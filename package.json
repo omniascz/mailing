@@ -18,7 +18,8 @@
       "esbuild",
       "msgpackr-extract",
       "sharp",
-      "unrs-resolver"
+      "unrs-resolver",
+      "core-js-pure"
     ]
   },
   "devDependencies": {
