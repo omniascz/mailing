@@ -31,6 +31,7 @@ import {
   type BatchSenderJobData,
   type MtaSendJobData,
   type MessageStream,
+  type TimewarpConfig,
 } from '../queues/index.js';
 
 interface ContactRow {
@@ -53,11 +54,19 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   let sent = 0;
   let skipped = 0;
 
+  // Resolve per-contact send timestamps when time-warp is enabled. One batch
+  // call (≤1000 contacts) → Map<contactId, ISO ts>. Failures fall through to
+  // immediate dispatch (worker keeps making progress on API outages).
+  const timewarpSchedule =
+    data.timewarp?.enabled
+      ? await fetchTimewarpSchedule(data.contactIds, data.timewarp)
+      : null;
+
   const mtaJobs: Array<{
     queue: ReturnType<typeof getMtaQueue>;
     name: string;
     data: MtaSendJobData;
-    opts: { priority: number };
+    opts: { priority: number; delay?: number };
   }> = [];
 
   for (const contact of contacts) {
@@ -125,6 +134,16 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     const isp = detectIsp(recipientDomain);
     const queue = getMtaQueue(isp);
 
+    // 7. Time-warp delay — when scheduled timestamp is in the future,
+    //    convert to a BullMQ delay (ms). Past timestamps fire immediately
+    //    (we never hold sends back if the local hour has already passed).
+    const scheduledIso = timewarpSchedule?.get(contact.id);
+    let delay: number | undefined;
+    if (scheduledIso) {
+      const ms = new Date(scheduledIso).getTime() - Date.now();
+      if (ms > 0) delay = ms;
+    }
+
     mtaJobs.push({
       queue,
       name: `send-${messageId}`,
@@ -148,7 +167,9 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         priority: data.priority,
         stream,
       },
-      opts: { priority: data.priority },
+      opts: delay !== undefined
+        ? { priority: data.priority, delay }
+        : { priority: data.priority },
     });
 
     sent++;
@@ -364,6 +385,36 @@ async function checkHoldout(orgId: string, contactId: string): Promise<boolean> 
     return body.data.heldOut;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Fetch per-contact time-warp send timestamps. The API service queries each
+ * contact's IANA timezone, computes the UTC instant for the configured
+ * local hour, and returns ISO strings keyed by contact ID. Returns null on
+ * failure so the worker can degrade to immediate dispatch instead of
+ * blocking the batch.
+ */
+async function fetchTimewarpSchedule(
+  contactIds: string[],
+  cfg: TimewarpConfig,
+): Promise<Map<string, string> | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/timewarp/schedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contactIds,
+        baseDate: cfg.baseDate ?? new Date().toISOString(),
+        localHour: cfg.localHour,
+        fallbackTimezone: cfg.fallbackTimezone ?? 'Europe/Prague',
+      }),
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { data: Record<string, string> };
+    return new Map(Object.entries(body.data));
+  } catch {
+    return null;
   }
 }
 

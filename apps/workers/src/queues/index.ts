@@ -125,6 +125,22 @@ export type IspName = keyof typeof mtaQueues;
 
 // ─── Job data types ──────────────────────────────────────────────────────────
 
+/**
+ * Time-warp config — when set, the worker queries the API for a per-contact
+ * send time aligned to each contact's IANA timezone, then schedules the MTA
+ * job with a BullMQ `delay` so it fires at the correct UTC instant. Contacts
+ * without a known tz fall back to `fallbackTimezone`.
+ */
+export interface TimewarpConfig {
+  enabled: boolean;
+  /** Local hour 0-23 in the recipient's timezone. */
+  localHour: number;
+  /** ISO 8601 date used as the "day" anchor; the worker uses today if absent. */
+  baseDate?: string;
+  /** IANA tz for contacts whose timezone is unknown (defaults to Europe/Prague). */
+  fallbackTimezone?: string;
+}
+
 export interface CampaignSplitterJobData {
   campaignId: string;
   orgId: string;
@@ -144,6 +160,8 @@ export interface CampaignSplitterJobData {
   dkimPrivateKey?: string;
   /** A/B test config (optional) */
   abConfig?: Record<string, unknown>;
+  /** Time-warp config (optional) — see TimewarpConfig */
+  timewarp?: TimewarpConfig;
   priority: Priority;
   stream?: MessageStream;
 }
@@ -163,6 +181,8 @@ export interface BatchSenderJobData {
   dkimDomain?: string;
   dkimSelector?: string;
   dkimPrivateKey?: string;
+  /** Time-warp config (optional) — applied per-contact in batch-sender */
+  timewarp?: TimewarpConfig;
   priority: Priority;
   stream: MessageStream;
 }

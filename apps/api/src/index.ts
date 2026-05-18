@@ -141,6 +141,7 @@ import sharedAssetsRoutes from './routes/v1/shared-assets.js';
 import billingExtendedRoutes from './routes/v1/billing-extended.js';
 import internalArchiveRoutes from './routes/v1/internal/archive.js';
 import internalHoldoutRoutes from './routes/v1/internal/holdout.js';
+import internalTimewarpRoutes from './routes/v1/internal/timewarp.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
 import seoClustersRoutes from './routes/v1/seo/clusters.js';
 import seoKeywordsRoutes from './routes/v1/seo/keywords.js';
@@ -331,6 +332,7 @@ export async function buildApp() {
   await app.register(billingExtendedRoutes);
   await app.register(internalArchiveRoutes);
   await app.register(internalHoldoutRoutes);
+  await app.register(internalTimewarpRoutes);
   await app.register(messagingSendRoutes);
   await app.register(seoClustersRoutes);
   await app.register(seoKeywordsRoutes);
