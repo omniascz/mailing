@@ -323,6 +323,9 @@ importers:
 
   apps/workers:
     dependencies:
+      '@forgemsg/editor':
+        specifier: workspace:*
+        version: link:../editor
       '@forgemsg/shared':
         specifier: workspace:*
         version: link:../../packages/shared

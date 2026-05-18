@@ -16,6 +16,8 @@
 
 import { Worker, type Job } from 'bullmq';
 import crypto from 'node:crypto';
+import { renderEmail as renderBlocks, type MergeTagContext } from '@forgemsg/editor/render';
+import { emailSchema, type EmailSchema } from '@forgemsg/editor/schema';
 import {
   connection,
   QUEUE_NAMES,
@@ -179,14 +181,69 @@ function getContactField(contact: ContactRow, field: string): string | undefined
   return undefined;
 }
 
+/**
+ * Build a MergeTagContext from a fetched contact row. Custom fields are spread
+ * onto the contact so {{ custom_field_name }} resolves directly. System keys
+ * (unsubscribe_url, view_in_browser_url, current_date/year) are populated when
+ * passed in via systemContext.
+ */
+function buildMergeContext(
+  contact: ContactRow,
+  systemContext?: MergeTagContext['system'],
+): MergeTagContext {
+  return {
+    contact: {
+      email: contact.email,
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      ...contact.customFields,
+    },
+    system: systemContext,
+  };
+}
+
+/**
+ * Render a campaign email for a specific contact.
+ *
+ * Three input shapes are accepted, in priority order:
+ *  1. EmailSchema (block JSON) — production path, validated via Zod and
+ *     rendered through @forgemsg/editor's renderEmail() which handles
+ *     dynamic conditions, dark-mode meta, mobile media queries, preheader
+ *     injection, etc.
+ *  2. Legacy { html: string } — kept for backwards compatibility with the
+ *     stub campaigns generated before B.2; merge tags resolved inline.
+ *  3. Anything else → JSON.stringify (still helpful for engine debug logs).
+ *
+ * Preheader override only applies to legacy path; block path takes preheader
+ * directly from the schema.
+ */
 function renderEmail(
   content: Record<string, unknown>,
   contact: ContactRow,
   preheader?: string,
 ): string {
-  // In production, this calls the editor's renderEmail() with the block JSON.
-  // For now, if content has an 'html' field, resolve merge tags in it.
-  // Otherwise, serialise the block JSON (the MTA sender will call render).
+  // Path 1: block JSON (production)
+  if ('blocks' in content && Array.isArray((content as { blocks?: unknown }).blocks)) {
+    const parsed = emailSchema.safeParse({
+      // Default preheader to empty (zod schema requires the field even when empty);
+      // the campaign-level preheader override (legacy concept) maps onto schema.
+      preheader: preheader ?? '',
+      ...content,
+    } satisfies Partial<EmailSchema> | Record<string, unknown>);
+
+    if (parsed.success) {
+      const ctx = buildMergeContext(contact);
+      const result = renderBlocks(parsed.data, { context: ctx });
+      return result.html;
+    }
+    // Validation failed — log and fall through to legacy path
+    console.warn(
+      `[batch-sender] Invalid EmailSchema for contact ${contact.id}, falling back to legacy render:`,
+      parsed.error.message,
+    );
+  }
+
+  // Path 2: legacy raw HTML
   const html = (content as { html?: string }).html;
   if (html) {
     let resolved = resolveMergeTags(html, contact);
@@ -197,6 +254,7 @@ function renderEmail(
     return resolved;
   }
 
+  // Path 3: fallback (should never happen in production)
   return JSON.stringify(content);
 }
 
