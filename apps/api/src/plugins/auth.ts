@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import { verifySession, type SessionData } from '../services/auth/sessions.js';
+import { lookupApiKey } from '../services/webhooks/index.js';
 import { AppError } from '../lib/app-error.js';
 import type { UserRole } from '@forgemsg/shared';
 
@@ -10,6 +11,7 @@ declare module 'fastify' {
   }
   interface FastifyInstance {
     requireAuth: (request: FastifyRequest) => Promise<void>;
+    authenticate: (request: FastifyRequest) => Promise<void>;
     requireRole: (...roles: UserRole[]) => (request: FastifyRequest) => Promise<void>;
   }
 }
@@ -25,8 +27,30 @@ function extractToken(request: FastifyRequest): string | null {
 }
 
 async function authPlugin(app: FastifyInstance) {
-  // Populate request.user when a valid token is present (does not throw if missing).
+  // Also expose an authenticate decorator (alias for requireAuth) for consistent naming.
+  app.decorate('authenticate', async (request: FastifyRequest) => {
+    if (!request.user) throw AppError.unauthorized('Authentication required');
+  });
+
+  // Populate request.user from JWT session OR X-API-Key header.
   app.addHook('onRequest', async (request) => {
+    // 1) Try API key header first
+    const apiKeyHeader = request.headers['x-api-key'] as string | undefined;
+    if (apiKeyHeader) {
+      const key = await lookupApiKey(apiKeyHeader).catch(() => null);
+      if (key) {
+        // Build a minimal SessionData from the API key
+        request.user = {
+          userId: key.userId ?? key.id,
+          orgId: key.orgId,
+          role: 'admin' as UserRole,
+          email: '',
+        };
+        return;
+      }
+    }
+
+    // 2) Fall back to Bearer / cookie JWT session
     const token = extractToken(request);
     if (!token) return;
     const session = await verifySession(token);

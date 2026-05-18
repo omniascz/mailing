@@ -1,0 +1,14 @@
+src/channels/sms/bulkgate-adapter.ts(28,3): error TS2724: '"@shared/sms-sender"' has no exported member named '_needsUnicode'. Did you mean 'needsUnicode'?
+src/channels/sms/bulkgate-adapter.ts(31,3): error TS2724: '"@shared/sms-sender"' has no exported member named '_BULKGATE_ERROR_CODES'. Did you mean 'BULKGATE_ERROR_CODES'?
+src/channels/sms/bulkgate-adapter.ts(32,8): error TS2724: '"@shared/sms-sender"' has no exported member named '_BulkGateConfig'. Did you mean 'BulkGateConfig'?
+src/db/schema/cdp-sources.ts(10,27): error TS2724: '"drizzle-orm/pg-core"' has no exported member named '_boolean'. Did you mean 'boolean'?
+src/db/schema/ctas.ts(7,3): error TS2724: '"drizzle-orm/pg-core"' has no exported member named '_text'. Did you mean 'text'?
+src/db/schema/lead-scoring.ts(10,3): error TS2724: '"drizzle-orm/pg-core"' has no exported member named '_numeric'. Did you mean 'numeric'?
+src/db/schema/push.ts(11,3): error TS2724: '"drizzle-orm/pg-core"' has no exported member named '_jsonb'. Did you mean 'jsonb'?
+src/db/schema/push.ts(12,3): error TS2724: '"drizzle-orm/pg-core"' has no exported member named '_integer'. Did you mean 'integer'?
+src/routes/v1/billing-extended.ts(17,50): error TS2724: '"../../services/billing/credits.js"' has no exported member named '_estimateCost'. Did you mean 'estimateCost'?
+src/routes/v1/in-app.ts(19,3): error TS2724: '"../../services/in-app/index.js"' has no exported member named '_getInAppMessage'. Did you mean 'getInAppMessage'?
+src/routes/v1/social/mentions.ts(5,38): error TS2724: '"../../../services/social/monitoring.js"' has no exported member named '_ingestMention'. Did you mean 'ingestMention'?
+src/routes/v1/voice.ts(15,3): error TS2724: '"../../services/voice/call-manager.js"' has no exported member named '_createCall'. Did you mean 'createCall'?
+src/routes/v1/whatsapp.ts(31,3): error TS2724: '"../../services/whatsapp/templates.js"' has no exported member named '_getWaTemplate'. Did you mean 'getWaTemplate'?
+src/services/tracking/site-tracker.ts(9,3): error TS2724: '"../../db/schema/index.js"' has no exported member named '_anonymousProfiles'. Did you mean 'anonymousProfiles'?

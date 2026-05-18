@@ -1,0 +1,12 @@
+apiVersion: v2
+name: forgemsg
+description: ForgeMsg unified messaging platform — API, workers, voice-bot, MTA engine, SMS gateway.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+icon: https://forgemsg.com/icon.png
+sources:
+  - https://github.com/forgemsg/forgemsg
+maintainers:
+  - name: ForgeMsg Engineering
+    email: ops@forgemsg.com

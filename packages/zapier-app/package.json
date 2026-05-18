@@ -1,0 +1,18 @@
+{
+  "name": "forgemsg-zapier",
+  "version": "1.0.0",
+  "description": "ForgeMsg Zapier integration app",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest --testPathPattern=src/test --passWithNoTests",
+    "validate": "zapier validate"
+  },
+  "dependencies": {
+    "zapier-platform-core": "^16.2.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "keywords": ["zapier", "forgemsg", "email", "marketing"],
+  "license": "MIT"
+}

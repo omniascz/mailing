@@ -1,0 +1,75 @@
+{{- if .Values.workers.enabled -}}
+{{- $component := "workers" -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "forgemsg.serviceAccountName" (dict "Release" .Release "component" $component) }}
+  labels:
+    {{- include "forgemsg.labels" . | nindent 4 }}
+  {{- with .Values.global.serviceAccount.annotationsRolePrefix }}
+  annotations:
+    eks.amazonaws.com/role-arn: {{ printf "%s%s" . $component | quote }}
+  {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ $component }}
+  labels:
+    {{- include "forgemsg.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  replicas: {{ .Values.workers.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "forgemsg.selectorLabels" (dict "Chart" .Chart "Release" .Release "component" $component) | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        {{- include "forgemsg.selectorLabels" (dict "Chart" .Chart "Release" .Release "component" $component) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "forgemsg.serviceAccountName" (dict "Release" .Release "component" $component) }}
+      {{- with .Values.global.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # Workers have no readiness/liveness probes — they don't expose HTTP.
+      # If the process crashes, the deployment will restart it via default
+      # restartPolicy. KEDA / queue-depth scaling can be added later.
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: workers
+          image: {{ include "forgemsg.image" (dict "Values" .Values "imageName" .Values.workers.image.name) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-env
+            - secretRef:
+                name: {{ .Values.global.externalSecretName }}
+          resources:
+            {{- toYaml .Values.workers.resources | nindent 12 }}
+{{- if .Values.workers.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-{{ $component }}
+  labels:
+    {{- include "forgemsg.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-{{ $component }}
+  minReplicas: {{ .Values.workers.minReplicas | default .Values.workers.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.workers.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.workers.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- end }}

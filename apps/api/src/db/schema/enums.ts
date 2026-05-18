@@ -4,7 +4,7 @@ export const planEnum = pgEnum('plan', ['free', 'starter', 'pro', 'business', 'e
 
 export const userRoleEnum = pgEnum('user_role', ['owner', 'admin', 'editor', 'viewer']);
 
-export const authProviderEnum = pgEnum('auth_provider', ['email', 'google']);
+export const authProviderEnum = pgEnum('auth_provider', ['email', 'google', 'sso']);
 
 export const contactStatusEnum = pgEnum('contact_status', [
   'active',
@@ -12,6 +12,18 @@ export const contactStatusEnum = pgEnum('contact_status', [
   'bounced',
   'complained',
   'pending',
+]);
+
+/** HubSpot-style lifecycle stages (#317/#394). Customisable later via per-org override. */
+export const lifecycleStageEnum = pgEnum('lifecycle_stage', [
+  'subscriber',
+  'lead',
+  'marketing_qualified_lead',
+  'sales_qualified_lead',
+  'opportunity',
+  'customer',
+  'evangelist',
+  'other',
 ]);
 
 export const phoneTypeEnum = pgEnum('phone_type', ['mobile', 'landline', 'voip', 'unknown']);
@@ -24,7 +36,10 @@ export const campaignTypeEnum = pgEnum('campaign_type', [
   'whatsapp',
   'push',
   'voice',
+  'viber',
 ]);
+
+export const dataRegionEnum = pgEnum('data_region', ['us', 'eu', 'ap']);
 
 export const campaignStatusEnum = pgEnum('campaign_status', [
   'draft',
@@ -63,4 +78,36 @@ export const suppressionReasonEnum = pgEnum('suppression_reason', [
   'complaint',
   'manual',
   'unsubscribe',
+]);
+
+export const customFieldTypeEnum = pgEnum('custom_field_type', [
+  'text',
+  'number',
+  'date',
+  'select',
+  'boolean',
+]);
+
+export const callStatusEnum = pgEnum('call_status', [
+  'initiated',
+  'ringing',
+  'in_progress',
+  'completed',
+  'no_answer',
+  'busy',
+  'voicemail',
+  'failed',
+]);
+
+export const messageStreamEnum = pgEnum('message_stream', [
+  'broadcast',
+  'transactional',
+  'triggered',
+]);
+
+/** Billing model for a plan: contact-based (default) or per-send-volume (#281) */
+export const billingTypeEnum = pgEnum('billing_type', [
+  'contact_based',
+  'send_based',
+  'payg',         // Pay-As-You-Go credits (#282)
 ]);

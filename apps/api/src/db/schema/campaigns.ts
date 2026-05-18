@@ -51,6 +51,8 @@ export const campaigns = pgTable(
     totalUnsubscribes: integer('total_unsubscribes').notNull().default(0),
     totalComplaints: integer('total_complaints').notNull().default(0),
 
+    locale: varchar('locale', { length: 8 }).notNull().default('en'),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),

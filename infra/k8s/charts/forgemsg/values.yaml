@@ -1,0 +1,120 @@
+# Default values for the ForgeMsg umbrella chart.
+# Override per environment via values-staging.yaml / values-production.yaml.
+
+global:
+  image:
+    registry: ghcr.io
+    repositoryPrefix: forgemsg-org/forgemsg
+    pullPolicy: IfNotPresent
+    tag: ""        # Set per deploy from CI. Falls back to .Chart.AppVersion.
+    pullSecrets: [] # e.g. [ghcr-pull]
+  environment: staging
+  domain: staging.forgemsg.com
+
+  # Reference an externally-managed Secret (created by ops or external-secrets).
+  externalSecretName: forgemsg-app
+
+  # IRSA — bind ServiceAccounts to AWS IAM roles for S3 / SES.
+  serviceAccount:
+    annotationsRolePrefix: ""  # e.g. arn:aws:iam::123:role/forgemsg-
+
+# ─── api ─────────────────────────────────────────────────────────────────────
+
+api:
+  enabled: true
+  replicaCount: 2
+  image:
+    name: api
+  port: 3001
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 1,    memory: 1Gi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+  ingress:
+    enabled: true
+    className: alb
+    host: api.staging.forgemsg.com
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+
+# ─── workers ─────────────────────────────────────────────────────────────────
+
+workers:
+  enabled: true
+  replicaCount: 2
+  image:
+    name: workers
+  resources:
+    requests: { cpu: 200m, memory: 512Mi }
+    limits:   { cpu: 2,    memory: 2Gi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 12
+    # Workers scale on Redis queue depth in prod (KEDA — out of scope here),
+    # CPU is a coarse proxy for the chart skeleton.
+    targetCPUUtilizationPercentage: 75
+
+# ─── voice-bot ───────────────────────────────────────────────────────────────
+
+voiceBot:
+  enabled: true
+  replicaCount: 1
+  image:
+    name: voice-bot
+  port: 8787
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 1,    memory: 1Gi }
+  ingress:
+    enabled: true
+    className: alb
+    host: voice.staging.forgemsg.com
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+
+# ─── engine (Go MTA) ─────────────────────────────────────────────────────────
+
+engine:
+  enabled: true
+  replicaCount: 2
+  image:
+    name: engine
+  port: 50051   # gRPC
+  resources:
+    requests: { cpu: 200m, memory: 256Mi }
+    limits:   { cpu: 2,    memory: 1Gi }
+  # No ingress — internal only (workers dial it via service DNS).
+
+# ─── sms-gateway ─────────────────────────────────────────────────────────────
+
+smsGateway:
+  enabled: true
+  replicaCount: 1
+  image:
+    name: sms-gateway
+  port: 2775   # SMPP
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits:   { cpu: 1,    memory: 512Mi }
+  service:
+    type: ClusterIP
+    # SMPP egress is initiated by the gateway, no external Service required.
+
+# ─── shared env ──────────────────────────────────────────────────────────────
+
+env:
+  # Plain values — non-secret. Secrets come from externalSecretName.
+  NODE_ENV: production
+  LOG_LEVEL: info
+  CLICKHOUSE_URL: http://clickhouse.forgemsg.svc.cluster.local:8123
+  KAFKA_BROKERS: kafka.forgemsg.svc.cluster.local:9092
+  ENGINE_GRPC_URL: forgemsg-engine.forgemsg.svc.cluster.local:50051

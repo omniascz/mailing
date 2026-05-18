@@ -35,6 +35,10 @@ export class AppError extends Error {
     return new AppError({ code: 'RATE_LIMIT', message: 'Too many requests', statusCode: 429 });
   }
 
+  static tooManyRequests(message = 'Too many requests') {
+    return new AppError({ code: 'TOO_MANY_REQUESTS', message, statusCode: 429 });
+  }
+
   static internal(message = 'Internal server error') {
     return new AppError({ code: 'INTERNAL_ERROR', message, statusCode: 500 });
   }

@@ -25,6 +25,9 @@ export const templates = pgTable(
     isPublic: varchar('is_public', { length: 5 }).notNull().default('false'),
     tags: jsonb('tags').$type<string[]>().notNull().default([]),
 
+    locale: varchar('locale', { length: 8 }).notNull().default('en'),
+    translationGroupId: uuid('translation_group_id'),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -32,6 +35,8 @@ export const templates = pgTable(
   (t) => [
     index('templates_org_id_idx').on(t.orgId),
     index('templates_category_idx').on(t.category),
+    index('templates_locale_idx').on(t.orgId, t.locale),
+    index('templates_tgroup_idx').on(t.translationGroupId),
   ],
 );
 

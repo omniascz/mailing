@@ -1,0 +1,21 @@
+{
+  "name": "@forgemsg/i18n-cs",
+  "version": "1.0.0",
+  "description": "Czech language tooling — vocative (5th case) and other declensions for merge-tags in email/SMS templates.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./vocative": "./src/vocative.ts",
+    "./cases": "./src/cases.ts",
+    "./name-days": "./src/name-days.ts",
+    "./public-holidays": "./src/public-holidays.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.5.0"
+  }
+}

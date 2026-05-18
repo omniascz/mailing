@@ -1,9 +1,9 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, jsonb, index, boolean, real } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { campaigns } from './campaigns.js';
 import { contacts } from './contacts.js';
-import { emailEventTypeEnum, bounceTypeEnum } from './enums.js';
+import { emailEventTypeEnum, bounceTypeEnum, messageStreamEnum } from './enums.js';
 
 /**
  * Email events — stored in PostgreSQL for the small/recent slice and replicated to
@@ -20,6 +20,7 @@ export const emailEvents = pgTable(
     campaignId: uuid('campaign_id').references(() => campaigns.id, { onDelete: 'cascade' }),
     contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
 
+    stream: messageStreamEnum('stream').notNull().default('broadcast'),
     eventType: emailEventTypeEnum('event_type').notNull(),
     bounceType: bounceTypeEnum('bounce_type'),
 
@@ -31,6 +32,13 @@ export const emailEvents = pgTable(
     emailClient: varchar('email_client', { length: 100 }),
 
     metadata: jsonb('metadata').$type<Record<string, unknown>>(),
+
+    /** True when bot-detection classified this open/click as automated (security scanner, prefetch, etc.). */
+    isBot: boolean('is_bot').notNull().default(false),
+    /** Confidence 0.0-1.0 from bot scoring. */
+    botScore: real('bot_score'),
+    /** Comma-separated rule ids that flagged the event (e.g., "ua-pattern,fast-click"). */
+    botReason: varchar('bot_reason', { length: 255 }),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },

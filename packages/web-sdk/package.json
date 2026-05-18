@@ -1,0 +1,18 @@
+{
+  "name": "@forgemsg/web-sdk",
+  "version": "0.1.0",
+  "description": "ForgeMsg in-app messaging SDK (<5KB gzipped)",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --minify",
+    "dev": "tsup src/index.ts --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}

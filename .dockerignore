@@ -1,0 +1,50 @@
+# Dependencies
+**/node_modules
+**/.pnpm-store
+
+# Build artefacts
+**/dist
+**/.next
+**/.turbo
+**/storybook-static
+**/.tsbuildinfo
+**/*.tsbuildinfo
+**/coverage
+
+# Local env / secrets
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.development
+.envrc
+
+# Logs
+**/*.log
+**/npm-debug.log*
+**/pnpm-debug.log*
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# CI / git / docs
+.git
+.github
+.gitignore
+**/*.md
+!README.md
+!apps/*/README.md
+
+# Tests / fixtures (build doesn't need them)
+**/*.test.ts
+**/*.spec.ts
+**/__tests__
+**/__mocks__
+
+# Loose helpers
+TODO.md
+FORGEMSG_ROADMAP.md
+docker-compose.yml
+docker-compose.*.yml

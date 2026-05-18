@@ -3,3 +3,10 @@
 export * from './types/index.js';
 export * from './types/channels.js';
 export * from './channels/index.js';
+export {
+  t,
+  resolveLocale,
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from './i18n/index.js';

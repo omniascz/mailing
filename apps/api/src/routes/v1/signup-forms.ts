@@ -1,0 +1,266 @@
+/**
+ * Signup form routes (task 6.5).
+ *
+ *  GET    /api/v1/signup-forms          — list forms
+ *  POST   /api/v1/signup-forms          — create form
+ *  GET    /api/v1/signup-forms/:id      — get form
+ *  PUT    /api/v1/signup-forms/:id      — update form
+ *  DELETE /api/v1/signup-forms/:id      — delete form
+ *  GET    /api/v1/signup-forms/:id/script — get embed JS snippet
+ *
+ *  POST   /public/forms/:id/submit      — public (unauthenticated) form submit
+ *  GET    /public/forms/:id/view        — track form impression (unauthenticated)
+ */
+
+import type { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
+import {
+  createSignupForm,
+  getSignupForm,
+  listSignupForms,
+  updateSignupForm,
+  deleteSignupForm,
+  generateEmbedScript,
+  getFormDefinition,
+  processFormSubmission,
+  trackFormView,
+  listVariants,
+  createVariant,
+  updateVariant,
+  deleteVariant,
+  selectVariantForVisitor,
+  trackVariantView,
+} from '../../services/signup-forms/index.js';
+
+const signupFormRoutes: FastifyPluginAsync = async (app) => {
+  const API_BASE = process.env.API_BASE_URL ?? 'https://api.forgemsg.io';
+
+  // ── Authenticated CRUD ────────────────────────────────────────────────────────
+
+  app.get('/api/v1/signup-forms', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Signup Forms'], summary: 'List signup forms' },
+  }, async (req, reply) => {
+    return reply.send({ data: await listSignupForms(req.user!.orgId) });
+  });
+
+  const fieldSchema = z.object({
+    name: z.string().min(1),
+    label: z.string().min(1),
+    type: z.enum(['text', 'email', 'phone', 'select', 'checkbox', 'hidden']),
+    required: z.boolean(),
+    options: z.array(z.string()).optional(),
+    placeholder: z.string().optional(),
+    defaultValue: z.string().optional(),
+  });
+
+  const configSchema = z.object({
+    submitButtonText: z.string().optional(),
+    successMessage: z.string().optional(),
+    redirectUrl: z.string().url().optional(),
+    doubleOptIn: z.boolean().optional(),
+    tags: z.array(z.string()).optional(),
+    workflowId: z.string().uuid().optional(),
+    styles: z.record(z.string()).optional(),
+  }).optional();
+
+  const createSchema = z.object({
+    name: z.string().min(1).max(255),
+    listId: z.string().uuid().optional(),
+    fields: z.array(fieldSchema).optional(),
+    embedType: z.enum(['inline', 'popup', 'slide', 'floating']).optional(),
+    config: configSchema,
+  });
+
+  app.post('/api/v1/signup-forms', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Signup Forms'], summary: 'Create signup form' },
+  }, async (req, reply) => {
+    const orgId = req.user!.orgId;
+    const body = createSchema.parse(req.body);
+    const form = await createSignupForm(orgId, body as Parameters<typeof createSignupForm>[1]);
+    return reply.status(201).send({ data: form });
+  });
+
+  app.get('/api/v1/signup-forms/:id', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Signup Forms'], summary: 'Get signup form' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    return reply.send({ data: await getSignupForm(id, req.user!.orgId) });
+  });
+
+  const updateSchema = createSchema.partial();
+
+  app.put('/api/v1/signup-forms/:id', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Signup Forms'], summary: 'Update signup form' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const orgId = req.user!.orgId;
+    const body = updateSchema.parse(req.body);
+    return reply.send({ data: await updateSignupForm(id, orgId, body as Parameters<typeof updateSignupForm>[2]) });
+  });
+
+  app.delete('/api/v1/signup-forms/:id', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Signup Forms'], summary: 'Delete signup form' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    await deleteSignupForm(id, req.user!.orgId);
+    return reply.status(204).send();
+  });
+
+  app.get('/api/v1/signup-forms/:id/script', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Signup Forms'], summary: 'Get embed JavaScript snippet' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    // Verify ownership
+    await getSignupForm(id, req.user!.orgId);
+    const script = generateEmbedScript(id, API_BASE);
+    return reply.type('text/html').send(script);
+  });
+
+  // ── Public endpoints (unauthenticated) ───────────────────────────────────────
+
+  // Get form definition (for the JS loader)
+  app.get('/public/forms/:id', {
+    schema: { tags: ['Public Forms'], summary: 'Get form definition for rendering' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const form = await getFormDefinition(id);
+    if (!form) return reply.status(404).send({ code: 'NOT_FOUND', message: 'Form not found' });
+    return reply.send({ data: form });
+  });
+
+  // Track form view
+  app.get('/public/forms/:id/view', {
+    schema: { tags: ['Public Forms'], summary: 'Track form impression' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    await trackFormView(id);
+    return reply.status(204).send();
+  });
+
+  // Submit form
+  const submitSchema = z.record(z.string());
+
+  app.post('/public/forms/:id/submit', {
+    schema: { tags: ['Public Forms'], summary: 'Submit a signup form (unauthenticated)' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const data = submitSchema.parse(req.body);
+    const result = await processFormSubmission(id, data, {
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    if (!result.success) {
+      return reply.status(422).send({ code: 'VALIDATION_ERROR', message: result.message });
+    }
+    return reply.send({ data: result });
+  });
+
+  // ── A/B Variant endpoints ─────────────────────────────────────────────────────
+
+  const variantBodySchema = z.object({
+    name: z.string().min(1).max(255),
+    trafficSplit: z.number().int().min(0).max(100).default(50),
+    fields: z.array(z.object({
+      name: z.string(), label: z.string(),
+      type: z.enum(['text', 'email', 'phone', 'select', 'checkbox', 'hidden']),
+      required: z.boolean(),
+      options: z.array(z.string()).optional(),
+      placeholder: z.string().optional(),
+      defaultValue: z.string().optional(),
+    })).optional(),
+    config: z.object({
+      submitButtonText: z.string().optional(),
+      successMessage: z.string().optional(),
+      redirectUrl: z.string().url().optional(),
+      doubleOptIn: z.boolean().optional(),
+      tags: z.array(z.string()).optional(),
+      workflowId: z.string().uuid().optional(),
+      styles: z.record(z.string()).optional(),
+    }).optional(),
+  });
+
+  app.get('/api/v1/signup-forms/:formId/variants', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Signup Forms'], summary: 'List A/B variants for a form' },
+  }, async (req, reply) => {
+    const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
+    return reply.send({ data: await listVariants(req.user!.orgId, formId) });
+  });
+
+  app.post('/api/v1/signup-forms/:formId/variants', {
+    preHandler: [app.authenticate, app.requireRole('editor', 'admin', 'owner')],
+    schema: { tags: ['Signup Forms'], summary: 'Create an A/B variant' },
+  }, async (req, reply) => {
+    const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
+    const body = variantBodySchema.parse(req.body);
+    const variant = await createVariant(req.user!.orgId, formId, body);
+    return reply.code(201).send({ data: variant });
+  });
+
+  app.put('/api/v1/signup-forms/:formId/variants/:variantId', {
+    preHandler: [app.authenticate, app.requireRole('editor', 'admin', 'owner')],
+    schema: { tags: ['Signup Forms'], summary: 'Update an A/B variant' },
+  }, async (req, reply) => {
+    const { variantId } = z.object({ formId: z.string().uuid(), variantId: z.string().uuid() }).parse(req.params);
+    const body = variantBodySchema.partial().extend({ active: z.boolean().optional() }).parse(req.body);
+    return reply.send({ data: await updateVariant(req.user!.orgId, variantId, body) });
+  });
+
+  app.delete('/api/v1/signup-forms/:formId/variants/:variantId', {
+    preHandler: [app.authenticate, app.requireRole('editor', 'admin', 'owner')],
+    schema: { tags: ['Signup Forms'], summary: 'Delete an A/B variant' },
+  }, async (req, reply) => {
+    const { variantId } = z.object({ formId: z.string().uuid(), variantId: z.string().uuid() }).parse(req.params);
+    await deleteVariant(req.user!.orgId, variantId);
+    return reply.code(204).send();
+  });
+
+  // Public: progressive profiling — return only unfilled fields for a known contact (#205)
+  app.get('/public/forms/:formId/progressive', {
+    schema: { tags: ['Public Forms'], summary: 'Get progressive fields for a known contact' },
+  }, async (req) => {
+    const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
+    const { contactId, orgId, fieldsPerVisit } = z.object({
+      contactId: z.string().uuid(),
+      orgId: z.string().uuid(),
+      fieldsPerVisit: z.coerce.number().int().min(1).max(10).optional(),
+    }).parse(req.query);
+    const { getProgressiveFields } = await import('../../services/signup-forms/progressive.js');
+    return { data: await getProgressiveFields({ formId, contactId, orgId, fieldsPerVisit }) };
+  });
+
+  // Authenticated: progressive profiling for dashboard (uses req.user.orgId)
+  app.get('/api/v1/forms/:formId/progressive', {
+    preHandler: app.requireAuth,
+    schema: { tags: ['Forms'], summary: 'Get progressive fields for a contact' },
+  }, async (req) => {
+    const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
+    const { contactId, fieldsPerVisit } = z.object({
+      contactId: z.string().uuid(),
+      fieldsPerVisit: z.coerce.number().int().min(1).max(10).optional(),
+    }).parse(req.query);
+    const { getProgressiveFields } = await import('../../services/signup-forms/progressive.js');
+    return { data: await getProgressiveFields({ formId, contactId, orgId: req.user!.orgId, fieldsPerVisit }) };
+  });
+
+  // Public: select which variant to show a visitor
+  app.get('/public/forms/:formId/variant', {
+    schema: { tags: ['Public Forms'], summary: 'Get variant for visitor token' },
+  }, async (req, reply) => {
+    const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
+    const { visitorToken } = z.object({ visitorToken: z.string().min(1) }).parse(req.query);
+    const variant = await selectVariantForVisitor(formId, '', visitorToken);
+    if (!variant) return reply.send({ data: null });
+    await trackVariantView(variant.id);
+    return reply.send({ data: variant });
+  });
+};
+
+export default signupFormRoutes;

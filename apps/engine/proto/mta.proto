@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package mta;
+
+option go_package = "github.com/forgemsg/engine/proto";
+
+// MTA gRPC service — used by BullMQ workers to send emails via the Go engine.
+service MTAService {
+  // Send a single email message.
+  rpc Send(SendRequest) returns (SendResponse);
+  // Send a batch of emails.
+  rpc SendBatch(SendBatchRequest) returns (SendBatchResponse);
+  // Health check.
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message SendRequest {
+  string message_id = 1;
+  string from_email = 2;
+  string from_name = 3;
+  string to_email = 4;
+  string to_name = 5;
+  string subject = 6;
+  string html_body = 7;
+  string text_body = 8;
+  string reply_to = 9;
+
+  // DKIM signing config
+  DkimConfig dkim = 10;
+
+  // Custom headers (List-Unsubscribe, etc.)
+  map<string, string> custom_headers = 11;
+
+  // Metadata for tracking
+  string org_id = 12;
+  string campaign_id = 13;
+  string contact_id = 14;
+
+  // Sending IP override (empty = use default pool)
+  string sending_ip = 15;
+}
+
+message DkimConfig {
+  string domain = 1;
+  string selector = 2;
+  string private_key_pem = 3;
+}
+
+message SendResponse {
+  bool success = 1;
+  string message_id = 2;
+  int32 smtp_code = 3;
+  string smtp_message = 4;
+  string error = 5;
+  // Duration in milliseconds
+  int64 duration_ms = 6;
+}
+
+message SendBatchRequest {
+  repeated SendRequest messages = 1;
+}
+
+message SendBatchResponse {
+  repeated SendResponse results = 1;
+  int32 total_sent = 2;
+  int32 total_failed = 3;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  int32 active_connections = 2;
+  int32 pool_size = 3;
+  string version = 4;
+}

@@ -1,7 +1,12 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, jsonb, boolean, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, jsonb, boolean, index, integer } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
-import { contactStatusEnum, phoneTypeEnum, phoneStatusEnum } from './enums.js';
+import {
+  contactStatusEnum,
+  phoneTypeEnum,
+  phoneStatusEnum,
+  lifecycleStageEnum,
+} from './enums.js';
 
 export const contacts = pgTable(
   'contacts',
@@ -19,6 +24,12 @@ export const contacts = pgTable(
 
     // Status
     status: contactStatusEnum('status').notNull().default('active'),
+
+    // Lifecycle stage (#317/#394)
+    lifecycleStage: lifecycleStageEnum('lifecycle_stage').notNull().default('subscriber'),
+    lifecycleStageEnteredAt: timestamp('lifecycle_stage_entered_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
 
     // Custom fields (flexible per-org schema)
     customFields: jsonb('custom_fields').$type<Record<string, unknown>>().notNull().default({}),
@@ -41,11 +52,17 @@ export const contacts = pgTable(
     // Engagement (denormalized for fast segmentation)
     lastOpenedAt: timestamp('last_opened_at', { withTimezone: true }),
     lastClickedAt: timestamp('last_clicked_at', { withTimezone: true }),
-    leadScore: varchar('lead_score', { length: 10 }).default('0'),
+    leadScore: integer('lead_score').default(0),
 
     // Source tracking
     source: varchar('source', { length: 100 }),
     sourceDetails: jsonb('source_details').$type<Record<string, unknown>>(),
+
+    // Preferred locale (ISO, e.g. 'en', 'cs', 'sk') — used to auto-select translations
+    preferredLocale: varchar('preferred_locale', { length: 8 }),
+
+    // Team ownership (#343) — NULL means org-wide (legacy or cross-team).
+    teamId: uuid('team_id'),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -70,8 +87,37 @@ export const contacts = pgTable(
 
     // Soft delete filter
     index('contacts_deleted_at_idx').on(t.deletedAt),
+
+    // Lifecycle filtering
+    index('contacts_lifecycle_stage_idx').on(t.orgId, t.lifecycleStage),
   ],
 );
+
+/** Lifecycle-stage transition history (#317/#394). */
+export const lifecycleStageHistory = pgTable(
+  'lifecycle_stage_history',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    fromStage: lifecycleStageEnum('from_stage'),
+    toStage: lifecycleStageEnum('to_stage').notNull(),
+    changedBy: uuid('changed_by'),
+    reason: varchar('reason', { length: 255 }),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('lifecycle_history_contact_idx').on(t.contactId, t.occurredAt),
+    index('lifecycle_history_org_idx').on(t.orgId, t.occurredAt),
+  ],
+);
+
+export type LifecycleStageHistory = typeof lifecycleStageHistory.$inferSelect;
 
 export type Contact = typeof contacts.$inferSelect;
 export type NewContact = typeof contacts.$inferInsert;

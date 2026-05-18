@@ -1,0 +1,57 @@
+{{- if .Values.smsGateway.enabled -}}
+{{- $component := "sms-gateway" -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "forgemsg.serviceAccountName" (dict "Release" .Release "component" $component) }}
+  labels:
+    {{- include "forgemsg.labels" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ $component }}
+  labels:
+    {{- include "forgemsg.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  replicas: {{ .Values.smsGateway.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "forgemsg.selectorLabels" (dict "Chart" .Chart "Release" .Release "component" $component) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "forgemsg.selectorLabels" (dict "Chart" .Chart "Release" .Release "component" $component) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "forgemsg.serviceAccountName" (dict "Release" .Release "component" $component) }}
+      containers:
+        - name: sms-gateway
+          image: {{ include "forgemsg.image" (dict "Values" .Values "imageName" .Values.smsGateway.image.name) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          ports:
+            - name: smpp
+              containerPort: {{ .Values.smsGateway.port }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-env
+            - secretRef:
+                name: {{ .Values.global.externalSecretName }}
+          resources:
+            {{- toYaml .Values.smsGateway.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ $component }}
+  labels:
+    {{- include "forgemsg.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.smsGateway.service.type }}
+  ports:
+    - name: smpp
+      port: {{ .Values.smsGateway.port }}
+      targetPort: smpp
+  selector:
+    {{- include "forgemsg.selectorLabels" (dict "Chart" .Chart "Release" .Release "component" $component) | nindent 4 }}
+{{- end }}

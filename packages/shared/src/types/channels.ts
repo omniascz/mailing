@@ -5,7 +5,7 @@
 // messages without knowing provider details. New channels are added by
 // implementing this interface; nothing else needs to change.
 
-export type Channel = 'email' | 'sms' | 'whatsapp' | 'push' | 'voice' | 'in_app';
+export type Channel = 'email' | 'sms' | 'whatsapp' | 'push' | 'voice' | 'in_app' | 'viber' | 'instagram' | 'messenger';
 
 export type DeliveryStatusType =
   | 'queued'
@@ -80,13 +80,34 @@ export interface InAppContent {
   ctaUrl?: string;
 }
 
+export interface ViberContent {
+  kind: 'viber';
+  /** Registered Viber message type: 'text', 'picture', 'video', 'file', 'action' */
+  type: 'text' | 'picture' | 'video' | 'file' | 'action';
+  body: string;
+  /** Sender display name (max 28 chars, registered in Viber Business) */
+  sender?: string;
+  /** For type=picture / video / file */
+  mediaUrl?: string;
+  /** Thumbnail for video */
+  thumbnailUrl?: string;
+  /** For type=action — CTA button */
+  actionUrl?: string;
+  actionText?: string;
+  /** Pre-approved template name (required for business initiated messages) */
+  templateName?: string;
+  /** TTL in seconds — how long to try delivery before expiry (default 86400) */
+  ttl?: number;
+}
+
 export type MessageContent =
   | EmailContent
   | SmsContent
   | WhatsAppContent
   | PushContent
   | VoiceContent
-  | InAppContent;
+  | InAppContent
+  | ViberContent;
 
 // ============================================================================
 // Unified message envelope
@@ -109,6 +130,8 @@ export interface Recipient {
   firstName?: string;
   lastName?: string;
   customFields?: Record<string, unknown>;
+  /** Platform-specific external user identifier (e.g., Instagram IGSID, Messenger PSID). */
+  externalId?: string;
 }
 
 // ============================================================================
