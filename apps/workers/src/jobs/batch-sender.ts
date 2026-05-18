@@ -77,6 +77,15 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         skipped++;
         continue;
       }
+
+      // 2b. Holdout group enforcement — broadcast only. Transactional and
+      //     triggered streams ignore holdouts so receipts / workflow alerts
+      //     still reach the held-out cohort.
+      const heldOut = await checkHoldout(data.orgId, contact.id);
+      if (heldOut) {
+        skipped++;
+        continue;
+      }
     }
 
     // 3. Build merge context once per contact; reused by subject + content
@@ -332,6 +341,29 @@ async function recordFrequencySend(orgId: string, contactId: string): Promise<vo
     });
   } catch {
     // non-critical
+  }
+}
+
+/**
+ * Check whether the recipient is currently assigned to an active holdout
+ * group. Holdout members are excluded from broadcast sends so the org can
+ * measure incremental lift (revenue/engagement uplift attributable to the
+ * campaign vs. the unmarketed control cohort).
+ *
+ * Fail-open on API errors so a transient outage doesn't accidentally
+ * release the entire holdout cohort. The dedicated alert on persistent
+ * 5xx from /internal/holdout/check is wired in §C.15 abuse signals.
+ */
+async function checkHoldout(orgId: string, contactId: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${API_URL}/api/v1/internal/holdout/check?orgId=${orgId}&contactId=${contactId}`,
+    );
+    if (!res.ok) return false;
+    const body = (await res.json()) as { data: { heldOut: boolean } };
+    return body.data.heldOut;
+  } catch {
+    return false;
   }
 }
 
