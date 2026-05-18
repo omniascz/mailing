@@ -19,6 +19,7 @@ import crypto from 'node:crypto';
 import {
   renderEmail as renderBlocks,
   renderPlainText,
+  parseMergeTags,
   type MergeTagContext,
 } from '@forgemsg/editor/render';
 import { emailSchema, type EmailSchema } from '@forgemsg/editor/schema';
@@ -78,15 +79,19 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
       }
     }
 
-    // 3. Resolve merge tags in subject
-    const subject = resolveMergeTags(data.subject, contact);
+    // 3. Build merge context once per contact; reused by subject + content
+    //    rendering paths. parseMergeTags (from @forgemsg/editor) is the
+    //    single source of truth for tag syntax + filter registry across
+    //    worker, editor preview, and server-side rendering.
+    const mergeCtx = buildMergeContext(contact);
+    const subject = parseMergeTags(data.subject, mergeCtx);
 
     // 4. Render HTML + plain-text alternative (block JSON path via
     //    @forgemsg/editor renderEmail + renderPlainText; legacy { html }
-    //    path uses inline merge tags + HTML→text fallback).
+    //    path uses parseMergeTags + HTML→text fallback).
     const { html: htmlBody, text: textBody } = renderEmail(
       data.content,
-      contact,
+      mergeCtx,
       data.preheader,
     );
 
@@ -164,38 +169,17 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   return { sent, skipped };
 }
 
-// ─── Merge tag resolution ────────────────────────────────────────────────────
-
-function resolveMergeTags(template: string, contact: ContactRow): string {
-  return template.replace(/\{\{(\w+)(?:\|([^}]*))?\}\}/g, (_match, field: string, fallback?: string) => {
-    const value = getContactField(contact, field);
-    return value ?? fallback ?? '';
-  });
-}
-
-function getContactField(contact: ContactRow, field: string): string | undefined {
-  const map: Record<string, string | null> = {
-    first_name: contact.firstName,
-    firstName: contact.firstName,
-    last_name: contact.lastName,
-    lastName: contact.lastName,
-    email: contact.email,
-  };
-
-  if (field in map && map[field] != null) return map[field]!;
-
-  // Check custom fields
-  const cf = contact.customFields?.[field];
-  if (cf != null) return String(cf);
-
-  return undefined;
-}
+// ─── Merge tag context ───────────────────────────────────────────────────────
 
 /**
  * Build a MergeTagContext from a fetched contact row. Custom fields are spread
  * onto the contact so {{ custom_field_name }} resolves directly. System keys
  * (unsubscribe_url, view_in_browser_url, current_date/year) are populated when
  * passed in via systemContext.
+ *
+ * All merge-tag resolution flows through @forgemsg/editor's parseMergeTags,
+ * giving us a single regex + filter registry (vocative, default, …) shared
+ * across editor preview, server-side render, and worker dispatch.
  */
 function buildMergeContext(
   contact: ContactRow,
@@ -230,7 +214,7 @@ interface RenderedEmail {
  */
 function renderEmail(
   content: Record<string, unknown>,
-  contact: ContactRow,
+  ctx: MergeTagContext,
   preheader?: string,
 ): RenderedEmail {
   // Path 1: block JSON (production)
@@ -241,13 +225,12 @@ function renderEmail(
     } satisfies Partial<EmailSchema> | Record<string, unknown>);
 
     if (parsed.success) {
-      const ctx = buildMergeContext(contact);
       const html = renderBlocks(parsed.data, { context: ctx }).html;
       const text = renderPlainText(parsed.data, { context: ctx });
       return { html, text };
     }
     console.warn(
-      `[batch-sender] Invalid EmailSchema for contact ${contact.id}, falling back to legacy render:`,
+      `[batch-sender] Invalid EmailSchema, falling back to legacy render:`,
       parsed.error.message,
     );
   }
@@ -255,14 +238,14 @@ function renderEmail(
   // Path 2: legacy raw HTML (+ optional text override)
   const html = (content as { html?: string }).html;
   if (html) {
-    let resolved = resolveMergeTags(html, contact);
+    let resolved = parseMergeTags(html, ctx);
     if (preheader) {
       const preheaderHtml = `<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">${preheader}</div>`;
       resolved = resolved.replace(/<body[^>]*>/i, (m) => m + preheaderHtml);
     }
     const textOverride = (content as { text?: string }).text;
     const text = textOverride
-      ? resolveMergeTags(textOverride, contact)
+      ? parseMergeTags(textOverride, ctx)
       : deriveTextFromHtml(resolved);
     return { html: resolved, text };
   }
