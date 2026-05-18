@@ -6,6 +6,11 @@ coverage
 storybook-static
 *.tsbuildinfo
 
+# Go build artifacts
+*.exe
+*.test
+*.out
+
 # Environment
 .env
 .env.local
