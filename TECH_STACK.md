@@ -1,6 +1,7 @@
 # ForgeMsg — Tech Stack Validation
 
 > Finalized: 2026-04-11
+> **Infrastructure section revised: 2026-05-18** — pivot AWS EKS → Hetzner + Vercel. Důvod: AWS odmítl onboarding marketing mailů; vlastní MTA infrastruktura potřebuje bulk-friendly hosting; ~75 % úspora nákladů. Detail v `infra/PIVOT_AWS_TO_HETZNER.md`, `infra/HOSTING_DETAIL.md`, `infra/DELIVERABILITY.md`.
 > Status: ✅ Validated for MVP through Scale (50k users)
 
 This document captures the **why** behind every technology choice, alternatives that were considered, and the trade-offs we accepted. It is the source of truth for architectural decisions; CLAUDE.md remains the operational reference.
@@ -155,7 +156,7 @@ Every component is evaluated against:
 
 ### Cache + Queue — Redis 7
 
-**Chosen**: Redis 7 (ElastiCache cluster mode in production) for sessions, BullMQ, rate limiting, HLR cache.
+**Chosen**: Redis 7 (ElastiCache cluster mode in production) for sessions, BullMQ, rate limiting.
 
 **Why**:
 - Single dependency for multiple needs (one less moving part)
@@ -231,34 +232,118 @@ Every component is evaluated against:
 
 ## Infrastructure
 
-### Container Orchestration — Kubernetes (EKS)
+> ⚠️ **REVIZE 2026-05-18**: AWS EKS plán **zrušen** kvůli AWS odmítnutí onboardingu pro marketing maily. Nahrazeno Hetzner + Vercel stackem. Sekce dále reflektuje aktuální stav.
 
-**Chosen**: AWS EKS with managed node groups (Graviton4 ARM instances), Helm charts, ArgoCD GitOps.
+### Frontend hosting — Vercel
+
+**Chosen**: Vercel Pro plán, Frankfurt region pinned pro `apps/web` (Next.js 15).
 
 **Why**:
-- Industry standard — broadest tooling, hiring pool
-- Graviton4 = ~30% better price/performance than x86 for our workloads
-- ArgoCD GitOps fits trunk-based development
+- Next.js native platforma (Edge runtime, ISR, image optimization, preview deployments per PR)
+- EU data residency pro hlavní user-facing app
+- Žádné DevOps pro frontend tier
+
+**Alternatives**: Self-hosted Next.js na Coolify (úspora $20/měs, ale ztráta edge features) — revisit při migraci na k3s v Phase 5+.
+
+### Compute orchestration — Coolify (MVP) → k3s (Phase 5+)
+
+**Chosen MVP**: Coolify self-hosted na 3× Hetzner Cloud CCX23 (Falkenstein). Spravuje API, workers, voice-bot, sms-gateway, mcp-server, internal Postgres/Redis/Kafka/ClickHouse pro dev.
+
+**Chosen Phase 5+**: Migrace na **k3s** (lightweight Kubernetes) pro multi-region a HA. Helm + ArgoCD GitOps zachovat.
+
+**Why Coolify pro MVP**:
+- UI-first, deploy z Gitu bez YAML
+- Auto Let's Encrypt, vstavěné databáze, monitoring
+- Vhodné pro 1–3 vývojáře
+- Migrace na k3s je later upgrade, ne side-grade
 
 **Alternatives considered**:
 | Option | Rejected because |
 |--------|------------------|
-| **ECS/Fargate** | Less portable; weaker for stateful workloads |
-| **Nomad** | Smaller ecosystem |
-| **Fly.io / Railway** | Great for MVP, but we hit scaling limits and need multi-AZ guarantees |
-| **Bare Docker on EC2** | We'll need K8s eventually — paying that complexity tax later is more expensive |
+| **AWS EKS** (původní plán) | AWS odmítl marketing mailing onboarding; cena 4–5× nad Hetznerem |
+| **Bare Docker + systemd** | Pro app tier příliš nízká úroveň; Coolify dělá tu samou věc s UI |
+| **Nomad** | Menší ekosystém, ale dobrá alternativa pro Phase 5+ pokud k3s nezvládneme |
+| **Fly.io / Railway** | Drahé pro náš objem; lock-in |
+
+### MTA cluster — Hetzner Dedicated + vlastní Go MTA
+
+**Chosen**: 2× Hetzner Dedicated EX44 (Falkenstein + Helsinki) v MVP, škálovat na 4–8 serverů + multi-ASN (OVH, Vultr) v Phase 5+. Provozováno přes systemd, ne kontejnery (důvod: fixní IP binding + rDNS + outbound port 25).
+
+**Why**:
+- Bulk-friendly hosting (Hetzner SMTP unblock přes ticket)
+- /29 IPv4 subnet zdarma s každým dedicated serverem (= 6 sending IPs)
+- Vlastní rDNS / PTR records
+- AS24940 sdílíme s tisíci sender peers — postupně zlepšit přes ASN diversifikaci (OVH, Vultr)
 
 **Trade-offs accepted**:
-- K8s operational complexity from day 1. Mitigated by Helm + ArgoCD + good runbooks.
-- ARM-only Docker images need multi-arch builds (handled in CI matrix)
+- Sami operujeme bare metal (žádný managed)
+- Postgres a Redis primary jdou na Dedicated od Phase 5+ pro ECC RAM
+- Multi-region složitější bez K8s — řešíme přes DNS-level failover
 
-### IaC — Terraform
+### Database hosting — Hetzner Dedicated (Postgres) + ClickHouse Cloud
 
-**Chosen**: Terraform for AWS resources (VPC, EKS, RDS, ElastiCache, S3, Route53, ACM, IAM).
+**Chosen**:
+- **Postgres**: Hetzner AX52 primary + AX42 replica (od Phase 5+). MVP na CCX23 cloud node.
+- **ClickHouse**: ClickHouse Cloud Dev tier ($50/měs) v MVP; přechod na Hetzner AX102 v Phase 5+ pokud cost-benefit.
+- **Redis**: Coolify managed Redis 7 cluster.
+- **Kafka**: KRaft mode 3-node Hetzner Cloud cluster od Phase 3+.
 
-**Why**: De-facto standard, broad provider support, state in S3 + DynamoDB lock works well for a small team.
+**Why**:
+- Hetzner Dedicated má **ECC RAM** (povinné pro DB)
+- $400/měs AX52 = ekvivalent ~$2 000/měs RDS r6g
+- ClickHouse Cloud zbavuje ops režie v MVP fázi
 
-**Alternatives**: Pulumi (TypeScript) would let us share types with the app, but Terraform's AWS provider maturity wins.
+### Object storage — Cloudflare R2
+
+**Chosen**: Cloudflare R2 (S3-compatible API) pro šablony, obrázky, attachmenty, screenshoty, voice recordings.
+
+**Why**:
+- Žádné egress fees (vs S3 $0.09/GB)
+- $0.015/GB/měs storage
+- Free tier 10 GB
+- Cloudflare CDN integrace zdarma
+
+### CDN + DNS — Cloudflare
+
+**Chosen**: Cloudflare pro DNS, CDN, edge funkce (tracking pixel + click redirect).
+
+**Why**:
+- Free tier pokrývá 99 % traffic
+- Workers pro low-latency tracking (50ms globálně)
+- DNS API friendly pro per-klient sender domain automatizaci
+- TLS automatika
+- **Pozor**: MX/SMTP záznamy MUSÍ být "DNS only" (proxy off)
+
+### Secret management — Doppler
+
+**Chosen**: Doppler workspace s envs `development`, `staging`, `production`.
+
+**Why**: Free do 5 uživatelů, lepší DX než HashiCorp Vault pro náš size, syncing do Coolify a Vercel.
+
+### IaC — Terraform (Hetzner) + Pulumi (Vercel)
+
+**Chosen**:
+- **Hetzner Cloud + Dedicated**: Terraform `hetznercloud/hcloud` provider. State v Hetzner Object Storage (S3-compatible) s lock přes Postgres.
+- **Vercel**: Pulumi TypeScript (provider stabilnější než Terraform Vercel provider) — nebo manual UI configuration pro single project (Vercel project = jedna entita).
+
+**Alternatives**:
+- OpenTofu místo Terraformu — možnost po Phase 5+ pokud Terraform změní licenci
+- Pulumi pro vše — sjednotí jazyk s appkou; revisit při expansion
+
+### Observability — Grafana Cloud + Better Stack
+
+**Chosen**:
+- **Grafana Cloud Free** (Prometheus + Loki + Tempo) pro metrics, logs, traces
+- **Better Stack** pro on-call + uptime monitoring (5× levnější PagerDuty)
+- **Sentry** pro error tracking ($26/měs Team plan)
+
+**Why**: Provider-agnostic stack — funguje nad AWS/Hetzner/Vercel/k3s. Free tier do 1 GB logs/měs pokrývá MVP.
+
+### Backup strategie
+
+- **Postgres**: pg_basebackup denně do **Hetzner Storage Box** (1 TB BX11 €3.81/měs) + continuous WAL archiv. Off-site copy do Cloudflare R2.
+- **ClickHouse**: spravuje ClickHouse Cloud (managed). Pro Phase 5+ self-hosted: native ClickHouse backup → R2.
+- **Aplikační data (R2)**: cross-region replication na druhý R2 bucket.
 
 ### Observability — Grafana Cloud (Prometheus + Loki + Tempo)
 

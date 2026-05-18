@@ -15,14 +15,13 @@ Turborepo monorepo with pnpm workspaces.
 | `@forgemsg/workers` | `apps/workers` | TypeScript | BullMQ job processors |
 | `sms-gateway` | `apps/sms-gateway` | Go | SMPP v3.4 SMS gateway |
 | `@forgemsg/voice-bot` | `apps/voice-bot` | TypeScript | AI voice robot (Twilio + Deepgram + ElevenLabs + Claude) |
-| `@forgemsg/number-intel` | `apps/number-intel` | TypeScript | Phone number intelligence (HLR, prefix DB, MSC) |
 | `@forgemsg/shared` | `packages/shared` | TypeScript | Shared types, utils, channel adapter interface |
 
 ### Infrastructure
 
 - **Database**: PostgreSQL 16 (Drizzle ORM)
 - **Analytics DB**: ClickHouse (event pipeline, materialized views)
-- **Cache/Queue**: Redis 7 (sessions, BullMQ, rate limiting, HLR cache)
+- **Cache/Queue**: Redis 7 (sessions, BullMQ, rate limiting)
 - **Message Queue**: BullMQ → Kafka (later phases)
 - **Object Storage**: MinIO (S3-compatible) → AWS S3 in production
 - **Container Orchestration**: Kubernetes (EKS) via Terraform

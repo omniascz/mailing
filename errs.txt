@@ -1,0 +1,25 @@
+src/channels/sms/sms-adapters.test.ts(113,12): error TS2532: Object is possibly 'undefined'.
+src/channels/whatsapp/whatsapp.test.ts(187,12): error TS2532: Object is possibly 'undefined'.
+src/db/schema/signup-forms.ts(174,78): error TS2345: Argument of type '{}' is not assignable to parameter of type 'SQL<unknown> | MigrationProgress'.
+src/integrations/raynet/sync.ts(192,6): error TS2769: No overload matches this call.
+src/lib/ai-client.test.ts(108,39): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number | bigint'.
+src/lib/ai-client.test.ts(112,42): error TS18048: 'PLAN_LIMITS.free' is possibly 'undefined'.
+src/lib/ai-client.test.ts(114,35): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number | bigint'.
+src/routes/v1/analytics.ts(196,9): error TS2739: Type 'typeof import("C:/Users/omnia/Documents/mailforge/node_modules/.pnpm/puppeteer@23.11.1_typescript@5.9.3/node_modules/puppeteer/lib/types")' is missing the following properties from type 'PuppeteerNode': #private, lastLaunchedBrowser, defaultBrowser, product
+src/routes/v1/custom-fields.test.ts(22,7): error TS2339: Property 'where' does not exist on type 'PostgresJsDatabase<typeof import("C:/Users/omnia/Documents/mailforge/apps/api/src/db/schema/index", { with: { "resolution-mode": "import" } })> & { $client: Sql<{}>; }'.
+src/routes/v1/social/posts.ts(54,7): error TS2322: Type 'string | Date | undefined' is not assignable to type 'Date | null | undefined'.
+src/services/analytics/analytics.test.ts(161,12): error TS2532: Object is possibly 'undefined'.
+src/services/analytics/analytics.test.ts(162,12): error TS2532: Object is possibly 'undefined'.
+src/services/blog/ctas.ts(129,33): error TS2339: Property 'content' does not exist on type 'CtaVariant'.
+src/services/cdp/source-sync.ts(66,20): error TS2339: Property 'sql' does not exist on type 'PostgresJsDatabase<typeof import("C:/Users/omnia/Documents/mailforge/apps/api/src/db/schema/index", { with: { "resolution-mode": "import" } })> & { $client: Sql<{}>; }'.
+src/services/commerce/invoicing.ts(56,6): error TS2769: No overload matches this call.
+src/services/commerce/quotes.ts(60,6): error TS2769: No overload matches this call.
+src/services/contacts/index.ts(163,10): error TS2345: Argument of type '{ updatedAt: Date; email?: string | undefined; phone?: string | undefined; firstName?: string | undefined; lastName?: string | undefined; status?: Contact["status"] | undefined; customFields?: Record<string, unknown> | undefined; phoneType?: Contact["phoneType"] | undefined; ... 9 more ...; emailValidatedAt?: Date |...' is not assignable to parameter of type '{ orgId?: string | SQL<unknown> | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}> | undefined; email?: string | SQL<unknown> | PgColumn<...> | null | undefined; ... 28 more ...; teamId?: string | ... 3 more ... | undefined; }'.
+src/services/deliverability/graymail.ts(82,10): error TS2769: No overload matches this call.
+src/services/lead-scoring/lead-scoring.test.ts(191,12): error TS2532: Object is possibly 'undefined'.
+src/services/tracking/site-tracker.ts(161,14): error TS2352: Conversion of type '(orgId: string, input: { visitorId: string; contactId: string; }) => Promise<MergeResult>' to type '(a: string, b: string) => Promise<void>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/services/webhooks/webhooks.test.ts(379,23): error TS7053: Element implicitly has an 'any' type because expression of type '"FNAME"' can't be used to index type '{}'.
+src/services/webhooks/webhooks.test.ts(399,50): error TS2532: Object is possibly 'undefined'.
+src/services/webhooks/webhooks.test.ts(399,57): error TS2532: Object is possibly 'undefined'.
+src/services/whatsapp/rich-messaging.ts(221,39): error TS2322: Type 'Buffer<ArrayBufferLike>' is not assignable to type 'BlobPart'.
+src/services/workflows/smart-channel.test.ts(148,65): error TS2367: This comparison appears to be unintentional because the types '"false" | "true"' and '"A"' have no overlap.

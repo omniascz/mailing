@@ -22,6 +22,7 @@
 12. [Tech stack reference](#tech-stack-reference)
 13. [Cenový model](#cenový-model)
 14. [Technický rozpočet](#technický-rozpočet)
+15. [Fáze UI — Frontend a grafický design](#fáze-ui--frontend-a-grafický-design) ← **implementuje se jako poslední**
 
 ---
 
@@ -43,7 +44,7 @@
 ### Týden 1 — Architektura a tooling
 
 - [ ] **Monorepo setup** — Turborepo + pnpm workspaces
-  - Balíčky: `api`, `web`, `editor`, `engine`, `workers`, `sms-gateway`, `voice-bot`, `number-intel`, `shared`
+  - Balíčky: `api`, `web`, `editor`, `engine`, `workers`, `sms-gateway`, `voice-bot`, `shared`
   - `CC` → "Vytvoř Turborepo monorepo s pnpm workspaces, TypeScript strict, ESLint, Prettier. Balíčky: api (Fastify), web (Next.js 15 App Router), editor (React), engine (Go — email sending), workers (BullMQ), sms-gateway (Go — SMPP), voice-bot (Node), number-intel (Node), shared (typy, utils). Přidej docker-compose.yml s PostgreSQL 16, Redis 7, ClickHouse, Kafka dev, MinIO."
 
 - [ ] **CLAUDE.md vytvořit** — projektový kontext pro Claude Code
@@ -78,12 +79,9 @@
 - [ ] **API framework** — route structure, middleware
   - `CC` → "Nastav Fastify API framework: route autoloading z /routes adresáře, Zod request/response validation plugin, error handling (custom AppError class), rate limiting (Redis-based), request ID logging, OpenAPI auto-gen (fastify-swagger). Příklad route: GET /api/v1/contacts s paginací."
 
-- [ ] **Design system bootstrap** — Tailwind + komponenty
-  - `CC` → "Vytvoř design system pro Next.js 15: Tailwind config s custom color tokens (primary, secondary, accent, success, warning, danger), typography (Inter + JetBrains Mono), spacing scale. Komponenty (React, TypeScript): Button (variants: primary/secondary/ghost/danger, sizes: sm/md/lg), Input (label, error, helper text), Card, Modal (portal-based), Toast (notification stack), Badge, Avatar, Dropdown. Všechno s Storybook stories."
+- [ ] **Design system bootstrap** — *viz Fáze UI*
 
-- [ ] **Auth pages** — frontend
-  - Login, register, forgot password, email verification, org onboarding wizard
-  - `CC` → "Vytvoř auth stránky v Next.js App Router: /login, /register, /forgot-password, /verify-email/[token], /onboarding (3-step wizard: org name → invite team → verify domain). Responsive, dark mode support, form validation (react-hook-form + zod)."
+- [ ] **Auth pages** — *viz Fáze UI*
 
 - [ ] **Channel adapter interface** — od dne 1
   - TypeScript interface pro všechny budoucí kanály
@@ -95,7 +93,7 @@
 
 ### Týden 3–4 — CRUD, import, segmentace
 
-- [ ] **Contact CRUD API**
+- [x] **Contact CRUD API**
   - GET/POST/PUT/DELETE /api/v1/contacts, pagination, filtering, sorting, full-text search
   - `CC` → "Implementuj Contact CRUD API ve Fastify: GET /contacts (cursor pagination, filtering by list/tag/segment/status/phone_operator/phone_district, sorting, full-text search přes pg_trgm), POST /contacts (single + batch), PUT /contacts/:id, DELETE /contacts/:id (soft delete). Zod validation, org-scoped (middleware)."
 
@@ -103,23 +101,19 @@
   - Upload → parse → column mapping → validation → batch insert
   - `CC` → "Implementuj contact import pipeline: POST /contacts/import/upload (multer, max 50MB), GET /contacts/import/:id/columns (vrať detected columns + sample data), POST /contacts/import/:id/mapping (user mapuje columns na contact fields), POST /contacts/import/:id/execute (BullMQ job: validate each row → batch insert 1000/chunk → progress webhook). Podpora CSV (papaparse) a XLSX (xlsx package). Deduplikace na email. Při importu automaticky spusť prefix parser na phone čísla."
 
-- [ ] **Email validation engine**
+- [x] **Email validation engine**
   - Syntax check, MX lookup, disposable domain detection, role-based detection
   - `CC` → "Vytvoř email validation service: syntaxCheck (regex), mxLookup (dns.resolveMx), disposableCheck (seznam 30k+ disposable domén — stáhni z github.com/disposable-email-domains), roleBasedCheck (admin@, info@, support@...). Validuj při importu i při API create. Vrať score 0-100 a reason array."
 
-- [ ] **Contact list UI** — frontend
-  - Filtrovatelná tabulka, bulk select, column sort, search, responsive
-  - `CC` → "Vytvoř contact list stránku v Next.js: tabulka s virtuálním scrollingem (tanstack-table), sloupce: jméno, email, telefon, operátor, okres, tagy, status, poslední aktivita. Filtry: sidebar s tag checkboxy, status dropdown, segment selector, search bar. Bulk akce: tag, untag, delete, export. Responsive — na mobilu card layout místo tabulky."
+- [ ] **Contact list UI** — *viz Fáze UI*
 
-- [ ] **Import wizard UI**
-  - File upload → column mapping drag-and-drop → preview → progress → result
-  - `CC` → "Vytvoř import wizard jako 5-step modal: 1) File upload (drag-and-drop zone, CSV/XLSX), 2) Column mapping (drag source columns to target fields, auto-detect common names), 3) Preview (prvních 10 řádků s highlight chyb), 4) Progress (real-time progress bar, WebSocket), 5) Result (X imported, Y skipped, Z errors — download error report). Stepper navigation."
+- [ ] **Import wizard UI** — *viz Fáze UI*
 
-- [ ] **Tag systém**
+- [x] **Tag systém**
   - CRUD, barevné tagy, bulk tag/untag, auto-tagging rules
   - `CC` → "Implementuj tag systém: CRUD API pro tagy (name, color hex, org_id), contact_tags junction table, bulk tag/untag endpoint (POST /contacts/bulk-tag {contact_ids, tag_ids, action: add|remove}), auto-tag rules (JSONB v tags tabulce: conditions → auto-apply při importu)."
 
-- [ ] **Custom fields engine**
+- [x] **Custom fields engine**
   - Definice (text/number/date/select/boolean), storage, validation
   - `CC` → "Implementuj custom fields: tabulka custom_field_definitions (id, org_id, name, field_type ENUM text/number/date/select/boolean, options JSONB pro select, required BOOLEAN). Hodnoty v contacts.custom_fields JSONB. API: GET/POST/PUT/DELETE /custom-fields, validace hodnot při contact create/update podle definice."
 
@@ -127,11 +121,9 @@
   - Dynamic SQL builder, AND/OR/NOT groups, nested conditions, event-based
   - `CC` → "Vytvoř segment query engine: tabulka segments (id, org_id, name, conditions JSONB). Conditions schema: {operator: 'AND'|'OR', rules: [{field, op: 'eq'|'neq'|'gt'|'lt'|'contains'|'not_contains'|'in'|'not_in'|'is_set'|'is_not_set', value}], groups: [nested conditions]}. buildSegmentQuery(conditions) → Drizzle SQL query. Podpora: contact fields, custom fields, tags (has_tag/not_has_tag), phone_district, phone_operator, event-based (opened_campaign, clicked_link v posledních N dnech). API: GET /segments/:id/count (preview), GET /segments/:id/contacts."
 
-- [ ] **Segment builder UI**
-  - Vizuální query builder, add condition, group conditions, preview count
-  - `CC` → "Vytvoř segment builder React komponentu: add condition button → select field → select operator → input value. Group conditions (AND/OR toggle). Nested groups (indent). Real-time count preview (debounced API call). Uložit jako segment. Použít v campaign audience selection."
+- [ ] **Segment builder UI** — *viz Fáze UI*
 
-- [ ] 🤖 **AI segment z popisu**
+- [x] 🤖 **AI segment z popisu**
   - Claude API přeloží "zákazníci co nekoupili 30 dní" na segment conditions
   - `API` model: `claude-sonnet-4-20250514` → "System prompt: Jsi expert na segmentaci kontaktů. Uživatel popíše segment v přirozeném jazyce. Vrať JSON conditions objekt kompatibilní s naším schema: {operator, rules: [{field, op, value}]}. Dostupná pole: email, first_name, last_name, phone_status, phone_operator, phone_district, tags, custom fields, last_opened_at, last_clicked_at, created_at. User: [popis segmentu]"
 
@@ -141,23 +133,23 @@
   - Kompletní mapování CZ/SK mobilních a pevných prefixů
   - `CC` → "Vytvoř phone prefix service v number-intel balíčku. Seed data (TypeScript const objekt): CZ mobilní: 601-608 → O2, 702-705 → O2, 720-729 → T-Mobile, 730-739 → T-Mobile, 770-779 → Vodafone, 790-799 → Vodafone. CZ pevné linky: 2 → Praha, 311-318 → Středočeský kraj, 35 → Karlovarský, 37 → Plzeňský, 38 → Jihočeský, 39 → Vysočina, 41 → Ústecký, 46 → Pardubický, 47-48 → Liberecký, 49 → Královéhradecký, 5 → Jihomoravský, 55 → Moravskoslezský, 56 → Vysočina/Jihomoravský, 57 → Zlínský, 58 → Olomoucký, 59 → Moravskoslezský. SK mobilní: 0900-0905 → Orange, 0906-0908 → O2, 0910-0915 → T-Mobile, 0940-0949 → O2, 0950-0951 → T-Mobile. Funkce parsePhoneNumber(phone: string): {country, type: mobile|landline|voip, originalOperator, region?, district?}."
 
-- [ ] 📡 **Phone parser service**
+- [x] 📡 **Phone parser service**
   - Input číslo → země, typ, operátor, oblast
   - `CC` → "Rozšiř phone parser: normalizace čísla (libphonenumber-js), validace formátu, lookup v prefix DB, vrať PhoneInfo {country, countryCode, type, originalOperator, region (pro pevné linky), isValid}. Exponuj jako interní service (volatelný z contact API) a jako API endpoint GET /number-intel/parse?phone=+420601123456."
 
-- [ ] 📡 **Auto-enrichment při importu**
+- [x] 📡 **Auto-enrichment při importu**
   - Každé číslo při importu projde prefix parserem
   - `CC` → "Uprav contact import pipeline: po validaci emailu spusť parsePhoneNumber na phone field. Výsledek zapiš do phone_* sloupců kontaktu. Pro pevné linky nastav phone_district z prefixu (okamžité, zdarma). Pro mobilní nastav phone_operator z prefixu. phone_district pro mobily zůstane NULL — doplní se v Fázi 8 přes HLR lookup."
 
-- [ ] **Double opt-in flow**
+- [x] **Double opt-in flow**
   - Konfigurovatelný potvrzovací email, custom landing page, token expiry
   - `CC` → "Implementuj double opt-in: POST /lists/:id/subscribe → generuj token (crypto.randomUUID, 48h expiry, Redis), odešli confirmation email (šablona v DB, merge tagy), GET /confirm/:token → aktivuj kontakt, redirect na thank-you page (konfigurovatelná URL per list)."
 
-- [ ] **Unsubscribe engine**
+- [x] **Unsubscribe engine**
   - One-click (RFC 8058), preference center, reason tracking
   - `CC` → "Implementuj unsubscribe: List-Unsubscribe a List-Unsubscribe-Post headers v každém emailu (RFC 8058), GET /unsubscribe/:token (one-click), preference center stránka (kontakt si vybere které listy/topics chce), reason tracking (při unsubscribe volitelný důvod: too frequent, not relevant, never signed up, other). Global suppression list per org."
 
-- [ ] **Suppression lists**
+- [x] **Suppression lists**
   - Global + per-org, auto-add hard bounces a complaints
   - `CC` → "Vytvoř suppression list systém: tabulka suppressions (id, org_id, email, phone, reason ENUM hard_bounce/complaint/manual/unsubscribe, created_at). Auto-add z bounce processoru a FBL. Pre-send check: před odesláním kampaně filtruj kontakty přes suppression list. API: GET/POST/DELETE /suppressions. Import/export CSV."
 
@@ -165,7 +157,7 @@
   - Max N emailů per kontakt per období, across all channels
   - `CC` → "Implementuj frequency capping: tabulka org_frequency_rules (org_id, channel ENUM email/sms/push/whatsapp/voice/all, max_count, period_hours). Redis sorted set per kontakt: 'freq:{org_id}:{contact_id}:{channel}' s timestampy odeslání. Před odesláním check: ZCOUNT key (now - period) now >= max_count → skip. Respektuj across all kampaní a workflow."
 
-- [ ] **Testy Fáze 1**
+- [x] **Testy Fáze 1**
   - `CC` → "Napiš testy pro Fázi 1: unit testy pro segment query builder (10+ scénářů: AND/OR, nested, event-based, phone_district filter), integration testy pro import pipeline (CSV upload → parse → mapping → insert → verify phone enrichment), unit testy pro phone prefix parser (CZ mobilní, CZ pevné, SK, neplatná čísla, zahraniční), e2e testy pro contact CRUD (Playwright). Coverage target: 80%+."
 
 ---
@@ -181,34 +173,27 @@
 - [ ] **Email render engine** — JSON → responsive HTML
   - `CC` → "Vytvoř email render engine: renderEmail(schema: EmailSchema): string. Výstup: responsive HTML s inline CSS, table-based layout (pro Outlook), dark mode meta tag, max-width 600px container, responsive columns (media query stack na mobilu), automatic CSS inlining (juice), img alt texty, preheader text (hidden span trick). Testuj output přes Litmus/Email on Acid snapshot. Podporuj merge tagy {{first_name}} — renderuj s contact data nebo fallback."
 
-- [ ] **Drag-and-drop canvas** — React
-  - `CC` → "Vytvoř email editor canvas v React: @dnd-kit/core pro drag-and-drop. Levý panel: block palette (přetáhni blok na canvas). Střed: canvas (600px wide preview, bloky s drag handles, click to select, blue outline on selected). Pravý panel: property editor pro vybraný blok (dynamický form podle block type). Globální styles panel (background, font, link color). Toolbar: undo/redo, preview, save, send test."
+- [ ] **Drag-and-drop canvas** — *viz Fáze UI*
 
-- [ ] **Undo/Redo**
-  - Command pattern, unlimited history
-  - `CC` → "Implementuj undo/redo pro editor: command pattern — každá akce (add block, move block, edit property, delete block) vytvoří Command {execute(), undo()}. History stack s max 100 entries. Keyboard shortcuts Cmd+Z (undo), Cmd+Shift+Z (redo). UI: undo/redo tlačítka v toolbaru s disabled state."
+- [ ] **Undo/Redo** — *viz Fáze UI*
 
 ### Týden 9 — Pokročilé bloky
 
-- [ ] 🔥 **Countdown timer block**
-  - Live countdown v emailu
-  - `CC` → "Implementuj countdown timer block: konfigurace target date/time + timezone. Render: generuj countdown GIF (server-side, sharp/canvas), fallback na statický text. Alternativa: AMP for Email živý countdown. Editor preview: live JS countdown. Styly: font, barva, pozadí, label (Days/Hours/Mins/Secs)."
+- [ ] 🔥 **Countdown timer block** — backend (GIF generátor) + *editor UI viz Fáze UI*
+  - `CC` → "Implementuj server-side countdown GIF generátor: POST /editor/countdown-gif {target_date, style}. Generuj animovaný GIF (sharp/canvas, 10fps, 5s loop). Fallback na statický text. AMP for Email živý countdown jako alternativa."
 
-- [ ] 🔥 **Product card block**
-  - Paste URL → auto-populate název, cena, obrázek
-  - `API` model: `claude-sonnet-4-20250514` → "Uživatel vloží URL produktu. Extrahuj: name, price, description (max 100 chars), image URL, currency. Vrať JSON."
-  - `CC` → "Implementuj product card block: input field pro URL, POST /editor/scrape-product (fetch URL → Claude API extrahuje data → vrať {name, price, image, description}). Block renderuje card: obrázek nahoře, název, cena, popis, CTA button. Editor: editovatelná pole po scrape."
+- [ ] 🔥 **Product card block** — backend scraper + *editor UI viz Fáze UI*
+  - `API` → "Extrahuj z URL produktu: name, price, description, image URL, currency."
+  - `CC` → "Implementuj POST /editor/scrape-product: fetch URL → Claude API extrahuje data → vrať {name, price, image, description}."
 
-- [ ] 🔥 **Dynamic content block**
-  - If/else per segment: "pokud tag=VIP zobraz tento blok, jinak tento"
-  - `CC` → "Implementuj conditional content block: DynamicBlock {condition: SegmentCondition, ifContent: Block[], elseContent: Block[]}. V editoru: toggle mezi if/else view, segment picker pro podmínku. V render engine: evaluateCondition(condition, contact) → renderuj příslušné bloky. Preview: dropdown 'zobrazit jako' s výběrem kontaktu nebo segmentu."
+- [ ] 🔥 **Dynamic content block** — render engine + *editor UI viz Fáze UI*
+  - `CC` → "Implementuj evaluateCondition(condition: SegmentCondition, contact): boolean v render engine. DynamicBlock v renderEmail: evaluuj podmínku per kontakt → renderuj if nebo else větev."
 
-- [ ] 🔥 **Saved blocks** — reusable across kampaní
-  - `CC` → "Implementuj saved blocks: tabulka saved_blocks (id, org_id, name, category, block_data JSONB). API: POST /editor/saved-blocks (uložit vybraný blok), GET /editor/saved-blocks (list s kategoriemi). V editoru: v block palette sekce 'Moje bloky' s thumbnail preview. Drag na canvas → vloží kopii."
+- [ ] 🔥 **Saved blocks API** — *editor UI viz Fáze UI*
+  - `CC` → "Implementuj saved blocks API: tabulka saved_blocks (id, org_id, name, category, block_data JSONB). GET/POST /editor/saved-blocks."
 
-- [ ] 🔥 **Brand kit**
-  - Upload logo + barvy + fonty → auto-apply
-  - `CC` → "Implementuj brand kit: tabulka brand_kits (org_id, logo_url, primary_color, secondary_color, accent_color, font_heading, font_body, footer_text). UI: settings stránka s color pickerem, font selectem, logo uploadem. Při vytvoření nového emailu: auto-apply brand kit na globalStyles. Tlačítko 'Apply brand kit' v editoru."
+- [ ] 🔥 **Brand kit API** — *settings UI viz Fáze UI*
+  - `CC` → "Implementuj brand kit API: tabulka brand_kits (org_id, logo_url, primary_color, secondary_color, accent_color, font_heading, font_body, footer_text). GET/PUT /brand-kit."
 
 ### Týden 10 — Personalizace + HTML editor
 
@@ -220,9 +205,7 @@
   - Podmínky, loops, filtry v obsahu
   - `CC` → "Přidej Liquid templating support (liquidjs knihovna): podmínky {% if contact.tags contains 'VIP' %}...{% endif %}, loops {% for product in products %}...{% endfor %}, filtry {{ name | upcase }}, {{ date | date: '%d.%m.%Y' }}. Sandboxed execution (timeout 5s, no filesystem access). V editoru: syntax highlighting pro Liquid v text blocích."
 
-- [ ] **HTML editor**
-  - CodeMirror 6, syntax highlighting, live preview
-  - `CC` → "Vytvoř HTML editor view v email editoru: CodeMirror 6 s HTML syntax highlighting, auto-complete pro merge tagy, split-screen (code vlevo, preview vpravo, live update s 300ms debounce). Tlačítko 'Import HTML' (upload .html soubor). Automatická CSS inlinace při přepnutí zpět na visual editor."
+- [ ] **HTML editor** — *viz Fáze UI*
 
 - [ ] 🔥 **HTML → blocks konverze**
   - Claude API analyzuje HTML → editovatelné bloky
@@ -230,21 +213,19 @@
 
 ### Týden 11 — Preview, šablony, QA
 
-- [ ] **Preview panel**
-  - Desktop/mobil/tablet toggle, dark mode toggle, "view as contact"
-  - `CC` → "Vytvoř preview panel: iframe s emailem, toggle desktop (600px) / mobil (375px) / tablet (768px), dark mode toggle (injektuj prefers-color-scheme: dark), 'View as' dropdown — vyber kontakt z DB → renderuj s jeho merge tagy. Tlačítko 'Send test email' → odešli na zadaný email."
+- [ ] **Preview panel** — *viz Fáze UI*
 
-- [ ] **Spam score checker**
-  - `CC` → "Implementuj spam score check: POST /editor/spam-check s HTML emailem. Kontroly: subject line (ALL CAPS?, exclamation marks?, spammy keywords: free, buy now, limited time...), HTML (link:text ratio, image:text ratio, broken links, missing alt texty), technické (List-Unsubscribe header, proper From/Reply-To). Vrať score 0-10 a array doporučení. Zobraz v editoru jako sidebar widget."
+- [ ] **Spam score checker** — backend API + *UI widget viz Fáze UI*
+  - `CC` → "Implementuj POST /editor/spam-check: kontroly subject line (ALL CAPS, exclamation, spam keywords), HTML (link:text ratio, image:text ratio, broken links, missing alt texty), technické (List-Unsubscribe, From/Reply-To). Vrať score 0-10 a array doporučení."
 
-- [ ] **Link checker**
-  - `CC` → "Implementuj link checker: extrahuj všechny URLs z HTML emailu, HEAD request na každý (parallel, timeout 5s), report: working (200), redirect (3xx → kam), broken (4xx/5xx), suspicious (shortened URL, known phishing domény). UI: list linků s status ikonami, kliknutelné."
+- [ ] **Link checker** — backend API + *UI viz Fáze UI*
+  - `CC` → "Implementuj POST /editor/link-check: extrahuj URLs z HTML, HEAD request parallel (timeout 5s), report: working/redirect/broken/suspicious. Vrať JSON array."
 
-- [ ] 🤖 **Accessibility checker**
-  - `API` model: `claude-sonnet-4-20250514` → "Analyzuj tento HTML email z hlediska accessibility: alt texty na obrázcích, kontrast textu vůči pozadí (WCAG AA minimum), heading hierarchy, lang atribut, semantic structure. Vrať JSON array [{issue, severity: error|warning|info, element, suggestion}]."
+- [ ] 🤖 **Accessibility checker** — API endpoint + *UI viz Fáze UI*
+  - `API` → "Analyzuj HTML email: alt texty, kontrast (WCAG AA), heading hierarchy, lang atribut. Vrať [{issue, severity, element, suggestion}]."
 
-- [ ] **Template library** — 100+ šablon
-  - `CC` → "Vytvoř 100 email šablon jako JSON soubory (náš block schema). Kategorie: newsletter (20), promo/sales (20), transactional (15: password reset, order confirm, shipping, invoice...), event (10: invitation, reminder, follow-up), onboarding (10: welcome, getting started, tips), seasonal (10: Christmas, Black Friday, Easter, summer, new year...), e-commerce (15: abandoned cart, product review, back in stock, wishlist, loyalty). Každá šablona: name, category, thumbnail (render → screenshot), tags. API: GET /templates?category=newsletter, POST /templates/:id/use (klonuj do kampaně)."
+- [ ] **Template library** — 100+ šablon — API + *UI viz Fáze UI*
+  - `CC` → "Vytvoř 100 email šablon jako JSON soubory (block schema). Kategorie: newsletter (20), promo/sales (20), transactional (15), event (10), onboarding (10), seasonal (10), e-commerce (15). API: GET /templates?category=..., POST /templates/:id/use (klonuj do kampaně)."
 
 - [ ] **Testy Fáze 2**
   - `CC` → "Napiš testy: editor e2e (Playwright — create email, add blocks, drag reorder, edit text, preview, save), render engine snapshot testy (renderuj 20 různých kombinací bloků, porovnej s expected HTML — golden file testing), block CRUD unit testy, merge tag parser unit testy, spam score unit testy."
@@ -263,8 +244,8 @@
   - 2048-bit RSA, per-domain keys, rotation
   - `CC` → "Implementuj DKIM signing v Go MTA: generuj 2048-bit RSA keypair per customer domain, uložen v DB. Sign každý odchozí email (relaxed/relaxed canonicalization, sha256). API endpoint pro DNS record generování: POST /domains/:id/dkim → vrať TXT record který zákazník přidá do DNS. Verifikace: po přidání DNS záznamu zkontroluj (dns.LookupTXT) a označ doménu jako verified."
 
-- [ ] **SPF/DMARC wizard**
-  - `CC` → "Vytvoř domain setup wizard: 1) Zákazník zadá doménu, 2) Systém vygeneruje potřebné DNS záznamy (SPF include:, DKIM TXT, DMARC policy record, custom Return-Path CNAME), 3) UI zobrazí záznamy ke zkopírování, 4) Tlačítko 'Verify' → DNS lookup → zelená/červená per záznam, 5) Po verifikaci všech → doména aktivní."
+- [ ] **SPF/DMARC wizard** — backend DNS verifikace + *wizard UI viz Fáze UI*
+  - `CC` → "Implementuj doménový setup backend: generuj DNS záznamy (SPF include:, DKIM TXT, DMARC policy, Return-Path CNAME). GET /domains/:id/dns-records (vrať required records), POST /domains/:id/verify (DNS lookup → vrať per-record status). Aktualizuj domain.verified po úspěchu."
 
 - [ ] **Queue architecture** — BullMQ
   - `CC` → "Navrhni email sending queue architecture: Campaign.send() → CampaignSplitter job (rozdělí audience na batche po 1000) → BatchSender job (per batch: resolve merge tagy, render HTML, check suppression list, check frequency cap) → per-ISP throttled queues (gmail, outlook, yahoo, other) → MTASender job (odešli přes Go MTA gRPC). Priority queues: transactional (highest) > triggered > campaign. BullMQ dashboard (bull-board) pro monitoring."
@@ -303,12 +284,9 @@
 - [ ] **Event pipeline** — Kafka → ClickHouse
   - `CC` → "Implementuj event pipeline: Kafka topics: email_sends, email_deliveries, email_opens, email_clicks, email_bounces, email_unsubscribes, email_complaints. Kafka consumer → batch insert do ClickHouse (email_events table: event_type, campaign_id, contact_id, timestamp, metadata JSONB). Retention: 2 roky. Materialized views pro aggregace (per campaign, per day, per ISP)."
 
-- [ ] **Campaign wizard UI**
-  - 4 kroky: Audience → Design → Review → Send
-  - `CC` → "Vytvoř campaign wizard: step 1 Audience (vyber list, optional segment filter, exclude segment, show estimated reach count), step 2 Design (embedded email editor nebo vyber template), step 3 Review (checklist: subject ✓, from address ✓, list ✓, spam score ✓, test email sent?, preview links), step 4 Schedule/Send (send now / schedule date-time picker s timezone selector). Stepper navigation, draft auto-save."
+- [ ] **Campaign wizard UI** — *viz Fáze UI*
 
-- [ ] **Live campaign dashboard**
-  - `CC` → "Vytvoř live campaign dashboard (po odeslání): KPI cards (sent, delivered, opens, clicks, bounces, unsubs — real-time update via WebSocket), time-series chart (opens/clicks over time, per minute first 2h, per hour after), device breakdown pie, email client breakdown, top clicked links table. Auto-refresh every 10s."
+- [ ] **Live campaign dashboard** — *viz Fáze UI*
 
 - [ ] **A/B testing engine**
   - `CC` → "Implementuj A/B testing: campaign.ab_config JSONB: {variants: [{name, subject?, content?, sender?, percentage}], winner_metric: open_rate|click_rate, winner_after_hours: 4, auto_send_winner: true}. Při odeslání: rozděl audience podle percentage, odešli varianty, po winner_after_hours vyhodnoť winner (statistická signifikance — chi-square test, min p<0.05), auto-send winner na zbytek audience."
@@ -325,40 +303,38 @@
 - [ ] **ClickHouse schema**
   - `CC` → "Vytvoř ClickHouse schema: CREATE TABLE email_events (event_id UUID, event_type Enum8('send'=1,'deliver'=2,'open'=3,'click'=4,'bounce'=5,'unsub'=6,'complaint'=7), org_id UInt32, campaign_id UInt32, contact_id UInt64, timestamp DateTime64(3), metadata String DEFAULT '{}', user_agent String DEFAULT '', ip_address IPv4 DEFAULT toIPv4('0.0.0.0'), link_url String DEFAULT '', bounce_type Enum8('none'=0,'hard'=1,'soft'=2,'block'=3) DEFAULT 'none', device_type Enum8('unknown'=0,'desktop'=1,'mobile'=2,'tablet'=3) DEFAULT 'unknown', email_client String DEFAULT '') ENGINE = MergeTree() PARTITION BY toYYYYMM(timestamp) ORDER BY (org_id, campaign_id, timestamp) TTL timestamp + INTERVAL 2 YEAR. Materialized views: campaign_daily_stats, campaign_hourly_stats (first 48h), org_monthly_stats."
 
-- [ ] **Campaign analytics API**
+- [x] **Campaign analytics API**
   - `CC` → "Implementuj campaign analytics API: GET /campaigns/:id/stats → {sent, delivered, delivery_rate, opens, unique_opens, open_rate, clicks, unique_clicks, click_rate, ctor, bounces, bounce_rate, hard_bounces, soft_bounces, unsubs, unsub_rate, complaints, complaint_rate}. GET /campaigns/:id/stats/timeline?interval=hour|day → time-series array. GET /campaigns/:id/stats/links → per-link clicks. GET /campaigns/:id/stats/devices → device breakdown. GET /campaigns/:id/stats/geo → open geo (IP → country/city via MaxMind GeoLite2)."
 
-- [ ] **Campaign report page** — frontend
-  - `CC` → "Vytvoř campaign report stránku: KPI cards row (opens, clicks, bounces, unsubs — každý s rate % a trend arrow vs org average), time-series Recharts chart (opens + clicks overlay), device pie chart, email client bar chart, geo map (world map s bubble overlay — d3 nebo react-simple-maps), per-link click table (URL, clicks, unique clicks, %). Export: PDF report button, CSV data export."
+- [ ] **Campaign report page** — *viz Fáze UI*
 
-- [ ] 🔥 **Click heatmapa**
-  - `CC` → "Implementuj click heatmap: renderuj email jako obrázek (Puppeteer screenshot), overlay click counts na jednotlivé linky. Backend: per-link click data z ClickHouse. Frontend: iframe s emailem + canvas overlay s heatmap (barva: zelená=málo, červená=hodně). Tooltip: link URL, click count, unique clicks, CTR."
+- [x] 🔥 **Click heatmapa** — backend (Puppeteer screenshot, ClickHouse data) + *overlay UI viz Fáze UI*
+  - `CC` → "Implementuj GET /campaigns/:id/heatmap-data: per-link click counts z ClickHouse. POST /campaigns/:id/screenshot: Puppeteer render emailu → PNG → S3. API vrací screenshot URL + link click data pro overlay."
 
-- [ ] **Account dashboard** — frontend
-  - `CC` → "Vytvoř hlavní dashboard: KPI metric cards (total contacts, list growth this month, avg open rate, avg click rate), recent campaigns table (název, sent, opens, clicks, datum — link na report), engagement trend chart (opens+clicks weekly, 3 měsíce), list growth chart (new subscribers - unsubscribes, weekly). Quick actions: create campaign, import contacts, view reports."
+- [ ] **Account dashboard** — *viz Fáze UI*
 
-- [ ] 🔥 **Anomaly detection**
+- [x] 🔥 **Anomaly detection**
   - `CC` → "Implementuj anomaly detection: cron job (hourly) porovnává aktuální metriky s 30-day rolling average. Alerty: bounce rate > 2x average, complaint rate > 0.1%, open rate drop > 50%, sudden spike in unsubscribes. Notifikace: in-app notification + email na admina. Dashboard widget s alert timeline."
 
 ### Týden 19–20 — AI features (Claude API)
 
-- [ ] 🤖 **AI copywriting engine**
+- [x] 🤖 **AI copywriting engine**
   - `API` model: `claude-sonnet-4-20250514`
   - `CC` → "Implementuj AI email generator: POST /ai/generate-email {goal, tone: formal|casual|urgent|friendly, audience_description, key_points[], cta_text, word_count_target}. System prompt: 'Jsi expert email copywriter. Generuj email v HTML (naše block schema JSON). Dodržuj best practices: jasný subject line, personalizace, jeden CTA, skenování-friendly formátování, mobile-first.' Vrať: {subject, preheader, blocks: Block[]}. Frontend: modal s input fields → streaming response → preview → 'Use this' tlačítko (vloží do editoru). Caching: hash(prompt) → Redis 24h."
 
-- [ ] 🤖 **AI subject line generator**
+- [x] 🤖 **AI subject line generator**
   - `API` model: `claude-sonnet-4-20250514`
   - `CC` → "Implementuj subject line generator: POST /ai/subject-lines {email_content_summary, tone, audience}. Generuj 5 variant + pro každou predikce (CTR score 1-10, důvod). System prompt: 'Generuj 5 email subject lines. Pro každou uveď predikovaný engagement score 1-10 a proč. Dodržuj: max 50 chars, no spam triggers, personalizace kde relevantní, A/B test-ready variety.' UI: card per varianta, score badge, 'Use' tlačítko, 'A/B test these' tlačítko."
 
-- [ ] 🤖 **Brand voice learning**
+- [x] 🤖 **Brand voice learning**
   - `API` model: `claude-sonnet-4-20250514`
   - `CC` → "Implementuj brand voice analysis: POST /ai/analyze-brand-voice {campaign_ids[]} → Claude analyzuje posledních 10-20 kampaní zákazníka → extrahuje: tone (formální/casual/...), vocabulary (často používaná slova), sentence structure (krátké/dlouhé), CTA patterns, emoji usage, personalization level. Uloží jako brand_voice JSONB na org. Při generování emailů přidej brand voice do system promptu."
 
-- [ ] 🤖 **AI campaign report**
+- [x] 🤖 **AI campaign report**
   - `API` model: `claude-sonnet-4-20250514`
   - `CC` → "Implementuj AI campaign summary: POST /ai/campaign-summary {campaign_stats}. Claude vygeneruje natural language report: 'Tato kampaň měla open rate 24.3%, což je o 5% nad vaším průměrem. Nejvíc kliků (340) získal link na produkt X. Doporučení: zkrátit subject line, přidat personalizaci.' UI: 'AI insights' karta na campaign report stránce."
 
-- [ ] 🤖 **AI překlad**
+- [x] 🤖 **AI překlad**
   - `API` model: `claude-sonnet-4-20250514`
   - `CC` → "Implementuj AI překlad kampaní: POST /ai/translate {blocks: Block[], source_lang, target_lang, brand_voice?}. Claude přeloží texty v blocích, zachová merge tagy ({{first_name}} zůstane), HTML formátování, a adaptuje pro cílovou kulturu. UI: 'Translate' tlačítko v editoru → select language → preview přeložené verze → 'Create translated campaign'."
 
@@ -366,10 +342,10 @@
   - `API` model: `claude-haiku-4-5-20251001` (levný, rychlý pre-send check)
   - `CC` → "Implementuj pre-send content moderation: před odesláním kampaně pošli obsah na Haiku → check: phishing indicators, misleading claims, regulatory issues (nezmiňuje potřebný disclaimer?), excessive urgency/pressure tactics. Vrať: {safe: boolean, issues: [{type, severity, description, suggestion}]}. Blokuj odeslání pokud severity=critical. UI: warning dialog před send."
 
-- [ ] **AI infra** — usage tracking, caching, costs
+- [x] **AI infra** — usage tracking, caching, costs
   - `CC` → "Implementuj AI usage tracking: tabulka ai_usage (org_id, model, input_tokens, output_tokens, cost_usd, feature, timestamp). Redis cache: hash(system_prompt + user_prompt) → response, TTL 24h. Rate limiting: per org per feature (free: 10 AI calls/day, pro: 100, business: 500). Cost calculation: Sonnet 4.6 $3/$15 per MTok, Haiku 4.5 $1/$5 per MTok. Dashboard: AI usage graph, cost per feature."
 
-- [ ] **Testy Fáze 4**
+- [x] **Testy Fáze 4**
   - `CC` → "Napiš testy: ClickHouse query performance (1M row test dataset, verify aggregation < 500ms), AI output quality eval set (10 test prompts pro copywriting, subject lines — verify output format, no hallucination, brand voice adherence), anomaly detection unit (mock data s anomáliemi, verify detection)."
 
 ---
@@ -378,37 +354,35 @@
 
 ### Týden 21–23 — Engine + canvas
 
-- [ ] 🔥 **Visual workflow builder** — React Flow
-  - `CC` → "Vytvoř visual workflow builder: @xyflow/react (React Flow) canvas. Node types: TriggerNode (zelený, start), ActionNode (modrý), ConditionNode (žlutý, diamond shape), DelayNode (šedý), SplitNode (růžový). Edge: animated, deletable. Node palette (sidebar): drag-to-add. Každý node má config panel (klik na node → pravý panel s formulářem). Canvas controls: zoom, pan, minimap, auto-layout (dagre). Uložení: POST /workflows s nodes + edges JSON."
+- [ ] 🔥 **Visual workflow builder** — *viz Fáze UI*
 
-- [ ] **Workflow execution engine**
+- [x] **Workflow execution engine**
   - `CC` → "Implementuj workflow execution engine: tabulka workflow_runs (workflow_id, contact_id, current_node_id, status, data JSONB, next_execution_at). BullMQ scheduler: every minute check workflow_runs where next_execution_at <= now. Per node execution: TriggerNode (check condition → start), SendEmailNode (queue email), SendSMSNode (queue SMS), WaitNode (set next_execution_at), ConditionNode (evaluate → follow true/false edge), WebhookNode (HTTP POST). State machine per contact per workflow. Concurrency: max 10k simultaneous workflow runs."
 
-- [ ] **Trigger types**
+- [x] **Trigger types**
   - `CC` → "Implementuj workflow triggers: ListSubscribe (contact přidán do listu), TagAdded (tag přiřazen), DateField (custom date field match — narozeniny, výročí), APIEvent (custom event přes API: POST /events {contact_id, event_name, properties}), FormSubmit (signup form), PurchaseEvent (e-commerce webhook), PhoneStatusChange (HLR zjistil změnu). Každý trigger: tabulka workflow_triggers (workflow_id, trigger_type, config JSONB). Evaluace: event-driven (Kafka consumer) nebo scheduled (cron pro date-based)."
 
-- [ ] **Action types**
+- [x] **Action types**
   - `CC` → "Implementuj workflow actions: SendEmail (campaign_id nebo inline template), SendSMS (message text, merge tagy), SendWhatsApp (template_id), SendPush (title, body, url), ShowInApp (widget config), MakeVoiceCall (scenario_id), Wait (duration: hours/days nebo until: specific time/day of week), AddTag, RemoveTag, UpdateField, MoveToList, RemoveFromList, SendWebhook (URL, method, headers, body template), InternalNotification (email na team). Každá akce: execute(contact, config) → result."
 
 - [ ] 🔥 **Cascade delivery node**
   - `CC` → "Implementuj CascadeNode: config {steps: [{channel, delay_hours, condition: 'not_opened'|'not_clicked'|'not_delivered'}]}. Příklad: email → pokud neotvřeno za 4h → push → pokud neotvřeno za 24h → SMS. Execution: odešli první kanál, schedule check za delay_hours, evaluuj condition, pokud true → next step. Cost-aware: preferuj levné kanály first (email → push → SMS)."
 
-- [ ] 🔥 **Smart channel selector node**
+- [x] 🔥 **Smart channel selector node**
   - `API` model: `claude-haiku-4-5-20251001`
   - `CC` → "Implementuj SmartChannelNode: vezme kontakt's channel history (open rates per channel, preferred times, last interactions) → rozhodne nejlepší kanál. Jednoduchá verze: rules-based (if email_open_rate > 30% → email, else if sms_open_rate > 80% → sms, else push). Pokročilá: Claude Haiku analyzuje historii a doporučí kanál + timing."
 
-- [ ] 🔥 **A/B split node + Goal node**
+- [x] 🔥 **A/B split node + Goal node**
   - `CC` → "Implementuj SplitNode: config {branches: [{name, percentage}]}. Random split per kontakt (deterministic: hash(contact_id + node_id) → consistent branch). Track performance per branch. GoalNode: config {event_type, within_hours}. Pokud kontakt provede event (purchase, signup, click) → exit workflow, mark as converted. Conversion tracking per workflow."
 
 ### Týden 24–25 — Templates + scoring
 
-- [ ] **Pre-built flows**
+- [x] **Pre-built flows**
   - `CC` → "Vytvoř pre-built workflow templates (JSON): Welcome series (trigger: subscribe → email day 0 → wait 2d → email day 2 → wait 3d → email day 5, if not opened day 5 → SMS), Abandoned cart (trigger: cart_abandoned → wait 1h → email → wait 4h if not purchased → push → wait 24h → SMS to VIP only), Onboarding (trigger: signup → email welcome → wait 1d → email getting started → wait 3d → condition: completed setup? → if no: email reminder + push), Re-engagement (trigger: 30d no open → email → wait 7d → push → wait 7d → SMS → wait 14d if still no engagement → tag: inactive). API: GET /workflows/templates, POST /workflows/templates/:id/use (klonuj)."
 
-- [ ] **Flow analytics UI**
-  - `CC` → "Vytvoř flow analytics view: na každém node zobraz: entered count, completed count, conversion rate. Vizualizace: barva node dle performance (zelená=dobrý, červená=drop-off). Side panel: per-step detail (sent, delivered, opened, clicked, converted). A/B split: side-by-side comparison per branch. Revenue per flow (pokud connected e-commerce). Active contacts count (kolik kontaktů je právě ve flow)."
+- [ ] **Flow analytics UI** — *viz Fáze UI*
 
-- [ ] 🔥 **Lead scoring engine**
+- [x] 🔥 **Lead scoring engine**
   - `CC` → "Implementuj lead scoring: tabulka lead_score_rules (org_id, event_type, points, decay_days). Výchozí pravidla: email open +1, email click +3, link click +5, page visit +2, form submit +10, purchase +20. Decay: -1 bod/den bez aktivity. Score uložen na kontaktu (contact.lead_score). Threshold akce: score > 50 → tag 'Hot lead' + webhook (notify sales). Score widget v kontaktním profilu. Segmentace: lead_score > X."
 
 - [ ] 🤖 **AI flow builder**
@@ -426,13 +400,12 @@
 - [ ] **REST API v1**
   - `CC` → "Vytvoř public REST API v1: /api/v1/contacts (CRUD, list, search, bulk), /api/v1/lists (CRUD, subscribe/unsubscribe), /api/v1/tags (CRUD), /api/v1/segments (CRUD, count, contacts), /api/v1/campaigns (CRUD, send, schedule, stats), /api/v1/templates (CRUD, render), /api/v1/workflows (CRUD, start, stop, stats), /api/v1/number-intel/lookup (HLR lookup), /api/v1/number-intel/parse (prefix parse), /api/v1/events (custom events pro triggers). Auth: API key v header (X-API-Key). Rate limiting: per plan tier (free: 100/min, pro: 1000/min, business: 5000/min). Pagination: cursor-based. Filtering: query params. Versioning: URL path (/v1/)."
 
-- [ ] **Webhook systém**
-  - `CC` → "Implementuj webhook systém: tabulka webhooks (org_id, url, events[], secret, active). Events: contact.created, contact.updated, contact.deleted, campaign.sent, email.delivered, email.opened, email.clicked, email.bounced, email.unsubscribed, email.complained, sms.delivered, sms.failed, workflow.completed, phone.validated, hlr.completed. Delivery: BullMQ job, retry (exponential backoff, max 5), signing (HMAC-SHA256 s secret), delivery log (webhook_deliveries table). UI: webhook management stránka, test endpoint button, delivery log viewer."
+- [x] **Webhook systém** — backend + *management UI viz Fáze UI*
+  - `CC` → "Implementuj webhook systém: tabulka webhooks (org_id, url, events[], secret, active), webhook_deliveries. Events: contact.created/updated/deleted, campaign.sent, email.delivered/opened/clicked/bounced/unsubscribed/complained, sms.delivered/failed, workflow.completed, phone.validated, hlr.completed. Delivery: BullMQ job, retry (exponential backoff, max 5), HMAC-SHA256 signing. API: GET/POST/PUT/DELETE /webhooks, POST /webhooks/:id/test."
 
-- [ ] **API docs**
-  - `CC` → "Generuj API dokumentaci: fastify-swagger → OpenAPI 3.0 spec, Mintlify docs site (nebo Docusaurus) s: Getting started guide, Authentication, Rate limits, Pagination, Error codes, per-endpoint docs s code examples (curl, Python, Node.js, PHP). Interactive playground (Swagger UI). Changelog page."
+- [ ] **API docs** — *viz Fáze UI*
 
-- [ ] **SDKs** — Python + Node.js
+- [x] **SDKs** — Python + Node.js
   - `CC` → "Generuj SDK pro Python a Node.js z OpenAPI spec: Python (requests-based, typed s dataclasses, published na PyPI jako forgemsg), Node.js (fetch-based, TypeScript, published na npm jako @forgemsg/sdk). Oba: auto-retry, rate limit handling, pagination helpers, webhook signature verification helper."
 
 ### Týden 28–29 — Billing + integrace
@@ -440,16 +413,15 @@
 - [ ] **Stripe billing**
   - `CC` → "Implementuj Stripe billing: plans table (name, stripe_price_id, contact_limit, email_limit, sms_rate, features JSONB). Stripe integration: createCustomer on org create, createSubscription on plan select, usage-based reporting (monthly email/sms count → Stripe usage records), invoice webhooks (payment_succeeded, payment_failed → update org.plan_status), proration on plan change. Overage: per email $0.001, per SMS pass-through + markup, per HLR lookup $0.005."
 
-- [ ] **Billing UI**
-  - `CC` → "Vytvoř billing stránku: current plan card (name, usage bars: contacts X/Y, emails X/Y), plan comparison grid (Free/Starter/Pro/Business/Enterprise s feature matrix), upgrade/downgrade flow, payment method management (Stripe Elements), invoice history table (datum, amount, status, PDF download link), usage breakdown chart (emails, SMS, HLR lookups, AI calls per měsíc)."
+- [ ] **Billing UI** — *viz Fáze UI*
 
-- [ ] **Signup forms** — embeddable
-  - `CC` → "Implementuj signup form builder: drag-and-drop form builder (fields: email, name, phone, custom fields), 3 embed types: popup (trigger: time delay, scroll %, exit intent), inline (div placeholder), full-page (hosted URL). JS snippet generator: <script src='forgemsg.com/forms/abc123.js'></script>. Submissions → contact create + add to list + trigger workflow. Analytics: views, submissions, conversion rate."
+- [x] **Signup forms** — backend + *form builder UI viz Fáze UI*
+  - `CC` → "Implementuj signup form backend: tabulka signup_forms (org_id, list_id, fields JSONB, embed_type, config JSONB, active). API: GET/POST/PUT/DELETE /signup-forms, GET /signup-forms/:id/script (vrať JS snippet). Public endpoint: POST /public/forms/:id/submit → contact create + add to list + trigger workflow. Analytics: views/submissions tracking."
 
-- [ ] **Zapier konektor**
+- [x] **Zapier konektor**
   - `CC` → "Vytvoř Zapier app: Triggers (New Subscriber, Campaign Sent, Email Opened, Email Clicked, Contact Tag Added), Actions (Create Contact, Update Contact, Send Campaign, Add Tag, Remove Tag, Trigger Workflow). Authentication: API key. Zapier CLI app s testy."
 
-- [ ] 🔥 **Mailchimp migration tool**
+- [x] 🔥 **Mailchimp migration tool**
   - `CC` → "Implementuj Mailchimp import: POST /migrations/mailchimp {api_key}. Steps: 1) Validate API key, 2) Fetch lists (GET /3.0/lists), 3) Fetch contacts per list (GET /3.0/lists/{id}/members, pagination), 4) Fetch templates, 5) Fetch automations (basic), 6) Map data → ForgeMsg format, 7) Batch import. UI: wizard s progress per step, field mapping review, conflict resolution (duplicate contacts). Cíl: one-click migration."
 
 - [ ] **Testy Fáze 6**
@@ -470,8 +442,7 @@
 - [ ] **Provider routing engine**
   - `CC` → "Implementuj SMS routing engine: tabulka sms_routes (country_code, provider ENUM bulkgate|twilio, priority, active). Routing logic: lookup country_code z recipient čísla → select provider s highest priority kde active=true. Failover: pokud primary provider vrátí error → automatic switch na next priority. Cost tracking: log provider, cost per SMS, delivery success. Dashboard: provider performance comparison (delivery rate, latency, cost per country)."
 
-- [ ] **SMS campaign builder UI**
-  - `CC` → "Vytvoř SMS campaign builder: textarea s character counter (160 GSM-7 / 70 Unicode, segment count), merge tag picker, link shortener (auto-shorten URLs, track clicks), preview per contact, audience selector (reuse z email campaign), scheduling s timezone-aware sending, quiet hours enforcement (neposílej 22:00-08:00 local time)."
+- [ ] **SMS campaign builder UI** — *viz Fáze UI*
 
 - [ ] **Two-way SMS**
   - `CC` → "Implementuj inbound SMS: webhook endpoint pro Twilio a Bulkgate, parse inbound SMS → match na contact (phone number lookup), keyword handling (STOP → auto-unsubscribe, HELP → send help message, custom keywords → trigger workflow), conversation view v unified inbox. Auto-response konfigurace per keyword."
@@ -484,8 +455,8 @@
 - [ ] **Meta Cloud API integrace**
   - `CC` → "Implementuj WhatsAppAdapter implements IChannelAdapter: Meta Cloud API (graph.facebook.com/v21.0), WABA (WhatsApp Business Account) provisioning flow, phone number registration. send() → POST /{phone_number_id}/messages. Webhook: příjem delivery receipts, read receipts, inbound messages. Config: access_token, phone_number_id, waba_id."
 
-- [ ] **Template management**
-  - `CC` → "Implementuj WhatsApp template management: CRUD API pro templates, submit for Meta approval (POST /{waba_id}/message_templates), status tracking (APPROVED/REJECTED/PENDING), template kategorie (marketing, utility, authentication). UI: template editor s placeholder variables, preview, submit button, status badge. Rejection → show reason + edit + resubmit."
+- [ ] **Template management** — backend API + *template editor UI viz Fáze UI*
+  - `CC` → "Implementuj WhatsApp template management API: CRUD pro templates, submit for Meta approval (POST /{waba_id}/message_templates), status tracking (APPROVED/REJECTED/PENDING), template kategorie (marketing, utility, authentication). API: GET/POST/PUT/DELETE /whatsapp/templates, POST /whatsapp/templates/:id/submit."
 
 - [ ] **Rich media + interactive**
   - `CC` → "Implementuj WhatsApp rich messaging: image messages (upload to Meta → media_id), video, document (PDF), location. Interactive: button messages (max 3 buttons), list messages (sections s items), quick reply buttons. Reply tracking: button clicks a list selections → event pipeline."
@@ -501,17 +472,18 @@
 - [ ] **In-app messaging SDK**
   - `CC` → "Vytvoř in-app messaging JS SDK (<5KB gzipped): ForgeMsg.init({apiKey, contactId}), widget types: banner (top/bottom), modal (center), slideout (side panel). Targeting: page URL rules, segment membership, event triggers. API: GET /in-app/messages?contact_id=X&page_url=Y → return matching messages. Impression + click tracking. Frequency capping (max 1 per session per message). NPM package: @forgemsg/web-sdk."
 
-- [ ] **Unified inbox v1**
-  - `CC` → "Vytvoř unified inbox stránku: levý panel: konverzace list (sortable by recent, filterable by channel: all/email/sms/whatsapp), každá konverzace: contact avatar, name, last message preview, channel icon, timestamp. Pravý panel: konverzace detail (chat-like timeline: all messages across channels, chronological, channel badge per message), reply composer (select channel for reply, text input, send button). Contact sidebar: contact profile, tags, notes."
+- [ ] **Unified inbox v1** — *viz Fáze UI*
 
 - [ ] **Testy Fáze 7**
   - `CC` → "Napiš testy: SMS delivery e2e (Twilio test credentials, send → verify delivery callback), SMS routing failover (mock Bulkgate failure → verify Twilio fallback), WhatsApp template approval flow (mock Meta API), push notification e2e (mock FCM, verify delivery + click tracking), unified inbox (create conversations across channels, verify timeline ordering)."
 
 ---
 
-## Fáze 8 — Number intelligence + AI voice robot (Týden 34–39)
+## Fáze 8 — AI voice robot (Týden 34–39)
 
-### Týden 34–35 — HLR lookup engine
+> **Pozn. 2026-04-25:** HLR lookup engine (původní obsah Fáze 8) byl zrušen. Phone intelligence se omezuje na offline prefix parser v `apps/api/src/services/import/phone-prefix.ts` (CZ/SK prefix DB, žádné externí HLR API).
+
+### Týden 34–35 — ~~HLR lookup engine~~ (zrušeno)
 
 - [ ] 📡 **HLR lookup service**
   - `CC` → "Vytvoř HLR lookup service v number-intel balíčku: primary provider Telnyx (GET https://api.telnyx.com/v2/number_lookup/{phone}), backup provider hlr-lookups.com (POST /api/hlr-lookup). Provider adapter pattern (IHlrProvider: lookup(phone): HlrResult). HlrResult: {msisdn, status: active|absent|unknown|invalid, mcc, mnc, originalNetwork, currentNetwork, ported: boolean, imsi, msc, roaming: boolean, numberType: mobile|landline|voip}. Error handling: timeout 10s, retry 1x, fallback na backup provider. Cost tracking per lookup."
@@ -536,14 +508,11 @@
 - [ ] 📡 **Batch HLR processing**
   - `CC` → "Implementuj batch HLR: POST /number-intel/batch-enrich {filter: segment_id | list_id | all}. BullMQ job: query contacts matching filter where phone IS NOT NULL → queue individual enrichment jobs (rate limited: 50/sec across all providers, parallelizace přes 2 providery). Tabulka batch_jobs (id, org_id, type, total, processed, succeeded, failed, status, started_at, completed_at). WebSocket progress updates."
 
-- [ ] 📡 **Progress tracking UI**
-  - `CC` → "Vytvoř batch processing UI: progress page s real-time updates (WebSocket): progress bar s %, 'Zpracováno 45 230 / 100 000', estimated time remaining, speed (lookups/sec). Result summary po dokončení: pie chart (active/inactive/unknown/invalid), error log (downloadable CSV)."
+- [ ] 📡 **Progress tracking UI** — *viz Fáze UI*
 
-- [ ] 📡 **Number intel dashboard**
-  - `CC` → "Vytvoř number intelligence dashboard stránku: metric cards (total phone contacts, % active, % ported, last batch date), operator distribution donut chart (O2, T-Mobile, Vodafone, other), status breakdown bar (active, inactive, unknown), region/district breakdown table (sortable by count), monthly validation trend chart (how status changes over time)."
+- [ ] 📡 **Number intel dashboard** — *viz Fáze UI*
 
-- [ ] 📡 **Mapa ČR** — interaktivní
-  - `CC` → "Vytvoř interaktivní mapu ČR s kontakty per kraj/okres: react-simple-maps nebo d3 s TopoJSON ČR (kraje). Barva = hustota kontaktů (gradient). Hover: tooltip s počtem a top metrics. Klik na kraj: filtruj contact list. Přepínač: zobraz per kraj / per okres. Export: screenshot mapy jako PNG."
+- [ ] 📡 **Mapa ČR** — interaktivní — *viz Fáze UI*
 
 - [ ] 📡 **Auto re-validace**
   - `CC` → "Implementuj scheduled re-validace: cron job (monthly): SELECT contacts WHERE phone_lookup_at < now() - interval '30 days' AND phone IS NOT NULL. Queue batch enrichment. Po dokončení: porovnej old vs new status, loguj změny (tabulka phone_status_changes: contact_id, old_status, new_status, old_operator, new_operator, changed_at). Alert pokud > 5% kontaktů změnilo status."
@@ -563,8 +532,7 @@
   - `API` model: `claude-sonnet-4-20250514`
   - `CC` → "Implementuj voice conversation engine: system prompt s instrukcemi pro telefonní hovor (buď stručný, jasný, přátelský, max 2 věty per response), scenario context (purpose: appointment reminder / NPS survey / verification), contact data (jméno, objednávka, termín...), conversation history (přidávej každou repliku). Branching: Claude rozhoduje na základě odpovědi (uživatel potvrdí → branch A, odmítne → branch B, požádá o přepojení → transfer to human). Sentiment detection: Claude vrátí sentiment tag (positive/neutral/negative) s každou odpovědí."
 
-- [ ] 🔥 **Voice scénář builder UI**
-  - `CC` → "Vytvoř voice scenario builder (podobný workflow builderu): node types: SayNode (TTS text, voice selection, speed), ListenNode (timeout, max duration, keywords to detect), BranchNode (condition na transcript: contains keyword? sentiment?), TransferNode (přepoj na lidského agenta: SIP URI / phone number), RecordNode (nahrávej odpověď, s GDPR upozorněním), HangupNode. Canvas: React Flow, drag-and-drop, edge connections. Preview: 'Test call' button → zavolej na zadané číslo a projdi scénář."
+- [ ] 🔥 **Voice scénář builder UI** — *viz Fáze UI*
 
 - [ ] **Call management**
   - `CC` → "Implementuj call management: outbound dialer (queue contacts → rate limited calling: max 5 concurrent calls), voicemail detection (Twilio AMD — Answering Machine Detection, pokud voicemail → leave message nebo hangup), DTMF handling ('stiskněte 1 pro potvrzení'), call recording (Twilio recording, s úvodním upozorněním 'Tento hovor je nahráván'), recording storage (S3, encrypted). Call log: tabulka calls (id, campaign_id, contact_id, scenario_id, status: completed|no_answer|busy|voicemail|failed, duration_seconds, recording_url, transcript, ai_summary, outcome JSONB, cost, created_at)."
@@ -619,16 +587,15 @@
 - [ ] **Security hardening**
   - `CC` → "Security audit a hardening: OWASP Top 10 check (SQL injection → parameterized queries ✓, XSS → CSP headers + sanitize output, CSRF → SameSite cookies, rate limiting na auth endpoints: 5 attempts/15min), dependency audit (npm audit, snyk test), secrets rotation (90-day schedule), audit logging (tabulka audit_logs: user_id, action, resource, ip, timestamp — log všechny writes), pen test prep (document attack surface, prepare test accounts)."
 
-- [ ] **Onboarding flow**
-  - `CC` → "Vytvoř onboarding wizard pro nové uživatele: 5 kroků: 1) Welcome + org name, 2) Verify sending domain (SPF/DKIM/DMARC wizard), 3) Import contacts (CSV upload nebo manual), 4) Create first campaign (guided, s AI suggestions), 5) Send test email + go live checklist. Progress tracking: onboarding_steps JSONB na org. Empty states na všech stránkách s CTA na relevant onboarding step."
+- [ ] **Onboarding flow** — backend progress tracking + *wizard UI viz Fáze UI*
+  - `CC` → "Implementuj onboarding backend: onboarding_steps JSONB na org (krok 1-5, každý s completed: bool). API: GET /onboarding/status, POST /onboarding/step/:step/complete. Kroky: domain_verified, contacts_imported, campaign_created, test_email_sent, live."
 
-- [ ] 🔥 **Cmd+K command palette**
-  - `CC` → "Implementuj command palette (Cmd+K / Ctrl+K): cmdk React library. Commands: navigace (Go to Campaigns, Go to Contacts, Go to Workflows...), akce (Create Campaign, Import Contacts, Send Test Email...), search (contacts, campaigns, templates — federated search). Recent commands. Keyboard navigation. Fuzzy matching."
+- [ ] 🔥 **Cmd+K command palette** — *viz Fáze UI*
 
 ### Týden 45–46 — Closed beta (50 uživatelů)
 
-- [ ] **Beta invite systém**
-  - `CC` → "Implementuj beta: waitlist stránka (email capture → tabulka waitlist), invite code systém (generuj unique codes, max uses), onboarding call scheduler (Calendly embed), feedback widget (in-app button na každé stránce → modal s textarea + category: bug/feature/ux → ukládej do Linear via API)."
+- [ ] **Beta invite systém** — backend + *waitlist stránka viz Fáze UI*
+  - `CC` → "Implementuj beta backend: tabulky waitlist (email, joined_at), invite_codes (code, max_uses, used_count, active). API: POST /waitlist (join), POST /invites (generuj kód), POST /invites/:code/validate. Feedback: POST /feedback {category: bug|feature|ux, text} → ukládej do DB + forward do Linear API."
 
 - [ ] **Bug fixing sprint**
   - `CC` + `Chat` → Denně: review feedback → prioritize → fix. Focus 100% na stabilitu a UX. Žádné nové features.
@@ -662,8 +629,7 @@
 - [ ] **Product Hunt launch**
   - `Chat` → "Navrhni Product Hunt launch strategii: timing (Tuesday-Thursday), prepare: 1-min video, 6 screenshots, compelling tagline, maker comment, first-day engagement plan."
 
-- [ ] **Developer docs site**
-  - `CC` → "Vytvoř docs site (Mintlify): Getting Started (5 min quickstart), API Reference (auto-gen z OpenAPI), SDKs (Python, Node.js), Webhooks guide, SMS guide, WhatsApp guide, Voice guide, Number Intelligence guide, Workflow guide, Migration from Mailchimp guide. Changelog. Status page link."
+- [ ] **Developer docs site** — *viz Fáze UI*
 
 - [ ] **Content marketing**
   - `Chat` → "Vygeneruj 10 blog postů pro launch: 1) Why we built ForgeMsg, 2) ForgeMsg vs Mailchimp (comparison), 3) How AI is changing email marketing, 4) Complete guide to email deliverability, 5) SMS marketing in 2026, 6) WhatsApp Business API tutorial, 7) Building omnichannel workflows, 8) Phone number intelligence explained, 9) AI voice bots for business, 10) Migration guide from Mailchimp."
@@ -770,3 +736,166 @@ Dedicated IP: $20/m add-on.
 *Dokument vytvořen: 10. dubna 2026*
 *Aktualizuj průběžně s každým sprintem.*
 *Používej Claude Code Max ($100–200/m per dev) pro maximální produktivitu.*
+
+---
+
+## Fáze UI — Frontend a grafický design
+
+> **Tato fáze se implementuje AŽ PO DOKONČENÍ celého backend systému.**
+> Grafický design, UI komponenty a frontend stránky jsou záměrně odloženy.
+> Všechny úkoly označené *viz Fáze UI* v předchozích fázích patří sem.
+
+---
+
+### UI 0 — Design system a auth
+
+- [ ] **Design system bootstrap** — Tailwind + komponenty
+  - `CC` → "Vytvoř design system pro Next.js 15: Tailwind config s custom color tokens (primary, secondary, accent, success, warning, danger), typography (Inter + JetBrains Mono), spacing scale. Komponenty (React, TypeScript): Button (variants: primary/secondary/ghost/danger, sizes: sm/md/lg), Input (label, error, helper text), Card, Modal (portal-based), Toast (notification stack), Badge, Avatar, Dropdown. Všechno s Storybook stories."
+
+- [ ] **Auth pages** — login, register, forgot-password, verify-email, onboarding
+  - `CC` → "Vytvoř auth stránky v Next.js App Router: /login, /register, /forgot-password, /verify-email/[token], /onboarding (3-step wizard: org name → invite team → verify domain). Responsive, dark mode support, form validation (react-hook-form + zod)."
+
+---
+
+### UI 1 — Contact engine
+
+- [ ] **Contact list UI** — filtrovatelná tabulka, bulk select, search
+  - `CC` → "Vytvoř contact list stránku v Next.js: tabulka s virtuálním scrollingem (tanstack-table), sloupce: jméno, email, telefon, operátor, okres, tagy, status, poslední aktivita. Filtry: sidebar s tag checkboxy, status dropdown, segment selector, search bar. Bulk akce: tag, untag, delete, export. Responsive — na mobilu card layout místo tabulky."
+
+- [ ] **Import wizard UI** — 5-step modal
+  - `CC` → "Vytvoř import wizard jako 5-step modal: 1) File upload (drag-and-drop zone, CSV/XLSX), 2) Column mapping (drag source columns to target fields, auto-detect common names), 3) Preview (prvních 10 řádků s highlight chyb), 4) Progress (real-time progress bar, WebSocket), 5) Result (X imported, Y skipped, Z errors — download error report). Stepper navigation."
+
+- [ ] **Segment builder UI** — vizuální query builder s real-time preview
+  - `CC` → "Vytvoř segment builder React komponentu: add condition button → select field → select operator → input value. Group conditions (AND/OR toggle). Nested groups (indent). Real-time count preview (debounced API call). Uložit jako segment. Použít v campaign audience selection."
+
+---
+
+### UI 2 — Email editor canvas
+
+- [ ] **Drag-and-drop canvas** — hlavní editor, block palette, property panel
+  - `CC` → "Vytvoř email editor canvas v React: @dnd-kit/core pro drag-and-drop. Levý panel: block palette (přetáhni blok na canvas). Střed: canvas (600px wide preview, bloky s drag handles, click to select, blue outline on selected). Pravý panel: property editor pro vybraný blok (dynamický form podle block type). Globální styles panel (background, font, link color). Toolbar: undo/redo, preview, save, send test."
+
+- [ ] **Undo/Redo** — command pattern, Cmd+Z / Cmd+Shift+Z
+  - `CC` → "Implementuj undo/redo pro editor: command pattern — každá akce (add block, move block, edit property, delete block) vytvoří Command {execute(), undo()}. History stack s max 100 entries. Keyboard shortcuts Cmd+Z (undo), Cmd+Shift+Z (redo). UI: undo/redo tlačítka v toolbaru s disabled state."
+
+- [ ] **HTML editor** — CodeMirror 6, split-screen, live preview
+  - `CC` → "Vytvoř HTML editor view v email editoru: CodeMirror 6 s HTML syntax highlighting, auto-complete pro merge tagy, split-screen (code vlevo, preview vpravo, live update s 300ms debounce). Tlačítko 'Import HTML' (upload .html soubor). Automatická CSS inlinace při přepnutí zpět na visual editor."
+
+- [ ] **Preview panel** — desktop/mobil/tablet/dark mode toggle, "view as contact"
+  - `CC` → "Vytvoř preview panel: iframe s emailem, toggle desktop (600px) / mobil (375px) / tablet (768px), dark mode toggle (injektuj prefers-color-scheme: dark), 'View as' dropdown — vyber kontakt z DB → renderuj s jeho merge tagy. Tlačítko 'Send test email' → odešli na zadaný email."
+
+- [ ] **Spam score widget** — sidebar v editoru, live výsledky
+  - `CC` → "Zobraz spam score (z /editor/spam-check API) jako sidebar widget v editoru: score badge, color-coded (zelená/žlutá/červená), list doporučení s ikonami. Live update při změně subject nebo obsahu (debounced)."
+
+- [ ] **Link checker UI** — list linků s status ikonami
+  - `CC` → "Zobraz výsledky /editor/link-check jako panel v editoru: list linků, status ikonas (✓ working, → redirect, ✗ broken, ⚠ suspicious), kliknutelné URL. Refresh button."
+
+- [ ] **Accessibility checker UI** — issue list se severitou
+  - `CC` → "Zobraz accessibility issues (z /ai/accessibility-check) jako sidebar panel: grouped by severity (error/warning/info), každý issue s elementem a suggestion. Fix counter v toolbaru."
+
+- [ ] **Template library UI** — browsování, kategorie, náhled, použití
+  - `CC` → "Vytvoř template library UI: modal s kategoriemi (newsletter, promo, transactional...), thumbnail grid (render preview), hover: 'Use this template' button, search, tag filter. Po výběru: klonuj do nové kampaně."
+
+- [ ] **Editor bloky — UI** (countdown timer, product card, dynamic content, saved blocks, brand kit settings)
+  - `CC` → "Vytvoř UI pro pokročilé bloky: Countdown timer block editor (date picker, style config, live JS preview). Product card block editor (URL input, auto-fetch preview, editovatelná pole). Dynamic content block editor (segment picker pro podmínku, toggle if/else view). Saved blocks panel v palette (list 'Moje bloky', thumbnail). Brand kit settings page (color picker, font select, logo upload)."
+
+---
+
+### UI 3 — Kampaně a odesílání
+
+- [ ] **SPF/DMARC wizard UI** — DNS záznamy ke zkopírování, verify button
+  - `CC` → "Vytvoř domain setup wizard UI: 1) Zákazník zadá doménu, 2) Zobraz potřebné DNS záznamy (SPF, DKIM TXT, DMARC, Return-Path CNAME) ke zkopírování (copy button), 3) Tlačítko 'Verify' → zelená/červená per záznam, 4) Po verifikaci všech → doména označena jako aktivní."
+
+- [ ] **Campaign wizard UI** — 4 kroky: Audience → Design → Review → Send
+  - `CC` → "Vytvoř campaign wizard: step 1 Audience (vyber list, optional segment filter, exclude segment, show estimated reach count), step 2 Design (embedded email editor nebo vyber template), step 3 Review (checklist: subject ✓, from address ✓, list ✓, spam score ✓, test email sent?, preview links), step 4 Schedule/Send (send now / schedule date-time picker s timezone selector). Stepper navigation, draft auto-save."
+
+- [ ] **Live campaign dashboard** — real-time KPI, WebSocket, charts
+  - `CC` → "Vytvoř live campaign dashboard (po odeslání): KPI cards (sent, delivered, opens, clicks, bounces, unsubs — real-time update via WebSocket), time-series chart (opens/clicks over time, per minute first 2h, per hour after), device breakdown pie, email client breakdown, top clicked links table. Auto-refresh every 10s."
+
+---
+
+### UI 4 — Analytika
+
+- [ ] **Campaign report page** — KPI, charts, geo map, per-link tabulka
+  - `CC` → "Vytvoř campaign report stránku: KPI cards row (opens, clicks, bounces, unsubs — každý s rate % a trend arrow vs org average), time-series Recharts chart (opens + clicks overlay), device pie chart, email client bar chart, geo map (world map s bubble overlay — d3 nebo react-simple-maps), per-link click table (URL, clicks, unique clicks, %). Export: PDF report button, CSV data export."
+
+- [ ] **Click heatmapa UI** — canvas overlay na screenshot emailu
+  - `CC` → "Zobraz click heatmap: iframe/img s email screenshotem (z /campaigns/:id/screenshot API), canvas overlay s heatmap z /campaigns/:id/heatmap-data (barva: zelená=málo, červená=hodně). Tooltip na hover: link URL, click count, unique clicks, CTR."
+
+- [ ] **Account dashboard** — hlavní stránka po přihlášení
+  - `CC` → "Vytvoř hlavní dashboard: KPI metric cards (total contacts, list growth this month, avg open rate, avg click rate), recent campaigns table (název, sent, opens, clicks, datum — link na report), engagement trend chart (opens+clicks weekly, 3 měsíce), list growth chart (new subscribers - unsubscribes, weekly). Quick actions: create campaign, import contacts, view reports."
+
+---
+
+### UI 5 — Workflow builder
+
+- [ ] 🔥 **Visual workflow builder canvas** — React Flow, node palette, config panel
+  - `CC` → "Vytvoř visual workflow builder: @xyflow/react (React Flow) canvas. Node types: TriggerNode (zelený, start), ActionNode (modrý), ConditionNode (žlutý, diamond shape), DelayNode (šedý), SplitNode (růžový). Edge: animated, deletable. Node palette (sidebar): drag-to-add. Každý node má config panel (klik na node → pravý panel s formulářem). Canvas controls: zoom, pan, minimap, auto-layout (dagre). Uložení: POST /workflows s nodes + edges JSON."
+
+- [ ] **Flow analytics UI** — per-node metriky, barevné performance indikátory
+  - `CC` → "Vytvoř flow analytics view: na každém node zobraz: entered count, completed count, conversion rate. Vizualizace: barva node dle performance (zelená=dobrý, červená=drop-off). Side panel: per-step detail (sent, delivered, opened, clicked, converted). A/B split: side-by-side comparison per branch. Revenue per flow (pokud connected e-commerce). Active contacts count."
+
+---
+
+### UI 6 — API, billing, integrace
+
+- [ ] **Webhook management UI** — CRUD, test endpoint, delivery log viewer
+  - `CC` → "Vytvoř webhook management stránku: list webhooks (URL, events, status, last delivery), create/edit modal (URL, events multiselect, secret), 'Test' button → odešli test event → zobraz response. Delivery log: tabulka posledních 50 delivery (timestamp, status, response code, retry count)."
+
+- [ ] **API docs site** — Mintlify/Docusaurus, interactive playground
+  - `CC` → "Vytvoř API docs site (Mintlify): Getting started (5 min quickstart), Authentication, Rate limits, Pagination, Error codes, per-endpoint docs s code examples (curl, Python, Node.js, PHP). Interactive playground (Swagger UI embed). Changelog page. Status page link."
+
+- [ ] **Billing UI** — plan comparison, Stripe Elements, invoice history
+  - `CC` → "Vytvoř billing stránku: current plan card (name, usage bars: contacts X/Y, emails X/Y), plan comparison grid (Free/Starter/Pro/Business/Enterprise s feature matrix), upgrade/downgrade flow, payment method management (Stripe Elements), invoice history table (datum, amount, status, PDF download link), usage breakdown chart (emails, SMS, HLR lookups, AI calls per měsíc)."
+
+- [ ] **Signup form builder UI** — drag-and-drop builder, embed options
+  - `CC` → "Vytvoř signup form builder UI: drag-and-drop field builder (email, name, phone, custom fields), 3 embed types (popup, inline, full-page), style editor (colors, fonts, border), embed snippet s copy button, preview. Analytics: views/submissions/conversion rate."
+
+---
+
+### UI 7 — SMS + WhatsApp + Push
+
+- [ ] **SMS campaign builder UI** — character counter, merge tags, scheduling
+  - `CC` → "Vytvoř SMS campaign builder: textarea s character counter (160 GSM-7 / 70 Unicode, segment count), merge tag picker, link shortener (auto-shorten URLs, track clicks), preview per contact (vyber kontakt → zobraz personalizovanou verzi), audience selector, scheduling s timezone-aware sending, quiet hours indicator."
+
+- [ ] **WhatsApp template editor UI** — placeholder variables, preview, submit
+  - `CC` → "Vytvoř WhatsApp template editor: form s template name, kategorie (marketing/utility/authentication), header (text/media), body s placeholder {{1}} {{2}} variables, footer, buttons. Preview: render jako WhatsApp message bubble. Submit button → POST to Meta, status badge (PENDING/APPROVED/REJECTED), rejection reason + edit + resubmit flow."
+
+- [ ] **Unified inbox UI** — multi-channel konverzace, reply composer
+  - `CC` → "Vytvoř unified inbox stránku: levý panel: konverzace list (sortable by recent, filterable by channel: all/email/sms/whatsapp), každá konverzace: contact avatar, name, last message preview, channel icon, timestamp. Pravý panel: konverzace detail (chat-like timeline: all messages across channels, chronological, channel badge per message), reply composer (select channel for reply, text input, send button). Contact sidebar: contact profile, tags, notes."
+
+---
+
+### UI 8 — Number intelligence
+
+- [ ] 📡 **Batch HLR progress UI** — real-time WebSocket progress, výsledky
+  - `CC` → "Vytvoř batch processing UI: progress page s real-time updates (WebSocket): progress bar s %, 'Zpracováno 45 230 / 100 000', estimated time remaining, speed (lookups/sec). Result summary po dokončení: pie chart (active/inactive/unknown/invalid), error log (downloadable CSV)."
+
+- [ ] 📡 **Number intel dashboard** — operátor donut, status breakdown, region tabulka
+  - `CC` → "Vytvoř number intelligence dashboard stránku: metric cards (total phone contacts, % active, % ported, last batch date), operator distribution donut chart (O2, T-Mobile, Vodafone, other), status breakdown bar (active, inactive, unknown), region/district breakdown table (sortable by count), monthly validation trend chart."
+
+- [ ] 📡 **Interaktivní mapa ČR** — hustota kontaktů per kraj/okres
+  - `CC` → "Vytvoř interaktivní mapu ČR s kontakty per kraj/okres: react-simple-maps nebo d3 s TopoJSON ČR (kraje). Barva = hustota kontaktů (gradient). Hover: tooltip s počtem a top metrics. Klik na kraj: filtruj contact list. Přepínač: zobraz per kraj / per okres. Export: screenshot mapy jako PNG."
+
+---
+
+### UI 9 — Voice robot a onboarding
+
+- [ ] 🔥 **Voice scénář builder UI** — React Flow canvas, SayNode/ListenNode/BranchNode
+  - `CC` → "Vytvoř voice scenario builder (podobný workflow builderu): node types: SayNode (TTS text, voice selection, speed), ListenNode (timeout, max duration, keywords to detect), BranchNode (condition na transcript: contains keyword? sentiment?), TransferNode (SIP URI / phone number), RecordNode (s GDPR upozorněním), HangupNode. Canvas: React Flow, drag-and-drop. Preview: 'Test call' button → zavolej na zadané číslo a projdi scénář."
+
+- [ ] **Onboarding wizard UI** — 5-step průvodce pro nové uživatele
+  - `CC` → "Vytvoř onboarding wizard UI pro nové uživatele: 5 kroků: 1) Welcome + org name, 2) Verify sending domain (SPF/DKIM/DMARC wizard), 3) Import contacts (CSV upload nebo manual), 4) Create first campaign (guided, s AI suggestions), 5) Send test email + go live checklist. Empty states na všech stránkách s CTA na relevant onboarding step."
+
+- [ ] 🔥 **Cmd+K command palette** — navigace, akce, federated search
+  - `CC` → "Implementuj command palette (Cmd+K / Ctrl+K): cmdk React library. Commands: navigace (Go to Campaigns, Go to Contacts, Go to Workflows...), akce (Create Campaign, Import Contacts, Send Test Email...), search (contacts, campaigns, templates — federated search). Recent commands. Keyboard navigation. Fuzzy matching."
+
+- [ ] **Beta waitlist stránka** — email capture, invite codes, feedback widget
+  - `CC` → "Vytvoř beta stránky: /waitlist (email capture form), /join?code=XYZ (invite code redemption → registrace). In-app feedback widget (button na každé stránce → modal s textarea + category: bug/feature/ux). Onboarding call scheduler (Calendly embed)."
+
+---
+
+### UI 10 — Developer docs a marketing
+
+- [ ] **Developer docs site** — Mintlify, Getting Started, API Reference, guides
+  - `CC` → "Vytvoř docs site (Mintlify): Getting Started (5 min quickstart), API Reference (auto-gen z OpenAPI), SDKs (Python, Node.js), Webhooks guide, SMS guide, WhatsApp guide, Voice guide, Number Intelligence guide, Workflow guide, Migration from Mailchimp guide. Changelog. Status page link."

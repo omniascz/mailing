@@ -1,0 +1,343 @@
+# TODO — NOW
+
+Seznam aktuálně nezpracovaných úkolů (🔴) z TODO.md seřazený podle modelu.
+Pořadí modelů: **Opus 4.7** → **Sonnet 4.6** → **Haiku 4.5**. Uvnitř každé skupiny podle originálního #ID.
+
+**Celkem:** 316 otevřených úkolů (Opus 79 / Sonnet 202 / Haiku 35).
+
+---
+
+## 🧠 Opus (79)
+
+| # | Úkol | Popis |
+|---|------|-------|
+| #383 | 1 | České + slovenské skloňování (vocative + 7 pádů) |
+| #394 | 12 | Lifecycle stages + Associations engine |
+| #395 | 13 | Sales CRM (Pipelines/Deals/Accounts/Tasks) |
+| #396 | 14 | Loyalty Program |
+| #398 | 16 | Sales Engagement AI (Win Probability, Sentiment) |
+| #399 | 17 | Commerce Hub (quotes, invoicing, subscriptions) |
+| #400 | 18 | Meetings scheduler |
+| #401 | 19 | Universal Inbox (IG DM, FB Messenger) |
+| #402 | 20 | CDP vrstva |
+| #403 | 21 | Cloud Phone |
+| #405 | 23 | Breeze AI agents (Prospecting, Customer, Content, Buyer Intent) |
+| #407 | 25 | **Slovenská** lokalizace + Shoptet.sk + slovenský účetní export |
+| #408 | 26 | Multi-language content framework pro editor/blog |
+| #425 | **CZ/SK gender inference** | lookup table + regex pravidla (příjmení -ová → ženské, jména Petr/Pavel/… → mužské, Anna/Jana/… → ženské); confidence score |
+| #432 | **Purpose-aware sending** | send guardrail: campaign má `required_purpose`, recipient bez consent → skip + log |
+| #441 | RFM klasifikace (recency/frequency/monetary score → 11 segmentů) |  |
+| #442 | Smart Sending frequency cap + cooldown logika |  |
+| #448 | Holdout groups (deterministic hash-mod) |  |
+| #449 | Cohort / Funnel / Timeline analytics |  |
+| #452 | Warehouse sync (S3/Snowflake/BigQuery/Redshift) |  |
+| #455 | Identity merge (visitor → contact backfill) |  |
+| #457 | **A) Sales CRM** — pipelines, deals, accounts schema + services |  |
+| #459 | A) Sales reports, win/loss, revenue forecasting |  |
+| #461 | **B) Win Probability AI model** |  |
+| #462 | B) Deal risk assessment |  |
+| #463 | B) Sentiment Analysis (Claude analýza) |  |
+| #466 | B) Predictive Lead Scoring (ML rozšíření) |  |
+| #473 | **D) AI Campaign Builder (autonomous agent)** |  |
+| #474 | D) Autonomous AI agent runner framework |  |
+| #476 | D) **MCP Server** (Postmark-style) |  |
+| #478 | D) Voice Agent streaming API |  |
+| #482 | **F) Custom objects engine** |  |
+| #484 | F) BotSense (bot click detection) |  |
+| #486 | **G) Inbound email (MX receiver Go)** |  |
+| #490 | H) Salesforce bi-sync |  |
+| #493 | H) App Studio (low-code builder) |  |
+| #494 | **I) SSO (SAML 2.0)** |  |
+| #495 | I) HIPAA compliance mode |  |
+| #498 | **A) Loyalty program schema + points ledger** |  |
+| #505 | B) Universal inbox routing logic |  |
+| #510 | **C) SIP/WebRTC calling (Twilio/Telnyx adapter)** |  |
+| #512 | C) Call routing (IVR, hunt groups) |  |
+| #517 | D) Calendar sync (Google/Outlook OAuth+CalDAV) |  |
+| #521 | E) Identity graph (multi-signal resolution) |  |
+| #522 | E) Unified profile view + cache |  |
+| #523 | E) Data activation (reverse-ETL) |  |
+| #524 | E) Event ingestion API (high-throughput) |  |
+| #525 | E) Real-time trait computation |  |
+| #526 | **F) NL→SQL query engine** |  |
+| #527 | F) Query sandboxing + row-level isolation |  |
+| #530 | **G) Parent-child orgs + permission inheritance** |  |
+| #535 | H) EU data residency (multi-region routing) |  |
+| #547 | A) Content strategy AI agent |  |
+| #555 | B) Breeze Social Agent (AI) |  |
+| #566 | D) Subscriptions + dunning |  |
+| #567 | D) Revenue schedule / MRR tracking |  |
+| #570 | E) Stage auto-advance rules engine |  |
+| #571 | **E) Associations engine (generic M:N)** |  |
+| #575 | F) 1:1 video messaging (record + HLS transcode) |  |
+| #578 | **G) Prospecting Agent** |  |
+| #579 | G) Customer Agent (autonomous support) |  |
+| #581 | G) Deal Health / Loss Agent |  |
+| #584 | G) RAG vector store (pgvector) |  |
+| #586 | H) Multi-language content framework |  |
+| #590 | **I) Sandboxes (isolated schema copies)** |  |
+| #591 | I) Teams/partitioning (row-level filter) |  |
+| #592 | I) Field-level permissions |  |
+| #594 | I) **Serverless functions runner (isolated-vm)** |  |
+| #595 | I) Custom Channels SDK |  |
+| #598 | I) Calculated properties + evaluator |  |
+| #601 | J) Deliverability insights engine |  |
+| #603 | **K) Bi-directional CRM sync engine** |  |
+| #605 | K) Programmable automation pipelines |  |
+| #606 | **A) Czech vocative declension (5. pád)** |  |
+| #607 | A) Czech 7-pád full declension |  |
+| #608 | A) Slovak declension (7 pádů) |  |
+| #637 | **C) Gender inference (CZ/SK)** |  |
+| #644 | D) Purpose-aware send guardrail |  |
+| #652 | ~50 | Architektura (associations engine, identity graph, CDP, serverless runner), AI agenti (Prospecting, Customer, Campaign Builder, MCP server), ML modely (Win Probability, Sentiment, Predictive Lead Scoring, BotSense), security-critical (SSO/SAML, HIPAA, field-level perms, EU residency multi-region, sandboxes), NL→SQL sandboxing, lingvistická logika (CZ/SK declension, gender), Go MX receiver, bi-directional CRM sync, RAG vector store, calculated properties evaluator, dunning/MRR logic |
+
+---
+
+## 🛠️ Sonnet (202)
+
+| # | Úkol | Popis |
+|---|------|-------|
+| #286 | **External feeds** | automatické data pulls (RSS/CSV/JSON URL) → contacts/events |
+| #317 | **Lifecycle stages** | předdefinované: subscriber → lead → MQL → SQL → opportunity → customer → evangelist (customizable) |
+| #318 | **Stage transition triggers** | workflows triggered on `lifecycle_stage_changed` |
+| #321 | **Association labels** | custom relationship types: "primary contact", "decision maker", "referred by" |
+| #322 | **Company-based workflows** | workflows triggered on company events (enriched, deal won, ARR threshold) |
+| #323 | **Ticket-based workflows** | workflows na helpdesk events (ticket_created, sla_breached, reopened) |
+| #324 | **Playbooks** | standardizované sales scripty (call script, discovery Q&A) s checklist + logging |
+| #326 | **Record rotation / round-robin assignment** (generalized) | fair distribution dealů/leadů/tiketů na tým |
+| #327 | **Quotes templating** | HTML/Liquid templates per brand |
+| #328 | **Sales sequences cadence** | více-kanálové sekvence: email → LinkedIn → call task → email (již v §15-B) |
+| #331 | **Content Agent** | generuje blog/landing/email/podcast-script z brand voice + product data |
+| #333 | **Buyer intent signals** | third-party intent data providers (Bombora/6sense adapter) + site activity intent score |
+| #334 | **Form autofill (identified visitor)** | cookie/IP → known contact → pre-fill form fields in API |
+| #336 | **Blog platform** (API-first / headless) | posts, kategorie, tagy, autoři, draft/published, scheduled |
+| #337 | **Blog → email automation** | new post → trigger workflow + RSS email campaign |
+| #339 | **Content staging / versioning** | draft → staged → published, revision history |
+| #340 | **CTAs (Calls-to-Action) widgets** | clickable buttons/popups/banners s A/B, analytics, smart content (segment-based) |
+| #341 | **Smart/Dependent forms** | field visibility podmíněná předchozí odpovědí |
+| #345 | **Custom permission sets** | opakovaně použitelné sady oprávnění |
+| #348 | **CRM extension cards (backend SDK)** | 3rd-party apps mohou přidat data panel na contact/deal view přes iframe+API |
+| #351 | **Graymail suppression** | auto-pause sending to contacts with zero engagement > N dní |
+| #352 | **Email health score per domain/IP** | composite: bounce rate, spam rate, complaint rate, inbox placement |
+| #354 | **Sender reputation monitoring** | integrace se SenderScore / Google Postmaster / Microsoft SNDS |
+| #356 | **Data sets** (named queries) | saved SQL/segment queries reusable napříč reporty |
+| #360 | **Český kalendář svátků (jmeniny)** | databáze jmenin → trigger `name_day_today` → auto-email na kontakty se shodným jménem |
+| #362 | **České/slovenské státní svátky** | calendar data pro marketing workflow triggery ("2 dny před Vánocemi") |
+| #364 | **CZ/SK fakturace** | CZK měna, DPH 21%, číslování faktur per rok, ISDOC export pro české účetnictví |
+| #366 | **Shoptet integrace** | OAuth + webhook: contacts, orders, products, abandoned carts bi-sync |
+| #367 | **Upgates integrace** | API-based contact+order sync |
+| #368 | **FastCentrik integrace** | XML feed + orders API sync |
+| #370 | **Raynet CRM bi-sync** | contacts + deals + companies bi-directional sync |
+| #372 | **Seznam Postmaster sledování** | parse Seznam deliverability feedback |
+| #374 | **Workflow JSON export** | serializace workflow (nodes, edges, config) do verzovaného JSON + hash |
+| #375 | **Workflow JSON import** | validace + migrace staré verze → import |
+| #376 | **Workflow template marketplace** | public katalog sdílených workflow (per-org visibility) |
+| #377 | **Survey response → auto-action rules** | per-question mapping: rating/choice → action (add_tag, update_field, trigger_workflow) |
+| #379 | **Product feed ingestion** | URL → scheduled fetch → parse (Heureka XML / Google Shopping / Zbozi.cz / custom XML+XSD) → product catalog |
+| #380 | **Heureka feed adapter** | CZ-specific Heureka XML schema |
+| #381 | **Zbozi.cz feed adapter** | CZ-specific Zbozi XML |
+| #382 | **Google Shopping feed adapter** | RSS/Atom Google Shopping format |
+| #384 | 2 | Jmeniny kalendář + workflow trigger |
+| #386 | 4 | **Shoptet integrace** (OAuth + webhooks + orders + abandoned cart sync) |
+| #388 | 6 | CZ fakturace: CZK měna, DPH 21%, ISDOC export (§17-D subset) |
+| #389 | 7 | CZ veřejné svátky kalendář |
+| #390 | 8 | **Upgates** integrace |
+| #391 | 9 | **Raynet CRM** bi-sync |
+| #392 | 10 | **FastCentrik** integrace |
+| #393 | 11 | **Heureka/Zbozi.cz XML feed** ingestion |
+| #397 | 15 | Graymail suppression + email health score |
+| #404 | 22 | Site messages + Web personalization |
+| #409 | 27 | Multi-currency billing (EUR, USD, GBP) |
+| #411 | 29 | SEO tooling |
+| #412 | 30 | Blog platform + CTAs |
+| #420 | **Sklik OAuth connection** | OAuth s Sklik.cz Business API |
+| #421 | **Sklik audiences sync** | push segment jako Sklik Custom Audience (hash email/phone) |
+| #422 | **Sklik retargeting pixel** | pixel snippet pro web → hash tracking + audience building |
+| #423 | **Sklik lookalike** | seed segment → Sklik lookalike request |
+| #424 | **Sklik conversion tracking** | conversion events → Sklik API pro attribution |
+| #426 | **Auto-fill gender při importu** | při importu kontaktu bez gender pole → infer z first_name, pokud confidence > 0.9 |
+| #427 | **Salutation merge tag** | `{{contact |
+| #429 | **Processing purposes schema** | per-org definice purposes: marketing_email, newsletter, profiling, 3rd_party_share, transactional |
+| #430 | **Contact-purpose consent tracking** | per-contact per-purpose: granted_at, legal_basis, source, expires_at, revoked_at |
+| #433 | **Consent workflow triggers** | triggery `consent_granted`, `consent_expired`, `consent_revoked` |
+| #434 | **Preference centre rozšíření** | preference page per-purpose toggle místo single unsubscribe |
+| #435 | **Double opt-in per purpose** | separate confirmation per purpose |
+| #436 | **Digital asset delivery** | upload digital assets per produkt, secure time-limited download URLs |
+| #437 | **License key generator** | pool of pre-generated keys nebo algorithmic generation per SKU |
+| #439 | **Download tracking** | per-contact download attempts, limit N per link |
+| #440 | **Sender reputation public badge** | veřejný score per odesílací doménu (warm-up status, bounce rate, complaint rate) pro transparentnost |
+| #443 | Quiet Hours (timezone-aware) |  |
+| #444 | Back-in-stock / price-drop alerts |  |
+| #445 | Unique coupon batches (generator + pool) |  |
+| #446 | Reviews + moderation queue |  |
+| #447 | Scheduled reports dispatch |  |
+| #450 | Catalog insights |  |
+| #451 | Helpdesk + marketing pause on open ticket |  |
+| #453 | SMS keyword routing |  |
+| #454 | Multi-email profily (až 5 emailů/kontakt) |  |
+| #456 | RCS messaging adapter |  |
+| #458 | A) Task management + notes + activity feed |  |
+| #460 | A) Deal stage change triggers ve workflows |  |
+| #464 | B) Automated 1:1 sales emails |  |
+| #465 | B) Sales engagement sequences |  |
+| #467 | **C) Site tracking JS snippet** |  |
+| #468 | C) Site messages (behavior-triggered) |  |
+| #469 | C) Web personalization (hide/show DOM) |  |
+| #470 | C) Connected sites (multi-domain sync) |  |
+| #471 | C) Progressive profiling |  |
+| #472 | C) Live chat WebSocket endpoint |  |
+| #475 | D) AI sidebar / recommendations API |  |
+| #477 | D) AI Calendly Block (smart scheduling) |  |
+| #479 | **E) Nested automations + automation maps** |  |
+| #481 | E) Click actions (tag/update on click) |  |
+| #483 | F) Social enrichment adapter |  |
+| #485 | F) List warming scheduler |  |
+| #487 | G) Message streams (broadcast vs transactional) |  |
+| #489 | **H) Integrace: Shopify/Woo/BigCommerce** |  |
+| #491 | H) HubSpot integrace |  |
+| #492 | H) Calendly, Stripe (extended) |  |
+| #496 | I) Audit logs |  |
+| #497 | I) DMARC Digests parser |  |
+| #499 | A) Rewards catalog + redemption flow |  |
+| #500 | A) Earning rules engine |  |
+| #501 | A) Loyalty webhooks + workflow triggers |  |
+| #502 | A) Loyalty analytics |  |
+| #503 | **B) Instagram DM adapter** |  |
+| #504 | B) Facebook Messenger adapter |  |
+| #506 | B) Chat routing + agent assignment |  |
+| #508 | B) Chat analytics |  |
+| #509 | B) Aura Support AI (summarize/tone/note→msg) |  |
+| #511 | C) Phone numbers management |  |
+| #513 | C) Call recording + transcription |  |
+| #514 | C) CRM call integration |  |
+| #515 | C) Voicemail + softphone WS API |  |
+| #516 | **D) Meetings booking pages + event types** |  |
+| #518 | D) Zoom/Meet/Teams link generation |  |
+| #519 | D) Round-robin scheduling |  |
+| #520 | **E) CDP source connectors** |  |
+| #528 | F) Chart suggestion |  |
+| #531 | G) Cross-account user access |  |
+| #532 | G) Consolidated billing |  |
+| #533 | G) Shared assets |  |
+| #534 | **H) IP restrictions middleware** |  |
+| #536 | H) Long-term log archive (S3 parquet) |  |
+| #537 | H) Webhook batching |  |
+| #538 | **I) Per-send pricing tier** |  |
+| #539 | I) Pay-as-you-go credit system |  |
+| #540 | I) Multi-product metering |  |
+| #541 | **J) Batch send API (1000 per call)** |  |
+| #542 | J) Unified messaging API |  |
+| #543 | J) External feeds ingestion |  |
+| #544 | **A) Topic clusters + pillar pages** |  |
+| #545 | A) Keyword research (DataForSEO/Semrush adapter) |  |
+| #546 | A) On-page SEO audit |  |
+| #549 | A) Search rank tracker |  |
+| #550 | **B) Social accounts OAuth (FB/IG/LI/X/TikTok)** |  |
+| #551 | B) Social publishing + scheduler |  |
+| #552 | B) Social monitoring |  |
+| #553 | B) Social inbox (extends §16-B) |  |
+| #554 | B) Social analytics |  |
+| #556 | **C) Ad platform OAuth** |  |
+| #557 | C) Audience sync (CRM→Ads) |  |
+| #558 | C) Lookalike audience API |  |
+| #559 | C) Lead sync (Ads→CRM) |  |
+| #560 | C) Ad performance reporting + attribution |  |
+| #561 | C) Retargeting workflows |  |
+| #562 | **D) Quotes generation + e-sign** |  |
+| #563 | D) Products/line items catalog |  |
+| #564 | D) Invoicing + PDF + reminders |  |
+| #565 | D) Stripe payments integration |  |
+| #568 | **E) Lifecycle stages + history** |  |
+| #569 | E) Stage transition triggers ve workflows |  |
+| #572 | E) Association labels |  |
+| #573 | E) Company-based + ticket-based workflows |  |
+| #574 | **F) Playbooks (scripts + checklist + logging)** |  |
+| #576 | F) Record rotation / round-robin (generic) |  |
+| #577 | F) LinkedIn InMail adapter |  |
+| #580 | G) Content Agent |  |
+| #582 | G) Buyer intent signals (Bombora/6sense) |  |
+| #583 | G) Form autofill (identified visitor) |  |
+| #585 | **H) Blog platform (API-first)** |  |
+| #587 | H) Content staging/versioning |  |
+| #588 | H) CTAs widgets + A/B |  |
+| #589 | H) Smart/dependent forms |  |
+| #593 | I) Custom permission sets |  |
+| #596 | I) CRM extension cards SDK |  |
+| #599 | **J) Graymail suppression** |  |
+| #600 | J) Email health score per domain/IP |  |
+| #602 | J) Sender reputation monitoring (SNDS/Postmaster) |  |
+| #604 | K) Data sets (named queries) |  |
+| #609 | A) Czech name-days kalendář (data + trigger) |  |
+| #611 | A) CZ/SK public holidays |  |
+| #613 | A) CZ fakturace (CZK, DPH 21%, ISDOC) |  |
+| #615 | **B) Shoptet OAuth + webhooks + sync** |  |
+| #616 | B) Upgates integrace |  |
+| #617 | B) FastCentrik integrace |  |
+| #619 | **C) Raynet CRM bi-sync** |  |
+| #621 | D) Seznam Postmaster parser |  |
+| #623 | **E) Workflow JSON export/import** |  |
+| #624 | E) Workflow marketplace |  |
+| #625 | **F) Survey response → auto-action rules** |  |
+| #627 | **G) Product feed ingestion engine** |  |
+| #628 | G) Heureka/Zbozi/Google Shopping adapters |  |
+| #629 | **A) Viber Business adapter** |  |
+| #630 | A) Rakuten/Infobip/MessageBird Viber providers |  |
+| #631 | A) Viber campaign type + workflow action |  |
+| #632 | A) Viber templates registry |  |
+| #633 | A) Viber → SMS cascade fallback |  |
+| #634 | **B) Sklik OAuth + audiences sync** |  |
+| #635 | B) Sklik retargeting pixel |  |
+| #636 | B) Sklik lookalike + conversions |  |
+| #638 | C) Auto-fill gender při importu |  |
+| #639 | C) Salutation merge tag s deklinací |  |
+| #641 | **D) Processing purposes schema** |  |
+| #642 | D) Contact-purpose consent tracking |  |
+| #645 | D) Consent workflow triggery |  |
+| #646 | D) Per-purpose preference centre |  |
+| #647 | D) Per-purpose double opt-in |  |
+| #648 | **E) Digital asset delivery + secure URLs** |  |
+| #649 | E) License key generator |  |
+| #651 | E) Download tracking + limits |  |
+| #653 | ~150 | Většina feature work: CRUD services/routes/schema, channel adaptéry (Viber, IG DM, FB Messenger, RCS, Sklik), integration adaptéry (Shoptet, Upgates, Raynet, Salesforce, HubSpot, Shopify, WooCommerce), workflow templates, booking/meetings, commerce (quotes/invoices/subscriptions), analytics dashboards, ad platforms, social publishing |
+
+---
+
+## ⚡ Haiku (35)
+
+| # | Úkol | Popis |
+|---|------|-------|
+| #215 | **900+ pre-built recipes** | rozšíření `flow-templates.ts` z ~10 na širší knihovnu (B2B, e-com, SaaS onboarding, re-engagement, sales sequences) |
+| #223 | **Activity export (transactional)** | bulk CSV/JSON export per date-range |
+| #246 | **Canned responses** | shared library per org, merge tags, kategorie |
+| #272 | **Saved questions** | uložené dotazy per user/org |
+| #291 | **Sitemap + robots.txt + canonical** | auto-generate per content collection |
+| #349 | **Data quality automation** | auto-format: phone E.164, email lowercase, name TitleCase, country ISO |
+| #361 | **Slovenský kalendář svátků** | obdobně pro SK |
+| #363 | **Lokalizace UI/emails** | CZ/SK překlady system emailů (preference centre, opt-in, unsubscribe, password reset) |
+| #365 | **Bank account QR code (SPAYD)** | czech payment QR code na fakturách |
+| #369 | **Shoptet app listing** | submit MailForge do Shoptet App Store (business ops, ale technicky vyžaduje spec OAuth flow) |
+| #371 | **Seznam Email topping header** | email header `Topping: ...` pro preferred inbox placement u Seznamu |
+| #373 | **Email.cz / Volny.cz / Centrum.cz pravidla** | ISP-specific throttling rules pro české poskytovatele |
+| #378 | **NPS / CSAT out-of-box** | předdefinované survey šablony + auto-tag promoters/passives/detractors |
+| #385 | 3 | CZ/SK lokalizace system emailů (preference centre, opt-in, unsubscribe) |
+| #387 | 5 | **Seznam Email deliverability headers + ISP rules** |
+| #428 | **International fallback** | pokud locale není cs/sk, zkusit genderize.io API nebo vynechat |
+| #431 | **Consent expiration worker** | scheduled job: expires_at < NOW → revoke + emit event `consent_expired` |
+| #438 | **Workflow template "digital product delivery"** | trigger: order_paid + product.type=digital → send email s personalized link/key |
+| #480 | E) 900+ workflow recipes expansion |  |
+| #488 | G) Activity export |  |
+| #507 | B) Canned responses |  |
+| #529 | F) Saved questions |  |
+| #548 | A) Sitemap + robots.txt + canonical |  |
+| #597 | I) Data quality automation (normalizers) |  |
+| #610 | A) Slovak name-days |  |
+| #612 | A) CZ/SK system email translations |  |
+| #614 | A) SPAYD QR code na fakturách |  |
+| #618 | B) Shoptet App Store submission |  |
+| #620 | **D) Seznam Email topping header** |  |
+| #622 | D) CZ ISP throttling rules |  |
+| #626 | F) NPS/CSAT out-of-box templates |  |
+| #640 | C) International genderize.io fallback |  |
+| #643 | D) Consent expiration worker |  |
+| #650 | E) Digital delivery workflow template |  |
+| #654 | ~25 | Boilerplate a static data: i18n JSON překlady, jmeniny seed, svátky seed, ISP header configs, canned responses CRUD, workflow šablony (text), Sitemap/robots, activity export, scheduled refresh jobs, NPS templates, data quality normalizers |
