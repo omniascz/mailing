@@ -37,10 +37,23 @@ describe('detectIsp', () => {
     expect(detectIsp('aol.com')).toBe('yahoo');
   });
 
+  it('detects seznam (CZ)', () => {
+    expect(detectIsp('seznam.cz')).toBe('seznam');
+    expect(detectIsp('email.cz')).toBe('seznam');
+  });
+
+  it('detects volny (CZ)', () => {
+    expect(detectIsp('volny.cz')).toBe('volny');
+  });
+
+  it('detects centrum (CZ)', () => {
+    expect(detectIsp('centrum.cz')).toBe('centrum');
+    expect(detectIsp('post.cz')).toBe('centrum');
+  });
+
   it('returns other for unknown domain', () => {
-    expect(detectIsp('seznam.cz')).toBe('other');
-    expect(detectIsp('email.cz')).toBe('other');
     expect(detectIsp('firma.com')).toBe('other');
+    expect(detectIsp('randomdomain.org')).toBe('other');
   });
 
   it('is case-insensitive', () => {

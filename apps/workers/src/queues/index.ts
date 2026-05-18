@@ -60,6 +60,9 @@ export const QUEUE_NAMES = {
   MTA_GMAIL: 'mta-gmail',
   MTA_MICROSOFT: 'mta-microsoft',
   MTA_YAHOO: 'mta-yahoo',
+  MTA_SEZNAM: 'mta-seznam',
+  MTA_VOLNY: 'mta-volny',
+  MTA_CENTRUM: 'mta-centrum',
   MTA_OTHER: 'mta-other',
   ARCHIVE_EMAIL_EVENTS: 'archive-email-events',
   SEO_RANK_POLL: 'seo-rank-poll',
@@ -112,6 +115,9 @@ export const mtaQueues = {
   gmail: new Queue(QUEUE_NAMES.MTA_GMAIL, defaultOpts),
   microsoft: new Queue(QUEUE_NAMES.MTA_MICROSOFT, defaultOpts),
   yahoo: new Queue(QUEUE_NAMES.MTA_YAHOO, defaultOpts),
+  seznam: new Queue(QUEUE_NAMES.MTA_SEZNAM, defaultOpts),
+  volny: new Queue(QUEUE_NAMES.MTA_VOLNY, defaultOpts),
+  centrum: new Queue(QUEUE_NAMES.MTA_CENTRUM, defaultOpts),
   other: new Queue(QUEUE_NAMES.MTA_OTHER, defaultOpts),
 } as const;
 
@@ -184,20 +190,34 @@ export interface MtaSendJobData {
 
 /**
  * ISP detection — maps recipient domain to the correct MTA queue.
+ * CZ ISPs (Seznam, Volny, Centrum) get dedicated queues so their
+ * specific rate limits and ISP-aware headers (X-Seznam-Campaign-Category)
+ * apply correctly. Mirrors ResolveIsp() in apps/engine/internal/email/headers.go.
  */
 const ISP_DOMAINS: Record<string, IspName> = {
+  // Google
   'gmail.com': 'gmail',
   'googlemail.com': 'gmail',
   'google.com': 'gmail',
+  // Microsoft
   'outlook.com': 'microsoft',
   'hotmail.com': 'microsoft',
   'live.com': 'microsoft',
   'msn.com': 'microsoft',
   'outlook.cz': 'microsoft',
+  // Yahoo
   'yahoo.com': 'yahoo',
   'yahoo.co.uk': 'yahoo',
   'ymail.com': 'yahoo',
   'aol.com': 'yahoo',
+  // Seznam (CZ — largest local mailbox provider)
+  'seznam.cz': 'seznam',
+  'email.cz': 'seznam',
+  // Volny (CZ)
+  'volny.cz': 'volny',
+  // Centrum (CZ)
+  'centrum.cz': 'centrum',
+  'post.cz': 'centrum',
 };
 
 export function detectIsp(recipientDomain: string): IspName {

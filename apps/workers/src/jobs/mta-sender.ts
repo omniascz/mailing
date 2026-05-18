@@ -211,8 +211,28 @@ const ISP_QUEUES = [
   QUEUE_NAMES.MTA_GMAIL,
   QUEUE_NAMES.MTA_MICROSOFT,
   QUEUE_NAMES.MTA_YAHOO,
+  QUEUE_NAMES.MTA_SEZNAM,
+  QUEUE_NAMES.MTA_VOLNY,
+  QUEUE_NAMES.MTA_CENTRUM,
   QUEUE_NAMES.MTA_OTHER,
 ] as const;
+
+/**
+ * Per-ISP hourly send limits per worker.
+ * Mirrors RecommendedThrottle() in apps/engine/internal/email/headers.go
+ * and ISP_CONFIG in apps/api/src/services/sending/isp-throttle.ts.
+ *
+ * Production deployments should override these via env vars (TODO).
+ */
+const ISP_HOURLY_LIMITS: Record<string, number> = {
+  [QUEUE_NAMES.MTA_GMAIL]: 500,
+  [QUEUE_NAMES.MTA_MICROSOFT]: 1000,
+  [QUEUE_NAMES.MTA_YAHOO]: 500,
+  [QUEUE_NAMES.MTA_SEZNAM]: 5000,
+  [QUEUE_NAMES.MTA_VOLNY]: 2000,
+  [QUEUE_NAMES.MTA_CENTRUM]: 2000,
+  [QUEUE_NAMES.MTA_OTHER]: 1000,
+};
 
 export function startMtaSenderWorkers() {
   const workers = ISP_QUEUES.map((queueName) => {
@@ -220,7 +240,7 @@ export function startMtaSenderWorkers() {
       connection,
       concurrency: 20,
       limiter: {
-        max: queueName === QUEUE_NAMES.MTA_GMAIL ? 500 : 1000,
+        max: ISP_HOURLY_LIMITS[queueName] ?? 1000,
         duration: 3600_000, // per hour
       },
     });

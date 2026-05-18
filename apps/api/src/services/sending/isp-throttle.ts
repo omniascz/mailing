@@ -15,8 +15,20 @@
 import { redis } from '../../lib/redis.js';
 
 // ─── ISP definitions ──────────────────────────────────────────────────────────
+//
+// CZ ISPs (Seznam, Volny, Centrum) get dedicated buckets. Without this they
+// would fall into `other` and share its rate limit, which violates Seznam's
+// observed throttle behavior (sub-5K/h triggers temp-defer). Limits below
+// mirror RecommendedThrottle() in apps/engine/internal/email/headers.go.
 
-export type IspName = 'gmail' | 'microsoft' | 'yahoo' | 'other';
+export type IspName =
+  | 'gmail'
+  | 'microsoft'
+  | 'yahoo'
+  | 'seznam'
+  | 'volny'
+  | 'centrum'
+  | 'other';
 
 interface IspConfig {
   /** Base hourly limit per sending IP */
@@ -37,6 +49,18 @@ const ISP_CONFIG: Record<IspName, IspConfig> = {
   yahoo: {
     baseHourlyLimit: 500,
     domains: ['yahoo.com', 'yahoo.co.uk', 'ymail.com', 'aol.com'],
+  },
+  seznam: {
+    baseHourlyLimit: 5000,
+    domains: ['seznam.cz', 'email.cz'],
+  },
+  volny: {
+    baseHourlyLimit: 2000,
+    domains: ['volny.cz'],
+  },
+  centrum: {
+    baseHourlyLimit: 2000,
+    domains: ['centrum.cz', 'post.cz'],
   },
   other: {
     baseHourlyLimit: 2000,

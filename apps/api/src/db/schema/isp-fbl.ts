@@ -8,6 +8,10 @@ export const ispEnum = pgEnum('isp_provider', [
   'yahoo',
   'aol',
   'comcast',
+  // CZ ISPs (added 2026-05-18) — see Sprint B.4 in ACTION_PLAN.md
+  'seznam',
+  'volny',
+  'centrum',
   'other',
 ]);
 
