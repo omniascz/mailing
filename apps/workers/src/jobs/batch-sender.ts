@@ -16,7 +16,11 @@
 
 import { Worker, type Job } from 'bullmq';
 import crypto from 'node:crypto';
-import { renderEmail as renderBlocks, type MergeTagContext } from '@forgemsg/editor/render';
+import {
+  renderEmail as renderBlocks,
+  renderPlainText,
+  type MergeTagContext,
+} from '@forgemsg/editor/render';
 import { emailSchema, type EmailSchema } from '@forgemsg/editor/schema';
 import {
   connection,
@@ -77,9 +81,14 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     // 3. Resolve merge tags in subject
     const subject = resolveMergeTags(data.subject, contact);
 
-    // 4. Render HTML (in production, this calls the editor render engine)
-    // For now we pass the content through merge tag resolution
-    const htmlBody = renderEmail(data.content, contact, data.preheader);
+    // 4. Render HTML + plain-text alternative (block JSON path via
+    //    @forgemsg/editor renderEmail + renderPlainText; legacy { html }
+    //    path uses inline merge tags + HTML→text fallback).
+    const { html: htmlBody, text: textBody } = renderEmail(
+      data.content,
+      contact,
+      data.preheader,
+    );
 
     // 5. Build custom headers
     const messageId = `${crypto.randomUUID()}@forgemsg.com`;
@@ -116,6 +125,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         toName: [contact.firstName, contact.lastName].filter(Boolean).join(' '),
         subject,
         htmlBody,
+        textBody,
         replyTo: data.replyTo,
         customHeaders,
         dkimDomain: data.dkimDomain,
@@ -202,48 +212,47 @@ function buildMergeContext(
   };
 }
 
+interface RenderedEmail {
+  html: string;
+  /** Auto-derived plain-text alternative for multipart/alternative MIME part. */
+  text: string;
+}
+
 /**
- * Render a campaign email for a specific contact.
+ * Render a campaign email for a specific contact, producing both an HTML
+ * body and a plain-text alternative. The plain text is required by Gmail/
+ * Yahoo 2024+ bulk-sender rules and reduces spam scoring across the board.
  *
  * Three input shapes are accepted, in priority order:
- *  1. EmailSchema (block JSON) — production path, validated via Zod and
- *     rendered through @forgemsg/editor's renderEmail() which handles
- *     dynamic conditions, dark-mode meta, mobile media queries, preheader
- *     injection, etc.
- *  2. Legacy { html: string } — kept for backwards compatibility with the
- *     stub campaigns generated before B.2; merge tags resolved inline.
- *  3. Anything else → JSON.stringify (still helpful for engine debug logs).
- *
- * Preheader override only applies to legacy path; block path takes preheader
- * directly from the schema.
+ *  1. EmailSchema (block JSON) — production path; renderBlocks() + renderPlainText()
+ *  2. Legacy { html: string } [+ optional { text: string }] — backward compat
+ *  3. Anything else → JSON.stringify (debug aid, never produced in prod)
  */
 function renderEmail(
   content: Record<string, unknown>,
   contact: ContactRow,
   preheader?: string,
-): string {
+): RenderedEmail {
   // Path 1: block JSON (production)
   if ('blocks' in content && Array.isArray((content as { blocks?: unknown }).blocks)) {
     const parsed = emailSchema.safeParse({
-      // Default preheader to empty (zod schema requires the field even when empty);
-      // the campaign-level preheader override (legacy concept) maps onto schema.
       preheader: preheader ?? '',
       ...content,
     } satisfies Partial<EmailSchema> | Record<string, unknown>);
 
     if (parsed.success) {
       const ctx = buildMergeContext(contact);
-      const result = renderBlocks(parsed.data, { context: ctx });
-      return result.html;
+      const html = renderBlocks(parsed.data, { context: ctx }).html;
+      const text = renderPlainText(parsed.data, { context: ctx });
+      return { html, text };
     }
-    // Validation failed — log and fall through to legacy path
     console.warn(
       `[batch-sender] Invalid EmailSchema for contact ${contact.id}, falling back to legacy render:`,
       parsed.error.message,
     );
   }
 
-  // Path 2: legacy raw HTML
+  // Path 2: legacy raw HTML (+ optional text override)
   const html = (content as { html?: string }).html;
   if (html) {
     let resolved = resolveMergeTags(html, contact);
@@ -251,11 +260,42 @@ function renderEmail(
       const preheaderHtml = `<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">${preheader}</div>`;
       resolved = resolved.replace(/<body[^>]*>/i, (m) => m + preheaderHtml);
     }
-    return resolved;
+    const textOverride = (content as { text?: string }).text;
+    const text = textOverride
+      ? resolveMergeTags(textOverride, contact)
+      : deriveTextFromHtml(resolved);
+    return { html: resolved, text };
   }
 
   // Path 3: fallback (should never happen in production)
-  return JSON.stringify(content);
+  const serialised = JSON.stringify(content);
+  return { html: serialised, text: serialised };
+}
+
+/**
+ * Best-effort HTML→text conversion for the legacy { html } path. The block
+ * path uses renderPlainText() from @forgemsg/editor which is far more
+ * accurate; this helper exists only so legacy campaigns also benefit from
+ * the multipart/alternative deliverability bump.
+ */
+function deriveTextFromHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/(?:div|h[1-6]|li|tr)>/gi, '\n')
+    .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 // ─── External service stubs ──────────────────────────────────────────────────

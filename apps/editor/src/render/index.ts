@@ -1,4 +1,5 @@
 export { renderEmail, type RenderOptions, type RenderResult } from './render.js';
+export { renderPlainText, type RenderPlainTextOptions } from './plain-text.js';
 export {
   parseMergeTags,
   listMergeTags,
