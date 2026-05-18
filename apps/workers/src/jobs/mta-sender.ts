@@ -19,10 +19,11 @@ import {
   QUEUE_NAMES,
   type MtaSendJobData,
 } from '../queues/index.js';
+import * as mtaClient from '../lib/mta-grpc-client.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
-// ─── MTA Client (HTTP fallback when gRPC client isn't available) ─────────────
+// ─── MTA Client (gRPC to Go engine) ──────────────────────────────────────────
 
 interface MtaSendResult {
   success: boolean;
@@ -34,61 +35,56 @@ interface MtaSendResult {
 }
 
 /**
- * Send an email via the MTA engine.
+ * Send an email via the Go MTA engine over gRPC.
  *
- * In production this uses a gRPC client; for initial integration we use
- * an HTTP bridge endpoint on the MTA (or the internal API forwards to MTA).
+ * Endpoint: MTA_GRPC_ENDPOINT env var (default: localhost:50051).
+ * Transport: insecure for local dev; TLS via envoy/proxy in production.
  */
 async function sendViaMta(data: MtaSendJobData): Promise<MtaSendResult> {
-  // gRPC client call — in production, use @grpc/grpc-js with the proto definition.
-  // For now, use the internal API bridge.
   try {
-    const res = await fetch(`${API_URL}/api/v1/internal/mta/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messageId: data.messageId,
-        fromEmail: data.fromEmail,
-        fromName: data.fromName,
-        toEmail: data.toEmail,
-        toName: data.toName,
-        subject: data.subject,
-        htmlBody: data.htmlBody,
-        textBody: data.textBody ?? '',
-        replyTo: data.replyTo ?? '',
-        customHeaders: data.customHeaders,
-        dkim: data.dkimDomain
-          ? {
-              domain: data.dkimDomain,
-              selector: data.dkimSelector,
-              privateKeyPem: data.dkimPrivateKey,
-            }
-          : undefined,
-        orgId: data.orgId,
-        campaignId: data.campaignId,
-        contactId: data.contactId,
-      }),
+    const res = await mtaClient.send({
+      messageId: data.messageId,
+      fromEmail: data.fromEmail,
+      fromName: data.fromName,
+      toEmail: data.toEmail,
+      toName: data.toName,
+      subject: data.subject,
+      htmlBody: data.htmlBody,
+      textBody: data.textBody ?? '',
+      replyTo: data.replyTo ?? '',
+      customHeaders: data.customHeaders,
+      orgId: data.orgId,
+      campaignId: data.campaignId,
+      contactId: data.contactId,
+      sendingIp: '', // empty = engine picks from default pool
+      dkim: data.dkimDomain
+        ? {
+            domain: data.dkimDomain,
+            selector: data.dkimSelector ?? '',
+            privateKeyPem: data.dkimPrivateKey ?? '',
+          }
+        : undefined,
     });
 
-    if (!res.ok) {
-      return {
-        success: false,
-        messageId: data.messageId,
-        smtpCode: 0,
-        smtpMessage: '',
-        error: `MTA HTTP ${res.status}`,
-        durationMs: 0,
-      };
-    }
-
-    return (await res.json()) as MtaSendResult;
+    return {
+      success: res.success,
+      messageId: res.messageId,
+      smtpCode: res.smtpCode,
+      smtpMessage: res.smtpMessage,
+      error: res.error,
+      // proto int64 → string; parseInt safe (durations fit in MAX_SAFE_INTEGER)
+      durationMs: Number.parseInt(res.durationMs, 10) || 0,
+    };
   } catch (err) {
+    // gRPC ServiceError has .code (status code) and .details/.message
+    const e = err as Error & { code?: number; details?: string };
+    const detail = e.details ?? e.message;
     return {
       success: false,
       messageId: data.messageId,
       smtpCode: 0,
       smtpMessage: '',
-      error: `MTA connection error: ${(err as Error).message}`,
+      error: `MTA gRPC error${e.code !== undefined ? ` (${e.code})` : ''}: ${detail}`,
       durationMs: 0,
     };
   }
@@ -244,4 +240,12 @@ export function startMtaSenderWorkers() {
   });
 
   return workers;
+}
+
+/**
+ * Graceful shutdown: close gRPC client connection to the MTA engine.
+ * Call from main process SIGTERM/SIGINT handler after workers are drained.
+ */
+export function shutdownMtaSender(): void {
+  mtaClient.close();
 }

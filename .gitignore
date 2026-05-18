@@ -11,6 +11,10 @@ storybook-static
 *.test
 *.out
 
+# Local engine runtime logs (smoke tests, dev runs)
+apps/engine/engine.log
+apps/engine/engine.err
+
 # Environment
 .env
 .env.local
