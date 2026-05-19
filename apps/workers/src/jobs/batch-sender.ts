@@ -90,6 +90,17 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   // TRACKING_BASE_URL if the org hasn't verified a branded subdomain yet.
   const trackingBaseUrl = await fetchTrackingBaseUrl(data.orgId);
 
+  // Sprint D.8 — ePrivacy strict mode. When the org has opted into the
+  // stricter EU regime, we ONLY apply click/open tracking to recipients
+  // who recorded explicit consent on the 'tracking' channel. Outside
+  // strict mode the worker tracks every non-transactional recipient
+  // under the org's legitimate-interest claim (the pre-D.8 behaviour).
+  const trackingStrict = await fetchTrackingStrict(data.orgId);
+  const trackingOptedIn =
+    trackingStrict && stream !== 'transactional'
+      ? await fetchOptedInForTracking(data.orgId, contactIds)
+      : null;
+
   await Promise.all(checks);
 
   const mtaJobs: Array<{
@@ -153,7 +164,16 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     //     sends — receipts / password-reset emails should not be wrapped
     //     to avoid surprising the recipient with a redirect host and to
     //     keep transactional inbox-placement free of marketing signals.
-    if (stream !== 'transactional') {
+    //
+    //     Sprint D.8: in ePrivacy strict mode, additionally gate tracking
+    //     on the recipient having opted into the 'tracking' channel.
+    //     Non-strict orgs keep the pre-D.8 behaviour (track everyone on
+    //     non-transactional streams).
+    const trackingAllowed =
+      stream !== 'transactional' &&
+      (!trackingOptedIn || trackingOptedIn.has(contact.id));
+
+    if (trackingAllowed) {
       htmlBody = wrapLinks(
         htmlBody,
         trackingBaseUrl,
@@ -461,6 +481,51 @@ async function recordFrequencySend(orgId: string, contactId: string): Promise<vo
     });
   } catch {
     // non-critical
+  }
+}
+
+/**
+ * Sprint D.8 — fetch the org's ePrivacy strict-mode flag. Fail-safe to
+ * false (= legitimate-interest mode) on API outages so a transient API
+ * down doesn't accidentally apply tracking to opted-out recipients in
+ * the wrong direction.
+ */
+async function fetchTrackingStrict(orgId: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${API_URL}/api/v1/internal/org/tracking-strict?orgId=${orgId}`,
+    );
+    if (!res.ok) return false;
+    const body = (await res.json()) as { data: { strict: boolean } };
+    return body.data.strict === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Sprint D.8 — return the set of contactIds that have recorded explicit
+ * opt-in on the 'tracking' channel for this org. Called only when
+ * trackingEuStrict is on (one batch HTTP call per send batch). Fail-safe
+ * to an empty set so a transient API outage does NOT accidentally
+ * resume tracking for everyone — strict mode stays strict.
+ */
+async function fetchOptedInForTracking(
+  orgId: string,
+  contactIds: string[],
+): Promise<Set<string>> {
+  if (contactIds.length === 0) return new Set();
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/consent/opted-in-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId, channel: 'tracking', contactIds }),
+    });
+    if (!res.ok) return new Set();
+    const body = (await res.json()) as { data: { optedIn: string[] } };
+    return new Set(body.data.optedIn);
+  } catch {
+    return new Set();
   }
 }
 

@@ -19,6 +19,14 @@ export const organizations = pgTable(
     ipRestrictionsEnabled: boolean('ip_restrictions_enabled').notNull().default(false),
     /** HIPAA compliance mode — enables PHI safeguards and audit hardening (#231) */
     hipaaMode: boolean('hipaa_mode').notNull().default(false),
+    /**
+     * Sprint D.8 — ePrivacy strict mode. When true, batch-sender skips
+     * click/open tracking for recipients who haven't recorded explicit
+     * consent on the 'tracking' channel (contact_channel_consents). When
+     * false (default), tracking is applied to every non-transactional
+     * send under the org's legitimate-interest claim.
+     */
+    trackingEuStrict: boolean('tracking_eu_strict').notNull().default(false),
     /** If set, this org IS a sandbox of the referenced parent org (#342). */
     sandboxOfOrgId: uuid('sandbox_of_org_id'),
     /** 'none' | 'sandbox' — drives send guardrails (no real external sends). */
