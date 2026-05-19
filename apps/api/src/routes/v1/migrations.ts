@@ -17,6 +17,7 @@ import {
 import { startEcomailMigration } from '../../services/migrations/ecomail.js';
 import { startSmartEmailingMigration } from '../../services/migrations/smartemailing.js';
 import { startKlaviyoMigration } from '../../services/migrations/klaviyo.js';
+import { rollbackMigration } from '../../services/migrations/rollback.js';
 
 const migrationRoutes: FastifyPluginAsync = async (app) => {
 
@@ -86,6 +87,24 @@ const migrationRoutes: FastifyPluginAsync = async (app) => {
     const { apiKey } = klaviyoSchema.parse(req.body);
     const job = await startKlaviyoMigration(req.user!.orgId, apiKey);
     return reply.status(202).send({ data: job });
+  });
+
+  const rollbackSchema = z.object({
+    force: z.boolean().optional(),
+    includeSent: z.boolean().optional(),
+  });
+
+  app.post('/api/v1/migrations/:id/rollback', {
+    preHandler: [app.authenticate, app.requireRole('admin', 'owner')],
+    schema: {
+      tags: ['Migrations'],
+      summary: 'Roll back a completed migration — soft-deletes imported contacts',
+    },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const body = rollbackSchema.parse(req.body ?? {});
+    const result = await rollbackMigration(id, req.user!.orgId, body);
+    return reply.send({ data: result });
   });
 };
 

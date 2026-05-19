@@ -147,6 +147,11 @@ export const migrationJobStatusEnum = pgEnum('migration_job_status', [
   'completed',
   'failed',
   'cancelled',
+  // Sprint C.9 — completed/failed job whose imported contacts have been
+  // soft-deleted via /api/v1/migrations/:id/rollback. Keeps the job row
+  // around (with progress + errorMessage) so the rollback decision is
+  // audit-traceable.
+  'rolled_back',
 ]);
 
 export interface MigrationProgress {
