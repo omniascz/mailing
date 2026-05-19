@@ -146,6 +146,7 @@ import internalTimewarpRoutes from './routes/v1/internal/timewarp.js';
 import internalContactsRoutes from './routes/v1/internal/contacts.js';
 import internalSuppressionsRoutes from './routes/v1/internal/suppressions.js';
 import internalFrequencyRoutes from './routes/v1/internal/frequency.js';
+import internalTrackingDomainRoutes from './routes/v1/internal/tracking-domain.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
 import seoClustersRoutes from './routes/v1/seo/clusters.js';
 import seoKeywordsRoutes from './routes/v1/seo/keywords.js';
@@ -341,6 +342,7 @@ export async function buildApp() {
   await app.register(internalContactsRoutes);
   await app.register(internalSuppressionsRoutes);
   await app.register(internalFrequencyRoutes);
+  await app.register(internalTrackingDomainRoutes);
   await app.register(messagingSendRoutes);
   await app.register(seoClustersRoutes);
   await app.register(seoKeywordsRoutes);

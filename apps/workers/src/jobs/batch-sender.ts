@@ -23,6 +23,7 @@ import {
   type MergeTagContext,
 } from '@forgemsg/editor/render';
 import { emailSchema, type EmailSchema } from '@forgemsg/editor/schema';
+import { injectOpenPixel, wrapLinks } from '@forgemsg/shared';
 import {
   connection,
   QUEUE_NAMES,
@@ -85,6 +86,10 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
       ? await fetchTimewarpSchedule(data.contactIds, data.timewarp)
       : null;
 
+  // Resolve tracking URL prefix once per batch. Falls back to the global
+  // TRACKING_BASE_URL if the org hasn't verified a branded subdomain yet.
+  const trackingBaseUrl = await fetchTrackingBaseUrl(data.orgId);
+
   await Promise.all(checks);
 
   const mtaJobs: Array<{
@@ -118,11 +123,32 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     // 4. Render HTML + plain-text alternative (block JSON path via
     //    @forgemsg/editor renderEmail + renderPlainText; legacy { html }
     //    path uses parseMergeTags + HTML→text fallback).
-    const { html: htmlBody, text: textBody } = renderEmail(
+    let { html: htmlBody, text: textBody } = renderEmail(
       data.content,
       mergeCtx,
       data.preheader,
     );
+
+    // 4b. Apply click + open tracking. Both are skipped for transactional
+    //     sends — receipts / password-reset emails should not be wrapped
+    //     to avoid surprising the recipient with a redirect host and to
+    //     keep transactional inbox-placement free of marketing signals.
+    if (stream !== 'transactional') {
+      htmlBody = wrapLinks(
+        htmlBody,
+        trackingBaseUrl,
+        data.orgId,
+        data.campaignId,
+        contact.id,
+      );
+      htmlBody = injectOpenPixel(
+        htmlBody,
+        trackingBaseUrl,
+        data.orgId,
+        data.campaignId,
+        contact.id,
+      );
+    }
 
     // 5. Build custom headers
     const messageId = `${crypto.randomUUID()}@forgemsg.com`;
@@ -415,6 +441,26 @@ async function recordFrequencySend(orgId: string, contactId: string): Promise<vo
     });
   } catch {
     // non-critical
+  }
+}
+
+/**
+ * Resolve the tracking-URL prefix for this org. Returns the branded
+ * subdomain (e.g. https://links.customer.cz) when the org has a verified
+ * sending domain with a mailSubdomain CNAME pointed at our tracking
+ * edge; otherwise the default TRACKING_BASE_URL. Fail-safe: on API
+ * errors we fall through to the env default so sends never block on a
+ * resolver outage.
+ */
+async function fetchTrackingBaseUrl(orgId: string): Promise<string> {
+  const fallback = process.env.TRACKING_BASE_URL ?? 'https://track.mailforge.io';
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/tracking-domain?orgId=${orgId}`);
+    if (!res.ok) return fallback;
+    const body = (await res.json()) as { data: { baseUrl: string; branded: boolean } };
+    return body.data.baseUrl ?? fallback;
+  } catch {
+    return fallback;
   }
 }
 
