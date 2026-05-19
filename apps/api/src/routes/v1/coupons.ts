@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import {
   createBatch, listBatches, assignCodeToContact, redeem, batchStats,
+  importCodes,
 } from '../../services/coupons/index.js';
 
 const couponRoutes: FastifyPluginAsync = async (app) => {
@@ -53,6 +54,24 @@ const couponRoutes: FastifyPluginAsync = async (app) => {
   }, async (req, reply) => {
     const { batchId } = z.object({ batchId: z.string().uuid() }).parse(req.params);
     return reply.send({ data: await batchStats(req.user!.orgId, batchId) });
+  });
+
+  /**
+   * POST /api/v1/coupons/batches/:batchId/import
+   * Bulk import operator-supplied codes (e.g. uploaded CSV of Shoptet vouchers).
+   * Body: { codes: string[] } (max 100 000)
+   * Idempotent on (orgId, code) — duplicates dropped on conflict.
+   */
+  app.post('/api/v1/coupons/batches/:batchId/import', {
+    preHandler: [app.authenticate, app.requireRole('editor', 'admin', 'owner')],
+    schema: { tags: ['Coupons'], summary: 'Bulk-import pre-generated codes' },
+  }, async (req, reply) => {
+    const { batchId } = z.object({ batchId: z.string().uuid() }).parse(req.params);
+    const body = z.object({
+      codes: z.array(z.string().min(1).max(64)).max(100_000),
+    }).parse(req.body);
+    const result = await importCodes(req.user!.orgId, batchId, body.codes);
+    return reply.send({ data: result });
   });
 };
 
