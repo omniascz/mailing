@@ -15,6 +15,7 @@ import {
   listMigrationJobs,
 } from '../../services/migrations/mailchimp.js';
 import { startEcomailMigration } from '../../services/migrations/ecomail.js';
+import { startSmartEmailingMigration } from '../../services/migrations/smartemailing.js';
 
 const migrationRoutes: FastifyPluginAsync = async (app) => {
 
@@ -56,6 +57,20 @@ const migrationRoutes: FastifyPluginAsync = async (app) => {
   }, async (req, reply) => {
     const { apiKey } = ecomailSchema.parse(req.body);
     const job = await startEcomailMigration(req.user!.orgId, apiKey);
+    return reply.status(202).send({ data: job });
+  });
+
+  const smartemailingSchema = z.object({
+    username: z.string().min(1),
+    apiKey: z.string().min(10),
+  });
+
+  app.post('/api/v1/migrations/smartemailing', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Migrations'], summary: 'Start SmartEmailing import (CZ source)' },
+  }, async (req, reply) => {
+    const { username, apiKey } = smartemailingSchema.parse(req.body);
+    const job = await startSmartEmailingMigration(req.user!.orgId, username, apiKey);
     return reply.status(202).send({ data: job });
   });
 };
