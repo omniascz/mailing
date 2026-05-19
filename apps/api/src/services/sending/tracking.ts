@@ -18,5 +18,6 @@ export {
   wrapLinks,
   type OpenTrackingPayload,
   type ClickTrackingPayload,
+  type PreferenceCenterPayload,
   type TrackingPayload,
 } from '@forgemsg/shared';

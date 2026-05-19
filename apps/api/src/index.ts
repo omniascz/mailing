@@ -24,6 +24,7 @@ import templateRoutes from './routes/v1/templates.js';
 import domainRoutes from './routes/v1/domains.js';
 import sendingRoutes from './routes/v1/sending.js';
 import trackingRoutes from './routes/v1/tracking.js';
+import preferenceCenterRoutes from './routes/v1/preference-center.js';
 import campaignRoutes from './routes/v1/campaigns.js';
 import analyticsRoutes from './routes/v1/analytics.js';
 import alertRoutes from './routes/v1/alerts.js';
@@ -220,6 +221,7 @@ export async function buildApp() {
   await app.register(domainRoutes);
   await app.register(sendingRoutes);
   await app.register(trackingRoutes);
+  await app.register(preferenceCenterRoutes);
   await app.register(campaignRoutes);
   await app.register(analyticsRoutes);
   await app.register(alertRoutes);

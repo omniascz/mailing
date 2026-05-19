@@ -39,7 +39,24 @@ export interface ClickTrackingPayload {
   ts: number;
 }
 
-export type TrackingPayload = OpenTrackingPayload | ClickTrackingPayload;
+/**
+ * Preference-center access token. Embedded as a merge tag
+ * `{{preference_center_url}}` into outbound emails so recipients can
+ * manage subscriptions without logging in. Same HMAC scheme as the
+ * tracking tokens above; the type field guards against an open/click
+ * token being replayed against the preference center.
+ */
+export interface PreferenceCenterPayload {
+  type: 'pref';
+  orgId: string;
+  contactId: string;
+  ts: number;
+}
+
+export type TrackingPayload =
+  | OpenTrackingPayload
+  | ClickTrackingPayload
+  | PreferenceCenterPayload;
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
 

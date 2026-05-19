@@ -34,6 +34,12 @@ export const contactLists = pgTable(
       .references(() => lists.id, { onDelete: 'cascade' }),
     addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
     confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+    // Sprint D.1 / D.9 — per-list opt-out (granular alternative to the global
+    // suppressions row). When set, batch-sender filters this (contact,list)
+    // pair out of broadcasts. The contact itself remains active for other
+    // lists they're subscribed to.
+    unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
+    unsubscribedReason: varchar('unsubscribed_reason', { length: 255 }),
   },
   (t) => [
     primaryKey({ columns: [t.contactId, t.listId] }),

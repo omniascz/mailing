@@ -151,8 +151,12 @@ describe('injectOpenPixel', () => {
     expect(match).not.toBeNull();
     const decoded = verifyTrackingToken(match![1]!);
     expect(decoded?.type).toBe('open');
-    expect(decoded?.campaignId).toBe(campaignId);
-    expect(decoded?.contactId).toBe(contactId);
+    // Narrow the union so campaignId access typechecks. Pref-center
+    // tokens don't carry a campaignId; open + click do.
+    if (decoded && decoded.type === 'open') {
+      expect(decoded.campaignId).toBe(campaignId);
+      expect(decoded.contactId).toBe(contactId);
+    }
   });
 
   it('includes mso-hide:all for Outlook compatibility', () => {
