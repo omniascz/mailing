@@ -42,6 +42,7 @@ export * from './oauth.js';
 export * from './rss-campaigns.js';
 export * from './engagement.js';
 export * from './contact-emails.js';
+export * from './contact-channel-consents.js';
 export * from './smart-sending.js';
 export * from './quiet-hours.js';
 export * from './alerts-subscriptions.js';
