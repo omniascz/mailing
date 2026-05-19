@@ -37,6 +37,13 @@ export const campaigns = pgTable(
     // A/B testing
     abConfig: jsonb('ab_config').$type<Record<string, unknown>>(),
 
+    // Sprint E.1 — resend to non-openers. When parentCampaignId is set,
+    // the audience is computed at send time as "contacts who received
+    // the parent campaign but didn't open it" — not from list + segment.
+    parentCampaignId: uuid('parent_campaign_id'),
+    /** {delayHours, newSubject?, newPreheader?, includeBots?} */
+    autoResendConfig: jsonb('auto_resend_config').$type<Record<string, unknown>>(),
+
     // Scheduling
     scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
     sentAt: timestamp('sent_at', { withTimezone: true }),

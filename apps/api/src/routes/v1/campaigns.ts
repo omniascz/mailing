@@ -26,6 +26,7 @@ import {
   resumeCampaign,
   cancelCampaign,
 } from '../../services/campaigns/index.js';
+import { scheduleResend } from '../../services/campaigns/auto-resend.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -266,6 +267,30 @@ export default async function campaignRoutes(app: FastifyInstance) {
       const { id } = idParam.parse(req.params);
       const campaign = await cancelCampaign(req.user!.orgId, id);
       return { data: campaign };
+    },
+  );
+
+  /**
+   * POST /api/v1/campaigns/:id/schedule-resend
+   * Schedule a resend of this campaign to contacts who didn't open it.
+   * Body: { delayHours, newSubject?, newPreheader?, includeBots? }
+   * Returns the newly-created child campaign in 'scheduled' status.
+   */
+  app.post(
+    '/api/v1/campaigns/:id/schedule-resend',
+    { schema: { tags: ['Campaigns'], summary: 'Schedule resend to non-openers' } },
+    async (req, reply) => {
+      const { id } = idParam.parse(req.params);
+      const body = z
+        .object({
+          delayHours: z.number().int().min(1).max(168),
+          newSubject: z.string().max(255).optional(),
+          newPreheader: z.string().max(255).optional(),
+          includeBots: z.boolean().optional(),
+        })
+        .parse(req.body);
+      const child = await scheduleResend(req.user!.orgId, id, body);
+      return reply.code(201).send({ data: child });
     },
   );
 }
