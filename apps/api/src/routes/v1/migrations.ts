@@ -1,9 +1,10 @@
 /**
- * Migration routes (task 6.7).
+ * Migration routes.
  *
- *  POST /api/v1/migrations/mailchimp         — start Mailchimp import job
- *  GET  /api/v1/migrations                   — list migration jobs
- *  GET  /api/v1/migrations/:id               — get job + progress
+ *  POST /api/v1/migrations/mailchimp  — start Mailchimp import job (task 6.7)
+ *  POST /api/v1/migrations/ecomail    — start Ecomail import job (Sprint C — CZ)
+ *  GET  /api/v1/migrations            — list migration jobs
+ *  GET  /api/v1/migrations/:id        — get job + progress
  */
 
 import type { FastifyPluginAsync } from 'fastify';
@@ -13,6 +14,7 @@ import {
   getMigrationJob,
   listMigrationJobs,
 } from '../../services/migrations/mailchimp.js';
+import { startEcomailMigration } from '../../services/migrations/ecomail.js';
 
 const migrationRoutes: FastifyPluginAsync = async (app) => {
 
@@ -41,6 +43,19 @@ const migrationRoutes: FastifyPluginAsync = async (app) => {
   }, async (req, reply) => {
     const { apiKey } = mailchimpSchema.parse(req.body);
     const job = await startMailchimpMigration(req.user!.orgId, apiKey);
+    return reply.status(202).send({ data: job });
+  });
+
+  const ecomailSchema = z.object({
+    apiKey: z.string().min(10),
+  });
+
+  app.post('/api/v1/migrations/ecomail', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Migrations'], summary: 'Start Ecomail import (CZ source)' },
+  }, async (req, reply) => {
+    const { apiKey } = ecomailSchema.parse(req.body);
+    const job = await startEcomailMigration(req.user!.orgId, apiKey);
     return reply.status(202).send({ data: job });
   });
 };
