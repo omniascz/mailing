@@ -29,6 +29,8 @@ export interface MergeTagContext {
   system?: {
     unsubscribeUrl?: string;
     viewInBrowserUrl?: string;
+    /** Signed token URL to the public preference center (Sprint D.1). */
+    preferenceCenterUrl?: string;
     currentDate?: string;
     currentYear?: string;
   };
@@ -37,6 +39,7 @@ export interface MergeTagContext {
 const SYSTEM_KEYS = new Set([
   'unsubscribe_url',
   'view_in_browser_url',
+  'preference_center_url',
   'current_date',
   'current_year',
 ]);
@@ -87,6 +90,8 @@ function resolveSystem(ctx: MergeTagContext, field: string): string | undefined 
       return sys.unsubscribeUrl;
     case 'view_in_browser_url':
       return sys.viewInBrowserUrl;
+    case 'preference_center_url':
+      return sys.preferenceCenterUrl;
     case 'current_date':
       return sys.currentDate ?? new Date().toISOString().slice(0, 10);
     case 'current_year':

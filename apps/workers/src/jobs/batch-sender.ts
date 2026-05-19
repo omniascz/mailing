@@ -23,7 +23,7 @@ import {
   type MergeTagContext,
 } from '@forgemsg/editor/render';
 import { emailSchema, type EmailSchema } from '@forgemsg/editor/schema';
-import { injectOpenPixel, wrapLinks } from '@forgemsg/shared';
+import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/shared';
 import {
   connection,
   QUEUE_NAMES,
@@ -117,7 +117,27 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     //    rendering paths. parseMergeTags (from @forgemsg/editor) is the
     //    single source of truth for tag syntax + filter registry across
     //    worker, editor preview, and server-side rendering.
-    const mergeCtx = buildMergeContext(contact);
+    //
+    //    System context fields are populated here:
+    //    - unsubscribe_url: legacy one-click unsub (still List-Unsubscribe
+    //      header backing); will eventually point at the same preference
+    //      center hostname once the redirect page ships.
+    //    - preference_center_url: signed pref token under /p/center/. The
+    //      recipient lands on a list-by-list opt-out page (D.1).
+    //    - current_date / current_year: cheap convenience tags.
+    const prefToken = createTrackingToken({
+      type: 'pref',
+      orgId: data.orgId,
+      contactId: contact.id,
+      ts: Math.floor(Date.now() / 1000),
+    });
+    const prefCenterUrl = `${trackingBaseUrl}/p/center/${prefToken}`;
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const mergeCtx = buildMergeContext(contact, {
+      preferenceCenterUrl: prefCenterUrl,
+      currentDate: todayIso,
+      currentYear: String(new Date().getFullYear()),
+    });
     const subject = parseMergeTags(data.subject, mergeCtx);
 
     // 4. Render HTML + plain-text alternative (block JSON path via
