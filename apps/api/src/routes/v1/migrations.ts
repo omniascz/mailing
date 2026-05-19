@@ -16,6 +16,7 @@ import {
 } from '../../services/migrations/mailchimp.js';
 import { startEcomailMigration } from '../../services/migrations/ecomail.js';
 import { startSmartEmailingMigration } from '../../services/migrations/smartemailing.js';
+import { startKlaviyoMigration } from '../../services/migrations/klaviyo.js';
 
 const migrationRoutes: FastifyPluginAsync = async (app) => {
 
@@ -71,6 +72,19 @@ const migrationRoutes: FastifyPluginAsync = async (app) => {
   }, async (req, reply) => {
     const { username, apiKey } = smartemailingSchema.parse(req.body);
     const job = await startSmartEmailingMigration(req.user!.orgId, username, apiKey);
+    return reply.status(202).send({ data: job });
+  });
+
+  const klaviyoSchema = z.object({
+    apiKey: z.string().min(10),
+  });
+
+  app.post('/api/v1/migrations/klaviyo', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['Migrations'], summary: 'Start Klaviyo import (DTC e-commerce)' },
+  }, async (req, reply) => {
+    const { apiKey } = klaviyoSchema.parse(req.body);
+    const job = await startKlaviyoMigration(req.user!.orgId, apiKey);
     return reply.status(202).send({ data: job });
   });
 };
