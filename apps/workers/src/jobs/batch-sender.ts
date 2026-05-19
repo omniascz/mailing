@@ -54,13 +54,38 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   let sent = 0;
   let skipped = 0;
 
-  // Resolve per-contact send timestamps when time-warp is enabled. One batch
-  // call (≤1000 contacts) → Map<contactId, ISO ts>. Failures fall through to
-  // immediate dispatch (worker keeps making progress on API outages).
+  // Resolve all batch-level pre-checks + per-contact send timestamps in
+  // parallel BEFORE the per-contact loop. Previously the loop made up to
+  // 3000 round-trips per batch (suppression + frequency + holdout × 1000
+  // contacts). Now: 4 HTTP calls per batch (contacts already batched).
+  const suppressedSet = new Set<string>();
+  const cappedSet = new Set<string>();
+  const heldOutSet = new Set<string>();
+
+  const contactIds = contacts.map((c) => c.id);
+  const emails = contacts.map((c) => c.email);
+
+  const checks: Array<Promise<unknown>> = [];
+  if (stream !== 'transactional') {
+    checks.push(
+      fetchSuppressedBatch(data.orgId, emails).then((s) =>
+        s.forEach((e) => suppressedSet.add(e.toLowerCase())),
+      ),
+    );
+  }
+  if (stream === 'broadcast') {
+    checks.push(
+      fetchCappedBatch(data.orgId, contactIds).then((c) => c.forEach((id) => cappedSet.add(id))),
+      fetchHeldOutBatch(data.orgId, contactIds).then((c) => c.forEach((id) => heldOutSet.add(id))),
+    );
+  }
+
   const timewarpSchedule =
     data.timewarp?.enabled
       ? await fetchTimewarpSchedule(data.contactIds, data.timewarp)
       : null;
+
+  await Promise.all(checks);
 
   const mtaJobs: Array<{
     queue: ReturnType<typeof getMtaQueue>;
@@ -70,31 +95,17 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   }> = [];
 
   for (const contact of contacts) {
-    // 1. Check suppression — transactional stream skips suppression
-    if (stream !== 'transactional') {
-      const suppressed = await checkSuppression(data.orgId, contact.email);
-      if (suppressed) {
-        skipped++;
-        continue;
-      }
+    // 1. Synchronous Set lookups (data pre-fetched above). Transactional
+    //    stream skips suppression; broadcast stream additionally checks
+    //    frequency cap + holdout (the pre-fetch already gated these by
+    //    stream so the sets are empty for non-applicable streams).
+    if (suppressedSet.has(contact.email.toLowerCase())) {
+      skipped++;
+      continue;
     }
-
-    // 2. Check frequency cap — only broadcast stream is capped
-    if (stream === 'broadcast') {
-      const capped = await checkFrequencyCap(data.orgId, contact.id);
-      if (capped) {
-        skipped++;
-        continue;
-      }
-
-      // 2b. Holdout group enforcement — broadcast only. Transactional and
-      //     triggered streams ignore holdouts so receipts / workflow alerts
-      //     still reach the held-out cohort.
-      const heldOut = await checkHoldout(data.orgId, contact.id);
-      if (heldOut) {
-        skipped++;
-        continue;
-      }
+    if (cappedSet.has(contact.id) || heldOutSet.has(contact.id)) {
+      skipped++;
+      continue;
     }
 
     // 3. Build merge context once per contact; reused by subject + content
@@ -331,25 +342,67 @@ async function fetchContacts(orgId: string, contactIds: string[]): Promise<Conta
   }
 }
 
-async function checkSuppression(orgId: string, email: string): Promise<boolean> {
+/**
+ * Bulk suppression check — returns the subset of recipient emails that are
+ * currently suppressed for the org. Worker calls this once per batch
+ * (≤1000 emails) instead of N individual `/suppressions/check?email=…`
+ * calls. Fail-open on API errors so a transient outage doesn't block sends.
+ */
+async function fetchSuppressedBatch(orgId: string, emails: string[]): Promise<string[]> {
+  if (emails.length === 0) return [];
   try {
-    const res = await fetch(`${API_URL}/api/v1/internal/suppressions/check?orgId=${orgId}&email=${encodeURIComponent(email)}`);
-    if (!res.ok) return false;
-    const body = (await res.json()) as { data: { suppressed: boolean } };
+    const res = await fetch(`${API_URL}/api/v1/internal/suppressions/check-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId, emails }),
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { data: { suppressed: string[] } };
     return body.data.suppressed;
   } catch {
-    return false; // fail open — don't block sending on API errors
+    return [];
   }
 }
 
-async function checkFrequencyCap(orgId: string, contactId: string): Promise<boolean> {
+/**
+ * Bulk frequency-cap check — returns the subset of contact IDs currently
+ * capped under the org's frequency rules for the email channel. Fail-open.
+ */
+async function fetchCappedBatch(orgId: string, contactIds: string[]): Promise<string[]> {
+  if (contactIds.length === 0) return [];
   try {
-    const res = await fetch(`${API_URL}/api/v1/internal/frequency/check?orgId=${orgId}&contactId=${contactId}&channel=email`);
-    if (!res.ok) return false;
-    const body = (await res.json()) as { data: { capped: boolean } };
+    const res = await fetch(`${API_URL}/api/v1/internal/frequency/check-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId, contactIds, channel: 'email' }),
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { data: { capped: string[] } };
     return body.data.capped;
   } catch {
-    return false;
+    return [];
+  }
+}
+
+/**
+ * Bulk holdout check — returns the subset of contact IDs currently
+ * assigned to an active holdout group. Worker calls once per broadcast
+ * batch. Fail-open to avoid accidentally releasing the control cohort on
+ * a transient API outage (persistent 5xx surfaces via §C.15 abuse signals).
+ */
+async function fetchHeldOutBatch(orgId: string, contactIds: string[]): Promise<string[]> {
+  if (contactIds.length === 0) return [];
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/holdout/check-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId, contactIds }),
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { data: { heldOut: string[] } };
+    return body.data.heldOut;
+  } catch {
+    return [];
   }
 }
 
@@ -362,29 +415,6 @@ async function recordFrequencySend(orgId: string, contactId: string): Promise<vo
     });
   } catch {
     // non-critical
-  }
-}
-
-/**
- * Check whether the recipient is currently assigned to an active holdout
- * group. Holdout members are excluded from broadcast sends so the org can
- * measure incremental lift (revenue/engagement uplift attributable to the
- * campaign vs. the unmarketed control cohort).
- *
- * Fail-open on API errors so a transient outage doesn't accidentally
- * release the entire holdout cohort. The dedicated alert on persistent
- * 5xx from /internal/holdout/check is wired in §C.15 abuse signals.
- */
-async function checkHoldout(orgId: string, contactId: string): Promise<boolean> {
-  try {
-    const res = await fetch(
-      `${API_URL}/api/v1/internal/holdout/check?orgId=${orgId}&contactId=${contactId}`,
-    );
-    if (!res.ok) return false;
-    const body = (await res.json()) as { data: { heldOut: boolean } };
-    return body.data.heldOut;
-  } catch {
-    return false;
   }
 }
 
