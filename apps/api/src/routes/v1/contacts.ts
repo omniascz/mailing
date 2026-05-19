@@ -11,6 +11,7 @@ import {
 } from '../../services/contacts/index.js';
 import { validateEmail } from '../../services/email-validation/index.js';
 import { getContactActivity, formatActivityCsv, generateFilename } from '../../services/contacts/activity-export.js';
+import { anonymizeContact, exportContactData } from '../../services/contacts/gdpr.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -169,6 +170,54 @@ export default async function contactRoutes(app: FastifyInstance) {
       const { id } = idParam.parse(req.params);
       await deleteContact(req.user!.orgId, id);
       return reply.code(204).send();
+    },
+  );
+
+  /**
+   * POST /api/v1/contacts/:id/anonymize
+   * GDPR Art. 17 (right to be forgotten). Scrubs PII from the contact
+   * row + behavioral PII (IP, UA) from related email_events. Inserts a
+   * hash-based suppression so a future re-import can't resurrect the
+   * identity. Returns { contactId, emailHash, anonymizedAt, emailEventsScrubbed }.
+   * Requires admin or owner role.
+   */
+  app.post(
+    '/api/v1/contacts/:id/anonymize',
+    {
+      preHandler: [app.requireRole('admin', 'owner')],
+      schema: {
+        tags: ['Contacts', 'GDPR'],
+        summary: 'Anonymize contact (GDPR right to be forgotten)',
+      },
+    },
+    async (req, reply) => {
+      const { id } = idParam.parse(req.params);
+      const result = await anonymizeContact(req.user!.orgId, id);
+      return reply.send({ data: result });
+    },
+  );
+
+  /**
+   * GET /api/v1/contacts/:id/export-data
+   * GDPR Art. 20 (data portability). Returns a JSON envelope with the
+   * contact profile + last 365 days of email events. Stable shape for
+   * hand-off to another ESP. Owner/admin can also pull it via
+   * activity-export.csv; this endpoint is the JSON twin.
+   */
+  app.get(
+    '/api/v1/contacts/:id/export-data',
+    {
+      schema: {
+        tags: ['Contacts', 'GDPR'],
+        summary: 'Export contact data (GDPR data portability)',
+      },
+    },
+    async (req, reply) => {
+      const { id } = idParam.parse(req.params);
+      const data = await exportContactData(req.user!.orgId, id);
+      return reply
+        .header('Content-Disposition', `attachment; filename="contact-${id}.json"`)
+        .send({ data });
     },
   );
 
