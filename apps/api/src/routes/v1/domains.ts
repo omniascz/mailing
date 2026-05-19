@@ -17,6 +17,7 @@ import { sendingDomains } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { generateDkimKeyPair, verifyDkimDns, buildDkimDnsRecord } from '../../services/domains/dkim.js';
 import { buildDnsRecords, verifyDnsRecords } from '../../services/domains/dns-records.js';
+import { runQualityCheck } from '../../services/domains/quality-check.js';
 import { getDomainWarmupStatus, getWarmupQuota } from '../../services/domains/warmup-scheduler.js';
 
 const domainParam = z.object({ id: z.string().uuid() });
@@ -288,6 +289,31 @@ export default async function domainRoutes(app: FastifyInstance) {
           allVerified: allVerified && dkimOk,
         },
       };
+    },
+  );
+
+  // ── Quality check (Sprint E.9) ──────────────────────────────────────────────
+
+  /**
+   * GET /api/v1/domains/:id/quality-check
+   * Consolidated readiness report — runs all 4 mandatory DNS checks (SPF /
+   * DKIM / DMARC / Return-Path) plus 3 advisory checks (DMARC policy
+   * enforcement, DMARC rua aggregate reporting, BIMI readiness). Returns
+   * { ready, errorCount, warningCount, checks[] } where ready=true means
+   * every error-severity check passed.
+   */
+  app.get(
+    '/api/v1/domains/:id/quality-check',
+    {
+      schema: {
+        tags: ['Domains'],
+        summary: 'Run consolidated authentication + deliverability checks',
+      },
+    },
+    async (req, reply) => {
+      const { id } = domainParam.parse(req.params);
+      const report = await runQualityCheck(req.user!.orgId, id);
+      return reply.send({ data: report });
     },
   );
 
