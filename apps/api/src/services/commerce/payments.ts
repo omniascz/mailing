@@ -31,59 +31,86 @@ async function stripePost(path: string, body: Record<string, StripeFieldValue>) 
   const res = await fetch(`https://api.stripe.com/v1${path}`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${stripeKey()}`,
+      Authorization: `Bearer ${stripeKey()}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: params.toString(),
   });
-  const json = await res.json() as Record<string, unknown>;
-  if (!res.ok) throw AppError.badRequest((json.error as Record<string, unknown>)?.message as string ?? 'Stripe error');
+  const json = (await res.json()) as Record<string, unknown>;
+  if (!res.ok)
+    throw AppError.badRequest(
+      ((json.error as Record<string, unknown>)?.message as string) ?? 'Stripe error',
+    );
   return json;
 }
 
 async function stripeGet(path: string) {
   const res = await fetch(`https://api.stripe.com/v1${path}`, {
-    headers: { 'Authorization': `Bearer ${stripeKey()}` },
+    headers: { Authorization: `Bearer ${stripeKey()}` },
   });
-  const json = await res.json() as Record<string, unknown>;
-  if (!res.ok) throw AppError.badRequest((json.error as Record<string, unknown>)?.message as string ?? 'Stripe error');
+  const json = (await res.json()) as Record<string, unknown>;
+  if (!res.ok)
+    throw AppError.badRequest(
+      ((json.error as Record<string, unknown>)?.message as string) ?? 'Stripe error',
+    );
   return json;
 }
 
 // ── Invoice payment ───────────────────────────────────────────────────────────
 
 export async function createInvoicePaymentIntent(orgId: string, invoiceId: string) {
-  const invoice = await db.select().from(invoices).where(and(eq(invoices.orgId, orgId), eq(invoices.id, invoiceId))).then(r => r[0]);
+  const invoice = await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.orgId, orgId), eq(invoices.id, invoiceId)))
+    .then((r) => r[0]);
   if (!invoice) throw AppError.notFound('Invoice not found');
   if (invoice.status === 'paid') throw AppError.badRequest('Invoice is already paid');
 
   const amountCents = Math.round(parseFloat(String(invoice.amountDue)) * 100);
-  const pi = await stripePost('/payment_intents', {
+  const pi = (await stripePost('/payment_intents', {
     amount: amountCents,
     currency: invoice.currency.toLowerCase(),
     metadata: { orgId, invoiceId: invoice.id, invoiceNumber: invoice.invoiceNumber },
     description: `Invoice ${invoice.invoiceNumber}`,
-  }) as { id: string; client_secret: string };
+  })) as { id: string; client_secret: string };
 
-  await db.update(invoices).set({ stripePaymentIntentId: pi.id, updatedAt: new Date() }).where(eq(invoices.id, invoiceId));
-  return { paymentIntentId: pi.id, clientSecret: pi.client_secret, amount: amountCents, currency: invoice.currency };
+  await db
+    .update(invoices)
+    .set({ stripePaymentIntentId: pi.id, updatedAt: new Date() })
+    .where(eq(invoices.id, invoiceId));
+  return {
+    paymentIntentId: pi.id,
+    clientSecret: pi.client_secret,
+    amount: amountCents,
+    currency: invoice.currency,
+  };
 }
 
 // ── Quote payment (pay-to-sign flow) ─────────────────────────────────────────
 
 export async function createQuotePaymentIntent(orgId: string, quoteId: string) {
-  const quote = await db.select().from(quotes).where(and(eq(quotes.orgId, orgId), eq(quotes.id, quoteId))).then(r => r[0]);
+  const quote = await db
+    .select()
+    .from(quotes)
+    .where(and(eq(quotes.orgId, orgId), eq(quotes.id, quoteId)))
+    .then((r) => r[0]);
   if (!quote) throw AppError.notFound('Quote not found');
 
   const amountCents = Math.round(parseFloat(String(quote.total)) * 100);
-  const pi = await stripePost('/payment_intents', {
+  const pi = (await stripePost('/payment_intents', {
     amount: amountCents,
     currency: quote.currency.toLowerCase(),
     metadata: { orgId, quoteId: quote.id, quoteNumber: quote.quoteNumber },
     description: `Quote ${quote.quoteNumber}: ${quote.title}`,
-  }) as { id: string; client_secret: string };
+  })) as { id: string; client_secret: string };
 
-  return { paymentIntentId: pi.id, clientSecret: pi.client_secret, amount: amountCents, currency: quote.currency };
+  return {
+    paymentIntentId: pi.id,
+    clientSecret: pi.client_secret,
+    amount: amountCents,
+    currency: quote.currency,
+  };
 }
 
 // ── Stripe Customer ───────────────────────────────────────────────────────────
@@ -120,23 +147,36 @@ export async function handleStripeWebhook(payload: Buffer, signature: string): P
 
       if (meta.invoiceId) {
         const { markInvoicePaid } = await import('./invoicing.js');
-        const amountReceived = (obj.amount_received as number ?? 0) / 100;
-        const invoice = await db.select().from(invoices).where(eq(invoices.stripePaymentIntentId, piId)).then(r => r[0]);
+        const amountReceived = ((obj.amount_received as number) ?? 0) / 100;
+        const invoice = await db
+          .select()
+          .from(invoices)
+          .where(eq(invoices.stripePaymentIntentId, piId))
+          .then((r) => r[0]);
         if (invoice) await markInvoicePaid(invoice.orgId, invoice.id, amountReceived);
       }
       if (meta.quoteId) {
-        await db.update(quotes).set({ status: 'accepted', acceptedAt: new Date(), updatedAt: new Date() }).where(eq(quotes.id, meta.quoteId));
+        await db
+          .update(quotes)
+          .set({ status: 'accepted', acceptedAt: new Date(), updatedAt: new Date() })
+          .where(eq(quotes.id, meta.quoteId));
       }
       break;
     }
     case 'payment_intent.payment_failed': {
       const piId = String(obj.id);
-      const invoice = await db.select().from(invoices).where(eq(invoices.stripePaymentIntentId, piId)).then(r => r[0]);
+      const invoice = await db
+        .select()
+        .from(invoices)
+        .where(eq(invoices.stripePaymentIntentId, piId))
+        .then((r) => r[0]);
       if (invoice) {
         // Fire workflow event
         const { onApiEvent } = await import('../workflows/triggers.js');
         if (invoice.contactId) {
-          await onApiEvent(invoice.orgId, invoice.contactId, 'payment_failed', { invoiceId: invoice.id });
+          await onApiEvent(invoice.orgId, invoice.contactId, 'payment_failed', {
+            invoiceId: invoice.id,
+          });
         }
       }
       break;
@@ -147,8 +187,11 @@ export async function handleStripeWebhook(payload: Buffer, signature: string): P
 // ── Retry failed charge (#314 dunning) ────────────────────────────────────────
 
 export async function retryStripeInvoice(orgId: string, invoiceId: string) {
-  const invoice = await db.select().from(invoices)
-    .where(and(eq(invoices.orgId, orgId), eq(invoices.id, invoiceId))).then(r => r[0]);
+  const invoice = await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.orgId, orgId), eq(invoices.id, invoiceId)))
+    .then((r) => r[0]);
   if (!invoice) throw AppError.notFound('Invoice not found');
   if (invoice.status === 'paid') return { skipped: 'already_paid' };
 
@@ -168,11 +211,18 @@ export async function retryStripeInvoice(orgId: string, invoiceId: string) {
 // ── Refund ────────────────────────────────────────────────────────────────────
 
 export async function refundInvoicePayment(orgId: string, invoiceId: string, amountCents?: number) {
-  const invoice = await db.select().from(invoices).where(and(eq(invoices.orgId, orgId), eq(invoices.id, invoiceId))).then(r => r[0]);
+  const invoice = await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.orgId, orgId), eq(invoices.id, invoiceId)))
+    .then((r) => r[0]);
   if (!invoice) throw AppError.notFound('Invoice not found');
-  if (!invoice.stripePaymentIntentId) throw AppError.badRequest('No Stripe payment found for this invoice');
+  if (!invoice.stripePaymentIntentId)
+    throw AppError.badRequest('No Stripe payment found for this invoice');
 
-  const refundBody: Record<string, string | number | undefined> = { payment_intent: invoice.stripePaymentIntentId };
+  const refundBody: Record<string, string | number | undefined> = {
+    payment_intent: invoice.stripePaymentIntentId,
+  };
   if (amountCents) refundBody.amount = amountCents;
 
   const refund = await stripePost('/refunds', refundBody);

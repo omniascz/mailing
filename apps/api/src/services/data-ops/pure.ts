@@ -18,15 +18,27 @@ export type Predicate =
   | { and: Predicate[] }
   | { or: Predicate[] };
 
-export interface FilterStep { type: 'filter'; predicate: Predicate }
-export interface MapStep { type: 'map'; projection: Record<string, string | { $field: string }> }
+export interface FilterStep {
+  type: 'filter';
+  predicate: Predicate;
+}
+export interface MapStep {
+  type: 'map';
+  projection: Record<string, string | { $field: string }>;
+}
 export interface AggregateStep {
   type: 'aggregate';
   groupBy: string[];
   metrics: Record<string, { op: 'count' | 'sum' | 'avg' | 'min' | 'max'; field?: string }>;
 }
-export interface LimitStep { type: 'limit'; count: number }
-export interface SortStep { type: 'sort'; by: Array<{ field: string; dir: 'asc' | 'desc' }> }
+export interface LimitStep {
+  type: 'limit';
+  count: number;
+}
+export interface SortStep {
+  type: 'sort';
+  by: Array<{ field: string; dir: 'asc' | 'desc' }>;
+}
 export interface JoinStep {
   type: 'join';
   rightSource: string;
@@ -50,7 +62,8 @@ export function getField(row: Row, path: string): unknown {
 export function cmp(a: unknown, b: unknown): number {
   if (typeof a === 'number' && typeof b === 'number') return a - b;
   if (typeof a === 'string' && typeof b === 'string') return a < b ? -1 : a > b ? 1 : 0;
-  const an = Number(a); const bn = Number(b);
+  const an = Number(a);
+  const bn = Number(b);
   if (Number.isFinite(an) && Number.isFinite(bn)) return an - bn;
   return 0;
 }
@@ -62,16 +75,26 @@ export function evalPredicate(p: Predicate, row: Row): boolean {
   if ('or' in p) return p.or.some((sub) => evalPredicate(sub, row));
   const v = getField(row, p.field);
   switch (p.op) {
-    case 'eq': return v === p.value;
-    case 'neq': return v !== p.value;
-    case 'gt': return cmp(v, p.value) > 0;
-    case 'gte': return cmp(v, p.value) >= 0;
-    case 'lt': return cmp(v, p.value) < 0;
-    case 'lte': return cmp(v, p.value) <= 0;
-    case 'contains': return typeof v === 'string' && v.includes(p.value);
-    case 'not_contains': return typeof v === 'string' && !v.includes(p.value);
-    case 'is_null': return v === null || v === undefined;
-    case 'is_not_null': return v !== null && v !== undefined;
+    case 'eq':
+      return v === p.value;
+    case 'neq':
+      return v !== p.value;
+    case 'gt':
+      return cmp(v, p.value) > 0;
+    case 'gte':
+      return cmp(v, p.value) >= 0;
+    case 'lt':
+      return cmp(v, p.value) < 0;
+    case 'lte':
+      return cmp(v, p.value) <= 0;
+    case 'contains':
+      return typeof v === 'string' && v.includes(p.value);
+    case 'not_contains':
+      return typeof v === 'string' && !v.includes(p.value);
+    case 'is_null':
+      return v === null || v === undefined;
+    case 'is_not_null':
+      return v !== null && v !== undefined;
   }
 }
 

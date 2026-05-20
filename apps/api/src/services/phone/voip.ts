@@ -28,7 +28,7 @@ export interface OutboundCallRequest {
   /** Agent user id placing the call; used for billing + logs. */
   agentUserId: string;
   from: string; // E.164 or SIP URI
-  to: string;   // E.164 or SIP URI
+  to: string; // E.164 or SIP URI
   /** URL the provider should fetch for TwiML/TeXML call control. */
   callbackUrl: string;
   /** Optional recording + AMD settings. */
@@ -113,7 +113,10 @@ class TwilioVoipProvider implements IVoipProvider {
       `https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Calls.json`,
       {
         method: 'POST',
-        headers: { Authorization: `Basic ${auth}`, 'content-type': 'application/x-www-form-urlencoded' },
+        headers: {
+          Authorization: `Basic ${auth}`,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
         body: body.toString(),
       },
     );
@@ -121,7 +124,7 @@ class TwilioVoipProvider implements IVoipProvider {
       const text = await resp.text();
       throw new Error(`Twilio dial failed: ${resp.status} ${text}`);
     }
-    const data = await resp.json() as { sid: string; status: string };
+    const data = (await resp.json()) as { sid: string; status: string };
     return { providerCallId: data.sid, status: 'queued', provider: this.id };
   }
 
@@ -132,7 +135,10 @@ class TwilioVoipProvider implements IVoipProvider {
       `https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Calls/${providerCallId}.json`,
       {
         method: 'POST',
-        headers: { Authorization: `Basic ${auth}`, 'content-type': 'application/x-www-form-urlencoded' },
+        headers: {
+          Authorization: `Basic ${auth}`,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
         body: new URLSearchParams({ Status: 'completed' }).toString(),
       },
     );
@@ -215,8 +221,7 @@ class TwilioVoipProvider implements IVoipProvider {
         },
       },
     };
-    const enc = (o: unknown): string =>
-      Buffer.from(JSON.stringify(o)).toString('base64url');
+    const enc = (o: unknown): string => Buffer.from(JSON.stringify(o)).toString('base64url');
     const unsigned = `${enc(header)}.${enc(payload)}`;
     const sig = createHmac('sha256', this.apiKeySecret).update(unsigned).digest('base64url');
     return {
@@ -268,7 +273,7 @@ class TelnyxVoipProvider implements IVoipProvider {
       const text = await resp.text();
       throw new Error(`Telnyx dial failed: ${resp.status} ${text}`);
     }
-    const data = await resp.json() as { data: { call_control_id: string } };
+    const data = (await resp.json()) as { data: { call_control_id: string } };
     return { providerCallId: data.data.call_control_id, status: 'initiated', provider: this.id };
   }
 
@@ -287,7 +292,8 @@ class TelnyxVoipProvider implements IVoipProvider {
     const data = (body.data ?? body) as Record<string, unknown>;
     const eventType = typeof data.event_type === 'string' ? data.event_type : '';
     const payload = (data.payload ?? {}) as Record<string, unknown>;
-    const callControlId = typeof payload.call_control_id === 'string' ? payload.call_control_id : null;
+    const callControlId =
+      typeof payload.call_control_id === 'string' ? payload.call_control_id : null;
     if (!callControlId) return null;
 
     if (eventType === 'call.initiated' && payload.direction === 'incoming') {

@@ -44,7 +44,7 @@ export function uniqueSlug(base: string, existing: Set<string>, maxLength = 128)
 export function extractExcerpt(body: string, maxChars = 180): string {
   const stripped = body
     .replace(/<[^>]+>/g, ' ')
-    .replace(/[#_*`>\[\]]/g, '')
+    .replace(/[#_*`>[\]]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
   if (stripped.length <= maxChars) return stripped;
@@ -66,12 +66,12 @@ export function estimateReadTimeMinutes(body: string, wordsPerMinute = 220): num
 // ─── Scheduled publish ─────────────────────────────────────────────────────
 
 /** Is this post due to auto-publish right now? */
-export function isDueToPublish(status: string, scheduledAt: Date | null, now: Date = new Date()): boolean {
-  return (
-    status === 'scheduled' &&
-    scheduledAt !== null &&
-    scheduledAt.getTime() <= now.getTime()
-  );
+export function isDueToPublish(
+  status: string,
+  scheduledAt: Date | null,
+  now: Date = new Date(),
+): boolean {
+  return status === 'scheduled' && scheduledAt !== null && scheduledAt.getTime() <= now.getTime();
 }
 
 // ─── CTA variant selection ─────────────────────────────────────────────────
@@ -118,8 +118,7 @@ export interface CtaPerformance extends CtaStats {
 
 export function computeCtaPerformance(stats: CtaStats): CtaPerformance {
   const ctr = stats.impressions === 0 ? 0 : stats.clicks / stats.impressions;
-  const dismissRate =
-    stats.impressions === 0 ? 0 : stats.dismissals / stats.impressions;
+  const dismissRate = stats.impressions === 0 ? 0 : stats.dismissals / stats.impressions;
   const engaged = stats.impressions - stats.dismissals;
   const engagementRate = engaged <= 0 ? 0 : stats.clicks / engaged;
   return {

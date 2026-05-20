@@ -23,11 +23,21 @@ import {
 export interface ActivityItem {
   id: string;
   type:
-    | 'email_sent' | 'email_open' | 'email_click' | 'email_bounce' | 'email_unsubscribe'
-    | 'sms_sent' | 'sms_delivered' | 'sms_failed'
-    | 'deal_created' | 'deal_stage_changed' | 'deal_won' | 'deal_lost'
+    | 'email_sent'
+    | 'email_open'
+    | 'email_click'
+    | 'email_bounce'
+    | 'email_unsubscribe'
+    | 'sms_sent'
+    | 'sms_delivered'
+    | 'sms_failed'
+    | 'deal_created'
+    | 'deal_stage_changed'
+    | 'deal_won'
+    | 'deal_lost'
     | 'note_added'
-    | 'task_created' | 'task_completed'
+    | 'task_created'
+    | 'task_completed'
     | 'custom_event';
   occurredAt: Date;
   metadata: Record<string, unknown>;
@@ -48,99 +58,141 @@ export async function getContactActivityFeed(
   // Fetch from each source in parallel, then merge-sort
   const [emails, sms, stageHistory, dealRows, events, notes, tasks] = await Promise.all([
     // Email events
-    db.select({
-      id: emailEvents.id,
-      eventType: emailEvents.eventType,
-      occurredAt: emailEvents.createdAt,
-      campaignId: emailEvents.campaignId,
-      linkUrl: emailEvents.linkUrl,
-    }).from(emailEvents).where(and(
-      eq(emailEvents.orgId, orgId),
-      eq(emailEvents.contactId, contactId),
-      sql`${emailEvents.createdAt} < ${before}`,
-    )).orderBy(desc(emailEvents.createdAt)).limit(limit),
+    db
+      .select({
+        id: emailEvents.id,
+        eventType: emailEvents.eventType,
+        occurredAt: emailEvents.createdAt,
+        campaignId: emailEvents.campaignId,
+        linkUrl: emailEvents.linkUrl,
+      })
+      .from(emailEvents)
+      .where(
+        and(
+          eq(emailEvents.orgId, orgId),
+          eq(emailEvents.contactId, contactId),
+          sql`${emailEvents.createdAt} < ${before}`,
+        ),
+      )
+      .orderBy(desc(emailEvents.createdAt))
+      .limit(limit),
 
     // SMS send log
-    db.select({
-      id: smsSendLog.id,
-      status: smsSendLog.status,
-      createdAt: smsSendLog.createdAt,
-      phone: smsSendLog.phone,
-    }).from(smsSendLog).where(and(
-      eq(smsSendLog.orgId, orgId),
-      eq(smsSendLog.contactId, contactId),
-      sql`${smsSendLog.createdAt} < ${before}`,
-    )).orderBy(desc(smsSendLog.createdAt)).limit(limit),
+    db
+      .select({
+        id: smsSendLog.id,
+        status: smsSendLog.status,
+        createdAt: smsSendLog.createdAt,
+        phone: smsSendLog.phone,
+      })
+      .from(smsSendLog)
+      .where(
+        and(
+          eq(smsSendLog.orgId, orgId),
+          eq(smsSendLog.contactId, contactId),
+          sql`${smsSendLog.createdAt} < ${before}`,
+        ),
+      )
+      .orderBy(desc(smsSendLog.createdAt))
+      .limit(limit),
 
     // Deal stage history (for deals linked to this contact)
-    db.select({
-      id: dealStageHistory.id,
-      dealId: dealStageHistory.dealId,
-      fromStageId: dealStageHistory.fromStageId,
-      toStageId: dealStageHistory.toStageId,
-      changedAt: dealStageHistory.changedAt,
-    }).from(dealStageHistory)
+    db
+      .select({
+        id: dealStageHistory.id,
+        dealId: dealStageHistory.dealId,
+        fromStageId: dealStageHistory.fromStageId,
+        toStageId: dealStageHistory.toStageId,
+        changedAt: dealStageHistory.changedAt,
+      })
+      .from(dealStageHistory)
       .innerJoin(deals, eq(deals.id, dealStageHistory.dealId))
-      .where(and(
-        eq(dealStageHistory.orgId, orgId),
-        eq(deals.contactId, contactId),
-        sql`${dealStageHistory.changedAt} < ${before}`,
-      )).orderBy(desc(dealStageHistory.changedAt)).limit(limit),
+      .where(
+        and(
+          eq(dealStageHistory.orgId, orgId),
+          eq(deals.contactId, contactId),
+          sql`${dealStageHistory.changedAt} < ${before}`,
+        ),
+      )
+      .orderBy(desc(dealStageHistory.changedAt))
+      .limit(limit),
 
     // Deal status changes (won/lost)
-    db.select({
-      id: deals.id,
-      name: deals.name,
-      status: deals.status,
-      value: deals.value,
-      actualCloseDate: deals.actualCloseDate,
-      createdAt: deals.createdAt,
-    }).from(deals).where(and(
-      eq(deals.orgId, orgId),
-      eq(deals.contactId, contactId),
-      isNull(deals.deletedAt),
-    )).orderBy(desc(deals.createdAt)).limit(limit),
+    db
+      .select({
+        id: deals.id,
+        name: deals.name,
+        status: deals.status,
+        value: deals.value,
+        actualCloseDate: deals.actualCloseDate,
+        createdAt: deals.createdAt,
+      })
+      .from(deals)
+      .where(and(eq(deals.orgId, orgId), eq(deals.contactId, contactId), isNull(deals.deletedAt)))
+      .orderBy(desc(deals.createdAt))
+      .limit(limit),
 
     // Custom events
-    db.select({
-      id: workflowEvents.id,
-      eventName: workflowEvents.eventName,
-      properties: workflowEvents.properties,
-      createdAt: workflowEvents.createdAt,
-    }).from(workflowEvents).where(and(
-      eq(workflowEvents.orgId, orgId),
-      eq(workflowEvents.contactId, contactId),
-      sql`${workflowEvents.createdAt} < ${before}`,
-    )).orderBy(desc(workflowEvents.createdAt)).limit(limit),
+    db
+      .select({
+        id: workflowEvents.id,
+        eventName: workflowEvents.eventName,
+        properties: workflowEvents.properties,
+        createdAt: workflowEvents.createdAt,
+      })
+      .from(workflowEvents)
+      .where(
+        and(
+          eq(workflowEvents.orgId, orgId),
+          eq(workflowEvents.contactId, contactId),
+          sql`${workflowEvents.createdAt} < ${before}`,
+        ),
+      )
+      .orderBy(desc(workflowEvents.createdAt))
+      .limit(limit),
 
     // Notes
-    db.select({
-      id: crmNotes.id,
-      body: crmNotes.body,
-      authorUserId: crmNotes.authorUserId,
-      createdAt: crmNotes.createdAt,
-    }).from(crmNotes).where(and(
-      eq(crmNotes.orgId, orgId),
-      eq(crmNotes.contactId, contactId),
-      isNull(crmNotes.deletedAt),
-      sql`${crmNotes.createdAt} < ${before}`,
-    )).orderBy(desc(crmNotes.createdAt)).limit(limit),
+    db
+      .select({
+        id: crmNotes.id,
+        body: crmNotes.body,
+        authorUserId: crmNotes.authorUserId,
+        createdAt: crmNotes.createdAt,
+      })
+      .from(crmNotes)
+      .where(
+        and(
+          eq(crmNotes.orgId, orgId),
+          eq(crmNotes.contactId, contactId),
+          isNull(crmNotes.deletedAt),
+          sql`${crmNotes.createdAt} < ${before}`,
+        ),
+      )
+      .orderBy(desc(crmNotes.createdAt))
+      .limit(limit),
 
     // Tasks
-    db.select({
-      id: crmTasks.id,
-      title: crmTasks.title,
-      type: crmTasks.type,
-      status: crmTasks.status,
-      assignedUserId: crmTasks.assignedUserId,
-      completedAt: crmTasks.completedAt,
-      createdAt: crmTasks.createdAt,
-    }).from(crmTasks).where(and(
-      eq(crmTasks.orgId, orgId),
-      eq(crmTasks.contactId, contactId),
-      isNull(crmTasks.deletedAt),
-      sql`${crmTasks.createdAt} < ${before}`,
-    )).orderBy(desc(crmTasks.createdAt)).limit(limit),
+    db
+      .select({
+        id: crmTasks.id,
+        title: crmTasks.title,
+        type: crmTasks.type,
+        status: crmTasks.status,
+        assignedUserId: crmTasks.assignedUserId,
+        completedAt: crmTasks.completedAt,
+        createdAt: crmTasks.createdAt,
+      })
+      .from(crmTasks)
+      .where(
+        and(
+          eq(crmTasks.orgId, orgId),
+          eq(crmTasks.contactId, contactId),
+          isNull(crmTasks.deletedAt),
+          sql`${crmTasks.createdAt} < ${before}`,
+        ),
+      )
+      .orderBy(desc(crmTasks.createdAt))
+      .limit(limit),
   ]);
 
   const items: ActivityItem[] = [];

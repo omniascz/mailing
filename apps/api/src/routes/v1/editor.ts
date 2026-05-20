@@ -27,9 +27,18 @@ const countdownGifSchema = z.object({
   targetDate: z.string().datetime({ message: 'targetDate must be an ISO 8601 datetime string' }),
   style: z
     .object({
-      bgColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-      textColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-      labelColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+      bgColor: z
+        .string()
+        .regex(/^#[0-9a-fA-F]{6}$/)
+        .optional(),
+      textColor: z
+        .string()
+        .regex(/^#[0-9a-fA-F]{6}$/)
+        .optional(),
+      labelColor: z
+        .string()
+        .regex(/^#[0-9a-fA-F]{6}$/)
+        .optional(),
       fontFamily: z.string().max(200).optional(),
       width: z.number().int().min(100).max(1200).optional(),
       height: z.number().int().min(40).max(400).optional(),
@@ -61,9 +70,18 @@ const savedBlockIdParam = z.object({ id: z.string().uuid() });
 
 const brandKitUpdateSchema = z.object({
   logoUrl: z.string().url().max(1024).nullable().optional(),
-  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
+  secondaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
+  accentColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
   fontHeading: z.string().max(100).optional(),
   fontBody: z.string().max(100).optional(),
   footerText: z.string().max(5000).nullable().optional(),
@@ -140,9 +158,7 @@ export default async function editorRoutes(app: FastifyInstance) {
     '/api/v1/editor/html-to-blocks',
     { schema: { tags: ['Editor'], summary: 'Convert HTML email to block JSON' } },
     async (req) => {
-      const { html } = z
-        .object({ html: z.string().min(10).max(80_000) })
-        .parse(req.body);
+      const { html } = z.object({ html: z.string().min(10).max(80_000) }).parse(req.body);
 
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
@@ -193,9 +209,7 @@ export default async function editorRoutes(app: FastifyInstance) {
     '/api/v1/editor/accessibility-check',
     { schema: { tags: ['Editor'], summary: 'WCAG accessibility audit for HTML email' } },
     async (req) => {
-      const { html } = z
-        .object({ html: z.string().min(1).max(200_000) })
-        .parse(req.body);
+      const { html } = z.object({ html: z.string().min(1).max(200_000) }).parse(req.body);
 
       const apiKey = process.env.ANTHROPIC_API_KEY;
       const result = await checkAccessibility(html, apiKey);
@@ -320,11 +334,7 @@ export default async function editorRoutes(app: FastifyInstance) {
     async (req) => {
       const orgId = req.user!.orgId;
 
-      const [row] = await db
-        .select()
-        .from(brandKits)
-        .where(eq(brandKits.orgId, orgId))
-        .limit(1);
+      const [row] = await db.select().from(brandKits).where(eq(brandKits.orgId, orgId)).limit(1);
 
       if (row) return { data: row };
 

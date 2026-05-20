@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `53_Bloomreach_Features_DeepDive.md` o **procesní pohled**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Bloomreach Engagement = původně Exponea** (Bratislava, 2016)
 > - **Akvizice:** 26. ledna 2021 Bloomreach Inc. (USA) za $900M valuation
 > - **CDXP = CDP + Marketing Automation** v jednom (ne 2 nástroje)
@@ -158,21 +159,21 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Customer admin** | Web login | Vše, billing, users | Vše |
-| **Marketing manager** | Web login | Strategy, campaigns | Per role |
-| **Email marketer** | Web login | Email campaigns | Per role |
-| **Data analyst** | SQL interface | Custom queries, reports | Per scope |
-| **Developer** | API + webhooks | Integrations, custom code | Per scope |
-| **End customer** | Email / SMS / push / web | Engage | Vlastní profil |
-| **Anonymous visitor** | Web | Browse, get tracked | Cookie ID |
-| **Bloomreach support** | Help desk | Issue resolution | s consent |
-| **Bloomreach consultant** | Engagement | Strategy, implementation | s consent |
-| **Bloomreach sales** | Sales process | Discovery, contracts | s consent |
-| **Actum Digital** | Partner portal | Implementation, ongoing | Per project |
-| **Adastra** | Partner portal | Implementation, ongoing | Per project |
-| **Custom partner** | Per agreement | Per agreement | Per agreement |
+| Aktér                     | Vstupní bod              | Co dělá                   | Co vidí        |
+| ------------------------- | ------------------------ | ------------------------- | -------------- |
+| **Customer admin**        | Web login                | Vše, billing, users       | Vše            |
+| **Marketing manager**     | Web login                | Strategy, campaigns       | Per role       |
+| **Email marketer**        | Web login                | Email campaigns           | Per role       |
+| **Data analyst**          | SQL interface            | Custom queries, reports   | Per scope      |
+| **Developer**             | API + webhooks           | Integrations, custom code | Per scope      |
+| **End customer**          | Email / SMS / push / web | Engage                    | Vlastní profil |
+| **Anonymous visitor**     | Web                      | Browse, get tracked       | Cookie ID      |
+| **Bloomreach support**    | Help desk                | Issue resolution          | s consent      |
+| **Bloomreach consultant** | Engagement               | Strategy, implementation  | s consent      |
+| **Bloomreach sales**      | Sales process            | Discovery, contracts      | s consent      |
+| **Actum Digital**         | Partner portal           | Implementation, ongoing   | Per project    |
+| **Adastra**               | Partner portal           | Implementation, ongoing   | Per project    |
+| **Custom partner**        | Per agreement            | Per agreement             | Per agreement  |
 
 ---
 
@@ -480,7 +481,7 @@ Common challenges:
 
 ### 4.3 Per oficiální G2 user
 
-> *"Time to market geeft ons de grootste voordeel. We kunnen snel schakelen voor campagnes in soms wel 10 landen."*
+> _"Time to market geeft ons de grootste voordeel. We kunnen snel schakelen voor campagnes in soms wel 10 landen."_
 
 (Překlad: "Time-to-market nám dává největší výhodu. Můžeme rychle přepínat kampaně někdy až v 10 zemích.")
 
@@ -549,11 +550,11 @@ ADASTRA:
 
 ### 5.2 Per Adastra (oficiální)
 
-> *"This recognition reflects our long-term partnership with Bloomreach and our combined ability to deliver world-class, data-driven customer experience solutions for data-rich organizations."*
+> _"This recognition reflects our long-term partnership with Bloomreach and our combined ability to deliver world-class, data-driven customer experience solutions for data-rich organizations."_
 
 ### 5.3 Per Actum (oficiální o SIKO)
 
-> *"Once completed a managed development roadmap had to be established to satisfy the needs of the customers on B2C websites in 3 countries. Furthermore, the need for hyperpersnalized communication led to implementation of Bloomreach Engagement platform."*
+> _"Once completed a managed development roadmap had to be established to satisfy the needs of the customers on B2C websites in 3 countries. Furthermore, the need for hyperpersnalized communication led to implementation of Bloomreach Engagement platform."_
 
 ### 5.4 Partner-led flow
 
@@ -1131,7 +1132,7 @@ Scenario builder workflow:
 
 ### 10.2 Per G2 review
 
-> *"Despite its power, the interface is intuitive. Marketers can build complex, personalized customer journeys and perform A/B testing without needing a constant line to the dev team."*
+> _"Despite its power, the interface is intuitive. Marketers can build complex, personalized customer journeys and perform A/B testing without needing a constant line to the dev team."_
 
 ### 10.3 Pre-built scenarios
 
@@ -1263,7 +1264,7 @@ Email with dynamic blocks:
 Block 1: Hero image
 - If: VIP customer
   → "Welcome back, [Name]" + product
-- If: First-time customer  
+- If: First-time customer
   → "Welcome to [Brand]" + intro
 - If: Returning churned
   → "We miss you, [Name]" + special offer
@@ -1809,7 +1810,7 @@ MVT capabilities:
 
 ### 17.3 Per G2 review
 
-> *"Marketers can build complex, personalized customer journeys and perform A/B testing without needing a constant line to the dev team."*
+> _"Marketers can build complex, personalized customer journeys and perform A/B testing without needing a constant line to the dev team."_
 
 ⚠️ **Self-serve A/B testing** = key marketer empowerment.
 
@@ -1857,7 +1858,7 @@ Recommendations config:
 
 ### 18.2 Per G2 user
 
-> *"I like that Bloomreach offers dynamic recommendations based on the user, utilizing different algorithms. It's pretty okay for personalization, recommending products based on the data you provide."*
+> _"I like that Bloomreach offers dynamic recommendations based on the user, utilizing different algorithms. It's pretty okay for personalization, recommending products based on the data you provide."_
 
 ### 18.3 Use case product recommendations
 
@@ -1919,7 +1920,7 @@ PREDICTIVE REPORTS:
 
 ### 19.2 Per G2 critique
 
-> *"While the campaign execution is great, the reporting dashboards leave a bit to be desired. Building out custom, granular reports on email performance or A/B tests can feel clunky and take longer than they should."*
+> _"While the campaign execution is great, the reporting dashboards leave a bit to be desired. Building out custom, granular reports on email performance or A/B tests can feel clunky and take longer than they should."_
 
 ```
 Reporting realities:
@@ -2107,9 +2108,9 @@ VÝSLEDKY (oficiální):
 
 ### 21.2 Per Bloomreach oficiální
 
-> *"Knowing personalization and segmentation were involved, it was safe to assume that Bloomreach Engagement had an important role in this campaign. However, Bloomreach's role extended further than helping personalize the video, the email campaign, and segmenting the audience receiving it. Bloomreach Engagement played the part of technical enablement with the data flow."*
+> _"Knowing personalization and segmentation were involved, it was safe to assume that Bloomreach Engagement had an important role in this campaign. However, Bloomreach's role extended further than helping personalize the video, the email campaign, and segmenting the audience receiving it. Bloomreach Engagement played the part of technical enablement with the data flow."_
 
-> *"Webhooks enable custom integrations with APIs outside of Bloomreach, allowing data to be sent to or brought in from a third party."*
+> _"Webhooks enable custom integrations with APIs outside of Bloomreach, allowing data to be sent to or brought in from a third party."_
 
 ### 21.3 Why this case demonstrates power
 
@@ -2174,7 +2175,7 @@ RESULTS:
 
 ### 22.2 Per HP Tronic team
 
-> *"You can really take a different approach with your customers when you have all of your customer data in one place. We really like that approach. We didn't need that many personnel resources from our side to get started with weblayers. You don't really need any back-end implementation or integration. You can run weblayers in two or three weeks."*
+> _"You can really take a different approach with your customers when you have all of your customer data in one place. We really like that approach. We didn't need that many personnel resources from our side to get started with weblayers. You don't really need any back-end implementation or integration. You can run weblayers in two or three weeks."_
 
 ### 22.3 Key takeaway
 
@@ -2244,9 +2245,9 @@ POST-BLOOMREACH:
 
 ### 23.2 Per Allwyn (oficiální)
 
-> *"One platform = campaign orchestration unlocked. Loomi AI replaced two legacy campaign systems, centralizing all messaging in a single workspace for multiple teams."*
+> _"One platform = campaign orchestration unlocked. Loomi AI replaced two legacy campaign systems, centralizing all messaging in a single workspace for multiple teams."_
 
-> *"With 11 communication channels under one roof, Allwyn can deliver the right message, to the right customer, at the right time — across web, email, mobile, and more."*
+> _"With 11 communication channels under one roof, Allwyn can deliver the right message, to the right customer, at the right time — across web, email, mobile, and more."_
 
 ### 23.3 Why Allwyn case is significant
 
@@ -2438,28 +2439,28 @@ Reference customer benefits:
 
 ## 26. Datová mapa: co vidí kdo
 
-| Data | Admin | Marketing manager | Email marketer | Data analyst | Developer | End customer | Anonymous visitor | Bloomreach support | Partner team | API client |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | view | ❌ | ❌ | ❌ | ❌ | ❌ | s consent | s consent | per scope |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | s consent | ❌ | ❌ |
-| Users + roles | ✅ | view | ❌ | ❌ | ❌ | ❌ | ❌ | s consent | s consent | per scope |
-| Customer profiles | ✅ | ✅ | ✅ | ✅ | per scope | own profile | ❌ | s consent | per project | ✅ |
-| Anonymous visitors | ✅ | view | view | ✅ | per scope | ❌ | own session | s consent | per project | per scope |
-| Events history | ✅ | ✅ | view | ✅ | per scope | own events | own events | s consent | per project | per scope |
-| Segments | ✅ | ✅ | ✅ | ✅ | per scope | ❌ | ❌ | s consent | per project | per scope |
-| Predictive scores | ✅ | view | view | ✅ | per scope | ❌ | ❌ | s consent | per project | per scope |
-| Scenarios | ✅ | ✅ | ✅ | view | per scope | ❌ | ❌ | s consent | per project | per scope |
-| Campaigns | ✅ | ✅ | ✅ | view | per scope | received content | ❌ | s consent | per project | per scope |
-| Templates | ✅ | ✅ | ✅ | view | per scope | ❌ | ❌ | s consent | per project | per scope |
-| Weblayers | ✅ | ✅ | ✅ | view | per scope | view displays | view displays | s consent | per project | per scope |
-| Reports | ✅ | ✅ | view | ✅ | per scope | ❌ | ❌ | s consent | per project | per scope |
-| Custom queries (SQL) | ✅ | view | ❌ | ✅ | per scope | ❌ | ❌ | s consent | per project | per scope |
-| Webhooks | ✅ | ❌ | ❌ | view | ✅ | ❌ | ❌ | s consent | per project | – |
-| API keys | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | s consent | per project | – |
-| Loomi AI insights | ✅ | ✅ | ✅ | ✅ | per scope | ❌ | ❌ | s consent | per project | per scope |
-| Implementation logs | ✅ | view | ❌ | view | ✅ | ❌ | ❌ | s consent | ✅ | – |
-| Audit logs | ✅ | ❌ | ❌ | view | ❌ | ❌ | ❌ | s consent | s consent | – |
-| Consent management | ✅ | view | view | view | per scope | own consent | own consent | s consent | per project | per scope |
+| Data                 | Admin | Marketing manager | Email marketer | Data analyst | Developer |   End customer   | Anonymous visitor | Bloomreach support | Partner team | API client |
+| -------------------- | :---: | :---------------: | :------------: | :----------: | :-------: | :--------------: | :---------------: | :----------------: | :----------: | :--------: |
+| Account settings     |  ✅   |       view        |       ❌       |      ❌      |    ❌     |        ❌        |        ❌         |     s consent      |  s consent   | per scope  |
+| Billing              |  ✅   |        ❌         |       ❌       |      ❌      |    ❌     |        ❌        |        ❌         |     s consent      |      ❌      |     ❌     |
+| Users + roles        |  ✅   |       view        |       ❌       |      ❌      |    ❌     |        ❌        |        ❌         |     s consent      |  s consent   | per scope  |
+| Customer profiles    |  ✅   |        ✅         |       ✅       |      ✅      | per scope |   own profile    |        ❌         |     s consent      | per project  |     ✅     |
+| Anonymous visitors   |  ✅   |       view        |      view      |      ✅      | per scope |        ❌        |    own session    |     s consent      | per project  | per scope  |
+| Events history       |  ✅   |        ✅         |      view      |      ✅      | per scope |    own events    |    own events     |     s consent      | per project  | per scope  |
+| Segments             |  ✅   |        ✅         |       ✅       |      ✅      | per scope |        ❌        |        ❌         |     s consent      | per project  | per scope  |
+| Predictive scores    |  ✅   |       view        |      view      |      ✅      | per scope |        ❌        |        ❌         |     s consent      | per project  | per scope  |
+| Scenarios            |  ✅   |        ✅         |       ✅       |     view     | per scope |        ❌        |        ❌         |     s consent      | per project  | per scope  |
+| Campaigns            |  ✅   |        ✅         |       ✅       |     view     | per scope | received content |        ❌         |     s consent      | per project  | per scope  |
+| Templates            |  ✅   |        ✅         |       ✅       |     view     | per scope |        ❌        |        ❌         |     s consent      | per project  | per scope  |
+| Weblayers            |  ✅   |        ✅         |       ✅       |     view     | per scope |  view displays   |   view displays   |     s consent      | per project  | per scope  |
+| Reports              |  ✅   |        ✅         |      view      |      ✅      | per scope |        ❌        |        ❌         |     s consent      | per project  | per scope  |
+| Custom queries (SQL) |  ✅   |       view        |       ❌       |      ✅      | per scope |        ❌        |        ❌         |     s consent      | per project  | per scope  |
+| Webhooks             |  ✅   |        ❌         |       ❌       |     view     |    ✅     |        ❌        |        ❌         |     s consent      | per project  |     –      |
+| API keys             |  ✅   |        ❌         |       ❌       |      ❌      |    ✅     |        ❌        |        ❌         |     s consent      | per project  |     –      |
+| Loomi AI insights    |  ✅   |        ✅         |       ✅       |      ✅      | per scope |        ❌        |        ❌         |     s consent      | per project  | per scope  |
+| Implementation logs  |  ✅   |       view        |       ❌       |     view     |    ✅     |        ❌        |        ❌         |     s consent      |      ✅      |     –      |
+| Audit logs           |  ✅   |        ❌         |       ❌       |     view     |    ❌     |        ❌        |        ❌         |     s consent      |  s consent   |     –      |
+| Consent management   |  ✅   |       view        |      view      |     view     | per scope |   own consent    |    own consent    |     s consent      | per project  | per scope  |
 
 ---
 
@@ -2480,7 +2481,8 @@ Friction for evaluation
 ### 27.2 Event-based pricing eskalace
 
 Per G2 critique:
-> *"Initially, during negotiations, they will underestimate the number of processed events you actually need to lure you in with a lower investment. Once you are signed up, they will insist you are far below the processed events you require."*
+
+> _"Initially, during negotiations, they will underestimate the number of processed events you actually need to lure you in with a lower investment. Once you are signed up, they will insist you are far below the processed events you require."_
 
 ⚠️ **Sales tactic concern** – underestimation pattern.
 
@@ -2778,4 +2780,4 @@ Lock-in once committed
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů bloomreach.com (Engagement, Case Studies, Loomi AI), G2 reviews, Gartner Peer Insights, Wikipedia (Bloomreach), TechCrunch (akvizice 26.1.2021), Slovak Spectator, PitchBook (Exponea profile), Capterra, SaaSworthy, Actum Digital + Adastra partner pages, MALL.CZ + HP Tronic + Allwyn + Spokojený pes + SIKO case studies. Pro nejaktuálnější detaily je nutný kontakt s Bloomreach (bloomreach.com/pricing) nebo certified partnery (Actum Digital, Adastra).*
+_Dokument zpracován z oficiálních zdrojů bloomreach.com (Engagement, Case Studies, Loomi AI), G2 reviews, Gartner Peer Insights, Wikipedia (Bloomreach), TechCrunch (akvizice 26.1.2021), Slovak Spectator, PitchBook (Exponea profile), Capterra, SaaSworthy, Actum Digital + Adastra partner pages, MALL.CZ + HP Tronic + Allwyn + Spokojený pes + SIKO case studies. Pro nejaktuálnější detaily je nutný kontakt s Bloomreach (bloomreach.com/pricing) nebo certified partnery (Actum Digital, Adastra)._

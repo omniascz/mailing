@@ -10,12 +10,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { signupForms, blogPosts } from '../../db/schema/index.js';
-import {
-  renderSitemap,
-  renderRobotsTxt,
-  canonicalize,
-  type SitemapEntry,
-} from './pure.js';
+import { renderSitemap, renderRobotsTxt, canonicalize, type SitemapEntry } from './pure.js';
 
 export type SitemapSource = 'blog' | 'landings' | 'signup_forms';
 
@@ -57,9 +52,7 @@ export async function generateSitemap(opts: SitemapOptions): Promise<string> {
       );
     for (const row of rows) {
       const path =
-        row.locale && row.locale !== 'en'
-          ? `/${row.locale}/blog/${row.slug}`
-          : `/blog/${row.slug}`;
+        row.locale && row.locale !== 'en' ? `/${row.locale}/blog/${row.slug}` : `/blog/${row.slug}`;
       const loc = canonicalize(`${opts.origin}${path}`);
       if (!loc) continue;
       entries.push({

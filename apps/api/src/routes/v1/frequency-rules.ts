@@ -7,7 +7,11 @@ const channelSchema = z.enum(['email', 'sms', 'push', 'whatsapp', 'voice', 'all'
 const upsertSchema = z.object({
   channel: channelSchema,
   maxCount: z.number().int().positive(),
-  periodHours: z.number().int().positive().max(24 * 365),
+  periodHours: z
+    .number()
+    .int()
+    .positive()
+    .max(24 * 365),
 });
 
 export default async function frequencyRoutes(app: FastifyInstance) {

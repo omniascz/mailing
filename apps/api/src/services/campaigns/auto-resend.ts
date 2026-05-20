@@ -26,11 +26,7 @@
 
 import { and, eq, sql, isNotNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  campaigns,
-  emailEvents,
-  type Campaign,
-} from '../../db/schema/index.js';
+import { campaigns, emailEvents, type Campaign } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 export interface ScheduleResendInput {
@@ -67,9 +63,7 @@ export async function scheduleResend(
   const [parent] = await db
     .select()
     .from(campaigns)
-    .where(
-      and(eq(campaigns.id, parentCampaignId), eq(campaigns.orgId, orgId)),
-    )
+    .where(and(eq(campaigns.id, parentCampaignId), eq(campaigns.orgId, orgId)))
     .limit(1);
 
   if (!parent) throw AppError.notFound('Campaign');
@@ -147,9 +141,7 @@ export async function resolveNonOpeners(
   // We do this in one SQL trip with a NOT EXISTS clause — cheaper than
   // selecting two sets and diffing in app code.
   const includeBots = options.includeBots === true;
-  const botCondition = includeBots
-    ? sql``
-    : sql`AND COALESCE(${emailEvents.isBot}, false) = false`;
+  const botCondition = includeBots ? sql`` : sql`AND COALESCE(${emailEvents.isBot}, false) = false`;
 
   const rows = await db.execute<{ contact_id: string }>(sql`
     SELECT DISTINCT s."contact_id"
@@ -171,8 +163,7 @@ export async function resolveNonOpeners(
   // Drizzle returns the rows array on .rows for raw execute; normalise.
   type ExecResult = { rows?: Array<{ contact_id: string }> };
   const out =
-    (rows as unknown as ExecResult).rows ??
-    (rows as unknown as Array<{ contact_id: string }>);
+    (rows as unknown as ExecResult).rows ?? (rows as unknown as Array<{ contact_id: string }>);
   return out.map((r) => r.contact_id).filter((id): id is string => !!id);
 }
 
@@ -185,10 +176,7 @@ export async function resolveNonOpeners(
  * Returns the contact ID list. Empty array on missing campaign — caller
  * decides whether that's a 404 or just "audience evaluated to nothing".
  */
-export async function resolveAudience(
-  orgId: string,
-  campaignId: string,
-): Promise<string[]> {
+export async function resolveAudience(orgId: string, campaignId: string): Promise<string[]> {
   const [campaign] = await db
     .select({
       id: campaigns.id,
@@ -226,8 +214,7 @@ export async function resolveAudience(
 
   type ExecResult = { rows?: Array<{ contact_id: string }> };
   const out =
-    (rows as unknown as ExecResult).rows ??
-    (rows as unknown as Array<{ contact_id: string }>);
+    (rows as unknown as ExecResult).rows ?? (rows as unknown as Array<{ contact_id: string }>);
   return out.map((r) => r.contact_id);
 }
 

@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  scoreDealHealth,
-  scoreProspect,
-  aggregateIntent,
-  type DealHealthSignals,
-} from './pure.js';
+import { scoreDealHealth, scoreProspect, aggregateIntent, type DealHealthSignals } from './pure.js';
 
 const healthy: DealHealthSignals = {
   stageAgeDays: 3,
@@ -101,7 +96,12 @@ describe('scoreProspect', () => {
   });
 
   it('cold tier recommends content touch', () => {
-    const res = scoreProspect({ icpFit: 40, engagementScore: 30, intentScore: 20, suppressed: false });
+    const res = scoreProspect({
+      icpFit: 40,
+      engagementScore: 30,
+      intentScore: 20,
+      suppressed: false,
+    });
     expect(res.tier).toBe('cold');
     expect(res.recommendation).toContain('Revisit');
   });
@@ -120,7 +120,7 @@ describe('aggregateIntent', () => {
 
   it('stacks multiple signals', () => {
     const res = aggregateIntent([
-      { weight: 0.8, ageInDays: 0 },  // pricing-page visit
+      { weight: 0.8, ageInDays: 0 }, // pricing-page visit
       { weight: 0.4, ageInDays: 2 },
       { weight: 0.2, ageInDays: 7 },
     ]);
@@ -129,9 +129,7 @@ describe('aggregateIntent', () => {
   });
 
   it('clamps to 100', () => {
-    const res = aggregateIntent(
-      Array.from({ length: 50 }, () => ({ weight: 1.0, ageInDays: 0 })),
-    );
+    const res = aggregateIntent(Array.from({ length: 50 }, () => ({ weight: 1.0, ageInDays: 0 })));
     expect(res.score).toBe(100);
     expect(res.bucket).toBe('high');
   });

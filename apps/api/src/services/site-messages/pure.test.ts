@@ -20,7 +20,10 @@ const ctx: VisitorContext = {
 describe('matchesCondition', () => {
   it('page_visit eq matches exact URL', () => {
     expect(
-      matchesCondition({ trigger: 'page_visit', operator: 'eq', value: 'https://example.cz/pricing' }, ctx),
+      matchesCondition(
+        { trigger: 'page_visit', operator: 'eq', value: 'https://example.cz/pricing' },
+        ctx,
+      ),
     ).toBe(true);
   });
 
@@ -31,24 +34,24 @@ describe('matchesCondition', () => {
   });
 
   it('time_on_site gte triggers above threshold', () => {
-    expect(
-      matchesCondition({ trigger: 'time_on_site', operator: 'gte', value: 30 }, ctx),
-    ).toBe(true);
-    expect(
-      matchesCondition({ trigger: 'time_on_site', operator: 'gte', value: 120 }, ctx),
-    ).toBe(false);
+    expect(matchesCondition({ trigger: 'time_on_site', operator: 'gte', value: 30 }, ctx)).toBe(
+      true,
+    );
+    expect(matchesCondition({ trigger: 'time_on_site', operator: 'gte', value: 120 }, ctx)).toBe(
+      false,
+    );
   });
 
   it('scroll_depth gt triggers', () => {
-    expect(
-      matchesCondition({ trigger: 'scroll_depth', operator: 'gt', value: 50 }, ctx),
-    ).toBe(true);
+    expect(matchesCondition({ trigger: 'scroll_depth', operator: 'gt', value: 50 }, ctx)).toBe(
+      true,
+    );
   });
 
   it('cart_value gte triggers on abandoned-cart threshold', () => {
-    expect(
-      matchesCondition({ trigger: 'cart_value', operator: 'gte', value: 1000 }, ctx),
-    ).toBe(true);
+    expect(matchesCondition({ trigger: 'cart_value', operator: 'gte', value: 1000 }, ctx)).toBe(
+      true,
+    );
   });
 
   it('returning_visitor uses boolean flag', () => {
@@ -58,9 +61,9 @@ describe('matchesCondition', () => {
   });
 
   it('exit_intent returns false when not set', () => {
-    expect(
-      matchesCondition({ trigger: 'exit_intent', operator: 'eq', value: true }, ctx),
-    ).toBe(false);
+    expect(matchesCondition({ trigger: 'exit_intent', operator: 'eq', value: true }, ctx)).toBe(
+      false,
+    );
   });
 
   it('segment_match in with array', () => {
@@ -81,14 +84,15 @@ describe('matchesCondition', () => {
   it('custom_event matches event name', () => {
     const eventCtx = { ...ctx, customEvent: 'checkout_started' };
     expect(
-      matchesCondition({ trigger: 'custom_event', operator: 'eq', value: 'checkout_started' }, eventCtx),
+      matchesCondition(
+        { trigger: 'custom_event', operator: 'eq', value: 'checkout_started' },
+        eventCtx,
+      ),
     ).toBe(true);
   });
 
   it('returns false for unknown trigger', () => {
-    expect(
-      matchesCondition({ trigger: 'bogus', operator: 'eq', value: 1 }, ctx),
-    ).toBe(false);
+    expect(matchesCondition({ trigger: 'bogus', operator: 'eq', value: 1 }, ctx)).toBe(false);
   });
 });
 
@@ -122,9 +126,7 @@ describe('canShowMessage', () => {
   });
 
   it('blocks when showOncePerVisitor + already seen', () => {
-    expect(
-      canShowMessage({ showOncePerVisitor: true, seenByVisitor: true }),
-    ).toBe(false);
+    expect(canShowMessage({ showOncePerVisitor: true, seenByVisitor: true })).toBe(false);
   });
 
   it('blocks within cooldown window', () => {

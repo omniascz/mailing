@@ -30,14 +30,34 @@ vi.mock('../../lib/redis.js', () => ({
 }));
 vi.mock('../../db/schema/index.js', () => ({
   contacts: { id: 'id', orgId: 'org_id', leadScore: 'lead_score', updatedAt: 'updated_at' },
-  leadScoreRules: { id: 'id', orgId: 'org_id', eventType: 'event_type', points: 'points', decayDays: 'decay_days', active: 'active', description: 'description', createdAt: 'created_at', updatedAt: 'updated_at' },
-  leadScoreEvents: { id: 'id', orgId: 'org_id', contactId: 'contact_id', eventType: 'event_type', pointsDelta: 'points_delta', scoreAfter: 'score_after', metadata: 'metadata', createdAt: 'created_at' },
+  leadScoreRules: {
+    id: 'id',
+    orgId: 'org_id',
+    eventType: 'event_type',
+    points: 'points',
+    decayDays: 'decay_days',
+    active: 'active',
+    description: 'description',
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  },
+  leadScoreEvents: {
+    id: 'id',
+    orgId: 'org_id',
+    contactId: 'contact_id',
+    eventType: 'event_type',
+    pointsDelta: 'points_delta',
+    scoreAfter: 'score_after',
+    metadata: 'metadata',
+    createdAt: 'created_at',
+  },
   tags: { id: 'id', name: 'name', orgId: 'org_id' },
   contactTags: { contactId: 'contact_id', tagId: 'tag_id' },
 }));
 vi.mock('../../lib/app-error.js', () => ({
   AppError: {
-    notFound: (r = 'Resource') => Object.assign(new Error(`${r} not found`), { statusCode: 404, code: 'NOT_FOUND' }),
+    notFound: (r = 'Resource') =>
+      Object.assign(new Error(`${r} not found`), { statusCode: 404, code: 'NOT_FOUND' }),
   },
 }));
 
@@ -117,8 +137,7 @@ describe('applyLeadScore', () => {
   });
 
   it('returns null when no rule found for event type', async () => {
-    (mockDb.limit as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce([]); // no rule
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]); // no rule
 
     const { applyLeadScore } = await import('./index.js');
     const result = await applyLeadScore('c1', 'o1', 'unknown_event');
@@ -145,7 +164,9 @@ describe('applyLeadScore', () => {
 
   it('floors score at 0 when negative points applied', async () => {
     (mockDb.limit as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce([{ points: -25, eventType: 'spam_complaint', decayDays: 365, active: true }])
+      .mockResolvedValueOnce([
+        { points: -25, eventType: 'spam_complaint', decayDays: 365, active: true },
+      ])
       .mockResolvedValueOnce([{ id: 'c1', leadScore: 10 }]);
 
     const { applyLeadScore } = await import('./index.js');
@@ -200,7 +221,14 @@ describe('createLeadScoreRule', () => {
   });
 
   it('creates and returns a new rule', async () => {
-    const newRule = { id: 'r-new', orgId: 'o1', eventType: 'demo_booked', points: 15, decayDays: 90, active: true };
+    const newRule = {
+      id: 'r-new',
+      orgId: 'o1',
+      eventType: 'demo_booked',
+      points: 15,
+      decayDays: 90,
+      active: true,
+    };
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([newRule]);
 
     const { createLeadScoreRule } = await import('./index.js');
@@ -223,7 +251,9 @@ describe('updateLeadScoreRule', () => {
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
 
     const { updateLeadScoreRule } = await import('./index.js');
-    await expect(updateLeadScoreRule('non-existent', 'o1', { points: 10 })).rejects.toMatchObject({ statusCode: 404 });
+    await expect(updateLeadScoreRule('non-existent', 'o1', { points: 10 })).rejects.toMatchObject({
+      statusCode: 404,
+    });
   });
 
   it('returns updated rule', async () => {
@@ -247,7 +277,9 @@ describe('deleteLeadScoreRule', () => {
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
 
     const { deleteLeadScoreRule } = await import('./index.js');
-    await expect(deleteLeadScoreRule('non-existent', 'o1')).rejects.toMatchObject({ statusCode: 404 });
+    await expect(deleteLeadScoreRule('non-existent', 'o1')).rejects.toMatchObject({
+      statusCode: 404,
+    });
   });
 
   it('resolves without error when rule exists', async () => {

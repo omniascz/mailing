@@ -1,0 +1,112 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ArrowLeft, Lock, LayoutGrid } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { apiFetch } from '@/lib/api';
+import { EditCampaignForm } from './edit-campaign-form';
+
+interface CampaignContent {
+  html?: string;
+  plainText?: string;
+}
+
+interface Campaign {
+  id: string;
+  name: string;
+  type: string;
+  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
+  subject: string | null;
+  preheader: string | null;
+  fromName: string | null;
+  fromEmail: string | null;
+  replyTo: string | null;
+  content: CampaignContent | null;
+  listId: string | null;
+  segmentId: string | null;
+  excludeSegmentId: string | null;
+}
+
+interface ListLite {
+  id: string;
+  name: string;
+  liveContactCount: number;
+}
+
+export const dynamic = 'force-dynamic';
+
+export default async function CampaignEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const [campaign, lists] = await Promise.all([
+    apiFetch<Campaign | null>(`/api/v1/campaigns/${id}`, { fallback: null }),
+    apiFetch<ListLite[]>('/api/v1/lists', { fallback: [] }),
+  ]);
+  if (!campaign) notFound();
+
+  const editable = campaign.status === 'draft';
+
+  return (
+    <div className="mx-auto max-w-4xl">
+      <Link
+        href={`/campaigns/${campaign.id}`}
+        className="mb-6 inline-flex items-center gap-1 text-sm text-secondary-600 hover:text-secondary-900"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to campaign
+      </Link>
+
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-secondary-900">Edit — {campaign.name}</h1>
+            <Badge variant={editable ? 'default' : 'warning'}>{campaign.status}</Badge>
+          </div>
+          <p className="mt-1 text-sm text-secondary-500">
+            {editable
+              ? 'Draft mode — changes save immediately when you hit Save.'
+              : 'This campaign has already left the draft stage. Content is shown read-only.'}
+          </p>
+        </div>
+        <Link
+          href={`/editor/campaigns/${campaign.id}`}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-100"
+        >
+          <LayoutGrid className="h-4 w-4" />
+          {editable ? 'Open visual editor' : 'Open in visual editor'}
+        </Link>
+      </header>
+
+      {!editable ? (
+        <Card className="mb-6 border-amber-200 bg-amber-50">
+          <CardContent>
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 shrink-0 text-amber-600" />
+              <div>
+                <p className="font-medium text-amber-900">Content is locked</p>
+                <p className="mt-1 text-sm text-amber-800">
+                  Campaigns that have been scheduled, sent, paused, or cancelled can't be edited.
+                  Clone this campaign to start a new draft with the same content.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Campaign content</CardTitle>
+          <CardDescription>
+            Subject, sender, audience, HTML body. Plain text is auto-derived if you leave it blank.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EditCampaignForm
+            campaign={campaign}
+            lists={lists.map((l) => ({ id: l.id, name: l.name, count: l.liveContactCount }))}
+            editable={editable}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

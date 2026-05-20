@@ -20,18 +20,11 @@ export function signPayload(secret: string, payload: string): string {
  * Verify a webhook signature using timing-safe comparison.
  * Prevents timing attacks by comparing all bytes regardless of mismatch position.
  */
-export function verifySignature(
-  secret: string,
-  payload: string,
-  signature: string,
-): boolean {
+export function verifySignature(secret: string, payload: string, signature: string): boolean {
   try {
     const expected = signPayload(secret, payload);
     if (expected.length !== signature.length) return false;
-    return timingSafeEqual(
-      Buffer.from(expected, 'utf-8'),
-      Buffer.from(signature, 'utf-8'),
-    );
+    return timingSafeEqual(Buffer.from(expected, 'utf-8'), Buffer.from(signature, 'utf-8'));
   } catch {
     return false;
   }
@@ -76,10 +69,7 @@ export function verifyTimestampedSignature(
     const expectedHex = expectedHmac.digest('hex');
 
     if (expectedHex.length !== vMatch[1].length) return false;
-    return timingSafeEqual(
-      Buffer.from(expectedHex, 'utf-8'),
-      Buffer.from(vMatch[1], 'utf-8'),
-    );
+    return timingSafeEqual(Buffer.from(expectedHex, 'utf-8'), Buffer.from(vMatch[1], 'utf-8'));
   } catch {
     return false;
   }

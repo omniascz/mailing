@@ -56,7 +56,11 @@ describe('resolveRegionEndpoints', () => {
 describe('guardCrossRegion', () => {
   it('allows same-region access', () => {
     expect(
-      guardCrossRegion({ orgRegion: 'eu', resourceRegion: 'eu', resource: 's3://forgemsg-eu/exports' }),
+      guardCrossRegion({
+        orgRegion: 'eu',
+        resourceRegion: 'eu',
+        resource: 's3://forgemsg-eu/exports',
+      }),
     ).toEqual({ allowed: true });
   });
 

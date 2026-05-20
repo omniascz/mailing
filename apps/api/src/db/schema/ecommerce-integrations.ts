@@ -26,37 +26,37 @@ export const ecommercePlatformEnum = pgEnum('ecommerce_platform', [
   'bigcommerce',
   'magento',
   'prestashop',
-  'shoptet',     // #366/#386 — CZ market launch
-  'upgates',     // #367/#390 — CZ market
+  'shoptet', // #366/#386 — CZ market launch
+  'upgates', // #367/#390 — CZ market
   'fastcentrik', // #368/#392 — CZ market
 ]);
 
 export const ecommerceConnectionStatusEnum = pgEnum('ecommerce_connection_status', [
-  'pending',      // OAuth not completed / not yet tested
-  'active',       // Connection healthy
-  'paused',       // Manually paused
-  'error',        // Last sync failed
-  'revoked',      // OAuth token revoked / API key deleted
+  'pending', // OAuth not completed / not yet tested
+  'active', // Connection healthy
+  'paused', // Manually paused
+  'error', // Last sync failed
+  'revoked', // OAuth token revoked / API key deleted
 ]);
 
 // ─── Connections ──────────────────────────────────────────────────────────────
 
 export interface ShopifyCredentials {
-  shopDomain: string;      // e.g. my-store.myshopify.com
+  shopDomain: string; // e.g. my-store.myshopify.com
   accessToken: string;
   webhookSecret?: string;
   scopes?: string[];
 }
 
 export interface WooCommerceCredentials {
-  storeUrl: string;        // e.g. https://store.example.com
+  storeUrl: string; // e.g. https://store.example.com
   consumerKey: string;
   consumerSecret: string;
   webhookSecret?: string;
 }
 
 export interface BigCommerceCredentials {
-  storeHash: string;       // e.g. abc123
+  storeHash: string; // e.g. abc123
   accessToken: string;
   clientId: string;
   clientSecret: string;
@@ -64,13 +64,13 @@ export interface BigCommerceCredentials {
 }
 
 export interface MagentoCredentials {
-  baseUrl: string;         // e.g. https://store.example.com
-  accessToken: string;     // integration token
+  baseUrl: string; // e.g. https://store.example.com
+  accessToken: string; // integration token
   webhookSecret?: string;
 }
 
 export interface PrestaShopCredentials {
-  baseUrl: string;         // e.g. https://store.example.com
+  baseUrl: string; // e.g. https://store.example.com
   apiKey: string;
   webhookSecret?: string;
 }
@@ -150,7 +150,9 @@ export interface EcommerceSyncState {
 export const ecommerceConnections = pgTable(
   'ecommerce_connections',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -189,7 +191,9 @@ export interface EcommerceOrderItem {
 export const ecommerceOrders = pgTable(
   'ecommerce_orders',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     connectionId: uuid('connection_id')
       .notNull()
       .references(() => ecommerceConnections.id, { onDelete: 'cascade' }),
@@ -221,7 +225,9 @@ export const ecommerceOrders = pgTable(
 export const ecommerceWebhookEvents = pgTable(
   'ecommerce_webhook_events',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     connectionId: uuid('connection_id')
       .notNull()
       .references(() => ecommerceConnections.id, { onDelete: 'cascade' }),

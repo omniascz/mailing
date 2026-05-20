@@ -109,5 +109,5 @@ export const messageStreamEnum = pgEnum('message_stream', [
 export const billingTypeEnum = pgEnum('billing_type', [
   'contact_based',
   'send_based',
-  'payg',         // Pay-As-You-Go credits (#282)
+  'payg', // Pay-As-You-Go credits (#282)
 ]);

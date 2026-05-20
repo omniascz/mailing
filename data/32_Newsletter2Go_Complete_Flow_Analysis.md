@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `31_Newsletter2Go_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** Newsletter2Go umí, tento popisuje, **kdo s tím interaguje a jak data tečou** v současném legacy stavu.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Legacy product (acquired 2019, rebranded 2020, parent rebranded 2023)**
 > - **NO new sign-ups** – existing customers only
 > - **Migration assistant to Brevo** built-in
@@ -138,18 +139,18 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Bestandskunde (existing customer)** | Login s legacy credentials | Newsletter operations | Account data |
-| **Account Owner** | Pre-2019 sign-up creator | Full account control | Vše |
-| **Additional users** | Pozvánka | Per role permissions | Per role |
-| **Recipient** | Form, integration | Receives newsletters | Své emaily |
-| **Brevo Support (DE)** | Email, phone, ticket | Issue resolution | Read s consent |
-| **Migration assistant** | In-product dashboard | Migration to Brevo | Account data |
-| **Brevo Sales** | Inquiry contact | Brevo upgrade promotion | Read |
-| **API Client** | API key | Per scope | Per scope |
-| **Shopware integration** | Schnittstelle | 1-Click product takeover | Per scope |
-| **Shopify integration** | Schnittstelle | 1-Click product takeover | Per scope |
+| Aktér                                 | Vstupní bod                | Co dělá                  | Co vidí        |
+| ------------------------------------- | -------------------------- | ------------------------ | -------------- |
+| **Bestandskunde (existing customer)** | Login s legacy credentials | Newsletter operations    | Account data   |
+| **Account Owner**                     | Pre-2019 sign-up creator   | Full account control     | Vše            |
+| **Additional users**                  | Pozvánka                   | Per role permissions     | Per role       |
+| **Recipient**                         | Form, integration          | Receives newsletters     | Své emaily     |
+| **Brevo Support (DE)**                | Email, phone, ticket       | Issue resolution         | Read s consent |
+| **Migration assistant**               | In-product dashboard       | Migration to Brevo       | Account data   |
+| **Brevo Sales**                       | Inquiry contact            | Brevo upgrade promotion  | Read           |
+| **API Client**                        | API key                    | Per scope                | Per scope      |
+| **Shopware integration**              | Schnittstelle              | 1-Click product takeover | Per scope      |
+| **Shopify integration**               | Schnittstelle              | 1-Click product takeover | Per scope      |
 
 ---
 
@@ -249,6 +250,7 @@ Sign-up form for Brevo (not Newsletter2Go)
 ### 3.2 Why Brevo enforces this
 
 **Strategic reasoning:**
+
 - **Avoid splitting customer base** (one platform > two)
 - **Future-proof customer journey** (Newsletter2Go will sunset)
 - **Cross-sell modern features** (multi-channel, AI, CRM)
@@ -257,11 +259,12 @@ Sign-up form for Brevo (not Newsletter2Go)
 
 ### 3.3 Per Brevo FAQ
 
-> *"Im Januar 2019 hat Brevo (damals noch Sendinblue) sämtliche Unternehmensanteile der Newsletter2Go GmbH erworben, um einen europäischen Marktführer für digitales Marketing aufzubauen."*
+> _"Im Januar 2019 hat Brevo (damals noch Sendinblue) sämtliche Unternehmensanteile der Newsletter2Go GmbH erworben, um einen europäischen Marktführer für digitales Marketing aufzubauen."_
 >
-> *"Neukund:innen können sich ab sofort einen kostenlosen Account bei Brevo erstellen."*
+> _"Neukund:innen können sich ab sofort einen kostenlosen Account bei Brevo erstellen."_
 
 **Translation:**
+
 - 2019: Sendinblue (now Brevo) acquired Newsletter2Go shares
 - New customers can register Brevo account for free immediately
 - **NOT Newsletter2Go**
@@ -269,6 +272,7 @@ Sign-up form for Brevo (not Newsletter2Go)
 ### 3.4 No exceptions
 
 Per Brevo's policy:
+
 - **No way** to sign up for Newsletter2Go
 - **No "small exception"** even pro existing partners
 - **All new business** goes to Brevo
@@ -318,7 +322,8 @@ Login form:
 ### 4.3 No changes to UI
 
 Per Brevo:
-> *"Auch nach der Umbenennung kannst du dich wie gewohnt in die Software einloggen."*
+
+> _"Auch nach der Umbenennung kannst du dich wie gewohnt in die Software einloggen."_
 
 - **Same UI** as pre-acquisition
 - **Same features** familiar
@@ -328,9 +333,11 @@ Per Brevo:
 ### 4.4 Tip from Brevo
 
 Per Brevo:
-> *"Tip: Bookmark the new login page in your browser."*
+
+> _"Tip: Bookmark the new login page in your browser."_
 
 **Customers encouraged to:**
+
 - Bookmark new URL
 - Avoid older URLs
 - Use current Brevo-hosted login
@@ -342,9 +349,11 @@ Per Brevo:
 ### 5.1 Why "nothing changes" for existing customers
 
 Per Brevo oficiální:
-> *"For existing Newsletter2Go customers, nothing will change. ... The Newsletter2Go software will remain unaffected by the rebrand. You can continue to use it as normal."*
+
+> _"For existing Newsletter2Go customers, nothing will change. ... The Newsletter2Go software will remain unaffected by the rebrand. You can continue to use it as normal."_
 
 **Maintained for Bestandskunden:**
+
 - ✅ Same software
 - ✅ Same login credentials
 - ✅ Same UI
@@ -357,9 +366,10 @@ Per Brevo oficiální:
 
 ### 5.2 Per Brevo on legal continuity
 
-> *"Sie auch keinen neuen Vertrag ausfüllen müssen."*
+> _"Sie auch keinen neuen Vertrag ausfüllen müssen."_
 
 **No new contract required:**
+
 - Original agreement still valid
 - Brevo legally assumed Newsletter2Go GmbH
 - Legal entity: Brevo GmbH (post-rename)
@@ -371,18 +381,21 @@ Per Brevo oficiální:
 **What Bestandskunden retain:**
 
 #### Pricing grandfathered
+
 - **Per emails sent** model preserved
 - **Original price tiers** maintained
 - **No surprise increases** post-acquisition
 - **Long-term price commitment**
 
 #### Feature access
+
 - **All Newsletter2Go features** continue
 - **Premium templates** continue work
 - **Custom Schnittstellen** continue
 - **Workflows + automation** continue
 
 #### Account ownership
+
 - **Account control** maintained
 - **Data ownership** preserved
 - **Export rights** preserved
@@ -391,17 +404,21 @@ Per Brevo oficiální:
 ### 5.4 What changed post-acquisition (positive)
 
 #### 6-day support
+
 Per Brevo (Apr 1, 2020):
+
 - **Saturday email** support added
 - **Better availability**
 - **Multi-channel**
 
 #### Migration option
+
 - **Free migration assistant**
 - **Flexibility** to move to Brevo
 - **Choice** preserved
 
 #### Continued investment in infrastructure
+
 - **Servers maintained**
 - **Security updates**
 - **Bug fixes**
@@ -410,9 +427,11 @@ Per Brevo (Apr 1, 2020):
 ### 5.5 What WILL change eventually
 
 Per Brevo FAQ:
-> *"Wir haben noch kein Datum, wann wir unsere Newsletter2Go Software offline schalten, doch es wird sicherlich kommen, das vorab."*
+
+> _"Wir haben noch kein Datum, wann wir unsere Newsletter2Go Software offline schalten, doch es wird sicherlich kommen, das vorab."_
 
 **Eventual sunset:**
+
 - **Date not announced** (2026)
 - **Will happen eventually**
 - **Customers will be migrated** (forced if needed)
@@ -427,6 +446,7 @@ Per Brevo FAQ:
 Newsletter2Go's role model is **simpler** than modern competitors (legacy product):
 
 #### Account Owner
+
 - **Highest tier**
 - **Created during pre-2019 signup**
 - Full account access
@@ -435,6 +455,7 @@ Newsletter2Go's role model is **simpler** than modern competitors (legacy produc
 - Account settings
 
 #### Additional users (per plan)
+
 - **Limited per tier**
 - LITE10: typically 1 user only
 - Higher tiers: more users
@@ -443,6 +464,7 @@ Newsletter2Go's role model is **simpler** than modern competitors (legacy produc
 ### 6.2 Permission categories
 
 Limited granularity vs. modern platforms:
+
 - Account access
 - Adressbuch management
 - Campaign creation
@@ -453,6 +475,7 @@ Limited granularity vs. modern platforms:
 ### 6.3 No advanced multi-user features
 
 ⚠️ Newsletter2Go's multi-user **less sophisticated** than:
+
 - **CleverReach** (unlimited users free + granular permissions)
 - **Brevo** (modern multi-user)
 - **HubSpot** (Seat-Permission-Team)
@@ -503,6 +526,7 @@ Daily activities:
 ### 7.2 Typical activities
 
 #### Build campaign
+
 ```
 Newsletter → Neue Kampagne
    ↓
@@ -520,6 +544,7 @@ Send / Schedule
 ```
 
 #### Manage recipients
+
 ```
 Adressbuch → Aktive Empfänger
    ↓
@@ -532,6 +557,7 @@ Actions:
 ```
 
 #### Check reports
+
 ```
 Reports → Campaign performance
    ↓
@@ -549,6 +575,7 @@ View:
 ### 8.1 Recipient creation paths
 
 #### A) Form submission s Double Opt-in
+
 ```
 Visitor fills Newsletter2Go form
    ↓
@@ -575,6 +602,7 @@ Add to Adressbuch / Gruppe
 ```
 
 #### B) CSV import
+
 ```
 Admin: Adressbuch → Import
    ↓
@@ -594,6 +622,7 @@ Import processed
 ```
 
 #### C) API integration
+
 ```
 External system API call
    ↓
@@ -609,6 +638,7 @@ Status: Pending (default DOI) or Active
 ```
 
 #### D) Shopware / Shopify integration
+
 ```
 Customer registers v shop
    ↓
@@ -647,15 +677,18 @@ Various transitions:
 ### 8.3 Inactive recipient handling (UNIQUE)
 
 Per Brevo migration FAQ:
-> *"Inaktive Empfänger werden standardmäßig nach 7 Tagen gelöscht. Somit ist die Liste Ihrer inaktiven Empfänger nicht vollständig. Da diese nur noch anonymisiert und verschlüsselt in der Datenbank gespeichert sind, ist eine vollständige Übertragung der inaktiven Empfänger nicht möglich."*
+
+> _"Inaktive Empfänger werden standardmäßig nach 7 Tagen gelöscht. Somit ist die Liste Ihrer inaktiven Empfänger nicht vollständig. Da diese nur noch anonymisiert und verschlüsselt in der Datenbank gespeichert sind, ist eine vollständige Übertragung der inaktiven Empfänger nicht möglich."_
 
 **Newsletter2Go's inactive policy:**
+
 - **7-day window** after marking inactive
 - **Anonymized + encrypted** in database
 - **Auto-deleted** after 7 days
 - **Cannot fully restore**
 
 ⚠️ **Implication pro migration:**
+
 - **Export inactive within 7 days** if needed
 - **Re-import to Brevo** manually
 - **Otherwise lost permanently**
@@ -673,6 +706,7 @@ Account level
 ```
 
 Higher tiers:
+
 ```
 Account level
 ├── Adressbuch 1
@@ -718,7 +752,8 @@ Use pro:
 ### 8.7 Export flow
 
 Per Newsletter2Go Help:
-> *"Aus dem Adressbuch können Sie die Daten ausgewählter aktiver oder inaktiver Empfänger oder ganzer Gruppen exportieren."*
+
+> _"Aus dem Adressbuch können Sie die Daten ausgewählter aktiver oder inaktiver Empfänger oder ganzer Gruppen exportieren."_
 
 ```
 Adressbuch → Select recipients / group
@@ -821,9 +856,11 @@ Confirmation
 ### 9.2 Premium template limitation
 
 Per Brevo migration FAQ:
-> *"Aus technischen Gründen ist es leider nicht möglich, Ihr Premium Template zu Brevo zu migrieren."*
+
+> _"Aus technischen Gründen ist es leider nicht möglich, Ihr Premium Template zu Brevo zu migrieren."_
 
 ⚠️ **Premium templates DO NOT migrate to Brevo:**
+
 - Custom premium designs lost during migration
 - Rebuild required v Brevo
 - Significant migration effort
@@ -890,7 +927,8 @@ Test connection
 ### 10.2 Use in newsletter creation
 
 Per Newsletter2Go Help:
-> *"Mit der 1-Klick-Produktübernahme von Newsletter2Go können Sie ganze Shop-Produkte übernehmen und in Ihren Newsletter einfügen."*
+
+> _"Mit der 1-Klick-Produktübernahme von Newsletter2Go können Sie ganze Shop-Produkte übernehmen und in Ihren Newsletter einfügen."_
 
 ```
 User creates newsletter v editor
@@ -938,9 +976,11 @@ Newsletter block formatted:
 ### 10.4 Migration to Brevo
 
 Per Brevo migration FAQ:
-> *"Für Shopware und Shopify funktioniert die 1-Klick-Produkt-Übernahme. Je nachdem, welche Anpassungen wir hier für Sie vorgenommen haben, unter Umständen in eingeschränkter Form."*
+
+> _"Für Shopware und Shopify funktioniert die 1-Klick-Produkt-Übernahme. Je nachdem, welche Anpassungen wir hier für Sie vorgenommen haben, unter Umständen in eingeschränkter Form."_
 
 ⚠️ **Migration nuances:**
+
 - ✅ **Shopware + Shopify** 1-Click works v Brevo
 - ⚠️ **Custom adjustments** may need rework
 - ⚠️ **Some advanced features** may be limited
@@ -948,9 +988,11 @@ Per Brevo migration FAQ:
 ### 10.5 Schnittstellen migration
 
 Per Brevo migration FAQ:
-> *"Schnittstellen müssen in Ihrem Brevo Account neu eingerichtet werden. Bitte beachten Sie an dieser Stelle, dass nicht alle Integrationen, die für Newsletter2Go angeboten werden, für Brevo verfügbar sind."*
+
+> _"Schnittstellen müssen in Ihrem Brevo Account neu eingerichtet werden. Bitte beachten Sie an dieser Stelle, dass nicht alle Integrationen, die für Newsletter2Go angeboten werden, für Brevo verfügbar sind."_
 
 ⚠️ **CRITICAL:**
+
 - **Schnittstellen NOT migrate automatically**
 - Must reconfigure v Brevo
 - **Some Newsletter2Go integrations NOT available v Brevo**
@@ -963,7 +1005,8 @@ Per Brevo migration FAQ:
 ### 11.1 Conversion tracking setup
 
 Per Newsletter2Go Help:
-> *"Das Conversion-Tracking können Sie unter 'E-Mail-Einstellungen → Tracking' aktivieren. Hier erhalten Sie dann ein JavaScript-Snippet von uns, das Sie auf Ihrer Zielseite einbinden und mit Ihrer Account-ID..."*
+
+> _"Das Conversion-Tracking können Sie unter 'E-Mail-Einstellungen → Tracking' aktivieren. Hier erhalten Sie dann ein JavaScript-Snippet von uns, das Sie auf Ihrer Zielseite einbinden und mit Ihrer Account-ID..."_
 
 ```
 Admin: E-Mail-Einstellungen → Tracking
@@ -1015,14 +1058,14 @@ Reports show:
 
 ⚠️ **Newsletter2Go's tracking is basic** vs. modern competitors:
 
-| Aspect | Newsletter2Go | Klaviyo / Modern |
-|---|---|---|
-| **Setup** | Manual JS snippet | Auto-installed |
-| **Real-time** | Limited | Real-time |
-| **Multi-touch attribution** | No | Yes |
-| **Custom events** | Limited | Extensive |
-| **Predictive analytics** | No | Yes |
-| **Cross-device tracking** | Limited | Yes |
+| Aspect                      | Newsletter2Go     | Klaviyo / Modern |
+| --------------------------- | ----------------- | ---------------- |
+| **Setup**                   | Manual JS snippet | Auto-installed   |
+| **Real-time**               | Limited           | Real-time        |
+| **Multi-touch attribution** | No                | Yes              |
+| **Custom events**           | Limited           | Extensive        |
+| **Predictive analytics**    | No                | Yes              |
+| **Cross-device tracking**   | Limited           | Yes              |
 
 ---
 
@@ -1099,6 +1142,7 @@ Trigger welcome automation (if configured)
 ### 12.3 Form migration challenge
 
 ⚠️ **Forms CANNOT migrate to Brevo:**
+
 - **Forms must be rebuilt v Brevo**
 - **Embed code on website changes**
 - **Double Opt-in setup new**
@@ -1128,6 +1172,7 @@ Per form:
 ### 13.1 Automation overview
 
 ⚠️ **Limited automation** (legacy product):
+
 - Basic welcome series
 - Birthday emails
 - Simple follow-up sequences
@@ -1161,6 +1206,7 @@ Activate
 ### 13.4 Common automation use cases
 
 #### Welcome series
+
 ```
 Trigger: Subscribed to Adressbuch
    ↓
@@ -1174,6 +1220,7 @@ End
 ```
 
 #### Birthday automation
+
 ```
 Trigger: Birthday today (date field)
    ↓
@@ -1183,6 +1230,7 @@ End
 ```
 
 #### Simple follow-up
+
 ```
 Trigger: 7 days after subscription
    ↓
@@ -1194,9 +1242,11 @@ End
 ### 13.5 Migration impact on automation
 
 Per Brevo migration FAQ:
-> *"Andere Daten, wie ... Aktivitäten ..."*
+
+> _"Andere Daten, wie ... Aktivitäten ..."_
 
 ⚠️ **Automation activities NOT migrate:**
+
 - Workflow definitions: must rebuild
 - Activation history: lost
 - Active workflow members: must re-trigger
@@ -1205,6 +1255,7 @@ Per Brevo migration FAQ:
 ### 13.6 Activities lost
 
 **"Aktivitäten" (activities) include:**
+
 - Workflow execution log
 - Step completion records
 - Active subscribers v workflows
@@ -1238,7 +1289,8 @@ Option B: Contact Brevo support directly
 ### 14.2 Migration activation
 
 Per Brevo migration FAQ:
-> *"Sobald die Migration für Sie aktiviert ist, finden Sie in Ihrem Account auf dem Dashboard einen separaten Bereich, mit dem Sie unseren Migrations-Assistenten starten können."*
+
+> _"Sobald die Migration für Sie aktiviert ist, finden Sie in Ihrem Account auf dem Dashboard einen separaten Bereich, mit dem Sie unseren Migrations-Assistenten starten können."_
 
 ```
 Brevo activates migration in account
@@ -1289,9 +1341,11 @@ Confirm migration
 ### 14.4 Email match requirement
 
 Per Brevo migration FAQ:
-> *"Sollten Sie zu einem bereits vorhandenen Brevo Account migrieren wollen, muss die E-Mail-Adresse Ihres Newsletter2Go Accounts und des Brevo Accounts übereinstimmen."*
+
+> _"Sollten Sie zu einem bereits vorhandenen Brevo Account migrieren wollen, muss die E-Mail-Adresse Ihres Newsletter2Go Accounts und des Brevo Accounts übereinstimmen."_
 
 **Critical:**
+
 - **Same email** required for both accounts (if existing Brevo)
 - If different emails:
   - Create new Brevo account, OR
@@ -1300,7 +1354,8 @@ Per Brevo migration FAQ:
 ### 14.5 Migration execution (overnight)
 
 Per Brevo migration FAQ:
-> *"Um Sie in Ihren Abläufen so wenig wie möglich zu beeinträchtigen, führen wir die Migration über Nacht durch. Sie gehen also mit Ihrem Newsletter2Go in den Feierabend und starten mit Brevo Ihren neuen Tag. Ganz unkompliziert!"*
+
+> _"Um Sie in Ihren Abläufen so wenig wie möglich zu beeinträchtigen, führen wir die Migration über Nacht durch. Sie gehen also mit Ihrem Newsletter2Go in den Feierabend und starten mit Brevo Ihren neuen Tag. Ganz unkompliziert!"_
 
 ```
 Evening: User confirms migration
@@ -1326,7 +1381,8 @@ Brevo account ready:
 ### 14.6 Cost
 
 Per Brevo migration FAQ:
-> *"Die Migration ist kostenfrei."*
+
+> _"Die Migration ist kostenfrei."_
 
 - **FREE migration**
 - No charges
@@ -1335,14 +1391,17 @@ Per Brevo migration FAQ:
 ### 14.7 One-time migration
 
 Per Brevo migration FAQ:
-> *"Die aktuelle Migration sieht nicht vor, nach einem Transfer noch weitere Daten von Ihrem Newsletter2Go zu ihrem Brevo Account zu migrieren. In der bisherigen Planung der Migration liegt es in Ihrer Verantwortung, diese auf Brevo zu übertragen."*
+
+> _"Die aktuelle Migration sieht nicht vor, nach einem Transfer noch weitere Daten von Ihrem Newsletter2Go zu ihrem Brevo Account zu migrieren. In der bisherigen Planung der Migration liegt es in Ihrer Verantwortung, diese auf Brevo zu übertragen."_
 
 ⚠️ **One-time process:**
+
 - **No incremental sync** post-migration
 - **No follow-up migrations** of new data
 - **User responsibility** to manage future data
 
 **Implications:**
+
 - If still adding contacts to Newsletter2Go post-migration: **must manually sync to Brevo**
 - Best practice: **stop using Newsletter2Go for new data** after migration
 
@@ -1374,9 +1433,11 @@ Recreate non-migrated items:
 ### 15.1 Newsletter2Go account post-migration
 
 Per Brevo migration FAQ:
-> *"Ihr Newsletter2Go Account bleibt nach der Migration weiterhin unverändert bestehen, sowie auch Ihr aktuelles Abonnement."*
+
+> _"Ihr Newsletter2Go Account bleibt nach der Migration weiterhin unverändert bestehen, sowie auch Ihr aktuelles Abonnement."_
 
 **After migration:**
+
 - ✅ Newsletter2Go account **stays active**
 - ✅ Subscription **unchanged** (still paying current plan)
 - ✅ All data **still in Newsletter2Go**
@@ -1385,6 +1446,7 @@ Per Brevo migration FAQ:
 ### 15.2 3 Options post-migration
 
 #### Option A: Keep Newsletter2Go active s subscription
+
 ```
 Continue using BOTH platforms
    ↓
@@ -1400,8 +1462,10 @@ Use cases:
 ```
 
 #### Option B: Switch Newsletter2Go to LITE10 (free)
+
 Per Brevo migration FAQ:
-> *"Sie möchten Ihren Newsletter2Go Account bestehen lassen, aber nicht dafür zahlen, so ändern Sie Ihr Paket auf LITE10 bzw. kündigen Sie das aktuelle Abonnement. Im LITE10 Paket steht Ihnen die Software kostenfrei, in eingeschränkter Form zur Verfügung."*
+
+> _"Sie möchten Ihren Newsletter2Go Account bestehen lassen, aber nicht dafür zahlen, so ändern Sie Ihr Paket auf LITE10 bzw. kündigen Sie das aktuelle Abonnement. Im LITE10 Paket steht Ihnen die Software kostenfrei, in eingeschränkter Form zur Verfügung."_
 
 ```
 Migrate primary use to Brevo
@@ -1422,8 +1486,10 @@ Use cases:
 ```
 
 #### Option C: Delete Newsletter2Go account completely
+
 Per Brevo migration FAQ:
-> *"Sie haben selbstverständlich die Möglichkeit den Account und alle dazugehörigen Daten löschen zu lassen. Hierzu erteilen Sie uns bitte schriftlich von der im Account hinterlegten E-Mail-Adresse einen expliziten Auftrag."*
+
+> _"Sie haben selbstverständlich die Möglichkeit den Account und alle dazugehörigen Daten löschen zu lassen. Hierzu erteilen Sie uns bitte schriftlich von der im Account hinterlegten E-Mail-Adresse einen expliziten Auftrag."_
 
 ```
 Decide to fully transition to Brevo
@@ -1446,6 +1512,7 @@ Brevo support processes:
 ### 15.3 Recommended approach
 
 **Best practice for most users:**
+
 ```
 Day 1: Use Migration Assistant
 Day 2: Verify migration in Brevo
@@ -1459,11 +1526,13 @@ After Brevo proves stable: Delete Newsletter2Go account
 ### 15.4 Unsubscribes after migration
 
 Per Brevo migration FAQ:
-> *"Was passiert mit meinen Empfängern die sich abmelden, nachdem ich mein Account zu Brevo migriert habe?"*
+
+> _"Was passiert mit meinen Empfängern die sich abmelden, nachdem ich mein Account zu Brevo migriert habe?"_
 >
-> *"Die aktuelle Migration sieht nicht vor, nach einem Transfer noch weitere Daten von Ihrem Newsletter2Go zu ihrem Brevo Account zu migrieren. In der bisherigen Planung der Migration liegt es in Ihrer Verantwortung, diese auf Brevo zu übertragen."*
+> _"Die aktuelle Migration sieht nicht vor, nach einem Transfer noch weitere Daten von Ihrem Newsletter2Go zu ihrem Brevo Account zu migrieren. In der bisherigen Planung der Migration liegt es in Ihrer Verantwortung, diese auf Brevo zu übertragen."_
 
 ⚠️ **Unsubscribes post-migration:**
+
 - If still using Newsletter2Go: unsubscribe stays on Newsletter2Go only
 - **Not synced to Brevo automatically**
 - **Could send to "unsubscribed" recipients v Brevo**
@@ -1511,24 +1580,24 @@ Post-migration:
 
 ### 16.2 Migration data table
 
-| Data | Migration status | Recovery option |
-|---|:---:|---|
-| Active recipients | ✅ Full transfer | – |
-| Email + name | ✅ Standard | – |
-| Custom fields (Merkmale) | ✅ Structure + values | – |
-| Adressbücher | ✅ Structure | – |
-| Static groups | ✅ Manual groups | – |
-| Standard templates | ✅ Migrated | – |
-| Premium templates | ❌ Lost | Rebuild manually |
-| 1-Click product takeover | ✅ Shopware + Shopify | Some custom may need work |
-| Forms (Formulare) | ❌ Lost | Rebuild in Brevo |
-| Activities (workflow execution) | ❌ Lost | Accept fresh start |
-| Inactive recipients | ❌ Auto-deleted | Export within 7 days if needed |
-| Reports (Berichte) | ❌ Lost | Export before migration |
-| Schnittstellen (interfaces) | ❌ Lost | Reconfigure in Brevo |
-| Custom integrations | ❌ Varies | Custom dev may be needed |
-| Conversion tracking history | ❌ Lost | Fresh tracking v Brevo |
-| Dynamic groups | varies | Static migrates, dynamic less reliable |
+| Data                            |   Migration status    | Recovery option                        |
+| ------------------------------- | :-------------------: | -------------------------------------- |
+| Active recipients               |   ✅ Full transfer    | –                                      |
+| Email + name                    |      ✅ Standard      | –                                      |
+| Custom fields (Merkmale)        | ✅ Structure + values | –                                      |
+| Adressbücher                    |     ✅ Structure      | –                                      |
+| Static groups                   |   ✅ Manual groups    | –                                      |
+| Standard templates              |      ✅ Migrated      | –                                      |
+| Premium templates               |        ❌ Lost        | Rebuild manually                       |
+| 1-Click product takeover        | ✅ Shopware + Shopify | Some custom may need work              |
+| Forms (Formulare)               |        ❌ Lost        | Rebuild in Brevo                       |
+| Activities (workflow execution) |        ❌ Lost        | Accept fresh start                     |
+| Inactive recipients             |    ❌ Auto-deleted    | Export within 7 days if needed         |
+| Reports (Berichte)              |        ❌ Lost        | Export before migration                |
+| Schnittstellen (interfaces)     |        ❌ Lost        | Reconfigure in Brevo                   |
+| Custom integrations             |       ❌ Varies       | Custom dev may be needed               |
+| Conversion tracking history     |        ❌ Lost        | Fresh tracking v Brevo                 |
+| Dynamic groups                  |        varies         | Static migrates, dynamic less reliable |
 
 ### 16.3 Pre-migration preparation checklist
 
@@ -1613,9 +1682,10 @@ Brevo support:
 
 ### 17.4 Per Brevo on deletion
 
-> *"Sie haben selbstverständlich die Möglichkeit den Account und alle dazugehörigen Daten löschen zu lassen. Hierzu erteilen Sie uns bitte schriftlich von der im Account hinterlegten E-Mail-Adresse einen expliziten Auftrag."*
+> _"Sie haben selbstverständlich die Möglichkeit den Account und alle dazugehörigen Daten löschen zu lassen. Hierzu erteilen Sie uns bitte schriftlich von der im Account hinterlegten E-Mail-Adresse einen expliziten Auftrag."_
 
 **Requirements pro deletion:**
+
 - **Written request** (not phone)
 - **From account email** (verification)
 - **Explicit deletion request**
@@ -1637,6 +1707,7 @@ vs. self-service deletion which other platforms offer.
 ### 18.1 Support hours
 
 Per Brevo (since April 2020):
+
 - **Monday-Friday:** Standard business hours
 - **Saturday 9:00-18:00:** Email support
 - **Sunday:** Closed
@@ -1672,9 +1743,11 @@ Email ticket:
 ### 18.4 Berlin team retention
 
 Per Brevo:
-> *"We'll still have the same office and Newsletter2Go team in Berlin."*
+
+> _"We'll still have the same office and Newsletter2Go team in Berlin."_
 
 **Original Newsletter2Go team retained:**
+
 - **Familiar with legacy product**
 - **German-speaking**
 - **Newsletter2Go expertise**
@@ -1733,9 +1806,11 @@ Comprehensive documentation
 ### 19.1 DSGVO compliance (preserved)
 
 Per Brevo:
-> *"As always, we'll continue to maintain the highest standards of data protection and maintain our servers in Germany."*
+
+> _"As always, we'll continue to maintain the highest standards of data protection and maintain our servers in Germany."_
 
 **Continued compliance:**
+
 - **Servers v Německu**
 - **DSGVO-compliant software**
 - **Audit trail per consent**
@@ -1781,11 +1856,13 @@ Data status:
 ### 19.3 Inactive recipient policy
 
 ⚠️ **UNIQUE Newsletter2Go policy:**
+
 - **7-day window** after marking inactive
 - **Anonymized + encrypted** in database
 - **Auto-deleted** after 7 days
 
 **Implications:**
+
 - **Faster cleanup** than other platforms
 - **DSGVO-friendly** (data minimization)
 - **Migration challenge** (cannot export inactive after 7 days)
@@ -1818,29 +1895,29 @@ Provide within 30 days (DSGVO requirement)
 
 ## 20. Datová mapa: co vidí kdo
 
-| Data | Owner | Add. user | Recipient | API | Brevo Support | Brevo Sales |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | per role | ❌ | per scope | read s consent | read s consent |
-| Billing | ✅ | ❌ | ❌ | per scope | read s consent | read s consent |
-| User management | ✅ | ❌ | ❌ | per scope | read s consent | read s consent |
-| All Adressbücher | ✅ | per role | jen sebe | per scope | read s consent | – |
-| Active recipients | ✅ | per role | jen sebe | ✅ | read | – |
-| Inactive recipients (7-day) | ✅ | per role | ❌ | per scope | read | – |
-| Custom fields (Merkmale) | ✅ | per role | jen své | ✅ | read | – |
-| Static groups | ✅ | per role | – | ✅ | read | – |
-| Campaigns | ✅ | per role | jen co dostal | ✅ | read | – |
-| Send campaigns | ✅ | per role | ❌ | ✅ | ❌ | ❌ |
-| Templates (standard) | ✅ | per role | – | ❌ | read | – |
-| Templates (premium) | ✅ | per role | – | ❌ | read | – |
-| Forms | ✅ | per role | submit | per scope | read | – |
-| Mediathek | ✅ | per role | – | per scope | read | – |
-| 1-Click product takeover | ✅ | per role | – | per scope | read | – |
-| Schnittstellen | ✅ | per role | – | per scope | read | – |
-| Conversion tracking | ✅ | per role | – | per scope | read | – |
-| Reports | ✅ | per role | ❌ | ✅ | read | – |
-| Automation (basic) | ✅ | per role | ❌ | ✅ | read | – |
-| Migration assistant | ✅ | per role | ❌ | ❌ | activate + assist | promote |
-| DSGVO delete | ✅ | per role | request | ✅ | execute | – |
+| Data                        | Owner | Add. user |   Recipient   |    API    |   Brevo Support   |  Brevo Sales   |
+| --------------------------- | :---: | :-------: | :-----------: | :-------: | :---------------: | :------------: |
+| Account settings            |  ✅   | per role  |      ❌       | per scope |  read s consent   | read s consent |
+| Billing                     |  ✅   |    ❌     |      ❌       | per scope |  read s consent   | read s consent |
+| User management             |  ✅   |    ❌     |      ❌       | per scope |  read s consent   | read s consent |
+| All Adressbücher            |  ✅   | per role  |   jen sebe    | per scope |  read s consent   |       –        |
+| Active recipients           |  ✅   | per role  |   jen sebe    |    ✅     |       read        |       –        |
+| Inactive recipients (7-day) |  ✅   | per role  |      ❌       | per scope |       read        |       –        |
+| Custom fields (Merkmale)    |  ✅   | per role  |    jen své    |    ✅     |       read        |       –        |
+| Static groups               |  ✅   | per role  |       –       |    ✅     |       read        |       –        |
+| Campaigns                   |  ✅   | per role  | jen co dostal |    ✅     |       read        |       –        |
+| Send campaigns              |  ✅   | per role  |      ❌       |    ✅     |        ❌         |       ❌       |
+| Templates (standard)        |  ✅   | per role  |       –       |    ❌     |       read        |       –        |
+| Templates (premium)         |  ✅   | per role  |       –       |    ❌     |       read        |       –        |
+| Forms                       |  ✅   | per role  |    submit     | per scope |       read        |       –        |
+| Mediathek                   |  ✅   | per role  |       –       | per scope |       read        |       –        |
+| 1-Click product takeover    |  ✅   | per role  |       –       | per scope |       read        |       –        |
+| Schnittstellen              |  ✅   | per role  |       –       | per scope |       read        |       –        |
+| Conversion tracking         |  ✅   | per role  |       –       | per scope |       read        |       –        |
+| Reports                     |  ✅   | per role  |      ❌       |    ✅     |       read        |       –        |
+| Automation (basic)          |  ✅   | per role  |      ❌       |    ✅     |       read        |       –        |
+| Migration assistant         |  ✅   | per role  |      ❌       |    ❌     | activate + assist |    promote     |
+| DSGVO delete                |  ✅   | per role  |    request    |    ✅     |      execute      |       –        |
 
 ---
 
@@ -1849,6 +1926,7 @@ Provide within 30 days (DSGVO requirement)
 ### 21.1 Legacy product status
 
 ⚠️ **Newsletter2Go is legacy in 2026:**
+
 - **No new feature development** (likely)
 - **No new customer acquisition**
 - **Eventual sunset announced** (no date)
@@ -1857,6 +1935,7 @@ Provide within 30 days (DSGVO requirement)
 ### 21.2 Migration limitations critical
 
 ⚠️ **What's lost during migration:**
+
 - **Forms** (rebuild required)
 - **Activities** (workflow history)
 - **Inactive recipients** (after 7 days)
@@ -1867,6 +1946,7 @@ Provide within 30 days (DSGVO requirement)
 ### 21.3 7-day inactive deletion (DSGVO-friendly but migration challenge)
 
 ⚠️ **Inactive recipients auto-delete after 7 days:**
+
 - DSGVO-positive (data minimization)
 - BUT migration challenge:
   - If migration delayed beyond 7 days
@@ -1876,6 +1956,7 @@ Provide within 30 days (DSGVO requirement)
 ### 21.4 One-time migration
 
 ⚠️ **No incremental sync:**
+
 - Migration is one-time event
 - No follow-up sync
 - New Newsletter2Go data post-migration: user must manually transfer
@@ -1884,9 +1965,11 @@ Provide within 30 days (DSGVO requirement)
 ### 21.5 Schnittstellen not fully available v Brevo
 
 Per Brevo migration FAQ:
-> *"nicht alle Integrationen, die für Newsletter2Go angeboten werden, für Brevo verfügbar sind"*
+
+> _"nicht alle Integrationen, die für Newsletter2Go angeboten werden, für Brevo verfügbar sind"_
 
 ⚠️ **Some integrations unavailable v Brevo:**
+
 - Custom development may be needed
 - Migration may break some workflows
 - Test thoroughly before fully transitioning
@@ -1894,6 +1977,7 @@ Per Brevo migration FAQ:
 ### 21.6 Premium templates rebuild
 
 ⚠️ **Premium templates DO NOT migrate:**
+
 - Significant investment may be lost
 - Rebuild from scratch v Brevo
 - Time-consuming
@@ -1902,6 +1986,7 @@ Per Brevo migration FAQ:
 ### 21.7 Forms rebuild required
 
 ⚠️ **Forms rebuild v Brevo:**
+
 - Embed code on website changes
 - Double Opt-in setup new
 - GDPR fields re-configured
@@ -1971,21 +2056,27 @@ Per Brevo migration FAQ:
 ### 22.1 Strategic decision matrix
 
 #### Scenario 1: Low-volume occasional sender (< 1000 emails/month)
+
 **Recommendation:** Switch to LITE10 (free), continue as is
+
 - No urgent need to migrate
 - Free continued access
 - Monitor sunset announcements
 - Migrate when convenient
 
 #### Scenario 2: Regular sender (1K-10K emails/month)
+
 **Recommendation:** Plan migration to Brevo within 6-12 months
+
 - Brevo cheaper for this volume
 - More features
 - Future-proofing
 - Use migration assistant
 
 #### Scenario 3: High-volume sender (>10K emails/month)
+
 **Recommendation:** Migrate to Brevo NOW
+
 - Significant cost savings
 - Modern features
 - Multi-channel options
@@ -1993,14 +2084,18 @@ Per Brevo migration FAQ:
 - Future-proofing critical
 
 #### Scenario 4: Heavy automation user
+
 **Recommendation:** Migrate to Brevo s implementation plan
+
 - Brevo automation more sophisticated
 - Plan workflow rebuilding
 - Use Brevo's new features
 - Consider Brevo Aura AI
 
 #### Scenario 5: Agency / Multi-account
+
 **Recommendation:** Migrate to Brevo immediately
+
 - Better multi-account management
 - Modern features pro clients
 - Better integration ecosystem
@@ -2086,4 +2181,4 @@ Timing:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů Brevo (newsletter2go-help-de.sendinblue.com + brevo.com/de/company/newsletter2go-login + brevo.com/de/landing/newsletter2go + brevo.com/newsletter2go) a analytických zdrojů (Tracxn, Crunchbase, Softools, IreneTheiss). Pro nejaktuálnější detaily migration je nutný engagement s Brevo support teamem.*
+_Dokument zpracován z oficiálních zdrojů Brevo (newsletter2go-help-de.sendinblue.com + brevo.com/de/company/newsletter2go-login + brevo.com/de/landing/newsletter2go + brevo.com/newsletter2go) a analytických zdrojů (Tracxn, Crunchbase, Softools, IreneTheiss). Pro nejaktuálnější detaily migration je nutný engagement s Brevo support teamem._

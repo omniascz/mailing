@@ -23,52 +23,52 @@
 
 ### 1.1 Top 10 svět + enterprise
 
-| # | Platforma | Origin | Founded | HQ | Sweet spot | Vstup. cena (USD) | Free plan |
-|---|---|---|---|---|---|---|---|
-| 1 | **Mailchimp** | 🇺🇸 | 2001 | Atlanta | SMB email + multichannel | $20/mo (500 cont.) | ✅ 500 cont. |
-| 2 | **HubSpot** | 🇺🇸 | 2006 | Cambridge MA | B2B SaaS + CRM | $20/mo Starter | ✅ Free CRM |
-| 3 | **Brevo (ex-Sendinblue)** | 🇫🇷 | 2012 | Paris | Mid-market omnichannel | $9/mo Starter | ✅ unlim. kont. |
-| 4 | **Klaviyo** | 🇺🇸 | 2012 | Boston | DTC ecommerce Shopify | $20/mo (500 cont.) | ✅ 250 cont. |
-| 5 | **ActiveCampaign** | 🇺🇸 | 2003 | Chicago | B2B mid-market automation | $15/mo Starter | ❌ 14-day trial |
-| 6 | **GetResponse** | 🇵🇱 | 1998 | Gdańsk | SMB + webinars + AI | $19/mo Starter | ✅ 500 cont. |
-| 7 | **MailerLite** | 🇱🇹 | 2010 | Vilnius | Content creators + SMB | $9/mo Growing | ✅ 1000 cont. |
-| 8 | **Constant Contact** | 🇺🇸 | 1995 | Waltham MA | US SMB + events + nonprofits | $12/mo Lite | ❌ 60d trial |
-| 9 | **SAP Emarsys** | 🇩🇪/🇦🇹 | 2000 | Vienna/Walldorf | DACH retail + SAP eco | enterprise custom | ❌ |
-| 10 | **Salesforce MC** | 🇺🇸 | 1999 (ExactTarget) | San Francisco | Salesforce CRM enterprise | $1,500/mo Growth | ❌ |
-| B | **Braze** (bonus) | 🇺🇸 | 2011 | NYC | Mobile-first apps | enterprise custom | ❌ |
+| #   | Platforma                 | Origin | Founded            | HQ              | Sweet spot                   | Vstup. cena (USD)  | Free plan       |
+| --- | ------------------------- | ------ | ------------------ | --------------- | ---------------------------- | ------------------ | --------------- |
+| 1   | **Mailchimp**             | 🇺🇸     | 2001               | Atlanta         | SMB email + multichannel     | $20/mo (500 cont.) | ✅ 500 cont.    |
+| 2   | **HubSpot**               | 🇺🇸     | 2006               | Cambridge MA    | B2B SaaS + CRM               | $20/mo Starter     | ✅ Free CRM     |
+| 3   | **Brevo (ex-Sendinblue)** | 🇫🇷     | 2012               | Paris           | Mid-market omnichannel       | $9/mo Starter      | ✅ unlim. kont. |
+| 4   | **Klaviyo**               | 🇺🇸     | 2012               | Boston          | DTC ecommerce Shopify        | $20/mo (500 cont.) | ✅ 250 cont.    |
+| 5   | **ActiveCampaign**        | 🇺🇸     | 2003               | Chicago         | B2B mid-market automation    | $15/mo Starter     | ❌ 14-day trial |
+| 6   | **GetResponse**           | 🇵🇱     | 1998               | Gdańsk          | SMB + webinars + AI          | $19/mo Starter     | ✅ 500 cont.    |
+| 7   | **MailerLite**            | 🇱🇹     | 2010               | Vilnius         | Content creators + SMB       | $9/mo Growing      | ✅ 1000 cont.   |
+| 8   | **Constant Contact**      | 🇺🇸     | 1995               | Waltham MA      | US SMB + events + nonprofits | $12/mo Lite        | ❌ 60d trial    |
+| 9   | **SAP Emarsys**           | 🇩🇪/🇦🇹  | 2000               | Vienna/Walldorf | DACH retail + SAP eco        | enterprise custom  | ❌              |
+| 10  | **Salesforce MC**         | 🇺🇸     | 1999 (ExactTarget) | San Francisco   | Salesforce CRM enterprise    | $1,500/mo Growth   | ❌              |
+| B   | **Braze** (bonus)         | 🇺🇸     | 2011               | NYC             | Mobile-first apps            | enterprise custom  | ❌              |
 
 ### 1.2 TOP 5 Polsko
 
-| # | Platforma | Origin | Founded | HQ | Sweet spot | Vstup. cena | Free plan |
-|---|---|---|---|---|---|---|---|
-| 11 | **GetResponse** (viz #6) | 🇵🇱 | 1998 | Gdańsk | – | – | – |
-| 12 | **MailerLite/FreshMail** | 🇱🇹/🇵🇱 | 2010/2009 | Vilnius | FreshMail acq 02/2025 | $9/mo | ✅ |
-| 13 | **SARE** | 🇵🇱 | 2005 | Rybnik | PL mid-market email + SMS | custom quote | ❌ |
-| 14 | **SALESmanago** | 🇵🇱 | 2011 | Kraków | PL/CEE mid-market CDP+MA | custom (~€450/mo+) | ❌ |
-| 15 | **ExpertSender** | 🇵🇱 | 2009 | Białystok | EU mid-market omnichannel | custom quote | ❌ |
-| 16 | **EmailLabs** | 🇵🇱 | – | Warsaw | PL transactional SMTP relay | per email pricing | ✅ trial |
+| #   | Platforma                | Origin | Founded   | HQ        | Sweet spot                  | Vstup. cena        | Free plan |
+| --- | ------------------------ | ------ | --------- | --------- | --------------------------- | ------------------ | --------- |
+| 11  | **GetResponse** (viz #6) | 🇵🇱     | 1998      | Gdańsk    | –                           | –                  | –         |
+| 12  | **MailerLite/FreshMail** | 🇱🇹/🇵🇱  | 2010/2009 | Vilnius   | FreshMail acq 02/2025       | $9/mo              | ✅        |
+| 13  | **SARE**                 | 🇵🇱     | 2005      | Rybnik    | PL mid-market email + SMS   | custom quote       | ❌        |
+| 14  | **SALESmanago**          | 🇵🇱     | 2011      | Kraków    | PL/CEE mid-market CDP+MA    | custom (~€450/mo+) | ❌        |
+| 15  | **ExpertSender**         | 🇵🇱     | 2009      | Białystok | EU mid-market omnichannel   | custom quote       | ❌        |
+| 16  | **EmailLabs**            | 🇵🇱     | –         | Warsaw    | PL transactional SMTP relay | per email pricing  | ✅ trial  |
 
 ### 1.3 TOP 5 DACH
 
-| # | Platforma | Origin | Founded | HQ | Sweet spot | Vstup. cena | Free plan |
-|---|---|---|---|---|---|---|---|
-| 17 | **CleverReach** | 🇩🇪 | 2007 | Rastede | DACH SMB email | €15/mo | ✅ 250 cont. |
-| 18 | **rapidmail** | 🇩🇪 | 2008 | Freiburg | DACH SMB simple email | €15/mo | ✅ 500 cont. |
-| 19 | **Newsletter2Go** (→ Brevo) | 🇩🇪 | 2010 | Berlin | acq 2019, → Brevo Engage | – | – |
-| 20 | **Inxmail** | 🇩🇪 | 1999 | Freiburg | DACH enterprise B2B | custom quote | ❌ |
-| 21 | **Mapp/Evalanche** | 🇩🇪/🇨🇭 | 1999/2002 | Munich/St.Gallen | DACH+EU enterprise CDP+MA | custom | ❌ |
+| #   | Platforma                   | Origin | Founded   | HQ               | Sweet spot                | Vstup. cena  | Free plan    |
+| --- | --------------------------- | ------ | --------- | ---------------- | ------------------------- | ------------ | ------------ |
+| 17  | **CleverReach**             | 🇩🇪     | 2007      | Rastede          | DACH SMB email            | €15/mo       | ✅ 250 cont. |
+| 18  | **rapidmail**               | 🇩🇪     | 2008      | Freiburg         | DACH SMB simple email     | €15/mo       | ✅ 500 cont. |
+| 19  | **Newsletter2Go** (→ Brevo) | 🇩🇪     | 2010      | Berlin           | acq 2019, → Brevo Engage  | –            | –            |
+| 20  | **Inxmail**                 | 🇩🇪     | 1999      | Freiburg         | DACH enterprise B2B       | custom quote | ❌           |
+| 21  | **Mapp/Evalanche**          | 🇩🇪/🇨🇭  | 1999/2002 | Munich/St.Gallen | DACH+EU enterprise CDP+MA | custom       | ❌           |
 
 ### 1.4 TOP 5 CZ/SK
 
-| # | Platforma | Origin | Founded | HQ | Sweet spot | Vstup. cena | Free plan |
-|---|---|---|---|---|---|---|---|
-| 22 | **SmartEmailing** | 🇨🇿 | 2009 | Brno | CZ/SK SMB email + automation | 690 Kč/mo | ✅ trial |
-| 23 | **Ecomail** | 🇨🇿 | 2013 | Praha | CZ/SK SMB+mid ecommerce | 350 Kč/mo | ✅ 200 cont. |
-| 24 | **Mailkit** | 🇨🇿 | 2002 | Praha | CZ transactional + enterprise | custom | ❌ |
-| 25 | **Boldem** | 🇨🇿 | 2018 | Praha | CZ SMB email simple | 290 Kč/mo | ✅ trial |
-| 26 | **Leadhub** | 🇨🇿 | 2015 | Praha | CZ/SK mid-market omnichannel | custom (~5-15K Kč/mo) | ❌ |
-| 27 | **Targito** | 🇨🇿 | 2008 | Praha | CZ mid-market CDP+MA | custom | ❌ |
-| 28 | **Bloomreach Engagement** | 🇸🇰→🇺🇸 | 2016 (Exponea) | Bratislava→USA | CEE+global enterprise CDXP | custom (~$3K+/mo) | ❌ |
+| #   | Platforma                 | Origin | Founded        | HQ             | Sweet spot                    | Vstup. cena           | Free plan    |
+| --- | ------------------------- | ------ | -------------- | -------------- | ----------------------------- | --------------------- | ------------ |
+| 22  | **SmartEmailing**         | 🇨🇿     | 2009           | Brno           | CZ/SK SMB email + automation  | 690 Kč/mo             | ✅ trial     |
+| 23  | **Ecomail**               | 🇨🇿     | 2013           | Praha          | CZ/SK SMB+mid ecommerce       | 350 Kč/mo             | ✅ 200 cont. |
+| 24  | **Mailkit**               | 🇨🇿     | 2002           | Praha          | CZ transactional + enterprise | custom                | ❌           |
+| 25  | **Boldem**                | 🇨🇿     | 2018           | Praha          | CZ SMB email simple           | 290 Kč/mo             | ✅ trial     |
+| 26  | **Leadhub**               | 🇨🇿     | 2015           | Praha          | CZ/SK mid-market omnichannel  | custom (~5-15K Kč/mo) | ❌           |
+| 27  | **Targito**               | 🇨🇿     | 2008           | Praha          | CZ mid-market CDP+MA          | custom                | ❌           |
+| 28  | **Bloomreach Engagement** | 🇸🇰→🇺🇸  | 2016 (Exponea) | Bratislava→USA | CEE+global enterprise CDXP    | custom (~$3K+/mo)     | ❌           |
 
 ⚠️ **Pozn.:** Číslování pokrývá 27 unikátních platforem; #11 GetResponse a #12 MailerLite duplicitní záznam pro PL TOP 5 (figurují i ve global TOP 10). Newsletter2Go (#19) byl 2019 akvizován Brevo → nyní Brevo Engage. **Bloomreach + Targito jsou samostatné platformy** (Bloomreach = bývalá Exponea, Targito = původně VIVmail.cz).
 
@@ -1157,4 +1157,4 @@ TRENDY:
 
 ---
 
-*Tento dokument je rozhodovací nástroj postavený na detailních analýzách 27 platforem (dokumenty 01-54). Pro hluboké detaily o jednotlivých platformách viz příslušné Features DeepDive a Complete Flow Analysis dokumenty.*
+_Tento dokument je rozhodovací nástroj postavený na detailních analýzách 27 platforem (dokumenty 01-54). Pro hluboké detaily o jednotlivých platformách viz příslušné Features DeepDive a Complete Flow Analysis dokumenty._

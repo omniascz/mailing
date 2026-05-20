@@ -55,9 +55,7 @@ describe('computeFreeSlots', () => {
   const end = new Date(Date.UTC(2026, 3, 24, 17, 0));
 
   it('returns full window when no busy slots', () => {
-    expect(computeFreeSlots(start, end, [])).toEqual([
-      { startAt: start, endAt: end },
-    ]);
+    expect(computeFreeSlots(start, end, [])).toEqual([{ startAt: start, endAt: end }]);
   });
 
   it('excludes busy ranges', () => {
@@ -76,8 +74,14 @@ describe('computeFreeSlots', () => {
 
   it('merges overlapping busy slots', () => {
     const busy: BusySlot[] = [
-      { startAt: new Date(Date.UTC(2026, 3, 24, 10, 0)), endAt: new Date(Date.UTC(2026, 3, 24, 12, 0)) },
-      { startAt: new Date(Date.UTC(2026, 3, 24, 11, 0)), endAt: new Date(Date.UTC(2026, 3, 24, 13, 0)) },
+      {
+        startAt: new Date(Date.UTC(2026, 3, 24, 10, 0)),
+        endAt: new Date(Date.UTC(2026, 3, 24, 12, 0)),
+      },
+      {
+        startAt: new Date(Date.UTC(2026, 3, 24, 11, 0)),
+        endAt: new Date(Date.UTC(2026, 3, 24, 13, 0)),
+      },
     ];
     const free = computeFreeSlots(start, end, busy);
     expect(free).toHaveLength(2);
@@ -86,7 +90,10 @@ describe('computeFreeSlots', () => {
 
   it('clips busy slots that extend past the window', () => {
     const busy: BusySlot[] = [
-      { startAt: new Date(Date.UTC(2026, 3, 24, 8, 0)), endAt: new Date(Date.UTC(2026, 3, 24, 10, 0)) },
+      {
+        startAt: new Date(Date.UTC(2026, 3, 24, 8, 0)),
+        endAt: new Date(Date.UTC(2026, 3, 24, 10, 0)),
+      },
     ];
     const free = computeFreeSlots(start, end, busy);
     expect(free).toHaveLength(1);
@@ -95,7 +102,10 @@ describe('computeFreeSlots', () => {
 
   it('filters slots below minSlotMinutes', () => {
     const busy: BusySlot[] = [
-      { startAt: new Date(Date.UTC(2026, 3, 24, 9, 10)), endAt: new Date(Date.UTC(2026, 3, 24, 17, 0)) },
+      {
+        startAt: new Date(Date.UTC(2026, 3, 24, 9, 10)),
+        endAt: new Date(Date.UTC(2026, 3, 24, 17, 0)),
+      },
     ];
     // Only 10 minutes free at the start, under default minSlotMinutes=15
     expect(computeFreeSlots(start, end, busy)).toEqual([]);

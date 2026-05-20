@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `11_MailerLite_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** MailerLite umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **5 default user typů** (Administrator, Manager, Viewer, Accountant, Custom user) – přehledná struktura
 > - **Multi-user feature jen Growing Business+** – Free omezeno na 1 user (Owner)
 > - **Growing Business: 3 users included**; **Advanced: unlimited users**
@@ -104,19 +105,19 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Account creation | Vše + billing + close account | Vše |
-| **Administrator** | Pozvánka od Owner | Full access incl. billing + user mgmt + export | Vše |
-| **Manager** | Pozvánka | Most features, ne export/billing/users | Most |
-| **Viewer** | Pozvánka | View reports only | Reports only |
-| **Accountant** | Pozvánka | Billing only | Billing only |
-| **Custom user** | Pozvánka s custom permissions | Per checkbox-defined permissions | Per role |
-| **Subscriber** | Form, import, integration, API | Otevírá emaily, kupuje, vyplňuje quiz | Své emaily + preference center |
-| **API Client** | API key | Per scope | Per scope |
-| **Integration** (WordPress, Shopify) | OAuth/plugin | Sync data | Per OAuth scope |
-| **MailerSend user** | Separate account | Transactional API only | MailerSend only |
-| **MailerLite Staff** | Interní s consent | Debug/support, anti-spam review | Limited |
+| Aktér                                | Vstupní bod                    | Co dělá                                        | Co vidí                        |
+| ------------------------------------ | ------------------------------ | ---------------------------------------------- | ------------------------------ |
+| **Account Owner**                    | Account creation               | Vše + billing + close account                  | Vše                            |
+| **Administrator**                    | Pozvánka od Owner              | Full access incl. billing + user mgmt + export | Vše                            |
+| **Manager**                          | Pozvánka                       | Most features, ne export/billing/users         | Most                           |
+| **Viewer**                           | Pozvánka                       | View reports only                              | Reports only                   |
+| **Accountant**                       | Pozvánka                       | Billing only                                   | Billing only                   |
+| **Custom user**                      | Pozvánka s custom permissions  | Per checkbox-defined permissions               | Per role                       |
+| **Subscriber**                       | Form, import, integration, API | Otevírá emaily, kupuje, vyplňuje quiz          | Své emaily + preference center |
+| **API Client**                       | API key                        | Per scope                                      | Per scope                      |
+| **Integration** (WordPress, Shopify) | OAuth/plugin                   | Sync data                                      | Per OAuth scope                |
+| **MailerSend user**                  | Separate account               | Transactional API only                         | MailerSend only                |
+| **MailerLite Staff**                 | Interní s consent              | Debug/support, anti-spam review                | Limited                        |
 
 ---
 
@@ -167,6 +168,7 @@ Ideal pro **marketing team lead** without finance/admin responsibilities.
   - Manage automations
 
 Ideal pro:
+
 - Stakeholders
 - C-level reviewing performance
 - External consultants
@@ -187,6 +189,7 @@ Ideal pro:
   - Access campaigns
 
 Ideal pro:
+
 - Finance team member
 - External accountant
 - Bookkeeper
@@ -196,6 +199,7 @@ Ideal pro:
 **Most flexible** – build per-feature permission set:
 
 Per feature checkbox model:
+
 - **Campaigns:**
   - View all
   - View created or assigned
@@ -237,12 +241,14 @@ Per feature checkbox model:
 #### Custom user examples
 
 **"External Copywriter"** custom user:
+
 - Campaigns: View created or assigned + Add/change/remove
 - Subscribers: View only
 - Reports: View
 - Everything else: No
 
 **"Designer"** custom user:
+
 - Campaigns: View + Add/change/remove (no send)
 - Forms: View + Create/edit (no publish)
 - Landing pages: View + Create/edit (no publish)
@@ -250,54 +256,54 @@ Per feature checkbox model:
 
 ### 2.6 Permission matrix (default roles)
 
-| Akce | Owner | Admin | Manager | Viewer | Accountant | Custom |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Account** |  |  |  |  |  |  |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | per checkbox |
-| **Billing** |  |  |  |  |  |  |
-| View billing | ✅ | ✅ | ❌ | ❌ | ✅ | per checkbox |
-| Manage billing | ✅ | ✅ | ❌ | ❌ | ✅ | per checkbox |
-| **Users** |  |  |  |  |  |  |
-| Add/edit/delete users | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Subscribers** |  |  |  |  |  |  |
-| View subscribers | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| Add/edit | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| Delete | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| **Export subscribers** | ✅ | ✅ | ❌ | ❌ | ❌ | per checkbox |
-| Import | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| **Campaigns** |  |  |  |  |  |  |
-| Create | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| Edit | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| Send | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| **Automations** |  |  |  |  |  |  |
-| View | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| Create/edit | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| Activate | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| **Forms/Popups** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| Publish | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| **Landing pages** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| Publish | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| **Websites** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| Publish | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| **Reports** |  |  |  |  |  |  |
-| View | ✅ | ✅ | ✅ | ✅ | ❌ | per checkbox |
-| **Integrations** |  |  |  |  |  |  |
-| Manage | ✅ | ✅ | ✅ | ❌ | ❌ | per checkbox |
-| **API keys** |  |  |  |  |  |  |
-| Manage | ✅ | ✅ | ❌ | ❌ | ❌ | per checkbox |
+| Akce                   | Owner | Admin | Manager | Viewer | Accountant |    Custom    |
+| ---------------------- | :---: | :---: | :-----: | :----: | :--------: | :----------: |
+| **Account**            |       |       |         |        |            |              |
+| Close account          |  ✅   |  ❌   |   ❌    |   ❌   |     ❌     |      ❌      |
+| Account settings       |  ✅   |  ✅   |   ❌    |   ❌   |     ❌     | per checkbox |
+| **Billing**            |       |       |         |        |            |              |
+| View billing           |  ✅   |  ✅   |   ❌    |   ❌   |     ✅     | per checkbox |
+| Manage billing         |  ✅   |  ✅   |   ❌    |   ❌   |     ✅     | per checkbox |
+| **Users**              |       |       |         |        |            |              |
+| Add/edit/delete users  |  ✅   |  ✅   |   ❌    |   ❌   |     ❌     |      ❌      |
+| **Subscribers**        |       |       |         |        |            |              |
+| View subscribers       |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| Add/edit               |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| Delete                 |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| **Export subscribers** |  ✅   |  ✅   |   ❌    |   ❌   |     ❌     | per checkbox |
+| Import                 |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| **Campaigns**          |       |       |         |        |            |              |
+| Create                 |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| Edit                   |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| Send                   |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| **Automations**        |       |       |         |        |            |              |
+| View                   |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| Create/edit            |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| Activate               |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| **Forms/Popups**       |       |       |         |        |            |              |
+| Create/edit            |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| Publish                |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| **Landing pages**      |       |       |         |        |            |              |
+| Create/edit            |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| Publish                |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| **Websites**           |       |       |         |        |            |              |
+| Create/edit            |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| Publish                |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| **Reports**            |       |       |         |        |            |              |
+| View                   |  ✅   |  ✅   |   ✅    |   ✅   |     ❌     | per checkbox |
+| **Integrations**       |       |       |         |        |            |              |
+| Manage                 |  ✅   |  ✅   |   ✅    |   ❌   |     ❌     | per checkbox |
+| **API keys**           |       |       |         |        |            |              |
+| Manage                 |  ✅   |  ✅   |   ❌    |   ❌   |     ❌     | per checkbox |
 
 ### 2.7 User seat allowances per plan
 
-| Plán | Users incl. | Multi-user support |
-|---|---|---|
-| **Free** | 1 (Owner only) | ❌ |
-| **Growing Business** | **3** | ✅ |
-| **Advanced** | **Unlimited** | ✅ |
-| **Enterprise** | Unlimited | ✅ + SSO/SAML |
+| Plán                 | Users incl.    | Multi-user support |
+| -------------------- | -------------- | ------------------ |
+| **Free**             | 1 (Owner only) | ❌                 |
+| **Growing Business** | **3**          | ✅                 |
+| **Advanced**         | **Unlimited**  | ✅                 |
+| **Enterprise**       | Unlimited      | ✅ + SSO/SAML      |
 
 ⚠️ Pozor: na Free plánu **nelze přidat dalšího uživatele**. Upgrade na Growing Business minimum.
 
@@ -753,12 +759,14 @@ Send invitation
 ### 8.2 Common custom user patterns
 
 #### Pattern 1: External agency (limited)
+
 - Campaigns: View created or assigned + Add/change/remove (no send – approval workflow effectively)
 - Subscribers: View only
 - Reports: View
 - Everything else: No
 
 #### Pattern 2: Senior copywriter
+
 - Campaigns: View all + Add/change/remove + Send
 - Subscribers: View only
 - Reports: View
@@ -766,11 +774,13 @@ Send invitation
 - Everything else: No
 
 #### Pattern 3: Reports analyst
+
 - All sections: View only where applicable
 - Reports: Full view
 - No edit anywhere
 
 #### Pattern 4: API integration service account
+
 - Best practice: use API key, not user account
 - But if user needed: Custom with API: Manage + minimal else
 
@@ -881,6 +891,7 @@ Pro Advanced: try Advanced features for 14 days
 ### 10.1 Sign-up methods
 
 #### A) Form submission
+
 ```
 Visitor fills MailerLite form (popup, embedded, landing page)
    ↓
@@ -900,6 +911,7 @@ Workflow trigger fires (if matches)
 ```
 
 #### B) Double opt-in flow
+
 ```
 Form submission
    ↓
@@ -919,6 +931,7 @@ Welcome workflow trigger fires
 ```
 
 #### C) E-commerce integration sync
+
 ```
 Customer creates account / orders on Shopify
    ↓
@@ -932,6 +945,7 @@ Workflow trigger
 ```
 
 #### D) Manual import (CSV)
+
 ```
 Admin: Subscribers → Import
    ↓
@@ -956,6 +970,7 @@ Subscribers imported
 ```
 
 #### E) API
+
 ```
 External system POST /api/subscribers
    ↓
@@ -1064,6 +1079,7 @@ If was Unsubscribed (not deleted):
 ### 10.7 Bounce handling
 
 #### Hard bounce
+
 ```
 ISP returns 5xx
    ↓
@@ -1077,6 +1093,7 @@ Excluded from future sends
 ```
 
 #### Soft bounce
+
 ```
 ISP returns 4xx (mailbox full, etc.)
    ↓
@@ -1296,6 +1313,7 @@ Subscriber starts at chosen step
 ```
 
 ⚠️ **Cannot add if:**
+
 - Subscriber already in workflow
 - Subscriber already completed workflow
 
@@ -1431,6 +1449,7 @@ Thank you page (Survey)
 ### 13.3 Quiz lead-magnet pattern
 
 Popular use case:
+
 - Personality / type quiz
 - Pre-question collection (email required to see results)
 - Auto-segment based on results
@@ -1546,6 +1565,7 @@ Welcome series for new customers:
 ### 14.5 E-commerce blocks v emailech
 
 V email editoru (Growing+):
+
 - **Product block** – dynamic product showcase
 - **Cart block** – display abandoned cart contents
 - **Recommendations block** – similar/related products
@@ -1759,18 +1779,18 @@ Both can be managed by same team but separately
 
 ### 16.7 Limitations comparison
 
-| Feature | MailerLite (built-in) | MailerSend (separate) |
-|---|---|---|
-| Marketing campaigns | ✅ | ❌ |
-| Transactional API | ❌ | ✅ |
-| SMTP relay | ❌ | ✅ |
-| Templates | ✅ (marketing) | ✅ (transactional) |
-| Subscriber management | ✅ | – |
-| Drag-drop editor | ✅ | ✅ |
-| Automations / workflows | ✅ | ❌ |
-| Webhooks (events out) | Limited | ✅ |
-| Email validation API | ❌ | ✅ |
-| SMS API | ❌ | ✅ (limited) |
+| Feature                 | MailerLite (built-in) | MailerSend (separate) |
+| ----------------------- | --------------------- | --------------------- |
+| Marketing campaigns     | ✅                    | ❌                    |
+| Transactional API       | ❌                    | ✅                    |
+| SMTP relay              | ❌                    | ✅                    |
+| Templates               | ✅ (marketing)        | ✅ (transactional)    |
+| Subscriber management   | ✅                    | –                     |
+| Drag-drop editor        | ✅                    | ✅                    |
+| Automations / workflows | ✅                    | ❌                    |
+| Webhooks (events out)   | Limited               | ✅                    |
+| Email validation API    | ❌                    | ✅                    |
+| SMS API                 | ❌                    | ✅ (limited)          |
 
 Pro firmy chtějící marketing + transactional v jednom: **Brevo lepší** (jediná platforma).
 
@@ -1952,6 +1972,7 @@ Provides download
 ### 18.4 Consent tracking
 
 For each subscriber:
+
 - Per-form consent timestamp + IP
 - Per-group opt-in source
 - Double opt-in audit (if applicable)
@@ -2007,30 +2028,30 @@ Owner notification + appeal process
 
 ## 19. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Manager | Viewer | Accountant | Custom | Subscriber | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Billing | ✅ | ✅ | ❌ | ❌ | ✅ | per role | ❌ | per scope |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope |
-| All subscribers | ✅ | ✅ | ✅ | ❌ | ❌ | per role | jen sebe | ✅ |
-| Edit subscribers | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ✅ |
-| Export subscribers | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | ✅ |
-| Groups | ✅ | ✅ | ✅ | ❌ | ❌ | per role | – | ✅ |
-| Segments | ✅ | ✅ | ✅ | ❌ | ❌ | per role | – | ✅ |
-| Campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | per role | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ✅ |
-| Automations | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ✅ |
-| Forms | ✅ | ✅ | ✅ | ❌ | ❌ | per role | submit only | ✅ |
-| Landing pages | ✅ | ✅ | ✅ | ❌ | ❌ | per role | view only | ✅ |
-| Websites | ✅ | ✅ | ✅ | ❌ | ❌ | per role | view only | per scope |
-| Surveys/Quizzes | ✅ | ✅ | ✅ | ❌ | ❌ | per role | take only | per scope |
-| Digital products | ✅ | ✅ | ✅ | ❌ | ❌ | per role | buy only | per scope |
-| Paid newsletters | ✅ | ✅ | ✅ | ❌ | ❌ | per role | subscribe | per scope |
-| Reports | ✅ | ✅ | ✅ | ✅ | ❌ | per role | ❌ | ✅ |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | – |
-| Integrations | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | per scope |
-| Domains | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| GDPR delete | ✅ | ✅ | per role | ❌ | ❌ | per role | request | per scope |
+| Data               | Owner | Admin | Manager  | Viewer | Accountant |  Custom  |  Subscriber   |    API    |
+| ------------------ | :---: | :---: | :------: | :----: | :--------: | :------: | :-----------: | :-------: |
+| Account settings   |  ✅   |  ✅   |    ❌    |   ❌   |     ❌     | per role |      ❌       | per scope |
+| Billing            |  ✅   |  ✅   |    ❌    |   ❌   |     ✅     | per role |      ❌       | per scope |
+| User management    |  ✅   |  ✅   |    ❌    |   ❌   |     ❌     |    ❌    |      ❌       | per scope |
+| All subscribers    |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |   jen sebe    |    ✅     |
+| Edit subscribers   |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |      ❌       |    ✅     |
+| Export subscribers |  ✅   |  ✅   |    ❌    |   ❌   |     ❌     | per role |      ❌       |    ✅     |
+| Groups             |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |       –       |    ✅     |
+| Segments           |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |       –       |    ✅     |
+| Campaigns          |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role | jen co dostal |    ✅     |
+| Send campaigns     |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |      ❌       |    ✅     |
+| Automations        |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |      ❌       |    ✅     |
+| Forms              |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |  submit only  |    ✅     |
+| Landing pages      |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |   view only   |    ✅     |
+| Websites           |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |   view only   | per scope |
+| Surveys/Quizzes    |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |   take only   | per scope |
+| Digital products   |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |   buy only    | per scope |
+| Paid newsletters   |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |   subscribe   | per scope |
+| Reports            |  ✅   |  ✅   |    ✅    |   ✅   |     ❌     | per role |      ❌       |    ✅     |
+| API keys           |  ✅   |  ✅   |    ❌    |   ❌   |     ❌     | per role |      ❌       |     –     |
+| Integrations       |  ✅   |  ✅   |    ✅    |   ❌   |     ❌     | per role |      ❌       | per scope |
+| Domains            |  ✅   |  ✅   |    ❌    |   ❌   |     ❌     | per role |      ❌       | per scope |
+| GDPR delete        |  ✅   |  ✅   | per role |   ❌   |     ❌     | per role |    request    | per scope |
 
 ---
 
@@ -2155,4 +2176,4 @@ Pokud MailerLite používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů mailerlite.com/help, mailerlite.com/pricing, mailerlite.com/features a praktických zdrojů (EmailToolTester, EmailVendorSelection, Sender, ThatMarketingBuddy, CostBench, Mailotrix, Sprout24, SendX). Pro nejaktuálnější detaily vždy konzultovat MailerLite Help Center.*
+_Dokument zpracován z oficiálních zdrojů mailerlite.com/help, mailerlite.com/pricing, mailerlite.com/features a praktických zdrojů (EmailToolTester, EmailVendorSelection, Sender, ThatMarketingBuddy, CostBench, Mailotrix, Sprout24, SendX). Pro nejaktuálnější detaily vždy konzultovat MailerLite Help Center._

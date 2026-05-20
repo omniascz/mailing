@@ -26,7 +26,9 @@ const internalSocialRoutes: FastifyPluginAsync = async (app) => {
       try {
         const { ingested } = await runMonitoringPoll(org.id);
         totalIngested += ingested;
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
     return reply.send({ data: { orgsPolled: orgs.length, totalIngested } });
   });

@@ -25,10 +25,7 @@ export interface ArchiveResult {
 
 // ─── Archive old events ───────────────────────────────────────────────────────
 
-export async function archiveOldEvents(
-  orgId: string,
-  cutoffDays = 30,
-): Promise<ArchiveResult> {
+export async function archiveOldEvents(orgId: string, cutoffDays = 30): Promise<ArchiveResult> {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - cutoffDays);
   cutoff.setHours(0, 0, 0, 0);
@@ -40,14 +37,16 @@ export async function archiveOldEvents(
   // Process in batches to avoid locking the table
   let hasMore = true;
   while (hasMore) {
-    const rows = await db.select().from(emailEvents)
-      .where(and(
-        eq(emailEvents.orgId, orgId),
-        lt(emailEvents.createdAt, cutoff),
-      ))
+    const rows = await db
+      .select()
+      .from(emailEvents)
+      .where(and(eq(emailEvents.orgId, orgId), lt(emailEvents.createdAt, cutoff)))
       .limit(BATCH_SIZE);
 
-    if (rows.length === 0) { hasMore = false; break; }
+    if (rows.length === 0) {
+      hasMore = false;
+      break;
+    }
 
     // Group by date for partitioned S3 keys
     const byDate = new Map<string, typeof rows>();
@@ -64,10 +63,8 @@ export async function archiveOldEvents(
     }
 
     // Delete archived rows
-    const ids = rows.map(r => r.id);
-    await db.execute(
-      sql`DELETE FROM email_events WHERE id = ANY(${ids}::uuid[])`,
-    );
+    const ids = rows.map((r) => r.id);
+    await db.execute(sql`DELETE FROM email_events WHERE id = ANY(${ids}::uuid[])`);
 
     totalArchived += rows.length;
     totalDeleted += rows.length;
@@ -92,9 +89,13 @@ export async function archiveAllOrgs(cutoffDays = 30): Promise<ArchiveResult[]> 
 
   const results: ArchiveResult[] = [];
   for (const { id } of orgs ?? []) {
-    const result = await archiveOldEvents(id, cutoffDays).catch(err => ({
-      orgId: id, rowsArchived: 0, rowsDeleted: 0, s3Keys: [],
-      cutoffDate: new Date(), error: String(err),
+    const result = await archiveOldEvents(id, cutoffDays).catch((err) => ({
+      orgId: id,
+      rowsArchived: 0,
+      rowsDeleted: 0,
+      s3Keys: [],
+      cutoffDate: new Date(),
+      error: String(err),
     }));
     results.push(result as ArchiveResult);
   }
@@ -113,7 +114,7 @@ export async function listArchivedFiles(
 
   if (!fromDate && !toDate) return keys;
 
-  return keys.filter(key => {
+  return keys.filter((key) => {
     const match = key.match(/year=(\d{4})\/month=(\d{2})\/day=(\d{2})/);
     if (!match) return true;
     const keyDate = new Date(`${match[1]}-${match[2]}-${match[3]}`);
@@ -138,7 +139,7 @@ async function uploadNdjson(key: string, rows: unknown[]): Promise<void> {
   const useSSL = process.env.MINIO_USE_SSL === 'true';
   const scheme = useSSL ? 'https' : 'http';
 
-  const ndjson = rows.map(r => JSON.stringify(r)).join('\n');
+  const ndjson = rows.map((r) => JSON.stringify(r)).join('\n');
   const body = Buffer.from(ndjson, 'utf8');
 
   await fetch(`${scheme}://${endpoint}:${port}/${bucket}/${key}`, {

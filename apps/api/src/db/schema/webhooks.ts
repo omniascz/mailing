@@ -48,7 +48,9 @@ export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
 export const webhooks = pgTable(
   'webhooks',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -57,7 +59,10 @@ export const webhooks = pgTable(
     /** HMAC-SHA256 signing secret (stored hashed — never returned in API) */
     secret: varchar('secret', { length: 255 }).notNull(),
     /** Array of subscribed event types, e.g. ['email.opened', 'contact.created'] */
-    events: text('events').array().notNull().default(sql`'{}'::text[]`),
+    events: text('events')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     description: varchar('description', { length: 255 }),
     active: boolean('active').notNull().default(true),
 
@@ -78,10 +83,7 @@ export const webhooks = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('webhooks_org_id_idx').on(t.orgId),
-    index('webhooks_active_idx').on(t.active),
-  ],
+  (t) => [index('webhooks_org_id_idx').on(t.orgId), index('webhooks_active_idx').on(t.active)],
 );
 
 // ─── Webhook deliveries ───────────────────────────────────────────────────────
@@ -89,7 +91,9 @@ export const webhooks = pgTable(
 export const webhookDeliveries = pgTable(
   'webhook_deliveries',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     webhookId: uuid('webhook_id')
       .notNull()
       .references(() => webhooks.id, { onDelete: 'cascade' }),
@@ -126,24 +130,26 @@ export const webhookDeliveries = pgTable(
 export const apiKeys = pgTable(
   'api_keys',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id'),          // who created this key
+    userId: uuid('user_id'), // who created this key
     name: varchar('name', { length: 255 }).notNull(),
     keyHash: varchar('key_hash', { length: 255 }).notNull().unique(),
     keyPrefix: varchar('key_prefix', { length: 16 }).notNull(), // e.g. "fm_live_xxxx"
-    scopes: text('scopes').array().notNull().default(sql`'{}'::text[]`),
+    scopes: text('scopes')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     active: boolean('active').notNull().default(true),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('api_keys_org_id_idx').on(t.orgId),
-    index('api_keys_key_hash_idx').on(t.keyHash),
-  ],
+  (t) => [index('api_keys_org_id_idx').on(t.orgId), index('api_keys_key_hash_idx').on(t.keyHash)],
 );
 
 export type Webhook = typeof webhooks.$inferSelect;

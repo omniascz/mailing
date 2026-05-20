@@ -17,7 +17,10 @@
  */
 
 import type {
-  CalcNode, CalcBinOp, CalcCall, CalcLiteral,
+  CalcNode,
+  CalcBinOp,
+  CalcCall,
+  CalcLiteral,
 } from '../../db/schema/calculated-properties.js';
 
 export interface EvalContext {
@@ -77,9 +80,12 @@ function evalBinOp(node: CalcBinOp, ctx: EvalContext, depth: number): unknown {
   const r = evaluate(node.right, ctx, depth + 1);
 
   switch (node.op) {
-    case '+': return num(l) + num(r);
-    case '-': return num(l) - num(r);
-    case '*': return num(l) * num(r);
+    case '+':
+      return num(l) + num(r);
+    case '-':
+      return num(l) - num(r);
+    case '*':
+      return num(l) * num(r);
     case '/': {
       const d = num(r);
       return d === 0 ? null : num(l) / d;
@@ -88,14 +94,22 @@ function evalBinOp(node: CalcBinOp, ctx: EvalContext, depth: number): unknown {
       const d = num(r);
       return d === 0 ? null : num(l) % d;
     }
-    case '==': return l === r;
-    case '!=': return l !== r;
-    case '<':  return cmp(l, r) < 0;
-    case '<=': return cmp(l, r) <= 0;
-    case '>':  return cmp(l, r) > 0;
-    case '>=': return cmp(l, r) >= 0;
-    case '&&': return Boolean(l) && Boolean(r);
-    case '||': return Boolean(l) || Boolean(r);
+    case '==':
+      return l === r;
+    case '!=':
+      return l !== r;
+    case '<':
+      return cmp(l, r) < 0;
+    case '<=':
+      return cmp(l, r) <= 0;
+    case '>':
+      return cmp(l, r) > 0;
+    case '>=':
+      return cmp(l, r) >= 0;
+    case '&&':
+      return Boolean(l) && Boolean(r);
+    case '||':
+      return Boolean(l) || Boolean(r);
     default:
       throw new EvalError(`Unknown binary op: ${(node as CalcBinOp).op}`);
   }
@@ -106,27 +120,46 @@ function evalCall(node: CalcCall, ctx: EvalContext, depth: number): unknown {
   const now = () => ctx.now ?? new Date();
 
   switch (node.fn) {
-    case 'now':   return now().toISOString();
-    case 'today': return new Date(now().setHours(0, 0, 0, 0)).toISOString().slice(0, 10);
+    case 'now':
+      return now().toISOString();
+    case 'today':
+      return new Date(now().setHours(0, 0, 0, 0)).toISOString().slice(0, 10);
 
-    case 'days_between': return msBetween(args) / 86_400_000;
-    case 'hours_between': return msBetween(args) / 3_600_000;
+    case 'days_between':
+      return msBetween(args) / 86_400_000;
+    case 'hours_between':
+      return msBetween(args) / 3_600_000;
 
-    case 'coalesce': return args.find((v) => v !== null && v !== undefined) ?? null;
-    case 'if':       return args[0] ? args[1] ?? null : args[2] ?? null;
+    case 'coalesce':
+      return args.find((v) => v !== null && v !== undefined) ?? null;
+    case 'if':
+      return args[0] ? (args[1] ?? null) : (args[2] ?? null);
 
-    case 'lower':  return typeof args[0] === 'string' ? args[0].toLowerCase() : null;
-    case 'upper':  return typeof args[0] === 'string' ? args[0].toUpperCase() : null;
-    case 'length': return typeof args[0] === 'string' ? args[0].length
-                    : Array.isArray(args[0]) ? args[0].length : 0;
-    case 'concat': return args.map((a) => (a == null ? '' : String(a))).join('');
+    case 'lower':
+      return typeof args[0] === 'string' ? args[0].toLowerCase() : null;
+    case 'upper':
+      return typeof args[0] === 'string' ? args[0].toUpperCase() : null;
+    case 'length':
+      return typeof args[0] === 'string'
+        ? args[0].length
+        : Array.isArray(args[0])
+          ? args[0].length
+          : 0;
+    case 'concat':
+      return args.map((a) => (a == null ? '' : String(a))).join('');
 
-    case 'round':  return Math.round(num(args[0]));
-    case 'floor':  return Math.floor(num(args[0]));
-    case 'ceil':   return Math.ceil(num(args[0]));
-    case 'abs':    return Math.abs(num(args[0]));
-    case 'min':    return Math.min(...args.map(num));
-    case 'max':    return Math.max(...args.map(num));
+    case 'round':
+      return Math.round(num(args[0]));
+    case 'floor':
+      return Math.floor(num(args[0]));
+    case 'ceil':
+      return Math.ceil(num(args[0]));
+    case 'abs':
+      return Math.abs(num(args[0]));
+    case 'min':
+      return Math.min(...args.map(num));
+    case 'max':
+      return Math.max(...args.map(num));
     default:
       throw new EvalError(`Unknown function: ${(node as CalcCall).fn}`);
   }
@@ -166,7 +199,8 @@ function cmp(a: unknown, b: unknown): number {
   if (typeof a === 'string' && typeof b === 'string') {
     return a < b ? -1 : a > b ? 1 : 0;
   }
-  const da = toDate(a); const db = toDate(b);
+  const da = toDate(a);
+  const db = toDate(b);
   if (da && db) return da.getTime() - db.getTime();
   return num(a) - num(b);
 }
@@ -175,7 +209,10 @@ function cmp(a: unknown, b: unknown): number {
 
 export function referencedFields(node: CalcNode, out: Set<string> = new Set()): Set<string> {
   if (node === null || typeof node !== 'object') return out;
-  if ('$field' in node) { out.add(node.$field); return out; }
+  if ('$field' in node) {
+    out.add(node.$field);
+    return out;
+  }
   if ('$ref' in node) return out;
   if ('op' in node) {
     referencedFields(node.left, out);

@@ -189,7 +189,9 @@ export async function updateBaa(
   const [updated] = await db
     .update(businessAssociateAgreements)
     .set({ ...patch, updatedAt: new Date() })
-    .where(and(eq(businessAssociateAgreements.id, baaId), eq(businessAssociateAgreements.orgId, orgId)))
+    .where(
+      and(eq(businessAssociateAgreements.id, baaId), eq(businessAssociateAgreements.orgId, orgId)),
+    )
     .returning();
   if (!updated) throw new Error('BAA not found');
   return updated;
@@ -206,7 +208,9 @@ export async function listBaas(orgId: string): Promise<BusinessAssociateAgreemen
 export async function deleteBaa(orgId: string, baaId: string): Promise<void> {
   await db
     .delete(businessAssociateAgreements)
-    .where(and(eq(businessAssociateAgreements.id, baaId), eq(businessAssociateAgreements.orgId, orgId)));
+    .where(
+      and(eq(businessAssociateAgreements.id, baaId), eq(businessAssociateAgreements.orgId, orgId)),
+    );
 }
 
 // ─── PHI field flags ──────────────────────────────────────────────────────────

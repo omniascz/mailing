@@ -23,9 +23,7 @@ describe('validateTiers', () => {
   });
 
   it('rejects tiers whose lowest is non-zero', () => {
-    expect(() =>
-      validateTiers([{ id: 'a', name: 'A', minPoints: 100 }]),
-    ).toThrow(/minPoints = 0/);
+    expect(() => validateTiers([{ id: 'a', name: 'A', minPoints: 100 }])).toThrow(/minPoints = 0/);
   });
 
   it('rejects duplicate tier IDs', () => {
@@ -38,17 +36,13 @@ describe('validateTiers', () => {
   });
 
   it('rejects empty tier name', () => {
-    expect(() =>
-      validateTiers([{ id: 'a', name: ' ', minPoints: 0 }]),
-    ).toThrow(/name is required/);
+    expect(() => validateTiers([{ id: 'a', name: ' ', minPoints: 0 }])).toThrow(/name is required/);
   });
 
   it('rejects negative multiplier', () => {
-    expect(() =>
-      validateTiers([
-        { id: 'a', name: 'A', minPoints: 0, multiplier: -1 },
-      ]),
-    ).toThrow(/multiplier must be >= 0/);
+    expect(() => validateTiers([{ id: 'a', name: 'A', minPoints: 0, multiplier: -1 }])).toThrow(
+      /multiplier must be >= 0/,
+    );
   });
 });
 
@@ -138,13 +132,9 @@ describe('computeExpiresAt', () => {
   });
 
   it('fixed picks next MM-DD occurrence', () => {
-    expect(computeExpiresAt('fixed', '12-31', now)!.toISOString().slice(0, 10)).toBe(
-      '2026-12-31',
-    );
+    expect(computeExpiresAt('fixed', '12-31', now)!.toISOString().slice(0, 10)).toBe('2026-12-31');
     // If date already passed this year, move to next year
-    expect(computeExpiresAt('fixed', '01-01', now)!.toISOString().slice(0, 10)).toBe(
-      '2027-01-01',
-    );
+    expect(computeExpiresAt('fixed', '01-01', now)!.toISOString().slice(0, 10)).toBe('2027-01-01');
   });
 
   it('returns null for malformed rolling/fixed values', () => {

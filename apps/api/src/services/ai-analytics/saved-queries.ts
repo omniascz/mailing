@@ -39,18 +39,13 @@ export async function createSavedQuery(
   return row!;
 }
 
-export async function listSavedQueries(
-  orgId: string,
-  userId: string,
-): Promise<SavedQuery[]> {
+export async function listSavedQueries(orgId: string, userId: string): Promise<SavedQuery[]> {
   const rows = await db
     .select()
     .from(savedQueries)
     .where(and(eq(savedQueries.orgId, orgId), isNull(savedQueries.deletedAt)))
     .orderBy(desc(savedQueries.lastRunAt));
-  return rows.filter(
-    (r) => r.visibility === 'org' || r.ownerUserId === userId,
-  );
+  return rows.filter((r) => r.visibility === 'org' || r.ownerUserId === userId);
 }
 
 export async function getSavedQuery(
@@ -91,11 +86,7 @@ export async function updateSavedQuery(
   return row!;
 }
 
-export async function deleteSavedQuery(
-  orgId: string,
-  id: string,
-  userId: string,
-): Promise<void> {
+export async function deleteSavedQuery(orgId: string, id: string, userId: string): Promise<void> {
   const existing = await getSavedQuery(orgId, id, userId);
   if (existing.ownerUserId !== userId) {
     throw AppError.forbidden('Only the owner can delete a saved query');

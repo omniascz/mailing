@@ -1,6 +1,14 @@
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, text, jsonb, boolean, timestamp, index, uniqueIndex,
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  jsonb,
+  boolean,
+  timestamp,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
@@ -21,8 +29,12 @@ import { organizations } from './organizations.js';
 export const customChannels = pgTable(
   'custom_channels',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     slug: varchar('slug', { length: 64 }).notNull(),
     name: varchar('name', { length: 128 }).notNull(),
     description: text('description'),
@@ -33,8 +45,10 @@ export const customChannels = pgTable(
     /** Optional schema describing the message body the remote expects. */
     messageSchema: jsonb('message_schema').$type<Record<string, unknown>>().notNull().default({}),
     /** Rate limits (requests/sec, max payload bytes) enforced by the dispatcher. */
-    rateLimits: jsonb('rate_limits').$type<{ rps?: number; maxPayloadBytes?: number }>()
-      .notNull().default({}),
+    rateLimits: jsonb('rate_limits')
+      .$type<{ rps?: number; maxPayloadBytes?: number }>()
+      .notNull()
+      .default({}),
     enabled: boolean('enabled').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

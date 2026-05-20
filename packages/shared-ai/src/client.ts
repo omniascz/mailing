@@ -26,11 +26,7 @@ const DEFAULT_MAX_RETRIES = 3;
 /**
  * Calculate the cost in USD for a given model and token counts.
  */
-export function calculateCost(
-  model: string,
-  inputTokens: number,
-  outputTokens: number,
-): number {
+export function calculateCost(model: string, inputTokens: number, outputTokens: number): number {
   const resolvedModel = resolveModel(model);
   const costs = MODEL_COSTS[resolvedModel] ?? MODEL_COSTS['claude-sonnet-4-6']!;
   return (
@@ -121,15 +117,17 @@ export function createAiClient(config: AiProviderConfig = {}) {
       if (cached) {
         // Track cached usage
         if (tenantId && config.usageTracker) {
-          Promise.resolve(config.usageTracker({
-            tenantId,
-            model,
-            feature,
-            inputTokens: 0,
-            outputTokens: 0,
-            costUsd: 0,
-            cached: true,
-          })).catch(() => {});
+          Promise.resolve(
+            config.usageTracker({
+              tenantId,
+              model,
+              feature,
+              inputTokens: 0,
+              outputTokens: 0,
+              costUsd: 0,
+              cached: true,
+            }),
+          ).catch(() => {});
         }
         return { text: cached, cached: true, inputTokens: 0, outputTokens: 0, costUsd: 0 };
       }
@@ -190,15 +188,17 @@ export function createAiClient(config: AiProviderConfig = {}) {
 
         // 5. Track usage (fire-and-forget)
         if (tenantId && config.usageTracker) {
-          Promise.resolve(config.usageTracker({
-            tenantId,
-            model,
-            feature,
-            inputTokens,
-            outputTokens,
-            costUsd,
-            cached: false,
-          })).catch(() => {});
+          Promise.resolve(
+            config.usageTracker({
+              tenantId,
+              model,
+              feature,
+              inputTokens,
+              outputTokens,
+              costUsd,
+              cached: false,
+            }),
+          ).catch(() => {});
         }
 
         return { text, cached: false, inputTokens, outputTokens, costUsd, rawResponse: result };

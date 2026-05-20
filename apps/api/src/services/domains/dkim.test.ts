@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  generateDkimKeyPair,
-  buildDkimDnsRecord,
-  signEmailDkim,
-} from './dkim.js';
+import { generateDkimKeyPair, buildDkimDnsRecord, signEmailDkim } from './dkim.js';
 
 describe('generateDkimKeyPair', () => {
   it('generates a key pair with all required fields', async () => {
@@ -74,8 +70,11 @@ describe('signEmailDkim', () => {
     const kp = await generateDkimKeyPair();
     const sig = signEmailDkim({
       headers: {
-        from: 'a@b.com', to: 'c@d.com', subject: 'Hi',
-        date: 'Mon, 1 Jan 2024 00:00:00 +0000', messageId: '<x@y>',
+        from: 'a@b.com',
+        to: 'c@d.com',
+        subject: 'Hi',
+        date: 'Mon, 1 Jan 2024 00:00:00 +0000',
+        messageId: '<x@y>',
         'message-id': '<x@y>',
       },
       body: 'body',

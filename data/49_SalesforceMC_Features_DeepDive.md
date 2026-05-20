@@ -7,6 +7,7 @@
 > **Důležitý kontext:** **Salesforce Marketing Cloud = enterprise standard pro B2C i B2B marketing automation**. Nejde o jeden produkt, ale **rodinu modulárních produktů** budovaných z akvizicí (ExactTarget, Pardot, Datorama, Evergage/Interaction Studio, Krux, Buddy Media, atd.).
 >
 > **Společnost:** Salesforce, Inc.
+>
 > - **HQ:** Salesforce Tower, San Francisco, California, USA
 > - **Public:** NYSE: CRM (S&P 500)
 > - **CEO:** Marc Benioff (founder, od 1999)
@@ -15,6 +16,7 @@
 > - **Marketing Cloud history:** založeno akvizicí ExactTarget (2013, $2.5B) + Pardot (2012, $96M)
 >
 > **Pozice 2026:**
+>
 > - **Enterprise marketing automation lídr** (B2C + B2B)
 > - **Leader Gartner Magic Quadrant** for B2C Marketing Automation Platforms (consistently)
 > - **Leader Gartner Magic Quadrant** for B2B Marketing Automation (Account Engagement / Pardot)
@@ -23,6 +25,7 @@
 > - **Agentforce** – AI agents pro marketing tasks
 >
 > **Klíčové diferenciátory:**
+>
 > - **Hluboká integrace se Salesforce CRM** (Sales Cloud, Service Cloud)
 > - **Modulární architektura** (vyber si moduly dle potřeby)
 > - **Enterprise scale** – miliardy emailů/měsíc, miliony kontaktů
@@ -42,6 +45,7 @@
 > - **Marketplace AppExchange** (1000+ apps)
 >
 > **Klíčové problémy/kritika 2026:**
+>
 > - **Enterprise pricing** – minimum $1,250/měsíc Engagement
 > - **Steep learning curve** (complex, technical setup)
 > - **Implementation time** 3-12 měsíců typically
@@ -94,11 +98,11 @@
 
 ### Per oficiální (Marketing Cloud Engagement Pricing)
 
-> *"Experience the power of Marketing Cloud Engagement's scale and automation, now enhanced with agentic capabilities from Marketing Cloud Next. This new, improved marketing stack personalizes and automates email, mobile, and web journeys at scale."*
+> _"Experience the power of Marketing Cloud Engagement's scale and automation, now enhanced with agentic capabilities from Marketing Cloud Next. This new, improved marketing stack personalizes and automates email, mobile, and web journeys at scale."_
 
 ### Per Research.com Review 2026
 
-> *"Salesforce Marketing Cloud Engagement features a unified data model that consolidates customer information from multiple sources, enabling marketers to gain a comprehensive understanding of customer behavior and preferences. This integration supports precise audience segmentation and targeted campaigns."*
+> _"Salesforce Marketing Cloud Engagement features a unified data model that consolidates customer information from multiple sources, enabling marketers to gain a comprehensive understanding of customer behavior and preferences. This integration supports precise audience segmentation and targeted campaigns."_
 
 ### Rodina produktů Marketing Cloud 2026
 
@@ -200,11 +204,11 @@ Cílový profil Marketing Cloud:
 
 ### Per Twelverays
 
-> *"Salesforce Marketing Cloud is a cloud-based digital marketing CRM platform that enables businesses to automate, optimize, and measure campaigns across multiple marketing channels. Whether it's through email campaigns, social media marketing, or mobile marketing, this platform offers tools that help businesses drive customer engagement and business growth."*
+> _"Salesforce Marketing Cloud is a cloud-based digital marketing CRM platform that enables businesses to automate, optimize, and measure campaigns across multiple marketing channels. Whether it's through email campaigns, social media marketing, or mobile marketing, this platform offers tools that help businesses drive customer engagement and business growth."_
 
 ### Per oficiální (Marketing Cloud pricing)
 
-> *"Next-Generation Marketing Cloud is a complete agentic marketing solution, purpose-built to help you personalize every moment of engagement across the customer lifecycle. Built natively on the Salesforce platform — right alongside Sales, Service, and Commerce — it connects your customer data, workflows, and teams in one unified system."*
+> _"Next-Generation Marketing Cloud is a complete agentic marketing solution, purpose-built to help you personalize every moment of engagement across the customer lifecycle. Built natively on the Salesforce platform — right alongside Sales, Service, and Commerce — it connects your customer data, workflows, and teams in one unified system."_
 
 ### Typické use cases
 
@@ -306,16 +310,18 @@ EINSTEIN AI:
 
 ### 2.3 Per G2 review
 
-> *"Salesforce Marketing Cloud is very powerful tool for creating personalized and end-to-end automated journeys for your email campaigns."*
+> _"Salesforce Marketing Cloud is very powerful tool for creating personalized and end-to-end automated journeys for your email campaigns."_
 
 ### 2.4 Email Studio capabilities
 
 Per oficiální G2 listing:
-> *"Email Studio offers: Features and capabilities for any email marketing strategy; Tools for any approach to email creation — from drag-and-drop to code-based; Drag-and-drop segmentation for audience targeting; Personalization tools from straightforward dynamic content to robust AI-powered decisioning; Marketer-friendly AI ready to use from day 1 with the click of a button for send time, frequency, engagement, and content; Prebuilt, mobile-optimized email templates; Drag-and-drop content blocks; Native connections with your favorite CMS tools; Built-in A/B and multivariate testing; Journey canvas for building cross-channel behavior-based journeys."*
+
+> _"Email Studio offers: Features and capabilities for any email marketing strategy; Tools for any approach to email creation — from drag-and-drop to code-based; Drag-and-drop segmentation for audience targeting; Personalization tools from straightforward dynamic content to robust AI-powered decisioning; Marketer-friendly AI ready to use from day 1 with the click of a button for send time, frequency, engagement, and content; Prebuilt, mobile-optimized email templates; Drag-and-drop content blocks; Native connections with your favorite CMS tools; Built-in A/B and multivariate testing; Journey canvas for building cross-channel behavior-based journeys."_
 
 ### 2.5 Pricing 2026
 
 Per Salesforce + Codleo (2026):
+
 - **Pro / Growth Edition: $1,250/měsíc** (entry level)
 - **Corporate / Plus Edition: $3,250/měsíc** (per organization, annual)
 - **Enterprise / Advanced Edition: ~$3,750/měsíc+** (advanced features)
@@ -327,7 +333,8 @@ Per Salesforce + Codleo (2026):
 ### 2.6 Engagement+ (NEW Oct 2025)
 
 Per oficiální:
-> *"Marketing Cloud Engagement+ is an enhanced version of Marketing Cloud Engagement that includes access to Marketing Cloud Next. It unlocks next-gen marketing capabilities including AI agents, unified data from across Salesforce clouds, and new orchestration tools — while preserving your current journeys, content, and campaigns."*
+
+> _"Marketing Cloud Engagement+ is an enhanced version of Marketing Cloud Engagement that includes access to Marketing Cloud Next. It unlocks next-gen marketing capabilities including AI agents, unified data from across Salesforce clouds, and new orchestration tools — while preserving your current journeys, content, and campaigns."_
 
 ```
 Engagement+ adds:
@@ -407,6 +414,7 @@ SALES ALIGNMENT:
 **4 editions Account Engagement:**
 
 #### Growth Edition
+
 - **Cena: $1,250/měsíc** (per organization, annual)
 - 10 000 kontaktů
 - Up to 50 form types
@@ -416,6 +424,7 @@ SALES ALIGNMENT:
 - Einstein recommendations (limited)
 
 #### Plus Edition
+
 - **Cena: $2,500/měsíc**
 - Advanced automation
 - Engagement Studio
@@ -424,6 +433,7 @@ SALES ALIGNMENT:
 - A/B testing
 
 #### Advanced Edition
+
 - **Cena: $4,000/měsíc**
 - Custom user roles
 - Multi-touch attribution
@@ -432,6 +442,7 @@ SALES ALIGNMENT:
 - Predictive insights
 
 #### Premium Edition
+
 - **Cena: custom** (typically $15,000-25,000+/měsíc)
 - Custom integrations
 - Predictive intelligence
@@ -442,7 +453,8 @@ SALES ALIGNMENT:
 ### 3.4 Account Engagement+ (NEW)
 
 Per oficiální:
-> *"Account Engagement+ allows Account Engagement customers to access Marketing Cloud Next. This allows all Account Engagement customers to enhance their marketing with Agentforce-powered campaigns, native SMS and WhatsApp, and advanced personalization capabilities."*
+
+> _"Account Engagement+ allows Account Engagement customers to access Marketing Cloud Next. This allows all Account Engagement customers to enhance their marketing with Agentforce-powered campaigns, native SMS and WhatsApp, and advanced personalization capabilities."_
 
 ```
 Account Engagement+ benefits:
@@ -456,7 +468,8 @@ Account Engagement+ benefits:
 ```
 
 Per oficiální:
-> *"Customers on Account Engagement Growth, Plus, Advanced, and Premium Editions have Account Engagement+ today."*
+
+> _"Customers on Account Engagement Growth, Plus, Advanced, and Premium Editions have Account Engagement+ today."_
 
 ⚠️ **Všichni Account Engagement zákazníci** mají Account Engagement+ (přístup k Marketing Cloud Next features).
 
@@ -605,7 +618,7 @@ USE CASES:
 
 ### 5.3 Per MagicFuse
 
-> *"Marketing Cloud Intelligence (formerly Datorama) helps organizations centralize marketing data, track KPIs, manage investments, and make data-driven decisions through advanced dashboards and reporting."*
+> _"Marketing Cloud Intelligence (formerly Datorama) helps organizations centralize marketing data, track KPIs, manage investments, and make data-driven decisions through advanced dashboards and reporting."_
 
 ### 5.4 Intelligence+ (NEW)
 
@@ -669,7 +682,7 @@ AI READY:
 
 ### 6.3 Per Salesforce positioning
 
-> *"Data Cloud complements [Intelligence] by unifying customer profiles from multiple sources, including customer service data, enabling real-time activation across channels."*
+> _"Data Cloud complements [Intelligence] by unifying customer profiles from multiple sources, including customer service data, enabling real-time activation across channels."_
 
 ### 6.4 Vs. konkurence CDPs
 
@@ -699,7 +712,8 @@ Salesforce Data Cloud advantages:
 ### 7.1 Launch
 
 Per oficiální:
-> *"Marketing Cloud Next is a complete agentic marketing solution, purpose-built to help you personalize every moment of engagement across the customer lifecycle. Built natively on the Salesforce platform — right alongside Sales, Service, and Commerce — it connects your customer data, workflows, and teams in one unified system."*
+
+> _"Marketing Cloud Next is a complete agentic marketing solution, purpose-built to help you personalize every moment of engagement across the customer lifecycle. Built natively on the Salesforce platform — right alongside Sales, Service, and Commerce — it connects your customer data, workflows, and teams in one unified system."_
 
 - **Launch:** Říjen 2025 GA
 - **Focus:** Agentic AI marketing
@@ -707,9 +721,9 @@ Per oficiální:
 
 ### 7.2 Per oficiální positioning
 
-> *"What sets it apart is its foundation in autonomous AI. These agents aren't just helpers — they act like expert teammates who understand your goals and act on your behalf. From campaign creation to optimization and 1:1 personalization, they automate what used to take teams of people — now at a scale and speed only made possible by today's advancements in AI."*
+> _"What sets it apart is its foundation in autonomous AI. These agents aren't just helpers — they act like expert teammates who understand your goals and act on your behalf. From campaign creation to optimization and 1:1 personalization, they automate what used to take teams of people — now at a scale and speed only made possible by today's advancements in AI."_
 
-> *"With our next-generation capabilities, every channel becomes a two-way conversation."*
+> _"With our next-generation capabilities, every channel becomes a two-way conversation."_
 
 ### 7.3 Klíčové AI agentic features
 
@@ -774,7 +788,8 @@ Adds new AI agentic capabilities
 ```
 
 Per oficiální:
-> *"These '+' editions work alongside your existing tools, so there's no disruption or need to rebuild. You keep your current journeys, data, and content—while gaining access to new AI-powered capabilities such as Agentforce campaign creation, real-time personalization, cross-channel orchestration, advanced analytics, and more."*
+
+> _"These '+' editions work alongside your existing tools, so there's no disruption or need to rebuild. You keep your current journeys, data, and content—while gaining access to new AI-powered capabilities such as Agentforce campaign creation, real-time personalization, cross-channel orchestration, advanced analytics, and more."_
 
 ### 7.5 Flow for Marketers (GA October 2025)
 
@@ -931,7 +946,8 @@ YEAR 2+ ONGOING: ~$170,000/year (without implementation)
 ### 8.5 Implementation costs
 
 Per Codleo:
-> *"Onboarding teams may need Salesforce Premier Support, Trailhead courses, or consulting services, especially if their workflows are complicated."*
+
+> _"Onboarding teams may need Salesforce Premier Support, Trailhead courses, or consulting services, especially if their workflows are complicated."_
 
 ```
 Implementation reality:
@@ -945,7 +961,8 @@ Implementation reality:
 ### 8.6 No public pricing
 
 ⚠️ Per Research.com:
-> *"Salesforce Marketing Cloud Account Engagement pricing is not publicly available and is typically customized based on each business's specific needs."*
+
+> _"Salesforce Marketing Cloud Account Engagement pricing is not publicly available and is typically customized based on each business's specific needs."_
 
 **Contact Sales required** for accurate quote.
 
@@ -956,7 +973,8 @@ Implementation reality:
 ### 9.1 Capabilities
 
 Per oficiální:
-> *"Email Studio offers: Features and capabilities for any email marketing strategy; Tools for any approach to email creation — from drag-and-drop to code-based."*
+
+> _"Email Studio offers: Features and capabilities for any email marketing strategy; Tools for any approach to email creation — from drag-and-drop to code-based."_
 
 ```
 Email Studio features:
@@ -1120,9 +1138,9 @@ GOALS + ANALYTICS:
 
 ### 10.2 Per G2
 
-> *"We highly utilize email Journey's to setup campaign's containing multiple emails with business logic for segmentation and personalization."*
+> _"We highly utilize email Journey's to setup campaign's containing multiple emails with business logic for segmentation and personalization."_
 
-> *"Journey Builder tool stands out as a powerful asset, offering a visual way to create automated workflows that react dynamically to customer behavior."*
+> _"Journey Builder tool stands out as a powerful asset, offering a visual way to create automated workflows that react dynamically to customer behavior."_
 
 ### 10.3 Use case examples
 
@@ -1216,7 +1234,8 @@ LINE messaging (Asian markets)
 ### 11.2 WhatsApp (NEW 2025)
 
 Per Marketing Cloud Next:
-> *"Multichannel Messaging: Deliver multichannel engagement journeys that include email, SMS, and WhatsApp. Previously, SMS and WhatsApp required third-party integrations. Now, it's fully integrated."*
+
+> _"Multichannel Messaging: Deliver multichannel engagement journeys that include email, SMS, and WhatsApp. Previously, SMS and WhatsApp required third-party integrations. Now, it's fully integrated."_
 
 ⚠️ **WhatsApp native** = key improvement (předtím přes 3rd-party).
 
@@ -1440,9 +1459,9 @@ Agentforce Campaign Creation:
 
 ### 15.2 Per oficiální
 
-> *"Agentforce Campaign Creation: Automate campaign creation, personalization, and optimization using natural language and machine learning."*
+> _"Agentforce Campaign Creation: Automate campaign creation, personalization, and optimization using natural language and machine learning."_
 
-> *"These agents aren't just helpers — they act like expert teammates who understand your goals and act on your behalf. From campaign creation to optimization and 1:1 personalization, they automate what used to take teams of people."*
+> _"These agents aren't just helpers — they act like expert teammates who understand your goals and act on your behalf. From campaign creation to optimization and 1:1 personalization, they automate what used to take teams of people."_
 
 ### 15.3 Use case example
 
@@ -1571,7 +1590,8 @@ WhatsApp historically:
 ### 17.2 Post-October 2025 native
 
 Per oficiální:
-> *"Previously, SMS and WhatsApp required third-party integrations. Now, it's fully integrated—improving ease of use, expanding use cases, and streamlining operations."*
+
+> _"Previously, SMS and WhatsApp required third-party integrations. Now, it's fully integrated—improving ease of use, expanding use cases, and streamlining operations."_
 
 ### 17.3 Use cases
 
@@ -1652,7 +1672,7 @@ Connected Campaigns (B2B Account Engagement):
 
 ### 18.3 Per Research.com
 
-> *"Integrated Salesforce Ecosystem: Tight connectivity with other Salesforce products, including Sales Cloud and Service Cloud, provides a unified view of the customer journey. This integration aligns marketing efforts with sales and service, enhancing cross-team collaboration."*
+> _"Integrated Salesforce Ecosystem: Tight connectivity with other Salesforce products, including Sales Cloud and Service Cloud, provides a unified view of the customer journey. This integration aligns marketing efforts with sales and service, enhancing cross-team collaboration."_
 
 ⚠️ **CRM-Marketing integration = key reason** existing Salesforce customers choose Marketing Cloud.
 
@@ -1662,7 +1682,7 @@ Connected Campaigns (B2B Account Engagement):
 
 ### 19.1 Per oficiální
 
-> *"Salesforce Flow for Marketers: Orchestrate cross-channel and cross-departmental journeys with marketing, sales, service, and commerce touch points more easily. Salesforce Flow for Marketers helps unify marketing with sales, service, and commerce departments—enabling smarter engagement across every stage of the journey."*
+> _"Salesforce Flow for Marketers: Orchestrate cross-channel and cross-departmental journeys with marketing, sales, service, and commerce touch points more easily. Salesforce Flow for Marketers helps unify marketing with sales, service, and commerce departments—enabling smarter engagement across every stage of the journey."_
 
 ### 19.2 Capabilities
 
@@ -1790,7 +1810,7 @@ COMPLIANCE TOOLS:
 
 ### 20.3 Per Research.com
 
-> *"User, Role, and Access Management: Offers detailed permission settings, enabling administrators to assign specific roles and access levels to protect data and optimize team collaboration."*
+> _"User, Role, and Access Management: Offers detailed permission settings, enabling administrators to assign specific roles and access levels to protect data and optimize team collaboration."_
 
 ⚠️ **Enterprise compliance** = klíčový důvod pro regulované industry (healthcare, financial, government).
 
@@ -1834,7 +1854,8 @@ CUSTOM APPS:
 ### 21.2 Pricing of add-ons
 
 Per MagicFuse:
-> *"This can range from $25 per month to $46,000 per month, so it can have a real impact on overall cost."*
+
+> _"This can range from $25 per month to $46,000 per month, so it can have a real impact on overall cost."_
 
 ⚠️ **AppExchange costs add up** quickly.
 
@@ -1845,7 +1866,8 @@ Per MagicFuse:
 ### 22.1 Languages supported
 
 Per G2 listing:
-> *"Czech, Danish, German, English, Finnish, French, Irish, Hungarian, Indonesian, Italian, Japanese, Korean, Dutch, Norwegian, Polish, Portuguese, Russian, Spanish, Swedish, Chinese (Simplified)"*
+
+> _"Czech, Danish, German, English, Finnish, French, Irish, Hungarian, Indonesian, Italian, Japanese, Korean, Dutch, Norwegian, Polish, Portuguese, Russian, Spanish, Swedish, Chinese (Simplified)"_
 
 ⚠️ **Čeština + Polština support** = vhodné pro CZ/PL enterprise!
 
@@ -1976,9 +1998,10 @@ Pro SMB = naprosto nedostupné
 ### 24.2 Komplexita
 
 Per Research.com:
-> *"Complex and unintuitive user interface with a steep learning curve for beginners."*
 
-> *"Extensive customization often demands advanced technical skills or developer assistance."*
+> _"Complex and unintuitive user interface with a steep learning curve for beginners."_
+
+> _"Extensive customization often demands advanced technical skills or developer assistance."_
 
 ```
 Complexity drivers:
@@ -2034,7 +2057,7 @@ AMPscript challenges:
 
 ### 24.6 Per G2 user
 
-> *"Salesforce Marketing Cloud can feel sometimes complex, especially during initial setup and troubleshooting."*
+> _"Salesforce Marketing Cloud can feel sometimes complex, especially during initial setup and troubleshooting."_
 
 ### 24.7 Slow innovation pace (relative)
 
@@ -2135,14 +2158,16 @@ Multi-stakeholder approval typical
 ### 24.14 Pricing not transparent
 
 Per Research.com:
-> *"Salesforce Marketing Cloud Account Engagement pricing is not publicly available and is typically customized based on each business's specific needs."*
+
+> _"Salesforce Marketing Cloud Account Engagement pricing is not publicly available and is typically customized based on each business's specific needs."_
 
 ⚠️ **No public pricing** = sales contact required.
 
 ### 24.15 Hidden costs (AppExchange + add-ons)
 
 Per MagicFuse:
-> *"This can range from $25 per month to $46,000 per month, so it can have a real impact on overall cost."*
+
+> _"This can range from $25 per month to $46,000 per month, so it can have a real impact on overall cost."_
 
 ```
 Common hidden costs:
@@ -2240,6 +2265,7 @@ Two main enterprise rivals:
 ## 25. Shrnutí: Pro koho a proti komu
 
 ### Marketing Cloud je dobrá volba pokud
+
 - Provozujete **enterprise B2C** (Engagement) nebo **enterprise B2B** (Account Engagement)
 - Máte **existující Salesforce CRM** (Sales/Service Cloud) – klíčový důvod!
 - Cíl je **multi-channel orchestration** (email + SMS + WhatsApp + push + ads)
@@ -2258,6 +2284,7 @@ Two main enterprise rivals:
 - Cíl je **predictive AI** (Einstein + Agentforce)
 
 ### Marketing Cloud není dobrá volba pokud
+
 - Provozujete **SMB** – pricing $1,250+/měsíc příliš vysoké
 - Cíl je **DTC ecommerce startup** – Klaviyo lepší ($20+/měsíc)
 - Vyžadujete **rychlý setup** (days, ne months)
@@ -2276,22 +2303,22 @@ Two main enterprise rivals:
 
 ### Marketing Cloud vs. konkurence
 
-| Konkurence | Kdy lepší než Marketing Cloud |
-|---|---|
-| **Adobe Experience Cloud** | Adobe Creative Suite ecosystem + Marketo |
-| **HubSpot** | B2B SaaS without Salesforce CRM, simpler all-in-one |
-| **Braze** | Mobile-first B2C, faster setup, agentic AI native |
-| **Klaviyo** | DTC ecommerce, faster ROI, lepší UX, lower cost |
-| **Iterable** | Enterprise B2C, less complex, modern UX |
-| **Bloomreach Engagement** | DTC personalization, CDP-native (CZ origin) |
-| **SAP Emarsys** | Mid-market retail, B2C focus, simpler |
-| **Oracle Eloqua** | B2B (alternative ke Account Engagement) |
-| **MoEngage** | APAC focus, mobile-first |
-| **Mailchimp** | SMB simpler, $20-200/měsíc |
-| **MailerLite** | SMB free + cheap, modern UX |
-| **Brevo** | SMB unlimited contacts, France origin |
-| **ActiveCampaign** | Mid-market automation, $15-300/měsíc |
-| **Leadhub** | CZ Shoptet e-shopy, malé scale |
+| Konkurence                 | Kdy lepší než Marketing Cloud                       |
+| -------------------------- | --------------------------------------------------- |
+| **Adobe Experience Cloud** | Adobe Creative Suite ecosystem + Marketo            |
+| **HubSpot**                | B2B SaaS without Salesforce CRM, simpler all-in-one |
+| **Braze**                  | Mobile-first B2C, faster setup, agentic AI native   |
+| **Klaviyo**                | DTC ecommerce, faster ROI, lepší UX, lower cost     |
+| **Iterable**               | Enterprise B2C, less complex, modern UX             |
+| **Bloomreach Engagement**  | DTC personalization, CDP-native (CZ origin)         |
+| **SAP Emarsys**            | Mid-market retail, B2C focus, simpler               |
+| **Oracle Eloqua**          | B2B (alternative ke Account Engagement)             |
+| **MoEngage**               | APAC focus, mobile-first                            |
+| **Mailchimp**              | SMB simpler, $20-200/měsíc                          |
+| **MailerLite**             | SMB free + cheap, modern UX                         |
+| **Brevo**                  | SMB unlimited contacts, France origin               |
+| **ActiveCampaign**         | Mid-market automation, $15-300/měsíc                |
+| **Leadhub**                | CZ Shoptet e-shopy, malé scale                      |
 
 ### Sweet spot pro Marketing Cloud 2026
 
@@ -2317,4 +2344,4 @@ B2B ACCOUNT ENGAGEMENT:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů salesforce.com (Marketing Cloud pricing, Engagement, Account Engagement, Personalization, Intelligence, Data Cloud, Marketing Cloud Next pages), G2 reviews (2026), Research.com Reviews (2026), Codleo blog (2026), MagicFuse, Twelverays, OMR Reviews. Pro nejaktuálnější detaily je nutný kontakt s Salesforce sales (sales@salesforce.com) nebo Salesforce Certified Partner.*
+_Dokument zpracován z oficiálních zdrojů salesforce.com (Marketing Cloud pricing, Engagement, Account Engagement, Personalization, Intelligence, Data Cloud, Marketing Cloud Next pages), G2 reviews (2026), Research.com Reviews (2026), Codleo blog (2026), MagicFuse, Twelverays, OMR Reviews. Pro nejaktuálnější detaily je nutný kontakt s Salesforce sales (sales@salesforce.com) nebo Salesforce Certified Partner._

@@ -15,6 +15,7 @@
  */
 
 import { Worker, type Job } from 'bullmq';
+import { captureJobException } from '../lib/telemetry.js';
 import crypto from 'node:crypto';
 import {
   renderEmail as renderBlocks,
@@ -47,7 +48,9 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   const data = job.data;
   const stream: MessageStream = data.stream ?? 'broadcast';
 
-  job.log(`Processing batch ${data.batchIndex} for campaign ${data.campaignId} stream=${stream} (${data.contactIds.length} contacts)`);
+  job.log(
+    `Processing batch ${data.batchIndex} for campaign ${data.campaignId} stream=${stream} (${data.contactIds.length} contacts)`,
+  );
 
   // Load contacts from the API
   const contacts = await fetchContacts(data.orgId, data.contactIds);
@@ -81,10 +84,9 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     );
   }
 
-  const timewarpSchedule =
-    data.timewarp?.enabled
-      ? await fetchTimewarpSchedule(data.contactIds, data.timewarp)
-      : null;
+  const timewarpSchedule = data.timewarp?.enabled
+    ? await fetchTimewarpSchedule(data.contactIds, data.timewarp)
+    : null;
 
   // Resolve tracking URL prefix once per batch. Falls back to the global
   // TRACKING_BASE_URL if the org hasn't verified a branded subdomain yet.
@@ -154,11 +156,9 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     // 4. Render HTML + plain-text alternative (block JSON path via
     //    @forgemsg/editor renderEmail + renderPlainText; legacy { html }
     //    path uses parseMergeTags + HTML→text fallback).
-    let { html: htmlBody, text: textBody } = renderEmail(
-      data.content,
-      mergeCtx,
-      data.preheader,
-    );
+    const rendered = renderEmail(data.content, mergeCtx, data.preheader);
+    let htmlBody = rendered.html;
+    const textBody = rendered.text;
 
     // 4b. Apply click + open tracking. Both are skipped for transactional
     //     sends — receipts / password-reset emails should not be wrapped
@@ -170,17 +170,10 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     //     Non-strict orgs keep the pre-D.8 behaviour (track everyone on
     //     non-transactional streams).
     const trackingAllowed =
-      stream !== 'transactional' &&
-      (!trackingOptedIn || trackingOptedIn.has(contact.id));
+      stream !== 'transactional' && (!trackingOptedIn || trackingOptedIn.has(contact.id));
 
     if (trackingAllowed) {
-      htmlBody = wrapLinks(
-        htmlBody,
-        trackingBaseUrl,
-        data.orgId,
-        data.campaignId,
-        contact.id,
-      );
+      htmlBody = wrapLinks(htmlBody, trackingBaseUrl, data.orgId, data.campaignId, contact.id);
       htmlBody = injectOpenPixel(
         htmlBody,
         trackingBaseUrl,
@@ -192,11 +185,13 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
 
     // 5. Build custom headers
     const messageId = `${crypto.randomUUID()}@forgemsg.com`;
-    const unsubToken = Buffer.from(JSON.stringify({
-      orgId: data.orgId,
-      contactId: contact.id,
-      campaignId: data.campaignId,
-    })).toString('base64url');
+    const unsubToken = Buffer.from(
+      JSON.stringify({
+        orgId: data.orgId,
+        contactId: contact.id,
+        campaignId: data.campaignId,
+      }),
+    ).toString('base64url');
 
     const customHeaders: Record<string, string> = {
       'X-Mailer': 'ForgeMsg/1.0',
@@ -244,9 +239,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         priority: data.priority,
         stream,
       },
-      opts: delay !== undefined
-        ? { priority: data.priority, delay }
-        : { priority: data.priority },
+      opts: delay !== undefined ? { priority: data.priority, delay } : { priority: data.priority },
     });
 
     sent++;
@@ -261,9 +254,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   }
 
   for (const [queue, jobs] of byQueue) {
-    await queue.addBulk(
-      jobs.map((j) => ({ name: j.name, data: j.data, opts: j.opts })),
-    );
+    await queue.addBulk(jobs.map((j) => ({ name: j.name, data: j.data, opts: j.opts })));
   }
 
   // Record frequency cap sends
@@ -351,9 +342,7 @@ function renderEmail(
       resolved = resolved.replace(/<body[^>]*>/i, (m) => m + preheaderHtml);
     }
     const textOverride = (content as { text?: string }).text;
-    const text = textOverride
-      ? parseMergeTags(textOverride, ctx)
-      : deriveTextFromHtml(resolved);
+    const text = textOverride ? parseMergeTags(textOverride, ctx) : deriveTextFromHtml(resolved);
     return { html: resolved, text };
   }
 
@@ -492,9 +481,7 @@ async function recordFrequencySend(orgId: string, contactId: string): Promise<vo
  */
 async function fetchTrackingStrict(orgId: string): Promise<boolean> {
   try {
-    const res = await fetch(
-      `${API_URL}/api/v1/internal/org/tracking-strict?orgId=${orgId}`,
-    );
+    const res = await fetch(`${API_URL}/api/v1/internal/org/tracking-strict?orgId=${orgId}`);
     if (!res.ok) return false;
     const body = (await res.json()) as { data: { strict: boolean } };
     return body.data.strict === true;
@@ -510,10 +497,7 @@ async function fetchTrackingStrict(orgId: string): Promise<boolean> {
  * to an empty set so a transient API outage does NOT accidentally
  * resume tracking for everyone — strict mode stays strict.
  */
-async function fetchOptedInForTracking(
-  orgId: string,
-  contactIds: string[],
-): Promise<Set<string>> {
+async function fetchOptedInForTracking(orgId: string, contactIds: string[]): Promise<Set<string>> {
   if (contactIds.length === 0) return new Set();
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/consent/opted-in-batch`, {
@@ -582,14 +566,10 @@ async function fetchTimewarpSchedule(
 // ─── Worker ──────────────────────────────────────────────────────────────────
 
 export function startBatchSenderWorker(queueName: string = QUEUE_NAMES.BATCH_SENDER) {
-  const worker = new Worker<BatchSenderJobData>(
-    queueName,
-    processBatchSender,
-    {
-      connection,
-      concurrency: 10,
-    },
-  );
+  const worker = new Worker<BatchSenderJobData>(queueName, processBatchSender, {
+    connection,
+    concurrency: 10,
+  });
 
   worker.on('completed', (job) => {
     console.log(`[batch-sender] Job ${job.id} completed: ${JSON.stringify(job.returnvalue)}`);
@@ -597,6 +577,14 @@ export function startBatchSenderWorker(queueName: string = QUEUE_NAMES.BATCH_SEN
 
   worker.on('failed', (job, err) => {
     console.error(`[batch-sender] Job ${job?.id} failed:`, err.message);
+    captureJobException(err, {
+      queue: 'batch-sender',
+      jobId: job?.id,
+      jobName: job?.name,
+      attempts: job?.attemptsMade,
+      orgId: (job?.data as { orgId?: string } | undefined)?.orgId,
+      campaignId: (job?.data as { campaignId?: string } | undefined)?.campaignId,
+    });
   });
 
   return worker;

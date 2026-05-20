@@ -19,22 +19,22 @@ Z toho plyne všechno, co následuje.
 
 ### 1.1 Kolik IP potřebujeme
 
-| Fáze | Mailů/měs | IP počet | Důvod |
-|---|---|---|---|
-| MVP (Týden 12–16) | <100k | 2 | Jedna pro warming, jedna pro test/transactional |
-| Closed beta (Týden 45–46) | <500k | 4 | Marketing pool 2× + transactional 1× + warming 1× |
-| Open beta (Týden 47–48) | <5M | 8 | Marketing pool 4× + transactional 2× + dedicated klienti 2× |
-| Scale (Phase 10) | <50M | 16–32 | Multi-tenant izolace, ASN diversity, regional |
+| Fáze                      | Mailů/měs | IP počet | Důvod                                                       |
+| ------------------------- | --------- | -------- | ----------------------------------------------------------- |
+| MVP (Týden 12–16)         | <100k     | 2        | Jedna pro warming, jedna pro test/transactional             |
+| Closed beta (Týden 45–46) | <500k     | 4        | Marketing pool 2× + transactional 1× + warming 1×           |
+| Open beta (Týden 47–48)   | <5M       | 8        | Marketing pool 4× + transactional 2× + dedicated klienti 2× |
+| Scale (Phase 10)          | <50M      | 16–32    | Multi-tenant izolace, ASN diversity, regional               |
 
 ### 1.2 Kde IP brát
 
-| Zdroj | Cena | Kvalita reputace | Risk |
-|---|---|---|---|
-| **Hetzner /29 subnet** k dedicated serveru | €5–8/měs | Smíšená (Hetzner AS24940 má ostatní bulk senders) | Sdílíme AS s neznámými sousedy |
-| **OVH /29 nebo additional IPv4** | €3–5/IP/měs | Lepší než Hetzner pro EU bulk | Některé /16 už blacklistnuté |
-| **Vultr additional IP** | $3/měs | Slušné, ne výborné | US-heavy traffic |
-| **Inception Hosting / Mailbaby** | $5–15/IP/měs | Specialized email-friendly | Drazší, ale stojí to za to pro warming |
-| **Vlastní /24 leasing přes IPv4.global** | $0.50–1/IP/měs (lease) | Nejlepší — vlastní reputace od 0 | Setup složitý, vyžaduje BGP + ASN registraci |
+| Zdroj                                      | Cena                   | Kvalita reputace                                  | Risk                                         |
+| ------------------------------------------ | ---------------------- | ------------------------------------------------- | -------------------------------------------- |
+| **Hetzner /29 subnet** k dedicated serveru | €5–8/měs               | Smíšená (Hetzner AS24940 má ostatní bulk senders) | Sdílíme AS s neznámými sousedy               |
+| **OVH /29 nebo additional IPv4**           | €3–5/IP/měs            | Lepší než Hetzner pro EU bulk                     | Některé /16 už blacklistnuté                 |
+| **Vultr additional IP**                    | $3/měs                 | Slušné, ne výborné                                | US-heavy traffic                             |
+| **Inception Hosting / Mailbaby**           | $5–15/IP/měs           | Specialized email-friendly                        | Drazší, ale stojí to za to pro warming       |
+| **Vlastní /24 leasing přes IPv4.global**   | $0.50–1/IP/měs (lease) | Nejlepší — vlastní reputace od 0                  | Setup složitý, vyžaduje BGP + ASN registraci |
 
 **Doporučená skladba pro Mailforge:**
 
@@ -50,6 +50,7 @@ Z toho plyne všechno, co následuje.
 ### 1.3 rDNS / PTR — povinné
 
 **Každá** sending IP musí mít forward + reverse DNS shoda:
+
 - A: `mta-1.mailforge.io → 49.13.X.X`
 - PTR: `49.13.X.X → mta-1.mailforge.io`
 
@@ -62,7 +63,7 @@ Marketing pool A           Marketing pool B          Transactional pool
 (warm, primary)            (warm, secondary)         (high engagement)
 - 49.13.x.1 mta-1a-1       - 49.13.x.5 mta-1b-1      - 49.13.x.9  mta-2a-1
 - 49.13.x.2 mta-1a-2       - 49.13.x.6 mta-1b-2      - 49.13.x.10 mta-2a-2
-- 49.13.x.3 mta-1a-3       - 49.13.x.7 mta-1b-3      
+- 49.13.x.3 mta-1a-3       - 49.13.x.7 mta-1b-3
 - 49.13.x.4 mta-1a-4       - 49.13.x.8 mta-1b-4      Warming pool
                                                       (rotates in/out)
                                                       - 49.13.x.11 mta-wm-1
@@ -72,6 +73,7 @@ Dedicated klienti (Pro Plan add-on):
 ```
 
 **Pravidla použití:**
+
 - Marketing → marketing pool, round-robin
 - Transactional (welcome, password reset, receipt) → transactional pool (vysoká engagement udržuje reputaci)
 - Warming → warming pool dokud nedosáhne 10k/den, pak se přesune do marketing
@@ -89,10 +91,10 @@ Dedicated klienti (Pro Plan add-on):
 
 ### 2.1 Sender domény — dvě cesty
 
-| Cesta | Kdo posílá | DKIM signing | DMARC alignment |
-|---|---|---|---|
-| **Subdomain delegation** | `klient.send.mailforge.io` od klienta | Naše klíče, naše DKIM | Naše DMARC; klient nemusí měnit svoje DNS |
-| **Klientova vlastní doména** | `newsletter.klientova-firma.cz` | Klient přidá CNAME → naše DKIM | Klient přidá SPF include + DMARC; my pošleme |
+| Cesta                        | Kdo posílá                            | DKIM signing                   | DMARC alignment                              |
+| ---------------------------- | ------------------------------------- | ------------------------------ | -------------------------------------------- |
+| **Subdomain delegation**     | `klient.send.mailforge.io` od klienta | Naše klíče, naše DKIM          | Naše DMARC; klient nemusí měnit svoje DNS    |
+| **Klientova vlastní doména** | `newsletter.klientova-firma.cz`       | Klient přidá CNAME → naše DKIM | Klient přidá SPF include + DMARC; my pošleme |
 
 **Default:** klientova vlastní doména (lepší branding a deliverability). Subdomain delegation jako fallback pro klienty, co neumí editovat DNS.
 
@@ -138,17 +140,17 @@ bounce.klient-domena.cz.    CNAME   bounce.mailforge.io.
 
 FBL = ISP nám reportuje "tenhle uživatel kliknul Mark as Spam".
 
-| ISP | FBL Program | Setup | Co dělat s reporty |
-|---|---|---|---|
-| **Yahoo / AOL** | CFL (Complaint Feedback Loop) | Vyplnit formulář na `https://senders.yahooinc.com`, doložit DKIM+SPF, čekat 1–2 týdny | Auto-unsubscribe stěžovatele |
-| **Microsoft (Outlook/Hotmail/Live)** | JMRP (Junk Mail Reporting) + SNDS (Smart Network Data Services) | Žádost na `https://sendersupport.olc.protection.outlook.com/snds/`, JMRP separátně | JMRP → unsubscribe. SNDS → dashboard s reputation per IP |
-| **Apple iCloud / Me / Mac** | iCloud Postmaster (limited) | Vyplnit formulář, ale Apple zveřejnil jen omezené stats | Ručně sledovat bounce rate na @icloud.com, @me.com, @mac.com |
-| **Comcast** | FBL via Cloudmark/Proofpoint | Žádost přes Cloudmark | Auto-unsubscribe |
-| **Cox** | FBL přes Cloudmark | Žádost | Auto-unsubscribe |
-| **Charter / Spectrum** | FBL via Cloudmark | Žádost | Auto-unsubscribe |
-| **Google / Gmail** | **NE FBL** ❌ | Místo toho **Postmaster Tools** | Reputation dashboard per IP/doména |
-| **Seznam.cz** | Žádný FBL | — | Manuálně sledovat bounce log na @seznam.cz |
-| **Centrum.cz** | Žádný FBL | — | Manuálně sledovat |
+| ISP                                  | FBL Program                                                     | Setup                                                                                 | Co dělat s reporty                                           |
+| ------------------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Yahoo / AOL**                      | CFL (Complaint Feedback Loop)                                   | Vyplnit formulář na `https://senders.yahooinc.com`, doložit DKIM+SPF, čekat 1–2 týdny | Auto-unsubscribe stěžovatele                                 |
+| **Microsoft (Outlook/Hotmail/Live)** | JMRP (Junk Mail Reporting) + SNDS (Smart Network Data Services) | Žádost na `https://sendersupport.olc.protection.outlook.com/snds/`, JMRP separátně    | JMRP → unsubscribe. SNDS → dashboard s reputation per IP     |
+| **Apple iCloud / Me / Mac**          | iCloud Postmaster (limited)                                     | Vyplnit formulář, ale Apple zveřejnil jen omezené stats                               | Ručně sledovat bounce rate na @icloud.com, @me.com, @mac.com |
+| **Comcast**                          | FBL via Cloudmark/Proofpoint                                    | Žádost přes Cloudmark                                                                 | Auto-unsubscribe                                             |
+| **Cox**                              | FBL přes Cloudmark                                              | Žádost                                                                                | Auto-unsubscribe                                             |
+| **Charter / Spectrum**               | FBL via Cloudmark                                               | Žádost                                                                                | Auto-unsubscribe                                             |
+| **Google / Gmail**                   | **NE FBL** ❌                                                   | Místo toho **Postmaster Tools**                                                       | Reputation dashboard per IP/doména                           |
+| **Seznam.cz**                        | Žádný FBL                                                       | —                                                                                     | Manuálně sledovat bounce log na @seznam.cz                   |
+| **Centrum.cz**                       | Žádný FBL                                                       | —                                                                                     | Manuálně sledovat                                            |
 
 **Krok 0 (Týden 14 v ROADMAP rozšíření):**
 
@@ -163,6 +165,7 @@ FBL = ISP nám reportuje "tenhle uživatel kliknul Mark as Spam".
 ### 3.1 Gmail Postmaster Tools
 
 Setup:
+
 1. Verifikuj `mailforge.io` v Google Search Console (TXT DNS record)
 2. Postmaster auto-přidá doménu po dosažení ~100 emailů/den z dané sender doiméně
 3. Dashboard ukáže:
@@ -178,6 +181,7 @@ Setup:
 ### 3.2 Microsoft SNDS
 
 Po registraci dostáváš denně:
+
 - Per-IP filtering rate
 - Complaint rate
 - Trap hits (spam trap = bývalá adresa které ISP nechal "naživu" pro detekci špatných seznamů)
@@ -195,14 +199,14 @@ Jeden klient s purchased listem 50 000 adres pošle kampaň → 8 % complaint ra
 
 ### 4.2 Vrstvy izolace
 
-| Vrstva | Mechanismus | Náklady | Kdy nasadit |
-|---|---|---|---|
-| 1. **Sender doména klienta** | Klient posílá z `newsletter.klient.cz`, ne z naší domény. Reputace domény je klientova. | $0 | Vždy (default) |
-| 2. **DKIM doména klienta** | DKIM signing přes klientovu doménu (i když IP je naše). | $0 | Vždy (default) |
-| 3. **Shared IP pool s engagement-based routing** | Klienti s vyšším engagement → premium IP; nový/podezřelí klienti → warming pool | $0 | Vždy |
-| 4. **Health score per klient** | Skore = f(open_rate, bounce_rate, complaint_rate, list_age, growth_rate). Pod prahem → auto-throttle. | $0 | Od Týdne 14 |
-| 5. **Dedikovaná IP (add-on $20/měs)** | Klient platí, dostane 1 IP exklusivně | base hardware + IP fee | Phase 6+ |
-| 6. **Dedikovaný MTA node** (Enterprise) | Vlastní hardware + IP pool pro big-tier klienta | $200+/měs | Phase 9+ |
+| Vrstva                                           | Mechanismus                                                                                           | Náklady                | Kdy nasadit    |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------- | -------------- |
+| 1. **Sender doména klienta**                     | Klient posílá z `newsletter.klient.cz`, ne z naší domény. Reputace domény je klientova.               | $0                     | Vždy (default) |
+| 2. **DKIM doména klienta**                       | DKIM signing přes klientovu doménu (i když IP je naše).                                               | $0                     | Vždy (default) |
+| 3. **Shared IP pool s engagement-based routing** | Klienti s vyšším engagement → premium IP; nový/podezřelí klienti → warming pool                       | $0                     | Vždy           |
+| 4. **Health score per klient**                   | Skore = f(open_rate, bounce_rate, complaint_rate, list_age, growth_rate). Pod prahem → auto-throttle. | $0                     | Od Týdne 14    |
+| 5. **Dedikovaná IP (add-on $20/měs)**            | Klient platí, dostane 1 IP exklusivně                                                                 | base hardware + IP fee | Phase 6+       |
+| 6. **Dedikovaný MTA node** (Enterprise)          | Vlastní hardware + IP pool pro big-tier klienta                                                       | $200+/měs              | Phase 9+       |
 
 ### 4.3 Health score algoritmus (návrh)
 
@@ -244,16 +248,17 @@ Score se přepočítává hourly za rolling 7-day window. Implementace v ClickHo
 
 Volíme **per ISP warming** místo uniform schedule. Důvod: Gmail je 5× přísnější než Yahoo.
 
-| Den | Gmail/Google Workspace | Outlook/Live/Hotmail | Yahoo/AOL | Apple iCloud | Ostatní |
-|---|---|---|---|---|---|
-| 1–3 | 50 | 100 | 100 | 200 | 500 |
-| 4–7 | 200 | 500 | 500 | 1 000 | 2 000 |
-| 8–14 | 1 000 | 2 000 | 2 000 | 5 000 | 10 000 |
-| 15–21 | 5 000 | 10 000 | 8 000 | 15 000 | 50 000 |
-| 22–30 | 20 000 | 50 000 | 30 000 | 50 000 | unlimited |
-| 31+ | unlimited (sledovat reputation) | unlimited | unlimited | unlimited | unlimited |
+| Den   | Gmail/Google Workspace          | Outlook/Live/Hotmail | Yahoo/AOL | Apple iCloud | Ostatní   |
+| ----- | ------------------------------- | -------------------- | --------- | ------------ | --------- |
+| 1–3   | 50                              | 100                  | 100       | 200          | 500       |
+| 4–7   | 200                             | 500                  | 500       | 1 000        | 2 000     |
+| 8–14  | 1 000                           | 2 000                | 2 000     | 5 000        | 10 000    |
+| 15–21 | 5 000                           | 10 000               | 8 000     | 15 000       | 50 000    |
+| 22–30 | 20 000                          | 50 000               | 30 000    | 50 000       | unlimited |
+| 31+   | unlimited (sledovat reputation) | unlimited            | unlimited | unlimited    | unlimited |
 
 **Pravidla:**
+
 - Pokud Gmail Postmaster reputation klesne na `Low` → **vrátit se o 1 týden zpět** v schedule
 - Pokud bounce rate per ISP > 5 % v rámci 1h → pozastavit pro daný ISP na 30 minut, retry pomaleji
 - Warming **jen smíšeným traffic** (klienti s dobrým engagement) — nikdy ne purchased lists ve warming
@@ -274,6 +279,7 @@ campaign → render HTML/text → Rspamd scan → score
 ```
 
 Sledovat **typické problémy:**
+
 - Subject samé velké písmena / vykřičníky
 - HTML/text mismatch
 - Image-only emails (no text)
@@ -288,6 +294,7 @@ Sledovat **typické problémy:**
 Gmail oficiálně potvrdil: dlouhodobá deliverability je funkcí **engagement** (opens, replies, scrolls), ne jen pravidel.
 
 Implementace:
+
 - Per contact `engagement_score` (z opens, clicks za posledních 90 dnů)
 - Při send: **prioritizovat aktivní příjemce** (high engagement) — Gmail vidí stabilní engagement pattern
 - Naopak: kontakty s 0 opens za 180 dní → "sunset" segment, nesílatel automaticky
@@ -297,13 +304,13 @@ Implementace:
 
 ## 8. List hygiene — povinné integrace
 
-| Funkce | Provider | Cena | Kdy |
-|---|---|---|---|
-| **Bulk list validation** (pre-import) | ZeroBounce nebo Kickbox | ~$0.005/adresa | Phase 1 (Týden 5) |
-| **Real-time validation** (signup form) | ZeroBounce real-time API | ~$0.008/check | Phase 6 |
-| **Spam trap database** | Kickbox / SparkPost trap lists | součást validation | Phase 3 |
-| **Disposable email blocking** | Vestavěná regex + 10minutemail lists | $0 | Phase 1 |
-| **Soft bounce retry → suppress** | Vlastní logic (3 retries → suppress) | $0 | Phase 3 (Týden 13) |
+| Funkce                                 | Provider                             | Cena               | Kdy                |
+| -------------------------------------- | ------------------------------------ | ------------------ | ------------------ |
+| **Bulk list validation** (pre-import)  | ZeroBounce nebo Kickbox              | ~$0.005/adresa     | Phase 1 (Týden 5)  |
+| **Real-time validation** (signup form) | ZeroBounce real-time API             | ~$0.008/check      | Phase 6            |
+| **Spam trap database**                 | Kickbox / SparkPost trap lists       | součást validation | Phase 3            |
+| **Disposable email blocking**          | Vestavěná regex + 10minutemail lists | $0                 | Phase 1            |
+| **Soft bounce retry → suppress**       | Vlastní logic (3 retries → suppress) | $0                 | Phase 3 (Týden 13) |
 
 ---
 
@@ -347,6 +354,7 @@ Implementace:
 ### Dashboard "Deliverability Health" (Grafana)
 
 **Per IP (hourly):**
+
 - Send count
 - Delivery rate (= 1 - bounce_rate)
 - Soft bounce %
@@ -355,6 +363,7 @@ Implementace:
 - Per-ISP delivery rate (Gmail, Outlook, Yahoo, Seznam separate panels)
 
 **Per sending domain (daily):**
+
 - Gmail Postmaster reputation score
 - DMARC aggregate report stats (alignment fail %)
 - Complaint rate
@@ -362,20 +371,21 @@ Implementace:
 - Click rate
 
 **Per org/tenant (real-time):**
+
 - Health score
 - Last 24h sent / delivered / bounced / complained
 - Suspended kampaně (auto-pause)
 
 ### Alerty (PagerDuty / Better Stack on-call)
 
-| Severity | Trigger | Akce |
-|---|---|---|
-| 🔴 P0 | Per-IP bounce rate > 10 % za 15 min | Auto-pause IP, oncall page |
-| 🔴 P0 | Spamhaus listing detected (denní DNSBL check) | Auto-pause IP, oncall page |
-| 🟠 P1 | Gmail reputation drop Medium → Low | Slack alert, ručně vyhodnotit |
-| 🟠 P1 | Per-org complaint rate > 0.3 % | Auto-pause org, email klientovi |
-| 🟡 P2 | DMARC report ukazuje SPF/DKIM fail > 5 % | Slack + ticket |
-| 🟢 P3 | Open rate drop > 30 % WoW | Týdenní review |
+| Severity | Trigger                                       | Akce                            |
+| -------- | --------------------------------------------- | ------------------------------- |
+| 🔴 P0    | Per-IP bounce rate > 10 % za 15 min           | Auto-pause IP, oncall page      |
+| 🔴 P0    | Spamhaus listing detected (denní DNSBL check) | Auto-pause IP, oncall page      |
+| 🟠 P1    | Gmail reputation drop Medium → Low            | Slack alert, ručně vyhodnotit   |
+| 🟠 P1    | Per-org complaint rate > 0.3 %                | Auto-pause org, email klientovi |
+| 🟡 P2    | DMARC report ukazuje SPF/DKIM fail > 5 %      | Slack + ticket                  |
+| 🟢 P3    | Open rate drop > 30 % WoW                     | Týdenní review                  |
 
 ---
 
@@ -427,5 +437,5 @@ Tento dokument **doplňuje** Týden 12–16 v ROADMAP. ROADMAP popisuje **co kó
 
 ---
 
-*Dokument vytvořen: 2026-05-18*
-*Status: připraveno k implementaci souběžně s Fází 3 v ROADMAP*
+_Dokument vytvořen: 2026-05-18_
+_Status: připraveno k implementaci souběžně s Fází 3 v ROADMAP_

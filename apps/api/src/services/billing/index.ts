@@ -6,11 +6,11 @@ import { AppError } from '../../lib/app-error.js';
 
 // Plan catalogue — kept in sync with Stripe product catalogue.
 export const PLANS = {
-  free:       { name: 'Free',       contacts: 500,    sends: 2_500,    priceUsd: 0 },
-  starter:    { name: 'Starter',    contacts: 2_500,  sends: 12_500,   priceUsd: 15 },
-  pro:        { name: 'Pro',        contacts: 10_000, sends: 50_000,   priceUsd: 49 },
-  business:   { name: 'Business',   contacts: 50_000, sends: 250_000,  priceUsd: 149 },
-  enterprise: { name: 'Enterprise', contacts: -1,     sends: -1,       priceUsd: -1 },
+  free: { name: 'Free', contacts: 500, sends: 2_500, priceUsd: 0 },
+  starter: { name: 'Starter', contacts: 2_500, sends: 12_500, priceUsd: 15 },
+  pro: { name: 'Pro', contacts: 10_000, sends: 50_000, priceUsd: 49 },
+  business: { name: 'Business', contacts: 50_000, sends: 250_000, priceUsd: 149 },
+  enterprise: { name: 'Enterprise', contacts: -1, sends: -1, priceUsd: -1 },
 } as const;
 
 export type PlanTier = keyof typeof PLANS;
@@ -42,17 +42,20 @@ export async function getSubscription(orgId: string) {
 
 // ── Stripe Checkout ───────────────────────────────────────────────────────────
 
-export async function createCheckoutSession(orgId: string, opts: {
-  tier: Exclude<PlanTier, 'free'>;
-  successUrl: string;
-  cancelUrl: string;
-}) {
+export async function createCheckoutSession(
+  orgId: string,
+  opts: {
+    tier: Exclude<PlanTier, 'free'>;
+    successUrl: string;
+    cancelUrl: string;
+  },
+) {
   if (!process.env.STRIPE_SECRET_KEY) throw AppError.badRequest('Stripe not configured');
 
   const priceMap: Partial<Record<PlanTier, string | undefined>> = {
-    starter:    process.env.STRIPE_PRICE_STARTER,
-    pro:        process.env.STRIPE_PRICE_PRO,
-    business:   process.env.STRIPE_PRICE_BUSINESS,
+    starter: process.env.STRIPE_PRICE_STARTER,
+    pro: process.env.STRIPE_PRICE_PRO,
+    business: process.env.STRIPE_PRICE_BUSINESS,
     enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
   };
 
@@ -61,11 +64,11 @@ export async function createCheckoutSession(orgId: string, opts: {
 
   const sub = await getOrCreateSubscription(orgId);
   const params = new URLSearchParams({
-    'mode': 'subscription',
+    mode: 'subscription',
     'line_items[0][price]': priceId,
     'line_items[0][quantity]': '1',
-    'success_url': opts.successUrl,
-    'cancel_url': opts.cancelUrl,
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
     'metadata[orgId]': orgId,
     'metadata[tier]': opts.tier,
   });
@@ -74,18 +77,18 @@ export async function createCheckoutSession(orgId: string, opts: {
   const resp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+      Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: params.toString(),
   });
 
   if (!resp.ok) {
-    const err = await resp.json() as { error?: { message?: string } };
+    const err = (await resp.json()) as { error?: { message?: string } };
     throw AppError.badRequest(err.error?.message ?? 'Stripe checkout failed');
   }
 
-  const session = await resp.json() as { id: string; url: string };
+  const session = (await resp.json()) as { id: string; url: string };
   return { sessionId: session.id, url: session.url };
 }
 
@@ -95,23 +98,24 @@ export async function createPortalSession(orgId: string, returnUrl: string) {
   if (!process.env.STRIPE_SECRET_KEY) throw AppError.badRequest('Stripe not configured');
 
   const sub = await getOrCreateSubscription(orgId);
-  if (!sub.stripeCustomerId) throw AppError.badRequest('No Stripe customer associated with this org');
+  if (!sub.stripeCustomerId)
+    throw AppError.badRequest('No Stripe customer associated with this org');
 
   const resp = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+      Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({ customer: sub.stripeCustomerId, return_url: returnUrl }).toString(),
   });
 
   if (!resp.ok) {
-    const err = await resp.json() as { error?: { message?: string } };
+    const err = (await resp.json()) as { error?: { message?: string } };
     throw AppError.badRequest(err.error?.message ?? 'Stripe portal failed');
   }
 
-  const session = await resp.json() as { url: string };
+  const session = (await resp.json()) as { url: string };
   return { url: session.url };
 }
 
@@ -125,11 +129,11 @@ export async function cancelSubscription(orgId: string) {
 
   const resp = await fetch(`https://api.stripe.com/v1/subscriptions/${sub.stripeSubscriptionId}`, {
     method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` },
+    headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` },
   });
 
   if (!resp.ok) {
-    const err = await resp.json() as { error?: { message?: string } };
+    const err = (await resp.json()) as { error?: { message?: string } };
     throw AppError.badRequest(err.error?.message ?? 'Stripe cancel failed');
   }
 
@@ -148,13 +152,17 @@ export async function handleStripeWebhook(rawBody: string, signature: string) {
   if (!secret) throw new Error('STRIPE_WEBHOOK_SECRET not configured');
 
   // Verify Stripe-Signature header (format: t=ts,v1=sig)
-  const ts = signature.split(',').find(p => p.startsWith('t='))?.slice(2);
-  const v1 = signature.split(',').find(p => p.startsWith('v1='))?.slice(3);
+  const ts = signature
+    .split(',')
+    .find((p) => p.startsWith('t='))
+    ?.slice(2);
+  const v1 = signature
+    .split(',')
+    .find((p) => p.startsWith('v1='))
+    ?.slice(3);
   if (!ts || !v1) throw new Error('Invalid Stripe-Signature header');
 
-  const expected = createHmac('sha256', secret)
-    .update(`${ts}.${rawBody}`, 'utf8')
-    .digest('hex');
+  const expected = createHmac('sha256', secret).update(`${ts}.${rawBody}`, 'utf8').digest('hex');
 
   if (!timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(v1, 'hex'))) {
     throw new Error('Stripe signature verification failed');
@@ -237,7 +245,13 @@ async function handlePaymentIntentSucceeded(obj: Record<string, unknown>) {
   const amountCents = (obj['amount_received'] as number) ?? (obj['amount'] as number) ?? 0;
   if (!orgId || !contactEmail) return;
 
-  await upsertContactWithPurchase(orgId, contactEmail, amountCents / 100, 'payment_intent', obj['id'] as string);
+  await upsertContactWithPurchase(
+    orgId,
+    contactEmail,
+    amountCents / 100,
+    'payment_intent',
+    obj['id'] as string,
+  );
 }
 
 async function handleChargeSucceeded(obj: Record<string, unknown>) {
@@ -248,7 +262,13 @@ async function handleChargeSucceeded(obj: Record<string, unknown>) {
   const amountCents = (obj['amount'] as number) ?? 0;
   if (!orgId || !contactEmail) return;
 
-  await upsertContactWithPurchase(orgId, contactEmail, amountCents / 100, 'charge', obj['id'] as string);
+  await upsertContactWithPurchase(
+    orgId,
+    contactEmail,
+    amountCents / 100,
+    'charge',
+    obj['id'] as string,
+  );
 }
 
 async function handleCustomerUpsert(obj: Record<string, unknown>) {
@@ -261,17 +281,23 @@ async function handleCustomerUpsert(obj: Record<string, unknown>) {
   const [firstName, ...rest] = name.split(' ');
   const lastName = rest.join(' ') || null;
 
-  const [existing] = await db.select({ id: contacts.id }).from(contacts)
-    .where(eq(contacts.email, email)).limit(1);
+  const [existing] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(eq(contacts.email, email))
+    .limit(1);
 
   if (!existing) {
-    await db.insert(contacts).values({
-      orgId,
-      email,
-      firstName: firstName || null,
-      lastName,
-      source: 'stripe',
-    } as typeof contacts.$inferInsert).onConflictDoNothing();
+    await db
+      .insert(contacts)
+      .values({
+        orgId,
+        email,
+        firstName: firstName || null,
+        lastName,
+        source: 'stripe',
+      } as typeof contacts.$inferInsert)
+      .onConflictDoNothing();
   }
 }
 
@@ -282,18 +308,24 @@ async function upsertContactWithPurchase(
   source: string,
   externalId: string,
 ): Promise<void> {
-  const [existing] = await db.select({ id: contacts.id }).from(contacts)
-    .where(eq(contacts.email, email)).limit(1);
+  const [existing] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(eq(contacts.email, email))
+    .limit(1);
 
   let contactId: string;
   if (existing) {
     contactId = existing.id;
   } else {
-    const [created] = await db.insert(contacts).values({
-      orgId,
-      email,
-      source: 'stripe',
-    } as typeof contacts.$inferInsert).returning({ id: contacts.id });
+    const [created] = await db
+      .insert(contacts)
+      .values({
+        orgId,
+        email,
+        source: 'stripe',
+      } as typeof contacts.$inferInsert)
+      .returning({ id: contacts.id });
     contactId = created!.id;
   }
 
@@ -308,5 +340,7 @@ async function upsertContactWithPurchase(
       contactId,
       metadata: { amount, source, externalId },
     }),
-  }).catch(() => { /* non-critical */ });
+  }).catch(() => {
+    /* non-critical */
+  });
 }

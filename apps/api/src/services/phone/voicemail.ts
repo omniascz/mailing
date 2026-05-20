@@ -27,8 +27,11 @@ export async function handleVoicemail(
   recordingUrl: string,
   recordingSid: string,
 ): Promise<VoicemailResult> {
-  const [call] = await db.select().from(calls)
-    .where(and(eq(calls.id, callId), eq(calls.orgId, orgId))).limit(1);
+  const [call] = await db
+    .select()
+    .from(calls)
+    .where(and(eq(calls.id, callId), eq(calls.orgId, orgId)))
+    .limit(1);
   if (!call) throw AppError.notFound('Call');
 
   // 1. Upload voicemail to S3/MinIO
@@ -38,7 +41,8 @@ export async function handleVoicemail(
   const transcript = await transcribeVoicemail(voicemailUrl);
 
   // 3. Persist
-  await db.update(calls)
+  await db
+    .update(calls)
     .set({ voicemailUrl, voicemailTranscript: transcript, updatedAt: new Date() })
     .where(eq(calls.id, callId));
 
@@ -67,7 +71,8 @@ async function storeVoicemail(
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const headers: Record<string, string> = {};
   if (accountSid && authToken) {
-    headers['Authorization'] = `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`;
+    headers['Authorization'] =
+      `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`;
   }
 
   const sourceRes = await fetch(sourceUrl, { headers });
@@ -89,17 +94,14 @@ async function transcribeVoicemail(audioUrl: string): Promise<string> {
   const dgKey = process.env.DEEPGRAM_API_KEY;
   if (dgKey) {
     try {
-      const res = await fetch(
-        'https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Token ${dgKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url: audioUrl }),
+      const res = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true', {
+        method: 'POST',
+        headers: {
+          Authorization: `Token ${dgKey}`,
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({ url: audioUrl }),
+      });
       if (res.ok) {
         const data = (await res.json()) as {
           results?: { channels?: Array<{ alternatives?: Array<{ transcript?: string }> }> };
@@ -107,7 +109,9 @@ async function transcribeVoicemail(audioUrl: string): Promise<string> {
         const t = data.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? '';
         if (t) return t;
       }
-    } catch { /* fall through */ }
+    } catch {
+      /* fall through */
+    }
   }
   return '[Voicemail transcription unavailable]';
 }

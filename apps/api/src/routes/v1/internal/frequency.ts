@@ -16,33 +16,39 @@ import { checkFrequencyCap } from '../../../services/frequency-capping/index.js'
 const channelEnum = z.enum(['email', 'sms', 'whatsapp', 'push', 'voice']);
 
 const internalFrequencyRoutes: FastifyPluginAsync = async (app) => {
-  app.post('/api/v1/internal/frequency/check-batch', {
-    schema: { tags: ['Internal'] },
-  }, async (req, reply) => {
-    const body = z.object({
-      orgId: z.string().uuid(),
-      contactIds: z.array(z.string().uuid()).max(1000),
-      channel: channelEnum,
-    }).parse(req.body);
+  app.post(
+    '/api/v1/internal/frequency/check-batch',
+    {
+      schema: { tags: ['Internal'] },
+    },
+    async (req, reply) => {
+      const body = z
+        .object({
+          orgId: z.string().uuid(),
+          contactIds: z.array(z.string().uuid()).max(1000),
+          channel: channelEnum,
+        })
+        .parse(req.body);
 
-    if (body.contactIds.length === 0) {
-      return reply.send({ data: { capped: [] } });
-    }
+      if (body.contactIds.length === 0) {
+        return reply.send({ data: { capped: [] } });
+      }
 
-    const results = await Promise.all(
-      body.contactIds.map(async (contactId) => {
-        const res = await checkFrequencyCap({
-          orgId: body.orgId,
-          contactId,
-          channel: body.channel,
-        });
-        return res.allowed ? null : contactId;
-      }),
-    );
+      const results = await Promise.all(
+        body.contactIds.map(async (contactId) => {
+          const res = await checkFrequencyCap({
+            orgId: body.orgId,
+            contactId,
+            channel: body.channel,
+          });
+          return res.allowed ? null : contactId;
+        }),
+      );
 
-    const capped = results.filter((id): id is string => id !== null);
-    return reply.send({ data: { capped } });
-  });
+      const capped = results.filter((id): id is string => id !== null);
+      return reply.send({ data: { capped } });
+    },
+  );
 };
 
 export default internalFrequencyRoutes;

@@ -38,7 +38,9 @@ function resetChain(limitValue: unknown[] = []) {
     fn.mockReturnValue(mockDb);
   }
   mockDb.limit.mockResolvedValue(limitValue);
-  mockDb.returning.mockResolvedValue([{ id: 'tmpl-001', orgId: 'org1', status: 'draft', name: 'test' }]);
+  mockDb.returning.mockResolvedValue([
+    { id: 'tmpl-001', orgId: 'org1', status: 'draft', name: 'test' },
+  ]);
 }
 
 beforeEach(() => resetChain());
@@ -63,12 +65,20 @@ describe('WhatsApp template management', () => {
   });
 
   it('submitWaTemplateForApproval calls Meta API and sets pending', async () => {
-    mockDb.limit.mockResolvedValueOnce([{
-      id: 'tmpl-001', orgId: 'org1', status: 'draft',
-      name: 'hello_world', category: 'utility', language: 'en_US',
-      components: [{ type: 'BODY', text: 'Hello!' }],
-    }]);
-    mockDb.returning.mockResolvedValueOnce([{ id: 'tmpl-001', status: 'pending', metaTemplateId: 'meta-123' }]);
+    mockDb.limit.mockResolvedValueOnce([
+      {
+        id: 'tmpl-001',
+        orgId: 'org1',
+        status: 'draft',
+        name: 'hello_world',
+        category: 'utility',
+        language: 'en_US',
+        components: [{ type: 'BODY', text: 'Hello!' }],
+      },
+    ]);
+    mockDb.returning.mockResolvedValueOnce([
+      { id: 'tmpl-001', status: 'pending', metaTemplateId: 'meta-123' },
+    ]);
 
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -83,18 +93,30 @@ describe('WhatsApp template management', () => {
   });
 
   it('syncWaTemplateStatus updates to approved', async () => {
-    mockDb.returning.mockResolvedValueOnce([{ id: 'tmpl-001', status: 'approved', approvedAt: new Date() }]);
+    mockDb.returning.mockResolvedValueOnce([
+      { id: 'tmpl-001', status: 'approved', approvedAt: new Date() },
+    ]);
     const { syncWaTemplateStatus } = await import('./templates.js');
     const result = await syncWaTemplateStatus('org1', 'hello_world', 'en_US', 'APPROVED');
     expect(result?.status).toBe('approved');
   });
 
   it('syncWaTemplateStatus stores rejection reason', async () => {
-    mockDb.returning.mockResolvedValueOnce([{
-      id: 'tmpl-001', status: 'rejected', rejectionReason: 'Content policy violation',
-    }]);
+    mockDb.returning.mockResolvedValueOnce([
+      {
+        id: 'tmpl-001',
+        status: 'rejected',
+        rejectionReason: 'Content policy violation',
+      },
+    ]);
     const { syncWaTemplateStatus } = await import('./templates.js');
-    const result = await syncWaTemplateStatus('org1', 'promo', 'en_US', 'REJECTED', 'Content policy violation');
+    const result = await syncWaTemplateStatus(
+      'org1',
+      'promo',
+      'en_US',
+      'REJECTED',
+      'Content policy violation',
+    );
     expect(result?.status).toBe('rejected');
     expect(result?.rejectionReason).toBe('Content policy violation');
   });
@@ -145,7 +167,9 @@ describe('RichWhatsAppSender payload builders', () => {
 
   it('list buttonLabel truncated to 20 chars', () => {
     const payload = buildListPayloadForTest('12025550100', {
-      body: 'b', buttonLabel: 'A very long list button text here', sections: [],
+      body: 'b',
+      buttonLabel: 'A very long list button text here',
+      sections: [],
     });
     expect(payload.interactive.action.button.length).toBe(20);
   });
@@ -198,7 +222,11 @@ describe('MetaWhatsAppAdapter — template parameters', () => {
     const result = await adapter.send(
       {
         channel: 'whatsapp',
-        content: { kind: 'whatsapp', templateId: 'order_update', parameters: { order: '12345', status: 'shipped' } },
+        content: {
+          kind: 'whatsapp',
+          templateId: 'order_update',
+          parameters: { order: '12345', status: 'shipped' },
+        },
         orgId: 'org1',
       },
       { contactId: 'c1', phone: '+12025550100' },
@@ -242,7 +270,9 @@ describe('WhatsApp compliance', () => {
 
   it('checkWaCompliance passes for authentication (no consent needed)', async () => {
     const { checkWaCompliance } = await import('./compliance.js');
-    await expect(checkWaCompliance('org1', '+1234567890', 'authentication')).resolves.toBeUndefined();
+    await expect(
+      checkWaCompliance('org1', '+1234567890', 'authentication'),
+    ).resolves.toBeUndefined();
   });
 
   it('checkWaCompliance blocks marketing when no consent (DB returns [])', async () => {

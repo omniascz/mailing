@@ -137,9 +137,7 @@ export class BulkGateClient {
 
     if (!data || (data.status !== 'accepted' && !data.sms_id)) {
       const errorCode = data?.error_code;
-      const mapped = errorCode !== undefined
-        ? (BULKGATE_ERROR_CODES[errorCode] ?? null)
-        : null;
+      const mapped = errorCode !== undefined ? (BULKGATE_ERROR_CODES[errorCode] ?? null) : null;
 
       throw new BulkGateError(
         mapped?.code ?? 'PROVIDER_ERROR',
@@ -174,7 +172,9 @@ export class BulkGateClient {
         text,
         unicode: needsUnicode(text) ? 1 : 0,
         ...(this.config.senderId && { sender_id: this.config.senderId }),
-        ...(this.config.senderIdValue && { sender_id_value: this.config.senderIdValue.slice(0, 11) }),
+        ...(this.config.senderIdValue && {
+          sender_id_value: this.config.senderIdValue.slice(0, 11),
+        }),
       })),
     };
 
@@ -214,11 +214,7 @@ export class BulkGateClient {
         signal: AbortSignal.timeout(this.timeoutMs),
       });
     } catch (err) {
-      throw new BulkGateError(
-        'NETWORK_ERROR',
-        (err as Error).message,
-        true,
-      );
+      throw new BulkGateError('NETWORK_ERROR', (err as Error).message, true);
     }
 
     const rawText = await httpResp.text();
@@ -230,7 +226,11 @@ export class BulkGateClient {
     try {
       return JSON.parse(rawText);
     } catch {
-      throw new BulkGateError('PROVIDER_ERROR', `Invalid JSON response: ${rawText.slice(0, 200)}`, false);
+      throw new BulkGateError(
+        'PROVIDER_ERROR',
+        `Invalid JSON response: ${rawText.slice(0, 200)}`,
+        false,
+      );
     }
   }
 }

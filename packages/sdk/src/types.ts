@@ -93,6 +93,6 @@ export interface CustomEvent {
 
 export interface WebhookSignatureVerifyOptions {
   secret: string;
-  payload: string;        // raw request body
-  signature: string;      // value of X-ForgeMsg-Signature header
+  payload: string; // raw request body
+  signature: string; // value of X-ForgeMsg-Signature header
 }

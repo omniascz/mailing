@@ -112,6 +112,19 @@ function makeDeadline(ms: number): grpc.Deadline {
   return new Date(Date.now() + ms);
 }
 
+/**
+ * gRPC status codes that indicate the channel is in a state we cannot
+ * recover from with retries on the same client. We drop the cached
+ * client so the NEXT call gets a fresh connection — covers the common
+ * "MTA wasn't running at worker boot, now it is" dev scenario, plus
+ * production MTA restarts behind a load balancer.
+ */
+const FATAL_CHANNEL_CODES = new Set<grpc.status>([
+  grpc.status.UNAVAILABLE, // 14 — connection refused / channel down
+  grpc.status.UNAUTHENTICATED, // 16 — TLS handshake or auth-token issue
+  grpc.status.INTERNAL, // 13 — transport-layer crash
+]);
+
 function unaryCall<TReq, TRes>(method: string, req: TReq, timeoutMs: number): Promise<TRes> {
   return new Promise((resolveCb, rejectCb) => {
     // grpc-js dynamic client exposes RPCs as methods on the instance.
@@ -129,8 +142,18 @@ function unaryCall<TReq, TRes>(method: string, req: TReq, timeoutMs: number): Pr
       return;
     }
     fn.call(c, req, { deadline: makeDeadline(timeoutMs) }, (err, res) => {
-      if (err) rejectCb(err);
-      else resolveCb(res);
+      if (err) {
+        // Drop the cached client when the channel is unrecoverable, so
+        // the NEXT call rebuilds it. Without this, a worker started
+        // before MTA stays permanently broken even after MTA recovers,
+        // because grpc-js sticks in TRANSIENT_FAILURE.
+        if (FATAL_CHANNEL_CODES.has(err.code)) {
+          close();
+        }
+        rejectCb(err);
+      } else {
+        resolveCb(res);
+      }
     });
   });
 }

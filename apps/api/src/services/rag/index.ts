@@ -15,8 +15,10 @@ import { createHash } from 'node:crypto';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  kbDocuments, kbChunks,
-  type KbDocument, type KbSourceType,
+  kbDocuments,
+  kbChunks,
+  type KbDocument,
+  type KbSourceType,
   EMBEDDING_DIMS,
 } from '../../db/schema/kb-embeddings.js';
 import { AppError } from '../../lib/app-error.js';
@@ -81,17 +83,24 @@ export async function ingestDocument(orgId: string, input: IngestInput): Promise
   // Upsert by (orgId, sourceType, sourceId) when provided, else by externalRef.
   let existing: KbDocument | undefined;
   if (input.sourceId) {
-    const rows = await db.select().from(kbDocuments).where(and(
-      eq(kbDocuments.orgId, orgId),
-      eq(kbDocuments.sourceType, input.sourceType),
-      eq(kbDocuments.sourceId, input.sourceId),
-    )).limit(1);
+    const rows = await db
+      .select()
+      .from(kbDocuments)
+      .where(
+        and(
+          eq(kbDocuments.orgId, orgId),
+          eq(kbDocuments.sourceType, input.sourceType),
+          eq(kbDocuments.sourceId, input.sourceId),
+        ),
+      )
+      .limit(1);
     existing = rows[0];
   } else if (input.externalRef) {
-    const rows = await db.select().from(kbDocuments).where(and(
-      eq(kbDocuments.orgId, orgId),
-      eq(kbDocuments.externalRef, input.externalRef),
-    )).limit(1);
+    const rows = await db
+      .select()
+      .from(kbDocuments)
+      .where(and(eq(kbDocuments.orgId, orgId), eq(kbDocuments.externalRef, input.externalRef)))
+      .limit(1);
     existing = rows[0];
   }
 
@@ -103,33 +112,39 @@ export async function ingestDocument(orgId: string, input: IngestInput): Promise
   const now = new Date();
   let docId: string;
   if (existing) {
-    await db.update(kbDocuments).set({
-      title: input.title,
-      url: input.url ?? existing.url,
-      language: input.language ?? existing.language,
-      body: input.body,
-      contentHash: hash,
-      status: 'embedding',
-      metadata: input.metadata ?? existing.metadata,
-      updatedAt: now,
-      error: null,
-    }).where(eq(kbDocuments.id, existing.id));
+    await db
+      .update(kbDocuments)
+      .set({
+        title: input.title,
+        url: input.url ?? existing.url,
+        language: input.language ?? existing.language,
+        body: input.body,
+        contentHash: hash,
+        status: 'embedding',
+        metadata: input.metadata ?? existing.metadata,
+        updatedAt: now,
+        error: null,
+      })
+      .where(eq(kbDocuments.id, existing.id));
     await db.delete(kbChunks).where(eq(kbChunks.documentId, existing.id));
     docId = existing.id;
   } else {
-    const inserted = await db.insert(kbDocuments).values({
-      orgId,
-      sourceType: input.sourceType,
-      sourceId: input.sourceId ?? null,
-      externalRef: input.externalRef ?? null,
-      title: input.title,
-      url: input.url ?? null,
-      language: input.language ?? 'en',
-      body: input.body,
-      contentHash: hash,
-      status: 'embedding',
-      metadata: input.metadata ?? {},
-    }).returning();
+    const inserted = await db
+      .insert(kbDocuments)
+      .values({
+        orgId,
+        sourceType: input.sourceType,
+        sourceId: input.sourceId ?? null,
+        externalRef: input.externalRef ?? null,
+        title: input.title,
+        url: input.url ?? null,
+        language: input.language ?? 'en',
+        body: input.body,
+        contentHash: hash,
+        status: 'embedding',
+        metadata: input.metadata ?? {},
+      })
+      .returning();
     const row = inserted[0];
     if (!row) throw AppError.internal('Failed to create kb document');
     docId = row.id;
@@ -137,7 +152,9 @@ export async function ingestDocument(orgId: string, input: IngestInput): Promise
 
   const chunks = chunkText(input.body);
   if (chunks.length === 0) {
-    await db.update(kbDocuments).set({ status: 'ready', updatedAt: new Date() })
+    await db
+      .update(kbDocuments)
+      .set({ status: 'ready', updatedAt: new Date() })
       .where(eq(kbDocuments.id, docId));
   } else {
     try {
@@ -162,14 +179,19 @@ export async function ingestDocument(orgId: string, input: IngestInput): Promise
           });
         }
       }
-      await db.update(kbDocuments).set({ status: 'ready', updatedAt: new Date() })
+      await db
+        .update(kbDocuments)
+        .set({ status: 'ready', updatedAt: new Date() })
         .where(eq(kbDocuments.id, docId));
     } catch (err) {
-      await db.update(kbDocuments).set({
-        status: 'failed',
-        error: (err as Error).message,
-        updatedAt: new Date(),
-      }).where(eq(kbDocuments.id, docId));
+      await db
+        .update(kbDocuments)
+        .set({
+          status: 'failed',
+          error: (err as Error).message,
+          updatedAt: new Date(),
+        })
+        .where(eq(kbDocuments.id, docId));
       throw err;
     }
   }
@@ -239,9 +261,14 @@ export async function search(
     LIMIT ${topK}
   `);
   const rows = result as unknown as Array<{
-    document_id: string; chunk_id: string; chunk_index: number;
-    title: string; url: string | null; snippet: string;
-    source_type: string; similarity: number;
+    document_id: string;
+    chunk_id: string;
+    chunk_index: number;
+    title: string;
+    url: string | null;
+    snippet: string;
+    source_type: string;
+    similarity: number;
   }>;
 
   return rows
@@ -279,19 +306,21 @@ export function buildContext(hits: SearchHit[], maxChars = 6000): string {
 // ─── CRUD helpers ─────────────────────────────────────────────────────────────
 
 export async function deleteDocument(orgId: string, documentId: string): Promise<void> {
-  await db.delete(kbDocuments)
+  await db
+    .delete(kbDocuments)
     .where(and(eq(kbDocuments.orgId, orgId), eq(kbDocuments.id, documentId)));
 }
 
 export async function getDocument(orgId: string, documentId: string): Promise<KbDocument> {
-  const rows = await db.select().from(kbDocuments)
-    .where(and(eq(kbDocuments.orgId, orgId), eq(kbDocuments.id, documentId))).limit(1);
+  const rows = await db
+    .select()
+    .from(kbDocuments)
+    .where(and(eq(kbDocuments.orgId, orgId), eq(kbDocuments.id, documentId)))
+    .limit(1);
   if (!rows[0]) throw AppError.notFound('Document not found');
   return rows[0];
 }
 
 export async function listDocuments(orgId: string, limit = 100): Promise<KbDocument[]> {
-  return db.select().from(kbDocuments)
-    .where(eq(kbDocuments.orgId, orgId))
-    .limit(limit);
+  return db.select().from(kbDocuments).where(eq(kbDocuments.orgId, orgId)).limit(limit);
 }

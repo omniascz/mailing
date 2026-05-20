@@ -1,6 +1,16 @@
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, text, jsonb, boolean, integer, timestamp, index, uniqueIndex, pgEnum,
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  jsonb,
+  boolean,
+  integer,
+  timestamp,
+  index,
+  uniqueIndex,
+  pgEnum,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
@@ -24,11 +34,7 @@ import { organizations } from './organizations.js';
  * the same entity (evaluator detects cycles).
  */
 
-export const calcPropEntityEnum = pgEnum('calc_prop_entity', [
-  'contact',
-  'deal',
-  'account',
-]);
+export const calcPropEntityEnum = pgEnum('calc_prop_entity', ['contact', 'deal', 'account']);
 
 export const calcPropResultTypeEnum = pgEnum('calc_prop_result_type', [
   'number',
@@ -40,8 +46,11 @@ export const calcPropResultTypeEnum = pgEnum('calc_prop_result_type', [
 export const calculatedProperties = pgTable(
   'calculated_properties',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull()
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
     entity: calcPropEntityEnum('entity').notNull(),
     key: varchar('key', { length: 64 }).notNull(),
@@ -73,10 +82,14 @@ export const calculatedProperties = pgTable(
 export const calculatedPropertyValues = pgTable(
   'calculated_property_values',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull()
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
-    propId: uuid('prop_id').notNull()
+    propId: uuid('prop_id')
+      .notNull()
       .references(() => calculatedProperties.id, { onDelete: 'cascade' }),
     entityId: uuid('entity_id').notNull(),
     /** The computed value, JSON-serialised to survive any of the result types. */
@@ -94,8 +107,12 @@ export const calculatedPropertyValues = pgTable(
 
 export type CalcLiteral = number | string | boolean | null;
 
-export interface CalcFieldRef { $field: string }
-export interface CalcPropRef { $ref: string }
+export interface CalcFieldRef {
+  $field: string;
+}
+export interface CalcPropRef {
+  $ref: string;
+}
 
 export interface CalcBinOp {
   op: '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | '||';
@@ -105,11 +122,22 @@ export interface CalcBinOp {
 
 export interface CalcCall {
   fn:
-    | 'now' | 'today'
-    | 'days_between' | 'hours_between'
-    | 'coalesce' | 'if'
-    | 'lower' | 'upper' | 'concat' | 'length'
-    | 'round' | 'floor' | 'ceil' | 'abs' | 'min' | 'max';
+    | 'now'
+    | 'today'
+    | 'days_between'
+    | 'hours_between'
+    | 'coalesce'
+    | 'if'
+    | 'lower'
+    | 'upper'
+    | 'concat'
+    | 'length'
+    | 'round'
+    | 'floor'
+    | 'ceil'
+    | 'abs'
+    | 'min'
+    | 'max';
   args?: CalcNode[];
 }
 

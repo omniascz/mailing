@@ -1,0 +1,154 @@
+# Mailforge — production-ish compose.
+#
+# Differs from docker-compose.yml (dev infrastructure-only) in that this
+# file also builds and runs the application services: API, workers, Go
+# MTA, web. Designed to be the smallest reproducible "the whole stack
+# runs locally" target before deploying to Hetzner.
+#
+# Bring up:    docker compose -f docker-compose.prod.yml up -d --build
+# Tear down:   docker compose -f docker-compose.prod.yml down -v
+# Logs:        docker compose -f docker-compose.prod.yml logs -f api workers
+#
+# Required env (read from a .env file next to this compose, or your
+# shell env):
+#   JWT_SECRET         — long random, 64+ chars
+#   POSTGRES_PASSWORD  — db password
+#   API_PUBLIC_URL     — externally reachable URL (e.g. https://api.example.com)
+#   APP_URL            — web URL (e.g. https://app.example.com)
+#   CORS_ORIGIN        — comma-separated origins
+#
+# Optional env: ANTHROPIC_API_KEY, STRIPE_SECRET_KEY, LITMUS_API_KEY, etc.
+# See apps/api/.env.example for the full list.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: forgemsg-prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: forgemsg
+      POSTGRES_USER: forgemsg
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U forgemsg -d forgemsg']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: forgemsg-prod-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: forgemsg-prod-api
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://forgemsg:${POSTGRES_PASSWORD}@postgres:5432/forgemsg
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      API_PUBLIC_URL: ${API_PUBLIC_URL:?API_PUBLIC_URL is required}
+      APP_URL: ${APP_URL:?APP_URL is required}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      TRACKING_BASE_URL: ${TRACKING_BASE_URL:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Optional integrations passed through if set on host.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LITMUS_API_KEY: ${LITMUS_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      DOI_FROM_EMAIL: ${DOI_FROM_EMAIL:-no-reply@example.com}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-}
+    ports:
+      - '${API_PORT:-3001}:3001'
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3001/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  engine:
+    build:
+      context: ./apps/engine
+      dockerfile: Dockerfile
+    container_name: forgemsg-prod-engine
+    restart: unless-stopped
+    # MTA needs outbound port 25 access for SMTP. On Hetzner this works
+    # out of the box; on most cloud providers you must request unblock.
+    ports:
+      - '${MTA_PORT:-50051}:50051'
+    # gRPC service has no HTTP healthcheck. The workers' connection pool
+    # detects unavailability via gRPC status codes and retries.
+
+  workers:
+    build:
+      context: .
+      dockerfile: apps/workers/Dockerfile
+    container_name: forgemsg-prod-workers
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      api: { condition: service_healthy }
+      # No service_healthy on engine since it has no healthcheck; the
+      # workers handle reconnect via FATAL_CHANNEL_CODES auto-recovery.
+      engine: { condition: service_started }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://forgemsg:${POSTGRES_PASSWORD}@postgres:5432/forgemsg
+      REDIS_URL: redis://redis:6379
+      # Inside the docker network the API is reachable by service name.
+      # IPv6 issue from local dev doesn't apply here.
+      API_URL: http://api:3001
+      MTA_GRPC_ENDPOINT: engine:50051
+      TRACKING_BASE_URL: ${TRACKING_BASE_URL:-}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-}
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked into the client bundle — change requires a rebuild.
+        NEXT_PUBLIC_API_URL: ${API_PUBLIC_URL:?API_PUBLIC_URL required for web build}
+    container_name: forgemsg-prod-web
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      # Server-side renders call the API internally. NEXT_PUBLIC_API_URL
+      # baked at build time covers client fetches.
+      API_URL: http://api:3001
+      PORT: 3000
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/login']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  postgres_data:
+  redis_data:

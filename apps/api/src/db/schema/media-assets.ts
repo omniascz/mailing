@@ -5,8 +5,12 @@ import { organizations } from './organizations.js';
 export const mediaAssets = pgTable(
   'media_assets',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     folder: varchar('folder', { length: 255 }).notNull().default('/'),
     filename: varchar('filename', { length: 255 }).notNull(),
     mimeType: varchar('mime_type', { length: 100 }).notNull(),

@@ -6,8 +6,12 @@ export const backInStockSubscriptions = pgTable(
   'back_in_stock_subscriptions',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
     sku: varchar('sku', { length: 128 }).notNull(),
     channel: varchar('channel', { length: 32 }).notNull().default('email'),
     notifiedAt: timestamp('notified_at', { withTimezone: true }),
@@ -20,8 +24,12 @@ export const priceDropSubscriptions = pgTable(
   'price_drop_subscriptions',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
     sku: varchar('sku', { length: 128 }).notNull(),
     channel: varchar('channel', { length: 32 }).notNull().default('email'),
     priceAtSubscribe: decimal('price_at_subscribe', { precision: 12, scale: 2 }).notNull(),

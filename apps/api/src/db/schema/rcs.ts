@@ -20,7 +20,9 @@ export const rcsMessages = pgTable(
   'rcs_messages',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
     phone: varchar('phone', { length: 32 }).notNull(),
     messageType: varchar('message_type', { length: 32 }).notNull().default('text'),

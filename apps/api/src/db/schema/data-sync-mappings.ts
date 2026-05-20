@@ -1,6 +1,15 @@
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, jsonb, boolean, integer, timestamp, index, uniqueIndex, pgEnum,
+  pgTable,
+  uuid,
+  varchar,
+  jsonb,
+  boolean,
+  integer,
+  timestamp,
+  index,
+  uniqueIndex,
+  pgEnum,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
@@ -19,23 +28,20 @@ import { organizations } from './organizations.js';
  *   'manual'        — flagged and surfaced in the UI for user resolution
  */
 
-export const crmProviderEnum = pgEnum('crm_sync_provider', [
-  'hubspot', 'salesforce', 'pipedrive',
-]);
+export const crmProviderEnum = pgEnum('crm_sync_provider', ['hubspot', 'salesforce', 'pipedrive']);
 
-export const crmEntityEnum = pgEnum('crm_sync_entity', [
-  'contact', 'deal', 'account',
-]);
+export const crmEntityEnum = pgEnum('crm_sync_entity', ['contact', 'deal', 'account']);
 
-export const crmSyncDirectionEnum = pgEnum('crm_sync_direction', [
-  'in', 'out', 'both',
-]);
+export const crmSyncDirectionEnum = pgEnum('crm_sync_direction', ['in', 'out', 'both']);
 
 export const dataSyncMappings = pgTable(
   'data_sync_mappings',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull()
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
     provider: crmProviderEnum('provider').notNull(),
     entity: crmEntityEnum('entity').notNull(),
@@ -51,8 +57,7 @@ export const dataSyncMappings = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex('data_sync_mappings_org_provider_entity_uq')
-      .on(t.orgId, t.provider, t.entity),
+    uniqueIndex('data_sync_mappings_org_provider_entity_uq').on(t.orgId, t.provider, t.entity),
     index('data_sync_mappings_org_idx').on(t.orgId),
   ],
 );
@@ -61,8 +66,11 @@ export const dataSyncMappings = pgTable(
 export const dataSyncPairs = pgTable(
   'data_sync_pairs',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull()
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
     provider: crmProviderEnum('provider').notNull(),
     entity: crmEntityEnum('entity').notNull(),
@@ -73,10 +81,8 @@ export const dataSyncPairs = pgTable(
     lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex('data_sync_pairs_provider_entity_local_uq')
-      .on(t.provider, t.entity, t.localId),
-    uniqueIndex('data_sync_pairs_provider_entity_remote_uq')
-      .on(t.provider, t.entity, t.remoteId),
+    uniqueIndex('data_sync_pairs_provider_entity_local_uq').on(t.provider, t.entity, t.localId),
+    uniqueIndex('data_sync_pairs_provider_entity_remote_uq').on(t.provider, t.entity, t.remoteId),
     index('data_sync_pairs_org_idx').on(t.orgId),
   ],
 );
@@ -85,10 +91,14 @@ export const dataSyncPairs = pgTable(
 export const dataSyncConflicts = pgTable(
   'data_sync_conflicts',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull()
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
-    pairId: uuid('pair_id').notNull()
+    pairId: uuid('pair_id')
+      .notNull()
       .references(() => dataSyncPairs.id, { onDelete: 'cascade' }),
     field: varchar('field', { length: 128 }).notNull(),
     localValue: jsonb('local_value').$type<unknown>(),

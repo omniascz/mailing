@@ -28,9 +28,16 @@ function computeMrr(
   intervalCount: number,
 ): number {
   const periodTotal = lineItems.reduce((sum, li) => sum + li.quantity * li.unitPrice, 0);
-  const monthsPerPeriod = ({
-    day: 1 / 30, week: 7 / 30, month: 1, quarter: 3, year: 12,
-  } as Record<string, number>)[interval] ?? 1;
+  const monthsPerPeriod =
+    (
+      {
+        day: 1 / 30,
+        week: 7 / 30,
+        month: 1,
+        quarter: 3,
+        year: 12,
+      } as Record<string, number>
+    )[interval] ?? 1;
   const totalMonths = monthsPerPeriod * intervalCount;
   if (totalMonths <= 0) return 0;
   return Math.round((periodTotal / totalMonths) * 100) / 100;
@@ -39,12 +46,24 @@ function computeMrr(
 function addInterval(base: Date, interval: string, count: number): Date {
   const d = new Date(base);
   switch (interval) {
-    case 'day':     d.setUTCDate(d.getUTCDate() + count); break;
-    case 'week':    d.setUTCDate(d.getUTCDate() + 7 * count); break;
-    case 'month':   d.setUTCMonth(d.getUTCMonth() + count); break;
-    case 'quarter': d.setUTCMonth(d.getUTCMonth() + 3 * count); break;
-    case 'year':    d.setUTCFullYear(d.getUTCFullYear() + count); break;
-    default:        d.setUTCMonth(d.getUTCMonth() + count); break;
+    case 'day':
+      d.setUTCDate(d.getUTCDate() + count);
+      break;
+    case 'week':
+      d.setUTCDate(d.getUTCDate() + 7 * count);
+      break;
+    case 'month':
+      d.setUTCMonth(d.getUTCMonth() + count);
+      break;
+    case 'quarter':
+      d.setUTCMonth(d.getUTCMonth() + 3 * count);
+      break;
+    case 'year':
+      d.setUTCFullYear(d.getUTCFullYear() + count);
+      break;
+    default:
+      d.setUTCMonth(d.getUTCMonth() + count);
+      break;
   }
   return d;
 }
@@ -59,17 +78,20 @@ async function nextSubscriptionNumber(orgId: string): Promise<string> {
 }
 
 function toInvoiceLineItems(items: SubscriptionLineItem[]): LineItem[] {
-  return items.map((li) => ({
-    productId: li.productId,
-    sku: li.sku ?? 'SUBSCRIPTION',
-    name: li.description,
-    description: li.description,
-    qty: li.quantity,
-    unitPrice: li.unitPrice,
-    total: Math.round(li.quantity * li.unitPrice * 100) / 100,
-    taxRate: li.taxRate ?? 0,
-    recurring: true,
-  } as LineItem));
+  return items.map(
+    (li) =>
+      ({
+        productId: li.productId,
+        sku: li.sku ?? 'SUBSCRIPTION',
+        name: li.description,
+        description: li.description,
+        qty: li.quantity,
+        unitPrice: li.unitPrice,
+        total: Math.round(li.quantity * li.unitPrice * 100) / 100,
+        taxRate: li.taxRate ?? 0,
+        recurring: true,
+      }) as LineItem,
+  );
 }
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
@@ -103,27 +125,30 @@ export async function createSubscription(
   const subNumber = await nextSubscriptionNumber(orgId);
   const status = input.trialEndsAt && input.trialEndsAt > new Date() ? 'trialing' : 'active';
 
-  const inserted = await db.insert(subscriptions).values({
-    orgId,
-    contactId: input.contactId ?? null,
-    dealId: input.dealId ?? null,
-    subscriptionNumber: subNumber,
-    status,
-    currency: input.currency ?? 'USD',
-    lineItems: input.lineItems,
-    mrr: String(mrr),
-    billingInterval: interval,
-    billingIntervalCount: intervalCount,
-    billingAnchor: input.billingAnchor ?? null,
-    startDate: start,
-    trialEndsAt: input.trialEndsAt ?? null,
-    endsAt: input.endsAt ?? null,
-    currentPeriodStart: start,
-    currentPeriodEnd: periodEnd,
-    nextInvoiceAt: input.trialEndsAt && input.trialEndsAt > start ? input.trialEndsAt : start,
-    stripeSubscriptionId: input.stripeSubscriptionId ?? null,
-    metadata: input.metadata ?? {},
-  }).returning();
+  const inserted = await db
+    .insert(subscriptions)
+    .values({
+      orgId,
+      contactId: input.contactId ?? null,
+      dealId: input.dealId ?? null,
+      subscriptionNumber: subNumber,
+      status,
+      currency: input.currency ?? 'USD',
+      lineItems: input.lineItems,
+      mrr: String(mrr),
+      billingInterval: interval,
+      billingIntervalCount: intervalCount,
+      billingAnchor: input.billingAnchor ?? null,
+      startDate: start,
+      trialEndsAt: input.trialEndsAt ?? null,
+      endsAt: input.endsAt ?? null,
+      currentPeriodStart: start,
+      currentPeriodEnd: periodEnd,
+      nextInvoiceAt: input.trialEndsAt && input.trialEndsAt > start ? input.trialEndsAt : start,
+      stripeSubscriptionId: input.stripeSubscriptionId ?? null,
+      metadata: input.metadata ?? {},
+    })
+    .returning();
   const row = inserted[0];
   if (!row) throw AppError.internal('Failed to create subscription');
 
@@ -149,13 +174,17 @@ export async function createSubscription(
         currency: row.currency,
       });
     }
-  } catch { /* non-fatal */ }
+  } catch {
+    /* non-fatal */
+  }
 
   return row;
 }
 
 export async function getSubscription(orgId: string, id: string): Promise<Subscription> {
-  const [row] = await db.select().from(subscriptions)
+  const [row] = await db
+    .select()
+    .from(subscriptions)
     .where(and(eq(subscriptions.orgId, orgId), eq(subscriptions.id, id)));
   if (!row || row.deletedAt) throw AppError.notFound('Subscription not found');
   return row;
@@ -169,7 +198,9 @@ export async function listSubscriptions(
   if (opts?.status) filters.push(eq(subscriptions.status, opts.status));
   if (opts?.contactId) filters.push(eq(subscriptions.contactId, opts.contactId));
 
-  return db.select().from(subscriptions)
+  return db
+    .select()
+    .from(subscriptions)
     .where(and(...filters))
     .limit(opts?.limit ?? 100);
 }
@@ -241,14 +272,16 @@ export async function updateSubscription(
 
     if (Math.abs(proration) > 0.01 && sub.contactId) {
       try {
-        const prorationLineItems: LineItem[] = [{
-          sku: 'PRORATION',
-          name: `Proration for ${sub.subscriptionNumber}`,
-          description: input.reason ?? `Plan change ${sub.subscriptionNumber}`,
-          qty: 1,
-          unitPrice: proration,
-          total: proration,
-        }];
+        const prorationLineItems: LineItem[] = [
+          {
+            sku: 'PRORATION',
+            name: `Proration for ${sub.subscriptionNumber}`,
+            description: input.reason ?? `Plan change ${sub.subscriptionNumber}`,
+            qty: 1,
+            unitPrice: proration,
+            total: proration,
+          },
+        ];
         const inv = await createInvoice(orgId, {
           contactId: sub.contactId,
           currency: sub.currency,
@@ -256,7 +289,9 @@ export async function updateSubscription(
           notes: input.reason ?? 'Subscription plan change proration',
         });
         prorationInvoiceId = inv?.id ?? null;
-      } catch { /* non-fatal */ }
+      } catch {
+        /* non-fatal */
+      }
     }
   }
 
@@ -266,7 +301,9 @@ export async function updateSubscription(
     patch.mrr = String(newMrr);
   }
 
-  const updatedRows = await db.update(subscriptions).set(patch)
+  const updatedRows = await db
+    .update(subscriptions)
+    .set(patch)
     .where(and(eq(subscriptions.orgId, orgId), eq(subscriptions.id, id)))
     .returning();
   const updated = updatedRows[0];
@@ -302,7 +339,8 @@ export async function pauseSubscription(
     throw AppError.badRequest(`Cannot pause from status=${sub.status}`);
   }
 
-  const pausedRows = await db.update(subscriptions)
+  const pausedRows = await db
+    .update(subscriptions)
     .set({ status: 'paused', updatedAt: new Date() })
     .where(and(eq(subscriptions.orgId, orgId), eq(subscriptions.id, id)))
     .returning();
@@ -334,7 +372,8 @@ export async function resumeSubscription(
 
   const now = new Date();
   const nextInvoice = now > sub.currentPeriodEnd ? now : sub.currentPeriodEnd;
-  const resumedRows = await db.update(subscriptions)
+  const resumedRows = await db
+    .update(subscriptions)
     .set({ status: 'active', nextInvoiceAt: nextInvoice, updatedAt: now })
     .where(and(eq(subscriptions.orgId, orgId), eq(subscriptions.id, id)))
     .returning();
@@ -386,7 +425,9 @@ export async function cancelSubscription(
     patch.cancelAt = sub.currentPeriodEnd;
   }
 
-  const canceledRows = await db.update(subscriptions).set(patch)
+  const canceledRows = await db
+    .update(subscriptions)
+    .set(patch)
     .where(and(eq(subscriptions.orgId, orgId), eq(subscriptions.id, id)))
     .returning();
   const row = canceledRows[0];
@@ -416,7 +457,9 @@ export async function cancelSubscription(
         reason: input?.reason,
       });
     }
-  } catch { /* non-fatal */ }
+  } catch {
+    /* non-fatal */
+  }
 
   return row;
 }
@@ -431,13 +474,15 @@ export async function reactivateSubscription(
     throw AppError.badRequest('Subscription is not scheduled for cancellation');
   }
 
-  const reactRows = await db.update(subscriptions).set({
-    status: 'active',
-    cancelAt: null,
-    canceledAt: null,
-    cancelReason: null,
-    updatedAt: new Date(),
-  })
+  const reactRows = await db
+    .update(subscriptions)
+    .set({
+      status: 'active',
+      cancelAt: null,
+      canceledAt: null,
+      cancelReason: null,
+      updatedAt: new Date(),
+    })
     .where(and(eq(subscriptions.orgId, orgId), eq(subscriptions.id, id)))
     .returning();
   const row = reactRows[0];
@@ -493,19 +538,25 @@ export async function generateNextInvoice(
 
   // If a scheduled cancellation hits this period, expire rather than rolling.
   if (sub.cancelAt && sub.cancelAt <= nextPeriodStart) {
-    await db.update(subscriptions).set({
-      status: 'canceled',
-      canceledAt: now,
-      mrr: '0',
-      updatedAt: now,
-    }).where(eq(subscriptions.id, subscriptionId));
+    await db
+      .update(subscriptions)
+      .set({
+        status: 'canceled',
+        canceledAt: now,
+        mrr: '0',
+        updatedAt: now,
+      })
+      .where(eq(subscriptions.id, subscriptionId));
   } else {
-    await db.update(subscriptions).set({
-      currentPeriodStart: nextPeriodStart,
-      currentPeriodEnd: nextPeriodEnd,
-      nextInvoiceAt: nextPeriodEnd,
-      updatedAt: now,
-    }).where(eq(subscriptions.id, subscriptionId));
+    await db
+      .update(subscriptions)
+      .set({
+        currentPeriodStart: nextPeriodStart,
+        currentPeriodEnd: nextPeriodEnd,
+        nextInvoiceAt: nextPeriodEnd,
+        updatedAt: now,
+      })
+      .where(eq(subscriptions.id, subscriptionId));
   }
 
   return { invoiceId: inv.id, periodStart: nextPeriodStart, periodEnd: nextPeriodEnd };
@@ -519,12 +570,16 @@ export async function runDueInvoiceGeneration(
   limit = 100,
 ): Promise<{ processed: number; generated: number; errors: number }> {
   const now = new Date();
-  const due = await db.select().from(subscriptions)
-    .where(and(
-      lte(subscriptions.nextInvoiceAt, now),
-      sql`${subscriptions.status} IN ('active','past_due')`,
-      sql`${subscriptions.deletedAt} IS NULL`,
-    ))
+  const due = await db
+    .select()
+    .from(subscriptions)
+    .where(
+      and(
+        lte(subscriptions.nextInvoiceAt, now),
+        sql`${subscriptions.status} IN ('active','past_due')`,
+        sql`${subscriptions.deletedAt} IS NULL`,
+      ),
+    )
     .limit(limit);
 
   let generated = 0;
@@ -543,15 +598,20 @@ export async function runDueInvoiceGeneration(
 // ─── History ──────────────────────────────────────────────────────────────────
 
 export async function listSubscriptionChanges(orgId: string, subscriptionId: string) {
-  return db.select().from(subscriptionChanges)
-    .where(and(
-      eq(subscriptionChanges.orgId, orgId),
-      eq(subscriptionChanges.subscriptionId, subscriptionId),
-    ));
+  return db
+    .select()
+    .from(subscriptionChanges)
+    .where(
+      and(
+        eq(subscriptionChanges.orgId, orgId),
+        eq(subscriptionChanges.subscriptionId, subscriptionId),
+      ),
+    );
 }
 
 export async function softDeleteSubscription(orgId: string, id: string): Promise<void> {
-  await db.update(subscriptions)
+  await db
+    .update(subscriptions)
     .set({ deletedAt: new Date(), updatedAt: new Date() })
     .where(and(eq(subscriptions.orgId, orgId), eq(subscriptions.id, id)));
 }

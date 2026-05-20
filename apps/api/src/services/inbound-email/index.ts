@@ -56,28 +56,35 @@ function normalizeEmail(addr: string): string {
   return (m ? m[1]! : addr).trim().toLowerCase();
 }
 
-export async function receiveInbound(orgId: string, payload: InboundPayload): Promise<InboundEmail> {
+export async function receiveInbound(
+  orgId: string,
+  payload: InboundPayload,
+): Promise<InboundEmail> {
   const fromEmail = normalizeEmail(payload.from);
 
-  const [contact] = await db.select({ id: contacts.id })
+  const [contact] = await db
+    .select({ id: contacts.id })
     .from(contacts)
     .where(and(eq(contacts.orgId, orgId), eq(contacts.email, fromEmail)))
     .limit(1);
 
-  const [row] = await db.insert(inboundEmails).values({
-    orgId,
-    contactId: contact?.id ?? null,
-    fromAddress: fromEmail,
-    toAddress: normalizeEmail(payload.to),
-    subject: payload.subject ?? null,
-    textBody: payload.textBody ?? null,
-    htmlBody: payload.htmlBody ?? null,
-    messageId: payload.messageId ?? null,
-    inReplyTo: payload.inReplyTo ?? null,
-    headers: payload.headers ?? {},
-    attachments: payload.attachments ?? [],
-    processed: false,
-  }).returning();
+  const [row] = await db
+    .insert(inboundEmails)
+    .values({
+      orgId,
+      contactId: contact?.id ?? null,
+      fromAddress: fromEmail,
+      toAddress: normalizeEmail(payload.to),
+      subject: payload.subject ?? null,
+      textBody: payload.textBody ?? null,
+      htmlBody: payload.htmlBody ?? null,
+      messageId: payload.messageId ?? null,
+      inReplyTo: payload.inReplyTo ?? null,
+      headers: payload.headers ?? {},
+      attachments: payload.attachments ?? [],
+      processed: false,
+    })
+    .returning();
 
   const rule = matchRule(normalizeEmail(payload.to));
 
@@ -131,19 +138,27 @@ export async function appendReplyToTicket(
   });
 }
 
-export async function listInbound(orgId: string, opts: { limit?: number; contactId?: string } = {}): Promise<InboundEmail[]> {
+export async function listInbound(
+  orgId: string,
+  opts: { limit?: number; contactId?: string } = {},
+): Promise<InboundEmail[]> {
   const limit = Math.min(opts.limit ?? 50, 500);
   const conds = [eq(inboundEmails.orgId, orgId)];
   if (opts.contactId) conds.push(eq(inboundEmails.contactId, opts.contactId));
-  return db.select().from(inboundEmails)
+  return db
+    .select()
+    .from(inboundEmails)
     .where(and(...conds))
     .orderBy(desc(inboundEmails.receivedAt))
     .limit(limit);
 }
 
 export async function getInbound(orgId: string, id: string): Promise<InboundEmail> {
-  const [row] = await db.select().from(inboundEmails)
-    .where(and(eq(inboundEmails.orgId, orgId), eq(inboundEmails.id, id))).limit(1);
+  const [row] = await db
+    .select()
+    .from(inboundEmails)
+    .where(and(eq(inboundEmails.orgId, orgId), eq(inboundEmails.id, id)))
+    .limit(1);
   if (!row) throw AppError.notFound('Inbound email');
   return row;
 }

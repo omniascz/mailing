@@ -33,17 +33,50 @@ vi.mock('../../lib/redis.js', () => ({
 }));
 vi.mock('../../db/schema/index.js', () => ({
   contacts: { id: 'id', orgId: 'org_id', leadScore: 'lead_score', updatedAt: 'updated_at' },
-  emailEvents: { contactId: 'contact_id', orgId: 'org_id', eventType: 'event_type', createdAt: 'created_at', id: 'id' },
-  workflowEvents: { id: 'id', orgId: 'org_id', contactId: 'contact_id', eventName: 'event_name', createdAt: 'created_at' },
-  leadScoreRules: { id: 'id', orgId: 'org_id', eventType: 'event_type', points: 'points', decayDays: 'decay_days', active: 'active', description: 'description', createdAt: 'created_at', updatedAt: 'updated_at' },
-  leadScoreEvents: { id: 'id', orgId: 'org_id', contactId: 'contact_id', eventType: 'event_type', pointsDelta: 'points_delta', scoreAfter: 'score_after', metadata: 'metadata', createdAt: 'created_at' },
+  emailEvents: {
+    contactId: 'contact_id',
+    orgId: 'org_id',
+    eventType: 'event_type',
+    createdAt: 'created_at',
+    id: 'id',
+  },
+  workflowEvents: {
+    id: 'id',
+    orgId: 'org_id',
+    contactId: 'contact_id',
+    eventName: 'event_name',
+    createdAt: 'created_at',
+  },
+  leadScoreRules: {
+    id: 'id',
+    orgId: 'org_id',
+    eventType: 'event_type',
+    points: 'points',
+    decayDays: 'decay_days',
+    active: 'active',
+    description: 'description',
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  },
+  leadScoreEvents: {
+    id: 'id',
+    orgId: 'org_id',
+    contactId: 'contact_id',
+    eventType: 'event_type',
+    pointsDelta: 'points_delta',
+    scoreAfter: 'score_after',
+    metadata: 'metadata',
+    createdAt: 'created_at',
+  },
   tags: { id: 'id', name: 'name', orgId: 'org_id' },
   contactTags: { contactId: 'contact_id', tagId: 'tag_id' },
 }));
 vi.mock('../../lib/app-error.js', () => ({
   AppError: {
-    notFound: (r = 'Resource') => Object.assign(new Error(`${r} not found`), { statusCode: 404, code: 'NOT_FOUND' }),
-    badRequest: (msg: string) => Object.assign(new Error(msg), { statusCode: 400, code: 'BAD_REQUEST' }),
+    notFound: (r = 'Resource') =>
+      Object.assign(new Error(`${r} not found`), { statusCode: 404, code: 'NOT_FOUND' }),
+    badRequest: (msg: string) =>
+      Object.assign(new Error(msg), { statusCode: 400, code: 'BAD_REQUEST' }),
   },
 }));
 
@@ -79,7 +112,9 @@ describe('selectBestChannel', () => {
     ]);
 
     const { redis } = await import('../../lib/redis.js');
-    (redis.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null).mockResolvedValueOnce('token-xyz');
+    (redis.get as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce('token-xyz');
 
     const { selectBestChannel } = await import('./smart-channel.js');
     const result = await selectBestChannel('c2', 'o1');
@@ -141,11 +176,16 @@ describe('split node (A/B)', () => {
 
     const results = await Promise.all(
       Array.from({ length: 100 }, (_, i) =>
-        executeAction(node, { id: 'r1', contactId: `contact-${i}` } as never, { orgId: 'o1', contact: null }),
+        executeAction(node, { id: 'r1', contactId: `contact-${i}` } as never, {
+          orgId: 'o1',
+          contact: null,
+        }),
       ),
     );
 
-    const aCount = results.filter((r) => r.type === 'branch' && (r as { branch: string }).branch === 'A').length;
+    const aCount = results.filter(
+      (r) => r.type === 'branch' && (r as { branch: string }).branch === 'A',
+    ).length;
     // With 100 contacts expect roughly 40-60 in each bucket
     expect(aCount).toBeGreaterThan(30);
     expect(aCount).toBeLessThan(70);
@@ -187,7 +227,13 @@ describe('goal node', () => {
       type: 'goal' as const,
       config: { emailEventType: 'open' },
     };
-    const run = { id: 'r1', orgId: 'o1', contactId: 'c1', createdAt: new Date(), data: {} } as never;
+    const run = {
+      id: 'r1',
+      orgId: 'o1',
+      contactId: 'c1',
+      createdAt: new Date(),
+      data: {},
+    } as never;
     const ctx = { orgId: 'o1', contact: null };
 
     const result = await executeAction(node, run, ctx);
@@ -204,7 +250,13 @@ describe('goal node', () => {
       type: 'goal' as const,
       config: { emailEventType: 'open' },
     };
-    const run = { id: 'r1', orgId: 'o1', contactId: 'c1', createdAt: new Date(), data: {} } as never;
+    const run = {
+      id: 'r1',
+      orgId: 'o1',
+      contactId: 'c1',
+      createdAt: new Date(),
+      data: {},
+    } as never;
     const ctx = { orgId: 'o1', contact: null };
 
     const result = await executeAction(node, run, ctx);
@@ -214,7 +266,13 @@ describe('goal node', () => {
   it('handles goal node with no config gracefully', async () => {
     const { executeAction } = await import('./actions.js');
     const node = { id: 'goal-1', type: 'goal' as const, config: {} };
-    const run = { id: 'r1', orgId: 'o1', contactId: 'c1', createdAt: new Date(), data: {} } as never;
+    const run = {
+      id: 'r1',
+      orgId: 'o1',
+      contactId: 'c1',
+      createdAt: new Date(),
+      data: {},
+    } as never;
     const ctx = { orgId: 'o1', contact: null };
 
     const result = await executeAction(node, run, ctx);
@@ -257,8 +315,14 @@ describe('flow templates (5.8)', () => {
       // All edge sources/targets reference real node ids
       const nodeIds = new Set(template.nodes.map((n) => n.id));
       for (const edge of template.edges) {
-        expect(nodeIds.has(edge.source), `Edge ${edge.id} source '${edge.source}' not in nodes`).toBe(true);
-        expect(nodeIds.has(edge.target), `Edge ${edge.id} target '${edge.target}' not in nodes`).toBe(true);
+        expect(
+          nodeIds.has(edge.source),
+          `Edge ${edge.id} source '${edge.source}' not in nodes`,
+        ).toBe(true);
+        expect(
+          nodeIds.has(edge.target),
+          `Edge ${edge.id} target '${edge.target}' not in nodes`,
+        ).toBe(true);
       }
     }
   });

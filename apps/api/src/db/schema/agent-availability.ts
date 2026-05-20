@@ -6,7 +6,17 @@
  * ticket_assignments  — audit log of every assignment action
  */
 
-import { pgTable, uuid, varchar, boolean, integer, jsonb, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  integer,
+  jsonb,
+  timestamp,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';
 
@@ -16,8 +26,12 @@ export const agentAvailability = pgTable(
   'agent_availability',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     /** online | away | busy | offline */
     status: varchar('status', { length: 32 }).notNull().default('offline'),
     /** Max concurrent chats this agent will accept (0 = unlimited). */
@@ -43,7 +57,9 @@ export const chatRoutingRules = pgTable(
   'chat_routing_rules',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
     /** Channel this rule applies to; null = all channels. */
     channel: varchar('channel', { length: 64 }),
@@ -59,9 +75,7 @@ export const chatRoutingRules = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('chat_routing_rules_org_idx').on(t.orgId, t.priority),
-  ],
+  (t) => [index('chat_routing_rules_org_idx').on(t.orgId, t.priority)],
 );
 
 // ─── Ticket assignment log ────────────────────────────────────────────────────
@@ -70,7 +84,9 @@ export const ticketAssignments = pgTable(
   'ticket_assignments',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     ticketId: uuid('ticket_id').notNull(),
     assignedTo: uuid('assigned_to').references(() => users.id, { onDelete: 'set null' }),
     assignedBy: uuid('assigned_by').references(() => users.id, { onDelete: 'set null' }),

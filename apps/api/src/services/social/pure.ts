@@ -68,11 +68,7 @@ export function extractHashtags(body: string): string[] {
  * the platform's hashtag ceiling. Existing hashtags in the body count
  * toward the limit.
  */
-export function mergeHashtags(
-  body: string,
-  defaults: string[],
-  platform: SocialPlatform,
-): string {
+export function mergeHashtags(body: string, defaults: string[], platform: SocialPlatform): string {
   const existing = extractHashtags(body);
   const limit = HASHTAG_LIMITS[platform];
   if (existing.length >= limit) return body;
@@ -126,10 +122,7 @@ export interface BestTimeSlot {
  * Pick the top-N slots from an engagement histogram. Ties broken by earlier
  * hour then day. Used for "best time to post" dashboards.
  */
-export function pickBestTimeSlots(
-  histogram: EngagementHistogramEntry[],
-  topN = 3,
-): BestTimeSlot[] {
+export function pickBestTimeSlots(histogram: EngagementHistogramEntry[], topN = 3): BestTimeSlot[] {
   const sorted = [...histogram].sort((a, b) => {
     if (a.score !== b.score) return b.score - a.score;
     if (a.hour !== b.hour) return a.hour - b.hour;
@@ -151,10 +144,7 @@ export interface CrossPostCheck {
  * Check a draft against every target platform and report which ones it
  * fits (helps the editor warn "truncated on Twitter" before send).
  */
-export function validateCrossPost(
-  body: string,
-  platforms: SocialPlatform[],
-): CrossPostCheck[] {
+export function validateCrossPost(body: string, platforms: SocialPlatform[]): CrossPostCheck[] {
   const tags = extractHashtags(body);
   return platforms.map((p) => {
     const charsOver = Math.max(0, body.length - POST_LIMITS[p]);

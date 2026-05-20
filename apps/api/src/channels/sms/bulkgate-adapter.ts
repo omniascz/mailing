@@ -50,9 +50,7 @@ export class BulkgateSmsAdapter extends BaseChannelAdapter {
     this.client = new BulkGateClient({
       applicationId: cfg.applicationId,
       applicationToken: cfg.applicationToken,
-      dlrBaseUrl: cfg.dlrBaseUrl
-        ? `${cfg.dlrBaseUrl}/api/v1/sms/webhooks/bulkgate/dlr`
-        : undefined,
+      dlrBaseUrl: cfg.dlrBaseUrl ? `${cfg.dlrBaseUrl}/api/v1/sms/webhooks/bulkgate/dlr` : undefined,
     });
   }
 
@@ -60,7 +58,11 @@ export class BulkgateSmsAdapter extends BaseChannelAdapter {
 
   async send(message: UnifiedMessage, recipient: Recipient): Promise<DeliveryResult> {
     if (message.content.kind !== 'sms') {
-      throw this.wrapError({ code: 'WRONG_CONTENT', message: 'Expected sms content', retryable: false });
+      throw this.wrapError({
+        code: 'WRONG_CONTENT',
+        message: 'Expected sms content',
+        retryable: false,
+      });
     }
 
     const phone = normalizePhone(recipient.phone ?? '');
@@ -98,7 +100,11 @@ export class BulkgateSmsAdapter extends BaseChannelAdapter {
           providerError: err.providerData,
         });
       }
-      throw this.wrapError({ code: 'NETWORK_ERROR', message: (err as Error).message, retryable: true });
+      throw this.wrapError({
+        code: 'NETWORK_ERROR',
+        message: (err as Error).message,
+        retryable: true,
+      });
     }
   }
 
@@ -117,7 +123,12 @@ export class BulkgateSmsAdapter extends BaseChannelAdapter {
 
   async estimateCost(message: UnifiedMessage, recipients: Recipient[]): Promise<CostEstimate> {
     if (message.content.kind !== 'sms') {
-      return { totalCost: 0, currency: 'EUR', perRecipientCost: 0, recipientCount: recipients.length };
+      return {
+        totalCost: 0,
+        currency: 'EUR',
+        perRecipientCost: 0,
+        recipientCount: recipients.length,
+      };
     }
 
     const parts = countSegments(message.content.body);
@@ -162,7 +173,10 @@ export class BulkgateSmsAdapter extends BaseChannelAdapter {
         errors.push({ field: 'body', message: 'SMS body exceeds 1600 characters (10 segments)' });
       }
       if (countSegments(body) > 3) {
-        warnings.push({ field: 'body', message: 'Message spans more than 3 SMS segments; cost will multiply' });
+        warnings.push({
+          field: 'body',
+          message: 'Message spans more than 3 SMS segments; cost will multiply',
+        });
       }
     }
 

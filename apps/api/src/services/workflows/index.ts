@@ -145,6 +145,16 @@ export async function listWorkflowRuns(
   return { data, hasMore, cursor: hasMore ? data[data.length - 1]!.id : undefined };
 }
 
+export async function getWorkflowRun(runId: string, orgId: string): Promise<WorkflowRun> {
+  const [row] = await db
+    .select()
+    .from(workflowRuns)
+    .where(and(eq(workflowRuns.id, runId), eq(workflowRuns.orgId, orgId)))
+    .limit(1);
+  if (!row) throw AppError.notFound('Workflow run');
+  return row;
+}
+
 export async function cancelWorkflowRun(runId: string, orgId: string): Promise<WorkflowRun> {
   const [row] = await db
     .update(workflowRuns)

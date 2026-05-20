@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `47_ConstantContact_Features_DeepDive.md` o **procesní pohled**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Constant Contact = americká klasika** (založeno 1995, 30+ let)
 > - **HQ:** Waltham, Massachusetts, USA
 > - **Vlastnictví:** Clearlake Capital + Siris Capital (od 2021)
@@ -154,22 +155,22 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account owner** | Login + billing | Vše, billing, users | Vše |
-| **Standard user (3 total)** | Login | Kampaně, automatizace | Per role |
-| **Premium user (unlimited)** | Login | Kampaně, automatizace | Per role |
-| **End subscriber** | Email / SMS / event | Engage | Vlastní data |
-| **Event registrant** | Event landing page | Sign up + pay | Event details |
-| **CC customer service** | Phone / chat | Issue resolution | s consent |
-| **CC marketing advisor** | Premium support | Strategy guidance | s consent |
-| **CC sales team** | Upgrade calls | Plan upgrades | s consent |
-| **CC retention team** | Cancellation calls | Save customer | s consent |
-| **Integration partner** | API / OAuth | Data sync | Per scope |
-| **Eventbrite** | OAuth | Event sync | Event data |
-| **Shopify** | OAuth | Product/customer sync | Ecommerce data |
-| **Canva** | Embed | Design import | Design data |
-| **Stripe** | OAuth | Event payment processing | Payment data |
+| Aktér                        | Vstupní bod         | Co dělá                  | Co vidí        |
+| ---------------------------- | ------------------- | ------------------------ | -------------- |
+| **Account owner**            | Login + billing     | Vše, billing, users      | Vše            |
+| **Standard user (3 total)**  | Login               | Kampaně, automatizace    | Per role       |
+| **Premium user (unlimited)** | Login               | Kampaně, automatizace    | Per role       |
+| **End subscriber**           | Email / SMS / event | Engage                   | Vlastní data   |
+| **Event registrant**         | Event landing page  | Sign up + pay            | Event details  |
+| **CC customer service**      | Phone / chat        | Issue resolution         | s consent      |
+| **CC marketing advisor**     | Premium support     | Strategy guidance        | s consent      |
+| **CC sales team**            | Upgrade calls       | Plan upgrades            | s consent      |
+| **CC retention team**        | Cancellation calls  | Save customer            | s consent      |
+| **Integration partner**      | API / OAuth         | Data sync                | Per scope      |
+| **Eventbrite**               | OAuth               | Event sync               | Event data     |
+| **Shopify**                  | OAuth               | Product/customer sync    | Ecommerce data |
+| **Canva**                    | Embed               | Design import            | Design data    |
+| **Stripe**                   | OAuth               | Event payment processing | Payment data   |
 
 ---
 
@@ -290,7 +291,8 @@ Free trial flow:
 ### 3.2 60denní trial scope
 
 Per Ecommerceparadise:
-> *"A 60-day free trial remains available with no credit card required — this is a meaningful trial period relative to the 7–14 day trials most competitors offer."*
+
+> _"A 60-day free trial remains available with no credit card required — this is a meaningful trial period relative to the 7–14 day trials most competitors offer."_
 
 ```
 Trial scope:
@@ -305,7 +307,7 @@ Trial scope:
 
 ### 3.3 Trial limits per Flowium
 
-> *"The trial gives you access to all the basic features, including: drag-and-drop email builder, professional templates, contact segmentation, basic automation, support team, and more. You can try them out in test campaigns that allow up to 100 sends."*
+> _"The trial gives you access to all the basic features, including: drag-and-drop email builder, professional templates, contact segmentation, basic automation, support team, and more. You can try them out in test campaigns that allow up to 100 sends."_
 
 ⚠️ **Limit 100 emails during trial** = test scope, ne production use.
 
@@ -561,7 +563,8 @@ Contact import options:
 ### 6.2 Permission compliance
 
 Per oficiální:
-> *"Constant Contact's terms of service require customers to uphold permission-based lists."*
+
+> _"Constant Contact's terms of service require customers to uphold permission-based lists."_
 
 ```
 Permission requirements:
@@ -673,7 +676,8 @@ Email creation flow:
 ### 7.2 Templates 2026
 
 Per EmailVendorSelection:
-> *"Templates: Recent changes increased email templates to 200+. Some of the new ones are modern-looking."*
+
+> _"Templates: Recent changes increased email templates to 200+. Some of the new ones are modern-looking."_
 
 ⚠️ Templates byly historicky **kritizovány** – nyní (2025-2026) modernizace.
 
@@ -838,7 +842,7 @@ Single-step ONLY!
 
 ### 9.2 Per Mailsoftly critique
 
-> *"The Lite plan offers only single-step automations: a welcome email when someone subscribes, a birthday message, or an anniversary email. That is the extent of it."*
+> _"The Lite plan offers only single-step automations: a welcome email when someone subscribes, a birthday message, or an anniversary email. That is the extent of it."_
 
 ⚠️ **Lite = pouze SINGLE-STEP** = velmi omezené.
 
@@ -928,7 +932,8 @@ Total reach: 4 200 (vs. 3 000 original)
 ### 11.1 Standard tier workflows
 
 Per Mailsoftly:
-> *"The Standard plan introduces multi-step automations, which is an improvement. You can create simple drip sequences with time delays between messages."*
+
+> _"The Standard plan introduces multi-step automations, which is an improvement. You can create simple drip sequences with time delays between messages."_
 
 ```
 Standard tier pre-built (3 only):
@@ -952,7 +957,7 @@ Standard tier pre-built (3 only):
 
 ### 11.2 Per EmailVendorSelection critique
 
-> *"You still don't get custom automations, only three pre-built workflows. For the cost of the Standard plan, this is a glaring omission."*
+> _"You still don't get custom automations, only three pre-built workflows. For the cost of the Standard plan, this is a glaring omission."_
 
 ⚠️ **3 pre-built = málo** vs. konkurence MailerLite 7+, Klaviyo 100+.
 
@@ -978,7 +983,8 @@ Beginner-friendly but limited
 ### 12.1 Premium automation
 
 Per Mailsoftly:
-> *"Premium unlocks what Constant Contact calls 'advanced automation,' including dynamic content and more complex trigger conditions."*
+
+> _"Premium unlocks what Constant Contact calls 'advanced automation,' including dynamic content and more complex trigger conditions."_
 
 ```
 Premium automation features:
@@ -1061,9 +1067,9 @@ CC Premium = "OK but not great"
 
 ### 13.1 Per EmailVendorSelection
 
-> *"Has event management and SMS marketing: Constant Contact goes beyond email with integrated event management."*
+> _"Has event management and SMS marketing: Constant Contact goes beyond email with integrated event management."_
 
-> *"You run and promote events. Constant Contact's event marketing tools are an interesting functionality if you run online and in-person events."*
+> _"You run and promote events. Constant Contact's event marketing tools are an interesting functionality if you run online and in-person events."_
 
 ### 13.2 Event Creation flow
 
@@ -1258,7 +1264,8 @@ Landing page creation:
 ### 14.2 Form types
 
 Per EmailVendorSelection:
-> *"Strong list-building options with 200+ forms and lead magnets."*
+
+> _"Strong list-building options with 200+ forms and lead magnets."_
 
 ```
 Form types available:
@@ -1338,7 +1345,8 @@ Lead magnet capabilities:
 ### 15.1 Social posting
 
 Per oficiální:
-> *"Put your business out there the easy way. Turn emails into social posts, share content to multiple platforms in a flash."*
+
+> _"Put your business out there the easy way. Turn emails into social posts, share content to multiple platforms in a flash."_
 
 ```
 Social posting flow:
@@ -1551,7 +1559,8 @@ Segment builder:
 ### 17.3 Dynamic Content (Premium-only)
 
 Per oficiální:
-> *"Dynamic content blocks allow you to customize emails by showing or hiding content based on a recipient's contact details like city, state, job title, or other custom fields."*
+
+> _"Dynamic content blocks allow you to customize emails by showing or hiding content based on a recipient's contact details like city, state, job title, or other custom fields."_
 
 ```
 Dynamic content flow:
@@ -1657,7 +1666,8 @@ Planner flow:
 ### 18.4 AI maturity check
 
 Per Ecommerceparadise:
-> *"In 2025 and 2026, Constant Contact has added AI tools (AI copy generator, AI-driven content recommendations, multichannel campaign planner)."*
+
+> _"In 2025 and 2026, Constant Contact has added AI tools (AI copy generator, AI-driven content recommendations, multichannel campaign planner)."_
 
 ⚠️ **AI = recent addition** (2025-2026), catch-up s konkurencí (Klaviyo, Brevo AI-native).
 
@@ -1770,7 +1780,7 @@ PREMIUM (full ecommerce):
 
 ### 20.3 Per Mailsoftly critique
 
-> *"Product recommendation engines, abandoned cart sequences with dynamic content, and revenue attribution are only available on the Premium plan."*
+> _"Product recommendation engines, abandoned cart sequences with dynamic content, and revenue attribution are only available on the Premium plan."_
 
 ⚠️ **Klíčové ecommerce features = Premium-only** = $80+/mo.
 
@@ -1848,7 +1858,7 @@ Standard campaign metrics:
 
 ### 21.3 Per Sonary
 
-> *"Marketers and business owners can keep track of major metrics like open, delivery, and conversion rates, all in one place. Furthermore, they can monitor their ecommerce activities within the reporting and analytics section of Constant Contact in real-time."*
+> _"Marketers and business owners can keep track of major metrics like open, delivery, and conversion rates, all in one place. Furthermore, they can monitor their ecommerce activities within the reporting and analytics section of Constant Contact in real-time."_
 
 ### 21.4 Reporting limitations
 
@@ -1943,9 +1953,9 @@ CC = best phone support in SMB email marketing
 
 ### 22.5 Per Sonary user
 
-> *"Whenever I go to a new company, I take Constant Contact with me. It is useful for the basics and does them very well."*
+> _"Whenever I go to a new company, I take Constant Contact with me. It is useful for the basics and does them very well."_
 
-> *"There are tools that require entire teams to manage then there's Constant Contact."*
+> _"There are tools that require entire teams to manage then there's Constant Contact."_
 
 ⚠️ **Phone support + ease of use** = stickiness drivers.
 
@@ -2032,9 +2042,10 @@ JAN - Tax receipts auto-sent
 ### 24.1 Trap mechanism
 
 Per Mailsoftly:
-> *"Constant Contact automatically upgrades you to the next contact tier mid-billing-cycle. This happens without a confirmation prompt."*
 
-> *"For example, going from 5,000 to 5,001 contacts on the Lite plan jumps your bill from $80/mo to $120/mo."*
+> _"Constant Contact automatically upgrades you to the next contact tier mid-billing-cycle. This happens without a confirmation prompt."_
+
+> _"For example, going from 5,000 to 5,001 contacts on the Lite plan jumps your bill from $80/mo to $120/mo."_
 
 ### 24.2 Flow
 
@@ -2059,7 +2070,8 @@ NO way to opt-out auto-upgrade
 ### 24.3 Send limit trap
 
 Per CheckThat.ai:
-> *"If you exceed your email send limit for two consecutive months, Constant Contact automatically upgrades you to a higher tier without asking."*
+
+> _"If you exceed your email send limit for two consecutive months, Constant Contact automatically upgrades you to a higher tier without asking."_
 
 ```
 Send limit auto-upgrade:
@@ -2074,7 +2086,8 @@ Month 3: User pays for new tier (without knowing why)
 ### 24.4 Way to return to lower tier
 
 Per Mailsoftly:
-> *"The only way to return to a lower tier is to reduce your contact count below the threshold and wait for the next billing cycle."*
+
+> _"The only way to return to a lower tier is to reduce your contact count below the threshold and wait for the next billing cycle."_
 
 ```
 Downgrade process:
@@ -2107,7 +2120,7 @@ Anti-trap strategy:
 
 ### 25.1 Per EmailVendorSelection
 
-> *"Hard to cancel: Many users report difficulties cancelling their Constant Contact subscription. You have to call customer service and talk to them to cancel."*
+> _"Hard to cancel: Many users report difficulties cancelling their Constant Contact subscription. You have to call customer service and talk to them to cancel."_
 
 ### 25.2 Cancellation flow
 
@@ -2137,7 +2150,7 @@ Cancellation steps:
 
 ### 25.3 Per Ecommerceparadise critique
 
-> *"The rating reflects the platform's real competitive position in 2026: it charges premium prices for a feature set that the broader market has moved beyond, lacks a permanent free plan, and makes cancellation unnecessarily difficult."*
+> _"The rating reflects the platform's real competitive position in 2026: it charges premium prices for a feature set that the broader market has moved beyond, lacks a permanent free plan, and makes cancellation unnecessarily difficult."_
 
 ⚠️ **Cancellation friction = retention strategy**.
 
@@ -2174,26 +2187,26 @@ Important safety net
 
 ## 26. Datová mapa: co vidí kdo
 
-| Data | Account owner | User (per role) | End subscriber | Event registrant | CC support | Sales team | Retention team | API client |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | view | ❌ | ❌ | s consent | s consent | ❌ | per scope |
-| Billing | ✅ | ❌ | ❌ | ❌ | s consent | s consent | s consent | – |
-| User management | ✅ | ❌ | ❌ | ❌ | s consent | ❌ | ❌ | per scope |
-| Contacts | ✅ | ✅ | own profile | ❌ | s consent | ❌ | s consent | ✅ |
-| Lists & Segments | ✅ | ✅ | ❌ | ❌ | s consent | ❌ | ❌ | per scope |
-| Campaigns | ✅ | ✅ | ❌ | ❌ | s consent | s consent | s consent | per scope |
-| Automation | ✅ | ✅ | ❌ | ❌ | s consent | s consent | ❌ | per scope |
-| Templates | ✅ | ✅ | ❌ | ❌ | s consent | ❌ | ❌ | per scope |
-| Events | ✅ | ✅ | view | own registration | s consent | ❌ | ❌ | per scope |
-| Forms & Landing Pages | ✅ | ✅ | view | view | s consent | ❌ | ❌ | per scope |
-| Reports | ✅ | ✅ | ❌ | ❌ | s consent | s consent | s consent | per scope |
-| Integrations | ✅ | view | ❌ | ❌ | s consent | s consent | ❌ | – |
-| BrandKit | ✅ | view | ❌ | ❌ | s consent | ❌ | ❌ | – |
-| Social posts | ✅ | ✅ | view | ❌ | s consent | ❌ | ❌ | per scope |
-| SMS | ✅ (Std+) | ✅ (Std+) | own | ❌ | s consent | s consent | s consent | per scope |
-| Domain authentication | ✅ | view | ❌ | ❌ | s consent | ❌ | ❌ | – |
-| Audit logs | ✅ | ❌ | ❌ | ❌ | s consent | ❌ | s consent | – |
-| Stripe (Events) | ✅ | view | ❌ | own transactions | s consent | ❌ | ❌ | – |
+| Data                  | Account owner | User (per role) | End subscriber | Event registrant | CC support | Sales team | Retention team | API client |
+| --------------------- | :-----------: | :-------------: | :------------: | :--------------: | :--------: | :--------: | :------------: | :--------: |
+| Account settings      |      ✅       |      view       |       ❌       |        ❌        | s consent  | s consent  |       ❌       | per scope  |
+| Billing               |      ✅       |       ❌        |       ❌       |        ❌        | s consent  | s consent  |   s consent    |     –      |
+| User management       |      ✅       |       ❌        |       ❌       |        ❌        | s consent  |     ❌     |       ❌       | per scope  |
+| Contacts              |      ✅       |       ✅        |  own profile   |        ❌        | s consent  |     ❌     |   s consent    |     ✅     |
+| Lists & Segments      |      ✅       |       ✅        |       ❌       |        ❌        | s consent  |     ❌     |       ❌       | per scope  |
+| Campaigns             |      ✅       |       ✅        |       ❌       |        ❌        | s consent  | s consent  |   s consent    | per scope  |
+| Automation            |      ✅       |       ✅        |       ❌       |        ❌        | s consent  | s consent  |       ❌       | per scope  |
+| Templates             |      ✅       |       ✅        |       ❌       |        ❌        | s consent  |     ❌     |       ❌       | per scope  |
+| Events                |      ✅       |       ✅        |      view      | own registration | s consent  |     ❌     |       ❌       | per scope  |
+| Forms & Landing Pages |      ✅       |       ✅        |      view      |       view       | s consent  |     ❌     |       ❌       | per scope  |
+| Reports               |      ✅       |       ✅        |       ❌       |        ❌        | s consent  | s consent  |   s consent    | per scope  |
+| Integrations          |      ✅       |      view       |       ❌       |        ❌        | s consent  | s consent  |       ❌       |     –      |
+| BrandKit              |      ✅       |      view       |       ❌       |        ❌        | s consent  |     ❌     |       ❌       |     –      |
+| Social posts          |      ✅       |       ✅        |      view      |        ❌        | s consent  |     ❌     |       ❌       | per scope  |
+| SMS                   |   ✅ (Std+)   |    ✅ (Std+)    |      own       |        ❌        | s consent  | s consent  |   s consent    | per scope  |
+| Domain authentication |      ✅       |      view       |       ❌       |        ❌        | s consent  |     ❌     |       ❌       |     –      |
+| Audit logs            |      ✅       |       ❌        |       ❌       |        ❌        | s consent  |     ❌     |   s consent    |     –      |
+| Stripe (Events)       |      ✅       |      view       |       ❌       | own transactions | s consent  |     ❌     |       ❌       |     –      |
 
 ---
 
@@ -2258,7 +2271,8 @@ ActiveCampaign $15 nabízí mnohem více
 ### 27.6 Premium pricing pro mid-tier features
 
 Per Ecommerceparadise:
-> *"It charges premium-tier prices while delivering a feature set that the broader market now treats as mid-tier."*
+
+> _"It charges premium-tier prices while delivering a feature set that the broader market now treats as mid-tier."_
 
 ### 27.7 SMS jen USA
 
@@ -2502,4 +2516,4 @@ Pro data-driven = Bloomreach / Klaviyo / SALESmanago
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů constantcontact.com (Pricing, Premium, About), G2 reviews, EmailVendorSelection (12/2025), Sender.net Review (1/2026), Flowium (1/2026), Mailsoftly (4/2026), CheckThat.ai (3/2026), Ecommerceparadise Review (4/2026). Pro nejaktuálnější detaily je nutný kontakt s Constant Contact (877-358-5969) nebo registrace 60denního zkušebního účtu.*
+_Dokument zpracován z oficiálních zdrojů constantcontact.com (Pricing, Premium, About), G2 reviews, EmailVendorSelection (12/2025), Sender.net Review (1/2026), Flowium (1/2026), Mailsoftly (4/2026), CheckThat.ai (3/2026), Ecommerceparadise Review (4/2026). Pro nejaktuálnější detaily je nutný kontakt s Constant Contact (877-358-5969) nebo registrace 60denního zkušebního účtu._

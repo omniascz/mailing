@@ -186,7 +186,9 @@ describe('runAnomalyCheckForOrg', () => {
 
   it('returns no alerts when traffic is below threshold', async () => {
     // < 10 sends → skip all checks
-    (mockDb.execute as ReturnType<typeof vi.fn>).mockResolvedValue([{ event_type: 'send', cnt: '5' }]);
+    (mockDb.execute as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { event_type: 'send', cnt: '5' },
+    ]);
 
     const { runAnomalyCheckForOrg } = await import('./anomaly-detector.js');
     const result = await runAnomalyCheckForOrg('org-1');
@@ -201,14 +203,14 @@ describe('runAnomalyCheckForOrg', () => {
     // Last hour: 100 sends, 10 bounces (10% bounce rate > 5% threshold)
     (mockDb.execute as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce([
-          { event_type: 'send', cnt: '100' },
-          { event_type: 'bounce', cnt: '10' },
-        ])
+        { event_type: 'send', cnt: '100' },
+        { event_type: 'bounce', cnt: '10' },
+      ])
       // 30-day baseline: normal
       .mockResolvedValueOnce([
-          { event_type: 'send', cnt: '50000' },
-          { event_type: 'bounce', cnt: '500' },
-        ]);
+        { event_type: 'send', cnt: '50000' },
+        { event_type: 'bounce', cnt: '500' },
+      ]);
 
     const { runAnomalyCheckForOrg } = await import('./anomaly-detector.js');
     const result = await runAnomalyCheckForOrg('org-1');
@@ -224,9 +226,9 @@ describe('runAnomalyCheckForOrg', () => {
 
     (mockDb.execute as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce([
-          { event_type: 'send', cnt: '1000' },
-          { event_type: 'complaint', cnt: '2' }, // 0.2% > 0.1%
-        ])
+        { event_type: 'send', cnt: '1000' },
+        { event_type: 'complaint', cnt: '2' }, // 0.2% > 0.1%
+      ])
       .mockResolvedValueOnce([{ event_type: 'send', cnt: '30000' }]);
 
     const { runAnomalyCheckForOrg } = await import('./anomaly-detector.js');
@@ -242,13 +244,13 @@ describe('runAnomalyCheckForOrg', () => {
 
     (mockDb.execute as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce([
-          { event_type: 'send', cnt: '500' },
-          { event_type: 'open', cnt: '10' }, // 2% open rate
-        ])
+        { event_type: 'send', cnt: '500' },
+        { event_type: 'open', cnt: '10' }, // 2% open rate
+      ])
       .mockResolvedValueOnce([
-          { event_type: 'send', cnt: '100000' },
-          { event_type: 'open', cnt: '25000' }, // baseline ~25%
-        ]);
+        { event_type: 'send', cnt: '100000' },
+        { event_type: 'open', cnt: '25000' }, // baseline ~25%
+      ]);
 
     const { runAnomalyCheckForOrg } = await import('./anomaly-detector.js');
     const result = await runAnomalyCheckForOrg('org-1');
@@ -265,9 +267,9 @@ describe('runAnomalyCheckForOrg', () => {
 
     (mockDb.execute as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce([
-          { event_type: 'send', cnt: '100' },
-          { event_type: 'bounce', cnt: '10' },
-        ])
+        { event_type: 'send', cnt: '100' },
+        { event_type: 'bounce', cnt: '10' },
+      ])
       .mockResolvedValueOnce([{ event_type: 'send', cnt: '10000' }]);
 
     const { runAnomalyCheckForOrg } = await import('./anomaly-detector.js');
@@ -283,17 +285,17 @@ describe('runAnomalyCheckForOrg', () => {
 
     (mockDb.execute as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce([
-          { event_type: 'send', cnt: '100' },
-          { event_type: 'open', cnt: '25' },
-          { event_type: 'click', cnt: '8' },
-          { event_type: 'bounce', cnt: '1' },
-        ])
+        { event_type: 'send', cnt: '100' },
+        { event_type: 'open', cnt: '25' },
+        { event_type: 'click', cnt: '8' },
+        { event_type: 'bounce', cnt: '1' },
+      ])
       .mockResolvedValueOnce([
-          { event_type: 'send', cnt: '100000' },
-          { event_type: 'open', cnt: '25000' },
-          { event_type: 'click', cnt: '8000' },
-          { event_type: 'bounce', cnt: '1000' },
-        ]);
+        { event_type: 'send', cnt: '100000' },
+        { event_type: 'open', cnt: '25000' },
+        { event_type: 'click', cnt: '8000' },
+        { event_type: 'bounce', cnt: '1000' },
+      ]);
 
     const { runAnomalyCheckForOrg } = await import('./anomaly-detector.js');
     const result = await runAnomalyCheckForOrg('org-1');

@@ -1,10 +1,5 @@
 export { declineName, inferGender, type Gender, type SlovakCase } from './cases.js';
-export {
-  slovakNameDays,
-  nameDaysFor,
-  isNameDayFor,
-  toMonthDayKey,
-} from './name-days.js';
+export { slovakNameDays, nameDaysFor, isNameDayFor, toMonthDayKey } from './name-days.js';
 export {
   SLOVAK_FIXED_HOLIDAYS,
   SLOVAK_EASTER_RELATIVE,

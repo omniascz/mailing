@@ -51,7 +51,8 @@ export async function transcribeCall(
   const { summary, tokensUsed } = await summarizeTranscript(orgId, transcript);
 
   // Step 3: Persist
-  await db.update(calls)
+  await db
+    .update(calls)
     .set({
       transcript,
       aiSummary: summary.keyPoints.join('\n'),
@@ -62,19 +63,24 @@ export async function transcribeCall(
   return { callId, transcript, summary, provider, tokensUsed };
 }
 
-async function transcribeAudio(audioUrl: string): Promise<{ transcript: string; provider: string }> {
+async function transcribeAudio(
+  audioUrl: string,
+): Promise<{ transcript: string; provider: string }> {
   // Try Deepgram first
   const dgKey = process.env.DEEPGRAM_API_KEY;
   if (dgKey) {
     try {
-      const res = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&diarize=true', {
-        method: 'POST',
-        headers: {
-          Authorization: `Token ${dgKey}`,
-          'Content-Type': 'application/json',
+      const res = await fetch(
+        'https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&diarize=true',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Token ${dgKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: audioUrl }),
         },
-        body: JSON.stringify({ url: audioUrl }),
-      });
+      );
       if (res.ok) {
         const data = (await res.json()) as {
           results?: { channels?: Array<{ alternatives?: Array<{ transcript?: string }> }> };
@@ -82,7 +88,9 @@ async function transcribeAudio(audioUrl: string): Promise<{ transcript: string; 
         const transcript = data.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? '';
         if (transcript) return { transcript, provider: 'deepgram' };
       }
-    } catch { /* fall through */ }
+    } catch {
+      /* fall through */
+    }
   }
 
   // Fallback: OpenAI Whisper
@@ -106,7 +114,9 @@ async function transcribeAudio(audioUrl: string): Promise<{ transcript: string; 
           if (data.text) return { transcript: data.text, provider: 'whisper' };
         }
       }
-    } catch { /* fall through */ }
+    } catch {
+      /* fall through */
+    }
   }
 
   return { transcript: '[Transcription unavailable]', provider: 'none' };
@@ -134,10 +144,15 @@ async function summarizeTranscript(
     });
 
     const summary = JSON.parse(result.text) as CallSummary;
-    return { summary, tokensUsed: (result.inputTokens + result.outputTokens) };
+    return { summary, tokensUsed: result.inputTokens + result.outputTokens };
   } catch {
     return {
-      summary: { outcome: 'other', keyPoints: [transcript.slice(0, 200)], actionItems: [], sentiment: 'neutral' },
+      summary: {
+        outcome: 'other',
+        keyPoints: [transcript.slice(0, 200)],
+        actionItems: [],
+        sentiment: 'neutral',
+      },
       tokensUsed: 0,
     };
   }

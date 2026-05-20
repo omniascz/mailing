@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, text, jsonb, timestamp, index, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  text,
+  jsonb,
+  timestamp,
+  index,
+  uniqueIndex,
+  varchar,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 /**
@@ -27,13 +36,20 @@ export interface CustomObjectField {
 export const customObjectDefinitions = pgTable(
   'custom_object_definitions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     key: varchar('key', { length: 64 }).notNull(),
     singularLabel: text('singular_label').notNull(),
     pluralLabel: text('plural_label').notNull(),
     description: text('description'),
-    fields: jsonb('fields').$type<CustomObjectField[]>().notNull().default(sql`'[]'::jsonb`),
+    fields: jsonb('fields')
+      .$type<CustomObjectField[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     /** Field key whose value uniquely identifies a record (used for upserts). */
     primaryFieldKey: varchar('primary_field_key', { length: 64 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -45,13 +61,20 @@ export const customObjectDefinitions = pgTable(
 export const customObjectRecords = pgTable(
   'custom_object_records',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').notNull(),
-    objectDefId: uuid('object_def_id').notNull().references(() => customObjectDefinitions.id, { onDelete: 'cascade' }),
+    objectDefId: uuid('object_def_id')
+      .notNull()
+      .references(() => customObjectDefinitions.id, { onDelete: 'cascade' }),
     objectKey: varchar('object_key', { length: 64 }).notNull(),
     /** Optional client-provided external id (e.g., from CRM) — supports idempotent upsert. */
     externalId: varchar('external_id', { length: 255 }),
-    data: jsonb('data').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+    data: jsonb('data')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -66,9 +89,13 @@ export const customObjectRecords = pgTable(
 export const customObjectRelations = pgTable(
   'custom_object_relations',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').notNull(),
-    recordId: uuid('record_id').notNull().references(() => customObjectRecords.id, { onDelete: 'cascade' }),
+    recordId: uuid('record_id')
+      .notNull()
+      .references(() => customObjectRecords.id, { onDelete: 'cascade' }),
     /** Entity type: 'contact' | 'account' | 'deal' | 'custom'. */
     entityType: varchar('entity_type', { length: 32 }).notNull(),
     entityId: uuid('entity_id').notNull(),

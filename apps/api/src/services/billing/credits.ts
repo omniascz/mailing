@@ -14,20 +14,25 @@ import { AppError } from '../../lib/app-error.js';
 // ─── Cost table (cents per unit) ──────────────────────────────────────────────
 
 export const CREDIT_COSTS = {
-  email:    0.02,   // $0.0002 / email  = 0.02 cents
-  sms:      0.75,   // $0.0075 / SMS segment
-  whatsapp: 1.00,   // $0.01   / message
-  voice:    2.00,   // $0.02   / minute (approx)
-  ai:       0.10,   // $0.001  / 1k tokens (Haiku approximate)
+  email: 0.02, // $0.0002 / email  = 0.02 cents
+  sms: 0.75, // $0.0075 / SMS segment
+  whatsapp: 1.0, // $0.01   / message
+  voice: 2.0, // $0.02   / minute (approx)
+  ai: 0.1, // $0.001  / 1k tokens (Haiku approximate)
 } as const;
 
 export type CreditProduct = keyof typeof CREDIT_COSTS;
 
 // ─── Get balance ──────────────────────────────────────────────────────────────
 
-export async function getBalance(orgId: string): Promise<{ balanceCents: number; balanceUsd: number }> {
-  const [row] = await db.select().from(creditBalances)
-    .where(eq(creditBalances.orgId, orgId)).limit(1);
+export async function getBalance(
+  orgId: string,
+): Promise<{ balanceCents: number; balanceUsd: number }> {
+  const [row] = await db
+    .select()
+    .from(creditBalances)
+    .where(eq(creditBalances.orgId, orgId))
+    .limit(1);
   const cents = Number(row?.balanceCents ?? 0);
   return { balanceCents: cents, balanceUsd: cents / 100 };
 }
@@ -42,11 +47,13 @@ export async function addCredits(
 ): Promise<{ newBalanceCents: number }> {
   return db.transaction(async (tx) => {
     // Upsert balance row
-    const [balance] = await tx.insert(creditBalances).values({
-      orgId,
-      balanceCents: String(amountCents),
-      totalPurchasedCents: String(amountCents),
-    })
+    const [balance] = await tx
+      .insert(creditBalances)
+      .values({
+        orgId,
+        balanceCents: String(amountCents),
+        totalPurchasedCents: String(amountCents),
+      })
       .onConflictDoUpdate({
         target: creditBalances.orgId,
         set: {
@@ -88,10 +95,9 @@ export async function deductCredits(
         totalConsumedCents: sql`credit_balances.total_consumed_cents + ${amountCents}`,
         updatedAt: new Date(),
       })
-      .where(and(
-        eq(creditBalances.orgId, orgId),
-        sql`credit_balances.balance_cents >= ${amountCents}`,
-      ))
+      .where(
+        and(eq(creditBalances.orgId, orgId), sql`credit_balances.balance_cents >= ${amountCents}`),
+      )
       .returning();
 
     if (!balance) {
@@ -115,7 +121,10 @@ export async function deductCredits(
 
 // ─── Check sufficient credits ─────────────────────────────────────────────────
 
-export async function checkSufficientCredits(orgId: string, estimatedCents: number): Promise<boolean> {
+export async function checkSufficientCredits(
+  orgId: string,
+  estimatedCents: number,
+): Promise<boolean> {
   const { balanceCents } = await getBalance(orgId);
   return balanceCents >= estimatedCents;
 }
@@ -135,7 +144,8 @@ export async function refundCredits(
   reason?: string,
 ): Promise<void> {
   await db.transaction(async (tx) => {
-    const [balance] = await tx.update(creditBalances)
+    const [balance] = await tx
+      .update(creditBalances)
       .set({
         balanceCents: sql`credit_balances.balance_cents + ${amountCents}`,
         updatedAt: new Date(),
@@ -158,12 +168,10 @@ export async function refundCredits(
 
 // ─── Transaction history ──────────────────────────────────────────────────────
 
-export async function getTransactionHistory(
-  orgId: string,
-  limit = 50,
-  offset = 0,
-) {
-  return db.select().from(creditTransactions)
+export async function getTransactionHistory(orgId: string, limit = 50, offset = 0) {
+  return db
+    .select()
+    .from(creditTransactions)
     .where(eq(creditTransactions.orgId, orgId))
     .orderBy(sql`created_at DESC`)
     .limit(limit)

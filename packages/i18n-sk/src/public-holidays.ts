@@ -43,31 +43,40 @@ interface FixedHoliday {
  * (independence-related) and `dni pracovného pokoja` (religious + social).
  */
 export const SLOVAK_FIXED_HOLIDAYS: readonly FixedHoliday[] = [
-  { key: '01-01', name: 'Deň vzniku Slovenskej republiky',          isWorkRest: true },
-  { key: '01-06', name: 'Zjavenie Pána (Traja králi)',              isWorkRest: true },
-  { key: '05-01', name: 'Sviatok práce',                            isWorkRest: true },
-  { key: '05-08', name: 'Deň víťazstva nad fašizmom',               isWorkRest: true },
-  { key: '07-05', name: 'Sviatok svätého Cyrila a svätého Metoda',  isWorkRest: true },
-  { key: '08-29', name: 'Výročie Slovenského národného povstania',  isWorkRest: true },
-  { key: '09-01', name: 'Deň Ústavy Slovenskej republiky',          isWorkRest: true },
-  { key: '09-15', name: 'Sedembolestná Panna Mária',                isWorkRest: true },
-  { key: '11-01', name: 'Sviatok všetkých svätých',                 isWorkRest: true },
-  { key: '11-17', name: 'Deň boja za slobodu a demokraciu',         isWorkRest: true },
-  { key: '12-24', name: 'Štedrý deň',                               isWorkRest: true },
-  { key: '12-25', name: 'Prvý sviatok vianočný',                    isWorkRest: true },
-  { key: '12-26', name: 'Druhý sviatok vianočný',                   isWorkRest: true },
+  { key: '01-01', name: 'Deň vzniku Slovenskej republiky', isWorkRest: true },
+  { key: '01-06', name: 'Zjavenie Pána (Traja králi)', isWorkRest: true },
+  { key: '05-01', name: 'Sviatok práce', isWorkRest: true },
+  { key: '05-08', name: 'Deň víťazstva nad fašizmom', isWorkRest: true },
+  { key: '07-05', name: 'Sviatok svätého Cyrila a svätého Metoda', isWorkRest: true },
+  { key: '08-29', name: 'Výročie Slovenského národného povstania', isWorkRest: true },
+  { key: '09-01', name: 'Deň Ústavy Slovenskej republiky', isWorkRest: true },
+  { key: '09-15', name: 'Sedembolestná Panna Mária', isWorkRest: true },
+  { key: '11-01', name: 'Sviatok všetkých svätých', isWorkRest: true },
+  { key: '11-17', name: 'Deň boja za slobodu a demokraciu', isWorkRest: true },
+  { key: '12-24', name: 'Štedrý deň', isWorkRest: true },
+  { key: '12-25', name: 'Prvý sviatok vianočný', isWorkRest: true },
+  { key: '12-26', name: 'Druhý sviatok vianočný', isWorkRest: true },
 ];
 
-export const SLOVAK_EASTER_RELATIVE: ReadonlyArray<{ offset: number; name: string; isWorkRest: boolean }> = [
-  { offset: -2, name: 'Veľký piatok',         isWorkRest: true },
-  { offset: 1,  name: 'Veľkonočný pondelok',  isWorkRest: true },
+export const SLOVAK_EASTER_RELATIVE: ReadonlyArray<{
+  offset: number;
+  name: string;
+  isWorkRest: boolean;
+}> = [
+  { offset: -2, name: 'Veľký piatok', isWorkRest: true },
+  { offset: 1, name: 'Veľkonočný pondelok', isWorkRest: true },
 ];
 
 function pad2(n: number): string {
   return n < 10 ? `0${n}` : String(n);
 }
 
-function shiftDate(year: number, month1: number, day: number, offsetDays: number): { y: number; m: number; d: number } {
+function shiftDate(
+  year: number,
+  month1: number,
+  day: number,
+  offsetDays: number,
+): { y: number; m: number; d: number } {
   const dt = new Date(Date.UTC(year, month1 - 1, day + offsetDays));
   return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate() };
 }
@@ -113,9 +122,9 @@ export function slovakPublicHolidayOn(date: Date): PublicHoliday | null {
 }
 
 export function holidaysInDays(date: Date, daysAhead: number): PublicHoliday[] {
-  const target = new Date(Date.UTC(
-    date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + daysAhead,
-  ));
+  const target = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + daysAhead),
+  );
   const targetIso = toIsoDate(target);
   const candidates = [
     ...slovakHolidaysForYear(target.getUTCFullYear()),

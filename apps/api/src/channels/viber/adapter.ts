@@ -42,7 +42,7 @@ export interface ViberAdapterConfig {
 // ─── Webhook types ────────────────────────────────────────────────────────────
 
 interface ViberWebhookMessage {
-  event: string;             // 'message' | 'delivered' | 'seen' | 'failed' | 'subscribed' | 'unsubscribed'
+  event: string; // 'message' | 'delivered' | 'seen' | 'failed' | 'subscribed' | 'unsubscribed'
   timestamp: number;
   message_token?: number;
   sender?: {
@@ -60,7 +60,7 @@ interface ViberWebhookMessage {
     tracking_data?: string;
   };
   user_id?: string;
-  desc?: string;             // error description for 'failed' events
+  desc?: string; // error description for 'failed' events
 }
 
 // ─── Adapter ─────────────────────────────────────────────────────────────────
@@ -156,9 +156,7 @@ export class ViberAdapter extends BaseChannelAdapter {
     const wh = payload as ViberWebhookMessage;
 
     try {
-      const receivedAt = wh.timestamp
-        ? new Date(wh.timestamp * 1000)
-        : new Date();
+      const receivedAt = wh.timestamp ? new Date(wh.timestamp * 1000) : new Date();
 
       const from = wh.sender?.id ?? wh.user_id ?? '';
       const messageToken = wh.message_token ? String(wh.message_token) : undefined;
@@ -212,17 +210,30 @@ export class ViberAdapter extends BaseChannelAdapter {
     const errors: { field: string; message: string }[] = [];
     const content = template.content as Record<string, unknown>;
 
-    if (!content.type || !['text', 'picture', 'video', 'file', 'action'].includes(String(content.type))) {
-      errors.push({ field: 'type', message: 'type must be one of: text, picture, video, file, action' });
+    if (
+      !content.type ||
+      !['text', 'picture', 'video', 'file', 'action'].includes(String(content.type))
+    ) {
+      errors.push({
+        field: 'type',
+        message: 'type must be one of: text, picture, video, file, action',
+      });
     }
 
-    if (!content.body || typeof content.body !== 'string' || (content.body as string).trim() === '') {
+    if (
+      !content.body ||
+      typeof content.body !== 'string' ||
+      (content.body as string).trim() === ''
+    ) {
       errors.push({ field: 'body', message: 'body text is required' });
     }
 
     if (content.type === 'picture' || content.type === 'video' || content.type === 'file') {
       if (!content.mediaUrl) {
-        errors.push({ field: 'mediaUrl', message: `mediaUrl is required for type=${String(content.type)}` });
+        errors.push({
+          field: 'mediaUrl',
+          message: `mediaUrl is required for type=${String(content.type)}`,
+        });
       }
     }
 

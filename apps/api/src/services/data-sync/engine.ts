@@ -21,19 +21,32 @@ import crypto from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  dataSyncMappings, dataSyncPairs, dataSyncConflicts,
-  type DataSyncMapping, type DataSyncPair, type FieldRule,
+  dataSyncMappings,
+  dataSyncPairs,
+  dataSyncConflicts,
+  type DataSyncMapping,
+  type DataSyncPair,
+  type FieldRule,
 } from '../../db/schema/data-sync-mappings.js';
 
 export interface CrmAdapter {
   /** Fetch a single record (or null if not found). */
   fetch(orgId: string, entity: string, remoteId: string): Promise<Record<string, unknown> | null>;
   /** Patch a subset of fields on the remote. */
-  patch(orgId: string, entity: string, remoteId: string, fields: Record<string, unknown>): Promise<void>;
+  patch(
+    orgId: string,
+    entity: string,
+    remoteId: string,
+    fields: Record<string, unknown>,
+  ): Promise<void>;
   /** Create a new remote record; returns the new remote id. */
   create(orgId: string, entity: string, fields: Record<string, unknown>): Promise<string>;
   /** List rows changed since `since` (for incremental pulls). */
-  listChangedSince?(orgId: string, entity: string, since: Date): Promise<Array<{ id: string; fields: Record<string, unknown> }>>;
+  listChangedSince?(
+    orgId: string,
+    entity: string,
+    since: Date,
+  ): Promise<Array<{ id: string; fields: Record<string, unknown> }>>;
 }
 
 export interface ReconcileInput {
@@ -99,8 +112,10 @@ function decideWinner(
   ctx: { local: unknown; remote: unknown; localTs: Date | null; remoteTs: Date | null },
 ): 'local' | 'remote' | 'manual' {
   switch (rule.conflict) {
-    case 'local_wins':  return 'local';
-    case 'remote_wins': return 'remote';
+    case 'local_wins':
+      return 'local';
+    case 'remote_wins':
+      return 'remote';
     case 'newer_wins': {
       if (!ctx.localTs || !ctx.remoteTs) return 'manual';
       return ctx.localTs.getTime() >= ctx.remoteTs.getTime() ? 'local' : 'remote';
@@ -116,7 +131,11 @@ function equal(a: unknown, b: unknown): boolean {
   if (a == null && b == null) return true;
   if (typeof a === 'string' && typeof b === 'string') return a.trim() === b.trim();
   if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
-  try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
 }
 
 function toDate(v: unknown): Date | null {
@@ -161,7 +180,8 @@ export async function applyPlan(input: ApplyPlanInput): Promise<void> {
     );
   }
   // Refresh hash + lastSyncedAt so a subsequent run doesn't redo the same work.
-  await db.update(dataSyncPairs)
+  await db
+    .update(dataSyncPairs)
     .set({
       remoteHash: hashPayload({ ...plan.remotePatch }), // best-effort marker
       lastSyncedAt: new Date(),
@@ -178,17 +198,20 @@ export function hashPayload(payload: Record<string, unknown>): string {
 // ─── Public entrypoints ──────────────────────────────────────────────────────
 
 export async function listEnabledMappings(orgId: string): Promise<DataSyncMapping[]> {
-  return db.select().from(dataSyncMappings).where(and(
-    eq(dataSyncMappings.orgId, orgId),
-    eq(dataSyncMappings.enabled, true),
-  ));
+  return db
+    .select()
+    .from(dataSyncMappings)
+    .where(and(eq(dataSyncMappings.orgId, orgId), eq(dataSyncMappings.enabled, true)));
 }
 
 export async function resolveConflict(
-  orgId: string, conflictId: string, resolution: 'local' | 'remote' | 'custom',
+  orgId: string,
+  conflictId: string,
+  resolution: 'local' | 'remote' | 'custom',
   customValue?: unknown,
 ): Promise<void> {
-  await db.update(dataSyncConflicts)
+  await db
+    .update(dataSyncConflicts)
     .set({
       resolved: true,
       resolution,
@@ -197,8 +220,5 @@ export async function resolveConflict(
         ? { localValue: customValue, remoteValue: customValue }
         : {}),
     })
-    .where(and(
-      eq(dataSyncConflicts.orgId, orgId),
-      eq(dataSyncConflicts.id, conflictId),
-    ));
+    .where(and(eq(dataSyncConflicts.orgId, orgId), eq(dataSyncConflicts.id, conflictId)));
 }

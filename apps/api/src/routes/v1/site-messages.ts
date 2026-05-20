@@ -14,7 +14,18 @@ const createSchema = z.object({
   siteId: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(255),
   type: z.enum(['popup', 'banner', 'slide_in', 'full_screen']).optional(),
-  trigger: z.enum(['page_visit', 'time_on_site', 'exit_intent', 'scroll_depth', 'cart_value', 'returning_visitor', 'segment_match', 'custom_event']).optional(),
+  trigger: z
+    .enum([
+      'page_visit',
+      'time_on_site',
+      'exit_intent',
+      'scroll_depth',
+      'cart_value',
+      'returning_visitor',
+      'segment_match',
+      'custom_event',
+    ])
+    .optional(),
   conditions: z.array(conditionSchema).optional(),
   headline: z.string().max(255).optional(),
   body: z.string().max(10_000).optional(),
@@ -47,7 +58,10 @@ export default async function siteMessageRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/site-messages',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteMessages'], summary: 'List site messages' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteMessages'], summary: 'List site messages' },
+    },
     async (req) => {
       const { siteId } = z.object({ siteId: z.string().uuid().optional() }).parse(req.query);
       return { data: await svc.listMessages(req.user!.orgId, siteId) };
@@ -56,16 +70,27 @@ export default async function siteMessageRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/site-messages',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteMessages'], summary: 'Create site message' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteMessages'], summary: 'Create site message' },
+    },
     async (req, reply) => {
       const body = createSchema.parse(req.body);
-      return reply.code(201).send({ data: await svc.createMessage(req.user!.orgId, body as Parameters<typeof svc.createMessage>[1]) });
+      return reply.code(201).send({
+        data: await svc.createMessage(
+          req.user!.orgId,
+          body as Parameters<typeof svc.createMessage>[1],
+        ),
+      });
     },
   );
 
   app.get(
     '/api/v1/site-messages/:id',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteMessages'], summary: 'Get site message' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteMessages'], summary: 'Get site message' },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
       return { data: await svc.getMessage(req.user!.orgId, id) };
@@ -74,16 +99,28 @@ export default async function siteMessageRoutes(app: FastifyInstance) {
 
   app.put(
     '/api/v1/site-messages/:id',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteMessages'], summary: 'Update site message' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteMessages'], summary: 'Update site message' },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
-      return { data: await svc.updateMessage(req.user!.orgId, id, createSchema.partial().parse(req.body) as Parameters<typeof svc.updateMessage>[2]) };
+      return {
+        data: await svc.updateMessage(
+          req.user!.orgId,
+          id,
+          createSchema.partial().parse(req.body) as Parameters<typeof svc.updateMessage>[2],
+        ),
+      };
     },
   );
 
   app.delete(
     '/api/v1/site-messages/:id',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteMessages'], summary: 'Delete site message' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteMessages'], summary: 'Delete site message' },
+    },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
       await svc.deleteMessage(req.user!.orgId, id);
@@ -110,7 +147,9 @@ export default async function siteMessageRoutes(app: FastifyInstance) {
       try {
         const body = impressionBody.parse(req.body);
         await svc.recordImpression(body);
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
       return reply.code(202).send({ ok: true });
     },
   );

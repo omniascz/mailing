@@ -1,6 +1,11 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { initiateOAuth, handleOAuthCallback, listSocialAccounts, disconnectSocialAccount } from '../../../services/social/accounts.js';
+import {
+  initiateOAuth,
+  handleOAuthCallback,
+  listSocialAccounts,
+  disconnectSocialAccount,
+} from '../../../services/social/accounts.js';
 import { SOCIAL_PLATFORMS } from '../../../db/schema/social-accounts.js';
 
 const platformSchema = z.enum(SOCIAL_PLATFORMS);

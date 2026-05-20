@@ -177,6 +177,7 @@ GetResponse má v 2026 **4 hlavní self-serve plány** + 2 enterprise plány (MA
 ### 2.8 Pricing scaling per contact count
 
 Příklady cen v 2026:
+
 - 1 000 contacts: $15–19 (Starter) / $49–59 (Marketer)
 - 5 000 contacts: $45 (Starter) / $89 (Marketer)
 - 10 000 contacts: $79 (Starter) / $129 (Marketer)
@@ -312,14 +313,14 @@ Pozn.: na rozdíl od Klaviya v 2026, kde se subscribed inactives počítají, Ge
 
 ### 5.1 Typy emailových kampaní
 
-| Typ | Kdy použít |
-|---|---|
-| **Newsletter** (Regular) | Standard broadcasts |
-| **A/B test** | Subject, content, time, from name |
-| **RSS to email** | Auto-generated z blog feedu |
-| **Autoresponder** | Date/time-based drip |
-| **Automation message** | Email v rámci workflow |
-| **Transactional** | Order confirmations (Ecommerce/MAX) |
+| Typ                      | Kdy použít                          |
+| ------------------------ | ----------------------------------- |
+| **Newsletter** (Regular) | Standard broadcasts                 |
+| **A/B test**             | Subject, content, time, from name   |
+| **RSS to email**         | Auto-generated z blog feedu         |
+| **Autoresponder**        | Date/time-based drip                |
+| **Automation message**   | Email v rámci workflow              |
+| **Transactional**        | Order confirmations (Ecommerce/MAX) |
 
 ### 5.2 Email Editor
 
@@ -396,12 +397,15 @@ Workflow = sekvence **Conditions, Actions, Filters**.
 ### 6.2 Workflow types
 
 #### A) From scratch
+
 - Visual canvas drag-drop editor
 - Plně customizable
 - Stack conditions, actions, filters
 
 #### B) From pre-built template
+
 Categories:
+
 - **Abandoned cart**
 - **Affiliate marketing**
 - **Engagement and retention**
@@ -412,12 +416,14 @@ Categories:
 - **Webinars and events**
 
 #### C) Imported workflows
+
 - **Export/import workflows** (My templates tab) – jedinečné!
 - Šíření know-how mezi účty
 
 ### 6.3 Conditions (full list)
 
 #### Starting conditions (workflow entry)
+
 - **Subscribed via form** – nová subscription
 - **Subscribed via list import**
 - **Subscribed via API**
@@ -429,6 +435,7 @@ Categories:
 - **Webinar registration / attendance**
 
 #### In-workflow conditions
+
 - **Message opened** – specific email
 - **Link clicked** – specific link
 - **Subscription** – status check
@@ -437,6 +444,7 @@ Categories:
 - **Tag check** – has/hasn't tag
 
 #### E-commerce conditions (Ecommerce+)
+
 - **Purchase made**
 - **Specific product purchased**
 - **Cart abandoned** – cart with specific products
@@ -446,11 +454,13 @@ Categories:
 ### 6.4 Actions (full list)
 
 #### Communication
+
 - **Send message** (email)
 - **Send SMS** (MAX+)
 - **Send push notification**
 
 #### Contact management
+
 - **Move to another list**
 - **Copy to another list**
 - **Remove from list**
@@ -459,21 +469,25 @@ Categories:
 - **Update field** (set value)
 
 #### Scoring
+
 - **Score** – add/subtract points
 - **Set score** (overwrite)
 
 #### Workflow control
+
 - **Wait** – fixed delay (with optional Time Travel for local time)
 - **Wait until event** – behavior-based wait
 - **Run multiple times** option for repeat actions
 
 #### Webhooks & API
+
 - **Webhook** – call external URL
 - **Custom API call**
 
 ### 6.5 Filters (segment narrowing)
 
 Place within workflow to narrow target:
+
 - **Amount** – limit by first N contacts (great for VIP rewards, contests)
 - **Range** – percentage split
 - **Lists** – filter by current list membership
@@ -494,6 +508,7 @@ Place within workflow to narrow target:
 ### 6.7 Web tracking integration
 
 GetResponse JS snippet enables:
+
 - **Active on Site** – page views
 - **Custom events** – tracked via JS
 - **Form submissions** – via form integration
@@ -504,6 +519,7 @@ GetResponse JS snippet enables:
 ### 6.8 Workflow examples
 
 #### Welcome series
+
 ```
 [Subscribed to list "Newsletter"]
   ↓
@@ -519,6 +535,7 @@ Send education email
 ```
 
 #### Abandoned cart recovery
+
 ```
 [Cart abandoned with products]
   ↓
@@ -540,6 +557,7 @@ Wait 48 hours
 ```
 
 #### Lead nurturing
+
 ```
 [Score reached 50]
   ↓
@@ -569,13 +587,13 @@ Send case study email
 
 ### 7.2 Kdy použít vs. workflows
 
-| | Autoresponders | Workflows |
-|---|---|---|
-| Setup | Simple | Visual canvas |
-| Logic | Linear | Branching |
-| Triggers | Subscription only | Any condition |
-| Available | All plans | Marketer+ |
-| Best for | Simple drip campaigns | Complex customer journeys |
+|           | Autoresponders        | Workflows                 |
+| --------- | --------------------- | ------------------------- |
+| Setup     | Simple                | Visual canvas             |
+| Logic     | Linear                | Branching                 |
+| Triggers  | Subscription only     | Any condition             |
+| Available | All plans             | Marketer+                 |
+| Best for  | Simple drip campaigns | Complex customer journeys |
 
 ### 7.3 Migration path
 
@@ -612,12 +630,14 @@ Send case study email
 **Unique GetResponse feature.** Funnel = chained sequence: landing page → email → upsell → thank you.
 
 #### Funnel types
+
 - **Lead generation funnel** – capture leads
 - **Sales funnel** – sell product
 - **Webinar funnel** – promote + register + follow-up
 - **Application funnel** – qualifying leads
 
 #### Funnel builder
+
 - Templates per goal
 - Drag-drop sequence editor
 - **Built-in payment processing** (Stripe)
@@ -940,6 +960,7 @@ GetResponse má robustní AI vrstvu (rozvinutou 2024–2026).
 ### 15.5 Comparison vs. Klaviyo
 
 GetResponse e-commerce features jsou **silné, ale ne hluboké jako Klaviyo**:
+
 - Méně sofistikované predictive analytics (žádné automatic CLV/churn risk)
 - Slabší Shopify integration depth
 - Méně e-commerce-specific templates
@@ -1014,13 +1035,13 @@ GetResponse e-commerce features jsou **silné, ale ne hluboké jako Klaviyo**:
 
 ### 17.2 Authentication
 
-| Protokol | Setup |
-|---|---|
-| **SPF** | Add include for GetResponse |
-| **DKIM** | 2× CNAME records on sending domain |
-| **DMARC** | TXT record on _dmarc |
-| **BIMI** | After DMARC reject + verified logo |
-| **Sender verification** | Email-ownership confirm |
+| Protokol                | Setup                              |
+| ----------------------- | ---------------------------------- |
+| **SPF**                 | Add include for GetResponse        |
+| **DKIM**                | 2× CNAME records on sending domain |
+| **DMARC**               | TXT record on \_dmarc              |
+| **BIMI**                | After DMARC reject + verified logo |
+| **Sender verification** | Email-ownership confirm            |
 
 ### 17.3 Domain authentication flow
 
@@ -1073,33 +1094,34 @@ Validate (5 min – 48h)
 
 ### 18.2 Hlavní API endpoints
 
-| Resource | Operace |
-|---|---|
-| `/contacts` | CRUD contacts |
-| `/lists` | List management |
-| `/segments` | Segment management |
-| `/custom-fields` | Custom field schema |
-| `/tags` | Tag management |
-| `/campaigns` | Email campaign CRUD |
-| `/newsletters` | Newsletter operations |
-| `/autoresponders` | Autoresponder management |
-| `/workflows` | Marketing automation |
-| `/forms` | Form management |
-| `/landing-pages` | Landing page CRUD |
-| `/webinars` | Webinar management |
-| `/funnels` | Funnel CRUD |
-| `/transactional-emails` | Transactional sending |
-| `/products` | Product catalog |
-| `/orders` | Order data |
-| `/webhooks` | Webhook subscriptions |
-| `/from-fields` | Verified senders |
-| `/import` | Bulk import |
-| `/export` | Bulk export |
-| `/me` | Account info |
+| Resource                | Operace                  |
+| ----------------------- | ------------------------ |
+| `/contacts`             | CRUD contacts            |
+| `/lists`                | List management          |
+| `/segments`             | Segment management       |
+| `/custom-fields`        | Custom field schema      |
+| `/tags`                 | Tag management           |
+| `/campaigns`            | Email campaign CRUD      |
+| `/newsletters`          | Newsletter operations    |
+| `/autoresponders`       | Autoresponder management |
+| `/workflows`            | Marketing automation     |
+| `/forms`                | Form management          |
+| `/landing-pages`        | Landing page CRUD        |
+| `/webinars`             | Webinar management       |
+| `/funnels`              | Funnel CRUD              |
+| `/transactional-emails` | Transactional sending    |
+| `/products`             | Product catalog          |
+| `/orders`               | Order data               |
+| `/webhooks`             | Webhook subscriptions    |
+| `/from-fields`          | Verified senders         |
+| `/import`               | Bulk import              |
+| `/export`               | Bulk export              |
+| `/me`                   | Account info             |
 
 ### 18.3 Webhooks
 
 Real-time events:
+
 - Subscriber events (subscribed, unsubscribed, updated)
 - Campaign events (sent, delivered, opened, clicked)
 - E-commerce events (order, cart abandon)
@@ -1120,6 +1142,7 @@ Real-time events:
 **180+ integrations**, vybrané:
 
 #### E-commerce
+
 - Shopify
 - WooCommerce
 - Magento
@@ -1129,42 +1152,51 @@ Real-time events:
 - Stripe
 
 #### CMS
+
 - WordPress (plugin)
 - Drupal
 - Joomla
 
 #### CRM
+
 - Salesforce
 - HubSpot
 - Pipedrive
 - Zoho
 
 #### Forms
+
 - Typeform
 - Jotform
 - Wufoo
 - Google Forms
 
 #### Productivity
+
 - Slack
 - Google Workspace
 - Microsoft 365
 
 #### Analytics
+
 - Google Analytics
 - Facebook Pixel
 
 #### Ads
+
 - Facebook/Meta Ads
 - Google Ads (s ad management)
 
 #### Webinar (additional to native)
+
 - Zoom (integration even though GR has own webinars)
 
 #### Booking
+
 - Calendly
 
 #### iPaaS
+
 - Zapier (700+ apps)
 - Make (Integromat)
 - Workato
@@ -1191,6 +1223,7 @@ Real-time events:
 ### 19.2 MAX features
 
 Vše z Ecommerce Marketing +
+
 - **SMS marketing** (multi-region)
 - **500 webinar attendees**
 - **Phone support**
@@ -1205,6 +1238,7 @@ Vše z Ecommerce Marketing +
 ### 19.3 MAX2
 
 Vše z MAX +
+
 - **Dedicated IP address** included
 - **Priority support** (faster SLA)
 - **1 000 webinar attendees**
@@ -1341,6 +1375,7 @@ Similar concept to Brevo's sub-organizations or HubSpot's portals.
 ## 22. Shrnutí: Pro koho a proti komu
 
 ### GetResponse je dobrá volba pokud
+
 - Jste **content creator** – webinars + courses + email v jednom
 - Hledáte **all-in-one growth platform** (email + landing pages + webinars + funnels)
 - Provozujete **online course / coaching business**
@@ -1353,6 +1388,7 @@ Similar concept to Brevo's sub-organizations or HubSpot's portals.
 - Cíl je **all-in-one** za rozumný budget
 
 ### GetResponse není dobrá volba pokud
+
 - Jste **enterprise B2B sales-led organization** (HubSpot, Salesforce lepší)
 - Provozujete **velký Shopify store** s deep e-commerce needs (Klaviyo silnější)
 - Potřebujete **deepest marketing automation** (ActiveCampaign deeper)
@@ -1364,17 +1400,17 @@ Similar concept to Brevo's sub-organizations or HubSpot's portals.
 
 ### GetResponse vs. konkurence
 
-| Konkurence | Kdy lepší než GetResponse |
-|---|---|
-| **Mailchimp** | Brand recognition, polished UI, basic email use |
-| **HubSpot** | Full B2B CRM, deep sales tools, multi-Hub |
-| **Klaviyo** | Pure DTC e-commerce, deep Shopify, predictive analytics |
-| **Brevo** | Volume-based pricing pro inactive databases, pure transactional |
-| **ActiveCampaign** | Deeper automation, more sophisticated workflows |
-| **MailerLite** | Cheaper for small lists |
-| **Teachable / Thinkific** | Pure course platforms, more course-specific features |
-| **Zoom Webinar** | Pure webinar, bigger audiences (10K+) |
+| Konkurence                | Kdy lepší než GetResponse                                       |
+| ------------------------- | --------------------------------------------------------------- |
+| **Mailchimp**             | Brand recognition, polished UI, basic email use                 |
+| **HubSpot**               | Full B2B CRM, deep sales tools, multi-Hub                       |
+| **Klaviyo**               | Pure DTC e-commerce, deep Shopify, predictive analytics         |
+| **Brevo**                 | Volume-based pricing pro inactive databases, pure transactional |
+| **ActiveCampaign**        | Deeper automation, more sophisticated workflows                 |
+| **MailerLite**            | Cheaper for small lists                                         |
+| **Teachable / Thinkific** | Pure course platforms, more course-specific features            |
+| **Zoom Webinar**          | Pure webinar, bigger audiences (10K+)                           |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů getresponse.com/help, getresponse.com/pricing, getresponse.com/features a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na getresponse.com/pricing.*
+_Dokument zpracován z oficiálních zdrojů getresponse.com/help, getresponse.com/pricing, getresponse.com/features a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na getresponse.com/pricing._

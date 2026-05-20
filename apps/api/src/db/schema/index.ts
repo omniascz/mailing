@@ -18,6 +18,7 @@ export * from './custom-fields.js';
 export * from './editor.js';
 export * from './domains.js';
 export * from './campaign-alerts.js';
+export * from './inbox-preview.js';
 export * from './ai-usage.js';
 export * from './workflows.js';
 export * from './lead-scoring.js';

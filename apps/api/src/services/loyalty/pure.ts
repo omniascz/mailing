@@ -19,10 +19,38 @@ export type ExpiryType = 'never' | 'rolling' | 'fixed';
 
 /** Default 4-tier bronze/silver/gold/platinum configuration. */
 export const DEFAULT_TIERS: readonly LoyaltyTier[] = [
-  { id: 'bronze', name: 'Bronze', minPoints: 0, color: '#CD7F32', multiplier: 1.0, benefits: ['Exclusive member discounts'] },
-  { id: 'silver', name: 'Silver', minPoints: 500, color: '#C0C0C0', multiplier: 1.25, benefits: ['5% bonus on all purchases', 'Early access to sales'] },
-  { id: 'gold', name: 'Gold', minPoints: 2000, color: '#FFD700', multiplier: 1.5, benefits: ['10% bonus on all purchases', 'Free shipping', 'Birthday reward'] },
-  { id: 'platinum', name: 'Platinum', minPoints: 10000, color: '#E5E4E2', multiplier: 2.0, benefits: ['20% bonus on all purchases', 'Free shipping', 'VIP support', 'Quarterly gift'] },
+  {
+    id: 'bronze',
+    name: 'Bronze',
+    minPoints: 0,
+    color: '#CD7F32',
+    multiplier: 1.0,
+    benefits: ['Exclusive member discounts'],
+  },
+  {
+    id: 'silver',
+    name: 'Silver',
+    minPoints: 500,
+    color: '#C0C0C0',
+    multiplier: 1.25,
+    benefits: ['5% bonus on all purchases', 'Early access to sales'],
+  },
+  {
+    id: 'gold',
+    name: 'Gold',
+    minPoints: 2000,
+    color: '#FFD700',
+    multiplier: 1.5,
+    benefits: ['10% bonus on all purchases', 'Free shipping', 'Birthday reward'],
+  },
+  {
+    id: 'platinum',
+    name: 'Platinum',
+    minPoints: 10000,
+    color: '#E5E4E2',
+    multiplier: 2.0,
+    benefits: ['20% bonus on all purchases', 'Free shipping', 'VIP support', 'Quarterly gift'],
+  },
 ];
 
 // ─── Validation ─────────────────────────────────────────────────────────────
@@ -57,10 +85,7 @@ export function validateTiers(tiers: LoyaltyTier[]): void {
   }
 }
 
-export function validateExpiryPolicy(
-  expiryType: ExpiryType,
-  expiryValue?: string | null,
-): void {
+export function validateExpiryPolicy(expiryType: ExpiryType, expiryValue?: string | null): void {
   if (expiryType === 'rolling') {
     const days = Number(expiryValue);
     if (!expiryValue || Number.isNaN(days) || days < 1) {
@@ -84,10 +109,7 @@ export function validateExpiryPolicy(
  * Find the highest tier whose `minPoints` ≤ `lifetimePoints`. Returns null
  * when no tiers are configured.
  */
-export function resolveTier(
-  tiers: LoyaltyTier[],
-  lifetimePoints: number,
-): LoyaltyTier | null {
+export function resolveTier(tiers: LoyaltyTier[], lifetimePoints: number): LoyaltyTier | null {
   if (tiers.length === 0) return null;
   const sorted = [...tiers].sort((a, b) => b.minPoints - a.minPoints);
   return sorted.find((t) => lifetimePoints >= t.minPoints) ?? null;
@@ -111,10 +133,7 @@ export function getNextTier(
 }
 
 /** Earning multiplier for a tier ID. Falls back to 1.0 when unknown. */
-export function getTierMultiplier(
-  tiers: LoyaltyTier[],
-  tierId: string | null,
-): number {
+export function getTierMultiplier(tiers: LoyaltyTier[], tierId: string | null): number {
   if (!tierId || tiers.length === 0) return 1.0;
   return tiers.find((t) => t.id === tierId)?.multiplier ?? 1.0;
 }

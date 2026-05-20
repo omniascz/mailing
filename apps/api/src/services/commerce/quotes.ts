@@ -23,35 +23,46 @@ async function nextQuoteNumber(orgId: string): Promise<string> {
 
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 
-export async function listQuotes(orgId: string, opts?: { status?: string; dealId?: string; limit?: number }) {
+export async function listQuotes(
+  orgId: string,
+  opts?: { status?: string; dealId?: string; limit?: number },
+) {
   const { and: a, eq: e } = await import('drizzle-orm');
   return db
     .select()
     .from(quotes)
-    .where(opts?.dealId
-      ? a(e(quotes.orgId, orgId), e(quotes.dealId, opts.dealId))
-      : e(quotes.orgId, orgId))
+    .where(
+      opts?.dealId
+        ? a(e(quotes.orgId, orgId), e(quotes.dealId, opts.dealId))
+        : e(quotes.orgId, orgId),
+    )
     .orderBy(desc(quotes.createdAt))
     .limit(opts?.limit ?? 50);
 }
 
 export async function getQuote(orgId: string, quoteId: string) {
-  const [row] = await db.select().from(quotes).where(and(eq(quotes.orgId, orgId), eq(quotes.id, quoteId)));
+  const [row] = await db
+    .select()
+    .from(quotes)
+    .where(and(eq(quotes.orgId, orgId), eq(quotes.id, quoteId)));
   if (!row) throw AppError.notFound('Quote not found');
   return row;
 }
 
-export async function createQuote(orgId: string, input: {
-  dealId?: string;
-  contactId?: string;
-  title: string;
-  currency?: string;
-  lineItems: LineItem[];
-  taxRate?: number;
-  validUntil?: Date;
-  notes?: string;
-  terms?: string;
-}) {
+export async function createQuote(
+  orgId: string,
+  input: {
+    dealId?: string;
+    contactId?: string;
+    title: string;
+    currency?: string;
+    lineItems: LineItem[];
+    taxRate?: number;
+    validUntil?: Date;
+    notes?: string;
+    terms?: string;
+  },
+) {
   const quoteNumber = await nextQuoteNumber(orgId);
   const totals = computeTotals(input.lineItems, input.taxRate ?? 0);
 
@@ -77,16 +88,20 @@ export async function createQuote(orgId: string, input: {
   return row!;
 }
 
-export async function updateQuote(orgId: string, quoteId: string, input: Partial<{
-  title: string;
-  lineItems: LineItem[];
-  taxRate: number;
-  currency: string;
-  validUntil: Date;
-  notes: string;
-  terms: string;
-  status: string;
-}>) {
+export async function updateQuote(
+  orgId: string,
+  quoteId: string,
+  input: Partial<{
+    title: string;
+    lineItems: LineItem[];
+    taxRate: number;
+    currency: string;
+    validUntil: Date;
+    notes: string;
+    terms: string;
+    status: string;
+  }>,
+) {
   const patch: Record<string, unknown> = { ...input, updatedAt: new Date() };
   if (input.lineItems) {
     const totals = computeTotals(input.lineItems, input.taxRate ?? 0);
@@ -102,7 +117,10 @@ export async function updateQuote(orgId: string, quoteId: string, input: Partial
 }
 
 export async function deleteQuote(orgId: string, quoteId: string) {
-  const [row] = await db.delete(quotes).where(and(eq(quotes.orgId, orgId), eq(quotes.id, quoteId))).returning({ id: quotes.id });
+  const [row] = await db
+    .delete(quotes)
+    .where(and(eq(quotes.orgId, orgId), eq(quotes.id, quoteId)))
+    .returning({ id: quotes.id });
   if (!row) throw AppError.notFound('Quote not found');
 }
 
@@ -124,7 +142,10 @@ export async function getQuoteByToken(token: string) {
 
   // Mark as viewed
   if (!row.viewedAt) {
-    await db.update(quotes).set({ viewedAt: new Date(), status: 'viewed', updatedAt: new Date() }).where(eq(quotes.id, row.id));
+    await db
+      .update(quotes)
+      .set({ viewedAt: new Date(), status: 'viewed', updatedAt: new Date() })
+      .where(eq(quotes.id, row.id));
   }
   return row;
 }

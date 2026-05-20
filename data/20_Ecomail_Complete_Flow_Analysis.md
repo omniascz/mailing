@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `19_Ecomail_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** Ecomail umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Český produkt s českou UI + supportem** – unikátní pro CZ/SK trh
 > - **User roles s tailored permissions** (per Research.com: "Enables setting up multiple user roles with tailored permissions")
 > - **Agency model** s multiple sub-accounts pod jedním master accountem + commission
@@ -126,22 +127,22 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Sign-up (account creator) | Full + billing + close account | Vše |
-| **Admin user** | Pozvánka od Owner | Operational + user mgmt | Vše krom Owner exclusive |
-| **Marketing user** | Pozvánka | Daily marketing | Per role permissions |
-| **Designer / Editor** | Pozvánka s custom role | Content + templates | Per role |
-| **Viewer / Read-only** | Pozvánka | View reports | Per role |
-| **Custom role users** | Pozvánka | Per permissions | Per role |
-| **Agency master user** | Agency contract | Manage all sub-accounts | All sub-accounts |
-| **Sub-account user** | Per sub-account | Per sub-account perms | Just one sub-account |
-| **Subscriber / Contact** | Form, integration | Receives emails, browses | Své emaily |
-| **API Client** | API key | Per scope | Per scope |
-| **Shoptet integration** | Plugin install | Sync data | Per integration scope |
-| **Shopify integration** | OAuth | Sync data | Per integration scope |
-| **Facebook integration** | OAuth | Lead Ads + Custom Audiences | Per integration scope |
-| **Ecomail Staff** | Interní | Support, debug | Limited |
+| Aktér                    | Vstupní bod               | Co dělá                        | Co vidí                  |
+| ------------------------ | ------------------------- | ------------------------------ | ------------------------ |
+| **Account Owner**        | Sign-up (account creator) | Full + billing + close account | Vše                      |
+| **Admin user**           | Pozvánka od Owner         | Operational + user mgmt        | Vše krom Owner exclusive |
+| **Marketing user**       | Pozvánka                  | Daily marketing                | Per role permissions     |
+| **Designer / Editor**    | Pozvánka s custom role    | Content + templates            | Per role                 |
+| **Viewer / Read-only**   | Pozvánka                  | View reports                   | Per role                 |
+| **Custom role users**    | Pozvánka                  | Per permissions                | Per role                 |
+| **Agency master user**   | Agency contract           | Manage all sub-accounts        | All sub-accounts         |
+| **Sub-account user**     | Per sub-account           | Per sub-account perms          | Just one sub-account     |
+| **Subscriber / Contact** | Form, integration         | Receives emails, browses       | Své emaily               |
+| **API Client**           | API key                   | Per scope                      | Per scope                |
+| **Shoptet integration**  | Plugin install            | Sync data                      | Per integration scope    |
+| **Shopify integration**  | OAuth                     | Sync data                      | Per integration scope    |
+| **Facebook integration** | OAuth                     | Lead Ads + Custom Audiences    | Per integration scope    |
+| **Ecomail Staff**        | Interní                   | Support, debug                 | Limited                  |
 
 ---
 
@@ -305,11 +306,12 @@ Tracking script auto-installed on Shoptet template
 
 ### 4.1 Default roles (typical for Ecomail)
 
-Per Research.com confirmation: *"User, Role, and Access Management: Enables setting up multiple user roles with tailored permissions"*
+Per Research.com confirmation: _"User, Role, and Access Management: Enables setting up multiple user roles with tailored permissions"_
 
 Exact role naming může vary, but typical structure:
 
 #### A) Account Owner
+
 - **Highest tier** access
 - **Vytvořen při signup** (account creator)
 - Cannot be deleted directly
@@ -318,6 +320,7 @@ Exact role naming může vary, but typical structure:
 - Manages all settings
 
 #### B) Administrator
+
 - **Full operational** access
 - User management
 - Integration management
@@ -325,6 +328,7 @@ Exact role naming může vary, but typical structure:
 - Cannot transfer ownership
 
 #### C) Marketing user
+
 - **Daily marketing** tasks
 - Campaigns + automations + segments
 - View contacts, edit
@@ -332,6 +336,7 @@ Exact role naming může vary, but typical structure:
 - No user management
 
 #### D) Designer / Editor
+
 - **Content focused**
 - Templates + design
 - Limited contact data
@@ -339,18 +344,21 @@ Exact role naming může vary, but typical structure:
 - No automation activation
 
 #### E) Read-only / Viewer
+
 - **View reports** only
 - No editing
 - No send
 - For stakeholders, executives
 
 #### F) Custom roles
+
 - Per business needs
 - Granular permissions
 
 ### 4.2 Permission categories
 
 #### Account & Settings
+
 - Account info
 - Billing access
 - User management
@@ -359,6 +367,7 @@ Exact role naming může vary, but typical structure:
 - API key management
 
 #### Contacts / Subscribers
+
 - View contacts
 - Edit contacts
 - Import contacts
@@ -366,15 +375,18 @@ Exact role naming může vary, but typical structure:
 - Delete contacts
 
 #### Lists
+
 - View lists
 - Create/edit lists
 - Delete lists
 
 #### Segments
+
 - View segments
 - Create/edit segments
 
 #### Campaigns
+
 - View campaigns
 - Create campaigns
 - Edit campaigns
@@ -382,69 +394,74 @@ Exact role naming může vary, but typical structure:
 - Delete campaigns
 
 #### Automations
+
 - View automations
 - Create/edit automations
 - Activate automations
 - Delete automations
 
 #### Templates
+
 - View templates
 - Create/edit templates
 - Brand kit management
 
 #### Forms / Pop-ups
+
 - View forms
 - Create/edit forms
 - Publish forms
 
 #### Reports
+
 - View reports
 - Export reports
 
 #### Integrations
+
 - View integrations
 - Manage integrations
 
 ### 4.3 Permission matrix (typical default)
 
-| Akce | Owner | Admin | Marketing | Designer | Viewer | Custom |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |  |  |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Manage billing | ✅ | ❌ | ❌ | ❌ | ❌ | per role |
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **User Management** |  |  |  |  |  |  |
-| Add/edit/delete users | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Contacts** |  |  |  |  |  |  |
-| View contacts | ✅ | ✅ | ✅ | limited | view | per role |
-| Edit contacts | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| Import contacts | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| Export contacts | ✅ | ✅ | per role | ❌ | ❌ | per role |
-| Delete contacts | ✅ | ✅ | per role | ❌ | ❌ | per role |
-| **Lists / Segments** |  |  |  |  |  |  |
-| Manage lists | ✅ | ✅ | ✅ | ❌ | view | per role |
-| Create segments | ✅ | ✅ | ✅ | ❌ | view | per role |
-| **Campaigns** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| Send | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| **Automations** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ❌ | view | per role |
-| Activate | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| **Templates** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| Brand kit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| **Forms / Pop-ups** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| Publish | ✅ | ✅ | ✅ | per role | ❌ | per role |
-| **Reports** |  |  |  |  |  |  |
-| View | ✅ | ✅ | ✅ | view | ✅ | per role |
-| Export | ✅ | ✅ | per role | ❌ | per role | per role |
-| **Integrations** |  |  |  |  |  |  |
-| Manage | ✅ | ✅ | per role | ❌ | ❌ | per role |
-| **API** |  |  |  |  |  |  |
-| Manage API keys | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Domains** |  |  |  |  |  |  |
-| Domain authentication | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
+| Akce                  | Owner | Admin | Marketing | Designer |  Viewer  |  Custom  |
+| --------------------- | :---: | :---: | :-------: | :------: | :------: | :------: |
+| **Account & Billing** |       |       |           |          |          |          |
+| Close account         |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    |    ❌    |
+| Manage billing        |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    | per role |
+| Account settings      |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **User Management**   |       |       |           |          |          |          |
+| Add/edit/delete users |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **Contacts**          |       |       |           |          |          |          |
+| View contacts         |  ✅   |  ✅   |    ✅     | limited  |   view   | per role |
+| Edit contacts         |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| Import contacts       |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| Export contacts       |  ✅   |  ✅   | per role  |    ❌    |    ❌    | per role |
+| Delete contacts       |  ✅   |  ✅   | per role  |    ❌    |    ❌    | per role |
+| **Lists / Segments**  |       |       |           |          |          |          |
+| Manage lists          |  ✅   |  ✅   |    ✅     |    ❌    |   view   | per role |
+| Create segments       |  ✅   |  ✅   |    ✅     |    ❌    |   view   | per role |
+| **Campaigns**         |       |       |           |          |          |          |
+| Create/edit           |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| Send                  |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| **Automations**       |       |       |           |          |          |          |
+| Create/edit           |  ✅   |  ✅   |    ✅     |    ❌    |   view   | per role |
+| Activate              |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| **Templates**         |       |       |           |          |          |          |
+| Create/edit           |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| Brand kit             |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| **Forms / Pop-ups**   |       |       |           |          |          |          |
+| Create/edit           |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| Publish               |  ✅   |  ✅   |    ✅     | per role |    ❌    | per role |
+| **Reports**           |       |       |           |          |          |          |
+| View                  |  ✅   |  ✅   |    ✅     |   view   |    ✅    | per role |
+| Export                |  ✅   |  ✅   | per role  |    ❌    | per role | per role |
+| **Integrations**      |       |       |           |          |          |          |
+| Manage                |  ✅   |  ✅   | per role  |    ❌    |    ❌    | per role |
+| **API**               |       |       |           |          |          |          |
+| Manage API keys       |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **Domains**           |       |       |           |          |          |          |
+| Domain authentication |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
 
 ### 4.4 User invitation flow
 
@@ -484,7 +501,7 @@ Sets password
 ### 5.1 Agency model
 
 Per oficiální pricing page:
-*"Do you manage emailing for multiple clients? With us, you can have several sub-accounts under one agency account. Plus, you'll earn a commission for each new customer in your agency account."*
+_"Do you manage emailing for multiple clients? With us, you can have several sub-accounts under one agency account. Plus, you'll earn a commission for each new customer in your agency account."_
 
 ### 5.2 Architecture
 
@@ -940,6 +957,7 @@ Save
 ### 9.1 Subscription creation paths
 
 #### A) Form submission
+
 ```
 Visitor fills form (popup, embedded, sticky bar)
    ↓
@@ -961,6 +979,7 @@ Automation trigger fires
 ```
 
 #### B) Double opt-in flow
+
 ```
 Form submission
    ↓
@@ -980,6 +999,7 @@ Welcome workflow triggers
 ```
 
 #### C) Shoptet integration sync
+
 ```
 Customer creates account na Shoptet
    ↓
@@ -995,9 +1015,11 @@ Workflow trigger (welcome new customer)
 ```
 
 #### D) Shopify / other e-commerce sync
+
 Same as Shoptet but via different integration.
 
 #### E) Manual import (CSV)
+
 ```
 Admin: Kontakty → Import
    ↓
@@ -1022,6 +1044,7 @@ Import processed
 ```
 
 #### F) API
+
 ```
 External system POST /subscribers
    ↓
@@ -1033,6 +1056,7 @@ Trigger workflows
 ```
 
 #### G) Facebook Lead Ads
+
 ```
 Facebook Ads campaign creates lead
    ↓
@@ -1118,6 +1142,7 @@ Data retained per GDPR
 ### 9.6 Bounce + spam handling
 
 #### Hard bounce
+
 ```
 ISP 5xx
    ↓
@@ -1127,6 +1152,7 @@ Auto-suppression
 ```
 
 #### Spam complaint
+
 ```
 ISP FBL → Ecomail
    ↓
@@ -1340,6 +1366,7 @@ Activate
 ### 12.3 Common scenarios detail
 
 #### Welcome series
+
 ```
 Trigger: Subscribed to "Newsletter" list
    ↓
@@ -1363,6 +1390,7 @@ Exit
 ```
 
 #### Abandoned cart (Shoptet integrated)
+
 ```
 Trigger: Cart abandoned (>30 min, from Shoptet webhook)
    ↓
@@ -1388,6 +1416,7 @@ Exit
 ```
 
 #### Birthday automation
+
 ```
 Trigger: Birthday date approaching (X days before)
    ↓
@@ -1564,6 +1593,7 @@ Automation triggers fire (if match)
 ### 14.3 Data synced
 
 #### Customer data
+
 - Email (primary key)
 - Jméno, příjmení
 - Telefon
@@ -1573,6 +1603,7 @@ Automation triggers fire (if match)
 - Last login
 
 #### Order data
+
 - Order ID
 - Date
 - Status
@@ -1585,6 +1616,7 @@ Automation triggers fire (if match)
 - Payment method
 
 #### Product data
+
 - Product ID
 - Name (CZ + other languages)
 - Category
@@ -1596,12 +1628,14 @@ Automation triggers fire (if match)
 - Custom attributes
 
 #### Cart events
+
 - Cart abandoned (>30 min default)
 - Cart items dynamically
 - Cart total
 - Updated cart events
 
 #### Browse data (s tracking script)
+
 - Page views
 - Product views
 - Search queries
@@ -1667,9 +1701,10 @@ Reports show:
 ### 14.6 Known issue: spam imports
 
 Per G2 review:
-*"We encountered an issue with spam emails that were collected through Shoptet and ended up in Ecomail. Although you could make educated guesses about which emails were most likely spam, Ecomail did not recognize them automatically. As a result, we had to manually review the entire database and remove the fake email addresses ourselves."*
+_"We encountered an issue with spam emails that were collected through Shoptet and ended up in Ecomail. Although you could make educated guesses about which emails were most likely spam, Ecomail did not recognize them automatically. As a result, we had to manually review the entire database and remove the fake email addresses ourselves."_
 
 ⚠️ Doporučení:
+
 - Pravidelná list hygiene
 - Manual review po initial sync
 - Použít Shoptet's own spam filtering before sync
@@ -1726,6 +1761,7 @@ Tracking script auto-included
 ### 15.3 Similarities cross-platform
 
 All e-commerce integrations work similarly:
+
 - OAuth or API key auth
 - Initial sync customers + orders
 - Continuous webhook updates
@@ -1797,7 +1833,7 @@ Email sent within minutes
 ### 16.4 Cross-channel orchestration
 
 Per Cuspera review:
-*"Ads can be triggered by various actions, such as email opens, SMS messages, and website visits"*
+_"Ads can be triggered by various actions, such as email opens, SMS messages, and website visits"_
 
 ```
 Customer opens marketing email
@@ -1970,16 +2006,16 @@ Workflow triggers if applicable
 
 ### 19.3 API endpoints (v2)
 
-| Resource | Operace |
-|---|---|
-| `/lists` | CRUD lists |
-| `/lists/{id}/subscribe` | Add subscriber to list |
-| `/lists/{id}/unsubscribe` | Remove from list |
-| `/subscribers` | Subscriber management |
-| `/transactional` | Send transactional |
-| `/automations` | Workflow data |
-| `/campaigns` | Campaign data |
-| `/templates` | Template management |
+| Resource                  | Operace                |
+| ------------------------- | ---------------------- |
+| `/lists`                  | CRUD lists             |
+| `/lists/{id}/subscribe`   | Add subscriber to list |
+| `/lists/{id}/unsubscribe` | Remove from list       |
+| `/subscribers`            | Subscriber management  |
+| `/transactional`          | Send transactional     |
+| `/automations`            | Workflow data          |
+| `/campaigns`              | Campaign data          |
+| `/templates`              | Template management    |
 
 ### 19.4 Webhooks
 
@@ -1992,9 +2028,11 @@ Workflow triggers if applicable
 ### 19.5 Native integrations
 
 #### CZ-specific
+
 - **Shoptet** (deep, dominant)
 
 #### Global e-commerce
+
 - **Shopify** + Shopify Plus
 - **WooCommerce**
 - **Magento** (Adobe Commerce)
@@ -2004,20 +2042,25 @@ Workflow triggers if applicable
 - **PrestaShop**
 
 #### CMS
+
 - **WordPress** plugin
 
 #### iPaaS
+
 - **Zapier** (5 000+ apps)
 - **Make (Integromat)**
 
 #### Forms (via Zapier)
+
 - Typeform, Jotform, Google Forms
 
 #### Social
+
 - **Facebook Ads** (Lead Ads, Custom Audiences)
 - **Instagram Ads**
 
 #### Analytics
+
 - Google Analytics
 - Facebook Pixel
 
@@ -2058,6 +2101,7 @@ Workflow triggers if applicable
 ### 20.3 Consent tracking
 
 Per subscriber:
+
 - Email opt-in timestamp + IP + source
 - Per-list consent
 - GDPR consent fields
@@ -2112,33 +2156,33 @@ Ecomail:
 
 ## 21. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Marketing | Designer | Viewer | Custom | Subscriber | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Domains | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| All subscribers | ✅ | ✅ | ✅ | limited | view | per role | jen sebe | ✅ |
-| Edit subscribers | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ✅ |
-| Export subscribers | ✅ | ✅ | per role | ❌ | ❌ | per role | request | per scope |
-| Lists | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Segments | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Tags | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Campaigns | ✅ | ✅ | ✅ | ✅ | view | per role | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ✅ |
-| Automations | ✅ | ✅ | ✅ | ❌ | view | per role | ❌ | ✅ |
-| Pre-made scenarios | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Templates | ✅ | ✅ | ✅ | ✅ | view | per role | – | ✅ |
-| Brand kit | ✅ | ✅ | ✅ | ✅ | view | per role | – | per scope |
-| Forms / Pop-ups | ✅ | ✅ | ✅ | ✅ | view | per role | submit | per scope |
-| SMS module | ✅ | ✅ | ✅ | ❌ | ❌ | per role | – | per scope |
-| Facebook integration | ✅ | ✅ | per role | ❌ | ❌ | per role | – | per scope |
-| Transactional | ✅ | ✅ | per role | ❌ | ❌ | per role | – | ✅ |
-| Reports | ✅ | ✅ | ✅ | view | ✅ | per role | ❌ | ✅ |
-| Integrations | ✅ | ✅ | per role | ❌ | ❌ | per role | – | per scope |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | – |
-| Sub-accounts (agency) | ✅ (master) | ✅ (master) | per role | ❌ | per role | per role | – | per scope |
-| GDPR delete | ✅ | ✅ | per role | ❌ | ❌ | per role | request | per scope |
+| Data                  |    Owner    |    Admin    | Marketing | Designer |  Viewer  |  Custom  |  Subscriber   |    API    |
+| --------------------- | :---------: | :---------: | :-------: | :------: | :------: | :------: | :-----------: | :-------: |
+| Account settings      |     ✅      |     ✅      |    ❌     |    ❌    |    ❌    | per role |      ❌       | per scope |
+| Billing               |     ✅      |     ❌      |    ❌     |    ❌    |    ❌    | per role |      ❌       | per scope |
+| User management       |     ✅      |     ✅      |    ❌     |    ❌    |    ❌    | per role |      ❌       | per scope |
+| Domains               |     ✅      |     ✅      |    ❌     |    ❌    |    ❌    | per role |      ❌       | per scope |
+| All subscribers       |     ✅      |     ✅      |    ✅     | limited  |   view   | per role |   jen sebe    |    ✅     |
+| Edit subscribers      |     ✅      |     ✅      |    ✅     |    ❌    |    ❌    | per role |      ❌       |    ✅     |
+| Export subscribers    |     ✅      |     ✅      | per role  |    ❌    |    ❌    | per role |    request    | per scope |
+| Lists                 |     ✅      |     ✅      |    ✅     |    ❌    |   view   | per role |       –       |    ✅     |
+| Segments              |     ✅      |     ✅      |    ✅     |    ❌    |   view   | per role |       –       |    ✅     |
+| Tags                  |     ✅      |     ✅      |    ✅     |    ❌    |   view   | per role |       –       |    ✅     |
+| Campaigns             |     ✅      |     ✅      |    ✅     |    ✅    |   view   | per role | jen co dostal |    ✅     |
+| Send campaigns        |     ✅      |     ✅      |    ✅     |    ❌    |    ❌    | per role |      ❌       |    ✅     |
+| Automations           |     ✅      |     ✅      |    ✅     |    ❌    |   view   | per role |      ❌       |    ✅     |
+| Pre-made scenarios    |     ✅      |     ✅      |    ✅     |    ❌    |   view   | per role |       –       |    ✅     |
+| Templates             |     ✅      |     ✅      |    ✅     |    ✅    |   view   | per role |       –       |    ✅     |
+| Brand kit             |     ✅      |     ✅      |    ✅     |    ✅    |   view   | per role |       –       | per scope |
+| Forms / Pop-ups       |     ✅      |     ✅      |    ✅     |    ✅    |   view   | per role |    submit     | per scope |
+| SMS module            |     ✅      |     ✅      |    ✅     |    ❌    |    ❌    | per role |       –       | per scope |
+| Facebook integration  |     ✅      |     ✅      | per role  |    ❌    |    ❌    | per role |       –       | per scope |
+| Transactional         |     ✅      |     ✅      | per role  |    ❌    |    ❌    | per role |       –       |    ✅     |
+| Reports               |     ✅      |     ✅      |    ✅     |   view   |    ✅    | per role |      ❌       |    ✅     |
+| Integrations          |     ✅      |     ✅      | per role  |    ❌    |    ❌    | per role |       –       | per scope |
+| API keys              |     ✅      |     ✅      |    ❌     |    ❌    |    ❌    | per role |      ❌       |     –     |
+| Sub-accounts (agency) | ✅ (master) | ✅ (master) | per role  |    ❌    | per role | per role |       –       | per scope |
+| GDPR delete           |     ✅      |     ✅      | per role  |    ❌    |    ❌    | per role |    request    | per scope |
 
 ---
 
@@ -2168,10 +2212,11 @@ Ecomail:
 ### 22.4 UI/UX issues
 
 Per reviews:
-- *"WYSIWYG editor problem with it - I didn't get what I saw"* (older)
-- *"Statistics can take times to show up after sending"*
-- *"No easier way to manage uploaded images"*
-- *"Cannot re-order or modify saved blocks easily"*
+
+- _"WYSIWYG editor problem with it - I didn't get what I saw"_ (older)
+- _"Statistics can take times to show up after sending"_
+- _"No easier way to manage uploaded images"_
+- _"Cannot re-order or modify saved blocks easily"_
 
 ### 22.5 List hygiene gap
 
@@ -2276,4 +2321,4 @@ Pokud Ecomail používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů ecomail.app, ecomail.cz, support.ecomail.app a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Research.com, Gartner Peer Insights, Cuspera). Pro nejaktuálnější detaily je nutný engagement s Ecomail support/sales teamem.*
+_Dokument zpracován z oficiálních zdrojů ecomail.app, ecomail.cz, support.ecomail.app a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Research.com, Gartner Peer Insights, Cuspera). Pro nejaktuálnější detaily je nutný engagement s Ecomail support/sales teamem._

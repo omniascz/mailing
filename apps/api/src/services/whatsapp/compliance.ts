@@ -127,7 +127,7 @@ export async function updateQualityRating(
 export async function updateMessagingLimitTier(
   orgId: string,
   phoneNumberId: string,
-  tier: string,  // "TIER_1K" | "TIER_10K" | "TIER_100K" | "TIER_UNLIMITED"
+  tier: string, // "TIER_1K" | "TIER_10K" | "TIER_100K" | "TIER_UNLIMITED"
 ) {
   // Normalize Meta tier strings to human-readable
   const tierMap: Record<string, string> = {

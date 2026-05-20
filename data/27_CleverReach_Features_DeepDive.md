@@ -9,6 +9,7 @@
 > **Pozice:** **DACH region leader** v email marketingu pro SMB + mid-market. **210 000+ zákazníků ve 152 zemích** (per oficiální claim). Reference klienti: **Spotify, DHL, Amnesty International** (per Capterra).
 >
 > **Klíčové diferenciátory:**
+>
 > - **Made in Germany** branding – důraz na security + compliance + data protection
 > - **DACH-friendly** (DE-first, ale 6 jazyků UI)
 > - **Generous free plan** – 250 recipients, 1000 emails/month
@@ -57,30 +58,35 @@
 - **Specializace:** **Small-to-medium businesses (SMB)** + mid-market
 - **Lokalizace UI:** **6 jazyků** – angličtina, němčina (native), francouzština, španělština, italština, holandština. **Žádná čeština ani slovenština**.
 - **Web:** cleverreach.com
-- **Marketing claim:** *"Email Marketing made in Germany since 2007"*
+- **Marketing claim:** _"Email Marketing made in Germany since 2007"_
 
 ### Filozofie produktu
 
 **Made in Germany** je core branding:
+
 - Důraz na **security + compliance + data protection**
 - **DSGVO (German GDPR) leadership**
 - **EU hosting** standard
 - **Reliability + ease of use**
 
 Per Capterra:
-> *"Spotify, Amnesty International & DHL send their newsletters with CleverReach®. Why? Because its that simple!"*
+
+> _"Spotify, Amnesty International & DHL send their newsletters with CleverReach®. Why? Because its that simple!"_
 
 Per oficiální:
-> *"Easily create and send responsive email newsletters with the drag & drop editor. Analyze your success and optimize your newsletters. Highest safety standards: Email Marketing made in Germany since 2007!"*
+
+> _"Easily create and send responsive email newsletters with the drag & drop editor. Analyze your success and optimize your newsletters. Highest safety standards: Email Marketing made in Germany since 2007!"_
 
 ### Reference customers
 
 **Tier 1 globální značky:**
+
 - **Spotify**
 - **DHL**
 - **Amnesty International**
 
 **Velký zákaznický base v DACH:**
+
 - 210 000+ businesses
 - SMB primary, ale i enterprise users
 - Cross-vertical use
@@ -148,6 +154,7 @@ Per oficiální:
 ### 2.1 Free plan (Lite)
 
 Per oficiální + recenze:
+
 - **250 recipients**
 - **1 000 emails/month**
 - **CleverReach branding** v emails (typical for free)
@@ -158,11 +165,13 @@ Per oficiální + recenze:
 ### 2.2 Paid plans (2026)
 
 Per Capterra/EmailTooltester:
+
 - **Free → €15/month** entry → **€41.25/month** → **€495/month** high volume
 
-⚠️ Capterra critique: *"The pricing tiers jump from free, to €15 per month, to €41.25 per month and then an high volume option for €495 per month, which does not seem to make much sense."*
+⚠️ Capterra critique: _"The pricing tiers jump from free, to €15 per month, to €41.25 per month and then an high volume option for €495 per month, which does not seem to make much sense."_
 
 Pricing structure based on recipients:
+
 - **Free (Lite):** 250 recipients
 - **Lite Plus:** od €15/month (small lists, ~500-1000 recipients)
 - **Flex/Essentials:** ~€41.25/month (1K-5K recipients typically)
@@ -171,27 +180,27 @@ Pricing structure based on recipients:
 ### 2.3 Estimated pricing per recipients
 
 | Recipients | Cena/měsíc (estimate) |
-|---|---|
-| 0–250 | Free |
-| 250–500 | €15 |
-| 1 000 | ~€25 |
-| 2 500 | ~€40 |
-| 5 000 | ~€60 |
-| 10 000 | ~€100 |
-| 25 000 | ~€200 |
-| 50 000 | ~€300+ |
-| 100 000 | ~€495+ |
-| 250 000+ | Custom |
+| ---------- | --------------------- |
+| 0–250      | Free                  |
+| 250–500    | €15                   |
+| 1 000      | ~€25                  |
+| 2 500      | ~€40                  |
+| 5 000      | ~€60                  |
+| 10 000     | ~€100                 |
+| 25 000     | ~€200                 |
+| 50 000     | ~€300+                |
+| 100 000    | ~€495+                |
+| 250 000+   | Custom                |
 
 ### 2.4 Annual discount
 
 Per EmailTooltester:
-*"There is a 10% discount for annual subscriptions."*
+_"There is a 10% discount for annual subscriptions."_
 
 ### 2.5 Premium support add-on
 
 Per EmailTooltester:
-*"the prices shown do not include premium support, which costs $26,63 per month."*
+_"the prices shown do not include premium support, which costs $26,63 per month."_
 
 **Premium support** is separate add-on (~$27/month).
 
@@ -219,29 +228,31 @@ Per EmailTooltester:
 
 ### 2.8 Cena vs. konkurence (10K subscribers, 2026)
 
-| Platform | Cena/měsíc |
-|---|---|
-| **CleverReach** | ~€100 |
-| **Mailchimp Standard** | ~$135 (€125) |
-| **MailerLite Advanced** | ~$80 (€75) |
-| **Brevo Business** | ~€65 |
-| **GetResponse Email Marketing** | ~$79 (€73) |
-| **ActiveCampaign Plus** | ~$234 (€215) |
-| **rapidmail** (DACH competitor) | varies |
-| **Inxmail** (DACH) | enterprise pricing |
-| **SmartEmailing** | ~€100 |
-| **Ecomail** | ~€60-70 |
+| Platform                        | Cena/měsíc         |
+| ------------------------------- | ------------------ |
+| **CleverReach**                 | ~€100              |
+| **Mailchimp Standard**          | ~$135 (€125)       |
+| **MailerLite Advanced**         | ~$80 (€75)         |
+| **Brevo Business**              | ~€65               |
+| **GetResponse Email Marketing** | ~$79 (€73)         |
+| **ActiveCampaign Plus**         | ~$234 (€215)       |
+| **rapidmail** (DACH competitor) | varies             |
+| **Inxmail** (DACH)              | enterprise pricing |
+| **SmartEmailing**               | ~€100              |
+| **Ecomail**                     | ~€60-70            |
 
 **CleverReach competitive** v mid-range, slightly more than budget options (Brevo, MailerLite), but s DACH-specific compliance advantages.
 
 ### 2.9 Pricing critique
 
 Per Capterra:
+
 - Pricing tiers **jumps** mezi tiers feel unnatural
 - **€41.25 → €495 gap** je very large
 
 Per EmailTooltester:
-- *"pricing plans may not be suitable for smaller businesses"*
+
+- _"pricing plans may not be suitable for smaller businesses"_
 - Reasonable for mid-market
 
 ---
@@ -277,9 +288,10 @@ Per EmailTooltester:
 **Unique among SMB competitors:**
 
 Per EmailTooltester:
-*"Allows multiple users with customizable access levels at no extra cost. You can assign specific permissions so each user only sees or manages certain areas, such as recipient data, reports, or campaigns. This makes it easy to collaborate with team members or agencies while keeping control over who can view or edit different parts of your account."*
+_"Allows multiple users with customizable access levels at no extra cost. You can assign specific permissions so each user only sees or manages certain areas, such as recipient data, reports, or campaigns. This makes it easy to collaborate with team members or agencies while keeping control over who can view or edit different parts of your account."_
 
 Most competitors charge extra per user OR limit free plan users:
+
 - Mailchimp: limited users na free
 - MailerLite: 1 user free, 3 na Growing Business
 - ActiveCampaign: 1 user Plus, 3 user Pro
@@ -306,6 +318,7 @@ Most competitors charge extra per user OR limit free plan users:
 ### 3.7 Reference brands
 
 **Spotify, DHL, Amnesty International** = strong trust signals pro:
+
 - DACH companies
 - Non-profits
 - Established brands
@@ -318,17 +331,17 @@ CleverReach's **proprietary AI feature** for marketing automation assistance.
 
 ### 3.9 Vs. DACH competitors
 
-| Aspect | CleverReach | rapidmail | Inxmail | Mapp/Evalanche |
-|---|---|---|---|---|
-| **Origin** | DE (2007) | DE | DE | CH/AT |
-| **Target segment** | SMB → mid-market | SMB | Mid-market → enterprise | Mid-market |
-| **Pricing tier** | Affordable to mid | Very affordable | Higher | Higher |
-| **UI languages** | 6 | DE-focused | Multilingual | Multilingual |
-| **Free plan** | ✅ generous | ✅ | ❌ | ❌ |
-| **GDPR/DSGVO** | ✅ strong | ✅ strong | ✅ strong | ✅ strong |
-| **DACH focus** | ✅ | ✅ | ✅ | ✅ |
-| **Multi-user free** | ✅ no extra cost | varies | enterprise | enterprise |
-| **Automation depth** | mid-level | basic | advanced | advanced |
+| Aspect               | CleverReach       | rapidmail       | Inxmail                 | Mapp/Evalanche |
+| -------------------- | ----------------- | --------------- | ----------------------- | -------------- |
+| **Origin**           | DE (2007)         | DE              | DE                      | CH/AT          |
+| **Target segment**   | SMB → mid-market  | SMB             | Mid-market → enterprise | Mid-market     |
+| **Pricing tier**     | Affordable to mid | Very affordable | Higher                  | Higher         |
+| **UI languages**     | 6                 | DE-focused      | Multilingual            | Multilingual   |
+| **Free plan**        | ✅ generous       | ✅              | ❌                      | ❌             |
+| **GDPR/DSGVO**       | ✅ strong         | ✅ strong       | ✅ strong               | ✅ strong      |
+| **DACH focus**       | ✅                | ✅              | ✅                      | ✅             |
+| **Multi-user free**  | ✅ no extra cost  | varies          | enterprise              | enterprise     |
+| **Automation depth** | mid-level         | basic           | advanced                | advanced       |
 
 ---
 
@@ -337,6 +350,7 @@ CleverReach's **proprietary AI feature** for marketing automation assistance.
 ### 4.1 Recipients (kontakty)
 
 #### Standard fields
+
 - Email (required)
 - First name, last name
 - Phone
@@ -347,6 +361,7 @@ CleverReach's **proprietary AI feature** for marketing automation assistance.
 - Custom fields
 
 #### Custom fields
+
 - **Text, number, date, dropdown, multi-select**
 - Configure per business need
 - Used pro segmentation + personalization
@@ -361,9 +376,10 @@ CleverReach's **proprietary AI feature** for marketing automation assistance.
 ### 4.3 Segmentation
 
 Per oficiální:
-*"detailed list management and segmentation features allow precise targeting based on demographics or user behavior"*
+_"detailed list management and segmentation features allow precise targeting based on demographics or user behavior"_
 
 #### Filter criteria
+
 - **Contact attributes** (custom fields, tags)
 - **Email engagement** (opened/clicked specific campaigns)
 - **Subscription source** (which form, integration)
@@ -375,7 +391,7 @@ Per oficiální:
 #### Behavior-based segmentation
 
 Per EmailTooltester:
-*"behavior-based segmentation"*
+_"behavior-based segmentation"_
 
 - Track recipient behavior (opens, clicks)
 - Segment based on engagement patterns
@@ -383,6 +399,7 @@ Per EmailTooltester:
 - Active vs. inactive
 
 #### Operators
+
 - AND, OR, NOT
 - Numeric ranges
 - Date ranges
@@ -427,7 +444,7 @@ Transitions:
 ### 4.8 Recipient management features
 
 Per Techjockey:
-*"from setting up a campaign to analyzing the results"* and *"managing recipient lists to automating mail delivery and handling bounce rates"*
+_"from setting up a campaign to analyzing the results"_ and _"managing recipient lists to automating mail delivery and handling bounce rates"_
 
 - Recipient management dashboard
 - Bounce handling automatic
@@ -440,13 +457,13 @@ Per Techjockey:
 
 ### 5.1 Campaign types
 
-| Type | Use case |
-|---|---|
-| **Standard newsletter** | Regular sends |
-| **A/B test campaign** | Test variants |
-| **Automated email** | Within workflow |
-| **Auto-responder** | Single trigger email |
-| **RSS-driven** | (some setups) |
+| Type                    | Use case             |
+| ----------------------- | -------------------- |
+| **Standard newsletter** | Regular sends        |
+| **A/B test campaign**   | Test variants        |
+| **Automated email**     | Within workflow      |
+| **Auto-responder**      | Single trigger email |
+| **RSS-driven**          | (some setups)        |
 
 ### 5.2 Campaign builder workflow
 
@@ -484,7 +501,7 @@ Confirm
 ### 5.3 Drag-and-drop editor
 
 Per oficiální:
-*"Easily create and send responsive email newsletters with the drag & drop editor"*
+_"Easily create and send responsive email newsletters with the drag & drop editor"_
 
 - **Visual drag-and-drop builder**
 - **Block-based structure:**
@@ -505,7 +522,7 @@ Per oficiální:
 ### 5.4 Editor UX
 
 Per Research.com:
-*"intuitive campaign builder allows users to create professional emails using a drag-and-drop interface, making it accessible to those without technical skills"*
+_"intuitive campaign builder allows users to create professional emails using a drag-and-drop interface, making it accessible to those without technical skills"_
 
 - **User-friendly for beginners**
 - **Quick to create campaigns**
@@ -540,11 +557,12 @@ CleverReach **automation** is named **THEA** (CleverReach's AI assistant).
 - **Real-time evaluation**
 
 Per oficiální:
-*"Automation is a key strength of CleverReach, enabling users to deploy trigger-based email sequences that react dynamically to customer actions like sign-ups or purchases."*
+_"Automation is a key strength of CleverReach, enabling users to deploy trigger-based email sequences that react dynamically to customer actions like sign-ups or purchases."_
 
 ### 6.2 Triggers
 
 #### Behavioral
+
 - Subscribed to list
 - Tag added
 - Form submitted
@@ -552,30 +570,36 @@ Per oficiální:
 - Email clicked
 
 #### Transactional / E-commerce
+
 - Order placed (via integration)
 - Cart abandoned (depending on integration)
 - Specific product purchased
 
 #### Date-based
+
 - Birthday
 - Anniversary
 - Custom date in field
 
 #### Engagement-based
+
 - Inactive X days
 - Custom event
 
 ### 6.3 Actions (nodes)
 
 #### Sending
+
 - Send email (designed inline or template)
 
 #### Contact manipulation
+
 - Add / remove from list
 - Add / remove tag
 - Update field
 
 #### Logic
+
 - Wait (time delay)
 - Condition (if/else)
 - Goal (conversion event)
@@ -583,6 +607,7 @@ Per oficiální:
 ### 6.4 Common automation scenarios
 
 #### Welcome series
+
 ```
 Trigger: Subscribed to "Newsletter"
    ↓
@@ -600,6 +625,7 @@ End
 ```
 
 #### Abandoned cart (with e-commerce integration)
+
 ```
 Trigger: Cart abandoned (e-commerce webhook)
    ↓
@@ -615,6 +641,7 @@ End
 ```
 
 #### Birthday automation
+
 ```
 Trigger: Birthday today
    ↓
@@ -626,7 +653,7 @@ End
 ### 6.5 Automation depth
 
 Per EmailTooltester:
-*"automation, responsive templates, behavior-based segmentation, and a very decent range of features"*
+_"automation, responsive templates, behavior-based segmentation, and a very decent range of features"_
 
 - **Solid mid-level automation**
 - Less sophisticated than ActiveCampaign / Klaviyo
@@ -695,6 +722,7 @@ Per EmailTooltester:
 ### 8.3 Use cases
 
 #### Segment-specific content
+
 ```
 If recipient.segment = "VIP":
   Show VIP-exclusive offer block
@@ -703,6 +731,7 @@ Else:
 ```
 
 #### Geographic targeting
+
 ```
 If recipient.country = "Germany":
   Show DE-specific content
@@ -764,7 +793,7 @@ Track results
 ### 10.1 Real-time reports
 
 Per oficiální:
-*"intuitive reports and monitor the success of your newsletters in real time"*
+_"intuitive reports and monitor the success of your newsletters in real time"_
 
 - **Sent, delivered, bounced**
 - **Opens** (unique + total), open rate
@@ -815,7 +844,7 @@ Per oficiální:
 ### 11.1 Multi-user capabilities
 
 Per EmailTooltester:
-*"Allows multiple users with customizable access levels at no extra cost. You can assign specific permissions so each user only sees or manages certain areas, such as recipient data, reports, or campaigns. This makes it easy to collaborate with team members or agencies while keeping control over who can view or edit different parts of your account."*
+_"Allows multiple users with customizable access levels at no extra cost. You can assign specific permissions so each user only sees or manages certain areas, such as recipient data, reports, or campaigns. This makes it easy to collaborate with team members or agencies while keeping control over who can view or edit different parts of your account."_
 
 ### 11.2 Access level configuration
 
@@ -844,12 +873,14 @@ Send invitation
 ### 11.3 Why this matters
 
 **vs. Mailchimp/MailerLite/ActiveCampaign:**
+
 - **Mailchimp:** limited free users, paid extra
 - **MailerLite:** 1 free, 3 na Growing Business
 - **ActiveCampaign:** 1 Plus, 3 Pro, 5 Enterprise
 - **CleverReach:** unlimited s customizable access
 
 **Benefit:**
+
 - **Agency collaboration** easier
 - **Team scaling** without cost
 - **Granular control** maintained
@@ -892,9 +923,10 @@ Send invitation
 - **Embedded forms** (HTML/JS)
 - **Sign-up forms** customizable
 - Per oficiální + EmailTooltester critique:
-*"limited form types"*
+  _"limited form types"_
 
 ⚠️ **Less form variety** than competitors:
+
 - Other tools nabízejí popup, slider, sticky bar, exit-intent
 - CleverReach forms primarily **embedded** + basic popup
 
@@ -911,9 +943,10 @@ Send invitation
 ### 12.3 No native website tracking
 
 Per EmailTooltester critique:
-*"limited form types, and no native website tracking"*
+_"limited form types, and no native website tracking"_
 
 ⚠️ **No site tracking script** native (unlike Klaviyo, ActiveCampaign, SmartEmailing)
+
 - Requires manual setup
 - Less behavior-based automation potential
 - Integration s e-commerce platforms (Shopify, etc.) provides some tracking
@@ -948,13 +981,13 @@ Per EmailTooltester critique:
 
 ### 13.3 Authentication setup
 
-| Protocol | Setup |
-|---|---|
-| **SPF** | Include for CleverReach |
-| **DKIM** | DNS records |
-| **DMARC** | TXT record |
-| **Sender verification** | Email verification |
-| **Branded tracking domain** | CNAME (recommended) |
+| Protocol                    | Setup                   |
+| --------------------------- | ----------------------- |
+| **SPF**                     | Include for CleverReach |
+| **DKIM**                    | DNS records             |
+| **DMARC**                   | TXT record              |
+| **Sender verification**     | Email verification      |
+| **Branded tracking domain** | CNAME (recommended)     |
 
 ### 13.4 Domain authentication flow
 
@@ -997,6 +1030,7 @@ Emails signed s vaší doménou
 **CleverReach's AI marketing assistant.**
 
 THEA = CleverReach's proprietary AI feature for:
+
 - Marketing automation suggestions
 - Subject line optimization
 - Send time optimization
@@ -1050,6 +1084,7 @@ THEA learns from results
 ### 15.1 Native e-commerce integrations
 
 Per oficiální / EmailTooltester:
+
 - **Shopify** (popular DACH)
 - **WooCommerce** (WordPress)
 - **Shopware** (German market leader v e-commerce!)
@@ -1060,6 +1095,7 @@ Per oficiální / EmailTooltester:
 ### 15.2 Shopware integration (DACH advantage)
 
 **Shopware = dominant German e-commerce platform** (similar to Shoptet's role v CZ):
+
 - Deep CleverReach ↔ Shopware integration
 - Native plugin
 - Real-time sync
@@ -1070,6 +1106,7 @@ This is **strong DACH-specific advantage**.
 ### 15.3 Sync capabilities
 
 #### Customer data
+
 - Email
 - Name
 - Phone
@@ -1078,6 +1115,7 @@ This is **strong DACH-specific advantage**.
 - Order history (LTV, AOV)
 
 #### Order data
+
 - Order ID
 - Date
 - Status
@@ -1085,12 +1123,14 @@ This is **strong DACH-specific advantage**.
 - Total
 
 #### Product data
+
 - Product catalog
 - Categories
 - Prices
 - Images
 
 #### Cart events (limited per platform)
+
 - Cart abandoned (some integrations)
 
 ### 15.4 Use cases enabled
@@ -1175,6 +1215,7 @@ Initial sync
 ### 17.2 API endpoints
 
 Typical structure:
+
 - `/groups` (lists)
 - `/receivers` (subscribers)
 - `/mailings` (campaigns)
@@ -1209,7 +1250,7 @@ Typical structure:
 ### 18.1 "Made in Germany" compliance
 
 Per oficiální:
-*"Highest safety standards: Email Marketing made in Germany since 2007!"*
+_"Highest safety standards: Email Marketing made in Germany since 2007!"_
 
 - **EU hosting** primary (Germany)
 - **DSGVO compliance** by design (German GDPR)
@@ -1255,6 +1296,7 @@ Per oficiální:
 ### 18.6 DACH-specific compliance advantages
 
 For DACH companies:
+
 - **No worries about cross-border data transfer**
 - **DSGVO native** understanding
 - **German support** for compliance questions
@@ -1267,7 +1309,7 @@ For DACH companies:
 ### 19.1 Free support
 
 Per oficiální:
-*"Free support & webinars."*
+_"Free support & webinars."_
 
 - **Email support** (all plans)
 - **Ticket-based** support
@@ -1277,7 +1319,7 @@ Per oficiální:
 ### 19.2 Premium support add-on
 
 Per EmailTooltester:
-*"premium support, which costs $26,63 per month"*
+_"premium support, which costs $26,63 per month"_
 
 - **Faster response times**
 - **Phone support** (premium)
@@ -1287,7 +1329,7 @@ Per EmailTooltester:
 ### 19.3 Free webinars
 
 Per oficiální:
-*"Free support & webinars."*
+_"Free support & webinars."_
 
 - **Regular webinars** on email marketing topics
 - **German + English language** options
@@ -1305,7 +1347,7 @@ Per oficiální:
 ### 19.5 No live chat
 
 Per EmailTooltester critique:
-*"While there is no live chat assistance, the support team is quick to respond to questions."*
+_"While there is no live chat assistance, the support team is quick to respond to questions."_
 
 ⚠️ **No live chat** (vs. competitors offering chat).
 
@@ -1316,33 +1358,34 @@ Per EmailTooltester critique:
 ### 20.1 Pricing critique
 
 Per Capterra:
-*"The pricing tiers jump from free, to €15 per month, to €41.25 per month and then an high volume option for €495 per month, which does not seem to make much sense."*
+_"The pricing tiers jump from free, to €15 per month, to €41.25 per month and then an high volume option for €495 per month, which does not seem to make much sense."_
 
 ⚠️ **Pricing tier gaps** feel unnatural – jumps between tiers significant.
 
 Per Research.com:
-*"pricing plans may not be suitable for smaller businesses"*
+_"pricing plans may not be suitable for smaller businesses"_
 
 ### 20.2 No live chat support
 
 Per EmailTooltester:
-*"While there is no live chat assistance"*
+_"While there is no live chat assistance"_
 
 ⚠️ **Email/ticket only** standard support.
 
 ### 20.3 Limited form types
 
 Per EmailTooltester:
-*"limited form types"*
+_"limited form types"_
 
 ⚠️ **Fewer form options** than competitors (no native exit-intent, slider, sticky bar, etc.).
 
 ### 20.4 No native website tracking
 
 Per EmailTooltester:
-*"no native website tracking"*
+_"no native website tracking"_
 
 ⚠️ **No site tracking script** native:
+
 - Less behavior-based automation
 - Less personalization data
 - E-commerce integration provides some, ale ne comprehensive
@@ -1350,9 +1393,10 @@ Per EmailTooltester:
 ### 20.5 Premium features require add-ons
 
 Per EmailTooltester:
-*"Some features require paid add-ons or manual setup."*
+_"Some features require paid add-ons or manual setup."_
 
 ⚠️ Advanced features sometimes require:
+
 - Premium support add-on ($27/month)
 - Manual configuration
 - Custom development
@@ -1360,7 +1404,7 @@ Per EmailTooltester:
 ### 20.6 Learning curve for advanced features
 
 Per SaaSworthy:
-*"some users have reported occasional technical glitches and a learning curve for advanced features"*
+_"some users have reported occasional technical glitches and a learning curve for advanced features"_
 
 ⚠️ Advanced automation + customization not always intuitive.
 
@@ -1430,6 +1474,7 @@ Per SaaSworthy:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### CleverReach je dobrá volba pokud
+
 - Provozujete **SMB / mid-market business** v **DACH region**
 - Vážíte si **"Made in Germany"** trust signal
 - Potřebujete **DSGVO/GDPR-strict compliance**
@@ -1445,6 +1490,7 @@ Per SaaSworthy:
 - Provozujete **TYPO3 / Contao CMS** (DACH integrace)
 
 ### CleverReach není dobrá volba pokud
+
 - Pracujete primárně mimo DACH region (CEE, US-only, etc.)
 - Hledáte **pure free / freemium** SMB tool – Mailchimp / MailerLite / Brevo lepší
 - Pracujete v **češtině / slovenštině** – Ecomail / SmartEmailing lepší
@@ -1460,22 +1506,22 @@ Per SaaSworthy:
 
 ### CleverReach vs. konkurence
 
-| Konkurence | Kdy lepší než CleverReach |
-|---|---|
-| **rapidmail** (DE) | Even more affordable, simpler DACH focus |
-| **Inxmail** (DE) | Enterprise DACH, deeper automation, larger scale |
-| **Mapp / Evalanche** (DACH) | Mid-market+ s deeper personalization |
-| **Mailchimp** | Brand recognition, larger template library, ecosystem |
-| **MailerLite** | Solopreneur simplicity, lower entry pricing |
-| **Brevo** | Volume-based pricing, transactional native, multi-vertical |
-| **Klaviyo** | DTC Shopify deep, predictive AI |
-| **HubSpot** | Full B2B CRM, multi-Hub |
-| **ActiveCampaign** | Deeper automation, integrated CRM |
-| **GetResponse** | Webinars + courses + 27 languages incl. CZ/SK/PL |
-| **SAP Emarsys** | Enterprise B2C retail, Gartner Leader |
-| **SmartEmailing / Ecomail** | Native CZ/SK |
-| **SALESmanago** | AI-driven CDXP, CEE focus |
+| Konkurence                  | Kdy lepší než CleverReach                                  |
+| --------------------------- | ---------------------------------------------------------- |
+| **rapidmail** (DE)          | Even more affordable, simpler DACH focus                   |
+| **Inxmail** (DE)            | Enterprise DACH, deeper automation, larger scale           |
+| **Mapp / Evalanche** (DACH) | Mid-market+ s deeper personalization                       |
+| **Mailchimp**               | Brand recognition, larger template library, ecosystem      |
+| **MailerLite**              | Solopreneur simplicity, lower entry pricing                |
+| **Brevo**                   | Volume-based pricing, transactional native, multi-vertical |
+| **Klaviyo**                 | DTC Shopify deep, predictive AI                            |
+| **HubSpot**                 | Full B2B CRM, multi-Hub                                    |
+| **ActiveCampaign**          | Deeper automation, integrated CRM                          |
+| **GetResponse**             | Webinars + courses + 27 languages incl. CZ/SK/PL           |
+| **SAP Emarsys**             | Enterprise B2C retail, Gartner Leader                      |
+| **SmartEmailing / Ecomail** | Native CZ/SK                                               |
+| **SALESmanago**             | AI-driven CDXP, CEE focus                                  |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů cleverreach.com a praktických zdrojů (Capterra, GetApp, Research.com, EmailTooltester, SaaSworthy, Techjockey, ITQlick). Pro nejaktuálnější ceny vždy ověřit na cleverreach.com.*
+_Dokument zpracován z oficiálních zdrojů cleverreach.com a praktických zdrojů (Capterra, GetApp, Research.com, EmailTooltester, SaaSworthy, Techjockey, ITQlick). Pro nejaktuálnější ceny vždy ověřit na cleverreach.com._

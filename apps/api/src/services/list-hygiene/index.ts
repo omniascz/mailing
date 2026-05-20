@@ -22,32 +22,32 @@ export interface HygieneReport {
 export async function generateHygieneReport(orgId: string): Promise<HygieneReport> {
   const staleCutoff = new Date(Date.now() - 180 * 86_400_000);
 
-  const [total] = await db.execute<{ n: string }>(sql`
+  const [total] = (await db.execute<{ n: string }>(sql`
     SELECT COUNT(*)::text AS n FROM contacts WHERE org_id = ${orgId}::uuid AND deleted_at IS NULL
-  `) as unknown as Array<{ n: string }>;
+  `)) as unknown as Array<{ n: string }>;
 
-  const [stale] = await db.execute<{ n: string }>(sql`
+  const [stale] = (await db.execute<{ n: string }>(sql`
     SELECT COUNT(*)::text AS n FROM contacts c
     LEFT JOIN contact_engagement ce ON ce.contact_id = c.id
     WHERE c.org_id = ${orgId}::uuid AND c.deleted_at IS NULL
       AND (ce.total_opens IS NULL OR ce.total_opens = 0)
       AND c.created_at <= ${staleCutoff}
-  `) as unknown as Array<{ n: string }>;
+  `)) as unknown as Array<{ n: string }>;
 
-  const [bounces] = await db.execute<{ n: string }>(sql`
+  const [bounces] = (await db.execute<{ n: string }>(sql`
     SELECT COUNT(*)::text AS n FROM contacts
     WHERE org_id = ${orgId}::uuid AND status = 'bounced' AND deleted_at IS NULL
-  `) as unknown as Array<{ n: string }>;
+  `)) as unknown as Array<{ n: string }>;
 
-  const [complaints] = await db.execute<{ n: string }>(sql`
+  const [complaints] = (await db.execute<{ n: string }>(sql`
     SELECT COUNT(*)::text AS n FROM contacts
     WHERE org_id = ${orgId}::uuid AND status = 'complained' AND deleted_at IS NULL
-  `) as unknown as Array<{ n: string }>;
+  `)) as unknown as Array<{ n: string }>;
 
-  const [invalid] = await db.execute<{ n: string }>(sql`
+  const [invalid] = (await db.execute<{ n: string }>(sql`
     SELECT COUNT(*)::text AS n FROM contacts
     WHERE org_id = ${orgId}::uuid AND email_validation_score = 'invalid' AND deleted_at IS NULL
-  `) as unknown as Array<{ n: string }>;
+  `)) as unknown as Array<{ n: string }>;
 
   const staleN = Number(stale?.n ?? 0);
   const bouncesN = Number(bounces?.n ?? 0);
@@ -73,7 +73,8 @@ export async function purgeInactive(orgId: string, days = 365): Promise<{ purged
       AND created_at <= ${cutoff}
       AND NOT EXISTS (SELECT 1 FROM email_events WHERE contact_id = contacts.id)
   `);
-  void contactEngagement; void emailEvents;
+  void contactEngagement;
+  void emailEvents;
   return { purged: (res as unknown as { rowCount?: number }).rowCount ?? 0 };
 }
 
@@ -115,7 +116,9 @@ export async function findDuplicates(orgId: string, limit = 500): Promise<Duplic
 
 /** Merge duplicates — keep primary, move engagement + events, soft-delete others. */
 export async function mergeDuplicates(
-  orgId: string, primaryId: string, duplicateIds: string[],
+  orgId: string,
+  primaryId: string,
+  duplicateIds: string[],
 ): Promise<{ merged: number }> {
   let merged = 0;
   for (const dup of duplicateIds) {
@@ -133,4 +136,8 @@ export async function mergeDuplicates(
   return { merged };
 }
 
-void and; void eq; void isNotNull; void lte; void contacts;
+void and;
+void eq;
+void isNotNull;
+void lte;
+void contacts;

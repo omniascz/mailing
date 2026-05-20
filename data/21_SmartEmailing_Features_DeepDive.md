@@ -11,6 +11,7 @@
 > **Pozice:** **advanced marketing automation tool with superior deliverability** – marketing claim. Cíleno na **mid-market e-shopy, agentury, mediální domy, fundraising organizace, neziskovky**. **PRO plán pro 50 000+ kontaktů**.
 >
 > **Klíčové diferenciátory:**
+>
 > - **Vlastní odesílací infrastruktura** v ČR (NE 3rd party rozesílač!)
 > - **Doručitelnost jako #1 prioritu** – aktivní monitoring, vztah s českými ISP (Seznam.cz, atd.)
 > - **Plná česká UI + český support**
@@ -22,6 +23,7 @@
 > - **Velkou škálu integrací** vč. Meiro, Motionlab, Shoptet
 >
 > **Vzhled platformy v 2026:**
+>
 > - **Nové rozhraní (01/2025)** – modernized UI
 > - Legacy rozhraní stále dostupné pro existing users
 > - Automatizace = modernější rozhraní spojující všechny funkce
@@ -72,7 +74,7 @@
 
 Per CEO Lenka Švihálková (interview):
 
-*"Na českém trhu jsou dva druhy nástrojů, které se věnují automatizaci e-mail marketingu. Do první skupiny můžeme zařadit nástroje marketingové automatizace, které představují vynikající práci s daty. Tyto nástroje se ale soustředí výhradně na automatizace a využívají pro posílání e-mailů nástroje 3. strany... Druhou skupinu tvoří nástroje pro e-mail marketing, které se zaměřují výhradně na doručitelnost... My spojujeme pro klienty oba světy. SmartEmailing má vlastní odesílací infrastrukturu konzultovanou s předními českými providery."*
+_"Na českém trhu jsou dva druhy nástrojů, které se věnují automatizaci e-mail marketingu. Do první skupiny můžeme zařadit nástroje marketingové automatizace, které představují vynikající práci s daty. Tyto nástroje se ale soustředí výhradně na automatizace a využívají pro posílání e-mailů nástroje 3. strany... Druhou skupinu tvoří nástroje pro e-mail marketing, které se zaměřují výhradně na doručitelnost... My spojujeme pro klienty oba světy. SmartEmailing má vlastní odesílací infrastrukturu konzultovanou s předními českými providery."_
 
 Klíčové: **vlastní odesílací infrastruktura** + **automatizace** = unique combo na CZ trhu.
 
@@ -161,6 +163,7 @@ SmartEmailing má **subscriber-based pricing** scaling per database size. Žádn
 ### 2.2 Plány (typická struktura 2026)
 
 #### SmartEmailing Basic / Standard
+
 - Pro **menší e-shopy a firmy**
 - Email marketing základ
 - Drag-and-drop editor
@@ -173,6 +176,7 @@ SmartEmailing má **subscriber-based pricing** scaling per database size. Žádn
 - **Cena:** od cca **490 Kč/měsíc** (do ~1 000 kontaktů, varies)
 
 #### SmartEmailing PRO
+
 - Pro **mid-market+, agentury, mediální domy**
 - **Doporučeno pro 50 000+ kontaktů**
 - Vše z Basic +
@@ -193,15 +197,15 @@ SmartEmailing má **subscriber-based pricing** scaling per database size. Žádn
 
 Per CZ reviews + oficiální (rough estimates v CZK / EUR):
 
-| Kontakty | Cena/měsíc (CZK) | (EUR) |
-|---|---|---|
-| Do 1 000 | ~490–700 Kč | ~€20–30 |
-| 5 000 | ~1 500–2 000 Kč | ~€60–80 |
-| 10 000 | ~2 500–3 500 Kč | ~€100–140 |
-| 25 000 | ~5 000–7 000 Kč | ~€200–280 |
-| 50 000 | ~9 000–12 000 Kč | ~€360–480 |
-| 100 000 | ~15 000–25 000 Kč | ~€600–1000 |
-| 500 000+ | Custom enterprise | Custom |
+| Kontakty | Cena/měsíc (CZK)  | (EUR)      |
+| -------- | ----------------- | ---------- |
+| Do 1 000 | ~490–700 Kč       | ~€20–30    |
+| 5 000    | ~1 500–2 000 Kč   | ~€60–80    |
+| 10 000   | ~2 500–3 500 Kč   | ~€100–140  |
+| 25 000   | ~5 000–7 000 Kč   | ~€200–280  |
+| 50 000   | ~9 000–12 000 Kč  | ~€360–480  |
+| 100 000  | ~15 000–25 000 Kč | ~€600–1000 |
+| 500 000+ | Custom enterprise | Custom     |
 
 ⚠️ **Přesné ceny ověřit na smartemailing.cz/prices** – pricing periodicky aktualizován.
 
@@ -237,26 +241,26 @@ Per CZ reviews + oficiální (rough estimates v CZK / EUR):
 
 ### 2.8 Pricing srovnání s konkurencí (10K contacts, 2026)
 
-| Platform | Cena/měsíc |
-|---|---|
+| Platform                | Cena/měsíc                 |
+| ----------------------- | -------------------------- |
 | **SmartEmailing Basic** | ~2 500–3 500 Kč (€100–140) |
-| **SmartEmailing PRO** | ~5 000+ Kč (€200+) |
-| **Ecomail** | ~60–70 € (1 500–1 750 Kč) |
-| **Mailkit (CZ)** | varies |
-| **Boldem (CZ)** | varies |
-| **Mailchimp Standard** | ~€125 (3 100 Kč) |
-| **MailerLite Advanced** | ~€75 (1 870 Kč) |
-| **Brevo Business** | ~€65 (1 600 Kč) |
-| **ActiveCampaign Plus** | ~€215 (5 400 Kč) |
+| **SmartEmailing PRO**   | ~5 000+ Kč (€200+)         |
+| **Ecomail**             | ~60–70 € (1 500–1 750 Kč)  |
+| **Mailkit (CZ)**        | varies                     |
+| **Boldem (CZ)**         | varies                     |
+| **Mailchimp Standard**  | ~€125 (3 100 Kč)           |
+| **MailerLite Advanced** | ~€75 (1 870 Kč)            |
+| **Brevo Business**      | ~€65 (1 600 Kč)            |
+| **ActiveCampaign Plus** | ~€215 (5 400 Kč)           |
 
 ⚠️ **SmartEmailing je dražší než Ecomail** v entry/mid-tier, ale **competitive s globálními** pro PRO features.
 
 ### 2.9 Cenová politika critique
 
-Per arecenze.cz: *"Doporučujeme ho všem, kdo chtějí spolehlivý český nástroj s pokročilými funkcemi a nevadí jim trochu vyšší cena."*
+Per arecenze.cz: _"Doporučujeme ho všem, kdo chtějí spolehlivý český nástroj s pokročilými funkcemi a nevadí jim trochu vyšší cena."_
 
 Per danielnytra.cz (older 2022 review – ověřit aktualitu):
-*"Má neadekvátní cenu ve srovnání s konkurencí"* – kontroverzní, novější reviews lepší.
+_"Má neadekvátní cenu ve srovnání s konkurencí"_ – kontroverzní, novější reviews lepší.
 
 V 2026 SmartEmailing competitive pricing pro **value provided** (vlastní infra + advanced automation), ale **premium oproti Ecomailu**.
 
@@ -268,7 +272,7 @@ V 2026 SmartEmailing competitive pricing pro **value provided** (vlastní infra 
 
 ### 3.1 Vlastní infrastruktura
 
-Per CEO Švihálková: *"SmartEmailing má vlastní odesílací infrastrukturu konzultovanou s předními českými providery. Nespoléháme na řešení 3. stran."*
+Per CEO Švihálková: _"SmartEmailing má vlastní odesílací infrastrukturu konzultovanou s předními českými providery. Nespoléháme na řešení 3. stran."_
 
 ```
 SmartEmailing setup:
@@ -287,6 +291,7 @@ SmartEmailing setup:
 ### 3.2 Vztah s Seznam.cz
 
 **Seznam.cz email** je **dominantní freemail v ČR** (~50% CZ trhu). SmartEmailing má dlouhodobý vztah:
+
 - CEO Švihálková appearance s Štěpánkou Lebedovou (PM Seznam Email) na Czech Online Expo 2026
 - Společné panely o doručitelnosti
 - Insight into Seznam's algorithms
@@ -328,6 +333,7 @@ Per oficiální claim: **"We deliver over 4 e-maillions a day"** – significant
 ### 4.1 Top 5 hráčů v Česku (2026)
 
 Per industry analyses:
+
 1. **SmartEmailing** – #1 nebo #2 (advanced features + delivery)
 2. **Ecomail** – #1 nebo #2 (affordable + Shoptet)
 3. **Mailkit** – #3 (self-hosted option)
@@ -337,6 +343,7 @@ Per industry analyses:
 ### 4.2 Top 5 hráčů v SK (2026)
 
 Většinou stejní hráči s mírnými rozdíly:
+
 1. Ecomail (popular na SK)
 2. SmartEmailing
 3. Mailkit
@@ -345,42 +352,45 @@ Většinou stejní hráči s mírnými rozdíly:
 
 ### 4.3 SmartEmailing vs. Ecomail (klíčový souboj v CZ)
 
-| Aspect | SmartEmailing | Ecomail |
-|---|---|---|
-| **Origin** | CZ (HK/Praha) | CZ (Praha) |
-| **Pricing** | Vyšší (premium) | Nižší (affordable) |
-| **UI/UX** | Tradiční, robust | Modern, intuitive |
-| **Automation depth** | **Deeper (PRO)** | Solid |
-| **Custom data structures** | ✅ (PRO) | ❌ |
-| **Webtracking** | ✅ | ✅ |
-| **Doručitelnost** | **#1 priority** (vlastní infra) | Solid |
-| **Shoptet integration** | ✅ Deep | ✅ Deep |
-| **Sklik integration** | ✅ Deep | Limited |
-| **Viber** | ✅ | Limited |
-| **Český support** | ✅ Native, oceňovaný | ✅ Native, oceňovaný |
-| **Free plan** | Limited / Trial | Free up to 40K (generous) |
-| **Professional services** | ✅ Strong | Limited |
-| **B2B focus** | More | Less |
-| **Mediální domy** | More | Less |
-| **Fundraising / neziskovky** | Strong | Some |
-| **Editor critique** | Older feel some | Modern but glitches |
-| **Landing pages** | Basic | Basic |
-| **B2C e-commerce small** | Možno overkill | Better fit |
+| Aspect                       | SmartEmailing                   | Ecomail                   |
+| ---------------------------- | ------------------------------- | ------------------------- |
+| **Origin**                   | CZ (HK/Praha)                   | CZ (Praha)                |
+| **Pricing**                  | Vyšší (premium)                 | Nižší (affordable)        |
+| **UI/UX**                    | Tradiční, robust                | Modern, intuitive         |
+| **Automation depth**         | **Deeper (PRO)**                | Solid                     |
+| **Custom data structures**   | ✅ (PRO)                        | ❌                        |
+| **Webtracking**              | ✅                              | ✅                        |
+| **Doručitelnost**            | **#1 priority** (vlastní infra) | Solid                     |
+| **Shoptet integration**      | ✅ Deep                         | ✅ Deep                   |
+| **Sklik integration**        | ✅ Deep                         | Limited                   |
+| **Viber**                    | ✅                              | Limited                   |
+| **Český support**            | ✅ Native, oceňovaný            | ✅ Native, oceňovaný      |
+| **Free plan**                | Limited / Trial                 | Free up to 40K (generous) |
+| **Professional services**    | ✅ Strong                       | Limited                   |
+| **B2B focus**                | More                            | Less                      |
+| **Mediální domy**            | More                            | Less                      |
+| **Fundraising / neziskovky** | Strong                          | Some                      |
+| **Editor critique**          | Older feel some                 | Modern but glitches       |
+| **Landing pages**            | Basic                           | Basic                     |
+| **B2C e-commerce small**     | Možno overkill                  | Better fit                |
 
 ### 4.4 Klientské reference
 
 #### Mediální domy + velké firmy
+
 - **Blesk.cz** (Mafra) – 30. výročí kampaň
 - **Lesensky.cz** – 6+ let používání
 - **Contexto** (agentura)
 
 #### Fundraising / neziskovky
+
 - **Armáda spásy** (Salvation Army)
 - **Diakonie** (153 lokací CZ + 10 zemí)
 - **Cesta domů** (paliative care)
 - **Charita ČR**
 
 #### E-commerce
+
 - **Vivantis** – 32 automation scenarios, 8-15% e-mail obratu
 - **Megapixel** – WebTop100 winner
 - **VirusFree**
@@ -401,6 +411,7 @@ Většinou stejní hráči s mírnými rozdíly:
 ### 5.1 Contact data structure
 
 #### Standard fields
+
 - Email (primární)
 - Jméno + Příjmení
 - Oslovení (5. pád, vokativ – **CZ-specific!**)
@@ -410,10 +421,12 @@ Většinou stejní hráči s mírnými rozdíly:
 - Adresa, město, stát
 
 #### Custom fields
+
 - Text, číslo, datum, multi-select, single-select
 - **Custom data structures** (PRO) – relational data
 
 #### CZ-specific features
+
 - **5. pád oslovení** – skloňování českých jmen
 - **Český kalendář** – svátky + jmeniny pro birthday triggers
 - **Slovenské skloňování** – SK podpora
@@ -432,6 +445,7 @@ Většinou stejní hráči s mírnými rozdíly:
 **Advanced segmentation** – key strength:
 
 #### Filter criteria
+
 - **Profile data** (custom fields, oslovení)
 - **Engagement** (opened/clicked specific campaigns)
 - **Webtracking** (page visits, time on site)
@@ -443,10 +457,12 @@ Většinou stejní hráči s mírnými rozdíly:
 - **Date conditions**
 
 #### Operators
+
 - AND, OR, NOT, parentheses
 - Equals, contains, between, before/after
 
 #### Segment types
+
 - **Dynamic** (auto-update)
 - **Static** (snapshot)
 - **Saved** (reusable)
@@ -495,6 +511,7 @@ Contact (Email = Jan Novák)
 ```
 
 Use cases:
+
 - **Loyalty programs** s point tracking
 - **Order history** s details
 - **Multi-purchase patterns**
@@ -507,14 +524,14 @@ Use cases:
 
 ### 6.1 Campaign types
 
-| Typ | Použití |
-|---|---|
-| **Standard kampaň** | Klasický newsletter |
-| **A/B test** | Test variant |
-| **Automatizační email** | V rámci scénáře |
-| **SmartKampaň** | Trigger-based automation |
-| **Transakční** | Order confirmations |
-| **RSS-driven** | Auto z RSS feed |
+| Typ                     | Použití                  |
+| ----------------------- | ------------------------ |
+| **Standard kampaň**     | Klasický newsletter      |
+| **A/B test**            | Test variant             |
+| **Automatizační email** | V rámci scénáře          |
+| **SmartKampaň**         | Trigger-based automation |
+| **Transakční**          | Order confirmations      |
+| **RSS-driven**          | Auto z RSS feed          |
 
 ### 6.2 Campaign builder workflow
 
@@ -596,6 +613,7 @@ Potvrdit
 ### 6.6 Slevové kupóny
 
 **CZ-specific feature:**
+
 - **Zásobník kupónů** – upload bulk codes
 - **Per-recipient unique code**
 - **Tracking redemption**
@@ -643,6 +661,7 @@ Potvrdit
 ### 7.3 Product Feed blocks (e-commerce)
 
 **Key feature pro e-shopy:**
+
 - Pull data z Shoptet / Shopify / WooCommerce
 - Dynamic product blocks
 - **Personalized:**
@@ -655,7 +674,7 @@ Potvrdit
 ### 7.4 Landing page editor
 
 Per danielnytra.cz critique (2022 review, ověřit současný stav):
-*"Pokud jste tvořili landing page v MailChimpu v Mailerlite nebo ActiveCampaing, vyděsíte se při pohledu na editor."*
+_"Pokud jste tvořili landing page v MailChimpu v Mailerlite nebo ActiveCampaing, vyděsíte se při pohledu na editor."_
 
 ⚠️ Landing page editor historically **less polished** než konkurence. V 2026 možná improved – ověřit s vendor demo.
 
@@ -680,6 +699,7 @@ Automation = visual scenario builder
 ### 8.2 Two paradigms
 
 #### Smart Kampaně (basic)
+
 - **Trigger-based** simple workflows
 - Limited customization
 - 8 systémových triggers
@@ -687,6 +707,7 @@ Automation = visual scenario builder
 - For basic use cases
 
 #### Automatizace (advanced - main)
+
 - **Full visual scenario builder**
 - **Multi-step workflows**
 - **Branching conditions**
@@ -697,6 +718,7 @@ Automation = visual scenario builder
 ### 8.3 Triggers (events)
 
 #### Systémové triggers (8 celkem)
+
 - **Přihlášení k odběru** (subscribe to list)
 - **Změna v seznamu** (list membership change)
 - **Otevření kampaně** (email opened)
@@ -707,9 +729,11 @@ Automation = visual scenario builder
 - **Custom event** (PRO!)
 
 #### 4 PRO-only systémové triggers
+
 Per danielnytra.cz: 4 of 8 systémových triggers jsou **PRO-only**.
 
 #### E-commerce triggers (vyžaduje napojení e-shopu)
+
 - **Opuštěný košík**
 - **Dokončený nákup**
 - **První nákup**
@@ -717,6 +741,7 @@ Per danielnytra.cz: 4 of 8 systémových triggers jsou **PRO-only**.
 - **Reorder cycle**
 
 #### Custom events (PRO!)
+
 - **Definovat vlastní triggery**
 - Via webhooks
 - Via API
@@ -728,6 +753,7 @@ Per danielnytra.cz: 4 of 8 systémových triggers jsou **PRO-only**.
 ### 8.4 Actions
 
 #### Sending
+
 - **Odeslat email**
 - **Odeslat SMS** (add-on)
 - **Odeslat Viber** (PRO)
@@ -735,6 +761,7 @@ Per danielnytra.cz: 4 of 8 systémových triggers jsou **PRO-only**.
 - **Přidat do Facebook audience**
 
 #### Contact manipulation
+
 - **Přidat do seznamu**
 - **Odebrat ze seznamu**
 - **Aktualizovat pole**
@@ -742,12 +769,14 @@ Per danielnytra.cz: 4 of 8 systémových triggers jsou **PRO-only**.
 - **Tagovat**
 
 #### Logic / Rules
+
 - **Čekat** (delay)
 - **Podmínka** (if/else)
 - **Goal** (conversion)
 - **A/B split**
 
 #### External
+
 - **Webhook**
 - **API call**
 
@@ -806,7 +835,7 @@ Real-time evaluation
 
 ### 8.8 Critique vs. ActiveCampaign
 
-Per danielnytra.cz: *"Pokud nemáte PRO plán, je vaše verze dost osekaná a i s PRO plánem tu není zrovna nepřeberné množství možností. Zejména pokud automatizace SmartEmailingu srovnáme s ActiveCampaign."*
+Per danielnytra.cz: _"Pokud nemáte PRO plán, je vaše verze dost osekaná a i s PRO plánem tu není zrovna nepřeberné množství možností. Zejména pokud automatizace SmartEmailingu srovnáme s ActiveCampaign."_
 
 ⚠️ SmartEmailing automation je **strong na CZ trhu**, ale **méně sofistikovaná než ActiveCampaign / Klaviyo** v některých edge cases.
 
@@ -817,7 +846,7 @@ Per danielnytra.cz: *"Pokud nemáte PRO plán, je vaše verze dost osekaná a i 
 ### 9.1 Smart kampaně = jednodušší automation
 
 Per oficiální documentation:
-*"SmartKampaně jsou automatizované e-maily v návaznosti na seznam. Nicméně v případě používání automatizace není třeba tuto sekci používat, protože vše zvládnete v krásném vizuálním prostředí automatizace."*
+_"SmartKampaně jsou automatizované e-maily v návaznosti na seznam. Nicméně v případě používání automatizace není třeba tuto sekci používat, protože vše zvládnete v krásném vizuálním prostředí automatizace."_
 
 Currently **legacy** + still functional, ale **Automatizace** je modernější verze.
 
@@ -862,10 +891,11 @@ SmartEmailing nabízí **11 pre-built scenarios celkem, 5 PRO-only**.
 ### 10.2 Scenarios PRO-only (5)
 
 Per danielnytra.cz:
+
 - **Odstupňovaný test angažovanosti** (gradient engagement test)
 - **Aktivní kontakty napříč kanály** (multi-channel active contacts)
 - **Jen nové a aktivní kontakty** (new + active contacts only)
-- + 2 další pokročilé scénáře
+- - 2 další pokročilé scénáře
 
 ### 10.3 Use case: Welcome série
 
@@ -900,6 +930,7 @@ End
 ### 10.4 Use case: Vivantis case study
 
 Per oficiální:
+
 - **3 původní scénáře → 32 scénářů**
 - **Automatizovaný emailing = 8-15% z celkového obratu z emailingu**
 - **Personalized automations o 10% vyšší open rate**
@@ -913,6 +944,7 @@ Per oficiální:
 ### 11.1 Co to je
 
 **Relational data modeling** beyond standard contact fields:
+
 - Define **custom tables** (objects)
 - Per-contact multiple records
 - Use v automation + segmentation + emails
@@ -920,6 +952,7 @@ Per oficiální:
 ### 11.2 Use cases
 
 #### Loyalty program
+
 ```
 Contact: Jan Novák
 ├── Loyalty Points table:
@@ -931,12 +964,14 @@ Contact: Jan Novák
 ```
 
 Email může pak zobrazit:
+
 - Current points balance
 - Recent activity
 - Expiry warning
 - Personalized rewards
 
 #### Subscription tracking
+
 ```
 Contact: Jana Veselá
 ├── Subscriptions table:
@@ -948,6 +983,7 @@ Contact: Jana Veselá
 Email triggers pre-expiration reminder.
 
 #### Order history s details
+
 ```
 Contact: Petr Černý
 ├── Orders table:
@@ -982,6 +1018,7 @@ Use v:
 ### 11.4 Integration s Ellity (loyalty platform)
 
 Per ellity.eu docs, deep integration:
+
 - Loyalty points sync
 - Account balance v emailech
 - Point expiration triggers
@@ -1060,7 +1097,7 @@ Continue nurturing
 SmartEmailing.trackEvent('viewed_video', {
   video_id: 'webinar-001',
   duration: 240,
-  completed: false
+  completed: false,
 });
 ```
 
@@ -1135,7 +1172,7 @@ Welcome email automatically
 
 ### 14.2 Landing page editor critique
 
-Per danielnytra.cz: *"Pokud jste tvořili landing page v MailChimpu v Mailerlite nebo ActiveCampaing, vyděsíte se při pohledu na editor."*
+Per danielnytra.cz: _"Pokud jste tvořili landing page v MailChimpu v Mailerlite nebo ActiveCampaing, vyděsíte se při pohledu na editor."_
 
 ⚠️ Landing page editor je **historically weaker** než email editor. V 2026 možná improved.
 
@@ -1179,6 +1216,7 @@ Per danielnytra.cz: *"Pokud jste tvořili landing page v MailChimpu v Mailerlite
 ### 15.3 Viber messages
 
 Per oficiální documentation:
+
 - **Viber business messages** dostupné
 - **Per-recipient pricing** (similar SMS)
 - **Rich media support**
@@ -1233,13 +1271,13 @@ Display ads na Seznam.cz, partner sites
 
 ### 16.3 Sklik vs. Facebook
 
-| Aspect | Sklik | Facebook Ads |
-|---|---|---|
-| **Geographic** | CZ/SK primary | Global |
-| **Reach** | Seznam.cz visitors (CZ trafik) | Facebook + Instagram |
-| **Cost** | Často nižší v CZ | Standard global |
-| **Targeting** | Behaviorální + demografická | Behaviorální + demografická + zájmy |
-| **Use case CZ** | Critical pro CZ businesses | Complementary |
+| Aspect          | Sklik                          | Facebook Ads                        |
+| --------------- | ------------------------------ | ----------------------------------- |
+| **Geographic**  | CZ/SK primary                  | Global                              |
+| **Reach**       | Seznam.cz visitors (CZ trafik) | Facebook + Instagram                |
+| **Cost**        | Často nižší v CZ               | Standard global                     |
+| **Targeting**   | Behaviorální + demografická    | Behaviorální + demografická + zájmy |
+| **Use case CZ** | Critical pro CZ businesses     | Complementary                       |
 
 ### 16.4 Multichannel use case
 
@@ -1314,6 +1352,7 @@ Cross-channel attribution
 ### 17.8 Reporting interface critique
 
 Některé reviews kritizují:
+
 - Reports interface může být **datově náročný**
 - Real-time updates **sometimes delayed**
 - Less visual než Mailchimp / Klaviyo dashboards
@@ -1325,7 +1364,7 @@ Některé reviews kritizují:
 ### 18.1 Shoptet plugin
 
 Per Shoptet doplňky:
-*"SmartEmailing je chytrý český nástroj pro automatizovanou e-mailovou a SMS komunikaci."*
+_"SmartEmailing je chytrý český nástroj pro automatizovanou e-mailovou a SMS komunikaci."_
 
 ```
 Shoptet → App Store → SmartEmailing
@@ -1344,6 +1383,7 @@ Propojení vytvořeno
 ### 18.2 Data synced
 
 #### Zákazníci
+
 - Email (primární)
 - Jméno, příjmení
 - Telefon
@@ -1352,6 +1392,7 @@ Propojení vytvořeno
 - Marketing consent
 
 #### Objednávky
+
 - Order ID
 - Datum, status
 - Total value (CZK)
@@ -1360,10 +1401,12 @@ Propojení vytvořeno
 - Payment method
 
 #### Produkty
+
 - Product feed (URL)
 - Automatic feed inserting
 
 #### Cart events
+
 - Cart abandoned (>30 min default)
 - Cart contents dynamic
 
@@ -1371,7 +1414,7 @@ Propojení vytvořeno
 
 **Klíčová výhoda Shoptet integrace SmartEmailingu:**
 
-*"Pokud máte dva a více e-shopů budete tento doplněk milovat. Nabízí bezkonkurenční propojení v reálném čase, které umožní stahovat data z více e-shopů do jednoho účtu SmartEmailingu."*
+_"Pokud máte dva a více e-shopů budete tento doplněk milovat. Nabízí bezkonkurenční propojení v reálném čase, které umožní stahovat data z více e-shopů do jednoho účtu SmartEmailingu."_
 
 ```
 SmartEmailing account
@@ -1425,17 +1468,17 @@ Use case: holding s multiple brands.
 
 ### 19.2 API endpoints
 
-| Resource | Operace |
-|---|---|
-| `/contacts` | CRUD contacts |
-| `/contactlists` | Lists management |
-| `/segments` | Segment data |
-| `/campaigns` | Campaign management |
-| `/automations` | Workflow data |
-| `/custom-data-structures` | Custom data (PRO) |
-| `/custom-events` | Event tracking (PRO) |
-| `/sms` | SMS sending |
-| `/transactional` | Transactional sends |
+| Resource                  | Operace              |
+| ------------------------- | -------------------- |
+| `/contacts`               | CRUD contacts        |
+| `/contactlists`           | Lists management     |
+| `/segments`               | Segment data         |
+| `/campaigns`              | Campaign management  |
+| `/automations`            | Workflow data        |
+| `/custom-data-structures` | Custom data (PRO)    |
+| `/custom-events`          | Event tracking (PRO) |
+| `/sms`                    | SMS sending          |
+| `/transactional`          | Transactional sends  |
 
 ### 19.3 Webhooks
 
@@ -1448,12 +1491,14 @@ Use case: holding s multiple brands.
 ### 19.4 Native integrace
 
 #### CZ-specific (klíčové)
+
 - **Shoptet** (deep)
 - **Sklik** (Seznam.cz reklamní)
 - **Heureka** (porovnávač cen)
 - **Zboží.cz** (porovnávač)
 
 #### Global e-commerce
+
 - **Shopify**
 - **WooCommerce**
 - **Magento** (Adobe Commerce)
@@ -1461,16 +1506,19 @@ Use case: holding s multiple brands.
 - **BigCommerce**
 
 #### Marketing / advanced
+
 - **Meiro** (CDP) – deep
 - **Motionlab** (video personalization)
 - **Ellity** (loyalty platform CZ)
 - **Facebook / Instagram Ads**
 
 #### iPaaS
+
 - **Zapier**
 - **Make (Integromat)**
 
 #### CRM
+
 - Salesforce (via Zapier)
 - Pipedrive (via Zapier)
 
@@ -1479,6 +1527,7 @@ Use case: holding s multiple brands.
 **Strong differentiator SmartEmailingu.**
 
 #### Tým certifikovaných specialistů:
+
 - **Design email templates** (custom design)
 - **Data migration** from competitor platforms (Mailchimp, atd.)
 - **Custom automation strategies**
@@ -1487,6 +1536,7 @@ Use case: holding s multiple brands.
 - **Onboarding training**
 
 #### Pricing services
+
 - Per hodina
 - Per balíček (template design)
 - Managed service monthly retainer
@@ -1512,6 +1562,7 @@ Ongoing support
 ### 19.7 Training programs
 
 Per oficiální:
+
 - **Video kurzy pro začátečníky**
 - **Školení** organizovaná SmartEmailingem
 - **Webináře**
@@ -1543,9 +1594,10 @@ Per oficiální:
 
 ### 20.3 Doručitelnost = compliance advantage
 
-Per oficiální documentation: *"All the steps within the SmartEmailing application are in accordance with the legislation and we store the data on our own servers."*
+Per oficiální documentation: _"All the steps within the SmartEmailing application are in accordance with the legislation and we store the data on our own servers."_
 
 Klíčové:
+
 - Vlastní servery = data nikam neopouštějí
 - Žádná závislost na 3rd party
 - Lepší kontrola compliance
@@ -1588,9 +1640,10 @@ Klíčové:
 
 ### 21.3 Automation depth vs. ActiveCampaign
 
-Per danielnytra.cz: *"automatizace SmartEmailingu srovnáme s ActiveCampaign... není zde nepřeberné množství možností"*
+Per danielnytra.cz: _"automatizace SmartEmailingu srovnáme s ActiveCampaign... není zde nepřeberné množství možností"_
 
 ⚠️ **Méně sofistikovaná** než ActiveCampaign pro power users:
+
 - Méně branching options
 - Limited workflow patterns
 - Fewer pre-built scenarios than ActiveCampaign 900+
@@ -1609,6 +1662,7 @@ Per danielnytra.cz: *"automatizace SmartEmailingu srovnáme s ActiveCampaign... 
 ### 21.5 Landing page editor
 
 Per critique:
+
 - **Less polished** than Mailchimp / MailerLite landing pages
 - **Limited templates**
 - **Custom HTML required** for advanced needs
@@ -1624,6 +1678,7 @@ Per critique:
 ### 21.7 Editor critique
 
 Per multiple older reviews:
+
 - **Block management UX** can be improved
 - **Image library management** limited
 - Reports occasionally delayed
@@ -1631,6 +1686,7 @@ Per multiple older reviews:
 ### 21.8 PRO plan barrier
 
 Many features locked behind PRO:
+
 - Custom events
 - Custom data structures
 - 4 z 8 systémových triggerů
@@ -1658,6 +1714,7 @@ Many features locked behind PRO:
 ### 21.11 Reports interface
 
 Per reviews:
+
 - **Data-heavy** layout
 - **Less visual** than modern platforms
 - Real-time updates **sometimes delayed**
@@ -1676,6 +1733,7 @@ Per reviews:
 ## 22. Shrnutí: Pro koho a proti komu
 
 ### SmartEmailing je dobrá volba pokud
+
 - Operate v **ČR/SK** s **CZ kontakty** primárně
 - Vážíte si **doručitelnost** (CZ ISP relationships) – #1 priority
 - Provozujete **mid-market e-shop** (50K+ kontakty)
@@ -1693,6 +1751,7 @@ Per reviews:
 - B2B firma s **CZ kontakty + Sklik ads**
 
 ### SmartEmailing není dobrá volba pokud
+
 - Jste **malé startupy / solopreneurs** s tight budget – overkill + drahé
 - Pracujete **primárně anglicky / mezinárodně** – globální platforms lepší
 - Provozujete **DTC s deep Shopify** mezinárodně – Klaviyo silnější
@@ -1709,21 +1768,21 @@ Per reviews:
 
 ### SmartEmailing vs. konkurence
 
-| Konkurence | Kdy lepší než SmartEmailing |
-|---|---|
-| **Ecomail (CZ)** | Affordable, modern UI, simpler, generous free plan |
-| **Mailkit (CZ)** | Self-hosted option, tech-savvy CZ businesses |
-| **Boldem (CZ)** | Modern interface, simpler use cases |
-| **Mailchimp** | Brand recognition, ecosystem, global reach |
-| **MailerLite** | Solopreneurs, content creators, free plan, modern UI |
-| **Brevo** | Multi-vertical, transactional v base, volume-based pricing |
-| **Klaviyo** | DTC Shopify e-commerce, predictive AI |
-| **ActiveCampaign** | Deeper automation, integrated CRM, 970+ integrations |
-| **HubSpot** | Full B2B CRM, multi-Hub vision |
-| **GetResponse** | Webinars, courses, content monetization, 27 languages |
-| **SAP Emarsys** | Enterprise retail, omnichannel scale, SAP ecosystem |
-| **ExpertSender** | E-commerce CDP, regional support |
+| Konkurence         | Kdy lepší než SmartEmailing                                |
+| ------------------ | ---------------------------------------------------------- |
+| **Ecomail (CZ)**   | Affordable, modern UI, simpler, generous free plan         |
+| **Mailkit (CZ)**   | Self-hosted option, tech-savvy CZ businesses               |
+| **Boldem (CZ)**    | Modern interface, simpler use cases                        |
+| **Mailchimp**      | Brand recognition, ecosystem, global reach                 |
+| **MailerLite**     | Solopreneurs, content creators, free plan, modern UI       |
+| **Brevo**          | Multi-vertical, transactional v base, volume-based pricing |
+| **Klaviyo**        | DTC Shopify e-commerce, predictive AI                      |
+| **ActiveCampaign** | Deeper automation, integrated CRM, 970+ integrations       |
+| **HubSpot**        | Full B2B CRM, multi-Hub vision                             |
+| **GetResponse**    | Webinars, courses, content monetization, 27 languages      |
+| **SAP Emarsys**    | Enterprise retail, omnichannel scale, SAP ecosystem        |
+| **ExpertSender**   | E-commerce CDP, regional support                           |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů smartemailing.cz, napoveda.smartemailing.cz, doplnky.shoptet.cz a praktických zdrojů (arecenze.cz, danielnytra.cz, nastrojeproweb.cz, ellity.eu). Pro nejaktuálnější ceny vždy ověřit na smartemailing.cz/prices.*
+_Dokument zpracován z oficiálních zdrojů smartemailing.cz, napoveda.smartemailing.cz, doplnky.shoptet.cz a praktických zdrojů (arecenze.cz, danielnytra.cz, nastrojeproweb.cz, ellity.eu). Pro nejaktuálnější ceny vždy ověřit na smartemailing.cz/prices._

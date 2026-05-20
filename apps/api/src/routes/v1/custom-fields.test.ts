@@ -19,7 +19,7 @@ import { db } from '../../db/client.js';
 
 // Helper to set what the mock DB returns
 function setDefs(defs: object[]) {
-  ((db as unknown as { where: ReturnType<typeof vi.fn> }).where).mockResolvedValue(defs);
+  (db as unknown as { where: ReturnType<typeof vi.fn> }).where.mockResolvedValue(defs);
 }
 
 describe('validateCustomFields', () => {
@@ -57,14 +57,18 @@ describe('validateCustomFields', () => {
   });
 
   it('throws when select value is not in options', async () => {
-    setDefs([{ key: 'plan', fieldType: 'select', required: false, options: ['free', 'pro', 'enterprise'] }]);
+    setDefs([
+      { key: 'plan', fieldType: 'select', required: false, options: ['free', 'pro', 'enterprise'] },
+    ]);
     await expect(validateCustomFields('org1', { plan: 'unknown' })).rejects.toMatchObject({
       details: { errors: expect.arrayContaining([expect.stringContaining('plan')]) },
     });
   });
 
   it('passes when select value is in options', async () => {
-    setDefs([{ key: 'plan', fieldType: 'select', required: false, options: ['free', 'pro', 'enterprise'] }]);
+    setDefs([
+      { key: 'plan', fieldType: 'select', required: false, options: ['free', 'pro', 'enterprise'] },
+    ]);
     await expect(validateCustomFields('org1', { plan: 'pro' })).resolves.toBeUndefined();
   });
 

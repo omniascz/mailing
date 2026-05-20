@@ -15,7 +15,11 @@
 import { and, eq, asc, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts } from '../../db/schema/contacts.js';
-import { lifecycleRules, type LifecycleRule, type LifecycleRuleCondition } from '../../db/schema/lifecycle-rules.js';
+import {
+  lifecycleRules,
+  type LifecycleRule,
+  type LifecycleRuleCondition,
+} from '../../db/schema/lifecycle-rules.js';
 
 // ─── Fact resolver ────────────────────────────────────────────────────────────
 
@@ -30,8 +34,11 @@ interface ContactFacts {
 }
 
 async function loadFacts(orgId: string, contactId: string): Promise<ContactFacts | null> {
-  const rows = await db.select().from(contacts)
-    .where(and(eq(contacts.orgId, orgId), eq(contacts.id, contactId))).limit(1);
+  const rows = await db
+    .select()
+    .from(contacts)
+    .where(and(eq(contacts.orgId, orgId), eq(contacts.id, contactId)))
+    .limit(1);
   const c = rows[0];
   if (!c) return null;
 
@@ -60,12 +67,18 @@ async function loadFacts(orgId: string, contactId: string): Promise<ContactFacts
 
 function resolveField(field: string, facts: ContactFacts): unknown {
   switch (field) {
-    case 'lead_score': return facts.leadScore;
-    case 'lifecycle_stage': return facts.lifecycleStage;
-    case 'has_booked_meeting': return facts.hasBookedMeeting;
-    case 'has_tag': return facts.tags;
-    case 'last_opened_at': return facts.lastOpenedAt;
-    case 'last_clicked_at': return facts.lastClickedAt;
+    case 'lead_score':
+      return facts.leadScore;
+    case 'lifecycle_stage':
+      return facts.lifecycleStage;
+    case 'has_booked_meeting':
+      return facts.hasBookedMeeting;
+    case 'has_tag':
+      return facts.tags;
+    case 'last_opened_at':
+      return facts.lastOpenedAt;
+    case 'last_clicked_at':
+      return facts.lastClickedAt;
     default:
       if (field.startsWith('custom.')) {
         return facts.customFields[field.slice('custom.'.length)];
@@ -79,15 +92,23 @@ function evaluateCondition(cond: LifecycleRuleCondition, facts: ContactFacts): b
   const expected = cond.value;
 
   switch (cond.operator) {
-    case 'eq':    return actual === expected;
-    case 'neq':   return actual !== expected;
-    case 'gt':    return typeof actual === 'number' && typeof expected === 'number' && actual > expected;
-    case 'gte':   return typeof actual === 'number' && typeof expected === 'number' && actual >= expected;
-    case 'lt':    return typeof actual === 'number' && typeof expected === 'number' && actual < expected;
-    case 'lte':   return typeof actual === 'number' && typeof expected === 'number' && actual <= expected;
+    case 'eq':
+      return actual === expected;
+    case 'neq':
+      return actual !== expected;
+    case 'gt':
+      return typeof actual === 'number' && typeof expected === 'number' && actual > expected;
+    case 'gte':
+      return typeof actual === 'number' && typeof expected === 'number' && actual >= expected;
+    case 'lt':
+      return typeof actual === 'number' && typeof expected === 'number' && actual < expected;
+    case 'lte':
+      return typeof actual === 'number' && typeof expected === 'number' && actual <= expected;
     case 'contains':
-      return Array.isArray(actual) && actual.includes(expected as string)
-        || typeof actual === 'string' && typeof expected === 'string' && actual.includes(expected);
+      return (
+        (Array.isArray(actual) && actual.includes(expected as string)) ||
+        (typeof actual === 'string' && typeof expected === 'string' && actual.includes(expected))
+      );
     case 'exists':
       return actual !== undefined && actual !== null && actual !== '';
     default:
@@ -122,13 +143,16 @@ export async function evaluateContact(
     return { advanced: false, fromStage: null, toStage: null, ruleId: null, ruleName: null };
   }
 
-  const rules = await db.select().from(lifecycleRules)
+  const rules = await db
+    .select()
+    .from(lifecycleRules)
     .where(and(eq(lifecycleRules.orgId, orgId), eq(lifecycleRules.enabled, true)))
     .orderBy(asc(lifecycleRules.priority));
 
   for (const rule of rules) {
     // Tick evaluation counter (async; non-blocking for the hot path)
-    void db.update(lifecycleRules)
+    void db
+      .update(lifecycleRules)
       .set({ evaluationCount: sql`${lifecycleRules.evaluationCount} + 1` })
       .where(eq(lifecycleRules.id, rule.id));
 
@@ -136,29 +160,44 @@ export async function evaluateContact(
 
     // Apply: advance stage + add tags + optionally enrol in workflow
     const fromStage = facts.lifecycleStage;
-    const nextCustomFields: Record<string, unknown> = { ...facts.customFields, lifecycle_stage: rule.toStage };
+    const nextCustomFields: Record<string, unknown> = {
+      ...facts.customFields,
+      lifecycle_stage: rule.toStage,
+    };
     if (rule.addTags.length) {
-      const existing = Array.isArray(facts.customFields.tags) ? facts.customFields.tags as string[] : [];
+      const existing = Array.isArray(facts.customFields.tags)
+        ? (facts.customFields.tags as string[])
+        : [];
       nextCustomFields.tags = [...new Set([...existing, ...rule.addTags])];
     }
 
-    await db.update(contacts).set({
-      customFields: nextCustomFields,
-      updatedAt: new Date(),
-    }).where(and(eq(contacts.orgId, orgId), eq(contacts.id, contactId)));
+    await db
+      .update(contacts)
+      .set({
+        customFields: nextCustomFields,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(contacts.orgId, orgId), eq(contacts.id, contactId)));
 
-    await db.update(lifecycleRules).set({
-      matchCount: sql`${lifecycleRules.matchCount} + 1`,
-      lastMatchedAt: new Date(),
-    }).where(eq(lifecycleRules.id, rule.id));
+    await db
+      .update(lifecycleRules)
+      .set({
+        matchCount: sql`${lifecycleRules.matchCount} + 1`,
+        lastMatchedAt: new Date(),
+      })
+      .where(eq(lifecycleRules.id, rule.id));
 
     if (rule.triggerWorkflowId) {
       try {
         const { onApiEvent } = await import('../workflows/triggers.js');
         await onApiEvent(orgId, contactId, 'lifecycle_stage_advanced', {
-          fromStage, toStage: rule.toStage, ruleId: rule.id,
+          fromStage,
+          toStage: rule.toStage,
+          ruleId: rule.id,
         });
-      } catch { /* non-fatal */ }
+      } catch {
+        /* non-fatal */
+      }
     }
 
     return {
@@ -170,40 +209,55 @@ export async function evaluateContact(
     };
   }
 
-  return { advanced: false, fromStage: facts.lifecycleStage, toStage: null, ruleId: null, ruleName: null };
+  return {
+    advanced: false,
+    fromStage: facts.lifecycleStage,
+    toStage: null,
+    ruleId: null,
+    ruleName: null,
+  };
 }
 
 // ─── CRUD helpers ─────────────────────────────────────────────────────────────
 
-export async function createRule(orgId: string, input: {
-  name: string;
-  fromStage?: string;
-  toStage: string;
-  conditions: LifecycleRuleCondition[];
-  addTags?: string[];
-  triggerWorkflowId?: string;
-  priority?: number;
-}): Promise<LifecycleRule> {
-  const [rule] = await db.insert(lifecycleRules).values({
-    orgId,
-    name: input.name,
-    fromStage: input.fromStage ?? null,
-    toStage: input.toStage,
-    conditions: input.conditions,
-    addTags: input.addTags ?? [],
-    triggerWorkflowId: input.triggerWorkflowId ?? null,
-    priority: input.priority ?? 100,
-  }).returning();
+export async function createRule(
+  orgId: string,
+  input: {
+    name: string;
+    fromStage?: string;
+    toStage: string;
+    conditions: LifecycleRuleCondition[];
+    addTags?: string[];
+    triggerWorkflowId?: string;
+    priority?: number;
+  },
+): Promise<LifecycleRule> {
+  const [rule] = await db
+    .insert(lifecycleRules)
+    .values({
+      orgId,
+      name: input.name,
+      fromStage: input.fromStage ?? null,
+      toStage: input.toStage,
+      conditions: input.conditions,
+      addTags: input.addTags ?? [],
+      triggerWorkflowId: input.triggerWorkflowId ?? null,
+      priority: input.priority ?? 100,
+    })
+    .returning();
   return rule!;
 }
 
 export async function listRules(orgId: string): Promise<LifecycleRule[]> {
-  return db.select().from(lifecycleRules)
+  return db
+    .select()
+    .from(lifecycleRules)
     .where(eq(lifecycleRules.orgId, orgId))
     .orderBy(asc(lifecycleRules.priority));
 }
 
 export async function deleteRule(orgId: string, ruleId: string): Promise<void> {
-  await db.delete(lifecycleRules)
+  await db
+    .delete(lifecycleRules)
     .where(and(eq(lifecycleRules.orgId, orgId), eq(lifecycleRules.id, ruleId)));
 }

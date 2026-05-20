@@ -19,9 +19,12 @@ import type { UserRole } from '@forgemsg/shared';
 export const ROLE_PERMISSIONS: Record<UserRole, readonly string[]> = {
   owner: ['*'],
   admin: [
-    'org:read', 'org:write',
-    'members:read', 'members:write',
-    'permission_sets:read', 'permission_sets:write',
+    'org:read',
+    'org:write',
+    'members:read',
+    'members:write',
+    'permission_sets:read',
+    'permission_sets:write',
     'campaigns:*',
     'contacts:*',
     'analytics:*',
@@ -32,12 +35,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly string[]> = {
   ],
   editor: [
     'org:read',
-    'campaigns:read', 'campaigns:write',
-    'contacts:read', 'contacts:write',
+    'campaigns:read',
+    'campaigns:write',
+    'contacts:read',
+    'contacts:write',
     'analytics:read',
-    'templates:read', 'templates:write',
-    'segments:read', 'segments:write',
-    'workflows:read', 'workflows:write',
+    'templates:read',
+    'templates:write',
+    'segments:read',
+    'segments:write',
+    'workflows:read',
+    'workflows:write',
   ],
   viewer: [
     'org:read',
@@ -103,5 +111,7 @@ export function findInvalidPermission(permissions: readonly string[]): string | 
 
 /** Dedupe + sort + drop empty entries. */
 export function canonicalisePermissions(permissions: readonly string[]): string[] {
-  return [...new Set(permissions.filter((p) => typeof p === 'string' && p.trim().length > 0))].sort();
+  return [
+    ...new Set(permissions.filter((p) => typeof p === 'string' && p.trim().length > 0)),
+  ].sort();
 }

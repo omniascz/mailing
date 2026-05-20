@@ -21,16 +21,20 @@ import { users } from './users.js';
  */
 
 export const dataSetKindEnum = pgEnum('data_set_kind', [
-  'sql',        // raw whitelisted SQL
-  'segment',    // contact segment definition
-  'aggregate',  // preconfigured analytics aggregate
+  'sql', // raw whitelisted SQL
+  'segment', // contact segment definition
+  'aggregate', // preconfigured analytics aggregate
 ]);
 
 export const dataSets = pgTable(
   'data_sets',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     ownerUserId: uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
 
     name: varchar('name', { length: 255 }).notNull(),
@@ -40,7 +44,14 @@ export const dataSets = pgTable(
 
     /** Parameter declarations: [{ name, type: 'string'|'number'|'date', required, default? }] */
     parameters: jsonb('parameters')
-      .$type<Array<{ name: string; type: 'string' | 'number' | 'date'; required?: boolean; defaultValue?: unknown }>>()
+      .$type<
+        Array<{
+          name: string;
+          type: 'string' | 'number' | 'date';
+          required?: boolean;
+          defaultValue?: unknown;
+        }>
+      >()
       .notNull()
       .default([]),
 

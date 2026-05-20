@@ -25,7 +25,8 @@ describe('extractSmtpCode', () => {
 
 describe('extractNdrReason', () => {
   it('extracts Diagnostic-Code line', () => {
-    const ndr = 'From: mailer-daemon@example.com\nDiagnostic-Code: smtp; 550 User unknown\nStatus: 5.1.1';
+    const ndr =
+      'From: mailer-daemon@example.com\nDiagnostic-Code: smtp; 550 User unknown\nStatus: 5.1.1';
     const reason = extractNdrReason(ndr);
     expect(reason).toContain('550 User unknown');
   });
@@ -45,7 +46,10 @@ describe('extractNdrReason', () => {
 
 describe('classifyBounce — hard bounces', () => {
   it('classifies 550 as hard', () => {
-    const r = classifyBounce(550, 'Delivery Status Notification\nDiagnostic-Code: smtp; 550 User unknown');
+    const r = classifyBounce(
+      550,
+      'Delivery Status Notification\nDiagnostic-Code: smtp; 550 User unknown',
+    );
     expect(r.type).toBe('hard');
     expect(r.autoSuppress).toBe(true);
     expect(r.alert).toBe(false);

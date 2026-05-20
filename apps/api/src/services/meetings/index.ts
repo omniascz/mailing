@@ -8,9 +8,7 @@
 
 import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  eventTypes, bookingAvailability,
-} from '../../db/schema/booking-pages.js';
+import { eventTypes, bookingAvailability } from '../../db/schema/booking-pages.js';
 import { bookings, calendarEvents } from '../../db/schema/calendar.js';
 import { AppError } from '../../lib/app-error.js';
 import { createVideoLink } from './video-links.js';
@@ -34,9 +32,12 @@ export async function getAvailableSlots(
   if (!et || !et.isActive) throw AppError.notFound('Event type');
 
   // Determine which user(s) to check
-  const userIds = et.schedulingType === 'round-robin'
-    ? (et.teamMemberIds.length ? et.teamMemberIds : [et.ownerUserId])
-    : [et.ownerUserId];
+  const userIds =
+    et.schedulingType === 'round-robin'
+      ? et.teamMemberIds.length
+        ? et.teamMemberIds
+        : [et.ownerUserId]
+      : [et.ownerUserId];
 
   // For each user, compute available windows then subtract busy blocks
   const allSlots: Slot[] = [];
@@ -49,20 +50,34 @@ export async function getAvailableSlots(
   // Deduplicate and sort by startAt
   const seen = new Set<string>();
   return allSlots
-    .filter(s => { const key = s.startAt; if (seen.has(key)) return false; seen.add(key); return true; })
+    .filter((s) => {
+      const key = s.startAt;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
     .sort((a, b) => a.startAt.localeCompare(b.startAt));
 }
 
 async function getSlotsForUser(
   userId: string,
-  et: { durationMinutes: number; bufferBeforeMinutes: number; bufferAfterMinutes: number;
-        minNoticeMinutes: number; maxPerDay: number; bookingWindowDays: number },
+  et: {
+    durationMinutes: number;
+    bufferBeforeMinutes: number;
+    bufferAfterMinutes: number;
+    minNoticeMinutes: number;
+    maxPerDay: number;
+    bookingWindowDays: number;
+  },
   fromDate: Date,
   toDate: Date,
   _timezone: string,
 ): Promise<Slot[]> {
-  const [avail] = await db.select().from(bookingAvailability)
-    .where(eq(bookingAvailability.userId, userId)).limit(1);
+  const [avail] = await db
+    .select()
+    .from(bookingAvailability)
+    .where(eq(bookingAvailability.userId, userId))
+    .limit(1);
 
   const schedule = avail?.schedule ?? defaultSchedule();
   const tz = avail?.timezone ?? 'UTC';
@@ -75,24 +90,30 @@ async function getSlotsForUser(
   const stepMs = slotDurationMs + bufferMs;
 
   // Load busy blocks from calendar events
-  const busyBlocks = await db.select({ startAt: calendarEvents.startAt, endAt: calendarEvents.endAt })
+  const busyBlocks = await db
+    .select({ startAt: calendarEvents.startAt, endAt: calendarEvents.endAt })
     .from(calendarEvents)
-    .where(and(
-      eq(calendarEvents.orgId, sql`(SELECT org_id FROM users WHERE id = ${userId})`),
-      gte(calendarEvents.startAt, fromDate),
-      lte(calendarEvents.endAt, toDate),
-      eq(calendarEvents.busy, true),
-    ));
+    .where(
+      and(
+        eq(calendarEvents.orgId, sql`(SELECT org_id FROM users WHERE id = ${userId})`),
+        gte(calendarEvents.startAt, fromDate),
+        lte(calendarEvents.endAt, toDate),
+        eq(calendarEvents.busy, true),
+      ),
+    );
 
   // Also count existing bookings per day for maxPerDay
-  const existingBookings = await db.select({ startAt: bookings.startAt })
+  const existingBookings = await db
+    .select({ startAt: bookings.startAt })
     .from(bookings)
-    .where(and(
-      eq(bookings.hostUserId, userId),
-      gte(bookings.startAt, fromDate),
-      lte(bookings.startAt, toDate),
-      eq(bookings.status, 'confirmed'),
-    ));
+    .where(
+      and(
+        eq(bookings.hostUserId, userId),
+        gte(bookings.startAt, fromDate),
+        lte(bookings.startAt, toDate),
+        eq(bookings.status, 'confirmed'),
+      ),
+    );
 
   const bookingsPerDay = new Map<string, number>();
   for (const b of existingBookings) {
@@ -106,7 +127,7 @@ async function getSlotsForUser(
   while (cursor < toDate) {
     const dayOfWeek = getDayOfWeekInTz(cursor, tz);
     const dateStr = cursor.toISOString().slice(0, 10);
-    const override = dateOverrides.find(d => d.date === dateStr);
+    const override = dateOverrides.find((d) => d.date === dateStr);
 
     if (override?.unavailable) {
       cursor.setDate(cursor.getDate() + 1);
@@ -115,9 +136,16 @@ async function getSlotsForUser(
     }
 
     const dayWindows = override
-      ? [{ dayOfWeek, startHour: override.startHour ?? 9, startMin: override.startMin ?? 0,
-              endHour: override.endHour ?? 17, endMin: override.endMin ?? 0 }]
-      : schedule.filter(w => w.dayOfWeek === dayOfWeek);
+      ? [
+          {
+            dayOfWeek,
+            startHour: override.startHour ?? 9,
+            startMin: override.startMin ?? 0,
+            endHour: override.endHour ?? 17,
+            endMin: override.endMin ?? 0,
+          },
+        ]
+      : schedule.filter((w) => w.dayOfWeek === dayOfWeek);
 
     for (const window of dayWindows) {
       const windowStart = toUtcMs(cursor, window.startHour, window.startMin, tz);
@@ -131,9 +159,7 @@ async function getSlotsForUser(
         const tooSoon = slotStart.getTime() - now.getTime() < minNoticeMs;
         const day = slotStart.toISOString().slice(0, 10);
         const tooMany = et.maxPerDay > 0 && (bookingsPerDay.get(day) ?? 0) >= et.maxPerDay;
-        const busy = busyBlocks.some(b =>
-          b.startAt < slotEnd && b.endAt > slotStart,
-        );
+        const busy = busyBlocks.some((b) => b.startAt < slotEnd && b.endAt > slotStart);
 
         if (!tooSoon && !tooMany && !busy) {
           slots.push({ startAt: slotStart.toISOString(), endAt: slotEnd.toISOString() });
@@ -161,16 +187,24 @@ export interface BookingInput {
 }
 
 export async function createBooking(orgId: string, input: BookingInput) {
-  const [et] = await db.select().from(eventTypes)
-    .where(and(eq(eventTypes.id, input.eventTypeId), eq(eventTypes.orgId, orgId))).limit(1);
+  const [et] = await db
+    .select()
+    .from(eventTypes)
+    .where(and(eq(eventTypes.id, input.eventTypeId), eq(eventTypes.orgId, orgId)))
+    .limit(1);
   if (!et || !et.isActive) throw AppError.notFound('Event type');
 
   const endAt = new Date(input.startAt.getTime() + et.durationMinutes * 60 * 1000);
 
   // Pick host for round-robin
-  const hostUserId = et.schedulingType === 'round-robin'
-    ? await pickNextHost(orgId, et.id, et.teamMemberIds.length ? et.teamMemberIds : [et.ownerUserId])
-    : et.ownerUserId;
+  const hostUserId =
+    et.schedulingType === 'round-robin'
+      ? await pickNextHost(
+          orgId,
+          et.id,
+          et.teamMemberIds.length ? et.teamMemberIds : [et.ownerUserId],
+        )
+      : et.ownerUserId;
 
   // Generate meeting link
   const meetingUrl = await createVideoLink(et.locationType, {
@@ -181,20 +215,23 @@ export async function createBooking(orgId: string, input: BookingInput) {
     inviteeEmail: input.inviteeEmail,
   }).catch(() => et.locationValue ?? null);
 
-  const [booking] = await db.insert(bookings).values({
-    orgId,
-    hostUserId,
-    inviteeEmail: input.inviteeEmail,
-    inviteeName: input.inviteeName ?? null,
-    title: et.name,
-    description: et.description ?? null,
-    startAt: input.startAt,
-    endAt,
-    timezone: input.timezone ?? et.timezone,
-    location: meetingUrl ?? et.locationValue ?? null,
-    meetingUrl: meetingUrl ?? null,
-    status: 'confirmed',
-  }).returning();
+  const [booking] = await db
+    .insert(bookings)
+    .values({
+      orgId,
+      hostUserId,
+      inviteeEmail: input.inviteeEmail,
+      inviteeName: input.inviteeName ?? null,
+      title: et.name,
+      description: et.description ?? null,
+      startAt: input.startAt,
+      endAt,
+      timezone: input.timezone ?? et.timezone,
+      location: meetingUrl ?? et.locationValue ?? null,
+      meetingUrl: meetingUrl ?? null,
+      status: 'confirmed',
+    })
+    .returning();
 
   await triggerMeetingEvent(orgId, 'meeting_booked', booking!.id).catch(() => {});
 
@@ -204,7 +241,8 @@ export async function createBooking(orgId: string, input: BookingInput) {
 // ─── Cancel booking ───────────────────────────────────────────────────────────
 
 export async function cancelBooking(orgId: string, bookingId: string): Promise<void> {
-  const [row] = await db.update(bookings)
+  const [row] = await db
+    .update(bookings)
     .set({ status: 'canceled', updatedAt: new Date() })
     .where(and(eq(bookings.id, bookingId), eq(bookings.orgId, orgId)))
     .returning();
@@ -219,14 +257,18 @@ export async function rescheduleBooking(
   bookingId: string,
   newStartAt: Date,
 ): Promise<void> {
-  const [existing] = await db.select().from(bookings)
-    .where(and(eq(bookings.id, bookingId), eq(bookings.orgId, orgId))).limit(1);
+  const [existing] = await db
+    .select()
+    .from(bookings)
+    .where(and(eq(bookings.id, bookingId), eq(bookings.orgId, orgId)))
+    .limit(1);
   if (!existing) throw AppError.notFound('Booking');
 
   const durationMs = existing.endAt.getTime() - existing.startAt.getTime();
   const newEndAt = new Date(newStartAt.getTime() + durationMs);
 
-  await db.update(bookings)
+  await db
+    .update(bookings)
     .set({ startAt: newStartAt, endAt: newEndAt, updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
 }
@@ -235,8 +277,12 @@ export async function rescheduleBooking(
 
 function defaultSchedule() {
   // Mon–Fri 9:00–17:00
-  return [1, 2, 3, 4, 5].map(day => ({
-    dayOfWeek: day, startHour: 9, startMin: 0, endHour: 17, endMin: 0,
+  return [1, 2, 3, 4, 5].map((day) => ({
+    dayOfWeek: day,
+    startHour: 9,
+    startMin: 0,
+    endHour: 17,
+    endMin: 0,
   }));
 }
 

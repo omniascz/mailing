@@ -17,9 +17,9 @@ import { redis } from '../../lib/redis.js';
 export type SentimentLabel = 'negative' | 'neutral' | 'positive';
 
 export interface SentimentResult {
-  score: number;        // -1..1
+  score: number; // -1..1
   label: SentimentLabel;
-  confidence: number;   // 0..1
+  confidence: number; // 0..1
   keywords: string[];
   source: 'rule' | 'claude' | 'cache';
 }
@@ -35,12 +35,44 @@ const CACHE_TTL = 60 * 60 * 24 * 7; // 7 days
 
 // English + Czech lexicons — kept compact on purpose; extend as needed.
 const POSITIVE_LEX = [
-  'great', 'excellent', 'love', 'amazing', 'perfect', 'thanks', 'thank you', 'awesome', 'happy',
-  'super', 'skvělé', 'výborné', 'děkuji', 'dobrý', 'spokojen', 'rád', 'úžasné',
+  'great',
+  'excellent',
+  'love',
+  'amazing',
+  'perfect',
+  'thanks',
+  'thank you',
+  'awesome',
+  'happy',
+  'super',
+  'skvělé',
+  'výborné',
+  'děkuji',
+  'dobrý',
+  'spokojen',
+  'rád',
+  'úžasné',
 ];
 const NEGATIVE_LEX = [
-  'bad', 'terrible', 'hate', 'awful', 'angry', 'frustrated', 'disappointed', 'worst', 'broken', 'refund', 'cancel',
-  'špatné', 'hrozné', 'zklamaný', 'nespokojen', 'naštvaný', 'chyba', 'nefunguje', 'vrátit',
+  'bad',
+  'terrible',
+  'hate',
+  'awful',
+  'angry',
+  'frustrated',
+  'disappointed',
+  'worst',
+  'broken',
+  'refund',
+  'cancel',
+  'špatné',
+  'hrozné',
+  'zklamaný',
+  'nespokojen',
+  'naštvaný',
+  'chyba',
+  'nefunguje',
+  'vrátit',
 ];
 
 function labelOf(score: number): SentimentLabel {
@@ -52,10 +84,19 @@ function labelOf(score: number): SentimentLabel {
 export function ruleBasedSentiment(text: string): SentimentResult {
   const lower = text.toLowerCase();
   const matched: string[] = [];
-  let positive = 0, negative = 0;
+  let positive = 0,
+    negative = 0;
 
-  for (const w of POSITIVE_LEX) if (lower.includes(w)) { positive++; matched.push(w); }
-  for (const w of NEGATIVE_LEX) if (lower.includes(w)) { negative++; matched.push(w); }
+  for (const w of POSITIVE_LEX)
+    if (lower.includes(w)) {
+      positive++;
+      matched.push(w);
+    }
+  for (const w of NEGATIVE_LEX)
+    if (lower.includes(w)) {
+      negative++;
+      matched.push(w);
+    }
 
   const total = positive + negative;
   if (total === 0) {
@@ -63,7 +104,13 @@ export function ruleBasedSentiment(text: string): SentimentResult {
   }
   const score = (positive - negative) / Math.max(total, 3);
   const confidence = Math.min(1, 0.4 + total * 0.15);
-  return { score: Math.max(-1, Math.min(1, score)), label: labelOf(score), confidence, keywords: matched, source: 'rule' };
+  return {
+    score: Math.max(-1, Math.min(1, score)),
+    label: labelOf(score),
+    confidence,
+    keywords: matched,
+    source: 'rule',
+  };
 }
 
 const SYSTEM_PROMPT = `You are a precise sentiment analyzer for customer communications (sales emails, SMS, helpdesk tickets).
@@ -108,7 +155,9 @@ export async function analyzeSentiment(
 
   const clamped: SentimentResult = {
     score: Math.max(-1, Math.min(1, Number(parsed.score) || 0)),
-    label: (['negative', 'neutral', 'positive'] as const).includes(parsed.label) ? parsed.label : labelOf(Number(parsed.score) || 0),
+    label: (['negative', 'neutral', 'positive'] as const).includes(parsed.label)
+      ? parsed.label
+      : labelOf(Number(parsed.score) || 0),
     confidence: Math.max(0, Math.min(1, Number(parsed.confidence) || 0.5)),
     keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 6).map(String) : [],
     source: 'claude',
@@ -119,7 +168,9 @@ export async function analyzeSentiment(
   return clamped;
 }
 
-export function aggregateSentiment(scores: Array<{ score: number; at: Date }>): AggregatedSentiment {
+export function aggregateSentiment(
+  scores: Array<{ score: number; at: Date }>,
+): AggregatedSentiment {
   if (scores.length === 0) {
     return { average: 0, label: 'neutral', samples: 0, trend: 'insufficient_data' };
   }

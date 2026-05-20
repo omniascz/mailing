@@ -23,12 +23,7 @@
 
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  migrationJobs,
-  contacts,
-  lists,
-  type MigrationProgress,
-} from '../../db/schema/index.js';
+import { migrationJobs, contacts, lists, type MigrationProgress } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 // ─── Klaviyo API client ──────────────────────────────────────────────────────
@@ -170,7 +165,7 @@ async function updateProgress(jobId: string, progress: Partial<MigrationProgress
     .limit(1);
 
   const merged = {
-    ...(current?.progress as unknown as Record<string, unknown> ?? {}),
+    ...((current?.progress as unknown as Record<string, unknown>) ?? {}),
     ...progress,
   };
 
@@ -185,10 +180,7 @@ export async function processKlaviyoMigration(
   orgId: string,
   apiKey: string,
 ): Promise<void> {
-  await db
-    .update(migrationJobs)
-    .set({ status: 'running' })
-    .where(eq(migrationJobs.id, jobId));
+  await db.update(migrationJobs).set({ status: 'running' }).where(eq(migrationJobs.id, jobId));
 
   const errors: string[] = [];
   let totalImported = 0;
@@ -281,9 +273,7 @@ export async function processKlaviyoMigration(
               });
             listImported++;
           } catch (err) {
-            errors.push(
-              `Insert failed for ${prof.attributes.email}: ${(err as Error).message}`,
-            );
+            errors.push(`Insert failed for ${prof.attributes.email}: ${(err as Error).message}`);
             listSkipped++;
           }
         }

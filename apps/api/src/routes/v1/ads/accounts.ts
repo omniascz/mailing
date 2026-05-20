@@ -1,6 +1,11 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { initiateAdOAuth, handleAdOAuthCallback, listAdAccounts, disconnectAdAccount } from '../../../services/ads/accounts.js';
+import {
+  initiateAdOAuth,
+  handleAdOAuthCallback,
+  listAdAccounts,
+  disconnectAdAccount,
+} from '../../../services/ads/accounts.js';
 import { AD_PLATFORMS } from '../../../db/schema/ad-accounts.js';
 
 const adAccountRoutes: FastifyPluginAsync = async (app) => {
@@ -15,7 +20,12 @@ const adAccountRoutes: FastifyPluginAsync = async (app) => {
 
   app.get('/api/v1/ads/accounts/connect/:platform', auth, async (req, reply) => {
     const { platform } = z.object({ platform: platformSchema }).parse(req.params);
-    const authUrl = await initiateAdOAuth(req.user!.orgId, req.user!.userId, platform, callbackBase);
+    const authUrl = await initiateAdOAuth(
+      req.user!.orgId,
+      req.user!.userId,
+      platform,
+      callbackBase,
+    );
     return reply.send({ data: { authUrl } });
   });
 

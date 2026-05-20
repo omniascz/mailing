@@ -1969,4 +1969,4 @@ BUDGET: $25K-50K Year 1
 
 ---
 
-*Dokument zpracován z 54 detailních deep-dive analýz (01-54) a verified web sources 2026. Migration scenarios jsou typické patterny – tvoje situace má specifika. Vždy consult s implementation partnerem před začátkem migrace.*
+_Dokument zpracován z 54 detailních deep-dive analýz (01-54) a verified web sources 2026. Migration scenarios jsou typické patterny – tvoje situace má specifika. Vždy consult s implementation partnerem před začátkem migrace._

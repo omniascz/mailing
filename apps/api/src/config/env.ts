@@ -17,8 +17,7 @@ import { z } from 'zod';
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Required-in-production helper: optional in dev/test, required in prod.
-const prodRequired = (schema: z.ZodString) =>
-  isProduction ? schema : schema.optional();
+const prodRequired = (schema: z.ZodString) => (isProduction ? schema : schema.optional());
 
 const Env = z.object({
   // ─── Runtime ──────────────────────────────────────────────────────────────
@@ -48,7 +47,9 @@ const Env = z.object({
   MINIO_USE_SSL: z.coerce.boolean().default(false),
 
   // ─── Secrets (must be set in prod) ────────────────────────────────────────
-  SESSION_SECRET: prodRequired(z.string().min(32)).default('dev-cookie-secret-change-in-production'),
+  SESSION_SECRET: prodRequired(z.string().min(32)).default(
+    'dev-cookie-secret-change-in-production',
+  ),
   INTERNAL_API_SECRET: prodRequired(z.string().min(32)),
   DMARC_INBOUND_SECRET: prodRequired(z.string().min(16)),
 
@@ -73,9 +74,11 @@ export type Env = z.infer<typeof Env>;
 function loadEnv(): Env {
   const parsed = Env.safeParse(process.env);
   if (!parsed.success) {
-    const issues = parsed.error.issues.map((i) => `  - ${i.path.join('.') || '<root>'}: ${i.message}`).join('\n');
+    const issues = parsed.error.issues
+      .map((i) => `  - ${i.path.join('.') || '<root>'}: ${i.message}`)
+      .join('\n');
     // Boot can't continue without a valid env — exit with a useful message.
-    // eslint-disable-next-line no-console
+
     console.error(`✖ Invalid environment configuration:\n${issues}`);
     if (isProduction) {
       process.exit(1);

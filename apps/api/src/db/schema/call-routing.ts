@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, jsonb, integer, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  jsonb,
+  integer,
+  timestamp,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';
 
@@ -8,7 +17,9 @@ export const huntGroups = pgTable(
   'hunt_groups',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
     strategy: varchar('strategy', { length: 32 }).notNull().default('ring-all'),
     memberUserIds: jsonb('member_user_ids').$type<string[]>().notNull().default([]),
@@ -37,7 +48,9 @@ export const ivrMenus = pgTable(
   'ivr_menus',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
     greeting: varchar('greeting', { length: 2000 }).notNull(),
     // If set, this IVR is the entry point for the given DID (inbound number)
@@ -71,7 +84,9 @@ export const businessHours = pgTable(
   'business_hours',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     timezone: varchar('timezone', { length: 64 }).notNull().default('UTC'),
     schedule: jsonb('schedule').$type<BusinessHoursScheduleEntry[]>().notNull().default([]),
     holidays: jsonb('holidays').$type<BusinessHoursHoliday[]>().notNull().default([]),
@@ -88,8 +103,12 @@ export const agentPresence = pgTable(
   'agent_presence',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     status: varchar('status', { length: 32 }).notNull().default('offline'),
     lastActiveAt: timestamp('last_active_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

@@ -51,7 +51,12 @@ export async function parseXlsx(path: string): Promise<ParsedFile> {
     columns.forEach((col, idx) => {
       const cell = row.getCell(idx + 1);
       const v = cell.value;
-      obj[col] = v == null ? '' : typeof v === 'object' && 'text' in (v as object) ? String((v as { text: unknown }).text) : String(v);
+      obj[col] =
+        v == null
+          ? ''
+          : typeof v === 'object' && 'text' in (v as object)
+            ? String((v as { text: unknown }).text)
+            : String(v);
     });
     rows.push(obj);
   }

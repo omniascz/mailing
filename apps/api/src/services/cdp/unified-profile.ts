@@ -11,8 +11,10 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  contacts, contactEngagement,
-  emailEvents, revenueEvents,
+  contacts,
+  contactEngagement,
+  emailEvents,
+  revenueEvents,
   helpdeskTickets,
   sitePageViews,
   loyaltyMembers,
@@ -49,11 +51,33 @@ export interface UnifiedProfile {
     lastSeenAt: Date;
   }>;
   recentActivity: {
-    emails: Array<{ eventType: string; campaignId: string | null; linkUrl: string | null; createdAt: Date }>;
-    orders: Array<{ id: string; orderId: string | null; amount: string; currency: string; occurredAt: Date }>;
-    tickets: Array<{ id: string; subject: string | null; status: string | null; channel: string | null; updatedAt: Date }>;
+    emails: Array<{
+      eventType: string;
+      campaignId: string | null;
+      linkUrl: string | null;
+      createdAt: Date;
+    }>;
+    orders: Array<{
+      id: string;
+      orderId: string | null;
+      amount: string;
+      currency: string;
+      occurredAt: Date;
+    }>;
+    tickets: Array<{
+      id: string;
+      subject: string | null;
+      status: string | null;
+      channel: string | null;
+      updatedAt: Date;
+    }>;
     pageViews: Array<{ url: string; path: string | null; occurredAt: Date }>;
-    customEvents: Array<{ name: string; source: string | null; properties: Record<string, unknown>; occurredAt: Date }>;
+    customEvents: Array<{
+      name: string;
+      source: string | null;
+      properties: Record<string, unknown>;
+      occurredAt: Date;
+    }>;
   };
   loyalty: { balance: number; tier: string | null } | null;
 }
@@ -180,25 +204,30 @@ export async function getUnifiedProfile(
     .limit(RECENT_LIMIT);
 
   const [loyaltyRow] = await db
-    .select({ pointBalance: loyaltyMembers.pointBalance, currentTierId: loyaltyMembers.currentTierId })
+    .select({
+      pointBalance: loyaltyMembers.pointBalance,
+      currentTierId: loyaltyMembers.currentTierId,
+    })
     .from(loyaltyMembers)
     .where(and(eq(loyaltyMembers.orgId, orgId), eq(loyaltyMembers.contactId, contactId)))
     .limit(1);
 
   const profile: UnifiedProfile = {
     contact,
-    engagement: engagementRow ? {
-      totalOpens: engagementRow.totalOpens,
-      totalClicks: engagementRow.totalClicks,
-      totalSends: engagementRow.totalSends,
-      totalOrders: engagementRow.totalOrders,
-      totalRevenue: engagementRow.totalRevenue,
-      lastOrderAt: engagementRow.lastOrderAt,
-      predictedClv: engagementRow.predictedClv,
-      purchaseLikelihood: engagementRow.purchaseLikelihood,
-      churnRisk: engagementRow.churnRisk,
-      rfmSegment: engagementRow.rfmSegment,
-    } : null,
+    engagement: engagementRow
+      ? {
+          totalOpens: engagementRow.totalOpens,
+          totalClicks: engagementRow.totalClicks,
+          totalSends: engagementRow.totalSends,
+          totalOrders: engagementRow.totalOrders,
+          totalRevenue: engagementRow.totalRevenue,
+          lastOrderAt: engagementRow.lastOrderAt,
+          predictedClv: engagementRow.predictedClv,
+          purchaseLikelihood: engagementRow.purchaseLikelihood,
+          churnRisk: engagementRow.churnRisk,
+          rfmSegment: engagementRow.rfmSegment,
+        }
+      : null,
     traits: traitRow?.values ?? {},
     identities: identityRows,
     recentActivity: {
@@ -218,10 +247,12 @@ export async function getUnifiedProfile(
         occurredAt: r.occurredAt,
       })),
     },
-    loyalty: loyaltyRow ? {
-      balance: Number(loyaltyRow.pointBalance ?? 0),
-      tier: loyaltyRow.currentTierId ?? null,
-    } : null,
+    loyalty: loyaltyRow
+      ? {
+          balance: Number(loyaltyRow.pointBalance ?? 0),
+          tier: loyaltyRow.currentTierId ?? null,
+        }
+      : null,
   };
 
   await redis.setex(key, PROFILE_TTL_SEC, JSON.stringify(profile));
@@ -255,11 +286,13 @@ export async function getProfileBySignal(
   const [row] = await db
     .select({ contactId: identitySignals.contactId })
     .from(identitySignals)
-    .where(and(
-      eq(identitySignals.orgId, orgId),
-      eq(identitySignals.signalType, signalType),
-      eq(identitySignals.signalValue, signalValue),
-    ))
+    .where(
+      and(
+        eq(identitySignals.orgId, orgId),
+        eq(identitySignals.signalType, signalType),
+        eq(identitySignals.signalValue, signalValue),
+      ),
+    )
     .limit(1);
   if (!row) return null;
   return getUnifiedProfile(orgId, row.contactId);

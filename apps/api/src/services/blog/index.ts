@@ -15,12 +15,7 @@ import {
   type BlogPost,
 } from '../../db/schema/blog.js';
 import { AppError } from '../../lib/app-error.js';
-import {
-  slugify,
-  uniqueSlug,
-  extractExcerpt,
-  isDueToPublish,
-} from './pure.js';
+import { slugify, uniqueSlug, extractExcerpt, isDueToPublish } from './pure.js';
 
 // ─── Categories ─────────────────────────────────────────────────────────────
 
@@ -125,11 +120,7 @@ async function allocateUniquePostSlug(orgId: string, base: string, locale: strin
     .select({ slug: blogPosts.slug })
     .from(blogPosts)
     .where(
-      and(
-        eq(blogPosts.orgId, orgId),
-        eq(blogPosts.locale, locale),
-        isNull(blogPosts.deletedAt),
-      ),
+      and(eq(blogPosts.orgId, orgId), eq(blogPosts.locale, locale), isNull(blogPosts.deletedAt)),
     );
   return uniqueSlug(base, new Set(rows.map((r) => r.slug)));
 }
@@ -142,9 +133,7 @@ export async function updatePost(
   const [existing] = await db
     .select()
     .from(blogPosts)
-    .where(
-      and(eq(blogPosts.orgId, orgId), eq(blogPosts.id, postId), isNull(blogPosts.deletedAt)),
-    )
+    .where(and(eq(blogPosts.orgId, orgId), eq(blogPosts.id, postId), isNull(blogPosts.deletedAt)))
     .limit(1);
   if (!existing) throw AppError.notFound('Blog post');
 
@@ -178,9 +167,7 @@ export async function publishPost(
   const [existing] = await db
     .select()
     .from(blogPosts)
-    .where(
-      and(eq(blogPosts.orgId, orgId), eq(blogPosts.id, postId), isNull(blogPosts.deletedAt)),
-    )
+    .where(and(eq(blogPosts.orgId, orgId), eq(blogPosts.id, postId), isNull(blogPosts.deletedAt)))
     .limit(1);
   if (!existing) throw AppError.notFound('Blog post');
 
@@ -221,9 +208,7 @@ export async function schedulePost(
       scheduledPublishAt: publishAt,
       updatedAt: new Date(),
     })
-    .where(
-      and(eq(blogPosts.orgId, orgId), eq(blogPosts.id, postId), isNull(blogPosts.deletedAt)),
-    )
+    .where(and(eq(blogPosts.orgId, orgId), eq(blogPosts.id, postId), isNull(blogPosts.deletedAt)))
     .returning();
   if (!row) throw AppError.notFound('Blog post');
   return row;
@@ -261,9 +246,7 @@ export async function getPost(orgId: string, postId: string) {
   const [row] = await db
     .select()
     .from(blogPosts)
-    .where(
-      and(eq(blogPosts.orgId, orgId), eq(blogPosts.id, postId), isNull(blogPosts.deletedAt)),
-    )
+    .where(and(eq(blogPosts.orgId, orgId), eq(blogPosts.id, postId), isNull(blogPosts.deletedAt)))
     .limit(1);
   if (!row) throw AppError.notFound('Blog post');
   return row;

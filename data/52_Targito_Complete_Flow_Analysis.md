@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `51_Targito_Features_DeepDive.md` o **procesní pohled**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Targito = český CDP** (15+ let, Targito.com s.r.o., IČO 28445937)
 > - **Sídlo:** Jungmannovo náměstí 753/18, Praha 1 – Nové Město
 > - **Historie:** SPORT 3000 (2008) → VIVmail (2012) → VIVmail.cz (2016) → **Targito (2021)**
@@ -150,20 +151,20 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account owner** | Login | Vše, billing, users | Vše |
-| **Marketing manager** | Login | Strategie, campaigns | Per role |
-| **Email specialist** | Login | Email design, send | Per role |
-| **Data analyst** | Login | Reports, analytics | Read + analytics |
-| **End customer** | Email/SMS/web | Engage | Vlastní data |
-| **Targito PM (onboarding)** | Direct | Implementation help | s consent |
-| **Targito CS team** | Phone / email | Issue resolution | s consent |
-| **Targito support** | Phone / chat / email | Technical issues | s consent |
-| **Targito sales** | Consultation request | Quote + qualify | Initial info |
-| **Partner agency** | OAuth / login | Client work | Per scope |
-| **Integration partner** | API | Data sync | Per scope |
-| **E-shop platform** | API | Order/customer sync | E-shop data |
+| Aktér                       | Vstupní bod          | Co dělá              | Co vidí          |
+| --------------------------- | -------------------- | -------------------- | ---------------- |
+| **Account owner**           | Login                | Vše, billing, users  | Vše              |
+| **Marketing manager**       | Login                | Strategie, campaigns | Per role         |
+| **Email specialist**        | Login                | Email design, send   | Per role         |
+| **Data analyst**            | Login                | Reports, analytics   | Read + analytics |
+| **End customer**            | Email/SMS/web        | Engage               | Vlastní data     |
+| **Targito PM (onboarding)** | Direct               | Implementation help  | s consent        |
+| **Targito CS team**         | Phone / email        | Issue resolution     | s consent        |
+| **Targito support**         | Phone / chat / email | Technical issues     | s consent        |
+| **Targito sales**           | Consultation request | Quote + qualify      | Initial info     |
+| **Partner agency**          | OAuth / login        | Client work          | Per scope        |
+| **Integration partner**     | API                  | Data sync            | Per scope        |
+| **E-shop platform**         | API                  | Order/customer sync  | E-shop data      |
 
 ---
 
@@ -213,7 +214,7 @@ Targito fits pokud:
 
 ### 2.3 Per oficiální positioning
 
-> *"I am interested in a consultation"* (key CTA on website)
+> _"I am interested in a consultation"_ (key CTA on website)
 
 ⚠️ **Consultation-first** = no self-service signup.
 
@@ -346,7 +347,7 @@ Targito sales response:
 
 ### 4.1 Per oficiální
 
-> *"If you are not working with a certified agency, our experienced project manager will guide you through the onboarding process. They will be available to you from day one, helping with implementation and ensuring that all steps go smoothly and according to plan. We have completed hundreds of implementations and know how to solve many of the pitfalls."*
+> _"If you are not working with a certified agency, our experienced project manager will guide you through the onboarding process. They will be available to you from day one, helping with implementation and ensuring that all steps go smoothly and according to plan. We have completed hundreds of implementations and know how to solve many of the pitfalls."_
 
 ### 4.2 PM-led onboarding flow
 
@@ -430,7 +431,8 @@ Targito PM duties:
 ### 4.4 "Pitfalls avoidance"
 
 Per oficiální:
-> *"We have completed hundreds of implementations and know how to solve many of the pitfalls."*
+
+> _"We have completed hundreds of implementations and know how to solve many of the pitfalls."_
 
 ```
 Common pitfalls Targito PM handles:
@@ -466,7 +468,7 @@ Smooth transition to BAU operations
 
 ### 5.1 Per oficiální
 
-> *"At Targito, we build long-term partnerships that extend the value of our platform. As a technology platform, we don't want to be a black box. On the contrary, we open up space for cooperation with various suppliers and agencies."*
+> _"At Targito, we build long-term partnerships that extend the value of our platform. As a technology platform, we don't want to be a black box. On the contrary, we open up space for cooperation with various suppliers and agencies."_
 
 ### 5.2 Partner agency model
 
@@ -780,7 +782,7 @@ GOVERNANCE:
 
 ### 8.1 Per oficiální
 
-> *"Targito CDP unifies data from all sources – website, e-shop, CRM, e-mails and another channels – into a single 360° view of the customer. All information is linked into a single profile that is always up to date and complete."*
+> _"Targito CDP unifies data from all sources – website, e-shop, CRM, e-mails and another channels – into a single 360° view of the customer. All information is linked into a single profile that is always up to date and complete."_
 
 ### 8.2 Identity resolution
 
@@ -943,7 +945,7 @@ Email creation in Targito:
 
 ### 9.2 Per oficiální capability
 
-> *"You create templates using drag & drop editor that supports all the features you would expect from a modern tool: simple yet powerful template system, block replacement, conditional display and dynamic connection to external data sources."*
+> _"You create templates using drag & drop editor that supports all the features you would expect from a modern tool: simple yet powerful template system, block replacement, conditional display and dynamic connection to external data sources."_
 
 ### 9.3 Advanced features
 
@@ -1007,7 +1009,7 @@ LOCAL HOLIDAYS:
 
 ### 10.1 Per oficiální
 
-> *"A pokud je třeba ulehčit s tvorbou obsahu, je tu naše Targito AI – na základě vašich zadání a dat připravíme kompletní marketingovou zprávu, od vzhledu po vybrané produkty, při dodržení všech byznysových pravidel."*
+> _"A pokud je třeba ulehčit s tvorbou obsahu, je tu naše Targito AI – na základě vašich zadání a dat připravíme kompletní marketingovou zprávu, od vzhledu po vybrané produkty, při dodržení všech byznysových pravidel."_
 
 ### 10.2 AI generation workflow
 
@@ -1084,7 +1086,7 @@ MULTI-LANGUAGE:
 
 ### 10.5 Per oficiální positioning
 
-> *"AI – Artificial intelligence that makes money - not just advice."*
+> _"AI – Artificial intelligence that makes money - not just advice."_
 
 ⚠️ **AI focus na revenue impact**, ne pouze insights.
 
@@ -1196,7 +1198,7 @@ AT-RISK CUSTOMER:
 
 ### 12.1 Per oficiální
 
-> *"Automation is created in a simple drag & drop editor, where you can build the logic of individual steps, conditions, and branching without programming."*
+> _"Automation is created in a simple drag & drop editor, where you can build the logic of individual steps, conditions, and branching without programming."_
 
 ### 12.2 Scenario builder workflow
 
@@ -1282,7 +1284,8 @@ T+4 days: SMS reminder (if SMS subscribed)
 ### 12.4 Maintenance benefits
 
 Per oficiální:
-> *"This keeps your work clear and easy to maintain."*
+
+> _"This keeps your work clear and easy to maintain."_
 
 ```
 Maintenance advantages:
@@ -1300,7 +1303,7 @@ Maintenance advantages:
 
 ### 13.1 Per oficiální (Moduly)
 
-> *"Working with purchasing behavior thanks to RFM segmentation"*
+> _"Working with purchasing behavior thanks to RFM segmentation"_
 
 ### 13.2 RFM module activation
 
@@ -1402,7 +1405,7 @@ Targito tracks segment shifts:
 
 ### 14.1 Per oficiální
 
-> *"Monitor communication frequency using contact policy"*
+> _"Monitor communication frequency using contact policy"_
 
 ### 14.2 Contact Policy setup
 
@@ -1515,7 +1518,7 @@ Contact Policy benefits:
 
 ### 15.1 Per oficiální
 
-> *"One data, one story - consistent across channels."*
+> _"One data, one story - consistent across channels."_
 
 ### 15.2 Cross-channel coordination
 
@@ -1714,7 +1717,7 @@ Important for CE region
 
 ### 17.1 Per oficiální
 
-> *"Stačí je aktivovat a začít používat. Rozděleny jsou podle oblasti, kterou obohacují, nebo podle funkcionality, kterou přidávají."*
+> _"Stačí je aktivovat a začít používat. Rozděleny jsou podle oblasti, kterou obohacují, nebo podle funkcionality, kterou přidávají."_
 
 ### 17.2 Module activation workflow
 
@@ -1954,7 +1957,8 @@ PATTERN:
 ### 19.1 UniCredit testimonial
 
 Per oficiální:
-> *"At UniCredit Group, we place maximum emphasis on the security of our clients' data. Therefore, every software and vendor selected must undergo a rigorous screening and selection process to ensure that all legal requirements for data security are met. Targito meets these high standards. We appreciate their ability to 'tailor' a product to our needs."*
+
+> _"At UniCredit Group, we place maximum emphasis on the security of our clients' data. Therefore, every software and vendor selected must undergo a rigorous screening and selection process to ensure that all legal requirements for data security are met. Targito meets these high standards. We appreciate their ability to 'tailor' a product to our needs."_
 
 ⚠️ **Banking-grade security** validation.
 
@@ -1994,7 +1998,8 @@ INTEGRATION:
 ### 19.3 IEA 2019 award
 
 Per oficiální:
-> *"We have automated almost all of our communication with our customers and B2B partners, which was awarded first place in the categories of emailing campaigns and B2B services by the independent jury of the IEA competition in 2019."*
+
+> _"We have automated almost all of our communication with our customers and B2B partners, which was awarded first place in the categories of emailing campaigns and B2B services by the independent jury of the IEA competition in 2019."_
 
 ⚠️ **Industrial Email Award** = external B2B validation.
 
@@ -2019,7 +2024,7 @@ Targito B2B fit:
 
 ### 20.1 Per oficiální
 
-> *"Analytics & reporting – Don't act blindly - make decisions based on data."*
+> _"Analytics & reporting – Don't act blindly - make decisions based on data."_
 
 ### 20.2 Analytics dashboard hierarchy
 
@@ -2134,7 +2139,7 @@ For external analytics platforms
 
 ### 21.1 Per oficiální
 
-> *"At Targito, we build long-term partnerships that extend the value of our platform."*
+> _"At Targito, we build long-term partnerships that extend the value of our platform."_
 
 ### 21.2 Agency collaboration patterns
 
@@ -2230,7 +2235,7 @@ CUSTOMER ↔ TARGITO:
 
 ### 22.1 Per oficiální
 
-> *"The fast and professional customer support, which is always ready to advise, is also a great help."*
+> _"The fast and professional customer support, which is always ready to advise, is also a great help."_
 
 ### 22.2 Support channels
 
@@ -2291,28 +2296,28 @@ CSM responsibilities (likely):
 
 ## 23. Datová mapa: co vidí kdo
 
-| Data | Account owner | Admin | Marketing user | Read-only | End customer | Targito PM | Targito support | Partner agency |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | view | ❌ | ❌ | s consent | s consent | per scope |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | s consent | s consent | ❌ |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | s consent | s consent | per scope |
-| CDP profiles | ✅ | ✅ | ✅ | view | own profile | s consent | s consent | per scope |
-| Identity resolution | ✅ | ✅ | view | ❌ | ❌ | s consent | s consent | per scope |
-| Segments | ✅ | ✅ | ✅ | view | ❌ | s consent | s consent | per scope |
-| Email templates | ✅ | ✅ | ✅ | view | ❌ | s consent | s consent | per scope |
-| Campaigns | ✅ | ✅ | ✅ | view | ❌ | s consent | s consent | per scope |
-| Automation | ✅ | ✅ | ✅ | view | ❌ | s consent | s consent | per scope |
-| RFM segments | ✅ | ✅ | ✅ | view | ❌ | s consent | s consent | per scope |
-| Contact Policy | ✅ | ✅ | view | ❌ | ❌ | s consent | s consent | per scope |
-| Reports | ✅ | ✅ | ✅ | view | ❌ | s consent | s consent | per scope |
-| Web tracking config | ✅ | ✅ | view | ❌ | ❌ | s consent | s consent | per scope |
-| SMS config | ✅ | ✅ | view | ❌ | ❌ | s consent | s consent | per scope |
-| Targito AI | ✅ | ✅ | ✅ | view | ❌ | s consent | s consent | per scope |
-| Integrations | ✅ | ✅ | view | ❌ | ❌ | s consent | s consent | per scope |
-| API keys | ✅ | view | ❌ | ❌ | ❌ | s consent | ❌ | ❌ |
-| Module activation | ✅ | ✅ | ❌ | ❌ | ❌ | s consent | s consent | per scope |
-| Audit logs | ✅ | view | ❌ | ❌ | ❌ | s consent | s consent | ❌ |
-| Personalizace web | ✅ | ✅ | ✅ | view | sees applied | s consent | s consent | per scope |
+| Data                | Account owner | Admin | Marketing user | Read-only | End customer | Targito PM | Targito support | Partner agency |
+| ------------------- | :-----------: | :---: | :------------: | :-------: | :----------: | :--------: | :-------------: | :------------: |
+| Account settings    |      ✅       |  ✅   |      view      |    ❌     |      ❌      | s consent  |    s consent    |   per scope    |
+| Billing             |      ✅       |  ❌   |       ❌       |    ❌     |      ❌      | s consent  |    s consent    |       ❌       |
+| User management     |      ✅       |  ✅   |       ❌       |    ❌     |      ❌      | s consent  |    s consent    |   per scope    |
+| CDP profiles        |      ✅       |  ✅   |       ✅       |   view    | own profile  | s consent  |    s consent    |   per scope    |
+| Identity resolution |      ✅       |  ✅   |      view      |    ❌     |      ❌      | s consent  |    s consent    |   per scope    |
+| Segments            |      ✅       |  ✅   |       ✅       |   view    |      ❌      | s consent  |    s consent    |   per scope    |
+| Email templates     |      ✅       |  ✅   |       ✅       |   view    |      ❌      | s consent  |    s consent    |   per scope    |
+| Campaigns           |      ✅       |  ✅   |       ✅       |   view    |      ❌      | s consent  |    s consent    |   per scope    |
+| Automation          |      ✅       |  ✅   |       ✅       |   view    |      ❌      | s consent  |    s consent    |   per scope    |
+| RFM segments        |      ✅       |  ✅   |       ✅       |   view    |      ❌      | s consent  |    s consent    |   per scope    |
+| Contact Policy      |      ✅       |  ✅   |      view      |    ❌     |      ❌      | s consent  |    s consent    |   per scope    |
+| Reports             |      ✅       |  ✅   |       ✅       |   view    |      ❌      | s consent  |    s consent    |   per scope    |
+| Web tracking config |      ✅       |  ✅   |      view      |    ❌     |      ❌      | s consent  |    s consent    |   per scope    |
+| SMS config          |      ✅       |  ✅   |      view      |    ❌     |      ❌      | s consent  |    s consent    |   per scope    |
+| Targito AI          |      ✅       |  ✅   |       ✅       |   view    |      ❌      | s consent  |    s consent    |   per scope    |
+| Integrations        |      ✅       |  ✅   |      view      |    ❌     |      ❌      | s consent  |    s consent    |   per scope    |
+| API keys            |      ✅       | view  |       ❌       |    ❌     |      ❌      | s consent  |       ❌        |       ❌       |
+| Module activation   |      ✅       |  ✅   |       ❌       |    ❌     |      ❌      | s consent  |    s consent    |   per scope    |
+| Audit logs          |      ✅       | view  |       ❌       |    ❌     |      ❌      | s consent  |    s consent    |       ❌       |
+| Personalizace web   |      ✅       |  ✅   |       ✅       |   view    | sees applied | s consent  |    s consent    |   per scope    |
 
 ---
 
@@ -2628,4 +2633,4 @@ For enterprise risk-averse = larger vendor preferred
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů targito.com (Platform, CDP, AI, Omnichannel, Moduly, E-commerce, B2B, Partneři, Spolupráce & podpora), Sherpas Tech research (313 e-shopů sample), Obchodní rejstřík ČR (justice.cz, IČO 28445937), LinkedIn Targito, Penize.cz, Podnikatel.cz, Finance.cz, Firmy.cz, Targito blog. Pro nejaktuálnější pricing detaily je nutný kontakt s Targito sales prostřednictvím konzultace na targito.com.*
+_Dokument zpracován z oficiálních zdrojů targito.com (Platform, CDP, AI, Omnichannel, Moduly, E-commerce, B2B, Partneři, Spolupráce & podpora), Sherpas Tech research (313 e-shopů sample), Obchodní rejstřík ČR (justice.cz, IČO 28445937), LinkedIn Targito, Penize.cz, Podnikatel.cz, Finance.cz, Firmy.cz, Targito blog. Pro nejaktuálnější pricing detaily je nutný kontakt s Targito sales prostřednictvím konzultace na targito.com._

@@ -10,13 +10,20 @@
 
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, boolean, integer, jsonb, timestamp, index,
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  integer,
+  jsonb,
+  timestamp,
+  index,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 /** Condition = { field, operator, value } — ANDed together. */
 export interface LifecycleRuleCondition {
-  field: string;          // e.g. 'lead_score', 'has_tag', 'has_booked_meeting', 'custom.region'
+  field: string; // e.g. 'lead_score', 'has_tag', 'has_booked_meeting', 'custom.region'
   operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'exists';
   value: string | number | boolean | null;
 }
@@ -24,7 +31,9 @@ export interface LifecycleRuleCondition {
 export const lifecycleRules = pgTable(
   'lifecycle_rules',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -34,7 +43,7 @@ export const lifecycleRules = pgTable(
     priority: integer('priority').notNull().default(100), // lower = runs first
 
     /** Target lifecycle stage the rule advances a contact INTO */
-    fromStage: varchar('from_stage', { length: 64 }),     // null = any stage
+    fromStage: varchar('from_stage', { length: 64 }), // null = any stage
     toStage: varchar('to_stage', { length: 64 }).notNull(),
 
     /** JSON array of LifecycleRuleCondition */

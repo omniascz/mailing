@@ -13,17 +13,23 @@ import { z } from 'zod';
 import { resolveAudience } from '../../../services/campaigns/auto-resend.js';
 
 const internalAudienceRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/api/v1/internal/audience', {
-    schema: { tags: ['Internal'] },
-  }, async (req, reply) => {
-    const { orgId, campaignId } = z.object({
-      orgId: z.string().uuid(),
-      campaignId: z.string().uuid(),
-    }).parse(req.query);
+  app.get(
+    '/api/v1/internal/audience',
+    {
+      schema: { tags: ['Internal'] },
+    },
+    async (req, reply) => {
+      const { orgId, campaignId } = z
+        .object({
+          orgId: z.string().uuid(),
+          campaignId: z.string().uuid(),
+        })
+        .parse(req.query);
 
-    const contactIds = await resolveAudience(orgId, campaignId);
-    return reply.send({ data: { contactIds } });
-  });
+      const contactIds = await resolveAudience(orgId, campaignId);
+      return reply.send({ data: { contactIds } });
+    },
+  );
 };
 
 export default internalAudienceRoutes;

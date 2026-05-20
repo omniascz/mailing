@@ -24,9 +24,14 @@ import { startSeoRankPollWorker, scheduleRankPoll } from './jobs/seo-rank-poll.j
 import { startSocialSchedulerWorker, scheduleSocialJobs } from './jobs/social-scheduler.js';
 import { startInvoiceReminderWorker, scheduleCommerceJobs } from './jobs/invoice-reminder.js';
 import { startVideoTranscodeWorker, scheduleVideoTranscode } from './jobs/video-transcode.js';
-import { startSubscriptionBillingWorker, scheduleSubscriptionBillingJob } from './jobs/subscription-billing.js';
+import {
+  startSubscriptionBillingWorker,
+  scheduleSubscriptionBillingJob,
+} from './jobs/subscription-billing.js';
 import { QUEUE_NAMES } from './queues/index.js';
+import { initTelemetry, flushTelemetry } from './lib/telemetry.js';
 
+initTelemetry();
 console.log('ForgeMsg Workers starting...');
 
 const campaignSplitter = startCampaignSplitterWorker();
@@ -37,7 +42,8 @@ const mtaSenders = startMtaSenderWorkers();
 const archiveWorker = startArchiveWorker();
 const seoRankPollWorker = startSeoRankPollWorker();
 scheduleRankPoll().catch(console.error);
-const { publishWorker: socialPublishWorker, monitorWorker: socialMonitorWorker } = startSocialSchedulerWorker();
+const { publishWorker: socialPublishWorker, monitorWorker: socialMonitorWorker } =
+  startSocialSchedulerWorker();
 scheduleSocialJobs().catch(console.error);
 const { worker: invoiceReminderWorker, adPerfWorker } = startInvoiceReminderWorker();
 scheduleCommerceJobs().catch(console.error);
@@ -65,6 +71,7 @@ async function shutdown() {
     videoTranscodeWorker.close(),
     subscriptionBillingWorker.close(),
   ]);
+  await flushTelemetry();
   console.log('All workers stopped.');
   process.exit(0);
 }

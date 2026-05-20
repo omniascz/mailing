@@ -2166,4 +2166,4 @@ TRANSACTIONAL:
 
 ---
 
-*Tento dokument konsoliduje deliverability + compliance napříč 27 platformami z dokumentů 01-54. Pro detailní pohled na konkrétní platformu viz příslušný Features DeepDive dokument.*
+_Tento dokument konsoliduje deliverability + compliance napříč 27 platformami z dokumentů 01-54. Pro detailní pohled na konkrétní platformu viz příslušný Features DeepDive dokument._

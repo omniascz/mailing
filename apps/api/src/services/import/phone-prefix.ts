@@ -141,7 +141,9 @@ export function parsePhonePrefix(raw: string): PrefixParseResult {
     }
 
     // Check longer prefixes first so '55' beats '5', '59' beats '5', etc.
-    const sortedLandline = [...CZ_LANDLINE_REGIONS].sort((a, b) => b.prefix.length - a.prefix.length);
+    const sortedLandline = [...CZ_LANDLINE_REGIONS].sort(
+      (a, b) => b.prefix.length - a.prefix.length,
+    );
     for (const { prefix, region } of sortedLandline) {
       if (rest.startsWith(prefix)) {
         return {

@@ -4,15 +4,16 @@
 
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { viberTemplates, type NewViberTemplate, type ViberTemplate } from '../../db/schema/index.js';
+import {
+  viberTemplates,
+  type NewViberTemplate,
+  type ViberTemplate,
+} from '../../db/schema/index.js';
 
 type CreateViberTemplateInput = Omit<NewViberTemplate, 'id' | 'orgId' | 'createdAt' | 'updatedAt'>;
 type UpdateViberTemplateInput = Partial<CreateViberTemplateInput>;
 
-export async function listViberTemplates(
-  orgId: string,
-  status?: string,
-): Promise<ViberTemplate[]> {
+export async function listViberTemplates(orgId: string, status?: string): Promise<ViberTemplate[]> {
   const conditions = [eq(viberTemplates.orgId, orgId)];
   if (status) {
     conditions.push(eq(viberTemplates.status, status));

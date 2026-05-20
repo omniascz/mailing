@@ -13,15 +13,23 @@ export interface TimelineEntry {
   data: Record<string, unknown>;
 }
 
-export async function getTimeline(orgId: string, contactId: string, opts?: {
-  limit?: number; before?: Date;
-}): Promise<TimelineEntry[]> {
+export async function getTimeline(
+  orgId: string,
+  contactId: string,
+  opts?: {
+    limit?: number;
+    before?: Date;
+  },
+): Promise<TimelineEntry[]> {
   const limit = Math.min(500, opts?.limit ?? 100);
-  const beforeClause = opts?.before
-    ? sql`AND created_at < ${opts.before}`
-    : sql``;
+  const beforeClause = opts?.before ? sql`AND created_at < ${opts.before}` : sql``;
 
-  const rs = await db.execute<{ at: Date; source: string; type: string; data: Record<string, unknown> }>(sql`
+  const rs = await db.execute<{
+    at: Date;
+    source: string;
+    type: string;
+    data: Record<string, unknown>;
+  }>(sql`
     SELECT created_at AS at, 'email' AS source, event_type AS type,
       jsonb_build_object('campaignId', campaign_id, 'workflowRunId', workflow_run_id) AS data
     FROM email_events
@@ -45,6 +53,17 @@ export async function getTimeline(orgId: string, contactId: string, opts?: {
     LIMIT ${limit}
   `);
 
-  return (rs as unknown as Array<{ at: Date; source: string; type: string; data: Record<string, unknown> }>)
-    .map((r) => ({ at: new Date(r.at), source: r.source as TimelineEntry['source'], type: r.type, data: r.data ?? {} }));
+  return (
+    rs as unknown as Array<{
+      at: Date;
+      source: string;
+      type: string;
+      data: Record<string, unknown>;
+    }>
+  ).map((r) => ({
+    at: new Date(r.at),
+    source: r.source as TimelineEntry['source'],
+    type: r.type,
+    data: r.data ?? {},
+  }));
 }

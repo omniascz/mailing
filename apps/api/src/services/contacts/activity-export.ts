@@ -54,15 +54,16 @@ export async function getContactActivity(
     .limit(limit);
 
   for (const e of emails) {
-    const typeLabel = {
-      send: 'Email sent',
-      deliver: 'Email delivered',
-      open: 'Email opened',
-      click: 'Link clicked',
-      bounce: 'Email bounced',
-      complaint: 'Email complaint',
-      unsubscribe: 'Unsubscribed',
-    }[e.eventType] || e.eventType;
+    const typeLabel =
+      {
+        send: 'Email sent',
+        deliver: 'Email delivered',
+        open: 'Email opened',
+        click: 'Link clicked',
+        bounce: 'Email bounced',
+        complaint: 'Email complaint',
+        unsubscribe: 'Unsubscribed',
+      }[e.eventType] || e.eventType;
 
     activities.push({
       timestamp: e.createdAt,
@@ -166,17 +167,13 @@ export async function getContactActivity(
 /**
  * Format activity rows as CSV. Headers: Timestamp, Type, Summary, Details (JSON).
  */
-export function formatActivityCsv(
-  _contact: Contact,
-  activities: ActivityRow[],
-): string {
+export function formatActivityCsv(_contact: Contact, activities: ActivityRow[]): string {
   const header = ['Timestamp', 'Type', 'Summary', 'Details'].map(escapecsvField).join(',');
-  const rows = activities.map((a) => [
-    a.timestamp.toISOString(),
-    a.type,
-    a.summary,
-    JSON.stringify(a.details),
-  ].map(escapecsvField).join(','));
+  const rows = activities.map((a) =>
+    [a.timestamp.toISOString(), a.type, a.summary, JSON.stringify(a.details)]
+      .map(escapecsvField)
+      .join(','),
+  );
   return [header, ...rows].join('\n');
 }
 

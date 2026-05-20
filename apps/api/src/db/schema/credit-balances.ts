@@ -7,37 +7,54 @@
 
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, decimal, timestamp, text, index, uniqueIndex,
+  pgTable,
+  uuid,
+  varchar,
+  decimal,
+  timestamp,
+  text,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 export const creditBalances = pgTable(
   'credit_balances',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
 
     /** Current balance in USD cents (integer arithmetic avoids floating-point drift) */
     balanceCents: decimal('balance_cents', { precision: 14, scale: 0 }).notNull().default('0'),
 
     /** Lifetime credits purchased */
-    totalPurchasedCents: decimal('total_purchased_cents', { precision: 14, scale: 0 }).notNull().default('0'),
+    totalPurchasedCents: decimal('total_purchased_cents', { precision: 14, scale: 0 })
+      .notNull()
+      .default('0'),
 
     /** Lifetime credits consumed */
-    totalConsumedCents: decimal('total_consumed_cents', { precision: 14, scale: 0 }).notNull().default('0'),
+    totalConsumedCents: decimal('total_consumed_cents', { precision: 14, scale: 0 })
+      .notNull()
+      .default('0'),
 
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    uniqueIndex('credit_balances_org_uq').on(t.orgId),
-  ],
+  (t) => [uniqueIndex('credit_balances_org_uq').on(t.orgId)],
 );
 
 export const creditTransactions = pgTable(
   'credit_transactions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
 
     /**
      * purchase   — credits added via Stripe payment

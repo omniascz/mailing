@@ -116,9 +116,7 @@ export async function findProspects(
     };
   });
 
-  return matches
-    .sort((a, b) => b.fitScore - a.fitScore)
-    .slice(0, limit);
+  return matches.sort((a, b) => b.fitScore - a.fitScore).slice(0, limit);
 }
 
 // ─── Account research brief ───────────────────────────────────────────────────
@@ -165,8 +163,7 @@ export async function researchAccount(
     tenantId: orgId,
     model: 'claude-opus-4-6',
     feature: 'agent_run',
-    system:
-      'You are a sales research analyst. Output strict JSON only, no markdown fences.',
+    system: 'You are a sales research analyst. Output strict JSON only, no markdown fences.',
     user: `Produce a prospecting brief for this account. Use ONLY the facts given — do NOT invent news or quotes.
 
 Account:
@@ -180,7 +177,12 @@ Relationship history:
 - Open deals: ${openCount}
 - Won deals: ${wonCount}
 - Lost deals: ${lostCount}
-- Last 3 deal names: ${accountDeals.slice(0, 3).map((d) => d.name).join(' | ') || 'none'}
+- Last 3 deal names: ${
+      accountDeals
+        .slice(0, 3)
+        .map((d) => d.name)
+        .join(' | ') || 'none'
+    }
 
 Return JSON:
 {
@@ -210,7 +212,7 @@ Return JSON:
     talkingPoints: parsed.talkingPoints ?? [],
     suggestedOutreachAngle: parsed.suggestedOutreachAngle ?? '',
     risks: parsed.risks ?? [],
-    tokensUsed: (result.inputTokens + result.outputTokens),
+    tokensUsed: result.inputTokens + result.outputTokens,
   };
 
   await redis.set(key, JSON.stringify(output), 'EX', RESEARCH_TTL);
@@ -252,9 +254,8 @@ export async function draftOutreach(
   if (!contact) throw AppError.notFound('Contact not found');
 
   const tone = input.tone ?? 'professional';
-  const language = input.language
-    ?? (contact as { preferredLocale?: string | null }).preferredLocale
-    ?? 'en';
+  const language =
+    input.language ?? (contact as { preferredLocale?: string | null }).preferredLocale ?? 'en';
 
   const contactFacts: string[] = [];
   if (contact.firstName) contactFacts.push(`firstName=${contact.firstName}`);
@@ -274,9 +275,10 @@ Rules:
 - Output strict JSON, no markdown.
 
 Return JSON:
-${input.channel === 'email'
-  ? `{ "subject": "...", "body": "...", "variants": [ { "subject": "...", "body": "..." }, { "subject": "...", "body": "..." } ] }`
-  : `{ "body": "...", "variants": [ { "body": "..." }, { "body": "..." } ] }`
+${
+  input.channel === 'email'
+    ? `{ "subject": "...", "body": "...", "variants": [ { "subject": "...", "body": "..." }, { "subject": "...", "body": "..." } ] }`
+    : `{ "body": "...", "variants": [ { "body": "..." }, { "body": "..." } ] }`
 }`;
 
   const result = await callClaude({
@@ -302,6 +304,6 @@ ${input.channel === 'email'
     subject: parsed.subject,
     body: parsed.body,
     variants: parsed.variants ?? [],
-    tokensUsed: (result.inputTokens + result.outputTokens),
+    tokensUsed: result.inputTokens + result.outputTokens,
   };
 }

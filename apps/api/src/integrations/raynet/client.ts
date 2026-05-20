@@ -84,7 +84,9 @@ async function rnFetch<T = unknown>(
   return (await res.json()) as T;
 }
 
-export async function testConnection(conn: RaynetConnection): Promise<{ ok: boolean; error?: string }> {
+export async function testConnection(
+  conn: RaynetConnection,
+): Promise<{ ok: boolean; error?: string }> {
   try {
     await rnFetch(conn, '/ping');
     return { ok: true };
@@ -103,10 +105,7 @@ export async function listContacts(
   if (opts.limit) params.set('limit', String(opts.limit));
   if (opts.offset) params.set('offset', String(opts.offset));
   const qs = params.toString() ? `?${params}` : '';
-  const res = await rnFetch<{ data: Array<Record<string, unknown>> }>(
-    conn,
-    `/contacts${qs}`,
-  );
+  const res = await rnFetch<{ data: Array<Record<string, unknown>> }>(conn, `/contacts${qs}`);
   return (res.data ?? []).map((row) => normalizeRaynetContact(row));
 }
 
@@ -120,11 +119,19 @@ export async function getContact(
 
 export async function createContact(
   conn: RaynetConnection,
-  input: { firstName?: string; lastName?: string; email?: string; phone?: string; companyId?: number },
+  input: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    companyId?: number;
+  },
 ): Promise<RaynetNormalizedContact> {
   const contactInfo: Array<Record<string, unknown>> = [];
-  if (input.email) contactInfo.push({ contactInfoType: 'email', contactInfo: input.email, primary: true });
-  if (input.phone) contactInfo.push({ contactInfoType: 'tel', contactInfo: input.phone, primary: true });
+  if (input.email)
+    contactInfo.push({ contactInfoType: 'email', contactInfo: input.email, primary: true });
+  if (input.phone)
+    contactInfo.push({ contactInfoType: 'tel', contactInfo: input.phone, primary: true });
 
   const res = await rnFetch<Record<string, unknown>>(conn, '/contacts', {
     method: 'POST',
@@ -132,9 +139,7 @@ export async function createContact(
       firstName: input.firstName,
       lastName: input.lastName,
       contactInfo,
-      ...(input.companyId
-        ? { primaryAddress: { company: { id: input.companyId } } }
-        : {}),
+      ...(input.companyId ? { primaryAddress: { company: { id: input.companyId } } } : {}),
     }),
   });
   return normalizeRaynetContact(res);
@@ -150,16 +155,21 @@ export async function listCompanies(
   if (opts.limit) params.set('limit', String(opts.limit));
   if (opts.offset) params.set('offset', String(opts.offset));
   const qs = params.toString() ? `?${params}` : '';
-  const res = await rnFetch<{ data: Array<Record<string, unknown>> }>(
-    conn,
-    `/companies${qs}`,
-  );
+  const res = await rnFetch<{ data: Array<Record<string, unknown>> }>(conn, `/companies${qs}`);
   return (res.data ?? []).map((row) => normalizeRaynetCompany(row));
 }
 
 export async function createCompany(
   conn: RaynetConnection,
-  input: { name: string; ico?: string; dic?: string; street?: string; city?: string; zip?: string; country?: string },
+  input: {
+    name: string;
+    ico?: string;
+    dic?: string;
+    street?: string;
+    city?: string;
+    zip?: string;
+    country?: string;
+  },
 ): Promise<RaynetNormalizedCompany> {
   const res = await rnFetch<Record<string, unknown>>(conn, '/companies', {
     method: 'POST',
@@ -188,9 +198,6 @@ export async function listDeals(
   if (opts.limit) params.set('limit', String(opts.limit));
   if (opts.offset) params.set('offset', String(opts.offset));
   const qs = params.toString() ? `?${params}` : '';
-  const res = await rnFetch<{ data: Array<Record<string, unknown>> }>(
-    conn,
-    `/businessCases${qs}`,
-  );
+  const res = await rnFetch<{ data: Array<Record<string, unknown>> }>(conn, `/businessCases${qs}`);
   return (res.data ?? []).map((row) => normalizeRaynetDeal(row));
 }

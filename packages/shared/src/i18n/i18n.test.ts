@@ -18,19 +18,13 @@ describe('resolveLocale', () => {
   });
 
   it('parses Accept-Language with quality factors', () => {
-    expect(
-      resolveLocale({ acceptLanguage: 'cs-CZ,cs;q=0.9,en;q=0.8' }),
-    ).toBe('cs');
-    expect(
-      resolveLocale({ acceptLanguage: 'de-DE,en;q=0.7,sk;q=0.9' }),
-    ).toBe('sk');
+    expect(resolveLocale({ acceptLanguage: 'cs-CZ,cs;q=0.9,en;q=0.8' })).toBe('cs');
+    expect(resolveLocale({ acceptLanguage: 'de-DE,en;q=0.7,sk;q=0.9' })).toBe('sk');
     expect(resolveLocale({ acceptLanguage: 'fr,de' })).toBe('cs'); // none supported → default
   });
 
   it('orgLocale wins over Accept-Language', () => {
-    expect(
-      resolveLocale({ orgLocale: 'sk', acceptLanguage: 'en-US' }),
-    ).toBe('sk');
+    expect(resolveLocale({ orgLocale: 'sk', acceptLanguage: 'en-US' })).toBe('sk');
   });
 });
 
@@ -42,9 +36,9 @@ describe('t', () => {
   });
 
   it('interpolates placeholders', () => {
-    expect(
-      t('common.footer_sent_by', 'cs', { org: 'Acme' }),
-    ).toBe('Tento e-mail vám byl odeslán službou Acme.');
+    expect(t('common.footer_sent_by', 'cs', { org: 'Acme' })).toBe(
+      'Tento e-mail vám byl odeslán službou Acme.',
+    );
   });
 
   it('leaves unknown placeholders intact for visibility', () => {

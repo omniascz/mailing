@@ -89,21 +89,21 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Super Admin** | Account creation / promotion | Vše bez omezení (krom hub features bez seat) | Vše |
-| **Admin (with permissions)** | Pozvánka od Super Admin | Vše co Super Admin nastaví v permissions | Per permissions |
-| **Marketing User** | Pozvánka, Core seat | Email, forms, landing pages, workflows | Marketing tools + CRM |
-| **Sales User** | Pozvánka, Core+Sales seat | Sequences, deals, prospecting | Sales tools + CRM |
-| **Service User** | Pozvánka, Core+Service seat | Inbox, tickets, KB | Service tools + CRM |
-| **Commerce User** | Pozvánka, Core+Commerce seat | Quotes, invoices, payments | Commerce + CRM |
-| **View-Only User** | Pozvánka, free seat | Read dashboards, reports | Reports + content |
-| **Partner Admin** | Solutions Partner program | Manage klientského účtu | Per partner access |
-| **Developer** | Developer seat | Custom apps, dev sandbox | Dev tools |
-| **Contact / Lead** | Form, import, integration | Otevírá emaily, klikne, browses, nakupuje | Své emaily + preference center |
-| **API klient** | Private App / OAuth | Cokoliv povolí scopes | Per scope |
-| **Integrace** (Shopify, etc.) | OAuth | Sync data oboustranně | Per OAuth scope |
-| **HubSpot Staff** | Interní | Debug/support s consentem | Limited |
+| Aktér                         | Vstupní bod                  | Co dělá                                      | Co vidí                        |
+| ----------------------------- | ---------------------------- | -------------------------------------------- | ------------------------------ |
+| **Super Admin**               | Account creation / promotion | Vše bez omezení (krom hub features bez seat) | Vše                            |
+| **Admin (with permissions)**  | Pozvánka od Super Admin      | Vše co Super Admin nastaví v permissions     | Per permissions                |
+| **Marketing User**            | Pozvánka, Core seat          | Email, forms, landing pages, workflows       | Marketing tools + CRM          |
+| **Sales User**                | Pozvánka, Core+Sales seat    | Sequences, deals, prospecting                | Sales tools + CRM              |
+| **Service User**              | Pozvánka, Core+Service seat  | Inbox, tickets, KB                           | Service tools + CRM            |
+| **Commerce User**             | Pozvánka, Core+Commerce seat | Quotes, invoices, payments                   | Commerce + CRM                 |
+| **View-Only User**            | Pozvánka, free seat          | Read dashboards, reports                     | Reports + content              |
+| **Partner Admin**             | Solutions Partner program    | Manage klientského účtu                      | Per partner access             |
+| **Developer**                 | Developer seat               | Custom apps, dev sandbox                     | Dev tools                      |
+| **Contact / Lead**            | Form, import, integration    | Otevírá emaily, klikne, browses, nakupuje    | Své emaily + preference center |
+| **API klient**                | Private App / OAuth          | Cokoliv povolí scopes                        | Per scope                      |
+| **Integrace** (Shopify, etc.) | OAuth                        | Sync data oboustranně                        | Per OAuth scope                |
+| **HubSpot Staff**             | Interní                      | Debug/support s consentem                    | Limited                        |
 
 ---
 
@@ -159,6 +159,7 @@ User
 ### 2.2 Pravidlo: Seat + Permission = Final access
 
 Příklad konfliktu:
+
 - **Super Admin s jen Core seatem** → nemůže používat Sales Hub Pro features (např. sequences), i když by je Super Admin permission dovolovala. Protože **seat to neumožňuje**.
 - **Core user s Edit-All-Contacts permission** → vidí a edituje všechny contacty, ale **nemůže používat Sequences** (vyžaduje Sales seat).
 
@@ -172,6 +173,7 @@ Příklad konfliktu:
 - Pozdě 2025 přejmenováno na **Roles** (RBAC alignment)
 
 **Typické role v praxi:**
+
 - Marketing Manager
 - Marketing Specialist
 - Marketing Designer
@@ -195,6 +197,7 @@ Teams = **hierarchické seskupení uživatelů**.
 - Reporting groupování
 
 Příklad:
+
 ```
 EMEA Team
 ├── EMEA Marketing
@@ -337,6 +340,7 @@ Strategic:
 ## 4. Admin flow (non-Super)
 
 Admin = user s elevated permissions ale ne Super Admin. Často:
+
 - Modify billing ❌ (pokud Super Admin neudělil)
 - Add and edit users ✅
 - Add and edit teams ✅
@@ -1517,25 +1521,25 @@ Provides download link (time-limited)
 
 ## 20. Datová mapa: co vidí kdo
 
-| Data | Super Admin | Admin (full perm) | Marketing User | Sales User | Service User | View-Only | Contact | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Billing & subscription | ✅ | per perm | ❌ | ❌ | ❌ | ❌ | ❌ | per scope |
-| User management | ✅ | per perm | ❌ | ❌ | ❌ | ❌ | ❌ | per scope |
-| All contacts | ✅ | ✅ | ✅* | ✅* | ✅* | ✅* | jen sebe | ✅ |
-| Team-only contacts | ✅ | ✅ | per perm | per perm | per perm | per perm | ❌ | – |
-| Owned contacts | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – |
-| Marketing emails | ✅ | ✅ | ✅ | view | view | view | jen co dostal | ✅ |
-| Marketing email reports | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Sales sequences | ✅ | ✅ | ❌ | ✅ | ❌ | view | ❌ | per seat scope |
-| Deals | ✅ | ✅ | view | ✅ | view | view | jen své | ✅ |
-| Service tickets | ✅ | ✅ | view | view | ✅ | view | jen své | ✅ |
-| Workflows | ✅ | ✅ | ✅ | ✅* | ✅* | view | ❌ | ✅ |
-| Custom reports | ✅ | ✅ | ✅ | ✅ | ✅ | view | ❌ | ✅ |
-| Domain settings | ✅ | per perm | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| API keys / Private Apps | ✅ | per perm | jen své | jen své | jen své | ❌ | ❌ | – |
-| Properties / Custom objects | ✅ | per perm | view | view | view | view | jen své | ✅ |
-| GDPR delete | ✅ | per perm | ❌ | ❌ | ❌ | ❌ | request | per scope |
-| Audit log | ✅ | per perm | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Data                        | Super Admin | Admin (full perm) | Marketing User | Sales User | Service User | View-Only |    Contact    |      API       |
+| --------------------------- | :---------: | :---------------: | :------------: | :--------: | :----------: | :-------: | :-----------: | :------------: |
+| Billing & subscription      |     ✅      |     per perm      |       ❌       |     ❌     |      ❌      |    ❌     |      ❌       |   per scope    |
+| User management             |     ✅      |     per perm      |       ❌       |     ❌     |      ❌      |    ❌     |      ❌       |   per scope    |
+| All contacts                |     ✅      |        ✅         |      ✅\*      |    ✅\*    |     ✅\*     |   ✅\*    |   jen sebe    |       ✅       |
+| Team-only contacts          |     ✅      |        ✅         |    per perm    |  per perm  |   per perm   | per perm  |      ❌       |       –        |
+| Owned contacts              |     ✅      |        ✅         |       ✅       |     ✅     |      ✅      |     –     |       –       |       –        |
+| Marketing emails            |     ✅      |        ✅         |       ✅       |    view    |     view     |   view    | jen co dostal |       ✅       |
+| Marketing email reports     |     ✅      |        ✅         |       ✅       |     ✅     |      ✅      |    ✅     |      ❌       |       ✅       |
+| Sales sequences             |     ✅      |        ✅         |       ❌       |     ✅     |      ❌      |   view    |      ❌       | per seat scope |
+| Deals                       |     ✅      |        ✅         |      view      |     ✅     |     view     |   view    |    jen své    |       ✅       |
+| Service tickets             |     ✅      |        ✅         |      view      |    view    |      ✅      |   view    |    jen své    |       ✅       |
+| Workflows                   |     ✅      |        ✅         |       ✅       |    ✅\*    |     ✅\*     |   view    |      ❌       |       ✅       |
+| Custom reports              |     ✅      |        ✅         |       ✅       |     ✅     |      ✅      |   view    |      ❌       |       ✅       |
+| Domain settings             |     ✅      |     per perm      |       ❌       |     ❌     |      ❌      |    ❌     |      ❌       |       ❌       |
+| API keys / Private Apps     |     ✅      |     per perm      |    jen své     |  jen své   |   jen své    |    ❌     |      ❌       |       –        |
+| Properties / Custom objects |     ✅      |     per perm      |      view      |    view    |     view     |   view    |    jen své    |       ✅       |
+| GDPR delete                 |     ✅      |     per perm      |       ❌       |     ❌     |      ❌      |    ❌     |    request    |   per scope    |
+| Audit log                   |     ✅      |     per perm      |       ❌       |     ❌     |      ❌      |    ❌     |      ❌       |       ❌       |
 
 \* Per-scope (All/Team/Owned/None) configurable
 
@@ -1622,4 +1626,4 @@ Pokud HubSpot používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů knowledge.hubspot.com a praktických příruček (RevPartners, INSIDEA, Hublead, Sidekick Strategies, Automation Strategists, ProcessPro Consulting, Onthefuze, Bardeen). Pro nejaktuálnější detaily vždy konzultovat HubSpot Knowledge Base.*
+_Dokument zpracován z oficiálních zdrojů knowledge.hubspot.com a praktických příruček (RevPartners, INSIDEA, Hublead, Sidekick Strategies, Automation Strategists, ProcessPro Consulting, Onthefuze, Bardeen). Pro nejaktuálnější detaily vždy konzultovat HubSpot Knowledge Base._

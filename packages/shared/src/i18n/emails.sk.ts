@@ -5,8 +5,7 @@ export const sk: EmailsBundle = {
     brand: 'ForgeMsg',
     view_in_browser: 'Zobraziť v prehliadači',
     footer_sent_by: 'Tento e-mail vám bol odoslaný službou {{org}}.',
-    footer_no_longer:
-      'Ak už nechcete dostávať tieto e-maily, môžete sa {{unsubscribe_link}}.',
+    footer_no_longer: 'Ak už nechcete dostávať tieto e-maily, môžete sa {{unsubscribe_link}}.',
     unsubscribe_link_label: 'odhlásiť tu',
   },
 
@@ -60,8 +59,7 @@ export const sk: EmailsBundle = {
     body_intro:
       'Dostali sme žiadosť o obnovenie hesla k vášmu účtu {{email}}. Kliknutím na odkaz nižšie nastavíte nové heslo.',
     cta: 'Obnoviť heslo',
-    ignore_if_not_yours:
-      'Ak ste obnovenie hesla nevyžiadali, tento e-mail ignorujte.',
+    ignore_if_not_yours: 'Ak ste obnovenie hesla nevyžiadali, tento e-mail ignorujte.',
     expires_in: 'Odkaz je platný 60 minút.',
   },
 
@@ -76,8 +74,7 @@ export const sk: EmailsBundle = {
   team_invite: {
     subject: '{{inviter}} vás pozýva do {{org}}',
     heading: 'Boli ste pozvaní do tímu',
-    body_intro:
-      '{{inviter}} vás pozýva na spoluprácu v organizácii {{org}} na {{brand}}.',
+    body_intro: '{{inviter}} vás pozýva na spoluprácu v organizácii {{org}} na {{brand}}.',
     cta: 'Prijať pozvánku',
   },
 };

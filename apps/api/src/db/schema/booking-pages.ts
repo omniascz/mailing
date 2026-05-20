@@ -9,8 +9,16 @@
 
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, boolean, integer, jsonb,
-  timestamp, text, index, uniqueIndex,
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  integer,
+  jsonb,
+  timestamp,
+  text,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';
@@ -20,9 +28,15 @@ import { users } from './users.js';
 export const eventTypes = pgTable(
   'event_types',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    ownerUserId: uuid('owner_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    ownerUserId: uuid('owner_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
 
     /** URL slug: /meetings/{bookingPageSlug}/{slug} */
     slug: varchar('slug', { length: 128 }).notNull(),
@@ -54,11 +68,18 @@ export const eventTypes = pgTable(
     timezone: varchar('timezone', { length: 64 }).notNull().default('UTC'),
 
     /** Custom questions to show on booking form [{id, label, type, required}] */
-    questions: jsonb('questions').$type<Array<{
-      id: string; label: string;
-      type: 'text' | 'textarea' | 'select' | 'checkbox';
-      required: boolean; options?: string[];
-    }>>().notNull().default([]),
+    questions: jsonb('questions')
+      .$type<
+        Array<{
+          id: string;
+          label: string;
+          type: 'text' | 'textarea' | 'select' | 'checkbox';
+          required: boolean;
+          options?: string[];
+        }>
+      >()
+      .notNull()
+      .default([]),
 
     /** For round-robin: list of user UUIDs in pool */
     teamMemberIds: jsonb('team_member_ids').$type<string[]>().notNull().default([]),
@@ -81,9 +102,15 @@ export const eventTypes = pgTable(
 export const bookingPages = pgTable(
   'booking_pages',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    ownerUserId: uuid('owner_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    ownerUserId: uuid('owner_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
 
     /** Public slug: /meetings/{slug} */
     slug: varchar('slug', { length: 128 }).notNull(),
@@ -106,34 +133,54 @@ export const bookingPages = pgTable(
 export const bookingAvailability = pgTable(
   'booking_availability',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
 
     /**
      * Weekly schedule as an array of windows:
      * [{dayOfWeek: 0-6, startHour: 9, startMin: 0, endHour: 17, endMin: 0}]
      */
-    schedule: jsonb('schedule').$type<Array<{
-      dayOfWeek: number; startHour: number; startMin: number;
-      endHour: number; endMin: number;
-    }>>().notNull().default([]),
+    schedule: jsonb('schedule')
+      .$type<
+        Array<{
+          dayOfWeek: number;
+          startHour: number;
+          startMin: number;
+          endHour: number;
+          endMin: number;
+        }>
+      >()
+      .notNull()
+      .default([]),
 
     /** IANA timezone the schedule is expressed in */
     timezone: varchar('timezone', { length: 64 }).notNull().default('UTC'),
 
     /** Date overrides: specific dates fully unavailable or custom hours */
-    dateOverrides: jsonb('date_overrides').$type<Array<{
-      date: string; unavailable?: boolean;
-      startHour?: number; startMin?: number;
-      endHour?: number; endMin?: number;
-    }>>().notNull().default([]),
+    dateOverrides: jsonb('date_overrides')
+      .$type<
+        Array<{
+          date: string;
+          unavailable?: boolean;
+          startHour?: number;
+          startMin?: number;
+          endHour?: number;
+          endMin?: number;
+        }>
+      >()
+      .notNull()
+      .default([]),
 
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    uniqueIndex('booking_availability_user_uq').on(t.orgId, t.userId),
-  ],
+  (t) => [uniqueIndex('booking_availability_user_uq').on(t.orgId, t.userId)],
 );
 
 // ─── Round-robin assignment state (#261) ─────────────────────────────────────
@@ -141,10 +188,16 @@ export const bookingAvailability = pgTable(
 export const roundRobinState = pgTable(
   'round_robin_state',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     eventTypeId: uuid('event_type_id').notNull(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     /** Number of bookings assigned so far in this rotation */
     assignmentCount: integer('assignment_count').notNull().default(0),
     lastAssignedAt: timestamp('last_assigned_at', { withTimezone: true }),

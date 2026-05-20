@@ -7,6 +7,7 @@
 > ⚠️ **KRITICKÝ KONTEXT – LEGACY PRODUKT:** Newsletter2Go je **historický produkt v "legacy mode"** v roce 2026.
 >
 > **Klíčové milníky:**
+>
 > - **2011:** Newsletter2Go založen v **Berlíně** (Steffen Schebesta + Christoph Beuck)
 > - **31. ledna 2019:** **Sendinblue (později Brevo) získává 100% akcií Newsletter2Go GmbH** – full share acquisition pro vybudování evropského market leaderа v digital marketingu
 > - **14. dubna 2020:** Sendinblue **rebrandinguje** na úroveň oba produkty – Newsletter2Go software zůstává pod jménem **"Sendinblue"** pro Bestandskunden, ale Sendinblue platforma rebranduje
@@ -15,9 +16,10 @@
 > - **Konec 2023:** Migration service plně dostupný v dashboard Newsletter2Go účtů
 >
 > **Aktuální stav v roce 2026:**
+>
 > - **Software stále operational pro Bestandskunden** (existing customers)
 > - **Nové registrace NELZE** – přesměrování na Brevo
-> - **Žádný end-of-life datum oznámeno**, ale per oficiální FAQ: *"alles Gute hat mal ein Ende. Wir haben noch kein Datum, wann wir unsere Newsletter2Go Software offline schalten, doch es wird sicherlich kommen"* (everything good must end – software will eventually be sunset)
+> - **Žádný end-of-life datum oznámeno**, ale per oficiální FAQ: _"alles Gute hat mal ein Ende. Wir haben noch kein Datum, wann wir unsere Newsletter2Go Software offline schalten, doch es wird sicherlich kommen"_ (everything good must end – software will eventually be sunset)
 > - **Migration assistant** dostupný v dashboard
 > - **6-day support** od 1.4.2020 (sobota 9-18h email)
 > - **Servers v Německu** zachovány
@@ -26,6 +28,7 @@
 > **Pozice (historicky):** Německý email marketing platform pre-akvizice. **Cenový model unique:** podle počtu odeslaných e-mailů (ne kontaktů) – disting funkce v industry.
 >
 > **Klíčové diferenciátory historicky (před acquisition):**
+>
 > - **Made in Germany** (Berlin HQ)
 > - **DSGVO native compliance**
 > - **Pricing per sent emails** (ne per contacts) – unique
@@ -67,17 +70,20 @@
 
 - **2011:** Founded in **Berlin, Germany**
 - **Founders:** Steffen Schebesta + Christoph Beuck
-- **Per Tracxn:** *"Newsletter2Go was founded in 2011. Newsletter2Go is headquartered in Berlin, Germany."*
+- **Per Tracxn:** _"Newsletter2Go was founded in 2011. Newsletter2Go is headquartered in Berlin, Germany."_
 
 ### 1.2 Sendinblue acquisition (31. ledna 2019)
 
 Per Tracxn:
-> *"Newsletter2Go got acquired by Brevo on Jan 31, 2019."*
+
+> _"Newsletter2Go got acquired by Brevo on Jan 31, 2019."_
 
 Per Brevo oficiální:
-> *"Brevo fully acquired Newsletter2Go GmbH's shares in January 2019. This made them the European market leader in digital marketing. Both companies share similar DNA and values."*
+
+> _"Brevo fully acquired Newsletter2Go GmbH's shares in January 2019. This made them the European market leader in digital marketing. Both companies share similar DNA and values."_
 
 **Akvizice rationale:**
+
 - **European market leadership** v digital marketingu
 - **Goal: rival US + China** digital companies
 - **Shared vision** o evropských standardech pro **data protection + digital security**
@@ -86,9 +92,11 @@ Per Brevo oficiální:
 ### 1.3 Sendinblue → Brevo rebrand (14. dubna 2020)
 
 Per Brevo oficiální:
-> *"Starting on 14 April 2020, the two companies are moving forward together under a single brand"*
+
+> _"Starting on 14 April 2020, the two companies are moving forward together under a single brand"_
 
 **14. dubna 2020:**
+
 - **Sendinblue brand merger** s Newsletter2Go
 - **Single brand approach** strategy
 - **Newsletter2Go software remains** for existing customers
@@ -97,20 +105,24 @@ Per Brevo oficiální:
 ### 1.4 Sendinblue → Brevo (Květen 2023)
 
 Per Irene Theiss:
-> *"Im Mai 2023 hat sich Sendinblue umbenannt in Brevo."*
+
+> _"Im Mai 2023 hat sich Sendinblue umbenannt in Brevo."_
 
 **Květen 2023:**
+
 - **Sendinblue brand** rebranded to **Brevo**
 - **Newsletter2Go software** stále operuje pod legacy stavem
 - Per oficiální:
-> *"Während sich die Plattform Sendinblue in Brevo umbenannt hat, bleibt für Sie alles beim Alten: Ihre gewohnte Newsletter2Go-Software läuft unter dem Namen Sendinblue unverändert weiter."*
+  > _"Während sich die Plattform Sendinblue in Brevo umbenannt hat, bleibt für Sie alles beim Alten: Ihre gewohnte Newsletter2Go-Software läuft unter dem Namen Sendinblue unverändert weiter."_
 
 ### 1.5 Současný status v roce 2026
 
 Per Softools.de:
-> *"Im Jahr 2019 wurde das Unternehmen jedoch von dem französischen Mitbewerber Brevo übernommen. Seitdem ist Newsletter2go als Software nur noch für Bestandskunden verfügbar. Neukunden werden direkt an Brevo weitergeleitet."*
+
+> _"Im Jahr 2019 wurde das Unternehmen jedoch von dem französischen Mitbewerber Brevo übernommen. Seitdem ist Newsletter2go als Software nur noch für Bestandskunden verfügbar. Neukunden werden direkt an Brevo weitergeleitet."_
 
 **Aktuální stav (květen 2026):**
+
 - ✅ **Software stále funguje** pro existing customers
 - ❌ **Nové registrace NEMOŽNÉ** – redirect na Brevo
 - ✅ **Migration assistant** dostupný v dashboard
@@ -123,9 +135,11 @@ Per Softools.de:
 ### 1.6 Per oficiální FAQ vyhlídky
 
 Per Brevo Newsletter2Go FAQ:
-> *"alles Gute hat mal ein Ende. Wir haben noch kein Datum, wann wir unsere Newsletter2Go Software offline schalten, doch es wird sicherlich kommen, das vorab."*
+
+> _"alles Gute hat mal ein Ende. Wir haben noch kein Datum, wann wir unsere Newsletter2Go Software offline schalten, doch es wird sicherlich kommen, das vorab."_
 
 **Vyhlídky:**
+
 - **Software bude eventuálně sunset**
 - **Datum NEZNÁMÉ** v 2026
 - **Brevo doporučuje migration** ale **nemíní zatím force migration**
@@ -169,7 +183,7 @@ Per Brevo Newsletter2Go FAQ:
 
 - **Software:** legacy product pro Bestandskunden (existing customers)
 - **Provoz:** stále operational, stable
-- **Mateřská společnost:** **Brevo (Brevo GmbH)** – per oficiální: *"Rechtlich gesehen bleiben wir auch nach der Umbenennung in Brevo noch die Brevo GmbH"*
+- **Mateřská společnost:** **Brevo (Brevo GmbH)** – per oficiální: _"Rechtlich gesehen bleiben wir auch nach der Umbenennung in Brevo noch die Brevo GmbH"_
 - **Office:** **Berlin, Germany** zachován
 - **Team:** Newsletter2Go team zachován
 - **Servers:** Germany (zachovány)
@@ -178,9 +192,11 @@ Per Brevo Newsletter2Go FAQ:
 ### 2.2 Strategická pozice
 
 Per Brevo oficiální:
-> *"For existing Newsletter2Go customers, nothing will change. New customers can create a free account with Brevo immediately. The Newsletter2Go software will remain unaffected by the rebrand."*
+
+> _"For existing Newsletter2Go customers, nothing will change. New customers can create a free account with Brevo immediately. The Newsletter2Go software will remain unaffected by the rebrand."_
 
 **Brevo strategie:**
+
 - **Protect existing customers** s grandfathered access
 - **Stop new acquisitions** na Newsletter2Go platform
 - **Encourage migration** to Brevo (s assistant)
@@ -190,11 +206,13 @@ Per Brevo oficiální:
 ### 2.3 Zachované benefits pro Bestandskunden
 
 Per Brevo:
-> *"Everything! Except for the brand name. We still have our office in Berlin and the whole team that formerly worked for Newsletter2Go. Everything that matters to you is still the same:*
-> - *Strict data protection standards*
-> - *Servers in Germany*
-> - *GDPR-compliant software at Newsletter2Go AND Brevo*
-> - *German-language support and sales"*
+
+> _"Everything! Except for the brand name. We still have our office in Berlin and the whole team that formerly worked for Newsletter2Go. Everything that matters to you is still the same:_
+>
+> - _Strict data protection standards_
+> - _Servers in Germany_
+> - _GDPR-compliant software at Newsletter2Go AND Brevo_
+> - _German-language support and sales"_
 
 ### 2.4 Typický Newsletter2Go user v 2026
 
@@ -266,9 +284,11 @@ Per Brevo:
 ### 3.1 Legacy pricing structure
 
 ⚠️ Per oficiální Brevo:
-> *"The Newsletter2Go prices will remain the same after the rebranding. Nothing will change for existing customers."*
+
+> _"The Newsletter2Go prices will remain the same after the rebranding. Nothing will change for existing customers."_
 
 **Tarify zůstávají stejné jako pre-2019:**
+
 - LITE10 (free tier)
 - Per email-volume tiers
 - Premium templates add-on
@@ -277,9 +297,11 @@ Per Brevo:
 ### 3.2 LITE10 (free tier)
 
 Per Irene Theiss:
-> *"Mit dem Lite Paket von Newsletter2go kannst du kostenlos 1.000 E-Mails pro Monat versenden. Du kannst die Basis-Funktionen nutzen, also 1 Adressbuch und keine automatisierten Mailings."*
+
+> _"Mit dem Lite Paket von Newsletter2go kannst du kostenlos 1.000 E-Mails pro Monat versenden. Du kannst die Basis-Funktionen nutzen, also 1 Adressbuch und keine automatisierten Mailings."_
 
 **LITE10 features:**
+
 - **1 000 emails/month FREE**
 - **1 Adressbuch** (address book)
 - **No automation**
@@ -290,15 +312,18 @@ Per Irene Theiss:
 ### 3.3 Higher tiers (email volume based)
 
 Per Irene Theiss:
-> *"Newsletter2Go hat Preisstufen bei 2.500, 5.000 und 10.000 E-Mails"*
+
+> _"Newsletter2Go hat Preisstufen bei 2.500, 5.000 und 10.000 E-Mails"_
 
 **Pricing tiers:**
+
 - **2 500 emails/month**
 - **5 000 emails/month**
 - **10 000 emails/month**
 - **Higher tiers** custom
 
 **Unique aspect:**
+
 - **Per emails sent**, NOT per contacts
 - **Different from most competitors**
 - **Convenient pro low-frequency senders s large lists**
@@ -306,7 +331,8 @@ Per Irene Theiss:
 ### 3.4 Prepaid Credits (alternative model)
 
 Per Irene Theiss:
-> *"Als Alternative bieten Brevo und Newsletter2Go Prepaid Credits an. Die Kosten pro E-Mail sind hier etwas höher."*
+
+> _"Als Alternative bieten Brevo und Newsletter2Go Prepaid Credits an. Die Kosten pro E-Mail sind hier etwas höher."_
 
 - **Pay-as-you-go option**
 - **Higher per-email cost** vs. subscription
@@ -316,7 +342,8 @@ Per Irene Theiss:
 ### 3.5 Cancel / downgrade flow
 
 Per Newsletter2Go Help:
-> *"Wenn Sie Ihre aktuelle Paket-Auswahl nicht mehr nutzen möchten, können Sie diese unter 'Abo verwalten' kündigen. Gehen Sie hierzu rechts oben ins Menü und wählen 'Konto' aus."*
+
+> _"Wenn Sie Ihre aktuelle Paket-Auswahl nicht mehr nutzen möchten, können Sie diese unter 'Abo verwalten' kündigen. Gehen Sie hierzu rechts oben ins Menü und wählen 'Konto' aus."_
 
 ```
 User: Konto → Abo verwalten
@@ -334,27 +361,29 @@ Confirmation
 ### 3.6 Why downgrade to LITE10 attractive
 
 Per Brevo migration FAQ:
-> *"Sie möchten Ihren Newsletter2Go Account bestehen lassen, aber nicht dafür zahlen, so ändern Sie Ihr Paket auf LITE10 bzw. kündigen Sie das aktuelle Abonnement. Im LITE10 Paket steht Ihnen die Software kostenfrei, in eingeschränkter Form zur Verfügung."*
+
+> _"Sie möchten Ihren Newsletter2Go Account bestehen lassen, aber nicht dafür zahlen, so ändern Sie Ihr Paket auf LITE10 bzw. kündigen Sie das aktuelle Abonnement. Im LITE10 Paket steht Ihnen die Software kostenfrei, in eingeschränkter Form zur Verfügung."_
 
 **Strategic option:**
+
 - **Migrate primary use** to Brevo
 - **Keep Newsletter2Go account on LITE10** (free) as backup
 - **No cost continuation** of legacy access
 
 ### 3.7 Per Irene Theiss comparison
 
-> *"Auch wenn diese beiden kostenlosen Angebote nicht direkt vergleichbar sind, ist meine Erfahrung: Wenn du ein oder zwei Newsletter pro Monat versendest und damit unter 1.000 E-Mails bleibst, lohnt sich der Wechsel zu Brevo finanziell nicht."*
+> _"Auch wenn diese beiden kostenlosen Angebote nicht direkt vergleichbar sind, ist meine Erfahrung: Wenn du ein oder zwei Newsletter pro Monat versendest und damit unter 1.000 E-Mails bleibst, lohnt sich der Wechsel zu Brevo finanziell nicht."_
 
 **LITE10 vs. Brevo free:**
 
-| Aspect | Newsletter2Go LITE10 | Brevo Free |
-|---|---|---|
-| **Emails/month** | 1 000 | 9 000 (300/day) |
-| **Address books** | 1 | Multiple |
-| **Automation** | ❌ | ✅ (up to 2 000 contacts) |
-| **Forms** | Limited | Unlimited |
-| **Lists** | 1 | Multiple |
-| **Multi-channel** | ❌ | ✅ (SMS, WhatsApp) |
+| Aspect            | Newsletter2Go LITE10 | Brevo Free                |
+| ----------------- | -------------------- | ------------------------- |
+| **Emails/month**  | 1 000                | 9 000 (300/day)           |
+| **Address books** | 1                    | Multiple                  |
+| **Automation**    | ❌                   | ✅ (up to 2 000 contacts) |
+| **Forms**         | Limited              | Unlimited                 |
+| **Lists**         | 1                    | Multiple                  |
+| **Multi-channel** | ❌                   | ✅ (SMS, WhatsApp)        |
 
 ⚠️ **Brevo free is more generous** in most aspects except daily limit handling.
 
@@ -411,9 +440,11 @@ LITE10 activates
 ### 5.1 Unique pricing model
 
 Per Softools.de:
-> *"Der herausstechendste Unterschied im Vergleich zu anderen Anbietern war vermutlich die Preisstruktur. Diese war nämlich nicht von der Anzahl der Kontakte abhängig, sondern von der Zahl der versendeten E-Mails pro Monat."*
+
+> _"Der herausstechendste Unterschied im Vergleich zu anderen Anbietern war vermutlich die Preisstruktur. Diese war nämlich nicht von der Anzahl der Kontakte abhängig, sondern von der Zahl der versendeten E-Mails pro Monat."_
 
 **Newsletter2Go's distinguishing feature:**
+
 - **Pricing per email sent** (monthly volume)
 - **NE per contact count**
 - **Different from:** Mailchimp, CleverReach, MailerLite, ActiveCampaign, Klaviyo (all per contact)
@@ -422,6 +453,7 @@ Per Softools.de:
 ### 5.2 Why this model existed
 
 Newsletter2Go was designed pro **occasional senders s large lists**:
+
 - 50 000 contacts
 - Send newsletter only 2x/year
 - Pay only pro 100 000 emails/year
@@ -429,9 +461,10 @@ Newsletter2Go was designed pro **occasional senders s large lists**:
 
 ### 5.3 Per Irene Theiss
 
-> *"Beide Tools bieten monatliche Pakete an, die nach Anzahl der versendeten E-Mails abrechnen (statt nach Zahl der Kontakte / aktiven Newsletter-Empfänger). Diese Abrechnungsmethode passt sehr gut zu allen, die ein oder zwei Newsletter pro Monat verschicken."*
+> _"Beide Tools bieten monatliche Pakete an, die nach Anzahl der versendeten E-Mails abrechnen (statt nach Zahl der Kontakte / aktiven Newsletter-Empfänger). Diese Abrechnungsmethode passt sehr gut zu allen, die ein oder zwei Newsletter pro Monat verschicken."_
 
 **Both Newsletter2Go AND Brevo** use per-emails-sent model:
+
 - **Newsletter2Go origin** of this approach
 - **Brevo inherited** this philosophy
 - **Competitive advantage** vs. per-contact platforms
@@ -440,11 +473,11 @@ Newsletter2Go was designed pro **occasional senders s large lists**:
 
 For 10 000 contacts, sending 1x/month:
 
-| Platform | Annual cost |
-|---|---|
-| **Newsletter2Go** | Per 120K emails/year tier |
-| **Brevo** | Per 120K emails/year tier |
-| **Mailchimp** (per contact) | 10K contacts × monthly fee |
+| Platform                     | Annual cost                |
+| ---------------------------- | -------------------------- |
+| **Newsletter2Go**            | Per 120K emails/year tier  |
+| **Brevo**                    | Per 120K emails/year tier  |
+| **Mailchimp** (per contact)  | 10K contacts × monthly fee |
 | **MailerLite** (per contact) | 10K contacts × monthly fee |
 
 ⚠️ Per-emails model **dramatically cheaper** pro low-frequency senders.
@@ -452,9 +485,11 @@ For 10 000 contacts, sending 1x/month:
 ### 5.5 Comparison s Brevo continuation
 
 Per Irene Theiss:
-> *"Das Starter-Paket von Brevo ist preiswerter als das Lite Paket von Newsletter2go. Neben den Kosten pro E-Mail auch wichtig: Bei Brevo sind zahlreiche Funktionen enthalten, die du bei Newsletter2go nur gegen Aufpreis oder gar nicht erhältst."*
+
+> _"Das Starter-Paket von Brevo ist preiswerter als das Lite Paket von Newsletter2go. Neben den Kosten pro E-Mail auch wichtig: Bei Brevo sind zahlreiche Funktionen enthalten, die du bei Newsletter2go nur gegen Aufpreis oder gar nicht erhältst."_
 
 **Brevo's advantages:**
+
 - **Brevo Starter cheaper** than Newsletter2Go Lite for similar volume
 - **More features included** standard v Brevo
 - **No paid add-ons** for features available v Newsletter2Go premium
@@ -476,6 +511,7 @@ Per Irene Theiss:
 ### 6.2 Editor UX
 
 Per real users (pre-2020):
+
 - **Easy to use**
 - **Intuitive interface**
 - **German-language UI**
@@ -484,9 +520,11 @@ Per real users (pre-2020):
 ### 6.3 Premium templates
 
 Per Brevo migration FAQ:
-> *"Aus technischen Gründen ist es leider nicht möglich, Ihr Premium Template zu Brevo zu migrieren."*
+
+> _"Aus technischen Gründen ist es leider nicht möglich, Ihr Premium Template zu Brevo zu migrieren."_
 
 **Premium templates:**
+
 - **Paid add-on** v Newsletter2Go
 - **Cannot migrate to Brevo!** (technical limitation)
 - **Custom designs** per business
@@ -546,9 +584,11 @@ Confirm
 ### 7.1 Adressbuch (address book)
 
 Per Newsletter2Go Help:
-> *"Aus dem Adressbuch können Sie die Daten ausgewählter aktiver oder inaktiver Empfänger oder ganzer Gruppen exportieren."*
+
+> _"Aus dem Adressbuch können Sie die Daten ausgewählter aktiver oder inaktiver Empfänger oder ganzer Gruppen exportieren."_
 
 **Adressbuch structure:**
+
 - **Adressbuch** (address book) – top level
 - **Groups (Gruppen)** within
 - **Active vs. inactive recipients**
@@ -563,13 +603,16 @@ Per Newsletter2Go Help:
 ### 7.3 Active vs. inactive recipients
 
 Per Brevo migration FAQ:
-> *"Ihre inaktiven Empfänger können Sie 7 Tage lang aus Ihrem Newsletter2Go Account exportieren und dann in Ihrem Brevo Account wieder importieren. Inaktive Empfänger werden standardmäßig nach 7 Tagen gelöscht."*
+
+> _"Ihre inaktiven Empfänger können Sie 7 Tage lang aus Ihrem Newsletter2Go Account exportieren und dann in Ihrem Brevo Account wieder importieren. Inaktive Empfänger werden standardmäßig nach 7 Tagen gelöscht."_
 
 **Active recipients:**
+
 - Subscribed, valid email, can receive
 - Counted toward send volume
 
 **Inactive recipients:**
+
 - Unsubscribed, bounced, marked inactive
 - **Auto-deleted after 7 days** v Newsletter2Go
 - Anonymized + encrypted in database
@@ -591,6 +634,7 @@ Per Brevo migration FAQ:
 ### 7.6 Import & Export
 
 #### Import
+
 ```
 Adressbuch → Import
    ↓
@@ -604,8 +648,10 @@ Double opt-in required (DSGVO!)
 ```
 
 #### Export
+
 Per Newsletter2Go Help:
-> *"Aus dem Adressbuch können Sie die Daten ausgewählter aktiver oder inaktiver Empfänger oder ganzer Gruppen exportieren. Über das Kästchen können Sie mit einem Haken den Empfänger oder die Gruppe markieren."*
+
+> _"Aus dem Adressbuch können Sie die Daten ausgewählter aktiver oder inaktiver Empfänger oder ganzer Gruppen exportieren. Über das Kästchen können Sie mit einem Haken den Empfänger oder die Gruppe markieren."_
 
 - **Active recipients:** exportovat possible
 - **Inactive recipients:** **only 7 days** before auto-delete
@@ -618,9 +664,11 @@ Per Newsletter2Go Help:
 ### 8.1 Forms
 
 Per Newsletter2Go Help:
-> *"Was ist ein Double-Opt-In-Mailing und wie erstellt man es?"*
+
+> _"Was ist ein Double-Opt-In-Mailing und wie erstellt man es?"_
 
 **Forms capabilities:**
+
 - **Sign-up forms** (Anmeldeformulare)
 - **Embed code** for website
 - **Custom fields**
@@ -650,9 +698,11 @@ Status: Active
 ### 8.3 Forms cannot migrate to Brevo
 
 Per Brevo migration FAQ:
-> *"Andere Daten, wie Formulare, Aktivitäten, inaktive Empfänger, Reports, etc., können leider nicht übertragen werden."*
+
+> _"Andere Daten, wie Formulare, Aktivitäten, inaktive Empfänger, Reports, etc., können leider nicht übertragen werden."_
 
 ⚠️ **CRITICAL migration limitation:**
+
 - **Forms NOT migrate-able**
 - **Must recreate** in Brevo
 - **Embed code changes** required on website
@@ -686,9 +736,11 @@ Per Brevo migration FAQ:
 ### 9.4 Cannot fully migrate
 
 Per Brevo migration FAQ:
-> *"Andere Daten, wie ... Aktivitäten ..."*
+
+> _"Andere Daten, wie ... Aktivitäten ..."_
 
 ⚠️ **Activities (workflows execution history) NOT migrate.**
+
 - **Workflows themselves** rebuild required
 - **Activation history** lost
 
@@ -699,9 +751,11 @@ Per Brevo migration FAQ:
 ### 10.1 1-Click feature
 
 Per Newsletter2Go Help:
-> *"Mit der 1-Klick-Produktübernahme von Newsletter2Go können Sie ganze Shop-Produkte übernehmen und in Ihren Newsletter einfügen."*
+
+> _"Mit der 1-Klick-Produktübernahme von Newsletter2Go können Sie ganze Shop-Produkte übernehmen und in Ihren Newsletter einfügen."_
 
 **1-Click-Produktübernahme:**
+
 - **Insert e-commerce products** directly into newsletters
 - **1-click insertion** from Shopware / Shopify
 - **Product image + price + description** auto-populated
@@ -710,7 +764,8 @@ Per Newsletter2Go Help:
 ### 10.2 Requirements
 
 Per Newsletter2Go Help:
-> *"Voraussetzungen für die 1-Klick-Produktübernahme: eine aktive Schnittstelle zu Ihrem [Shop]"*
+
+> _"Voraussetzungen für die 1-Klick-Produktübernahme: eine aktive Schnittstelle zu Ihrem [Shop]"_
 
 - **Active Schnittstelle** (interface) to e-shop
 - **Shopware** or **Shopify** integration
@@ -744,9 +799,11 @@ Save + continue building
 ### 10.4 Migration to Brevo
 
 Per Brevo migration FAQ:
-> *"Für Shopware und Shopify funktioniert die 1-Klick-Produkt-Übernahme. Je nachdem, welche Anpassungen wir hier für Sie vorgenommen haben, unter Umständen in eingeschränkter Form."*
+
+> _"Für Shopware und Shopify funktioniert die 1-Klick-Produkt-Übernahme. Je nachdem, welche Anpassungen wir hier für Sie vorgenommen haben, unter Umständen in eingeschränkter Form."_
 
 ⚠️ **Migration s some limitations:**
+
 - **Shopware + Shopify** 1-Click works v Brevo
 - **Custom configurations** may need adjustments
 - **Some features** may be limited post-migration
@@ -778,9 +835,11 @@ Configure connection:
 ### 11.1 Conversion tracking capability
 
 Per Newsletter2Go Help:
-> *"Das Conversion-Tracking können Sie unter 'E-Mail-Einstellungen → Tracking' aktivieren. Hier erhalten Sie dann ein JavaScript-Snippet von uns, das Sie auf Ihrer Zielseite einbinden und mit Ihrer Account-ID..."*
+
+> _"Das Conversion-Tracking können Sie unter 'E-Mail-Einstellungen → Tracking' aktivieren. Hier erhalten Sie dann ein JavaScript-Snippet von uns, das Sie auf Ihrer Zielseite einbinden und mit Ihrer Account-ID..."_
 
 **Conversion tracking:**
+
 - **JavaScript snippet** provided
 - **Embed na Zielseite** (landing page)
 - **Account-ID** identification
@@ -825,9 +884,11 @@ Conversions tracked per campaign
 ### 12.1 Mediathek capabilities
 
 Per Newsletter2Go Help:
-> *"Wie kann ich die Bilder in der Mediathek verwalten? Um die Mediathek zu bearbeiten und z. B. Bilder zu löschen oder Ordner einzurichten, öffnen Sie diese oben rechts über Ihr Profil und dann auf die Mediathek klicken."*
+
+> _"Wie kann ich die Bilder in der Mediathek verwalten? Um die Mediathek zu bearbeiten und z. B. Bilder zu löschen oder Ordner einzurichten, öffnen Sie diese oben rechts über Ihr Profil und dann auf die Mediathek klicken."_
 
 **Mediathek (Media Library):**
+
 - **Upload + manage images**
 - **Folders organization**
 - **Delete unused**
@@ -874,9 +935,11 @@ Used v campaigns + templates
 ### 13.2 Reports cannot migrate
 
 Per Brevo migration FAQ:
-> *"Andere Daten, wie ... Reports ... können leider nicht übertragen werden."*
+
+> _"Andere Daten, wie ... Reports ... können leider nicht übertragen werden."_
 
 ⚠️ **CRITICAL migration limitation:**
+
 - **Historical reports NOT migrate**
 - **Performance history lost**
 - **Need to export reports** before migration
@@ -913,6 +976,7 @@ Newsletter2Go transactional emails are likely **integrated s Sendinblue/Brevo in
 ### 14.3 API access
 
 Per Brevo migration:
+
 - **API endpoints** for transactional
 - **Schnittstellen** (interfaces) for sending
 - **Templates s variables**
@@ -920,9 +984,11 @@ Per Brevo migration:
 ### 14.4 Migration challenge
 
 Per Brevo migration FAQ:
-> *"Schnittstellen müssen in Ihrem Brevo Account neu eingerichtet werden. Bitte beachten Sie an dieser Stelle, dass nicht alle Integrationen, die für Newsletter2Go angeboten werden, für Brevo verfügbar sind."*
+
+> _"Schnittstellen müssen in Ihrem Brevo Account neu eingerichtet werden. Bitte beachten Sie an dieser Stelle, dass nicht alle Integrationen, die für Newsletter2Go angeboten werden, für Brevo verfügbar sind."_
 
 ⚠️ **Integration migration:**
+
 - **Schnittstellen (interfaces) NOT migrate** automatically
 - **Must reconfigure** in Brevo
 - **Some Newsletter2Go integrations** unavailable v Brevo
@@ -935,9 +1001,11 @@ Per Brevo migration FAQ:
 ### 15.1 Migration assistant overview
 
 Per Brevo migration FAQ:
-> *"Ab sofort bieten wir eine Migration an, mit der Sie Daten von Ihrem Newsletter2Go Account zu einem bereits vorhandenen oder neuen Brevo Account übertragen können. Sobald die Migration für Sie aktiviert ist, finden Sie in Ihrem Account auf dem Dashboard einen separaten Bereich, mit dem Sie unseren Migrations-Assistenten starten können."*
+
+> _"Ab sofort bieten wir eine Migration an, mit der Sie Daten von Ihrem Newsletter2Go Account zu einem bereits vorhandenen oder neuen Brevo Account übertragen können. Sobald die Migration für Sie aktiviert ist, finden Sie in Ihrem Account auf dem Dashboard einen separaten Bereich, mit dem Sie unseren Migrations-Assistenten starten können."_
 
 **Migration assistant:**
+
 - **Built-in to Newsletter2Go dashboard**
 - **Self-service migration**
 - **Free of charge**
@@ -946,9 +1014,11 @@ Per Brevo migration FAQ:
 ### 15.2 Migration trigger
 
 Per Brevo migration FAQ:
-> *"Derzeit arbeiten wir an einer Migration, die es ermöglicht, Konten von Newsletter2Go zu Sendinblue automatisch zu migrieren. Wann genau wir Ihr Konto migrieren können, hängt von den genutzten Funktionen in Ihrem Account ab."*
+
+> _"Derzeit arbeiten wir an einer Migration, die es ermöglicht, Konten von Newsletter2Go zu Sendinblue automatisch zu migrieren. Wann genau wir Ihr Konto migrieren können, hängt von den genutzten Funktionen in Ihrem Account ab."_
 
 **Phased rollout:**
+
 - **End 2022:** First users (Lite tier) offered migration
 - **End 2023:** Migration assistant fully deployed
 - **2024-2026:** Available pro all users
@@ -984,7 +1054,8 @@ Next morning: Brevo account ready
 ### 15.4 Migration cost
 
 Per Brevo migration FAQ:
-> *"Die Migration ist kostenfrei."*
+
+> _"Die Migration ist kostenfrei."_
 
 - **FREE migration**
 - No charges
@@ -993,9 +1064,11 @@ Per Brevo migration FAQ:
 ### 15.5 Account status post-migration
 
 Per Brevo migration FAQ:
-> *"Ihr Newsletter2Go Account bleibt nach der Migration weiterhin unverändert bestehen, sowie auch Ihr aktuelles Abonnement."*
+
+> _"Ihr Newsletter2Go Account bleibt nach der Migration weiterhin unverändert bestehen, sowie auch Ihr aktuelles Abonnement."_
 
 **After migration:**
+
 - ✅ Newsletter2Go account **stays active**
 - ✅ Subscription **unchanged**
 - ✅ Can use both platforms (transition period)
@@ -1004,9 +1077,11 @@ Per Brevo migration FAQ:
 ### 15.6 Email match requirement
 
 Per Brevo migration FAQ:
-> *"Sollten Sie zu einem bereits vorhandenen Brevo Account migrieren wollen, muss die E-Mail-Adresse Ihres Newsletter2Go Accounts und des Brevo Accounts übereinstimmen."*
+
+> _"Sollten Sie zu einem bereits vorhandenen Brevo Account migrieren wollen, muss die E-Mail-Adresse Ihres Newsletter2Go Accounts und des Brevo Accounts übereinstimmen."_
 
 ⚠️ **Critical:** If migrating to existing Brevo account:
+
 - **Email addresses must match**
 - Newsletter2Go email == Brevo email
 - Otherwise create new Brevo account
@@ -1040,57 +1115,66 @@ Newsletter2Go account remains active
 ### 16.1 Migrated data
 
 Per Brevo migration FAQ:
-> *"Die Migration ermöglicht Ihnen die Mitnahme von aktiven Empfängern, Merkmalen, Adressbüchern und statischen Gruppen."*
+
+> _"Die Migration ermöglicht Ihnen die Mitnahme von aktiven Empfängern, Merkmalen, Adressbüchern und statischen Gruppen."_
 
 **Successfully migrated:**
 
 #### Active recipients (Aktive Empfänger)
+
 - Email addresses
 - Names
 - Subscription status
 - Active subscribers only
 
 #### Attributes / Custom fields (Merkmale)
+
 - Custom field values
 - Field structure
 - Per-recipient data
 
 #### Adressbücher (address books)
+
 - Top-level address book structure
 - Address book names
 - Organization preserved
 
 #### Static groups (Statische Gruppen)
+
 - Manual group memberships
 - Group definitions
 - Member assignments
 
 #### Newsletter templates (some)
+
 Per Irene Theiss:
-> *"Auch die Newsletter-Vorlagen werden in dein neues Brevo-Konto übernommen."*
+
+> _"Auch die Newsletter-Vorlagen werden in dein neues Brevo-Konto übernommen."_
 
 - Standard templates migrate
 - ⚠️ Premium templates DO NOT migrate
 
 #### 1-Click product takeover for Shopware + Shopify
+
 Per Brevo migration FAQ:
-> *"Für Shopware und Shopify funktioniert die 1-Klick-Produkt-Übernahme."*
+
+> _"Für Shopware und Shopify funktioniert die 1-Klick-Produkt-Übernahme."_
 
 - Works v Brevo after migration
 - Some custom adjustments may need rework
 
 ### 16.2 What migrates: Summary
 
-| Data type | Migrates? | Notes |
-|---|:---:|---|
-| **Active recipients** | ✅ | Full transfer |
-| **Email + name** | ✅ | Standard fields |
-| **Custom fields (Merkmale)** | ✅ | Field structure + values |
-| **Adressbücher** | ✅ | Address book structure |
-| **Static groups** | ✅ | Manual groups |
-| **Newsletter templates (standard)** | ✅ | Standard ones migrate |
-| **Premium templates** | ❌ | Cannot migrate |
-| **1-Click product takeover** | ✅ | Works pro Shopware + Shopify |
+| Data type                           | Migrates? | Notes                        |
+| ----------------------------------- | :-------: | ---------------------------- |
+| **Active recipients**               |    ✅     | Full transfer                |
+| **Email + name**                    |    ✅     | Standard fields              |
+| **Custom fields (Merkmale)**        |    ✅     | Field structure + values     |
+| **Adressbücher**                    |    ✅     | Address book structure       |
+| **Static groups**                   |    ✅     | Manual groups                |
+| **Newsletter templates (standard)** |    ✅     | Standard ones migrate        |
+| **Premium templates**               |    ❌     | Cannot migrate               |
+| **1-Click product takeover**        |    ✅     | Works pro Shopware + Shopify |
 
 ---
 
@@ -1099,38 +1183,46 @@ Per Brevo migration FAQ:
 ### 17.1 Data NOT migrated
 
 Per Brevo migration FAQ:
-> *"Andere Daten, wie Formulare, Aktivitäten, inaktive Empfänger, Reports, etc., können leider nicht übertragen werden."*
+
+> _"Andere Daten, wie Formulare, Aktivitäten, inaktive Empfänger, Reports, etc., können leider nicht übertragen werden."_
 
 #### Forms (Formulare)
+
 - ❌ **Cannot migrate**
 - Must rebuild in Brevo
 - Embed code changes
 - Double opt-in setup new
 
 #### Activities (workflow execution history)
+
 - ❌ **Cannot migrate**
 - Workflow execution data lost
 - New tracking starts fresh
 
 #### Inactive recipients (Inaktive Empfänger)
+
 - ❌ **Cannot migrate**
-- Per Brevo: *"Inaktive Empfänger werden standardmäßig nach 7 Tagen gelöscht. Somit ist die Liste Ihrer inaktiven Empfänger nicht vollständig. Da diese nur noch anonymisiert und verschlüsselt in der Datenbank gespeichert sind, ist eine vollständige Übertragung der inaktiven Empfänger nicht möglich."*
+- Per Brevo: _"Inaktive Empfänger werden standardmäßig nach 7 Tagen gelöscht. Somit ist die Liste Ihrer inaktiven Empfänger nicht vollständig. Da diese nur noch anonymisiert und verschlüsselt in der Datenbank gespeichert sind, ist eine vollständige Übertragung der inaktiven Empfänger nicht möglich."_
 - Already anonymized + encrypted
 - Cannot fully restore
 
 #### Reports (Berichte)
+
 - ❌ **Cannot migrate**
 - Historical performance data lost
 - New reporting starts fresh
 
 #### Premium templates
+
 - ❌ **Cannot migrate**
-- Per Brevo: *"Aus technischen Gründen ist es leider nicht möglich, Ihr Premium Template zu Brevo zu migrieren."*
+- Per Brevo: _"Aus technischen Gründen ist es leider nicht möglich, Ihr Premium Template zu Brevo zu migrieren."_
 - Rebuild required v Brevo
 
 #### Interfaces / Schnittstellen
+
 Per Brevo migration FAQ:
-> *"Schnittstellen müssen in Ihrem Brevo Account neu eingerichtet werden. Bitte beachten Sie an dieser Stelle, dass nicht alle Integrationen, die für Newsletter2Go angeboten werden, für Brevo verfügbar sind."*
+
+> _"Schnittstellen müssen in Ihrem Brevo Account neu eingerichtet werden. Bitte beachten Sie an dieser Stelle, dass nicht alle Integrationen, die für Newsletter2Go angeboten werden, für Brevo verfügbar sind."_
 
 - ❌ **Cannot migrate**
 - Must reconfigure
@@ -1139,23 +1231,25 @@ Per Brevo migration FAQ:
 
 ### 17.2 What's NOT migrated: Summary
 
-| Data type | Migrates? | What to do |
-|---|:---:|---|
-| **Forms (Formulare)** | ❌ | Rebuild v Brevo |
-| **Activities** | ❌ | Lost, accept fresh start |
-| **Inactive recipients** | ❌ | Export within 7 days if needed |
-| **Reports** | ❌ | Export before migration |
-| **Premium templates** | ❌ | Rebuild v Brevo |
-| **Schnittstellen (interfaces)** | ❌ | Reconfigure v Brevo |
-| **Dynamic groups** | varies | Static groups migrate, dynamic less reliable |
-| **Custom integrations** | ❌ | Custom dev may be needed |
+| Data type                       | Migrates? | What to do                                   |
+| ------------------------------- | :-------: | -------------------------------------------- |
+| **Forms (Formulare)**           |    ❌     | Rebuild v Brevo                              |
+| **Activities**                  |    ❌     | Lost, accept fresh start                     |
+| **Inactive recipients**         |    ❌     | Export within 7 days if needed               |
+| **Reports**                     |    ❌     | Export before migration                      |
+| **Premium templates**           |    ❌     | Rebuild v Brevo                              |
+| **Schnittstellen (interfaces)** |    ❌     | Reconfigure v Brevo                          |
+| **Dynamic groups**              |  varies   | Static groups migrate, dynamic less reliable |
+| **Custom integrations**         |    ❌     | Custom dev may be needed                     |
 
 ### 17.3 Future updates to migration
 
 Per Brevo migration FAQ:
-> *"Die aktuelle Migration sieht nicht vor, nach einem Transfer noch weitere Daten von Ihrem Newsletter2Go zu ihrem Brevo Account zu migrieren. In der bisherigen Planung der Migration liegt es in Ihrer Verantwortung, diese auf Brevo zu übertragen."*
+
+> _"Die aktuelle Migration sieht nicht vor, nach einem Transfer noch weitere Daten von Ihrem Newsletter2Go zu ihrem Brevo Account zu migrieren. In der bisherigen Planung der Migration liegt es in Ihrer Verantwortung, diese auf Brevo zu übertragen."_
 
 ⚠️ **One-time migration:**
+
 - **No incremental sync** after migration
 - **No follow-up migrations** of new data
 - **User responsibility** to manage post-migration
@@ -1167,19 +1261,23 @@ Per Brevo migration FAQ:
 ### 18.1 Options post-migration
 
 Per Brevo migration FAQ:
-> *"Wie mit Ihrem Newsletter2Go Account verfahren wird, können Sie festlegen."*
+
+> _"Wie mit Ihrem Newsletter2Go Account verfahren wird, können Sie festlegen."_
 
 **3 options post-migration:**
 
 #### Option A: Keep Newsletter2Go active s subscription
+
 - Continue using both platforms
 - Pay for both
 - Maximum flexibility
 - Most expensive
 
 #### Option B: Switch to LITE10 (free)
+
 Per Brevo migration FAQ:
-> *"Sie möchten Ihren Newsletter2Go Account bestehen lassen, aber nicht dafür zahlen, so ändern Sie Ihr Paket auf LITE10 bzw. kündigen Sie das aktuelle Abonnement. Im LITE10 Paket steht Ihnen die Software kostenfrei, in eingeschränkter Form zur Verfügung."*
+
+> _"Sie möchten Ihren Newsletter2Go Account bestehen lassen, aber nicht dafür zahlen, so ändern Sie Ihr Paket auf LITE10 bzw. kündigen Sie das aktuelle Abonnement. Im LITE10 Paket steht Ihnen die Software kostenfrei, in eingeschränkter Form zur Verfügung."_
 
 - **Free tier** continuation
 - Backup access
@@ -1187,8 +1285,10 @@ Per Brevo migration FAQ:
 - Most users choose this
 
 #### Option C: Delete Newsletter2Go account completely
+
 Per Brevo migration FAQ:
-> *"Sie haben selbstverständlich die Möglichkeit den Account und alle dazugehörigen Daten löschen zu lassen. Hierzu erteilen Sie uns bitte schriftlich von der im Account hinterlegten E-Mail-Adresse einen expliziten Auftrag."*
+
+> _"Sie haben selbstverständlich die Möglichkeit den Account und alle dazugehörigen Daten löschen zu lassen. Hierzu erteilen Sie uns bitte schriftlich von der im Account hinterlegten E-Mail-Adresse einen expliziten Auftrag."_
 
 - **Written request required** from account email
 - **All data deleted**
@@ -1198,6 +1298,7 @@ Per Brevo migration FAQ:
 ### 18.2 Recommended approach
 
 **Common best practice:**
+
 1. **Migrate to Brevo** s assistant
 2. **Switch Newsletter2Go to LITE10** (free)
 3. **Use Brevo primarily**
@@ -1211,9 +1312,11 @@ Per Brevo migration FAQ:
 ### 19.1 Made in Germany (preserved)
 
 Per Brevo oficiální:
-> *"As always, we'll continue to maintain the highest standards of data protection and maintain our servers in Germany."*
+
+> _"As always, we'll continue to maintain the highest standards of data protection and maintain our servers in Germany."_
 
 **Post-acquisition guarantees:**
+
 - ✅ **Servers v Německu** zachovány
 - ✅ **GDPR-compliant software**
 - ✅ **Strict data protection** standards
@@ -1231,7 +1334,8 @@ Per Brevo oficiální:
 ### 19.3 Berlin office + team
 
 Per Brevo oficiální:
-> *"We'll still have the same office and Newsletter2Go team in Berlin."*
+
+> _"We'll still have the same office and Newsletter2Go team in Berlin."_
 
 - **Berlin office** intact
 - **Original Newsletter2Go team** retained
@@ -1241,9 +1345,11 @@ Per Brevo oficiální:
 ### 19.4 6-day support (post-acquisition benefit)
 
 Per Brevo oficiální:
-> *"Starting on 1 April 2020, we're offering support 6 days a week. On Saturdays between 9 a.m. and 6 p.m. our support team will answer support tickets via email."*
+
+> _"Starting on 1 April 2020, we're offering support 6 days a week. On Saturdays between 9 a.m. and 6 p.m. our support team will answer support tickets via email."_
 
 **Support hours expanded:**
+
 - **Monday-Friday:** Standard hours
 - **Saturday 9:00-18:00:** Email support
 - **Sunday:** Closed
@@ -1252,9 +1358,11 @@ Per Brevo oficiální:
 ### 19.5 Identical compliance Newsletter2Go vs. Brevo
 
 Per Brevo:
-> *"Brevo (damals noch Sendinblue) und Newsletter2Go haben bereits seit 2019 den gleichen strengen Datenschutz. Egal, ob du weiterhin Newsletter2go benutzt oder zu Brevo wechselst – du kannst auf höchste Sicherheit für sämtliche Daten zählen."*
+
+> _"Brevo (damals noch Sendinblue) und Newsletter2Go haben bereits seit 2019 den gleichen strengen Datenschutz. Egal, ob du weiterhin Newsletter2go benutzt oder zu Brevo wechselst – du kannst auf höchste Sicherheit für sämtliche Daten zählen."_
 
 **Same compliance standards** for both:
+
 - Newsletter2Go
 - Brevo
 - **No security downgrade** s migration
@@ -1273,6 +1381,7 @@ Per Brevo:
 ### 20.1 Legacy product limitations
 
 ⚠️ **Newsletter2Go in 2026 is legacy:**
+
 - **No new features**
 - **No new sign-ups**
 - **Eventual sunset** (no date)
@@ -1281,6 +1390,7 @@ Per Brevo:
 ### 20.2 Migration challenges
 
 **What's lost when migrating:**
+
 - **Forms** (rebuild required)
 - **Activities** (workflow history)
 - **Inactive recipients** (after 7 days)
@@ -1289,6 +1399,7 @@ Per Brevo:
 - **Custom Schnittstellen** (some integrations)
 
 **Effort estimate:**
+
 - Active list migration: **Few hours**
 - Forms rebuild: **Days**
 - Templates rebuild: **Days-weeks** (if premium)
@@ -1319,9 +1430,11 @@ Per Brevo:
 ### 20.6 Less feature-rich vs. Brevo
 
 Per Irene Theiss:
-> *"Bei Brevo sind zahlreiche Funktionen enthalten, die du bei Newsletter2go nur gegen Aufpreis oder gar nicht erhältst."*
+
+> _"Bei Brevo sind zahlreiche Funktionen enthalten, die du bei Newsletter2go nur gegen Aufpreis oder gar nicht erhältst."_
 
 **Brevo includes for free / standard:**
+
 - Multi-channel (SMS, WhatsApp)
 - CRM
 - Landing pages
@@ -1333,6 +1446,7 @@ Per Irene Theiss:
 ### 20.7 Strategic dilemma for users
 
 **Why customers stay on Newsletter2Go:**
+
 1. **Familiar UI** + workflow
 2. **No urgent reason** to migrate
 3. **Avoiding migration effort**
@@ -1341,6 +1455,7 @@ Per Irene Theiss:
 6. **6-day support familiar**
 
 **Why customers should consider migration:**
+
 1. **Brevo has more features** at similar/lower cost
 2. **Eventual sunset** inevitable
 3. **No new features** v Newsletter2Go
@@ -1351,20 +1466,26 @@ Per Irene Theiss:
 ### 20.8 Recommendations 2026
 
 #### For occasional users (< 1000 emails/month)
+
 **Stay on LITE10** until ready or forced migration:
+
 - Free
 - Functional
 - No urgent need
 
 #### For active users (1K-10K emails/month)
+
 **Consider migration to Brevo:**
+
 - Brevo cheaper for similar volume
 - More features
 - Future-proofing
 - Migration assistant smooths transition
 
 #### For heavy users (>10K emails/month)
+
 **Migrate to Brevo NOW:**
+
 - Cost savings
 - Modern features
 - Multi-channel options
@@ -1372,7 +1493,9 @@ Per Irene Theiss:
 - Future-proofing
 
 #### For agencies / consultants
+
 **Migrate to Brevo:**
+
 - Better multi-account management
 - Better integrations
 - Modern features pro clients
@@ -1381,6 +1504,7 @@ Per Irene Theiss:
 ### 20.9 Migration timing
 
 **No urgent deadline announced**, but:
+
 - **Sooner is better** (smoother transition)
 - **Avoid forced migration** (Brevo may enforce eventually)
 - **Build expertise** v Brevo before mandatory
@@ -1391,6 +1515,7 @@ Per Irene Theiss:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### Newsletter2Go (legacy) je vhodný pokud
+
 - Jste **Bestandskunde** s long-term familiarity
 - Posíláte **occasional newsletters** s LITE10 free tier
 - Nepotřebujete **new features** ani innovation
@@ -1401,6 +1526,7 @@ Per Irene Theiss:
 - Spokojeni s **email-only marketing** (no SMS, no automation deep)
 
 ### Newsletter2Go není dobrá volba pokud
+
 - Jste **new business** – CANNOT register (must use Brevo)
 - Potřebujete **modern features** (AI, multi-channel, CRM)
 - Provozujete **high-volume** (Brevo levnější)
@@ -1415,6 +1541,7 @@ Per Irene Theiss:
 ### Migration to Brevo recommended pro most users
 
 **Brevo offers same Newsletter2Go heritage PLUS:**
+
 - ✅ All Newsletter2Go core features
 - ✅ Modern AI features
 - ✅ Multi-channel (SMS, WhatsApp)
@@ -1431,4 +1558,4 @@ Per Irene Theiss:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů Brevo (newsletter2go-help-de.sendinblue.com + brevo.com/de/company/newsletter2go-login + brevo.com/de/landing/newsletter2go + brevo.com/newsletter2go) a analytických zdrojů (Tracxn, Crunchbase, Softools, IreneTheiss). Pro nejaktuálnější detaily migration je nutný engagement s Brevo support teamem.*
+_Dokument zpracován z oficiálních zdrojů Brevo (newsletter2go-help-de.sendinblue.com + brevo.com/de/company/newsletter2go-login + brevo.com/de/landing/newsletter2go + brevo.com/newsletter2go) a analytických zdrojů (Tracxn, Crunchbase, Softools, IreneTheiss). Pro nejaktuálnější detaily migration je nutný engagement s Brevo support teamem._

@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `39_Boldem_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** Boldem umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **České řešení** s vlastními servery v ČR
 > - **MailKomplet legacy** – Boldem je nástupce klasického CZ tool
 > - **CDP platform** integrované (ne jen email tool)
@@ -167,23 +168,23 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Sign-up / contract | Full + billing + users | Vše |
-| **Administrator** | Pozvánka | Operational lead | Per scope |
-| **Marketing user** | Pozvánka | Daily marketing | Per permissions |
-| **Designer / Editor** | Pozvánka | Content + templates | Per role |
-| **Analyst** | Pozvánka | Reports + BI | Read + analyze |
-| **Read-only / Viewer** | Pozvánka | View only | Read-only |
-| **Agency uživatel** | Multi-client | Switch mezi klienty | Per assigned |
-| **Recipient / Subscriber** | Form, integration | Receives multi-channel | Své zprávy |
-| **Boldem Customer Support** | Telefon / chat / e-mail | Issue resolution | Read s consent |
-| **Boldem Sales** | Inquiry | Upgrades + new contracts | Read s consent |
-| **CDP consultant** | Sales-driven | CDP custom setup | Read s consent |
-| **Migration team** | Migration request | Z MailKomplet / jiných | Read access |
-| **API Client** | API key | Custom integration | Per scope |
-| **Shoptet integrace** | Verifikační kód! | E-commerce sync | Per scope |
-| **Rocketoo integrace** | UNIKÁTNÍ CZ | E-commerce sync | Per scope |
+| Aktér                       | Vstupní bod             | Co dělá                  | Co vidí         |
+| --------------------------- | ----------------------- | ------------------------ | --------------- |
+| **Account Owner**           | Sign-up / contract      | Full + billing + users   | Vše             |
+| **Administrator**           | Pozvánka                | Operational lead         | Per scope       |
+| **Marketing user**          | Pozvánka                | Daily marketing          | Per permissions |
+| **Designer / Editor**       | Pozvánka                | Content + templates      | Per role        |
+| **Analyst**                 | Pozvánka                | Reports + BI             | Read + analyze  |
+| **Read-only / Viewer**      | Pozvánka                | View only                | Read-only       |
+| **Agency uživatel**         | Multi-client            | Switch mezi klienty      | Per assigned    |
+| **Recipient / Subscriber**  | Form, integration       | Receives multi-channel   | Své zprávy      |
+| **Boldem Customer Support** | Telefon / chat / e-mail | Issue resolution         | Read s consent  |
+| **Boldem Sales**            | Inquiry                 | Upgrades + new contracts | Read s consent  |
+| **CDP consultant**          | Sales-driven            | CDP custom setup         | Read s consent  |
+| **Migration team**          | Migration request       | Z MailKomplet / jiných   | Read access     |
+| **API Client**              | API key                 | Custom integration       | Per scope       |
+| **Shoptet integrace**       | Verifikační kód!        | E-commerce sync          | Per scope       |
+| **Rocketoo integrace**      | UNIKÁTNÍ CZ             | E-commerce sync          | Per scope       |
 
 ---
 
@@ -297,7 +298,8 @@ Dočasný přístup do systému (per dohoda)
 ### 2.5 Dočasný přístup
 
 Per Shoptet:
-> *"Na základě domluvy může být součástí i dočasný přístup do systému."*
+
+> _"Na základě domluvy může být součástí i dočasný přístup do systému."_
 
 ```
 Sales-approved trial:
@@ -348,7 +350,8 @@ Demo / konzultace v češtině
 ### 3.2 CDP-specific consultation
 
 Per Shoptet:
-> *"Pokud se chcete blíže seznámit s tím, co Boldem nabízí, doporučujeme domluvit si konzultaci s obchodníkem."*
+
+> _"Pokud se chcete blíže seznámit s tím, co Boldem nabízí, doporučujeme domluvit si konzultaci s obchodníkem."_
 
 ```
 CDP consultation:
@@ -365,9 +368,11 @@ Custom proposal s pricing
 ### 3.3 Multi-channel kontakt
 
 Per Shoptet:
-> *"Pro více informací lze využít také chat, e-mail nebo telefonickou podporu Boldem."*
+
+> _"Pro více informací lze využít také chat, e-mail nebo telefonickou podporu Boldem."_
 
 **Pre-sales channels:**
+
 - **Web form**
 - **Chat na boldem.cz**
 - **E-mail** (support@boldem.cz)
@@ -377,12 +382,14 @@ Per Shoptet:
 ### 3.4 "O marketingu bez obleků" community events
 
 Per oficiální:
-> *"Pravidelně proto pořádáme zdarma akce O marketingu bez obleků, kde:*
-> *Na každém setkání zaznívá praktická prezentace od hosta z praxe (např. CEO Angry Beards, CMO Textilomanie, apod.), který ukáže, jak řeší marketing reálně, bez zbytečné teorie a 'omáčky' kolem."*
+
+> _"Pravidelně proto pořádáme zdarma akce O marketingu bez obleků, kde:_
+> _Na každém setkání zaznívá praktická prezentace od hosta z praxe (např. CEO Angry Beards, CMO Textilomanie, apod.), který ukáže, jak řeší marketing reálně, bez zbytečné teorie a 'omáčky' kolem."_
 >
-> *"Po úvodní přednášce následuje neformální Q&A spolu s networkingem u kávy a občerstvení."*
+> _"Po úvodní přednášce následuje neformální Q&A spolu s networkingem u kávy a občerstvení."_
 
 **Community-driven approach:**
+
 - **Free pro veřejnost**
 - **Praktické prezentace**
 - **Reference hosts:** Angry Beards CEO, Textilomanie CMO
@@ -396,7 +403,8 @@ Per oficiální:
 ### 4.1 Shoptet integrace process
 
 Per Shoptet doplňky:
-> *"Spusťte instalaci kliknutím na Objednat doplněk. Zkontrolujte e-mailovou schránku, na kterou máte zaregistrovaný účet Shoptet. V e-mailu najdete ověřovací kód. Kód si zkopírujte a použijte ho ke spárování s vaším účtem Boldem."*
+
+> _"Spusťte instalaci kliknutím na Objednat doplněk. Zkontrolujte e-mailovou schránku, na kterou máte zaregistrovaný účet Shoptet. V e-mailu najdete ověřovací kód. Kód si zkopírujte a použijte ho ke spárování s vaším účtem Boldem."_
 
 ```
 Step 1: Shoptet admin
@@ -453,24 +461,28 @@ Automatization scenarios:
 
 ### 4.4 Per Shoptet review
 
-> *"E-mailing je nedílnou součástí naší komunikace se zákazníky. Líbí se nám, že v Boldemu velice rychle připravíme kampaň v rychlém editoru. Využíváme i pokročilé kampaně jako opuštěný košík, welcome kampaň a jiné. Určitě doporučujeme."* – Lukáš Nejedlý, scandishop.cz
+> _"E-mailing je nedílnou součástí naší komunikace se zákazníky. Líbí se nám, že v Boldemu velice rychle připravíme kampaň v rychlém editoru. Využíváme i pokročilé kampaně jako opuštěný košík, welcome kampaň a jiné. Určitě doporučujeme."_ – Lukáš Nejedlý, scandishop.cz
 
 ### 4.5 Other e-commerce integrations
 
 **Shopify:**
+
 - Native plugin
 - OAuth connection
 - Customer + order sync
 
 **Upgates:**
+
 - Native CZ e-shop integrace
 - Customer sync
 
 **Rocketoo:**
+
 - UNIKÁTNÍ CZ niche
 - Native integration
 
 **Custom via API:**
+
 - API tracking script
 - "Vložením kódu do hlavičky" (per oficiální)
 
@@ -540,7 +552,8 @@ Verify data flow
 ### 5.4 Data migrace (Week 2-4)
 
 Per oficiální FAQ:
-> *"Samozřejmě. Běžně pomáháme klientům přenést data při přechodu z jiného systému. Vhodné je se na přenosu domluvit předem."*
+
+> _"Samozřejmě. Běžně pomáháme klientům přenést data při přechodu z jiného systému. Vhodné je se na přenosu domluvit předem."_
 
 ```
 Migration support:
@@ -652,6 +665,7 @@ Pre-launch QA → Soft launch → Full launch → Hypercare
 ### 6.1 User roles (typical)
 
 #### Account Owner
+
 - **Highest tier** access
 - **Sign-up creator** nebo contract owner
 - Full administrative control
@@ -660,32 +674,38 @@ Pre-launch QA → Soft launch → Full launch → Hypercare
 - Close account
 
 #### Administrator
+
 - **Full operational** access
 - User management v rámci scope
 - Integration management
 - Configuration
 
 #### Marketing user
+
 - **Daily marketing** tasks
 - Campaigns + segments
 - Content creation
 - Reports
 
 #### Designer / Editor
+
 - **Content focused**
 - Templates + design
 - Limited recipient data
 
 #### Analyst
+
 - **Reports + dashboards**
 - Power BI / Looker Studio
 - Data export
 
 #### Read-only / Viewer
+
 - **View only**
 - For stakeholders, executives
 
 #### Agency users
+
 - **Multi-tenant access**
 - **Switch mezi klienty**
 - **Per-uživatel práva**
@@ -693,9 +713,11 @@ Pre-launch QA → Soft launch → Full launch → Hypercare
 ### 6.2 Per-uživatel práva
 
 Per oficiální FAQ:
-> *"Ano. Boldem nabízí možnost agenturního účtu. Počet uživatelů k jednomu účtu není omezen a každému můžete nastavit různá práva."*
+
+> _"Ano. Boldem nabízí možnost agenturního účtu. Počet uživatelů k jednomu účtu není omezen a každému můžete nastavit různá práva."_
 
 **Granular permissions:**
+
 - **Neomezený počet uživatelů** v účtu
 - **Per-uživatel práva**
 - **Per-funkce permissions**
@@ -722,7 +744,8 @@ Uživatel aktivuje + nastaví heslo
 ### 6.4 Multi-client management
 
 Per oficiální FAQ:
-> *"Pokud provozujete agenturu, nebo spravujete portfolio více klientů, můžete mít pod sebou v Boldem všechny účty, ke kterým vám vaši klienti udělí přístup."*
+
+> _"Pokud provozujete agenturu, nebo spravujete portfolio více klientů, můžete mít pod sebou v Boldem všechny účty, ke kterým vám vaši klienti udělí přístup."_
 
 ```
 Agency uživatel:
@@ -736,6 +759,7 @@ Agency uživatel:
 ### 6.5 Sportovní klub use case
 
 Pro sportovní klub typicky:
+
 - **Owner:** Marketing manager klubu
 - **Administrator:** PR oddělení
 - **Marketing user:** Specialista
@@ -749,9 +773,11 @@ Pro sportovní klub typicky:
 ### 7.1 Agency account features
 
 Per oficiální FAQ:
-> *"Ano. Boldem nabízí možnost agenturního účtu. Počet uživatelů k jednomu účtu není omezen a každému můžete nastavit různá práva."*
+
+> _"Ano. Boldem nabízí možnost agenturního účtu. Počet uživatelů k jednomu účtu není omezen a každému můžete nastavit různá práva."_
 
 **Agency features:**
+
 - **Neomezený počet uživatelů**
 - **Per-uživatel práva**
 - **Multi-client management**
@@ -783,7 +809,8 @@ Agency staff:
 ### 7.3 Multi-client management
 
 Per FAQ:
-> *"můžete mít pod sebou v Boldem všechny účty, ke kterým vám vaši klienti udělí přístup"*
+
+> _"můžete mít pod sebou v Boldem všechny účty, ke kterým vám vaši klienti udělí přístup"_
 
 ```
 Agency dashboard:
@@ -957,7 +984,8 @@ Save (dynamic / static)
 ### 8.5 Sloučení / rozdělení seznamů
 
 Per Freshstart.cz:
-> *"Boldem přidává funkci sloučení a rovnoměrného rozdělení seznamů podle potřeby."*
+
+> _"Boldem přidává funkci sloučení a rovnoměrného rozdělení seznamů podle potřeby."_
 
 ```
 Seznamy → Operace
@@ -979,6 +1007,7 @@ Execute
 ### 9.1 Recipient creation paths
 
 #### A) Form submission (web/landing)
+
 ```
 Visitor fills Boldem form
    ↓
@@ -1005,6 +1034,7 @@ Welcome workflow triggered
 ```
 
 #### B) Shoptet integration sync
+
 ```
 Customer registers v Shoptet shop
    ↓
@@ -1022,6 +1052,7 @@ Welcome workflow if active
 ```
 
 #### C) Shopify / Upgates / Rocketoo
+
 ```
 E-shop customer event
    ↓
@@ -1033,6 +1064,7 @@ Recipient created
 ```
 
 #### D) API integration
+
 ```
 External system POST to Boldem API
    ↓
@@ -1044,6 +1076,7 @@ Creates/updates recipient
 ```
 
 #### E) Manual CSV import
+
 ```
 Admin: Import → CSV upload
    ↓
@@ -1061,6 +1094,7 @@ Import processed
 ```
 
 #### F) Vlastní událost (Tarif Profi)
+
 ```
 Custom event tracking aktivní
    ↓
@@ -1128,7 +1162,8 @@ Profile updated
 ### 9.5 Bounce management
 
 Per oficiální FAQ:
-> *"Bounce e-maily, tedy vrácené e-maily, jsou nedoručené zprávy."*
+
+> _"Bounce e-maily, tedy vrácené e-maily, jsou nedoručené zprávy."_
 
 ```
 ISP 5xx response
@@ -1306,6 +1341,7 @@ Continue until end / goal / removal
 ### 11.4 Common automation patterns
 
 #### Welcome series
+
 ```
 Trigger: Subscribed
    ↓
@@ -1323,6 +1359,7 @@ End
 ```
 
 #### Opuštěný košík (e-commerce)
+
 ```
 Trigger: Cart abandoned > 1h
    ↓
@@ -1342,6 +1379,7 @@ Exit
 ```
 
 #### Reaktivace
+
 ```
 Trigger: Customer neaktivní 90 dní
    ↓
@@ -1361,9 +1399,11 @@ If still inactive after 30 dní:
 ### 11.5 Always-on transakční + automation
 
 Per FAQ:
-> *"Automatizace a transakční e-maily budou stále aktivní, přičemž kampaně jsou zastropovány aktuálním tarifem, který platíte."*
+
+> _"Automatizace a transakční e-maily budou stále aktivní, přičemž kampaně jsou zastropovány aktuálním tarifem, který platíte."_
 
 **Key:**
+
 - **Automation pokračuje** i po vyčerpání tarifu (kampaně zastropeny)
 - **Transakční pokračuje** vždy (kritické pro e-shop)
 - **Marketing kampaně omezeny** na current tarif
@@ -1375,7 +1415,8 @@ Per FAQ:
 ### 12.1 Cart abandonment setup
 
 Per Shoptet:
-> *"Automatizace: Neomezené automatizované procesy pro získávání nových zákazníků a udržení těch stávajících, včetně funkcí jako je vítání nových uživatelů, sledování opuštěných košíků a reaktivace dřívějších zájemců o vaše produkty."*
+
+> _"Automatizace: Neomezené automatizované procesy pro získávání nových zákazníků a udržení těch stávajících, včetně funkcí jako je vítání nových uživatelů, sledování opuštěných košíků a reaktivace dřívějších zájemců o vaše produkty."_
 
 ```
 E-commerce integration aktivní (Shoptet/Shopify/Upgates/Rocketoo)
@@ -1431,7 +1472,8 @@ Exit
 ### 12.3 Tržby attribution
 
 Per Boldem blog:
-> *"Díky sledování tržeb v Boldem přesně víte, jak si jednotlivé kampaně vedou, a na základě reálných dat můžete snadno přizpůsobit své marketingové strategie."*
+
+> _"Díky sledování tržeb v Boldem přesně víte, jak si jednotlivé kampaně vedou, a na základě reálných dat můžete snadno přizpůsobit své marketingové strategie."_
 
 ```
 Cart abandonment email click
@@ -1451,7 +1493,7 @@ If order placed within X dní:
 
 ### 12.4 Per scandishop.cz review
 
-> *"Využíváme i pokročilé kampaně jako opuštěný košík, welcome kampaň a jiné. Určitě doporučujeme."*
+> _"Využíváme i pokročilé kampaně jako opuštěný košík, welcome kampaň a jiné. Určitě doporučujeme."_
 
 **Real CZ e-shop confirmation** že cart abandonment v Boldem funguje.
 
@@ -1747,7 +1789,7 @@ Profile enriched
 
 ### 15.3 Per Shoptet description
 
-> *"Konsolidace dat: Boldem centralizuje data z různých zdrojů, jako jsou webové stránky, CRM systémy, e-mailové kampaně a sociální média, do jednoho systému, což výrazně zjednodušuje jejich správu a analýzu."*
+> _"Konsolidace dat: Boldem centralizuje data z různých zdrojů, jako jsou webové stránky, CRM systémy, e-mailové kampaně a sociální média, do jednoho systému, což výrazně zjednodušuje jejich správu a analýzu."_
 
 ### 15.4 360° customer profile
 
@@ -1771,9 +1813,11 @@ Boldem CDP combines:
 ### 15.5 CDP advantages
 
 Per oficiální:
-> *"Jednotná datová základna – snadný přístup ke všem kanálům klienta na jednom místě."*
+
+> _"Jednotná datová základna – snadný přístup ke všem kanálům klienta na jednom místě."_
 
 **Benefits:**
+
 - **Easier multi-channel campaigns**
 - **Better segmentation**
 - **Predictive insights**
@@ -1786,7 +1830,8 @@ Per oficiální:
 ### 16.1 Custom event tracking setup
 
 Per oficiální:
-> *"Sledujte události a aktivitu na webu, ve vaší aplikaci, nebo na dalších platformách. Sami si určíte, které události chcete sledovat."*
+
+> _"Sledujte události a aktivitu na webu, ve vaší aplikaci, nebo na dalších platformách. Sami si určíte, které události chcete sledovat."_
 
 ```
 Tarif Profi aktivní
@@ -1810,6 +1855,7 @@ Test events flow
 ### 16.2 Use cases custom events
 
 #### E-shop
+
 ```
 Custom events:
 - "premium_membership_started"
@@ -1825,6 +1871,7 @@ Per event:
 ```
 
 #### SaaS
+
 ```
 Custom events:
 - "feature_X_activated"
@@ -1837,6 +1884,7 @@ Lifecycle automations
 ```
 
 #### Sportovní klub
+
 ```
 Custom events:
 - "ticket_purchased_match_X"
@@ -1851,7 +1899,8 @@ Targeted fan engagement
 ### 16.3 Tagging system
 
 Per oficiální:
-> *"Libovolné tagování (označování) uživatelů. Rozšířená segmentace uživatelů."*
+
+> _"Libovolné tagování (označování) uživatelů. Rozšířená segmentace uživatelů."_
 
 ```
 Tagy use cases:
@@ -1915,7 +1964,8 @@ Targeted campaigns:
 ### 17.1 A/B testing setup
 
 Per Freshstart.cz:
-> *"Boldem umožňuje otestovat až 4 varianty."*
+
+> _"Boldem umožňuje otestovat až 4 varianty."_
 
 ```
 Create campaign
@@ -2012,7 +2062,8 @@ Boldem learns: questions outperform statements
 ### 18.1 Limiter activation
 
 Per oficiální:
-> *"Limiter mají k dispozici uživatelé v účtu s tarifem Profi. Využít ho můžete při rozesílce, ve které je více než 1 000 příjemců."*
+
+> _"Limiter mají k dispozici uživatelé v účtu s tarifem Profi. Využít ho můžete při rozesílce, ve které je více než 1 000 příjemců."_
 
 ```
 Requirements:
@@ -2044,8 +2095,10 @@ Schedule generated:
 ### 18.3 Use cases
 
 #### Warm-up nového účtu
+
 Per oficiální:
-> *"Při prvních rozesílkách v novém nástroji je u větší databáze vždy potřeba 'zahřívat'."*
+
+> _"Při prvních rozesílkách v novém nástroji je u větší databáze vždy potřeba 'zahřívat'."_
 
 ```
 Nový Boldem account s 50 000 kontakty
@@ -2064,6 +2117,7 @@ Better deliverability long-term
 ```
 
 #### Warm-up importovaných seznamů
+
 ```
 Import 30 000 nových kontaktů
    ↓
@@ -2075,8 +2129,10 @@ First send → Limiter
 ```
 
 #### Ochrana webu před přetížením
+
 Per oficiální:
-> *"Využití najdete také při komunikaci akce, u které může zvýšený počet návštěvníků omezit fungování webu."*
+
+> _"Využití najdete také při komunikaci akce, u které může zvýšený počet návštěvníků omezit fungování webu."_
 
 ```
 Black Friday kampaň 100K příjemců
@@ -2090,8 +2146,10 @@ S Limiterem: 5000/h
 ```
 
 #### Ochrana customer support
+
 Per oficiální:
-> *"při posílání oznámení, které může zatížit vaši zákaznickou podporu"*
+
+> _"při posílání oznámení, které může zatížit vaši zákaznickou podporu"_
 
 ```
 Service announcement 50K příjemcům
@@ -2111,6 +2169,7 @@ S Limiterem: 100 tickets za hodinu
 ### 19.1 Sportovní klub setup
 
 Per oficiální (reference):
+
 - Zbrojovka Brno
 - Banská Bystrica (hokej)
 - Slovan Bratislava (futbal + hokej)
@@ -2131,9 +2190,11 @@ Sportovní klub onboarding:
 ### 19.2 Fan engagement flow
 
 Per oficiální:
-> *"Boldem usnadňuje cílení na poli marketingu – pomáháme s newslettery, šablonami, usnadňujeme komunikaci s fanoušky, vytváříme systémy na prodej lístků a zařizujeme související marketingové aktivity."*
+
+> _"Boldem usnadňuje cílení na poli marketingu – pomáháme s newslettery, šablonami, usnadňujeme komunikaci s fanoušky, vytváříme systémy na prodej lístků a zařizujeme související marketingové aktivity."_
 
 **Boldem services pro sportovní klub:**
+
 - **Newslettery** (sezónní + týdenní)
 - **Šablony** (klubové)
 - **Komunikace s fanoušky** multi-channel
@@ -2230,9 +2291,11 @@ Weekly newsletter (Friday):
 ### 20.1 Štěpán Hon kalendář example
 
 Per oficiální:
-> *"Štěpán Hon každý rok představuje kalendář s 12 známými osobnostmi v jejich domovech. Jsme rádi, že i díky naší spolupráci týkající se správy webů a poskytnutí aplikace k direct mailingu se mu opět daří generovat spoustu peněz pro neziskové organizace Cesta domů a Arkadie. Během roku 2024 se Štěpánovi podařilo skrze prodej kalendářů vybrat více než 1 368 000 korun!"*
+
+> _"Štěpán Hon každý rok představuje kalendář s 12 známými osobnostmi v jejich domovech. Jsme rádi, že i díky naší spolupráci týkající se správy webů a poskytnutí aplikace k direct mailingu se mu opět daří generovat spoustu peněz pro neziskové organizace Cesta domů a Arkadie. Během roku 2024 se Štěpánovi podařilo skrze prodej kalendářů vybrat více než 1 368 000 korun!"_
 
 **Boldem služby pro fundraising:**
+
 - **Direct mailing**
 - **Web správa**
 - **Marketing aktivity**
@@ -2334,7 +2397,8 @@ PUSH (web):
 ### 21.1 White-label setup
 
 Per oficiální:
-> *"Škálovatelné procesy – správa stovek klientů v jedné platformě s možností white-label řešení."*
+
+> _"Škálovatelné procesy – správa stovek klientů v jedné platformě s možností white-label řešení."_
 
 ```
 Agentura objednává white-label tarif
@@ -2423,7 +2487,8 @@ Boldem benefits:
 ### 22.1 API access
 
 Per oficiální:
-> *"V případě Boldem můžete prostřednictvím API využívat marketingové funkce přímo ve vaší aplikaci, nebo v podnikovém systému a jednoduše je automatizovat."*
+
+> _"V případě Boldem můžete prostřednictvím API využívat marketingové funkce přímo ve vaší aplikaci, nebo v podnikovém systému a jednoduše je automatizovat."_
 
 ```
 Admin: Settings → API
@@ -2472,7 +2537,8 @@ Generate API key:
 ### 22.3 Webhook setup
 
 Per oficiální:
-> *"Specifický způsob komunikace, který umožňuje odeslat na adresu URL vaší aplikace informaci okamžitě poté, co v aplikaci Boldem dojde k nějaké akci, kterou potřebujete sledovat."*
+
+> _"Specifický způsob komunikace, který umožňuje odeslat na adresu URL vaší aplikace informaci okamžitě poté, co v aplikaci Boldem dojde k nějaké akci, kterou potřebujete sledovat."_
 
 ```
 Admin: Settings → Webhooks
@@ -2500,7 +2566,8 @@ On event:
 ### 22.4 E-shop doplněk pattern
 
 Per oficiální:
-> *"Rozhraní API využíváme také při přípravě doplňků pro různé e-shopové platformy. V takovém případě nemusíte nic programovat a stačí si doplněk nainstalovat v administraci dané platformy."*
+
+> _"Rozhraní API využíváme také při přípravě doplňků pro různé e-shopové platformy. V takovém případě nemusíte nic programovat a stačí si doplněk nainstalovat v administraci dané platformy."_
 
 ```
 E-shop doplněk pattern:
@@ -2555,7 +2622,8 @@ Boldem GDPR compliance:
 ### 23.2 Double Opt-in flow
 
 Per oficiální FAQ:
-> *"Je to proces, kdy nový kontakt, který se přihlásí přes formulář do vašeho seznamu, musí potvrdit odběr vašich zpráv kliknutím na odkaz v e-mailu. Je tím tak zabráněno nevyžádanému posílání na nepotvrzené e-maily a na neplatné e-maily."*
+
+> _"Je to proces, kdy nový kontakt, který se přihlásí přes formulář do vašeho seznamu, musí potvrdit odběr vašich zpráv kliknutím na odkaz v e-mailu. Je tím tak zabráněno nevyžádanému posílání na nepotvrzené e-maily a na neplatné e-maily."_
 
 ```
 Visitor submits form
@@ -2636,7 +2704,8 @@ Provide within 30 dní (GDPR requirement)
 ### 23.5 Per Ecomail comparison advantage
 
 Per Freshstart.cz:
-> *"Ecomail je v českém prostoru dobře známý... Má však otázky týkající se zabezpečení dat uživatelů na zahraničních serverech."*
+
+> _"Ecomail je v českém prostoru dobře známý... Má však otázky týkající se zabezpečení dat uživatelů na zahraničních serverech."_
 
 ```
 Boldem vs. Ecomail GDPR:
@@ -2670,7 +2739,8 @@ Boldem CDP advantage pro GDPR
 ### 24.1 MailKomplet → Boldem migration
 
 Per Freshstart.cz:
-> *"Boldem, ačkoliv je nováčkem na trhu e-mailových nástrojů, čerpá zkušenosti ze svého předchůdce, MailKompletu."*
+
+> _"Boldem, ačkoliv je nováčkem na trhu e-mailových nástrojů, čerpá zkušenosti ze svého předchůdce, MailKompletu."_
 
 ```
 Migration scenario:
@@ -2698,7 +2768,8 @@ Training na new Boldem UI
 ### 24.2 General migration support
 
 Per oficiální FAQ:
-> *"Samozřejmě. Běžně pomáháme klientům přenést data při přechodu z jiného systému. Vhodné je se na přenosu domluvit předem. Stačí napsat do chatu naší zákaznické podpoře, nebo na e-mail support@boldem.cz."*
+
+> _"Samozřejmě. Běžně pomáháme klientům přenést data při přechodu z jiného systému. Vhodné je se na přenosu domluvit předem. Stačí napsat do chatu naší zákaznické podpoře, nebo na e-mail support@boldem.cz."_
 
 ```
 Migration request:
@@ -2723,6 +2794,7 @@ Validation
 ### 24.3 Migration paths
 
 #### Z Ecomail
+
 ```
 - Export contacts CSV
 - Field mapping to Boldem
@@ -2732,6 +2804,7 @@ Validation
 ```
 
 #### Z SmartEmailing
+
 ```
 - Export contacts
 - Field mapping
@@ -2741,6 +2814,7 @@ Validation
 ```
 
 #### Z Mailchimp
+
 ```
 - Export contacts
 - Field mapping (Mailchimp tags → Boldem)
@@ -2750,6 +2824,7 @@ Validation
 ```
 
 #### Z Brevo (Sendinblue)
+
 ```
 - Export contacts
 - Field mapping
@@ -2781,9 +2856,11 @@ Boldem typicky migruje:
 ### 24.5 Hand-holding migration
 
 Per Shoptet:
-> *"Vhodné je se na přenosu domluvit předem."*
+
+> _"Vhodné je se na přenosu domluvit předem."_
 
 **Boldem approach:**
+
 - **Hands-on support**
 - **CZ native team**
 - **Migration coordinated**
@@ -2794,38 +2871,38 @@ Per Shoptet:
 
 ## 25. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Marketing | Designer | Analyst | Viewer | Agency | Subscriber | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Per-uživatel práva | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| All recipients | ✅ | ✅ | ✅ | limited | view | view | per client | jen sebe | ✅ |
-| Edit recipients | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | ✅ |
-| Custom fields + Tagy | ✅ | ✅ | ✅ | view | view | view | per role | jen své | ✅ |
-| Build segments | ✅ | ✅ | ✅ | ❌ | view | view | per role | – | ✅ |
-| Email kampaně | ✅ | ✅ | ✅ | ✅ | view | view | per client | jen co dostal | ✅ |
-| Send kampaně | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | ✅ |
-| SMS kampaně | ✅ | ✅ | ✅ | ❌ | view | view | per role | jen co dostal | ✅ |
-| PUSH oznámení | ✅ | ✅ | ✅ | ❌ | view | view | per role | receive | ✅ |
-| In-App zprávy | ✅ | ✅ | ✅ | view | view | view | per role | in-app | ✅ |
-| Transakční | ✅ | ✅ | per role | ❌ | view | view | per role | receive | ✅ |
-| Automatizace | ✅ | ✅ | ✅ | view | view | view | per role | ❌ | ✅ |
-| Activate automation | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | ✅ |
-| Templates | ✅ | ✅ | ✅ | ✅ | view | view | per role | – | ✅ |
-| Forms | ✅ | ✅ | ✅ | ✅ | view | view | per role | submit | ✅ |
-| A/B testing | ✅ | ✅ | ✅ | view | view | view | per role | – | ✅ |
-| Limiter (Tarif Profi) | ✅ | ✅ | ✅ | ❌ | view | view | per role | – | – |
-| Vlastní události (Profi) | ✅ | ✅ | ✅ | view | ✅ | view | per role | tracked | ✅ |
-| CDP profiles | ✅ | ✅ | ✅ | limited | ✅ | view | per role | jen sebe | ✅ |
-| Reports | ✅ | ✅ | ✅ | view | ✅ | ✅ | per role | ❌ | ✅ |
-| Tržby v aplikaci | ✅ | ✅ | ✅ | view | ✅ | ✅ | per role | ❌ | ✅ |
-| Power BI / Looker Studio | ✅ | ✅ | per role | view | ✅ | view | per role | ❌ | ✅ |
-| Integrace (Shoptet ...) | ✅ | ✅ | per role | ❌ | view | ❌ | per role | – | per scope |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role | – | – |
-| Webhooks | ✅ | ✅ | per role | ❌ | view | ❌ | per role | – | per scope |
-| White-label config | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | – |
-| GDPR delete | ✅ | ✅ | per role | ❌ | per role | ❌ | per role | request | ✅ |
+| Data                     | Owner | Admin | Marketing | Designer | Analyst  | Viewer |   Agency   |  Subscriber   |    API    |
+| ------------------------ | :---: | :---: | :-------: | :------: | :------: | :----: | :--------: | :-----------: | :-------: |
+| Account settings         |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |   ❌   |  per role  |      ❌       | per scope |
+| Billing                  |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    |   ❌   |  per role  |      ❌       | per scope |
+| User management          |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |   ❌   |  per role  |      ❌       | per scope |
+| Per-uživatel práva       |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |   ❌   |  per role  |      ❌       | per scope |
+| All recipients           |  ✅   |  ✅   |    ✅     | limited  |   view   |  view  | per client |   jen sebe    |    ✅     |
+| Edit recipients          |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |   ❌   |  per role  |      ❌       |    ✅     |
+| Custom fields + Tagy     |  ✅   |  ✅   |    ✅     |   view   |   view   |  view  |  per role  |    jen své    |    ✅     |
+| Build segments           |  ✅   |  ✅   |    ✅     |    ❌    |   view   |  view  |  per role  |       –       |    ✅     |
+| Email kampaně            |  ✅   |  ✅   |    ✅     |    ✅    |   view   |  view  | per client | jen co dostal |    ✅     |
+| Send kampaně             |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |   ❌   |  per role  |      ❌       |    ✅     |
+| SMS kampaně              |  ✅   |  ✅   |    ✅     |    ❌    |   view   |  view  |  per role  | jen co dostal |    ✅     |
+| PUSH oznámení            |  ✅   |  ✅   |    ✅     |    ❌    |   view   |  view  |  per role  |    receive    |    ✅     |
+| In-App zprávy            |  ✅   |  ✅   |    ✅     |   view   |   view   |  view  |  per role  |    in-app     |    ✅     |
+| Transakční               |  ✅   |  ✅   | per role  |    ❌    |   view   |  view  |  per role  |    receive    |    ✅     |
+| Automatizace             |  ✅   |  ✅   |    ✅     |   view   |   view   |  view  |  per role  |      ❌       |    ✅     |
+| Activate automation      |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |   ❌   |  per role  |      ❌       |    ✅     |
+| Templates                |  ✅   |  ✅   |    ✅     |    ✅    |   view   |  view  |  per role  |       –       |    ✅     |
+| Forms                    |  ✅   |  ✅   |    ✅     |    ✅    |   view   |  view  |  per role  |    submit     |    ✅     |
+| A/B testing              |  ✅   |  ✅   |    ✅     |   view   |   view   |  view  |  per role  |       –       |    ✅     |
+| Limiter (Tarif Profi)    |  ✅   |  ✅   |    ✅     |    ❌    |   view   |  view  |  per role  |       –       |     –     |
+| Vlastní události (Profi) |  ✅   |  ✅   |    ✅     |   view   |    ✅    |  view  |  per role  |    tracked    |    ✅     |
+| CDP profiles             |  ✅   |  ✅   |    ✅     | limited  |    ✅    |  view  |  per role  |   jen sebe    |    ✅     |
+| Reports                  |  ✅   |  ✅   |    ✅     |   view   |    ✅    |   ✅   |  per role  |      ❌       |    ✅     |
+| Tržby v aplikaci         |  ✅   |  ✅   |    ✅     |   view   |    ✅    |   ✅   |  per role  |      ❌       |    ✅     |
+| Power BI / Looker Studio |  ✅   |  ✅   | per role  |   view   |    ✅    |  view  |  per role  |      ❌       |    ✅     |
+| Integrace (Shoptet ...)  |  ✅   |  ✅   | per role  |    ❌    |   view   |   ❌   |  per role  |       –       | per scope |
+| API keys                 |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |   ❌   |  per role  |       –       |     –     |
+| Webhooks                 |  ✅   |  ✅   | per role  |    ❌    |   view   |   ❌   |  per role  |       –       | per scope |
+| White-label config       |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |   ❌   |  per role  |      ❌       |     –     |
+| GDPR delete              |  ✅   |  ✅   | per role  |    ❌    | per role |   ❌   |  per role  |    request    |    ✅     |
 
 ---
 
@@ -2834,14 +2911,16 @@ Per Shoptet:
 ### 26.1 Méně automation templates
 
 Per Freshstart.cz:
-> *"Začínající uživatelé by mohli postrádat předpřipravené šablony pro automatizaci."*
+
+> _"Začínající uživatelé by mohli postrádat předpřipravené šablony pro automatizaci."_
 
 ⚠️ **Méně pre-built automation templates** než Ecomail / SmartEmailing.
 
 ### 26.2 Personalization tokens UI
 
 Per Freshstart.cz:
-> *"U Boldem je potřeba znát definici proměnné nebo ji vyhledat v nápovědě."*
+
+> _"U Boldem je potřeba znát definici proměnné nebo ji vyhledat v nápovědě."_
 
 ⚠️ **Personalization tokens méně user-friendly** vs. Ecomail/SmartEmailing s "snadným výběrem".
 
@@ -2861,7 +2940,8 @@ Per Freshstart.cz:
 ### 26.5 Méně Sklik / sociální integrace
 
 Per Freshstart.cz:
-> *"Ecomail a SmartEmailing nabízejí funkci pro rozesílání promovaných příspěvků na sociální sítě nebo pro vytváření remarketingových kampaní přes Sklik."*
+
+> _"Ecomail a SmartEmailing nabízejí funkci pro rozesílání promovaných příspěvků na sociální sítě nebo pro vytváření remarketingových kampaní přes Sklik."_
 
 ⚠️ **Boldem méně sociální/Sklik** integrace explicitně zmíněné.
 
@@ -2963,4 +3043,4 @@ Pokud Boldem používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů boldem.cz + Shoptet doplňky a praktických zdrojů (Freshstart.cz). Pro nejaktuálnější detaily je nutný engagement s Boldem sales / consultant teamem.*
+_Dokument zpracován z oficiálních zdrojů boldem.cz + Shoptet doplňky a praktických zdrojů (Freshstart.cz). Pro nejaktuálnější detaily je nutný engagement s Boldem sales / consultant teamem._

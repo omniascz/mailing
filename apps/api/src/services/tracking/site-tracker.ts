@@ -6,26 +6,32 @@ import {
   sitePageViews,
   siteEvents,
   contacts,
-
+  revenueEvents,
   type TrackedSite,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 // ─── Site management ──────────────────────────────────────────────────────────
 
-export async function createSite(orgId: string, input: {
-  domain: string;
-  name?: string;
-  crossDomainSync?: boolean;
-}): Promise<TrackedSite> {
+export async function createSite(
+  orgId: string,
+  input: {
+    domain: string;
+    name?: string;
+    crossDomainSync?: boolean;
+  },
+): Promise<TrackedSite> {
   const siteToken = crypto.randomBytes(24).toString('hex');
-  const [row] = await db.insert(trackedSites).values({
-    orgId,
-    siteToken,
-    domain: input.domain.toLowerCase(),
-    name: input.name ?? null,
-    crossDomainSync: input.crossDomainSync ?? false,
-  }).returning();
+  const [row] = await db
+    .insert(trackedSites)
+    .values({
+      orgId,
+      siteToken,
+      domain: input.domain.toLowerCase(),
+      name: input.name ?? null,
+      crossDomainSync: input.crossDomainSync ?? false,
+    })
+    .returning();
   return row!;
 }
 
@@ -34,25 +40,35 @@ export async function listSites(orgId: string): Promise<TrackedSite[]> {
 }
 
 export async function getSite(orgId: string, id: string): Promise<TrackedSite> {
-  const [row] = await db.select().from(trackedSites)
+  const [row] = await db
+    .select()
+    .from(trackedSites)
     .where(and(eq(trackedSites.id, id), eq(trackedSites.orgId, orgId)));
   if (!row) throw AppError.notFound('Site not found');
   return row;
 }
 
 export async function getSiteByToken(token: string): Promise<TrackedSite | null> {
-  const [row] = await db.select().from(trackedSites)
+  const [row] = await db
+    .select()
+    .from(trackedSites)
     .where(and(eq(trackedSites.siteToken, token), eq(trackedSites.trackingEnabled, true)));
   return row ?? null;
 }
 
-export async function updateSite(orgId: string, id: string, patch: {
-  name?: string;
-  trackingEnabled?: boolean;
-  crossDomainSync?: boolean;
-}): Promise<TrackedSite> {
+export async function updateSite(
+  orgId: string,
+  id: string,
+  patch: {
+    name?: string;
+    trackingEnabled?: boolean;
+    crossDomainSync?: boolean;
+  },
+): Promise<TrackedSite> {
   await getSite(orgId, id);
-  const [row] = await db.update(trackedSites).set({ ...patch, updatedAt: new Date() })
+  const [row] = await db
+    .update(trackedSites)
+    .set({ ...patch, updatedAt: new Date() })
     .where(and(eq(trackedSites.id, id), eq(trackedSites.orgId, orgId)))
     .returning();
   return row!;
@@ -60,8 +76,7 @@ export async function updateSite(orgId: string, id: string, patch: {
 
 export async function deleteSite(orgId: string, id: string): Promise<void> {
   await getSite(orgId, id);
-  await db.delete(trackedSites)
-    .where(and(eq(trackedSites.id, id), eq(trackedSites.orgId, orgId)));
+  await db.delete(trackedSites).where(and(eq(trackedSites.id, id), eq(trackedSites.orgId, orgId)));
 }
 
 // ─── Page view recording ─────────────────────────────────────────────────────
@@ -83,21 +98,24 @@ export async function recordPageView(input: {
   const site = await getSiteByToken(input.siteToken);
   if (!site) throw AppError.notFound('Site not found or tracking disabled');
 
-  const [row] = await db.insert(sitePageViews).values({
-    orgId: site.orgId,
-    siteId: site.id,
-    visitorId: input.visitorId,
-    sessionId: input.sessionId ?? null,
-    contactId: input.contactId ?? null,
-    url: input.url,
-    path: input.path ?? null,
-    referrer: input.referrer ?? null,
-    title: input.title ?? null,
-    utmSource: input.utmSource ?? null,
-    utmMedium: input.utmMedium ?? null,
-    utmCampaign: input.utmCampaign ?? null,
-    utmContent: input.utmContent ?? null,
-  }).returning({ id: sitePageViews.id });
+  const [row] = await db
+    .insert(sitePageViews)
+    .values({
+      orgId: site.orgId,
+      siteId: site.id,
+      visitorId: input.visitorId,
+      sessionId: input.sessionId ?? null,
+      contactId: input.contactId ?? null,
+      url: input.url,
+      path: input.path ?? null,
+      referrer: input.referrer ?? null,
+      title: input.title ?? null,
+      utmSource: input.utmSource ?? null,
+      utmMedium: input.utmMedium ?? null,
+      utmCampaign: input.utmCampaign ?? null,
+      utmContent: input.utmContent ?? null,
+    })
+    .returning({ id: sitePageViews.id });
 
   return { pageViewId: row!.id };
 }
@@ -124,6 +142,75 @@ export async function recordEvent(input: {
   });
 }
 
+// ─── Revenue event recording ─────────────────────────────────────────────────
+// Public ingest path called by `FM.revenue(orderId, amount, currency, items)`
+// from the on-page snippet. Lands directly in revenue_events so it feeds
+// RFM scoring + CLV/churn predictions without a separate ETL step.
+// Idempotent on (orgId, orderId) so a duplicate "Thank you" page refresh
+// doesn't double-count revenue.
+
+export async function recordRevenueEvent(input: {
+  siteToken: string;
+  visitorId: string;
+  orderId?: string;
+  amount: number;
+  currency?: string;
+  items?: Array<{ sku: string; name: string; qty: number; price: number }>;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  contactId?: string;
+  email?: string;
+}): Promise<{ revenueEventId: string | null; duplicate: boolean }> {
+  const site = await getSiteByToken(input.siteToken);
+  if (!site) return { revenueEventId: null, duplicate: false };
+
+  // Resolve contact: explicit > email lookup > leave null
+  let contactId = input.contactId ?? null;
+  if (!contactId && input.email) {
+    const [c] = await db
+      .select({ id: contacts.id })
+      .from(contacts)
+      .where(
+        and(
+          eq(contacts.orgId, site.orgId),
+          eq(contacts.email, input.email.toLowerCase()),
+          isNull(contacts.deletedAt),
+        ),
+      )
+      .limit(1);
+    contactId = c?.id ?? null;
+  }
+
+  // Dedup on (orgId, orderId) when an orderId is provided. Without an
+  // orderId we can't tell duplicates apart, so we let them through.
+  if (input.orderId) {
+    const [existing] = await db
+      .select({ id: revenueEvents.id })
+      .from(revenueEvents)
+      .where(and(eq(revenueEvents.orgId, site.orgId), eq(revenueEvents.orderId, input.orderId)))
+      .limit(1);
+    if (existing) return { revenueEventId: existing.id, duplicate: true };
+  }
+
+  const [row] = await db
+    .insert(revenueEvents)
+    .values({
+      orgId: site.orgId,
+      contactId,
+      orderId: input.orderId ?? null,
+      amount: input.amount.toFixed(2),
+      currency: (input.currency ?? 'USD').toUpperCase(),
+      items: input.items ?? [],
+      utmSource: input.utmSource ?? null,
+      utmMedium: input.utmMedium ?? null,
+      utmCampaign: input.utmCampaign ?? null,
+    })
+    .returning({ id: revenueEvents.id });
+
+  return { revenueEventId: row!.id, duplicate: false };
+}
+
 // ─── Identity: link visitor to contact ───────────────────────────────────────
 
 export async function identifyVisitor(input: {
@@ -139,26 +226,40 @@ export async function identifyVisitor(input: {
   let contactId: string | null = null;
 
   if (input.email) {
-    const [contact] = await db.select({ id: contacts.id })
+    const [contact] = await db
+      .select({ id: contacts.id })
       .from(contacts)
-      .where(and(eq(contacts.orgId, site.orgId), eq(contacts.email, input.email), isNull(contacts.deletedAt)))
+      .where(
+        and(
+          eq(contacts.orgId, site.orgId),
+          eq(contacts.email, input.email),
+          isNull(contacts.deletedAt),
+        ),
+      )
       .limit(1);
     contactId = contact?.id ?? null;
   }
 
   if (contactId) {
     // Back-fill contactId on recent page views for this visitor
-    await db.update(sitePageViews)
+    await db
+      .update(sitePageViews)
       .set({ contactId })
       .where(and(eq(sitePageViews.visitorId, input.visitorId), isNull(sitePageViews.contactId)));
-    await db.update(siteEvents)
+    await db
+      .update(siteEvents)
       .set({ contactId })
       .where(and(eq(siteEvents.visitorId, input.visitorId), isNull(siteEvents.contactId)));
 
     // Merge anonymous profile
-    const { mergeVisitorIntoContact } = await import('../identity-merge/index.js').catch(() => ({ mergeVisitorIntoContact: null }));
+    const { mergeVisitorIntoContact } = await import('../identity-merge/index.js').catch(() => ({
+      mergeVisitorIntoContact: null,
+    }));
     if (mergeVisitorIntoContact) {
-      await (mergeVisitorIntoContact as unknown as (a: string, b: string) => Promise<void>)(input.visitorId, contactId).catch(() => {});
+      await (mergeVisitorIntoContact as unknown as (a: string, b: string) => Promise<void>)(
+        input.visitorId,
+        contactId,
+      ).catch(() => {});
     }
   }
 
@@ -168,7 +269,9 @@ export async function identifyVisitor(input: {
 // ─── Analytics queries ────────────────────────────────────────────────────────
 
 export async function getContactPageViews(orgId: string, contactId: string, limit = 50) {
-  return db.select().from(sitePageViews)
+  return db
+    .select()
+    .from(sitePageViews)
     .where(and(eq(sitePageViews.orgId, orgId), eq(sitePageViews.contactId, contactId)))
     .orderBy(desc(sitePageViews.occurredAt))
     .limit(limit);

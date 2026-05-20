@@ -31,7 +31,7 @@
 
 ### 1.1 Per CDP Institute (David Raab, founder)
 
-> *"A Customer Data Platform is packaged software that creates a persistent, unified customer database that is accessible to other systems."*
+> _"A Customer Data Platform is packaged software that creates a persistent, unified customer database that is accessible to other systems."_
 
 ### 1.2 Tři klíčové pilíře CDP
 
@@ -211,10 +211,10 @@ TEST: Vyplň tabulku per platforma
 CDP MATURITY: ✅✅✅ TOP TIER
 
 PER OFICIÁLNÍ:
-"When you buy Marketing Automation you get access 
-to our customer data engine (CDE), which combines 
-data unification, identity resolution, and other 
-CDP capabilities with journey orchestration, AI, 
+"When you buy Marketing Automation you get access
+to our customer data engine (CDE), which combines
+data unification, identity resolution, and other
+CDP capabilities with journey orchestration, AI,
 and marketing analytics."
 
 KEY FEATURES:
@@ -719,35 +719,35 @@ EMAILLABS:
 
 ### 6.1 Detailní capability scoring
 
-| Platforma | Persistent | Identity Resolution | Real-time | Multi-source | Predictive | Activation | UI |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Bloomreach** | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ |
-| **SAP Emarsys** | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅ |
-| **Salesforce Data 360** | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅✅ | ✅✅ |
-| **Mapp/Evalanche** | ✅✅✅ | ✅✅✅ | ✅✅ | ✅✅ | ✅✅ | ✅✅✅ | ✅✅ |
-| **SALESmanago** | ✅✅✅ | ✅✅ | ✅✅✅ | ✅✅ | ✅✅✅ | ✅✅✅ | ✅✅ |
-| **Targito** | ✅✅ | ✅✅ | ✅✅ | ✅✅ | ✅ | ✅✅ | ✅✅ |
-| **Braze** | ✅✅✅ | ✅✅ | ✅✅✅ | ✅✅✅ | ✅✅ | ✅✅✅ | ✅✅ |
-| **HubSpot** | ✅✅ | ✅✅ | ✅✅ | ✅ | ✅✅ | ✅✅ | ✅✅✅ |
-| **Klaviyo** | ✅✅ | ✅✅ | ✅✅ | ✅✅ | ✅✅✅ | ✅✅ | ✅✅✅ |
-| **ActiveCampaign** | ✅✅ | ✅ | ✅✅ | ✅ | ✅✅ | ✅✅ | ✅✅ |
-| **Leadhub** | ✅✅ | ✅ | ✅✅ | ✅ | ✅ | ✅✅ | ✅✅ |
-| **ExpertSender** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅✅ | ✅ |
-| **Brevo** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅✅ | ✅✅ |
-| **Inxmail** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Mailchimp** | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅✅ |
-| **MailerLite** | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅✅ |
-| **GetResponse** | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅✅ |
-| **Constant Contact** | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| **Ecomail** | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| **SmartEmailing** | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| **Mailkit** | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| **CleverReach** | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| **rapidmail** | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| **Boldem** | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| **Newsletter2Go** | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| **SARE** | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| **EmailLabs** | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | – API |
+| Platforma               | Persistent | Identity Resolution | Real-time | Multi-source | Predictive | Activation |   UI   |
+| ----------------------- | :--------: | :-----------------: | :-------: | :----------: | :--------: | :--------: | :----: |
+| **Bloomreach**          |   ✅✅✅   |       ✅✅✅        |  ✅✅✅   |    ✅✅✅    |   ✅✅✅   |   ✅✅✅   | ✅✅✅ |
+| **SAP Emarsys**         |   ✅✅✅   |       ✅✅✅        |  ✅✅✅   |    ✅✅✅    |   ✅✅✅   |   ✅✅✅   |  ✅✅  |
+| **Salesforce Data 360** |   ✅✅✅   |       ✅✅✅        |  ✅✅✅   |    ✅✅✅    |   ✅✅✅   |   ✅✅✅   |  ✅✅  |
+| **Mapp/Evalanche**      |   ✅✅✅   |       ✅✅✅        |   ✅✅    |     ✅✅     |    ✅✅    |   ✅✅✅   |  ✅✅  |
+| **SALESmanago**         |   ✅✅✅   |        ✅✅         |  ✅✅✅   |     ✅✅     |   ✅✅✅   |   ✅✅✅   |  ✅✅  |
+| **Targito**             |    ✅✅    |        ✅✅         |   ✅✅    |     ✅✅     |     ✅     |    ✅✅    |  ✅✅  |
+| **Braze**               |   ✅✅✅   |        ✅✅         |  ✅✅✅   |    ✅✅✅    |    ✅✅    |   ✅✅✅   |  ✅✅  |
+| **HubSpot**             |    ✅✅    |        ✅✅         |   ✅✅    |      ✅      |    ✅✅    |    ✅✅    | ✅✅✅ |
+| **Klaviyo**             |    ✅✅    |        ✅✅         |   ✅✅    |     ✅✅     |   ✅✅✅   |    ✅✅    | ✅✅✅ |
+| **ActiveCampaign**      |    ✅✅    |         ✅          |   ✅✅    |      ✅      |    ✅✅    |    ✅✅    |  ✅✅  |
+| **Leadhub**             |    ✅✅    |         ✅          |   ✅✅    |      ✅      |     ✅     |    ✅✅    |  ✅✅  |
+| **ExpertSender**        |     ✅     |         ✅          |    ✅     |      ✅      |     ✅     |    ✅✅    |   ✅   |
+| **Brevo**               |     ✅     |         ✅          |    ✅     |      ✅      |     ✅     |    ✅✅    |  ✅✅  |
+| **Inxmail**             |     ✅     |         ✅          |    ✅     |      ✅      |     ✅     |     ✅     |   ✅   |
+| **Mailchimp**           |     ✅     |         ❌          |    ✅     |      ❌      |     ✅     |     ✅     |  ✅✅  |
+| **MailerLite**          |     ✅     |         ❌          |    ✅     |      ❌      |     ❌     |     ✅     |  ✅✅  |
+| **GetResponse**         |     ✅     |         ❌          |    ✅     |      ❌      |     ✅     |     ✅     |  ✅✅  |
+| **Constant Contact**    |     ✅     |         ❌          |    ❌     |      ❌      |     ✅     |     ✅     |   ✅   |
+| **Ecomail**             |     ✅     |         ❌          |    ✅     |      ❌      |     ❌     |     ✅     |   ✅   |
+| **SmartEmailing**       |     ✅     |         ❌          |    ✅     |      ❌      |     ❌     |     ✅     |   ✅   |
+| **Mailkit**             |     ✅     |         ❌          |    ❌     |      ❌      |     ❌     |     ✅     |   ✅   |
+| **CleverReach**         |     ✅     |         ❌          |    ✅     |      ❌      |     ❌     |     ✅     |   ✅   |
+| **rapidmail**           |     ✅     |         ❌          |    ❌     |      ❌      |     ❌     |     ✅     |   ✅   |
+| **Boldem**              |     ✅     |         ❌          |    ❌     |      ❌      |     ❌     |     ✅     |   ✅   |
+| **Newsletter2Go**       |     ✅     |         ❌          |    ✅     |      ❌      |     ❌     |     ✅     |   ✅   |
+| **SARE**                |     ✅     |         ❌          |    ✅     |      ❌      |     ❌     |     ✅     |   ✅   |
+| **EmailLabs**           |     ✅     |         ❌          |    ❌     |      ❌      |     ❌     |     ✅     | – API  |
 
 **Score 14-21 = TIER 1 CDP**
 **Score 8-13 = TIER 2 CDP-lite**
@@ -1070,35 +1070,35 @@ TIER 3 - EMAIL CENTRIC:
 
 ### 11.2 Per platform activation breadth
 
-| Platforma | Email | SMS | Push | In-App | Web | Ads | Custom |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Bloomreach** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **SAP Emarsys** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Salesforce MC** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Braze** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Mapp** | ✅ | ✅ | ✅ | – | ✅ | ✅ | ✅ |
-| **SALESmanago** | ✅ | ✅ | ✅ | – | ✅ | ✅ | – |
-| **Targito** | ✅ | ✅ | – | – | ✅ | ✅ | – |
-| **Klaviyo** | ✅ | ✅ | ✅ | – | – | ✅ | – |
-| **HubSpot** | ✅ | ✅ | – | – | ✅ | ✅ | – |
-| **ActiveCampaign** | ✅ | ✅ | – | – | ✅ | – | – |
-| **Brevo** | ✅ | ✅ | – | – | – | – | – |
-| **Mailchimp** | ✅ | $$ | – | – | – | ✅ | – |
-| **MailerLite** | ✅ | ✅ | – | – | – | – | – |
-| **GetResponse** | ✅ | ✅ | – | – | ✅ | – | – |
-| **Constant Contact** | ✅ | US-only | – | – | – | ✅ | – |
-| **Ecomail** | ✅ | ✅ | – | – | – | – | – |
-| **SmartEmailing** | ✅ | ✅ | – | – | – | – | – |
-| **Mailkit** | ✅ | ✅ | – | – | – | – | – |
-| **CleverReach** | ✅ | – | – | – | – | – | – |
-| **rapidmail** | ✅ | – | – | – | – | – | – |
-| **Boldem** | ✅ | ✅ | – | – | – | – | – |
-| **Leadhub** | ✅ | ✅ | – | – | – | – | – |
-| **Inxmail** | ✅ | – | – | – | – | – | – |
-| **SARE** | ✅ | ✅ | – | – | – | – | – |
-| **EmailLabs** | ✅ | ✅ | – | – | – | – | – |
-| **ExpertSender** | ✅ | ✅ | – | – | – | – | – |
-| **Newsletter2Go** | ✅ | ✅ | – | – | – | – | – |
+| Platforma            | Email |   SMS   | Push | In-App | Web | Ads | Custom |
+| -------------------- | :---: | :-----: | :--: | :----: | :-: | :-: | :----: |
+| **Bloomreach**       |  ✅   |   ✅    |  ✅  |   ✅   | ✅  | ✅  |   ✅   |
+| **SAP Emarsys**      |  ✅   |   ✅    |  ✅  |   ✅   | ✅  | ✅  |   ✅   |
+| **Salesforce MC**    |  ✅   |   ✅    |  ✅  |   ✅   | ✅  | ✅  |   ✅   |
+| **Braze**            |  ✅   |   ✅    |  ✅  |   ✅   | ✅  | ✅  |   ✅   |
+| **Mapp**             |  ✅   |   ✅    |  ✅  |   –    | ✅  | ✅  |   ✅   |
+| **SALESmanago**      |  ✅   |   ✅    |  ✅  |   –    | ✅  | ✅  |   –    |
+| **Targito**          |  ✅   |   ✅    |  –   |   –    | ✅  | ✅  |   –    |
+| **Klaviyo**          |  ✅   |   ✅    |  ✅  |   –    |  –  | ✅  |   –    |
+| **HubSpot**          |  ✅   |   ✅    |  –   |   –    | ✅  | ✅  |   –    |
+| **ActiveCampaign**   |  ✅   |   ✅    |  –   |   –    | ✅  |  –  |   –    |
+| **Brevo**            |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **Mailchimp**        |  ✅   |   $$    |  –   |   –    |  –  | ✅  |   –    |
+| **MailerLite**       |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **GetResponse**      |  ✅   |   ✅    |  –   |   –    | ✅  |  –  |   –    |
+| **Constant Contact** |  ✅   | US-only |  –   |   –    |  –  | ✅  |   –    |
+| **Ecomail**          |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **SmartEmailing**    |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **Mailkit**          |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **CleverReach**      |  ✅   |    –    |  –   |   –    |  –  |  –  |   –    |
+| **rapidmail**        |  ✅   |    –    |  –   |   –    |  –  |  –  |   –    |
+| **Boldem**           |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **Leadhub**          |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **Inxmail**          |  ✅   |    –    |  –   |   –    |  –  |  –  |   –    |
+| **SARE**             |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **EmailLabs**        |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **ExpertSender**     |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
+| **Newsletter2Go**    |  ✅   |   ✅    |  –   |   –    |  –  |  –  |   –    |
 
 ---
 
@@ -1379,7 +1379,7 @@ Q5: Budget?
 6. **Implementation 6-12 měsíců** standard
 7. **Identity resolution** = klíčový rozdíl Tier 1 vs. 3
 8. **Real-time architecture** = engineering investment
-9. **CEE má vlastní CDP (Bloomreach, SALESmanago, Targito)
+9. \*\*CEE má vlastní CDP (Bloomreach, SALESmanago, Targito)
 10. **DACH dominance** s Emarsys, Mapp
 11. **Convergence** CDP + CRM + email tools 2026+
 12. **True CDP value** = predictive + cross-channel
@@ -1442,4 +1442,4 @@ PRO ROZHODOVÁNÍ O CDP:
 
 ---
 
-*Dokument zpracován z 54 detailních deep-dive analýz (01-54) a verified web sources 2026. CDP definitions per CDP Institute (David Raab). Capabilities evolve - re-check vendor docs quarterly.*
+_Dokument zpracován z 54 detailních deep-dive analýz (01-54) a verified web sources 2026. CDP definitions per CDP Institute (David Raab). Capabilities evolve - re-check vendor docs quarterly._

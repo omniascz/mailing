@@ -34,9 +34,9 @@ describe('generateCountdownGif', () => {
   });
 
   it('throws on invalid targetDate', async () => {
-    await expect(
-      generateCountdownGif({ targetDate: 'not-a-date' }),
-    ).rejects.toThrow('Invalid targetDate');
+    await expect(generateCountdownGif({ targetDate: 'not-a-date' })).rejects.toThrow(
+      'Invalid targetDate',
+    );
   });
 
   it('returns a Buffer', async () => {

@@ -7,6 +7,7 @@
 > **Klíčový kontext:** **Bloomreach Engagement = původně Exponea**, slovenský/český CDP startup založený 2016, akvizovaný americkým Bloomreach 26. ledna 2021. Po akvizici a integraci přejmenován na Bloomreach Engagement.
 >
 > **Společnost:** Bloomreach, Inc.
+>
 > - **HQ Bloomreach:** Mountain View, California, USA
 > - **Založení Bloomreach:** 2009 (Raj De Datta + Ashutosh Garg)
 > - **Akvizice Exponea:** 26. ledna 2021 ($150M investice od Sixth Street Growth, valuation $900M Bloomreach)
@@ -17,6 +18,7 @@
 > - **Zákazníci:** 1 400+ brandů worldwide (vč. 250 z Exponea base)
 >
 > **Pozice 2026:** **Enterprise CDXP (Customer Data & Experience Platform)** s důrazem na:
+>
 > - **Unified CDP + Marketing Automation** v jednom (real-time)
 > - **Loomi AI** = AI engine napříč platformou (rebrand 2024-2025)
 > - **"Agentic platform for personalization"** (autonomous marketing)
@@ -25,6 +27,7 @@
 > - **Český/slovenský origin** = silné v CEE regionu
 >
 > **Klíčové diferenciátory:**
+>
 > - **CDP + Marketing Automation native unified** (ne integrace dvou nástrojů!)
 > - **Real-time data processing** (in-memory framework)
 > - **Loomi AI engine** napříč všemi produkty
@@ -38,6 +41,7 @@
 > - **MACH Alliance member** (modern architecture)
 >
 > **Klíčové problémy/kritika 2026:**
+>
 > - **Žádné public pricing** (sales-driven, custom quotes)
 > - **Technicky náročný** (často potřeba external consultantů)
 > - **High learning curve** (komplexní platforma)
@@ -93,13 +97,13 @@
 
 ### Per oficiální popis
 
-> *"Bloomreach is the agentic platform for personalization. Powering autonomous search, conversational shopping, and autonomous marketing, Bloomreach personalizes the entire customer experience."*
+> _"Bloomreach is the agentic platform for personalization. Powering autonomous search, conversational shopping, and autonomous marketing, Bloomreach personalizes the entire customer experience."_
 
-> *"Bloomreach drives personalization for 1,400+ brands around the world, including American Eagle, Sonepar, and Pandora."*
+> _"Bloomreach drives personalization for 1,400+ brands around the world, including American Eagle, Sonepar, and Pandora."_
 
 ### Per Bloomreach o Exponea akvizici
 
-> *"In a world of CDPs, why did we decide that Exponea was special? It comes down to this: Ecommerce customers love Exponea. It's the most loved CDP in the market, and for good reason."*
+> _"In a world of CDPs, why did we decide that Exponea was special? It comes down to this: Ecommerce customers love Exponea. It's the most loved CDP in the market, and for good reason."_
 
 — Raj De Datta, CEO Bloomreach (January 2021)
 
@@ -123,7 +127,7 @@ Cílový profil Bloomreach Engagement:
 
 ### Per oficiální o cílovém audience
 
-> *"The target audience for Bloomreach encompasses commerce businesses of all sizes that are looking to optimize customer interactions and drive sales growth. Its suite of products is particularly beneficial for marketers, content creators, and ecommerce managers who aim to improve customer engagement and conversion rates."*
+> _"The target audience for Bloomreach encompasses commerce businesses of all sizes that are looking to optimize customer interactions and drive sales growth. Its suite of products is particularly beneficial for marketers, content creators, and ecommerce managers who aim to improve customer engagement and conversion rates."_
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -286,19 +290,19 @@ Cílový profil Bloomreach Engagement:
 
 ### 2.2 Per Slovak Spectator (původní news 2021)
 
-> *"The Exponea company has been purchased by US firm Bloomreach. ... Up until now, the owner of HB Reavis Ivan Chrenko controlled the majority in Exponea. ... With the acquisition, Bloomreach will add 200 additional employees to its 300-member staff. It will also gain 250 net new customers, giving it a total of 750."*
+> _"The Exponea company has been purchased by US firm Bloomreach. ... Up until now, the owner of HB Reavis Ivan Chrenko controlled the majority in Exponea. ... With the acquisition, Bloomreach will add 200 additional employees to its 300-member staff. It will also gain 250 net new customers, giving it a total of 750."_
 
 ### 2.3 Per TechCrunch (akvizice 2021)
 
-> *"Bloomreach raises $150M on $900M valuation and acquires Exponea... The two companies did not reveal the acquisition price, but along with the pure functionality, the company gains 200 additional employees, which is significant, considering Bloomreach had 300 prior to the acquisition."*
+> _"Bloomreach raises $150M on $900M valuation and acquires Exponea... The two companies did not reveal the acquisition price, but along with the pure functionality, the company gains 200 additional employees, which is significant, considering Bloomreach had 300 prior to the acquisition."_
 
 — Ron Miller, TechCrunch (January 26, 2021)
 
 ### 2.4 Per Raj De Datta (CEO Bloomreach)
 
-> *"What makes this partnership unique is that Bloomreach majors in commerce experience, with deep product data and AI to help people find the right product and deliver great experiences on eCommerce sites, while Exponea majors in customer data, a very deep understanding of customer profiles and marketing channels."*
+> _"What makes this partnership unique is that Bloomreach majors in commerce experience, with deep product data and AI to help people find the right product and deliver great experiences on eCommerce sites, while Exponea majors in customer data, a very deep understanding of customer profiles and marketing channels."_
 
-> *"In a world of CDPs, why did we decide that Exponea was special? It comes down to this: Ecommerce customers love Exponea. It's the most loved CDP in the market."*
+> _"In a world of CDPs, why did we decide that Exponea was special? It comes down to this: Ecommerce customers love Exponea. It's the most loved CDP in the market."_
 
 ### 2.5 Klíčoví lidé z Exponea v Bloomreach
 
@@ -351,7 +355,7 @@ US parent:
 
 ### 2.7 Per Wikipedia (Bloomreach)
 
-> *"Bloomreach was founded in 2009 in Mountain View, California by Raj De Datta and Ashutosh Garg. In 2012, it launched its first product, an SEO-focused tool. ... In 2016, Bloomreach acquired Hippo CMS, an open-source Web Content Management company, creating a digital experience platform that combines content, search, and merchandising. In 2021, Bloomreach acquired Exponea..."*
+> _"Bloomreach was founded in 2009 in Mountain View, California by Raj De Datta and Ashutosh Garg. In 2012, it launched its first product, an SEO-focused tool. ... In 2016, Bloomreach acquired Hippo CMS, an open-source Web Content Management company, creating a digital experience platform that combines content, search, and merchandising. In 2021, Bloomreach acquired Exponea..."_
 
 ---
 
@@ -394,7 +398,7 @@ Bloomreach product suite:
 
 ### 3.3 Per oficiální G2 review
 
-> *"Bloomreach stands out because it perfectly balances sophisticated AI with user-friendly execution. Here's what makes it a top-tier choice: Smart Search & Discovery: Their Loomi AI is incredible at understanding customer intent. ... Unified Customer Data: Having a built-in CDP means your marketing isn't just automated, it's actually relevant. It connects browsing behavior with email and SMS in real-time."*
+> _"Bloomreach stands out because it perfectly balances sophisticated AI with user-friendly execution. Here's what makes it a top-tier choice: Smart Search & Discovery: Their Loomi AI is incredible at understanding customer intent. ... Unified Customer Data: Having a built-in CDP means your marketing isn't just automated, it's actually relevant. It connects browsing behavior with email and SMS in real-time."_
 
 ---
 
@@ -402,7 +406,7 @@ Bloomreach product suite:
 
 ### 4.1 Per oficiální Bloomreach pricing
 
-> *"Your Bloomreach subscription consists of two parts: a module fee and a usage fee. You only pay for the modules (e.g., email marketing) you wish to access. After choosing the module, your pricing is usage-based. The more the usage, the lower your per-unit price, so growing with Bloomreach is a win-win. Your base plan also comes with Loomi AI, Bloomreach support and access to our documentation and best practice sessions. An annual subscription gives you flexibility and challenges Bloomreach to demonstrate our value year after year."*
+> _"Your Bloomreach subscription consists of two parts: a module fee and a usage fee. You only pay for the modules (e.g., email marketing) you wish to access. After choosing the module, your pricing is usage-based. The more the usage, the lower your per-unit price, so growing with Bloomreach is a win-win. Your base plan also comes with Loomi AI, Bloomreach support and access to our documentation and best practice sessions. An annual subscription gives you flexibility and challenges Bloomreach to demonstrate our value year after year."_
 
 ### 4.2 Struktura pricing
 
@@ -471,7 +475,7 @@ Low-event lite usage = výhodné
 
 ### 4.4 Per uživatelské review (G2)
 
-> *"Voornamelijk omdat het verdienmodel hier niet op contacten ligt maar op events."*
+> _"Voornamelijk omdat het verdienmodel hier niet op contacten ligt maar op events."_
 
 (Překlad: "Hlavně protože byznys model zde není na kontaktech, ale na eventech.")
 
@@ -480,13 +484,14 @@ Low-event lite usage = výhodné
 ### 4.5 Kritika pricing transparency
 
 Per G2 user critique:
-> *"Initially, during negotiations, they will underestimate the number of processed events you actually need to lure you in with a lower investment. Once you are signed up, they will insist you are far below the processed events you require."*
+
+> _"Initially, during negotiations, they will underestimate the number of processed events you actually need to lure you in with a lower investment. Once you are signed up, they will insist you are far below the processed events you require."_
 
 ⚠️ **Strategic concern:** Bloomreach may **underestimate events** at signup, leading to upgrade pressure later.
 
 ### 4.6 Bloomreach response (oficiální G2)
 
-> *"Bloomreach is a powerful and, by nature, technical platform, and while many teams are able to self-serve, others do choose to work with our consultants to accelerate time-to-value."*
+> _"Bloomreach is a powerful and, by nature, technical platform, and while many teams are able to self-serve, others do choose to work with our consultants to accelerate time-to-value."_
 
 ### 4.7 Custom quote required
 
@@ -537,14 +542,16 @@ nikoli oficiální Bloomreach pricing.
 ### 5.1 Unified CDP + Marketing Automation NATIVE
 
 Per G2 review (verified):
-> *"The way Bloomreach unifies customer data into a single view is what provides the most value for us. Having the CDP baked directly into the marketing execution tool means I don't have to wait for data syncs or export lists to start a campaign. It's made our personalisation feel truly real-time, which has led to a much higher ROI on our email segments."*
+
+> _"The way Bloomreach unifies customer data into a single view is what provides the most value for us. Having the CDP baked directly into the marketing execution tool means I don't have to wait for data syncs or export lists to start a campaign. It's made our personalisation feel truly real-time, which has led to a much higher ROI on our email segments."_
 
 ⚠️ **Klíč:** CDP + Marketing Automation jsou v **jednom nástroji** od základu (ne 2 oddělené nástroje integrované).
 
 ### 5.2 Real-time data + in-memory framework
 
 Per oficiální:
-> *"Scalability: Bloomreach's agile in-memory framework is scalable by design and is ready to handle massive volumes of rapidly changing data at the speeds necessary for business success."*
+
+> _"Scalability: Bloomreach's agile in-memory framework is scalable by design and is ready to handle massive volumes of rapidly changing data at the speeds necessary for business success."_
 
 ```
 Real-time capabilities:
@@ -576,12 +583,14 @@ Loomi AI scope:
 ```
 
 Per oficiální:
-> *"I am in love with Loomi - it is not a single feature, rather a whole AI engine woven into the Bloomreach platform that powers smarter personalisation, automation, reporting, segmentation and deeper insights into the entire suite."*
+
+> _"I am in love with Loomi - it is not a single feature, rather a whole AI engine woven into the Bloomreach platform that powers smarter personalisation, automation, reporting, segmentation and deeper insights into the entire suite."_
 
 ### 5.4 Massive ecommerce dataset (Bloomreach advantage)
 
 Per oficiální:
-> *"We can uniquely and dramatically improve results at this level because of our massive dataset (only Amazon has more ecommerce data than us, and other vendors would need years and significantly more customers to catch up) and through our semantic understanding (the most advanced for commerce search)."*
+
+> _"We can uniquely and dramatically improve results at this level because of our massive dataset (only Amazon has more ecommerce data than us, and other vendors would need years and significantly more customers to catch up) and through our semantic understanding (the most advanced for commerce search)."_
 
 ⚠️ **Bloomreach má 2. největší e-commerce dataset po Amazonu** = key competitive moat.
 
@@ -598,7 +607,8 @@ Event-based = revenue alignment:
 ### 5.6 Drag & drop scenarios
 
 Per Capterra G2 reviews:
-> *"Ease of use all the features are drag & drop."*
+
+> _"Ease of use all the features are drag & drop."_
 
 ```
 Journey builder:
@@ -615,23 +625,23 @@ Journey builder:
 
 ### 5.7 Vs. konkurence comparison
 
-| Aspect | Bloomreach Engagement | Klaviyo | Salesforce MC | SAP Emarsys | SALESmanago |
-|---|---|---|---|---|---|
-| **Origin** | 🇸🇰 SK/CZ → 🇺🇸 USA | 🇺🇸 USA (2012) | 🇺🇸 USA (1999) | 🇩🇪 DE (2000) | 🇵🇱 PL (2011) |
-| **CDP native** | ✅✅✅ ground-up | ✅ ecommerce | ✅ via Data 360 | ✅ native | ✅ |
-| **Real-time engine** | ✅ in-memory | ✅ | ✅ (slower) | ✅ | ✅ |
-| **AI** | ✅ Loomi engine | ✅ predictive | ✅ Einstein/Agentforce | ✅ AI Suite | ✅ AI Studio |
-| **Pricing model** | event-based | contact-based | org-based | custom enterprise | contact-based |
-| **Pricing transparency** | sales-driven | public | hidden | hidden | hidden |
-| **Implementation** | 6-12 měsíců | 1-3 měsíce | 6-12 měsíců | 6-12 měsíců | 1-3 měsíce |
-| **Sweet spot** | mid-market ecom + retail | DTC ecom | enterprise | enterprise retail | mid-market |
-| **CEE region** | ✅ silná | omezeně | univerzální | ✅ DACH | ✅ PL/CEE |
-| **No-code builder** | ✅✅ drag-drop | ✅ visual | ✅ Journey Builder | ✅ omnichannel | ✅ |
-| **Web personalization** | ✅✅ weblayers | omezeně | ✅ via Personalization | ✅ | ✅ |
-| **Mobile push + in-app** | ✅ | ✅ | ✅ (MobilePush) | ✅ | ✅ |
-| **Conversational AI** | ✅ Clarity | ❌ | ✅ Agentforce | omezeně | omezeně |
-| **Massive ecom dataset** | ✅✅ #2 after Amazon | omezeně | ✅ | omezeně | omezeně |
-| **Customers 2026** | 1 400+ | 250 000+ | enterprise scale | 1 500+ | 3 000+ |
+| Aspect                   | Bloomreach Engagement    | Klaviyo       | Salesforce MC          | SAP Emarsys       | SALESmanago   |
+| ------------------------ | ------------------------ | ------------- | ---------------------- | ----------------- | ------------- |
+| **Origin**               | 🇸🇰 SK/CZ → 🇺🇸 USA        | 🇺🇸 USA (2012) | 🇺🇸 USA (1999)          | 🇩🇪 DE (2000)      | 🇵🇱 PL (2011)  |
+| **CDP native**           | ✅✅✅ ground-up         | ✅ ecommerce  | ✅ via Data 360        | ✅ native         | ✅            |
+| **Real-time engine**     | ✅ in-memory             | ✅            | ✅ (slower)            | ✅                | ✅            |
+| **AI**                   | ✅ Loomi engine          | ✅ predictive | ✅ Einstein/Agentforce | ✅ AI Suite       | ✅ AI Studio  |
+| **Pricing model**        | event-based              | contact-based | org-based              | custom enterprise | contact-based |
+| **Pricing transparency** | sales-driven             | public        | hidden                 | hidden            | hidden        |
+| **Implementation**       | 6-12 měsíců              | 1-3 měsíce    | 6-12 měsíců            | 6-12 měsíců       | 1-3 měsíce    |
+| **Sweet spot**           | mid-market ecom + retail | DTC ecom      | enterprise             | enterprise retail | mid-market    |
+| **CEE region**           | ✅ silná                 | omezeně       | univerzální            | ✅ DACH           | ✅ PL/CEE     |
+| **No-code builder**      | ✅✅ drag-drop           | ✅ visual     | ✅ Journey Builder     | ✅ omnichannel    | ✅            |
+| **Web personalization**  | ✅✅ weblayers           | omezeně       | ✅ via Personalization | ✅                | ✅            |
+| **Mobile push + in-app** | ✅                       | ✅            | ✅ (MobilePush)        | ✅                | ✅            |
+| **Conversational AI**    | ✅ Clarity               | ❌            | ✅ Agentforce          | omezeně           | omezeně       |
+| **Massive ecom dataset** | ✅✅ #2 after Amazon     | omezeně       | ✅                     | omezeně           | omezeně       |
+| **Customers 2026**       | 1 400+                   | 250 000+      | enterprise scale       | 1 500+            | 3 000+        |
 
 ---
 
@@ -639,7 +649,7 @@ Journey builder:
 
 ### 6.1 Per oficiální
 
-> *"When you buy Marketing Automation you get access to our customer data engine (CDE), which combines data unification, identity resolution, and other CDP capabilities with journey orchestration, AI, and marketing analytics."*
+> _"When you buy Marketing Automation you get access to our customer data engine (CDE), which combines data unification, identity resolution, and other CDP capabilities with journey orchestration, AI, and marketing analytics."_
 
 ### 6.2 CDE capabilities
 
@@ -681,7 +691,7 @@ Customer journey unified:
 1. Anonymous visitor → web
    - Cookie ID created
    - Browsing events tracked
-   
+
 2. Subscribe newsletter
    - Email identified
    - Anonymous → known
@@ -709,12 +719,13 @@ napříč kanály real-time
 
 ### 6.4 Per Capterra review
 
-> *"That is a one-in-all solution for all Marketing Automation needs. If we had to select another setup this would mean purchasing different solutions to cover all the use cases of Bloomreach."*
+> _"That is a one-in-all solution for all Marketing Automation needs. If we had to select another setup this would mean purchasing different solutions to cover all the use cases of Bloomreach."_
 
 ### 6.5 Standalone CDP nebo full platform
 
 Per oficiální:
-> *"Bloomreach offers you the flexibility to pick and choose which features you want to use; it's not an 'all-or-nothing' solution. Although Bloomreach is a CDP + marketing automation, it can act as a standalone CDP to provide a unified source of customer data to an existing technology stack, or it can be used to handle all marketing activities."*
+
+> _"Bloomreach offers you the flexibility to pick and choose which features you want to use; it's not an 'all-or-nothing' solution. Although Bloomreach is a CDP + marketing automation, it can act as a standalone CDP to provide a unified source of customer data to an existing technology stack, or it can be used to handle all marketing activities."_
 
 ⚠️ **Flexibility:** CDP-only OR full marketing platform – your choice.
 
@@ -743,7 +754,7 @@ Use cases:
 
 ### 7.2 Per oficiální
 
-> *"Bloomreach's agile in-memory framework is scalable by design and is ready to handle massive volumes of rapidly changing data at the speeds necessary for business success."*
+> _"Bloomreach's agile in-memory framework is scalable by design and is ready to handle massive volumes of rapidly changing data at the speeds necessary for business success."_
 
 ### 7.3 Real-time use cases
 
@@ -831,7 +842,7 @@ CONVERSATIONAL:
 
 ### 8.3 Per oficiální Bloomreach
 
-> *"Their Loomi AI is incredible at understanding customer intent. It moves beyond simple keywords to ensure users actually find what they're looking for, which directly boosts conversion rates."*
+> _"Their Loomi AI is incredible at understanding customer intent. It moves beyond simple keywords to ensure users actually find what they're looking for, which directly boosts conversion rates."_
 
 ### 8.4 Loomi vs. konkurence AI
 
@@ -877,7 +888,8 @@ SALESmanago AI Studio:
 ### 8.5 Agentic capability
 
 Per oficiální 2026:
-> *"Bloomreach is the agentic platform for personalization. Powering autonomous search, conversational shopping, and autonomous marketing."*
+
+> _"Bloomreach is the agentic platform for personalization. Powering autonomous search, conversational shopping, and autonomous marketing."_
 
 ```
 Agentic = autonomous AI agents:
@@ -941,7 +953,7 @@ OPTIMIZATION:
 
 ### 9.2 Per G2 review
 
-> *"Despite its power, the interface is intuitive. Marketers can build complex, personalized customer journeys and perform A/B testing without needing a constant line to the dev team."*
+> _"Despite its power, the interface is intuitive. Marketers can build complex, personalized customer journeys and perform A/B testing without needing a constant line to the dev team."_
 
 ### 9.3 Pre-built scenarios
 
@@ -1111,9 +1123,9 @@ In-App Messaging:
 
 ### 12.2 Per Allwyn case study
 
-> *"Missed opportunities in-app = under-leveraged mobile channels. Rich push and in-app messaging weren't fully activated, leaving a key engagement channel underutilized."*
+> _"Missed opportunities in-app = under-leveraged mobile channels. Rich push and in-app messaging weren't fully activated, leaving a key engagement channel underutilized."_
 
-> *"Allwyn implemented Bloomreach's agentic personalization platform, Loomi AI, to unify customer communications, personalize at scale, and activate all channels from one consolidated platform."*
+> _"Allwyn implemented Bloomreach's agentic personalization platform, Loomi AI, to unify customer communications, personalize at scale, and activate all channels from one consolidated platform."_
 
 ### 12.3 Allwyn (Sazka) results
 
@@ -1153,7 +1165,7 @@ Weblayer types:
 
 ### 13.2 Per HP Tronic case study
 
-> *"Just one month after implementing Bloomreach Engagement, HP Tronic launched a welcome campaign with weblayers to turn first-time visitors and browsers into buyers. When the Datart browser cookies recognized a new visitor, a weblayer would appear on the visitor's screen."*
+> _"Just one month after implementing Bloomreach Engagement, HP Tronic launched a welcome campaign with weblayers to turn first-time visitors and browsers into buyers. When the Datart browser cookies recognized a new visitor, a weblayer would appear on the visitor's screen."_
 
 ### 13.3 HP Tronic results (CZ + SK)
 
@@ -1225,7 +1237,7 @@ CAPABILITIES:
 
 ### 14.2 Per oficiální
 
-> *"Cut acquisition costs by targeting smarter with your first-party data."*
+> _"Cut acquisition costs by targeting smarter with your first-party data."_
 
 ```
 First-party data → Paid:
@@ -1342,7 +1354,7 @@ Recommendation types:
 
 ### 16.2 Per G2 user
 
-> *"I like that Bloomreach offers dynamic recommendations based on the user, utilizing different algorithms. It's pretty okay for personalization, recommending products based on the data you provide."*
+> _"I like that Bloomreach offers dynamic recommendations based on the user, utilizing different algorithms. It's pretty okay for personalization, recommending products based on the data you provide."_
 
 ### 16.3 Algorithm options
 
@@ -1409,7 +1421,7 @@ MULTIVARIATE:
 
 ### 17.2 Per G2 review
 
-> *"Marketers can build complex, personalized customer journeys and perform A/B testing without needing a constant line to the dev team."*
+> _"Marketers can build complex, personalized customer journeys and perform A/B testing without needing a constant line to the dev team."_
 
 ### 17.3 Statistical rigor
 
@@ -1460,11 +1472,11 @@ PREDICTIVE:
 
 ### 18.2 Per oficiální
 
-> *"Predefined reports are no longer a constraint. Create reports that are intelligent, specific to your business needs, and updated in real-time using their vast data manipulation features."*
+> _"Predefined reports are no longer a constraint. Create reports that are intelligent, specific to your business needs, and updated in real-time using their vast data manipulation features."_
 
 ### 18.3 Per G2 critique
 
-> *"While the campaign execution is great, the reporting dashboards leave a bit to be desired. Building out custom, granular reports on email performance or A/B tests can feel clunky and take longer than they should. It would be helpful to have more robust, out-of-the-box reporting templates that don't require so much manual configuration."*
+> _"While the campaign execution is great, the reporting dashboards leave a bit to be desired. Building out custom, granular reports on email performance or A/B tests can feel clunky and take longer than they should. It would be helpful to have more robust, out-of-the-box reporting templates that don't require so much manual configuration."_
 
 ⚠️ **Reporting** = méně robustní než campaign execution (per user feedback).
 
@@ -1606,7 +1618,7 @@ Brand voice:
 
 ### 20.3 Per oficiální G2 review (verified user)
 
-> *"Revenue from emails sent from exponea has increased from 17% to 21%. We are seeing huge potential in our email marketing strategy."*
+> _"Revenue from emails sent from exponea has increased from 17% to 21%. We are seeing huge potential in our email marketing strategy."_
 
 ---
 
@@ -1781,7 +1793,7 @@ TEAM REQUIRED:
 
 ### 22.2 Per G2 user critique
 
-> *"From a usability standpoint, it's very technical, and you will need to hire a technical consultant from Bloomreach to develop the scenarios, which is an extra cost."*
+> _"From a usability standpoint, it's very technical, and you will need to hire a technical consultant from Bloomreach to develop the scenarios, which is an extra cost."_
 
 ⚠️ **Technicky náročný** = key implementation challenge.
 
@@ -1812,13 +1824,13 @@ AKTUÁLNĚ:
 
 ### 22.4 Per Adastra (oficiální)
 
-> *"Adastra implemented a Campaign Management tool, which is utilized to full satisfaction by many large companies in the Czech Republic."*
+> _"Adastra implemented a Campaign Management tool, which is utilized to full satisfaction by many large companies in the Czech Republic."_
 
-> *"This recognition reflects our long-term partnership with Bloomreach and our combined ability to deliver world-class, data-driven customer experience solutions for data-rich organizations."*
+> _"This recognition reflects our long-term partnership with Bloomreach and our combined ability to deliver world-class, data-driven customer experience solutions for data-rich organizations."_
 
 ### 22.5 Per Actum (oficiální)
 
-> *"Actum's work with Bloomreach Experience and Exponea provides clients with trusted data, CMS and e-commerce solutions that increase customer knowledge and drive sales."*
+> _"Actum's work with Bloomreach Experience and Exponea provides clients with trusted data, CMS and e-commerce solutions that increase customer knowledge and drive sales."_
 
 ### 22.6 Internal team alternative
 
@@ -1858,14 +1870,16 @@ Težká comparace + budgeting
 ### 23.2 Event-based pricing může eskalovat
 
 Per G2 critique:
-> *"Initially, during negotiations, they will underestimate the number of processed events you actually need to lure you in with a lower investment. Once you are signed up, they will insist you are far below the processed events you require."*
+
+> _"Initially, during negotiations, they will underestimate the number of processed events you actually need to lure you in with a lower investment. Once you are signed up, they will insist you are far below the processed events you require."_
 
 ⚠️ **Strategic concern:** event volume underestimated at signup → upgrade pressure later.
 
 ### 23.3 Technicky náročný
 
 Per G2:
-> *"It's very technical, and you will need to hire a technical consultant from Bloomreach to develop the scenarios, which is an extra cost."*
+
+> _"It's very technical, and you will need to hire a technical consultant from Bloomreach to develop the scenarios, which is an extra cost."_
 
 ```
 Technical challenges:
@@ -1883,8 +1897,9 @@ Marketing team alone = often insufficient
 ### 23.4 High learning curve
 
 Per G2 (Dutch translation):
-> *"Hoge leercurve voor nieuwe gebruikers maar uiteindelijk de moeite waard."*
-(Vysoká křivka učení pro nové uživatele, ale nakonec to stojí za to.)
+
+> _"Hoge leercurve voor nieuwe gebruikers maar uiteindelijk de moeite waard."_
+> (Vysoká křivka učení pro nové uživatele, ale nakonec to stojí za to.)
 
 ```
 Learning curve realities:
@@ -1899,7 +1914,8 @@ Learning curve realities:
 ### 23.5 Reporting méně robustní než execution
 
 Per G2 review:
-> *"While the campaign execution is great, the reporting dashboards leave a bit to be desired. Building out custom, granular reports on email performance or A/B tests can feel clunky."*
+
+> _"While the campaign execution is great, the reporting dashboards leave a bit to be desired. Building out custom, granular reports on email performance or A/B tests can feel clunky."_
 
 ```
 Reporting gaps:
@@ -2111,6 +2127,7 @@ Modern commerce stack = compatible ale ne native-first
 ## 24. Shrnutí: Pro koho a proti komu
 
 ### Bloomreach Engagement je dobrá volba pokud
+
 - Provozujete **mid-market až enterprise e-shop** (€5M+ revenue)
 - Cíl je **unified CDP + Marketing Automation** v jednom nástroji
 - Vyžadujete **real-time personalization** (in-memory framework)
@@ -2131,6 +2148,7 @@ Modern commerce stack = compatible ale ne native-first
 - Hledáte **alternative to Salesforce MC** (lepší TTV, lepší real-time)
 
 ### Bloomreach Engagement není dobrá volba pokud
+
 - Cíl je **SMB / startup** (enterprise pricing!)
 - Vyžadujete **public pricing transparency**
 - Cíl je **quick implementation** (< 3 měsíce)
@@ -2150,21 +2168,21 @@ Modern commerce stack = compatible ale ne native-first
 
 ### Bloomreach vs. konkurence
 
-| Konkurence | Kdy lepší než Bloomreach Engagement |
-|---|---|
-| **Klaviyo** | Pure DTC ecommerce Shopify, levnější vstup, faster TTV |
-| **Salesforce MC** | Salesforce CRM ekosystem, Agentforce dominantní |
-| **SAP Emarsys** | DACH retail, native commerce, SAP ecosystem |
-| **SALESmanago** | PL/CEE mid-market, AI Studio focus, levnější |
-| **Mailchimp** | SMB, simple email, levnější |
-| **MailerLite** | SMB content creators, free plan |
-| **Brevo** | Mid-market omnichannel, levnější |
-| **HubSpot** | B2B SaaS, full CRM + marketing |
-| **ActiveCampaign** | B2B mid-market, deeper automation |
-| **Mailchimp Premium** | Marketplace SMB lepší vstupní cena |
-| **Targito** | CZ/SK SMB-mid, levnější, lokální podpora |
-| **Constant Contact** | Eventy + nonprofits |
-| **Braze** | Mobile-first apps, real-time scale |
+| Konkurence            | Kdy lepší než Bloomreach Engagement                    |
+| --------------------- | ------------------------------------------------------ |
+| **Klaviyo**           | Pure DTC ecommerce Shopify, levnější vstup, faster TTV |
+| **Salesforce MC**     | Salesforce CRM ekosystem, Agentforce dominantní        |
+| **SAP Emarsys**       | DACH retail, native commerce, SAP ecosystem            |
+| **SALESmanago**       | PL/CEE mid-market, AI Studio focus, levnější           |
+| **Mailchimp**         | SMB, simple email, levnější                            |
+| **MailerLite**        | SMB content creators, free plan                        |
+| **Brevo**             | Mid-market omnichannel, levnější                       |
+| **HubSpot**           | B2B SaaS, full CRM + marketing                         |
+| **ActiveCampaign**    | B2B mid-market, deeper automation                      |
+| **Mailchimp Premium** | Marketplace SMB lepší vstupní cena                     |
+| **Targito**           | CZ/SK SMB-mid, levnější, lokální podpora               |
+| **Constant Contact**  | Eventy + nonprofits                                    |
+| **Braze**             | Mobile-first apps, real-time scale                     |
 
 ### Sweet spot pro Bloomreach Engagement 2026
 
@@ -2199,4 +2217,4 @@ Geografické fit 2026:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů bloomreach.com (Engagement, Pricing, Case Studies, Loomi AI), G2 reviews (1,400+ brand), Gartner Peer Insights, Wikipedia (Bloomreach), TechCrunch (akvizice Exponea 26.1.2021), Slovak Spectator (akvizice news), Objevit.cz, PitchBook (Exponea profile), Tracxn, Crunchbase, Capterra, SaaSworthy, Actum Digital + Adastra partner pages. Pro nejaktuálnější detaily je nutný kontakt s Bloomreach (bloomreach.com/pricing) nebo certified partnery (Actum, Adastra).*
+_Dokument zpracován z oficiálních zdrojů bloomreach.com (Engagement, Pricing, Case Studies, Loomi AI), G2 reviews (1,400+ brand), Gartner Peer Insights, Wikipedia (Bloomreach), TechCrunch (akvizice Exponea 26.1.2021), Slovak Spectator (akvizice news), Objevit.cz, PitchBook (Exponea profile), Tracxn, Crunchbase, Capterra, SaaSworthy, Actum Digital + Adastra partner pages. Pro nejaktuálnější detaily je nutný kontakt s Bloomreach (bloomreach.com/pricing) nebo certified partnery (Actum, Adastra)._

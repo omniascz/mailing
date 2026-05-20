@@ -146,17 +146,25 @@ export default async function aiRoutes(app: FastifyInstance) {
       });
 
       let conditions: unknown;
-      try { conditions = parseJsonSafe(text); }
-      catch { throw AppError.internal('AI returned an invalid response. Please rephrase your description.'); }
+      try {
+        conditions = parseJsonSafe(text);
+      } catch {
+        throw AppError.internal(
+          'AI returned an invalid response. Please rephrase your description.',
+        );
+      }
 
-      const parsed = z.object({
-        operator: z.enum(['AND', 'OR']),
-        rules: z.array(z.object({ field: z.string(), op: z.string() }).passthrough()),
-        groups: z.array(z.unknown()).optional(),
-        negate: z.boolean().optional(),
-      }).safeParse(conditions);
+      const parsed = z
+        .object({
+          operator: z.enum(['AND', 'OR']),
+          rules: z.array(z.object({ field: z.string(), op: z.string() }).passthrough()),
+          groups: z.array(z.unknown()).optional(),
+          negate: z.boolean().optional(),
+        })
+        .safeParse(conditions);
 
-      if (!parsed.success) throw AppError.internal('AI returned an unrecognisable conditions structure');
+      if (!parsed.success)
+        throw AppError.internal('AI returned an unrecognisable conditions structure');
       await redis.setex(key, CACHE_TTL, JSON.stringify(parsed.data));
       return { data: { conditions: parsed.data } };
     },
@@ -168,29 +176,36 @@ export default async function aiRoutes(app: FastifyInstance) {
     '/api/v1/ai/generate-email',
     { schema: { tags: ['AI'], summary: 'Generate email content with AI' } },
     async (req) => {
-      const body = z.object({
-        goal: z.string().min(5).max(500),
-        tone: z.enum(['formal', 'casual', 'urgent', 'friendly']).optional().default('friendly'),
-        audienceDescription: z.string().max(500).optional().default(''),
-        keyPoints: z.array(z.string().max(200)).max(10).optional().default([]),
-        ctaText: z.string().max(100).optional().default('Learn More'),
-        wordCountTarget: z.number().int().min(50).max(800).optional().default(200),
-        brandVoice: z.record(z.unknown()).optional(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          goal: z.string().min(5).max(500),
+          tone: z.enum(['formal', 'casual', 'urgent', 'friendly']).optional().default('friendly'),
+          audienceDescription: z.string().max(500).optional().default(''),
+          keyPoints: z.array(z.string().max(200)).max(10).optional().default([]),
+          ctaText: z.string().max(100).optional().default('Learn More'),
+          wordCountTarget: z.number().int().min(50).max(800).optional().default(200),
+          brandVoice: z.record(z.unknown()).optional(),
+        })
+        .parse(req.body);
 
       const orgId = req.user!.orgId;
       const brandVoiceCtx = body.brandVoice
-        ? `\n\nBrand voice:\n${JSON.stringify(body.brandVoice, null, 2)}` : '';
+        ? `\n\nBrand voice:\n${JSON.stringify(body.brandVoice, null, 2)}`
+        : '';
 
       const userPrompt = [
         `Goal: ${body.goal}`,
         `Tone: ${body.tone}`,
         `Audience: ${body.audienceDescription || 'general audience'}`,
-        body.keyPoints.length > 0 ? `Key points:\n${body.keyPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}` : '',
+        body.keyPoints.length > 0
+          ? `Key points:\n${body.keyPoints.map((p, i) => `${i + 1}. ${p}`).join('\n')}`
+          : '',
         `CTA text: ${body.ctaText}`,
         `Target word count: ~${body.wordCountTarget} words`,
         brandVoiceCtx,
-      ].filter(Boolean).join('\n');
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       const { text, cached } = await callClaude({
         model: 'claude-sonnet-4-6',
@@ -202,14 +217,19 @@ export default async function aiRoutes(app: FastifyInstance) {
       });
 
       let result: unknown;
-      try { result = parseJsonSafe(text); }
-      catch { throw AppError.internal('AI returned invalid email structure. Please try again.'); }
+      try {
+        result = parseJsonSafe(text);
+      } catch {
+        throw AppError.internal('AI returned invalid email structure. Please try again.');
+      }
 
-      const parsed = z.object({
-        subject: z.string(),
-        preheader: z.string(),
-        blocks: z.array(z.object({ type: z.string() }).passthrough()),
-      }).safeParse(result);
+      const parsed = z
+        .object({
+          subject: z.string(),
+          preheader: z.string(),
+          blocks: z.array(z.object({ type: z.string() }).passthrough()),
+        })
+        .safeParse(result);
 
       if (!parsed.success) throw AppError.internal('AI returned an unrecognisable email structure');
       return { data: { ...parsed.data, _cached: cached } };
@@ -222,23 +242,31 @@ export default async function aiRoutes(app: FastifyInstance) {
     '/api/v1/ai/subject-lines',
     { schema: { tags: ['AI'], summary: 'Generate subject line variants with scores' } },
     async (req) => {
-      const body = z.object({
-        emailContentSummary: z.string().min(10).max(1000),
-        tone: z.enum(['formal', 'casual', 'urgent', 'friendly', 'curious']).optional().default('friendly'),
-        audience: z.string().max(300).optional().default(''),
-        brandVoice: z.record(z.unknown()).optional(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          emailContentSummary: z.string().min(10).max(1000),
+          tone: z
+            .enum(['formal', 'casual', 'urgent', 'friendly', 'curious'])
+            .optional()
+            .default('friendly'),
+          audience: z.string().max(300).optional().default(''),
+          brandVoice: z.record(z.unknown()).optional(),
+        })
+        .parse(req.body);
 
       const orgId = req.user!.orgId;
       const brandVoiceCtx = body.brandVoice
-        ? `\n\nBrand voice:\n${JSON.stringify(body.brandVoice, null, 2)}` : '';
+        ? `\n\nBrand voice:\n${JSON.stringify(body.brandVoice, null, 2)}`
+        : '';
 
       const userPrompt = [
         `Email content summary: ${body.emailContentSummary}`,
         `Tone: ${body.tone}`,
         `Audience: ${body.audience || 'general audience'}`,
         brandVoiceCtx,
-      ].filter(Boolean).join('\n');
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       const { text, cached } = await callClaude({
         model: 'claude-sonnet-4-6',
@@ -250,14 +278,29 @@ export default async function aiRoutes(app: FastifyInstance) {
       });
 
       let result: unknown;
-      try { result = parseJsonSafe(text); }
-      catch { throw AppError.internal('AI returned invalid subject line structure. Please try again.'); }
+      try {
+        result = parseJsonSafe(text);
+      } catch {
+        throw AppError.internal('AI returned invalid subject line structure. Please try again.');
+      }
 
-      const parsed = z.object({
-        variants: z.array(z.object({ subject: z.string().max(100), score: z.number().min(1).max(10), reason: z.string() })).min(1).max(10),
-      }).safeParse(result);
+      const parsed = z
+        .object({
+          variants: z
+            .array(
+              z.object({
+                subject: z.string().max(100),
+                score: z.number().min(1).max(10),
+                reason: z.string(),
+              }),
+            )
+            .min(1)
+            .max(10),
+        })
+        .safeParse(result);
 
-      if (!parsed.success) throw AppError.internal('AI returned unrecognisable subject line variants');
+      if (!parsed.success)
+        throw AppError.internal('AI returned unrecognisable subject line variants');
       return { data: { variants: parsed.data.variants, _cached: cached } };
     },
   );
@@ -268,9 +311,11 @@ export default async function aiRoutes(app: FastifyInstance) {
     '/api/v1/ai/analyze-brand-voice',
     { schema: { tags: ['AI'], summary: 'Analyze brand voice from past campaigns' } },
     async (req) => {
-      const { campaignIds } = z.object({
-        campaignIds: z.array(z.string().uuid()).min(1).max(20),
-      }).parse(req.body);
+      const { campaignIds } = z
+        .object({
+          campaignIds: z.array(z.string().uuid()).min(1).max(20),
+        })
+        .parse(req.body);
 
       const orgId = req.user!.orgId;
       const campaignRows = await db
@@ -279,23 +324,27 @@ export default async function aiRoutes(app: FastifyInstance) {
         .where(eq(campaigns.orgId, orgId));
 
       const filtered = campaignRows.filter((c) => campaignIds.includes(c.id));
-      if (filtered.length === 0) throw AppError.badRequest('No matching campaigns found for the provided IDs');
+      if (filtered.length === 0)
+        throw AppError.badRequest('No matching campaigns found for the provided IDs');
 
-      const corpus = filtered.map((c) => {
-        const parts: string[] = [];
-        if (c.subject) parts.push(`Subject: ${c.subject}`);
-        if (c.content && typeof c.content === 'object') {
-          const content = c.content as Record<string, unknown>;
-          if (Array.isArray(content.blocks)) {
-            for (const block of content.blocks as Array<Record<string, unknown>>) {
-              const bc = block.content as Record<string, unknown> | undefined;
-              if (bc?.html) parts.push(String(bc.html).replace(/<[^>]+>/g, ''));
-              if (bc?.text) parts.push(String(bc.text));
+      const corpus = filtered
+        .map((c) => {
+          const parts: string[] = [];
+          if (c.subject) parts.push(`Subject: ${c.subject}`);
+          if (c.content && typeof c.content === 'object') {
+            const content = c.content as Record<string, unknown>;
+            if (Array.isArray(content.blocks)) {
+              for (const block of content.blocks as Array<Record<string, unknown>>) {
+                const bc = block.content as Record<string, unknown> | undefined;
+                if (bc?.html) parts.push(String(bc.html).replace(/<[^>]+>/g, ''));
+                if (bc?.text) parts.push(String(bc.text));
+              }
             }
           }
-        }
-        return parts.join('\n');
-      }).join('\n\n---\n\n').slice(0, 8000);
+          return parts.join('\n');
+        })
+        .join('\n\n---\n\n')
+        .slice(0, 8000);
 
       const { text, cached } = await callClaude({
         model: 'claude-sonnet-4-6',
@@ -307,13 +356,23 @@ export default async function aiRoutes(app: FastifyInstance) {
       });
 
       let brandVoice: unknown;
-      try { brandVoice = parseJsonSafe(text); }
-      catch { throw AppError.internal('AI returned invalid brand voice structure. Please try again.'); }
+      try {
+        brandVoice = parseJsonSafe(text);
+      } catch {
+        throw AppError.internal('AI returned invalid brand voice structure. Please try again.');
+      }
 
       const brandVoiceSchema = z.object({
         tone: z.string(),
-        vocabulary: z.object({ keyPhrases: z.array(z.string()), readingLevel: z.enum(['basic', 'intermediate', 'advanced']), avgWordsPerSentence: z.number() }),
-        ctaPatterns: z.object({ actionWords: z.array(z.string()), urgencyLevel: z.enum(['low', 'medium', 'high']) }),
+        vocabulary: z.object({
+          keyPhrases: z.array(z.string()),
+          readingLevel: z.enum(['basic', 'intermediate', 'advanced']),
+          avgWordsPerSentence: z.number(),
+        }),
+        ctaPatterns: z.object({
+          actionWords: z.array(z.string()),
+          urgencyLevel: z.enum(['low', 'medium', 'high']),
+        }),
         emojiUsage: z.enum(['none', 'rare', 'moderate', 'frequent']),
         personalizationLevel: z.enum(['none', 'basic', 'advanced']),
         brandValues: z.array(z.string()),
@@ -321,9 +380,11 @@ export default async function aiRoutes(app: FastifyInstance) {
       });
 
       const parsed = brandVoiceSchema.safeParse(brandVoice);
-      if (!parsed.success) throw AppError.internal('AI returned unrecognisable brand voice structure');
+      if (!parsed.success)
+        throw AppError.internal('AI returned unrecognisable brand voice structure');
 
-      await db.update(organizations)
+      await db
+        .update(organizations)
         .set({ settings: { brandVoice: parsed.data } } as never)
         .where(eq(organizations.id, orgId));
 
@@ -337,34 +398,41 @@ export default async function aiRoutes(app: FastifyInstance) {
     '/api/v1/ai/campaign-summary',
     { schema: { tags: ['AI'], summary: 'Generate AI campaign performance summary' } },
     async (req) => {
-      const body = z.object({
-        campaignStats: z.object({
-          sent: z.number(),
-          delivered: z.number(),
-          deliveryRate: z.number(),
-          opens: z.number(),
-          uniqueOpens: z.number(),
-          openRate: z.number(),
-          clicks: z.number(),
-          uniqueClicks: z.number(),
-          clickRate: z.number(),
-          ctor: z.number(),
-          bounces: z.number(),
-          bounceRate: z.number(),
-          unsubs: z.number(),
-          unsubRate: z.number(),
-          complaints: z.number(),
-          complaintRate: z.number(),
-        }),
-        /** Optional extra context for the report */
-        campaignName: z.string().max(255).optional(),
-        topLinks: z.array(z.object({ url: z.string(), clicks: z.number() })).max(5).optional(),
-        orgAverages: z.object({
-          openRate: z.number(),
-          clickRate: z.number(),
-          bounceRate: z.number(),
-        }).optional(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          campaignStats: z.object({
+            sent: z.number(),
+            delivered: z.number(),
+            deliveryRate: z.number(),
+            opens: z.number(),
+            uniqueOpens: z.number(),
+            openRate: z.number(),
+            clicks: z.number(),
+            uniqueClicks: z.number(),
+            clickRate: z.number(),
+            ctor: z.number(),
+            bounces: z.number(),
+            bounceRate: z.number(),
+            unsubs: z.number(),
+            unsubRate: z.number(),
+            complaints: z.number(),
+            complaintRate: z.number(),
+          }),
+          /** Optional extra context for the report */
+          campaignName: z.string().max(255).optional(),
+          topLinks: z
+            .array(z.object({ url: z.string(), clicks: z.number() }))
+            .max(5)
+            .optional(),
+          orgAverages: z
+            .object({
+              openRate: z.number(),
+              clickRate: z.number(),
+              bounceRate: z.number(),
+            })
+            .optional(),
+        })
+        .parse(req.body);
 
       const orgId = req.user!.orgId;
 
@@ -382,7 +450,9 @@ export default async function aiRoutes(app: FastifyInstance) {
         body.topLinks && body.topLinks.length > 0
           ? `Top links:\n${body.topLinks.map((l, i) => `  ${i + 1}. ${l.url} (${l.clicks} clicks)`).join('\n')}`
           : '',
-      ].filter(Boolean).join('\n');
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       const { text, cached } = await callClaude({
         model: 'claude-sonnet-4-6',
@@ -394,14 +464,19 @@ export default async function aiRoutes(app: FastifyInstance) {
       });
 
       let result: unknown;
-      try { result = parseJsonSafe(text); }
-      catch { throw AppError.internal('AI returned invalid summary structure. Please try again.'); }
+      try {
+        result = parseJsonSafe(text);
+      } catch {
+        throw AppError.internal('AI returned invalid summary structure. Please try again.');
+      }
 
-      const parsed = z.object({
-        summary: z.string(),
-        highlights: z.array(z.string()).min(1).max(10),
-        recommendations: z.array(z.string()).min(1).max(5),
-      }).safeParse(result);
+      const parsed = z
+        .object({
+          summary: z.string(),
+          highlights: z.array(z.string()).min(1).max(10),
+          recommendations: z.array(z.string()).min(1).max(5),
+        })
+        .safeParse(result);
 
       if (!parsed.success) throw AppError.internal('AI returned unrecognisable summary structure');
       return { data: { ...parsed.data, _cached: cached } };
@@ -414,19 +489,25 @@ export default async function aiRoutes(app: FastifyInstance) {
     '/api/v1/ai/translate',
     { schema: { tags: ['AI'], summary: 'Translate email blocks to target language' } },
     async (req) => {
-      const body = z.object({
-        blocks: z.array(z.object({ type: z.string() }).passthrough()).min(1).max(100),
-        sourceLang: z.string().min(2).max(10).optional().default('auto'),
-        targetLang: z.string().min(2).max(10),
-        brandVoice: z.record(z.unknown()).optional(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          blocks: z
+            .array(z.object({ type: z.string() }).passthrough())
+            .min(1)
+            .max(100),
+          sourceLang: z.string().min(2).max(10).optional().default('auto'),
+          targetLang: z.string().min(2).max(10),
+          brandVoice: z.record(z.unknown()).optional(),
+        })
+        .parse(req.body);
 
       const orgId = req.user!.orgId;
 
       const blocksJson = JSON.stringify(body.blocks, null, 2);
 
       const brandVoiceCtx = body.brandVoice
-        ? `\n\nBrand voice to maintain:\n${JSON.stringify(body.brandVoice)}` : '';
+        ? `\n\nBrand voice to maintain:\n${JSON.stringify(body.brandVoice)}`
+        : '';
 
       const userPrompt = [
         `Source language: ${body.sourceLang}`,
@@ -446,13 +527,18 @@ export default async function aiRoutes(app: FastifyInstance) {
       });
 
       let translatedBlocks: unknown;
-      try { translatedBlocks = parseJsonSafe(text); }
-      catch { throw AppError.internal('AI returned invalid translated blocks. Please try again.'); }
+      try {
+        translatedBlocks = parseJsonSafe(text);
+      } catch {
+        throw AppError.internal('AI returned invalid translated blocks. Please try again.');
+      }
 
-      const parsed = z.array(z.object({ type: z.string() }).passthrough())
+      const parsed = z
+        .array(z.object({ type: z.string() }).passthrough())
         .safeParse(translatedBlocks);
 
-      if (!parsed.success) throw AppError.internal('AI returned unrecognisable blocks structure after translation');
+      if (!parsed.success)
+        throw AppError.internal('AI returned unrecognisable blocks structure after translation');
 
       // Verify merge tags were preserved (basic check)
       const originalTags = [...blocksJson.matchAll(/\{\{[^}]+\}\}/g)].map((m) => m[0]);
@@ -464,9 +550,12 @@ export default async function aiRoutes(app: FastifyInstance) {
           blocks: parsed.data,
           targetLang: body.targetLang,
           _cached: cached,
-          _warnings: missingTags.length > 0
-            ? [`${missingTags.length} merge tag(s) may be missing: ${missingTags.slice(0, 3).join(', ')}`]
-            : [],
+          _warnings:
+            missingTags.length > 0
+              ? [
+                  `${missingTags.length} merge tag(s) may be missing: ${missingTags.slice(0, 3).join(', ')}`,
+                ]
+              : [],
         },
       };
     },
@@ -478,9 +567,11 @@ export default async function aiRoutes(app: FastifyInstance) {
     '/api/v1/ai/usage',
     { schema: { tags: ['AI'], summary: 'Get AI usage statistics for the org' } },
     async (req) => {
-      const query = z.object({
-        days: z.string().optional().default('30'),
-      }).parse(req.query);
+      const query = z
+        .object({
+          days: z.string().optional().default('30'),
+        })
+        .parse(req.query);
 
       const orgId = req.user!.orgId;
       const days = Math.min(parseInt(query.days, 10) || 30, 365);

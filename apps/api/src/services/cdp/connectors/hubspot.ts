@@ -22,7 +22,14 @@ export async function pullHubSpotContacts(
   config: HubSpotConfig,
   since?: string,
 ): Promise<{ rowsPulled: number; rowsUpserted: number; cursor: string }> {
-  const props = config.contactProperties ?? ['email', 'firstname', 'lastname', 'phone', 'company', 'lifecyclestage'];
+  const props = config.contactProperties ?? [
+    'email',
+    'firstname',
+    'lastname',
+    'phone',
+    'company',
+    'lifecyclestage',
+  ];
   let after: string | undefined;
   let total = 0;
   let upserted = 0;
@@ -30,13 +37,17 @@ export async function pullHubSpotContacts(
 
   do {
     const body: Record<string, unknown> = {
-      filterGroups: [{
-        filters: [{
-          propertyName: 'lastmodifieddate',
-          operator: 'GTE',
-          value: lastModifiedDate,
-        }],
-      }],
+      filterGroups: [
+        {
+          filters: [
+            {
+              propertyName: 'lastmodifieddate',
+              operator: 'GTE',
+              value: lastModifiedDate,
+            },
+          ],
+        },
+      ],
       properties: props,
       limit: 100,
     };

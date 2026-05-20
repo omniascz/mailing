@@ -24,13 +24,13 @@ export interface DealRiskSignals {
 }
 
 export interface DealRiskThresholds {
-  stalledDays?: number;        // default 30
-  silentDays?: number;         // default 21
+  stalledDays?: number; // default 30
+  silentDays?: number; // default 21
   highValueThreshold?: number; // default 10_000
 }
 
 export interface DealRiskScore {
-  riskScore: number;   // 0..100
+  riskScore: number; // 0..100
   severity: DealRiskSeverity;
   flags: DealRiskFlags;
   reasons: string[];

@@ -85,7 +85,12 @@ export function parseXml(input: string): XmlNode {
     pos = nextClose + 1;
   }
   if (stack.length !== 1) {
-    throw new Error(`Unclosed XML elements: ${stack.map((n) => n.tag).slice(1).join(',')}`);
+    throw new Error(
+      `Unclosed XML elements: ${stack
+        .map((n) => n.tag)
+        .slice(1)
+        .join(',')}`,
+    );
   }
   return root;
 }
@@ -101,7 +106,7 @@ function splitTag(inner: string): { tag: string; attrs: Record<string, string> }
   let m: RegExpExecArray | null;
   while ((m = re.exec(attrSrc)) !== null) {
     const name = (m[1] ?? m[3])!;
-    const value = (m[2] ?? m[4]) ?? '';
+    const value = m[2] ?? m[4] ?? '';
     attrs[name] = decodeEntities(value);
   }
   return { tag, attrs };
@@ -165,9 +170,7 @@ export function normalizeFastCentrikOrder(node: XmlNode): FastCentrikNormalizedO
 
   const items: FastCentrikNormalizedOrderItem[] = itemsNode
     ? findChildren(itemsNode, 'ITEM').map((item) => ({
-        ...(text(findChild(item, 'CODE'))
-          ? { sku: text(findChild(item, 'CODE')) }
-          : {}),
+        ...(text(findChild(item, 'CODE')) ? { sku: text(findChild(item, 'CODE')) } : {}),
         name: text(findChild(item, 'NAME')),
         qty: Number(text(findChild(item, 'QTY')) || text(findChild(item, 'QUANTITY')) || 1),
         price: Number(text(findChild(item, 'PRICE')) || text(findChild(item, 'UNIT_PRICE')) || 0),

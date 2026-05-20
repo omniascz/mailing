@@ -26,9 +26,25 @@ function makeClaudeResponse(json: object) {
 const VALID_SCHEMA = {
   subject: 'Test email',
   preheader: 'A preheader',
-  globalStyles: { backgroundColor: '#ffffff', fontFamily: 'Arial', linkColor: '#000', textColor: '#333', contentWidth: 600, contentBackgroundColor: '#fff' },
+  globalStyles: {
+    backgroundColor: '#ffffff',
+    fontFamily: 'Arial',
+    linkColor: '#000',
+    textColor: '#333',
+    contentWidth: 600,
+    contentBackgroundColor: '#fff',
+  },
   blocks: [
-    { id: 'b1', type: 'text', content: '<p>Hello</p>', fontSize: '16px', fontFamily: 'Arial', color: '#000', lineHeight: '1.5', textAlign: 'left' },
+    {
+      id: 'b1',
+      type: 'text',
+      content: '<p>Hello</p>',
+      fontSize: '16px',
+      fontFamily: 'Arial',
+      color: '#000',
+      lineHeight: '1.5',
+      textAlign: 'left',
+    },
   ],
 };
 
@@ -77,7 +93,9 @@ describe('htmlToBlocks', () => {
         }),
     } as unknown as Response);
 
-    await expect(htmlToBlocks('<html><body><p>Hello</p></body></html>', 'test-key')).rejects.toMatchObject({
+    await expect(
+      htmlToBlocks('<html><body><p>Hello</p></body></html>', 'test-key'),
+    ).rejects.toMatchObject({
       statusCode: 500,
     });
   });
@@ -85,15 +103,22 @@ describe('htmlToBlocks', () => {
   it('throws when response lacks blocks array', async () => {
     mockFetch.mockResolvedValueOnce(makeClaudeResponse({ subject: 'ok', noBlocks: true }));
 
-    await expect(htmlToBlocks('<html><body><p>Hello</p></body></html>', 'test-key')).rejects.toMatchObject({
+    await expect(
+      htmlToBlocks('<html><body><p>Hello</p></body></html>', 'test-key'),
+    ).rejects.toMatchObject({
       statusCode: 500,
     });
   });
 
   it('throws when Claude API returns non-200', async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, text: () => Promise.resolve('error') } as unknown as Response);
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      text: () => Promise.resolve('error'),
+    } as unknown as Response);
 
-    await expect(htmlToBlocks('<html><body><p>Hello</p></body></html>', 'test-key')).rejects.toMatchObject({
+    await expect(
+      htmlToBlocks('<html><body><p>Hello</p></body></html>', 'test-key'),
+    ).rejects.toMatchObject({
       statusCode: 500,
     });
   });

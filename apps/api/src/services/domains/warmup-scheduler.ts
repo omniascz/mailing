@@ -65,7 +65,8 @@ export async function getDomainWarmupStatus(
   orgId: string,
   domainId: string,
 ): Promise<DomainWarmupStatus> {
-  const [domain] = await db.select()
+  const [domain] = await db
+    .select()
     .from(sendingDomains)
     .where(and(eq(sendingDomains.id, domainId), eq(sendingDomains.orgId, orgId)))
     .limit(1);
@@ -82,14 +83,13 @@ export async function getDomainWarmupStatus(
   const startedAt = domain.warmupStartedAt ?? new Date();
   if (!domain.warmupStartedAt) {
     // First send — start warmup
-    await db.update(sendingDomains)
+    await db
+      .update(sendingDomains)
       .set({ warmupStatus: 'warming', warmupStartedAt: new Date(), updatedAt: new Date() })
       .where(eq(sendingDomains.id, domainId));
   }
 
-  const daysSinceStart = Math.floor(
-    (Date.now() - startedAt.getTime()) / 86_400_000,
-  ) + 1;
+  const daysSinceStart = Math.floor((Date.now() - startedAt.getTime()) / 86_400_000) + 1;
 
   const warmupDay = Math.min(daysSinceStart, WARM_THRESHOLD_DAY + 1);
   const dailyQuota = getWarmupQuota(warmupDay);
@@ -97,7 +97,8 @@ export async function getDomainWarmupStatus(
 
   // Promote to warm if past threshold
   if (!isWarming && domain.warmupStatus !== 'warm') {
-    await db.update(sendingDomains)
+    await db
+      .update(sendingDomains)
       .set({ warmupStatus: 'warm', warmupCompletedAt: new Date(), updatedAt: new Date() })
       .where(eq(sendingDomains.id, domainId));
   }
@@ -125,21 +126,23 @@ const today = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
  * Check remaining send quota for a warming IP.
  * Creates a warmup record if not found.
  */
-export async function getIpWarmupStatus(
-  orgId: string,
-  ipAddress: string,
-): Promise<IpWarmupStatus> {
-  let [ip] = await db.select()
-    .from(warmupIps)
-    .where(eq(warmupIps.ipAddress, ipAddress))
-    .limit(1);
+export async function getIpWarmupStatus(orgId: string, ipAddress: string): Promise<IpWarmupStatus> {
+  let [ip] = await db.select().from(warmupIps).where(eq(warmupIps.ipAddress, ipAddress)).limit(1);
 
   const currentDay = today();
 
   if (!ip) {
     // First use — start warming
-    [ip] = await db.insert(warmupIps)
-      .values({ orgId, ipAddress, warmupDay: 1, todaySent: 0, currentDate: currentDay, status: 'warming' })
+    [ip] = await db
+      .insert(warmupIps)
+      .values({
+        orgId,
+        ipAddress,
+        warmupDay: 1,
+        todaySent: 0,
+        currentDate: currentDay,
+        status: 'warming',
+      })
       .returning();
   }
 
@@ -150,7 +153,8 @@ export async function getIpWarmupStatus(
   // Reset daily counter if it's a new day
   if (ip.currentDate !== currentDay) {
     const newDay = ip.warmupDay + 1;
-    [ip] = await db.update(warmupIps)
+    [ip] = await db
+      .update(warmupIps)
       .set({ warmupDay: newDay, todaySent: 0, currentDate: currentDay, updatedAt: new Date() })
       .where(eq(warmupIps.ipAddress, ipAddress))
       .returning();
@@ -172,19 +176,18 @@ export async function getIpWarmupStatus(
  * Promotes IP to 'warm' once the warmup threshold is reached.
  */
 export async function recordIpSend(ipAddress: string, count: number): Promise<void> {
-  const [ip] = await db.select()
-    .from(warmupIps)
-    .where(eq(warmupIps.ipAddress, ipAddress))
-    .limit(1);
+  const [ip] = await db.select().from(warmupIps).where(eq(warmupIps.ipAddress, ipAddress)).limit(1);
 
   if (!ip || ip.status !== 'warming') return;
 
   const newTodaySent = ip.todaySent + count;
-  const newStatus = ip.warmupDay >= WARM_THRESHOLD_DAY && newTodaySent >= getWarmupQuota(ip.warmupDay)
-    ? 'warm'
-    : ip.status;
+  const newStatus =
+    ip.warmupDay >= WARM_THRESHOLD_DAY && newTodaySent >= getWarmupQuota(ip.warmupDay)
+      ? 'warm'
+      : ip.status;
 
-  await db.update(warmupIps)
+  await db
+    .update(warmupIps)
     .set({ todaySent: newTodaySent, status: newStatus, updatedAt: new Date() })
     .where(eq(warmupIps.ipAddress, ipAddress));
 }

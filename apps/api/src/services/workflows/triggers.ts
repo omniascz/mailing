@@ -120,9 +120,7 @@ export async function onListSubscribe(
     );
 
   await Promise.allSettled(
-    activeWorkflows.map((w) =>
-      fireListSubscribeTrigger(w.id, orgId, contactId, listId),
-    ),
+    activeWorkflows.map((w) => fireListSubscribeTrigger(w.id, orgId, contactId, listId)),
   );
 }
 
@@ -132,11 +130,7 @@ export async function onListSubscribe(
  * Called when a tag is assigned to a contact.
  * config: { tagName: string }
  */
-export async function onTagAdded(
-  orgId: string,
-  contactId: string,
-  tagName: string,
-): Promise<void> {
+export async function onTagAdded(orgId: string, contactId: string, tagName: string): Promise<void> {
   const activeWorkflows = await db
     .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
     .from(workflows)
@@ -289,9 +283,7 @@ export async function processDailyNameDayTriggers(): Promise<{ triggered: number
 
     // Normalized comparison values for SQL — lowercase + diacritics stripped
     // via Postgres `unaccent` (pre-normalize on the JS side to match).
-    const normalizedNames = names.map((n) =>
-      n.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(),
-    );
+    const normalizedNames = names.map((n) => n.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase());
 
     const contactRows = await db.execute(
       sql`
@@ -366,14 +358,14 @@ export async function processDailyHolidayTriggers(
     const locale = config.locale === 'sk' ? 'sk' : 'cs';
     const daysAhead = Math.max(0, Math.floor(Number(config.daysAhead ?? 0)));
 
-    const holidays = locale === 'sk'
-      ? slovakHolidaysInDays(now, daysAhead)
-      : czechHolidaysInDays(now, daysAhead);
+    const holidays =
+      locale === 'sk' ? slovakHolidaysInDays(now, daysAhead) : czechHolidaysInDays(now, daysAhead);
     if (holidays.length === 0) continue;
 
-    const matching = config.holidayKeys && config.holidayKeys.length > 0
-      ? holidays.filter((h) => config.holidayKeys!.includes(h.key))
-      : holidays;
+    const matching =
+      config.holidayKeys && config.holidayKeys.length > 0
+        ? holidays.filter((h) => config.holidayKeys!.includes(h.key))
+        : holidays;
     if (matching.length === 0) continue;
 
     const contactRows = config.listId
@@ -443,7 +435,10 @@ export async function onDealStageChanged(
   probability: number,
 ): Promise<void> {
   await onApiEvent(orgId, contactId, 'deal_stage_changed', {
-    dealId, fromStageId, toStageId, probability,
+    dealId,
+    fromStageId,
+    toStageId,
+    probability,
   });
 }
 
@@ -480,11 +475,13 @@ export async function onDealLost(
  * in longer than `thresholdHours` (default 72 h).
  * Uses Redis to debounce: each deal fires at most once per 24 h.
  */
-export async function processStaleDealTriggers(opts: {
-  orgId?: string;
-  thresholdHours?: number;
-  limit?: number;
-} = {}): Promise<{ fired: number }> {
+export async function processStaleDealTriggers(
+  opts: {
+    orgId?: string;
+    thresholdHours?: number;
+    limit?: number;
+  } = {},
+): Promise<{ fired: number }> {
   const thresholdHours = opts.thresholdHours ?? 72;
   const limit = opts.limit ?? 500;
 
@@ -496,14 +493,18 @@ export async function processStaleDealTriggers(opts: {
     ...(opts.orgId ? [eq(deals.orgId, opts.orgId)] : []),
   );
 
-  const staleDeals = await db.select({
-    id: deals.id,
-    orgId: deals.orgId,
-    contactId: deals.contactId,
-    stageId: deals.stageId,
-    stageChangedAt: deals.stageChangedAt,
-    value: deals.value,
-  }).from(deals).where(baseConditions).limit(limit);
+  const staleDeals = await db
+    .select({
+      id: deals.id,
+      orgId: deals.orgId,
+      contactId: deals.contactId,
+      stageId: deals.stageId,
+      stageChangedAt: deals.stageChangedAt,
+      value: deals.value,
+    })
+    .from(deals)
+    .where(baseConditions)
+    .limit(limit);
 
   let fired = 0;
   for (const deal of staleDeals) {

@@ -53,10 +53,7 @@ export interface NormalisedToken {
  * Normalise the raw token response into the shape we persist on `ad_accounts`.
  * `now` is injected for deterministic tests; defaults to the current wall clock.
  */
-export function normaliseTokenResponse(
-  raw: unknown,
-  now: Date = new Date(),
-): NormalisedToken {
+export function normaliseTokenResponse(raw: unknown, now: Date = new Date()): NormalisedToken {
   if (!raw || typeof raw !== 'object') {
     throw new Error('Sklik token response is not an object');
   }
@@ -106,7 +103,8 @@ export function isValidRedirectUri(uri: string): boolean {
   try {
     const url = new URL(uri);
     if (url.protocol === 'https:') return true;
-    if (url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1')) return true;
+    if (url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1'))
+      return true;
     return false;
   } catch {
     return false;

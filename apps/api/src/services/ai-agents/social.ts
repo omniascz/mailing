@@ -24,7 +24,7 @@ export interface SocialDraftInput {
   topic: string;
   brandVoice?: string;
   callToAction?: string;
-  language?: string;    // 'cs' default
+  language?: string; // 'cs' default
   platforms: SocialPlatform[];
   /** Optional link to include (will be placed in CTA). */
   linkUrl?: string;
@@ -36,9 +36,9 @@ export interface SocialDraftPerPlatform {
   platform: SocialPlatform;
   body: string;
   hashtags: string[];
-  suggestedMediaPrompt: string;  // for image/video generation
-  bestPostTime: string;           // e.g. "Tue 10:00 local time"
-  hook: string;                   // first-line attention grabber
+  suggestedMediaPrompt: string; // for image/video generation
+  bestPostTime: string; // e.g. "Tue 10:00 local time"
+  hook: string; // first-line attention grabber
   characterCount: number;
 }
 
@@ -119,7 +119,10 @@ export async function generateSocialDrafts(
     }
   }
 
-  const output: SocialDraftResult = { ...parsed, tokensUsed: (result.inputTokens + result.outputTokens) };
+  const output: SocialDraftResult = {
+    ...parsed,
+    tokensUsed: result.inputTokens + result.outputTokens,
+  };
   await redis.set(key, JSON.stringify(output), 'EX', CACHE_TTL);
   return output;
 }

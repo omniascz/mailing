@@ -243,9 +243,7 @@ export async function processFormSubmission(
     // Trigger workflow (fire-and-forget)
     if (config.workflowId && contactId) {
       import('../../services/workflows/triggers.js')
-        .then(({ triggerManual }) =>
-          triggerManual(config.workflowId!, form.orgId, contactId!),
-        )
+        .then(({ triggerManual }) => triggerManual(config.workflowId!, form.orgId, contactId!))
         .catch(() => {});
     }
 
@@ -271,8 +269,7 @@ export async function processFormSubmission(
         dispatchEvent(form.orgId, 'contact.created', { contactId, formId, email }),
       )
       .catch(() => {});
-
-  } catch (err) {
+  } catch (_err) {
     return { contactId: null, success: false, message: 'Submission failed. Please try again.' };
   }
 
@@ -295,7 +292,13 @@ export async function trackFormView(formId: string): Promise<void> {
 
 function defaultFields(): FormField[] {
   return [
-    { name: 'email', label: 'Email address', type: 'email', required: true, placeholder: 'you@example.com' },
+    {
+      name: 'email',
+      label: 'Email address',
+      type: 'email',
+      required: true,
+      placeholder: 'you@example.com',
+    },
     { name: 'first_name', label: 'First name', type: 'text', required: false, placeholder: 'Jane' },
   ];
 }
@@ -333,7 +336,13 @@ export async function createVariant(
 export async function updateVariant(
   orgId: string,
   variantId: string,
-  input: Partial<{ name: string; trafficSplit: number; fields: FormField[]; config: FormConfig; active: boolean }>,
+  input: Partial<{
+    name: string;
+    trafficSplit: number;
+    fields: FormField[];
+    config: FormConfig;
+    active: boolean;
+  }>,
 ): Promise<SignupFormVariant> {
   const [variant] = await db
     .update(signupFormVariants)

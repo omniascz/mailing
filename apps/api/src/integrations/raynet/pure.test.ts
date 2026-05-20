@@ -82,9 +82,7 @@ describe('normalizeRaynetContact', () => {
     const c = normalizeRaynetContact({
       data: {
         id: 1,
-        contactInfo: [
-          { contactInfoType: 'email', contactInfo: 'only@example.cz' },
-        ],
+        contactInfo: [{ contactInfoType: 'email', contactInfo: 'only@example.cz' }],
       },
     });
     expect(c.email).toBe('only@example.cz');

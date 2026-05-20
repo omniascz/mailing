@@ -29,10 +29,7 @@ export const LIFECYCLE_PIPELINE: readonly LifecycleStage[] = [
 ];
 
 /** All stages including the off-pipeline "other" bucket. */
-export const LIFECYCLE_STAGES: readonly LifecycleStage[] = [
-  ...LIFECYCLE_PIPELINE,
-  'other',
-];
+export const LIFECYCLE_STAGES: readonly LifecycleStage[] = [...LIFECYCLE_PIPELINE, 'other'];
 
 export function isLifecycleStage(value: unknown): value is LifecycleStage {
   return typeof value === 'string' && (LIFECYCLE_STAGES as readonly string[]).includes(value);

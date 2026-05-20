@@ -86,10 +86,10 @@ const WELCOME_SERIES: FlowTemplate = {
   ],
   edges: [
     { id: 'e1', source: 'trigger-1', target: 'email-1' },
-    { id: 'e2', source: 'email-1',   target: 'wait-1'  },
-    { id: 'e3', source: 'wait-1',    target: 'email-2' },
-    { id: 'e4', source: 'email-2',   target: 'wait-2'  },
-    { id: 'e5', source: 'wait-2',    target: 'email-3' },
+    { id: 'e2', source: 'email-1', target: 'wait-1' },
+    { id: 'e3', source: 'wait-1', target: 'email-2' },
+    { id: 'e4', source: 'email-2', target: 'wait-2' },
+    { id: 'e5', source: 'wait-2', target: 'email-3' },
   ],
 };
 
@@ -153,19 +153,20 @@ const ABANDONED_CART: FlowTemplate = {
     },
   ],
   edges: [
-    { id: 'e1', source: 'trigger-1',   target: 'wait-1'      },
-    { id: 'e2', source: 'wait-1',      target: 'goal-1'      },
-    { id: 'e3', source: 'goal-1',      target: 'condition-1' },
-    { id: 'e4', source: 'condition-1', target: 'email-1',  label: 'true'  },
-    { id: 'e5', source: 'email-1',     target: 'wait-2'      },
-    { id: 'e6', source: 'wait-2',      target: 'email-2'     },
+    { id: 'e1', source: 'trigger-1', target: 'wait-1' },
+    { id: 'e2', source: 'wait-1', target: 'goal-1' },
+    { id: 'e3', source: 'goal-1', target: 'condition-1' },
+    { id: 'e4', source: 'condition-1', target: 'email-1', label: 'true' },
+    { id: 'e5', source: 'email-1', target: 'wait-2' },
+    { id: 'e6', source: 'wait-2', target: 'email-2' },
   ],
 };
 
 const ONBOARDING_TOUR: FlowTemplate = {
   id: 'onboarding-tour',
   name: 'Product Onboarding Tour',
-  description: 'Tag-driven feature tour that adapts based on whether the contact has activated each feature.',
+  description:
+    'Tag-driven feature tour that adapts based on whether the contact has activated each feature.',
   category: 'onboarding',
   triggerType: 'tag_added',
   estimatedDurationDays: 14,
@@ -236,14 +237,14 @@ const ONBOARDING_TOUR: FlowTemplate = {
     },
   ],
   edges: [
-    { id: 'e1', source: 'trigger-1',   target: 'email-1'     },
-    { id: 'e2', source: 'email-1',     target: 'wait-1'      },
-    { id: 'e3', source: 'wait-1',      target: 'condition-1' },
-    { id: 'e4', source: 'condition-1', target: 'email-2a',   label: 'true'  },
-    { id: 'e5', source: 'condition-1', target: 'email-2b',   label: 'false' },
-    { id: 'e6', source: 'email-2a',    target: 'wait-2'      },
-    { id: 'e7', source: 'email-2b',    target: 'wait-2'      },
-    { id: 'e8', source: 'wait-2',      target: 'email-3'     },
+    { id: 'e1', source: 'trigger-1', target: 'email-1' },
+    { id: 'e2', source: 'email-1', target: 'wait-1' },
+    { id: 'e3', source: 'wait-1', target: 'condition-1' },
+    { id: 'e4', source: 'condition-1', target: 'email-2a', label: 'true' },
+    { id: 'e5', source: 'condition-1', target: 'email-2b', label: 'false' },
+    { id: 'e6', source: 'email-2a', target: 'wait-2' },
+    { id: 'e7', source: 'email-2b', target: 'wait-2' },
+    { id: 'e8', source: 'wait-2', target: 'email-3' },
   ],
 };
 
@@ -319,15 +320,15 @@ const RE_ENGAGEMENT: FlowTemplate = {
     },
   ],
   edges: [
-    { id: 'e1', source: 'trigger-1',   target: 'smart-1'     },
-    { id: 'e2', source: 'smart-1',     target: 'email-1',    label: 'email' },
-    { id: 'e3', source: 'smart-1',     target: 'sms-1',      label: 'sms'   },
-    { id: 'e4', source: 'email-1',     target: 'wait-1'      },
-    { id: 'e5', source: 'sms-1',       target: 'wait-1'      },
-    { id: 'e6', source: 'wait-1',      target: 'condition-1' },
-    { id: 'e7', source: 'condition-1', target: 'remove-1',   label: 'false' },
-    { id: 'e8', source: 'condition-1', target: 'email-2',    label: 'true'  },
-    { id: 'e9', source: 'remove-1',    target: 'tag-1'       },
+    { id: 'e1', source: 'trigger-1', target: 'smart-1' },
+    { id: 'e2', source: 'smart-1', target: 'email-1', label: 'email' },
+    { id: 'e3', source: 'smart-1', target: 'sms-1', label: 'sms' },
+    { id: 'e4', source: 'email-1', target: 'wait-1' },
+    { id: 'e5', source: 'sms-1', target: 'wait-1' },
+    { id: 'e6', source: 'wait-1', target: 'condition-1' },
+    { id: 'e7', source: 'condition-1', target: 'remove-1', label: 'false' },
+    { id: 'e8', source: 'condition-1', target: 'email-2', label: 'true' },
+    { id: 'e9', source: 'remove-1', target: 'tag-1' },
   ],
 };
 

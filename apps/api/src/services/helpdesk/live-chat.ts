@@ -80,12 +80,7 @@ export async function startChatSession(input: {
     contactId,
   };
 
-  await redis.set(
-    `${SESSION_PREFIX}${sessionToken}`,
-    JSON.stringify(session),
-    'EX',
-    SESSION_TTL,
-  );
+  await redis.set(`${SESSION_PREFIX}${sessionToken}`, JSON.stringify(session), 'EX', SESSION_TTL);
 
   return session;
 }
@@ -153,12 +148,7 @@ export async function endChatSession(sessionToken: string): Promise<void> {
   await db
     .update(helpdeskTickets)
     .set({ status: 'closed', closedAt: new Date(), updatedAt: new Date() })
-    .where(
-      and(
-        eq(helpdeskTickets.id, session.ticketId),
-        eq(helpdeskTickets.orgId, session.orgId),
-      ),
-    );
+    .where(and(eq(helpdeskTickets.id, session.ticketId), eq(helpdeskTickets.orgId, session.orgId)));
   await redis.del(`${SESSION_PREFIX}${sessionToken}`);
 }
 

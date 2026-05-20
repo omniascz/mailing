@@ -31,12 +31,12 @@ describe('extractTag', () => {
 
 describe('extractMeta', () => {
   it('parses name + content in either order', () => {
-    expect(
-      extractMeta('<meta name="description" content="Page desc" />', 'description'),
-    ).toBe('Page desc');
-    expect(
-      extractMeta('<meta content="Page desc" name="description" />', 'description'),
-    ).toBe('Page desc');
+    expect(extractMeta('<meta name="description" content="Page desc" />', 'description')).toBe(
+      'Page desc',
+    );
+    expect(extractMeta('<meta content="Page desc" name="description" />', 'description')).toBe(
+      'Page desc',
+    );
   });
 });
 
@@ -81,7 +81,11 @@ describe('fleschKincaid / readabilityLabel', () => {
 describe('detectIssues', () => {
   const base: AuditSignals = {
     title: 'A perfectly acceptable SEO title for testing',
-    metaDesc: 'A meta description that is between 70 and 160 characters to satisfy the best-practice threshold without overshooting. '.slice(0, 120),
+    metaDesc:
+      'A meta description that is between 70 and 160 characters to satisfy the best-practice threshold without overshooting. '.slice(
+        0,
+        120,
+      ),
     h1: 'Heading one',
     h1Count: 1,
     wordCount: 500,
@@ -123,9 +127,7 @@ describe('detectIssues', () => {
 describe('scoreFromIssues', () => {
   it('starts at 100 and subtracts per severity', () => {
     expect(scoreFromIssues([])).toBe(100);
-    expect(
-      scoreFromIssues([{ type: 'x', severity: 'error', message: '' }]),
-    ).toBe(85);
+    expect(scoreFromIssues([{ type: 'x', severity: 'error', message: '' }])).toBe(85);
     expect(
       scoreFromIssues([
         { type: 'x', severity: 'error', message: '' },
@@ -194,9 +196,9 @@ describe('renderRobotsTxt', () => {
 
 describe('canonicalize', () => {
   it('drops UTM + tracking params', () => {
-    expect(
-      canonicalize('https://example.cz/p?utm_source=fb&utm_medium=cpc&ref=x&id=42'),
-    ).toBe('https://example.cz/p?id=42');
+    expect(canonicalize('https://example.cz/p?utm_source=fb&utm_medium=cpc&ref=x&id=42')).toBe(
+      'https://example.cz/p?id=42',
+    );
   });
 
   it('drops fragment', () => {

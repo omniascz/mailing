@@ -13,7 +13,9 @@ const createSchema = z.object({
   siteId: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(255),
   selector: z.string().min(1).max(2048),
-  action: z.enum(['hide', 'show', 'swap_text', 'swap_html', 'add_class', 'remove_class', 'set_attr']).optional(),
+  action: z
+    .enum(['hide', 'show', 'swap_text', 'swap_html', 'add_class', 'remove_class', 'set_attr'])
+    .optional(),
   value: z.string().nullable().optional(),
   urlPattern: z.string().max(2048).nullable().optional(),
   audience: audienceSchema.optional(),
@@ -33,7 +35,10 @@ export default async function webPersonalizationRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/personalization/rules',
-    { preHandler: app.requireAuth, schema: { tags: ['WebPersonalization'], summary: 'List personalization rules' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['WebPersonalization'], summary: 'List personalization rules' },
+    },
     async (req) => {
       const { siteId } = z.object({ siteId: z.string().uuid().optional() }).parse(req.query);
       return { data: await svc.listRules(req.user!.orgId, siteId) };
@@ -42,7 +47,10 @@ export default async function webPersonalizationRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/personalization/rules',
-    { preHandler: app.requireAuth, schema: { tags: ['WebPersonalization'], summary: 'Create personalization rule' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['WebPersonalization'], summary: 'Create personalization rule' },
+    },
     async (req, reply) => {
       const body = createSchema.parse(req.body);
       return reply.code(201).send({ data: await svc.createRule(req.user!.orgId, body) });
@@ -60,16 +68,24 @@ export default async function webPersonalizationRoutes(app: FastifyInstance) {
 
   app.put(
     '/api/v1/personalization/rules/:id',
-    { preHandler: app.requireAuth, schema: { tags: ['WebPersonalization'], summary: 'Update rule' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['WebPersonalization'], summary: 'Update rule' },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
-      return { data: await svc.updateRule(req.user!.orgId, id, createSchema.partial().parse(req.body)) };
+      return {
+        data: await svc.updateRule(req.user!.orgId, id, createSchema.partial().parse(req.body)),
+      };
     },
   );
 
   app.delete(
     '/api/v1/personalization/rules/:id',
-    { preHandler: app.requireAuth, schema: { tags: ['WebPersonalization'], summary: 'Delete rule' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['WebPersonalization'], summary: 'Delete rule' },
+    },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
       await svc.deleteRule(req.user!.orgId, id);
@@ -81,7 +97,12 @@ export default async function webPersonalizationRoutes(app: FastifyInstance) {
 
   app.get(
     '/t/personalization',
-    { schema: { tags: ['WebPersonalization'], summary: 'Resolve personalization rules for visitor' } },
+    {
+      schema: {
+        tags: ['WebPersonalization'],
+        summary: 'Resolve personalization rules for visitor',
+      },
+    },
     async (req) => {
       const q = resolveQuery.parse(req.query);
       return { data: await svc.resolveRulesForVisitor(q) };

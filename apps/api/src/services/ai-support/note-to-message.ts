@@ -43,7 +43,7 @@ export async function noteToMessage(
   const out: NoteToMessageResult = {
     note,
     message: result.text.trim(),
-    tokensUsed: (result.inputTokens + result.outputTokens),
+    tokensUsed: result.inputTokens + result.outputTokens,
   };
 
   await redis.setex(cKey, CACHE_TTL, JSON.stringify(out));

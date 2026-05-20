@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { getDailyLimit, getWarmupPhase, WARMUP_COMPLETE_DAY, WARMUP_SCHEDULE } from './ip-warmup.js';
+import {
+  getDailyLimit,
+  getWarmupPhase,
+  WARMUP_COMPLETE_DAY,
+  WARMUP_SCHEDULE,
+} from './ip-warmup.js';
 
 // Pure function tests — no DB/Redis required
 

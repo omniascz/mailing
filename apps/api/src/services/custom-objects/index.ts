@@ -31,7 +31,9 @@ function assertFields(fields: CustomObjectField[]): void {
       throw AppError.badRequest(`reference field "${f.key}" requires referenceTo`);
     }
     if (f.referenceTo === 'custom' && !f.referenceCustomKey) {
-      throw AppError.badRequest(`field "${f.key}": referenceCustomKey required when referenceTo='custom'`);
+      throw AppError.badRequest(
+        `field "${f.key}": referenceCustomKey required when referenceTo='custom'`,
+      );
     }
   }
 }
@@ -83,7 +85,10 @@ export async function listDefinitions(orgId: string): Promise<CustomObjectDefini
     .orderBy(asc(customObjectDefinitions.key));
 }
 
-export async function getDefinition(orgId: string, idOrKey: string): Promise<CustomObjectDefinition> {
+export async function getDefinition(
+  orgId: string,
+  idOrKey: string,
+): Promise<CustomObjectDefinition> {
   const isUuid = /^[0-9a-f-]{36}$/i.test(idOrKey);
   const where = isUuid
     ? and(eq(customObjectDefinitions.id, idOrKey), eq(customObjectDefinitions.orgId, orgId))
@@ -144,7 +149,10 @@ function coerce(value: unknown, type: CustomObjectField['type']): unknown {
   }
 }
 
-function validateRecordData(def: CustomObjectDefinition, data: Record<string, unknown>): Record<string, unknown> {
+function validateRecordData(
+  def: CustomObjectDefinition,
+  data: Record<string, unknown>,
+): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   const errors: string[] = [];
   const fieldMap = new Map(def.fields.map((f) => [f.key, f]));
@@ -158,16 +166,19 @@ function validateRecordData(def: CustomObjectDefinition, data: Record<string, un
     }
     switch (f.type) {
       case 'number':
-        if (typeof value !== 'number' || Number.isNaN(value)) errors.push(`"${f.key}" must be number`);
+        if (typeof value !== 'number' || Number.isNaN(value))
+          errors.push(`"${f.key}" must be number`);
         break;
       case 'boolean':
         if (typeof value !== 'boolean') errors.push(`"${f.key}" must be boolean`);
         break;
       case 'date':
-        if (typeof value !== 'string' || Number.isNaN(Date.parse(value))) errors.push(`"${f.key}" must be ISO date`);
+        if (typeof value !== 'string' || Number.isNaN(Date.parse(value)))
+          errors.push(`"${f.key}" must be ISO date`);
         break;
       case 'select':
-        if (!f.options?.includes(String(value))) errors.push(`"${f.key}" must be one of: ${f.options?.join(', ')}`);
+        if (!f.options?.includes(String(value)))
+          errors.push(`"${f.key}" must be one of: ${f.options?.join(', ')}`);
         break;
       case 'reference':
         if (typeof value !== 'string') errors.push(`"${f.key}" must be a referenced id (string)`);
@@ -229,7 +240,11 @@ export async function upsertRecord(input: {
       data: validated,
     })
     .onConflictDoUpdate({
-      target: [customObjectRecords.orgId, customObjectRecords.objectKey, customObjectRecords.externalId],
+      target: [
+        customObjectRecords.orgId,
+        customObjectRecords.objectKey,
+        customObjectRecords.externalId,
+      ],
       set: { data: validated, updatedAt: new Date(), deletedAt: null },
     })
     .returning();
@@ -315,10 +330,7 @@ export async function relateRecord(input: {
   if (input.entityType === 'custom' && !input.entityCustomKey) {
     throw AppError.badRequest('entityCustomKey is required when entityType=custom');
   }
-  const [row] = await db
-    .insert(customObjectRelations)
-    .values(input)
-    .returning();
+  const [row] = await db.insert(customObjectRelations).values(input).returning();
   return row!;
 }
 
@@ -326,7 +338,9 @@ export async function listRelationsForRecord(orgId: string, recordId: string) {
   return db
     .select()
     .from(customObjectRelations)
-    .where(and(eq(customObjectRelations.orgId, orgId), eq(customObjectRelations.recordId, recordId)))
+    .where(
+      and(eq(customObjectRelations.orgId, orgId), eq(customObjectRelations.recordId, recordId)),
+    )
     .orderBy(desc(customObjectRelations.createdAt));
 }
 

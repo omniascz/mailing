@@ -7,8 +7,11 @@
 import { and, eq, gte, sql, desc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  revenueEvents, emailEvents, contactEngagement,
-  type NewRevenueEvent, type RevenueEvent,
+  revenueEvents,
+  emailEvents,
+  contactEngagement,
+  type NewRevenueEvent,
+  type RevenueEvent,
 } from '../../db/schema/index.js';
 
 const DEFAULT_WINDOW_DAYS = 30;
@@ -38,36 +41,41 @@ export async function trackPurchase(input: TrackPurchaseInput): Promise<RevenueE
     const events = await db
       .select({ campaignId: emailEvents.campaignId, createdAt: emailEvents.createdAt })
       .from(emailEvents)
-      .where(and(
-        eq(emailEvents.contactId, input.contactId),
-        eq(emailEvents.orgId, input.orgId),
-        gte(emailEvents.createdAt, since),
-      ))
+      .where(
+        and(
+          eq(emailEvents.contactId, input.contactId),
+          eq(emailEvents.orgId, input.orgId),
+          gte(emailEvents.createdAt, since),
+        ),
+      )
       .orderBy(desc(emailEvents.createdAt));
 
     const withCampaign = events.filter((e) => e.campaignId);
     if (withCampaign.length > 0) {
-      campaignId = (model === 'first_touch'
-        ? withCampaign[withCampaign.length - 1]!
-        : withCampaign[0]!).campaignId;
+      campaignId = (
+        model === 'first_touch' ? withCampaign[withCampaign.length - 1]! : withCampaign[0]!
+      ).campaignId;
     }
   }
 
   // UTM campaign name → campaign id (best-effort) is skipped; left as metadata.
-  const [row] = await db.insert(revenueEvents).values({
-    orgId: input.orgId,
-    contactId: input.contactId ?? null,
-    orderId: input.orderId,
-    amount: input.amount.toFixed(2),
-    currency: input.currency ?? 'USD',
-    items: input.items ?? [],
-    utmSource: input.utm?.source,
-    utmMedium: input.utm?.medium,
-    utmCampaign: input.utm?.campaign,
-    attributedCampaignId: campaignId,
-    attributionModel: model,
-    occurredAt,
-  }).returning();
+  const [row] = await db
+    .insert(revenueEvents)
+    .values({
+      orgId: input.orgId,
+      contactId: input.contactId ?? null,
+      orderId: input.orderId,
+      amount: input.amount.toFixed(2),
+      currency: input.currency ?? 'USD',
+      items: input.items ?? [],
+      utmSource: input.utm?.source,
+      utmMedium: input.utm?.medium,
+      utmCampaign: input.utm?.campaign,
+      attributedCampaignId: campaignId,
+      attributionModel: model,
+      occurredAt,
+    })
+    .returning();
 
   // Update per-contact engagement aggregates.
   if (input.contactId) {
@@ -86,14 +94,24 @@ export async function trackPurchase(input: TrackPurchaseInput): Promise<RevenueE
   return row!;
 }
 
-export async function campaignRevenueReport(orgId: string, opts: { since?: Date } = {}): Promise<Array<{
-  campaignId: string | null;
-  orders: number;
-  revenue: number;
-  currency: string;
-}>> {
+export async function campaignRevenueReport(
+  orgId: string,
+  opts: { since?: Date } = {},
+): Promise<
+  Array<{
+    campaignId: string | null;
+    orders: number;
+    revenue: number;
+    currency: string;
+  }>
+> {
   const since = opts.since ?? new Date(Date.now() - 90 * 86_400_000);
-  const rs = await db.execute<{ cid: string | null; orders: string; revenue: string; currency: string }>(sql`
+  const rs = await db.execute<{
+    cid: string | null;
+    orders: string;
+    revenue: string;
+    currency: string;
+  }>(sql`
     SELECT attributed_campaign_id AS cid,
            COUNT(*)::text AS orders,
            SUM(amount)::text AS revenue,
@@ -103,7 +121,14 @@ export async function campaignRevenueReport(orgId: string, opts: { since?: Date 
     GROUP BY attributed_campaign_id
     ORDER BY SUM(amount) DESC NULLS LAST
   `);
-  return (rs as unknown as Array<{ cid: string | null; orders: string; revenue: string; currency: string }>).map((r) => ({
+  return (
+    rs as unknown as Array<{
+      cid: string | null;
+      orders: string;
+      revenue: string;
+      currency: string;
+    }>
+  ).map((r) => ({
     campaignId: r.cid,
     orders: Number(r.orders),
     revenue: Number(r.revenue),

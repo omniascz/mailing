@@ -125,18 +125,13 @@ export function classifyBounce(
   rawNdr?: string,
 ): BounceClassification {
   const reasonStr =
-    typeof smtpCodeOrReason === 'number'
-      ? String(smtpCodeOrReason)
-      : smtpCodeOrReason;
+    typeof smtpCodeOrReason === 'number' ? String(smtpCodeOrReason) : smtpCodeOrReason;
 
   const ndrText = rawNdr ? extractNdrReason(rawNdr) : reasonStr;
   const combined = `${reasonStr} ${ndrText}`;
 
   // Extract numeric code if present
-  const code =
-    typeof smtpCodeOrReason === 'number'
-      ? smtpCodeOrReason
-      : extractSmtpCode(combined);
+  const code = typeof smtpCodeOrReason === 'number' ? smtpCodeOrReason : extractSmtpCode(combined);
 
   // 1. Block patterns take priority — they are always 5xx but reason is policy
   if (BLOCK_PATTERNS.some((p) => p.test(combined))) {
@@ -150,10 +145,7 @@ export function classifyBounce(
   }
 
   // 2. Hard: explicit 5xx codes OR hard keyword patterns
-  if (
-    (code !== null && HARD_CODES.has(code)) ||
-    HARD_PATTERNS.some((p) => p.test(combined))
-  ) {
+  if ((code !== null && HARD_CODES.has(code)) || HARD_PATTERNS.some((p) => p.test(combined))) {
     return {
       type: 'hard',
       smtpCode: code,
@@ -164,10 +156,7 @@ export function classifyBounce(
   }
 
   // 3. Soft: 4xx codes OR soft keyword patterns
-  if (
-    (code !== null && SOFT_CODES.has(code)) ||
-    SOFT_PATTERNS.some((p) => p.test(combined))
-  ) {
+  if ((code !== null && SOFT_CODES.has(code)) || SOFT_PATTERNS.some((p) => p.test(combined))) {
     return {
       type: 'soft',
       smtpCode: code,
@@ -214,9 +203,6 @@ export function classifyBounce(
  * Determine whether accumulated soft bounces warrant suppression.
  * Policy: suppress after 3 soft bounces within 30 days.
  */
-export function shouldSuppressAfterSoftBounces(
-  softBounceCount: number,
-  threshold = 3,
-): boolean {
+export function shouldSuppressAfterSoftBounces(softBounceCount: number, threshold = 3): boolean {
   return softBounceCount >= threshold;
 }

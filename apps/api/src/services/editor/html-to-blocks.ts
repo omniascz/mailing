@@ -100,7 +100,10 @@ export async function htmlToBlocks(html: string, apiKey: string): Promise<Conver
   const text = result.content.find((c) => c.type === 'text')?.text ?? '';
 
   // Strip markdown code fences if Claude wrapped the JSON anyway
-  const cleaned = text.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\n?/, '')
+    .replace(/\n?```$/, '');
 
   let parsed: unknown;
   try {

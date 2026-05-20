@@ -2,7 +2,8 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema/index.js';
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://forgemsg:forgemsg@localhost:5432/forgemsg';
+const connectionString =
+  process.env.DATABASE_URL || 'postgresql://forgemsg:forgemsg@localhost:5432/forgemsg';
 
 // Disable prefetch for compatibility with PgBouncer transaction mode
 const client = postgres(connectionString, {

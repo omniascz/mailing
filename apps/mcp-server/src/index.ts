@@ -92,7 +92,8 @@ const TOOLS: McpTool[] = [
   },
   {
     name: 'create_contact',
-    description: 'Create or upsert a contact in MailForge. If contact with this email exists, it will be updated.',
+    description:
+      'Create or upsert a contact in MailForge. If contact with this email exists, it will be updated.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -111,7 +112,10 @@ const TOOLS: McpTool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        name_contains: { type: 'string', description: 'Filter segments whose name contains this string' },
+        name_contains: {
+          type: 'string',
+          description: 'Filter segments whose name contains this string',
+        },
         limit: { type: 'string', description: 'Max number of segments to return (default 10)' },
       },
       required: [],
@@ -160,7 +164,7 @@ async function callApi(path: string, method: string, body?: unknown): Promise<un
     signal: AbortSignal.timeout(30_000),
   });
 
-  const data = await response.json() as unknown;
+  const data = (await response.json()) as unknown;
   if (!response.ok) {
     throw new Error(`API error ${response.status}: ${JSON.stringify(data)}`);
   }
@@ -173,32 +177,40 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
   switch (name) {
     case 'send_email':
       await callApi('/api/v1/transactional/email', 'POST', {
-        to: input.to, subject: input.subject, html: input.html,
-        text: input.text, fromName: input.from_name,
+        to: input.to,
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+        fromName: input.from_name,
       });
       return `Email sent successfully to ${input.to as string}`;
 
     case 'send_sms':
       await callApi('/api/v1/transactional/sms', 'POST', {
-        to: input.to, body: input.body, senderId: input.sender_id,
+        to: input.to,
+        body: input.body,
+        senderId: input.sender_id,
       });
       return `SMS sent successfully to ${input.to as string}`;
 
     case 'create_contact': {
       const tags = input.tags ? (input.tags as string).split(',').map((t) => t.trim()) : [];
       const result = await callApi('/api/v1/contacts', 'POST', {
-        email: input.email, firstName: input.first_name, lastName: input.last_name,
-        phone: input.phone, tags,
+        email: input.email,
+        firstName: input.first_name,
+        lastName: input.last_name,
+        phone: input.phone,
+        tags,
       });
       return `Contact created/updated: ${JSON.stringify(result)}`;
     }
 
     case 'query_segments': {
       const limit = parseInt((input.limit as string | undefined) ?? '10', 10);
-      const result = await callApi(
+      const result = (await callApi(
         `/api/v1/segments?limit=${limit}${input.name_contains ? `&search=${encodeURIComponent(input.name_contains as string)}` : ''}`,
         'GET',
-      ) as { data: unknown[] };
+      )) as { data: unknown[] };
       return `Found ${result.data?.length ?? 0} segments: ${JSON.stringify(result.data)}`;
     }
 
@@ -209,9 +221,12 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
 
     case 'create_campaign': {
       const result = await callApi('/api/v1/campaigns', 'POST', {
-        name: input.name, subject: input.subject,
-        fromName: input.from_name, fromEmail: input.from_email,
-        type: 'email', content: { html: (input.html as string | undefined) ?? '' },
+        name: input.name,
+        subject: input.subject,
+        fromName: input.from_name,
+        fromEmail: input.from_email,
+        type: 'email',
+        content: { html: (input.html as string | undefined) ?? '' },
         segmentId: input.segment_id,
       });
       return `Campaign created: ${JSON.stringify(result)}`;
@@ -227,7 +242,9 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
 async function handleRequest(req: McpRequest): Promise<McpResponse> {
   const respond = (result: unknown): McpResponse => ({ jsonrpc: '2.0', id: req.id, result });
   const respondError = (code: number, message: string): McpResponse => ({
-    jsonrpc: '2.0', id: req.id, error: { code, message },
+    jsonrpc: '2.0',
+    id: req.id,
+    error: { code, message },
   });
 
   try {
@@ -288,7 +305,9 @@ async function startStdioServer(input: Readable, output: Writable): Promise<void
 
 if (!ORG_ID || !API_KEY) {
   process.stderr.write('ForgeMsg MCP Server: missing --org-id or --api-key\n');
-  process.stderr.write('Usage: node dist/index.js --org-id <orgId> --api-key <apiKey> [--api-url <url>]\n');
+  process.stderr.write(
+    'Usage: node dist/index.js --org-id <orgId> --api-key <apiKey> [--api-url <url>]\n',
+  );
   process.exit(1);
 }
 

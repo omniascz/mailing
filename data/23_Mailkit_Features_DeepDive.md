@@ -6,9 +6,10 @@
 
 > **Důležitý kontext:** Mailkit je **český produkt s premium positioning** – jeden z nejstarších CZ hráčů (založen 2005-2006), unikátní v industry **vlastní uzavřenou infrastrukturou (no cloud, no third-party processors)**. Mateřská společnost: **Mailkit s.r.o.**, HQ **Praha, Česká republika**.
 >
-> **Pozice:** **premium B2B/B2C platform** pro **mid-market a enterprise** klienty. Per oficiální claim: *"leader in international mailing distribution"*. Reference klienti zahrnují KetoDiet a fashion e-shopy operující v 17+ trzích.
+> **Pozice:** **premium B2B/B2C platform** pro **mid-market a enterprise** klienty. Per oficiální claim: _"leader in international mailing distribution"_. Reference klienti zahrnují KetoDiet a fashion e-shopy operující v 17+ trzích.
 >
 > **Klíčové diferenciátory (UNIKÁTNÍ v industry):**
+>
 > - **100% vlastní infrastruktura** – žádný cloud, žádní third-party processors
 > - **ISO certifikace 7 standardů** (ISO 9001, 22301, 27001, 27701, 27017, 27018, 20000)
 > - **Member of Certified Senders Alliance, M3AAWG, Signal Spam** (prestigious industry orgs)
@@ -21,7 +22,7 @@
 > - **Sub-accounts** pro agency / multi-market companies
 > - **4 levels access rights** per account/sub-account
 >
-> **NE pro masy:** Mailkit aktivně **selektuje klienty** – per oficiální: *"We want to get to know you better before establishing cooperation and if we find that something is preventing us from doing so with regard to best-practice procedures, we will try to find solution together."* – pricing "on demand", premium positioning.
+> **NE pro masy:** Mailkit aktivně **selektuje klienty** – per oficiální: _"We want to get to know you better before establishing cooperation and if we find that something is preventing us from doing so with regard to best-practice procedures, we will try to find solution together."_ – pricing "on demand", premium positioning.
 
 ---
 
@@ -67,10 +68,11 @@
 
 Klíčový diferenciátor je **vlastní uzavřená infrastruktura**:
 
-> *"Many companies often come across the fact that their ESP does not meet their requirements or legislative obligations because it is directly dependent on other data processors (cloud services, third party infrastructures). In the case of Mailkit, however, it is a 100% comprehensive solution. We do not share your data with anyone, there are no other processors, and therefore our clients have certainty that no mistake can be made."*
+> _"Many companies often come across the fact that their ESP does not meet their requirements or legislative obligations because it is directly dependent on other data processors (cloud services, third party infrastructures). In the case of Mailkit, however, it is a 100% comprehensive solution. We do not share your data with anyone, there are no other processors, and therefore our clients have certainty that no mistake can be made."_
 
 Marketing claim z oficiální:
-> *"From the beginning, we didn't want to compromise, rely on anyone else and settle for what everyone else was doing. That is why we have built a comprehensive solution, including our own infrastructure, so that we have everything under complete control in order to achieve the best possible reputation, gain very specific know-how and a premium position on the international market. Mailkit is not just a tool, but a completely complex organism."*
+
+> _"From the beginning, we didn't want to compromise, rely on anyone else and settle for what everyone else was doing. That is why we have built a comprehensive solution, including our own infrastructure, so that we have everything under complete control in order to achieve the best possible reputation, gain very specific know-how and a premium position on the international market. Mailkit is not just a tool, but a completely complex organism."_
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -144,10 +146,10 @@ Marketing claim z oficiální:
 
 ### Reference customers (per oficiální)
 
-- **KetoDiet** – per testimonial: *"emailing is KetoDiet's 'TOP' performance channel"*
+- **KetoDiet** – per testimonial: _"emailing is KetoDiet's 'TOP' performance channel"_
 - **Fashion e-shop** v 17 markets
 - Various B2B / B2C corporate clients
-- Many long-term clients (per oficiální: *"Our clients stay with us for the long term"*)
+- Many long-term clients (per oficiální: _"Our clients stay with us for the long term"_)
 
 ---
 
@@ -156,9 +158,10 @@ Marketing claim z oficiální:
 ### 2.1 "On Demand" pricing
 
 Per SMTPedia review:
-*"The pricing is On Demand, which means, that you, as a company, you have to request a contact from them in order to check with you the number of emails that you expect to send every month. Based on that, they will quote a pricing which goes with your needs."*
+_"The pricing is On Demand, which means, that you, as a company, you have to request a contact from them in order to check with you the number of emails that you expect to send every month. Based on that, they will quote a pricing which goes with your needs."_
 
 ⚠️ **Mailkit NEMÁ public pricing kalkulátor**:
+
 - Sales-driven model
 - Custom quote per klient
 - Qualification process s account management
@@ -169,6 +172,7 @@ Per SMTPedia review:
 Per SMTPedia + oficiální:
 
 #### Lite
+
 - **Entry tier**
 - Limited contacts
 - Limited monthly emails
@@ -176,6 +180,7 @@ Per SMTPedia + oficiální:
 - Core features access
 
 #### Pro
+
 - **Mid-market tier**
 - Higher contacts allowance
 - Higher monthly email volume
@@ -183,6 +188,7 @@ Per SMTPedia + oficiální:
 - Advanced features
 
 #### Enterprise
+
 - **Top tier**
 - Unlimited / very high contacts
 - High monthly volume
@@ -194,6 +200,7 @@ Per SMTPedia + oficiální:
 ### 2.3 Co je v ceně included (common across tiers)
 
 Per oficiální features page:
+
 - Email marketing campaigns
 - SMS marketing
 - Customer segmentation
@@ -222,7 +229,7 @@ Per oficiální features page:
 
 ### 2.5 Qualification process
 
-Per oficiální: *"We want to get to know you better before establishing cooperation"*:
+Per oficiální: _"We want to get to know you better before establishing cooperation"_:
 
 ```
 Lead inquiry (form on mailkit.com)
@@ -255,9 +262,10 @@ Onboarding
 
 ### 2.6 Per oficiální about qualification
 
-> *"if we find that something is preventing us from doing so with regard to best-practice procedures, we will try to find solution together."*
+> _"if we find that something is preventing us from doing so with regard to best-practice procedures, we will try to find solution together."_
 
 Mailkit **may decline klienta** pokud:
+
 - Klient porušuje best practices (purchased lists, spam patterns)
 - Compliance issues
 - Not fit pro Mailkit's reputation standards
@@ -265,14 +273,14 @@ Mailkit **may decline klienta** pokud:
 
 ### 2.7 Cenové porovnání (10K subscribers, 2026 estimate)
 
-| Platform | Cena/měsíc (estimate) |
-|---|---|
-| **Mailkit** | Custom (on demand) – typicky premium tier |
-| **SmartEmailing** | ~€100 |
-| **Ecomail** | ~€60–70 |
-| **Mailchimp Standard** | ~$135 (€125) |
-| **MailerLite Advanced** | ~$80 (€75) |
-| **Brevo Business** | ~€65 |
+| Platform                | Cena/měsíc (estimate)                     |
+| ----------------------- | ----------------------------------------- |
+| **Mailkit**             | Custom (on demand) – typicky premium tier |
+| **SmartEmailing**       | ~€100                                     |
+| **Ecomail**             | ~€60–70                                   |
+| **Mailchimp Standard**  | ~$135 (€125)                              |
+| **MailerLite Advanced** | ~$80 (€75)                                |
+| **Brevo Business**      | ~€65                                      |
 
 ⚠️ Mailkit **premium pricing** – pricing-wise pravděpodobně srovnatelný nebo dražší než SmartEmailing, ale s premium service + vlastní infrastruktura.
 
@@ -291,15 +299,17 @@ Mailkit **may decline klienta** pokud:
 ### 3.1 Closed infrastructure
 
 Per oficiální claim:
-> *"We have been developing a mailing platform with our own infrastructure since 2006."*
+
+> _"We have been developing a mailing platform with our own infrastructure since 2006."_
 >
-> *"a purely Czech multichannel marketing platform with main focus on e-mail and SMS, which works on completely own and closed infrastructure (no cloud phase)."*
+> _"a purely Czech multichannel marketing platform with main focus on e-mail and SMS, which works on completely own and closed infrastructure (no cloud phase)."_
 
 ### 3.2 No third-party processors
 
-> *"We do not share your data with anyone, there are no other processors, and therefore our clients have certainty that no mistake can be made."*
+> _"We do not share your data with anyone, there are no other processors, and therefore our clients have certainty that no mistake can be made."_
 
 **Klíčové implikace:**
+
 - **Data nikdy neopustí Mailkit infrastruktury**
 - **Žádní subprocessors** (vs. competitors používající AWS, Google Cloud, Azure)
 - **Full GDPR compliance** s simplified data flow
@@ -309,9 +319,11 @@ Per oficiální claim:
 ### 3.3 Direct ISP contractual relationships
 
 Per oficiální:
-> *"the only one from the available competition, to conclude unique contractual relationships with all key providers"*
+
+> _"the only one from the available competition, to conclude unique contractual relationships with all key providers"_
 
 Mailkit má direct relationships s key ISPs:
+
 - **Seznam.cz** (CZ #1 ISP)
 - **Major international ISPs**
 - Direct feedback loops
@@ -336,6 +348,7 @@ Mailkit má direct relationships s key ISPs:
 ### 3.6 Why this matters
 
 For regulated industries:
+
 - Banking, finance
 - Healthcare (s GDPR strict)
 - Government / public sector
@@ -343,11 +356,13 @@ For regulated industries:
 - Critical infrastructure
 
 For premium brands:
+
 - Brand reputation protection
 - No multi-tenant risks
 - Full control over deliverability
 
 For multi-market enterprise:
+
 - Consistent infrastructure performance
 - No geographic variability
 - Predictable behavior
@@ -363,40 +378,48 @@ Mailkit holds **7 ISO certifications** a member of **major industry organization
 Per oficiální:
 
 #### ISO 9001 – Quality Management
+
 - Quality management system standard
 - Continuous improvement processes
 - Customer focus
 
 #### ISO 22301 – Business Continuity Management
+
 - Continuity of operations
 - Disaster recovery
 - Risk management
 
 #### ISO 27001 – Information Security Management
+
 - Comprehensive information security
 - Most recognized security certification
 - Annual audits required
 
 #### ISO 27701 – Privacy Information Management
+
 - GDPR-aligned privacy management
 - Personal data protection
 - Privacy controls
 
 #### ISO 27017 – Cloud Security
+
 - Security controls for cloud services
 - Even though Mailkit doesn't use cloud, certifikace existuje
 
 #### ISO 27018 – Personally Identifiable Information v Cloudu
+
 - PII protection v cloud environments
 - Similar applicability comment
 
 #### ISO 20000 – IT Service Management
+
 - Service management standards
 - IT operations excellence
 
 ### 4.2 Why 7 ISO certifications matter
 
 **Few competitors mají ISO 27001 alone:**
+
 - Mailchimp: SOC 2, ISO 27001
 - SAP Emarsys: ISO 27001, SOC 2, ISO 22301
 - HubSpot: SOC 2, ISO 27001
@@ -408,18 +431,21 @@ Per oficiální:
 ### 4.3 Member of industry organizations
 
 #### Certified Senders Alliance (CSA)
+
 - **Strict sender reputation standards**
 - **Whitelisted by major ISPs** (Gmail, Outlook, etc.)
 - **Continuous monitoring** of sender behavior
 - Pre-defined inbox placement
 
 #### M3AAWG (Messaging Malware Mobile Anti-Abuse Working Group)
+
 - **Industry-leading anti-abuse organization**
 - Members include major ISPs, ESPs, security companies
 - Sets industry best practices
 - Anti-spam, anti-abuse standards
 
 #### Signal Spam
+
 - French anti-spam organization
 - ISP feedback loops
 - European cooperation
@@ -439,11 +465,12 @@ Per oficiální:
 ### 5.1 Sub-account architecture
 
 Per oficiální features:
-*"The Mailkit platform lets you manage your account in just a few clicks. Are you an agency that handles emailing for multiple clients or a large company active in multiple markets? Set up as many sub-accounts as you need."*
+_"The Mailkit platform lets you manage your account in just a few clicks. Are you an agency that handles emailing for multiple clients or a large company active in multiple markets? Set up as many sub-accounts as you need."_
 
 ### 5.2 Use cases
 
 #### Agency model
+
 - **Multiple client accounts** under master agency account
 - **Per-client isolation**
 - **Centralized agency management**
@@ -451,12 +478,14 @@ Per oficiální features:
 - **Cross-account reporting** for agency
 
 #### Multi-market companies
+
 - **International brands** active v multiple countries
 - **Per-country sub-accounts** (UK, DE, CZ, etc.)
 - **Local team access** to specific markets
 - **Centralized brand HQ access**
 
 #### Multi-brand companies
+
 - **Per-brand sub-account** (e.g. parent company s several brands)
 - **Brand isolation** of data + campaigns
 - **Centralized HQ overview**
@@ -509,13 +538,14 @@ Master Account
 ## 6. User access rights (4 levels)
 
 Per oficiální features:
-*"Set up to 4 levels of access rights for each account and sub-account."*
+_"Set up to 4 levels of access rights for each account and sub-account."_
 
 ### 6.1 4 levels access rights
 
 Typical structure:
 
 #### Level 1: Owner / Master Admin
+
 - **Highest tier**
 - Full administrative control
 - Billing access
@@ -524,6 +554,7 @@ Typical structure:
 - Close account option
 
 #### Level 2: Administrator
+
 - **Operational lead per account/sub-account**
 - User management within sub-account
 - Configuration
@@ -531,6 +562,7 @@ Typical structure:
 - Cannot manage billing
 
 #### Level 3: Manager / Marketing user
+
 - **Daily operational**
 - Campaigns, automation, segments
 - Content creation
@@ -538,6 +570,7 @@ Typical structure:
 - No settings
 
 #### Level 4: Reporter / View-only
+
 - **Read-only**
 - Reports + analytics
 - No editing, sending
@@ -561,6 +594,7 @@ For each sub-account:
 ### 6.3 Granular permissions per level
 
 Per level configurable:
+
 - **Account settings access**
 - **Billing visibility**
 - **User management**
@@ -601,6 +635,7 @@ Send invitation
 ### 7.1 Contacts (kontakty)
 
 #### Standard fields
+
 - Email (povinný)
 - Jméno, příjmení
 - Telefon
@@ -612,6 +647,7 @@ Send invitation
 - Custom fields
 
 #### Custom fields
+
 - **Text, číslo, datum, dropdown, multi-select**
 - **Unlimited custom fields**
 - Per business need
@@ -627,9 +663,10 @@ Send invitation
 
 ### 7.3 Sophisticated segmentation
 
-Per testimonial: *"sophisticated customer database segmentation"*
+Per testimonial: _"sophisticated customer database segmentation"_
 
 #### Filter criteria
+
 - **Contact attributes** (custom fields, tags)
 - **Email engagement** (opened/clicked specific campaigns)
 - **SMS engagement**
@@ -642,6 +679,7 @@ Per testimonial: *"sophisticated customer database segmentation"*
 - **Behavior history**
 
 #### Operators
+
 - AND, OR, NOT
 - Nested conditions
 - Equal, contains, between, before/after
@@ -692,14 +730,14 @@ Various transitions:
 
 ### 8.1 Campaign types
 
-| Typ | Use case |
-|---|---|
-| **Standard newsletter** | Regular sends |
-| **A/B test campaign** | Test variants |
-| **Triggered campaign** | Event-based |
-| **Automation email** | V rámci workflow |
-| **Transactional** | Order confirmations, etc. |
-| **Trigger campaign** (per testimonial) | Advanced behavior-based |
+| Typ                                    | Use case                  |
+| -------------------------------------- | ------------------------- |
+| **Standard newsletter**                | Regular sends             |
+| **A/B test campaign**                  | Test variants             |
+| **Triggered campaign**                 | Event-based               |
+| **Automation email**                   | V rámci workflow          |
+| **Transactional**                      | Order confirmations, etc. |
+| **Trigger campaign** (per testimonial) | Advanced behavior-based   |
 
 ### 8.2 Campaign builder workflow
 
@@ -756,7 +794,7 @@ Confirm
 ### 8.4 Send authorized domains
 
 Per oficiální:
-*"Send campaigns from your authorized email addresses."*
+_"Send campaigns from your authorized email addresses."_
 
 - **Domain authentication required** (DKIM, SPF, DMARC)
 - **Multiple sender domains** per account
@@ -770,7 +808,7 @@ Per oficiální:
 ### 9.1 Visual creator capabilities
 
 Per oficiální features:
-*"To make your messages eye-catching, you can use the visual creator, which offers over 300 ready-to-use drag & drop templates."*
+_"To make your messages eye-catching, you can use the visual creator, which offers over 300 ready-to-use drag & drop templates."_
 
 - **Drag-and-drop visual builder**
 - **Block-based structure**
@@ -783,9 +821,10 @@ Per oficiální features:
 ### 9.2 AMP for Email support
 
 Per oficiální:
-*"AMP support integrated directly into the editor"*
+_"AMP support integrated directly into the editor"_
 
 **AMP for Email = next-generation interactive email standard:**
+
 - **Forms inside emails** (no need to click link)
 - **Real-time content** (live pricing, inventory)
 - **Interactive elements** (carousels, tabs)
@@ -797,7 +836,7 @@ Per oficiální:
 ### 9.3 Free photo database
 
 Per oficiální:
-*"and a free photo database"*
+_"and a free photo database"_
 
 - **Free stock photo library** built-in
 - **No external service** needed
@@ -807,19 +846,22 @@ Per oficiální:
 ### 9.4 Variables, loops, conditions
 
 Per oficiální:
-*"Work with variables, loops and conditions."*
+_"Work with variables, loops and conditions."_
 
 #### Variables
+
 - Personalization tokens
 - Custom field values
 - Computed variables
 
 #### Loops
+
 - **For-each loops** for product feeds
 - Dynamic content arrays
 - Repeating blocks
 
 #### Conditions
+
 - **If/Else logic** within email
 - **Show/hide blocks** based on conditions
 - **Per-recipient different content**
@@ -827,6 +869,7 @@ Per oficiální:
 ### 9.5 Use cases enabled
 
 #### Dynamic newsletters
+
 ```
 For each product v subscriber's last viewed:
   Show product block with image, price, link
@@ -834,6 +877,7 @@ End for
 ```
 
 #### Conditional content
+
 ```
 If subscriber.gender == "female":
   Show female-targeted hero
@@ -843,6 +887,7 @@ End if
 ```
 
 #### Loyalty program
+
 ```
 If subscriber.tier == "Gold":
   Show Gold benefits + offer
@@ -858,7 +903,7 @@ End if
 ## 10. Templates (300+ drag&drop)
 
 Per oficiální:
-*"over 300 ready-to-use drag & drop templates"*
+_"over 300 ready-to-use drag & drop templates"_
 
 ### 10.1 Template categories
 
@@ -891,8 +936,9 @@ Per oficiální:
 ## 11. Marketing Automation
 
 Per testimonials:
-- *"a wealth of automation and personalization options"*
-- *"advanced trigger campaign creation"*
+
+- _"a wealth of automation and personalization options"_
+- _"advanced trigger campaign creation"_
 
 ### 11.1 Automation builder
 
@@ -905,6 +951,7 @@ Per testimonials:
 ### 11.2 Triggers
 
 #### Behavioral
+
 - Subscribed to list
 - Tag added/removed
 - Form submitted
@@ -912,50 +959,58 @@ Per testimonials:
 - SMS clicked
 
 #### Transactional / E-commerce
+
 - Order placed (via integration)
 - Cart abandoned
 - Product viewed
 - Specific product purchased
 
 #### Date-based
+
 - Birthday trigger
 - Anniversary
 - Custom date in field
 
 #### Engagement-based
+
 - Engagement Score threshold reached
 - Inactive X days
 - Custom event
 
 #### API-triggered
+
 - External event via API
 
 ### 11.3 Actions (nodes)
 
 #### Sending
+
 - Send email
 - Send SMS
 - Send transactional
 
 #### Contact manipulation
+
 - Add/remove tag
 - Add/remove from list
 - Update field
 - Update Engagement Score
 
 #### Logic
+
 - Wait (time delay)
 - Condition (if/else branch)
 - Goal (conversion event)
 - Random split (A/B)
 
 #### External
+
 - Webhook
 - API call
 
 ### 11.4 Trigger campaigns (advanced)
 
-Per testimonial: *"advanced trigger campaign creation"*
+Per testimonial: _"advanced trigger campaign creation"_
 
 - **Real-time triggered** based on events
 - **Multi-condition** triggers
@@ -965,6 +1020,7 @@ Per testimonial: *"advanced trigger campaign creation"*
 ### 11.5 Use case examples
 
 #### Multi-touch welcome series
+
 ```
 Trigger: Subscribed to "Newsletter"
    ↓
@@ -986,6 +1042,7 @@ End
 ```
 
 #### Cart abandonment s SMS escalation
+
 ```
 Trigger: Cart abandoned >2h
    ↓
@@ -1015,7 +1072,7 @@ Exit
 ### 12.1 Advanced personalization
 
 Per testimonial:
-*"dynamic content combined with advanced trigger campaign creation and sophisticated customer database segmentation"*
+_"dynamic content combined with advanced trigger campaign creation and sophisticated customer database segmentation"_
 
 ### 12.2 Variables system
 
@@ -1038,6 +1095,7 @@ Per testimonial:
 ```
 
 Use cases:
+
 - Cart contents
 - Product recommendations
 - Order line items
@@ -1056,6 +1114,7 @@ Use cases:
 ```
 
 Use cases:
+
 - Loyalty tier-based content
 - Gender-specific content
 - Geographic targeting
@@ -1064,6 +1123,7 @@ Use cases:
 ### 12.5 Variables + loops + conditions combined
 
 Powerful combinations enable:
+
 - **Personalized product recommendations** per subscriber
 - **Dynamic loyalty status** displays
 - **Per-recipient unique email** generation
@@ -1078,9 +1138,10 @@ Mailkit's **proprietary scoring system**.
 ### 13.1 What is Engagement Score
 
 Per oficiální:
-*"Our Engagement Score makes establishing and maintaining customer relationships way easier."*
+_"Our Engagement Score makes establishing and maintaining customer relationships way easier."_
 
 **Numerical score per subscriber** indicating engagement level:
+
 - Based on multiple behavioral signals
 - Updated continuously
 - Used for segmentation + workflows
@@ -1100,22 +1161,26 @@ Per oficiální:
 ### 13.3 Use cases
 
 #### Segment by engagement
+
 - **High engagers** (top 10% score) – VIP segment
 - **Medium engagers** – regular newsletters
 - **Low engagers** – re-engagement campaigns
 - **Inactive** – suppress or re-permission
 
 #### Workflow triggers
+
 - Engagement Score crossed threshold
 - Engagement Score declining
 - Re-engagement automation
 
 #### Deliverability optimization
+
 - **Send to high engagers first** (better reputation)
 - **Suppress low engagers** (avoid spam complaints)
 - **Engagement-based routing** (different IPs per engagement)
 
 #### Lifecycle management
+
 - Identify customer health
 - Predict churn risk
 - Identify upsell opportunities
@@ -1192,7 +1257,7 @@ Per oficiální:
 ## 16. Reports & Analytics
 
 Per oficiální focus:
-*"accurate reporting"*
+_"accurate reporting"_
 
 ### 16.1 Campaign reports
 
@@ -1256,10 +1321,10 @@ Per oficiální focus:
 ### 17.1 "Unbeatable deliverability"
 
 Per testimonial:
-*"The unbeatable deliverability of our emails combined with dynamic content..."*
+_"The unbeatable deliverability of our emails combined with dynamic content..."_
 
 Per oficiální:
-*"top worldwide deliverability"*
+_"top worldwide deliverability"_
 
 ### 17.2 Reputation infrastructure
 
@@ -1272,6 +1337,7 @@ Per oficiální:
 ### 17.3 CSA membership advantage
 
 **Certified Senders Alliance:**
+
 - Whitelisted by major German ISPs (web.de, GMX, etc.)
 - Pre-defined inbox placement
 - Continuous monitoring required
@@ -1330,7 +1396,7 @@ Per oficiální:
 ### 18.1 API-first approach
 
 Per testimonials:
-*"easy to connect our internal system via API, which was helped by very detailed and well written documentation"*
+_"easy to connect our internal system via API, which was helped by very detailed and well written documentation"_
 
 - **Comprehensive REST API**
 - **Detailed documentation**
@@ -1341,6 +1407,7 @@ Per testimonials:
 ### 18.2 API endpoints
 
 Typical structure:
+
 - `/contacts` – contact management
 - `/lists` – list management
 - `/segments` – segmentation
@@ -1355,9 +1422,10 @@ Typical structure:
 ### 18.3 Data sources
 
 Per oficiální features:
-*"Interconnect using the API or data sources."*
+_"Interconnect using the API or data sources."_
 
 **Data source integration:**
+
 - Direct database connections (configured)
 - CSV/FTP imports
 - Webhook-based updates
@@ -1366,11 +1434,13 @@ Per oficiální features:
 ### 18.4 Native integrations
 
 ⚠️ **Mailkit má méně out-of-box integrations** než Mailchimp/Ecomail/SmartEmailing:
+
 - API-first approach
 - Custom integration projects typical
 - Per-client integration setup
 
 Known integrations (less prominently advertised):
+
 - Various e-commerce platforms via API
 - CRM systems via API
 - ERP systems via API
@@ -1403,10 +1473,11 @@ Known integrations (less prominently advertised):
 ### 19.2 ISO certifications
 
 (See section 4)
+
 - ISO 27001 – Information Security
 - ISO 27701 – Privacy Information
 - ISO 9001 – Quality Management
-- + 4 more
+- - 4 more
 
 ### 19.3 GDPR compliance
 
@@ -1428,6 +1499,7 @@ Known integrations (less prominently advertised):
 ### 19.5 Industry-specific compliance
 
 ISO certifications enable:
+
 - **Banking / finance** compliance
 - **Healthcare** (HIPAA-ready architecture)
 - **Government** procurement
@@ -1447,6 +1519,7 @@ ISO certifications enable:
 ### 19.7 Data sovereignty
 
 For multi-national enterprises:
+
 - **No US subprocessors**
 - **No GDPR Schrems II issues**
 - **EU sovereign cloud equivalent**
@@ -1572,6 +1645,7 @@ For multi-national enterprises:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### Mailkit je dobrá volba pokud
+
 - Provozujete **mid-market nebo enterprise** business
 - Vyžadujete **ISO 27001 + další compliance** certifikace
 - Pracujete v **regulovaných odvětvích** (banking, healthcare, government, critical infrastructure)
@@ -1588,6 +1662,7 @@ For multi-national enterprises:
 - Budget je **flexible** (premium positioning)
 
 ### Mailkit není dobrá volba pokud
+
 - Jste **small business / solopreneur** – overkill + nedostupné
 - Hledáte **self-service freemium** – Mailchimp, MailerLite, Ecomail lepší
 - Nemáte **dev resources** pro API integration
@@ -1602,20 +1677,20 @@ For multi-national enterprises:
 
 ### Mailkit vs. konkurence
 
-| Konkurence | Kdy lepší než Mailkit |
-|---|---|
-| **SmartEmailing** | Public pricing, jmeniny features, Shoptet deep integration, lower entry |
-| **Ecomail** | Free plan up to 40K, modernější UI, lower entry price, Shoptet |
-| **Mailchimp** | Brand recognition, self-service, free plan, larger template library |
-| **MailerLite** | Solopreneur simplicity, public pricing, free plan |
-| **Brevo** | Transactional v base, volume-based transparent pricing, multilingual |
-| **Klaviyo** | DTC e-commerce, Shopify deep, predictive AI |
-| **HubSpot** | Full B2B CRM, multi-Hub vision, sales-led |
-| **ActiveCampaign** | Mid-market deep automation, integrated CRM, 970+ integrations |
-| **GetResponse** | Webinars + courses + landing pages + 27 langs UI |
-| **ExpertSender** | Polský origin, similar premium positioning, e-commerce CDP |
-| **SAP Emarsys** | Enterprise scale, SAP ecosystem, Gartner Leader |
+| Konkurence         | Kdy lepší než Mailkit                                                   |
+| ------------------ | ----------------------------------------------------------------------- |
+| **SmartEmailing**  | Public pricing, jmeniny features, Shoptet deep integration, lower entry |
+| **Ecomail**        | Free plan up to 40K, modernější UI, lower entry price, Shoptet          |
+| **Mailchimp**      | Brand recognition, self-service, free plan, larger template library     |
+| **MailerLite**     | Solopreneur simplicity, public pricing, free plan                       |
+| **Brevo**          | Transactional v base, volume-based transparent pricing, multilingual    |
+| **Klaviyo**        | DTC e-commerce, Shopify deep, predictive AI                             |
+| **HubSpot**        | Full B2B CRM, multi-Hub vision, sales-led                               |
+| **ActiveCampaign** | Mid-market deep automation, integrated CRM, 970+ integrations           |
+| **GetResponse**    | Webinars + courses + landing pages + 27 langs UI                        |
+| **ExpertSender**   | Polský origin, similar premium positioning, e-commerce CDP              |
+| **SAP Emarsys**    | Enterprise scale, SAP ecosystem, Gartner Leader                         |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů mailkit.com a praktických zdrojů (G2, SMTPedia, Crunchbase, Email Vendor Selection, customer testimonials). Pro nejaktuálnější detaily je nutný engagement s Mailkit sales teamem.*
+_Dokument zpracován z oficiálních zdrojů mailkit.com a praktických zdrojů (G2, SMTPedia, Crunchbase, Email Vendor Selection, customer testimonials). Pro nejaktuálnější detaily je nutný engagement s Mailkit sales teamem._

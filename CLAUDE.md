@@ -6,16 +6,16 @@ Turborepo monorepo with pnpm workspaces.
 
 ### Packages
 
-| Package | Path | Language | Purpose |
-|---------|------|----------|---------|
-| `@forgemsg/api` | `apps/api` | TypeScript | Fastify REST API (port 3001) |
-| `@forgemsg/web` | `apps/web` | TypeScript | Next.js 15 App Router frontend (port 3000) |
-| `@forgemsg/editor` | `apps/editor` | TypeScript | React email block editor (library) |
-| `engine` | `apps/engine` | Go | SMTP sending engine (MTA, DKIM, connection pooling) |
-| `@forgemsg/workers` | `apps/workers` | TypeScript | BullMQ job processors |
-| `sms-gateway` | `apps/sms-gateway` | Go | SMPP v3.4 SMS gateway |
-| `@forgemsg/voice-bot` | `apps/voice-bot` | TypeScript | AI voice robot (Twilio + Deepgram + ElevenLabs + Claude) |
-| `@forgemsg/shared` | `packages/shared` | TypeScript | Shared types, utils, channel adapter interface |
+| Package               | Path               | Language   | Purpose                                                  |
+| --------------------- | ------------------ | ---------- | -------------------------------------------------------- |
+| `@forgemsg/api`       | `apps/api`         | TypeScript | Fastify REST API (port 3001)                             |
+| `@forgemsg/web`       | `apps/web`         | TypeScript | Next.js 15 App Router frontend (port 3000)               |
+| `@forgemsg/editor`    | `apps/editor`      | TypeScript | React email block editor (library)                       |
+| `engine`              | `apps/engine`      | Go         | SMTP sending engine (MTA, DKIM, connection pooling)      |
+| `@forgemsg/workers`   | `apps/workers`     | TypeScript | BullMQ job processors                                    |
+| `sms-gateway`         | `apps/sms-gateway` | Go         | SMPP v3.4 SMS gateway                                    |
+| `@forgemsg/voice-bot` | `apps/voice-bot`   | TypeScript | AI voice robot (Twilio + Deepgram + ElevenLabs + Claude) |
+| `@forgemsg/shared`    | `packages/shared`  | TypeScript | Shared types, utils, channel adapter interface           |
 
 ### Infrastructure
 
@@ -52,6 +52,7 @@ src/
 ### Error Handling
 
 Use `AppError` class from `@forgemsg/shared`:
+
 - Always throw typed errors with `code`, `message`, `statusCode`
 - Never expose internal errors to API consumers
 - Log errors with request context (requestId, orgId, userId)
@@ -99,6 +100,7 @@ Use `AppError` class from `@forgemsg/shared`:
 ## Channel Adapter Pattern
 
 All messaging channels implement `IChannelAdapter` from `@forgemsg/shared`:
+
 - `send()`, `getStatus()`, `estimateCost()`, `handleInbound()`, `validateTemplate()`, `getChannelLimits()`
 - Each adapter lives in its own directory under the relevant package
 - Provider failover: primary → backup with automatic switching
@@ -113,6 +115,7 @@ All messaging channels implement `IChannelAdapter` from `@forgemsg/shared`:
 ## Environment Variables
 
 Required in `.env.local`:
+
 ```
 DATABASE_URL=postgresql://forgemsg:forgemsg@localhost:5432/forgemsg
 REDIS_URL=redis://localhost:6379

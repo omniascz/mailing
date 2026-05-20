@@ -47,7 +47,9 @@ export interface HelpdeskAnalytics {
   backlog: Array<{ bucket: string; count: number }>;
 }
 
-export async function getHelpdeskAnalytics(input: HelpdeskAnalyticsInput): Promise<HelpdeskAnalytics> {
+export async function getHelpdeskAnalytics(
+  input: HelpdeskAnalyticsInput,
+): Promise<HelpdeskAnalytics> {
   const { orgId, from, to, channel, agentId } = input;
 
   const baseConds = [
@@ -86,17 +88,16 @@ export async function getHelpdeskAnalytics(input: HelpdeskAnalyticsInput): Promi
     .from(
       db
         .select({
-          seconds: sql<number>`EXTRACT(EPOCH FROM (MIN(tm.created_at) - ht.created_at))`.as('seconds'),
+          seconds: sql<number>`EXTRACT(EPOCH FROM (MIN(tm.created_at) - ht.created_at))`.as(
+            'seconds',
+          ),
         })
         .from((helpdeskTickets as unknown as { as(a: string): typeof helpdeskTickets }).as('ht'))
         .innerJoin(
           (ticketMessages as unknown as { as(a: string): typeof ticketMessages }).as('tm'),
-          and(
-            eq(sql`tm.ticket_id`, sql`ht.id`),
-            eq(sql`tm.direction`, sql`'outbound'`),
-          ),
+          and(eq(sql`tm.ticket_id`, sql`ht.id`), eq(sql`tm.direction`, sql`'outbound'`)),
         )
-        .where(and(...baseConds.map(c => sql`${c}`)))
+        .where(and(...baseConds.map((c) => sql`${c}`)))
         .groupBy(sql`ht.id`, sql`ht.created_at`)
         .as('first_reply'),
     );
@@ -159,16 +160,21 @@ export async function getHelpdeskAnalytics(input: HelpdeskAnalyticsInput): Promi
     avgFirstResponseSeconds: responseRow?.avgSeconds ?? null,
     avgResolutionSeconds: resolutionRow?.avgSeconds ?? null,
     avgCsat: null, // CSAT collected via separate survey flow
-    byChannel: channelRows.map(r => ({ channel: r.channel, total: r.total, open: r.open, closed: r.closed })),
+    byChannel: channelRows.map((r) => ({
+      channel: r.channel,
+      total: r.total,
+      open: r.open,
+      closed: r.closed,
+    })),
     byAgent: agentRows
-      .filter(r => r.agentId != null)
-      .map(r => ({
+      .filter((r) => r.agentId != null)
+      .map((r) => ({
         agentId: r.agentId!,
         assigned: r.assigned,
         closed: r.closed,
         avgResponseSeconds: r.avgResponseSeconds ?? null,
       })),
-    backlog: backlogBuckets.map(r => ({ bucket: r.bucket, count: r.count })),
+    backlog: backlogBuckets.map((r) => ({ bucket: r.bucket, count: r.count })),
   };
 }
 

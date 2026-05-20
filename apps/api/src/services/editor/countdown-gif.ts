@@ -1,6 +1,5 @@
-// @ts-ignore — sharp types not bundled in this workspace config
 import sharp from 'sharp';
-// @ts-ignore — no bundled types for gif-encoder-2
+// @ts-expect-error — no bundled types for gif-encoder-2
 import GIFEncoder from 'gif-encoder-2';
 
 export interface CountdownStyle {
@@ -69,9 +68,10 @@ function buildSvgFrame(parts: Parts, style: Required<CountdownStyle>): string {
   const cellsSvg = cells
     .map(({ value, label }, i) => {
       const x = cellW * i + cellW / 2;
-      const separator = i < 3
-        ? `<text x="${cellW * (i + 1)}" y="${numY}" font-family="${fontFamily}" font-size="${numSize}" fill="${textColor}" text-anchor="middle" dominant-baseline="middle" font-weight="bold">:</text>`
-        : '';
+      const separator =
+        i < 3
+          ? `<text x="${cellW * (i + 1)}" y="${numY}" font-family="${fontFamily}" font-size="${numSize}" fill="${textColor}" text-anchor="middle" dominant-baseline="middle" font-weight="bold">:</text>`
+          : '';
       return `
         <text x="${x}" y="${numY}" font-family="${fontFamily}" font-size="${numSize}" fill="${textColor}" text-anchor="middle" dominant-baseline="middle" font-weight="bold">${value}</text>
         <text x="${x}" y="${labelY}" font-family="${fontFamily}" font-size="${labelSize}" fill="${labelColor}" text-anchor="middle">${label}</text>

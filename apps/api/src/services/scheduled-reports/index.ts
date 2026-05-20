@@ -21,17 +21,29 @@ export function computeNextRun(frequency: ReportFrequency, from: Date = new Date
   return next;
 }
 
-export async function createScheduledReport(orgId: string, input: {
-  name: string; reportType: ReportType; frequency: ReportFrequency;
-  recipients: string[]; params?: Record<string, unknown>;
-}): Promise<ScheduledReport> {
+export async function createScheduledReport(
+  orgId: string,
+  input: {
+    name: string;
+    reportType: ReportType;
+    frequency: ReportFrequency;
+    recipients: string[];
+    params?: Record<string, unknown>;
+  },
+): Promise<ScheduledReport> {
   if (input.recipients.length === 0) throw AppError.badRequest('At least one recipient required');
-  const [row] = await db.insert(scheduledReports).values({
-    orgId, name: input.name, reportType: input.reportType,
-    frequency: input.frequency, recipients: input.recipients,
-    params: input.params ?? {},
-    nextRunAt: computeNextRun(input.frequency),
-  }).returning();
+  const [row] = await db
+    .insert(scheduledReports)
+    .values({
+      orgId,
+      name: input.name,
+      reportType: input.reportType,
+      frequency: input.frequency,
+      recipients: input.recipients,
+      params: input.params ?? {},
+      nextRunAt: computeNextRun(input.frequency),
+    })
+    .returning();
   return row!;
 }
 
@@ -40,7 +52,8 @@ export async function listScheduledReports(orgId: string): Promise<ScheduledRepo
 }
 
 export async function deleteScheduledReport(orgId: string, id: string): Promise<void> {
-  await db.delete(scheduledReports)
+  await db
+    .delete(scheduledReports)
     .where(and(eq(scheduledReports.id, id), eq(scheduledReports.orgId, orgId)));
 }
 
@@ -62,22 +75,28 @@ async function renderReport(report: ScheduledReport): Promise<string> {
 
 /** Cron entrypoint: dispatch every report whose nextRunAt is in the past. */
 export async function runDueReports(now: Date = new Date()): Promise<DispatchResult[]> {
-  const due = await db.select().from(scheduledReports).where(
-    and(eq(scheduledReports.enabled, true), lte(scheduledReports.nextRunAt, now)),
-  );
+  const due = await db
+    .select()
+    .from(scheduledReports)
+    .where(and(eq(scheduledReports.enabled, true), lte(scheduledReports.nextRunAt, now)));
 
   const results: DispatchResult[] = [];
   for (const report of due) {
     const html = await renderReport(report);
     // Defer actual email delivery to the workers queue. Here we just record dispatch.
     results.push({
-      reportId: report.id, reportType: report.reportType,
-      recipients: report.recipients.length, rendered: html,
+      reportId: report.id,
+      reportType: report.reportType,
+      recipients: report.recipients.length,
+      rendered: html,
     });
-    await db.update(scheduledReports).set({
-      lastRunAt: now,
-      nextRunAt: computeNextRun(report.frequency as ReportFrequency, now),
-    }).where(eq(scheduledReports.id, report.id));
+    await db
+      .update(scheduledReports)
+      .set({
+        lastRunAt: now,
+        nextRunAt: computeNextRun(report.frequency as ReportFrequency, now),
+      })
+      .where(eq(scheduledReports.id, report.id));
   }
   return results;
 }

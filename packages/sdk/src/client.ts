@@ -2,7 +2,12 @@
  * ForgeMsg API client — fetch-based, TypeScript, zero external dependencies.
  */
 
-import type { ForgemsgClientOptions, ListResponse, ItemResponse, PaginationOptions } from './types.js';
+import type {
+  ForgemsgClientOptions,
+  ListResponse,
+  ItemResponse,
+  PaginationOptions,
+} from './types.js';
 
 const DEFAULT_BASE_URL = 'https://api.forgemsg.io';
 const DEFAULT_MAX_RETRIES = 3;
@@ -35,12 +40,7 @@ export class ForgemsgClient {
 
   // ─── HTTP ────────────────────────────────────────────────────────────────────
 
-  private async request<T>(
-    method: string,
-    path: string,
-    body?: unknown,
-    retries = 0,
-  ): Promise<T> {
+  private async request<T>(method: string, path: string, body?: unknown, retries = 0): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
       'X-API-Key': this.apiKey,
@@ -65,7 +65,7 @@ export class ForgemsgClient {
     if (!res.ok) {
       let errorBody: Record<string, unknown> = {};
       try {
-        errorBody = await res.json() as Record<string, unknown>;
+        errorBody = (await res.json()) as Record<string, unknown>;
       } catch {
         // ignore
       }

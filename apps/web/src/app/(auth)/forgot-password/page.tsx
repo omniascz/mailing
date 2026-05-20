@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,8 +25,9 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/auth/forgot-password', {
+      const res = await fetch(`${API_BASE}/api/v1/auth/forgot-password`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
@@ -52,7 +55,10 @@ export default function ForgotPasswordPage() {
           <p className="mt-2 text-sm text-secondary-500">
             We sent a password reset link to <strong>{email}</strong>
           </p>
-          <Link href="/login" className="mt-6 inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700">
+          <Link
+            href="/login"
+            className="mt-6 inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+          >
             <ArrowLeft className="h-4 w-4" /> Back to sign in
           </Link>
         </CardContent>
@@ -84,7 +90,10 @@ export default function ForgotPasswordPage() {
             Send reset link
           </Button>
           <div className="text-center">
-            <Link href="/login" className="inline-flex items-center gap-1 text-sm text-secondary-500 hover:text-secondary-700">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1 text-sm text-secondary-500 hover:text-secondary-700"
+            >
               <ArrowLeft className="h-4 w-4" /> Back to sign in
             </Link>
           </div>

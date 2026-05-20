@@ -70,10 +70,7 @@ async function assertCampaignExists(campaignId: string, orgId: string) {
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
-export async function getCampaignStats(
-  campaignId: string,
-  orgId: string,
-): Promise<CampaignStats> {
+export async function getCampaignStats(campaignId: string, orgId: string): Promise<CampaignStats> {
   await assertCampaignExists(campaignId, orgId);
 
   // Count each event type
@@ -85,14 +82,11 @@ export async function getCampaignStats(
       uniqueContacts: countDistinct(emailEvents.contactId),
     })
     .from(emailEvents)
-    .where(
-      and(eq(emailEvents.campaignId, campaignId), eq(emailEvents.orgId, orgId)),
-    )
+    .where(and(eq(emailEvents.campaignId, campaignId), eq(emailEvents.orgId, orgId)))
     .groupBy(emailEvents.eventType, emailEvents.bounceType);
 
   const get = (type: string) => rows.find((r) => r.eventType === type);
-  const getUnique = (type: string) =>
-    rows.find((r) => r.eventType === type)?.uniqueContacts ?? 0;
+  const getUnique = (type: string) => rows.find((r) => r.eventType === type)?.uniqueContacts ?? 0;
 
   const sent = get('send')?.total ?? 0;
   const delivered = get('deliver')?.total ?? 0;
@@ -320,7 +314,8 @@ export async function compareCampaigns(
   campaignIds: string[],
 ): Promise<CampaignComparison[]> {
   if (campaignIds.length === 0) return [];
-  if (campaignIds.length > 20) throw AppError.badRequest('Cannot compare more than 20 campaigns at once');
+  if (campaignIds.length > 20)
+    throw AppError.badRequest('Cannot compare more than 20 campaigns at once');
 
   const { inArray } = await import('drizzle-orm');
 
@@ -337,7 +332,7 @@ export async function compareCampaigns(
     .from(campaigns)
     .where(and(eq(campaigns.orgId, orgId), inArray(campaigns.id, campaignIds)));
 
-  const found = new Set(rows.map(r => r.id));
+  const found = new Set(rows.map((r) => r.id));
   for (const id of campaignIds) {
     if (!found.has(id)) throw AppError.notFound(`Campaign not found: ${id}`);
   }
@@ -361,8 +356,8 @@ export async function compareCampaigns(
   );
 
   // Return in the requested order
-  const index = new Map(results.map(r => [r.campaign.id, r]));
-  return campaignIds.map(id => index.get(id)!);
+  const index = new Map(results.map((r) => [r.campaign.id, r]));
+  return campaignIds.map((id) => index.get(id)!);
 }
 
 // ─── Org-level stats (for anomaly detection and dashboards) ──────────────────
@@ -378,10 +373,7 @@ export interface OrgDailyStats {
   complaints: number;
 }
 
-export async function getOrgDailyStats(
-  orgId: string,
-  days: number,
-): Promise<OrgDailyStats[]> {
+export async function getOrgDailyStats(orgId: string, days: number): Promise<OrgDailyStats[]> {
   const since = new Date();
   since.setDate(since.getDate() - days);
 
@@ -402,18 +394,41 @@ export async function getOrgDailyStats(
   for (const row of rows as unknown as Array<Record<string, unknown>>) {
     const date = new Date(row.date as string).toISOString().slice(0, 10);
     if (!map.has(date)) {
-      map.set(date, { date, sent: 0, delivered: 0, opens: 0, clicks: 0, bounces: 0, unsubs: 0, complaints: 0 });
+      map.set(date, {
+        date,
+        sent: 0,
+        delivered: 0,
+        opens: 0,
+        clicks: 0,
+        bounces: 0,
+        unsubs: 0,
+        complaints: 0,
+      });
     }
     const s = map.get(date)!;
     const cnt = Number(row.cnt);
     switch (row.event_type) {
-      case 'send': s.sent += cnt; break;
-      case 'deliver': s.delivered += cnt; break;
-      case 'open': s.opens += cnt; break;
-      case 'click': s.clicks += cnt; break;
-      case 'bounce': s.bounces += cnt; break;
-      case 'unsubscribe': s.unsubs += cnt; break;
-      case 'complaint': s.complaints += cnt; break;
+      case 'send':
+        s.sent += cnt;
+        break;
+      case 'deliver':
+        s.delivered += cnt;
+        break;
+      case 'open':
+        s.opens += cnt;
+        break;
+      case 'click':
+        s.clicks += cnt;
+        break;
+      case 'bounce':
+        s.bounces += cnt;
+        break;
+      case 'unsubscribe':
+        s.unsubs += cnt;
+        break;
+      case 'complaint':
+        s.complaints += cnt;
+        break;
     }
   }
 

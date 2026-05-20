@@ -137,14 +137,20 @@ describe('frequency capping', () => {
     const { checkFrequencyCap, recordSend } = await loadModule(fake);
     const base = 10_000_000;
 
-    await recordSend({ orgId: ORG, contactId: CONTACT, channel: 'email', now: base }, fake as unknown as Redis);
+    await recordSend(
+      { orgId: ORG, contactId: CONTACT, channel: 'email', now: base },
+      fake as unknown as Redis,
+    );
     const afterOne = await checkFrequencyCap(
       { orgId: ORG, contactId: CONTACT, channel: 'email', now: base + 1 },
       fake as unknown as Redis,
     );
     expect(afterOne.allowed).toBe(true);
 
-    await recordSend({ orgId: ORG, contactId: CONTACT, channel: 'email', now: base + 2 }, fake as unknown as Redis);
+    await recordSend(
+      { orgId: ORG, contactId: CONTACT, channel: 'email', now: base + 2 },
+      fake as unknown as Redis,
+    );
     const afterTwo = await checkFrequencyCap(
       { orgId: ORG, contactId: CONTACT, channel: 'email', now: base + 3 },
       fake as unknown as Redis,
@@ -168,7 +174,10 @@ describe('frequency capping', () => {
     const { checkFrequencyCap, recordSend } = await loadModule(fake);
     const base = 20_000_000;
 
-    await recordSend({ orgId: ORG, contactId: CONTACT, channel: 'email', now: base }, fake as unknown as Redis);
+    await recordSend(
+      { orgId: ORG, contactId: CONTACT, channel: 'email', now: base },
+      fake as unknown as Redis,
+    );
     // 2 hours later, outside a 1-hour window
     const later = base + 2 * 3600 * 1000;
     const result = await checkFrequencyCap(
@@ -192,8 +201,14 @@ describe('frequency capping', () => {
     ]);
     const { checkFrequencyCap, recordSend } = await loadModule(fake);
     const base = 30_000_000;
-    await recordSend({ orgId: ORG, contactId: CONTACT, channel: 'email', now: base }, fake as unknown as Redis);
-    await recordSend({ orgId: ORG, contactId: CONTACT, channel: 'sms', now: base + 1 }, fake as unknown as Redis);
+    await recordSend(
+      { orgId: ORG, contactId: CONTACT, channel: 'email', now: base },
+      fake as unknown as Redis,
+    );
+    await recordSend(
+      { orgId: ORG, contactId: CONTACT, channel: 'sms', now: base + 1 },
+      fake as unknown as Redis,
+    );
 
     const result = await checkFrequencyCap(
       { orgId: ORG, contactId: CONTACT, channel: 'push', now: base + 2 },

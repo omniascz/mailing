@@ -12,17 +12,23 @@ import { z } from 'zod';
 import { isHeldOut } from '../../../services/holdout/index.js';
 
 const internalHoldoutRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/api/v1/internal/holdout/check', {
-    schema: { tags: ['Internal'] },
-  }, async (req, reply) => {
-    const { orgId, contactId } = z.object({
-      orgId: z.string().uuid(),
-      contactId: z.string().uuid(),
-    }).parse(req.query);
+  app.get(
+    '/api/v1/internal/holdout/check',
+    {
+      schema: { tags: ['Internal'] },
+    },
+    async (req, reply) => {
+      const { orgId, contactId } = z
+        .object({
+          orgId: z.string().uuid(),
+          contactId: z.string().uuid(),
+        })
+        .parse(req.query);
 
-    const heldOut = await isHeldOut(orgId, contactId);
-    return reply.send({ data: { heldOut } });
-  });
+      const heldOut = await isHeldOut(orgId, contactId);
+      return reply.send({ data: { heldOut } });
+    },
+  );
 };
 
 export default internalHoldoutRoutes;

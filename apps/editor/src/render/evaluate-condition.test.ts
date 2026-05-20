@@ -3,9 +3,7 @@ import { evaluateCondition } from './evaluate-condition.js';
 
 describe('evaluateCondition', () => {
   it('returns true for an empty AND condition', () => {
-    expect(
-      evaluateCondition({ operator: 'AND', rules: [] }, { firstName: 'x' }),
-    ).toBe(true);
+    expect(evaluateCondition({ operator: 'AND', rules: [] }, { firstName: 'x' })).toBe(true);
   });
 
   it('eq operator matches loosely across string/number', () => {

@@ -374,11 +374,11 @@ export async function listEvents(
   const conditions = [eq(abuseEvents.orgId, orgId)];
   if (opts.status)
     conditions.push(
-      eq(abuseEvents.status, opts.status as typeof abuseEvents.status.enumValues[number]),
+      eq(abuseEvents.status, opts.status as (typeof abuseEvents.status.enumValues)[number]),
     );
   if (opts.severity)
     conditions.push(
-      eq(abuseEvents.severity, opts.severity as typeof abuseEvents.severity.enumValues[number]),
+      eq(abuseEvents.severity, opts.severity as (typeof abuseEvents.severity.enumValues)[number]),
     );
   return db
     .select()
@@ -493,7 +493,11 @@ export async function checkSendingAllowed(
     .filter((s) => s.action === 'throttle' && s.throttleRatePerHour > 0)
     .sort((a, b) => a.throttleRatePerHour - b.throttleRatePerHour);
   if (throttles.length > 0) {
-    return { allowed: true, sanction: throttles[0], throttleRatePerHour: throttles[0]!.throttleRatePerHour };
+    return {
+      allowed: true,
+      sanction: throttles[0],
+      throttleRatePerHour: throttles[0]!.throttleRatePerHour,
+    };
   }
   return { allowed: true };
 }

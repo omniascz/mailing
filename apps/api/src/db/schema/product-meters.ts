@@ -7,15 +7,29 @@
 
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, integer, decimal,
-  timestamp, index, uniqueIndex,
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  decimal,
+  timestamp,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 /** Supported billable products */
 export const METER_PRODUCTS = [
-  'email', 'sms', 'whatsapp', 'voice', 'push',
-  'in_app', 'viber', 'rcs', 'ai_tokens', 'loyalty',
+  'email',
+  'sms',
+  'whatsapp',
+  'voice',
+  'push',
+  'in_app',
+  'viber',
+  'rcs',
+  'ai_tokens',
+  'loyalty',
 ] as const;
 
 export type MeterProduct = (typeof METER_PRODUCTS)[number];
@@ -23,8 +37,12 @@ export type MeterProduct = (typeof METER_PRODUCTS)[number];
 export const productUsageMeters = pgTable(
   'product_usage_meters',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
 
     /** Billable product */
     product: varchar('product', { length: 32 }).notNull(),
@@ -55,8 +73,12 @@ export const productUsageMeters = pgTable(
 export const productMeterEvents = pgTable(
   'product_meter_events',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     product: varchar('product', { length: 32 }).notNull(),
     units: integer('units').notNull().default(1),
     referenceId: varchar('reference_id', { length: 255 }),

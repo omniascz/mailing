@@ -7,19 +7,43 @@
 
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  loyaltyPrograms,
-  type LoyaltyProgram,
-  type LoyaltyTier,
-} from '../../db/schema/index.js';
+import { loyaltyPrograms, type LoyaltyProgram, type LoyaltyTier } from '../../db/schema/index.js';
 
 // ─── Default tiers ────────────────────────────────────────────────────────────
 
 export const DEFAULT_TIERS: LoyaltyTier[] = [
-  { id: 'bronze', name: 'Bronze', minPoints: 0,    color: '#CD7F32', multiplier: 1.0, benefits: ['Exclusive member discounts'] },
-  { id: 'silver', name: 'Silver', minPoints: 500,  color: '#C0C0C0', multiplier: 1.25, benefits: ['5% bonus on all purchases', 'Early access to sales'] },
-  { id: 'gold',   name: 'Gold',   minPoints: 2000, color: '#FFD700', multiplier: 1.5, benefits: ['10% bonus on all purchases', 'Free shipping', 'Birthday reward'] },
-  { id: 'platinum', name: 'Platinum', minPoints: 10000, color: '#E5E4E2', multiplier: 2.0, benefits: ['20% bonus on all purchases', 'Free shipping', 'VIP support', 'Quarterly gift'] },
+  {
+    id: 'bronze',
+    name: 'Bronze',
+    minPoints: 0,
+    color: '#CD7F32',
+    multiplier: 1.0,
+    benefits: ['Exclusive member discounts'],
+  },
+  {
+    id: 'silver',
+    name: 'Silver',
+    minPoints: 500,
+    color: '#C0C0C0',
+    multiplier: 1.25,
+    benefits: ['5% bonus on all purchases', 'Early access to sales'],
+  },
+  {
+    id: 'gold',
+    name: 'Gold',
+    minPoints: 2000,
+    color: '#FFD700',
+    multiplier: 1.5,
+    benefits: ['10% bonus on all purchases', 'Free shipping', 'Birthday reward'],
+  },
+  {
+    id: 'platinum',
+    name: 'Platinum',
+    minPoints: 10000,
+    color: '#E5E4E2',
+    multiplier: 2.0,
+    benefits: ['20% bonus on all purchases', 'Free shipping', 'VIP support', 'Quarterly gift'],
+  },
 ];
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -45,10 +69,7 @@ export function validateTiers(tiers: LoyaltyTier[]): void {
   }
 }
 
-export function validateExpiryPolicy(
-  expiryType: string,
-  expiryValue?: string | null,
-): void {
+export function validateExpiryPolicy(expiryType: string, expiryValue?: string | null): void {
   if (expiryType === 'rolling') {
     const days = Number(expiryValue);
     if (!expiryValue || isNaN(days) || days < 1) {
@@ -180,7 +201,10 @@ export function resolveTier(tiers: LoyaltyTier[], lifetimePoints: number): Loyal
  * Get the tier that would be reached NEXT after the current one.
  * Used to show progress toward the next tier in the member dashboard.
  */
-export function getNextTier(tiers: LoyaltyTier[], lifetimePoints: number): {
+export function getNextTier(
+  tiers: LoyaltyTier[],
+  lifetimePoints: number,
+): {
   tier: LoyaltyTier | null;
   pointsNeeded: number;
 } {

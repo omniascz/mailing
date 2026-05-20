@@ -153,10 +153,7 @@ async function writeTierTag(
 
   const tagId = tierTags[tier];
   if (!tagId) return;
-  await db
-    .insert(contactTags)
-    .values({ contactId, tagId })
-    .onConflictDoNothing();
+  await db.insert(contactTags).values({ contactId, tagId }).onConflictDoNothing();
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, text, jsonb, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  jsonb,
+  timestamp,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 import { users } from './users.js';
@@ -8,7 +17,9 @@ export const helpdeskTickets = pgTable(
   'helpdesk_tickets',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
     subject: varchar('subject', { length: 512 }).notNull(),
     status: varchar('status', { length: 32 }).notNull().default('open'),
@@ -20,7 +31,10 @@ export const helpdeskTickets = pgTable(
     // The handle the customer reached us through (email, E.164 phone, @handle, social_id)
     externalIdentity: varchar('external_identity', { length: 255 }),
     // Per-channel opaque metadata (e.g., WhatsApp wa_id, Twilio conversation SID)
-    channelMetadata: jsonb('channel_metadata').$type<Record<string, unknown>>().notNull().default({}),
+    channelMetadata: jsonb('channel_metadata')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
     assignedTo: uuid('assigned_to').references(() => users.id, { onDelete: 'set null' }),
     teamId: uuid('team_id'),
     tags: jsonb('tags').$type<string[]>().notNull().default([]),
@@ -43,14 +57,19 @@ export const ticketMessages = pgTable(
   'ticket_messages',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    ticketId: uuid('ticket_id').notNull().references(() => helpdeskTickets.id, { onDelete: 'cascade' }),
+    ticketId: uuid('ticket_id')
+      .notNull()
+      .references(() => helpdeskTickets.id, { onDelete: 'cascade' }),
     sender: varchar('sender', { length: 32 }).notNull(),
     // Message direction: inbound | outbound | internal (private agent note)
     direction: varchar('direction', { length: 16 }).notNull().default('inbound'),
     // External message id from the source channel (idempotency key for webhooks)
     externalMessageId: varchar('external_message_id', { length: 255 }),
     body: text('body').notNull(),
-    attachments: jsonb('attachments').$type<Array<{ url: string; name: string }>>().notNull().default([]),
+    attachments: jsonb('attachments')
+      .$type<Array<{ url: string; name: string }>>()
+      .notNull()
+      .default([]),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

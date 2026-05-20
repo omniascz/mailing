@@ -8,8 +8,13 @@ import { and, asc, eq } from 'drizzle-orm';
 import { createHash, randomBytes, createHmac } from 'node:crypto';
 import { db } from '../../db/client.js';
 import {
-  appStudioApps, appStudioWebhookSubscribers, appStudioActions, appStudioTriggers,
-  type AppStudioApp, type AppStudioAction, type AppStudioTrigger,
+  appStudioApps,
+  appStudioWebhookSubscribers,
+  appStudioActions,
+  appStudioTriggers,
+  type AppStudioApp,
+  type AppStudioAction,
+  type AppStudioTrigger,
 } from '../../db/schema/app-studio.js';
 import { AppError } from '../../lib/app-error.js';
 
@@ -31,7 +36,9 @@ export interface InstallAppInput {
   settings?: Record<string, unknown>;
 }
 
-export async function installApp(input: InstallAppInput): Promise<{ app: AppStudioApp; accessToken: string }> {
+export async function installApp(
+  input: InstallAppInput,
+): Promise<{ app: AppStudioApp; accessToken: string }> {
   if (!SLUG_RE.test(input.slug)) throw AppError.badRequest('slug must be kebab-case');
   const accessToken = `as_${randomBytes(24).toString('hex')}`;
   try {
@@ -58,7 +65,11 @@ export async function installApp(input: InstallAppInput): Promise<{ app: AppStud
 }
 
 export async function listApps(orgId: string): Promise<AppStudioApp[]> {
-  return db.select().from(appStudioApps).where(eq(appStudioApps.orgId, orgId)).orderBy(asc(appStudioApps.slug));
+  return db
+    .select()
+    .from(appStudioApps)
+    .where(eq(appStudioApps.orgId, orgId))
+    .orderBy(asc(appStudioApps.slug));
 }
 
 export async function getApp(orgId: string, idOrSlug: string): Promise<AppStudioApp> {
@@ -74,7 +85,13 @@ export async function getApp(orgId: string, idOrSlug: string): Promise<AppStudio
 export async function updateApp(
   orgId: string,
   id: string,
-  patch: Partial<{ name: string; description: string; iconUrl: string; settings: Record<string, unknown>; enabled: boolean }>,
+  patch: Partial<{
+    name: string;
+    description: string;
+    iconUrl: string;
+    settings: Record<string, unknown>;
+    enabled: boolean;
+  }>,
 ): Promise<AppStudioApp> {
   const [row] = await db
     .update(appStudioApps)
@@ -93,7 +110,10 @@ export async function uninstallApp(orgId: string, id: string): Promise<void> {
   if (!row) throw AppError.notFound('App');
 }
 
-export async function rotateAccessToken(orgId: string, id: string): Promise<{ accessToken: string }> {
+export async function rotateAccessToken(
+  orgId: string,
+  id: string,
+): Promise<{ accessToken: string }> {
   const accessToken = `as_${randomBytes(24).toString('hex')}`;
   const [row] = await db
     .update(appStudioApps)
@@ -108,14 +128,21 @@ export async function rotateAccessToken(orgId: string, id: string): Promise<{ ac
 export async function authenticateApp(token: string): Promise<AppStudioApp | null> {
   if (!token) return null;
   const tokenHash = hashToken(token);
-  const [row] = await db.select().from(appStudioApps).where(eq(appStudioApps.accessTokenHash, tokenHash)).limit(1);
+  const [row] = await db
+    .select()
+    .from(appStudioApps)
+    .where(eq(appStudioApps.accessTokenHash, tokenHash))
+    .limit(1);
   return row && row.enabled ? row : null;
 }
 
 // ─── Subscribers ─────────────────────────────────────────────────────────────
 
 export async function addSubscriber(input: {
-  orgId: string; appId: string; event: string; targetUrl: string;
+  orgId: string;
+  appId: string;
+  event: string;
+  targetUrl: string;
 }) {
   const secret = randomBytes(24).toString('hex');
   const [row] = await db
@@ -129,13 +156,20 @@ export async function listSubscribers(orgId: string, appId: string) {
   return db
     .select()
     .from(appStudioWebhookSubscribers)
-    .where(and(eq(appStudioWebhookSubscribers.orgId, orgId), eq(appStudioWebhookSubscribers.appId, appId)));
+    .where(
+      and(
+        eq(appStudioWebhookSubscribers.orgId, orgId),
+        eq(appStudioWebhookSubscribers.appId, appId),
+      ),
+    );
 }
 
 export async function removeSubscriber(orgId: string, id: string): Promise<void> {
   const [row] = await db
     .delete(appStudioWebhookSubscribers)
-    .where(and(eq(appStudioWebhookSubscribers.id, id), eq(appStudioWebhookSubscribers.orgId, orgId)))
+    .where(
+      and(eq(appStudioWebhookSubscribers.id, id), eq(appStudioWebhookSubscribers.orgId, orgId)),
+    )
     .returning();
   if (!row) throw AppError.notFound('Subscriber');
 }
@@ -145,7 +179,11 @@ export async function removeSubscriber(orgId: string, id: string): Promise<void>
  * deliveries attempted. Failures are logged in the row but don't throw —
  * the caller is the platform event bus, not an end-user.
  */
-export async function dispatchToApps(orgId: string, event: string, payload: Record<string, unknown>): Promise<number> {
+export async function dispatchToApps(
+  orgId: string,
+  event: string,
+  payload: Record<string, unknown>,
+): Promise<number> {
   const subs = await db
     .select()
     .from(appStudioWebhookSubscribers)
@@ -186,10 +224,17 @@ export async function dispatchToApps(orgId: string, event: string, payload: Reco
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
 export async function defineAction(input: {
-  orgId: string; appId: string; key: string; name: string;
-  description?: string; method?: string; urlTemplate: string;
-  headers?: Record<string, string>; bodyTemplate?: string;
-  paramSchema?: Record<string, unknown>; responsePath?: string;
+  orgId: string;
+  appId: string;
+  key: string;
+  name: string;
+  description?: string;
+  method?: string;
+  urlTemplate: string;
+  headers?: Record<string, string>;
+  bodyTemplate?: string;
+  paramSchema?: Record<string, unknown>;
+  responsePath?: string;
 }) {
   if (!SLUG_RE.test(input.key)) throw AppError.badRequest('action key must be kebab-case');
   try {
@@ -273,7 +318,13 @@ export async function executeAction(
   const [action] = await db
     .select()
     .from(appStudioActions)
-    .where(and(eq(appStudioActions.orgId, orgId), eq(appStudioActions.key, actionKey), eq(appStudioActions.enabled, true)))
+    .where(
+      and(
+        eq(appStudioActions.orgId, orgId),
+        eq(appStudioActions.key, actionKey),
+        eq(appStudioActions.enabled, true),
+      ),
+    )
     .limit(1);
   if (!action) throw AppError.notFound(`Action "${actionKey}"`);
 
@@ -291,19 +342,30 @@ export async function executeAction(
   let raw: unknown;
   const ct = res.headers.get('content-type') ?? '';
   if (ct.includes('application/json')) {
-    try { raw = await res.json(); } catch { raw = await res.text(); }
+    try {
+      raw = await res.json();
+    } catch {
+      raw = await res.text();
+    }
   } else {
     raw = await res.text();
   }
 
-  return { status: res.status, body: action.responsePath ? pickPath(raw, action.responsePath) : raw };
+  return {
+    status: res.status,
+    body: action.responsePath ? pickPath(raw, action.responsePath) : raw,
+  };
 }
 
 // ─── Triggers ────────────────────────────────────────────────────────────────
 
 export async function defineTrigger(input: {
-  orgId: string; appId: string; key: string; name: string;
-  eventName: string; payloadSchema?: Record<string, unknown>;
+  orgId: string;
+  appId: string;
+  key: string;
+  name: string;
+  eventName: string;
+  payloadSchema?: Record<string, unknown>;
 }): Promise<AppStudioTrigger> {
   if (!SLUG_RE.test(input.key)) throw AppError.badRequest('trigger key must be kebab-case');
   try {
@@ -334,11 +396,22 @@ export async function deleteTrigger(orgId: string, id: string): Promise<void> {
 }
 
 /** Look up a trigger by app + key (used by the inbound webhook router). */
-export async function findTrigger(orgId: string, appId: string, key: string): Promise<AppStudioTrigger | null> {
+export async function findTrigger(
+  orgId: string,
+  appId: string,
+  key: string,
+): Promise<AppStudioTrigger | null> {
   const [row] = await db
     .select()
     .from(appStudioTriggers)
-    .where(and(eq(appStudioTriggers.orgId, orgId), eq(appStudioTriggers.appId, appId), eq(appStudioTriggers.key, key), eq(appStudioTriggers.enabled, true)))
+    .where(
+      and(
+        eq(appStudioTriggers.orgId, orgId),
+        eq(appStudioTriggers.appId, appId),
+        eq(appStudioTriggers.key, key),
+        eq(appStudioTriggers.enabled, true),
+      ),
+    )
     .limit(1);
   return row ?? null;
 }

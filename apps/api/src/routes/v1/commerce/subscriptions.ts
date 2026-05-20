@@ -1,10 +1,17 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import {
-  createSubscription, getSubscription, listSubscriptions,
-  updateSubscription, pauseSubscription, resumeSubscription,
-  cancelSubscription, reactivateSubscription, listSubscriptionChanges,
-  softDeleteSubscription, runDueInvoiceGeneration,
+  createSubscription,
+  getSubscription,
+  listSubscriptions,
+  updateSubscription,
+  pauseSubscription,
+  resumeSubscription,
+  cancelSubscription,
+  reactivateSubscription,
+  listSubscriptionChanges,
+  softDeleteSubscription,
+  runDueInvoiceGeneration,
 } from '../../../services/commerce/subscriptions.js';
 
 const subscriptionLineItemSchema = z.object({
@@ -22,11 +29,13 @@ const commerceSubscriptionRoutes: FastifyPluginAsync = async (app) => {
   const auth = { preHandler: [app.authenticate] };
 
   app.get('/api/v1/commerce/subscriptions', auth, async (req, reply) => {
-    const q = z.object({
-      status: z.string().optional(),
-      contactId: z.string().uuid().optional(),
-      limit: z.coerce.number().int().min(1).max(200).default(50),
-    }).parse(req.query);
+    const q = z
+      .object({
+        status: z.string().optional(),
+        contactId: z.string().uuid().optional(),
+        limit: z.coerce.number().int().min(1).max(200).default(50),
+      })
+      .parse(req.query);
     const data = await listSubscriptions(req.user!.orgId, q);
     return reply.send({ data });
   });
@@ -38,20 +47,22 @@ const commerceSubscriptionRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.post('/api/v1/commerce/subscriptions', auth, async (req, reply) => {
-    const body = z.object({
-      contactId: z.string().uuid().optional(),
-      dealId: z.string().uuid().optional(),
-      currency: z.string().length(3).default('USD'),
-      lineItems: z.array(subscriptionLineItemSchema).min(1),
-      billingInterval: z.enum(['day', 'week', 'month', 'quarter', 'year']).default('month'),
-      billingIntervalCount: z.number().int().min(1).default(1),
-      billingAnchor: z.number().int().min(1).max(31).optional(),
-      startDate: z.string().datetime().optional(),
-      trialEndsAt: z.string().datetime().optional(),
-      endsAt: z.string().datetime().optional(),
-      stripeSubscriptionId: z.string().optional(),
-      metadata: z.record(z.unknown()).optional(),
-    }).parse(req.body);
+    const body = z
+      .object({
+        contactId: z.string().uuid().optional(),
+        dealId: z.string().uuid().optional(),
+        currency: z.string().length(3).default('USD'),
+        lineItems: z.array(subscriptionLineItemSchema).min(1),
+        billingInterval: z.enum(['day', 'week', 'month', 'quarter', 'year']).default('month'),
+        billingIntervalCount: z.number().int().min(1).default(1),
+        billingAnchor: z.number().int().min(1).max(31).optional(),
+        startDate: z.string().datetime().optional(),
+        trialEndsAt: z.string().datetime().optional(),
+        endsAt: z.string().datetime().optional(),
+        stripeSubscriptionId: z.string().optional(),
+        metadata: z.record(z.unknown()).optional(),
+      })
+      .parse(req.body);
 
     const data = await createSubscription(req.user!.orgId, {
       ...body,
@@ -64,11 +75,13 @@ const commerceSubscriptionRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch('/api/v1/commerce/subscriptions/:id', auth, async (req, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    const body = z.object({
-      lineItems: z.array(subscriptionLineItemSchema).min(1),
-      effective: z.enum(['immediate', 'next_period']).default('immediate'),
-      reason: z.string().max(500).optional(),
-    }).parse(req.body);
+    const body = z
+      .object({
+        lineItems: z.array(subscriptionLineItemSchema).min(1),
+        effective: z.enum(['immediate', 'next_period']).default('immediate'),
+        reason: z.string().max(500).optional(),
+      })
+      .parse(req.body);
     const data = await updateSubscription(req.user!.orgId, id, {
       ...body,
       changedByUserId: req.user!.userId,
@@ -90,10 +103,12 @@ const commerceSubscriptionRoutes: FastifyPluginAsync = async (app) => {
 
   app.post('/api/v1/commerce/subscriptions/:id/cancel', auth, async (req, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    const body = z.object({
-      when: z.enum(['immediate', 'period_end']).default('period_end'),
-      reason: z.string().max(500).optional(),
-    }).parse(req.body ?? {});
+    const body = z
+      .object({
+        when: z.enum(['immediate', 'period_end']).default('period_end'),
+        reason: z.string().max(500).optional(),
+      })
+      .parse(req.body ?? {});
     const data = await cancelSubscription(req.user!.orgId, id, {
       ...body,
       changedByUserId: req.user!.userId,
@@ -125,7 +140,9 @@ const commerceSubscriptionRoutes: FastifyPluginAsync = async (app) => {
     if (!secret || secret !== process.env.INTERNAL_API_SECRET) {
       return reply.code(401).send({ error: 'unauthorized' });
     }
-    const body = z.object({ limit: z.number().int().min(1).max(1000).default(100) }).parse(req.body ?? {});
+    const body = z
+      .object({ limit: z.number().int().min(1).max(1000).default(100) })
+      .parse(req.body ?? {});
     const result = await runDueInvoiceGeneration(body.limit);
     return reply.send({ data: result });
   });

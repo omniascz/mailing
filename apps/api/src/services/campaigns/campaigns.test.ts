@@ -47,7 +47,9 @@ describe('Campaign State Machine', () => {
   });
 
   it('rejects draft → paused', () => {
-    expect(() => validateTransition('draft', 'paused')).toThrow(/Invalid campaign status transition/);
+    expect(() => validateTransition('draft', 'paused')).toThrow(
+      /Invalid campaign status transition/,
+    );
   });
 
   it('rejects sent → draft', () => {
@@ -67,22 +69,32 @@ describe('Campaign State Machine', () => {
   });
 
   it('rejects sending → scheduled', () => {
-    expect(() => validateTransition('sending', 'scheduled')).toThrow(/Invalid campaign status transition/);
+    expect(() => validateTransition('sending', 'scheduled')).toThrow(
+      /Invalid campaign status transition/,
+    );
   });
 
   it('rejects sending → draft', () => {
-    expect(() => validateTransition('sending', 'draft')).toThrow(/Invalid campaign status transition/);
+    expect(() => validateTransition('sending', 'draft')).toThrow(
+      /Invalid campaign status transition/,
+    );
   });
 
   it('rejects scheduled → draft', () => {
-    expect(() => validateTransition('scheduled', 'draft')).toThrow(/Invalid campaign status transition/);
+    expect(() => validateTransition('scheduled', 'draft')).toThrow(
+      /Invalid campaign status transition/,
+    );
   });
 
   it('rejects paused → draft', () => {
-    expect(() => validateTransition('paused', 'draft')).toThrow(/Invalid campaign status transition/);
+    expect(() => validateTransition('paused', 'draft')).toThrow(
+      /Invalid campaign status transition/,
+    );
   });
 
   it('rejects paused → scheduled', () => {
-    expect(() => validateTransition('paused', 'scheduled')).toThrow(/Invalid campaign status transition/);
+    expect(() => validateTransition('paused', 'scheduled')).toThrow(
+      /Invalid campaign status transition/,
+    );
   });
 });

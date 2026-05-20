@@ -37,7 +37,10 @@ async function getRulesForChannel(
   if (cached) {
     rules = JSON.parse(cached) as OrgFrequencyRule[];
   } else {
-    rules = (await db.select().from(orgFrequencyRules).where(eq(orgFrequencyRules.orgId, orgId))) as OrgFrequencyRule[];
+    rules = (await db
+      .select()
+      .from(orgFrequencyRules)
+      .where(eq(orgFrequencyRules.orgId, orgId))) as OrgFrequencyRule[];
     await redis.set(cacheKey, JSON.stringify(rules), 'EX', RULE_TTL_SECONDS);
   }
   return rules.filter((r) => r.channel === channel || r.channel === 'all');

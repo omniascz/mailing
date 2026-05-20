@@ -41,19 +41,13 @@ export interface VisitorContext {
  * Return true when every condition evaluates to true against the context
  * (AND semantics). An empty list matches anything.
  */
-export function matchesAllConditions(
-  conditions: SiteCondition[],
-  ctx: VisitorContext,
-): boolean {
+export function matchesAllConditions(conditions: SiteCondition[], ctx: VisitorContext): boolean {
   if (conditions.length === 0) return true;
   return conditions.every((c) => matchesCondition(c, ctx));
 }
 
 /** Evaluate a single condition. Unknown trigger/operator combos return false. */
-export function matchesCondition(
-  condition: SiteCondition,
-  ctx: VisitorContext,
-): boolean {
+export function matchesCondition(condition: SiteCondition, ctx: VisitorContext): boolean {
   switch (condition.trigger) {
     case 'page_visit':
       return evalString(ctx.url, condition.operator, condition.value);
@@ -98,11 +92,7 @@ export function matchesCondition(
 
 // ─── Internals ──────────────────────────────────────────────────────────────
 
-function evalString(
-  actual: string | undefined,
-  op: ConditionOperator,
-  expected: unknown,
-): boolean {
+function evalString(actual: string | undefined, op: ConditionOperator, expected: unknown): boolean {
   if (actual === undefined) return false;
   const exp = String(expected ?? '');
   switch (op) {
@@ -115,11 +105,7 @@ function evalString(
   }
 }
 
-function evalNumber(
-  actual: number | undefined,
-  op: ConditionOperator,
-  expected: unknown,
-): boolean {
+function evalNumber(actual: number | undefined, op: ConditionOperator, expected: unknown): boolean {
   if (actual === undefined) return false;
   const exp = Number(expected);
   if (!Number.isFinite(exp)) return false;

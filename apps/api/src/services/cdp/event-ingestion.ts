@@ -17,11 +17,7 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { cdpEvents, type CdpEvent } from '../../db/schema/index.js';
-import {
-  ingestSignals,
-  resolveContact,
-  normaliseSignal,
-} from './identity-graph.js';
+import { ingestSignals, resolveContact, normaliseSignal } from './identity-graph.js';
 import { invalidateProfile } from './unified-profile.js';
 
 export interface IngestEvent {
@@ -59,7 +55,18 @@ export interface IngestResult {
 
 const MAX_BATCH = 500;
 
-type SignalTuple = { type: 'email' | 'phone' | 'user_id' | 'account_id' | 'cookie' | 'device_id' | 'social_id' | 'visitor_id'; value: string };
+type SignalTuple = {
+  type:
+    | 'email'
+    | 'phone'
+    | 'user_id'
+    | 'account_id'
+    | 'cookie'
+    | 'device_id'
+    | 'social_id'
+    | 'visitor_id';
+  value: string;
+};
 
 function extractSignals(e: IngestEvent): SignalTuple[] {
   const out: SignalTuple[] = [];
@@ -73,10 +80,7 @@ function extractSignals(e: IngestEvent): SignalTuple[] {
   return out;
 }
 
-async function resolveEventContact(
-  orgId: string,
-  event: IngestEvent,
-): Promise<string | null> {
+async function resolveEventContact(orgId: string, event: IngestEvent): Promise<string | null> {
   if (event.contactId) return event.contactId;
   const signals = extractSignals(event);
   if (signals.length === 0) return null;
@@ -88,10 +92,7 @@ async function resolveEventContact(
  * retry only the failed items. Never throws on a single bad event — errors
  * are reported in `errors[]`.
  */
-export async function ingestEvents(
-  orgId: string,
-  events: IngestEvent[],
-): Promise<IngestResult> {
+export async function ingestEvents(orgId: string, events: IngestEvent[]): Promise<IngestResult> {
   if (events.length === 0) {
     return { accepted: 0, duplicates: 0, failed: 0, errors: [], inserted: [] };
   }
@@ -108,7 +109,7 @@ export async function ingestEvents(
   };
 
   const touchedContacts = new Set<string>();
-  const rows: typeof cdpEvents.$inferInsert[] = [];
+  const rows: (typeof cdpEvents.$inferInsert)[] = [];
 
   for (let i = 0; i < events.length; i++) {
     const event = events[i]!;
@@ -172,7 +173,6 @@ export async function ingestEvents(
   // PG row is the source of truth.
   if (process.env.KAFKA_BROKERS && result.inserted.length > 0) {
     publishToKafka(orgId, result.inserted).catch((err) => {
-      // eslint-disable-next-line no-console
       console.error('[cdp] kafka publish failed', err);
     });
   }
@@ -216,10 +216,7 @@ export interface QueryEventsInput {
   limit?: number;
 }
 
-export async function queryEvents(
-  orgId: string,
-  input: QueryEventsInput,
-): Promise<CdpEvent[]> {
+export async function queryEvents(orgId: string, input: QueryEventsInput): Promise<CdpEvent[]> {
   const limit = Math.min(Math.max(1, input.limit ?? 100), 1000);
   const conds = [eq(cdpEvents.orgId, orgId)];
   if (input.contactId) conds.push(eq(cdpEvents.contactId, input.contactId));

@@ -64,10 +64,38 @@ describe('rootOrgId', () => {
 describe('rollupUsage', () => {
   const usage: OrgUsage[] = [
     { orgId: 'agency', emailsSent: 0, smsSent: 0, storageBytes: 0, aiTokensIn: 0, aiTokensOut: 0 },
-    { orgId: 'client-a', emailsSent: 1000, smsSent: 50, storageBytes: 1024, aiTokensIn: 100, aiTokensOut: 50 },
-    { orgId: 'client-a-eu', emailsSent: 500, smsSent: 20, storageBytes: 512, aiTokensIn: 80, aiTokensOut: 30 },
-    { orgId: 'client-b', emailsSent: 2000, smsSent: 100, storageBytes: 2048, aiTokensIn: 200, aiTokensOut: 100 },
-    { orgId: 'unrelated', emailsSent: 9999, smsSent: 999, storageBytes: 9999, aiTokensIn: 999, aiTokensOut: 999 },
+    {
+      orgId: 'client-a',
+      emailsSent: 1000,
+      smsSent: 50,
+      storageBytes: 1024,
+      aiTokensIn: 100,
+      aiTokensOut: 50,
+    },
+    {
+      orgId: 'client-a-eu',
+      emailsSent: 500,
+      smsSent: 20,
+      storageBytes: 512,
+      aiTokensIn: 80,
+      aiTokensOut: 30,
+    },
+    {
+      orgId: 'client-b',
+      emailsSent: 2000,
+      smsSent: 100,
+      storageBytes: 2048,
+      aiTokensIn: 200,
+      aiTokensOut: 100,
+    },
+    {
+      orgId: 'unrelated',
+      emailsSent: 9999,
+      smsSent: 999,
+      storageBytes: 9999,
+      aiTokensIn: 999,
+      aiTokensOut: 999,
+    },
   ];
 
   it('sums descendants and excludes unrelated orgs', () => {
@@ -92,20 +120,12 @@ describe('rollupUsage', () => {
 
 describe('effectiveRole', () => {
   it('uses direct role on target', () => {
-    const role = effectiveRole(
-      [{ orgId: 'client-a', role: 'editor' }],
-      'client-a',
-      tree,
-    );
+    const role = effectiveRole([{ orgId: 'client-a', role: 'editor' }], 'client-a', tree);
     expect(role).toBe('editor');
   });
 
   it('inherits from ancestor', () => {
-    const role = effectiveRole(
-      [{ orgId: 'agency', role: 'admin' }],
-      'client-a-eu',
-      tree,
-    );
+    const role = effectiveRole([{ orgId: 'agency', role: 'admin' }], 'client-a-eu', tree);
     expect(role).toBe('admin');
   });
 
@@ -122,9 +142,7 @@ describe('effectiveRole', () => {
   });
 
   it('returns null when nothing applies', () => {
-    expect(
-      effectiveRole([{ orgId: 'unrelated', role: 'owner' }], 'client-a', tree),
-    ).toBeNull();
+    expect(effectiveRole([{ orgId: 'unrelated', role: 'owner' }], 'client-a', tree)).toBeNull();
   });
 });
 

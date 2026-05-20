@@ -9,8 +9,10 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  calculatedProperties, calculatedPropertyValues,
-  type CalculatedProperty, type CalcNode,
+  calculatedProperties,
+  calculatedPropertyValues,
+  type CalculatedProperty,
+  type CalcNode,
 } from '../../db/schema/calculated-properties.js';
 import { AppError } from '../../lib/app-error.js';
 import { evaluate, referencedFields } from './evaluator.js';
@@ -27,40 +29,47 @@ export interface CreatePropInput {
 }
 
 export async function createProperty(
-  orgId: string, input: CreatePropInput,
+  orgId: string,
+  input: CreatePropInput,
 ): Promise<CalculatedProperty> {
   if (!/^[a-z][a-z0-9_]*$/.test(input.key)) {
     throw AppError.badRequest('key must be snake_case');
   }
-  const [row] = await db.insert(calculatedProperties).values({
-    orgId,
-    entity: input.entity,
-    key: input.key,
-    label: input.label,
-    description: input.description,
-    resultType: input.resultType,
-    formula: input.formula,
-    cacheStrategy: input.cacheStrategy ?? 'lazy',
-    cacheTtlSeconds: input.cacheTtlSeconds ?? 3600,
-  }).returning();
+  const [row] = await db
+    .insert(calculatedProperties)
+    .values({
+      orgId,
+      entity: input.entity,
+      key: input.key,
+      label: input.label,
+      description: input.description,
+      resultType: input.resultType,
+      formula: input.formula,
+      cacheStrategy: input.cacheStrategy ?? 'lazy',
+      cacheTtlSeconds: input.cacheTtlSeconds ?? 3600,
+    })
+    .returning();
   if (!row) throw AppError.internal('Failed to create calculated property');
   return row;
 }
 
 export async function listProperties(
-  orgId: string, entity?: 'contact' | 'deal' | 'account',
+  orgId: string,
+  entity?: 'contact' | 'deal' | 'account',
 ): Promise<CalculatedProperty[]> {
   const where = entity
-    ? and(eq(calculatedProperties.orgId, orgId),
-          eq(calculatedProperties.entity, entity),
-          isNull(calculatedProperties.deletedAt))
-    : and(eq(calculatedProperties.orgId, orgId),
-          isNull(calculatedProperties.deletedAt));
+    ? and(
+        eq(calculatedProperties.orgId, orgId),
+        eq(calculatedProperties.entity, entity),
+        isNull(calculatedProperties.deletedAt),
+      )
+    : and(eq(calculatedProperties.orgId, orgId), isNull(calculatedProperties.deletedAt));
   return db.select().from(calculatedProperties).where(where);
 }
 
 export async function deleteProperty(orgId: string, id: string): Promise<void> {
-  await db.update(calculatedProperties)
+  await db
+    .update(calculatedProperties)
     .set({ deletedAt: new Date() })
     .where(and(eq(calculatedProperties.orgId, orgId), eq(calculatedProperties.id, id)));
 }
@@ -111,10 +120,20 @@ function topoOrder(props: CalculatedProperty[]): CalculatedProperty[] {
 
 function refsOf(node: CalcNode, out: Set<string> = new Set()): Set<string> {
   if (node === null || typeof node !== 'object') return out;
-  if ('$ref' in node) { out.add(node.$ref); return out; }
+  if ('$ref' in node) {
+    out.add(node.$ref);
+    return out;
+  }
   if ('$field' in node) return out;
-  if ('op' in node) { refsOf(node.left, out); refsOf(node.right, out); return out; }
-  if ('fn' in node) { for (const a of node.args ?? []) refsOf(a, out); return out; }
+  if ('op' in node) {
+    refsOf(node.left, out);
+    refsOf(node.right, out);
+    return out;
+  }
+  if ('fn' in node) {
+    for (const a of node.args ?? []) refsOf(a, out);
+    return out;
+  }
   return out;
 }
 
@@ -129,18 +148,23 @@ export async function writeCachedValues(
   const now = Date.now();
   await db.delete(calculatedPropertyValues).where(
     and(
-      inArray(calculatedPropertyValues.propId, values.map((v) => v.propId)),
+      inArray(
+        calculatedPropertyValues.propId,
+        values.map((v) => v.propId),
+      ),
       eq(calculatedPropertyValues.entityId, entityId),
     ),
   );
   await db.insert(calculatedPropertyValues).values(
     values.map((v) => ({
-      orgId, propId: v.propId, entityId, value: v.value,
+      orgId,
+      propId: v.propId,
+      entityId,
+      value: v.value,
       computedAt: new Date(now),
       expiresAt: new Date(now + v.ttlSeconds * 1000),
     })),
   );
 }
-
 
 export { evaluate, referencedFields };

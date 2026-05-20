@@ -141,16 +141,12 @@ export async function startMailchimpMigration(
 }
 
 export async function getMigrationJob(id: string, orgId: string) {
-  const [job] = await db
-    .select()
-    .from(migrationJobs)
-    .where(eq(migrationJobs.id, id))
-    .limit(1);
+  const [job] = await db.select().from(migrationJobs).where(eq(migrationJobs.id, id)).limit(1);
 
   if (!job || job.orgId !== orgId) throw AppError.notFound('MigrationJob');
 
   // Remove stored API key from progress before returning
-  const { apiKey: _ak, ...safeProgress } = (job.progress as unknown as Record<string, unknown>);
+  const { apiKey: _ak, ...safeProgress } = job.progress as unknown as Record<string, unknown>;
   return { ...job, progress: safeProgress as unknown as MigrationProgress };
 }
 
@@ -162,7 +158,7 @@ export async function listMigrationJobs(orgId: string) {
     .orderBy(migrationJobs.createdAt);
 
   return rows.map((j) => {
-    const { apiKey: _ak, ...safeProgress } = (j.progress as unknown as Record<string, unknown>);
+    const { apiKey: _ak, ...safeProgress } = j.progress as unknown as Record<string, unknown>;
     return { ...j, progress: safeProgress as unknown as MigrationProgress };
   });
 }
@@ -176,7 +172,10 @@ async function updateProgress(jobId: string, progress: Partial<MigrationProgress
     .where(eq(migrationJobs.id, jobId))
     .limit(1);
 
-  const merged = { ...(current?.progress as unknown as Record<string, unknown> ?? {}), ...progress };
+  const merged = {
+    ...((current?.progress as unknown as Record<string, unknown>) ?? {}),
+    ...progress,
+  };
 
   await db
     .update(migrationJobs)
@@ -184,11 +183,12 @@ async function updateProgress(jobId: string, progress: Partial<MigrationProgress
     .where(eq(migrationJobs.id, jobId));
 }
 
-export async function processMigration(jobId: string, orgId: string, apiKey: string): Promise<void> {
-  await db
-    .update(migrationJobs)
-    .set({ status: 'running' })
-    .where(eq(migrationJobs.id, jobId));
+export async function processMigration(
+  jobId: string,
+  orgId: string,
+  apiKey: string,
+): Promise<void> {
+  await db.update(migrationJobs).set({ status: 'running' }).where(eq(migrationJobs.id, jobId));
 
   try {
     // ── Step 1: fetch lists ──────────────────────────────────────────────────
@@ -334,7 +334,12 @@ export async function processMigration(jobId: string, orgId: string, apiKey: str
           processedContacts++;
         }
 
-        await updateProgress(jobId, { processedContacts, imported, skipped, errors: errors.slice(-10) });
+        await updateProgress(jobId, {
+          processedContacts,
+          imported,
+          skipped,
+          errors: errors.slice(-10),
+        });
 
         if (processedContacts >= totalContacts) break;
         memberOffset += pageSize;
@@ -345,12 +350,12 @@ export async function processMigration(jobId: string, orgId: string, apiKey: str
     // ── Step 4: import templates ─────────────────────────────────────────────
     await updateProgress(jobId, { step: 'importing_templates' });
 
-    const mcTemplates = await mcGet<McTemplatesResponse>(
-      apiKey,
-      `/templates?type=user&count=100`,
-    );
+    const mcTemplates = await mcGet<McTemplatesResponse>(apiKey, `/templates?type=user&count=100`);
 
-    await updateProgress(jobId, { totalTemplates: mcTemplates.templates.length, processedTemplates: 0 });
+    await updateProgress(jobId, {
+      totalTemplates: mcTemplates.templates.length,
+      processedTemplates: 0,
+    });
 
     let processedTemplates = 0;
     for (const mcTpl of mcTemplates.templates) {
@@ -378,7 +383,6 @@ export async function processMigration(jobId: string, orgId: string, apiKey: str
       .update(migrationJobs)
       .set({ status: 'completed', completedAt: new Date() })
       .where(eq(migrationJobs.id, jobId));
-
   } catch (err) {
     await db
       .update(migrationJobs)

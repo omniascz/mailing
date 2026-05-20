@@ -126,7 +126,9 @@ describe('deliverWebhook', () => {
   });
 
   it('returns failure on network error', async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED')) as unknown as typeof fetch;
+    globalThis.fetch = vi
+      .fn()
+      .mockRejectedValue(new Error('ECONNREFUSED')) as unknown as typeof fetch;
 
     const result = await deliverWebhook(mockSubscription, 'del-001', mockPayload);
 

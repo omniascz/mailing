@@ -49,18 +49,18 @@ Mailchimp má v roce 2026 čtyři tarify + transactional/SMS add-ony.
 
 ### 2.1 Free
 
-| Parametr | Hodnota |
-|---|---|
-| Kontakty | max **250** |
-| Měsíční odesílací limit | **500 emailů** |
-| Denní limit | 250 emailů |
-| Audience | 1 |
-| Branding | povinné Mailchimp logo v patičce |
-| Uživatelské role | jen Owner (single-user) |
-| Šablony | omezený výběr |
-| Email support | pouze prvních 30 dní |
-| Automation | jen single-step welcome (multi-step zrušen 2025) |
-| Pozn. | Free byl 2022: 2 000 kontaktů → 2023: 500 → 2026: 250 |
+| Parametr                | Hodnota                                               |
+| ----------------------- | ----------------------------------------------------- |
+| Kontakty                | max **250**                                           |
+| Měsíční odesílací limit | **500 emailů**                                        |
+| Denní limit             | 250 emailů                                            |
+| Audience                | 1                                                     |
+| Branding                | povinné Mailchimp logo v patičce                      |
+| Uživatelské role        | jen Owner (single-user)                               |
+| Šablony                 | omezený výběr                                         |
+| Email support           | pouze prvních 30 dní                                  |
+| Automation              | jen single-step welcome (multi-step zrušen 2025)      |
+| Pozn.                   | Free byl 2022: 2 000 kontaktů → 2023: 500 → 2026: 250 |
 
 > **Důležité:** při překročení limitu free plán **úplně pauzuje** odesílání (na placeném tarifu jen účtuje overage).
 
@@ -80,6 +80,7 @@ Mailchimp má v roce 2026 čtyři tarify + transactional/SMS add-ony.
 ### 2.3 Standard – od cca $20/měsíc (500 kontaktů)
 
 Nejčastěji doporučovaný tarif. Zahrnuje vše z Essentials plus:
+
 - Měsíční limit: **12× počet kontaktů**
 - 5 audience listů
 - **5 uživatelských slotů**
@@ -107,11 +108,11 @@ Nejčastěji doporučovaný tarif. Zahrnuje vše z Essentials plus:
 
 ### 2.5 Add-ony
 
-| Add-on | Cena 2026 |
-|---|---|
+| Add-on                         | Cena 2026                                                     |
+| ------------------------------ | ------------------------------------------------------------- |
 | Transactional Email (Mandrill) | bloky 25 000 emailů za ~$20 / blok (do 500K), pak ~$18 / blok |
-| SMS Marketing | samostatné credit packs, podle země; není ve free |
-| Dedicated IP | pouze Premium + min. 5 000 mailů/den × 3 dny v týdnu |
+| SMS Marketing                  | samostatné credit packs, podle země; není ve free             |
+| Dedicated IP                   | pouze Premium + min. 5 000 mailů/den × 3 dny v týdnu          |
 
 ### 2.6 Skryté náklady – co kritici nejčastěji uvádějí
 
@@ -144,19 +145,20 @@ Account (Owner-level)
 
 ### 3.2 Stavy kontaktu
 
-| Stav | Popis | Účtováno do tarifu? |
-|---|---|---|
-| **Subscribed** | Aktivní příjemce | **Ano** |
-| **Unsubscribed** | Odhlásil se | **Ano** (často přehlíženo) |
-| **Non-subscribed** | Někde v účtu se vyskytl (např. objednávka), ale neopt-in | **Ano** |
-| **Cleaned** | Hard bounce nebo opakovaně soft bounce | Ne |
-| **Archived** | Ručně archivován uživatelem | **Ne** – jediná cesta jak nepočítat |
-| **Pending** | Čeká na potvrzení double opt-in | Ne |
-| **Transactional** | Příjemce transakčních emailů | Závisí |
+| Stav               | Popis                                                    | Účtováno do tarifu?                 |
+| ------------------ | -------------------------------------------------------- | ----------------------------------- |
+| **Subscribed**     | Aktivní příjemce                                         | **Ano**                             |
+| **Unsubscribed**   | Odhlásil se                                              | **Ano** (často přehlíženo)          |
+| **Non-subscribed** | Někde v účtu se vyskytl (např. objednávka), ale neopt-in | **Ano**                             |
+| **Cleaned**        | Hard bounce nebo opakovaně soft bounce                   | Ne                                  |
+| **Archived**       | Ručně archivován uživatelem                              | **Ne** – jediná cesta jak nepočítat |
+| **Pending**        | Čeká na potvrzení double opt-in                          | Ne                                  |
+| **Transactional**  | Příjemce transakčních emailů                             | Závisí                              |
 
 ### 3.3 Multi-Audience strategie – nedoporučeno
 
 Praktici (Pure Firefly, ALM Corp) doporučují **jeden audience list + tags/groups/segments**, protože:
+
 - Duplicity se počítají vícekrát
 - Subscriber neví, kolik listů ho má → komplikované preferencí
 - Reportování je oddělené (žádný cross-audience report bez Premium)
@@ -169,7 +171,7 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 
 ### 4.1 Merge Fields (Audience fields)
 
-- **Cesta:** Audience → Manage Audience → Audience fields and *|MERGE|* tags
+- **Cesta:** Audience → Manage Audience → Audience fields and _|MERGE|_ tags
 - Sloty pro data jako FNAME, LNAME, EMAIL, PHONE, ADDRESS, BIRTHDAY, libovolná vlastní pole
 - **Typy polí:** text, číslo, datum, adresa, telefon, dropdown, radio, checkbox, image, website, zip code, birthday
 - Merge tagy slouží i k **personalizaci v emailech**: `*|FNAME|*` nahradí jméno
@@ -263,18 +265,19 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 
 ### 6.1 Typy kampaní
 
-| Typ | Popis |
-|---|---|
-| **Regular** | klasický newsletter |
-| **Plain-text** | bez formátování |
-| **A/B Test** | 2 varianty (Essentials+) nebo Multivariate 8 variant (Premium) |
-| **RSS-to-email** | automatický odběr blogu, generuje email |
-| **Automated** | spouštěné automation flow |
-| **Transactional** | přes Mandrill add-on |
+| Typ               | Popis                                                          |
+| ----------------- | -------------------------------------------------------------- |
+| **Regular**       | klasický newsletter                                            |
+| **Plain-text**    | bez formátování                                                |
+| **A/B Test**      | 2 varianty (Essentials+) nebo Multivariate 8 variant (Premium) |
+| **RSS-to-email**  | automatický odběr blogu, generuje email                        |
+| **Automated**     | spouštěné automation flow                                      |
+| **Transactional** | přes Mandrill add-on                                           |
 
 ### 6.2 Email Editor
 
 #### New Email Builder (default 2026)
+
 - Drag-and-drop bloky: text, image, button, divider, social, video, code, payment, signup, survey, poll
 - **Content blocks knihovna** – uložené reusable bloky
 - **Brand kit** – uložené barvy, fonty, logo
@@ -282,6 +285,7 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 - **Stock image library** – Unsplash, Giphy, Adobe Stock integrace
 
 #### Classic Builder (legacy)
+
 - Stále dostupný; tabbed view (Design, Content, Preview)
 
 ### 6.3 Šablony
@@ -328,18 +332,19 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 
 ### 7.1 Plán dostupnosti
 
-| Tarif | Co lze |
-|---|---|
-| Free | Single welcome email (1 step) |
-| Essentials | Až **4 steps**, 1 trigger |
-| Standard | Až **200 steps**, **3 triggers**, plné větvení |
-| Premium | Vše + unlimited flows |
+| Tarif      | Co lze                                         |
+| ---------- | ---------------------------------------------- |
+| Free       | Single welcome email (1 step)                  |
+| Essentials | Až **4 steps**, 1 trigger                      |
+| Standard   | Až **200 steps**, **3 triggers**, plné větvení |
+| Premium    | Vše + unlimited flows                          |
 
 ### 7.2 Komponenty flow
 
 #### Triggers (starting points) – plný výčet
 
 **Audience-based**
+
 - Tag added / Tag removed
 - Signs up for email
 - Audience field updated
@@ -348,6 +353,7 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 - Birthday / specific date
 
 **Engagement-based**
+
 - Sent an email
 - Opens email
 - Unopened campaign
@@ -357,6 +363,7 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 - Customer Journeys API trigger
 
 **E-commerce**
+
 - Makes a purchase
 - Purchases specific product / category
 - **Abandons cart** (generic)
@@ -366,14 +373,17 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 - **Product back in stock** (s back-in-stock form)
 
 **Predictive (Standard+)**
+
 - **Customer churn risk** – High/Medium/Low
 - **Time until predicted purchase** – X dní před predikovaným nákupem
 - **Customer lifetime value** thresholds
 
 **Reviews (Standard+ with integration)**
+
 - Judge.me / Yotpo review submitted (filtruje podle star ratingu)
 
 #### Rules (control flow)
+
 - **Conditional split** – if/else podle až 5 podmínek (Standard+)
 - **Percentage split** – A/B/X procentuální rozdělení cesty (Standard+)
 - **Wait for trigger** – pauza dokud kontakt nesplní další podmínku
@@ -381,6 +391,7 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 - **Wait until specific date**
 
 #### Actions
+
 - **Send email** – plnohodnotný kampaňový editor
 - **Send SMS** (s SMS add-on, schválený program)
 - **Add tag / Remove tag**
@@ -391,10 +402,12 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 - **End the flow** (exit action)
 
 #### Filters
+
 - Až **5 filtrů per trigger** – upřesňuje, kdo do flow vstoupí
 - Stejné možnosti jako Segments
 
 #### Exit conditions
+
 - Goal step – ukončí cestu při dosažení cíle (např. nákup)
 - Tag remove
 - Unsubscribe (vždy implicitně)
@@ -422,6 +435,7 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 ## 8. Classic Automations
 
 **Legacy systém**, existuje paralelně s Automation Flows.
+
 - Lineární sekvence emailů (ne canvas builder)
 - Single-trigger
 - Použití hlavně pro:
@@ -470,6 +484,7 @@ Mailchimp nabízí **čtyři vrstvy** pro organizaci kontaktů, často matoucí:
 ### 10.1 Store integrace
 
 Native:
+
 - Shopify (oficiální app re-launched 2023)
 - WooCommerce (Mailchimp for WooCommerce plugin)
 - Magento / Adobe Commerce
@@ -599,13 +614,13 @@ Mailchimp publikuje globální benchmarky podle industry (e-commerce, education,
 
 ### 13.2 Autentizace
 
-| Protokol | Mailchimp setup |
-|---|---|
-| **SPF** | Mailchimp používá vlastní return-path → SPF alignment vždy fails; **není potřeba upravovat váš SPF** kvůli DMARC (DMARC projde přes DKIM) |
-| **DKIM** | 2× CNAME na váš sending domain (k1._domainkey, k2._domainkey) |
-| **DMARC** | 1× TXT na _dmarc.yourdomain; doporučeno start na p=none, pak quarantine/reject |
-| **BIMI** | Možné po splnění DMARC reject + verified logo (SVG) |
-| **Entri** | Automated DNS setup integrace (encrypted login do DNS providera) |
+| Protokol  | Mailchimp setup                                                                                                                           |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **SPF**   | Mailchimp používá vlastní return-path → SPF alignment vždy fails; **není potřeba upravovat váš SPF** kvůli DMARC (DMARC projde přes DKIM) |
+| **DKIM**  | 2× CNAME na váš sending domain (k1.\_domainkey, k2.\_domainkey)                                                                           |
+| **DMARC** | 1× TXT na \_dmarc.yourdomain; doporučeno start na p=none, pak quarantine/reject                                                           |
+| **BIMI**  | Možné po splnění DMARC reject + verified logo (SVG)                                                                                       |
+| **Entri** | Automated DNS setup integrace (encrypted login do DNS providera)                                                                          |
 
 ### 13.3 Domain verification vs. authentication
 
@@ -640,29 +655,30 @@ Mailchimp publikuje globální benchmarky podle industry (e-commerce, education,
 ### 14.1 Marketing API (v3.0)
 
 Současná stabilní verze. Base URL: `https://<dc>.api.mailchimp.com/3.0/`
+
 - Autentizace: API key (basic auth) nebo OAuth2
 - Rate limit: 10 simultaneous connections per account
 - Datacenter (`<dc>`) z API key suffixu (např. `us19`)
 
 #### Hlavní endpointy
 
-| Resource | Operace |
-|---|---|
-| `/lists` (audiences) | CRUD audience, member operations |
-| `/lists/{id}/members` | Add/update/delete subscriber, tags, merge fields |
-| `/lists/{id}/segments` | Manage segments |
-| `/lists/{id}/interest-categories` | Manage groups |
-| `/lists/{id}/signup-forms` | Form management |
-| `/lists/{id}/webhooks` | Subscribe to events |
-| `/campaigns` | Create, schedule, send campaigns |
-| `/campaigns/{id}/content` | Set HTML/template |
-| `/automations` | Legacy Classic Automations (CRUD, start, pause, archive) |
-| `/customer-journeys/journeys/{id}/steps/{id}/actions/trigger` | Trigger Automation Flow step pro kontakt |
-| `/reports` | Campaign reports, click details, open details, e-commerce |
-| `/batches` | Bulk operations (max 500 ops per batch, async) |
-| `/lists/{id}/members/{email}/events` | Custom events – trigger flows |
-| `/ecommerce/stores` | Manage connected stores (orders, products) |
-| `/ping` | Health check |
+| Resource                                                      | Operace                                                   |
+| ------------------------------------------------------------- | --------------------------------------------------------- |
+| `/lists` (audiences)                                          | CRUD audience, member operations                          |
+| `/lists/{id}/members`                                         | Add/update/delete subscriber, tags, merge fields          |
+| `/lists/{id}/segments`                                        | Manage segments                                           |
+| `/lists/{id}/interest-categories`                             | Manage groups                                             |
+| `/lists/{id}/signup-forms`                                    | Form management                                           |
+| `/lists/{id}/webhooks`                                        | Subscribe to events                                       |
+| `/campaigns`                                                  | Create, schedule, send campaigns                          |
+| `/campaigns/{id}/content`                                     | Set HTML/template                                         |
+| `/automations`                                                | Legacy Classic Automations (CRUD, start, pause, archive)  |
+| `/customer-journeys/journeys/{id}/steps/{id}/actions/trigger` | Trigger Automation Flow step pro kontakt                  |
+| `/reports`                                                    | Campaign reports, click details, open details, e-commerce |
+| `/batches`                                                    | Bulk operations (max 500 ops per batch, async)            |
+| `/lists/{id}/members/{email}/events`                          | Custom events – trigger flows                             |
+| `/ecommerce/stores`                                           | Manage connected stores (orders, products)                |
+| `/ping`                                                       | Health check                                              |
 
 ### 14.2 Webhooks
 
@@ -680,6 +696,7 @@ Současná stabilní verze. Base URL: `https://<dc>.api.mailchimp.com/3.0/`
 ### 14.4 SDK / klientské knihovny
 
 Oficiální:
+
 - Node.js
 - Python
 - PHP
@@ -689,6 +706,7 @@ Oficiální:
 ### 14.5 Native integrace (300+, údaj G2/2026)
 
 Vybrané:
+
 - **E-commerce:** Shopify, WooCommerce, BigCommerce, Magento, Squarespace, Wix
 - **CRM:** Salesforce, HubSpot, Zoho, Pipedrive
 - **CMS:** WordPress, Drupal, Webflow, Wix
@@ -780,20 +798,20 @@ Mailchimp se snaží být víc než email tool – nabízí:
 
 ### 17.1 Často zmiňované problémy (G2, Capterra, Reddit)
 
-| Problém | Detail |
-|---|---|
-| **Cena** | Skok mezi tiery, počítání unsubscribed |
-| **Tier rounding** | Vždy nahoru |
-| **Limited Features** | 58 G2 zmínek v 2026 |
-| **Missing Features** | 55 G2 zmínek (chybí: e-mail verification, granular permissions, A/B na automations) |
-| **Customer support** | Phone jen na Premium |
-| **Free plan reductions** | 2022: 2 000 → 2023: 500 → 2026: 250 kontaktů |
-| **Multi-step automation** | jen Standard+ od 2025 |
-| **No custom roles** | jen 5 fixních rolí |
-| **No audit log (granular)** | žádný compliance-grade logging |
-| **Shared IP quality** | klesá s růstem userbase |
-| **Žádné multibrand prostředí** | jen audiences, ne brand-level segregace |
-| **Cancelace** | musí Admin/Owner, žádný self-service v US v některých case-ech |
+| Problém                        | Detail                                                                              |
+| ------------------------------ | ----------------------------------------------------------------------------------- |
+| **Cena**                       | Skok mezi tiery, počítání unsubscribed                                              |
+| **Tier rounding**              | Vždy nahoru                                                                         |
+| **Limited Features**           | 58 G2 zmínek v 2026                                                                 |
+| **Missing Features**           | 55 G2 zmínek (chybí: e-mail verification, granular permissions, A/B na automations) |
+| **Customer support**           | Phone jen na Premium                                                                |
+| **Free plan reductions**       | 2022: 2 000 → 2023: 500 → 2026: 250 kontaktů                                        |
+| **Multi-step automation**      | jen Standard+ od 2025                                                               |
+| **No custom roles**            | jen 5 fixních rolí                                                                  |
+| **No audit log (granular)**    | žádný compliance-grade logging                                                      |
+| **Shared IP quality**          | klesá s růstem userbase                                                             |
+| **Žádné multibrand prostředí** | jen audiences, ne brand-level segregace                                             |
+| **Cancelace**                  | musí Admin/Owner, žádný self-service v US v některých case-ech                      |
 
 ### 17.2 Co Mailchimp neumí (per květen 2026)
 
@@ -820,6 +838,7 @@ Mailchimp se snaží být víc než email tool – nabízí:
 ## 18. Shrnutí: Pro koho a proti komu
 
 ### Mailchimp je dobrá volba pokud
+
 - Začínáte s email marketingem a chcete osvědčenou značku
 - Máte malou až střední listu (< 50K kontaktů)
 - Posíláte typické newslettery + jednoduchou automation
@@ -827,6 +846,7 @@ Mailchimp se snaží být víc než email tool – nabízí:
 - Cení si si polished UI a velkého community
 
 ### Mailchimp není dobrá volba pokud
+
 - Máte 50K+ kontaktů (cena letí nahoru)
 - Chcete pokročilé automation s minimální cenou (lepší ActiveCampaign, Brevo)
 - Pracujete primárně v češtině/slovenštině/polštině (žádná lokalizace UI)
@@ -836,4 +856,4 @@ Mailchimp se snaží být víc než email tool – nabízí:
 
 ---
 
-*Dokument zpracován z veřejně dostupných oficiálních zdrojů Mailchimpu a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na mailchimp.com/pricing.*
+_Dokument zpracován z veřejně dostupných oficiálních zdrojů Mailchimpu a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na mailchimp.com/pricing._

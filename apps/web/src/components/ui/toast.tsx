@@ -64,7 +64,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               <Icon className="h-5 w-5 shrink-0" />
               <p className="text-sm font-medium">{t.message}</p>
-              <button onClick={() => removeToast(t.id)} className="ml-2 shrink-0 opacity-60 hover:opacity-100">
+              <button
+                onClick={() => removeToast(t.id)}
+                className="ml-2 shrink-0 opacity-60 hover:opacity-100"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>

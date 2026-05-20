@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, timestamp, integer, jsonb, decimal, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  integer,
+  jsonb,
+  decimal,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 
@@ -9,15 +18,25 @@ import { contacts } from './contacts.js';
 export const contactEngagement = pgTable(
   'contact_engagement',
   {
-    contactId: uuid('contact_id').primaryKey().references(() => contacts.id, { onDelete: 'cascade' }),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .primaryKey()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
 
     // Timezone (IANA string, e.g. Europe/Prague) — inferred from locale/geo.
     timezone: varchar('timezone', { length: 100 }),
 
     // Histogram of opens per hour-of-day 0..23 and day-of-week 0..6 (Sun=0).
-    openHourHistogram: jsonb('open_hour_histogram').$type<number[]>().notNull().default(Array(24).fill(0)),
-    openDayHistogram: jsonb('open_day_histogram').$type<number[]>().notNull().default(Array(7).fill(0)),
+    openHourHistogram: jsonb('open_hour_histogram')
+      .$type<number[]>()
+      .notNull()
+      .default(Array(24).fill(0)),
+    openDayHistogram: jsonb('open_day_histogram')
+      .$type<number[]>()
+      .notNull()
+      .default(Array(7).fill(0)),
 
     // Aggregate engagement counters.
     totalOpens: integer('total_opens').notNull().default(0),

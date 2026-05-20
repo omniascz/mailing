@@ -18,23 +18,17 @@ describe('isWithinBusinessHours', () => {
 
   it('returns true inside schedule', () => {
     // 2026-04-27 is a Monday; 10:00 Prague
-    expect(
-      isWithinBusinessHours(bh, new Date('2026-04-27T08:00:00Z')),
-    ).toBe(true); // 10:00 local
+    expect(isWithinBusinessHours(bh, new Date('2026-04-27T08:00:00Z'))).toBe(true); // 10:00 local
   });
 
   it('returns false outside schedule', () => {
     // 2026-04-27 Monday 18:00 local
-    expect(
-      isWithinBusinessHours(bh, new Date('2026-04-27T16:00:00Z')),
-    ).toBe(false);
+    expect(isWithinBusinessHours(bh, new Date('2026-04-27T16:00:00Z'))).toBe(false);
   });
 
   it('returns false on unscheduled day', () => {
     // 2026-04-25 Saturday — not in schedule
-    expect(
-      isWithinBusinessHours(bh, new Date('2026-04-25T10:00:00Z')),
-    ).toBe(false);
+    expect(isWithinBusinessHours(bh, new Date('2026-04-25T10:00:00Z'))).toBe(false);
   });
 
   it('honours holidays', () => {
@@ -42,15 +36,11 @@ describe('isWithinBusinessHours', () => {
       ...bh,
       holidays: [{ date: '2026-04-27', label: 'Special closure' }],
     };
-    expect(
-      isWithinBusinessHours(withHoliday, new Date('2026-04-27T10:00:00Z')),
-    ).toBe(false);
+    expect(isWithinBusinessHours(withHoliday, new Date('2026-04-27T10:00:00Z'))).toBe(false);
   });
 
   it('treats empty schedule as always-open', () => {
-    expect(
-      isWithinBusinessHours({ timezone: 'Europe/Prague', schedule: [] }),
-    ).toBe(true);
+    expect(isWithinBusinessHours({ timezone: 'Europe/Prague', schedule: [] })).toBe(true);
   });
 });
 
@@ -91,10 +81,7 @@ describe('selectHuntPool', () => {
   ];
 
   it('ring-all returns all available agents', () => {
-    expect(selectHuntPool(['a', 'b', 'c'], presence, 'ring-all').userIds).toEqual([
-      'a',
-      'b',
-    ]);
+    expect(selectHuntPool(['a', 'b', 'c'], presence, 'ring-all').userIds).toEqual(['a', 'b']);
   });
 
   it('round-robin rotates through available agents', () => {
@@ -107,22 +94,16 @@ describe('selectHuntPool', () => {
   });
 
   it('least-idle picks the most-recently-active agent', () => {
-    expect(
-      selectHuntPool(['a', 'b', 'c'], presence, 'least-idle').userIds,
-    ).toEqual(['b']);
+    expect(selectHuntPool(['a', 'b', 'c'], presence, 'least-idle').userIds).toEqual(['b']);
   });
 
   it('fewest-calls picks the agent with lowest callsToday', () => {
-    expect(
-      selectHuntPool(['a', 'b', 'c'], presence, 'fewest-calls').userIds,
-    ).toEqual(['b']);
+    expect(selectHuntPool(['a', 'b', 'c'], presence, 'fewest-calls').userIds).toEqual(['b']);
   });
 
   it('falls back to all candidates when none are available', () => {
     const stale = presence.map((p) => ({ ...p, status: 'offline' as const }));
-    expect(
-      selectHuntPool(['a', 'b'], stale, 'ring-all').userIds.sort(),
-    ).toEqual(['a', 'b']);
+    expect(selectHuntPool(['a', 'b'], stale, 'ring-all').userIds.sort()).toEqual(['a', 'b']);
   });
 
   it('returns empty pool for empty candidate list', () => {

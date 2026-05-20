@@ -29,17 +29,21 @@ async function fetchPending(): Promise<VideoPending[]> {
     headers: { 'x-internal-secret': INTERNAL_SECRET },
   });
   if (!res.ok) return [];
-  const json = await res.json() as { data: VideoPending[] };
+  const json = (await res.json()) as { data: VideoPending[] };
   return json.data;
 }
 
-async function reportResult(videoId: string, orgId: string, result: {
-  success: boolean;
-  hlsManifestKey?: string;
-  thumbnailKey?: string;
-  durationSeconds?: number;
-  error?: string;
-}) {
+async function reportResult(
+  videoId: string,
+  orgId: string,
+  result: {
+    success: boolean;
+    hlsManifestKey?: string;
+    thumbnailKey?: string;
+    durationSeconds?: number;
+    error?: string;
+  },
+) {
   await fetch(`${API_BASE}/api/v1/internal/video/${videoId}/transcode-result`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_SECRET },
@@ -82,17 +86,23 @@ export function startVideoTranscodeWorker() {
     { connection, concurrency: 1 },
   );
 
-  worker.on('failed', (job, err) => console.error('[video-transcode] failed', job?.id, err.message));
+  worker.on('failed', (job, err) =>
+    console.error('[video-transcode] failed', job?.id, err.message),
+  );
   return worker;
 }
 
 export async function scheduleVideoTranscode() {
   const existing = await transcodeQueue.getRepeatableJobs();
-  if (!existing.find(j => j.name === 'video-transcode-poll')) {
-    await transcodeQueue.add('video-transcode-poll', {}, {
-      repeat: { every: 30_000 }, // every 30 s
-      removeOnComplete: true,
-    });
+  if (!existing.find((j) => j.name === 'video-transcode-poll')) {
+    await transcodeQueue.add(
+      'video-transcode-poll',
+      {},
+      {
+        repeat: { every: 30_000 }, // every 30 s
+        removeOnComplete: true,
+      },
+    );
   }
   console.log('[video-transcode] poll scheduled (30s interval)');
 }

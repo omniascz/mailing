@@ -74,18 +74,15 @@ export async function getSegment(orgId: string, id: string) {
  * Count matching contacts for a given conditions tree, org-scoped.
  * Accepts either a stored segment id or an ad-hoc conditions object via the caller.
  */
-export async function countByConditions(orgId: string, conditions: SegmentConditions): Promise<number> {
+export async function countByConditions(
+  orgId: string,
+  conditions: SegmentConditions,
+): Promise<number> {
   const where = buildSegmentWhere(conditions);
   const result = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(contacts)
-    .where(
-      and(
-        eq(contacts.orgId, orgId),
-        isNull(contacts.deletedAt),
-        where,
-      ),
-    );
+    .where(and(eq(contacts.orgId, orgId), isNull(contacts.deletedAt), where));
   return result[0]?.count ?? 0;
 }
 
@@ -112,6 +109,6 @@ export async function listContactsByConditions(
 
   const hasMore = rows.length > limit;
   const data = hasMore ? rows.slice(0, limit) : rows;
-  const nextCursor = hasMore ? data[data.length - 1]?.id ?? null : null;
+  const nextCursor = hasMore ? (data[data.length - 1]?.id ?? null) : null;
   return { data, cursor: nextCursor, hasMore };
 }

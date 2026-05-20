@@ -20,22 +20,33 @@ describe('buildAuthorizeUrl', () => {
     expect(u.origin + u.pathname).toBe(SKLIK_OAUTH_AUTHORIZE_URL);
     expect(u.searchParams.get('response_type')).toBe('code');
     expect(u.searchParams.get('client_id')).toBe('cid');
-    expect(u.searchParams.get('redirect_uri')).toBe('https://app.forgemsg.com/oauth/sklik/callback');
+    expect(u.searchParams.get('redirect_uri')).toBe(
+      'https://app.forgemsg.com/oauth/sklik/callback',
+    );
     expect(u.searchParams.get('state')).toBe('s-1');
     expect(u.searchParams.get('scope')).toBe(DEFAULT_SCOPES.join(' '));
   });
 
   it('respects custom scopes', () => {
     const url = buildAuthorizeUrl({
-      clientId: 'cid', redirectUri: 'https://x', state: 's', scopes: ['user.read', 'audience.write'],
+      clientId: 'cid',
+      redirectUri: 'https://x',
+      state: 's',
+      scopes: ['user.read', 'audience.write'],
     });
     expect(new URL(url).searchParams.get('scope')).toBe('user.read audience.write');
   });
 
   it('throws on missing required inputs', () => {
-    expect(() => buildAuthorizeUrl({ clientId: '', redirectUri: 'https://x', state: 's' })).toThrow(/clientId/);
-    expect(() => buildAuthorizeUrl({ clientId: 'c', redirectUri: '', state: 's' })).toThrow(/redirectUri/);
-    expect(() => buildAuthorizeUrl({ clientId: 'c', redirectUri: 'https://x', state: '' })).toThrow(/state/);
+    expect(() => buildAuthorizeUrl({ clientId: '', redirectUri: 'https://x', state: 's' })).toThrow(
+      /clientId/,
+    );
+    expect(() => buildAuthorizeUrl({ clientId: 'c', redirectUri: '', state: 's' })).toThrow(
+      /redirectUri/,
+    );
+    expect(() => buildAuthorizeUrl({ clientId: 'c', redirectUri: 'https://x', state: '' })).toThrow(
+      /state/,
+    );
   });
 });
 

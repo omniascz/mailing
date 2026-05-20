@@ -39,7 +39,9 @@ const enrollSchema = z.object({
 const listEnrollmentsQuery = z.object({
   contactId: z.string().uuid().optional(),
   sequenceId: z.string().uuid().optional(),
-  status: z.enum(['active', 'paused', 'completed', 'replied', 'unsubscribed', 'bounced', 'cancelled']).optional(),
+  status: z
+    .enum(['active', 'paused', 'completed', 'replied', 'unsubscribed', 'bounced', 'cancelled'])
+    .optional(),
 });
 
 export default async function sequenceRoutes(app: FastifyInstance) {
@@ -92,7 +94,10 @@ export default async function sequenceRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/crm/sequences/:id/enroll',
-    { preHandler: app.requireAuth, schema: { tags: ['CRM'], summary: 'Enroll contact in sequence' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['CRM'], summary: 'Enroll contact in sequence' },
+    },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
       const body = enrollSchema.parse(req.body);

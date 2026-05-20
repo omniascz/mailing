@@ -122,38 +122,38 @@ USE CASE: SMB-mid e-shop / B2B SaaS
 
 ### 2.2 Měsíční ceny – 10K kontaktů
 
-| Platforma | Plan | $/mo | Roční | Notes |
-|---|---|---:|---:|---|
-| **Mailchimp** | Standard | $87 | $1 044 | bez SMS |
-| **HubSpot** | Marketing Starter | $50 | $600 | limited features |
-| **HubSpot** | Marketing Pro | $890 | $10 680 | full features |
-| **Brevo** | Business | $52 | $624 | unlimited cont., 20K sends |
-| **Klaviyo** | Email | $175 | $2 100 | base predictive |
-| **Klaviyo** | Email + SMS | varies | – | + SMS pricing |
-| **GetResponse** | Marketer | $89 | $1 068 | webinars + funnels |
-| **MailerLite** | Advanced | $73 | $876 | full features |
-| **ActiveCampaign** | Plus | $169 | $2 028 | automation depth |
-| **Ecomail** | Marketer | 1 499 Kč ($65) | $780 | CZ leader SMB |
-| **SmartEmailing** | Plus | 2 490 Kč ($108) | $1 296 | CZ klasika |
-| **Mailkit** | Profi | 3 990 Kč ($173) | $2 076 | CZ deliverability |
-| **Boldem** | Premium Plus | 2 490 Kč ($108) | $1 296 | CZ levné |
-| **CleverReach** | Plus | €99 ($107) | $1 284 | DACH SMB |
-| **rapidmail** | Volume | €99 ($107) | $1 284 | DACH SMB |
-| **GetResponse** | Plus | $59 | $708 | basic automation |
-| **Constant Contact** | Standard | $120 | $1 440 | Premium tier |
-| **Constant Contact** | Premium | $200 | $2 400 | full |
-| **Inxmail** | Professional | €299 ($322) | $3 864 | DACH B2B |
-| **SALESmanago** | Mid-tier | $750+ | $9 000+ | enterprise mid |
-| **Leadhub** | Mid-tier | $500+ | $6 000+ | CZ mid-market |
-| **Targito** | Mid-tier | $750+ | $9 000+ | CZ CDP |
-| **ExpertSender** | Custom | $500+ | $6 000+ | PL enterprise |
-| **Mapp/Evalanche** | Enterprise | $1 500+ | $18 000+ | DACH CDP |
-| **SAP Emarsys** | Custom | $2 500+ | $30 000+ | enterprise retail |
-| **Salesforce MC** | Growth | $1 500+ | $18 000+ | flat per org |
-| **Bloomreach** | Custom | $3 000+ | $36 000+ | CDXP |
-| **Braze** | Enterprise | $5 000+ | $60 000+ | mobile-first scale |
-| **SARE** | Enterprise | – | – | PL focused |
-| **EmailLabs** | API-based | varies | – | per 1000 sendů |
+| Platforma            | Plan              |            $/mo |    Roční | Notes                      |
+| -------------------- | ----------------- | --------------: | -------: | -------------------------- |
+| **Mailchimp**        | Standard          |             $87 |   $1 044 | bez SMS                    |
+| **HubSpot**          | Marketing Starter |             $50 |     $600 | limited features           |
+| **HubSpot**          | Marketing Pro     |            $890 |  $10 680 | full features              |
+| **Brevo**            | Business          |             $52 |     $624 | unlimited cont., 20K sends |
+| **Klaviyo**          | Email             |            $175 |   $2 100 | base predictive            |
+| **Klaviyo**          | Email + SMS       |          varies |        – | + SMS pricing              |
+| **GetResponse**      | Marketer          |             $89 |   $1 068 | webinars + funnels         |
+| **MailerLite**       | Advanced          |             $73 |     $876 | full features              |
+| **ActiveCampaign**   | Plus              |            $169 |   $2 028 | automation depth           |
+| **Ecomail**          | Marketer          |  1 499 Kč ($65) |     $780 | CZ leader SMB              |
+| **SmartEmailing**    | Plus              | 2 490 Kč ($108) |   $1 296 | CZ klasika                 |
+| **Mailkit**          | Profi             | 3 990 Kč ($173) |   $2 076 | CZ deliverability          |
+| **Boldem**           | Premium Plus      | 2 490 Kč ($108) |   $1 296 | CZ levné                   |
+| **CleverReach**      | Plus              |      €99 ($107) |   $1 284 | DACH SMB                   |
+| **rapidmail**        | Volume            |      €99 ($107) |   $1 284 | DACH SMB                   |
+| **GetResponse**      | Plus              |             $59 |     $708 | basic automation           |
+| **Constant Contact** | Standard          |            $120 |   $1 440 | Premium tier               |
+| **Constant Contact** | Premium           |            $200 |   $2 400 | full                       |
+| **Inxmail**          | Professional      |     €299 ($322) |   $3 864 | DACH B2B                   |
+| **SALESmanago**      | Mid-tier          |           $750+ |  $9 000+ | enterprise mid             |
+| **Leadhub**          | Mid-tier          |           $500+ |  $6 000+ | CZ mid-market              |
+| **Targito**          | Mid-tier          |           $750+ |  $9 000+ | CZ CDP                     |
+| **ExpertSender**     | Custom            |           $500+ |  $6 000+ | PL enterprise              |
+| **Mapp/Evalanche**   | Enterprise        |         $1 500+ | $18 000+ | DACH CDP                   |
+| **SAP Emarsys**      | Custom            |         $2 500+ | $30 000+ | enterprise retail          |
+| **Salesforce MC**    | Growth            |         $1 500+ | $18 000+ | flat per org               |
+| **Bloomreach**       | Custom            |         $3 000+ | $36 000+ | CDXP                       |
+| **Braze**            | Enterprise        |         $5 000+ | $60 000+ | mobile-first scale         |
+| **SARE**             | Enterprise        |               – |        – | PL focused                 |
+| **EmailLabs**        | API-based         |          varies |        – | per 1000 sendů             |
 
 ### 2.3 Top 5 doporučení pro 10K kontaktů
 
@@ -196,39 +196,39 @@ USE CASE: Mid-market e-shop / B2B
 
 ### 3.2 Měsíční ceny – 50K kontaktů
 
-| Platforma | Plan | $/mo | Roční | Notes |
-|---|---|---:|---:|---|
-| **Mailchimp** | Standard | $230 | $2 760 | rychle roste |
-| **Mailchimp** | Premium | $640 | $7 680 | full features |
-| **HubSpot** | Marketing Pro | $890+ | $10 680+ | + contacts adds |
-| **HubSpot** | Marketing Enterprise | $3 600+ | $43 200+ | full |
-| **Brevo** | Business | $52+ | $624+ | unlim cont., sends scale |
-| **Klaviyo** | Email | $720 | $8 640 | predictive scale |
-| **Klaviyo** | Email + SMS | $850+ | $10 200+ | + SMS bundle |
-| **GetResponse** | Creator+ | $189 | $2 268 | webinars |
-| **MailerLite** | Advanced | $189 | $2 268 | scales reasonably |
-| **ActiveCampaign** | Plus | $400+ | $4 800+ | mid-market sweet spot |
-| **ActiveCampaign** | Enterprise | $700+ | $8 400+ | full |
-| **Ecomail** | Custom | 4 500+ Kč | – | CZ enterprise |
-| **SmartEmailing** | Custom | 5 000+ Kč | – | CZ klasika scale |
-| **Mailkit** | Profi+ | 7 990+ Kč | – | CZ deliverability scale |
-| **Boldem** | Custom | – | – | CZ levné scale |
-| **CleverReach** | Custom | €200+ | $2 400+ | DACH SMB |
-| **rapidmail** | Volume | €200+ | $2 400+ | DACH |
-| **Constant Contact** | Premium | $400+ | $4 800+ | scales rychle |
-| **Inxmail** | Professional | €599+ | $7 188+ | B2B DACH |
-| **SALESmanago** | Standard | $1 500+ | $18 000+ | mid-market |
-| **Leadhub** | Mid | $1 500+ | $18 000+ | CZ mid-market |
-| **Targito** | Mid | $1 500+ | $18 000+ | CZ CDP |
-| **ExpertSender** | Mid | $1 200+ | $14 400+ | PL enterprise |
-| **Mapp/Evalanche** | Enterprise | $2 500+ | $30 000+ | DACH CDP |
-| **SAP Emarsys** | Enterprise | $5 000+ | $60 000+ | retail enterprise |
-| **Salesforce MC** | Growth | $1 500+ | $18 000+ | flat |
-| **Salesforce MC** | Advanced | $3 250+ | $39 000+ | premium |
-| **Bloomreach** | Custom | $5 000+ | $60 000+ | CDXP |
-| **Braze** | Enterprise | $7 500+ | $90 000+ | mobile scale |
-| **SARE** | Enterprise | $2 500+ | $30 000+ | PL B2C |
-| **EmailLabs** | Custom | varies | – | per 1000 sendů |
+| Platforma            | Plan                 |      $/mo |    Roční | Notes                    |
+| -------------------- | -------------------- | --------: | -------: | ------------------------ |
+| **Mailchimp**        | Standard             |      $230 |   $2 760 | rychle roste             |
+| **Mailchimp**        | Premium              |      $640 |   $7 680 | full features            |
+| **HubSpot**          | Marketing Pro        |     $890+ | $10 680+ | + contacts adds          |
+| **HubSpot**          | Marketing Enterprise |   $3 600+ | $43 200+ | full                     |
+| **Brevo**            | Business             |      $52+ |    $624+ | unlim cont., sends scale |
+| **Klaviyo**          | Email                |      $720 |   $8 640 | predictive scale         |
+| **Klaviyo**          | Email + SMS          |     $850+ | $10 200+ | + SMS bundle             |
+| **GetResponse**      | Creator+             |      $189 |   $2 268 | webinars                 |
+| **MailerLite**       | Advanced             |      $189 |   $2 268 | scales reasonably        |
+| **ActiveCampaign**   | Plus                 |     $400+ |  $4 800+ | mid-market sweet spot    |
+| **ActiveCampaign**   | Enterprise           |     $700+ |  $8 400+ | full                     |
+| **Ecomail**          | Custom               | 4 500+ Kč |        – | CZ enterprise            |
+| **SmartEmailing**    | Custom               | 5 000+ Kč |        – | CZ klasika scale         |
+| **Mailkit**          | Profi+               | 7 990+ Kč |        – | CZ deliverability scale  |
+| **Boldem**           | Custom               |         – |        – | CZ levné scale           |
+| **CleverReach**      | Custom               |     €200+ |  $2 400+ | DACH SMB                 |
+| **rapidmail**        | Volume               |     €200+ |  $2 400+ | DACH                     |
+| **Constant Contact** | Premium              |     $400+ |  $4 800+ | scales rychle            |
+| **Inxmail**          | Professional         |     €599+ |  $7 188+ | B2B DACH                 |
+| **SALESmanago**      | Standard             |   $1 500+ | $18 000+ | mid-market               |
+| **Leadhub**          | Mid                  |   $1 500+ | $18 000+ | CZ mid-market            |
+| **Targito**          | Mid                  |   $1 500+ | $18 000+ | CZ CDP                   |
+| **ExpertSender**     | Mid                  |   $1 200+ | $14 400+ | PL enterprise            |
+| **Mapp/Evalanche**   | Enterprise           |   $2 500+ | $30 000+ | DACH CDP                 |
+| **SAP Emarsys**      | Enterprise           |   $5 000+ | $60 000+ | retail enterprise        |
+| **Salesforce MC**    | Growth               |   $1 500+ | $18 000+ | flat                     |
+| **Salesforce MC**    | Advanced             |   $3 250+ | $39 000+ | premium                  |
+| **Bloomreach**       | Custom               |   $5 000+ | $60 000+ | CDXP                     |
+| **Braze**            | Enterprise           |   $7 500+ | $90 000+ | mobile scale             |
+| **SARE**             | Enterprise           |   $2 500+ | $30 000+ | PL B2C                   |
+| **EmailLabs**        | Custom               |    varies |        – | per 1000 sendů           |
 
 ### 3.3 Top 5 doporučení pro 50K kontaktů
 
@@ -279,34 +279,34 @@ USE CASE: Enterprise SMB / Mid-market
 
 ### 4.2 Měsíční ceny – 200K kontaktů
 
-| Platforma | Plan | $/mo | Roční | Notes |
-|---|---|---:|---:|---|
-| **Mailchimp** | Premium | $1 600+ | $19 200+ | scales fast |
-| **HubSpot** | Marketing Enterprise | $3 600+ | $43 200+ | + contact adds |
-| **Brevo** | Business+ | $400+ | $4 800+ | unlim cont. magic |
-| **Klaviyo** | Email | $2 880 | $34 560 | predictive enterprise |
-| **Klaviyo** | Enterprise | custom | – | typically $3K+ |
-| **GetResponse** | Custom | $500+ | $6 000+ | scales |
-| **MailerLite** | Advanced+ | $400+ | $4 800+ | scales |
-| **ActiveCampaign** | Enterprise | $1 500+ | $18 000+ | enterprise |
-| **Ecomail** | Custom | $1 000+ | $12 000+ | CZ enterprise |
-| **SmartEmailing** | Custom | $1 200+ | $14 400+ | CZ |
-| **Mailkit** | Profi+ | $1 500+ | $18 000+ | CZ deliverability |
-| **CleverReach** | Custom | $500+ | $6 000+ | DACH |
-| **rapidmail** | Custom | $400+ | $4 800+ | DACH |
-| **Constant Contact** | Premium | $1 500+ | $18 000+ | mid-market max |
-| **Inxmail** | Enterprise | $2 000+ | $24 000+ | DACH B2B |
-| **SALESmanago** | Custom | $3 000+ | $36 000+ | enterprise CEE |
-| **Leadhub** | Enterprise | $3 000+ | $36 000+ | CZ enterprise |
-| **Targito** | Enterprise | $3 000+ | $36 000+ | CZ CDP |
-| **ExpertSender** | Enterprise | $2 500+ | $30 000+ | PL B2C |
-| **Mapp/Evalanche** | Enterprise | $4 000+ | $48 000+ | DACH enterprise CDP |
-| **SAP Emarsys** | Custom | $8 000+ | $96 000+ | retail enterprise |
-| **Salesforce MC** | Advanced | $3 250+ | $39 000+ | flat + usage |
-| **Salesforce MC** | Premier | $4 200+ | $50 400+ | corporate |
-| **Bloomreach** | Custom | $7 000+ | $84 000+ | CDXP enterprise |
-| **Braze** | Enterprise | $10 000+ | $120 000+ | mobile-first |
-| **SARE** | Custom | $4 000+ | $48 000+ | PL enterprise |
+| Platforma            | Plan                 |     $/mo |     Roční | Notes                 |
+| -------------------- | -------------------- | -------: | --------: | --------------------- |
+| **Mailchimp**        | Premium              |  $1 600+ |  $19 200+ | scales fast           |
+| **HubSpot**          | Marketing Enterprise |  $3 600+ |  $43 200+ | + contact adds        |
+| **Brevo**            | Business+            |    $400+ |   $4 800+ | unlim cont. magic     |
+| **Klaviyo**          | Email                |   $2 880 |   $34 560 | predictive enterprise |
+| **Klaviyo**          | Enterprise           |   custom |         – | typically $3K+        |
+| **GetResponse**      | Custom               |    $500+ |   $6 000+ | scales                |
+| **MailerLite**       | Advanced+            |    $400+ |   $4 800+ | scales                |
+| **ActiveCampaign**   | Enterprise           |  $1 500+ |  $18 000+ | enterprise            |
+| **Ecomail**          | Custom               |  $1 000+ |  $12 000+ | CZ enterprise         |
+| **SmartEmailing**    | Custom               |  $1 200+ |  $14 400+ | CZ                    |
+| **Mailkit**          | Profi+               |  $1 500+ |  $18 000+ | CZ deliverability     |
+| **CleverReach**      | Custom               |    $500+ |   $6 000+ | DACH                  |
+| **rapidmail**        | Custom               |    $400+ |   $4 800+ | DACH                  |
+| **Constant Contact** | Premium              |  $1 500+ |  $18 000+ | mid-market max        |
+| **Inxmail**          | Enterprise           |  $2 000+ |  $24 000+ | DACH B2B              |
+| **SALESmanago**      | Custom               |  $3 000+ |  $36 000+ | enterprise CEE        |
+| **Leadhub**          | Enterprise           |  $3 000+ |  $36 000+ | CZ enterprise         |
+| **Targito**          | Enterprise           |  $3 000+ |  $36 000+ | CZ CDP                |
+| **ExpertSender**     | Enterprise           |  $2 500+ |  $30 000+ | PL B2C                |
+| **Mapp/Evalanche**   | Enterprise           |  $4 000+ |  $48 000+ | DACH enterprise CDP   |
+| **SAP Emarsys**      | Custom               |  $8 000+ |  $96 000+ | retail enterprise     |
+| **Salesforce MC**    | Advanced             |  $3 250+ |  $39 000+ | flat + usage          |
+| **Salesforce MC**    | Premier              |  $4 200+ |  $50 400+ | corporate             |
+| **Bloomreach**       | Custom               |  $7 000+ |  $84 000+ | CDXP enterprise       |
+| **Braze**            | Enterprise           | $10 000+ | $120 000+ | mobile-first          |
+| **SARE**             | Custom               |  $4 000+ |  $48 000+ | PL enterprise         |
 
 ### 4.3 Top 5 doporučení pro 200K kontaktů
 
@@ -697,20 +697,20 @@ YEAR 2:
 ### 7.3 TCO calculator framework
 
 ```
-TCO YEAR 1 = 
+TCO YEAR 1 =
   Subscription × 12 months
   + Implementation cost
   + Training cost
   + Integration cost
   + Support package
 
-TCO YEAR 2+ = 
+TCO YEAR 2+ =
   Subscription × 12 (often +5-15% annual)
   + Ongoing optimization
   + Support package
   + Possible upgrades
 
-3-YEAR TCO = 
+3-YEAR TCO =
   Year 1 + (Year 2 × 1) + (Year 3 × 1.1)
 
 WATCH FOR:
@@ -1176,4 +1176,4 @@ PRO TVŮJ TCO:
 
 ---
 
-*Dokument zpracován z 54 detailních deep-dive analýz (01-54) a verified web sources 2026. Pricing aktuální k květnu 2026 dle oficiálních zdrojů. Enterprise pricing varies dle negotiation - vždy získat custom quote. Pro detail per platformu viz individuální dokumenty.*
+_Dokument zpracován z 54 detailních deep-dive analýz (01-54) a verified web sources 2026. Pricing aktuální k květnu 2026 dle oficiálních zdrojů. Enterprise pricing varies dle negotiation - vždy získat custom quote. Pro detail per platformu viz individuální dokumenty._

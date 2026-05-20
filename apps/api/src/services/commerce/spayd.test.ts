@@ -55,7 +55,7 @@ describe('buildSpaydString', () => {
     // No `*` or `:` should appear inside the message payload
     const msgSegment = spayd.split('*').find((p) => p.startsWith('MSG:'))!;
     expect(msgSegment.slice(4).length).toBeLessThanOrEqual(60);
-    expect(msgSegment.slice(4)).not.toMatch(/[\*\:]/);
+    expect(msgSegment.slice(4)).not.toMatch(/[*:]/);
   });
 
   it('rejects invalid IBAN', () => {
@@ -63,9 +63,7 @@ describe('buildSpaydString', () => {
   });
 
   it('rejects negative amounts', () => {
-    expect(() =>
-      buildSpaydString({ iban: 'CZ6520100000002301234567', amount: -1 }),
-    ).toThrow();
+    expect(() => buildSpaydString({ iban: 'CZ6520100000002301234567', amount: -1 })).toThrow();
   });
 
   it('rejects non-numeric variable symbol', () => {

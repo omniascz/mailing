@@ -27,7 +27,11 @@ import { contacts } from '../../db/schema/contacts.js';
 import { accounts } from '../../db/schema/accounts.js';
 import { deals } from '../../db/schema/deals.js';
 import { listContacts, listCompanies, listDeals } from './client.js';
-import type { RaynetNormalizedContact, RaynetNormalizedCompany, RaynetNormalizedDeal } from './pure.js';
+import type {
+  RaynetNormalizedContact,
+  RaynetNormalizedCompany,
+  RaynetNormalizedDeal,
+} from './pure.js';
 
 // ─── Pull: Raynet → MailForge ────────────────────────────────────────────────
 

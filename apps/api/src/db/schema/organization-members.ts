@@ -9,17 +9,19 @@
  */
 
 import { sql } from 'drizzle-orm';
-import {
-  pgTable, uuid, varchar, timestamp, text, index, uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, text, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';
 
 export const organizationMembers = pgTable(
   'organization_members',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
 
     /** Email used for invitation (before the user accepts / account exists) */
@@ -31,7 +33,9 @@ export const organizationMembers = pgTable(
     /** pending | active | suspended | removed */
     status: varchar('status', { length: 16 }).notNull().default('pending'),
 
-    invitedByUserId: uuid('invited_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    invitedByUserId: uuid('invited_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     invitationToken: text('invitation_token'),
     invitationExpiresAt: timestamp('invitation_expires_at', { withTimezone: true }),
     acceptedAt: timestamp('accepted_at', { withTimezone: true }),

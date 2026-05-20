@@ -33,7 +33,9 @@ export function startArchiveWorker(): Worker {
         throw new Error(`Archive API returned ${res.status}: ${text}`);
       }
 
-      const result = (await res.json()) as { data: { totalArchived: number; totalDeleted: number; orgsProcessed: number } };
+      const result = (await res.json()) as {
+        data: { totalArchived: number; totalDeleted: number; orgsProcessed: number };
+      };
       job.log(`Done: ${JSON.stringify(result.data)}`);
       return result.data;
     },

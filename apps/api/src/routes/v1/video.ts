@@ -29,12 +29,14 @@ export default async function videoRoutes(app: FastifyInstance) {
     scope.addHook('preHandler', app.requireAuth);
 
     scope.post('/api/v1/video/request-upload', async (req, reply) => {
-      const body = z.object({
-        contactId: z.string().uuid().optional(),
-        title: z.string().max(255).optional(),
-        mimeType: z.string().max(64),
-        sizeBytes: z.number().int().positive(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          contactId: z.string().uuid().optional(),
+          title: z.string().max(255).optional(),
+          mimeType: z.string().max(64),
+          sizeBytes: z.number().int().positive(),
+        })
+        .parse(req.body);
 
       const user = req.user as { orgId: string; userId: string };
       const result = await requestUpload(user.orgId, {
@@ -77,10 +79,12 @@ export default async function videoRoutes(app: FastifyInstance) {
 
   app.post('/v/:token/events', async (req, reply) => {
     const { token } = z.object({ token: z.string().min(16).max(128) }).parse(req.params);
-    const body = z.object({
-      eventType: z.enum(['play', 'pause', 'progress', 'completed']),
-      positionSeconds: z.number().int().nonnegative(),
-    }).parse(req.body);
+    const body = z
+      .object({
+        eventType: z.enum(['play', 'pause', 'progress', 'completed']),
+        positionSeconds: z.number().int().nonnegative(),
+      })
+      .parse(req.body);
 
     await recordPlayEvent(token, {
       eventType: body.eventType,
@@ -100,12 +104,16 @@ export default async function videoRoutes(app: FastifyInstance) {
     const { db } = await import('../../db/client.js');
     const { videoMessages } = await import('../../db/schema/video-messages.js');
     const { eq } = await import('drizzle-orm');
-    const rows = await db.select({
-      id: videoMessages.id,
-      orgId: videoMessages.orgId,
-      originalObjectKey: videoMessages.originalObjectKey,
-      shareToken: videoMessages.shareToken,
-    }).from(videoMessages).where(eq(videoMessages.status, 'uploaded')).limit(20);
+    const rows = await db
+      .select({
+        id: videoMessages.id,
+        orgId: videoMessages.orgId,
+        originalObjectKey: videoMessages.originalObjectKey,
+        shareToken: videoMessages.shareToken,
+      })
+      .from(videoMessages)
+      .where(eq(videoMessages.status, 'uploaded'))
+      .limit(20);
     return reply.send({ data: rows });
   });
 
@@ -114,14 +122,16 @@ export default async function videoRoutes(app: FastifyInstance) {
     if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
 
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    const body = z.object({
-      orgId: z.string().uuid(),
-      success: z.boolean(),
-      hlsManifestKey: z.string().optional(),
-      thumbnailKey: z.string().optional(),
-      durationSeconds: z.number().int().optional(),
-      error: z.string().optional(),
-    }).parse(req.body);
+    const body = z
+      .object({
+        orgId: z.string().uuid(),
+        success: z.boolean(),
+        hlsManifestKey: z.string().optional(),
+        thumbnailKey: z.string().optional(),
+        durationSeconds: z.number().int().optional(),
+        error: z.string().optional(),
+      })
+      .parse(req.body);
 
     await markTranscodeResult(body.orgId, id, body);
     return reply.status(204).send();

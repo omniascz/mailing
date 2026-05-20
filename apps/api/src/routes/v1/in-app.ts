@@ -16,7 +16,6 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
   listInAppMessages,
-
   createInAppMessage,
   updateInAppMessage,
   deleteInAppMessage,
@@ -24,7 +23,6 @@ import {
   checkFrequency,
   trackImpression,
 } from '../../services/in-app/index.js';
-
 
 export default async function inAppRoutes(app: FastifyInstance) {
   // ── Dashboard CRUD (requires JWT auth) ───────────────────────────────────
@@ -50,16 +48,30 @@ export default async function inAppRoutes(app: FastifyInstance) {
     body: z.string().min(1),
     ctaLabel: z.string().optional(),
     ctaUrl: z.string().url().optional(),
-    backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#ffffff'),
-    textColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#000000'),
+    backgroundColor: z
+      .string()
+      .regex(/^#[0-9a-fA-F]{6}$/)
+      .default('#ffffff'),
+    textColor: z
+      .string()
+      .regex(/^#[0-9a-fA-F]{6}$/)
+      .default('#000000'),
     imageUrl: z.string().url().optional(),
     targetingRules: z.array(targetingRuleSchema).default([]),
     maxPerSession: z.number().int().min(0).default(1),
     maxTotal: z.number().int().min(0).default(0),
     autoCloseSeconds: z.number().int().min(0).default(0),
     campaignId: z.string().uuid().optional(),
-    startAt: z.string().datetime().optional().transform((v) => v ? new Date(v) : undefined),
-    endAt: z.string().datetime().optional().transform((v) => v ? new Date(v) : undefined),
+    startAt: z
+      .string()
+      .datetime()
+      .optional()
+      .transform((v) => (v ? new Date(v) : undefined)),
+    endAt: z
+      .string()
+      .datetime()
+      .optional()
+      .transform((v) => (v ? new Date(v) : undefined)),
   });
 
   app.post('/api/v1/in-app/messages', { preHandler: [app.authenticate] }, async (req, reply) => {
@@ -73,16 +85,24 @@ export default async function inAppRoutes(app: FastifyInstance) {
     const { orgId } = req.user as { orgId: string };
     const { id } = req.params as { id: string };
     const data = createSchema.partial().parse(req.body);
-    const msg = await updateInAppMessage(id, orgId, data as Parameters<typeof updateInAppMessage>[2]);
+    const msg = await updateInAppMessage(
+      id,
+      orgId,
+      data as Parameters<typeof updateInAppMessage>[2],
+    );
     return { data: msg };
   });
 
-  app.delete('/api/v1/in-app/messages/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
-    const { orgId } = req.user as { orgId: string };
-    const { id } = req.params as { id: string };
-    await deleteInAppMessage(id, orgId);
-    return reply.status(204).send();
-  });
+  app.delete(
+    '/api/v1/in-app/messages/:id',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { orgId } = req.user as { orgId: string };
+      const { id } = req.params as { id: string };
+      await deleteInAppMessage(id, orgId);
+      return reply.status(204).send();
+    },
+  );
 
   // ── SDK-facing: fetch matching messages ───────────────────────────────────
   // This endpoint is called by @forgemsg/web-sdk on every page load.
@@ -140,7 +160,14 @@ export default async function inAppRoutes(app: FastifyInstance) {
     if (!orgId) return reply.status(401).send({ error: 'Unauthorized' });
 
     const data = trackSchema.parse(req.body);
-    await trackImpression(orgId, data.messageId, data.sessionId, data.eventType, data.contactId, data.pageUrl);
+    await trackImpression(
+      orgId,
+      data.messageId,
+      data.sessionId,
+      data.eventType,
+      data.contactId,
+      data.pageUrl,
+    );
 
     return reply.status(204).send();
   });

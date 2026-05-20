@@ -35,10 +35,7 @@ import {
   getSmsSendStats,
   updateSmsDeliveryStatus,
 } from '../../services/sms/routing.js';
-import {
-  processInboundSms,
-  listInboundSms,
-} from '../../services/sms/inbound.js';
+import { processInboundSms, listInboundSms } from '../../services/sms/inbound.js';
 import {
   recordConsent,
   revokeConsent,
@@ -264,12 +261,16 @@ export default async function smsRoutes(app: FastifyInstance) {
     return reply.status(201).send({ data: consent });
   });
 
-  app.delete('/api/v1/sms/consents/:phone', { preHandler: [app.authenticate] }, async (req, reply) => {
-    const { orgId } = req.user as { orgId: string };
-    const phone = decodeURIComponent((req.params as { phone: string }).phone);
-    await revokeConsent(orgId, phone);
-    return reply.status(204).send();
-  });
+  app.delete(
+    '/api/v1/sms/consents/:phone',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { orgId } = req.user as { orgId: string };
+      const phone = decodeURIComponent((req.params as { phone: string }).phone);
+      await revokeConsent(orgId, phone);
+      return reply.status(204).send();
+    },
+  );
 
   const complianceCheckSchema = z.object({
     phone: z.string().min(5),

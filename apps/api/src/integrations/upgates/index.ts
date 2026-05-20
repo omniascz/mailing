@@ -44,7 +44,10 @@ export async function registerConnection(
 
   // Validate credentials by hitting `/api/v2/eshop` (lightweight ping)
   const res = await fetch(`${adminUrl}/api/v2/eshop`, {
-    headers: { Authorization: buildUpgatesAuthHeader(input.apiLogin, input.apiKey), Accept: 'application/json' },
+    headers: {
+      Authorization: buildUpgatesAuthHeader(input.apiLogin, input.apiKey),
+      Accept: 'application/json',
+    },
   });
   if (!res.ok) {
     throw new AppError({
@@ -76,12 +79,7 @@ export async function handleWebhookEvent(
   topic: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
-  const orderTopics = new Set([
-    'order.created',
-    'order.updated',
-    'order/create',
-    'order/update',
-  ]);
+  const orderTopics = new Set(['order.created', 'order.updated', 'order/create', 'order/update']);
   if (orderTopics.has(topic)) {
     const order = normalizeUpgatesOrderPayload(payload);
     await ingestOrder(connection, order);

@@ -23,7 +23,9 @@ export const ispEnum = pgEnum('isp_provider', [
 export const ispFblRegistrations = pgTable(
   'isp_fbl_registrations',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -35,10 +37,7 @@ export const ispFblRegistrations = pgTable(
     notes: varchar('notes', { length: 1024 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('isp_fbl_org_idx').on(t.orgId),
-    index('isp_fbl_isp_idx').on(t.isp),
-  ],
+  (t) => [index('isp_fbl_org_idx').on(t.orgId), index('isp_fbl_isp_idx').on(t.isp)],
 );
 
 export type IspFblRegistration = typeof ispFblRegistrations.$inferSelect;

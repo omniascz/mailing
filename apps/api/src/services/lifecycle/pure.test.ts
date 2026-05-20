@@ -80,15 +80,15 @@ describe('canTransition', () => {
 
 describe('suggestedStageFromSignals', () => {
   it('picks the highest matching signal', () => {
-    expect(
-      suggestedStageFromSignals({ hasOptedIn: true, hasMarketingEngagement: true }),
-    ).toBe('marketing_qualified_lead');
+    expect(suggestedStageFromSignals({ hasOptedIn: true, hasMarketingEngagement: true })).toBe(
+      'marketing_qualified_lead',
+    );
   });
 
   it('prefers "evangelist" when referral signal is set', () => {
-    expect(
-      suggestedStageFromSignals({ hasClosedWonDeal: true, hasReferred: true }),
-    ).toBe('evangelist');
+    expect(suggestedStageFromSignals({ hasClosedWonDeal: true, hasReferred: true })).toBe(
+      'evangelist',
+    );
   });
 
   it('falls back to "other" when no signal is set', () => {

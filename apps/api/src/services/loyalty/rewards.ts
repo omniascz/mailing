@@ -73,7 +73,11 @@ export async function updateReward(
     .update(loyaltyRewards)
     .set({ ...patch, updatedAt: new Date() })
     .where(
-      and(eq(loyaltyRewards.id, rewardId), eq(loyaltyRewards.orgId, orgId), isNull(loyaltyRewards.deletedAt)),
+      and(
+        eq(loyaltyRewards.id, rewardId),
+        eq(loyaltyRewards.orgId, orgId),
+        isNull(loyaltyRewards.deletedAt),
+      ),
     )
     .returning();
   if (!updated) throw new Error('Reward not found');
@@ -128,7 +132,11 @@ export async function redeemReward(
     .select()
     .from(loyaltyRewards)
     .where(
-      and(eq(loyaltyRewards.id, rewardId), eq(loyaltyRewards.orgId, orgId), isNull(loyaltyRewards.deletedAt)),
+      and(
+        eq(loyaltyRewards.id, rewardId),
+        eq(loyaltyRewards.orgId, orgId),
+        isNull(loyaltyRewards.deletedAt),
+      ),
     )
     .limit(1);
 
@@ -168,7 +176,10 @@ export async function redeemReward(
       .where(eq(loyaltyMembers.id, memberId))
       .limit(1);
 
-    if (!member?.currentTierId || !(reward.requiredTierIds as string[]).includes(member.currentTierId)) {
+    if (
+      !member?.currentTierId ||
+      !(reward.requiredTierIds as string[]).includes(member.currentTierId)
+    ) {
       return { success: false, reason: 'Member tier does not meet requirement' };
     }
   }

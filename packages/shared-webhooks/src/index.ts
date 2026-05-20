@@ -8,11 +8,7 @@ export {
 } from './signing.js';
 
 // HTTP delivery
-export {
-  buildPayload,
-  deliverWebhook,
-  matchesEvent,
-} from './delivery.js';
+export { buildPayload, deliverWebhook, matchesEvent } from './delivery.js';
 
 // Retry logic
 export {

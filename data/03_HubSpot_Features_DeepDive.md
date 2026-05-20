@@ -72,23 +72,23 @@ HubSpot má v roce 2026 **šest produktových hubů**, každý se čtyřmi tarif
 
 ### 2.1 Marketing Hub
 
-| Tarif | Cena (annual) | Contacts | Klíčové |
-|---|---|---|---|
-| **Free** | $0 | 100 marketing contacts | Drag-drop email editor (limitovaný), formuláře, jednoduchá segmentace, HubSpot branding v emailech |
-| **Starter** | **$20/seat/měsíc** | 1 000 marketing contacts | Plný email editor, email + chat support, žádný HubSpot branding, jednoduchá automatizace (10 automated email actions), 25 active lists, 1 000 static lists |
-| **Professional** | **$890/měsíc** (3 core seats vč.) | 2 000 marketing contacts | + Workflows (plné), A/B testing email/landing pages, custom reporting, lead scoring, social media scheduling, ABM tools, SEO tools, smart content, omnichannel automation, **$3 000 onboarding fee** |
-| **Enterprise** | **$3 600/měsíc** (5 core seats) | 10 000 marketing contacts | + custom objects, advanced reporting, hierarchical teams, multi-touch revenue attribution, partitioning, sandbox environment, **$6 000 onboarding fee** (některé zdroje uvádí $12 000) |
+| Tarif            | Cena (annual)                     | Contacts                  | Klíčové                                                                                                                                                                                              |
+| ---------------- | --------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Free**         | $0                                | 100 marketing contacts    | Drag-drop email editor (limitovaný), formuláře, jednoduchá segmentace, HubSpot branding v emailech                                                                                                   |
+| **Starter**      | **$20/seat/měsíc**                | 1 000 marketing contacts  | Plný email editor, email + chat support, žádný HubSpot branding, jednoduchá automatizace (10 automated email actions), 25 active lists, 1 000 static lists                                           |
+| **Professional** | **$890/měsíc** (3 core seats vč.) | 2 000 marketing contacts  | + Workflows (plné), A/B testing email/landing pages, custom reporting, lead scoring, social media scheduling, ABM tools, SEO tools, smart content, omnichannel automation, **$3 000 onboarding fee** |
+| **Enterprise**   | **$3 600/měsíc** (5 core seats)   | 10 000 marketing contacts | + custom objects, advanced reporting, hierarchical teams, multi-touch revenue attribution, partitioning, sandbox environment, **$6 000 onboarding fee** (některé zdroje uvádí $12 000)               |
 
 **44× cenový skok** mezi Starter a Professional je nejčastěji kritizovaný moment.
 
 ### 2.2 Sales Hub
 
-| Tarif | Cena |
-|---|---|
-| Free | $0 |
-| Starter | $20/seat/měsíc |
+| Tarif        | Cena                                |
+| ------------ | ----------------------------------- |
+| Free         | $0                                  |
+| Starter      | $20/seat/měsíc                      |
 | Professional | $100/seat/měsíc + $1 500 onboarding |
-| Enterprise | $150/seat/měsíc + $3 500 onboarding |
+| Enterprise   | $150/seat/měsíc + $3 500 onboarding |
 
 ### 2.3 Service Hub
 
@@ -120,6 +120,7 @@ Stejná struktura jako Sales Hub: $20 / $100 / $150 per seat.
 ### 2.8 Pricing struktura
 
 HubSpot je dražší než většina konkurence v SMB segmentu, ale **cílí na mid-market a enterprise**. Tři proměnné určují cenu:
+
 1. **Tier** (Free/Starter/Pro/Enterprise)
 2. **Počet seats** (Core, Sales, Service, Commerce paid seats)
 3. **Marketing contacts** (jen Marketing Hub)
@@ -132,15 +133,15 @@ Klíčový shift od 5. března 2024. Týká se nových účtů; starší účty 
 
 ### 3.1 Seat types
 
-| Seat | Cena | Co umožňuje | Limit |
-|---|---|---|---|
-| **View-Only** | $0 (zdarma) | View dashboards, reports, content; nelze vytvořit/editovat | **unlimited** |
-| **Core** | součást plánu / additional ~$50–75 | Edit access napříč Marketing/Content/Operations/Starter Sales|Service | per plán |
-| **Sales** | součást Sales Hub seat / add-on | Plné Sales Hub Professional/Enterprise tooly (sequences, playbooks, prospecting) | per plán |
-| **Service** | součást Service Hub | Service Hub Professional/Enterprise tooly | per plán |
-| **Commerce** | součást Commerce Hub | Commerce-specific tooly (quotes editing, payments) | per plán |
-| **Partner** | $0 pro Solutions Partners | Plný přístup ke klientskému účtu | jen eligible partners |
-| **Developer** | $0 | Developer tools, sandbox; nelze kombinovat s ostatními seats | – |
+| Seat          | Cena                               | Co umožňuje                                                                      | Limit                 |
+| ------------- | ---------------------------------- | -------------------------------------------------------------------------------- | --------------------- | -------- |
+| **View-Only** | $0 (zdarma)                        | View dashboards, reports, content; nelze vytvořit/editovat                       | **unlimited**         |
+| **Core**      | součást plánu / additional ~$50–75 | Edit access napříč Marketing/Content/Operations/Starter Sales                    | Service               | per plán |
+| **Sales**     | součást Sales Hub seat / add-on    | Plné Sales Hub Professional/Enterprise tooly (sequences, playbooks, prospecting) | per plán              |
+| **Service**   | součást Service Hub                | Service Hub Professional/Enterprise tooly                                        | per plán              |
+| **Commerce**  | součást Commerce Hub               | Commerce-specific tooly (quotes editing, payments)                               | per plán              |
+| **Partner**   | $0 pro Solutions Partners          | Plný přístup ke klientskému účtu                                                 | jen eligible partners |
+| **Developer** | $0                                 | Developer tools, sandbox; nelze kombinovat s ostatními seats                     | –                     |
 
 > **Pravidlo:** každý user, který má **edit access**, potřebuje minimálně Core seat. Hub-specific seats (Sales/Service/Commerce) jsou **additivní** nad Core.
 
@@ -156,6 +157,7 @@ Klíčový shift od 5. března 2024. Týká se nových účtů; starší účty 
 ### 3.3 Permission Sets (Roles)
 
 Enterprise: **Permission Sets** = custom roles. Lze:
+
 - Vytvořit až **100 permission sets**
 - Klonovat existující sets
 - Porovnat sets (Professional+)
@@ -166,6 +168,7 @@ V late 2025 byly Permission Sets přejmenovány na **Roles** pro alignment s ind
 ### 3.4 Permission scope
 
 Permissions se nastavují v několika dimenzích:
+
 - **CRM objects** – Contacts, Companies, Deals, Tickets, Custom Objects, Leads
 - **Per-object level**: View / Edit / Delete + scope (All / Team / Owned only / None)
 - **Marketing tools** – Email, Forms, Landing Pages, Workflows, Social, Ads, Lists, etc.
@@ -185,21 +188,21 @@ CRM je **datový základ** – pro všechny huby společný. Není ho lze „vyp
 
 ### 4.1 Standardní objekty
 
-| Objekt | Co reprezentuje |
-|---|---|
-| **Contact** | Individuální osoba |
-| **Company** | Organizace (auto-detected z domain) |
-| **Deal** | Sales opportunity (s pipeline a stages) |
-| **Ticket** | Service request |
-| **Product** | Položka katalogu (Sales + Commerce) |
-| **Line Item** | Položka v dealu/quote |
-| **Quote** | Cenová nabídka |
-| **Invoice** | Faktura (Commerce) |
-| **Payment** | Platba (Commerce) |
-| **Subscription** | Předplatné |
-| **Cart** | Košík (Commerce) |
+| Objekt                | Co reprezentuje                                              |
+| --------------------- | ------------------------------------------------------------ |
+| **Contact**           | Individuální osoba                                           |
+| **Company**           | Organizace (auto-detected z domain)                          |
+| **Deal**              | Sales opportunity (s pipeline a stages)                      |
+| **Ticket**            | Service request                                              |
+| **Product**           | Položka katalogu (Sales + Commerce)                          |
+| **Line Item**         | Položka v dealu/quote                                        |
+| **Quote**             | Cenová nabídka                                               |
+| **Invoice**           | Faktura (Commerce)                                           |
+| **Payment**           | Platba (Commerce)                                            |
+| **Subscription**      | Předplatné                                                   |
+| **Cart**              | Košík (Commerce)                                             |
 | **Lead** (nový 2024+) | Pre-deal prospecting object, lives alongside Contact/Company |
-| **Custom Objects** | Vlastní (jen Enterprise) |
+| **Custom Objects**    | Vlastní (jen Enterprise)                                     |
 
 ### 4.2 Asociace mezi objekty
 
@@ -229,6 +232,7 @@ Default progression contacta v marketingovo-prodejním procesu:
 8. **Other** – nezapadá
 
 **Vlastnosti:**
+
 - Plně customizovatelné (Enterprise)
 - Nelze backwards (HubSpot blokuje regrese)
 - Auto-update via workflows nebo lifecycle stage settings
@@ -237,6 +241,7 @@ Default progression contacta v marketingovo-prodejním procesu:
 ### 4.5 Leads object (2024+)
 
 Nový top-level objekt pro **pre-deal prospecting**. Sales Workspace má dedikovanou „Leads" sekci.
+
 - Sales rep vytvoří Lead z Contact/Company
 - Lead má vlastní stages (custom)
 - Když Lead konvertuje → vytvoří Deal
@@ -260,17 +265,18 @@ Nový top-level objekt pro **pre-deal prospecting**. Sales Workspace má dedikov
 
 ### 5.2 Starter ($20/seat/month)
 
-+ Remove HubSpot branding
-+ Email send limit: **5× počet kontaktů/měsíc**
-+ Up to 10 reporting dashboards, 10 reports per dashboard
-+ Simple automation (10 automated email actions per signup form)
-+ Pop-up forms
-+ 25 active lists, 1 000 static lists
-+ Blog (1)
-+ Email + in-app chat support
-+ Payment links
+- Remove HubSpot branding
+- Email send limit: **5× počet kontaktů/měsíc**
+- Up to 10 reporting dashboards, 10 reports per dashboard
+- Simple automation (10 automated email actions per signup form)
+- Pop-up forms
+- 25 active lists, 1 000 static lists
+- Blog (1)
+- Email + in-app chat support
+- Payment links
 
 **Co Starter NEMÁ:**
+
 - Workflows (full automation tool)
 - A/B testing
 - Custom reporting
@@ -283,50 +289,50 @@ Nový top-level objekt pro **pre-deal prospecting**. Sales Workspace má dedikov
 
 ### 5.3 Professional ($890/month, 3 seats)
 
-+ **Plné Workflows** (multi-step automation, branching, kompletní triggers)
-+ Email send limit: **10× počet kontaktů**
-+ Phone support
-+ 100 shared inboxes
-+ **Marketing email A/B testing**
-+ **Custom reports & dashboards**
-+ **Lead scoring** (manual + nakonec predictive)
-+ **Social media** scheduling + monitoring (Facebook, Instagram, LinkedIn, X/Twitter, YouTube, TikTok)
-+ **Ad management** advanced (audience sync s Google, Meta, LinkedIn)
-+ **ABM (Account-Based Marketing)** tools
-+ **SEO tools** + content strategy
-+ **Smart content** – dynamic content per persona/segment
-+ **Marketing calendar**
-+ **Campaigns reporting** (cross-channel)
-+ **Multi-language content**
-+ **Salesforce integration** (full)
-+ **Custom event tracking**
-+ **Multichannel workflows** (email, ads, social, chat)
-+ **Personalization tokens** (full)
-+ **Custom CTAs**
-+ **Landing page A/B testing**
-+ **Goals & forecasts**
+- **Plné Workflows** (multi-step automation, branching, kompletní triggers)
+- Email send limit: **10× počet kontaktů**
+- Phone support
+- 100 shared inboxes
+- **Marketing email A/B testing**
+- **Custom reports & dashboards**
+- **Lead scoring** (manual + nakonec predictive)
+- **Social media** scheduling + monitoring (Facebook, Instagram, LinkedIn, X/Twitter, YouTube, TikTok)
+- **Ad management** advanced (audience sync s Google, Meta, LinkedIn)
+- **ABM (Account-Based Marketing)** tools
+- **SEO tools** + content strategy
+- **Smart content** – dynamic content per persona/segment
+- **Marketing calendar**
+- **Campaigns reporting** (cross-channel)
+- **Multi-language content**
+- **Salesforce integration** (full)
+- **Custom event tracking**
+- **Multichannel workflows** (email, ads, social, chat)
+- **Personalization tokens** (full)
+- **Custom CTAs**
+- **Landing page A/B testing**
+- **Goals & forecasts**
 
 ### 5.4 Enterprise ($3 600/month, 5 seats)
 
-+ Email send limit: **15× počet kontaktů**
-+ **Custom objects** (CRM)
-+ **Hierarchical teams**
-+ **Field-level permissions** (property-level security)
-+ **Sandbox environments**
-+ **Partitioning** (asset access podle teams)
-+ **Multi-touch revenue attribution**
-+ **Behavioral event triggers** (custom events workflow triggers)
-+ **Predictive lead scoring** (AI-based)
-+ **Calculated properties advanced**
-+ **Email frequency caps**
-+ **Marketing SMS** (selected regions)
-+ **Adaptive testing** (multivariate, AI-driven)
-+ **Account-Based Marketing** advanced
-+ **Single sign-on (SSO)** – SAML
-+ **Hierarchical reporting**
-+ **API rate limit increase**
-+ **Dedicated IP** option (separate add-on)
-+ **Brand kits** (multiple, multi-brand)
+- Email send limit: **15× počet kontaktů**
+- **Custom objects** (CRM)
+- **Hierarchical teams**
+- **Field-level permissions** (property-level security)
+- **Sandbox environments**
+- **Partitioning** (asset access podle teams)
+- **Multi-touch revenue attribution**
+- **Behavioral event triggers** (custom events workflow triggers)
+- **Predictive lead scoring** (AI-based)
+- **Calculated properties advanced**
+- **Email frequency caps**
+- **Marketing SMS** (selected regions)
+- **Adaptive testing** (multivariate, AI-driven)
+- **Account-Based Marketing** advanced
+- **Single sign-on (SSO)** – SAML
+- **Hierarchical reporting**
+- **API rate limit increase**
+- **Dedicated IP** option (separate add-on)
+- **Brand kits** (multiple, multi-brand)
 
 ---
 
@@ -334,13 +340,13 @@ Nový top-level objekt pro **pre-deal prospecting**. Sales Workspace má dedikov
 
 ### 6.1 Typy marketingových emailů
 
-| Typ | Kdy použít |
-|---|---|
-| **Regular** | Single one-shot newsletter / promo |
-| **Automated** | Email pro workflow (Pro+ jen) |
-| **Blog/RSS** | Auto-generated z blog feedu |
-| **A/B test** | 2 varianty regular (Pro+) |
-| **Test send** | Test do vašeho inboxu |
+| Typ           | Kdy použít                         |
+| ------------- | ---------------------------------- |
+| **Regular**   | Single one-shot newsletter / promo |
+| **Automated** | Email pro workflow (Pro+ jen)      |
+| **Blog/RSS**  | Auto-generated z blog feedu        |
+| **A/B test**  | 2 varianty regular (Pro+)          |
+| **Test send** | Test do vašeho inboxu              |
 
 ### 6.2 Email Editor (drag-and-drop)
 
@@ -357,11 +363,12 @@ Nový top-level objekt pro **pre-deal prospecting**. Sales Workspace má dedikov
 ```
 Dear {{ contact.firstname|default("there") }},
 
-Your company {{ contact.company }} has been with us since 
+Your company {{ contact.company }} has been with us since
 {{ contact.createdate|datetimeformat('%B %Y') }}.
 ```
 
 **Token kategorie:**
+
 - Contact properties
 - Company properties (auto-associated)
 - Deal properties (workflow-triggered emails)
@@ -400,6 +407,7 @@ Your company {{ contact.company }} has been with us since
 ### 6.6 Smart Content (Pro+)
 
 Dynamický obsah, který se mění podle:
+
 - Lifecycle stage
 - Contact list membership
 - Country
@@ -419,6 +427,7 @@ Příklad: email má jeden „Smart Block" s 3 verzemi – MQL vidí verzi A, SQ
 ### 6.8 Subscription Types (GDPR-friendly)
 
 Místo „audience-level opt-in" jako Mailchimp, HubSpot má **multiple subscription types per účet**:
+
 - E.g. „Newsletter", „Product Updates", „Promotional Offers", „Webinars"
 - Kontakt může být subscribed jen k některým
 - Každý email se posílá s referenčním subscription type
@@ -431,17 +440,19 @@ Místo „audience-level opt-in" jako Mailchimp, HubSpot má **multiple subscrip
 
 ### 7.1 Lists
 
-| Typ | Update | Use case |
-|---|---|---|
-| **Active list** | Dynamicky (real-time) | Behavior tracking, lifecycle stage grouping |
-| **Static list** | Jednorázově při vytvoření | Specific point-in-time snapshot |
+| Typ             | Update                    | Use case                                    |
+| --------------- | ------------------------- | ------------------------------------------- |
+| **Active list** | Dynamicky (real-time)     | Behavior tracking, lifecycle stage grouping |
+| **Static list** | Jednorázově při vytvoření | Specific point-in-time snapshot             |
 
 **Limity:**
+
 - Starter: 25 active, 1 000 static
 - Professional: 1 200 active, 1 200 static
 - Enterprise: vyšší limity / custom
 
 **List filter criteria** – až **250 filtrů per list** (sloučeno AND/OR groups):
+
 - Contact property (default + custom)
 - Company property
 - Deal property
@@ -466,12 +477,14 @@ Místo „audience-level opt-in" jako Mailchimp, HubSpot má **multiple subscrip
 ### 7.2 Segments (CRM-wide, 2024+)
 
 HubSpot zavedl **Segments** – obecnější než lists, mohou být napříč objekty.
+
 - Použitelné jako enrollment criteria ve workflows
 - Lze sdílet napříč tooly
 
 ### 7.3 Lifecycle Stage management
 
 Viz sekce 4.4. Klíčové že:
+
 - **Workflow trigger** může enrolovat při Lifecycle stage change
 - **Lifecycle stage source** track (kdo updatnul – manually, by workflow, by integration)
 - **Cumulative time in [stage]** – kolik dní celkově strávil
@@ -480,6 +493,7 @@ Viz sekce 4.4. Klíčové že:
 ### 7.4 Lead Status (sub-stages SQL)
 
 V rámci Sales Qualified Lead stage:
+
 - **New** – právě se stal SQL
 - **Open** – sales otevřel ho jako lead
 - **In Progress** – aktivně working
@@ -497,6 +511,7 @@ V rámci Sales Qualified Lead stage:
 ### 8.1 Forms
 
 **Typy:**
+
 - **Embedded form** – HTML/JS k vložení na vlastní web
 - **Standalone form** – HubSpot-hosted URL
 - **Pop-up form** – modal, banner, drop-down, slide-in
@@ -504,6 +519,7 @@ V rámci Sales Qualified Lead stage:
 - **Multi-step forms** (Pro+)
 
 **Features:**
+
 - Drag-drop builder
 - Field types: text, dropdown, multi-select, radio, checkbox, date, file upload, hidden, rich text
 - **Progressive profiling** – další návštěva nahrazuje již vyplněná pole novými otázkami
@@ -553,6 +569,7 @@ V rámci Sales Qualified Lead stage:
 ### 9.1 Workflow object types
 
 Workflow má pevně přiřazený object type:
+
 - **Contact-based** – nejčastější
 - **Company-based**
 - **Deal-based**
@@ -569,9 +586,11 @@ Object type určuje, co workflow může enrolovat a měnit.
 Pět typů:
 
 #### A) When an event occurs (event-based)
+
 Nejmodernější typ (rozšířen 2025+). Záznam se enrolne, když konkrétní událost nastane (po aktivaci workflow). **Nelze enrolnout existing records, kteří už event splnili.**
 
 **Příklady event triggerů:**
+
 - Form submission (specific form + page)
 - Email events (opened, clicked, sent)
 - Ad interactions
@@ -585,13 +604,16 @@ Nejmodernější typ (rozšířen 2025+). Záznam se enrolne, když konkrétní 
 - File downloaded
 
 #### B) When filter criteria is met
+
 Záznam se enrolne, když splňuje set of filter conditions. Lze:
+
 - Enrolnout jen new records that meet criteria
 - Enrolnout i existing records that already meet criteria
 
 Až **250 filtrů per workflow** trigger.
 
 #### C) Based on a schedule
+
 - Recurring (annual/monthly/weekly/daily – monthly+ vyžaduje Data Hub Pro/Ent)
 - Once at specific date
 - Based on date property (e.g. contact's birthday)
@@ -599,10 +621,13 @@ Až **250 filtrů per workflow** trigger.
 Bez additional filter criteria pouze enrolne manuálně.
 
 #### D) When a webhook is received (Data Hub Pro+ only)
+
 External system POSTNE webhook → HubSpot enrolne kontakt.
 
 #### E) Trigger manually
+
 Bez auto-enrollment. Lze enrolnout z:
+
 - Other workflows (Enroll in another workflow action)
 - Bot conversation
 - Manual user action (CRM card)
@@ -610,6 +635,7 @@ Bez auto-enrollment. Lze enrolnout z:
 ### 9.3 Actions – plný výčet
 
 **Communication actions:**
+
 - Send email (marketing or one-to-one transactional)
 - Send SMS (with SMS integration / Marketing Enterprise)
 - Send WhatsApp message
@@ -618,16 +644,19 @@ Bez auto-enrollment. Lze enrolnout z:
 - Send Slack notification
 
 **Delays:**
+
 - Delay for set amount of time
 - Delay until specific day/time
 - Delay until event occurs (with timeout)
 
 **Branches:**
+
 - **If/then branch** – up to 20 branches s conditions
 - **Value equals branch** – branchuje podle hodnoty property
 - **Random split** – % split
 
 **CRM actions:**
+
 - Create record (Contact, Company, Deal, Ticket, Custom Object)
 - Copy record
 - Associate records
@@ -641,21 +670,25 @@ Bez auto-enrollment. Lze enrolnout z:
 - Manage GDPR consent
 
 **Workflow management:**
+
 - Enroll in another workflow
 - Unenroll from another workflow
 - Send for approval
 - End workflow / goto step
 
 **Tasks:**
+
 - Create task
 - Update task
 
 **Lead management:**
+
 - Rotate leads (round-robin assignment)
 - Assign owner (set Contact owner, Deal owner, etc.)
 - Create lead record
 
 **External actions (integrations):**
+
 - Slack message
 - Zoom meeting
 - Google Calendar event
@@ -665,11 +698,13 @@ Bez auto-enrollment. Lze enrolnout z:
 - App-specific actions from connected apps
 
 **Data quality:**
+
 - Format property value
 - Convert phone number format
 - Translate text
 
 **AI actions (Breeze):**
+
 - Generate email content with AI
 - Summarize with AI
 - Classify with AI
@@ -687,6 +722,7 @@ Bez auto-enrollment. Lze enrolnout z:
 ### 9.5 Suppression lists
 
 Per workflow:
+
 - Lists records, které se NIKDY neenroll
 - Lze multiple suppression lists
 
@@ -708,6 +744,7 @@ Per workflow:
 ### 9.8 AI Workflow Builder
 
 Od 2025+: **Breeze Assistant** umí vygenerovat workflow z prompt:
+
 > "When a contact submits the Demo Request form on the Pricing page, send them a confirmation email, create a Lead record, and notify the sales team via Slack."
 
 → Breeze vygeneruje triggers + actions.
@@ -730,14 +767,14 @@ Pro každou automated AI action workflow zobrazí Audit Card – proč AI rozhod
 
 **Sequences ≠ Workflows!** Často matoucí.
 
-| | Workflows | Sequences |
-|---|---|---|
-| Typ | Many-to-one mass automation | **One-to-one personal outreach** |
-| Audience | Lists, segments, dynamic | Manuálně enrolled, malé skupiny |
-| Co posílá | Marketing emaily (batch) | Z osobní inbox sales rep |
-| Stop trigger | Goal step / unenroll | **Auto-stop on reply nebo booked meeting** |
-| Použití | Lead nurture, lifecycle, ops | Sales prospecting |
-| Tarif | Marketing Hub Pro+ | Sales Hub Pro+ |
+|              | Workflows                    | Sequences                                  |
+| ------------ | ---------------------------- | ------------------------------------------ |
+| Typ          | Many-to-one mass automation  | **One-to-one personal outreach**           |
+| Audience     | Lists, segments, dynamic     | Manuálně enrolled, malé skupiny            |
+| Co posílá    | Marketing emaily (batch)     | Z osobní inbox sales rep                   |
+| Stop trigger | Goal step / unenroll         | **Auto-stop on reply nebo booked meeting** |
+| Použití      | Lead nurture, lifecycle, ops | Sales prospecting                          |
+| Tarif        | Marketing Hub Pro+           | Sales Hub Pro+                             |
 
 Sales rep vytvoří 5-step sequence, manually enrolle 50 prospects, sequence auto-pošle z jeho osobní inbox přes Gmail/Outlook integration. Pokud někdo odpoví, sequence se okamžitě zastaví (jen pro toho contacta).
 
@@ -782,6 +819,7 @@ Sales rep vytvoří 5-step sequence, manually enrolle 50 prospects, sequence aut
 - **Non-Marketing Contact** – v CRM existuje, ale nelze mu posílat marketing email; **neúčtuje se**
 
 User volí status:
+
 - Manuálně (toggle na contact record)
 - Workflow action „Set marketing contact status"
 - Form submission (auto-mark as marketing pokud submitted marketing form)
@@ -816,18 +854,19 @@ HubSpot's AI suite, launched 2024, evoluce přes 2025–2026. Nahradila „ChatS
 
 Autonomní specializovaní AI agents:
 
-| Agent | Co dělá |
-|---|---|
-| **Prospecting Agent** | Hledá nové prospekty, researchuje firmy, draftuje outreach emails |
-| **Content Agent** | Generates blog posts, landing pages, email content podle brand voice |
-| **Customer Agent** | AI-powered customer support (chatbot+) |
-| **Social Media Agent** | Drafts social posts, suggests timing |
-| **Data Agent** | Cleans CRM data, deduplicates, enriches properties |
-| **Knowledge Base Agent** | Generates KB articles z historických tickets |
+| Agent                    | Co dělá                                                              |
+| ------------------------ | -------------------------------------------------------------------- |
+| **Prospecting Agent**    | Hledá nové prospekty, researchuje firmy, draftuje outreach emails    |
+| **Content Agent**        | Generates blog posts, landing pages, email content podle brand voice |
+| **Customer Agent**       | AI-powered customer support (chatbot+)                               |
+| **Social Media Agent**   | Drafts social posts, suggests timing                                 |
+| **Data Agent**           | Cleans CRM data, deduplicates, enriches properties                   |
+| **Knowledge Base Agent** | Generates KB articles z historických tickets                         |
 
 ### 13.3 Breeze Intelligence
 
 Embedded AI features napříč platformou:
+
 - **Predictive lead scoring** (viz výše)
 - **Send time optimization**
 - **Subject line generation**
@@ -841,6 +880,7 @@ Embedded AI features napříč platformou:
 ### 13.4 HubSpot Credits (2025+)
 
 AI features konzumují **HubSpot Credits** – nová billing unit:
+
 - Plány mají monthly allowance kreditů
 - Heavy AI workloads vyžadují přikoupení kreditů
 - Per-action cost se liší (basic completion vs. agent run)
@@ -852,6 +892,7 @@ AI features konzumují **HubSpot Credits** – nová billing unit:
 ### 14.1 Out-of-the-box reports
 
 Stovky pre-built reports per Hub + general:
+
 - Email performance
 - Funnel reports (lifecycle stage funnels)
 - Source attribution
@@ -895,6 +936,7 @@ Stovky pre-built reports per Hub + general:
 ### 14.5 Email Analytics
 
 Per-email report obsahuje:
+
 - Sent, Delivered, Bounce (hard/soft)
 - Opens (raw + unique), Open rate
 - Clicks, CTR, top links
@@ -919,9 +961,10 @@ Per-email report obsahuje:
 ### 15.2 Email Authentication
 
 Stejný jako u Mailchimpu, ale s vlastními configy:
+
 - **SPF** – HubSpot uses own MAIL FROM, doesn't require SPF update on customer domain (alignment fails ale OK)
-- **DKIM** – 2× CNAME records (cm._domainkey, mta._domainkey) na customer's sending domain
-- **DMARC** – customer publishes _dmarc TXT record; passes via DKIM
+- **DKIM** – 2× CNAME records (cm.\_domainkey, mta.\_domainkey) na customer's sending domain
+- **DMARC** – customer publishes \_dmarc TXT record; passes via DKIM
 - **BIMI** – po splnění DMARC reject + verified logo
 - **Automated DNS** – HubSpot nemá vlastní Entri-like ale poskytuje DNS provider integrations
 
@@ -960,24 +1003,25 @@ Stejný jako u Mailchimpu, ale s vlastními configy:
 **API v3** je current. Base: `https://api.hubapi.com/`
 
 **Authentication:**
+
 - **Private Apps** (recommended) – API key per app, scoped permissions
 - **OAuth 2.0** – pro public apps z App Marketplace
 - **API Keys** (deprecated, ale stále funkční pro legacy)
 
 ### 16.2 Hlavní endpoint groups
 
-| API | Endpoint examples |
-|---|---|
-| **CRM API** | `/crm/v3/objects/contacts`, `/companies`, `/deals`, `/tickets`, `/leads`, `/products`, custom objects |
-| **CMS API** | Pages, Blog, HubDB, Templates |
-| **Marketing API** | Emails, Forms, Landing Pages, Campaigns, CTAs |
-| **Conversations API** | Inbox, channels |
-| **Webhooks API** | Subscribe to events |
-| **Files API** | File Manager upload/management |
-| **Workflow API** | Enroll/unenroll contacts |
-| **Analytics API** | Event tracking, custom behavioral events |
-| **OAuth API** | Token refresh, scopes |
-| **Settings API** | Users, teams, permission sets |
+| API                   | Endpoint examples                                                                                     |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| **CRM API**           | `/crm/v3/objects/contacts`, `/companies`, `/deals`, `/tickets`, `/leads`, `/products`, custom objects |
+| **CMS API**           | Pages, Blog, HubDB, Templates                                                                         |
+| **Marketing API**     | Emails, Forms, Landing Pages, Campaigns, CTAs                                                         |
+| **Conversations API** | Inbox, channels                                                                                       |
+| **Webhooks API**      | Subscribe to events                                                                                   |
+| **Files API**         | File Manager upload/management                                                                        |
+| **Workflow API**      | Enroll/unenroll contacts                                                                              |
+| **Analytics API**     | Event tracking, custom behavioral events                                                              |
+| **OAuth API**         | Token refresh, scopes                                                                                 |
+| **Settings API**      | Users, teams, permission sets                                                                         |
 
 ### 16.3 Rate limits
 
@@ -988,6 +1032,7 @@ Stejný jako u Mailchimpu, ale s vlastními configy:
 ### 16.4 Webhooks
 
 Subscribe to events:
+
 - Contact created/updated/deleted/property change
 - Deal lifecycle
 - Form submissions
@@ -1002,6 +1047,7 @@ Track behavioral events z jakékoli external systému → HubSpot může enrolln
 ### 16.6 App Marketplace
 
 **1 700+ integrations** (2026). Vybrané:
+
 - **CRM:** Salesforce (deep two-way sync), Microsoft Dynamics, Pipedrive
 - **E-commerce:** Shopify, WooCommerce, BigCommerce, Magento
 - **Email:** Gmail, Outlook integration (deep)
@@ -1023,6 +1069,7 @@ Track behavioral events z jakékoli external systému → HubSpot může enrolln
 ### 16.7 Operations Hub / Data Hub (integration layer)
 
 Vlastní iPaaS:
+
 - **Data Sync** – two-way sync s 100+ apps (built-in, no Zapier middleman)
 - **Custom-coded workflow actions** – JS/Python serverless
 - **Programmable automation** – complex transformations
@@ -1206,6 +1253,7 @@ Viz sekce 16.7. Cross-cutting infrastruktura.
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### HubSpot je dobrá volba pokud
+
 - Hledáte **all-in-one platform** (CRM + marketing + sales + service)
 - Máte **střední až velký B2B tým** s formálními procesy
 - Cíl je **sales-led growth** s long sales cycles
@@ -1215,6 +1263,7 @@ Viz sekce 16.7. Cross-cutting infrastruktura.
 - Vážíte si polished UX a velkého community + ekosystému partners
 
 ### HubSpot není dobrá volba pokud
+
 - Hlavní use-case je **pouze email marketing** (Mailchimp/Brevo levnější)
 - Jste **e-commerce-first** (Klaviyo silnější pro Shopify)
 - Máte malý budget – Marketing Hub Pro je $890/měsíc base
@@ -1226,16 +1275,16 @@ Viz sekce 16.7. Cross-cutting infrastruktura.
 
 ### HubSpot vs. konkurence (matice)
 
-| Konkurence | Kdy lepší než HubSpot |
-|---|---|
-| **Mailchimp** | Cheap email-only use case |
-| **Brevo** | Volume-based pricing pro velké listy s low send frequency |
-| **Klaviyo** | E-commerce / Shopify-first |
-| **ActiveCampaign** | Mid-tier automation za frakci ceny |
-| **Salesforce + Pardot** | Enterprise s existující SF investment |
-| **Marketo** | Enterprise B2B s heavy account-based motion |
-| **Customer.io** | Product-led growth / SaaS s event-driven journeys |
+| Konkurence              | Kdy lepší než HubSpot                                     |
+| ----------------------- | --------------------------------------------------------- |
+| **Mailchimp**           | Cheap email-only use case                                 |
+| **Brevo**               | Volume-based pricing pro velké listy s low send frequency |
+| **Klaviyo**             | E-commerce / Shopify-first                                |
+| **ActiveCampaign**      | Mid-tier automation za frakci ceny                        |
+| **Salesforce + Pardot** | Enterprise s existující SF investment                     |
+| **Marketo**             | Enterprise B2B s heavy account-based motion               |
+| **Customer.io**         | Product-led growth / SaaS s event-driven journeys         |
 
 ---
 
-*Dokument zpracován z veřejně dostupných oficiálních zdrojů HubSpotu (knowledge.hubspot.com, hubspot.com/pricing, hubspot.com/products) a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na hubspot.com/pricing.*
+_Dokument zpracován z veřejně dostupných oficiálních zdrojů HubSpotu (knowledge.hubspot.com, hubspot.com/pricing, hubspot.com/products) a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na hubspot.com/pricing._

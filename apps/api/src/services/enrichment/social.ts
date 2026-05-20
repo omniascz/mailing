@@ -57,18 +57,21 @@ class ClearbitProvider implements ISocialEnrichmentProvider {
 
   async enrich(email: string): Promise<SocialProfile | null> {
     try {
-      const res = await fetch(`https://person.clearbit.com/v2/combined/find?email=${encodeURIComponent(email)}`, {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          Accept: 'application/json',
+      const res = await fetch(
+        `https://person.clearbit.com/v2/combined/find?email=${encodeURIComponent(email)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            Accept: 'application/json',
+          },
+          signal: AbortSignal.timeout(8_000),
         },
-        signal: AbortSignal.timeout(8_000),
-      });
+      );
 
       if (res.status === 404 || res.status === 422) return null;
       if (!res.ok) throw new Error(`Clearbit ${res.status}`);
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         person?: {
           linkedin?: { handle?: string };
           twitter?: { handle?: string };
@@ -125,7 +128,7 @@ class HunterProvider implements ISocialEnrichmentProvider {
       );
       if (!res.ok) return null;
 
-      const body = await res.json() as {
+      const body = (await res.json()) as {
         data?: {
           linkedin_url?: string;
           twitter?: string;
@@ -192,12 +195,17 @@ function createProvider(): ISocialEnrichmentProvider {
  * Uses Redis cache (30d TTL) to avoid repeated API calls.
  * Merges enriched data into contact.customFields (non-destructive).
  */
-export async function enrichContact(orgId: string, contactId: string): Promise<SocialProfile | null> {
-  const [contact] = await db.select({
-    id: contacts.id,
-    email: contacts.email,
-    customFields: contacts.customFields,
-  }).from(contacts)
+export async function enrichContact(
+  orgId: string,
+  contactId: string,
+): Promise<SocialProfile | null> {
+  const [contact] = await db
+    .select({
+      id: contacts.id,
+      email: contacts.email,
+      customFields: contacts.customFields,
+    })
+    .from(contacts)
     .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
     .limit(1);
 
@@ -243,7 +251,8 @@ export async function enrichContact(orgId: string, contactId: string): Promise<S
   }
 
   if (Object.keys(updates).length > 0) {
-    await db.update(contacts)
+    await db
+      .update(contacts)
       .set({ customFields: { ...existing, ...updates }, updatedAt: new Date() })
       .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
   }

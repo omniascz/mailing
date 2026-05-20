@@ -33,46 +33,60 @@ const EventSchema = z.object({
 });
 
 const cdpEventRoutes: FastifyPluginAsync = async (app) => {
-  app.post('/api/v1/cdp/events', {
-    preHandler: [app.authenticate],
-    schema: { tags: ['CDP'] },
-    config: { rateLimit: { max: 1000, timeWindow: '1 minute' } },
-  }, async (req, reply) => {
-    const body = EventSchema.parse(req.body);
-    const result = await ingestEvents(req.user!.orgId, [body as IngestEvent]);
-    return reply.code(202).send({ data: result });
-  });
+  app.post(
+    '/api/v1/cdp/events',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['CDP'] },
+      config: { rateLimit: { max: 1000, timeWindow: '1 minute' } },
+    },
+    async (req, reply) => {
+      const body = EventSchema.parse(req.body);
+      const result = await ingestEvents(req.user!.orgId, [body as IngestEvent]);
+      return reply.code(202).send({ data: result });
+    },
+  );
 
-  app.post('/api/v1/cdp/events/batch', {
-    preHandler: [app.authenticate],
-    schema: { tags: ['CDP'] },
-    config: { rateLimit: { max: 300, timeWindow: '1 minute' } },
-    bodyLimit: 5 * 1024 * 1024, // 5 MB — batch can be large
-  }, async (req, reply) => {
-    const body = z.object({ events: z.array(EventSchema).min(1).max(500) }).parse(req.body);
-    const result = await ingestEvents(req.user!.orgId, body.events as IngestEvent[]);
-    return reply.code(202).send({ data: result });
-  });
+  app.post(
+    '/api/v1/cdp/events/batch',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['CDP'] },
+      config: { rateLimit: { max: 300, timeWindow: '1 minute' } },
+      bodyLimit: 5 * 1024 * 1024, // 5 MB — batch can be large
+    },
+    async (req, reply) => {
+      const body = z.object({ events: z.array(EventSchema).min(1).max(500) }).parse(req.body);
+      const result = await ingestEvents(req.user!.orgId, body.events as IngestEvent[]);
+      return reply.code(202).send({ data: result });
+    },
+  );
 
-  app.get('/api/v1/cdp/events', {
-    preHandler: [app.authenticate],
-    schema: { tags: ['CDP'] },
-  }, async (req, reply) => {
-    const q = z.object({
-      contactId: z.string().uuid().optional(),
-      anonymousId: z.string().max(128).optional(),
-      name: z.string().max(255).optional(),
-      since: z.string().datetime().optional(),
-      until: z.string().datetime().optional(),
-      limit: z.coerce.number().int().min(1).max(1000).optional(),
-    }).parse(req.query);
-    const rows = await queryEvents(req.user!.orgId, {
-      ...q,
-      since: q.since ? new Date(q.since) : undefined,
-      until: q.until ? new Date(q.until) : undefined,
-    });
-    return reply.send({ data: rows });
-  });
+  app.get(
+    '/api/v1/cdp/events',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['CDP'] },
+    },
+    async (req, reply) => {
+      const q = z
+        .object({
+          contactId: z.string().uuid().optional(),
+          anonymousId: z.string().max(128).optional(),
+          name: z.string().max(255).optional(),
+          since: z.string().datetime().optional(),
+          until: z.string().datetime().optional(),
+          limit: z.coerce.number().int().min(1).max(1000).optional(),
+        })
+        .parse(req.query);
+      const rows = await queryEvents(req.user!.orgId, {
+        ...q,
+        since: q.since ? new Date(q.since) : undefined,
+        until: q.until ? new Date(q.until) : undefined,
+      });
+      return reply.send({ data: rows });
+    },
+  );
 };
 
 export default cdpEventRoutes;

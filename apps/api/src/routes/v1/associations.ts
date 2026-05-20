@@ -12,8 +12,17 @@ import {
 } from '../../services/associations/index.js';
 
 const ENTITY_TYPES = [
-  'contact', 'company', 'account', 'deal', 'ticket',
-  'quote', 'invoice', 'custom_object', 'task', 'note', 'meeting',
+  'contact',
+  'company',
+  'account',
+  'deal',
+  'ticket',
+  'quote',
+  'invoice',
+  'custom_object',
+  'task',
+  'note',
+  'meeting',
 ] as const;
 
 const createSchema = z.object({
@@ -49,10 +58,12 @@ export default async function associationRoutes(app: FastifyInstance) {
   });
 
   app.get('/api/v1/associations/counts', async (req, reply) => {
-    const q = z.object({
-      entityType: z.enum(ENTITY_TYPES),
-      entityId: z.string().uuid(),
-    }).parse(req.query);
+    const q = z
+      .object({
+        entityType: z.enum(ENTITY_TYPES),
+        entityId: z.string().uuid(),
+      })
+      .parse(req.query);
     const orgId = (req.user as { orgId: string }).orgId;
     const counts = await countAssociations(orgId, q.entityType, q.entityId);
     return reply.send({ data: counts });

@@ -9,22 +9,29 @@ import { db } from '../../db/client.js';
 export type CohortPeriod = 'week' | 'month';
 
 export interface CohortRow {
-  cohort: string;          // ISO date of cohort start
-  size: number;            // contacts in cohort
-  retention: number[];     // engagement per offset period (count of contacts active)
+  cohort: string; // ISO date of cohort start
+  size: number; // contacts in cohort
+  retention: number[]; // engagement per offset period (count of contacts active)
 }
 
 /** Cohort by sign-up date, retention measured by any email engagement in each subsequent period. */
-export async function signupCohorts(orgId: string, opts: {
-  period?: CohortPeriod; periods?: number;
-} = {}): Promise<CohortRow[]> {
+export async function signupCohorts(
+  orgId: string,
+  opts: {
+    period?: CohortPeriod;
+    periods?: number;
+  } = {},
+): Promise<CohortRow[]> {
   const period = opts.period ?? 'month';
   const periods = Math.min(24, Math.max(1, opts.periods ?? 6));
   const trunc = period === 'week' ? 'week' : 'month';
   const interval = period === 'week' ? '7 days' : '1 month';
 
   const rs = await db.execute<{
-    cohort: string; size: string; offset: number; active: string;
+    cohort: string;
+    size: string;
+    offset: number;
+    active: string;
   }>(sql`
     WITH base AS (
       SELECT id, date_trunc(${trunc}, created_at) AS cohort
@@ -47,9 +54,18 @@ export async function signupCohorts(orgId: string, opts: {
   `);
 
   const map = new Map<string, CohortRow>();
-  for (const r of rs as unknown as Array<{ cohort: string; size: string; offset: number; active: string }>) {
+  for (const r of rs as unknown as Array<{
+    cohort: string;
+    size: string;
+    offset: number;
+    active: string;
+  }>) {
     if (!map.has(r.cohort)) {
-      map.set(r.cohort, { cohort: r.cohort, size: Number(r.size), retention: Array(periods).fill(0) });
+      map.set(r.cohort, {
+        cohort: r.cohort,
+        size: Number(r.size),
+        retention: Array(periods).fill(0),
+      });
     }
     const off = Math.floor(Number(r.offset ?? 0));
     if (off >= 0 && off < periods) {

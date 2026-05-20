@@ -37,7 +37,11 @@ export interface CalendlyInviteeEvent {
   };
 }
 
-export function verifyWebhookSignature(rawBody: string, signature: string, signingKey: string): boolean {
+export function verifyWebhookSignature(
+  rawBody: string,
+  signature: string,
+  signingKey: string,
+): boolean {
   const expected = crypto.createHmac('sha256', signingKey).update(rawBody, 'utf8').digest('hex');
   try {
     return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
@@ -46,8 +50,15 @@ export function verifyWebhookSignature(rawBody: string, signature: string, signi
   }
 }
 
-export async function processCalendlyEvent(orgId: string, event: CalendlyInviteeEvent): Promise<void> {
-  const [conn] = await db.select().from(calendlyConnections).where(eq(calendlyConnections.orgId, orgId)).limit(1);
+export async function processCalendlyEvent(
+  orgId: string,
+  event: CalendlyInviteeEvent,
+): Promise<void> {
+  const [conn] = await db
+    .select()
+    .from(calendlyConnections)
+    .where(eq(calendlyConnections.orgId, orgId))
+    .limit(1);
   if (!conn) return;
 
   if (event.event === 'invitee.created') {
@@ -56,7 +67,9 @@ export async function processCalendlyEvent(orgId: string, event: CalendlyInvitee
     const lastName = rest.join(' ') || null;
 
     // Upsert contact
-    const [existing] = await db.select({ id: contacts.id }).from(contacts)
+    const [existing] = await db
+      .select({ id: contacts.id })
+      .from(contacts)
       .where(eq(contacts.email, invitee.email))
       .limit(1);
 
@@ -64,20 +77,26 @@ export async function processCalendlyEvent(orgId: string, event: CalendlyInvitee
     if (existing) {
       contactId = existing.id;
     } else {
-      const [created] = await db.insert(contacts).values({
-        orgId,
-        email: invitee.email,
-        firstName: invitee.first_name ?? firstName ?? null,
-        lastName: invitee.last_name ?? lastName,
-        source: 'calendly',
-      } as typeof contacts.$inferInsert).returning({ id: contacts.id });
+      const [created] = await db
+        .insert(contacts)
+        .values({
+          orgId,
+          email: invitee.email,
+          firstName: invitee.first_name ?? firstName ?? null,
+          lastName: invitee.last_name ?? lastName,
+          source: 'calendly',
+        } as typeof contacts.$inferInsert)
+        .returning({ id: contacts.id });
       contactId = created!.id;
     }
 
     // Optionally create a deal
     if (conn.createDeal) {
-      const [pipeline] = await db.select({ id: pipelines.id, stages: pipelines.stages })
-        .from(pipelines).where(eq(pipelines.orgId, orgId)).limit(1);
+      const [pipeline] = await db
+        .select({ id: pipelines.id, stages: pipelines.stages })
+        .from(pipelines)
+        .where(eq(pipelines.orgId, orgId))
+        .limit(1);
       if (pipeline) {
         const firstStage = pipeline.stages[0]?.id ?? 'new';
         await db.insert(deals).values({
@@ -103,7 +122,9 @@ export async function processCalendlyEvent(orgId: string, event: CalendlyInvitee
           contactId,
           metadata: { calendly_event: event.payload.scheduled_event.uri },
         }),
-      }).catch(() => { /* non-critical */ });
+      }).catch(() => {
+        /* non-critical */
+      });
     }
   }
 }

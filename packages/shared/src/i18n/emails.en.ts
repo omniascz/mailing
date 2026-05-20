@@ -60,8 +60,7 @@ export const en: EmailsBundle = {
     body_intro:
       'We received a request to reset the password for your account {{email}}. Click the link below to set a new password.',
     cta: 'Reset password',
-    ignore_if_not_yours:
-      'If you did not request a password reset, simply ignore this email.',
+    ignore_if_not_yours: 'If you did not request a password reset, simply ignore this email.',
     expires_in: 'The link is valid for 60 minutes.',
   },
 
@@ -76,8 +75,7 @@ export const en: EmailsBundle = {
   team_invite: {
     subject: '{{inviter}} invites you to {{org}}',
     heading: "You've been invited to a team",
-    body_intro:
-      '{{inviter}} is inviting you to collaborate in {{org}} on {{brand}}.',
+    body_intro: '{{inviter}} is inviting you to collaborate in {{org}} on {{brand}}.',
     cta: 'Accept invitation',
   },
 };

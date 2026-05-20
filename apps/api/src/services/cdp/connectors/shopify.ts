@@ -6,7 +6,7 @@
 import { upsertContactFromCdp } from '../source-sync.js';
 
 interface ShopifyConfig {
-  shopDomain: string;   // e.g. mystore.myshopify.com
+  shopDomain: string; // e.g. mystore.myshopify.com
   accessToken: string;
 }
 

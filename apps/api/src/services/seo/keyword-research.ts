@@ -34,23 +34,36 @@ async function fetchKeywordMetrics(keywords: string[], language: string, country
   const creds = dfsCreds();
   const res = await fetch(`${DATAFORSEO_BASE}/keywords_data/google_ads/search_volume/live`, {
     method: 'POST',
-    headers: { 'Authorization': dfsAuth(creds), 'Content-Type': 'application/json' },
-    body: JSON.stringify([{ keywords, language_code: language, location_code: countryToLocation(country) }]),
+    headers: { Authorization: dfsAuth(creds), 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      { keywords, language_code: language, location_code: countryToLocation(country) },
+    ]),
   });
   if (!res.ok) throw AppError.badRequest(`DataForSEO error: ${res.status}`);
-  const json = await res.json() as { tasks: Array<{ result: Array<{ keyword: string; search_volume: number; competition: number; cpc: number }> }> };
+  const json = (await res.json()) as {
+    tasks: Array<{
+      result: Array<{ keyword: string; search_volume: number; competition: number; cpc: number }>;
+    }>;
+  };
   return json.tasks[0]?.result ?? [];
 }
 
 async function fetchKeywordDifficulty(keywords: string[], language: string, country: string) {
   const creds = dfsCreds();
-  const res = await fetch(`${DATAFORSEO_BASE}/dataforseo_labs/google/bulk_keyword_difficulty/live`, {
-    method: 'POST',
-    headers: { 'Authorization': dfsAuth(creds), 'Content-Type': 'application/json' },
-    body: JSON.stringify([{ keywords, language_code: language, location_code: countryToLocation(country) }]),
-  });
+  const res = await fetch(
+    `${DATAFORSEO_BASE}/dataforseo_labs/google/bulk_keyword_difficulty/live`,
+    {
+      method: 'POST',
+      headers: { Authorization: dfsAuth(creds), 'Content-Type': 'application/json' },
+      body: JSON.stringify([
+        { keywords, language_code: language, location_code: countryToLocation(country) },
+      ]),
+    },
+  );
   if (!res.ok) return [];
-  const json = await res.json() as { tasks: Array<{ result: Array<{ keyword: string; keyword_difficulty: number }> }> };
+  const json = (await res.json()) as {
+    tasks: Array<{ result: Array<{ keyword: string; keyword_difficulty: number }> }>;
+  };
   return json.tasks[0]?.result ?? [];
 }
 
@@ -70,13 +83,13 @@ async function enrichWithClaude(orgId: string, keywords: string[]) {
 - intent: one of "informational" | "navigational" | "transactional" | "commercial"
 Respond with a JSON array of objects: [{"keyword":"...","intent":"..."}]
 Output ONLY the JSON array, no markdown.`,
-    user: `Classify intent for these keywords:\n${keywords.map(k => `- ${k}`).join('\n')}`,
+    user: `Classify intent for these keywords:\n${keywords.map((k) => `- ${k}`).join('\n')}`,
     maxTokens: 1024,
   });
 
   try {
     const parsed = JSON.parse(content) as Array<{ keyword: string; intent: string }>;
-    return Object.fromEntries(parsed.map(p => [p.keyword, p.intent]));
+    return Object.fromEntries(parsed.map((p) => [p.keyword, p.intent]));
   } catch {
     return {} as Record<string, string>;
   }
@@ -84,12 +97,15 @@ Output ONLY the JSON array, no markdown.`,
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-export async function researchKeywords(orgId: string, input: {
-  keywords: string[];
-  language?: string;
-  country?: string;
-  enrichWithAi?: boolean;
-}) {
+export async function researchKeywords(
+  orgId: string,
+  input: {
+    keywords: string[];
+    language?: string;
+    country?: string;
+    enrichWithAi?: boolean;
+  },
+) {
   const language = input.language ?? 'en';
   const country = input.country ?? 'US';
 
@@ -98,13 +114,14 @@ export async function researchKeywords(orgId: string, input: {
     fetchKeywordDifficulty(input.keywords, language, country),
   ]);
 
-  const diffMap = Object.fromEntries(diffData.map(d => [d.keyword, d.keyword_difficulty]));
-  const intentMap = input.enrichWithAi !== false
-    ? await enrichWithClaude(orgId, input.keywords)
-    : {} as Record<string, string>;
+  const diffMap = Object.fromEntries(diffData.map((d) => [d.keyword, d.keyword_difficulty]));
+  const intentMap =
+    input.enrichWithAi !== false
+      ? await enrichWithClaude(orgId, input.keywords)
+      : ({} as Record<string, string>);
 
-  const results = input.keywords.map(kw => {
-    const vol = volumeData.find(v => v.keyword === kw);
+  const results = input.keywords.map((kw) => {
+    const vol = volumeData.find((v) => v.keyword === kw);
     return {
       keyword: kw,
       searchVolume: vol?.search_volume ?? null,
@@ -128,7 +145,7 @@ export async function researchKeywords(orgId: string, input: {
         cpc: r.cpc ?? undefined,
         intent: r.intent ?? undefined,
         enrichedAt: new Date(),
-        rawData: { volumeData: volumeData.find(v => v.keyword === r.keyword) ?? {} },
+        rawData: { volumeData: volumeData.find((v) => v.keyword === r.keyword) ?? {} },
       })
       .onConflictDoUpdate({
         target: [seoKeywords.orgId, seoKeywords.keyword, seoKeywords.language, seoKeywords.country],
@@ -155,21 +172,35 @@ export async function listKeywords(orgId: string, opts?: { limit?: number; offse
     .offset(opts?.offset ?? 0);
 }
 
-export async function getSuggestedKeywords(_orgId: string, seedKeyword: string, language = 'en', country = 'US') {
+export async function getSuggestedKeywords(
+  _orgId: string,
+  seedKeyword: string,
+  language = 'en',
+  country = 'US',
+) {
   const creds = dfsCreds();
   const res = await fetch(`${DATAFORSEO_BASE}/dataforseo_labs/google/related_keywords/live`, {
     method: 'POST',
-    headers: { 'Authorization': dfsAuth(creds), 'Content-Type': 'application/json' },
-    body: JSON.stringify([{
-      keyword: seedKeyword,
-      language_code: language,
-      location_code: countryToLocation(country),
-      limit: 30,
-    }]),
+    headers: { Authorization: dfsAuth(creds), 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      {
+        keyword: seedKeyword,
+        language_code: language,
+        location_code: countryToLocation(country),
+        limit: 30,
+      },
+    ]),
   });
   if (!res.ok) throw AppError.badRequest(`DataForSEO error: ${res.status}`);
-  const json = await res.json() as { tasks: Array<{ result: Array<{ keyword: string; keyword_info: { search_volume: number; competition: number; cpc: number } }> }> };
-  return (json.tasks[0]?.result ?? []).map(r => ({
+  const json = (await res.json()) as {
+    tasks: Array<{
+      result: Array<{
+        keyword: string;
+        keyword_info: { search_volume: number; competition: number; cpc: number };
+      }>;
+    }>;
+  };
+  return (json.tasks[0]?.result ?? []).map((r) => ({
     keyword: r.keyword,
     searchVolume: r.keyword_info?.search_volume ?? null,
     cpc: r.keyword_info?.cpc ?? null,

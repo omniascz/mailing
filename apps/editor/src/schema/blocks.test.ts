@@ -10,9 +10,7 @@ describe('block schema', () => {
   });
 
   it('rejects a block missing an id', () => {
-    expect(() =>
-      blockSchema.parse({ type: 'spacer', height: 20 }),
-    ).toThrow();
+    expect(() => blockSchema.parse({ type: 'spacer', height: 20 })).toThrow();
   });
 
   it('validates a full empty email', () => {

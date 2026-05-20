@@ -1,4 +1,15 @@
-import { pgTable, uuid, varchar, boolean, bigint, text, jsonb, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  bigint,
+  text,
+  jsonb,
+  timestamp,
+  uniqueIndex,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 import { deals } from './deals.js';
@@ -7,7 +18,9 @@ export const hubspotConnections = pgTable(
   'hubspot_connections',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     hubId: varchar('hub_id', { length: 64 }),
     hubDomain: varchar('hub_domain', { length: 255 }),
     accessToken: text('access_token').notNull(),
@@ -31,8 +44,12 @@ export const hubspotContactMap = pgTable(
   'hubspot_contact_map',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
     hubspotVid: bigint('hubspot_vid', { mode: 'number' }).notNull(),
     syncedAt: timestamp('synced_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -47,8 +64,12 @@ export const hubspotDealMap = pgTable(
   'hubspot_deal_map',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    dealId: uuid('deal_id').notNull().references(() => deals.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    dealId: uuid('deal_id')
+      .notNull()
+      .references(() => deals.id, { onDelete: 'cascade' }),
     hubspotDealId: bigint('hubspot_deal_id', { mode: 'number' }).notNull(),
     syncedAt: timestamp('synced_at', { withTimezone: true }).notNull().defaultNow(),
   },

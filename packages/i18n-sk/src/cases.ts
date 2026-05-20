@@ -30,11 +30,11 @@ export type SlovakCase =
   | 'instrumental';
 
 const VOCATIVE_EXCEPTIONS: Record<string, string> = {
-  'priateľ': 'priateľu',
-  'otec':    'otče',
-  'boh':     'bože',
-  'chlap':   'chlape',
-  'syn':     'synu',
+  priateľ: 'priateľu',
+  otec: 'otče',
+  boh: 'bože',
+  chlap: 'chlape',
+  syn: 'synu',
 };
 
 export function inferGender(name: string): Gender {
@@ -56,13 +56,20 @@ export function declineName(name: string, cs: SlovakCase, gender?: Gender): stri
   const g = gender ?? inferGender(trimmed);
 
   switch (cs) {
-    case 'nominative':   return trimmed;
-    case 'vocative':     return vocative(trimmed);
-    case 'genitive':     return g === 'female' ? femaleGenitive(trimmed) : maleGenitive(trimmed);
-    case 'dative':       return g === 'female' ? femaleDative(trimmed) : maleDative(trimmed);
-    case 'accusative':   return g === 'female' ? femaleAccusative(trimmed) : maleAccusative(trimmed);
-    case 'locative':     return g === 'female' ? femaleLocative(trimmed) : maleLocative(trimmed);
-    case 'instrumental': return g === 'female' ? femaleInstrumental(trimmed) : maleInstrumental(trimmed);
+    case 'nominative':
+      return trimmed;
+    case 'vocative':
+      return vocative(trimmed);
+    case 'genitive':
+      return g === 'female' ? femaleGenitive(trimmed) : maleGenitive(trimmed);
+    case 'dative':
+      return g === 'female' ? femaleDative(trimmed) : maleDative(trimmed);
+    case 'accusative':
+      return g === 'female' ? femaleAccusative(trimmed) : maleAccusative(trimmed);
+    case 'locative':
+      return g === 'female' ? femaleLocative(trimmed) : maleLocative(trimmed);
+    case 'instrumental':
+      return g === 'female' ? femaleInstrumental(trimmed) : maleInstrumental(trimmed);
   }
 }
 
@@ -76,8 +83,8 @@ function vocative(n: string): string {
 
 function maleGenitive(n: string): string {
   const last = n.slice(-1).toLowerCase();
-  if (last === 'a') return n.slice(0, -1) + 'u';     // Slávo → Slávu (rare)
-  if (last === 'o') return n.slice(0, -1) + 'u';     // Janko → Janka? handled below with fleeting
+  if (last === 'a') return n.slice(0, -1) + 'u'; // Slávo → Slávu (rare)
+  if (last === 'o') return n.slice(0, -1) + 'u'; // Janko → Janka? handled below with fleeting
   if (last === 'í' || last === 'i') return n + 'ho';
   // Fleeting -o- in -ko → -ka (Janko → Janka)
   if (n.slice(-2).toLowerCase() === 'ko') return n.slice(0, -2) + 'ka';
@@ -97,9 +104,13 @@ function maleDative(n: string): string {
   return n + 'ovi';
 }
 
-function maleAccusative(n: string): string { return maleGenitive(n); }
+function maleAccusative(n: string): string {
+  return maleGenitive(n);
+}
 
-function maleLocative(n: string): string { return maleDative(n); }
+function maleLocative(n: string): string {
+  return maleDative(n);
+}
 
 function maleInstrumental(n: string): string {
   const last = n.slice(-1).toLowerCase();
@@ -115,30 +126,32 @@ function maleInstrumental(n: string): string {
 
 function femaleGenitive(n: string): string {
   const last = n.slice(-1).toLowerCase();
-  if (last === 'a') return n.slice(0, -1) + 'y';     // Jana → Jany
+  if (last === 'a') return n.slice(0, -1) + 'y'; // Jana → Jany
   if (n.toLowerCase().endsWith('ia')) return n.slice(0, -1) + 'e'; // Mária → Márie
   return n;
 }
 
 function femaleDative(n: string): string {
   const last = n.slice(-1).toLowerCase();
-  if (last === 'a') return n.slice(0, -1) + 'e';     // Jana → Jane
+  if (last === 'a') return n.slice(0, -1) + 'e'; // Jana → Jane
   if (n.toLowerCase().endsWith('ia')) return n.slice(0, -1) + 'i'; // Mária → Márii
   return n;
 }
 
 function femaleAccusative(n: string): string {
   const last = n.slice(-1).toLowerCase();
-  if (last === 'a') return n.slice(0, -1) + 'u';     // Jana → Janu
+  if (last === 'a') return n.slice(0, -1) + 'u'; // Jana → Janu
   if (n.toLowerCase().endsWith('ia')) return n.slice(0, -1) + 'u'; // Mária → Máriu
   return n;
 }
 
-function femaleLocative(n: string): string { return femaleDative(n); }
+function femaleLocative(n: string): string {
+  return femaleDative(n);
+}
 
 function femaleInstrumental(n: string): string {
   const last = n.slice(-1).toLowerCase();
-  if (last === 'a') return n.slice(0, -1) + 'ou';    // Jana → Janou
+  if (last === 'a') return n.slice(0, -1) + 'ou'; // Jana → Janou
   if (n.toLowerCase().endsWith('ia')) return n.slice(0, -1) + 'ou'; // Mária → Máriou
   return n;
 }

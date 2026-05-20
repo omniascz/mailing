@@ -13,7 +13,11 @@ const BASE = 'https://api.hubapi.com';
 const TOKEN_URL = 'https://api.hubapi.com/oauth/v1/token';
 
 export async function getConnection(orgId: string): Promise<HubspotConnection> {
-  const [row] = await db.select().from(hubspotConnections).where(eq(hubspotConnections.orgId, orgId)).limit(1);
+  const [row] = await db
+    .select()
+    .from(hubspotConnections)
+    .where(eq(hubspotConnections.orgId, orgId))
+    .limit(1);
   if (!row) throw AppError.notFound('HubSpot connection');
   return row;
 }
@@ -24,12 +28,14 @@ export function authorizeUrl(input: {
   state: string;
   scopes?: string[];
 }): string {
-  const scopes = (input.scopes ?? [
-    'crm.objects.contacts.read',
-    'crm.objects.contacts.write',
-    'crm.objects.deals.read',
-    'crm.objects.deals.write',
-  ]).join(' ');
+  const scopes = (
+    input.scopes ?? [
+      'crm.objects.contacts.read',
+      'crm.objects.contacts.write',
+      'crm.objects.deals.read',
+      'crm.objects.deals.write',
+    ]
+  ).join(' ');
   const url = new URL('https://app.hubspot.com/oauth/authorize');
   url.searchParams.set('client_id', input.clientId);
   url.searchParams.set('redirect_uri', input.redirectUri);
@@ -52,7 +58,11 @@ export async function exchangeCode(input: {
     client_secret: input.clientSecret,
     redirect_uri: input.redirectUri,
   });
-  const res = await fetch(TOKEN_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body });
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body,
+  });
   if (!res.ok) throw AppError.badRequest(`HubSpot token exchange failed (${res.status})`);
   const data = (await res.json()) as {
     access_token: string;
@@ -88,21 +98,39 @@ export async function exchangeCode(input: {
   return row!;
 }
 
-async function refreshAccessToken(conn: HubspotConnection, clientId: string, clientSecret: string): Promise<HubspotConnection> {
-  if (!conn.refreshToken) throw AppError.badRequest('HubSpot connection has no refresh token; reauthorize required');
+async function refreshAccessToken(
+  conn: HubspotConnection,
+  clientId: string,
+  clientSecret: string,
+): Promise<HubspotConnection> {
+  if (!conn.refreshToken)
+    throw AppError.badRequest('HubSpot connection has no refresh token; reauthorize required');
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: conn.refreshToken,
     client_id: clientId,
     client_secret: clientSecret,
   });
-  const res = await fetch(TOKEN_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body });
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body,
+  });
   if (!res.ok) throw AppError.badRequest(`HubSpot token refresh failed (${res.status})`);
-  const data = (await res.json()) as { access_token: string; refresh_token?: string; expires_in?: number };
+  const data = (await res.json()) as {
+    access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
+  };
   const expiresAt = data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : null;
   const [row] = await db
     .update(hubspotConnections)
-    .set({ accessToken: data.access_token, refreshToken: data.refresh_token ?? conn.refreshToken, tokenExpiresAt: expiresAt, updatedAt: new Date() })
+    .set({
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token ?? conn.refreshToken,
+      tokenExpiresAt: expiresAt,
+      updatedAt: new Date(),
+    })
     .where(eq(hubspotConnections.orgId, conn.orgId))
     .returning();
   return row!;
@@ -173,41 +201,85 @@ export async function searchContacts(conn: HubspotConnection, email: string): Pr
     properties: ['email', 'firstname', 'lastname', 'phone', 'company'],
     limit: 10,
   });
-  const result = await hsFetch<{ results: HsContact[] }>(conn, '/crm/v3/objects/contacts/search', { method: 'POST', body });
+  const result = await hsFetch<{ results: HsContact[] }>(conn, '/crm/v3/objects/contacts/search', {
+    method: 'POST',
+    body,
+  });
   return result.results;
 }
 
-export async function upsertContact(conn: HubspotConnection, props: HsContactProperties): Promise<HsContact> {
+export async function upsertContact(
+  conn: HubspotConnection,
+  props: HsContactProperties,
+): Promise<HsContact> {
   if (!props.email) throw AppError.badRequest('HubSpot contact upsert requires email');
   const body = JSON.stringify({ properties: props });
   return hsFetch<HsContact>(conn, '/crm/v3/objects/contacts', { method: 'POST', body });
 }
 
-export async function updateContact(conn: HubspotConnection, hsContactId: string, props: HsContactProperties): Promise<HsContact> {
-  return hsFetch<HsContact>(conn, `/crm/v3/objects/contacts/${hsContactId}`, { method: 'PATCH', body: JSON.stringify({ properties: props }) });
+export async function updateContact(
+  conn: HubspotConnection,
+  hsContactId: string,
+  props: HsContactProperties,
+): Promise<HsContact> {
+  return hsFetch<HsContact>(conn, `/crm/v3/objects/contacts/${hsContactId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ properties: props }),
+  });
 }
 
-export async function getRecentContacts(conn: HubspotConnection, after?: string, limit = 100): Promise<{ results: HsContact[]; paging?: { next?: { after: string } } }> {
-  const params = new URLSearchParams({ limit: String(limit), properties: 'email,firstname,lastname,phone,company' });
+export async function getRecentContacts(
+  conn: HubspotConnection,
+  after?: string,
+  limit = 100,
+): Promise<{ results: HsContact[]; paging?: { next?: { after: string } } }> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    properties: 'email,firstname,lastname,phone,company',
+  });
   if (after) params.set('after', after);
   return hsFetch(conn, `/crm/v3/objects/contacts?${params}`);
 }
 
-export async function createDeal(conn: HubspotConnection, props: HsDealProperties): Promise<HsDeal> {
-  return hsFetch<HsDeal>(conn, '/crm/v3/objects/deals', { method: 'POST', body: JSON.stringify({ properties: props }) });
+export async function createDeal(
+  conn: HubspotConnection,
+  props: HsDealProperties,
+): Promise<HsDeal> {
+  return hsFetch<HsDeal>(conn, '/crm/v3/objects/deals', {
+    method: 'POST',
+    body: JSON.stringify({ properties: props }),
+  });
 }
 
-export async function updateDeal(conn: HubspotConnection, hsDealId: string, props: HsDealProperties): Promise<HsDeal> {
-  return hsFetch<HsDeal>(conn, `/crm/v3/objects/deals/${hsDealId}`, { method: 'PATCH', body: JSON.stringify({ properties: props }) });
+export async function updateDeal(
+  conn: HubspotConnection,
+  hsDealId: string,
+  props: HsDealProperties,
+): Promise<HsDeal> {
+  return hsFetch<HsDeal>(conn, `/crm/v3/objects/deals/${hsDealId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ properties: props }),
+  });
 }
 
-export async function getRecentDeals(conn: HubspotConnection, after?: string, limit = 100): Promise<{ results: HsDeal[]; paging?: { next?: { after: string } } }> {
-  const params = new URLSearchParams({ limit: String(limit), properties: 'dealname,amount,dealstage,pipeline,closedate' });
+export async function getRecentDeals(
+  conn: HubspotConnection,
+  after?: string,
+  limit = 100,
+): Promise<{ results: HsDeal[]; paging?: { next?: { after: string } } }> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    properties: 'dealname,amount,dealstage,pipeline,closedate',
+  });
   if (after) params.set('after', after);
   return hsFetch(conn, `/crm/v3/objects/deals?${params}`);
 }
 
-export async function associateContactToDeal(conn: HubspotConnection, hsContactId: string, hsDealId: string): Promise<void> {
+export async function associateContactToDeal(
+  conn: HubspotConnection,
+  hsContactId: string,
+  hsDealId: string,
+): Promise<void> {
   await hsFetch(conn, `/crm/v4/objects/contacts/${hsContactId}/associations/deals/${hsDealId}`, {
     method: 'PUT',
     body: JSON.stringify([{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }]),

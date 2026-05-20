@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  scoreDealRisk,
-  sentimentLabel,
-  weightedSentiment,
-  type DealRiskSignals,
-} from './pure.js';
+import { scoreDealRisk, sentimentLabel, weightedSentiment, type DealRiskSignals } from './pure.js';
 
 const baseline: DealRiskSignals = {
   daysInCurrentStage: 5,
@@ -60,10 +55,7 @@ describe('scoreDealRisk', () => {
   });
 
   it('respects custom thresholds', () => {
-    const res = scoreDealRisk(
-      { ...baseline, daysInCurrentStage: 10 },
-      { stalledDays: 5 },
-    );
+    const res = scoreDealRisk({ ...baseline, daysInCurrentStage: 10 }, { stalledDays: 5 });
     expect(res.flags.stalled).toBe(true);
   });
 
@@ -95,20 +87,18 @@ describe('weightedSentiment', () => {
 
   it('weights recent messages more heavily', () => {
     const result = weightedSentiment([
-      { polarity: 1.0, ageInDays: 0 },     // recent positive
-      { polarity: -1.0, ageInDays: 60 },   // old negative (2 half-lives = 0.25× weight)
+      { polarity: 1.0, ageInDays: 0 }, // recent positive
+      { polarity: -1.0, ageInDays: 60 }, // old negative (2 half-lives = 0.25× weight)
     ]);
     expect(result.score).toBeGreaterThan(0); // recent positive wins
     expect(result.label).toBe('positive');
   });
 
   it('averages evenly when all messages are same age', () => {
-    const result = weightedSentiment(
-      [
-        { polarity: 0.5, ageInDays: 10 },
-        { polarity: -0.5, ageInDays: 10 },
-      ],
-    );
+    const result = weightedSentiment([
+      { polarity: 0.5, ageInDays: 10 },
+      { polarity: -0.5, ageInDays: 10 },
+    ]);
     expect(result.score).toBeCloseTo(0, 4);
     expect(result.label).toBe('neutral');
   });

@@ -6,7 +6,13 @@ const meta: Meta<typeof Card> = {
   title: 'UI/Card',
   component: Card,
   tags: ['autodocs'],
-  decorators: [(Story) => <div className="w-96"><Story /></div>],
+  decorators: [
+    (Story) => (
+      <div className="w-96">
+        <Story />
+      </div>
+    ),
+  ],
 };
 
 export default meta;
@@ -36,7 +42,9 @@ export const Default: Story = {
         </div>
       </CardContent>
       <CardFooter>
-        <Button variant="secondary" size="sm">View details</Button>
+        <Button variant="secondary" size="sm">
+          View details
+        </Button>
         <Button size="sm">Send again</Button>
       </CardFooter>
     </Card>

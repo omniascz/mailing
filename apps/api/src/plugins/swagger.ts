@@ -11,9 +11,7 @@ async function swaggerPlugin(app: FastifyInstance) {
         description: 'Unified omnichannel messaging platform API',
         version: '1.0.0',
       },
-      servers: [
-        { url: 'http://localhost:3001', description: 'Development' },
-      ],
+      servers: [{ url: 'http://localhost:3001', description: 'Development' }],
       components: {
         securitySchemes: {
           apiKey: {

@@ -100,7 +100,10 @@ async function fetchMessages(): Promise<InAppMessagePayload[]> {
   return result?.data ?? [];
 }
 
-async function track(messageId: string, eventType: 'shown' | 'clicked' | 'dismissed'): Promise<void> {
+async function track(
+  messageId: string,
+  eventType: 'shown' | 'clicked' | 'dismissed',
+): Promise<void> {
   await apiFetch('/api/v1/in-app/track', {
     method: 'POST',
     body: JSON.stringify({
@@ -194,14 +197,22 @@ function renderWidget(msg: InAppMessagePayload): void {
   overlay?.addEventListener('click', () => closeWidget(msg.id, 'dismissed', overlay));
 }
 
-function closeWidget(messageId: string, event: 'dismissed' | 'clicked', overlay: HTMLElement | null): void {
+function closeWidget(
+  messageId: string,
+  event: 'dismissed' | 'clicked',
+  overlay: HTMLElement | null,
+): void {
   document.getElementById(`_fm_widget_${messageId}`)?.remove();
   overlay?.remove();
   if (event === 'dismissed') void track(messageId, 'dismissed');
 }
 
 function escHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────

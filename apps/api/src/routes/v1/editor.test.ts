@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { z } from 'zod';
 
 /**
  * Unit tests for editor routes helpers.
@@ -77,7 +78,6 @@ describe('product-scraper service', () => {
 
 describe('saved blocks Zod validation', () => {
   it('accepts valid create payload', () => {
-    const { z } = require('zod');
     const schema = z.object({
       name: z.string().min(1).max(255),
       category: z.string().min(1).max(100).optional(),
@@ -90,19 +90,19 @@ describe('saved blocks Zod validation', () => {
   });
 
   it('rejects empty name', () => {
-    const { z } = require('zod');
     const schema = z.object({ name: z.string().min(1).max(255), blockData: z.record(z.unknown()) });
     expect(() => schema.parse({ name: '', blockData: {} })).toThrow();
   });
 
   it('rejects invalid thumbnailUrl', () => {
-    const { z } = require('zod');
     const schema = z.object({
       name: z.string().min(1),
       blockData: z.record(z.unknown()),
       thumbnailUrl: z.string().url().max(1024).optional(),
     });
-    expect(() => schema.parse({ name: 'Block', blockData: {}, thumbnailUrl: 'not-a-url' })).toThrow();
+    expect(() =>
+      schema.parse({ name: 'Block', blockData: {}, thumbnailUrl: 'not-a-url' }),
+    ).toThrow();
   });
 });
 
@@ -110,29 +110,31 @@ describe('saved blocks Zod validation', () => {
 
 describe('brand kit Zod validation', () => {
   it('accepts valid hex colors', () => {
-    const { z } = require('zod');
     const schema = z.object({
-      primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+      primaryColor: z
+        .string()
+        .regex(/^#[0-9a-fA-F]{6}$/)
+        .optional(),
     });
     expect(() => schema.parse({ primaryColor: '#2563eb' })).not.toThrow();
   });
 
   it('rejects invalid hex color', () => {
-    const { z } = require('zod');
     const schema = z.object({
-      primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+      primaryColor: z
+        .string()
+        .regex(/^#[0-9a-fA-F]{6}$/)
+        .optional(),
     });
     expect(() => schema.parse({ primaryColor: 'blue' })).toThrow();
   });
 
   it('allows null logoUrl', () => {
-    const { z } = require('zod');
     const schema = z.object({ logoUrl: z.string().url().max(1024).nullable().optional() });
     expect(() => schema.parse({ logoUrl: null })).not.toThrow();
   });
 
   it('rejects invalid logoUrl', () => {
-    const { z } = require('zod');
     const schema = z.object({ logoUrl: z.string().url().max(1024).nullable().optional() });
     expect(() => schema.parse({ logoUrl: 'not-a-url' })).toThrow();
   });
@@ -142,7 +144,6 @@ describe('brand kit Zod validation', () => {
 
 describe('countdown-gif Zod validation', () => {
   it('accepts ISO 8601 datetime', () => {
-    const { z } = require('zod');
     const schema = z.object({
       targetDate: z.string().datetime(),
       fps: z.number().int().min(1).max(10).optional(),
@@ -153,19 +154,16 @@ describe('countdown-gif Zod validation', () => {
   });
 
   it('rejects non-datetime string', () => {
-    const { z } = require('zod');
     const schema = z.object({ targetDate: z.string().datetime() });
     expect(() => schema.parse({ targetDate: 'tomorrow' })).toThrow();
   });
 
   it('rejects fps > 10', () => {
-    const { z } = require('zod');
     const schema = z.object({ fps: z.number().int().min(1).max(10) });
     expect(() => schema.parse({ fps: 15 })).toThrow();
   });
 
   it('rejects durationSeconds > 60', () => {
-    const { z } = require('zod');
     const schema = z.object({ durationSeconds: z.number().int().min(1).max(60) });
     expect(() => schema.parse({ durationSeconds: 120 })).toThrow();
   });

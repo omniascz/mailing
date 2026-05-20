@@ -25,7 +25,12 @@ export type CreateTestInput = {
   campaignId: string;
   name: string;
   description?: string;
-  winnerMetric?: 'open_rate' | 'click_rate' | 'click_to_open_rate' | 'conversion_rate' | 'revenue_per_email';
+  winnerMetric?:
+    | 'open_rate'
+    | 'click_rate'
+    | 'click_to_open_rate'
+    | 'conversion_rate'
+    | 'revenue_per_email';
   testAudiencePercent?: number;
   testWindowHours?: number;
   autoSendWinner?: boolean;
@@ -114,7 +119,10 @@ export async function listMultivariateTests(
   if (opts.campaignId) conditions.push(eq(multivariateTests.campaignId, opts.campaignId));
   if (opts.status)
     conditions.push(
-      eq(multivariateTests.status, opts.status as typeof multivariateTests.status.enumValues[number]),
+      eq(
+        multivariateTests.status,
+        opts.status as (typeof multivariateTests.status.enumValues)[number],
+      ),
     );
 
   return db
@@ -211,9 +219,9 @@ export async function assignVariant(
   if (variants.length === 0) return null;
 
   // Deterministic bucket 0..99 from md5(contact::text || test::text)
-  const [row] = await db.execute<{ bucket: string }>(sql`
+  const [row] = (await db.execute<{ bucket: string }>(sql`
     SELECT (('x' || substr(md5(${contactId}::text || ${testId}::text), 1, 8))::bit(32)::int % 100) AS bucket
-  `) as unknown as Array<{ bucket: string }>;
+  `)) as unknown as Array<{ bucket: string }>;
   const bucket = Math.abs(Number(row?.bucket ?? 0));
 
   // Walk the allocation to find which variant this bucket falls into
@@ -254,31 +262,23 @@ export async function incrementVariantStats(
 ): Promise<void> {
   // Build SET clause dynamically so only touched fields are updated
   const parts: Array<ReturnType<typeof sql>> = [];
-  if (delta.totalSent)
-    parts.push(sql`total_sent = total_sent + ${delta.totalSent}`);
+  if (delta.totalSent) parts.push(sql`total_sent = total_sent + ${delta.totalSent}`);
   if (delta.totalDelivered)
     parts.push(sql`total_delivered = total_delivered + ${delta.totalDelivered}`);
-  if (delta.totalOpens)
-    parts.push(sql`total_opens = total_opens + ${delta.totalOpens}`);
-  if (delta.uniqueOpens)
-    parts.push(sql`unique_opens = unique_opens + ${delta.uniqueOpens}`);
-  if (delta.totalClicks)
-    parts.push(sql`total_clicks = total_clicks + ${delta.totalClicks}`);
-  if (delta.uniqueClicks)
-    parts.push(sql`unique_clicks = unique_clicks + ${delta.uniqueClicks}`);
+  if (delta.totalOpens) parts.push(sql`total_opens = total_opens + ${delta.totalOpens}`);
+  if (delta.uniqueOpens) parts.push(sql`unique_opens = unique_opens + ${delta.uniqueOpens}`);
+  if (delta.totalClicks) parts.push(sql`total_clicks = total_clicks + ${delta.totalClicks}`);
+  if (delta.uniqueClicks) parts.push(sql`unique_clicks = unique_clicks + ${delta.uniqueClicks}`);
   if (delta.totalConversions)
     parts.push(sql`total_conversions = total_conversions + ${delta.totalConversions}`);
-  if (delta.totalRevenue)
-    parts.push(sql`total_revenue = total_revenue + ${delta.totalRevenue}`);
+  if (delta.totalRevenue) parts.push(sql`total_revenue = total_revenue + ${delta.totalRevenue}`);
 
   if (parts.length === 0) return;
 
   parts.push(sql`updated_at = NOW()`);
   const setClause = sql.join(parts, sql`, `);
 
-  await db.execute(
-    sql`UPDATE mv_test_variants SET ${setClause} WHERE id = ${variantId}::uuid`,
-  );
+  await db.execute(sql`UPDATE mv_test_variants SET ${setClause} WHERE id = ${variantId}::uuid`);
 }
 
 /**

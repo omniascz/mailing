@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `29_rapidmail_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** rapidmail umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Německý produkt z Freiburgu im Breisgau (Schwarzwald, založeno 2008)** – jeden z dlouhodobých DACH SMB hráčů
 > - **"Made in Germany"** core branding – servery EXCLUSIVELY v Německu
 > - **CSA-certified** (whitelisted by GMX, web.de, T-Online)
@@ -139,18 +140,18 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Self-serve sign-up | Full + billing + users | Vše |
-| **Additional user** | Pozvánka od Owner | Per role permissions | Per role |
-| **Recipient / Subscriber** | Form, integration | Receives newsletters | Své emaily |
-| **Pay-per-mail credit holder** | Purchase credits | Send within credit | Send dashboard |
-| **Subscription plan user** | Monthly subscription | Unlimited sends within plan | Standard access |
-| **WordPress plugin user** | WP plugin install | Form embed + tracking | Via WP |
-| **Shopify integration** | App install | Limited sync | Per integration scope |
-| **rapidmail Support** | Phone / Email / Chat | Issue resolution | Read s consent |
-| **rapidmail Sales** | Inquiry / contact | Enterprise inquiries | Read s consent |
-| **CSA / ISP** | Sender reputation | Whitelisting | Per agreement |
+| Aktér                          | Vstupní bod          | Co dělá                     | Co vidí               |
+| ------------------------------ | -------------------- | --------------------------- | --------------------- |
+| **Account Owner**              | Self-serve sign-up   | Full + billing + users      | Vše                   |
+| **Additional user**            | Pozvánka od Owner    | Per role permissions        | Per role              |
+| **Recipient / Subscriber**     | Form, integration    | Receives newsletters        | Své emaily            |
+| **Pay-per-mail credit holder** | Purchase credits     | Send within credit          | Send dashboard        |
+| **Subscription plan user**     | Monthly subscription | Unlimited sends within plan | Standard access       |
+| **WordPress plugin user**      | WP plugin install    | Form embed + tracking       | Via WP                |
+| **Shopify integration**        | App install          | Limited sync                | Per integration scope |
+| **rapidmail Support**          | Phone / Email / Chat | Issue resolution            | Read s consent        |
+| **rapidmail Sales**            | Inquiry / contact    | Enterprise inquiries        | Read s consent        |
+| **CSA / ISP**                  | Sender reputation    | Whitelisting                | Per agreement         |
 
 ---
 
@@ -187,7 +188,8 @@ First login → dashboard
 ### 2.2 Free tier limits
 
 Per Trusted:
-> *"Versendungen an bis zu maximal 10 Empfänger:innen sind immer kostenlos."*
+
+> _"Versendungen an bis zu maximal 10 Empfänger:innen sind immer kostenlos."_
 
 - **10 recipients FREE always**
 - Test campaigns
@@ -197,9 +199,11 @@ Per Trusted:
 ### 2.3 First send free up to 2 000
 
 Per Trusted:
-> *"der erste Versand an bis zu 2.000 Empfänger:innen ist gratis"*
+
+> _"der erste Versand an bis zu 2.000 Empfänger:innen ist gratis"_
 
 **One-time bonus:**
+
 - **First send FREE** up to **2 000 recipients**
 - Trial run rapidmail full experience
 - No credit card
@@ -262,7 +266,8 @@ Free support assistance v němčině
 ### 3.1 Pay-per-Mail principle
 
 Per EuropeanStack:
-> *"pay-as-you-go option requires no subscription: you purchase mailing credits, with pricing starting from EUR 16 per mailing for up to 250 recipients. Credits remain valid for 12 months."*
+
+> _"pay-as-you-go option requires no subscription: you purchase mailing credits, with pricing starting from EUR 16 per mailing for up to 250 recipients. Credits remain valid for 12 months."_
 
 ```
 **Per send pricing model:**
@@ -324,9 +329,11 @@ Confirmation email s breakdown
 ### 3.4 When Pay-per-Mail makes sense
 
 Per EuropeanStack:
-> *"For businesses sending fewer than 12 newsletters per year, this is dramatically cheaper than any subscription-based competitor."*
+
+> _"For businesses sending fewer than 12 newsletters per year, this is dramatically cheaper than any subscription-based competitor."_
 
 **Optimal pro:**
+
 - **Occasional senders** (1-12 newsletters/year)
 - **Seasonal businesses** (Christmas peaks, January quiet)
 - **Yoga studios** (monthly class schedules)
@@ -338,9 +345,11 @@ Per EuropeanStack:
 ### 3.5 Pay-per-Mail example calculation
 
 Per Business.digital example:
-> *"Ein Handwerksbetrieb verschickt viermal im Jahr einen Saisonalnewsletter an 800 Kunden. Mit rapidmail wird der Newsletter im Drag-and-Drop-Editor in einer Stunde erstellt, geprüft und versendet. Kosten: Pay-per-Mail, unter €5 für 800 Empfänger. Kein Monatsbeitrag zwischen den Versänden."*
+
+> _"Ein Handwerksbetrieb verschickt viermal im Jahr einen Saisonalnewsletter an 800 Kunden. Mit rapidmail wird der Newsletter im Drag-and-Drop-Editor in einer Stunde erstellt, geprüft und versendet. Kosten: Pay-per-Mail, unter €5 für 800 Empfänger. Kein Monatsbeitrag zwischen den Versänden."_
 
 **Example: Handwerksbetrieb (craftsman business):**
+
 - 4 newsletters/year
 - 800 recipients
 - Pay-per-Mail cost: **~€5 per send** (per Business.digital, smaller volume)
@@ -367,6 +376,7 @@ Best practice:
 ### 3.7 Pro Versand tier limitations
 
 Per Trusted:
+
 - **1 user only**
 - **3 automated mailings max**
 - **Basic features**
@@ -398,11 +408,13 @@ Unused Pay-per-Mail credits often convertible (check with support)
 ### 4.1 Subscription model overview
 
 Per oficiální + EuropeanStack:
+
 - **Starter:** €9-15/měsíc
 - **Premium / Performance:** €25-29/měsíc
 - **Unlimited:** Custom
 
 Features:
+
 - **Unlimited mailings** within plan
 - **Monthly cancellation** (monatlich kündbar)
 - **Annual discount** available
@@ -638,6 +650,7 @@ Free phone support throughout
 ### 6.1 User roles (typical)
 
 #### Account Owner
+
 - **Highest tier** access
 - **Created during sign-up**
 - Full administrative control
@@ -647,18 +660,19 @@ Free phone support throughout
 - Close account
 
 #### Additional users (per plan)
+
 - **Limited count per plan**
 - Various permission levels (basic)
 - Per role permissions
 
 ### 6.2 Per plan user limits
 
-| Plan | User limit |
-|---|---|
-| **Free / Pro Versand** | 1 user only |
-| **Starter** | 1-2 users typically |
-| **Premium / Performance** | More users |
-| **Unlimited** | Unlimited users |
+| Plan                      | User limit          |
+| ------------------------- | ------------------- |
+| **Free / Pro Versand**    | 1 user only         |
+| **Starter**               | 1-2 users typically |
+| **Premium / Performance** | More users          |
+| **Unlimited**             | Unlimited users     |
 
 ### 6.3 User invitation flow
 
@@ -694,6 +708,7 @@ User activates + sets password
 ### 6.5 Multi-user limitations
 
 ⚠️ vs. CleverReach which has **unlimited users at no extra cost**:
+
 - rapidmail charges per plan tier
 - Limited granularity of permissions
 - Less flexibility pro agencies
@@ -749,6 +764,7 @@ Activities:
 ### 7.3 Billing management
 
 #### Pay-per-Mail flow
+
 ```
 Owner: Account → Credits
    ↓
@@ -766,6 +782,7 @@ Actions:
 ```
 
 #### Subscription flow
+
 ```
 Owner: Account → Tarif
    ↓
@@ -957,6 +974,7 @@ Save template
 ### 9.1 Recipient creation paths
 
 #### A) Form submission
+
 ```
 Visitor fills rapidmail form
 - Klassische Anmeldebox
@@ -990,7 +1008,8 @@ Welcome automation triggers (if active)
 #### B) Double opt-in flow (DACH standard)
 
 Per EU Picks:
-> *"Double-Opt-in ist standardmäßig aktiviert (nicht in den Einstellungen versteckt)."*
+
+> _"Double-Opt-in ist standardmäßig aktiviert (nicht in den Einstellungen versteckt)."_
 
 ```
 Form submission
@@ -1011,6 +1030,7 @@ Welcome workflow triggers
 ```
 
 #### C) Manual import (CSV)
+
 ```
 Admin: Empfänger → Import
    ↓
@@ -1036,6 +1056,7 @@ Import completed
 ```
 
 #### D) E-commerce integration sync (limited)
+
 ```
 Shopify / WooCommerce customer
    ↓
@@ -1049,11 +1070,14 @@ Welcome automation if active
 ```
 
 #### E) No API option
+
 ⚠️ rapidmail nemá API, takže nelze:
+
 - Programmatically add recipients (vyjma CSV / Zapier / plugin)
 - Custom system integration directly
 
 Workarounds:
+
 - **Zapier** (limited)
 - **WordPress plugin**
 - **Manual CSV import**
@@ -1127,9 +1151,10 @@ Data retained per GDPR
 ### 9.6 Bounce handling
 
 Per Software Advice:
-*"automatic bounce management, unsubscribing options, subscription notices, blacklists, recipient segmentation"*
+_"automatic bounce management, unsubscribing options, subscription notices, blacklists, recipient segmentation"_
 
 #### Hard bounce
+
 ```
 ISP 5xx response
    ↓
@@ -1141,6 +1166,7 @@ rapidmail Bounce-Management:
 ```
 
 #### Soft bounce
+
 ```
 ISP 4xx response
    ↓
@@ -1150,6 +1176,7 @@ If persistent → mark as bounced
 ```
 
 #### Spam complaint
+
 ```
 ISP FBL → rapidmail
    ↓
@@ -1308,6 +1335,7 @@ Continue until end
 ### 11.4 Basic automation use cases
 
 #### Welcome series (basic)
+
 ```
 Trigger: Subscribed
    ↓
@@ -1325,6 +1353,7 @@ End
 ```
 
 #### Birthday automation
+
 ```
 Trigger: Birthday date today
    ↓
@@ -1334,6 +1363,7 @@ End
 ```
 
 #### Follow-up sequence
+
 ```
 Trigger: Subscribed to specific list
    ↓
@@ -1347,9 +1377,11 @@ End
 ### 11.5 Automation limitations
 
 Per Newsletter-tools.de:
-> *"Für komplexere Marketing-Automationen ist die Plattform jedoch nicht ausgelegt."*
+
+> _"Für komplexere Marketing-Automationen ist die Plattform jedoch nicht ausgelegt."_
 
 ⚠️ rapidmail **NEMÁ**:
+
 - Complex branching workflows
 - Multi-channel orchestration (email only)
 - Lead scoring
@@ -1374,9 +1406,11 @@ For complex automation: **migrate to ActiveCampaign / Brevo / CleverReach**.
 ### 12.1 Form types available
 
 Per Newsletter-tools.de:
-> *"rapidmail stellt verschiedene Formulartypen bereit: klassische Anmeldeboxen, Pop-ups und Exit-Intent-Layer."*
+
+> _"rapidmail stellt verschiedene Formulartypen bereit: klassische Anmeldeboxen, Pop-ups und Exit-Intent-Layer."_
 
 **Multiple form types:**
+
 - **Klassische Anmeldebox** (classic embedded)
 - **Pop-up** (modal)
 - **Exit-Intent-Layer** (exit-intent overlay)
@@ -1420,9 +1454,11 @@ Save + Publish
 ### 12.3 Double opt-in default ON
 
 Per EU Picks:
-> *"Double-Opt-in ist standardmäßig aktiviert (nicht in den Einstellungen versteckt)."*
+
+> _"Double-Opt-in ist standardmäßig aktiviert (nicht in den Einstellungen versteckt)."_
 
 **UNIKÁTNÍ approach:**
+
 - **Default ON** for all forms
 - **DSGVO compliance by default**
 - **No risk of forgetting**
@@ -1468,6 +1504,7 @@ C) Manual link/button (less common)
 ### 12.6 Form limits per plan
 
 Per EmailTooltester:
+
 - **Pro Versand / Starter:** limited count
 - **Performance:** up to 5 forms
 - **Unlimited:** no limit
@@ -1481,6 +1518,7 @@ Per EmailTooltester:
 ### 13.1 Available integrations
 
 #### Shopify (basic)
+
 ```
 Shopify admin → Apps → rapidmail (if available)
    ↓
@@ -1497,6 +1535,7 @@ Basic sync:
 ⚠️ Less deep than Klaviyo's Shopify integration.
 
 #### WooCommerce (WordPress plugin)
+
 ```
 WordPress admin → Plugins → rapidmail
    ↓
@@ -1514,27 +1553,32 @@ WooCommerce orders sync (basic)
 ```
 
 #### Magento (limited)
+
 - Basic email capture
 - Limited automation
 - Less developed than competitors
 
 #### Shopware (limited)
+
 - Less native than CleverReach's Shopware integration
 - DACH e-shops may prefer CleverReach pro Shopware
 
 ### 13.2 What syncs (limited)
 
 #### Customer data (basic)
+
 - Email
 - Name
 - Marketing consent flag
 
 #### Order data (limited - depending on integration)
+
 - Order events
 - Basic order data
 - Limited custom fields
 
 #### Product data (rare)
+
 - Limited product feed support
 - Not built for product recommendations
 
@@ -1543,6 +1587,7 @@ WooCommerce orders sync (basic)
 ⚠️ rapidmail **doesn't have native cart abandonment** automation like Klaviyo.
 
 Workarounds:
+
 - **Custom JavaScript** + form submission
 - **WordPress plugin** capabilities
 - **Zapier** for trigger forwarding
@@ -1556,6 +1601,7 @@ Workarounds:
 ### 13.5 For deep e-commerce:
 
 **Outgrow rapidmail to:**
+
 - **Klaviyo** (DTC Shopify deep)
 - **Brevo** (multi-channel + transactional)
 - **CleverReach** (Shopware native)
@@ -1568,7 +1614,7 @@ Workarounds:
 ### 14.1 Display test flow
 
 Per Software Suggest:
-*"Display tests simulate the view on different devices."*
+_"Display tests simulate the view on different devices."_
 
 ```
 User creates campaign
@@ -1597,7 +1643,7 @@ Fix rendering issues if any
 ### 14.2 Spam test flow
 
 Per Trusted:
-*"Vorab-Spam-Test"*
+_"Vorab-Spam-Test"_
 
 ```
 User builds campaign
@@ -1626,7 +1672,7 @@ User reviews + adjusts
 ### 14.3 Deliverability test
 
 Per Software Suggest:
-*"Companies can carry out deliverability tests to identify weak points in the mailing and rectify them before sending."*
+_"Companies can carry out deliverability tests to identify weak points in the mailing and rectify them before sending."_
 
 ```
 Pre-send → Deliverability test
@@ -1651,6 +1697,7 @@ User addresses issues
 ### 14.4 Why these tests matter
 
 Per rapidmail's CSA membership:
+
 - Tests **protect rapidmail's CSA standing**
 - Tests **maintain DACH ISP reputation**
 - Tests **improve user success rate**
@@ -1708,9 +1755,11 @@ If any fail → User prompted to fix
 ### 16.1 Phone support availability
 
 Per European Purpose:
-> *"All customers receive free support via phone, email, and the ticket system"*
+
+> _"All customers receive free support via phone, email, and the ticket system"_
 
 **Phone support FREE for ALL plans:**
+
 - Pay-per-Mail
 - Starter
 - Premium / Performance
@@ -1719,7 +1768,8 @@ Per European Purpose:
 ### 16.2 Response time excellence
 
 Per European Purpose:
-> *"The average response time is reported to be approximately 9 minutes, which is exceptional for a SaaS platform."*
+
+> _"The average response time is reported to be approximately 9 minutes, which is exceptional for a SaaS platform."_
 
 **~9 min average response** = **industry-leading**.
 
@@ -1754,6 +1804,7 @@ Follow-up email s details
 ### 16.4 Why this matters
 
 **Competitive advantage:**
+
 - **Most SaaS:** email-only, 24-48h response
 - **rapidmail:** phone + ~9 min response
 - **Critical for SMB** non-technical users
@@ -1762,9 +1813,10 @@ Follow-up email s details
 ### 16.5 Multi-channel support flow
 
 Per GetApp:
-*"rapidmail offers the following support options: Email/Help Desk, Phone Support, Knowledge Base, Chat, FAQs/Forum"*
+_"rapidmail offers the following support options: Email/Help Desk, Phone Support, Knowledge Base, Chat, FAQs/Forum"_
 
 Channels:
+
 1. **Phone** (~9 min response, free)
 2. **Live Chat** (available)
 3. **Email / Ticket system**
@@ -1776,9 +1828,10 @@ User can choose preferred channel.
 ### 16.6 Support quality
 
 Per real customers:
-> *"Am besten gefallen hat mir der Support. Der ist aussergewöhnlich!!! Sofort immer ein kompetenter Ansprechpartner. Das findet sich in Deutschland sehr selten!"*
 
-> *"rapidmail ist wirklich einfach zu bedienen. Und der Support hat bei einer Frage umgehend geantwortet."*
+> _"Am besten gefallen hat mir der Support. Der ist aussergewöhnlich!!! Sofort immer ein kompetenter Ansprechpartner. Das findet sich in Deutschland sehr selten!"_
+
+> _"rapidmail ist wirklich einfach zu bedienen. Und der Support hat bei einer Frage umgehend geantwortet."_
 
 ---
 
@@ -1787,11 +1840,12 @@ Per real customers:
 ⚠️ **rapidmail nemá public API.**
 
 Per GetApp:
-*"Q. Does rapidmail offer an API? No, rapidmail does not have an API available."*
+_"Q. Does rapidmail offer an API? No, rapidmail does not have an API available."_
 
 ### 17.1 Workaround options
 
 #### Option A: Zapier (limited)
+
 ```
 External app (e.g., Shopify, WordPress, custom)
    ↓
@@ -1808,6 +1862,7 @@ Zapier action: rapidmail
 ⚠️ Less comprehensive than direct API.
 
 #### Option B: WordPress plugin
+
 ```
 WordPress admin → rapidmail plugin
    ↓
@@ -1820,6 +1875,7 @@ Provides:
 ```
 
 #### Option C: CSV import/export
+
 ```
 External system → Generate CSV
    ↓
@@ -1831,6 +1887,7 @@ Periodic manual sync
 ```
 
 #### Option D: Email piping
+
 ```
 External system → Send email to rapidmail address
    ↓
@@ -1854,6 +1911,7 @@ Limited automation
 ### 17.3 Implications
 
 **rapidmail's positioning:**
+
 - **SMB / non-technical focus**
 - **No dev-heavy customers expected**
 - **Pre-built integrations only**
@@ -1868,7 +1926,8 @@ Limited automation
 ### 18.1 Transactional add-on activation
 
 Per Trusted:
-> *"Sie können bei Bedarf das Add-on für den Versand von Transaktions-E-Mails buchen."*
+
+> _"Sie können bei Bedarf das Add-on für den Versand von Transaktions-E-Mails buchen."_
 
 ```
 User: Account → Add-ons → Transactional
@@ -1916,6 +1975,7 @@ Logged in account
 ### 18.4 Limitations vs. dedicated transactional
 
 ⚠️ Less feature-rich than:
+
 - **Postmark**
 - **Mailgun**
 - **Brevo transactional**
@@ -1949,9 +2009,11 @@ CSA-protected delivery
 ### 19.2 CSA membership benefits
 
 Per EuropeanStack:
-> *"As a CSA-certified sender, rapidmail benefits from whitelisting by major German and European ISPs"*
+
+> _"As a CSA-certified sender, rapidmail benefits from whitelisting by major German and European ISPs"_
 
 **Whitelisted by:**
+
 - **GMX**
 - **web.de**
 - **T-Online**
@@ -1959,6 +2021,7 @@ Per EuropeanStack:
 - **Other major DACH ISPs**
 
 **Result:**
+
 - **Faster inbox placement**
 - **Higher open rates** (DACH-specific)
 - **Less spam filter risk**
@@ -1967,9 +2030,11 @@ Per EuropeanStack:
 ### 19.3 Authentication
 
 Per EuropeanStack:
-> *"The platform handles SPF, DKIM, and DMARC configuration"*
+
+> _"The platform handles SPF, DKIM, and DMARC configuration"_
 
 **rapidmail manages:**
+
 - SPF
 - DKIM
 - DMARC
@@ -1980,7 +2045,8 @@ User just verifies email/domain.
 ### 19.4 Dedicated IP option
 
 Per EuropeanStack:
-> *"provides dedicated IP options for high-volume senders"*
+
+> _"provides dedicated IP options for high-volume senders"_
 
 - **High-volume customers**
 - **Better sender reputation control**
@@ -1989,7 +2055,7 @@ Per EuropeanStack:
 ### 19.5 List hygiene (automatic Bounce-Management)
 
 Per Software Advice:
-*"automatic bounce management, unsubscribing options, subscription notices, blacklists"*
+_"automatic bounce management, unsubscribing options, subscription notices, blacklists"_
 
 ```
 Continuous monitoring:
@@ -2011,9 +2077,11 @@ Sender reputation protected
 ### 19.7 DACH deliverability excellence
 
 Per EU Picks:
-> *"Hervorragende Zustellbarkeit im DACH-Raum"*
+
+> _"Hervorragende Zustellbarkeit im DACH-Raum"_
 
 **Excellent DACH deliverability** due to:
+
 - Made in Germany infrastructure
 - Long-term ISP relationships (since 2008)
 - CSA membership
@@ -2051,7 +2119,8 @@ Data flow:
 ### 20.3 Auftragsverarbeitungsvertrag (DPA)
 
 Per EuropeanStack:
-> *"provides built-in double opt-in, consent tracking, and data processing agreements as standard."*
+
+> _"provides built-in double opt-in, consent tracking, and data processing agreements as standard."_
 
 ```
 Account setup:
@@ -2103,9 +2172,11 @@ Provide within 30 days (DSGVO requirement)
 ### 20.6 German jurisdiction advantage
 
 Per EuropeanStack:
-> *"For businesses in regulated industries or those that have experienced scrutiny from German data protection authorities, rapidmail provides a level of jurisdictional certainty that US-based platforms simply cannot match."*
+
+> _"For businesses in regulated industries or those that have experienced scrutiny from German data protection authorities, rapidmail provides a level of jurisdictional certainty that US-based platforms simply cannot match."_
 
 Pro regulated industries:
+
 - Banking
 - Healthcare
 - Government / public sector
@@ -2116,29 +2187,29 @@ Pro regulated industries:
 
 ## 21. Datová mapa: co vidí kdo
 
-| Data | Owner | Add. user | Subscriber | Plugin (WP) | Zapier | rapidmail Support |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | per role | ❌ | ❌ | ❌ | read s consent |
-| Billing / Credits | ✅ | ❌ | ❌ | ❌ | ❌ | read s consent |
-| User management | ✅ | ❌ | ❌ | ❌ | ❌ | read s consent |
-| All recipients | ✅ | per role | jen sebe | per scope | per scope | read s consent |
-| Edit recipients | ✅ | per role | ❌ | per scope | per scope | per request |
-| Import recipients | ✅ | per role | ❌ | ❌ | per scope | assist |
-| Export recipients | ✅ | per role | request (DSAR) | ❌ | ❌ | assist |
-| Lists | ✅ | per role | – | per scope | per scope | read |
-| Segments | ✅ | per role | – | ❌ | ❌ | read |
-| Tags | ✅ | per role | – | ❌ | ❌ | read |
-| Campaigns | ✅ | per role | jen co dostal | ❌ | ❌ | read |
-| Send campaigns | ✅ | per role | ❌ | ❌ | ❌ | ❌ |
-| Pay-per-Mail credits | ✅ | per role | ❌ | ❌ | ❌ | read |
-| Automation (basic) | ✅ | per role | ❌ | ❌ | ❌ | read |
-| Templates | ✅ | per role | – | ❌ | ❌ | read |
-| Forms | ✅ | per role | submit | per scope | per scope | read |
-| Reports | ✅ | per role | ❌ | ❌ | ❌ | read |
-| Display test | ✅ | per role | – | ❌ | ❌ | read |
-| Spam test | ✅ | per role | – | ❌ | ❌ | read |
-| Phone support access | ✅ | ✅ | – | – | – | provide |
-| DSGVO delete | ✅ | per role | request | ❌ | ❌ | execute |
+| Data                 | Owner | Add. user |   Subscriber   | Plugin (WP) |  Zapier   | rapidmail Support |
+| -------------------- | :---: | :-------: | :------------: | :---------: | :-------: | :---------------: |
+| Account settings     |  ✅   | per role  |       ❌       |     ❌      |    ❌     |  read s consent   |
+| Billing / Credits    |  ✅   |    ❌     |       ❌       |     ❌      |    ❌     |  read s consent   |
+| User management      |  ✅   |    ❌     |       ❌       |     ❌      |    ❌     |  read s consent   |
+| All recipients       |  ✅   | per role  |    jen sebe    |  per scope  | per scope |  read s consent   |
+| Edit recipients      |  ✅   | per role  |       ❌       |  per scope  | per scope |    per request    |
+| Import recipients    |  ✅   | per role  |       ❌       |     ❌      | per scope |      assist       |
+| Export recipients    |  ✅   | per role  | request (DSAR) |     ❌      |    ❌     |      assist       |
+| Lists                |  ✅   | per role  |       –        |  per scope  | per scope |       read        |
+| Segments             |  ✅   | per role  |       –        |     ❌      |    ❌     |       read        |
+| Tags                 |  ✅   | per role  |       –        |     ❌      |    ❌     |       read        |
+| Campaigns            |  ✅   | per role  | jen co dostal  |     ❌      |    ❌     |       read        |
+| Send campaigns       |  ✅   | per role  |       ❌       |     ❌      |    ❌     |        ❌         |
+| Pay-per-Mail credits |  ✅   | per role  |       ❌       |     ❌      |    ❌     |       read        |
+| Automation (basic)   |  ✅   | per role  |       ❌       |     ❌      |    ❌     |       read        |
+| Templates            |  ✅   | per role  |       –        |     ❌      |    ❌     |       read        |
+| Forms                |  ✅   | per role  |     submit     |  per scope  | per scope |       read        |
+| Reports              |  ✅   | per role  |       ❌       |     ❌      |    ❌     |       read        |
+| Display test         |  ✅   | per role  |       –        |     ❌      |    ❌     |       read        |
+| Spam test            |  ✅   | per role  |       –        |     ❌      |    ❌     |       read        |
+| Phone support access |  ✅   |    ✅     |       –        |      –      |     –     |      provide      |
+| DSGVO delete         |  ✅   | per role  |    request     |     ❌      |    ❌     |      execute      |
 
 ---
 
@@ -2147,9 +2218,10 @@ Pro regulated industries:
 ### 22.1 No API (critical limitation)
 
 Per GetApp:
-*"No, rapidmail does not have an API available."*
+_"No, rapidmail does not have an API available."_
 
 ⚠️ **No public API** = significant limitation pro:
+
 - Custom integrations
 - Developer-driven organizations
 - Real-time programmatic operations
@@ -2158,9 +2230,11 @@ Per GetApp:
 ### 22.2 Limited automation
 
 Per Newsletter-tools.de:
-> *"Für komplexere Marketing-Automationen ist die Plattform jedoch nicht ausgelegt."*
+
+> _"Für komplexere Marketing-Automationen ist die Plattform jedoch nicht ausgelegt."_
 
 ⚠️ **Basic automation only:**
+
 - No complex branching workflows
 - No multi-channel orchestration
 - No lead scoring
@@ -2172,9 +2246,11 @@ Per Newsletter-tools.de:
 ### 22.3 No CRM, SMS, landing pages
 
 Per EuropeanStack:
-> *"It does not offer CRM, SMS, landing pages, or marketing automation."*
+
+> _"It does not offer CRM, SMS, landing pages, or marketing automation."_
 
 **Intentional limitation:**
+
 - Newsletter focus only
 - For multi-channel: outgrow
 
@@ -2196,7 +2272,8 @@ For agencies / multi-user teams: **CleverReach may be better**.
 ### 22.6 Higher pricing vs. CleverReach
 
 Per EmailTooltester:
-> *"Im Vergleich zu anderen Newsletter-Tools wie CleverReach empfinde ich aber auch den Performance Tarif von rapidmail als etwas überteuert"*
+
+> _"Im Vergleich zu anderen Newsletter-Tools wie CleverReach empfinde ich aber auch den Performance Tarif von rapidmail als etwas überteuert"_
 
 - **Subscription slightly higher** than CleverReach for similar features
 - **Justified by:** simplicity + phone support + Made in Germany
@@ -2205,6 +2282,7 @@ Per EmailTooltester:
 ### 22.7 No A/B testing in Essential
 
 Per EmailTooltester:
+
 - **A/B testing nedostupné** v lower tiers
 - Available v Performance+ only
 
@@ -2312,4 +2390,4 @@ Pokud rapidmail používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů rapidmail.com a praktických zdrojů (GetApp, Software Advice, Software Suggest, EmailTooltester, EuropeanStack, European Purpose, EU Picks, Trusted, Business Digital, Newsletter-tools.de, customer testimonials). Pro nejaktuálnější detaily je nutný engagement s rapidmail support teamem (free phone v němčině!).*
+_Dokument zpracován z oficiálních zdrojů rapidmail.com a praktických zdrojů (GetApp, Software Advice, Software Suggest, EmailTooltester, EuropeanStack, European Purpose, EU Picks, Trusted, Business Digital, Newsletter-tools.de, customer testimonials). Pro nejaktuálnější detaily je nutný engagement s rapidmail support teamem (free phone v němčině!)._

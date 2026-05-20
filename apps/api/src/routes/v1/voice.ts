@@ -12,7 +12,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
-
   getCall,
   getCallsByContact,
   getCallsByCampaign,
@@ -53,7 +52,9 @@ export default async function voiceRoutes(app: FastifyInstance) {
       try {
         const callId = await queueOutboundCall(request);
         if (!callId) {
-          throw AppError.tooManyRequests('Max concurrent calls reached (5). Try again in 30 seconds.');
+          throw AppError.tooManyRequests(
+            'Max concurrent calls reached (5). Try again in 30 seconds.',
+          );
         }
 
         return { data: { callId, status: 'pending' } };
@@ -87,7 +88,9 @@ export default async function voiceRoutes(app: FastifyInstance) {
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-      const { limit } = z.object({ limit: z.coerce.number().int().max(1000).default(50) }).parse(req.query);
+      const { limit } = z
+        .object({ limit: z.coerce.number().int().max(1000).default(50) })
+        .parse(req.query);
 
       const callList = await getCallsByContact(id, orgId, limit);
       return { data: callList };
@@ -102,7 +105,9 @@ export default async function voiceRoutes(app: FastifyInstance) {
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-      const { limit } = z.object({ limit: z.coerce.number().int().max(1000).default(100) }).parse(req.query);
+      const { limit } = z
+        .object({ limit: z.coerce.number().int().max(1000).default(100) })
+        .parse(req.query);
 
       const callList = await getCallsByCampaign(id, orgId, limit);
       return { data: callList };
@@ -147,13 +152,14 @@ export default async function voiceRoutes(app: FastifyInstance) {
         .parse(req.body);
 
       // Map Twilio status to our enum
-      const statusMap: Record<string, 'completed' | 'no_answer' | 'busy' | 'voicemail' | 'failed'> = {
-        'completed': 'completed',
-        'no-answer': 'no_answer',
-        'busy': 'busy',
-        'voicemail': 'voicemail',
-        'failed': 'failed',
-      };
+      const statusMap: Record<string, 'completed' | 'no_answer' | 'busy' | 'voicemail' | 'failed'> =
+        {
+          completed: 'completed',
+          'no-answer': 'no_answer',
+          busy: 'busy',
+          voicemail: 'voicemail',
+          failed: 'failed',
+        };
 
       const status = CallStatus ? statusMap[CallStatus] : 'completed';
 

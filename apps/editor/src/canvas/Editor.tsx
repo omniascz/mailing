@@ -1,13 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import {
-  DndContext,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import type { BlockType, EmailSchema } from '../schema/blocks.js';
 import { createEmptyEmail } from '../schema/factory.js';
 import { renderEmail, type MergeTagContext } from '../render/index.js';
@@ -56,9 +50,7 @@ export function Editor({ initialEmail, previewContext, onChange }: EditorProps) 
     return () => window.removeEventListener('keydown', handler);
   }, [actions]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -151,11 +143,13 @@ export function Editor({ initialEmail, previewContext, onChange }: EditorProps) 
 }
 
 function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60) || 'email';
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'email'
+  );
 }
 
 function triggerDownload(blob: Blob, filename: string) {

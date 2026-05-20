@@ -1,13 +1,5 @@
 import { sql } from 'drizzle-orm';
-import {
-  pgTable,
-  uuid,
-  varchar,
-  timestamp,
-  jsonb,
-  index,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, jsonb, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 
@@ -24,8 +16,12 @@ import { contacts } from './contacts.js';
 export const cdpEvents = pgTable(
   'cdp_events',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
 
     /** Caller-supplied dedupe key (UUID v7 or any unique string). */
     eventId: varchar('event_id', { length: 128 }),
@@ -82,7 +78,9 @@ export const contactTraits = pgTable(
     contactId: uuid('contact_id')
       .primaryKey()
       .references(() => contacts.id, { onDelete: 'cascade' }),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
 
     values: jsonb('values').$type<Record<string, unknown>>().notNull().default({}),
 
@@ -106,8 +104,12 @@ export type ContactTraits = typeof contactTraits.$inferSelect;
 export const activationDestinations = pgTable(
   'activation_destinations',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
 
     /** salesforce | hubspot | mailchimp | webhook | meta_ads | google_ads | tiktok_ads */
@@ -126,8 +128,12 @@ export const activationDestinations = pgTable(
 export const activationRuns = pgTable(
   'activation_runs',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     destinationId: uuid('destination_id')
       .notNull()
       .references(() => activationDestinations.id, { onDelete: 'cascade' }),

@@ -209,9 +209,7 @@ describe('AI subject-lines (4.6)', () => {
   });
 
   it('caches results and returns _cached flag on hit', async () => {
-    const cached = JSON.stringify([
-      { subject: 'Cached subject', score: 8, reason: 'From cache' },
-    ]);
+    const cached = JSON.stringify([{ subject: 'Cached subject', score: 8, reason: 'From cache' }]);
     mockRedis.get.mockResolvedValueOnce(cached);
 
     const cacheHit = await mockRedis.get('ai:subject-lines:hash');
@@ -235,7 +233,11 @@ describe('AI analyze-brand-voice (4.7)', () => {
   it('validates brand voice schema', () => {
     const validBrandVoice = {
       tone: 'casual',
-      vocabulary: { keyPhrases: ['amazing', 'community'], readingLevel: 'basic', avgWordsPerSentence: 12 },
+      vocabulary: {
+        keyPhrases: ['amazing', 'community'],
+        readingLevel: 'basic',
+        avgWordsPerSentence: 12,
+      },
       ctaPatterns: { actionWords: ['Shop now', 'Explore'], urgencyLevel: 'medium' },
       emojiUsage: 'rare',
       personalizationLevel: 'basic',
@@ -256,15 +258,17 @@ describe('AI analyze-brand-voice (4.7)', () => {
   });
 
   it('rejects more than 20 campaign IDs', () => {
-    const tooMany = Array.from({ length: 21 }, (_, i) =>
-      `00000000-0000-0000-0000-${String(i).padStart(12, '0')}`,
+    const tooMany = Array.from(
+      { length: 21 },
+      (_, i) => `00000000-0000-0000-0000-${String(i).padStart(12, '0')}`,
     );
     expect(() => brandVoiceBodySchema.parse({ campaignIds: tooMany })).toThrow();
   });
 
   it('accepts exactly 20 campaign IDs', () => {
-    const exactly20 = Array.from({ length: 20 }, (_, i) =>
-      `00000000-0000-0000-0000-${String(i).padStart(12, '0')}`,
+    const exactly20 = Array.from(
+      { length: 20 },
+      (_, i) => `00000000-0000-0000-0000-${String(i).padStart(12, '0')}`,
     );
     expect(() => brandVoiceBodySchema.parse({ campaignIds: exactly20 })).not.toThrow();
   });

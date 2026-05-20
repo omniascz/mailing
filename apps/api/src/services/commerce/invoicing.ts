@@ -33,21 +33,27 @@ export async function listInvoices(orgId: string, opts?: { status?: string; limi
 }
 
 export async function getInvoice(orgId: string, invoiceId: string) {
-  const [row] = await db.select().from(invoices).where(and(eq(invoices.orgId, orgId), eq(invoices.id, invoiceId)));
+  const [row] = await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.orgId, orgId), eq(invoices.id, invoiceId)));
   if (!row) throw AppError.notFound('Invoice not found');
   return row;
 }
 
-export async function createInvoice(orgId: string, input: {
-  dealId?: string;
-  contactId?: string;
-  title?: string;
-  currency?: string;
-  lineItems: LineItem[];
-  taxRate?: number;
-  dueDate?: Date;
-  notes?: string;
-}) {
+export async function createInvoice(
+  orgId: string,
+  input: {
+    dealId?: string;
+    contactId?: string;
+    title?: string;
+    currency?: string;
+    lineItems: LineItem[];
+    taxRate?: number;
+    dueDate?: Date;
+    notes?: string;
+  },
+) {
   const invoiceNumber = await nextInvoiceNumber(orgId);
   const totals = computeTotals(input.lineItems, input.taxRate ?? 0);
 
@@ -71,13 +77,17 @@ export async function createInvoice(orgId: string, input: {
   return row!;
 }
 
-export async function updateInvoice(orgId: string, invoiceId: string, input: Partial<{
-  lineItems: LineItem[];
-  taxRate: number;
-  dueDate: Date;
-  notes: string;
-  status: string;
-}>) {
+export async function updateInvoice(
+  orgId: string,
+  invoiceId: string,
+  input: Partial<{
+    lineItems: LineItem[];
+    taxRate: number;
+    dueDate: Date;
+    notes: string;
+    status: string;
+  }>,
+) {
   const patch: Record<string, unknown> = { ...input, updatedAt: new Date() };
   if (input.lineItems) {
     const totals = computeTotals(input.lineItems, input.taxRate ?? 0);
@@ -137,10 +147,7 @@ export async function getOverdueInvoices() {
   return db
     .select()
     .from(invoices)
-    .where(and(
-      eq(invoices.status, 'sent'),
-      lte(invoices.dueDate, now),
-    ));
+    .where(and(eq(invoices.status, 'sent'), lte(invoices.dueDate, now)));
 }
 
 export async function markOverdueInvoices() {
@@ -168,10 +175,12 @@ export async function sendDueReminders() {
     const dueSoon = await db
       .select()
       .from(invoices)
-      .where(and(
-        eq(invoices.status, 'sent'),
-        sql`date_trunc('day', ${invoices.dueDate}) = ${targetDateStr}::date`,
-      ));
+      .where(
+        and(
+          eq(invoices.status, 'sent'),
+          sql`date_trunc('day', ${invoices.dueDate}) = ${targetDateStr}::date`,
+        ),
+      );
 
     for (const invoice of dueSoon) {
       if (!invoice.contactId) continue;
@@ -189,10 +198,16 @@ export async function sendDueReminders() {
 
         await db
           .update(invoices)
-          .set({ remindersSent: invoice.remindersSent + 1, lastReminderAt: now, updatedAt: new Date() })
+          .set({
+            remindersSent: invoice.remindersSent + 1,
+            lastReminderAt: now,
+            updatedAt: new Date(),
+          })
           .where(eq(invoices.id, invoice.id));
         sent++;
-      } catch { /* non-fatal */ }
+      } catch {
+        /* non-fatal */
+      }
     }
   }
   return sent;

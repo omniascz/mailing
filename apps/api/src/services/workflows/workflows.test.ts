@@ -24,7 +24,12 @@ const mockDb: Record<string, unknown> = {
 
 vi.mock('../../db/client.js', () => ({ db: mockDb }));
 vi.mock('../../lib/redis.js', () => ({
-  redis: { get: vi.fn().mockResolvedValue(null), setex: vi.fn(), incr: vi.fn().mockResolvedValue(1), expire: vi.fn() },
+  redis: {
+    get: vi.fn().mockResolvedValue(null),
+    setex: vi.fn(),
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn(),
+  },
 }));
 vi.mock('../../lib/queues.js', () => ({
   queues: {
@@ -33,20 +38,59 @@ vi.mock('../../lib/queues.js', () => ({
   },
 }));
 vi.mock('../../db/schema/index.js', () => ({
-  contacts: { id: 'id', orgId: 'org_id', deletedAt: 'deleted_at', firstName: 'first_name', lastName: 'last_name', email: 'email', phone: 'phone', customFields: 'custom_fields', updatedAt: 'updated_at' },
+  contacts: {
+    id: 'id',
+    orgId: 'org_id',
+    deletedAt: 'deleted_at',
+    firstName: 'first_name',
+    lastName: 'last_name',
+    email: 'email',
+    phone: 'phone',
+    customFields: 'custom_fields',
+    updatedAt: 'updated_at',
+  },
   tags: { id: 'id', name: 'name', orgId: 'org_id' },
   contactTags: { contactId: 'contact_id', tagId: 'tag_id' },
   contactLists: { contactId: 'contact_id', listId: 'list_id' },
-  workflows: { id: 'id', orgId: 'org_id', status: 'status', triggerType: 'trigger_type', deletedAt: 'deleted_at', triggerConfig: 'trigger_config', totalRuns: 'total_runs', completedRuns: 'completed_runs', failedRuns: 'failed_runs' },
-  workflowRuns: { id: 'id', workflowId: 'workflow_id', orgId: 'org_id', contactId: 'contact_id', status: 'status', currentNodeId: 'current_node_id', nextExecutionAt: 'next_execution_at' },
-  workflowEvents: { id: 'id', orgId: 'org_id', contactId: 'contact_id', eventName: 'event_name', properties: 'properties', processed: 'processed', createdAt: 'created_at' },
+  workflows: {
+    id: 'id',
+    orgId: 'org_id',
+    status: 'status',
+    triggerType: 'trigger_type',
+    deletedAt: 'deleted_at',
+    triggerConfig: 'trigger_config',
+    totalRuns: 'total_runs',
+    completedRuns: 'completed_runs',
+    failedRuns: 'failed_runs',
+  },
+  workflowRuns: {
+    id: 'id',
+    workflowId: 'workflow_id',
+    orgId: 'org_id',
+    contactId: 'contact_id',
+    status: 'status',
+    currentNodeId: 'current_node_id',
+    nextExecutionAt: 'next_execution_at',
+  },
+  workflowEvents: {
+    id: 'id',
+    orgId: 'org_id',
+    contactId: 'contact_id',
+    eventName: 'event_name',
+    properties: 'properties',
+    processed: 'processed',
+    createdAt: 'created_at',
+  },
   emailEvents: { contactId: 'contact_id', orgId: 'org_id', eventType: 'event_type', id: 'id' },
 }));
 vi.mock('../../lib/app-error.js', () => ({
   AppError: {
-    internal: (msg: string) => Object.assign(new Error(msg), { statusCode: 500, code: 'INTERNAL_ERROR' }),
-    badRequest: (msg: string) => Object.assign(new Error(msg), { statusCode: 400, code: 'BAD_REQUEST' }),
-    notFound: (resource = 'Resource') => Object.assign(new Error(`${resource} not found`), { statusCode: 404, code: 'NOT_FOUND' }),
+    internal: (msg: string) =>
+      Object.assign(new Error(msg), { statusCode: 500, code: 'INTERNAL_ERROR' }),
+    badRequest: (msg: string) =>
+      Object.assign(new Error(msg), { statusCode: 400, code: 'BAD_REQUEST' }),
+    notFound: (resource = 'Resource') =>
+      Object.assign(new Error(`${resource} not found`), { statusCode: 404, code: 'NOT_FOUND' }),
   },
 }));
 
@@ -56,8 +100,14 @@ describe('substituteMergeTags', () => {
   it('replaces known tags', async () => {
     const { substituteMergeTags } = await import('./actions.js');
     const contact = {
-      id: '1', email: 'jane@example.com', firstName: 'Jane', lastName: 'Doe',
-      phone: '+1234', customFields: { plan: 'pro' }, tags: [], listIds: [],
+      id: '1',
+      email: 'jane@example.com',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      phone: '+1234',
+      customFields: { plan: 'pro' },
+      tags: [],
+      listIds: [],
     };
 
     const result = substituteMergeTags('Hi {{first_name}}, your email is {{email}}', contact);
@@ -73,8 +123,14 @@ describe('substituteMergeTags', () => {
   it('substitutes custom fields', async () => {
     const { substituteMergeTags } = await import('./actions.js');
     const contact = {
-      id: '1', email: null, firstName: null, lastName: null, phone: null,
-      customFields: { company: 'Acme' }, tags: [], listIds: [],
+      id: '1',
+      email: null,
+      firstName: null,
+      lastName: null,
+      phone: null,
+      customFields: { company: 'Acme' },
+      tags: [],
+      listIds: [],
     };
     const result = substituteMergeTags('Hello from {{custom.company}}', contact);
     expect(result).toBe('Hello from Acme');
@@ -103,37 +159,94 @@ describe('condition evaluation', () => {
 
     // Mock loadContact: contact with tags
     (mockDb.limit as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce([{ id: 'c1', email: 'test@x.com', firstName: 'A', lastName: 'B', phone: null, customFields: {} }])
+      .mockResolvedValueOnce([
+        {
+          id: 'c1',
+          email: 'test@x.com',
+          firstName: 'A',
+          lastName: 'B',
+          phone: null,
+          customFields: {},
+        },
+      ])
       .mockResolvedValueOnce([{ name: 'vip' }, { name: 'gold' }]) // tags
       .mockResolvedValueOnce([]); // lists
 
-    const node = { id: 'n1', type: 'condition' as const, config: { field: 'has_tag', op: 'eq', value: 'vip' } };
+    const node = {
+      id: 'n1',
+      type: 'condition' as const,
+      config: { field: 'has_tag', op: 'eq', value: 'vip' },
+    };
     const run = { id: 'r1', workflowId: 'w1', orgId: 'o1', contactId: 'c1' } as never;
-    const ctx = { orgId: 'o1', contact: { id: 'c1', email: null, firstName: null, lastName: null, phone: null, customFields: {}, tags: ['vip', 'gold'], listIds: [] } };
+    const ctx = {
+      orgId: 'o1',
+      contact: {
+        id: 'c1',
+        email: null,
+        firstName: null,
+        lastName: null,
+        phone: null,
+        customFields: {},
+        tags: ['vip', 'gold'],
+        listIds: [],
+      },
+    };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('branch');
     if (result.type === 'branch') expect(result.branch).toBe('true');
   });
 
   it('has_tag returns false when contact lacks the tag', async () => {
     const { executeAction } = await import('./actions.js');
-    const node = { id: 'n1', type: 'condition' as const, config: { field: 'has_tag', op: 'eq', value: 'premium' } };
+    const node = {
+      id: 'n1',
+      type: 'condition' as const,
+      config: { field: 'has_tag', op: 'eq', value: 'premium' },
+    };
     const run = { id: 'r1', workflowId: 'w1', orgId: 'o1', contactId: 'c1' } as never;
-    const ctx = { orgId: 'o1', contact: { id: 'c1', email: null, firstName: null, lastName: null, phone: null, customFields: {}, tags: ['basic'], listIds: [] } };
+    const ctx = {
+      orgId: 'o1',
+      contact: {
+        id: 'c1',
+        email: null,
+        firstName: null,
+        lastName: null,
+        phone: null,
+        customFields: {},
+        tags: ['basic'],
+        listIds: [],
+      },
+    };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('branch');
     if (result.type === 'branch') expect(result.branch).toBe('false');
   });
 
   it('condition with null contact returns false branch', async () => {
     const { executeAction } = await import('./actions.js');
-    const node = { id: 'n1', type: 'condition' as const, config: { field: 'has_tag', op: 'eq', value: 'vip' } };
+    const node = {
+      id: 'n1',
+      type: 'condition' as const,
+      config: { field: 'has_tag', op: 'eq', value: 'vip' },
+    };
     const run = { id: 'r1', workflowId: 'w1', orgId: 'o1', contactId: 'c1' } as never;
     const ctx = { orgId: 'o1', contact: null };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('branch');
     if (result.type === 'branch') expect(result.branch).toBe('false');
   });
@@ -149,7 +262,11 @@ describe('wait node', () => {
     const run = { id: 'r1' } as never;
     const ctx = { orgId: 'o1', contact: null };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('wait');
     if (result.type === 'wait') {
       const diff = result.until.getTime() - before;
@@ -165,7 +282,11 @@ describe('wait node', () => {
     const run = { id: 'r1' } as never;
     const ctx = { orgId: 'o1', contact: null };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('wait');
     if (result.type === 'wait') {
       const diff = result.until.getTime() - before;
@@ -180,7 +301,11 @@ describe('wait node', () => {
     const run = { id: 'r1' } as never;
     const ctx = { orgId: 'o1', contact: null };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('wait');
     if (result.type === 'wait') {
       expect(result.until.toISOString()).toBe(future);
@@ -193,7 +318,11 @@ describe('wait node', () => {
     const run = { id: 'r1' } as never;
     const ctx = { orgId: 'o1', contact: null };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('error');
   });
 });
@@ -207,7 +336,11 @@ describe('send_webhook action', () => {
     const run = { id: 'r1', orgId: 'o1' } as never;
     const ctx = { orgId: 'o1', contact: null };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('error');
     if (result.type === 'error') expect(result.message).toContain('URL');
   });
@@ -216,11 +349,19 @@ describe('send_webhook action', () => {
     global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 500 });
 
     const { executeAction } = await import('./actions.js');
-    const node = { id: 'n1', type: 'send_webhook' as const, config: { url: 'https://example.com/hook' } };
+    const node = {
+      id: 'n1',
+      type: 'send_webhook' as const,
+      config: { url: 'https://example.com/hook' },
+    };
     const run = { id: 'r1', orgId: 'o1', contactId: 'c1' } as never;
     const ctx = { orgId: 'o1', contact: null };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('error');
     if (result.type === 'error') expect(result.message).toContain('500');
   });
@@ -229,11 +370,19 @@ describe('send_webhook action', () => {
     global.fetch = vi.fn().mockResolvedValueOnce({ ok: true, status: 200 });
 
     const { executeAction } = await import('./actions.js');
-    const node = { id: 'n1', type: 'send_webhook' as const, config: { url: 'https://example.com/hook' } };
+    const node = {
+      id: 'n1',
+      type: 'send_webhook' as const,
+      config: { url: 'https://example.com/hook' },
+    };
     const run = { id: 'r1', orgId: 'o1', contactId: 'c1' } as never;
     const ctx = { orgId: 'o1', contact: null };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('next');
   });
 });
@@ -266,7 +415,11 @@ describe('workflow CRUD service', () => {
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([expected]);
 
     const { createWorkflow } = await import('./index.js');
-    const result = await createWorkflow({ orgId: 'org-1', name: 'Welcome Series', triggerType: 'list_subscribe' });
+    const result = await createWorkflow({
+      orgId: 'org-1',
+      name: 'Welcome Series',
+      triggerType: 'list_subscribe',
+    });
 
     expect(result.name).toBe('Welcome Series');
     expect(result.id).toBe('w-1');
@@ -281,7 +434,9 @@ describe('workflow CRUD service', () => {
 
   it('listWorkflows returns paginated results', async () => {
     const mockWorkflows = Array.from({ length: 3 }, (_, i) => ({
-      id: `w-${i}`, name: `Flow ${i}`, status: 'active',
+      id: `w-${i}`,
+      name: `Flow ${i}`,
+      status: 'active',
     }));
     (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockWorkflows);
 
@@ -383,10 +538,23 @@ describe('cascadeDeliveryNode', () => {
     };
     const ctx = {
       orgId: 'org-1',
-      contact: { id: 'c-1', email: 'test@example.com', phone: '+1234', firstName: 'John', lastName: 'Doe', customFields: {}, tags: [], listIds: [] },
+      contact: {
+        id: 'c-1',
+        email: 'test@example.com',
+        phone: '+1234',
+        firstName: 'John',
+        lastName: 'Doe',
+        customFields: {},
+        tags: [],
+        listIds: [],
+      },
     };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('wait'); // should schedule next check
   });
 
@@ -415,25 +583,38 @@ describe('cascadeDeliveryNode', () => {
     };
     const ctx = {
       orgId: 'org-1',
-      contact: { id: 'c-1', email: 'test@example.com', phone: '+1234', firstName: 'John', lastName: 'Doe', customFields: {}, tags: [], listIds: [] },
+      contact: {
+        id: 'c-1',
+        email: 'test@example.com',
+        phone: '+1234',
+        firstName: 'John',
+        lastName: 'Doe',
+        customFields: {},
+        tags: [],
+        listIds: [],
+      },
     };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('wait'); // should schedule next step
   });
 
   it('exits cascade if condition not met', async () => {
     // Mock returns a result (email was opened)
-    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValueOnce([{ id: 'event-1', eventType: 'open' }]);
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
+      { id: 'event-1', eventType: 'open' },
+    ]);
 
     const { executeAction } = await import('./actions.js');
     const node = {
       id: 'cascade-1',
       type: 'cascade' as const,
       config: {
-        steps: [
-          { channel: 'email', delayHours: 4, condition: 'not_opened' },
-        ],
+        steps: [{ channel: 'email', delayHours: 4, condition: 'not_opened' }],
       },
     };
     const run = {
@@ -447,10 +628,23 @@ describe('cascadeDeliveryNode', () => {
     };
     const ctx = {
       orgId: 'org-1',
-      contact: { id: 'c-1', email: 'test@example.com', phone: '+1234', firstName: 'John', lastName: 'Doe', customFields: {}, tags: [], listIds: [] },
+      contact: {
+        id: 'c-1',
+        email: 'test@example.com',
+        phone: '+1234',
+        firstName: 'John',
+        lastName: 'Doe',
+        customFields: {},
+        tags: [],
+        listIds: [],
+      },
     };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('next'); // exit cascade
   });
 
@@ -462,9 +656,7 @@ describe('cascadeDeliveryNode', () => {
       id: 'cascade-1',
       type: 'cascade' as const,
       config: {
-        steps: [
-          { channel: 'email', delayHours: 4, condition: 'not_opened' },
-        ],
+        steps: [{ channel: 'email', delayHours: 4, condition: 'not_opened' }],
       },
     };
     const run = {
@@ -478,10 +670,23 @@ describe('cascadeDeliveryNode', () => {
     };
     const ctx = {
       orgId: 'org-1',
-      contact: { id: 'c-1', email: 'test@example.com', phone: '+1234', firstName: 'John', lastName: 'Doe', customFields: {}, tags: [], listIds: [] },
+      contact: {
+        id: 'c-1',
+        email: 'test@example.com',
+        phone: '+1234',
+        firstName: 'John',
+        lastName: 'Doe',
+        customFields: {},
+        tags: [],
+        listIds: [],
+      },
     };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('next'); // all steps done
   });
 
@@ -506,7 +711,11 @@ describe('cascadeDeliveryNode', () => {
       contact: null,
     };
 
-    const result = await executeAction(node, run as unknown as Parameters<typeof executeAction>[1], ctx);
+    const result = await executeAction(
+      node,
+      run as unknown as Parameters<typeof executeAction>[1],
+      ctx,
+    );
     expect(result.type).toBe('next');
   });
 });

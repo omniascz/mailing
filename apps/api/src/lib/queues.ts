@@ -37,9 +37,90 @@ export const emailQueue = new Queue('email', queueOpts);
 export const smsQueue = new Queue('sms', queueOpts);
 export const webhookQueue = new Queue('webhook', queueOpts);
 
+/**
+ * Campaign-splitter producer. Workers in apps/workers consume from this
+ * same Redis-backed queue (name must match worker's
+ * `QUEUE_NAMES.CAMPAIGN_SPLITTER`). Job priority 3 marks bulk campaign
+ * sends; transactional (1) and triggered (2) take precedence.
+ */
+export const campaignSplitterQueue = new Queue('campaign-splitter', queueOpts);
+
+export const PRIORITY = {
+  TRANSACTIONAL: 1,
+  TRIGGERED: 2,
+  CAMPAIGN: 3,
+} as const;
+
+/**
+ * MTA-other producer. The workers' MTA pool routes each per-ISP queue
+ * to the Go engine via gRPC; mta-other is the catch-all for any domain
+ * not matched by one of the dedicated queues (gmail/microsoft/yahoo/
+ * seznam/volny/centrum). Transactional emails — DOI confirmations,
+ * password reset, verify email, campaign test sends — go here so we
+ * don't need separate plumbing for one-shot sends.
+ */
+export const mtaOtherQueue = new Queue('mta-other', queueOpts);
+
+import { randomUUID } from 'node:crypto';
+
+export interface TransactionalEmailInput {
+  to: string;
+  toName?: string;
+  from: string;
+  fromName?: string;
+  subject: string;
+  html: string;
+  text?: string;
+  replyTo?: string;
+  /** Optional org context — feeds tracking/audit if set. */
+  orgId?: string;
+  /** Optional contact ID if this is to a known recipient. */
+  contactId?: string;
+}
+
+/**
+ * Enqueue a one-shot transactional email. Returns the synthetic
+ * messageId so callers can correlate with email_events. The actual
+ * SMTP delivery happens asynchronously via the Go MTA — this only
+ * returns once the job is on the queue.
+ *
+ * For DOI / verify / reset emails, callers should construct the HTML
+ * inline (small enough that a real templating system is overkill).
+ * For marketing emails go through the campaign-splitter flow instead.
+ */
+export async function sendTransactionalEmail(input: TransactionalEmailInput): Promise<string> {
+  const messageId = `<txn-${randomUUID()}@forgemsg>`;
+  await mtaOtherQueue.add(
+    `txn-${randomUUID()}`,
+    {
+      // synthetic campaign ID; mta-sender worker logs against this for
+      // traceability but doesn't expect a real campaigns row to exist.
+      campaignId: input.orgId ?? randomUUID(),
+      orgId: input.orgId ?? randomUUID(),
+      contactId: input.contactId ?? randomUUID(),
+      messageId,
+      fromEmail: input.from,
+      fromName: input.fromName ?? '',
+      toEmail: input.to,
+      toName: input.toName ?? '',
+      subject: input.subject,
+      htmlBody: input.html,
+      textBody: input.text ?? '',
+      replyTo: input.replyTo ?? '',
+      customHeaders: {},
+      priority: PRIORITY.TRANSACTIONAL,
+      stream: 'transactional',
+    },
+    { priority: PRIORITY.TRANSACTIONAL },
+  );
+  return messageId;
+}
+
 /** Convenience map used by workflow actions */
 export const queues = {
   email: emailQueue,
   sms: smsQueue,
   webhook: webhookQueue,
+  campaignSplitter: campaignSplitterQueue,
+  mtaOther: mtaOtherQueue,
 };

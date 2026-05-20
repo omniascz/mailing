@@ -35,12 +35,19 @@ export async function alsoBought(orgId: string, sku: string, limit = 6): Promise
     LIMIT ${limit}
   `);
   return (rs as unknown as Array<{ sku: string; name: string; count: string }>).map((r) => ({
-    sku: r.sku, name: r.name, score: Number(r.count), reason: 'Customers who bought this also bought',
+    sku: r.sku,
+    name: r.name,
+    score: Number(r.count),
+    reason: 'Customers who bought this also bought',
   }));
 }
 
 /** Rule-based fallback — same-category top sellers. */
-export async function topInCategory(orgId: string, category: string, limit = 6): Promise<Recommendation[]> {
+export async function topInCategory(
+  orgId: string,
+  category: string,
+  limit = 6,
+): Promise<Recommendation[]> {
   const rs = await db.execute<{ sku: string; name: string }>(sql`
     SELECT p.sku, p.name
     FROM products p
@@ -50,12 +57,19 @@ export async function topInCategory(orgId: string, category: string, limit = 6):
     LIMIT ${limit}
   `);
   return (rs as unknown as Array<{ sku: string; name: string }>).map((r, i) => ({
-    sku: r.sku, name: r.name, score: limit - i, reason: `Popular in ${category}`,
+    sku: r.sku,
+    name: r.name,
+    score: limit - i,
+    reason: `Popular in ${category}`,
   }));
 }
 
 /** AI-personalised recommender based on a contact's purchase history. */
-export async function personalisedFor(orgId: string, contactId: string, limit = 6): Promise<Recommendation[]> {
+export async function personalisedFor(
+  orgId: string,
+  contactId: string,
+  limit = 6,
+): Promise<Recommendation[]> {
   const history = await db
     .select({ items: revenueEvents.items })
     .from(revenueEvents)
@@ -83,7 +97,10 @@ export async function personalisedFor(orgId: string, contactId: string, limit = 
 {sku, name, score (0-100), reason} — up to ${limit} items. No prose.`,
       user: `OWNED SKUS: ${[...ownedSkus].slice(0, 20).join(', ')}
 CATALOGUE (sku | name | categories):
-${candidates.slice(0, 60).map((p) => `${p.sku} | ${p.name} | ${(p.categories ?? []).join(',')}`).join('\n')}`,
+${candidates
+  .slice(0, 60)
+  .map((p) => `${p.sku} | ${p.name} | ${(p.categories ?? []).join(',')}`)
+  .join('\n')}`,
       model: 'claude-haiku-4-5-20251001',
       maxTokens: 800,
     });
@@ -95,41 +112,70 @@ ${candidates.slice(0, 60).map((p) => `${p.sku} | ${p.name} | ${(p.categories ?? 
 
   // Fallback: pick most common category from history, then top in category.
   const cats = new Map<string, number>();
-  for (const p of catalogue) for (const c of p.categories ?? []) {
-    if (ownedSkus.has(p.sku)) cats.set(c, (cats.get(c) ?? 0) + 1);
-  }
+  for (const p of catalogue)
+    for (const c of p.categories ?? []) {
+      if (ownedSkus.has(p.sku)) cats.set(c, (cats.get(c) ?? 0) + 1);
+    }
   const top = [...cats.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
   if (top) return topInCategory(orgId, top, limit);
   return candidates.slice(0, limit).map((p, i) => ({
-    sku: p.sku, name: p.name, score: limit - i, reason: 'New arrival',
+    sku: p.sku,
+    name: p.name,
+    score: limit - i,
+    reason: 'New arrival',
   }));
 }
 
 /** Simple CRUD for the catalogue — enough to back recommendations and merge-tag blocks. */
-export async function upsertProduct(orgId: string, data: {
-  sku: string; name: string; description?: string; price: number;
-  currency?: string; imageUrl?: string; url?: string;
-  categories?: string[]; tags?: string[]; stock?: number;
-}) {
-  const [existing] = await db.select().from(products)
-    .where(and(eq(products.orgId, orgId), eq(products.sku, data.sku))).limit(1);
+export async function upsertProduct(
+  orgId: string,
+  data: {
+    sku: string;
+    name: string;
+    description?: string;
+    price: number;
+    currency?: string;
+    imageUrl?: string;
+    url?: string;
+    categories?: string[];
+    tags?: string[];
+    stock?: number;
+  },
+) {
+  const [existing] = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.orgId, orgId), eq(products.sku, data.sku)))
+    .limit(1);
 
   if (existing) {
-    const [row] = await db.update(products).set({
-      ...data, price: data.price.toFixed(2),
-      updatedAt: new Date(),
-    } as never).where(eq(products.id, existing.id)).returning();
+    const [row] = await db
+      .update(products)
+      .set({
+        ...data,
+        price: data.price.toFixed(2),
+        updatedAt: new Date(),
+      } as never)
+      .where(eq(products.id, existing.id))
+      .returning();
     return row!;
   }
-  const [row] = await db.insert(products).values({
-    orgId, sku: data.sku, name: data.name,
-    description: data.description,
-    price: data.price.toFixed(2),
-    currency: data.currency ?? 'USD',
-    imageUrl: data.imageUrl, url: data.url,
-    categories: data.categories ?? [], tags: data.tags ?? [],
-    stock: data.stock,
-  }).returning();
+  const [row] = await db
+    .insert(products)
+    .values({
+      orgId,
+      sku: data.sku,
+      name: data.name,
+      description: data.description,
+      price: data.price.toFixed(2),
+      currency: data.currency ?? 'USD',
+      imageUrl: data.imageUrl,
+      url: data.url,
+      categories: data.categories ?? [],
+      tags: data.tags ?? [],
+      stock: data.stock,
+    })
+    .returning();
   return row!;
 }
 
@@ -137,7 +183,10 @@ export async function listProducts(orgId: string): Promise<Product[]> {
   return db.select().from(products).where(eq(products.orgId, orgId)).limit(500);
 }
 
-export async function bulkUpsertProducts(orgId: string, items: Parameters<typeof upsertProduct>[1][]) {
+export async function bulkUpsertProducts(
+  orgId: string,
+  items: Parameters<typeof upsertProduct>[1][],
+) {
   const results: Product[] = [];
   for (const it of items) results.push(await upsertProduct(orgId, it));
   return results;

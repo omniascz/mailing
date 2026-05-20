@@ -29,22 +29,28 @@ import { AppError } from '../../lib/app-error.js';
 import { randomUUID } from 'node:crypto';
 
 const TEXT_KEYS = new Set([
-  'text', 'content', 'html', 'altText', 'buttonText', 'subject', 'preheader',
-  'label', 'heading', 'title', 'caption',
+  'text',
+  'content',
+  'html',
+  'altText',
+  'buttonText',
+  'subject',
+  'preheader',
+  'label',
+  'heading',
+  'title',
+  'caption',
 ]);
 
 export function createTranslationGroup(): string {
   return randomUUID();
 }
 
-export async function getTemplateGroup(
-  orgId: string,
-  groupId: string,
-): Promise<Template[]> {
-  return db.select().from(templates).where(and(
-    eq(templates.orgId, orgId),
-    eq(templates.translationGroupId, groupId),
-  ));
+export async function getTemplateGroup(orgId: string, groupId: string): Promise<Template[]> {
+  return db
+    .select()
+    .from(templates)
+    .where(and(eq(templates.orgId, orgId), eq(templates.translationGroupId, groupId)));
 }
 
 export async function selectTemplateForLocale(
@@ -85,11 +91,7 @@ function collectStrings(node: unknown, path: string, out: Map<string, string>): 
   }
 }
 
-function applyTranslations(
-  node: unknown,
-  path: string,
-  map: Map<string, string>,
-): unknown {
+function applyTranslations(node: unknown, path: string, map: Map<string, string>): unknown {
   if (node == null || typeof node !== 'object') return node;
   if (Array.isArray(node)) {
     return node.map((v, i) => applyTranslations(v, `${path}/${i}`, map));
@@ -133,17 +135,24 @@ export async function translateTemplate(
 
   const groupId = source.translationGroupId ?? createTranslationGroup();
   if (!source.translationGroupId) {
-    await db.update(templates)
+    await db
+      .update(templates)
       .set({ translationGroupId: groupId })
       .where(eq(templates.id, source.id));
   }
 
   // Avoid double-translating if a row for this locale already exists.
-  const existing = await db.select().from(templates).where(and(
-    eq(templates.orgId, orgId),
-    eq(templates.translationGroupId, groupId),
-    eq(templates.locale, targetLocale),
-  )).limit(1);
+  const existing = await db
+    .select()
+    .from(templates)
+    .where(
+      and(
+        eq(templates.orgId, orgId),
+        eq(templates.translationGroupId, groupId),
+        eq(templates.locale, targetLocale),
+      ),
+    )
+    .limit(1);
   if (existing[0]) {
     return {
       templateId: existing[0].id,
@@ -193,21 +202,24 @@ Output: JSON object with identical keys and translated string values. No comment
   const newPreheader = translatedMap.get('/preheader') ?? source.preheader;
   const newBlocks = applyTranslations(source.blocks, '/blocks', translatedMap) as unknown[];
 
-  const [inserted] = await db.insert(templates).values({
-    orgId: source.orgId,
-    name: `${source.name} (${targetLocale})`,
-    description: source.description,
-    category: source.category,
-    thumbnailUrl: source.thumbnailUrl,
-    subject: newSubject,
-    preheader: newPreheader,
-    blocks: newBlocks,
-    globalStyles: source.globalStyles,
-    isPublic: source.isPublic,
-    tags: source.tags,
-    locale: targetLocale,
-    translationGroupId: groupId,
-  }).returning();
+  const [inserted] = await db
+    .insert(templates)
+    .values({
+      orgId: source.orgId,
+      name: `${source.name} (${targetLocale})`,
+      description: source.description,
+      category: source.category,
+      thumbnailUrl: source.thumbnailUrl,
+      subject: newSubject,
+      preheader: newPreheader,
+      blocks: newBlocks,
+      globalStyles: source.globalStyles,
+      isPublic: source.isPublic,
+      tags: source.tags,
+      locale: targetLocale,
+      translationGroupId: groupId,
+    })
+    .returning();
 
   if (!inserted) throw AppError.internal('Failed to insert translated template');
 

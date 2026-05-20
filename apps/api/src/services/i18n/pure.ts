@@ -24,10 +24,7 @@ export function parseLocale(locale: string): { language: string; region: string 
  * Given just `cs` we try:
  *   cs → <default>
  */
-export function localeFallbackChain(
-  requested: string,
-  defaultLocale = 'en',
-): string[] {
+export function localeFallbackChain(requested: string, defaultLocale = 'en'): string[] {
   const chain: string[] = [];
   const seen = new Set<string>();
 
@@ -94,9 +91,7 @@ export function selectVariant<T>(
     // Same-language, any region
     const languageHit =
       byLocale.get(parsed.language) ??
-      [...byLocale.values()].find(
-        (v) => parseLocale(v.locale).language === parsed.language,
-      );
+      [...byLocale.values()].find((v) => parseLocale(v.locale).language === parsed.language);
     if (languageHit) return { ...languageHit, matched: 'language' };
   }
 
@@ -106,9 +101,7 @@ export function selectVariant<T>(
     : defaultParsed.language;
   const defaultHit =
     byLocale.get(defaultTag) ??
-    [...byLocale.values()].find(
-      (v) => parseLocale(v.locale).language === defaultParsed.language,
-    );
+    [...byLocale.values()].find((v) => parseLocale(v.locale).language === defaultParsed.language);
   if (defaultHit) return { ...defaultHit, matched: 'default' };
 
   const [first] = variants;
@@ -177,20 +170,13 @@ function walk(node: unknown, path: string, out: TextNode[]): void {
  * translation didn't mangle them; this function just writes strings — the
  * caller is responsible for validating merge-tag integrity first.
  */
-export function applyTranslations<T>(
-  root: T,
-  translations: Map<string, string>,
-): T {
+export function applyTranslations<T>(root: T, translations: Map<string, string>): T {
   const clone = structuredClone(root);
   applyInPlace(clone, '', translations);
   return clone;
 }
 
-function applyInPlace(
-  node: unknown,
-  path: string,
-  translations: Map<string, string>,
-): void {
+function applyInPlace(node: unknown, path: string, translations: Map<string, string>): void {
   if (node === null || node === undefined) return;
   if (Array.isArray(node)) {
     node.forEach((item, i) => applyInPlace(item, `${path}/${i}`, translations));
@@ -202,11 +188,7 @@ function applyInPlace(
   for (const key of Object.keys(obj)) {
     const childPath = `${path}/${key}`;
     const existing = obj[key];
-    if (
-      typeof existing === 'string' &&
-      TRANSLATABLE_KEYS.has(key) &&
-      translations.has(childPath)
-    ) {
+    if (typeof existing === 'string' && TRANSLATABLE_KEYS.has(key) && translations.has(childPath)) {
       obj[key] = translations.get(childPath)!;
     } else {
       applyInPlace(existing, childPath, translations);
@@ -228,10 +210,7 @@ export interface MergeTagValidation {
  * Ensure a translation preserves the set of merge tags from the original.
  * Returns the tags that were dropped + any new ones the translator added.
  */
-export function validateMergeTags(
-  original: string,
-  translated: string,
-): MergeTagValidation {
+export function validateMergeTags(original: string, translated: string): MergeTagValidation {
   const origTags = (original.match(MERGE_TAG_RE) ?? []).map((t) => t.trim()).sort();
   const transTags = (translated.match(MERGE_TAG_RE) ?? []).map((t) => t.trim()).sort();
 

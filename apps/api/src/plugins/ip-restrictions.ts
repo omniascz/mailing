@@ -12,7 +12,8 @@ export async function getOrgAllowedCidrs(orgId: string): Promise<string[]> {
   const cached = await redis.get(cacheKey);
   if (cached) return JSON.parse(cached) as string[];
 
-  const rules = await db.select({ cidr: ipRestrictions.cidr })
+  const rules = await db
+    .select({ cidr: ipRestrictions.cidr })
     .from(ipRestrictions)
     .where(and(eq(ipRestrictions.orgId, orgId), eq(ipRestrictions.enabled, true)));
 
@@ -25,7 +26,8 @@ function isIpInCidr(ip: string, cidr: string): boolean {
   // simple CIDR check — IPv4 only
   const [range, bits] = cidr.split('/');
   const mask = ~((1 << (32 - parseInt(bits ?? '32', 10))) - 1);
-  const toInt = (addr: string) => addr.split('.').reduce((acc, oct) => (acc << 8) | parseInt(oct, 10), 0) >>> 0;
+  const toInt = (addr: string) =>
+    addr.split('.').reduce((acc, oct) => (acc << 8) | parseInt(oct, 10), 0) >>> 0;
   return (toInt(ip) & mask) >>> 0 === (toInt(range ?? '') & mask) >>> 0;
 }
 
@@ -41,11 +43,12 @@ function extractClientIp(req: FastifyRequest): string {
 const ipRestrictionsPlugin: FastifyPluginCallback = (app, _opts, done) => {
   app.addHook('preHandler', async (request, reply) => {
     // Only check authenticated requests with an orgId
-    const orgId: string | undefined = (request as unknown as { orgId?: string }).orgId
-      ?? request.user?.orgId;
+    const orgId: string | undefined =
+      (request as unknown as { orgId?: string }).orgId ?? request.user?.orgId;
     if (!orgId) return;
 
-    const org = await db.select({ ipRestrictionsEnabled: organizations.ipRestrictionsEnabled })
+    const org = await db
+      .select({ ipRestrictionsEnabled: organizations.ipRestrictionsEnabled })
       .from(organizations)
       .where(eq(organizations.id, orgId))
       .limit(1)
@@ -60,7 +63,11 @@ const ipRestrictionsPlugin: FastifyPluginCallback = (app, _opts, done) => {
     const allowed = cidrs.some((cidr) => isIpInCidr(clientIp, cidr));
 
     if (!allowed) {
-      return reply.code(403).send({ code: 'IP_RESTRICTED', message: 'Access denied: IP not in allowlist', statusCode: 403 });
+      return reply.code(403).send({
+        code: 'IP_RESTRICTED',
+        message: 'Access denied: IP not in allowlist',
+        statusCode: 403,
+      });
     }
   });
   done();

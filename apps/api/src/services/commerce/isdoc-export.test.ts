@@ -24,7 +24,14 @@ const buyer: CzParty = {
 };
 
 const lineItems: LineItem[] = [
-  { sku: 'LIC-PRO', name: 'MailForge Pro (měsíční)', qty: 1, unitPrice: 990, total: 990, taxRate: 21 },
+  {
+    sku: 'LIC-PRO',
+    name: 'MailForge Pro (měsíční)',
+    qty: 1,
+    unitPrice: 990,
+    total: 990,
+    taxRate: 21,
+  },
   { sku: 'SETUP', name: 'Implementace', qty: 2, unitPrice: 500, total: 1000, taxRate: 21 },
 ];
 

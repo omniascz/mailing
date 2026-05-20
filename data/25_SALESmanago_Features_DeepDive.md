@@ -6,15 +6,16 @@
 
 > **Důležitý kontext:** SALESmanago je **polský produkt** založený společností **Benhauer sp. z o.o.** v **Krakově** (ul. Grzegórzecka 21, 31-532 Kraków, Poland). **Financial Times rankuje SALESmanago jako fastest growing marketing automation platform v Evropě** (claim z oficiální materiálů).
 >
-> **Pozice:** **AI-driven CDXP** (Customer Data Platform & Customer Experience Platform). **3 000–3 600+ klientů ve 50 zemích**. Per oficiální: *"the only no-code, AI driven CDXP (all in One Customer Data Platform & Customer Experience Platform)"*.
+> **Pozice:** **AI-driven CDXP** (Customer Data Platform & Customer Experience Platform). **3 000–3 600+ klientů ve 50 zemích**. Per oficiální: _"the only no-code, AI driven CDXP (all in One Customer Data Platform & Customer Experience Platform)"_.
 >
 > **Klíčové reference klienti:** **Starbucks, Vodafone, Lacoste, New Balance, Victoria's Secret, Adidas, Converse, Crocs, Nahdi, Tanners** – velké globální značky.
 >
 > **Velikost firmy:** **350 zaměstnanců** (consultants, data scientists, engineers). Síť **1 000+ reselling partners** internationally.
 >
-> **Akvizice / investor:** **SilverTree Equity** (private equity round). Per recenze: *"Over the past three years, following the acquisition, SALESmanago has undergone significant shifts in strategy, personnel, board composition, and management."*
+> **Akvizice / investor:** **SilverTree Equity** (private equity round). Per recenze: _"Over the past three years, following the acquisition, SALESmanago has undergone significant shifts in strategy, personnel, board composition, and management."_
 >
 > **Klíčové diferenciátory:**
+>
 > - **CDP + Marketing Automation v jedné platformě** (native integration)
 > - **AI-driven personalization** (deep ML)
 > - **EU-based + GDPR-compliant** (data v EU)
@@ -74,11 +75,12 @@
 **"AI Commerce Growth Platform"** – marketing positioning.
 
 Per oficiální:
-*"We help you get set up and running quickly. Our goal is to minimise the time and effort needed for your team to achieve growth objectives. Flexible, proven workflows and intuitive tools let you drag and drop easily. Be the hero."*
+_"We help you get set up and running quickly. Our goal is to minimise the time and effort needed for your team to achieve growth objectives. Flexible, proven workflows and intuitive tools let you drag and drop easily. Be the hero."_
 
 ### Reference customers
 
 **Tier 1 global brands** (per oficiální claim):
+
 - **Starbucks**
 - **Vodafone**
 - **Lacoste**
@@ -89,6 +91,7 @@ Per oficiální:
 - **Crocs**
 
 **Mid-market klienti:**
+
 - **Nahdi** (pharmacy, Saudi)
 - **Tanners** (UK e-commerce)
 - **iSpot** (Apple Premium Partner, Poland)
@@ -188,9 +191,10 @@ Per oficiální:
 ### 2.1 Pricing approach
 
 Per oficiální pricing page (salesmanago.com/info/salesmanago-pricing.htm):
-*"Every business is different. That's why our pricing is too. Every SALESmanago customer gets a fully customised package to fit their goals. **From €199 per month.**"*
+_"Every business is different. That's why our pricing is too. Every SALESmanago customer gets a fully customised package to fit their goals. **From €199 per month.**"_
 
 ⚠️ **Pricing model:**
+
 - **Sales-driven** (no self-serve)
 - **Custom packages** per klient
 - **Entry tier od €199/měsíc**
@@ -211,9 +215,10 @@ Per oficiální pricing page (salesmanago.com/info/salesmanago-pricing.htm):
 ### 2.3 Modular add-on architektura
 
 Per oficiální:
-*"And we enhanced our CEP with modular add-on solutions directly corresponding with your business challenges"*
+_"And we enhanced our CEP with modular add-on solutions directly corresponding with your business challenges"_
 
 Core + add-ons:
+
 - **Core:** CDP + Marketing Automation
 - **Add-ons:**
   - Customer Data Platform (full features)
@@ -230,13 +235,13 @@ Core + add-ons:
 
 ⚠️ Custom per klient, ale typical ranges (per industry context):
 
-| Tier | Range | Typical klient |
-|---|---|---|
-| **Entry** | €199 – €500/měsíc | Small mid-market, low contacts |
-| **Standard** | €500 – €2 000/měsíc | Mid-market e-commerce |
-| **Advanced** | €2 000 – €5 000/měsíc | Established mid-market |
-| **Enterprise** | €5 000+/měsíc | Large brands, enterprise needs |
-| **Custom** | Custom | Strategic accounts (Starbucks, etc.) |
+| Tier           | Range                 | Typical klient                       |
+| -------------- | --------------------- | ------------------------------------ |
+| **Entry**      | €199 – €500/měsíc     | Small mid-market, low contacts       |
+| **Standard**   | €500 – €2 000/měsíc   | Mid-market e-commerce                |
+| **Advanced**   | €2 000 – €5 000/měsíc | Established mid-market               |
+| **Enterprise** | €5 000+/měsíc         | Large brands, enterprise needs       |
+| **Custom**     | Custom                | Strategic accounts (Starbucks, etc.) |
 
 ### 2.5 Demo + custom quote process
 
@@ -267,9 +272,10 @@ Contract negotiation
 ### 2.6 Growth Plan offering
 
 Per oficiální:
-*"Think of us as an extension of your marketing team, always focused on delivering value, starting with a custom Growth Plan tailored to your business."*
+_"Think of us as an extension of your marketing team, always focused on delivering value, starting with a custom Growth Plan tailored to your business."_
 
 **Custom Growth Plan:**
+
 - Strategic roadmap pro každého klienta
 - KPI alignment
 - Tool selection per use case
@@ -278,16 +284,16 @@ Per oficiální:
 
 ### 2.7 Cenové porovnání (mid-market estimate)
 
-| Platform | Mid-market start | Enterprise typical |
-|---|---|---|
-| **SALESmanago** | **€199/měsíc** (entry) | €5K+/měsíc |
-| **Klaviyo** | $720/měsíc (50K) | $5K+/měsíc |
-| **HubSpot Marketing Hub** | $890+/měsíc | $10K+/měsíc |
-| **ActiveCampaign Plus** | $234/měsíc (10K) | $1.5K+/měsíc |
-| **Brevo Business** | €65/měsíc (10K) | €1K+/měsíc |
-| **SAP Emarsys** | $1.5K-$5K/měsíc | $10K+/měsíc |
-| **Bloomreach Engagement** | $3K+/měsíc | $15K+/měsíc |
-| **ExpertSender** | $450+/měsíc | $1K-$10K+/měsíc |
+| Platform                  | Mid-market start       | Enterprise typical |
+| ------------------------- | ---------------------- | ------------------ |
+| **SALESmanago**           | **€199/měsíc** (entry) | €5K+/měsíc         |
+| **Klaviyo**               | $720/měsíc (50K)       | $5K+/měsíc         |
+| **HubSpot Marketing Hub** | $890+/měsíc            | $10K+/měsíc        |
+| **ActiveCampaign Plus**   | $234/měsíc (10K)       | $1.5K+/měsíc       |
+| **Brevo Business**        | €65/měsíc (10K)        | €1K+/měsíc         |
+| **SAP Emarsys**           | $1.5K-$5K/měsíc        | $10K+/měsíc        |
+| **Bloomreach Engagement** | $3K+/měsíc             | $15K+/měsíc        |
+| **ExpertSender**          | $450+/měsíc            | $1K-$10K+/měsíc    |
 
 **SALESmanago competitive:** entry pricing dostupnější než Bloomreach/Emarsys/Adobe, ale vyšší než pure email marketing tools.
 
@@ -307,9 +313,10 @@ SALESmanago **redesigned platforma** v 2024+ jako Customer Engagement Platform.
 ### 3.1 CEP overview
 
 Per oficiální:
-*"We have redesigned our Customer Engagement Platform (CEP) to offer built-in fundamentals—a certified CDP and marketing automation—delivering deep customer insights and personalisation."*
+_"We have redesigned our Customer Engagement Platform (CEP) to offer built-in fundamentals—a certified CDP and marketing automation—delivering deep customer insights and personalisation."_
 
 **Core CEP components:**
+
 1. **Certified CDP**
 2. **Marketing Automation**
 3. **AI Personalization**
@@ -319,6 +326,7 @@ Per oficiální:
 ### 3.2 Built-in vs. add-ons
 
 **Built-in fundamentals (vždy v plánu):**
+
 - Certified CDP
 - Marketing Automation
 - Email marketing core
@@ -326,6 +334,7 @@ Per oficiální:
 - Standard reports
 
 **Add-ons (modular, per klient):**
+
 - Customer Data Platform advanced features
 - Web Experience full
 - Mobile (push, app)
@@ -338,10 +347,12 @@ Per oficiální:
 ### 3.3 4 critical areas
 
 Per oficiální:
-*"Our platform... introduces innovative tools across four critical areas:"*
+_"Our platform... introduces innovative tools across four critical areas:"_
 
 #### 1. Audiences
+
 **Centralise customer data**
+
 - Single Customer Profile (360°)
 - Real-time data ingestion
 - Identity resolution
@@ -349,7 +360,9 @@ Per oficiální:
 - Audience segmentation
 
 #### 2. Web Experience
+
 **Turn visitors into leads**
+
 - Pop-ups
 - Banners
 - On-site personalization
@@ -359,7 +372,9 @@ Per oficiální:
 - A/B testing
 
 #### 3. Marketing Automation
+
 **Multi-channel orchestration**
+
 - Workflows (drag-drop)
 - Triggers (behavioral, transactional)
 - Multi-step sequences
@@ -367,7 +382,9 @@ Per oficiální:
 - Goal-based exits
 
 #### 4. AI Personalization
+
 **Deep behavioral targeting**
+
 - Recommendation Frames
 - Product Collections
 - AI Email Design Studio
@@ -377,9 +394,10 @@ Per oficiální:
 ### 3.4 SALESmanago Growth Framework
 
 Per oficiální:
-*"The SALESmanago Growth Framework allows you to easily build a roadmap for success."*
+_"The SALESmanago Growth Framework allows you to easily build a roadmap for success."_
 
 **Framework phases:**
+
 1. **Acquisition** – attract new customers
 2. **Conversion** – maximize sales
 3. **Engagement** – build relationships
@@ -388,9 +406,10 @@ Per oficiální:
 ### 3.5 Lifecycle Engagement Platform
 
 Per oficiální:
-*"The SALESmanago Lifecycle Engagement Platform deeply personalises omnichannel customer journeys for growth, loyalty and scale."*
+_"The SALESmanago Lifecycle Engagement Platform deeply personalises omnichannel customer journeys for growth, loyalty and scale."_
 
 Customer lifecycle stages:
+
 - Anonymous visitor
 - Identified prospect
 - New customer
@@ -410,6 +429,7 @@ Per-stage strategies + automation.
 ### 4.1 CDP capabilities
 
 #### Data ingestion
+
 - **Website behavior** (page views, clicks, time on site, scroll depth)
 - **E-commerce events** (cart, checkout, purchase, browse)
 - **Email engagement** (open, click)
@@ -420,12 +440,14 @@ Per-stage strategies + automation.
 - **External data sources** (CRM, ERP, POS)
 
 #### Identity resolution
+
 - Cookie ID → identified contact when email captured
 - Cross-device matching (email-based)
 - Anonymous → identified profile merge
 - Historical data preserved
 
 #### Real-time profile updates
+
 - Events processed real-time
 - Profile immediately reflects new data
 - Segments re-evaluated
@@ -434,6 +456,7 @@ Per-stage strategies + automation.
 ### 4.2 Single Customer Profile (360°)
 
 Per profile:
+
 - **Demographics** (name, email, phone, address, age, gender)
 - **Behavioral data** (pages, products viewed, time on site)
 - **Transactional data** (orders, AOV, LTV, frequency)
@@ -447,6 +470,7 @@ Per profile:
 ### 4.3 Behavioral, transactional, declarative
 
 #### Behavioral data
+
 - Page views
 - Time on page
 - Scroll depth
@@ -455,6 +479,7 @@ Per profile:
 - Cart additions
 
 #### Transactional data
+
 - Orders
 - Products purchased
 - Categories preferred
@@ -463,6 +488,7 @@ Per profile:
 - Lifetime Value
 
 #### Declarative data (zero-party)
+
 - Preferences (explicit)
 - Survey responses
 - Form fields
@@ -491,7 +517,7 @@ Per profile:
 ## 5. Audiences (centralized customer data)
 
 Per oficiální features (Section 3.3):
-*"Manage contacts with the Customer Data Platform, create deep 360° profiles, precisely define your target audience. Serve as a source for all personalisation, increase loyalty and retention."*
+_"Manage contacts with the Customer Data Platform, create deep 360° profiles, precisely define your target audience. Serve as a source for all personalisation, increase loyalty and retention."_
 
 ### 5.1 Audience management
 
@@ -505,6 +531,7 @@ Per oficiální features (Section 3.3):
 ### 5.2 Segmentation capabilities
 
 #### Filter criteria
+
 - **Contact attributes** (custom fields, tags)
 - **Email engagement** (specific campaigns, recency)
 - **Site activity** (visited pages, time, behavior)
@@ -517,6 +544,7 @@ Per oficiální features (Section 3.3):
 - **Custom events**
 
 #### Operators
+
 - AND, OR, NOT
 - Nested conditions
 - Numeric ranges
@@ -526,9 +554,10 @@ Per oficiální features (Section 3.3):
 ### 5.3 Behavior-based targeting
 
 Per oficiální:
-*"Target contacts based on their online activity and specific email interactions"*
+_"Target contacts based on their online activity and specific email interactions"_
 
 Example segments:
+
 - Visitors who viewed Product X but didn't purchase
 - Customers who purchased Category A but never B
 - High engagers who haven't bought v 30 days
@@ -550,9 +579,10 @@ Example segments:
 ### 6.1 Web Experience module
 
 Per oficiální:
-*"Web Experience to turn visitors into leads"*
+_"Web Experience to turn visitors into leads"_
 
 Capabilities:
+
 - **Real-time visitor monitoring**
 - **Pop-ups** (entry, exit-intent, scroll, click)
 - **Banners** (top, bottom, sticky)
@@ -614,6 +644,7 @@ Capabilities:
 ### 7.2 AI Email Design Studio
 
 **Innovative feature:**
+
 - **AI generates email designs**
 - **Per-recipient personalization**
 - **Brand-consistent output**
@@ -623,9 +654,10 @@ Capabilities:
 ### 7.3 Dynamic 1-to-1 emails
 
 Per reference testimonial:
-*"higher CTR and 206% higher OR for dynamic emails with 1-to-1 recommendations compared to mass emails"*
+_"higher CTR and 206% higher OR for dynamic emails with 1-to-1 recommendations compared to mass emails"_
 
 Per-recipient unique content:
+
 - Product recommendations
 - Dynamic blocks per profile
 - Behavior-based content
@@ -651,7 +683,7 @@ Per-recipient unique content:
 ### 7.6 A/B testing limitations
 
 Per Capterra review:
-*"more efficient A/B testing for email subjects (currently, multiple emails have to be created for testing)"*
+_"more efficient A/B testing for email subjects (currently, multiple emails have to be created for testing)"_
 
 ⚠️ A/B testing **less efficient** než competitors – requires creating multiple emails vs. inline variant management.
 
@@ -677,6 +709,7 @@ Per Capterra review:
 ### 8.2 Triggers
 
 #### Behavioral
+
 - Visited specific page
 - Viewed product
 - Searched query
@@ -684,6 +717,7 @@ Per Capterra review:
 - Clicked element
 
 #### Transactional
+
 - Cart abandoned
 - Order placed
 - Specific product purchased
@@ -691,23 +725,27 @@ Per Capterra review:
 - Subscription event
 
 #### Email/SMS engagement
+
 - Email opened
 - Email clicked
 - Link clicked
 - SMS clicked
 
 #### Date-based
+
 - Birthday
 - Anniversary
 - Custom date
 - Recurring dates
 
 #### Score-based
+
 - Engagement Score threshold
 - Predictive score change
 - Lead score reached
 
 #### External
+
 - API event
 - Webhook
 - CDP segment change
@@ -715,6 +753,7 @@ Per Capterra review:
 ### 8.3 Actions (nodes)
 
 #### Sending
+
 - Send email
 - Send SMS
 - Send web push
@@ -723,6 +762,7 @@ Per Capterra review:
 - Display dynamic content
 
 #### Contact manipulation
+
 - Add / remove tag
 - Update field
 - Update Engagement Score
@@ -730,6 +770,7 @@ Per Capterra review:
 - Add / remove from list
 
 #### Logic
+
 - Wait (delay)
 - Condition (if/else)
 - A/B split
@@ -737,6 +778,7 @@ Per Capterra review:
 - Random split
 
 #### External
+
 - Webhook
 - API call
 - Sync to Facebook / Google Ads
@@ -744,9 +786,10 @@ Per Capterra review:
 ### 8.4 Pre-defined frameworks
 
 Per GetApp:
-*"Pre-defined frameworks and an intuitive interface allow teams to execute complex strategies without extensive technical resources."*
+_"Pre-defined frameworks and an intuitive interface allow teams to execute complex strategies without extensive technical resources."_
 
 **Pre-built frameworks** pro common use cases:
+
 - Welcome series
 - Cart abandonment
 - Post-purchase
@@ -759,6 +802,7 @@ Per GetApp:
 ### 8.5 Workflow examples
 
 #### Cart abandonment
+
 ```
 Trigger: Cart abandoned > 1h
    ↓
@@ -782,6 +826,7 @@ Exit
 ```
 
 #### VIP welcome
+
 ```
 Trigger: Customer becomes VIP (LTV > threshold)
    ↓
@@ -805,7 +850,7 @@ End
 ## 9. AI-driven personalization
 
 Per oficiální:
-*"AI-driven personalization" is core differentiator*
+_"AI-driven personalization" is core differentiator_
 
 ### 9.1 AI capabilities
 
@@ -820,9 +865,10 @@ Per oficiální:
 ### 9.2 ChatGPT integration
 
 Per LinkedIn material:
-*"Chat GPT integration" listed as core feature*
+_"Chat GPT integration" listed as core feature_
 
 Use cases:
+
 - Email content generation
 - Subject line suggestions
 - Marketing copy creation
@@ -832,9 +878,10 @@ Use cases:
 ### 9.3 Deep Behavioral Personalization
 
 Per LinkedIn:
-*"Deep Behavioral Personalization - a concept... putting it to use with SALESmanago's new feature - Product Collections"*
+_"Deep Behavioral Personalization - a concept... putting it to use with SALESmanago's new feature - Product Collections"_
 
 **Captures all engagement signals:**
+
 - Browse patterns
 - Search queries
 - Cart events
@@ -870,6 +917,7 @@ Per LinkedIn:
 **Proprietary AI recommendation engine.**
 
 Used pro:
+
 - Email recommendations (1-to-1)
 - On-site widgets
 - Web push content
@@ -878,26 +926,32 @@ Used pro:
 ### 10.2 Recommendation strategies
 
 #### Collaborative filtering
+
 - Customers like you bought X
 - Based on aggregate behavior
 
 #### Content-based
+
 - Similar products
 - Product attribute matching
 
 #### Personalized ML
+
 - Per-profile recommendations
 - Browse + purchase history weighted
 
 #### Trending
+
 - Popular right now
 - Per category
 
 #### Cross-sell / Upsell
+
 - Complementary products
 - Higher-tier alternatives
 
 #### Search-based
+
 - Based na recent searches
 
 ### 10.3 Frame configuration
@@ -936,15 +990,18 @@ Used pro:
 ### 11.3 Use cases
 
 #### Personalized newsletter
+
 - Each customer sees products from their behavioral collection
 - Per-recipient unique product selection
 - Higher conversion vs. bulk newsletter
 
 #### Email recommendation blocks
+
 - Dynamic product collection per email
 - Auto-updated based on recent behavior
 
 #### On-site personalization
+
 - Show customer's specific collection on homepage
 - Recommend new products fitting their pattern
 
@@ -962,13 +1019,14 @@ Used pro:
 ### 12.1 Zero-party data
 
 Per oficiální:
-*"innovative tools like zero-party data collection"*
+_"innovative tools like zero-party data collection"_
 
 **Zero-party data** = data explicitly shared by customer (preferences, intentions).
 
 ### 12.2 Collection methods
 
 #### Customer Preference Center
+
 - Customer-managed preferences
 - Topic preferences
 - Frequency preferences
@@ -976,20 +1034,24 @@ Per oficiální:
 - Product category interests
 
 #### Surveys + quizzes
+
 - In-email surveys
 - On-site quizzes
 - "What's your style?" type questions
 
 #### Progressive profiling
+
 - Multi-step forms
 - Gradual data collection
 - Non-intrusive
 
 #### Wishlists
+
 - Explicit product interest
 - Used pro recommendations
 
 #### Personalization quizzes
+
 - "Help us recommend better"
 - Style preferences
 - Use case preferences
@@ -997,6 +1059,7 @@ Per oficiální:
 ### 12.3 Why zero-party matters
 
 V era of cookieless future:
+
 - **First-party data limited** (own website)
 - **Third-party cookies disappearing**
 - **Zero-party explicit consent** strongest signal
@@ -1118,23 +1181,27 @@ Per oficiální feature list.
 ### 15.1 Standard reports
 
 #### Campaign reports
+
 - Sent, delivered, bounced
 - Opens, CTR
 - Conversion rate
 - Revenue attribution
 
 #### Workflow reports
+
 - Per-workflow performance
 - Per-step metrics
 - Goal achievement
 - Drop-off analysis
 
 #### CDP reports
+
 - Audience size trends
 - Segment performance
 - Engagement Score distribution
 
 #### E-commerce reports
+
 - Revenue per campaign
 - Per-segment revenue
 - Top performing products
@@ -1152,14 +1219,14 @@ Per oficiální feature list.
 ### 15.3 Critique on reporting
 
 Per Capterra review:
-*"expanded options for data extraction (e.g., you can extract data for users who opened an email but not for those who clicked)"*
+_"expanded options for data extraction (e.g., you can extract data for users who opened an email but not for those who clicked)"_
 
 ⚠️ **Some data extraction limited** – not all metrics easily exportable.
 
 ### 15.4 Unified Data Analysis
 
 Per oficiální:
-*"Unified Data Analysis – Monitor and analyse website visitor behaviour, seamlessly integrating eCommerce data and tracking email interactions"*
+_"Unified Data Analysis – Monitor and analyse website visitor behaviour, seamlessly integrating eCommerce data and tracking email interactions"_
 
 Cross-channel reporting.
 
@@ -1170,6 +1237,7 @@ Cross-channel reporting.
 ### 16.1 Native integrations
 
 #### E-commerce platforms
+
 - **Shopify + Shopify Plus**
 - **Magento** (Adobe Commerce)
 - **WooCommerce**
@@ -1179,17 +1247,20 @@ Cross-channel reporting.
 - Custom platforms
 
 #### CRM systems
+
 - **Salesforce** (CRM sync)
 - **HubSpot CRM**
 - **Microsoft Dynamics**
 
 #### Ad platforms
+
 - **Facebook Ads / Meta**
 - **Google Ads**
 - **TikTok Ads**
 - **Other**
 
 #### Other
+
 - **Google Analytics**
 - **Live chat** (various)
 - **Zapier** (5 000+ apps)
@@ -1211,6 +1282,7 @@ Cross-channel reporting.
 ### 16.4 Implementation partners
 
 **1 000+ reselling partners** internationally:
+
 - **Polish partners** (largest)
 - **DACH partners**
 - **UK partners**
@@ -1218,6 +1290,7 @@ Cross-channel reporting.
 - **Latin American partners**
 
 Partners often handle:
+
 - Implementation
 - Training
 - Custom integrations
@@ -1227,10 +1300,10 @@ Partners often handle:
 ### 16.5 Partner critique
 
 Per Capterra review:
-*"A big advantage was the excellent support from the partner program account manager, who guided me step by step"*
+_"A big advantage was the excellent support from the partner program account manager, who guided me step by step"_
 
 Per critique:
-*"There were some gaps in the integration when I started using it... I believe it would be helpful for the clients if SalesManago conducts a health check at the end of each integration."*
+_"There were some gaps in the integration when I started using it... I believe it would be helpful for the clients if SalesManago conducts a health check at the end of each integration."_
 
 ⚠️ **Integration health checks** sometimes missed.
 
@@ -1241,9 +1314,10 @@ Per critique:
 ### 17.1 Growth Framework
 
 Per oficiální:
-*"SALESmanago's Growth Framework offers a clear path to achieving your eCommerce goals of acquisition, conversion, and engagement, while delivering personalised experiences to customers and ensuring sustainable growth."*
+_"SALESmanago's Growth Framework offers a clear path to achieving your eCommerce goals of acquisition, conversion, and engagement, while delivering personalised experiences to customers and ensuring sustainable growth."_
 
 **4 stages:**
+
 1. **Acquisition** – attract
 2. **Conversion** – sell
 3. **Engagement** – relationship
@@ -1252,9 +1326,10 @@ Per oficiální:
 ### 17.2 Custom Growth Plan
 
 Per oficiální:
-*"starting with a custom Growth Plan tailored to your business"*
+_"starting with a custom Growth Plan tailored to your business"_
 
 **Per-customer custom roadmap:**
+
 - Strategic assessment
 - KPI alignment
 - Tool selection
@@ -1278,6 +1353,7 @@ Per oficiální:
 **1 000+ reselling partners** internationally.
 
 Partner types:
+
 - **Digital agencies**
 - **Marketing automation specialists**
 - **E-commerce consultancies**
@@ -1295,6 +1371,7 @@ Partner types:
 ### 18.3 Partner-managed clients
 
 Many clients onboarded via partners:
+
 - **Partner handles implementation**
 - **Partner provides ongoing support**
 - **Partner-specific account managers**
@@ -1303,6 +1380,7 @@ Many clients onboarded via partners:
 ### 18.4 Geographic reach
 
 **1 000+ partners across 50+ countries:**
+
 - Poland (largest)
 - DACH
 - UK + Ireland
@@ -1321,7 +1399,7 @@ Many clients onboarded via partners:
 ### 19.1 EU hosting
 
 Per oficiální:
-*"EU-based and GDPR-compliant – As a European provider, we ensure all data remains within the EU, offering industry-leading compliance and security."*
+_"EU-based and GDPR-compliant – As a European provider, we ensure all data remains within the EU, offering industry-leading compliance and security."_
 
 ⚠️ Crunchbase listing indicates **U.S. Server Location** – ale oficiální materiály claim EU. Pravděpodobně **multi-region** s primary EU.
 
@@ -1382,49 +1460,49 @@ Per oficiální:
 ### 20.2 Post-acquisition challenges
 
 Per Software Advice review:
-*"Over the past three years, following the acquisition, SALESmanago has undergone significant shifts in strategy, personnel, board composition, and management—changes that at times made collaboration more difficult."*
+_"Over the past three years, following the acquisition, SALESmanago has undergone significant shifts in strategy, personnel, board composition, and management—changes that at times made collaboration more difficult."_
 
-⚠️ **Acquisition by SilverTree Equity** caused some growing pains. Per review further: *"We felt some growing pains, but we understood this was a necessary step for a company aiming to make major strides."*
+⚠️ **Acquisition by SilverTree Equity** caused some growing pains. Per review further: _"We felt some growing pains, but we understood this was a necessary step for a company aiming to make major strides."_
 
 ### 20.3 Complexity
 
 - **Steep learning curve** v některých částech
-- *"Not all features are intuitive at first"* (Capterra)
+- _"Not all features are intuitive at first"_ (Capterra)
 - **Requires training + workshops**
 - **Better s partner support**
 
 ### 20.4 A/B testing limitations
 
 Per review:
-*"more efficient A/B testing for email subjects (currently, multiple emails have to be created for testing)"*
+_"more efficient A/B testing for email subjects (currently, multiple emails have to be created for testing)"_
 
 ⚠️ A/B testing **less efficient** než competitors.
 
 ### 20.5 Reporting / data extraction
 
 Per review:
-*"expanded options for data extraction (e.g., you can extract data for users who opened an email but not for those who clicked)"*
+_"expanded options for data extraction (e.g., you can extract data for users who opened an email but not for those who clicked)"_
 
 ⚠️ **Granular data extraction** sometimes limited.
 
 ### 20.6 Mass management
 
 Per review:
-*"simpler, faster mass management of tags and user details"*
+_"simpler, faster mass management of tags and user details"_
 
 ⚠️ **Bulk operations** sometimes slow / unwieldy.
 
 ### 20.7 Integration health gaps
 
 Per review:
-*"I wasn't involved during the initial tool implementation, but there were some gaps in the integration when I started using it... it would be helpful for the clients if SalesManago conducts a health check at the end of each integration. This could include verifying if purchases are being sent correctly, ensuring dashboards are tracking them properly, etc."*
+_"I wasn't involved during the initial tool implementation, but there were some gaps in the integration when I started using it... it would be helpful for the clients if SalesManago conducts a health check at the end of each integration. This could include verifying if purchases are being sent correctly, ensuring dashboards are tracking them properly, etc."_
 
 ⚠️ **Integration health checks** sometimes missed, leading to data gaps.
 
 ### 20.8 Customization complexity
 
 For non-typical use cases (non-e-commerce):
-*"we needed a more customized approach, and SalesManago introduced several improvements for us over a few months"*
+_"we needed a more customized approach, and SalesManago introduced several improvements for us over a few months"_
 
 ⚠️ Less polished pro **non-e-commerce** use cases (B2B services, content businesses).
 
@@ -1437,7 +1515,7 @@ For non-typical use cases (non-e-commerce):
 ### 20.10 SMS features less intuitive
 
 Per review:
-*"Not all features are intuitive at first, especially when it comes to SMS campaigns."*
+_"Not all features are intuitive at first, especially when it comes to SMS campaigns."_
 
 ### 20.11 Less feature-rich vs. Klaviyo
 
@@ -1475,6 +1553,7 @@ Per review:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### SALESmanago je dobrá volba pokud
+
 - Provozujete **mid-market e-commerce** (50K+ kontaktů)
 - Potřebujete **CDP + Marketing Automation v jedné platformě**
 - Cíl je **AI-driven personalization** at scale
@@ -1491,6 +1570,7 @@ Per review:
 - Provozujete **subscription / loyalty** programs
 
 ### SALESmanago není dobrá volba pokud
+
 - Jste **small business / startup** – sales-driven model je friction
 - Hledáte **self-serve freemium** – Mailchimp, MailerLite, Ecomail lepší
 - Provozujete **pure DTC Shopify** s deep integration needs – Klaviyo silnější
@@ -1506,23 +1586,23 @@ Per review:
 
 ### SALESmanago vs. konkurence
 
-| Konkurence | Kdy lepší než SALESmanago |
-|---|---|
-| **Klaviyo** | Pure DTC Shopify, transparent pricing, autonomous AI agents |
-| **HubSpot** | Full B2B CRM, multi-Hub, marketing+sales+service |
-| **Brevo** | Volume-based pricing, transactional v base, simpler SMB |
-| **ActiveCampaign** | Deeper automation engine, integrated CRM s deals/pipelines |
-| **Mailchimp** | Brand recognition, self-service, free plan |
-| **MailerLite** | Solopreneur simplicity, content creators |
-| **SAP Emarsys** | Pure enterprise B2C retail, omnichannel scale, Gartner Leader |
-| **Bloomreach Engagement** | CZ origin, deep content personalization, DTC |
-| **GetResponse** | Webinars + courses + 27 languages incl. CZ/SK |
-| **ExpertSender** | Polský origin, similar mid-market focus |
-| **Adobe Journey Optimizer** | Adobe Experience Cloud ecosystem |
-| **Braze** | App-first mobile companies, real-time messaging |
-| **Bloomreach** | DTC content personalization, Czech origin |
-| **Ecomail / SmartEmailing** | Pure CZ/SK market with native localization |
+| Konkurence                  | Kdy lepší než SALESmanago                                     |
+| --------------------------- | ------------------------------------------------------------- |
+| **Klaviyo**                 | Pure DTC Shopify, transparent pricing, autonomous AI agents   |
+| **HubSpot**                 | Full B2B CRM, multi-Hub, marketing+sales+service              |
+| **Brevo**                   | Volume-based pricing, transactional v base, simpler SMB       |
+| **ActiveCampaign**          | Deeper automation engine, integrated CRM s deals/pipelines    |
+| **Mailchimp**               | Brand recognition, self-service, free plan                    |
+| **MailerLite**              | Solopreneur simplicity, content creators                      |
+| **SAP Emarsys**             | Pure enterprise B2C retail, omnichannel scale, Gartner Leader |
+| **Bloomreach Engagement**   | CZ origin, deep content personalization, DTC                  |
+| **GetResponse**             | Webinars + courses + 27 languages incl. CZ/SK                 |
+| **ExpertSender**            | Polský origin, similar mid-market focus                       |
+| **Adobe Journey Optimizer** | Adobe Experience Cloud ecosystem                              |
+| **Braze**                   | App-first mobile companies, real-time messaging               |
+| **Bloomreach**              | DTC content personalization, Czech origin                     |
+| **Ecomail / SmartEmailing** | Pure CZ/SK market with native localization                    |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů salesmanago.com a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Crunchbase, LinkedIn customer testimonials). Pro nejaktuálnější detaily je nutný engagement s SALESmanago sales teamem.*
+_Dokument zpracován z oficiálních zdrojů salesmanago.com a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Crunchbase, LinkedIn customer testimonials). Pro nejaktuálnější detaily je nutný engagement s SALESmanago sales teamem._

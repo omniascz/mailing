@@ -47,20 +47,24 @@ export default async function tagRoutes(app: FastifyInstance) {
    * POST /api/v1/tags
    * Create a new tag. Names are unique per organisation.
    */
-  app.post('/api/v1/tags', { schema: { tags: ['Tags'], summary: 'Create tag' } }, async (req, reply) => {
-    const body = createTagSchema.parse(req.body);
-    const [row] = await db
-      .insert(tags)
-      .values({ orgId: req.user!.orgId, ...body })
-      .returning()
-      .catch((err: Error) => {
-        if (err.message.includes('tags_org_name_idx')) {
-          throw AppError.conflict(`Tag "${body.name}" already exists`);
-        }
-        throw err;
-      });
-    return reply.code(201).send({ data: row });
-  });
+  app.post(
+    '/api/v1/tags',
+    { schema: { tags: ['Tags'], summary: 'Create tag' } },
+    async (req, reply) => {
+      const body = createTagSchema.parse(req.body);
+      const [row] = await db
+        .insert(tags)
+        .values({ orgId: req.user!.orgId, ...body })
+        .returning()
+        .catch((err: Error) => {
+          if (err.message.includes('tags_org_name_idx')) {
+            throw AppError.conflict(`Tag "${body.name}" already exists`);
+          }
+          throw err;
+        });
+      return reply.code(201).send({ data: row });
+    },
+  );
 
   /**
    * GET /api/v1/tags/:id
@@ -81,37 +85,45 @@ export default async function tagRoutes(app: FastifyInstance) {
    * PUT /api/v1/tags/:id
    * Update tag name, color, or autoTagRules.
    */
-  app.put('/api/v1/tags/:id', { schema: { tags: ['Tags'], summary: 'Update tag' } }, async (req) => {
-    const { id } = idParam.parse(req.params);
-    const patch = updateTagSchema.parse(req.body);
-    const [row] = await db
-      .update(tags)
-      .set({ ...patch, updatedAt: new Date() })
-      .where(and(eq(tags.id, id), eq(tags.orgId, req.user!.orgId)))
-      .returning()
-      .catch((err: Error) => {
-        if (err.message.includes('tags_org_name_idx')) {
-          throw AppError.conflict(`Tag "${patch.name}" already exists`);
-        }
-        throw err;
-      });
-    if (!row) throw AppError.notFound('Tag');
-    return { data: row };
-  });
+  app.put(
+    '/api/v1/tags/:id',
+    { schema: { tags: ['Tags'], summary: 'Update tag' } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const patch = updateTagSchema.parse(req.body);
+      const [row] = await db
+        .update(tags)
+        .set({ ...patch, updatedAt: new Date() })
+        .where(and(eq(tags.id, id), eq(tags.orgId, req.user!.orgId)))
+        .returning()
+        .catch((err: Error) => {
+          if (err.message.includes('tags_org_name_idx')) {
+            throw AppError.conflict(`Tag "${patch.name}" already exists`);
+          }
+          throw err;
+        });
+      if (!row) throw AppError.notFound('Tag');
+      return { data: row };
+    },
+  );
 
   /**
    * DELETE /api/v1/tags/:id
    * Delete a tag and remove all contact associations.
    */
-  app.delete('/api/v1/tags/:id', { schema: { tags: ['Tags'], summary: 'Delete tag' } }, async (req, reply) => {
-    const { id } = idParam.parse(req.params);
-    const [row] = await db
-      .delete(tags)
-      .where(and(eq(tags.id, id), eq(tags.orgId, req.user!.orgId)))
-      .returning();
-    if (!row) throw AppError.notFound('Tag');
-    return reply.code(204).send();
-  });
+  app.delete(
+    '/api/v1/tags/:id',
+    { schema: { tags: ['Tags'], summary: 'Delete tag' } },
+    async (req, reply) => {
+      const { id } = idParam.parse(req.params);
+      const [row] = await db
+        .delete(tags)
+        .where(and(eq(tags.id, id), eq(tags.orgId, req.user!.orgId)))
+        .returning();
+      if (!row) throw AppError.notFound('Tag');
+      return reply.code(204).send();
+    },
+  );
 
   /**
    * GET /api/v1/tags/:id/contacts/count
@@ -133,7 +145,10 @@ export default async function tagRoutes(app: FastifyInstance) {
       const [row] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(contactTags)
-        .innerJoin(contacts, and(eq(contacts.id, contactTags.contactId), isNull(contacts.deletedAt)))
+        .innerJoin(
+          contacts,
+          and(eq(contacts.id, contactTags.contactId), isNull(contacts.deletedAt)),
+        )
         .where(eq(contactTags.tagId, id));
       return { data: { count: row?.count ?? 0 } };
     },

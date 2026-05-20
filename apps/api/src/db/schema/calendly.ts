@@ -1,11 +1,22 @@
-import { pgTable, uuid, varchar, boolean, text, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  text,
+  timestamp,
+  uniqueIndex,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 export const calendlyConnections = pgTable(
   'calendly_connections',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     userUri: varchar('user_uri', { length: 512 }),
     organizationUri: varchar('organization_uri', { length: 512 }),
     accessToken: text('access_token').notNull(),

@@ -7,7 +7,6 @@ import {
   boolean,
   timestamp,
   index,
-
   jsonb,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
@@ -30,13 +29,15 @@ import { contacts } from './contacts.js';
 export const leadScoreRules = pgTable(
   'lead_score_rules',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
 
     eventType: varchar('event_type', { length: 100 }).notNull(),
-    points: integer('points').notNull(),           // positive = add, negative = subtract
+    points: integer('points').notNull(), // positive = add, negative = subtract
     decayDays: integer('decay_days').notNull().default(90), // days until score contribution decays to 0
     active: boolean('active').notNull().default(true),
     description: varchar('description', { length: 255 }),
@@ -55,7 +56,9 @@ export const leadScoreRules = pgTable(
 export const leadScoreEvents = pgTable(
   'lead_score_events',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

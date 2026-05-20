@@ -67,7 +67,8 @@ function getOAuthConfig(platform: SocialPlatform): OAuthConfig {
       clientId: process.env.TIKTOK_CLIENT_KEY ?? '',
       clientSecret: process.env.TIKTOK_CLIENT_SECRET ?? '',
       scope: 'user.info.basic,video.publish,video.upload',
-      userInfoUrl: 'https://open.tiktokapis.com/v2/user/info/?fields=display_name,avatar_url,open_id',
+      userInfoUrl:
+        'https://open.tiktokapis.com/v2/user/info/?fields=display_name,avatar_url,open_id',
     },
   };
   return cfg[platform];
@@ -75,7 +76,12 @@ function getOAuthConfig(platform: SocialPlatform): OAuthConfig {
 
 // ── Initiate OAuth flow ───────────────────────────────────────────────────────
 
-export async function initiateOAuth(orgId: string, userId: string, platform: SocialPlatform, callbackBase: string) {
+export async function initiateOAuth(
+  orgId: string,
+  userId: string,
+  platform: SocialPlatform,
+  callbackBase: string,
+) {
   const cfg = getOAuthConfig(platform);
   if (!cfg.clientId) throw AppError.badRequest(`${platform} OAuth not configured`);
 
@@ -142,7 +148,7 @@ export async function handleOAuthCallback(
   });
 
   if (!tokenRes.ok) throw AppError.badRequest(`Token exchange failed: ${tokenRes.status}`);
-  const tokens = await tokenRes.json() as {
+  const tokens = (await tokenRes.json()) as {
     access_token: string;
     refresh_token?: string;
     expires_in?: number;
@@ -152,18 +158,16 @@ export async function handleOAuthCallback(
   // Fetch user profile
   const userInfo = await fetchUserInfo(platform, tokens.access_token);
   const platformUserId = String(
-    (userInfo.id ?? userInfo.sub ?? (userInfo.data as Record<string, unknown>)?.open_id) ?? ''
+    userInfo.id ?? userInfo.sub ?? (userInfo.data as Record<string, unknown>)?.open_id ?? '',
   );
   const displayName = String(userInfo.name ?? userInfo.display_name ?? '');
   const avatarUrl = String(
     (userInfo.picture as Record<string, unknown>)?.data
       ? ((userInfo.picture as Record<string, unknown>).data as Record<string, unknown>)?.url
-      : userInfo.picture ?? (userInfo.data as Record<string, unknown>)?.avatar_url ?? ''
+      : (userInfo.picture ?? (userInfo.data as Record<string, unknown>)?.avatar_url ?? ''),
   );
 
-  const tokenExpiresAt = tokens.expires_in
-    ? new Date(Date.now() + tokens.expires_in * 1000)
-    : null;
+  const tokenExpiresAt = tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null;
 
   // Upsert account
   const [account] = await db

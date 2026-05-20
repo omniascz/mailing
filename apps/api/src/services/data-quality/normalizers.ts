@@ -87,16 +87,23 @@ export function normaliseName(input: string | null | undefined): NormaliseResult
   if (!trimmed) return { value: null, changed: input !== '' };
 
   // Detect scripts where Latin title-casing is wrong.
+  // eslint-disable-next-line no-control-regex
   if (/[^\x00-\x7FÀ-ž]/.test(trimmed) && !/[a-zA-ZÀ-ž]/.test(trimmed)) {
     return { value: trimmed, changed: trimmed !== input };
   }
 
-  const out = trimmed.replace(/(^|[\s\-'])([\p{L}])(\p{L}*)/gu, (_match, sep: string, first: string, rest: string) => {
-    return sep + first.toLocaleUpperCase() + rest.toLocaleLowerCase();
-  });
+  const out = trimmed.replace(
+    /(^|[\s\-'])([\p{L}])(\p{L}*)/gu,
+    (_match, sep: string, first: string, rest: string) => {
+      return sep + first.toLocaleUpperCase() + rest.toLocaleLowerCase();
+    },
+  );
 
   // Mc / Mac patterns: capitalise the next letter too.
-  const final = out.replace(/\b(Mc|Mac)([\p{L}])/gu, (_m, prefix: string, ch: string) => prefix + ch.toLocaleUpperCase());
+  const final = out.replace(
+    /\b(Mc|Mac)([\p{L}])/gu,
+    (_m, prefix: string, ch: string) => prefix + ch.toLocaleUpperCase(),
+  );
 
   return { value: final, changed: final !== input };
 }
@@ -106,43 +113,54 @@ export function normaliseName(input: string | null | undefined): NormaliseResult
 const COUNTRY_NAME_TO_ISO2: Record<string, string> = {
   // Common English names
   'czech republic': 'CZ',
-  'czechia': 'CZ',
-  'slovakia': 'SK',
+  czechia: 'CZ',
+  slovakia: 'SK',
   'slovak republic': 'SK',
-  'germany': 'DE',
-  'austria': 'AT',
-  'poland': 'PL',
-  'hungary': 'HU',
+  germany: 'DE',
+  austria: 'AT',
+  poland: 'PL',
+  hungary: 'HU',
   'united states': 'US',
   'united states of america': 'US',
-  'usa': 'US',
+  usa: 'US',
   'united kingdom': 'GB',
   'great britain': 'GB',
-  'uk': 'GB',
-  'france': 'FR',
-  'spain': 'ES',
-  'italy': 'IT',
-  'netherlands': 'NL',
-  'belgium': 'BE',
-  'switzerland': 'CH',
+  uk: 'GB',
+  france: 'FR',
+  spain: 'ES',
+  italy: 'IT',
+  netherlands: 'NL',
+  belgium: 'BE',
+  switzerland: 'CH',
   // Czech / Slovak names
   'česká republika': 'CZ',
-  'česko': 'CZ',
-  'slovensko': 'SK',
+  česko: 'CZ',
+  slovensko: 'SK',
   'slovenská republika': 'SK',
-  'německo': 'DE',
-  'rakousko': 'AT',
-  'polsko': 'PL',
-  'maďarsko': 'HU',
-  'francie': 'FR',
-  'španělsko': 'ES',
-  'itálie': 'IT',
+  německo: 'DE',
+  rakousko: 'AT',
+  polsko: 'PL',
+  maďarsko: 'HU',
+  francie: 'FR',
+  španělsko: 'ES',
+  itálie: 'IT',
 };
 
 const ISO3_TO_ISO2: Record<string, string> = {
-  CZE: 'CZ', SVK: 'SK', DEU: 'DE', AUT: 'AT', POL: 'PL',
-  HUN: 'HU', USA: 'US', GBR: 'GB', FRA: 'FR', ESP: 'ES',
-  ITA: 'IT', NLD: 'NL', BEL: 'BE', CHE: 'CH',
+  CZE: 'CZ',
+  SVK: 'SK',
+  DEU: 'DE',
+  AUT: 'AT',
+  POL: 'PL',
+  HUN: 'HU',
+  USA: 'US',
+  GBR: 'GB',
+  FRA: 'FR',
+  ESP: 'ES',
+  ITA: 'IT',
+  NLD: 'NL',
+  BEL: 'BE',
+  CHE: 'CH',
 };
 
 /**

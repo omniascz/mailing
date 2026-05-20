@@ -30,42 +30,54 @@ interface MetaWebhookPayload {
 
 const instagramWebhookRoutes: FastifyPluginAsync = async (app) => {
   // Webhook verification (GET) — Meta sends a hub.challenge during subscription setup
-  app.get('/api/v1/webhooks/instagram', {
-    schema: { tags: ['Webhooks', 'Instagram'] },
-  }, async (req, reply) => {
-    const { 'hub.mode': mode, 'hub.verify_token': token, 'hub.challenge': challenge } = req.query as Record<string, string>;
-    const expected = process.env.META_WEBHOOK_VERIFY_TOKEN ?? '';
-    if (mode === 'subscribe' && token === expected) {
-      return reply.send(challenge);
-    }
-    throw AppError.forbidden('Instagram webhook verification failed');
-  });
+  app.get(
+    '/api/v1/webhooks/instagram',
+    {
+      schema: { tags: ['Webhooks', 'Instagram'] },
+    },
+    async (req, reply) => {
+      const {
+        'hub.mode': mode,
+        'hub.verify_token': token,
+        'hub.challenge': challenge,
+      } = req.query as Record<string, string>;
+      const expected = process.env.META_WEBHOOK_VERIFY_TOKEN ?? '';
+      if (mode === 'subscribe' && token === expected) {
+        return reply.send(challenge);
+      }
+      throw AppError.forbidden('Instagram webhook verification failed');
+    },
+  );
 
   // Incoming events (POST)
-  app.post('/api/v1/webhooks/instagram', {
-    config: { rawBody: true },
-    schema: { tags: ['Webhooks', 'Instagram'] },
-  }, async (req, reply) => {
-    const appSecret = process.env.META_APP_SECRET ?? '';
-    const signature = (req.headers['x-hub-signature-256'] as string) ?? '';
-    const rawBody = (req as { rawBody?: string }).rawBody ?? JSON.stringify(req.body);
+  app.post(
+    '/api/v1/webhooks/instagram',
+    {
+      config: { rawBody: true },
+      schema: { tags: ['Webhooks', 'Instagram'] },
+    },
+    async (req, reply) => {
+      const appSecret = process.env.META_APP_SECRET ?? '';
+      const signature = (req.headers['x-hub-signature-256'] as string) ?? '';
+      const rawBody = (req as { rawBody?: string }).rawBody ?? JSON.stringify(req.body);
 
-    if (appSecret && !verifyInstagramWebhook(rawBody, signature, appSecret)) {
-      throw AppError.forbidden('Invalid Instagram webhook signature');
-    }
+      if (appSecret && !verifyInstagramWebhook(rawBody, signature, appSecret)) {
+        throw AppError.forbidden('Invalid Instagram webhook signature');
+      }
 
-    const payload = req.body as MetaWebhookPayload;
-    if (payload.object !== 'instagram') {
+      const payload = req.body as MetaWebhookPayload;
+      if (payload.object !== 'instagram') {
+        return reply.send({ received: true });
+      }
+
+      // Dispatch events — we process them best-effort; always return 200 quickly
+      processInstagramEvents(payload).catch((err) => {
+        app.log.error({ err }, 'Instagram webhook processing error');
+      });
+
       return reply.send({ received: true });
-    }
-
-    // Dispatch events — we process them best-effort; always return 200 quickly
-    processInstagramEvents(payload).catch((err) => {
-      app.log.error({ err }, 'Instagram webhook processing error');
-    });
-
-    return reply.send({ received: true });
-  });
+    },
+  );
 };
 
 async function processInstagramEvents(payload: MetaWebhookPayload): Promise<void> {
@@ -86,38 +98,49 @@ async function processInstagramEvents(payload: MetaWebhookPayload): Promise<void
       const [existing] = await db
         .select({ id: helpdeskTickets.id })
         .from(helpdeskTickets)
-        .where(and(
-          eq(helpdeskTickets.orgId, orgId),
-          eq(helpdeskTickets.channel, 'instagram'),
-          eq(helpdeskTickets.externalThreadId, igSenderId),
-        ))
+        .where(
+          and(
+            eq(helpdeskTickets.orgId, orgId),
+            eq(helpdeskTickets.channel, 'instagram'),
+            eq(helpdeskTickets.externalThreadId, igSenderId),
+          ),
+        )
         .limit(1);
 
       let ticketId: string;
       if (existing) {
         ticketId = existing.id;
         // Reopen if closed
-        await db.update(helpdeskTickets).set({ status: 'open', updatedAt: new Date() }).where(eq(helpdeskTickets.id, ticketId));
+        await db
+          .update(helpdeskTickets)
+          .set({ status: 'open', updatedAt: new Date() })
+          .where(eq(helpdeskTickets.id, ticketId));
       } else {
-        const [created] = await db.insert(helpdeskTickets).values({
-          orgId,
-          subject: `Instagram DM from ${igSenderId}`,
-          channel: 'instagram',
-          externalThreadId: igSenderId,
-          externalIdentity: igSenderId,
-          channelMetadata: { page_id: pageId },
-        }).returning({ id: helpdeskTickets.id });
+        const [created] = await db
+          .insert(helpdeskTickets)
+          .values({
+            orgId,
+            subject: `Instagram DM from ${igSenderId}`,
+            channel: 'instagram',
+            externalThreadId: igSenderId,
+            externalIdentity: igSenderId,
+            channelMetadata: { page_id: pageId },
+          })
+          .returning({ id: helpdeskTickets.id });
         ticketId = created!.id;
       }
 
       // Insert the inbound message (idempotent on mid)
-      await db.insert(ticketMessages).values({
-        ticketId,
-        sender: igSenderId,
-        direction: 'inbound',
-        externalMessageId: mid ?? null,
-        body: messageText,
-      }).onConflictDoNothing();
+      await db
+        .insert(ticketMessages)
+        .values({
+          ticketId,
+          sender: igSenderId,
+          direction: 'inbound',
+          externalMessageId: mid ?? null,
+          body: messageText,
+        })
+        .onConflictDoNothing();
     }
   }
 }

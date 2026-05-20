@@ -33,7 +33,7 @@ export interface ChannelStats {
 
 export interface SmartChannelResult {
   channel: Channel;
-  confidence: number;   // 0-1
+  confidence: number; // 0-1
   reason: string;
   stats: ChannelStats;
 }
@@ -65,7 +65,7 @@ async function getContactChannelStats(
 
   const emailSends = emailRows.find((r) => r.eventType === 'send')?.cnt ?? 0;
   const emailOpens = emailRows.find((r) => r.eventType === 'open')?.cnt ?? 0;
-  const emailOpenRate = emailSends > 0 ? (Number(emailOpens) / Number(emailSends)) : 0;
+  const emailOpenRate = emailSends > 0 ? Number(emailOpens) / Number(emailSends) : 0;
 
   // Push token presence: check Redis key set by push adapter
   const pushKey = `push:token:${contactId}`;

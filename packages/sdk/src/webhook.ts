@@ -30,9 +30,7 @@ export interface VerifyOptions {
  * Uses constant-time comparison to prevent timing attacks.
  */
 export function verifyWebhookSignature(opts: VerifyOptions): boolean {
-  const expected = 'sha256=' + createHmac('sha256', opts.secret)
-    .update(opts.payload)
-    .digest('hex');
+  const expected = 'sha256=' + createHmac('sha256', opts.secret).update(opts.payload).digest('hex');
 
   if (expected.length !== opts.signature.length) return false;
 

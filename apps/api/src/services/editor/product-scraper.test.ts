@@ -57,7 +57,8 @@ describe('scrapeProduct', () => {
   });
 
   it('fetches page HTML then calls Claude API', async () => {
-    const productHtml = '<html><body><h1>Awesome Widget</h1><p>Great product</p><span>199 Kč</span></body></html>';
+    const productHtml =
+      '<html><body><h1>Awesome Widget</h1><p>Great product</p><span>199 Kč</span></body></html>';
     const claudeData = {
       title: 'Awesome Widget',
       description: 'Great product',
@@ -110,15 +111,13 @@ describe('scrapeProduct', () => {
 
   it('throws when Claude returns unparseable JSON', async () => {
     const productHtml = '<html><body><h1>Widget</h1></body></html>';
-    mockFetch
-      .mockResolvedValueOnce(makeHtmlResponse(productHtml))
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            content: [{ type: 'text', text: 'not json at all' }],
-          }),
-      } as unknown as Response);
+    mockFetch.mockResolvedValueOnce(makeHtmlResponse(productHtml)).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          content: [{ type: 'text', text: 'not json at all' }],
+        }),
+    } as unknown as Response);
 
     await expect(scrapeProduct('https://example.com/widget', FAKE_API_KEY)).rejects.toMatchObject({
       statusCode: 500,
@@ -127,11 +126,15 @@ describe('scrapeProduct', () => {
 
   it('throws when Claude response has no title', async () => {
     const productHtml = '<html><body></body></html>';
-    mockFetch
-      .mockResolvedValueOnce(makeHtmlResponse(productHtml))
-      .mockResolvedValueOnce(
-        makeClaudeResponse({ title: '', description: '', price: null, currency: null, imageUrl: null }),
-      );
+    mockFetch.mockResolvedValueOnce(makeHtmlResponse(productHtml)).mockResolvedValueOnce(
+      makeClaudeResponse({
+        title: '',
+        description: '',
+        price: null,
+        currency: null,
+        imageUrl: null,
+      }),
+    );
 
     await expect(scrapeProduct('https://example.com/empty', FAKE_API_KEY)).rejects.toMatchObject({
       statusCode: 500,

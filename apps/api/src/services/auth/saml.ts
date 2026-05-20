@@ -33,9 +33,9 @@ export interface SamlAttributes {
 }
 
 export interface SamlIdpConfig {
-  entityId: string;         // IdP entity ID / Issuer
-  ssoUrl: string;           // IdP SSO service URL
-  certificate: string;      // PEM or base64 DER certificate
+  entityId: string; // IdP entity ID / Issuer
+  ssoUrl: string; // IdP SSO service URL
+  certificate: string; // PEM or base64 DER certificate
   /** Attribute name for email (default: email / emailAddress) */
   emailAttribute?: string;
   /** Attribute name for display name (default: displayName / cn / name) */
@@ -45,8 +45,8 @@ export interface SamlIdpConfig {
 }
 
 export interface SamlSpConfig {
-  entityId: string;         // SP entity ID (our app's issuer URL)
-  acsUrl: string;           // Assertion Consumer Service URL
+  entityId: string; // SP entity ID (our app's issuer URL)
+  acsUrl: string; // Assertion Consumer Service URL
   /** Optional: request signing certificate/key for signed AuthnRequests */
   privateKey?: string;
 }
@@ -56,11 +56,7 @@ export interface SamlSpConfig {
 /**
  * Build a SAML 2.0 AuthnRequest XML string.
  */
-function buildAuthnRequestXml(
-  sp: SamlSpConfig,
-  idpSsoUrl: string,
-  requestId: string,
-): string {
+function buildAuthnRequestXml(sp: SamlSpConfig, idpSsoUrl: string, requestId: string): string {
   const now = new Date().toISOString();
   return [
     `<samlp:AuthnRequest`,
@@ -140,7 +136,7 @@ export function buildSpMetadataXml(sp: SamlSpConfig): string {
 
 /** Extract text content of a single XML element */
 function xmlText(xml: string, tag: string): string {
-  const m = xml.match(new RegExp(`<(?:[a-z]+:)?${tag}[^>]*>([^<]*)<\/(?:[a-z]+:)?${tag}>`, 's'));
+  const m = xml.match(new RegExp(`<(?:[a-z]+:)?${tag}[^>]*>([^<]*)</(?:[a-z]+:)?${tag}>`, 's'));
   return m?.[1]?.trim() ?? '';
 }
 
@@ -152,7 +148,7 @@ function xmlAttr(xml: string, tag: string, attr: string): string {
 
 /** Extract all elements with a tag */
 function xmlAll(xml: string, tag: string): string[] {
-  const re = new RegExp(`<(?:[a-z]+:)?${tag}[^>]*>([\\s\\S]*?)<\/(?:[a-z]+:)?${tag}>`, 'g');
+  const re = new RegExp(`<(?:[a-z]+:)?${tag}[^>]*>([\\s\\S]*?)</(?:[a-z]+:)?${tag}>`, 'g');
   const results: string[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(xml)) !== null) results.push(m[1]!.trim());
@@ -163,9 +159,7 @@ function xmlAll(xml: string, tag: string): string[] {
  * Parse SAML attributes from a single <Attribute> element block.
  */
 function parseAttribute(attrXml: string): { name: string; values: string[] } {
-  const name =
-    attrXml.match(/Name="([^"]+)"/)?.[1] ??
-    attrXml.match(/name="([^"]+)"/)?.[1] ?? '';
+  const name = attrXml.match(/Name="([^"]+)"/)?.[1] ?? attrXml.match(/name="([^"]+)"/)?.[1] ?? '';
   const values = xmlAll(attrXml, 'AttributeValue');
   return { name, values };
 }
@@ -174,13 +168,15 @@ function parseAttribute(attrXml: string): { name: string; values: string[] } {
  * Validate the <Conditions> block timing and audience.
  */
 function validateConditions(assertionXml: string, spEntityId: string): void {
-  const conditionsBlock = assertionXml.match(
-    /<(?:[a-z]+:)?Conditions[^>]*>([\s\S]*?)<\/(?:[a-z]+:)?Conditions>/i,
-  )?.[0] ?? '';
+  const conditionsBlock =
+    assertionXml.match(/<(?:[a-z]+:)?Conditions[^>]*>([\s\S]*?)<\/(?:[a-z]+:)?Conditions>/i)?.[0] ??
+    '';
 
-  const notBefore = xmlAttr(conditionsBlock, 'Conditions', 'NotBefore') ||
+  const notBefore =
+    xmlAttr(conditionsBlock, 'Conditions', 'NotBefore') ||
     conditionsBlock.match(/NotBefore="([^"]+)"/)?.[1];
-  const notOnOrAfter = xmlAttr(conditionsBlock, 'Conditions', 'NotOnOrAfter') ||
+  const notOnOrAfter =
+    xmlAttr(conditionsBlock, 'Conditions', 'NotOnOrAfter') ||
     conditionsBlock.match(/NotOnOrAfter="([^"]+)"/)?.[1];
 
   const now = Date.now();
@@ -247,9 +243,7 @@ export function verifySamlSignature(responseXml: string, certPem: string): boole
   const sigBuffer = Buffer.from(signatureValue, 'base64');
 
   // 3. Detect algorithm
-  const algoMatch = responseXml.match(
-    /<(?:ds:)?SignatureMethod[^>]*Algorithm="([^"]+)"/,
-  );
+  const algoMatch = responseXml.match(/<(?:ds:)?SignatureMethod[^>]*Algorithm="([^"]+)"/);
   const algo = algoMatch?.[1] ?? '';
   const nodeAlgo = algo.includes('sha256') ? 'RSA-SHA256' : 'RSA-SHA1';
 
@@ -288,7 +282,9 @@ export function parseSamlResponse(
   const statusCode = xmlText(xml, 'StatusCode');
   if (statusCode && !statusCode.includes('Success')) {
     const statusMessage = xmlText(xml, 'StatusMessage');
-    throw new Error(`SAML response status: ${statusCode}${statusMessage ? ` — ${statusMessage}` : ''}`);
+    throw new Error(
+      `SAML response status: ${statusCode}${statusMessage ? ` — ${statusMessage}` : ''}`,
+    );
   }
 
   // 2. Verify signature (if present)
@@ -330,7 +326,9 @@ export function parseSamlResponse(
   // 8. Resolve email from attributes or NameID
   const emailAttrNames = [
     idp.emailAttribute,
-    'email', 'emailAddress', 'mail',
+    'email',
+    'emailAddress',
+    'mail',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/email',
   ].filter(Boolean) as string[];
@@ -338,7 +336,10 @@ export function parseSamlResponse(
   let email = '';
   for (const attrName of emailAttrNames) {
     const val = rawAttributes[attrName]?.[0];
-    if (val) { email = val.toLowerCase(); break; }
+    if (val) {
+      email = val.toLowerCase();
+      break;
+    }
   }
   if (!email) email = nameId.toLowerCase();
   if (!email) throw new Error('No email could be extracted from SAML assertion');
@@ -346,7 +347,11 @@ export function parseSamlResponse(
   // 9. Resolve display name
   const nameAttrNames = [
     idp.nameAttribute,
-    'displayName', 'cn', 'name', 'givenName', 'fullName',
+    'displayName',
+    'cn',
+    'name',
+    'givenName',
+    'fullName',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/displayname',
   ].filter(Boolean) as string[];
@@ -354,20 +359,29 @@ export function parseSamlResponse(
   let displayName: string | null = null;
   for (const attrName of nameAttrNames) {
     const val = rawAttributes[attrName]?.[0];
-    if (val) { displayName = val; break; }
+    if (val) {
+      displayName = val;
+      break;
+    }
   }
 
   // 10. Resolve role
   const roleAttrNames = [
     idp.roleAttribute,
-    'role', 'roles', 'memberOf', 'groups',
+    'role',
+    'roles',
+    'memberOf',
+    'groups',
     'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
   ].filter(Boolean) as string[];
 
   let role: string | null = null;
   for (const attrName of roleAttrNames) {
     const val = rawAttributes[attrName]?.[0];
-    if (val) { role = val.toLowerCase(); break; }
+    if (val) {
+      role = val.toLowerCase();
+      break;
+    }
   }
 
   return { nameId, email, displayName, role, raw: rawAttributes };

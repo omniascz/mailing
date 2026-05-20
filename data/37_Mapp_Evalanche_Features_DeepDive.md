@@ -7,6 +7,7 @@
 > **Důležitý kontext:** Mapp a Evalanche jsou **DVĚ ODDĚLENÉ platformy**, často zmiňované společně v DACH kontextu, ale **nejsou jedna firma**:
 >
 > **Mapp Marketing Cloud:**
+>
 > - **Společnost:** Mapp Digital
 > - **Pozice:** **B2C/D2C enterprise CDP + cross-channel marketing automation**
 > - **Heritage:** vznikl z Teradata Marketing Applications, BlueHornet, Webtrekk (acquisitions)
@@ -15,6 +16,7 @@
 > - **Industries:** Retail, eCommerce, finance, travel, fashion
 >
 > **Evalanche:**
+>
 > - **Společnost:** **SC-Networks GmbH** (Starnberg, Germany)
 > - **Pozice:** **B2B marketing automation specialist**
 > - **25+ let v industry** (one z nejstarších DACH B2B martech)
@@ -31,6 +33,7 @@
 ## Obsah
 
 ### Část 1: Mapp Marketing Cloud
+
 1. [Co je Mapp a pro koho je](#1-co-je-mapp)
 2. [Mapp tarify](#2-mapp-tarify)
 3. [Mapp diferenciátory](#3-mapp-diferenciatory)
@@ -41,6 +44,7 @@
 8. [Mapp limity](#8-mapp-limity)
 
 ### Část 2: Evalanche (SC-Networks)
+
 9. [Co je Evalanche a pro koho je](#9-co-je-evalanche)
 10. [Evalanche tarify (nutzungsbasiert)](#10-evalanche-tarify)
 11. [Evalanche diferenciátory](#11-evalanche-diferenciatory)
@@ -52,6 +56,7 @@
 17. [Evalanche limity](#17-evalanche-limity)
 
 ### Část 3: Srovnání
+
 18. [Mapp vs. Evalanche head-to-head](#18-comparison)
 19. [Pro koho a proti komu](#19-pro-koho)
 
@@ -72,17 +77,18 @@
 
 ### Per oficiální (mapp.com)
 
-> *"Mapp Marketing Cloud is an enterprise platform that combines AI-powered digital analytics with cross-channel marketing automation, enabling you to collect and unify customer data from multiple touchpoints, extract actionable insights, and deliver personalized messages through email, SMS, mobile apps, and web, while seamlessly integrating with your tech stack."*
+> _"Mapp Marketing Cloud is an enterprise platform that combines AI-powered digital analytics with cross-channel marketing automation, enabling you to collect and unify customer data from multiple touchpoints, extract actionable insights, and deliver personalized messages through email, SMS, mobile apps, and web, while seamlessly integrating with your tech stack."_
 
 ### Per G2
 
-> *"Marketing professionals from CMOs to Email Marketing Specialists at B2C & D2C mid-market and enterprise companies."*
+> _"Marketing professionals from CMOs to Email Marketing Specialists at B2C & D2C mid-market and enterprise companies."_
 
 ### Per oficiální positioning
 
-> *"Mapp helps marketers build personalized customer experiences through our SaaS platform, Mapp Marketing Cloud."*
+> _"Mapp helps marketers build personalized customer experiences through our SaaS platform, Mapp Marketing Cloud."_
 
 **Key value propositions:**
+
 - **Unify customer data** from various sources (websites, eCommerce, loyalty platforms, CRMs, mobile apps)
 - **Build customer profiles** s compliant first-party data collection
 - **Convert data into actionable insights** around socio-demographic, behavior, preferences
@@ -147,6 +153,7 @@
 ### 2.1 Custom enterprise pricing
 
 ⚠️ Mapp neoznamuje **public pricing** – sales-driven:
+
 - **Mid-market + enterprise** focus
 - **Custom quote** per klient
 - **Annual contracts** typical
@@ -199,9 +206,11 @@
 ### 3.1 European heritage + GDPR
 
 Per FitGap:
-> *"Mapp's European heritage and infrastructure provide built-in GDPR compliance and data residency options that appeal to organizations with strict privacy requirements."*
+
+> _"Mapp's European heritage and infrastructure provide built-in GDPR compliance and data residency options that appeal to organizations with strict privacy requirements."_
 
 **Klíčové:**
+
 - **European-rooted** (vs. US competitors)
 - **GDPR-native compliance**
 - **Data residency options** v EU
@@ -211,9 +220,11 @@ Per FitGap:
 ### 3.2 Combined CDP + Marketing Automation
 
 Per FitGap:
-> *"Mapp combines customer data platform functionality with marketing automation in a unified system, eliminating the need for separate tools to collect data and execute campaigns."*
+
+> _"Mapp combines customer data platform functionality with marketing automation in a unified system, eliminating the need for separate tools to collect data and execute campaigns."_
 
 **Unified system:**
+
 - **CDP + automation v one platform**
 - **No separate tools needed**
 - **Simpler tech stack**
@@ -222,9 +233,11 @@ Per FitGap:
 ### 3.3 AI-powered insights
 
 Per FitGap:
-> *"The platform incorporates artificial intelligence and machine learning to deliver predictive insights such as churn probability, next-best-action recommendations, and customer lifetime value forecasting."*
+
+> _"The platform incorporates artificial intelligence and machine learning to deliver predictive insights such as churn probability, next-best-action recommendations, and customer lifetime value forecasting."_
 
 **AI capabilities:**
+
 - **Churn probability** prediction
 - **Next-best-action** recommendations
 - **Customer Lifetime Value** forecasting
@@ -234,9 +247,11 @@ Per FitGap:
 ### 3.4 B2C/D2C focus
 
 Per G2:
-> *"Marketing professionals from CMOs to Email Marketing Specialists at B2C & D2C mid-market and enterprise companies."*
+
+> _"Marketing professionals from CMOs to Email Marketing Specialists at B2C & D2C mid-market and enterprise companies."_
 
 **Specifically B2C/D2C:**
+
 - **Vs. Evalanche** B2B focus
 - **Consumer marketing** patterns
 - **High-volume** transactional + marketing
@@ -259,9 +274,11 @@ Per G2:
 ### 4.1 CDP capabilities
 
 Per oficiální:
-> *"Unify customer data from various sources like websites, eCommerce, loyalty platforms, CRMs, and mobile apps, build customer profiles, and enrich these with compliant first-party data collection."*
+
+> _"Unify customer data from various sources like websites, eCommerce, loyalty platforms, CRMs, and mobile apps, build customer profiles, and enrich these with compliant first-party data collection."_
 
 **Customer Data Platform:**
+
 - **Centralized profile management**
 - **Multiple data sources** unified
 - **Real-time updates**
@@ -281,9 +298,11 @@ Per oficiální:
 ### 4.3 Profile enrichment
 
 Per oficiální:
-> *"Convert data into actionable insights around each customer's socio-demographic, behavior, and preferences"*
+
+> _"Convert data into actionable insights around each customer's socio-demographic, behavior, and preferences"_
 
 **Profile dimensions:**
+
 - **Socio-demographic** data
 - **Behavioral** patterns
 - **Transactional** history
@@ -305,7 +324,8 @@ Per oficiální:
 ### 5.1 AI-powered Digital Analytics
 
 Per oficiální:
-> *"Our intelligent analytics engine transforms raw data into clear answers, revealing the story behind every customer interaction. By analyzing millions of touchpoints across your digital channels, we pinpoint exactly where to focus your marketing investments."*
+
+> _"Our intelligent analytics engine transforms raw data into clear answers, revealing the story behind every customer interaction. By analyzing millions of touchpoints across your digital channels, we pinpoint exactly where to focus your marketing investments."_
 
 ### 5.2 Predictive capabilities
 
@@ -337,11 +357,13 @@ Per oficiální:
 ### 6.1 Cross-channel capabilities
 
 Per oficiální:
-> *"Mapp Marketing Cloud helps you reach the right audience through email, SMS, mobile push, in-app messages, web push notifications, website banners and overlays…from one single platform."*
+
+> _"Mapp Marketing Cloud helps you reach the right audience through email, SMS, mobile push, in-app messages, web push notifications, website banners and overlays…from one single platform."_
 
 ### 6.2 Channels
 
 #### Email Marketing
+
 - Drag-drop editor
 - Dynamic content
 - A/B testing
@@ -350,28 +372,33 @@ Per oficiální:
 - Personalization
 
 #### SMS
+
 - Bulk campaigns
 - Triggered SMS
 - Personalization
 - Link tracking
 
 #### Mobile Push (iOS + Android)
+
 - App connectivity
 - Personalized notifications
 - Location-based targeting
 - Rich media support
 
 #### Web Push
+
 - Browser notifications
 - Subscribed users
 - Cross-device
 
 #### In-App Messages
+
 - Within mobile app
 - Triggered by behavior
 - Rich content
 
 #### Website Banners + Overlays
+
 - On-site personalization
 - Behavioral triggers
 - Audience-specific content
@@ -398,56 +425,69 @@ Per oficiální:
 ### 7.1 Integration ecosystem
 
 Per SourceForge:
-> *"Mapp Marketing Cloud integrates with: Infobip, Flutter, Google Tag Manager, Kameleoon, Playable, Lytics, Magento, Mitto SMS, Nosto, optilyz, Data Virtuality, VWO Engage, Everest, Segment, Shopify, Shopware, Sinch, Trustpilot, Usercentrics, WordPress, and Zapier."*
+
+> _"Mapp Marketing Cloud integrates with: Infobip, Flutter, Google Tag Manager, Kameleoon, Playable, Lytics, Magento, Mitto SMS, Nosto, optilyz, Data Virtuality, VWO Engage, Everest, Segment, Shopify, Shopware, Sinch, Trustpilot, Usercentrics, WordPress, and Zapier."_
 
 ### 7.2 Categories
 
 #### E-commerce
+
 - **Shopify**
 - **Magento**
 - **Shopware** (DACH e-commerce)
 
 #### SMS
+
 - **Infobip**
 - **Mitto SMS**
 - **Sinch**
 
 #### Marketing tools
+
 - **Google Tag Manager**
 - **Segment** (data integration)
 - **Lytics**
 - **Nosto** (recommendations)
 
 #### Testing
+
 - **Kameleoon** (A/B testing)
 - **VWO Engage**
 
 #### Analytics
+
 - **Data Virtuality**
 - **Everest**
 
 #### Print
+
 - **optilyz** (print marketing)
 
 #### CMS
+
 - **WordPress**
 
 #### Consent
+
 - **Usercentrics** (GDPR)
 
 #### Reviews
+
 - **Trustpilot**
 
 #### iPaaS
+
 - **Zapier**
 
 #### Loyalty / Engagement
+
 - **Playable**
 
 ### 7.3 API + Flexible framework
 
 Per oficiální:
-> *"Mapp Marketing Cloud's flexible integration framework enables connectivity with different third-party systems, like CRM, eCommerce, and loyalty platforms, leveraging a combination of APIs, data exchanges, and tailored solutions to meet diverse business needs."*
+
+> _"Mapp Marketing Cloud's flexible integration framework enables connectivity with different third-party systems, like CRM, eCommerce, and loyalty platforms, leveraging a combination of APIs, data exchanges, and tailored solutions to meet diverse business needs."_
 
 - **REST API**
 - **Webhooks**
@@ -456,7 +496,7 @@ Per oficiální:
 
 ### 7.4 Limitation per FitGap
 
-> *"The platform offers fewer pre-built connectors and integrations compared to market leaders like HubSpot or Salesforce Marketing Cloud that have extensive app marketplaces. Organizations with complex technology stacks may need to invest in custom API development to connect Mapp with specialized tools."*
+> _"The platform offers fewer pre-built connectors and integrations compared to market leaders like HubSpot or Salesforce Marketing Cloud that have extensive app marketplaces. Organizations with complex technology stacks may need to invest in custom API development to connect Mapp with specialized tools."_
 
 ⚠️ Fewer pre-built integrations vs. HubSpot / Salesforce.
 
@@ -467,7 +507,8 @@ Per oficiální:
 ### 8.1 Less market awareness
 
 Per FitGap:
-> *"Mapp has significantly lower market awareness compared to established platforms like HubSpot, Adobe Marketo Engage, or Salesforce Marketing Cloud, particularly in North American markets."*
+
+> _"Mapp has significantly lower market awareness compared to established platforms like HubSpot, Adobe Marketo Engage, or Salesforce Marketing Cloud, particularly in North American markets."_
 
 - **Limited brand recognition** outside Europe
 - **Executive buy-in** harder
@@ -483,28 +524,32 @@ Per FitGap:
 ### 8.3 Less granular segmentation
 
 Per Research.com:
-> *"Segmentation features are less granular compared to similar platforms."*
+
+> _"Segmentation features are less granular compared to similar platforms."_
 
 ⚠️ Limited vs. competitors.
 
 ### 8.4 Manual data import/export
 
 Per Research.com:
-> *"Data import/export requires manual steps, complicating management processes."*
+
+> _"Data import/export requires manual steps, complicating management processes."_
 
 ⚠️ Some manual workflows needed.
 
 ### 8.5 Complexity
 
 Per G2:
-> *"Mapp Cloud is a comprehensive marketing automation platform with many features and capabilities, which may require some time and effort to fully understand and utilize effectively."*
+
+> _"Mapp Cloud is a comprehensive marketing automation platform with many features and capabilities, which may require some time and effort to fully understand and utilize effectively."_
 
 ⚠️ Learning curve.
 
 ### 8.6 Higher cost
 
 Per G2:
-> *"Mapp Cloud is a premium product, and its pricing may be higher than some other marketing automation tools."*
+
+> _"Mapp Cloud is a premium product, and its pricing may be higher than some other marketing automation tools."_
 
 - **Not for small businesses**
 - **Premium positioning**
@@ -512,23 +557,26 @@ Per G2:
 ### 8.7 Email tool needs improvement
 
 Per Capterra real customer review:
-> *"Good, but could be better, especially regarding the email marketing tool."*
 
-> *"The email marketing/HTML creator has some bugs and won't interpret code correctly sometimes. The templates not usually work in a responsive manner, so sometimes you have to manually tweak it so it works on every type of screen and email provider."*
+> _"Good, but could be better, especially regarding the email marketing tool."_
+
+> _"The email marketing/HTML creator has some bugs and won't interpret code correctly sometimes. The templates not usually work in a responsive manner, so sometimes you have to manually tweak it so it works on every type of screen and email provider."_
 
 ⚠️ Email tool has bugs, templates not always responsive.
 
 ### 8.8 Customer support challenges
 
 Per G2:
-> *"Some users have reported challenges with Mapp Cloud's customer support, including difficulty getting prompt and effective assistance with technical issues."*
+
+> _"Some users have reported challenges with Mapp Cloud's customer support, including difficulty getting prompt and effective assistance with technical issues."_
 
 ⚠️ Support quality varies.
 
 ### 8.9 Integration challenges
 
 Per G2:
-> *"While Mapp Cloud integrates with many data sources and platforms, integrating with certain systems may require custom development or additional resources."*
+
+> _"While Mapp Cloud integrates with many data sources and platforms, integrating with certain systems may require custom development or additional resources."_
 
 ### 8.10 Limited UI languages
 
@@ -552,18 +600,18 @@ Per G2:
 - **HQ:** **Starnberg, Německo** (Bavaria, near München)
 - **Vznik:** SC-Networks founded; **25+ let v industry** (per oficiální)
 - **Pozice:** **B2B marketing automation specialist**
-- **Per oficiální:** *"the first TÜV-certified High-End System Evalanche"*
+- **Per oficiální:** _"the first TÜV-certified High-End System Evalanche"_
 - **Specializace:** **Mid-market + enterprise B2B**
-- **Per LinkedIn:** *"Hersteller der Marketing Automation Plattform Evalanche"*
+- **Per LinkedIn:** _"Hersteller der Marketing Automation Plattform Evalanche"_
 - **Pricing:** **Nutzungsbasiert** (usage-based)
 - **Servers:** **EXCLUSIVELY v Germany**
 - **Certifikace:** **ISO 27001 TÜV-zertifiziert**
 - **Customer count:** **1,500+ companies** (per historical 2013 data, likely higher v 2026)
-- **Per Business.digital:** *"Mehrere tausend Unternehmen im DACH-Raum setzen Evalanche ein"*
+- **Per Business.digital:** _"Mehrere tausend Unternehmen im DACH-Raum setzen Evalanche ein"_
 
 ### Per oficiální (SC-Networks LinkedIn)
 
-> *"Die SC-Networks GmbH mit Sitz in Starnberg ist Hersteller der Marketing Automation Plattform Evalanche. Die Software kommt bei einer Vielzahl von Unternehmen und Agenturen erfolgreich zum Einsatz, um Marketing- und Vertriebsprozesse zu digitalisieren und zu automatisieren."*
+> _"Die SC-Networks GmbH mit Sitz in Starnberg ist Hersteller der Marketing Automation Plattform Evalanche. Die Software kommt bei einer Vielzahl von Unternehmen und Agenturen erfolgreich zum Einsatz, um Marketing- und Vertriebsprozesse zu digitalisieren und zu automatisieren."_
 
 ### Klíčové facts
 
@@ -577,11 +625,12 @@ Per G2:
 
 ### Per Business.digital (Mar 2026)
 
-> *"Evalanche ist die erste Wahl für DSGVO-bewusste Unternehmen im DACH-Raum, die Marketing Automation als Best-of-Breed-Lösung in ihre bestehende Systemlandschaft integrieren wollen. Über 25 Jahre Erfahrung und tausende Kunden sprechen für die Plattform."*
+> _"Evalanche ist die erste Wahl für DSGVO-bewusste Unternehmen im DACH-Raum, die Marketing Automation als Best-of-Breed-Lösung in ihre bestehende Systemlandschaft integrieren wollen. Über 25 Jahre Erfahrung und tausende Kunden sprechen für die Plattform."_
 
 ### Reference customers
 
 Per oficiální + LinkedIn:
+
 - **Schunk** (Lead Management pro 34 dceřinné společnosti)
 - **Autohaus-Gruppe Kunzmann**
 - **Payone**
@@ -659,9 +708,11 @@ Per oficiální + LinkedIn:
 ### 10.1 Usage-based pricing
 
 Per Business.digital:
-> *"Nutzungsbasierte Tarife, die mit dem tatsächlichen Einsatz skalieren. PowerSets bieten vorkonfigurierte Lösungen für schnelleren Start. Preise auf Anfrage."*
+
+> _"Nutzungsbasierte Tarife, die mit dem tatsächlichen Einsatz skalieren. PowerSets bieten vorkonfigurierte Lösungen für schnelleren Start. Preise auf Anfrage."_
 
 **Pricing model:**
+
 - **Usage-based** (nutzungsbasiert)
 - **Scales s actual usage**
 - **PowerSets** pre-configured solutions
@@ -681,9 +732,11 @@ Per Business.digital:
 ### 10.3 PowerSets concept
 
 Per oficiální:
-> *"Mit den Evalanche PowerSets startest Du schneller in die Marketing Automation. Unsere PowerSets basieren auf jahrelanger Erfahrung und Best Practices für E-Mails, Landingpages und Kampagnen."*
+
+> _"Mit den Evalanche PowerSets startest Du schneller in die Marketing Automation. Unsere PowerSets basieren auf jahrelanger Erfahrung und Best Practices für E-Mails, Landingpages und Kampagnen."_
 
 **PowerSets =:**
+
 - **Pre-configured solutions**
 - **Based on best practices**
 - **For emails, landing pages, campaigns**
@@ -705,7 +758,8 @@ Per oficiální:
 ### 11.1 25+ years experience
 
 Per oficiální + Business.digital:
-> *"Über 25 Jahre Erfahrung und tausende Kunden im DACH-Raum"*
+
+> _"Über 25 Jahre Erfahrung und tausende Kunden im DACH-Raum"_
 
 - **25+ let v B2B marketing automation**
 - **Among earliest** DACH B2B martech platforms
@@ -715,21 +769,25 @@ Per oficiální + Business.digital:
 ### 11.2 Best-of-Breed approach
 
 Per Business.digital:
-> *"Best-of-Breed-Ansatz integriert sich in bestehende Systeme statt sie zu ersetzen."*
+
+> _"Best-of-Breed-Ansatz integriert sich in bestehende Systeme statt sie zu ersetzen."_
 
 **Philosophy:**
+
 - **Integrates s existing systems** (CRM)
 - **Doesn't replace** monolithic suites
 - **Specialized marketing tool**
 - **Complements CRM, not replaces**
 
 Per FlyMint:
-> *"Echte, offene Plattform als 'Best of Breed' durch API-Schnittstellen"*
+
+> _"Echte, offene Plattform als 'Best of Breed' durch API-Schnittstellen"_
 
 ### 11.3 Made in Germany + ISO 27001
 
 Per oficiální:
-> *"Die Plattform wird ausschließlich in deutschen Rechenzentren gehosted, die – wie SC-Networks – nach ISO 27001 TÜV-zertifiziert sind."*
+
+> _"Die Plattform wird ausschließlich in deutschen Rechenzentren gehosted, die – wie SC-Networks – nach ISO 27001 TÜV-zertifiziert sind."_
 
 - **Servers exclusively v Germany**
 - **ISO 27001 TÜV-certified** (SC-Networks GmbH + data centers)
@@ -740,9 +798,11 @@ Per oficiální:
 ### 11.4 World's first TÜV-certified email tool
 
 Per email-marketing-forum.de:
-> *"Der TÜV SÜD hat die Software als weltweit erste eMail-Marketing-Lösung in den Bereichen Funktionalität und Datensicherheit zertifiziert."*
+
+> _"Der TÜV SÜD hat die Software als weltweit erste eMail-Marketing-Lösung in den Bereichen Funktionalität und Datensicherheit zertifiziert."_
 
 **UNIKÁTNÍ historical positioning:**
+
 - **World's first** TÜV SÜD certified email marketing solution
 - **Functionality + Data Security** both certified
 - **Industry standard-setter**
@@ -750,14 +810,17 @@ Per email-marketing-forum.de:
 ### 11.5 TOP100 innovative German Mittelstand 2012
 
 Per email-marketing-forum.de:
-> *"2012 wurde das Unternehmen im Rahmen des TOP100 Wettbewerbs zu den innovativsten Mittelständlern Deutschlands gewählt."*
+
+> _"2012 wurde das Unternehmen im Rahmen des TOP100 Wettbewerbs zu den innovativsten Mittelständlern Deutschlands gewählt."_
 
 ### 11.6 Multi-tenant architecture
 
 Per oficiální:
-> *"Multi-Tenant ermöglicht separate Kampagnen für drei Produktmarken"*
+
+> _"Multi-Tenant ermöglicht separate Kampagnen für drei Produktmarken"_
 
 **Multi-tenant capabilities:**
+
 - **Multi-brand support**
 - **Multi-unit organizations**
 - **Subsidiary management** (e.g., Schunk: 34 dceřiné společnosti)
@@ -766,9 +829,11 @@ Per oficiální:
 ### 11.7 Multivariate Scoring
 
 Per FlyMint:
-> *"Umfangreiche Auswertungen, multivariates Scoring und integrierte Buyer Personas geben euch ein Toolset, das in dieser Form selten ist."*
+
+> _"Umfangreiche Auswertungen, multivariates Scoring und integrierte Buyer Personas geben euch ein Toolset, das in dieser Form selten ist."_
 
 **UNIKÁTNÍ B2B capability:**
+
 - **Multivariate scoring** (multiple criteria)
 - **Buyer Personas integrated**
 - **Profile + behavior + demographics**
@@ -777,9 +842,11 @@ Per FlyMint:
 ### 11.8 Print marketing integration
 
 Per FlyMint:
-> *"Gerade in Branchen, in denen Fax oder Brief weiterhin wichtige Kommunikationskanäle sind (z. B. Handwerk, Apotheken), hat Evalanche die passende Marketing-Power an Bord."*
+
+> _"Gerade in Branchen, in denen Fax oder Brief weiterhin wichtige Kommunikationskanäle sind (z. B. Handwerk, Apotheken), hat Evalanche die passende Marketing-Power an Bord."_
 
 **Analog channel support:**
+
 - **Fax** (still relevant DACH B2B!)
 - **Letters / direct mail**
 - **Combine s digital**
@@ -788,7 +855,8 @@ Per FlyMint:
 ### 11.9 SAP CRM native integration
 
 Per Business.digital example:
-> *"Ein B2B-Maschinenbauer mit SAP CRM will Lead Management digitalisieren. Mit Evalanche: Landing Pages für Whitepaper-Downloads. ... Scoring identifiziert kaufbereite Leads und übergibt sie ans SAP CRM."*
+
+> _"Ein B2B-Maschinenbauer mit SAP CRM will Lead Management digitalisieren. Mit Evalanche: Landing Pages für Whitepaper-Downloads. ... Scoring identifiziert kaufbereite Leads und übergibt sie ans SAP CRM."_
 
 - **SAP CRM native** integration
 - **B2B Maschinenbau** strong fit
@@ -797,9 +865,11 @@ Per Business.digital example:
 ### 11.10 DACH industry expertise
 
 Per Business.digital:
-> *"Best-of-Breed-Ansatz integriert sich in bestehende Systeme statt sie zu ersetzen"*
+
+> _"Best-of-Breed-Ansatz integriert sich in bestehende Systeme statt sie zu ersetzen"_
 
 **DACH industries:**
+
 - **Maschinenbau** (mechanical engineering)
 - **Elektrotechnik**
 - **Chemie**
@@ -815,12 +885,15 @@ Per Business.digital:
 ### 12.1 Visual campaign builder
 
 Per FlyMint:
-> *"Visueller Kampagnen-Designer (keine Programmierkenntnisse notwendig)"*
+
+> _"Visueller Kampagnen-Designer (keine Programmierkenntnisse notwendig)"_
 
 Per Business.digital:
-> *"Der Campaign Designer orchestriert Multichannel-Kampagnen visuell."*
+
+> _"Der Campaign Designer orchestriert Multichannel-Kampagnen visuell."_
 
 **No-code approach:**
+
 - **Visual drag-drop builder**
 - **No programming required**
 - **Click-to-assemble**
@@ -840,7 +913,8 @@ Visual Campaign Designer:
 ### 12.3 Persona-based campaigns
 
 Per oficiální V7 update:
-> *"The persona token checks whether a profile corresponds to your defined persona. On the basis of this knowledge, new points can be defined in the campaign."*
+
+> _"The persona token checks whether a profile corresponds to your defined persona. On the basis of this knowledge, new points can be defined in the campaign."_
 
 - **Persona tokens** check buyer persona match
 - **Campaign branches** by persona
@@ -849,7 +923,8 @@ Per oficiální V7 update:
 ### 12.4 Geo-location targeting
 
 Per oficiální V7:
-> *"Boost your event marketing with highly selective content for a designated geo location."*
+
+> _"Boost your event marketing with highly selective content for a designated geo location."_
 
 - **Geographic targeting**
 - **Event marketing**
@@ -858,7 +933,8 @@ Per oficiální V7:
 ### 12.5 Form-triggered campaigns
 
 Per V7:
-> *"You can now easily define that a campaign is started automatically after the completed form has been submitted."*
+
+> _"You can now easily define that a campaign is started automatically after the completed form has been submitted."_
 
 - **Form submission → campaign start**
 - **Dynamic profile entry**
@@ -867,7 +943,8 @@ Per V7:
 ### 12.6 Dynamic campaign entry
 
 Per V7:
-> *"In the future, you will no longer necessarily have to import a target group if you want to start a campaign. This is because the profiles start the campaign dynamically as soon as they correspond to one of your predefined definitions."*
+
+> _"In the future, you will no longer necessarily have to import a target group if you want to start a campaign. This is because the profiles start the campaign dynamically as soon as they correspond to one of your predefined definitions."_
 
 - **Dynamic profile inclusion**
 - **No manual import needed**
@@ -877,7 +954,8 @@ Per V7:
 ### 12.7 Modular campaigns
 
 Per V7:
-> *"For particularly extensive or varied campaigns, you have the option of copying profiles from one campaign to another from Q1 2018 onwards. In this way, you can easily modularize complex scenarios and integrate them into one or more additional campaigns."*
+
+> _"For particularly extensive or varied campaigns, you have the option of copying profiles from one campaign to another from Q1 2018 onwards. In this way, you can easily modularize complex scenarios and integrate them into one or more additional campaigns."_
 
 - **Profile cross-campaign movement**
 - **Complex scenario modularization**
@@ -890,9 +968,11 @@ Per V7:
 ### 13.1 Lead Management capabilities
 
 Per oficiální:
-> *"Mit Evalanche Lead Management automatisierst Du jeden Schritt im Verkaufsprozess: von der Lead-Generierung bis hin zur Übergabe an den Vertrieb."*
+
+> _"Mit Evalanche Lead Management automatisierst Du jeden Schritt im Verkaufsprozess: von der Lead-Generierung bis hin zur Übergabe an den Vertrieb."_
 
 **End-to-end lead management:**
+
 - **Lead Generation**
 - **Lead Capturing**
 - **Lead Scoring** (multivariate)
@@ -911,7 +991,8 @@ Per oficiální:
 ### 13.3 Progressive Profiling
 
 Per FlyMint:
-> *"Progressive Profiling"*
+
+> _"Progressive Profiling"_
 
 - **Incremental data collection**
 - **Each interaction adds info**
@@ -922,9 +1003,11 @@ Per FlyMint:
 ### 13.4 Scoring (multivariate)
 
 Per FlyMint:
-> *"multivariates Scoring und integrierte Buyer Personas"*
+
+> _"multivariates Scoring und integrierte Buyer Personas"_
 
 **Multi-criteria scoring:**
+
 - **Behavioral score** (email opens, clicks, page views)
 - **Profile score** (job title, company size, industry)
 - **Engagement score** (frequency, recency)
@@ -955,7 +1038,8 @@ Sales takes over
 ### 13.7 Nurturing-Strecken (Nurturing paths)
 
 Per FlyMint:
-> *"Mit Evalanche baut ihr Inbound-Marketing-Strecken auf, in denen potenzielle Neukunden oder Wiederkäufer nicht nur identifiziert und 'eingefangen' werden (Lead Capturing), sondern über Nurturing-Strecken automatisch qualifiziert werden."*
+
+> _"Mit Evalanche baut ihr Inbound-Marketing-Strecken auf, in denen potenzielle Neukunden oder Wiederkäufer nicht nur identifiziert und 'eingefangen' werden (Lead Capturing), sondern über Nurturing-Strecken automatisch qualifiziert werden."_
 
 - **Inbound marketing focus**
 - **Multi-step nurturing**
@@ -969,9 +1053,11 @@ Per FlyMint:
 ### 14.1 PowerSets concept
 
 Per oficiální:
-> *"Mit den Evalanche PowerSets startest Du schneller in die Marketing Automation. Unsere PowerSets basieren auf jahrelanger Erfahrung und Best Practices für E-Mails, Landingpages und Kampagnen. Sie basieren auf einem leistungsstarken Design System. Die vorkonfigurierten Module sind speziell entwickelt, um Deine Prozesse zu beschleunigen."*
+
+> _"Mit den Evalanche PowerSets startest Du schneller in die Marketing Automation. Unsere PowerSets basieren auf jahrelanger Erfahrung und Best Practices für E-Mails, Landingpages und Kampagnen. Sie basieren auf einem leistungsstarken Design System. Die vorkonfigurierten Module sind speziell entwickelt, um Deine Prozesse zu beschleunigen."_
 
 **PowerSets =:**
+
 - **Pre-configured modules**
 - **Based on best practices** (25+ years!)
 - **For:** Emails, Landing Pages, Campaigns
@@ -999,7 +1085,8 @@ With PowerSets:
 ### 14.3 AI-supported content
 
 Per oficiální:
-> *"Und mithilfe Künstlicher Intelligenz (KI/AI) erstellst und optimierst Du Deine Inhalte im Handumdrehen."*
+
+> _"Und mithilfe Künstlicher Intelligenz (KI/AI) erstellst und optimierst Du Deine Inhalte im Handumdrehen."_
 
 - **AI assists content creation**
 - **Optimization suggestions**
@@ -1012,9 +1099,11 @@ Per oficiální:
 ### 15.1 Best-of-Breed strategy
 
 Per oficiální:
-> *"Sie kombiniert je nach Bedarf vorhandene Systeme mit der Evalanche Marketing Automation und weiteren spezialisierten Partnerlösungen als Add-ons – im Sinne der Best-of-Breed-Strategie."*
+
+> _"Sie kombiniert je nach Bedarf vorhandene Systeme mit der Evalanche Marketing Automation und weiteren spezialisierten Partnerlösungen als Add-ons – im Sinne der Best-of-Breed-Strategie."_
 
 **Integrates s existing landscape:**
+
 - **CRM (any)**
 - **ERP**
 - **E-commerce**
@@ -1024,6 +1113,7 @@ Per oficiální:
 ### 15.2 CRM integrations
 
 Per LinkedIn (Jauch Quartz example):
+
 - **itmX CRM** (itmX GmbH)
 - **SAP CRM** (native)
 - **Salesforce**
@@ -1033,7 +1123,8 @@ Per LinkedIn (Jauch Quartz example):
 ### 15.3 Adapter hub
 
 Per oficiální V7:
-> *"With the adapter hub of our partner Marini Systems you have the possibility to configure connections of Evalanche to third-party systems independently from 2018."*
+
+> _"With the adapter hub of our partner Marini Systems you have the possibility to configure connections of Evalanche to third-party systems independently from 2018."_
 
 - **Marini Systems adapter hub**
 - **Self-service integrations**
@@ -1043,7 +1134,8 @@ Per oficiální V7:
 ### 15.4 Address verification
 
 Per V7:
-> *"With the automatic address correction for form entries, our partner Uniserv offers you an automatic correction in case of errors in the address data."*
+
+> _"With the automatic address correction for form entries, our partner Uniserv offers you an automatic correction in case of errors in the address data."_
 
 - **Uniserv partnership**
 - **Auto-correct addresses**
@@ -1052,7 +1144,8 @@ Per V7:
 ### 15.5 Multi-variant templates pro agencies
 
 Per V7:
-> *"In cooperation with nextage we now offer agencies a configuration set for multi-variant, multilingual template scenarios. This makes it easy to create individual newsletters and emailing templates for your customers."*
+
+> _"In cooperation with nextage we now offer agencies a configuration set for multi-variant, multilingual template scenarios. This makes it easy to create individual newsletters and emailing templates for your customers."_
 
 - **Nextage partnership**
 - **Agency-friendly**
@@ -1062,7 +1155,8 @@ Per V7:
 ### 15.6 SOAP API + REST API
 
 Per V7:
-> *"In Evalanche V7, we have carried out numerous modernizations and additions to the SOAP interfaces"*
+
+> _"In Evalanche V7, we have carried out numerous modernizations and additions to the SOAP interfaces"_
 
 - **SOAP interfaces** (legacy enterprise)
 - **REST API** modern
@@ -1072,6 +1166,7 @@ Per V7:
 ### 15.7 Integration examples
 
 Per LinkedIn:
+
 - **Jauch Quartz** (electrotechnical) → itmX CRM + Evalanche
 - **Schunk** → 34 subsidiaries lead management
 - **Autohaus-Gruppe Kunzmann** → automotive customer communication
@@ -1084,7 +1179,8 @@ Per LinkedIn:
 ### 16.1 ISO 27001 TÜV-certified
 
 Per oficiální:
-> *"One of the main features of SC-Networks - producer of the marketing automation platform Evalanche - is its excellent data protection and certified data security TÜV Hessen according to ISO 27001. These award is very important to us, which is why we recertify annually through new audits."*
+
+> _"One of the main features of SC-Networks - producer of the marketing automation platform Evalanche - is its excellent data protection and certified data security TÜV Hessen according to ISO 27001. These award is very important to us, which is why we recertify annually through new audits."_
 
 - **ISO 27001** certified
 - **TÜV Hessen** auditor
@@ -1094,7 +1190,8 @@ Per oficiální:
 ### 16.2 Made in Germany
 
 Per oficiální:
-> *"Die Plattform wird ausschließlich in deutschen Rechenzentren gehosted"*
+
+> _"Die Plattform wird ausschließlich in deutschen Rechenzentren gehosted"_
 
 - **German data centers EXCLUSIVELY**
 - **No EU general** – Germany specifically
@@ -1104,7 +1201,8 @@ Per oficiální:
 ### 16.3 DSGVO native
 
 Per Business.digital:
-> *"Alles DSGVO-konform auf deutschen Servern."*
+
+> _"Alles DSGVO-konform auf deutschen Servern."_
 
 - **DSGVO native compliance**
 - **Built-in from start**
@@ -1114,7 +1212,8 @@ Per Business.digital:
 ### 16.4 EU legal requirements focus
 
 Per oficiální V7:
-> *"Evalanche V7 is built and optimized to fully comply with EU legal and data protection requirements with a special focus on the requirements of the DACH region."*
+
+> _"Evalanche V7 is built and optimized to fully comply with EU legal and data protection requirements with a special focus on the requirements of the DACH region."_
 
 - **DACH legal requirements** focus
 - **Optimized pro DACH compliance**
@@ -1122,7 +1221,8 @@ Per oficiální V7:
 ### 16.5 World's first TÜV SÜD certified
 
 Per email-marketing-forum.de:
-> *"Der TÜV SÜD hat die Software als weltweit erste eMail-Marketing-Lösung in den Bereichen Funktionalität und Datensicherheit zertifiziert."*
+
+> _"Der TÜV SÜD hat die Software als weltweit erste eMail-Marketing-Lösung in den Bereichen Funktionalität und Datensicherheit zertifiziert."_
 
 - **TÜV SÜD certified** (functionality + data security)
 - **World's first** email marketing solution s této certifikací
@@ -1134,9 +1234,11 @@ Per email-marketing-forum.de:
 ### 17.1 Less SMB-friendly
 
 Per Business.digital:
-> *"Für KMU gibt es zugänglichere Alternativen."*
+
+> _"Für KMU gibt es zugänglichere Alternativen."_
 
 ⚠️ **Not for small businesses**:
+
 - **Mid-market + enterprise** focus
 - **Higher pricing**
 - **Implementation effort**
@@ -1145,28 +1247,32 @@ Per Business.digital:
 ### 17.2 Steep learning curve
 
 Per OMR Reviews:
-> *"some note that the interface can feel outdated, and the initial learning curve can be steep due to its complexity."*
+
+> _"some note that the interface can feel outdated, and the initial learning curve can be steep due to its complexity."_
 
 ⚠️ **Complex** vs. SMB tools.
 
 ### 17.3 Higher pricing
 
 Per OMR Reviews:
-> *"the pricing may be high for smaller businesses"*
+
+> _"the pricing may be high for smaller businesses"_
 
 ⚠️ Not for small budgets.
 
 ### 17.4 Outdated interface feel
 
 Per OMR Reviews:
-> *"the interface can feel outdated"*
+
+> _"the interface can feel outdated"_
 
 ⚠️ UI modernization needs work despite V7 updates.
 
 ### 17.5 Reporting could be improved
 
 Per OMR Reviews:
-> *"certain features, like reporting and integrations, could be improved"*
+
+> _"certain features, like reporting and integrations, could be improved"_
 
 ⚠️ Reporting less polished than market leaders.
 
@@ -1186,7 +1292,8 @@ Per OMR Reviews:
 ### 17.8 Per FlyMint positioning
 
 Per FlyMint:
-> *"Gerade im B2B und für Multi-Produkt-Unternehmen ist Evalanche für euch nicht nur eine Option – sondern der 'Hidden Champion' unter den Marketing-Automation-Tools."*
+
+> _"Gerade im B2B und für Multi-Produkt-Unternehmen ist Evalanche für euch nicht nur eine Option – sondern der 'Hidden Champion' unter den Marketing-Automation-Tools."_
 
 - **"Hidden Champion"** = known v industry, not mainstream
 - **Pro B2B + multi-product** companies
@@ -1200,24 +1307,24 @@ Per FlyMint:
 
 ### 18.1 Core differences
 
-| Aspect | Mapp Marketing Cloud | Evalanche |
-|---|---|---|
-| **Společnost** | Mapp Digital | SC-Networks GmbH |
-| **HQ** | San Diego (US) + EU offices | Starnberg, Germany |
-| **Heritage** | Teradata, BlueHornet, Webtrekk | 25+ let SC-Networks |
-| **Target** | **B2C / D2C** mid-market + enterprise | **B2B** mid-market + enterprise |
-| **Industry focus** | Retail, e-commerce, finance, travel, fashion | Maschinenbau, IT, Apotheken, Handwerk, B2B |
-| **Servers** | EU options | **EXCLUSIVELY Germany** |
-| **Pricing** | Custom enterprise | Nutzungsbasiert + PowerSets |
-| **UI Languages** | 5 (EN, FR, DE, IT, ES) | DE primary, multilang available |
-| **Approach** | All-in-one CDP + automation | **Best-of-Breed** (integrates) |
-| **AI focus** | Predictive (churn, CLV, NBA) | KI content frameworks (assistive) |
-| **Compliance** | GDPR-native | **ISO 27001 TÜV + DSGVO** |
-| **CDP** | ✅ Strong | Lead Management + Profiling |
-| **Cross-channel** | Email, SMS, mobile push, web push, in-app, web | Email + Landing Pages + Print |
-| **Lead Scoring** | Predictive AI | **Multivariate Scoring** + Buyer Personas |
-| **Customers** | Mid-market + enterprise B2C | 1,500+ B2B (thousands per latest) |
-| **Specialty** | B2C/D2C consumer journeys | B2B lead generation + nurturing |
+| Aspect             | Mapp Marketing Cloud                           | Evalanche                                  |
+| ------------------ | ---------------------------------------------- | ------------------------------------------ |
+| **Společnost**     | Mapp Digital                                   | SC-Networks GmbH                           |
+| **HQ**             | San Diego (US) + EU offices                    | Starnberg, Germany                         |
+| **Heritage**       | Teradata, BlueHornet, Webtrekk                 | 25+ let SC-Networks                        |
+| **Target**         | **B2C / D2C** mid-market + enterprise          | **B2B** mid-market + enterprise            |
+| **Industry focus** | Retail, e-commerce, finance, travel, fashion   | Maschinenbau, IT, Apotheken, Handwerk, B2B |
+| **Servers**        | EU options                                     | **EXCLUSIVELY Germany**                    |
+| **Pricing**        | Custom enterprise                              | Nutzungsbasiert + PowerSets                |
+| **UI Languages**   | 5 (EN, FR, DE, IT, ES)                         | DE primary, multilang available            |
+| **Approach**       | All-in-one CDP + automation                    | **Best-of-Breed** (integrates)             |
+| **AI focus**       | Predictive (churn, CLV, NBA)                   | KI content frameworks (assistive)          |
+| **Compliance**     | GDPR-native                                    | **ISO 27001 TÜV + DSGVO**                  |
+| **CDP**            | ✅ Strong                                      | Lead Management + Profiling                |
+| **Cross-channel**  | Email, SMS, mobile push, web push, in-app, web | Email + Landing Pages + Print              |
+| **Lead Scoring**   | Predictive AI                                  | **Multivariate Scoring** + Buyer Personas  |
+| **Customers**      | Mid-market + enterprise B2C                    | 1,500+ B2B (thousands per latest)          |
+| **Specialty**      | B2C/D2C consumer journeys                      | B2B lead generation + nurturing            |
 
 ### 18.2 When to choose Mapp
 
@@ -1252,6 +1359,7 @@ Choose Evalanche when:
 ### 18.4 Common ground
 
 Both are:
+
 - **DACH mid-market+ focused**
 - **GDPR compliant**
 - **Sales-driven pricing** (custom quotes)
@@ -1266,6 +1374,7 @@ Both are:
 ## 19. Pro koho a proti komu
 
 ### Mapp je dobrá volba pokud
+
 - Provozujete **B2C / D2C mid-market+ enterprise**
 - Hledáte **unified CDP + cross-channel marketing automation**
 - Provozujete **retail / e-commerce / fashion / travel / finance**
@@ -1279,6 +1388,7 @@ Both are:
 - Cíl je **personalized consumer experiences** at scale
 
 ### Mapp není dobrá volba pokud
+
 - Hledáte **SMB freemium** – Mailchimp / MailerLite lepší
 - Provozujete **B2B s lead management focus** – **Evalanche** lepší
 - Cíl je **simple newsletter** pro non-technical
@@ -1290,6 +1400,7 @@ Both are:
 - Hledáte **wide integration ecosystem** – HubSpot / Salesforce
 
 ### Evalanche je dobrá volba pokud
+
 - Provozujete **B2B mid-market+ enterprise**
 - Hledáte **specialized marketing automation** (ne all-in-one)
 - Provozujete **B2B Maschinenbau / IT / Software / Pharma / Energy**
@@ -1306,6 +1417,7 @@ Both are:
 - Provozujete **agency** s multi-client needs
 
 ### Evalanche není dobrá volba pokud
+
 - Hledáte **SMB freemium** – CleverReach / Mailchimp lepší
 - Provozujete **B2C / D2C** primárně – **Mapp** lepší
 - Provozujete **e-commerce** s shopping cart focus – Klaviyo / SALESmanago / Mapp
@@ -1319,25 +1431,25 @@ Both are:
 
 ### Vs. konkurence (oba)
 
-| Konkurence | Kdy lepší než Mapp/Evalanche |
-|---|---|
-| **Mailchimp** | SMB brand recognition, global ecosystem, free plan |
-| **MailerLite** | Solopreneur simplicity, content creators |
-| **Brevo** | Multi-channel, volume-based pricing, free tier |
-| **Klaviyo** | DTC Shopify deep, predictive AI |
-| **HubSpot** | Full B2B CRM, multi-Hub, autonomous AI |
-| **ActiveCampaign** | Deep automation + integrated CRM |
-| **GetResponse** | All-in-one + webinars + courses + 27 jazyků |
-| **CleverReach** | DACH SMB free plan, unlimited users free |
-| **rapidmail** | SMB Pay-per-Mail, free phone support |
-| **Inxmail** | Mid-market+ DACH s CSA founding member + multilingual UI |
-| **SAP Emarsys** | Enterprise retail s deeper SAP integration |
-| **SARE / SALESmanago** | Polish market + deeper omnichannel |
-| **SmartEmailing / Ecomail** | Native CZ/SK SMB focus |
-| **Salesforce Marketing Cloud** | Enterprise s Salesforce ecosystem |
-| **Adobe Journey Optimizer** | Enterprise Adobe Experience Cloud |
-| **Bloomreach Engagement** | DTC personalization (CZ origin), deeper ML |
+| Konkurence                     | Kdy lepší než Mapp/Evalanche                             |
+| ------------------------------ | -------------------------------------------------------- |
+| **Mailchimp**                  | SMB brand recognition, global ecosystem, free plan       |
+| **MailerLite**                 | Solopreneur simplicity, content creators                 |
+| **Brevo**                      | Multi-channel, volume-based pricing, free tier           |
+| **Klaviyo**                    | DTC Shopify deep, predictive AI                          |
+| **HubSpot**                    | Full B2B CRM, multi-Hub, autonomous AI                   |
+| **ActiveCampaign**             | Deep automation + integrated CRM                         |
+| **GetResponse**                | All-in-one + webinars + courses + 27 jazyků              |
+| **CleverReach**                | DACH SMB free plan, unlimited users free                 |
+| **rapidmail**                  | SMB Pay-per-Mail, free phone support                     |
+| **Inxmail**                    | Mid-market+ DACH s CSA founding member + multilingual UI |
+| **SAP Emarsys**                | Enterprise retail s deeper SAP integration               |
+| **SARE / SALESmanago**         | Polish market + deeper omnichannel                       |
+| **SmartEmailing / Ecomail**    | Native CZ/SK SMB focus                                   |
+| **Salesforce Marketing Cloud** | Enterprise s Salesforce ecosystem                        |
+| **Adobe Journey Optimizer**    | Enterprise Adobe Experience Cloud                        |
+| **Bloomreach Engagement**      | DTC personalization (CZ origin), deeper ML               |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů mapp.com + sc-networks.com a praktických zdrojů (GetApp, Capterra, G2, OMR Reviews, SoftwareAdvice, SoftwareSuggest, Research.com, FitGap, Business.digital, FlyMint, email-marketing-forum.de). Pro nejaktuálnější detaily je nutný engagement s Mapp / SC-Networks sales teamem.*
+_Dokument zpracován z oficiálních zdrojů mapp.com + sc-networks.com a praktických zdrojů (GetApp, Capterra, G2, OMR Reviews, SoftwareAdvice, SoftwareSuggest, Research.com, FitGap, Business.digital, FlyMint, email-marketing-forum.de). Pro nejaktuálnější detaily je nutný engagement s Mapp / SC-Networks sales teamem._

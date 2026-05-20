@@ -11,6 +11,7 @@
 > **Velikost:** **700,000+ companies trust** EmailLabs (per oficiální claim). **6+ billion messages annually**.
 >
 > **Klíčové diferenciátory:**
+>
 > - **Polský CPaaS specialist** (Vercom S.A. Group)
 > - **Email delivery infrastructure** focus (NOT campaign builder)
 > - **SMTP relay + Email API** kombinace
@@ -25,7 +26,7 @@
 > - **English + Polish UI**
 > - **Integrace s major platforms:** SALESmanago, Bloomreach, IdoSell, Magento, PrestaShop, WooCommerce, WordPress, atd.
 >
-> **Filozofie:** *"Email delivery experts since years"* – EmailLabs nese marketing/transactional emails customers, kteří mají vlastní campaign system (CRM, ERP, CMS, marketing automation).
+> **Filozofie:** _"Email delivery experts since years"_ – EmailLabs nese marketing/transactional emails customers, kteří mají vlastní campaign system (CRM, ERP, CMS, marketing automation).
 
 ---
 
@@ -74,16 +75,19 @@
 ### Filozofie produktu
 
 Per oficiální:
-> *"EmailLabs is part of the Vercom S.A Group, which implements technology solutions in the CPaaS model. We are a cloud SMTP server infrastructure: Cloud SMTP & Email API."*
 
-> *"Plug EmailLabs into your transactional sends - start sending in less than 5 minutes."*
+> _"EmailLabs is part of the Vercom S.A Group, which implements technology solutions in the CPaaS model. We are a cloud SMTP server infrastructure: Cloud SMTP & Email API."_
+
+> _"Plug EmailLabs into your transactional sends - start sending in less than 5 minutes."_
 
 ### Co EmailLabs JE
 
 Per G2:
-> *"EmailLabs was created for those who have a system that generates emails. Whether you have a store, billing, accounting, CRM, ERP, CMS, or a dedicated Marketing Automation system - EmailLabs will increase the deliverability of your emails."*
+
+> _"EmailLabs was created for those who have a system that generates emails. Whether you have a store, billing, accounting, CRM, ERP, CMS, or a dedicated Marketing Automation system - EmailLabs will increase the deliverability of your emails."_
 
 **Klíčové:**
+
 - **NENÍ campaign builder** (jako Mailchimp/Klaviyo)
 - **NENÍ marketing automation suite** (jako SALESmanago/Brevo)
 - **JE delivery infrastructure** doplňující existing systems
@@ -105,13 +109,14 @@ Cílový profil:
 
 ### Per Capterra reviewer (PL company)
 
-> *"For privacy reasons we needed a service fully hosted in the EU and we wanted better control of the deliverability of our transactional emails... EmailLabs offered everything we needed, including non throttled email quotas per day."*
+> _"For privacy reasons we needed a service fully hosted in the EU and we wanted better control of the deliverability of our transactional emails... EmailLabs offered everything we needed, including non throttled email quotas per day."_
 
-> *"We needed a transactional email service hosted in the EU for our platform. We're using EmailLabs to send email to the users of our platform, not for marketing purposes, so we need maximum delivery rate. Having a dedicated IP means we are in control of our own reputation and do not risk getting downrated due to other customers using the same IP for marketing emails so this was one main reason why we picked Email labs."*
+> _"We needed a transactional email service hosted in the EU for our platform. We're using EmailLabs to send email to the users of our platform, not for marketing purposes, so we need maximum delivery rate. Having a dedicated IP means we are in control of our own reputation and do not risk getting downrated due to other customers using the same IP for marketing emails so this was one main reason why we picked Email labs."_
 
 ### Reference customers
 
 Per oficiální:
+
 - **eFitness** (Gym Management Software)
 - **Marketing Automation platform** (SaaS s recommendation engine)
 - **Szkla.com** (eCommerce, fast-growing PL)
@@ -219,9 +224,11 @@ Per oficiální:
 ### 2.1 Free plan
 
 Per European Alternatives:
-> *"EmailLabs offers a free plan that includes 24,000 emails."*
+
+> _"EmailLabs offers a free plan that includes 24,000 emails."_
 
 **Free tier:**
+
 - **24,000 emails/měsíc** zdarma
 - **Generous** vs. Mailchimp (500 contacts) / Brevo (300 emails/day)
 - **Plug-and-play** SMTP/API access
@@ -231,9 +238,11 @@ Per European Alternatives:
 ### 2.2 Pro plan
 
 Per European Alternatives:
-> *"The cheapest Pro plan starts at 23€/month."*
+
+> _"The cheapest Pro plan starts at 23€/month."_
 
 **Pro plan from €23/month:**
+
 - More emails included
 - Better features
 - Priority support
@@ -263,25 +272,27 @@ Per oficiální:
 
 ### 2.5 Vs. competitors
 
-| Service | Free tier | Pro entry |
-|---|---|---|
-| **EmailLabs** | **24K emails/měsíc** | €23/měsíc |
-| **SendGrid** | 100 emails/den | $19.95/měsíc |
-| **Mailgun** | 1K emails/měsíc | $35/měsíc |
-| **Postmark** | 100 emails/měsíc | $15/měsíc |
-| **Mailtrap** | 1K emails/měsíc | $10/měsíc |
-| **Amazon SES** | 62K (z EC2) | $0.10 per 1K |
-| **Brevo Transactional** | 300 emails/den | €19/měsíc |
-| **rapidmail** | 1K subscribers | €9/měsíc |
+| Service                 | Free tier            | Pro entry    |
+| ----------------------- | -------------------- | ------------ |
+| **EmailLabs**           | **24K emails/měsíc** | €23/měsíc    |
+| **SendGrid**            | 100 emails/den       | $19.95/měsíc |
+| **Mailgun**             | 1K emails/měsíc      | $35/měsíc    |
+| **Postmark**            | 100 emails/měsíc     | $15/měsíc    |
+| **Mailtrap**            | 1K emails/měsíc      | $10/měsíc    |
+| **Amazon SES**          | 62K (z EC2)          | $0.10 per 1K |
+| **Brevo Transactional** | 300 emails/den       | €19/měsíc    |
+| **rapidmail**           | 1K subscribers       | €9/měsíc     |
 
 ⚠️ **EmailLabs free plan = nejštědřejší v EU prostoru** (24K/měsíc).
 
 ### 2.6 Custom enterprise plan
 
 Per G2:
-> *"Contact our team, who will provide you with a customized plan that will allow you to deliver transactional and marketing messages regardless of the size of your company and the number of messages you send."*
+
+> _"Contact our team, who will provide you with a customized plan that will allow you to deliver transactional and marketing messages regardless of the size of your company and the number of messages you send."_
 
 **Enterprise features:**
+
 - **Custom volume tiers**
 - **Multiple dedicated IPs**
 - **SLA guarantees**
@@ -291,7 +302,7 @@ Per G2:
 
 ### 2.7 Capterra customer praise
 
-> *"My overall experience with EmailLabs has been positive. The platform is reliable, offers great deliverability... While the cost may be a hurdle for smaller businesses, the value it brings to larger campaigns is well worth it."*
+> _"My overall experience with EmailLabs has been positive. The platform is reliable, offers great deliverability... While the cost may be a hurdle for smaller businesses, the value it brings to larger campaigns is well worth it."_
 
 ---
 
@@ -300,9 +311,11 @@ Per G2:
 ### 3.1 Polish CPaaS specialist
 
 Per oficiální:
-> *"EmailLabs is part of the Vercom S.A Group, which implements technology solutions in the CPaaS model."*
+
+> _"EmailLabs is part of the Vercom S.A Group, which implements technology solutions in the CPaaS model."_
 
 **CPaaS context:**
+
 - **Communications Platform as a Service**
 - **Email as primary channel**
 - **Specialized vs. all-in-one**
@@ -311,9 +324,11 @@ Per oficiální:
 ### 3.2 700,000+ companies trust
 
 Per oficiální:
-> *"Partner with a delivery service that's trusted by over 700,000 companies"*
+
+> _"Partner with a delivery service that's trusted by over 700,000 companies"_
 
 **Scale:**
+
 - **700K+ companies**
 - **Developers + Marketers**
 - **Time-savings, scalability, delivery expertise**
@@ -321,9 +336,11 @@ Per oficiální:
 ### 3.3 6 billion+ messages annually
 
 Per G2:
-> *"As one of the top leaders in the industry, we are delivering a 6 billion-plus messages on a yearly basis."*
+
+> _"As one of the top leaders in the industry, we are delivering a 6 billion-plus messages on a yearly basis."_
 
 **Volume scale:**
+
 - **6 billion+ messages/year**
 - **~500 million/měsíc**
 - **~16 million/den**
@@ -332,18 +349,21 @@ Per G2:
 ### 3.4 0.16 seconds delivery speed
 
 Per oficiální:
-> *"Deliver emails in 0.16 seconds."*
+
+> _"Deliver emails in 0.16 seconds."_
 
 ⚠️ **Speed claim** = critical pro transactional (password reset, OTP).
 
 ### 3.5 Marketing vs. Transactional separation
 
 Per oficiální:
-> *"Send accurate emails and separate marketing from transactional, with dynamic filtering to avoid getting throttled."*
 
-> *"Choose to separate between transactional and marketing emails, and max your effective deliverability of the most important messages, and have that password reset email waiting for them before they are even able to open their email tab."*
+> _"Send accurate emails and separate marketing from transactional, with dynamic filtering to avoid getting throttled."_
+
+> _"Choose to separate between transactional and marketing emails, and max your effective deliverability of the most important messages, and have that password reset email waiting for them before they are even able to open their email tab."_
 
 **Key feature:**
+
 - **Separate IP pools** (marketing vs. transactional)
 - **Avoids throttling**
 - **Transactional priority**
@@ -352,9 +372,11 @@ Per oficiální:
 ### 3.6 Dedicated IPs s controllable reputation
 
 Per Capterra customer:
-> *"Having a dedicated IP means we are in control of our own reputation and do not risk getting downrated due to other customers using the same IP for marketing emails so this was one main reason why we picked Email labs."*
+
+> _"Having a dedicated IP means we are in control of our own reputation and do not risk getting downrated due to other customers using the same IP for marketing emails so this was one main reason why we picked Email labs."_
 
 **Klíčové:**
+
 - **Vlastní IP = vlastní reputation**
 - **Bez vlivu other customers' practices**
 - **Predictable deliverability**
@@ -362,9 +384,11 @@ Per Capterra customer:
 ### 3.7 Local market ISP relationships
 
 Per Base.com integration page:
-> *"EmailLabs adjusts the rate of mailings to meet the requirements of specific mail providers both in Poland and in local markets in the Czech Republic, Germany or France."*
+
+> _"EmailLabs adjusts the rate of mailings to meet the requirements of specific mail providers both in Poland and in local markets in the Czech Republic, Germany or France."_
 
 ⚠️ **UNIKÁTNÍ pro CEE:**
+
 - **Polish ISPs** (WP.pl, Onet.pl, Interia.pl)
 - **Czech ISPs** (Seznam.cz, Centrum.cz, Volný.cz)
 - **German ISPs** (GMX, web.de, T-Online)
@@ -374,9 +398,11 @@ Per Base.com integration page:
 ### 3.8 S/MIME + Digital certificates
 
 Per oficiální:
-> *"Sending digitally signed and encrypted emails with S/MIME and other trusted certificates are avaliable on local markets"*
+
+> _"Sending digitally signed and encrypted emails with S/MIME and other trusted certificates are avaliable on local markets"_
 
 ⚠️ **UNIKÁTNÍ:**
+
 - **S/MIME signing**
 - **Digital certificates** support
 - **Local markets** specific
@@ -386,9 +412,11 @@ Per oficiální:
 ### 3.9 Non-throttled email quotas
 
 Per Capterra customer:
-> *"EmailLabs offered everything we needed, including non throttled email quotas per day."*
+
+> _"EmailLabs offered everything we needed, including non throttled email quotas per day."_
 
 ⚠️ **Vs. competitors:**
+
 - Mnoho ESPs **throttle** emails per hour
 - EmailLabs **non-throttled** (within plan)
 - **Better for burst sending**
@@ -396,17 +424,20 @@ Per Capterra customer:
 ### 3.10 Top-rated support
 
 Per oficiální:
-> *"Our dynamic support team is rated top in the industry, and is there to help with any questions or issues you might have."*
+
+> _"Our dynamic support team is rated top in the industry, and is there to help with any questions or issues you might have."_
 
 Per G2 reviewer:
-> *"Whenever we had questions or needed adjustments, their team was quick to react and always helpful."*
 
-> *"The customer support team responds quickly if needed, so we are not left alone with the platform."*
+> _"Whenever we had questions or needed adjustments, their team was quick to react and always helpful."_
+
+> _"The customer support team responds quickly if needed, so we are not left alone with the platform."_
 
 ### 3.11 EU hosting (privacy advantage)
 
 Per Capterra customer:
-> *"For privacy reasons we needed a service fully hosted in the EU"*
+
+> _"For privacy reasons we needed a service fully hosted in the EU"_
 
 - **Full EU hosting**
 - **GDPR-friendly**
@@ -415,19 +446,19 @@ Per Capterra customer:
 
 ### 3.12 Vs. konkurence v PL
 
-| Aspect | EmailLabs | SendGrid | Mailgun | Brevo Transactional | rapidmail |
-|---|---|---|---|---|---|
-| **Origin** | Polsko (Vercom S.A.) | US (Twilio) | US | FR | DE |
-| **Free tier** | **24K emails/měsíc** | 100/day | 1K/měsíc | 300/day | 1K kontaktů |
-| **Pro entry** | €23/měsíc | $19.95 | $35 | €19 | €9 |
-| **CPaaS focus** | ✅ Email only | Multi (Twilio) | Email + SMS | Multi | Multi |
-| **CEE ISP expertise** | ✅ PL + CZ + DE + FR | Limited | Limited | Limited | DE primary |
-| **S/MIME** | ✅ Local markets | Limited | – | – | – |
-| **Dedicated IPs** | ✅ | ✅ Premium | ✅ | ✅ | – |
-| **EU hosting** | ✅ Full | US | US | EU | DE |
-| **Speed** | 0.16s | Fast | Fast | Fast | Fast |
-| **Throttling** | Non-throttled | Some | Some | Some | – |
-| **Support** | Polish + EN | English | English | EN + FR + multi | DE + EN + FR |
+| Aspect                | EmailLabs            | SendGrid       | Mailgun     | Brevo Transactional | rapidmail    |
+| --------------------- | -------------------- | -------------- | ----------- | ------------------- | ------------ |
+| **Origin**            | Polsko (Vercom S.A.) | US (Twilio)    | US          | FR                  | DE           |
+| **Free tier**         | **24K emails/měsíc** | 100/day        | 1K/měsíc    | 300/day             | 1K kontaktů  |
+| **Pro entry**         | €23/měsíc            | $19.95         | $35         | €19                 | €9           |
+| **CPaaS focus**       | ✅ Email only        | Multi (Twilio) | Email + SMS | Multi               | Multi        |
+| **CEE ISP expertise** | ✅ PL + CZ + DE + FR | Limited        | Limited     | Limited             | DE primary   |
+| **S/MIME**            | ✅ Local markets     | Limited        | –           | –                   | –            |
+| **Dedicated IPs**     | ✅                   | ✅ Premium     | ✅          | ✅                  | –            |
+| **EU hosting**        | ✅ Full              | US             | US          | EU                  | DE           |
+| **Speed**             | 0.16s                | Fast           | Fast        | Fast                | Fast         |
+| **Throttling**        | Non-throttled        | Some           | Some        | Some                | –            |
+| **Support**           | Polish + EN          | English        | English     | EN + FR + multi     | DE + EN + FR |
 
 ---
 
@@ -436,9 +467,10 @@ Per Capterra customer:
 ### 4.1 SMTP relay capabilities
 
 Per docs.emaillabs.io:
-> *"Integracja za pomocą SMTP (Simple Mail Transfer Protocol) to proces umożliwiający różnym aplikacjom, systemom lub programom komunikację w celu przekazywania wiadomości e-mail z jednego serwera pocztowego na drugi."*
 
-> *"Połączenie z EmailLabs za pomocą protokołu SMTP oferuje szeroki wachlarz korzyści i możliwości związanych z efektywną wysyłką wiadomości e-mail oraz poprawą dostarczalności."*
+> _"Integracja za pomocą SMTP (Simple Mail Transfer Protocol) to proces umożliwiający różnym aplikacjom, systemom lub programom komunikację w celu przekazywania wiadomości e-mail z jednego serwera pocztowego na drugi."_
+
+> _"Połączenie z EmailLabs za pomocą protokołu SMTP oferuje szeroki wachlarz korzyści i możliwości związanych z efektywną wysyłką wiadomości e-mail oraz poprawą dostarczalności."_
 
 ### 4.2 SMTP integration
 
@@ -469,6 +501,7 @@ Tracking automatic
 ### 4.3 SMTP use cases
 
 #### Existing systems
+
 ```
 - CRM → SMTP relay → recipients
 - ERP → SMTP relay → recipients
@@ -481,9 +514,11 @@ Tracking automatic
 ### 4.4 Per oficiální advantages
 
 Per emaillabs.io:
-> *"SMTP Relay (Simple Mail Transfer Protocol): This acts as a bridge. You can configure your CRM, CMS (like WordPress or Magento), or marketing automation platform to route emails through a specialized SMTP server instead of your local outbox. This bypasses daily sending limits while keeping your current workflow intact."*
+
+> _"SMTP Relay (Simple Mail Transfer Protocol): This acts as a bridge. You can configure your CRM, CMS (like WordPress or Magento), or marketing automation platform to route emails through a specialized SMTP server instead of your local outbox. This bypasses daily sending limits while keeping your current workflow intact."_
 
 **Key advantages:**
+
 - **Bypasses local outbox limits**
 - **Keeps current workflow**
 - **No code changes**
@@ -492,7 +527,8 @@ Per emaillabs.io:
 ### 4.5 Pod 5 minut start
 
 Per G2:
-> *"Plug EmailLabs into your transactional sends - start sending in less than 5 minutes."*
+
+> _"Plug EmailLabs into your transactional sends - start sending in less than 5 minutes."_
 
 ```
 Setup time: < 5 minutes
@@ -514,7 +550,8 @@ Steps:
 ### 5.1 Email API capabilities
 
 Per oficiální:
-> *"Email API: Designed for developers and product teams, a RESTful Email API enables deep integration into applications. It allows for automated transactional triggers (like password resets or invoices) and high-speed bulk dispatch with full programmatic control over the message content and timing."*
+
+> _"Email API: Designed for developers and product teams, a RESTful Email API enables deep integration into applications. It allows for automated transactional triggers (like password resets or invoices) and high-speed bulk dispatch with full programmatic control over the message content and timing."_
 
 ### 5.2 RESTful API features
 
@@ -547,9 +584,11 @@ API use cases:
 ### 5.4 SDK / Libraries
 
 Per G2:
-> *"Seamless Integration: Easy SMTP setup and RESTful API enable quick integration with ready-made libraries and code samples."*
+
+> _"Seamless Integration: Easy SMTP setup and RESTful API enable quick integration with ready-made libraries and code samples."_
 
 **Available:**
+
 - **Ready-made libraries**
 - **Code samples**
 - **Multiple languages support**
@@ -558,7 +597,8 @@ Per G2:
 ### 5.5 API documentation
 
 Per G2:
-> *"Check out our documentation filled with protips to help you through the integration process and start reaching your subscribers' inboxes!"*
+
+> _"Check out our documentation filled with protips to help you through the integration process and start reaching your subscribers' inboxes!"_
 
 - **Comprehensive docs**
 - **docs.emaillabs.io**
@@ -614,13 +654,15 @@ Update your system records
 ### 6.1 Dedicated IP advantage
 
 Per oficiální:
-> *"Add a dedicated IP, and authenticate your email with SPF, DKIM, and DMARC - standards that establish a consistent domain reputation and keep your brand secure from any spoofing or scams - defining a trustworthy brand."*
+
+> _"Add a dedicated IP, and authenticate your email with SPF, DKIM, and DMARC - standards that establish a consistent domain reputation and keep your brand secure from any spoofing or scams - defining a trustworthy brand."_
 
 ### 6.2 Per Capterra customer
 
-> *"Having a dedicated IP means we are in control of our own reputation and do not risk getting downrated due to other customers using the same IP for marketing emails."*
+> _"Having a dedicated IP means we are in control of our own reputation and do not risk getting downrated due to other customers using the same IP for marketing emails."_
 
 **Dedicated IP benefits:**
+
 - **Vlastní reputation control**
 - **No "bad neighbor" impact**
 - **Predictable deliverability**
@@ -647,7 +689,8 @@ Dedicated IP:
 ### 6.4 Pick from top IPs
 
 Per oficiální:
-> *"Pick from top IPs with the best reputation, authorized by international or domestic ISPs."*
+
+> _"Pick from top IPs with the best reputation, authorized by international or domestic ISPs."_
 
 - **Top-tier IPs available**
 - **International ISPs authorized**
@@ -657,6 +700,7 @@ Per oficiální:
 ### 6.5 IP warm-up
 
 When getting dedicated IP:
+
 - **Gradual volume increase**
 - **EmailLabs guidance**
 - **Reputation building**
@@ -676,9 +720,10 @@ When getting dedicated IP:
 ### 7.1 Robust infrastructure
 
 Per oficiální:
-> *"Rely on a robust system built on a backbone of deliverability."*
 
-> *"With a highly scalable cloud service, you can quickly improve your reliability to a service built on speed, regardless of the email volume, to send out 5 or 5 million emails."*
+> _"Rely on a robust system built on a backbone of deliverability."_
+
+> _"With a highly scalable cloud service, you can quickly improve your reliability to a service built on speed, regardless of the email volume, to send out 5 or 5 million emails."_
 
 ### 7.2 Scalability
 
@@ -690,9 +735,11 @@ Per oficiální:
 ### 7.3 0.16 seconds speed
 
 Per oficiální:
-> *"Deliver emails in 0.16 seconds."*
+
+> _"Deliver emails in 0.16 seconds."_
 
 **Speed pro transactional:**
+
 - **Password reset:** 0.16s delivery
 - **Customer doesn't wait** for code
 - **Better UX**
@@ -701,7 +748,8 @@ Per oficiální:
 ### 7.4 Dynamic filtering
 
 Per oficiální:
-> *"Send accurate emails and separate marketing from transactional, with dynamic filtering to avoid getting throttled."*
+
+> _"Send accurate emails and separate marketing from transactional, with dynamic filtering to avoid getting throttled."_
 
 - **Dynamic filtering** per ISP
 - **Avoids throttling**
@@ -710,9 +758,11 @@ Per oficiální:
 ### 7.5 Intelligent technology
 
 Per oficiální:
-> *"Our intelligent technology aggregates data from millions of email messages and automatically adjusts delivery for each and every ISP."*
+
+> _"Our intelligent technology aggregates data from millions of email messages and automatically adjusts delivery for each and every ISP."_
 
 **ML-driven:**
+
 - **Aggregates data** from millions of messages
 - **Auto-adjusts** per ISP
 - **Optimization continuous**
@@ -720,6 +770,7 @@ Per oficiální:
 ### 7.6 IP rotation strategies
 
 For high-volume:
+
 - **Multiple IPs** rotation
 - **Per-ISP optimization**
 - **Reputation distributed**
@@ -728,7 +779,8 @@ For high-volume:
 ### 7.7 SLA + Redundancy
 
 Per Base.com integration:
-> *"EmailLabs' infrastructure is designed to handle transactional and multi-million dollar marketing traffic; with scalability, redundancy and bandwidth principles, meeting SLA requirements."*
+
+> _"EmailLabs' infrastructure is designed to handle transactional and multi-million dollar marketing traffic; with scalability, redundancy and bandwidth principles, meeting SLA requirements."_
 
 - **Scalability**
 - **Redundancy** (multiple datacenters)
@@ -742,15 +794,18 @@ Per Base.com integration:
 ### 8.1 Why separation matters
 
 Per oficiální:
-> *"Choose to separate between transactional and marketing emails, and max your effective deliverability of the most important messages, and have that password reset email waiting for them before they are even able to open their email tab."*
+
+> _"Choose to separate between transactional and marketing emails, and max your effective deliverability of the most important messages, and have that password reset email waiting for them before they are even able to open their email tab."_
 
 **Problem:**
+
 - Marketing emails občas bouncovat / spam
 - ISP throttling impacts ALL emails on same IP
 - Password reset stuck in queue = bad UX
 - Customer frustration
 
 **Solution:**
+
 - **Separate IP pools**
 - **Marketing IP** može mít drobné issues
 - **Transactional IP** zůstává clean
@@ -759,7 +814,8 @@ Per oficiální:
 ### 8.2 Per oficiální blog
 
 Per emaillabs.io blog:
-> *"Bulk email (marketing) sends the same message to many recipients at once (e.g., newsletters, promotions). Transactional email is triggered by a specific user action (e.g., password reset, order confirmation, shipping update) and is sent individually. However, both benefit from the same high-performance infrastructure (SMTP/API) to ensure timely delivery."*
+
+> _"Bulk email (marketing) sends the same message to many recipients at once (e.g., newsletters, promotions). Transactional email is triggered by a specific user action (e.g., password reset, order confirmation, shipping update) and is sent individually. However, both benefit from the same high-performance infrastructure (SMTP/API) to ensure timely delivery."_
 
 ### 8.3 Implementation
 
@@ -818,14 +874,17 @@ EmailLabs:
 ### 9.1 Real-time analytics capabilities
 
 Per oficiální:
-> *"Using real-time analytics you will have a reliable description of your email list health, spam traps, sender reputation and engagement. It is everything you need to improve your email performance."*
+
+> _"Using real-time analytics you will have a reliable description of your email list health, spam traps, sender reputation and engagement. It is everything you need to improve your email performance."_
 
 ### 9.2 Track & analyze
 
 Per oficiální:
-> *"Track and get email performing analysis, and learn optimization techniques for high engagement in future campaigns."*
+
+> _"Track and get email performing analysis, and learn optimization techniques for high engagement in future campaigns."_
 
 **Metrics tracked:**
+
 - **Deliverability rate**
 - **Spam complaints**
 - **Bounce rate** (soft + hard)
@@ -839,7 +898,7 @@ Per oficiální:
 
 ### 9.3 Per oficiální
 
-> *"Review everything from deliverability, spam complaints, bounce, open, and click-though rates, plus many more indicators, are all offered that you can track to help you make optimal adjustments and hit your ideal metric."*
+> _"Review everything from deliverability, spam complaints, bounce, open, and click-though rates, plus many more indicators, are all offered that you can track to help you make optimal adjustments and hit your ideal metric."_
 
 ### 9.4 Dashboard
 
@@ -852,11 +911,11 @@ Per oficiální:
 
 ### 9.5 Per G2 user
 
-> *"Advanced Analytics: Real-time monitoring of deliverability, sender reputation, and spam trap detection helps optimize email campaigns."*
+> _"Advanced Analytics: Real-time monitoring of deliverability, sender reputation, and spam trap detection helps optimize email campaigns."_
 
 ### 9.6 Per Capterra reviewer
 
-> *"detailed insights to improve email campaigns... robust email delivery system. The platform provides excellent deliverability rates, ensuring that emails consistently reach the inbox rather than the spam folder. I also appreciated the detailed analytics, which offer insightful metrics such as open rates, click-through rates, and bounce tracking. This level of transparency helps optimize campaigns."*
+> _"detailed insights to improve email campaigns... robust email delivery system. The platform provides excellent deliverability rates, ensuring that emails consistently reach the inbox rather than the spam folder. I also appreciated the detailed analytics, which offer insightful metrics such as open rates, click-through rates, and bounce tracking. This level of transparency helps optimize campaigns."_
 
 ### 9.7 Export options
 
@@ -872,7 +931,8 @@ Per oficiální:
 ### 10.1 Authentication standards
 
 Per oficiální:
-> *"EmailLabs is heavily focused on providing and securing your email communication with authentications such as SPF, DKIM and DMARC and TLS encryption."*
+
+> _"EmailLabs is heavily focused on providing and securing your email communication with authentications such as SPF, DKIM and DMARC and TLS encryption."_
 
 ### 10.2 SPF (Sender Policy Framework)
 
@@ -907,7 +967,8 @@ Better deliverability
 ### 10.4 DMARC
 
 Per emaillabs.io blog:
-> *"DMARC: (Domain-based Message Authentication, Reporting & Conformance): The ultimate policy layer."*
+
+> _"DMARC: (Domain-based Message Authentication, Reporting & Conformance): The ultimate policy layer."_
 
 ```
 DMARC setup:
@@ -950,13 +1011,15 @@ Customers compliant by default
 ### 11.1 S/MIME advantage
 
 Per oficiální:
-> *"Sending digitally signed and encrypted emails with S/MIME and other trusted certificates are avaliable on local markets, which is designed to protect your business from..."*
+
+> _"Sending digitally signed and encrypted emails with S/MIME and other trusted certificates are avaliable on local markets, which is designed to protect your business from..."_
 
 ⚠️ **UNIKÁTNÍ feature** vs. mnoho competitorů.
 
 ### 11.2 S/MIME capabilities
 
 **Secure/Multipurpose Internet Mail Extensions:**
+
 - **Digital signatures** on emails
 - **End-to-end encryption** option
 - **Trusted certificates** (CA-issued)
@@ -995,7 +1058,8 @@ Enterprise:
 ### 11.4 Local markets
 
 Per oficiální:
-> *"available on local markets"*
+
+> _"available on local markets"_
 
 - **Polish market** primary
 - **CZ market**
@@ -1017,14 +1081,14 @@ S/MIME setup (custom):
 
 ### 11.6 Vs. competitors
 
-| Service | S/MIME |
-|---|---|
+| Service       | S/MIME           |
+| ------------- | ---------------- |
 | **EmailLabs** | ✅ Local markets |
-| **SendGrid** | Limited |
-| **Mailgun** | – |
-| **Brevo** | – |
-| **Mailchimp** | – |
-| **rapidmail** | – |
+| **SendGrid**  | Limited          |
+| **Mailgun**   | –                |
+| **Brevo**     | –                |
+| **Mailchimp** | –                |
+| **rapidmail** | –                |
 
 ⚠️ **UNIKÁTNÍ pro EmailLabs** v CEE prostoru.
 
@@ -1035,7 +1099,8 @@ S/MIME setup (custom):
 ### 12.1 Reputation Defender concept
 
 Per SourceForge (related):
-> *"Reputation Defender is SMTP's proprietary technology that uses big data to proactively monitor your email list health and safeguard your domain and IP reputation among ISPs by suppressing bad emails in your sends from hard and soft bounces."*
+
+> _"Reputation Defender is SMTP's proprietary technology that uses big data to proactively monitor your email list health and safeguard your domain and IP reputation among ISPs by suppressing bad emails in your sends from hard and soft bounces."_
 
 ### 12.2 What it does
 
@@ -1063,9 +1128,10 @@ Deliverability incrementally better
 
 ### 12.3 Per oficiální claim
 
-> *"This ensures your delivery rates and inbox placement incrementally gets better over time."*
+> _"This ensures your delivery rates and inbox placement incrementally gets better over time."_
 
 **Continuous improvement:**
+
 - **Over time** improvements
 - **List naturally cleans**
 - **Reputation builds**
@@ -1084,9 +1150,11 @@ Deliverability incrementally better
 ### 13.1 List health
 
 Per oficiální:
-> *"Using real-time analytics you will have a reliable description of your email list health, spam traps, sender reputation and engagement."*
+
+> _"Using real-time analytics you will have a reliable description of your email list health, spam traps, sender reputation and engagement."_
 
 **List health metrics:**
+
 - **% active subscribers**
 - **% bounced**
 - **% complained**
@@ -1132,7 +1200,7 @@ Deliverability recovers
 
 ### 13.4 Per oficiální benefits
 
-> *"It is everything you need to improve your email performance."*
+> _"It is everything you need to improve your email performance."_
 
 - **Visibility into problems**
 - **Proactive monitoring**
@@ -1145,15 +1213,18 @@ Deliverability recovers
 ### 14.1 SALESmanago integration (PL native!)
 
 Per oficiální:
-> *"Integrating EmailLabs infrastructure with SALESmanago is extremely simple and fast. One thing to keep in mind, however, is that you are able to send only one message to 1,000 contacts at a time using an external SMTP server."*
+
+> _"Integrating EmailLabs infrastructure with SALESmanago is extremely simple and fast. One thing to keep in mind, however, is that you are able to send only one message to 1,000 contacts at a time using an external SMTP server."_
 
 **SALESmanago + EmailLabs:**
+
 - **Both Polish companies**
 - **Native integration**
 - **Improves SALESmanago deliverability**
 - **Limit: 1,000 contacts per send via external SMTP**
 
 ⚠️ **UNIKÁTNÍ kombinace:**
+
 - SALESmanago = AI-driven CDXP (Polish)
 - EmailLabs = email delivery infrastructure (Polish)
 - **Synergy pro PL+CEE companies**
@@ -1161,11 +1232,13 @@ Per oficiální:
 ### 14.2 Bloomreach Engagement
 
 Per G2:
+
 - **Bloomreach Engagement** (formerly Exponea, CZ origin!)
 - Native integration
 - Delivers Bloomreach campaigns via EmailLabs
 
 **Bloomreach + EmailLabs:**
+
 - **CDXP** (Bloomreach) + **delivery infrastructure** (EmailLabs)
 - **EU-friendly** combination
 - **Strong CEE presence**
@@ -1173,9 +1246,11 @@ Per G2:
 ### 14.3 Mautic (open-source)
 
 Per oficiální:
-> *"For those using Mautic, the automation marketing platform, we have good news: you can integrate Mautic with EmailLabs, a RESTful API that provides the best email deliverability in Poland."*
+
+> _"For those using Mautic, the automation marketing platform, we have good news: you can integrate Mautic with EmailLabs, a RESTful API that provides the best email deliverability in Poland."_
 
 **Mautic + EmailLabs:**
+
 - **Open-source automation** (Mautic)
 - **Premium delivery** (EmailLabs)
 - **Cost-effective enterprise stack**
@@ -1184,6 +1259,7 @@ Per oficiální:
 ### 14.4 Acquia Campaign Studio
 
 Per G2:
+
 - Acquia Campaign Studio integration
 - Enterprise marketing automation
 - EmailLabs as delivery layer
@@ -1191,6 +1267,7 @@ Per G2:
 ### 14.5 User.com
 
 Per G2:
+
 - User.com integration
 - All-in-one marketing platform
 - EmailLabs delivers
@@ -1198,6 +1275,7 @@ Per G2:
 ### 14.6 Woodpecker
 
 Per G2:
+
 - Woodpecker (cold email + sales automation)
 - Polish company also
 - EmailLabs delivery integration
@@ -1219,7 +1297,8 @@ EmailLabs philosophy:
 ### 15.1 E-commerce integrations
 
 Per G2:
-> *"IdoSell, Magento, PrestaShop, Selly, WooCommerce, Base.com, RedCard"*
+
+> _"IdoSell, Magento, PrestaShop, Selly, WooCommerce, Base.com, RedCard"_
 
 ### 15.2 IdoSell (PL leader)
 
@@ -1238,6 +1317,7 @@ Per G2:
 ### 15.4 PrestaShop
 
 Per docs:
+
 - Popular EU e-commerce
 - Plug-in integration
 - Standard SMTP / API setup
@@ -1251,9 +1331,11 @@ Per docs:
 ### 15.6 Base.com
 
 Per Base.com integration:
-> *"EmailLabs Cloud SMTP and Email API is a SaaS-based service that offers its customers external servers (SMTP) to handle solicited emails. The service specializes in handling transactional and marketing emails addressed to Polish and foreign email users. The combination of E-commerce business with Base.com platform and EmailLabs ensures security as well as high deliverability of sent messages."*
+
+> _"EmailLabs Cloud SMTP and Email API is a SaaS-based service that offers its customers external servers (SMTP) to handle solicited emails. The service specializes in handling transactional and marketing emails addressed to Polish and foreign email users. The combination of E-commerce business with Base.com platform and EmailLabs ensures security as well as high deliverability of sent messages."_
 
 **Base.com + EmailLabs:**
+
 - Polish e-commerce platform
 - Native integration
 - Security + deliverability
@@ -1261,6 +1343,7 @@ Per Base.com integration:
 ### 15.7 Selly + RedCard
 
 Per G2:
+
 - Selly: PL e-commerce
 - RedCard: payment/e-commerce
 - Native integrations
@@ -1268,7 +1351,8 @@ Per G2:
 ### 15.8 eFitness
 
 Per oficiální:
-> *"The eFitness system provides Gym Management Software. It allows you to connect a third-party email infrastructure for mailings, in order to achieve more effective deliverability."*
+
+> _"The eFitness system provides Gym Management Software. It allows you to connect a third-party email infrastructure for mailings, in order to achieve more effective deliverability."_
 
 - **Gym management software**
 - **Customer email delivery**
@@ -1281,6 +1365,7 @@ Per oficiální:
 ### 16.1 WordPress
 
 Per G2:
+
 - **WordPress** (most popular CMS)
 - **WP Mail SMTP** plugin
 - Easy setup
@@ -1289,6 +1374,7 @@ Per G2:
 ### 16.2 WP Mail SMTP
 
 Per oficiální (G2):
+
 - Dedicated WordPress plugin
 - Routes all WP emails via EmailLabs
 - Better deliverability vs. PHP mail()
@@ -1297,6 +1383,7 @@ Per oficiální (G2):
 ### 16.3 Joomla
 
 Per G2:
+
 - Joomla CMS integration
 - Standard SMTP setup
 - Easy configuration
@@ -1304,9 +1391,11 @@ Per G2:
 ### 16.4 CRM systems
 
 Per oficiální:
-> *"Whether you have a store, billing, accounting, CRM, ERP, CMS, or a dedicated Marketing Automation system - EmailLabs will increase the deliverability of your emails."*
+
+> _"Whether you have a store, billing, accounting, CRM, ERP, CMS, or a dedicated Marketing Automation system - EmailLabs will increase the deliverability of your emails."_
 
 **Generic CRM integration:**
+
 - Configure SMTP settings v CRM
 - Or use API for advanced
 - Any CRM supports SMTP
@@ -1324,6 +1413,7 @@ Per oficiální:
 ### 16.6 Custom integrations
 
 Per oficiální flexibility:
+
 - REST API
 - SMTP relay
 - Webhooks
@@ -1337,7 +1427,8 @@ Per oficiální flexibility:
 ### 17.1 Multi-market ISP expertise
 
 Per Base.com:
-> *"EmailLabs adjusts the rate of mailings to meet the requirements of specific mail providers both in Poland and in local markets in the Czech Republic, Germany or France."*
+
+> _"EmailLabs adjusts the rate of mailings to meet the requirements of specific mail providers both in Poland and in local markets in the Czech Republic, Germany or France."_
 
 ⚠️ **UNIKÁTNÍ pro CEE:**
 
@@ -1403,7 +1494,8 @@ French market delivery
 ### 17.7 Dynamic adjustment
 
 Per oficiální:
-> *"Our intelligent technology aggregates data from millions of email messages and automatically adjusts delivery for each and every ISP."*
+
+> _"Our intelligent technology aggregates data from millions of email messages and automatically adjusts delivery for each and every ISP."_
 
 - **Per-ISP optimization**
 - **Real-time adjustment**
@@ -1417,7 +1509,8 @@ Per oficiální:
 ### 18.1 Ready-made libraries
 
 Per G2:
-> *"Seamless Integration: Easy SMTP setup and RESTful API enable quick integration with ready-made libraries and code samples."*
+
+> _"Seamless Integration: Easy SMTP setup and RESTful API enable quick integration with ready-made libraries and code samples."_
 
 ### 18.2 Likely supported languages
 
@@ -1442,6 +1535,7 @@ Per G2:
 ### 18.4 docs.emaillabs.io
 
 Per docs URL pattern:
+
 - **Comprehensive docs**
 - **Integration guides**
 - **API reference**
@@ -1455,7 +1549,8 @@ Per docs URL pattern:
 ### 19.1 Email Deliverability Academy
 
 Per G2:
-> *"Our Email Deliverability Academy is the place for anyone who wants to improve their deliverability and reach their subscribers with their messages."*
+
+> _"Our Email Deliverability Academy is the place for anyone who wants to improve their deliverability and reach their subscribers with their messages."_
 
 ⚠️ **Thought leadership** + customer education.
 
@@ -1503,12 +1598,14 @@ EmailLabs benefits:
 ### 20.1 Support quality
 
 Per oficiální:
-> *"Our dynamic support team is rated top in the industry, and is there to help with any questions or issues you might have. We connect with ISPs on your behalf and can offer advice on optimization or how best to improve your ROI."*
+
+> _"Our dynamic support team is rated top in the industry, and is there to help with any questions or issues you might have. We connect with ISPs on your behalf and can offer advice on optimization or how best to improve your ROI."_
 
 ### 20.2 Support channels
 
 Per G2:
-> *"EmailLabs offers support via phone support and online."*
+
+> _"EmailLabs offers support via phone support and online."_
 
 - **Phone support**
 - **Online support** (chat, email, ticket)
@@ -1517,9 +1614,11 @@ Per G2:
 ### 20.3 ISP advocacy
 
 Per oficiální:
-> *"We connect with ISPs on your behalf"*
+
+> _"We connect with ISPs on your behalf"_
 
 ⚠️ **Unique service:**
+
 - **EmailLabs talks to ISPs** pro customer
 - **Resolves deliverability issues**
 - **Blacklist removal** assistance
@@ -1528,15 +1627,16 @@ Per oficiální:
 ### 20.4 Customer praise
 
 Per G2 reviewer:
-> *"Whenever we had questions or needed adjustments, their team was quick to react and always helpful."*
 
-> *"The customer support team responds quickly if needed, so we are not left alone with the platform."*
+> _"Whenever we had questions or needed adjustments, their team was quick to react and always helpful."_
 
-> *"Users consistently praise the product for its reliable email delivery and responsive customer support, highlighting how it ensures emails reach recipients without issues."*
+> _"The customer support team responds quickly if needed, so we are not left alone with the platform."_
+
+> _"Users consistently praise the product for its reliable email delivery and responsive customer support, highlighting how it ensures emails reach recipients without issues."_
 
 ### 20.5 Per Capterra reviewer
 
-> *"We have been working with EmailLabs since 2020, and if any situation required a prompt response, the EmailLabs Team was there for us."*
+> _"We have been working with EmailLabs since 2020, and if any situation required a prompt response, the EmailLabs Team was there for us."_
 
 - **Long-term customer satisfaction**
 - **Prompt responses**
@@ -1545,7 +1645,8 @@ Per G2 reviewer:
 ### 20.6 Optimization advice
 
 Per oficiální:
-> *"can offer advice on optimization or how best to improve your ROI"*
+
+> _"can offer advice on optimization or how best to improve your ROI"_
 
 - **Strategic guidance**
 - **ROI improvement**
@@ -1558,9 +1659,11 @@ Per oficiální:
 ### 21.1 EU hosting
 
 Per Capterra customer:
-> *"For privacy reasons we needed a service fully hosted in the EU"*
+
+> _"For privacy reasons we needed a service fully hosted in the EU"_
 
 **Full EU hosting:**
+
 - **All data v EU**
 - **Polish jurisdiction**
 - **Schrems II compliant**
@@ -1576,9 +1679,10 @@ Per Capterra customer:
 
 ### 21.3 Per oficiální focus
 
-> *"EmailLabs is heavily focused on providing and securing your email communication"*
+> _"EmailLabs is heavily focused on providing and securing your email communication"_
 
 **Security focus:**
+
 - **SPF / DKIM / DMARC**
 - **TLS encryption**
 - **S/MIME signing**
@@ -1611,9 +1715,11 @@ EU customer wants EmailLabs because:
 ### 22.1 Marketing Automation platform
 
 Per oficiální:
-> *"Marketing Automation platform based on a SaaS model. Having an advanced recommendation and email automation engine, the company needed support for effective..."*
+
+> _"Marketing Automation platform based on a SaaS model. Having an advanced recommendation and email automation engine, the company needed support for effective..."_
 
 **Use case:**
+
 - SaaS marketing automation platform
 - Recommendation engine
 - Needs email delivery infrastructure
@@ -1622,9 +1728,11 @@ Per oficiální:
 ### 22.2 Szkla.com (e-commerce)
 
 Per oficiální:
-> *"As a fast-growing eCommerce business, Szkla.com continues to send out more emails each month. The store needed a solution at hand that would optimize..."*
+
+> _"As a fast-growing eCommerce business, Szkla.com continues to send out more emails each month. The store needed a solution at hand that would optimize..."_
 
 **Use case:**
+
 - Fast-growing PL e-commerce
 - Increasing email volume
 - Optimization needed
@@ -1633,9 +1741,11 @@ Per oficiální:
 ### 22.3 Eobuwie.pl (largest PL e-commerce)
 
 Per oficiální:
-> *"Eobuwie.pl is one of the largest eCommerce brands in Poland. With several hundreds of thousands of orders handled daily, the store needs reliable email..."*
+
+> _"Eobuwie.pl is one of the largest eCommerce brands in Poland. With several hundreds of thousands of orders handled daily, the store needs reliable email..."_
 
 **Use case:**
+
 - One of largest PL e-commerce brands
 - **Hundreds of thousands orders daily**
 - Reliable email critical
@@ -1645,9 +1755,11 @@ Per oficiální:
 ### 22.4 Promote International
 
 Per oficiální:
-> *"Promote International is a Swedish company dedicated to promoting international education and helping people gain new experiences and qualifications"*
+
+> _"Promote International is a Swedish company dedicated to promoting international education and helping people gain new experiences and qualifications"_
 
 **Use case:**
+
 - Swedish education company
 - International audience
 - Reliable communication
@@ -1676,6 +1788,7 @@ Common EmailLabs use cases:
 ### 23.1 NENÍ campaign builder
 
 ⚠️ **Klíčový limit:**
+
 - EmailLabs **NEMÁ** campaign builder
 - Žádný drag-drop editor
 - Žádné templates marketingové
@@ -1685,9 +1798,11 @@ Common EmailLabs use cases:
 ### 23.2 Vyžaduje existing system
 
 Per G2:
-> *"EmailLabs was created for those who have a system that generates emails."*
+
+> _"EmailLabs was created for those who have a system that generates emails."_
 
 ⚠️ Potřebujete:
+
 - Vlastní CRM / ERP / CMS
 - NEBO marketing automation tool
 - NEBO custom application
@@ -1696,9 +1811,11 @@ Per G2:
 ### 23.3 Limited UI languages
 
 Per G2:
-> *"EmailLabs supports these languages: English and Polish."*
+
+> _"EmailLabs supports these languages: English and Polish."_
 
 ⚠️ **Pouze 2 jazyky** (EN + PL):
+
 - **No Czech UI**
 - **No Slovak UI**
 - **No German UI**
@@ -1708,23 +1825,27 @@ Per G2:
 ### 23.4 Sometimes Polish pages confuse
 
 Per Capterra customer:
-> *"Sometimes you click on something and somehow end up in a page in Polish which may be confusing when you only know English but it's easy to find your way back to the English version of the interface."*
+
+> _"Sometimes you click on something and somehow end up in a page in Polish which may be confusing when you only know English but it's easy to find your way back to the English version of the interface."_
 
 ⚠️ Občas se EN user dostane na Polish page.
 
 ### 23.5 Higher cost pro smaller businesses
 
 Per Capterra:
-> *"While the cost may be a hurdle for smaller businesses, the value it brings to larger campaigns is well worth it."*
+
+> _"While the cost may be a hurdle for smaller businesses, the value it brings to larger campaigns is well worth it."_
 
 ⚠️ Pro velmi malé use cases možná drahé. Free plan 24K/měsíc je dobrý start.
 
 ### 23.6 Advanced features learning curve
 
 Per Capterra:
-> *"One aspect to consider with EmailLabs is that it offers a lot of advanced features, which might take a bit of time to fully explore and utilize."*
+
+> _"One aspect to consider with EmailLabs is that it offers a lot of advanced features, which might take a bit of time to fully explore and utilize."_
 
 ⚠️ Advanced features potřebují čas:
+
 - Authentication setup
 - IP warm-up
 - Reputation optimization
@@ -1733,16 +1854,19 @@ Per Capterra:
 ### 23.7 UI panel could be refreshed
 
 Per Capterra reviewer:
-> *"The user panel could be slightly refreshed, but in its current form it is still functional."*
+
+> _"The user panel could be slightly refreshed, but in its current form it is still functional."_
 
 ⚠️ **UI Panel** could use modernization (functional but dated).
 
 ### 23.8 SALESmanago limit (1000 contacts/send)
 
 Per oficiální:
-> *"One thing to keep in mind, however, is that you are able to send only one message to 1,000 contacts at a time using an external SMTP server."*
+
+> _"One thing to keep in mind, however, is that you are able to send only one message to 1,000 contacts at a time using an external SMTP server."_
 
 ⚠️ Pro SALESmanago integration:
+
 - Max 1000 contacts per send
 - SALESmanago limitation, not EmailLabs
 - Pro larger campaigns: split sends
@@ -1817,6 +1941,7 @@ But initial learning curve exists
 ## 24. Shrnutí: Pro koho a proti komu
 
 ### EmailLabs je dobrá volba pokud
+
 - Provozujete **vlastní system** generating emails (CRM, ERP, CMS, automation)
 - Potřebujete **lepší deliverability** vs. local outbox / shared SMTP
 - Vyžadujete **EU hosting** pro privacy/compliance
@@ -1838,6 +1963,7 @@ But initial learning curve exists
 - Provozujete **eFitness gym software**
 
 ### EmailLabs není dobrá volba pokud
+
 - Hledáte **marketing campaign builder** – Mailchimp/Brevo/Klaviyo lepší
 - Cíl je **all-in-one platform** s campaign creation
 - Provozujete **SMB s no technical team** – plug-and-play campaign tool better
@@ -1856,23 +1982,23 @@ But initial learning curve exists
 
 ### EmailLabs vs. konkurence
 
-| Konkurence | Kdy lepší než EmailLabs |
-|---|---|
-| **SendGrid** (Twilio) | Global brand, multi-channel (SMS via Twilio), more integrations |
-| **Mailgun** | Developer-focused, large global presence |
-| **Postmark** | Transactional excellence, simpler UX |
-| **Amazon SES** | AWS ecosystem, very low cost at scale |
-| **Brevo (Transactional)** | All-in-one s marketing tools, French origin |
-| **Mailchimp** | All-in-one s campaign builder, global brand |
-| **Klaviyo** | DTC Shopify deep, predictive AI |
-| **HubSpot** | Full B2B CRM |
-| **SALESmanago** | Marketing automation CDXP (use s EmailLabs as delivery!) |
-| **Bloomreach Engagement** | CDXP s personalization (use s EmailLabs as delivery!) |
-| **Mautic** | Open-source automation (use s EmailLabs as delivery!) |
-| **Inxmail** | DACH enterprise email platform s campaign tools |
-| **CleverReach** | DACH SMB campaign builder s free plan |
-| **rapidmail** | DACH SMB Pay-per-Mail |
+| Konkurence                | Kdy lepší než EmailLabs                                         |
+| ------------------------- | --------------------------------------------------------------- |
+| **SendGrid** (Twilio)     | Global brand, multi-channel (SMS via Twilio), more integrations |
+| **Mailgun**               | Developer-focused, large global presence                        |
+| **Postmark**              | Transactional excellence, simpler UX                            |
+| **Amazon SES**            | AWS ecosystem, very low cost at scale                           |
+| **Brevo (Transactional)** | All-in-one s marketing tools, French origin                     |
+| **Mailchimp**             | All-in-one s campaign builder, global brand                     |
+| **Klaviyo**               | DTC Shopify deep, predictive AI                                 |
+| **HubSpot**               | Full B2B CRM                                                    |
+| **SALESmanago**           | Marketing automation CDXP (use s EmailLabs as delivery!)        |
+| **Bloomreach Engagement** | CDXP s personalization (use s EmailLabs as delivery!)           |
+| **Mautic**                | Open-source automation (use s EmailLabs as delivery!)           |
+| **Inxmail**               | DACH enterprise email platform s campaign tools                 |
+| **CleverReach**           | DACH SMB campaign builder s free plan                           |
+| **rapidmail**             | DACH SMB Pay-per-Mail                                           |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů emaillabs.io / emaillabs.pl a praktických zdrojů (G2, Capterra, SourceForge, European Alternatives, Base.com). Pro nejaktuálnější detaily je nutný engagement s EmailLabs sales / consultant teamem.*
+_Dokument zpracován z oficiálních zdrojů emaillabs.io / emaillabs.pl a praktických zdrojů (G2, Capterra, SourceForge, European Alternatives, Base.com). Pro nejaktuálnější detaily je nutný engagement s EmailLabs sales / consultant teamem._

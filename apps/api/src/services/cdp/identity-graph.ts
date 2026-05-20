@@ -23,9 +23,11 @@ import { createHash } from 'node:crypto';
 import { and, eq, sql, desc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  identitySignals, identityMerges,
+  identitySignals,
+  identityMerges,
   contacts,
-  type IdentitySignal, type SignalType,
+  type IdentitySignal,
+  type SignalType,
 } from '../../db/schema/index.js';
 
 // ─── Normalisation ───────────────────────────────────────────────────────────
@@ -114,19 +116,23 @@ export async function ingestSignals(input: IngestSignalInput): Promise<Resolutio
   }));
 
   // Resolve: find all existing contacts that share any of these signals
-  const candidates = await db.select({
-    contactId: identitySignals.contactId,
-    type: identitySignals.signalType,
-    value: identitySignals.signalValue,
-    confidence: identitySignals.confidence,
-  }).from(identitySignals)
-    .where(and(
-      eq(identitySignals.orgId, input.orgId),
-      sql`(${identitySignals.signalType}, ${identitySignals.signalValue}) IN (${sql.join(
-        normalised.map((s) => sql`(${s.type}, ${s.value})`),
-        sql`, `,
-      )})`,
-    ));
+  const candidates = await db
+    .select({
+      contactId: identitySignals.contactId,
+      type: identitySignals.signalType,
+      value: identitySignals.signalValue,
+      confidence: identitySignals.confidence,
+    })
+    .from(identitySignals)
+    .where(
+      and(
+        eq(identitySignals.orgId, input.orgId),
+        sql`(${identitySignals.signalType}, ${identitySignals.signalValue}) IN (${sql.join(
+          normalised.map((s) => sql`(${s.type}, ${s.value})`),
+          sql`, `,
+        )})`,
+      ),
+    );
 
   const uniqueCandidates = new Set(candidates.map((c) => c.contactId));
   if (input.contactId) uniqueCandidates.add(input.contactId);
@@ -139,12 +145,15 @@ export async function ingestSignals(input: IngestSignalInput): Promise<Resolutio
     // Create a contact from the strongest PII signal we have
     const emailSignal = normalised.find((s) => s.type === 'email');
     const phoneSignal = normalised.find((s) => s.type === 'phone');
-    const [newContact] = await db.insert(contacts).values({
-      orgId: input.orgId,
-      email: emailSignal?.value ?? null,
-      phone: phoneSignal?.value ?? null,
-      source: normalised[0]?.source ?? 'identity-graph',
-    }).returning({ id: contacts.id });
+    const [newContact] = await db
+      .insert(contacts)
+      .values({
+        orgId: input.orgId,
+        email: emailSignal?.value ?? null,
+        phone: phoneSignal?.value ?? null,
+        source: normalised[0]?.source ?? 'identity-graph',
+      })
+      .returning({ id: contacts.id });
     winnerId = newContact!.id;
     created = true;
   } else if (uniqueCandidates.size === 1) {
@@ -152,20 +161,35 @@ export async function ingestSignals(input: IngestSignalInput): Promise<Resolutio
   } else {
     // Merge: pick winner with highest aggregate signal confidence, oldest createdAt as tiebreak
     const contactIds = Array.from(uniqueCandidates);
-    const stats = await db.select({
-      contactId: identitySignals.contactId,
-      score: sql<number>`sum(${identitySignals.confidence})::int`,
-    }).from(identitySignals)
-      .where(and(
-        eq(identitySignals.orgId, input.orgId),
-        sql`${identitySignals.contactId} IN (${sql.join(contactIds.map((id) => sql`${id}::uuid`), sql`, `)})`,
-      ))
+    const stats = await db
+      .select({
+        contactId: identitySignals.contactId,
+        score: sql<number>`sum(${identitySignals.confidence})::int`,
+      })
+      .from(identitySignals)
+      .where(
+        and(
+          eq(identitySignals.orgId, input.orgId),
+          sql`${identitySignals.contactId} IN (${sql.join(
+            contactIds.map((id) => sql`${id}::uuid`),
+            sql`, `,
+          )})`,
+        ),
+      )
       .groupBy(identitySignals.contactId);
 
-    const contactRows = await db.select({
-      id: contacts.id, createdAt: contacts.createdAt,
-    }).from(contacts)
-      .where(sql`${contacts.id} IN (${sql.join(contactIds.map((id) => sql`${id}::uuid`), sql`, `)})`);
+    const contactRows = await db
+      .select({
+        id: contacts.id,
+        createdAt: contacts.createdAt,
+      })
+      .from(contacts)
+      .where(
+        sql`${contacts.id} IN (${sql.join(
+          contactIds.map((id) => sql`${id}::uuid`),
+          sql`, `,
+        )})`,
+      );
 
     const scoreMap = new Map(stats.map((s) => [s.contactId, Number(s.score)]));
     const createdMap = new Map(contactRows.map((c) => [c.id, c.createdAt]));
@@ -189,24 +213,27 @@ export async function ingestSignals(input: IngestSignalInput): Promise<Resolutio
   // Upsert all signals onto the winner
   let signalsLinked = 0;
   for (const s of normalised) {
-    await db.insert(identitySignals).values({
-      orgId: input.orgId,
-      contactId: winnerId,
-      signalType: s.type,
-      signalValue: s.value,
-      confidence: s.confidence,
-      source: s.source ?? null,
-      metadata: s.metadata ?? {},
-    }).onConflictDoUpdate({
-      target: [identitySignals.orgId, identitySignals.signalType, identitySignals.signalValue],
-      set: {
+    await db
+      .insert(identitySignals)
+      .values({
+        orgId: input.orgId,
         contactId: winnerId,
-        confidence: sql`GREATEST(${identitySignals.confidence}, ${s.confidence})`,
+        signalType: s.type,
+        signalValue: s.value,
+        confidence: s.confidence,
         source: s.source ?? null,
-        lastSeenAt: new Date(),
         metadata: s.metadata ?? {},
-      },
-    });
+      })
+      .onConflictDoUpdate({
+        target: [identitySignals.orgId, identitySignals.signalType, identitySignals.signalValue],
+        set: {
+          contactId: winnerId,
+          confidence: sql`GREATEST(${identitySignals.confidence}, ${s.confidence})`,
+          source: s.source ?? null,
+          lastSeenAt: new Date(),
+          metadata: s.metadata ?? {},
+        },
+      });
     signalsLinked++;
   }
 
@@ -221,19 +248,24 @@ export async function resolveContact(
 ): Promise<string | null> {
   if (signals.length === 0) return null;
   const normalised = signals.map((s) => ({
-    type: s.type, value: normaliseSignal(s.type, s.value),
+    type: s.type,
+    value: normaliseSignal(s.type, s.value),
   }));
-  const rows = await db.select({
-    contactId: identitySignals.contactId,
-    confidence: identitySignals.confidence,
-  }).from(identitySignals)
-    .where(and(
-      eq(identitySignals.orgId, orgId),
-      sql`(${identitySignals.signalType}, ${identitySignals.signalValue}) IN (${sql.join(
-        normalised.map((s) => sql`(${s.type}, ${s.value})`),
-        sql`, `,
-      )})`,
-    ));
+  const rows = await db
+    .select({
+      contactId: identitySignals.contactId,
+      confidence: identitySignals.confidence,
+    })
+    .from(identitySignals)
+    .where(
+      and(
+        eq(identitySignals.orgId, orgId),
+        sql`(${identitySignals.signalType}, ${identitySignals.signalValue}) IN (${sql.join(
+          normalised.map((s) => sql`(${s.type}, ${s.value})`),
+          sql`, `,
+        )})`,
+      ),
+    );
   if (rows.length === 0) return null;
   // Pick the candidate with highest aggregate confidence
   const agg = new Map<string, number>();
@@ -241,10 +273,10 @@ export async function resolveContact(
   return [...agg.entries()].sort((a, b) => b[1] - a[1])[0]![0];
 }
 
-export async function listSignals(
-  orgId: string, contactId: string,
-): Promise<IdentitySignal[]> {
-  return db.select().from(identitySignals)
+export async function listSignals(orgId: string, contactId: string): Promise<IdentitySignal[]> {
+  return db
+    .select()
+    .from(identitySignals)
     .where(and(eq(identitySignals.orgId, orgId), eq(identitySignals.contactId, contactId)))
     .orderBy(desc(identitySignals.confidence), desc(identitySignals.lastSeenAt));
 }
@@ -259,20 +291,22 @@ export async function mergeContacts(
 ): Promise<number> {
   if (winnerContactId === loserContactId) return 0;
 
-  const result = await db.update(identitySignals)
+  const result = await db
+    .update(identitySignals)
     .set({ contactId: winnerContactId })
-    .where(and(
-      eq(identitySignals.orgId, orgId),
-      eq(identitySignals.contactId, loserContactId),
-    ))
+    .where(and(eq(identitySignals.orgId, orgId), eq(identitySignals.contactId, loserContactId)))
     .returning({ id: identitySignals.id });
   const moved = result.length;
 
   // Copy missing PII fields from loser → winner, then soft-delete the loser
-  const [loser] = await db.select().from(contacts)
+  const [loser] = await db
+    .select()
+    .from(contacts)
     .where(and(eq(contacts.id, loserContactId), eq(contacts.orgId, orgId)))
     .limit(1);
-  const [winner] = await db.select().from(contacts)
+  const [winner] = await db
+    .select()
+    .from(contacts)
     .where(and(eq(contacts.id, winnerContactId), eq(contacts.orgId, orgId)))
     .limit(1);
 
@@ -283,16 +317,21 @@ export async function mergeContacts(
     if (!winner.firstName && loser.firstName) patch.firstName = loser.firstName;
     if (!winner.lastName && loser.lastName) patch.lastName = loser.lastName;
     if (Object.keys(patch).length > 0) {
-      await db.update(contacts).set({ ...patch, updatedAt: new Date() })
+      await db
+        .update(contacts)
+        .set({ ...patch, updatedAt: new Date() })
         .where(eq(contacts.id, winnerContactId));
     }
-    await db.update(contacts).set({ deletedAt: new Date(), updatedAt: new Date() })
+    await db
+      .update(contacts)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
       .where(eq(contacts.id, loserContactId));
   }
 
   await db.insert(identityMerges).values({
     orgId,
-    winnerContactId, loserContactId,
+    winnerContactId,
+    loserContactId,
     movedSignals: moved,
     reason: reason ?? null,
   });
@@ -302,20 +341,31 @@ export async function mergeContacts(
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
 
-export async function listDuplicates(orgId: string, limit = 50): Promise<Array<{
-  signalType: string; signalValue: string; contactIds: string[];
-}>> {
+export async function listDuplicates(
+  orgId: string,
+  limit = 50,
+): Promise<
+  Array<{
+    signalType: string;
+    signalValue: string;
+    contactIds: string[];
+  }>
+> {
   // Any signal value that maps to >1 contact is a merge candidate.
   // Shouldn't happen with our unique index — but a race during ingest could
   // temporarily produce them, and we also want to spot legacy dupes.
-  const rows = await db.execute<{ signal_type: string; signal_value: string; contact_ids: string[] }>(sql`
+  const rows = (await db.execute<{
+    signal_type: string;
+    signal_value: string;
+    contact_ids: string[];
+  }>(sql`
     SELECT signal_type, signal_value, array_agg(DISTINCT contact_id::text) AS contact_ids
     FROM identity_signals
     WHERE org_id = ${orgId}::uuid
     GROUP BY signal_type, signal_value
     HAVING count(DISTINCT contact_id) > 1
     LIMIT ${limit}
-  `) as unknown as Array<{ signal_type: string; signal_value: string; contact_ids: string[] }>;
+  `)) as unknown as Array<{ signal_type: string; signal_value: string; contact_ids: string[] }>;
   return rows.map((r) => ({
     signalType: r.signal_type,
     signalValue: r.signal_value,

@@ -28,7 +28,6 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
   listWaTemplates,
-
   createWaTemplate,
   updateWaTemplate,
   deleteWaTemplate,
@@ -46,7 +45,6 @@ import {
   updateMessagingLimitTier,
   upsertWaPhoneNumber,
 } from '../../services/whatsapp/compliance.js';
-
 
 import { db } from '../../db/client.js';
 import { whatsappConsents, whatsappPhoneNumbers } from '../../db/schema/whatsapp.js';
@@ -66,12 +64,16 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     type: z.enum(['HEADER', 'BODY', 'FOOTER', 'BUTTONS']),
     format: z.enum(['TEXT', 'IMAGE', 'VIDEO', 'DOCUMENT']).optional(),
     text: z.string().optional(),
-    buttons: z.array(z.object({
-      type: z.enum(['QUICK_REPLY', 'URL', 'PHONE_NUMBER']),
-      text: z.string().max(25),
-      url: z.string().optional(),
-      phone_number: z.string().optional(),
-    })).optional(),
+    buttons: z
+      .array(
+        z.object({
+          type: z.enum(['QUICK_REPLY', 'URL', 'PHONE_NUMBER']),
+          text: z.string().max(25),
+          url: z.string().optional(),
+          phone_number: z.string().optional(),
+        }),
+      )
+      .optional(),
   });
 
   const createTemplateSchema = z.object({
@@ -92,25 +94,37 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     const { orgId } = req.user as { orgId: string };
     const { id } = req.params as { id: string };
     const data = createTemplateSchema.partial().parse(req.body);
-    const template = await updateWaTemplate(id, orgId, data as Parameters<typeof updateWaTemplate>[2]);
+    const template = await updateWaTemplate(
+      id,
+      orgId,
+      data as Parameters<typeof updateWaTemplate>[2],
+    );
     return { data: template };
   });
 
-  app.delete('/api/v1/whatsapp/templates/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
-    const { orgId } = req.user as { orgId: string };
-    const { id } = req.params as { id: string };
-    await deleteWaTemplate(id, orgId);
-    return reply.status(204).send();
-  });
+  app.delete(
+    '/api/v1/whatsapp/templates/:id',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { orgId } = req.user as { orgId: string };
+      const { id } = req.params as { id: string };
+      await deleteWaTemplate(id, orgId);
+      return reply.status(204).send();
+    },
+  );
 
-  app.post('/api/v1/whatsapp/templates/:id/submit', { preHandler: [app.authenticate] }, async (req) => {
-    const { orgId } = req.user as { orgId: string };
-    const { id } = req.params as { id: string };
-    const { accessToken, wabaId } = req.body as { accessToken: string; wabaId: string };
+  app.post(
+    '/api/v1/whatsapp/templates/:id/submit',
+    { preHandler: [app.authenticate] },
+    async (req) => {
+      const { orgId } = req.user as { orgId: string };
+      const { id } = req.params as { id: string };
+      const { accessToken, wabaId } = req.body as { accessToken: string; wabaId: string };
 
-    const template = await submitWaTemplateForApproval(id, orgId, accessToken, wabaId);
-    return { data: template };
-  });
+      const template = await submitWaTemplateForApproval(id, orgId, accessToken, wabaId);
+      return { data: template };
+    },
+  );
 
   // ── Rich messaging ────────────────────────────────────────────────────────
 
@@ -130,7 +144,10 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     };
 
     const sender = getWaSender({ phoneNumberId, accessToken });
-    const result = await sender.sendMedia(recipient, media as Parameters<typeof sender.sendMedia>[1]);
+    const result = await sender.sendMedia(
+      recipient,
+      media as Parameters<typeof sender.sendMedia>[1],
+    );
     return { data: result };
   });
 
@@ -192,16 +209,24 @@ export default async function whatsappRoutes(app: FastifyInstance) {
       consentSource: string;
       consentContext?: string;
     };
-    const consent = await recordWaConsent(orgId, phone, { contactId, consentSource, consentContext });
+    const consent = await recordWaConsent(orgId, phone, {
+      contactId,
+      consentSource,
+      consentContext,
+    });
     return reply.status(201).send({ data: consent });
   });
 
-  app.delete('/api/v1/whatsapp/consents/:phone', { preHandler: [app.authenticate] }, async (req, reply) => {
-    const { orgId } = req.user as { orgId: string };
-    const phone = decodeURIComponent((req.params as { phone: string }).phone);
-    await revokeWaConsent(orgId, phone);
-    return reply.status(204).send();
-  });
+  app.delete(
+    '/api/v1/whatsapp/consents/:phone',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { orgId } = req.user as { orgId: string };
+      const phone = decodeURIComponent((req.params as { phone: string }).phone);
+      await revokeWaConsent(orgId, phone);
+      return reply.status(204).send();
+    },
+  );
 
   // Phone numbers management
   app.get('/api/v1/whatsapp/phone-numbers', { preHandler: [app.authenticate] }, async (req) => {
@@ -213,12 +238,19 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     return { data: numbers };
   });
 
-  app.post('/api/v1/whatsapp/phone-numbers', { preHandler: [app.authenticate] }, async (req, reply) => {
-    const { orgId } = req.user as { orgId: string };
-    const { phoneNumberId, displayPhone } = req.body as { phoneNumberId: string; displayPhone?: string };
-    const number = await upsertWaPhoneNumber(orgId, phoneNumberId, displayPhone);
-    return reply.status(201).send({ data: number });
-  });
+  app.post(
+    '/api/v1/whatsapp/phone-numbers',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { orgId } = req.user as { orgId: string };
+      const { phoneNumberId, displayPhone } = req.body as {
+        phoneNumberId: string;
+        displayPhone?: string;
+      };
+      const number = await upsertWaPhoneNumber(orgId, phoneNumberId, displayPhone);
+      return reply.status(201).send({ data: number });
+    },
+  );
 
   // ── Meta webhook ──────────────────────────────────────────────────────────
 
@@ -260,7 +292,13 @@ export default async function whatsappRoutes(app: FastifyInstance) {
             };
 
             if (orgId) {
-              await syncWaTemplateStatus(orgId, message_template_name, message_template_language, event, reason);
+              await syncWaTemplateStatus(
+                orgId,
+                message_template_name,
+                message_template_language,
+                event,
+                reason,
+              );
             }
           }
 
@@ -272,7 +310,11 @@ export default async function whatsappRoutes(app: FastifyInstance) {
             };
 
             if (orgId && display_phone_number_id) {
-              await updateQualityRating(orgId, display_phone_number_id, current_rating ?? 'UNKNOWN');
+              await updateQualityRating(
+                orgId,
+                display_phone_number_id,
+                current_rating ?? 'UNKNOWN',
+              );
             }
           }
 
@@ -308,7 +350,7 @@ export default async function whatsappRoutes(app: FastifyInstance) {
                     listId: replyData.id,
                     title: replyData.title ?? '',
                     contactPhone: `+${from}`,
-                    messageId: msg.id as string ?? '',
+                    messageId: (msg.id as string) ?? '',
                   });
                 }
               }

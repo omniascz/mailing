@@ -7,7 +7,7 @@ async function rateLimitPlugin(app: FastifyInstance) {
     max: 100,
     timeWindow: '1 minute',
     keyGenerator: (request) => {
-      return request.headers['x-api-key'] as string || request.ip;
+      return (request.headers['x-api-key'] as string) || request.ip;
     },
   });
 }

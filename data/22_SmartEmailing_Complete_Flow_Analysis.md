@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `21_SmartEmailing_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** SmartEmailing umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Český produkt z Brna (založeno 2009)** – 16+ let v industry
 > - **#1 nebo top 2 na CZ trhu** (vedle Ecomailu)
 > - **Native česká + slovenská UI + phone support**
@@ -130,22 +131,22 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Sign-up (account creator) | Full + billing + close account | Vše |
-| **Administrator** | Pozvánka od Owner | Operational + user mgmt | Vše krom Owner exclusive |
-| **Marketing user** | Pozvánka | Daily marketing | Per role permissions |
-| **Designer / Editor** | Pozvánka s custom role | Content + templates | Per role |
-| **Viewer / Read-only** | Pozvánka | View reports | Per role |
-| **Custom role users** | Pozvánka | Per permissions | Per role |
-| **Subscriber / Contact** | Form, integration | Receives emails, browses | Své emaily |
-| **API Client** | API key | Per scope | Per scope |
-| **Shoptet integration** | Plugin install | Sync data | Per integration scope |
-| **Shopify / WooCommerce** | API / plugin | Sync data | Per integration scope |
-| **PrestaShop integration** | Plugin | Sync data | Per integration scope |
-| **Make / Zapier** | OAuth | Workflow automation | Per integration scope |
-| **Luigi's Box** | API integration | Product search/recommendations | Per scope |
-| **SmartEmailing Staff** | Interní | Support, debug | Limited |
+| Aktér                      | Vstupní bod               | Co dělá                        | Co vidí                  |
+| -------------------------- | ------------------------- | ------------------------------ | ------------------------ |
+| **Account Owner**          | Sign-up (account creator) | Full + billing + close account | Vše                      |
+| **Administrator**          | Pozvánka od Owner         | Operational + user mgmt        | Vše krom Owner exclusive |
+| **Marketing user**         | Pozvánka                  | Daily marketing                | Per role permissions     |
+| **Designer / Editor**      | Pozvánka s custom role    | Content + templates            | Per role                 |
+| **Viewer / Read-only**     | Pozvánka                  | View reports                   | Per role                 |
+| **Custom role users**      | Pozvánka                  | Per permissions                | Per role                 |
+| **Subscriber / Contact**   | Form, integration         | Receives emails, browses       | Své emaily               |
+| **API Client**             | API key                   | Per scope                      | Per scope                |
+| **Shoptet integration**    | Plugin install            | Sync data                      | Per integration scope    |
+| **Shopify / WooCommerce**  | API / plugin              | Sync data                      | Per integration scope    |
+| **PrestaShop integration** | Plugin                    | Sync data                      | Per integration scope    |
+| **Make / Zapier**          | OAuth                     | Workflow automation            | Per integration scope    |
+| **Luigi's Box**            | API integration           | Product search/recommendations | Per scope                |
+| **SmartEmailing Staff**    | Interní                   | Support, debug                 | Limited                  |
 
 ---
 
@@ -323,6 +324,7 @@ Czech migration team assistance available
 ⚠️ **SmartEmailing role naming** specifically not always publicly documented – typical structure pro CZ platforms:
 
 #### A) Account Owner
+
 - **Highest tier** access
 - **Vytvořen při signup** (account creator)
 - Cannot be deleted directly
@@ -331,6 +333,7 @@ Czech migration team assistance available
 - Manages all settings + users
 
 #### B) Administrator
+
 - **Full operational** access
 - User management
 - Integration management
@@ -338,6 +341,7 @@ Czech migration team assistance available
 - Cannot transfer ownership
 
 #### C) Marketing user
+
 - **Daily marketing** tasks
 - Campaigns + automations + segments
 - View contacts, edit
@@ -345,22 +349,26 @@ Czech migration team assistance available
 - No user management
 
 #### D) Designer / Editor
+
 - **Content focused**
 - Templates + design
 - Limited contact data access
 - No send permissions typically
 
 #### E) Read-only / Viewer
+
 - **View reports** only
 - No editing
 - For stakeholders, executives
 
 #### F) Custom roles
+
 - Per business needs (higher tier feature)
 
 ### 4.2 Permission categories (typical)
 
 #### Account & Settings
+
 - Account info
 - Billing access
 - User management
@@ -369,6 +377,7 @@ Czech migration team assistance available
 - API key management
 
 #### Contacts
+
 - View contacts
 - Edit contacts
 - Import contacts
@@ -377,88 +386,97 @@ Czech migration team assistance available
 - GDPR evidence view
 
 #### Lists
+
 - View lists
 - Create/edit lists
 
 #### Segments
+
 - View segments
 - Create/edit segments
 
 #### Campaigns
+
 - View campaigns
 - Create / edit
 - Send campaigns
 
 #### Automations
+
 - View automations
 - Create / edit
 - Activate / deactivate
 
 #### Templates
+
 - View templates
 - Create / edit
 
 #### Forms / Pop-ups
+
 - View forms
 - Create / edit
 - Publish
 
 #### SMS
+
 - Send SMS
 - Manage credits
 
 #### Reports
+
 - View reports
 - Export reports
 
 #### Integrations
+
 - View integrations
 - Manage integrations
 
 ### 4.3 Permission matrix (typical default)
 
-| Akce | Owner | Admin | Marketing | Designer | Viewer | Custom |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |  |  |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Manage billing | ✅ | ❌ | ❌ | ❌ | ❌ | per role |
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **User Management** |  |  |  |  |  |  |
-| Add/edit/delete users | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Contacts** |  |  |  |  |  |  |
-| View contacts | ✅ | ✅ | ✅ | limited | view | per role |
-| Edit contacts | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| Import contacts | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| Export contacts | ✅ | ✅ | per role | ❌ | ❌ | per role |
-| GDPR evidence view | ✅ | ✅ | ✅ | view | view | per role |
-| **Lists / Segments** |  |  |  |  |  |  |
-| Manage lists | ✅ | ✅ | ✅ | ❌ | view | per role |
-| Create segments | ✅ | ✅ | ✅ | ❌ | view | per role |
-| **Campaigns** |  |  |  |  |  |  |
-| Create / edit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| Send | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| **Automations** |  |  |  |  |  |  |
-| Create / edit | ✅ | ✅ | ✅ | ❌ | view | per role |
-| Activate | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| **Templates** |  |  |  |  |  |  |
-| Create / edit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| **Forms / Pop-ups** |  |  |  |  |  |  |
-| Create / edit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| Publish | ✅ | ✅ | ✅ | per role | ❌ | per role |
-| **SMS** |  |  |  |  |  |  |
-| Send SMS | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| Manage credits | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Transactional** |  |  |  |  |  |  |
-| API access | ✅ | ✅ | per role | ❌ | ❌ | per role |
-| **Reports** |  |  |  |  |  |  |
-| View | ✅ | ✅ | ✅ | view | ✅ | per role |
-| Export | ✅ | ✅ | per role | ❌ | per role | per role |
-| **Integrations** |  |  |  |  |  |  |
-| Manage | ✅ | ✅ | per role | ❌ | ❌ | per role |
-| **API** |  |  |  |  |  |  |
-| Manage API keys | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Domains** |  |  |  |  |  |  |
-| Domain authentication | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
+| Akce                  | Owner | Admin | Marketing | Designer |  Viewer  |  Custom  |
+| --------------------- | :---: | :---: | :-------: | :------: | :------: | :------: |
+| **Account & Billing** |       |       |           |          |          |          |
+| Close account         |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    |    ❌    |
+| Manage billing        |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    | per role |
+| Account settings      |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **User Management**   |       |       |           |          |          |          |
+| Add/edit/delete users |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **Contacts**          |       |       |           |          |          |          |
+| View contacts         |  ✅   |  ✅   |    ✅     | limited  |   view   | per role |
+| Edit contacts         |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| Import contacts       |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| Export contacts       |  ✅   |  ✅   | per role  |    ❌    |    ❌    | per role |
+| GDPR evidence view    |  ✅   |  ✅   |    ✅     |   view   |   view   | per role |
+| **Lists / Segments**  |       |       |           |          |          |          |
+| Manage lists          |  ✅   |  ✅   |    ✅     |    ❌    |   view   | per role |
+| Create segments       |  ✅   |  ✅   |    ✅     |    ❌    |   view   | per role |
+| **Campaigns**         |       |       |           |          |          |          |
+| Create / edit         |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| Send                  |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| **Automations**       |       |       |           |          |          |          |
+| Create / edit         |  ✅   |  ✅   |    ✅     |    ❌    |   view   | per role |
+| Activate              |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| **Templates**         |       |       |           |          |          |          |
+| Create / edit         |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| **Forms / Pop-ups**   |       |       |           |          |          |          |
+| Create / edit         |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| Publish               |  ✅   |  ✅   |    ✅     | per role |    ❌    | per role |
+| **SMS**               |       |       |           |          |          |          |
+| Send SMS              |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| Manage credits        |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **Transactional**     |       |       |           |          |          |          |
+| API access            |  ✅   |  ✅   | per role  |    ❌    |    ❌    | per role |
+| **Reports**           |       |       |           |          |          |          |
+| View                  |  ✅   |  ✅   |    ✅     |   view   |    ✅    | per role |
+| Export                |  ✅   |  ✅   | per role  |    ❌    | per role | per role |
+| **Integrations**      |       |       |           |          |          |          |
+| Manage                |  ✅   |  ✅   | per role  |    ❌    |    ❌    | per role |
+| **API**               |       |       |           |          |          |          |
+| Manage API keys       |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **Domains**           |       |       |           |          |          |          |
+| Domain authentication |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
 
 ### 4.4 User invitation flow
 
@@ -896,6 +914,7 @@ Embed code OR plugin install
 ### 8.1 Subscription creation paths
 
 #### A) Form submission
+
 ```
 Visitor fills SmartEmailing form (embedded, pop-up, exit-intent)
    ↓
@@ -921,6 +940,7 @@ Automation trigger fires
 ```
 
 #### B) Double opt-in flow
+
 ```
 Form submission
    ↓
@@ -942,6 +962,7 @@ Welcome workflow triggers
 ```
 
 #### C) Shoptet integration sync
+
 ```
 Customer creates account na Shoptet
    ↓
@@ -959,6 +980,7 @@ Workflow trigger (welcome new customer)
 ```
 
 #### D) Manual import (CSV)
+
 ```
 Admin: Kontakty → Import
    ↓
@@ -986,6 +1008,7 @@ Import processed
 ```
 
 #### E) API
+
 ```
 External system POST /contactlists/{id}/contacts
    ↓
@@ -1002,6 +1025,7 @@ Trigger workflows
 ```
 
 #### F) E-commerce via Make/Zapier
+
 ```
 Custom platform → Make/Zapier
    ↓
@@ -1083,6 +1107,7 @@ Data retained per GDPR / business
 ### 8.6 Bounce + spam handling
 
 #### Hard bounce
+
 ```
 ISP 5xx
    ↓
@@ -1094,6 +1119,7 @@ Auto-suppression
 ```
 
 #### Spam complaint
+
 ```
 ISP FBL → SmartEmailing
    ↓
@@ -1306,9 +1332,10 @@ Per automation:
 ### 11.1 GDPR evidence per contact
 
 Per oficiální claim:
-*"GDPR evidenciou, s ktorou máte neustále prehľad o pôvode vašich kontaktov, účelom spracovania a platnosťou súhlasu."*
+_"GDPR evidenciou, s ktorou máte neustále prehľad o pôvode vašich kontaktov, účelom spracovania a platnosťou súhlasu."_
 
 Tracked per contact:
+
 - **Source** (původ – which form, integration, import)
 - **Purpose** (účel – marketing, transactional, etc.)
 - **Validity period** (platnost souhlasu)
@@ -1320,6 +1347,7 @@ Tracked per contact:
 ### 11.2 GDPR evidence creation flow
 
 #### Form submission with consent
+
 ```
 Visitor fills form s GDPR consent checkbox
    ↓
@@ -1341,6 +1369,7 @@ Audit trail v contact profile
 ```
 
 #### Manual import with consent
+
 ```
 Admin imports CSV
    ↓
@@ -1356,6 +1385,7 @@ Audit trail
 ```
 
 #### Integration sync (Shoptet)
+
 ```
 Customer registered na Shoptet s marketing consent
    ↓
@@ -1386,6 +1416,7 @@ Compliance audit ready
 ### 11.4 GDPR rights flow
 
 #### Right to access (DSAR)
+
 ```
 Subscriber requests data
    ↓
@@ -1403,6 +1434,7 @@ Provide to subscriber within 30 days
 ```
 
 #### Right to be Forgotten
+
 ```
 Subscriber requests deletion
    ↓
@@ -1422,12 +1454,13 @@ Compliance log
 ### 11.5 GDPR evidence importance pro CZ
 
 CZ regulations (ÚOOÚ) are stricter v některých aspectech vs. EU general GDPR. SmartEmailing's evidence feature explicitly addresses:
+
 - **ÚOOÚ kontrola** (Czech data protection authority audits)
 - **Proof of consent** required during audits
 - **Source provenance** must be demonstrable
 - **Validity period** must be documented
 
-Per oficiální: *"Proti kontrole z úradu sa ubránite GDPR evidenciou"*
+Per oficiální: _"Proti kontrole z úradu sa ubránite GDPR evidenciou"_
 
 ---
 
@@ -1454,6 +1487,7 @@ Email sent s grammatically correct salutation:
 ```
 
 **Pro Czech/Slovak languages this is critical** because:
+
 - Nominative (Petr) ≠ Vocative (Petře)
 - Incorrect case sounds wrong
 - Globální platformy (Mailchimp, ActiveCampaign) tohle nedělají
@@ -1665,6 +1699,7 @@ Automation triggers fire (if match)
 ### 14.3 Data synced
 
 #### Customer data
+
 - Email (primary)
 - Jméno, příjmení (with case forms support)
 - Telefon
@@ -1675,6 +1710,7 @@ Automation triggers fire (if match)
 - Registration date
 
 #### Order data
+
 - Order ID
 - Date
 - Status
@@ -1685,6 +1721,7 @@ Automation triggers fire (if match)
 - Various Shoptet fields
 
 #### Product data
+
 - Auto-imported via product feed URL
 - Product images, names, prices
 - Categories
@@ -1692,13 +1729,14 @@ Automation triggers fire (if match)
 - Real-time updates
 
 #### Cart events
+
 - Cart abandoned (>30 min default)
 - Cart items dynamically
 
 ### 14.4 Form embed
 
 Per oficiální:
-*"jednoduché vloženie smartemailingového formulára na váš e-shop"*
+_"jednoduché vloženie smartemailingového formulára na váš e-shop"_
 
 ```
 SmartEmailing form embed do Shoptet:
@@ -1998,16 +2036,16 @@ Action performed
 
 ### 18.3 API endpoints
 
-| Resource | Operace |
-|---|---|
-| `/contactlists` | Lists management |
-| `/contactlists/{id}/contacts` | Add to list |
-| `/contacts` | Contact management |
-| `/transactional-emails` | Send transactional |
-| `/campaigns` | Campaign data |
-| `/automations` | Workflow management |
-| `/forms` | Form data |
-| `/orders` | E-commerce orders |
+| Resource                      | Operace             |
+| ----------------------------- | ------------------- |
+| `/contactlists`               | Lists management    |
+| `/contactlists/{id}/contacts` | Add to list         |
+| `/contacts`                   | Contact management  |
+| `/transactional-emails`       | Send transactional  |
+| `/campaigns`                  | Campaign data       |
+| `/automations`                | Workflow management |
+| `/forms`                      | Form data           |
+| `/orders`                     | E-commerce orders   |
 
 ### 18.4 Webhooks
 
@@ -2019,6 +2057,7 @@ Action performed
 ### 18.5 Make (Integromat) integration
 
 **Deep CZ-friendly integration:**
+
 ```
 Make scenario builder
    ↓
@@ -2056,7 +2095,7 @@ Zapier:
 
 ### 19.1 SmartEmailing's claimed CZ deliverability leadership
 
-Per oficiální: *"number one position in deliverability na CZ trhu"*
+Per oficiální: _"number one position in deliverability na CZ trhu"_
 
 ### 19.2 Infrastructure
 
@@ -2069,6 +2108,7 @@ Per oficiální: *"number one position in deliverability na CZ trhu"*
 ### 19.3 CZ ISP relationships
 
 Strong relationships particularly:
+
 - **Seznam.cz** (#1 CZ email provider)
 - **Centrum.cz**
 - **Atlas.cz**
@@ -2079,13 +2119,13 @@ Local expertise advantage vs. globální platforms.
 
 ### 19.4 Authentication setup
 
-| Protokol | Setup |
-|---|---|
-| **SPF** | Include for SmartEmailing |
-| **DKIM** | DNS records |
-| **DMARC** | TXT record |
-| **Sender verification** | Email verification |
-| **Branded tracking domain** | CNAME |
+| Protokol                    | Setup                     |
+| --------------------------- | ------------------------- |
+| **SPF**                     | Include for SmartEmailing |
+| **DKIM**                    | DNS records               |
+| **DMARC**                   | TXT record                |
+| **Sender verification**     | Email verification        |
+| **Branded tracking domain** | CNAME                     |
 
 ### 19.5 Domain authentication flow
 
@@ -2197,33 +2237,33 @@ Provide to subscriber (30 days max per GDPR)
 
 ## 21. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Marketing | Designer | Viewer | Custom | Subscriber | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Domains | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| All subscribers | ✅ | ✅ | ✅ | limited | view | per role | jen sebe | ✅ |
-| Edit subscribers | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ✅ |
-| Export subscribers | ✅ | ✅ | per role | ❌ | ❌ | per role | request | per scope |
-| GDPR evidence | ✅ | ✅ | view | view | view | per role | jen své | ✅ |
-| Lists | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Segments | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Tags | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Campaigns | ✅ | ✅ | ✅ | ✅ | view | per role | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ✅ |
-| Automations | ✅ | ✅ | ✅ | ❌ | view | per role | ❌ | ✅ |
-| Pre-prepared scenarios | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Templates | ✅ | ✅ | ✅ | ✅ | view | per role | – | ✅ |
-| Forms / Pop-ups | ✅ | ✅ | ✅ | ✅ | view | per role | submit | per scope |
-| SMS module | ✅ | ✅ | ✅ | ❌ | ❌ | per role | – | per scope |
-| SMS credits | ✅ | ✅ | view | ❌ | ❌ | per role | – | per scope |
-| Transactional | ✅ | ✅ | per role | ❌ | ❌ | per role | – | ✅ |
-| Czech personalization (jmeniny) | ✅ | ✅ | ✅ | ✅ | view | per role | – | per scope |
-| Reports | ✅ | ✅ | ✅ | view | ✅ | per role | ❌ | ✅ |
-| Integrations | ✅ | ✅ | per role | ❌ | ❌ | per role | – | per scope |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | – |
-| GDPR delete | ✅ | ✅ | per role | ❌ | ❌ | per role | request | per scope |
+| Data                            | Owner | Admin | Marketing | Designer | Viewer |  Custom  |  Subscriber   |    API    |
+| ------------------------------- | :---: | :---: | :-------: | :------: | :----: | :------: | :-----------: | :-------: |
+| Account settings                |  ✅   |  ✅   |    ❌     |    ❌    |   ❌   | per role |      ❌       | per scope |
+| Billing                         |  ✅   |  ❌   |    ❌     |    ❌    |   ❌   | per role |      ❌       | per scope |
+| User management                 |  ✅   |  ✅   |    ❌     |    ❌    |   ❌   | per role |      ❌       | per scope |
+| Domains                         |  ✅   |  ✅   |    ❌     |    ❌    |   ❌   | per role |      ❌       | per scope |
+| All subscribers                 |  ✅   |  ✅   |    ✅     | limited  |  view  | per role |   jen sebe    |    ✅     |
+| Edit subscribers                |  ✅   |  ✅   |    ✅     |    ❌    |   ❌   | per role |      ❌       |    ✅     |
+| Export subscribers              |  ✅   |  ✅   | per role  |    ❌    |   ❌   | per role |    request    | per scope |
+| GDPR evidence                   |  ✅   |  ✅   |   view    |   view   |  view  | per role |    jen své    |    ✅     |
+| Lists                           |  ✅   |  ✅   |    ✅     |    ❌    |  view  | per role |       –       |    ✅     |
+| Segments                        |  ✅   |  ✅   |    ✅     |    ❌    |  view  | per role |       –       |    ✅     |
+| Tags                            |  ✅   |  ✅   |    ✅     |    ❌    |  view  | per role |       –       |    ✅     |
+| Campaigns                       |  ✅   |  ✅   |    ✅     |    ✅    |  view  | per role | jen co dostal |    ✅     |
+| Send campaigns                  |  ✅   |  ✅   |    ✅     |    ❌    |   ❌   | per role |      ❌       |    ✅     |
+| Automations                     |  ✅   |  ✅   |    ✅     |    ❌    |  view  | per role |      ❌       |    ✅     |
+| Pre-prepared scenarios          |  ✅   |  ✅   |    ✅     |    ❌    |  view  | per role |       –       |    ✅     |
+| Templates                       |  ✅   |  ✅   |    ✅     |    ✅    |  view  | per role |       –       |    ✅     |
+| Forms / Pop-ups                 |  ✅   |  ✅   |    ✅     |    ✅    |  view  | per role |    submit     | per scope |
+| SMS module                      |  ✅   |  ✅   |    ✅     |    ❌    |   ❌   | per role |       –       | per scope |
+| SMS credits                     |  ✅   |  ✅   |   view    |    ❌    |   ❌   | per role |       –       | per scope |
+| Transactional                   |  ✅   |  ✅   | per role  |    ❌    |   ❌   | per role |       –       |    ✅     |
+| Czech personalization (jmeniny) |  ✅   |  ✅   |    ✅     |    ✅    |  view  | per role |       –       | per scope |
+| Reports                         |  ✅   |  ✅   |    ✅     |   view   |   ✅   | per role |      ❌       |    ✅     |
+| Integrations                    |  ✅   |  ✅   | per role  |    ❌    |   ❌   | per role |       –       | per scope |
+| API keys                        |  ✅   |  ✅   |    ❌     |    ❌    |   ❌   | per role |      ❌       |     –     |
+| GDPR delete                     |  ✅   |  ✅   | per role  |    ❌    |   ❌   | per role |    request    | per scope |
 
 ---
 
@@ -2369,4 +2409,4 @@ Pokud SmartEmailing používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů smartemailing.cz, Shoptet doplnek SK docs, a praktických zdrojů (Slashdot, SourceForge, CompareYourTech, WProom, ostatní aggregátory). Pro nejaktuálnější detaily je nutný engagement s SmartEmailing support/sales teamem.*
+_Dokument zpracován z oficiálních zdrojů smartemailing.cz, Shoptet doplnek SK docs, a praktických zdrojů (Slashdot, SourceForge, CompareYourTech, WProom, ostatní aggregátory). Pro nejaktuálnější detaily je nutný engagement s SmartEmailing support/sales teamem._

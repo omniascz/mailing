@@ -51,7 +51,9 @@ export async function trackPageView(input: TrackPageViewInput): Promise<ProductP
   const { orgId, contactId, visitorToken, sku, productName, productUrl, meta = {} } = input;
 
   if (!contactId && !visitorToken) {
-    throw Object.assign(new Error('Either contactId or visitorToken is required'), { statusCode: 400 });
+    throw Object.assign(new Error('Either contactId or visitorToken is required'), {
+      statusCode: 400,
+    });
   }
 
   // Upsert: contact+sku unique, increment view_count + refresh last_viewed_at
@@ -243,7 +245,9 @@ export async function markConverted(orgId: string, contactId: string): Promise<v
 export async function topViewedProducts(
   orgId: string,
   limit = 20,
-): Promise<{ sku: string | null; productName: string | null; totalViews: number; uniqueContacts: number }[]> {
+): Promise<
+  { sku: string | null; productName: string | null; totalViews: number; uniqueContacts: number }[]
+> {
   const rows = await db.execute<{
     sku: string | null;
     product_name: string | null;

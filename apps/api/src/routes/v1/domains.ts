@@ -15,10 +15,15 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { sendingDomains } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
-import { generateDkimKeyPair, verifyDkimDns, buildDkimDnsRecord } from '../../services/domains/dkim.js';
+import {
+  generateDkimKeyPair,
+  verifyDkimDns,
+  buildDkimDnsRecord,
+} from '../../services/domains/dkim.js';
 import { buildDnsRecords, verifyDnsRecords } from '../../services/domains/dns-records.js';
 import { runQualityCheck } from '../../services/domains/quality-check.js';
 import { getDomainWarmupStatus, getWarmupQuota } from '../../services/domains/warmup-scheduler.js';
+import { sendTransactionalEmail } from '../../lib/queues.js';
 
 const domainParam = z.object({ id: z.string().uuid() });
 
@@ -58,7 +63,11 @@ export default async function domainRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const { domain, mailSubdomain } = z
         .object({
-          domain: z.string().min(4).max(253).regex(/^[a-z0-9.-]+$/i, 'Invalid domain'),
+          domain: z
+            .string()
+            .min(4)
+            .max(253)
+            .regex(/^[a-z0-9.-]+$/i, 'Invalid domain'),
           mailSubdomain: z.string().min(4).max(253).optional(),
         })
         .parse(req.body);
@@ -82,7 +91,9 @@ export default async function domainRoutes(app: FastifyInstance) {
         .returning()
         .catch((err: Error) => {
           if (err.message.includes('sending_domains_org_domain_idx')) {
-            throw AppError.conflict(`Domain "${domain}" is already registered for this organisation`);
+            throw AppError.conflict(
+              `Domain "${domain}" is already registered for this organisation`,
+            );
           }
           throw err;
         });
@@ -206,16 +217,32 @@ export default async function domainRoutes(app: FastifyInstance) {
       return {
         data: records.map((r) => {
           if (r.purpose.startsWith('DKIM')) {
-            return { ...r, verified: domain.dkimVerified, lastCheckedAt: domain.dkimVerifiedAt?.toISOString() ?? null };
+            return {
+              ...r,
+              verified: domain.dkimVerified,
+              lastCheckedAt: domain.dkimVerifiedAt?.toISOString() ?? null,
+            };
           }
           if (r.purpose.startsWith('SPF')) {
-            return { ...r, verified: domain.spfVerified, lastCheckedAt: domain.spfVerifiedAt?.toISOString() ?? null };
+            return {
+              ...r,
+              verified: domain.spfVerified,
+              lastCheckedAt: domain.spfVerifiedAt?.toISOString() ?? null,
+            };
           }
           if (r.purpose.startsWith('DMARC')) {
-            return { ...r, verified: domain.dmarcVerified, lastCheckedAt: domain.dmarcVerifiedAt?.toISOString() ?? null };
+            return {
+              ...r,
+              verified: domain.dmarcVerified,
+              lastCheckedAt: domain.dmarcVerifiedAt?.toISOString() ?? null,
+            };
           }
           if (r.purpose.startsWith('Return-Path')) {
-            return { ...r, verified: domain.returnPathVerified, lastCheckedAt: domain.returnPathVerifiedAt?.toISOString() ?? null };
+            return {
+              ...r,
+              verified: domain.returnPathVerified,
+              lastCheckedAt: domain.returnPathVerifiedAt?.toISOString() ?? null,
+            };
           }
           return r;
         }),
@@ -314,6 +341,56 @@ export default async function domainRoutes(app: FastifyInstance) {
       const { id } = domainParam.parse(req.params);
       const report = await runQualityCheck(req.user!.orgId, id);
       return reply.send({ data: report });
+    },
+  );
+
+  /**
+   * POST /api/v1/domains/:id/send-test
+   * Enqueue a self-addressed test email from this sending domain to the
+   * caller's account email. Useful after DNS propagation to verify the
+   * end-to-end pipeline (queue → worker → MTA gRPC → SMTP) is working
+   * and to inspect SPF/DKIM/DMARC headers on the received message.
+   *
+   * Body: { to?: string }  // defaults to caller's session email
+   */
+  app.post(
+    '/api/v1/domains/:id/send-test',
+    { schema: { tags: ['Domains'], summary: 'Send a test email from this domain' } },
+    async (req, reply) => {
+      const { id } = domainParam.parse(req.params);
+      const { to } = z
+        .object({ to: z.string().email().optional() })
+        .parse((req.body as Record<string, unknown>) ?? {});
+
+      const orgId = req.user!.orgId;
+      const recipient = to ?? req.user!.email;
+
+      const [row] = await db
+        .select()
+        .from(sendingDomains)
+        .where(and(eq(sendingDomains.id, id), eq(sendingDomains.orgId, orgId)))
+        .limit(1);
+      if (!row) throw AppError.notFound('Sending domain');
+
+      const fromLocal = process.env.DOI_FROM_EMAIL?.split('@')[0] || 'no-reply';
+      const fromAddress = `${fromLocal}@${row.domain}`;
+      const sentAt = new Date().toISOString();
+
+      const messageId = await sendTransactionalEmail({
+        to: recipient,
+        from: fromAddress,
+        fromName: 'Mailforge test',
+        subject: `Mailforge test from ${row.domain}`,
+        html: `<p>This is a test from <strong>${row.domain}</strong>.</p>
+<p>If it landed in the inbox (not spam), your sending domain is working. Check the headers to confirm SPF, DKIM and DMARC pass.</p>
+<p style="color:#888;font-size:12px">Sent at ${sentAt}</p>`,
+        text: `Mailforge test from ${row.domain}\n\nIf this landed in your inbox, your sending domain is working.\nSent at ${sentAt}`,
+        orgId,
+      });
+
+      return reply.code(202).send({
+        data: { messageId, sentTo: recipient, from: fromAddress },
+      });
     },
   );
 

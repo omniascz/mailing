@@ -32,12 +32,12 @@ USP, které žádný velký hráč neposkytuje **současně**:
 
 ### 1.1 Velikost trhu
 
-| Region | TAM email marketing SaaS | TAM omnichannel | Naše addressable share |
-|---|---|---|---|
-| **ČR** | ~250 mil. Kč/rok | ~600 mil. Kč/rok | 5–10 % do 5 let realistická |
-| **SK** | ~80 mil. Kč/rok | ~200 mil. Kč/rok | 3–8 % |
-| **V4+ (PL, HU, AT, SI)** | ~1.5 mld. Kč | ~3.5 mld. Kč | 0.5–2 % |
-| **EU (vyjma V4)** | ~80 mld. Kč | ~150 mld. Kč | 0.01–0.1 % (niche only) |
+| Region                   | TAM email marketing SaaS | TAM omnichannel  | Naše addressable share      |
+| ------------------------ | ------------------------ | ---------------- | --------------------------- |
+| **ČR**                   | ~250 mil. Kč/rok         | ~600 mil. Kč/rok | 5–10 % do 5 let realistická |
+| **SK**                   | ~80 mil. Kč/rok          | ~200 mil. Kč/rok | 3–8 %                       |
+| **V4+ (PL, HU, AT, SI)** | ~1.5 mld. Kč             | ~3.5 mld. Kč     | 0.5–2 %                     |
+| **EU (vyjma V4)**        | ~80 mld. Kč              | ~150 mld. Kč     | 0.01–0.1 % (niche only)     |
 
 Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement segment ~$80 mld.
 
@@ -55,12 +55,14 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 - Cestovní agentury
 
 **Volume profile:**
+
 - Kontakty: 5 000 – 100 000
 - Emaily/měs: 5 000 – 200 000
 - SMS: 0 – 20 000 (drop-shipping reminders, marketing)
 - Voice (Vlna 2+): debt collection, schůzková připomenutí, surveys
 
 **Annual contract value (ACV):**
+
 - Starter (≤10k kontaktů, ≤50k emailů): 19 € / ~500 Kč
 - Pro (≤50k kontaktů, ≤250k emailů): 79 € / ~2 000 Kč
 - Business (≤200k kontaktů, ≤1M emailů): 199 € / ~5 000 Kč
@@ -190,17 +192,17 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 
 ### 3.1 Konkurence ceny (1M emailů/měs srovnání)
 
-| Provider | Cena za 1M emailů/měs | Kontakty included | Poznámka |
-|---|---|---|---|
-| **EcoMail** | ~5 000 Kč | 50 000 | Jen email |
-| **SmartEmailing** | ~6 000 Kč | 50 000 | + workflow |
-| **Mailchimp Standard 50k** | ~$200 (~5 000 Kč) | 50 000 | Globální brand |
-| **MailerLite Advanced 50k** | ~$120 (~3 000 Kč) | 50 000 | Jen email |
-| **Brevo Business** | ~€69+ (~1 800 Kč) | unlimited (pay per send) | Omnichannel |
-| **Mailgun Foundation 1M** | $700 (~17 500 Kč) | API only | Transactional |
-| **Sendgrid Pro 1.5M** | $89.95 (~2 200 Kč) | API only | Transactional |
-| **AWS SES** | $100 (~2 500 Kč) | API only | Raw, vlastní setup |
-| **Mailforge Business (návrh)** | **199 € (~5 000 Kč)** | 200 000 | **Omnichannel + AI + lokalizace** |
+| Provider                       | Cena za 1M emailů/měs | Kontakty included        | Poznámka                          |
+| ------------------------------ | --------------------- | ------------------------ | --------------------------------- |
+| **EcoMail**                    | ~5 000 Kč             | 50 000                   | Jen email                         |
+| **SmartEmailing**              | ~6 000 Kč             | 50 000                   | + workflow                        |
+| **Mailchimp Standard 50k**     | ~$200 (~5 000 Kč)     | 50 000                   | Globální brand                    |
+| **MailerLite Advanced 50k**    | ~$120 (~3 000 Kč)     | 50 000                   | Jen email                         |
+| **Brevo Business**             | ~€69+ (~1 800 Kč)     | unlimited (pay per send) | Omnichannel                       |
+| **Mailgun Foundation 1M**      | $700 (~17 500 Kč)     | API only                 | Transactional                     |
+| **Sendgrid Pro 1.5M**          | $89.95 (~2 200 Kč)    | API only                 | Transactional                     |
+| **AWS SES**                    | $100 (~2 500 Kč)      | API only                 | Raw, vlastní setup                |
+| **Mailforge Business (návrh)** | **199 € (~5 000 Kč)** | 200 000                  | **Omnichannel + AI + lokalizace** |
 
 **Strategie:**
 
@@ -211,15 +213,16 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 
 ### 3.2 Cenová struktura (zachovat z ROADMAP)
 
-| Plan | Cena/měs | Kontakty | Emaily/měs | SMS | Voice | AI | Dedicated IP |
-|---|---|---|---|---|---|---|---|
-| **Free** | 0 Kč | 1 000 | 5 000 | — | — | 10/den | — |
-| **Starter** | 500 Kč / $19 | 10 000 | 50 000 | pay-per-use | — | 50/den | — |
-| **Pro** | 2 000 Kč / $79 | 50 000 | 250 000 | pay-per-use | $0.05/min | 200/den | + $20 |
-| **Business** | 5 000 Kč / $199 | 200 000 | 1 000 000 | pay-per-use | $0.05/min | 500/den | + $20 |
-| **Enterprise** | custom | unlimited | unlimited | volume rates | enterprise | unlimited | included |
+| Plan           | Cena/měs        | Kontakty  | Emaily/měs | SMS          | Voice      | AI        | Dedicated IP |
+| -------------- | --------------- | --------- | ---------- | ------------ | ---------- | --------- | ------------ |
+| **Free**       | 0 Kč            | 1 000     | 5 000      | —            | —          | 10/den    | —            |
+| **Starter**    | 500 Kč / $19    | 10 000    | 50 000     | pay-per-use  | —          | 50/den    | —            |
+| **Pro**        | 2 000 Kč / $79  | 50 000    | 250 000    | pay-per-use  | $0.05/min  | 200/den   | + $20        |
+| **Business**   | 5 000 Kč / $199 | 200 000   | 1 000 000  | pay-per-use  | $0.05/min  | 500/den   | + $20        |
+| **Enterprise** | custom          | unlimited | unlimited  | volume rates | enterprise | unlimited | included     |
 
 **Pass-through náklady:**
+
 - SMS: skutečný cost × 2 (CZ ~0.50 Kč → 1 Kč/SMS)
 - WhatsApp business: meta cena × 2
 - Voice robot: Twilio cost + našich $0.02/min markup
@@ -237,15 +240,19 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 ### 4.2 Sub-výroky podle persony
 
 **E-commerce manager:**
+
 > "Skončete s pěti samostatnými nástroji. Email kampaně, abandoned cart SMS, reminder volání — všechno z jednoho dashboardu, lokalizované do češtiny i s 7 pády."
 
 **Fitness/wellness chain (PulseUp-typ):**
+
 > "Notifikace o lekci, připomenutí termínu, marketing nabídky. Email tam, kde si klient čte. SMS tam, kde nečte. Volání tam, kde je důležitější."
 
 **Event/divadlo (Ticketarium-typ):**
+
 > "Připomeňte návštěvníkovi koupené vstupenky emailem ráno, SMS dvě hodiny před, a po představení získejte feedback krátkým hovorem od AI agenta."
 
 **B2B SaaS:**
+
 > "Marketing automation, transactional, in-app — všechno jedno API a jedna platforma. Bez Mailgunu vedle Mailchimpu vedle Twilia."
 
 ### 4.3 Negativní pozicování (čím NE jsme)
@@ -268,18 +275,18 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 
 ### 5.2 Public launch (Phase 10)
 
-| Kanál | Investice | Očekávaný outcome |
-|---|---|---|
-| **Product Hunt launch** | 0 Kč | 200–500 signups, awareness, $0–500 MRR |
-| **Lupa.cz, CzechCrunch PR** | 0–20 000 Kč | 1–3 články, signups z tech komunity |
-| **SEO blog** | čas (Claude content) | Long-term hlavní akviziční kanál |
-| **Affiliate program** | 30 % první rok, 10 % thereafter | Drahé ale skálovatelné |
-| **Comparison pages** ("Mailchimp vs Mailforge", …) | čas | SEO + buying intent |
-| **CZ Shoptet/Comgate partnership** | Revenue share | Distribuce přes e-commerce platformy |
-| **Konference (Reshoper, Marketing Festival)** | 50–100 000 Kč | Brand awareness |
-| **Cold outreach** B2B na specific niches | čas | Volume sensitive |
-| **LinkedIn/FB ads** (CZ targeting) | 10–30 000 Kč/měs | Acquisition test |
-| **Existing PulseUp + Ticketarium klienti** | 0 Kč | Cross-sell, warm intro |
+| Kanál                                              | Investice                       | Očekávaný outcome                      |
+| -------------------------------------------------- | ------------------------------- | -------------------------------------- |
+| **Product Hunt launch**                            | 0 Kč                            | 200–500 signups, awareness, $0–500 MRR |
+| **Lupa.cz, CzechCrunch PR**                        | 0–20 000 Kč                     | 1–3 články, signups z tech komunity    |
+| **SEO blog**                                       | čas (Claude content)            | Long-term hlavní akviziční kanál       |
+| **Affiliate program**                              | 30 % první rok, 10 % thereafter | Drahé ale skálovatelné                 |
+| **Comparison pages** ("Mailchimp vs Mailforge", …) | čas                             | SEO + buying intent                    |
+| **CZ Shoptet/Comgate partnership**                 | Revenue share                   | Distribuce přes e-commerce platformy   |
+| **Konference (Reshoper, Marketing Festival)**      | 50–100 000 Kč                   | Brand awareness                        |
+| **Cold outreach** B2B na specific niches           | čas                             | Volume sensitive                       |
+| **LinkedIn/FB ads** (CZ targeting)                 | 10–30 000 Kč/měs                | Acquisition test                       |
+| **Existing PulseUp + Ticketarium klienti**         | 0 Kč                            | Cross-sell, warm intro                 |
 
 ### 5.3 Důležité partnership v CZ
 
@@ -290,14 +297,14 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 
 ### 5.4 Cíle Vlna 1 (18 měsíců po launch)
 
-| Quartal | MRR Kč | Klienti platící | Klíčové milestone |
-|---|---|---|---|
-| Q1 | 30k | 30 | Public launch, first 30 paying |
-| Q2 | 80k | 70 | Product-market fit validated |
-| Q3 | 150k | 110 | Affiliate program live, partnerships |
-| Q4 | 250k | 170 | Shoptet integration live |
-| Q5 | 320k | 200 | **Cíl Vlna 1 splněn** |
-| Q6 | 400k | 240 | Polské UI lokalizace start |
+| Quartal | MRR Kč | Klienti platící | Klíčové milestone                    |
+| ------- | ------ | --------------- | ------------------------------------ |
+| Q1      | 30k    | 30              | Public launch, first 30 paying       |
+| Q2      | 80k    | 70              | Product-market fit validated         |
+| Q3      | 150k   | 110             | Affiliate program live, partnerships |
+| Q4      | 250k   | 170             | Shoptet integration live             |
+| Q5      | 320k   | 200             | **Cíl Vlna 1 splněn**                |
+| Q6      | 400k   | 240             | Polské UI lokalizace start           |
 
 ---
 
@@ -372,9 +379,10 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 **Doporučení:** Ujasnit jméno **PŘED public launch**. Mailforge je intuitivnější pro CZ trh (mail = email, forge = výrobna). ForgeMsg je generičtější, ale "Msg" jako koncovka může být branded jako omnichannel.
 
 **Návrh:**
+
 - Public brand: **Mailforge**
-- Tagline CZ: *"Vykuté zprávy. Email, SMS, voice — vše v jednom."*
-- Tagline EN: *"Forge your messaging. Email, SMS, voice — one platform."*
+- Tagline CZ: _"Vykuté zprávy. Email, SMS, voice — vše v jednom."_
+- Tagline EN: _"Forge your messaging. Email, SMS, voice — one platform."_
 - Doména: `mailforge.io` (primary), `mailforge.cz`, `mailforge.sk`
 
 ### 7.2 Vizuální identita
@@ -386,22 +394,22 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 
 ### 7.3 Slogany podle segmentu
 
-- E-com: *"Vykuté kampaně. Větší prodej."*
-- Fitness: *"Připomenout. Motivovat. Vrátit."*
-- Eventy: *"Od pozvánky až po feedback."*
-- B2B: *"Marketing engine bez kompromisů."*
+- E-com: _"Vykuté kampaně. Větší prodej."_
+- Fitness: _"Připomenout. Motivovat. Vrátit."_
+- Eventy: _"Od pozvánky až po feedback."_
+- B2B: _"Marketing engine bez kompromisů."_
 
 ---
 
 ## 8. Roadmap pozicování (long-term)
 
-| Rok | Fokus | Hlavní mark |
-|---|---|---|
-| **Rok 1 (2026)** | Foundations + closed beta | 50 beta klientů, $0–5k MRR |
-| **Rok 2 (2027)** | CZ/SK launch, product-market fit | $30k MRR, 200 paying, partnerships |
-| **Rok 3 (2028)** | V4+ expansion, AI dominance | $100k MRR, PL lokalizace, voice mainstream |
-| **Rok 4 (2029)** | EU mid-market, vertical specialization | $300k MRR, Shoptet/PrestaShop ekosystém vertikální moduly |
-| **Rok 5 (2030)** | Global niche (fitness, events, e-com EU) | $1M MRR, M&A target nebo Series A |
+| Rok              | Fokus                                    | Hlavní mark                                               |
+| ---------------- | ---------------------------------------- | --------------------------------------------------------- |
+| **Rok 1 (2026)** | Foundations + closed beta                | 50 beta klientů, $0–5k MRR                                |
+| **Rok 2 (2027)** | CZ/SK launch, product-market fit         | $30k MRR, 200 paying, partnerships                        |
+| **Rok 3 (2028)** | V4+ expansion, AI dominance              | $100k MRR, PL lokalizace, voice mainstream                |
+| **Rok 4 (2029)** | EU mid-market, vertical specialization   | $300k MRR, Shoptet/PrestaShop ekosystém vertikální moduly |
+| **Rok 5 (2030)** | Global niche (fitness, events, e-com EU) | $1M MRR, M&A target nebo Series A                         |
 
 ---
 
@@ -425,5 +433,5 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 
 ---
 
-*Dokument vytvořen: 2026-05-18*
-*Status: pracovní; revize po Phase 0 dokončení*
+_Dokument vytvořen: 2026-05-18_
+_Status: pracovní; revize po Phase 0 dokončení_

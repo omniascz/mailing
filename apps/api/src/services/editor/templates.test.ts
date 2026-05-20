@@ -68,7 +68,15 @@ describe('Template library', () => {
 
   it('covers the expected categories', () => {
     const cats = new Set(getAllCategories());
-    const expected = ['newsletter', 'promo', 'transactional', 'event', 'onboarding', 'seasonal', 'ecommerce'];
+    const expected = [
+      'newsletter',
+      'promo',
+      'transactional',
+      'event',
+      'onboarding',
+      'seasonal',
+      'ecommerce',
+    ];
     for (const cat of expected) {
       expect(cats.has(cat as never), `Missing category: ${cat}`).toBe(true);
     }

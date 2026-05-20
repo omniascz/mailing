@@ -17,13 +17,37 @@ import { AppError } from '../../lib/app-error.js';
 // ─── Country classification ───────────────────────────────────────────────────
 
 const EU_COUNTRIES = new Set([
-  'AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI',
-  'FR', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT',
-  'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK',
+  'AT',
+  'BE',
+  'BG',
+  'CY',
+  'CZ',
+  'DE',
+  'DK',
+  'EE',
+  'ES',
+  'FI',
+  'FR',
+  'GR',
+  'HR',
+  'HU',
+  'IE',
+  'IT',
+  'LT',
+  'LU',
+  'LV',
+  'MT',
+  'NL',
+  'PL',
+  'PT',
+  'RO',
+  'SE',
+  'SI',
+  'SK',
 ]);
 
 const COUNTRY_TIMEZONE: Record<string, string> = {
-  US: 'America/New_York',  // Conservative: use Eastern (latest quiet-hours cutoff)
+  US: 'America/New_York', // Conservative: use Eastern (latest quiet-hours cutoff)
   CA: 'America/Toronto',
   GB: 'Europe/London',
   DE: 'Europe/Berlin',
@@ -65,7 +89,9 @@ export function checkTcpaQuietHours(
 
   // Get local hour in recipient timezone using Intl
   const localHour = parseInt(
-    new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false }).format(nowUtc),
+    new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false }).format(
+      nowUtc,
+    ),
     10,
   );
 
@@ -92,7 +118,9 @@ function getNext8AM(tz: string, from: Date): Date {
   for (let i = 0; i < 25; i++) {
     candidate.setHours(candidate.getHours() + 1);
     const h = parseInt(
-      new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false }).format(candidate),
+      new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false }).format(
+        candidate,
+      ),
       10,
     );
     if (h === 8) return candidate;
@@ -139,11 +167,7 @@ export async function recordConsent(
   return consent!;
 }
 
-export async function revokeConsent(
-  orgId: string,
-  phone: string,
-  keyword?: string,
-): Promise<void> {
+export async function revokeConsent(orgId: string, phone: string, keyword?: string): Promise<void> {
   await db
     .update(smsConsents)
     .set({

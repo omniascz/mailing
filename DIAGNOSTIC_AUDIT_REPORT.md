@@ -36,6 +36,7 @@
 **Doba:** 880ms (FULL TURBO cache hit — 10/10)
 **Tasks:** 10 successful, 10 cached
 **Per-package:**
+
 - `@forgemsg/shared:typecheck` — pass
 - `@forgemsg/sdk:typecheck` — pass
 - `@forgemsg/web-sdk:typecheck` — pass
@@ -54,11 +55,13 @@
 **Status:** ✅ exit 0
 **Doba:** test duration 25.72s pro api, total command 8+ minut s cache
 **Per-package:**
+
 - `@forgemsg/api:test` — **78 test files, 1 226 testů PASS, 0 failed** (Vitest)
 - `@forgemsg/web:test` — no test files found (exit 0 via --passWithNoTests)
 - Tasks: 15 successful, 15 cached
 
 **Insight:** **1 226 passing testů** je důkaz, že kritické cesty fungují:
+
 - Auth flow (jiný test ukázal Fastify auth plugin `apps/api/src/plugins/auth.ts:61` házející `AppError.unauthorized` na 401)
 - Health endpoint (200 OK)
 - Routes 404 fallback
@@ -86,6 +89,7 @@
 | **`@forgemsg/mcp-server:build`** | ❌ `error TS5083: Cannot read file 'C:/Users/omnia/Documents/mailforge/tsconfig.json'` |
 
 **Root cause:**
+
 ```json
 // apps/mcp-server/tsconfig.json
 {
@@ -95,6 +99,7 @@
 ```
 
 **Fix (5 minut):**
+
 ```diff
 - "extends": "../../tsconfig.json",
 + "extends": "../../tsconfig.base.json",
@@ -106,6 +111,7 @@
 
 **Status:** ❌ Cannot execute — Go SDK není nainstalováno
 **Detail:**
+
 - `go: command not found` v bash (Git Bash + WSL paths)
 - Standard Windows install locations checknuté: `C:\Program Files\Go`, `C:\Go`, `%USERPROFILE%\go`, `%LOCALAPPDATA%\Programs\go`, `%USERPROFILE%\scoop`, `%ProgramData%\chocolatey` — **žádný Go binary nenalezen**
 - `winget list --id GoLang.Go` — "No installed package found matching input criteria"
@@ -113,6 +119,7 @@
 **Implication:** Apps/engine (1 733 řádků Go, DKIM signer, SMTP sender, pool, gRPC, inbound) a apps/sms-gateway (7 řádků stub) **nikdy nebyly compiled na tomto stroji**. Kód existuje, ale jeho korektnost nelze potvrdit bez compilace.
 
 **Fix (15 minut):**
+
 ```powershell
 winget install GoLang.Go
 # nebo
@@ -121,6 +128,7 @@ choco install golang
 ```
 
 Po install rerun:
+
 ```bash
 cd apps/engine && go build ./... && go test ./...
 cd apps/sms-gateway && go build ./...
@@ -136,6 +144,7 @@ cd apps/sms-gateway && go build ./...
 **Smazané soubory tracked:** 3 (`apps/number-intel/*`)
 
 **Modifikace, které vypadají important (require commit):**
+
 - `.env.example`, `.github/workflows/ci.yml`, `CLAUDE.md`, `FORGEMSG_ROADMAP.md`, `TECH_STACK.md` — config + docs updates (likely from dnešní práce)
 - `apps/api/src/db/schema/{campaigns,contacts,email-events,enums,index,organizations,templates}.ts` — schema updates
 - `apps/api/src/{index,lib/app-error,plugins/auth,routes/v1/contacts}.ts` — API updates
@@ -145,14 +154,17 @@ cd apps/sms-gateway && go build ./...
 **Modifikace v `pnpm-lock.yaml`** (5 870 řádků diff): expected po `pnpm install`. Commit.
 
 **Untracked (require review):**
+
 - **58 Drizzle SQL migrations** `apps/api/drizzle/0001_*.sql` až `0058_saved_queries.sql` — critical pro DB reproducibility. Commit.
 - **3 nové GitHub Actions workflows** (`cd.yml`, `db-migrations.yml`, `infra-plan.yml`) — commit.
 - **5 dokumentů** (EMAIL_DEEP_ANALYSIS, MAILFORGE_FINDING_REPORT, POZICOVANI, TODO, UNPLANNED_FEATURES_AND_FLOW_AUDIT) — commit.
 
 **Smazané tracked (need git rm + commit):**
+
 - `apps/number-intel/{package.json, src/index.ts, tsconfig.json}` — orphaned (HLR lookup engine zrušeno per ROADMAP)
 
 **Git log (jen 5 commitů, 6 týdnů staré):**
+
 ```
 b2cb4a0 feat: add Storybook 9 with stories for all 8 UI components
 bb09f0d feat: tech stack validation, DB schema, auth system, channel adapter
@@ -167,14 +179,14 @@ Každý z 5 commitů má ~15-20k řádků kódu = AI burst-generation pattern. M
 
 ## Sumární tabulka
 
-| Check | Status | Result | Action |
-|---|---|---|---|
-| `pnpm install` | ✅ | exit 0 | — |
-| `pnpm typecheck` | ✅ | 10/10 packages, 0 errors | — |
-| `pnpm test` | ✅ | 1 226 testů PASS, 0 failed | Rerun s `--coverage` pro baseline |
-| `pnpm build` | ⚠️ | 8/9 PASS, mcp-server fail | **Fix tsconfig extend path (5 min)** |
-| `go build` (engine + sms-gateway) | ❌ | Go SDK not installed | **Install Go 1.23+ (15 min)** |
-| `git status` | ⚠️ | 39 mod + 70+ untracked | **Commit (2-3 hodiny review)** |
+| Check                             | Status | Result                     | Action                               |
+| --------------------------------- | ------ | -------------------------- | ------------------------------------ |
+| `pnpm install`                    | ✅     | exit 0                     | —                                    |
+| `pnpm typecheck`                  | ✅     | 10/10 packages, 0 errors   | —                                    |
+| `pnpm test`                       | ✅     | 1 226 testů PASS, 0 failed | Rerun s `--coverage` pro baseline    |
+| `pnpm build`                      | ⚠️     | 8/9 PASS, mcp-server fail  | **Fix tsconfig extend path (5 min)** |
+| `go build` (engine + sms-gateway) | ❌     | Go SDK not installed       | **Install Go 1.23+ (15 min)**        |
+| `git status`                      | ⚠️     | 39 mod + 70+ untracked     | **Commit (2-3 hodiny review)**       |
 
 ---
 
@@ -197,6 +209,7 @@ Každý z 5 commitů má ~15-20k řádků kódu = AI burst-generation pattern. M
 ### Insight 1: 95k řádků AI-generated kódu je překvapivě zdravých
 
 Předtím jsem se obával, že většina kódu jsou "AI hallucinations" — type errors, broken imports, ghost references. Realita: **TypeScript typecheck prošel 10/10 packages** a **Vitest 1 226 testů PASS**. To je důkaz, že:
+
 - Drizzle schemas + Zod validation + Fastify routes mají koherentní typy
 - Channel adapters + workers + editor sdílí types z `@forgemsg/shared` bez drift
 - Mock-based testy fungují end-to-end (auth, health, swagger, error paths)
@@ -238,6 +251,7 @@ Vzhledem k tomu, že typecheck + test + build (s výjimkou mcp-server) pass, **w
 ## Next steps (per ACTION_PLAN.md §1 Sprint A)
 
 Po dokončení Sprint A:
+
 1. Sprint B: Sending Flow finish (gRPC + block render + CZ ISP + plain-text + branded tracking)
 2. Sprint C: Migration connectors (Mailchimp + Klaviyo + Ecomail + SmartEmailing)
 3. Sprint D: Compliance UI (preference center + GDPR endpoints + audit log UI)
@@ -245,7 +259,7 @@ Po dokončení Sprint A:
 
 ---
 
-*Dokument vytvořen: 2026-05-18*
-*Nástroje: pnpm 10.33.0 + Turborepo 2.9.6 + Node 22 + Git*
-*Stroj: Windows 11 Pro, PowerShell + Git Bash*
-*Owner: omniascz@gmail.com*
+_Dokument vytvořen: 2026-05-18_
+_Nástroje: pnpm 10.33.0 + Turborepo 2.9.6 + Node 22 + Git_
+_Stroj: Windows 11 Pro, PowerShell + Git Bash_
+_Owner: omniascz@gmail.com_

@@ -24,59 +24,66 @@ export async function getParentOrgId(orgId: string): Promise<string | null> {
 
 // ─── Shared saved blocks ──────────────────────────────────────────────────────
 
-export async function listSavedBlocksWithShared(
-  orgId: string,
-  category?: string,
-) {
+export async function listSavedBlocksWithShared(orgId: string, category?: string) {
   const parentOrgId = await getParentOrgId(orgId);
 
-  const ownRows = await db.select().from(savedBlocks)
-    .where(and(
-      eq(savedBlocks.orgId, orgId),
-      category ? eq(savedBlocks.category, category) : undefined,
-    ));
+  const ownRows = await db
+    .select()
+    .from(savedBlocks)
+    .where(
+      and(eq(savedBlocks.orgId, orgId), category ? eq(savedBlocks.category, category) : undefined),
+    );
 
-  if (!parentOrgId) return ownRows.map(r => ({ ...r, isShared: false }));
+  if (!parentOrgId) return ownRows.map((r) => ({ ...r, isShared: false }));
 
-  const parentRows = await db.select().from(savedBlocks)
-    .where(and(
-      eq(savedBlocks.orgId, parentOrgId),
-      category ? eq(savedBlocks.category, category) : undefined,
-    ));
+  const parentRows = await db
+    .select()
+    .from(savedBlocks)
+    .where(
+      and(
+        eq(savedBlocks.orgId, parentOrgId),
+        category ? eq(savedBlocks.category, category) : undefined,
+      ),
+    );
 
   return [
-    ...ownRows.map(r => ({ ...r, isShared: false })),
-    ...parentRows.map(r => ({ ...r, isShared: true })),
+    ...ownRows.map((r) => ({ ...r, isShared: false })),
+    ...parentRows.map((r) => ({ ...r, isShared: true })),
   ];
 }
 
 // ─── Shared templates ─────────────────────────────────────────────────────────
 
-export async function listTemplatesWithShared(
-  orgId: string,
-  category?: string,
-) {
+export async function listTemplatesWithShared(orgId: string, category?: string) {
   const parentOrgId = await getParentOrgId(orgId);
 
-  const ownRows = await db.select().from(templates)
-    .where(and(
-      eq(templates.orgId, orgId),
-      category ? eq(templates.category, category as never) : undefined,
-      sql`${templates.deletedAt} IS NULL`,
-    ));
+  const ownRows = await db
+    .select()
+    .from(templates)
+    .where(
+      and(
+        eq(templates.orgId, orgId),
+        category ? eq(templates.category, category as never) : undefined,
+        sql`${templates.deletedAt} IS NULL`,
+      ),
+    );
 
-  if (!parentOrgId) return ownRows.map(r => ({ ...r, isShared: false }));
+  if (!parentOrgId) return ownRows.map((r) => ({ ...r, isShared: false }));
 
-  const parentRows = await db.select().from(templates)
-    .where(and(
-      eq(templates.orgId, parentOrgId),
-      category ? eq(templates.category, category as never) : undefined,
-      sql`${templates.deletedAt} IS NULL`,
-    ));
+  const parentRows = await db
+    .select()
+    .from(templates)
+    .where(
+      and(
+        eq(templates.orgId, parentOrgId),
+        category ? eq(templates.category, category as never) : undefined,
+        sql`${templates.deletedAt} IS NULL`,
+      ),
+    );
 
   return [
-    ...ownRows.map(r => ({ ...r, isShared: false })),
-    ...parentRows.map(r => ({ ...r, isShared: true })),
+    ...ownRows.map((r) => ({ ...r, isShared: false })),
+    ...parentRows.map((r) => ({ ...r, isShared: true })),
   ];
 }
 
@@ -91,6 +98,10 @@ export async function getEffectiveBrandKit(orgId: string) {
   const parentOrgId = await getParentOrgId(orgId);
   if (!parentOrgId) return null;
 
-  const [parent] = await db.select().from(brandKits).where(eq(brandKits.orgId, parentOrgId)).limit(1);
+  const [parent] = await db
+    .select()
+    .from(brandKits)
+    .where(eq(brandKits.orgId, parentOrgId))
+    .limit(1);
   return parent ? { ...parent, isShared: true } : null;
 }

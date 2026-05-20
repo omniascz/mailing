@@ -1,6 +1,15 @@
+// Env validation runs first so missing JWT_SECRET / DATABASE_URL fails
+// the boot with a clear message before any plugin tries to use them.
+import './lib/env.js';
+// Sentry next — has to wrap the runtime as early as possible to instrument
+// http/console. No-op when SENTRY_DSN is unset (dev + tests).
+import { initTelemetry } from './lib/telemetry.js';
+initTelemetry();
+
 import crypto from 'node:crypto';
 import Fastify from 'fastify';
 import errorHandler from './plugins/error-handler.js';
+import helmetPlugin from './plugins/helmet.js';
 import swaggerPlugin from './plugins/swagger.js';
 import corsPlugin from './plugins/cors.js';
 import rateLimitPlugin from './plugins/rate-limit.js';
@@ -18,6 +27,8 @@ import tagRoutes from './routes/v1/tags.js';
 import customFieldRoutes from './routes/v1/custom-fields.js';
 import suppressionRoutes from './routes/v1/suppressions.js';
 import subscriptionRoutes from './routes/v1/subscriptions.js';
+import listRoutes from './routes/v1/lists.js';
+import organizationRoutes from './routes/v1/organizations.js';
 import aiRoutes from './routes/v1/ai.js';
 import editorRoutes from './routes/v1/editor.js';
 import templateRoutes from './routes/v1/templates.js';
@@ -141,6 +152,8 @@ import cdpSourceRoutes from './routes/v1/cdp/sources.js';
 import crossAccountRoutes from './routes/v1/cross-account.js';
 import sharedAssetsRoutes from './routes/v1/shared-assets.js';
 import billingExtendedRoutes from './routes/v1/billing-extended.js';
+import inboxPreviewRoutes from './routes/v1/inbox-preview.js';
+import workflowTemplateRoutes from './routes/v1/workflow-templates.js';
 import internalArchiveRoutes from './routes/v1/internal/archive.js';
 import internalHoldoutRoutes from './routes/v1/internal/holdout.js';
 import internalHoldoutBatchRoutes from './routes/v1/internal/holdout-batch.js';
@@ -153,6 +166,8 @@ import internalEPrivacyRoutes from './routes/v1/internal/eprivacy.js';
 import internalAudienceRoutes from './routes/v1/internal/audience.js';
 import internalCouponsRoutes from './routes/v1/internal/coupons.js';
 import internalTriggersRoutes from './routes/v1/internal/triggers.js';
+import internalRfmRoutes from './routes/v1/internal/rfm.js';
+import internalPredictiveRoutes from './routes/v1/internal/predictive.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
 import seoClustersRoutes from './routes/v1/seo/clusters.js';
 import seoKeywordsRoutes from './routes/v1/seo/keywords.js';
@@ -197,10 +212,15 @@ export async function buildApp() {
       }),
     },
     genReqId: () => crypto.randomUUID(),
+    // Honor X-Forwarded-For / X-Forwarded-Proto from upstream proxies
+    // (Cloudflare → Coolify → Fastify). Without this, rate-limit
+    // keyGenerator sees the proxy IP and treats all traffic as one bucket.
+    trustProxy: process.env.NODE_ENV === 'production',
   });
 
   // Plugins (order matters: cookie → auth → routes)
   await app.register(errorHandler);
+  await app.register(helmetPlugin);
   await app.register(swaggerPlugin);
   await app.register(corsPlugin);
   await app.register(rateLimitPlugin);
@@ -220,6 +240,8 @@ export async function buildApp() {
   await app.register(customFieldRoutes);
   await app.register(suppressionRoutes);
   await app.register(subscriptionRoutes);
+  await app.register(listRoutes);
+  await app.register(organizationRoutes);
   await app.register(aiRoutes);
   await app.register(editorRoutes);
   await app.register(templateRoutes);
@@ -343,6 +365,8 @@ export async function buildApp() {
   await app.register(crossAccountRoutes);
   await app.register(sharedAssetsRoutes);
   await app.register(billingExtendedRoutes);
+  await app.register(inboxPreviewRoutes);
+  await app.register(workflowTemplateRoutes);
   await app.register(internalArchiveRoutes);
   await app.register(internalHoldoutRoutes);
   await app.register(internalHoldoutBatchRoutes);
@@ -355,6 +379,8 @@ export async function buildApp() {
   await app.register(internalAudienceRoutes);
   await app.register(internalCouponsRoutes);
   await app.register(internalTriggersRoutes);
+  await app.register(internalRfmRoutes);
+  await app.register(internalPredictiveRoutes);
   await app.register(messagingSendRoutes);
   await app.register(seoClustersRoutes);
   await app.register(seoKeywordsRoutes);

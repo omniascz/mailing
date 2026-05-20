@@ -8,13 +8,11 @@ import {
   type QuoteLineItem,
 } from './pure.js';
 
-const basic: SubscriptionLineItem[] = [
-  { name: 'Pro seat', quantity: 3, unitPrice: 990 },
-];
+const basic: SubscriptionLineItem[] = [{ name: 'Pro seat', quantity: 3, unitPrice: 990 }];
 
 describe('computeMrr', () => {
   it('returns per-month revenue for annual plans', () => {
-    expect(computeMrr(basic, 'year', 1)).toBeCloseTo(990 * 3 / 12, 2);
+    expect(computeMrr(basic, 'year', 1)).toBeCloseTo((990 * 3) / 12, 2);
   });
 
   it('returns per-month revenue for monthly plans', () => {
@@ -22,12 +20,12 @@ describe('computeMrr', () => {
   });
 
   it('handles quarterly cadence', () => {
-    expect(computeMrr(basic, 'quarter', 1)).toBeCloseTo(990 * 3 / 3, 2);
+    expect(computeMrr(basic, 'quarter', 1)).toBeCloseTo((990 * 3) / 3, 2);
   });
 
   it('accounts for intervalCount > 1', () => {
     // Every 2 months: total revenue / 2
-    expect(computeMrr(basic, 'month', 2)).toBe(990 * 3 / 2);
+    expect(computeMrr(basic, 'month', 2)).toBe((990 * 3) / 2);
   });
 
   it('returns 0 for zero-length periods', () => {
@@ -113,9 +111,7 @@ describe('computeQuoteTotals', () => {
   });
 
   it('applies line-level discount before tax', () => {
-    const items: QuoteLineItem[] = [
-      { quantity: 1, unitPrice: 1000, discount: 10, taxRate: 21 },
-    ];
+    const items: QuoteLineItem[] = [{ quantity: 1, unitPrice: 1000, discount: 10, taxRate: 21 }];
     const totals = computeQuoteTotals(items);
     expect(totals.discountTotal).toBe(100);
     expect(totals.subtotal).toBe(900);

@@ -13,7 +13,9 @@ describe('ROLE_PERMISSIONS', () => {
   });
 
   it('viewer has only :read scopes', () => {
-    expect(ROLE_PERMISSIONS.viewer.every((p) => p === 'org:read' || p.endsWith(':read'))).toBe(true);
+    expect(ROLE_PERMISSIONS.viewer.every((p) => p === 'org:read' || p.endsWith(':read'))).toBe(
+      true,
+    );
   });
 });
 

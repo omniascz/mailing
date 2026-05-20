@@ -28,12 +28,10 @@ export async function pickNextHost(
   await ensureStateRows(orgId, eventTypeId, memberIds);
 
   // Load state sorted by (assignmentCount ASC, lastAssignedAt ASC)
-  const states = await db.select()
+  const states = await db
+    .select()
     .from(roundRobinState)
-    .where(and(
-      eq(roundRobinState.orgId, orgId),
-      eq(roundRobinState.eventTypeId, eventTypeId),
-    ))
+    .where(and(eq(roundRobinState.orgId, orgId), eq(roundRobinState.eventTypeId, eventTypeId)))
     .orderBy(asc(roundRobinState.assignmentCount), asc(roundRobinState.lastAssignedAt));
 
   // Pick the first eligible member (who is available right now)
@@ -42,7 +40,8 @@ export async function pickNextHost(
     if (!memberIds.includes(state.userId)) continue;
     const available = await isMemberAvailable(state.userId, now);
     if (available) {
-      await db.update(roundRobinState)
+      await db
+        .update(roundRobinState)
         .set({
           assignmentCount: state.assignmentCount + 1,
           lastAssignedAt: now,
@@ -54,9 +53,10 @@ export async function pickNextHost(
   }
 
   // Fallback: pick the one with fewest assignments ignoring availability
-  const fallback = states.find(s => memberIds.includes(s.userId));
+  const fallback = states.find((s) => memberIds.includes(s.userId));
   if (fallback) {
-    await db.update(roundRobinState)
+    await db
+      .update(roundRobinState)
       .set({
         assignmentCount: fallback.assignmentCount + 1,
         lastAssignedAt: now,
@@ -103,25 +103,31 @@ export async function getTeamAvailability(
 
 async function isMemberAvailable(_userId: string, at: Date): Promise<boolean> {
   // Check for calendar conflicts at the given moment
-  const conflicts = await db.select({ id: calendarEvents.id })
+  const conflicts = await db
+    .select({ id: calendarEvents.id })
     .from(calendarEvents)
-    .where(and(
-      eq(calendarEvents.busy, true),
-      lte(calendarEvents.startAt, at),
-      gte(calendarEvents.endAt, at),
-    ))
+    .where(
+      and(
+        eq(calendarEvents.busy, true),
+        lte(calendarEvents.startAt, at),
+        gte(calendarEvents.endAt, at),
+      ),
+    )
     .limit(1);
   return conflicts.length === 0;
 }
 
 async function isMemberAvailableInRange(_userId: string, from: Date, to: Date): Promise<boolean> {
-  const conflicts = await db.select({ id: calendarEvents.id })
+  const conflicts = await db
+    .select({ id: calendarEvents.id })
     .from(calendarEvents)
-    .where(and(
-      eq(calendarEvents.busy, true),
-      lte(calendarEvents.startAt, to),
-      gte(calendarEvents.endAt, from),
-    ))
+    .where(
+      and(
+        eq(calendarEvents.busy, true),
+        lte(calendarEvents.startAt, to),
+        gte(calendarEvents.endAt, from),
+      ),
+    )
     .limit(1);
   return conflicts.length === 0;
 }
@@ -133,19 +139,18 @@ async function ensureStateRows(
   eventTypeId: string,
   memberIds: string[],
 ): Promise<void> {
-  const existing = await db.select({ userId: roundRobinState.userId })
+  const existing = await db
+    .select({ userId: roundRobinState.userId })
     .from(roundRobinState)
-    .where(and(
-      eq(roundRobinState.orgId, orgId),
-      eq(roundRobinState.eventTypeId, eventTypeId),
-    ));
+    .where(and(eq(roundRobinState.orgId, orgId), eq(roundRobinState.eventTypeId, eventTypeId)));
 
-  const existingIds = new Set(existing.map(r => r.userId));
-  const missing = memberIds.filter(id => !existingIds.has(id));
+  const existingIds = new Set(existing.map((r) => r.userId));
+  const missing = memberIds.filter((id) => !existingIds.has(id));
 
   if (missing.length > 0) {
-    await db.insert(roundRobinState).values(
-      missing.map(userId => ({ orgId, eventTypeId, userId })),
-    ).onConflictDoNothing();
+    await db
+      .insert(roundRobinState)
+      .values(missing.map((userId) => ({ orgId, eventTypeId, userId })))
+      .onConflictDoNothing();
   }
 }

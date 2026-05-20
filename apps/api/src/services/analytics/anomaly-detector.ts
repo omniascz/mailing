@@ -56,7 +56,8 @@ async function getMetricsForWindow(
   const get = (type: string) =>
     (rows as unknown as Array<Record<string, unknown>>).find((r) => r.event_type === type)?.cnt
       ? Number(
-          (rows as unknown as Array<Record<string, unknown>>).find((r) => r.event_type === type)!.cnt,
+          (rows as unknown as Array<Record<string, unknown>>).find((r) => r.event_type === type)!
+            .cnt,
         )
       : 0;
 
@@ -135,8 +136,21 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
   if (bounceThresholdBreached) {
     const severity = currentBounceRate > 0.1 ? 'critical' : 'warning';
     const msg = `Bounce rate spiked to ${(currentBounceRate * 100).toFixed(2)}% (baseline: ${(baselineBounceRate * 100).toFixed(2)}%)`;
-    alerts.push({ type: 'bounce_rate_spike', severity, message: msg, details: { currentBounceRate, baselineBounceRate, currentSends: current.sends, currentBounces: current.bounces } });
-    await createAlert(orgId, 'bounce_rate_spike', severity, msg, { currentBounceRate, baselineBounceRate });
+    alerts.push({
+      type: 'bounce_rate_spike',
+      severity,
+      message: msg,
+      details: {
+        currentBounceRate,
+        baselineBounceRate,
+        currentSends: current.sends,
+        currentBounces: current.bounces,
+      },
+    });
+    await createAlert(orgId, 'bounce_rate_spike', severity, msg, {
+      currentBounceRate,
+      baselineBounceRate,
+    });
   }
 
   // ── Complaint rate ───────────────────────────────────────────────────────
@@ -144,7 +158,16 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
   if (complaintRate > 0.001) {
     const severity = complaintRate > 0.003 ? 'critical' : 'warning';
     const msg = `Complaint rate is ${(complaintRate * 100).toFixed(3)}%, which exceeds the 0.1% threshold`;
-    alerts.push({ type: 'complaint_rate_spike', severity, message: msg, details: { complaintRate, currentComplaints: current.complaints, currentSends: current.sends } });
+    alerts.push({
+      type: 'complaint_rate_spike',
+      severity,
+      message: msg,
+      details: {
+        complaintRate,
+        currentComplaints: current.complaints,
+        currentSends: current.sends,
+      },
+    });
     await createAlert(orgId, 'complaint_rate_spike', severity, msg, { complaintRate });
   }
 
@@ -153,8 +176,16 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
   const baselineOpenRate = safeRate(baselinePerHour.opens, baselinePerHour.sends);
   if (baselineOpenRate > 0 && currentOpenRate < baselineOpenRate * 0.5) {
     const msg = `Open rate dropped to ${(currentOpenRate * 100).toFixed(2)}% (baseline: ${(baselineOpenRate * 100).toFixed(2)}%)`;
-    alerts.push({ type: 'open_rate_drop', severity: 'warning', message: msg, details: { currentOpenRate, baselineOpenRate } });
-    await createAlert(orgId, 'open_rate_drop', 'warning', msg, { currentOpenRate, baselineOpenRate });
+    alerts.push({
+      type: 'open_rate_drop',
+      severity: 'warning',
+      message: msg,
+      details: { currentOpenRate, baselineOpenRate },
+    });
+    await createAlert(orgId, 'open_rate_drop', 'warning', msg, {
+      currentOpenRate,
+      baselineOpenRate,
+    });
   }
 
   // ── Unsubscribe spike ────────────────────────────────────────────────────
@@ -166,8 +197,16 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
 
   if (unsubThresholdBreached) {
     const msg = `Unsubscribe rate spiked to ${(currentUnsubRate * 100).toFixed(2)}% (baseline: ${(baselineUnsubRate * 100).toFixed(2)}%)`;
-    alerts.push({ type: 'unsub_spike', severity: 'warning', message: msg, details: { currentUnsubRate, baselineUnsubRate } });
-    await createAlert(orgId, 'unsub_spike', 'warning', msg, { currentUnsubRate, baselineUnsubRate });
+    alerts.push({
+      type: 'unsub_spike',
+      severity: 'warning',
+      message: msg,
+      details: { currentUnsubRate, baselineUnsubRate },
+    });
+    await createAlert(orgId, 'unsub_spike', 'warning', msg, {
+      currentUnsubRate,
+      baselineUnsubRate,
+    });
   }
 
   return { orgId, alerts };
@@ -181,7 +220,5 @@ export async function runAnomalyCheckAllOrgs(): Promise<void> {
     .from(organizations)
     .where(isNull(organizations.deletedAt));
 
-  await Promise.allSettled(
-    orgs.map((org) => runAnomalyCheckForOrg(org.id)),
-  );
+  await Promise.allSettled(orgs.map((org) => runAnomalyCheckForOrg(org.id)));
 }

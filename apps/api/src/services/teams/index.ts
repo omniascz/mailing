@@ -37,18 +37,23 @@ export async function createTeam(
   orgId: string,
   input: { name: string; slug: string; description?: string },
 ): Promise<Team> {
-  const [row] = await db.insert(teams).values({
-    orgId,
-    name: input.name,
-    slug: input.slug,
-    description: input.description,
-  }).returning();
+  const [row] = await db
+    .insert(teams)
+    .values({
+      orgId,
+      name: input.name,
+      slug: input.slug,
+      description: input.description,
+    })
+    .returning();
   if (!row) throw AppError.internal('Failed to create team');
   return row;
 }
 
 export async function listTeams(orgId: string): Promise<Team[]> {
-  return db.select().from(teams)
+  return db
+    .select()
+    .from(teams)
     .where(and(eq(teams.orgId, orgId), isNull(teams.deletedAt)));
 }
 
@@ -58,7 +63,9 @@ export async function addMember(
   userId: string,
   opts?: { teamRole?: string; crossTeamAccess?: boolean },
 ): Promise<void> {
-  const [team] = await db.select().from(teams)
+  const [team] = await db
+    .select()
+    .from(teams)
     .where(and(eq(teams.id, teamId), eq(teams.orgId, orgId)))
     .limit(1);
   if (!team) throw AppError.notFound('Team not found');
@@ -73,16 +80,16 @@ export async function addMember(
   await redis.del(membershipKey(orgId, userId));
 }
 
-export async function removeMember(
-  orgId: string,
-  teamId: string,
-  userId: string,
-): Promise<void> {
-  await db.delete(teamMembers).where(and(
-    eq(teamMembers.orgId, orgId),
-    eq(teamMembers.teamId, teamId),
-    eq(teamMembers.userId, userId),
-  ));
+export async function removeMember(orgId: string, teamId: string, userId: string): Promise<void> {
+  await db
+    .delete(teamMembers)
+    .where(
+      and(
+        eq(teamMembers.orgId, orgId),
+        eq(teamMembers.teamId, teamId),
+        eq(teamMembers.userId, userId),
+      ),
+    );
   await redis.del(membershipKey(orgId, userId));
 }
 
@@ -100,13 +107,13 @@ export async function getUserTeams(
   const cached = await redis.get(key);
   if (cached) return JSON.parse(cached) as { teamIds: string[]; crossTeamAccess: boolean };
 
-  const rows = await db.select({
-    teamId: teamMembers.teamId,
-    crossTeamAccess: teamMembers.crossTeamAccess,
-  }).from(teamMembers).where(and(
-    eq(teamMembers.orgId, orgId),
-    eq(teamMembers.userId, userId),
-  ));
+  const rows = await db
+    .select({
+      teamId: teamMembers.teamId,
+      crossTeamAccess: teamMembers.crossTeamAccess,
+    })
+    .from(teamMembers)
+    .where(and(eq(teamMembers.orgId, orgId), eq(teamMembers.userId, userId)));
 
   const out = {
     teamIds: rows.map((r) => r.teamId),
@@ -158,10 +165,7 @@ export function teamScopeSql(
  * Assert write access for a row about to be created or updated. Throws if the
  * user cannot write to the target `teamId`.
  */
-export function assertTeamWrite(
-  ctx: TeamContext,
-  targetTeamId: string | null | undefined,
-): void {
+export function assertTeamWrite(ctx: TeamContext, targetTeamId: string | null | undefined): void {
   if (ctx.bypass) return;
   if (targetTeamId == null) return; // org-wide / unowned → everybody can create it
   if (!ctx.teamIds.includes(targetTeamId)) {

@@ -18,7 +18,8 @@
 
 import { assignCodeToContact } from '../coupons/index.js';
 
-const COUPON_TAG_RE = /\{\{coupon_code:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\}\}/gi;
+const COUPON_TAG_RE =
+  /\{\{coupon_code:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\}\}/gi;
 
 /**
  * Pre-process email HTML/text to replace all `{{coupon_code:batchId}}` tags

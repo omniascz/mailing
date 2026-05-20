@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  czechNameDays,
-  nameDaysFor,
-  isNameDayFor,
-  toMonthDayKey,
-} from './name-days.js';
+import { czechNameDays, nameDaysFor, isNameDayFor, toMonthDayKey } from './name-days.js';
 
 describe('czechNameDays', () => {
   it('covers all 366 calendar days (including 02-29)', () => {

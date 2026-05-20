@@ -1,7 +1,5 @@
 import { sql } from 'drizzle-orm';
-import {
-  pgTable, uuid, varchar, jsonb, timestamp, index, uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, jsonb, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 /**
@@ -19,8 +17,12 @@ import { organizations } from './organizations.js';
 export const fieldPermissions = pgTable(
   'field_permissions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     role: varchar('role', { length: 64 }).notNull(),
     entity: varchar('entity', { length: 64 }).notNull(),
     readable: jsonb('readable').$type<string[]>().notNull().default(['*']),

@@ -71,11 +71,7 @@ describe('selectVariant', () => {
   });
 
   it('returns "any" when default is missing too', () => {
-    const res = selectVariant(
-      [{ locale: 'fr', content: 'Bienvenue' }],
-      'de',
-      'en',
-    );
+    const res = selectVariant([{ locale: 'fr', content: 'Bienvenue' }], 'de', 'en');
     expect(res?.content).toBe('Bienvenue');
     expect(res?.matched).toBe('any');
   });
@@ -149,19 +145,13 @@ describe('validateMergeTags', () => {
   });
 
   it('flags missing tags', () => {
-    const res = validateMergeTags(
-      'Hello {{first_name}} {{coupon_code}}',
-      'Ahoj {{first_name}}',
-    );
+    const res = validateMergeTags('Hello {{first_name}} {{coupon_code}}', 'Ahoj {{first_name}}');
     expect(res.ok).toBe(false);
     expect(res.missing).toContain('{{coupon_code}}');
   });
 
   it('flags extra tags', () => {
-    const res = validateMergeTags(
-      'Hello',
-      'Ahoj {{wild_tag}}',
-    );
+    const res = validateMergeTags('Hello', 'Ahoj {{wild_tag}}');
     expect(res.ok).toBe(false);
     expect(res.extra).toContain('{{wild_tag}}');
   });

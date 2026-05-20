@@ -9,8 +9,14 @@ vi.mock('../../lib/redis.js', () => {
   return {
     redis: {
       get: vi.fn(async (key: string) => store[key] ?? null),
-      set: vi.fn(async (key: string, val: string) => { store[key] = val; return 'OK'; }),
-      del: vi.fn(async (...keys: string[]) => { keys.forEach((k) => delete store[k]); return keys.length; }),
+      set: vi.fn(async (key: string, val: string) => {
+        store[key] = val;
+        return 'OK';
+      }),
+      del: vi.fn(async (...keys: string[]) => {
+        keys.forEach((k) => delete store[k]);
+        return keys.length;
+      }),
       exists: vi.fn().mockResolvedValue(0),
       incr: vi.fn().mockResolvedValue(1),
       expire: vi.fn().mockResolvedValue(1),

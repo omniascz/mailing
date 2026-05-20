@@ -6,8 +6,7 @@ import { z } from 'zod';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const prodRequired = (schema: z.ZodString) =>
-  isProduction ? schema : schema.optional();
+const prodRequired = (schema: z.ZodString) => (isProduction ? schema : schema.optional());
 
 const Env = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -35,8 +34,13 @@ export type Env = z.infer<typeof Env>;
 function loadEnv(): Env {
   const parsed = Env.safeParse(process.env);
   if (!parsed.success) {
-    const issues = parsed.error.issues.map((i: { path: PropertyKey[]; message: string }) => `  - ${i.path.join('.') || '<root>'}: ${i.message}`).join('\n');
-    // eslint-disable-next-line no-console
+    const issues = parsed.error.issues
+      .map(
+        (i: { path: PropertyKey[]; message: string }) =>
+          `  - ${i.path.join('.') || '<root>'}: ${i.message}`,
+      )
+      .join('\n');
+
     console.error(`✖ Invalid environment configuration:\n${issues}`);
     if (isProduction) process.exit(1);
     throw new Error('Invalid environment configuration');

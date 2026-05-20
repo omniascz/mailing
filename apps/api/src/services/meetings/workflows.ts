@@ -21,16 +21,19 @@ export async function triggerMeetingEvent(
   eventType: MeetingEventType,
   bookingId: string,
 ): Promise<void> {
-  const [booking] = await db.select().from(bookings)
-    .where(and(eq(bookings.id, bookingId), eq(bookings.orgId, orgId))).limit(1);
+  const [booking] = await db
+    .select()
+    .from(bookings)
+    .where(and(eq(bookings.id, bookingId), eq(bookings.orgId, orgId)))
+    .limit(1);
   if (!booking) return;
 
   // Find contact by invitee email to resolve contactId for the workflow
-  const [contact] = await db.select({ id: contacts.id }).from(contacts)
-    .where(and(
-      eq(contacts.orgId, orgId),
-      eq(contacts.email, booking.inviteeEmail),
-    )).limit(1);
+  const [contact] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(and(eq(contacts.orgId, orgId), eq(contacts.email, booking.inviteeEmail)))
+    .limit(1);
 
   if (!contact) return;
 
@@ -49,8 +52,11 @@ export async function triggerMeetingEvent(
 // ─── Schedule reminders via internal HTTP ────────────────────────────────────
 
 export async function scheduleMeetingReminders(bookingId: string, orgId: string): Promise<void> {
-  const [booking] = await db.select().from(bookings)
-    .where(and(eq(bookings.id, bookingId), eq(bookings.orgId, orgId))).limit(1);
+  const [booking] = await db
+    .select()
+    .from(bookings)
+    .where(and(eq(bookings.id, bookingId), eq(bookings.orgId, orgId)))
+    .limit(1);
   if (!booking || booking.status !== 'confirmed') return;
 
   const base = process.env.API_URL ?? 'http://localhost:3001';

@@ -16,7 +16,6 @@ import { calls } from '../../db/schema/index.js';
 import { redis } from '../../lib/redis.js';
 import type { NewCall, Call } from '../../db/schema/calls.js';
 
-
 // ─── Concurrent call management ────────────────────────────────────────────
 
 const ACTIVE_CALLS_KEY = 'voice:active_calls';
@@ -182,8 +181,7 @@ export async function getCallStats(campaignId: string, orgId: string): Promise<C
     (acc, call) => {
       acc.totalCalls += 1;
       if (call.status === 'completed') acc.completedCalls += 1;
-      if (call.status === 'completed' || call.status === 'voicemail')
-        acc.answeredCalls += 1;
+      if (call.status === 'completed' || call.status === 'voicemail') acc.answeredCalls += 1;
       if (call.status === 'no_answer') acc.noAnswerCalls += 1;
       if (call.status === 'voicemail') acc.voicemailCalls += 1;
       if (call.status === 'failed') acc.failedCalls += 1;
@@ -216,9 +214,7 @@ export async function getCallStats(campaignId: string, orgId: string): Promise<C
     avgDurationSeconds: Math.round(stats.totalDuration / stats.totalCalls) || 0,
     totalCost: stats.totalCost.toFixed(2),
     answerRate:
-      stats.totalCalls > 0
-        ? Math.round((stats.answeredCalls / stats.totalCalls) * 100)
-        : 0,
+      stats.totalCalls > 0 ? Math.round((stats.answeredCalls / stats.totalCalls) * 100) : 0,
   };
 }
 
@@ -274,10 +270,7 @@ export async function queueOutboundCall(request: OutboundCallRequest): Promise<s
  * Initiate an actual outbound call via Twilio.
  * Stub implementation — in production, integrate with Twilio REST API.
  */
-async function initiateOutboundCall(
-  callId: string,
-  request: OutboundCallRequest,
-): Promise<void> {
+async function initiateOutboundCall(callId: string, request: OutboundCallRequest): Promise<void> {
   const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
   const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
   const TWILIO_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER;

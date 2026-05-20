@@ -43,7 +43,7 @@ async function embedVoyage(texts: string[]): Promise<number[][]> {
     const body = await res.text().catch(() => '');
     throw AppError.internal(`Voyage embedding failed ${res.status}: ${body.slice(0, 200)}`);
   }
-  const json = await res.json() as { data: Array<{ embedding: number[] }> };
+  const json = (await res.json()) as { data: Array<{ embedding: number[] }> };
   return json.data.map((d) => d.embedding);
 }
 
@@ -66,7 +66,7 @@ async function embedOpenAi(texts: string[]): Promise<number[][]> {
     const body = await res.text().catch(() => '');
     throw AppError.internal(`OpenAI embedding failed ${res.status}: ${body.slice(0, 200)}`);
   }
-  const json = await res.json() as { data: Array<{ embedding: number[] }> };
+  const json = (await res.json()) as { data: Array<{ embedding: number[] }> };
   return json.data.map((d) => d.embedding);
 }
 
@@ -92,9 +92,12 @@ function mockEmbed(text: string): number[] {
 export async function embedTexts(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
   switch (provider()) {
-    case 'voyage': return embedVoyage(texts);
-    case 'openai': return embedOpenAi(texts);
-    default:       return texts.map(mockEmbed);
+    case 'voyage':
+      return embedVoyage(texts);
+    case 'openai':
+      return embedOpenAi(texts);
+    default:
+      return texts.map(mockEmbed);
   }
 }
 
@@ -104,4 +107,6 @@ export async function embedQuery(text: string): Promise<number[]> {
   return vec;
 }
 
-export function activeProvider(): EmbeddingProvider { return provider(); }
+export function activeProvider(): EmbeddingProvider {
+  return provider();
+}

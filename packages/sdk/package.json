@@ -16,8 +16,16 @@
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
-  "files": ["dist", "src"],
-  "keywords": ["forgemsg", "email", "marketing", "sdk"],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "forgemsg",
+    "email",
+    "marketing",
+    "sdk"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^25.6.0",

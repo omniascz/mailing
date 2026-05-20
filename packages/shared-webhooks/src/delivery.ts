@@ -122,10 +122,7 @@ export async function deliverWebhook(
  * Check if a subscription is interested in a given event type.
  * Supports wildcard '*' to match all events.
  */
-export function matchesEvent(
-  subscriptionEvents: string[],
-  eventType: string,
-): boolean {
+export function matchesEvent(subscriptionEvents: string[], eventType: string): boolean {
   if (subscriptionEvents.includes('*')) return true;
   return subscriptionEvents.includes(eventType);
 }

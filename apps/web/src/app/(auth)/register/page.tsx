@@ -4,7 +4,16 @@ import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
@@ -23,8 +32,10 @@ export default function RegisterPage() {
     if (!form.name) newErrors.name = 'Name is required';
     if (!form.email) newErrors.email = 'Email is required';
     if (!form.password) newErrors.password = 'Password is required';
-    else if (form.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
-    if (form.password !== form.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    else if (form.password.length < 8)
+      newErrors.password = 'Password must be at least 8 characters';
+    if (form.password !== form.confirmPassword)
+      newErrors.confirmPassword = 'Passwords do not match';
     if (Object.keys(newErrors).length) {
       setErrors(newErrors);
       return;
@@ -32,8 +43,9 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/auth/register', {
+      const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
       });

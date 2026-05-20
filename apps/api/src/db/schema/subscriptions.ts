@@ -11,7 +11,15 @@
 
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, numeric, integer, jsonb, timestamp, index, text,
+  pgTable,
+  uuid,
+  varchar,
+  numeric,
+  integer,
+  jsonb,
+  timestamp,
+  index,
+  text,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
@@ -32,7 +40,9 @@ export interface SubscriptionLineItem {
 export const subscriptions = pgTable(
   'subscriptions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -61,13 +71,15 @@ export const subscriptions = pgTable(
     /** Active contract window */
     startDate: timestamp('start_date', { withTimezone: true }).notNull().defaultNow(),
     trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
-    endsAt: timestamp('ends_at', { withTimezone: true }),         // fixed-term end (null = evergreen)
-    currentPeriodStart: timestamp('current_period_start', { withTimezone: true }).notNull().defaultNow(),
+    endsAt: timestamp('ends_at', { withTimezone: true }), // fixed-term end (null = evergreen)
+    currentPeriodStart: timestamp('current_period_start', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }).notNull(),
     nextInvoiceAt: timestamp('next_invoice_at', { withTimezone: true }).notNull(),
 
     /** Cancellation */
-    cancelAt: timestamp('cancel_at', { withTimezone: true }),       // if user scheduled cancel later
+    cancelAt: timestamp('cancel_at', { withTimezone: true }), // if user scheduled cancel later
     canceledAt: timestamp('canceled_at', { withTimezone: true }),
     cancelReason: text('cancel_reason'),
 
@@ -98,7 +110,9 @@ export const subscriptions = pgTable(
 export const subscriptionChanges = pgTable(
   'subscription_changes',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -109,13 +123,18 @@ export const subscriptionChanges = pgTable(
     /** upgrade | downgrade | quantity_change | cancel | reactivate | pause | resume | plan_swap */
     changeType: varchar('change_type', { length: 32 }).notNull(),
 
-    previousLineItems: jsonb('previous_line_items').$type<SubscriptionLineItem[]>().notNull().default([]),
+    previousLineItems: jsonb('previous_line_items')
+      .$type<SubscriptionLineItem[]>()
+      .notNull()
+      .default([]),
     newLineItems: jsonb('new_line_items').$type<SubscriptionLineItem[]>().notNull().default([]),
 
     previousMrr: numeric('previous_mrr', { precision: 18, scale: 2 }).notNull().default('0'),
     newMrr: numeric('new_mrr', { precision: 18, scale: 2 }).notNull().default('0'),
 
-    prorationAmount: numeric('proration_amount', { precision: 18, scale: 2 }).notNull().default('0'),
+    prorationAmount: numeric('proration_amount', { precision: 18, scale: 2 })
+      .notNull()
+      .default('0'),
     prorationInvoiceId: uuid('proration_invoice_id'),
 
     /** When the change becomes active: immediate|next_period|custom */

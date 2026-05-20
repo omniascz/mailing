@@ -25,7 +25,7 @@ export const workflowStatusEnum = pgEnum('workflow_status', [
 export const workflowRunStatusEnum = pgEnum('workflow_run_status', [
   'pending',
   'running',
-  'waiting',    // waiting on a WaitNode timer
+  'waiting', // waiting on a WaitNode timer
   'completed',
   'failed',
   'cancelled',
@@ -39,12 +39,12 @@ export const workflowTriggerTypeEnum = pgEnum('workflow_trigger_type', [
   'form_submit',
   'purchase_event',
   'manual',
-  'loyalty_points_earned',  // #239 — member earned points
-  'loyalty_tier_up',        // #239 — member reached a new tier
+  'loyalty_points_earned', // #239 — member earned points
+  'loyalty_tier_up', // #239 — member reached a new tier
   'loyalty_reward_redeemed', // #239 — member redeemed a reward
-  'name_day_today',         // #360/#384 — contact first_name matches today's jmeniny
+  'name_day_today', // #360/#384 — contact first_name matches today's jmeniny
   'lifecycle_stage_changed', // #317/#394 — contact lifecycle stage transitioned
-  'n_days_before_holiday',  // #389 — N days before a CZ/SK public holiday
+  'n_days_before_holiday', // #389 — N days before a CZ/SK public holiday
 ]);
 
 // ─── Workflows ────────────────────────────────────────────────────────────────
@@ -58,7 +58,9 @@ export const workflowTriggerTypeEnum = pgEnum('workflow_trigger_type', [
 export const workflows = pgTable(
   'workflows',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -75,10 +77,7 @@ export const workflows = pgTable(
     /** Trigger type determines when this workflow starts */
     triggerType: workflowTriggerTypeEnum('trigger_type').notNull().default('manual'),
     /** Trigger-specific configuration */
-    triggerConfig: jsonb('trigger_config')
-      .$type<Record<string, unknown>>()
-      .notNull()
-      .default({}),
+    triggerConfig: jsonb('trigger_config').$type<Record<string, unknown>>().notNull().default({}),
 
     /** Stats — updated as runs complete */
     totalRuns: integer('total_runs').notNull().default(0),
@@ -101,7 +100,9 @@ export const workflows = pgTable(
 export const workflowRuns = pgTable(
   'workflow_runs',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     workflowId: uuid('workflow_id')
       .notNull()
       .references(() => workflows.id, { onDelete: 'cascade' }),
@@ -146,7 +147,9 @@ export const workflowRuns = pgTable(
 export const workflowEvents = pgTable(
   'workflow_events',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -189,19 +192,19 @@ export type NodeType =
   | 'remove_from_list'
   | 'send_webhook'
   | 'internal_notification'
-  | 'smart_channel'     // 5.6 — picks best channel for contact
-  | 'split'             // 5.7 — A/B split
-  | 'goal'              // 5.7 — goal conversion node
-  | 'cascade'           // 5.5 — cascade delivery node
-  | 'assign_task'       // #188 — create CRM task with round-robin assignment
+  | 'smart_channel' // 5.6 — picks best channel for contact
+  | 'split' // 5.7 — A/B split
+  | 'goal' // 5.7 — goal conversion node
+  | 'cascade' // 5.5 — cascade delivery node
+  | 'assign_task' // #188 — create CRM task with round-robin assignment
   | 'send_personal_email' // #198 — 1:1 plain-text email from rep
-  | 'start_workflow'  // #213 — launch a child workflow (nested automation)
-  | 'enroll_in_loyalty'  // #239 — enroll contact in a loyalty program
+  | 'start_workflow' // #213 — launch a child workflow (nested automation)
+  | 'enroll_in_loyalty' // #239 — enroll contact in a loyalty program
   | 'award_loyalty_points' // #239 — award bonus points to a member
-  | 'sync_to_ad_audience'  // #307 — add/refresh contact in ad platform custom audience
-  | 'stripe_retry_charge'  // #314 — retry a failed Stripe invoice charge
-  | 'notify_owner'         // #314 — ping workspace owner via in-app / email
-  | 'run_code';            // #346 — user code in a sandboxed isolate
+  | 'sync_to_ad_audience' // #307 — add/refresh contact in ad platform custom audience
+  | 'stripe_retry_charge' // #314 — retry a failed Stripe invoice charge
+  | 'notify_owner' // #314 — ping workspace owner via in-app / email
+  | 'run_code'; // #346 — user code in a sandboxed isolate
 
 export interface WorkflowNode {
   id: string;

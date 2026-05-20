@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `49_SalesforceMC_Features_DeepDive.md` o **procesní pohled**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Salesforce Marketing Cloud = enterprise standard** s minimum $1,250/měsíc
 > - **Multi-product family** – ne jeden nástroj, ale 6+ produktů
 > - **Implementation = 3-12 měsíců** (vs. SaaS hours-days)
@@ -167,26 +168,26 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **System Admin** | Salesforce Setup | Full configuration | Vše |
-| **MC Administrator** | MC Setup | MC-specific config | MC scope |
-| **Marketing Manager** | MC interface | Strategy + approval | Per scope |
-| **Marketing User** | MC interface | Campaign execution | Per role |
-| **Email Specialist** | Email Studio | Email creation | Per scope |
-| **Mobile Specialist** | Mobile Studio | SMS/Push | Per scope |
-| **Content Editor** | Content Builder | Content creation | Per scope |
-| **Analytics User** | Reports + Intelligence | Reporting | Per scope |
-| **Approver/Reviewer** | Approval workflows | Sign-off | Approval scope |
-| **End subscriber/lead** | Email/SMS/Web | Engage | Vlastní data |
-| **Implementation Partner** | Engaged for project | Setup + customization | s consent |
-| **Salesforce AE** | Sales cycle | Account management | s consent |
-| **Salesforce CSM** | Post-sale | Adoption | s consent |
-| **Premier Support** | Support tickets | Issue resolution | s consent |
-| **Trailhead learners** | trailhead.salesforce.com | Self-learning | Public materials |
-| **AppExchange devs** | AppExchange | App development | Per integration |
-| **Agentforce AI** | Marketing Cloud Next | Autonomous tasks | Configured scope |
-| **Einstein AI** | Embedded | AI predictions | Aggregated data |
+| Aktér                      | Vstupní bod              | Co dělá               | Co vidí          |
+| -------------------------- | ------------------------ | --------------------- | ---------------- |
+| **System Admin**           | Salesforce Setup         | Full configuration    | Vše              |
+| **MC Administrator**       | MC Setup                 | MC-specific config    | MC scope         |
+| **Marketing Manager**      | MC interface             | Strategy + approval   | Per scope        |
+| **Marketing User**         | MC interface             | Campaign execution    | Per role         |
+| **Email Specialist**       | Email Studio             | Email creation        | Per scope        |
+| **Mobile Specialist**      | Mobile Studio            | SMS/Push              | Per scope        |
+| **Content Editor**         | Content Builder          | Content creation      | Per scope        |
+| **Analytics User**         | Reports + Intelligence   | Reporting             | Per scope        |
+| **Approver/Reviewer**      | Approval workflows       | Sign-off              | Approval scope   |
+| **End subscriber/lead**    | Email/SMS/Web            | Engage                | Vlastní data     |
+| **Implementation Partner** | Engaged for project      | Setup + customization | s consent        |
+| **Salesforce AE**          | Sales cycle              | Account management    | s consent        |
+| **Salesforce CSM**         | Post-sale                | Adoption              | s consent        |
+| **Premier Support**        | Support tickets          | Issue resolution      | s consent        |
+| **Trailhead learners**     | trailhead.salesforce.com | Self-learning         | Public materials |
+| **AppExchange devs**       | AppExchange              | App development       | Per integration  |
+| **Agentforce AI**          | Marketing Cloud Next     | Autonomous tasks      | Configured scope |
+| **Einstein AI**            | Embedded                 | AI predictions        | Aggregated data  |
 
 ---
 
@@ -635,7 +636,7 @@ DECELERATORS:
 
 ### 5.3 Per Codleo
 
-> *"Onboarding teams may need Salesforce Premier Support, Trailhead courses, or consulting services, especially if their workflows are complicated. By planning for these extra expenses, businesses can get the most out of the platform while staying within their budget."*
+> _"Onboarding teams may need Salesforce Premier Support, Trailhead courses, or consulting services, especially if their workflows are complicated. By planning for these extra expenses, businesses can get the most out of the platform while staying within their budget."_
 
 ⚠️ **Implementation = největší capital cost** Year 1.
 
@@ -1605,7 +1606,7 @@ Unified, relevant experience
 
 ### 14.3 Per oficiální
 
-> *"Data Unification: With Data 360, Account Engagement customers can build segments using all their Salesforce and non-Salesforce data in one unified platform."*
+> _"Data Unification: With Data 360, Account Engagement customers can build segments using all their Salesforce and non-Salesforce data in one unified platform."_
 
 ---
 
@@ -1809,7 +1810,7 @@ Agentforce setup:
 Real-world example:
 
 USER REQUEST:
-"Create a Black Friday campaign for our top 
+"Create a Black Friday campaign for our top
  1000 VIP customers who haven't purchased
  in 60 days. Email + SMS combo with 25% off."
 
@@ -1840,7 +1841,7 @@ EXECUTION:
 
 ### 17.3 Per oficiální
 
-> *"These agents aren't just helpers — they act like expert teammates who understand your goals and act on your behalf."*
+> _"These agents aren't just helpers — they act like expert teammates who understand your goals and act on your behalf."_
 
 ### 17.4 Productivity impact
 
@@ -2038,7 +2039,7 @@ ALL VISIBLE across teams
 
 ### 19.2 Per Research.com
 
-> *"Integrated Salesforce Ecosystem: Tight connectivity with other Salesforce products, including Sales Cloud and Service Cloud, provides a unified view of the customer journey. This integration aligns marketing efforts with sales and service, enhancing cross-team collaboration."*
+> _"Integrated Salesforce Ecosystem: Tight connectivity with other Salesforce products, including Sales Cloud and Service Cloud, provides a unified view of the customer journey. This integration aligns marketing efforts with sales and service, enhancing cross-team collaboration."_
 
 ### 19.3 Connected Campaigns (B2B)
 
@@ -2242,7 +2243,7 @@ App integration workflow:
 
 ### 22.3 Per MagicFuse
 
-> *"This can range from $25 per month to $46,000 per month, so it can have a real impact on overall cost."*
+> _"This can range from $25 per month to $46,000 per month, so it can have a real impact on overall cost."_
 
 ⚠️ **AppExchange costs add up** quickly.
 
@@ -2319,26 +2320,26 @@ Strategic relationship
 
 ## 24. Datová mapa: co vidí kdo
 
-| Data | System Admin | MC Admin | Marketing Manager | User | End subscriber | Salesforce CSM | Support | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| All settings | ✅ | view | ❌ | ❌ | ❌ | s consent | s consent | per scope |
-| Billing | ✅ | view | ❌ | ❌ | ❌ | s consent | s consent | – |
-| Users | ✅ | ✅ | view | ❌ | ❌ | s consent | s consent | per scope |
-| Data Extensions | ✅ | ✅ | view | per role | own data | s consent | s consent | ✅ |
-| Email Sends | ✅ | ✅ | ✅ | ✅ | own received | s consent | s consent | per scope |
-| Journeys | ✅ | ✅ | ✅ | per role | ❌ | s consent | s consent | per scope |
-| Templates | ✅ | ✅ | ✅ | per role | ❌ | s consent | s consent | per scope |
-| Content Builder | ✅ | ✅ | ✅ | per role | ❌ | s consent | s consent | per scope |
-| Mobile Studio | ✅ | ✅ | ✅ | per role | own received | s consent | s consent | per scope |
-| Reports | ✅ | ✅ | ✅ | per role | ❌ | s consent | s consent | per scope |
-| Einstein AI | ✅ | ✅ | view | view | ❌ | s consent | s consent | – |
-| Agentforce | ✅ | ✅ | ✅ | per role | ❌ | s consent | s consent | per scope |
-| Audit logs | ✅ | view | ❌ | ❌ | ❌ | s consent | s consent | – |
-| Sandboxes | ✅ | ✅ | view | per role | ❌ | s consent | s consent | per scope |
-| Data Cloud | ✅ | per role | view | per role | own data | s consent | s consent | per scope |
-| Salesforce CRM sync | ✅ | ✅ | view | view | own data | s consent | s consent | per scope |
-| AppExchange apps | ✅ | ✅ | view | view | ❌ | s consent | s consent | per scope |
-| Subscription preferences | – | – | – | – | ✅ own | – | – | – |
+| Data                     | System Admin | MC Admin | Marketing Manager |   User   | End subscriber | Salesforce CSM |  Support  |    API    |
+| ------------------------ | :----------: | :------: | :---------------: | :------: | :------------: | :------------: | :-------: | :-------: |
+| All settings             |      ✅      |   view   |        ❌         |    ❌    |       ❌       |   s consent    | s consent | per scope |
+| Billing                  |      ✅      |   view   |        ❌         |    ❌    |       ❌       |   s consent    | s consent |     –     |
+| Users                    |      ✅      |    ✅    |       view        |    ❌    |       ❌       |   s consent    | s consent | per scope |
+| Data Extensions          |      ✅      |    ✅    |       view        | per role |    own data    |   s consent    | s consent |    ✅     |
+| Email Sends              |      ✅      |    ✅    |        ✅         |    ✅    |  own received  |   s consent    | s consent | per scope |
+| Journeys                 |      ✅      |    ✅    |        ✅         | per role |       ❌       |   s consent    | s consent | per scope |
+| Templates                |      ✅      |    ✅    |        ✅         | per role |       ❌       |   s consent    | s consent | per scope |
+| Content Builder          |      ✅      |    ✅    |        ✅         | per role |       ❌       |   s consent    | s consent | per scope |
+| Mobile Studio            |      ✅      |    ✅    |        ✅         | per role |  own received  |   s consent    | s consent | per scope |
+| Reports                  |      ✅      |    ✅    |        ✅         | per role |       ❌       |   s consent    | s consent | per scope |
+| Einstein AI              |      ✅      |    ✅    |       view        |   view   |       ❌       |   s consent    | s consent |     –     |
+| Agentforce               |      ✅      |    ✅    |        ✅         | per role |       ❌       |   s consent    | s consent | per scope |
+| Audit logs               |      ✅      |   view   |        ❌         |    ❌    |       ❌       |   s consent    | s consent |     –     |
+| Sandboxes                |      ✅      |    ✅    |       view        | per role |       ❌       |   s consent    | s consent | per scope |
+| Data Cloud               |      ✅      | per role |       view        | per role |    own data    |   s consent    | s consent | per scope |
+| Salesforce CRM sync      |      ✅      |    ✅    |       view        |   view   |    own data    |   s consent    | s consent | per scope |
+| AppExchange apps         |      ✅      |    ✅    |       view        |   view   |       ❌       |   s consent    | s consent | per scope |
+| Subscription preferences |      –       |    –     |         –         |    –     |     ✅ own     |       –        |     –     |     –     |
 
 ---
 
@@ -2372,7 +2373,8 @@ Cost reality:
 ### 25.3 Komplexita
 
 Per Research.com:
-> *"Complex and unintuitive user interface with a steep learning curve for beginners."*
+
+> _"Complex and unintuitive user interface with a steep learning curve for beginners."_
 
 ```
 Complexity drivers:
@@ -2671,4 +2673,4 @@ Strategic risk if Salesforce changes pricing
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů salesforce.com (Marketing Cloud pricing, Engagement, Account Engagement, Personalization, Intelligence, Data Cloud, Marketing Cloud Next pages), G2 reviews (2026), Research.com Reviews (2026), Codleo blog (2026), MagicFuse, Twelverays, OMR Reviews. Pro nejaktuálnější detaily je nutný kontakt s Salesforce sales nebo Salesforce Certified Partner.*
+_Dokument zpracován z oficiálních zdrojů salesforce.com (Marketing Cloud pricing, Engagement, Account Engagement, Personalization, Intelligence, Data Cloud, Marketing Cloud Next pages), G2 reviews (2026), Research.com Reviews (2026), Codleo blog (2026), MagicFuse, Twelverays, OMR Reviews. Pro nejaktuálnější detaily je nutný kontakt s Salesforce sales nebo Salesforce Certified Partner._

@@ -13,15 +13,16 @@ Hetzner má **tři produktové linie**, lišící se cenou, výkonem a flexibili
 
 Plně virtualizovaný cloud, srovnatelný s DigitalOcean / Linode. **Stabilní, snadno škálovatelný, podporuje snapshotting, private networks.**
 
-| Plán | CPU | RAM | Disk | Bandwidth | Cena/měs | Vhodné pro |
-|---|---|---|---|---|---|---|
-| **CX22** | 2 vCPU (AMD) | 4 GB | 40 GB SSD | 20 TB | €4.49 | Coolify management node, dev |
-| **CCX13** | 2 vCPU (dedicated) | 8 GB | 80 GB SSD | 20 TB | €12.49 | API node, worker node (low) |
-| **CCX23** | 4 vCPU (dedicated) | 16 GB | 160 GB SSD | 20 TB | €23.99 | API, workers, ClickHouse (dev) |
-| **CCX33** | 8 vCPU (dedicated) | 32 GB | 240 GB SSD | 30 TB | €47.99 | Postgres staging, Kafka node |
-| **CCX43** | 16 vCPU (dedicated) | 64 GB | 360 GB SSD | 40 TB | €95.99 | Postgres prod fallback, large workers |
+| Plán      | CPU                 | RAM   | Disk       | Bandwidth | Cena/měs | Vhodné pro                            |
+| --------- | ------------------- | ----- | ---------- | --------- | -------- | ------------------------------------- |
+| **CX22**  | 2 vCPU (AMD)        | 4 GB  | 40 GB SSD  | 20 TB     | €4.49    | Coolify management node, dev          |
+| **CCX13** | 2 vCPU (dedicated)  | 8 GB  | 80 GB SSD  | 20 TB     | €12.49   | API node, worker node (low)           |
+| **CCX23** | 4 vCPU (dedicated)  | 16 GB | 160 GB SSD | 20 TB     | €23.99   | API, workers, ClickHouse (dev)        |
+| **CCX33** | 8 vCPU (dedicated)  | 32 GB | 240 GB SSD | 30 TB     | €47.99   | Postgres staging, Kafka node          |
+| **CCX43** | 16 vCPU (dedicated) | 64 GB | 360 GB SSD | 40 TB     | €95.99   | Postgres prod fallback, large workers |
 
 **Klíčové vlastnosti pro nás:**
+
 - ✅ Private networking zdarma (Cloud Networks)
 - ✅ Snapshots, automated backups (+20 % ceny)
 - ✅ Floating IPs (přesunout mezi servery)
@@ -33,16 +34,17 @@ Plně virtualizovaný cloud, srovnatelný s DigitalOcean / Linode. **Stabilní, 
 
 Bare-metal servery, vlastní hardware, vlastní IP rozsah. **Nejlepší cena/výkon, ale operační režie.**
 
-| Server | CPU | RAM | Disk | Network | Cena/měs | Vhodné pro |
-|---|---|---|---|---|---|---|
-| **EX44** | AMD Ryzen 7700 (8/16) | 64 GB DDR5 | 2× 1 TB NVMe | 1 Gbit | €39 | MTA node, Postgres primary (small) |
-| **EX101** | Intel Core i9-13900 (24/32) | 64 GB DDR5 | 2× 1.92 TB NVMe | 1 Gbit | €76 | Postgres primary (medium), ClickHouse |
-| **AX42** | AMD Ryzen 9 7900 (12/24) | 64 GB ECC DDR5 | 2× 1 TB NVMe | 1 Gbit | €56 | Postgres replica, Kafka cluster node |
-| **AX52** | AMD Ryzen 9 9900X (12/24) | 64 GB ECC DDR5 | 2× 1 TB NVMe | 1 Gbit | €69 | Postgres prod primary |
-| **AX102** | AMD Ryzen 9 7950X3D (16/32) | 128 GB ECC DDR5 | 2× 1.92 TB NVMe | 1 Gbit | €123 | ClickHouse prod, multi-tenant DB |
-| **EX130-S** | Intel Xeon Gold 5412U (24/48) | 128 GB ECC DDR5 | 2× 3.84 TB NVMe | 1 Gbit (10 Gbit upgrade €€) | €189 | Enterprise scale primary |
+| Server      | CPU                           | RAM             | Disk            | Network                     | Cena/měs | Vhodné pro                            |
+| ----------- | ----------------------------- | --------------- | --------------- | --------------------------- | -------- | ------------------------------------- |
+| **EX44**    | AMD Ryzen 7700 (8/16)         | 64 GB DDR5      | 2× 1 TB NVMe    | 1 Gbit                      | €39      | MTA node, Postgres primary (small)    |
+| **EX101**   | Intel Core i9-13900 (24/32)   | 64 GB DDR5      | 2× 1.92 TB NVMe | 1 Gbit                      | €76      | Postgres primary (medium), ClickHouse |
+| **AX42**    | AMD Ryzen 9 7900 (12/24)      | 64 GB ECC DDR5  | 2× 1 TB NVMe    | 1 Gbit                      | €56      | Postgres replica, Kafka cluster node  |
+| **AX52**    | AMD Ryzen 9 9900X (12/24)     | 64 GB ECC DDR5  | 2× 1 TB NVMe    | 1 Gbit                      | €69      | Postgres prod primary                 |
+| **AX102**   | AMD Ryzen 9 7950X3D (16/32)   | 128 GB ECC DDR5 | 2× 1.92 TB NVMe | 1 Gbit                      | €123     | ClickHouse prod, multi-tenant DB      |
+| **EX130-S** | Intel Xeon Gold 5412U (24/48) | 128 GB ECC DDR5 | 2× 3.84 TB NVMe | 1 Gbit (10 Gbit upgrade €€) | €189     | Enterprise scale primary              |
 
 **Klíčové vlastnosti:**
+
 - ✅ /29 subnet (6 použitelných IPv4) zdarma k serveru (€5–8 setup fee)
 - ✅ Vlastní rDNS na všech IPs
 - ✅ Můžeme žádat o **odblokování SMTP** (vyšší pravděpodobnost než HC)
@@ -56,10 +58,10 @@ Bare-metal servery, vlastní hardware, vlastní IP rozsah. **Nejlepší cena/vý
 S3-like object storage + SFTP/Borg/Restic kompatibilní. Pro **backupy a archivace**.
 
 | Plán | Kapacita | Cena/měs |
-|---|---|---|
-| BX11 | 1 TB | €3.81 |
-| BX21 | 5 TB | €13.10 |
-| BX31 | 10 TB | €25.20 |
+| ---- | -------- | -------- |
+| BX11 | 1 TB     | €3.81    |
+| BX21 | 5 TB     | €13.10   |
+| BX31 | 10 TB    | €25.20   |
 
 Použití: pg_basebackup, WAL archiv, Restic backupy aplikačních dat. **NE** pro live serving (žádný HTTP API, jen storage).
 
@@ -67,45 +69,45 @@ Použití: pg_basebackup, WAL archiv, Restic backupy aplikačních dat. **NE** p
 
 **MVP (Fáze 0.5):**
 
-| Účel | Hardware | Cena/měs |
-|---|---|---|
-| Coolify mgmt + reverse proxy | CCX13 (Falkenstein) | €12.49 |
-| API + workers (1 node) | CCX23 (Falkenstein) | €23.99 |
-| Postgres primary (dev/staging) | CCX23 (Falkenstein) | €23.99 |
-| ClickHouse | **ClickHouse Cloud Dev** | $50 / ~€46 |
-| **MTA node #1** | **EX44 (Falkenstein) + /29 subnet** | €39 + €5 = €44 |
-| **MTA node #2** | **EX44 (Helsinki) + /29 subnet** (geo diversity) | €39 + €5 = €44 |
-| Backup storage | BX11 (1 TB) | €3.81 |
-| Bandwidth | included (60+ TB/měs) | €0 |
-| **Hetzner total** | | **€198 / ~$215** |
-| Vercel Pro | apps/web | $20 |
-| Cloudflare R2 (50 GB) | object storage | $0.75 |
-| ClickHouse Cloud | | $50 |
-| Doppler | secrets | $0 |
-| Grafana Cloud Free | obs | $0 |
-| Better Stack Free | uptime | $0 |
-| **MVP total** | | **~$285 / měs** |
+| Účel                           | Hardware                                         | Cena/měs         |
+| ------------------------------ | ------------------------------------------------ | ---------------- |
+| Coolify mgmt + reverse proxy   | CCX13 (Falkenstein)                              | €12.49           |
+| API + workers (1 node)         | CCX23 (Falkenstein)                              | €23.99           |
+| Postgres primary (dev/staging) | CCX23 (Falkenstein)                              | €23.99           |
+| ClickHouse                     | **ClickHouse Cloud Dev**                         | $50 / ~€46       |
+| **MTA node #1**                | **EX44 (Falkenstein) + /29 subnet**              | €39 + €5 = €44   |
+| **MTA node #2**                | **EX44 (Helsinki) + /29 subnet** (geo diversity) | €39 + €5 = €44   |
+| Backup storage                 | BX11 (1 TB)                                      | €3.81            |
+| Bandwidth                      | included (60+ TB/měs)                            | €0               |
+| **Hetzner total**              |                                                  | **€198 / ~$215** |
+| Vercel Pro                     | apps/web                                         | $20              |
+| Cloudflare R2 (50 GB)          | object storage                                   | $0.75            |
+| ClickHouse Cloud               |                                                  | $50              |
+| Doppler                        | secrets                                          | $0               |
+| Grafana Cloud Free             | obs                                              | $0               |
+| Better Stack Free              | uptime                                           | $0               |
+| **MVP total**                  |                                                  | **~$285 / měs**  |
 
 **Growth (Fáze 5–7):**
 
-| Účel | Hardware | Cena/měs |
-|---|---|---|
-| Coolify mgmt + HA proxy | 3× CCX23 | €72 |
-| API tier | 2× CCX33 | €96 |
-| Worker tier | 2× CCX23 | €48 |
-| Postgres primary | AX52 (Falkenstein) | €69 |
-| Postgres replica | AX42 (Helsinki) | €56 |
-| ClickHouse | **AX42 + dedicated NVMe** | €56 |
-| Kafka cluster | 3× CCX23 | €72 |
-| Redis cluster | 2× CCX13 | €25 |
-| **MTA cluster** | **4× EX44 + 4× /29 (16 IPs)** | €196 |
-| **Backup MTA pool** | **2× OVH IPs + 2× Vultr IPs** | ~€30 |
-| Backup storage | BX21 (5 TB) | €13 |
-| **Hetzner+ total** | | **~€733 / $795** |
-| Vercel Pro + extras | | $120 |
-| Cloudflare R2 (500 GB) | | $7.50 |
-| ClickHouse Cloud Production | | $200 |
-| **Growth total** | | **~$1 120 / měs** |
+| Účel                        | Hardware                      | Cena/měs          |
+| --------------------------- | ----------------------------- | ----------------- |
+| Coolify mgmt + HA proxy     | 3× CCX23                      | €72               |
+| API tier                    | 2× CCX33                      | €96               |
+| Worker tier                 | 2× CCX23                      | €48               |
+| Postgres primary            | AX52 (Falkenstein)            | €69               |
+| Postgres replica            | AX42 (Helsinki)               | €56               |
+| ClickHouse                  | **AX42 + dedicated NVMe**     | €56               |
+| Kafka cluster               | 3× CCX23                      | €72               |
+| Redis cluster               | 2× CCX13                      | €25               |
+| **MTA cluster**             | **4× EX44 + 4× /29 (16 IPs)** | €196              |
+| **Backup MTA pool**         | **2× OVH IPs + 2× Vultr IPs** | ~€30              |
+| Backup storage              | BX21 (5 TB)                   | €13               |
+| **Hetzner+ total**          |                               | **~€733 / $795**  |
+| Vercel Pro + extras         |                               | $120              |
+| Cloudflare R2 (500 GB)      |                               | $7.50             |
+| ClickHouse Cloud Production |                               | $200              |
+| **Growth total**            |                               | **~$1 120 / měs** |
 
 ---
 
@@ -116,6 +118,7 @@ Použití: pg_basebackup, WAL archiv, Restic backupy aplikačních dat. **NE** p
 **Self-hosted alternativa k Vercel / Heroku / Render.** Open source, ~35k GitHub stars, aktivní vývoj.
 
 **Plus:**
+
 - ✅ Krásné UI — deploy z Gitu jedním kliknutím
 - ✅ Auto Let's Encrypt certifikáty
 - ✅ Built-in Postgres, Redis, MinIO, Clickhouse jako služby
@@ -126,6 +129,7 @@ Použití: pg_basebackup, WAL archiv, Restic backupy aplikačních dat. **NE** p
 - ✅ Vhodné pro 1–3 vývojáře (řekl bych až do ~$5M ARR)
 
 **Minus:**
+
 - ⚠️ Není K8s — pokud později přejdeme na multi-cloud / multi-region, migrace bude netriviální
 - ⚠️ Networking limitace pro low-level věci (MTA s vlastními IPs → držet mimo Coolify)
 - ⚠️ Méně zralé než K8s ekosystém pro enterprise věci (RBAC, audit logs, …)
@@ -137,6 +141,7 @@ Použití: pg_basebackup, WAL archiv, Restic backupy aplikačních dat. **NE** p
 **Lightweight Kubernetes** od Ranchera. Jeden binární soubor, ARM/x86 kompatibilní, plné API.
 
 **Plus:**
+
 - ✅ Full Kubernetes API
 - ✅ Vše co znáš z EKS funguje (Helm, ArgoCD, kubectl)
 - ✅ Lehký — Hetzner CCX23 unese single-node k3s s 20+ pods
@@ -146,6 +151,7 @@ Použití: pg_basebackup, WAL archiv, Restic backupy aplikačních dat. **NE** p
 - ⚠️ Více setupu (ingress controller, cert-manager, monitoring stack)
 
 **Kdy přejít z Coolify na k3s:**
+
 - Multi-region (Hetzner Falkenstein + Helsinki + USA)
 - Tým 3+ devs / 1+ SRE
 - Phase 9–10 (closed beta → launch)
@@ -180,6 +186,7 @@ WantedBy=multi-user.target
 ```
 
 Enable per IP:
+
 ```bash
 systemctl enable mailforge-mta@49.13.x.1
 systemctl enable mailforge-mta@49.13.x.2
@@ -211,13 +218,14 @@ Deploy = GitHub Actions → SSH + scp + `systemctl restart` (Ansible role v `inf
 
 ### 3.3 Tracking pixel — kam?
 
-| Volba | Pro | Proti |
-|---|---|---|
+| Volba                                                  | Pro                                                       | Proti                                                                                  |
+| ------------------------------------------------------ | --------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **Cloudflare Workers** + Workers KV + Kafka REST proxy | Globálně nejnižší latence; Cloudflare zdarma 100k req/den | Logika sice jednoduchá, ale potřebujeme dostat do Kafka (rest-proxy nebo direct queue) |
-| Vercel Edge Function | Stejně dobré jako CF | Vendor lock-in; Vercel logy pro debugging horší |
-| Vlastní Go endpoint na Hetzneru | Plná kontrola | Latence z USA ~150ms |
+| Vercel Edge Function                                   | Stejně dobré jako CF                                      | Vendor lock-in; Vercel logy pro debugging horší                                        |
+| Vlastní Go endpoint na Hetzneru                        | Plná kontrola                                             | Latence z USA ~150ms                                                                   |
 
 **Doporučení:** Cloudflare Workers — `https://track.mailforge.io/o/:id.gif` a `/c/:id`. Worker:
+
 1. Log event do Cloudflare Queues (managed)
 2. Cloudflare Queue → custom consumer na Hetzner → Kafka → ClickHouse
 3. Response: 1×1 GIF (open) nebo 302 redirect (click)
@@ -243,8 +251,8 @@ Internet
    ├─→ api.mailforge.io ─→ Hetzner Coolify LB
    ├─→ track.mailforge.io ─→ Cloudflare Workers
    └─→ mta-{1..N}.mailforge.io ─→ Hetzner Dedicated IPs
-   
-   
+
+
 Privátní síť (Hetzner Cloud Network 10.0.0.0/16)
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
@@ -289,20 +297,21 @@ Bandwidth privátní = unmetered
 ## 5. ASN diversity — proč ne jen Hetzner
 
 Pokud bys měl všech 16 sending IPs v `49.13.0.0/16` (Hetzner AS24940), Gmail tě vyhodnotí jako:
+
 - High volume sender
 - Single AS origin
 - → "snowshoe" pattern (rozmazání spamu přes mnoho IPs jednoho prefixu)
 
 **Diversifikace pro Phase 5+:**
 
-| Provider | AS | Region | Cena IP | Reputace pro bulk |
-|---|---|---|---|---|
-| **Hetzner** | AS24940 | DE/FI | €1.20/IP | Mixed (closer to bulk-friendly post-2023) |
-| **OVH** | AS16276 | FR/UK | €2/IP | Mixed; FR sender často horší než DE |
-| **Vultr** | AS20473 | DE/JP/US | $3/IP | Slušné, mladší IPs |
-| **Linode (Akamai)** | AS63949 | DE/UK | $5/IP | Velmi dobré |
-| **Inception Hosting** | AS50673 | UK | $5/IP | Specialized email-friendly |
-| **vlastní /24 (BGP)** | vlastní ASN | — | €0.50/IP/měs (lease) | Nejlepší dlouhodobě |
+| Provider              | AS          | Region   | Cena IP              | Reputace pro bulk                         |
+| --------------------- | ----------- | -------- | -------------------- | ----------------------------------------- |
+| **Hetzner**           | AS24940     | DE/FI    | €1.20/IP             | Mixed (closer to bulk-friendly post-2023) |
+| **OVH**               | AS16276     | FR/UK    | €2/IP                | Mixed; FR sender často horší než DE       |
+| **Vultr**             | AS20473     | DE/JP/US | $3/IP                | Slušné, mladší IPs                        |
+| **Linode (Akamai)**   | AS63949     | DE/UK    | $5/IP                | Velmi dobré                               |
+| **Inception Hosting** | AS50673     | UK       | $5/IP                | Specialized email-friendly                |
+| **vlastní /24 (BGP)** | vlastní ASN | —        | €0.50/IP/měs (lease) | Nejlepší dlouhodobě                       |
 
 **Růstová strategie:**
 
@@ -364,18 +373,18 @@ Vercel terraform provider je nezralý, raději Pulumi nebo přímo Vercel CLI / 
 
 ```typescript
 // infra/pulumi/vercel/index.ts
-import * as vercel from "@pulumiverse/vercel";
+import * as vercel from '@pulumiverse/vercel';
 
-const project = new vercel.Project("mailforge-web", {
-  name: "mailforge-web",
-  framework: "nextjs",
-  rootDirectory: "apps/web",
+const project = new vercel.Project('mailforge-web', {
+  name: 'mailforge-web',
+  framework: 'nextjs',
+  rootDirectory: 'apps/web',
   gitRepository: {
-    type: "github",
-    repo: "omniascz/mailforge",
+    type: 'github',
+    repo: 'omniascz/mailforge',
   },
-  buildCommand: "cd ../.. && pnpm turbo build --filter=@forgemsg/web",
-  installCommand: "cd ../.. && pnpm install --frozen-lockfile",
+  buildCommand: 'cd ../.. && pnpm turbo build --filter=@forgemsg/web',
+  installCommand: 'cd ../.. && pnpm install --frozen-lockfile',
 });
 ```
 
@@ -388,6 +397,7 @@ Nebo úplně skip IaC pro Vercel a configurovat ručně přes UI — pro single 
 (Viz `PIVOT_AWS_TO_HETZNER.md` Akční plán pro plnou šíři.)
 
 **Hardware nákupní seznam:**
+
 - 1× CCX13 (Coolify mgmt)
 - 1× CCX23 (API + workers dev)
 - 1× CCX23 (Postgres dev)
@@ -395,6 +405,7 @@ Nebo úplně skip IaC pro Vercel a configurovat ručně přes UI — pro single 
 - 1× BX11 (backupy)
 
 **Účty:**
+
 - Hetzner (Cloud + Robot/Dedicated)
 - Vercel Pro ($20/měs)
 - Cloudflare (free OK)
@@ -404,6 +415,7 @@ Nebo úplně skip IaC pro Vercel a configurovat ručně přes UI — pro single 
 - Better Stack (free)
 
 **Žádosti:**
+
 - Hetzner support: SMTP unblock pro Cloud servers (na všech IPs)
 - Hetzner support: PTR/rDNS setup pro každou MTA IP
 - ZeroBounce / Kickbox trial account (list validation)
@@ -427,4 +439,4 @@ Nebo úplně skip IaC pro Vercel a configurovat ručně přes UI — pro single 
 
 ---
 
-*Dokument vytvořen: 2026-05-18*
+_Dokument vytvořen: 2026-05-18_

@@ -26,7 +26,9 @@ describe('createRateLimiter', () => {
     });
 
     await expect(limiter('org-1', 'translate')).resolves.toBeUndefined();
-    expect(cache.incr).toHaveBeenCalledWith(expect.stringContaining('ai:ratelimit:org-1:translate:'));
+    expect(cache.incr).toHaveBeenCalledWith(
+      expect.stringContaining('ai:ratelimit:org-1:translate:'),
+    );
   });
 
   it('throws when limit is exceeded', async () => {
@@ -102,8 +104,6 @@ describe('createRateLimiter', () => {
 
     await limiter('org-1', 'subject_lines');
 
-    expect(cache.incr).toHaveBeenCalledWith(
-      expect.stringContaining('subject_lines'),
-    );
+    expect(cache.incr).toHaveBeenCalledWith(expect.stringContaining('subject_lines'));
   });
 });

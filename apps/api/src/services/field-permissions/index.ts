@@ -35,11 +35,17 @@ async function loadRule(
     if (cached === 'null') return null;
     return JSON.parse(cached) as FieldPermission;
   }
-  const [row] = await db.select().from(fieldPermissions).where(and(
-    eq(fieldPermissions.orgId, orgId),
-    eq(fieldPermissions.role, role),
-    eq(fieldPermissions.entity, entity),
-  )).limit(1);
+  const [row] = await db
+    .select()
+    .from(fieldPermissions)
+    .where(
+      and(
+        eq(fieldPermissions.orgId, orgId),
+        eq(fieldPermissions.role, role),
+        eq(fieldPermissions.entity, entity),
+      ),
+    )
+    .limit(1);
   await redis.set(key, row ? JSON.stringify(row) : 'null', 'EX', TTL);
   return row ?? null;
 }
@@ -115,30 +121,43 @@ export interface UpsertInput {
 }
 
 export async function upsertRule(orgId: string, input: UpsertInput): Promise<FieldPermission> {
-  const [existing] = await db.select().from(fieldPermissions).where(and(
-    eq(fieldPermissions.orgId, orgId),
-    eq(fieldPermissions.role, input.role),
-    eq(fieldPermissions.entity, input.entity),
-  )).limit(1);
+  const [existing] = await db
+    .select()
+    .from(fieldPermissions)
+    .where(
+      and(
+        eq(fieldPermissions.orgId, orgId),
+        eq(fieldPermissions.role, input.role),
+        eq(fieldPermissions.entity, input.entity),
+      ),
+    )
+    .limit(1);
 
   let row: FieldPermission | undefined;
   if (existing) {
-    const [u] = await db.update(fieldPermissions).set({
-      readable: input.readable ?? existing.readable,
-      hidden: input.hidden ?? existing.hidden,
-      writable: input.writable ?? existing.writable,
-      updatedAt: new Date(),
-    }).where(eq(fieldPermissions.id, existing.id)).returning();
+    const [u] = await db
+      .update(fieldPermissions)
+      .set({
+        readable: input.readable ?? existing.readable,
+        hidden: input.hidden ?? existing.hidden,
+        writable: input.writable ?? existing.writable,
+        updatedAt: new Date(),
+      })
+      .where(eq(fieldPermissions.id, existing.id))
+      .returning();
     row = u;
   } else {
-    const [i] = await db.insert(fieldPermissions).values({
-      orgId,
-      role: input.role,
-      entity: input.entity,
-      readable: input.readable ?? ['*'],
-      hidden: input.hidden ?? [],
-      writable: input.writable ?? ['*'],
-    }).returning();
+    const [i] = await db
+      .insert(fieldPermissions)
+      .values({
+        orgId,
+        role: input.role,
+        entity: input.entity,
+        readable: input.readable ?? ['*'],
+        hidden: input.hidden ?? [],
+        writable: input.writable ?? ['*'],
+      })
+      .returning();
     row = i;
   }
   if (!row) throw AppError.internal('Failed to upsert field permission');
@@ -151,10 +170,11 @@ export async function listRules(orgId: string): Promise<FieldPermission[]> {
 }
 
 export async function deleteRule(orgId: string, id: string): Promise<void> {
-  const [row] = await db.select().from(fieldPermissions).where(and(
-    eq(fieldPermissions.orgId, orgId),
-    eq(fieldPermissions.id, id),
-  )).limit(1);
+  const [row] = await db
+    .select()
+    .from(fieldPermissions)
+    .where(and(eq(fieldPermissions.orgId, orgId), eq(fieldPermissions.id, id)))
+    .limit(1);
   if (!row) return;
   await db.delete(fieldPermissions).where(eq(fieldPermissions.id, id));
   await redis.del(cacheKey(orgId, row.role, row.entity));

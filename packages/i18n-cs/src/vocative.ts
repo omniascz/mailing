@@ -21,18 +21,18 @@
 export type Gender = 'male' | 'female' | 'unknown';
 
 const EXCEPTIONS: Record<string, string> = {
-  'Pavel': 'Pavle',
-  'Karel': 'Karle',
-  'Ježek': 'Ježku',
-  'Otec': 'Otče',
-  'Bůh': 'Bože',
-  'Kristus': 'Kriste',
-  'Bratr': 'Bratře',
-  'Syn': 'Synu',
-  'Chlap': 'Chlape',
-  'Člověk': 'Člověče',
-  'Pán': 'Pane',
-  'Petr': 'Petře',
+  Pavel: 'Pavle',
+  Karel: 'Karle',
+  Ježek: 'Ježku',
+  Otec: 'Otče',
+  Bůh: 'Bože',
+  Kristus: 'Kriste',
+  Bratr: 'Bratře',
+  Syn: 'Synu',
+  Chlap: 'Chlape',
+  Člověk: 'Člověče',
+  Pán: 'Pane',
+  Petr: 'Petře',
 };
 
 export function inferGender(name: string): Gender {
@@ -75,7 +75,7 @@ function vocativeMale(name: string): string {
 
   // -e, -ě — often ends up as -e already (Ondřej → Ondřeji)
   if (lastLower === 'e' || lastLower === 'ě') return name + ''; // keep form
-  if (lastLower === 'j') return name + 'i';                     // Ondřej → Ondřeji
+  if (lastLower === 'j') return name + 'i'; // Ondřej → Ondřeji
 
   // -s (Tomáš), -š, -c, -č, -ř, -ž, -h, -ch, -k, -g — mostly "+i"
   if ('sšcčřžhkgx'.includes(lastLower)) {
@@ -84,10 +84,10 @@ function vocativeMale(name: string): string {
       if (name.length >= 3 && name.slice(-2).toLowerCase() === 'ek') {
         return name.slice(0, -2) + 'ku';
       }
-      return name.slice(0, -1) + 'ku';                          // Honzík → Honzíku, Dvořák → Dvořáku
+      return name.slice(0, -1) + 'ku'; // Honzík → Honzíku, Dvořák → Dvořáku
     }
-    if (lastLower === 'h') return name.slice(0, -1) + 'že';     // Bůh → Bože (exception covers specific)
-    if (lastLower === 'g') return name.slice(0, -1) + 'že';     // rare
+    if (lastLower === 'h') return name.slice(0, -1) + 'že'; // Bůh → Bože (exception covers specific)
+    if (lastLower === 'g') return name.slice(0, -1) + 'že'; // rare
     if (lastLower === 'ch') return name + 'u';
     return name + 'i';
   }

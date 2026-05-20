@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, integer, decimal, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  decimal,
+  timestamp,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 
@@ -6,7 +15,9 @@ export const couponBatches = pgTable(
   'coupon_batches',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
     codePrefix: varchar('code_prefix', { length: 32 }).notNull().default(''),
     discountType: varchar('discount_type', { length: 16 }).notNull().default('percent'),
@@ -23,8 +34,12 @@ export const couponCodes = pgTable(
   'coupon_codes',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    batchId: uuid('batch_id').notNull().references(() => couponBatches.id, { onDelete: 'cascade' }),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    batchId: uuid('batch_id')
+      .notNull()
+      .references(() => couponBatches.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     code: varchar('code', { length: 64 }).notNull(),
     assignedTo: uuid('assigned_to').references(() => contacts.id, { onDelete: 'set null' }),
     assignedAt: timestamp('assigned_at', { withTimezone: true }),

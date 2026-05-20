@@ -247,10 +247,7 @@ export async function debitPoints(
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
-export async function getMember(
-  orgId: string,
-  memberId: string,
-): Promise<LoyaltyMember | null> {
+export async function getMember(orgId: string, memberId: string): Promise<LoyaltyMember | null> {
   const [row] = await db
     .select()
     .from(loyaltyMembers)
@@ -285,10 +282,7 @@ export async function listMembers(
 ): Promise<{ data: LoyaltyMember[]; cursor: string | null; hasMore: boolean }> {
   const limit = Math.min(opts.limit ?? 50, 200);
 
-  const conditions = [
-    eq(loyaltyMembers.orgId, orgId),
-    eq(loyaltyMembers.programId, programId),
-  ];
+  const conditions = [eq(loyaltyMembers.orgId, orgId), eq(loyaltyMembers.programId, programId)];
 
   if (opts.cursor) {
     conditions.push(sql`${loyaltyMembers.enrolledAt} < ${new Date(opts.cursor).toISOString()}`);

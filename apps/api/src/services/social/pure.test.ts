@@ -31,9 +31,10 @@ describe('POST_LIMITS / HASHTAG_LIMITS', () => {
 
 describe('extractHashtags', () => {
   it('extracts in document order', () => {
-    expect(
-      extractHashtags('Check out our #launch! #MailForge is live #launch'),
-    ).toEqual(['#launch', '#MailForge']);
+    expect(extractHashtags('Check out our #launch! #MailForge is live #launch')).toEqual([
+      '#launch',
+      '#MailForge',
+    ]);
   });
 
   it('ignores mid-word hashes', () => {

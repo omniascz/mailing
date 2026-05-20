@@ -27,20 +27,32 @@ export function initRegionDbs(): void {
   // EU DB — lazily initialized when EU_DATABASE_URL is set
   if (process.env.EU_DATABASE_URL && !euDb) {
     // Dynamic import to avoid importing drizzle at module load if not needed
-    import('../db/client.js').then((mod) => {
-      const createDbClient = (mod as Record<string, unknown>)['createDbClient'];
-      if (typeof createDbClient === 'function') {
-        euDb = (createDbClient as (url: string) => typeof primaryDb)(process.env.EU_DATABASE_URL!);
-      }
-    }).catch(() => { /* fall back to primary */ });
+    import('../db/client.js')
+      .then((mod) => {
+        const createDbClient = (mod as Record<string, unknown>)['createDbClient'];
+        if (typeof createDbClient === 'function') {
+          euDb = (createDbClient as (url: string) => typeof primaryDb)(
+            process.env.EU_DATABASE_URL!,
+          );
+        }
+      })
+      .catch(() => {
+        /* fall back to primary */
+      });
   }
   if (process.env.AP_DATABASE_URL && !apDb) {
-    import('../db/client.js').then((mod) => {
-      const createDbClient = (mod as Record<string, unknown>)['createDbClient'];
-      if (typeof createDbClient === 'function') {
-        apDb = (createDbClient as (url: string) => typeof primaryDb)(process.env.AP_DATABASE_URL!);
-      }
-    }).catch(() => { /* fall back to primary */ });
+    import('../db/client.js')
+      .then((mod) => {
+        const createDbClient = (mod as Record<string, unknown>)['createDbClient'];
+        if (typeof createDbClient === 'function') {
+          apDb = (createDbClient as (url: string) => typeof primaryDb)(
+            process.env.AP_DATABASE_URL!,
+          );
+        }
+      })
+      .catch(() => {
+        /* fall back to primary */
+      });
   }
 }
 

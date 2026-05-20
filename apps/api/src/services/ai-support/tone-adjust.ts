@@ -47,7 +47,7 @@ export async function adjustTone(
     original: text,
     adjusted: result.text.trim(),
     tone,
-    tokensUsed: (result.inputTokens + result.outputTokens),
+    tokensUsed: result.inputTokens + result.outputTokens,
   };
 
   await redis.setex(cKey, CACHE_TTL, JSON.stringify(out));

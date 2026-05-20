@@ -30,10 +30,13 @@ export const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
  * Render the JS snippet for a tracked site. The snippet is small,
  * dependency-free, and works in IE11+.
  */
-export function generateSklikSnippet(siteToken: string, opts: {
-  endpointBase?: string;
-  cookieName?: string;
-} = {}): string {
+export function generateSklikSnippet(
+  siteToken: string,
+  opts: {
+    endpointBase?: string;
+    cookieName?: string;
+  } = {},
+): string {
   const safeToken = siteToken.replace(/[^A-Za-z0-9_-]/g, '');
   if (!safeToken) throw new Error('Invalid site token');
   const base = opts.endpointBase ?? '';
@@ -96,9 +99,11 @@ export function parseTrackingEvent(
   return {
     visitorId: v,
     url: u,
-    emailLower: typeof query.e === 'string' && query.e.includes('@') ? query.e.toLowerCase().trim() : null,
+    emailLower:
+      typeof query.e === 'string' && query.e.includes('@') ? query.e.toLowerCase().trim() : null,
     phone: typeof query.p === 'string' && query.p.length > 0 ? query.p : null,
-    ts: typeof query.t === 'string' && /^\d+$/.test(query.t) ? new Date(Number(query.t)) : fallbackTs,
+    ts:
+      typeof query.t === 'string' && /^\d+$/.test(query.t) ? new Date(Number(query.t)) : fallbackTs,
   };
 }
 
@@ -114,7 +119,11 @@ export async function resolveTrackedSite(siteToken: string): Promise<{
 } | null> {
   if (!isValidSiteToken(siteToken)) return null;
   const [row] = await db
-    .select({ id: trackedSites.id, orgId: trackedSites.orgId, trackingEnabled: trackedSites.trackingEnabled })
+    .select({
+      id: trackedSites.id,
+      orgId: trackedSites.orgId,
+      trackingEnabled: trackedSites.trackingEnabled,
+    })
     .from(trackedSites)
     .where(eq(trackedSites.siteToken, siteToken))
     .limit(1);
@@ -131,7 +140,8 @@ export async function recordPixelEvent(
 ): Promise<void> {
   let contactId: string | null = null;
   if (event.emailLower) {
-    const [c] = await db.select({ id: contacts.id })
+    const [c] = await db
+      .select({ id: contacts.id })
       .from(contacts)
       .where(and(eq(contacts.orgId, site.orgId), eq(contacts.email, event.emailLower)))
       .limit(1);
@@ -186,7 +196,5 @@ export async function buildAudienceFromPixel(
       ),
     );
 
-  return rows
-    .filter((r) => r.email || r.phone)
-    .map((r) => ({ email: r.email, phone: r.phone }));
+  return rows.filter((r) => r.email || r.phone).map((r) => ({ email: r.email, phone: r.phone }));
 }

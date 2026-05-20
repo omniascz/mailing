@@ -12,9 +12,9 @@ import { db } from '../../db/client.js';
 import { contactEngagement, contacts } from '../../db/schema/index.js';
 
 export interface PredictiveScores {
-  clv: number;              // predicted USD lifetime value
+  clv: number; // predicted USD lifetime value
   purchaseLikelihood: number; // 0..1
-  churnRisk: number;        // 0..1
+  churnRisk: number; // 0..1
 }
 
 /** Compute scores for a single contact from its engagement aggregates. */
@@ -41,14 +41,14 @@ export function computeScores(row: {
   const clv = Math.round(avgOrder * ordersPerDay * 730 * 100) / 100;
 
   // Purchase likelihood — combines recency, frequency and recent engagement.
-  const recencyScore = row.totalOrders === 0
-    ? 0
-    : Math.exp(-daysSinceLastOrder / 30); // half-life ~21d
-  const engagementScore = row.totalSends > 0
-    ? Math.min(1, (row.totalOpens * 0.4 + row.totalClicks * 1.0) / row.totalSends)
-    : 0;
+  const recencyScore = row.totalOrders === 0 ? 0 : Math.exp(-daysSinceLastOrder / 30); // half-life ~21d
+  const engagementScore =
+    row.totalSends > 0
+      ? Math.min(1, (row.totalOpens * 0.4 + row.totalClicks * 1.0) / row.totalSends)
+      : 0;
   const frequencyScore = Math.min(1, row.totalOrders / 5);
-  const purchaseLikelihood = Math.min(1,
+  const purchaseLikelihood = Math.min(
+    1,
     0.5 * recencyScore + 0.3 * engagementScore + 0.2 * frequencyScore,
   );
 
@@ -65,10 +65,7 @@ export function computeScores(row: {
 
 /** Recompute scores for every contact in the org. */
 export async function refreshOrgPredictions(orgId: string): Promise<{ updated: number }> {
-  const rows = await db
-    .select()
-    .from(contactEngagement)
-    .where(eq(contactEngagement.orgId, orgId));
+  const rows = await db.select().from(contactEngagement).where(eq(contactEngagement.orgId, orgId));
 
   let updated = 0;
   for (const row of rows) {
@@ -102,9 +99,11 @@ export async function topContactsByScore(
   limit = 50,
 ): Promise<Array<{ contactId: string; email: string | null; score: number }>> {
   const column =
-    metric === 'clv' ? 'predicted_clv'
-    : metric === 'purchase_likelihood' ? 'purchase_likelihood'
-    : 'churn_risk';
+    metric === 'clv'
+      ? 'predicted_clv'
+      : metric === 'purchase_likelihood'
+        ? 'purchase_likelihood'
+        : 'churn_risk';
 
   const rows = await db.execute<{ contact_id: string; email: string | null; score: string }>(sql`
     SELECT ce.contact_id, c.email, ce.${sql.raw(column)}::text AS score
@@ -116,7 +115,9 @@ export async function topContactsByScore(
     LIMIT ${limit}
   `);
 
-  return (rows as unknown as Array<{ contact_id: string; email: string | null; score: string }>).map((r) => ({
+  return (
+    rows as unknown as Array<{ contact_id: string; email: string | null; score: string }>
+  ).map((r) => ({
     contactId: r.contact_id,
     email: r.email,
     score: Number(r.score),
@@ -130,8 +131,11 @@ export async function orgPredictiveSummary(orgId: string): Promise<{
   highLikelihoodCount: number;
   atRiskCount: number;
 }> {
-  const [row] = await db.execute<{
-    total: string; avg_clv: string | null; hi: string; risk: string;
+  const [row] = (await db.execute<{
+    total: string;
+    avg_clv: string | null;
+    hi: string;
+    risk: string;
   }>(sql`
     SELECT
       COUNT(*)::text AS total,
@@ -140,7 +144,7 @@ export async function orgPredictiveSummary(orgId: string): Promise<{
       COUNT(*) FILTER (WHERE churn_risk >= 0.7)::text AS risk
     FROM contact_engagement
     WHERE org_id = ${orgId}::uuid
-  `) as unknown as Array<{ total: string; avg_clv: string | null; hi: string; risk: string }>;
+  `)) as unknown as Array<{ total: string; avg_clv: string | null; hi: string; risk: string }>;
 
   return {
     totalContacts: Number(row?.total ?? 0),
@@ -148,6 +152,114 @@ export async function orgPredictiveSummary(orgId: string): Promise<{
     highLikelihoodCount: Number(row?.hi ?? 0),
     atRiskCount: Number(row?.risk ?? 0),
   };
+}
+
+/**
+ * Single-contact lookup. Returns null when the engagement row exists but
+ * predictions haven't been computed yet (predictedAt is null) so the UI
+ * can show "scores pending — run refresh" instead of zeros.
+ */
+export async function getContactPredictions(
+  orgId: string,
+  contactId: string,
+): Promise<{
+  clv: number;
+  purchaseLikelihood: number;
+  churnRisk: number;
+  predictedAt: Date | null;
+} | null> {
+  const [row] = await db
+    .select({
+      clv: contactEngagement.predictedClv,
+      pl: contactEngagement.purchaseLikelihood,
+      ch: contactEngagement.churnRisk,
+      at: contactEngagement.predictedAt,
+      orgId: contactEngagement.orgId,
+    })
+    .from(contactEngagement)
+    .where(eq(contactEngagement.contactId, contactId))
+    .limit(1);
+
+  if (!row || row.orgId !== orgId) return null;
+  if (!row.at) return null;
+  return {
+    clv: Number(row.clv ?? 0),
+    purchaseLikelihood: Number(row.pl ?? 0),
+    churnRisk: Number(row.ch ?? 0),
+    predictedAt: row.at,
+  };
+}
+
+/**
+ * CLV-band distribution for charts. Buckets:
+ *   0 (no orders), 1–50, 50–250, 250–1000, 1000+
+ * plus churn-risk buckets (low <0.3, medium 0.3–0.7, high >=0.7).
+ * Buckets are fixed so the UI stays stable across orgs of different sizes.
+ */
+export async function predictiveDistribution(orgId: string): Promise<{
+  clv: Array<{ bucket: string; count: number }>;
+  churn: Array<{ bucket: string; count: number }>;
+}> {
+  const clvRows = (await db.execute<{ bucket: string; count: string }>(sql`
+    SELECT
+      CASE
+        WHEN predicted_clv IS NULL OR predicted_clv <= 0 THEN '0'
+        WHEN predicted_clv < 50 THEN '1-50'
+        WHEN predicted_clv < 250 THEN '50-250'
+        WHEN predicted_clv < 1000 THEN '250-1000'
+        ELSE '1000+'
+      END AS bucket,
+      COUNT(*)::text AS count
+    FROM contact_engagement
+    WHERE org_id = ${orgId}::uuid
+    GROUP BY 1
+  `)) as unknown as Array<{ bucket: string; count: string }>;
+
+  const churnRows = (await db.execute<{ bucket: string; count: string }>(sql`
+    SELECT
+      CASE
+        WHEN churn_risk IS NULL THEN 'unknown'
+        WHEN churn_risk < 0.3 THEN 'low'
+        WHEN churn_risk < 0.7 THEN 'medium'
+        ELSE 'high'
+      END AS bucket,
+      COUNT(*)::text AS count
+    FROM contact_engagement
+    WHERE org_id = ${orgId}::uuid
+    GROUP BY 1
+  `)) as unknown as Array<{ bucket: string; count: string }>;
+
+  return {
+    clv: clvRows.map((r) => ({ bucket: r.bucket, count: Number(r.count) })),
+    churn: churnRows.map((r) => ({ bucket: r.bucket, count: Number(r.count) })),
+  };
+}
+
+/**
+ * Refresh predictive scores for every org that has any engagement rows.
+ * Sequential per-org to keep pool pressure predictable; same shape as
+ * refreshAllOrgsRfm so the daily-run orchestrator can call both.
+ */
+export async function refreshAllOrgsPredictions(): Promise<{
+  orgs: number;
+  updated: number;
+  errors: number;
+}> {
+  const rows = (await db.execute<{ org_id: string }>(sql`
+    SELECT DISTINCT org_id FROM contact_engagement
+  `)) as unknown as Array<{ org_id: string }>;
+
+  let updated = 0;
+  let errors = 0;
+  for (const { org_id } of rows) {
+    try {
+      const r = await refreshOrgPredictions(org_id);
+      updated += r.updated;
+    } catch {
+      errors++;
+    }
+  }
+  return { orgs: rows.length, updated, errors };
 }
 
 /** Ensure every org contact has an engagement row (lazy bootstrap). */

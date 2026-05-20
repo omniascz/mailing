@@ -4,10 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateVapidKeyPair, WebPushAdapter } from '../../channels/push/web-push-adapter.js';
-import {
-  getMatchingMessages,
-  checkFrequency,
-} from '../in-app/index.js';
+import { getMatchingMessages, checkFrequency } from '../in-app/index.js';
 import type { InAppTargetingRule } from '../../db/schema/in-app.js';
 
 // ─── Mock DB (vi.hoisted so factory has access) ───────────────────────────────
@@ -119,7 +116,9 @@ describe('WebPushAdapter', () => {
 
   it('validateTemplate fails with empty title', async () => {
     const bad = await adapter.validateTemplate({
-      id: 't1', channel: 'push', content: { title: '', body: 'body' },
+      id: 't1',
+      channel: 'push',
+      content: { title: '', body: 'body' },
     });
     expect(bad.valid).toBe(false);
     expect(bad.errors.some((e) => e.field === 'title')).toBe(true);
@@ -127,7 +126,9 @@ describe('WebPushAdapter', () => {
 
   it('validateTemplate fails with empty body', async () => {
     const bad = await adapter.validateTemplate({
-      id: 't1', channel: 'push', content: { title: 'Title', body: '' },
+      id: 't1',
+      channel: 'push',
+      content: { title: 'Title', body: '' },
     });
     expect(bad.valid).toBe(false);
     expect(bad.errors.some((e) => e.field === 'body')).toBe(true);
@@ -135,14 +136,19 @@ describe('WebPushAdapter', () => {
 
   it('validateTemplate passes with title + body', async () => {
     const good = await adapter.validateTemplate({
-      id: 't1', channel: 'push', content: { title: 'Hey!', body: 'Check this' },
+      id: 't1',
+      channel: 'push',
+      content: { title: 'Hey!', body: 'Check this' },
     });
     expect(good.valid).toBe(true);
   });
 
   it('handleInbound parses SW click event', async () => {
     const inbound = await adapter.handleInbound({
-      messageId: 'log-001', contactId: 'c1', url: '/promo', action: 'click',
+      messageId: 'log-001',
+      contactId: 'c1',
+      url: '/promo',
+      action: 'click',
     });
     expect(inbound.channel).toBe('push');
     expect(inbound.content).toBe('click');
@@ -156,9 +162,14 @@ describe('WebPushAdapter', () => {
   });
 
   it('getStatus reads status from send log', async () => {
-    mockDb.limit.mockResolvedValue([{
-      id: 'log-001', status: 'sent', sentAt: new Date(), clickedAt: null,
-    }]);
+    mockDb.limit.mockResolvedValue([
+      {
+        id: 'log-001',
+        status: 'sent',
+        sentAt: new Date(),
+        clickedAt: null,
+      },
+    ]);
 
     const status = await adapter.getStatus('log-001');
     expect(status.status).toBe('sent');
@@ -173,14 +184,21 @@ describe('getMatchingMessages — targeting', () => {
     const future = new Date(Date.now() + 60_000);
     mockDb.limit.mockResolvedValue([
       {
-        id: 'msg1', active: true, startAt: null, endAt: future,
-        targetingRules: [{ type: 'page_url', operator: 'contains', value: '/pricing' }] as InAppTargetingRule[],
-        maxPerSession: 1, maxTotal: 0,
+        id: 'msg1',
+        active: true,
+        startAt: null,
+        endAt: future,
+        targetingRules: [
+          { type: 'page_url', operator: 'contains', value: '/pricing' },
+        ] as InAppTargetingRule[],
+        maxPerSession: 1,
+        maxTotal: 0,
       },
     ]);
 
     const msgs = await getMatchingMessages('org1', {
-      sessionId: 'sess-1', pageUrl: 'https://app.forgemsg.com/pricing?tab=annual',
+      sessionId: 'sess-1',
+      pageUrl: 'https://app.forgemsg.com/pricing?tab=annual',
     });
     expect(msgs).toHaveLength(1);
   });
@@ -188,14 +206,21 @@ describe('getMatchingMessages — targeting', () => {
   it('filters out message when page_url:is does not match', async () => {
     mockDb.limit.mockResolvedValue([
       {
-        id: 'msg1', active: true, startAt: null, endAt: null,
-        targetingRules: [{ type: 'page_url', operator: 'is', value: '/checkout' }] as InAppTargetingRule[],
-        maxPerSession: 1, maxTotal: 0,
+        id: 'msg1',
+        active: true,
+        startAt: null,
+        endAt: null,
+        targetingRules: [
+          { type: 'page_url', operator: 'is', value: '/checkout' },
+        ] as InAppTargetingRule[],
+        maxPerSession: 1,
+        maxTotal: 0,
       },
     ]);
 
     const msgs = await getMatchingMessages('org1', {
-      sessionId: 'sess-1', pageUrl: '/pricing',
+      sessionId: 'sess-1',
+      pageUrl: '/pricing',
     });
     expect(msgs).toHaveLength(0);
   });
@@ -204,9 +229,13 @@ describe('getMatchingMessages — targeting', () => {
     const past = new Date(Date.now() - 10_000);
     mockDb.limit.mockResolvedValue([
       {
-        id: 'msg-old', active: true, startAt: null, endAt: past,
+        id: 'msg-old',
+        active: true,
+        startAt: null,
+        endAt: past,
         targetingRules: [] as InAppTargetingRule[],
-        maxPerSession: 1, maxTotal: 0,
+        maxPerSession: 1,
+        maxTotal: 0,
       },
     ]);
 
@@ -218,9 +247,13 @@ describe('getMatchingMessages — targeting', () => {
     const future = new Date(Date.now() + 86_400_000);
     mockDb.limit.mockResolvedValue([
       {
-        id: 'msg-future', active: true, startAt: future, endAt: null,
+        id: 'msg-future',
+        active: true,
+        startAt: future,
+        endAt: null,
         targetingRules: [] as InAppTargetingRule[],
-        maxPerSession: 1, maxTotal: 0,
+        maxPerSession: 1,
+        maxTotal: 0,
       },
     ]);
 
@@ -231,9 +264,13 @@ describe('getMatchingMessages — targeting', () => {
   it('shows message with empty rules (broadcast)', async () => {
     mockDb.limit.mockResolvedValue([
       {
-        id: 'msg-all', active: true, startAt: null, endAt: null,
+        id: 'msg-all',
+        active: true,
+        startAt: null,
+        endAt: null,
         targetingRules: [] as InAppTargetingRule[],
-        maxPerSession: 1, maxTotal: 0,
+        maxPerSession: 1,
+        maxTotal: 0,
       },
     ]);
 
@@ -244,9 +281,15 @@ describe('getMatchingMessages — targeting', () => {
   it('matches page_url starts_with rule', async () => {
     mockDb.limit.mockResolvedValue([
       {
-        id: 'msg-app', active: true, startAt: null, endAt: null,
-        targetingRules: [{ type: 'page_url', operator: 'starts_with', value: '/app/' }] as InAppTargetingRule[],
-        maxPerSession: 1, maxTotal: 0,
+        id: 'msg-app',
+        active: true,
+        startAt: null,
+        endAt: null,
+        targetingRules: [
+          { type: 'page_url', operator: 'starts_with', value: '/app/' },
+        ] as InAppTargetingRule[],
+        maxPerSession: 1,
+        maxTotal: 0,
       },
     ]);
 
@@ -255,13 +298,22 @@ describe('getMatchingMessages — targeting', () => {
 
     mockDb.limit.mockResolvedValue([
       {
-        id: 'msg-app', active: true, startAt: null, endAt: null,
-        targetingRules: [{ type: 'page_url', operator: 'starts_with', value: '/app/' }] as InAppTargetingRule[],
-        maxPerSession: 1, maxTotal: 0,
+        id: 'msg-app',
+        active: true,
+        startAt: null,
+        endAt: null,
+        targetingRules: [
+          { type: 'page_url', operator: 'starts_with', value: '/app/' },
+        ] as InAppTargetingRule[],
+        maxPerSession: 1,
+        maxTotal: 0,
       },
     ]);
 
-    const noMatch = await getMatchingMessages('org1', { sessionId: 's', pageUrl: '/marketing/home' });
+    const noMatch = await getMatchingMessages('org1', {
+      sessionId: 's',
+      pageUrl: '/marketing/home',
+    });
     expect(noMatch).toHaveLength(0);
   });
 });

@@ -60,20 +60,23 @@ export default async function trackingRoutes(app: FastifyInstance) {
       if (payload && payload.type === 'open') {
         const mpp = isAppleMpp(userAgent);
 
-        await db.insert(emailEvents).values({
-          orgId: payload.orgId,
-          campaignId: payload.campaignId,
-          contactId: payload.contactId,
-          eventType: 'open',
-          userAgent: userAgent.slice(0, 1024),
-          ipAddress: ipAddress?.slice(0, 45) ?? null,
-          metadata: {
-            suspectedBot: mpp,
-            botReason: mpp ? 'apple_mpp' : null,
-          },
-        }).catch(() => {
-          // Non-fatal: best-effort tracking
-        });
+        await db
+          .insert(emailEvents)
+          .values({
+            orgId: payload.orgId,
+            campaignId: payload.campaignId,
+            contactId: payload.contactId,
+            eventType: 'open',
+            userAgent: userAgent.slice(0, 1024),
+            ipAddress: ipAddress?.slice(0, 45) ?? null,
+            metadata: {
+              suspectedBot: mpp,
+              botReason: mpp ? 'apple_mpp' : null,
+            },
+          })
+          .catch(() => {
+            // Non-fatal: best-effort tracking
+          });
       }
 
       return reply.send(TRANSPARENT_GIF);
@@ -111,18 +114,21 @@ export default async function trackingRoutes(app: FastifyInstance) {
       }
 
       // Log the click event (best-effort)
-      await db.insert(emailEvents).values({
-        orgId: payload.orgId,
-        campaignId: payload.campaignId,
-        contactId: payload.contactId,
-        eventType: 'click',
-        linkUrl: payload.url.slice(0, 2048),
-        userAgent: userAgent.slice(0, 1024),
-        ipAddress: ipAddress?.slice(0, 45) ?? null,
-        metadata: {},
-      }).catch(() => {
-        // Non-fatal: best-effort tracking
-      });
+      await db
+        .insert(emailEvents)
+        .values({
+          orgId: payload.orgId,
+          campaignId: payload.campaignId,
+          contactId: payload.contactId,
+          eventType: 'click',
+          linkUrl: payload.url.slice(0, 2048),
+          userAgent: userAgent.slice(0, 1024),
+          ipAddress: ipAddress?.slice(0, 45) ?? null,
+          metadata: {},
+        })
+        .catch(() => {
+          // Non-fatal: best-effort tracking
+        });
 
       return reply.redirect(payload.url, 302);
     },
@@ -153,12 +159,15 @@ export default async function trackingRoutes(app: FastifyInstance) {
         oid?: string;
       };
 
-      const destination = dest ? decodeURIComponent(dest) : (process.env.APP_URL ?? 'https://forgemsg.com');
+      const destination = dest
+        ? decodeURIComponent(dest)
+        : (process.env.APP_URL ?? 'https://forgemsg.com');
 
       // Execute click action best-effort (non-blocking on failure)
       if (action && cid && oid) {
         try {
-          const { decodeClickAction, executeClickAction } = await import('../../services/campaigns/click-actions.js');
+          const { decodeClickAction, executeClickAction } =
+            await import('../../services/campaigns/click-actions.js');
           const parsed = decodeClickAction(action);
           if (parsed) {
             executeClickAction(oid, cid, parsed).catch(() => undefined);
@@ -170,15 +179,22 @@ export default async function trackingRoutes(app: FastifyInstance) {
 
       // Log click event if we have enough context
       if (cid && oid) {
-        await db.insert(emailEvents).values({
-          orgId: oid,
-          contactId: cid,
-          eventType: 'click',
-          linkUrl: destination.slice(0, 2048),
-          userAgent: (req.headers['user-agent'] ?? '').slice(0, 1024),
-          ipAddress: ((req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? req.socket.remoteAddress ?? '').slice(0, 45),
-          metadata: { linkId },
-        }).catch(() => undefined);
+        await db
+          .insert(emailEvents)
+          .values({
+            orgId: oid,
+            contactId: cid,
+            eventType: 'click',
+            linkUrl: destination.slice(0, 2048),
+            userAgent: (req.headers['user-agent'] ?? '').slice(0, 1024),
+            ipAddress: (
+              (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
+              req.socket.remoteAddress ??
+              ''
+            ).slice(0, 45),
+            metadata: { linkId },
+          })
+          .catch(() => undefined);
       }
 
       return reply.redirect(destination, 302);

@@ -22,14 +22,14 @@ import { computeVatBreakdown } from './invoicing-cz.js';
 export interface IsdocInvoiceInput {
   invoiceNumber: string;
   issueDate: Date;
-  taxPointDate: Date;   // datum uskutečnění zdanitelného plnění
+  taxPointDate: Date; // datum uskutečnění zdanitelného plnění
   dueDate: Date;
   variableSymbol?: string;
   constantSymbol?: string;
   paymentMeansCode?: number; // 42 = bank transfer per ISDOC
-  bankAccount?: string;       // ČSOB / Česká spořitelna-style "1234567890/0100"
+  bankAccount?: string; // ČSOB / Česká spořitelna-style "1234567890/0100"
   iban?: string;
-  currency: string;            // "CZK"
+  currency: string; // "CZK"
   seller: CzParty;
   buyer: CzParty;
   lineItems: LineItem[];
@@ -47,9 +47,7 @@ export function renderIsdocInvoice(input: IsdocInvoiceInput): string {
   const taxPoint = formatDate(input.taxPointDate);
   const due = formatDate(input.dueDate);
 
-  const lines = input.lineItems
-    .map((item, idx) => renderLine(item, idx + 1))
-    .join('\n');
+  const lines = input.lineItems.map((item, idx) => renderLine(item, idx + 1)).join('\n');
 
   const vatRows = breakdown.buckets.map((b) => renderVatDetail(b, input.currency)).join('\n');
 
@@ -136,7 +134,9 @@ function renderLine(item: LineItem, seq: number): string {
     `      </ClassifiedTaxCategory>`,
     `      <Item>`,
     `        <Description>${escape(item.name)}</Description>`,
-    item.sku ? `        <SellersItemIdentification><ID>${escape(item.sku)}</ID></SellersItemIdentification>` : '',
+    item.sku
+      ? `        <SellersItemIdentification><ID>${escape(item.sku)}</ID></SellersItemIdentification>`
+      : '',
     `      </Item>`,
     `    </InvoiceLine>`,
   ]
@@ -144,7 +144,10 @@ function renderLine(item: LineItem, seq: number): string {
     .join('\n');
 }
 
-function renderVatDetail(b: { rate: number; base: number; tax: number; total: number }, currency: string): string {
+function renderVatDetail(
+  b: { rate: number; base: number; tax: number; total: number },
+  currency: string,
+): string {
   return [
     `    <TaxSubTotal>`,
     `      <TaxableAmount>${b.base.toFixed(2)}</TaxableAmount>`,
@@ -175,8 +178,12 @@ function renderPaymentMeans(input: IsdocInvoiceInput, due: string, grand: number
     input.bankAccount ? `        <PaymentDueDate>${due}</PaymentDueDate>` : '',
     input.bankAccount ? `        <ID>${escape(input.bankAccount)}</ID>` : '',
     input.iban ? `        <IBAN>${escape(input.iban)}</IBAN>` : '',
-    input.variableSymbol ? `        <VariableSymbol>${escape(input.variableSymbol)}</VariableSymbol>` : '',
-    input.constantSymbol ? `        <ConstantSymbol>${escape(input.constantSymbol)}</ConstantSymbol>` : '',
+    input.variableSymbol
+      ? `        <VariableSymbol>${escape(input.variableSymbol)}</VariableSymbol>`
+      : '',
+    input.constantSymbol
+      ? `        <ConstantSymbol>${escape(input.constantSymbol)}</ConstantSymbol>`
+      : '',
     `      </Details>`,
     `    </Payment>`,
     `  </PaymentMeans>`,

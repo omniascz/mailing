@@ -37,8 +37,13 @@ export async function bestSellers(orgId: string, days = 30, limit = 25): Promise
     ORDER BY revenue DESC
     LIMIT ${limit}
   `);
-  return (rs as unknown as Array<{ sku: string; name: string; units: string; revenue: string }>).map((r) => ({
-    sku: r.sku, name: r.name ?? r.sku, units: Number(r.units), revenue: Number(r.revenue),
+  return (
+    rs as unknown as Array<{ sku: string; name: string; units: string; revenue: string }>
+  ).map((r) => ({
+    sku: r.sku,
+    name: r.name ?? r.sku,
+    units: Number(r.units),
+    revenue: Number(r.revenue),
   }));
 }
 
@@ -58,14 +63,24 @@ export async function slowMovers(orgId: string, days = 90, limit = 25): Promise<
     ORDER BY revenue ASC
     LIMIT ${limit}
   `);
-  return (rs as unknown as Array<{ sku: string; name: string; units: string; revenue: string }>).map((r) => ({
-    sku: r.sku, name: r.name, units: Number(r.units), revenue: Number(r.revenue),
+  return (
+    rs as unknown as Array<{ sku: string; name: string; units: string; revenue: string }>
+  ).map((r) => ({
+    sku: r.sku,
+    name: r.name,
+    units: Number(r.units),
+    revenue: Number(r.revenue),
   }));
 }
 
 export async function revenueByCategory(orgId: string, days = 30): Promise<CategoryStat[]> {
   const since = new Date(Date.now() - days * 86_400_000);
-  const rs = await db.execute<{ category: string; units: string; revenue: string; orders: string }>(sql`
+  const rs = await db.execute<{
+    category: string;
+    units: string;
+    revenue: string;
+    orders: string;
+  }>(sql`
     SELECT
       jsonb_array_elements_text(p.categories) AS category,
       SUM((i->>'quantity')::int)::text AS units,
@@ -79,10 +94,13 @@ export async function revenueByCategory(orgId: string, days = 30): Promise<Categ
     GROUP BY category
     ORDER BY revenue DESC
   `);
-  return (rs as unknown as Array<{ category: string; units: string; revenue: string; orders: string }>).map((r) => ({
+  return (
+    rs as unknown as Array<{ category: string; units: string; revenue: string; orders: string }>
+  ).map((r) => ({
     category: r.category,
     units: Number(r.units),
     revenue: Number(r.revenue),
-    avgOrderValue: Number(r.orders) > 0 ? Math.round((Number(r.revenue) / Number(r.orders)) * 100) / 100 : 0,
+    avgOrderValue:
+      Number(r.orders) > 0 ? Math.round((Number(r.revenue) / Number(r.orders)) * 100) / 100 : 0,
   }));
 }

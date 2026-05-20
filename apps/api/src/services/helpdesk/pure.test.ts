@@ -13,9 +13,7 @@ describe('normalizeInboxIdentity', () => {
   });
 
   it('strips non-digit chars from phone', () => {
-    expect(
-      normalizeInboxIdentity({ phone: '+420 777 123 456' }).phone,
-    ).toBe('+420777123456');
+    expect(normalizeInboxIdentity({ phone: '+420 777 123 456' }).phone).toBe('+420777123456');
   });
 
   it('drops phones shorter than 8 digits', () => {
@@ -23,9 +21,9 @@ describe('normalizeInboxIdentity', () => {
   });
 
   it('trims socialId but preserves case', () => {
-    expect(
-      normalizeInboxIdentity({ socialId: '  @AnnaDvorakova  ' }).socialId,
-    ).toBe('@AnnaDvorakova');
+    expect(normalizeInboxIdentity({ socialId: '  @AnnaDvorakova  ' }).socialId).toBe(
+      '@AnnaDvorakova',
+    );
   });
 
   it('returns nulls for missing inputs', () => {

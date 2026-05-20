@@ -7,6 +7,7 @@
 > **Důležitý kontext:** **Targito je nejpoužívanější CDP v ČR** (per Sherpas Tech research, sample 313 e-shopů). Jde o **českou firmu s 15+ lety historie** (původně VIVmail od 2012), která se postupně rozvinula z e-mail nástroje do **enterprise-grade CDP platformy** s 40+ moduly, AI-driven personalizací a omnichannel orchestrace.
 >
 > **Společnost:** Targito.com, s.r.o.
+>
 > - **IČO:** 28445937
 > - **DIČ:** CZ28445937
 > - **Sídlo:** Jungmannovo náměstí 753/18, 110 00 Praha 1 – Nové Město
@@ -19,12 +20,14 @@
 > - **Phone:** 775 602 ... (per Firmy.cz)
 >
 > **Pozice 2026:**
+>
 > - **#1 nejpoužívanější CDP v ČR** (per Sherpas Tech, sample 313 e-shopů)
 > - **Czech-built CDP platform** alternativa k Bloomreach Engagement (ex-Exponea)
 > - **Mid-market to enterprise** customer base
 > - **15+ let zkušeností** v českém email marketingu
 >
 > **Klíčové diferenciátory:**
+>
 > - **40+ aktivovatelných modulů** (oficiální claim)
 > - **Targito AI** – generování kompletních marketingových zpráv dle dat
 > - **360° pohled na zákazníka** (CDP foundation)
@@ -82,19 +85,19 @@
 
 ### Per oficiální popis (targito.com)
 
-> *"Jsme nejpoužívanější CDP v ČR. Targito sjednocuje data a využívá AI k vytváření promyšlené, osobní komunikaci, která inspiruje a vydělává."*
+> _"Jsme nejpoužívanější CDP v ČR. Targito sjednocuje data a využívá AI k vytváření promyšlené, osobní komunikaci, která inspiruje a vydělává."_
 
-> *"Targito unifies data and leverages AI to create thoughtful, personalized communications that inspire and monetize. Because customers deserve more than just a message."*
+> _"Targito unifies data and leverages AI to create thoughtful, personalized communications that inspire and monetize. Because customers deserve more than just a message."_
 
 ### Per oficiální (Sherpas Tech research)
 
-> *"* Based on independent studies Sherpas Targito is the most used CDP. The research is based on a sample of 313 e-shops."*
+> _"_ Based on independent studies Sherpas Targito is the most used CDP. The research is based on a sample of 313 e-shops."\*
 
 ⚠️ **Nejpoužívanější CDP v ČR** – oficiální claim podložený externí studií Sherpas Tech.
 
 ### Per oficiální (Solutions for E-commerce)
 
-> *"Targito is not just a tool for sending emails, but a comprehensive CDP (Customer Data Platform) that helps e-shops grow, take care of their customers, and achieve greater campaign effectiveness with less effort."*
+> _"Targito is not just a tool for sending emails, but a comprehensive CDP (Customer Data Platform) that helps e-shops grow, take care of their customers, and achieve greater campaign effectiveness with less effort."_
 
 ### Pro koho je
 
@@ -131,9 +134,9 @@ Targito NENÍ pro:
 
 ### Pozicování per oficiální stránka
 
-> *"Connect data, customers, and channels—and turn purchases into long-term relationships. Today, e-shops are not only based on products and prices, but also on how well they understand their customers."*
+> _"Connect data, customers, and channels—and turn purchases into long-term relationships. Today, e-shops are not only based on products and prices, but also on how well they understand their customers."_
 
-> *"Data on behavior, purchases, and preferences is available to you—it's just often scattered across CRM, simple e-shops, marketing tools and another systems. Targito CDP – This data is consolidated and transformed into personalized communication."*
+> _"Data on behavior, purchases, and preferences is available to you—it's just often scattered across CRM, simple e-shops, marketing tools and another systems. Targito CDP – This data is consolidated and transformed into personalized communication."_
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -237,18 +240,19 @@ Targito NENÍ pro:
 
 ### 2.2 Per oficiální blog (2023)
 
-> *"Náš zakladatel Vladan Hejnic a CEO Martin Štěpaník se v tomto díle baví o cestě, kterou firma podstoupila při předávání otěží ze zakladatele na CEO. Ačkoliv zní možná název Targito světově, jsme česká firma."*
+> _"Náš zakladatel Vladan Hejnic a CEO Martin Štěpaník se v tomto díle baví o cestě, kterou firma podstoupila při předávání otěží ze zakladatele na CEO. Ačkoliv zní možná název Targito světově, jsme česká firma."_
 
-> *"Targito kluci a holky už od začátku svého působení sedí v pražských kancelářích. Zde před 12 lety začal Vladan Hejnic psát příběh firmy, která tehdy ještě pod názvem Vivmail, chtěla změnit svět českého e-mailingu."*
+> _"Targito kluci a holky už od začátku svého působení sedí v pražských kancelářích. Zde před 12 lety začal Vladan Hejnic psát příběh firmy, která tehdy ještě pod názvem Vivmail, chtěla změnit svět českého e-mailingu."_
 
-> *"Po více jak deseti letech se Targito rozrostlo do podoby platformy, která na základě dat umožňuje firmám komunikovat se zákazníky i mnoha dalšími způsoby, než jenom e-mailingem."*
+> _"Po více jak deseti letech se Targito rozrostlo do podoby platformy, která na základě dat umožňuje firmám komunikovat se zákazníky i mnoha dalšími způsoby, než jenom e-mailingem."_
 
 ⚠️ **15+ let historie** – Targito = jeden z nejdéle běžících českých marketing tech.
 
 ### 2.3 Změny CEO 2024
 
 Per LinkedIn Targito (2024):
-> *"Nový kapitán u kormidla! Dosavadní CEO Martin Stepanik se rozhodl odejít po 3 úspěšných letech za novou výzvou. Na jeho místo nastupuje Jan Baštýř, který střídá židli CTO za CEO. Změny započaly už během února a všechno jde hladce."*
+
+> _"Nový kapitán u kormidla! Dosavadní CEO Martin Stepanik se rozhodl odejít po 3 úspěšných letech za novou výzvou. Na jeho místo nastupuje Jan Baštýř, který střídá židli CTO za CEO. Změny započaly už během února a všechno jde hladce."_
 
 ```
 CEO transition pattern:
@@ -262,6 +266,7 @@ Internal promotion (CTO → CEO)
 ### 2.4 Per zakladatelův insight (podcast Zážeh, 2023)
 
 Vladan Hejnic v podcastu sdílel:
+
 - Jak identifikovat čas k předání řízení firmy
 - Vybalancovat zasahování s respektem k novému CEO
 - Smooth handover process
@@ -282,8 +287,8 @@ Evolution path:
 - Targito + AI (2024-2026): AI-driven CDP
 
 Per oficiální:
-"Po více jak deseti letech se Targito rozrostlo do podoby 
-platformy, která na základě dat umožňuje firmám komunikovat 
+"Po více jak deseti letech se Targito rozrostlo do podoby
+platformy, která na základě dat umožňuje firmám komunikovat
 se zákazníky i mnoha dalšími způsoby, než jenom e-mailingem."
 ```
 
@@ -294,6 +299,7 @@ se zákazníky i mnoha dalšími způsoby, než jenom e-mailingem."
 ### 3.1 Pricing transparency
 
 Per oficiální:
+
 - **Pricing NENÍ na webu zveřejněn**
 - "I am interested in a consultation" tlačítko
 - **Sales-driven custom pricing**
@@ -356,7 +362,8 @@ Doplňky often paid extra:
 ### 3.4 Implementation cost
 
 Per oficiální:
-> *"If you are not working with a certified agency, our experienced project manager will guide you through the onboarding process. They will be available to you from day one, helping with implementation and ensuring that all steps go smoothly and according to plan. We have completed hundreds of implementations and know how to solve many of the pitfalls."*
+
+> _"If you are not working with a certified agency, our experienced project manager will guide you through the onboarding process. They will be available to you from day one, helping with implementation and ensuring that all steps go smoothly and according to plan. We have completed hundreds of implementations and know how to solve many of the pitfalls."_
 
 ```
 Implementation reality:
@@ -369,16 +376,16 @@ Implementation reality:
 
 ### 3.5 Vs. konkurence
 
-| Platforma | Pricing | Target |
-|---|---|---|
-| **Targito** | Custom (sales) | Mid-market ČR |
-| **Bloomreach Engagement** | Custom (€€€€) | Enterprise DTC |
-| **SALESmanago** | €179+/měs starter | Mid-market |
-| **Klaviyo Email** | $20+/měs | DTC SMB to Enterprise |
-| **Ecomail** | 290+ Kč/měs | SMB to Mid |
-| **SmartEmailing** | 349+ Kč/měs | SMB to Mid |
-| **Leadhub** | 216+ Kč/měs | SMB Shoptet/Upgates |
-| **Mailchimp Premium** | $350+/měs | SMB to Mid global |
+| Platforma                 | Pricing           | Target                |
+| ------------------------- | ----------------- | --------------------- |
+| **Targito**               | Custom (sales)    | Mid-market ČR         |
+| **Bloomreach Engagement** | Custom (€€€€)     | Enterprise DTC        |
+| **SALESmanago**           | €179+/měs starter | Mid-market            |
+| **Klaviyo Email**         | $20+/měs          | DTC SMB to Enterprise |
+| **Ecomail**               | 290+ Kč/měs       | SMB to Mid            |
+| **SmartEmailing**         | 349+ Kč/měs       | SMB to Mid            |
+| **Leadhub**               | 216+ Kč/měs       | SMB Shoptet/Upgates   |
+| **Mailchimp Premium**     | $350+/měs         | SMB to Mid global     |
 
 ⚠️ **Targito = mid-market sweet spot** v ČR mezi Bloomreach (enterprise) a Ecomail/SmartEmailing (SMB).
 
@@ -399,71 +406,77 @@ Targito strengths:
 ```
 
 Per Klára Borlová customer feedback:
-> *"Thanks to Targito, we have taken e-mailing one level higher. Faster newsletter creation, advanced automation, language mutations, detailed personalization, wide segmentation options, modern design and much more are what I appreciate about this tool."*
+
+> _"Thanks to Targito, we have taken e-mailing one level higher. Faster newsletter creation, advanced automation, language mutations, detailed personalization, wide segmentation options, modern design and much more are what I appreciate about this tool."_
 
 ### 4.2 CDP architecture (ne jen email tool)
 
 Per oficiální:
-> *"Targito is not just a tool for sending emails, but a comprehensive CDP (Customer Data Platform) that helps e-shops grow, take care of their customers, and achieve greater campaign effectiveness with less effort."*
+
+> _"Targito is not just a tool for sending emails, but a comprehensive CDP (Customer Data Platform) that helps e-shops grow, take care of their customers, and achieve greater campaign effectiveness with less effort."_
 
 ⚠️ **Klíčová pozice:** Targito = **plnohodnotná CDP**, ne email-only nástroj.
 
 ### 4.3 40+ modulů
 
 Per oficiální:
-> *"Každý byznys je jiný. Proto máme více jak 40 modulů. Moduly v Targitu vám umožní výrazně rozšířit možnosti personalizace, segmentace, reportingu nebo automatizace – bez potřeby vývoje. Stačí je aktivovat a začít používat."*
+
+> _"Každý byznys je jiný. Proto máme více jak 40 modulů. Moduly v Targitu vám umožní výrazně rozšířit možnosti personalizace, segmentace, reportingu nebo automatizace – bez potřeby vývoje. Stačí je aktivovat a začít používat."_
 
 ⚠️ **Modulární architektura** = aktivuj jen co potřebuješ, no development.
 
 ### 4.4 Targito AI integrated
 
 Per oficiální:
-> *"AI – Umělá inteligence, která vydělává – nejen radí."*
 
-> *"A pokud je třeba ulehčit s tvorbou obsahu, je tu naše Targito AI – na základě vašich zadání a dat připravíme kompletní marketingovou zprávu, od vzhledu po vybrané produkty, při dodržení všech byznysových pravidel."*
+> _"AI – Umělá inteligence, která vydělává – nejen radí."_
+
+> _"A pokud je třeba ulehčit s tvorbou obsahu, je tu naše Targito AI – na základě vašich zadání a dat připravíme kompletní marketingovou zprávu, od vzhledu po vybrané produkty, při dodržení všech byznysových pravidel."_
 
 ⚠️ **AI = generování celé message** (ne jen subject line).
 
 ### 4.5 Onboarding s certifikovaným PM
 
 Per oficiální:
-> *"If you are not working with a certified agency, our experienced project manager will guide you through the onboarding process."*
+
+> _"If you are not working with a certified agency, our experienced project manager will guide you through the onboarding process."_
 
 ⚠️ **Dedicated PM** = key differentiator vs. self-service tools.
 
 ### 4.6 Hundreds of implementations
 
-> *"We have completed hundreds of implementations and know how to solve many of the pitfalls."*
+> _"We have completed hundreds of implementations and know how to solve many of the pitfalls."_
 
 ⚠️ **Mature implementation practice** = lower risk.
 
 ### 4.7 Partner ecosystem
 
 Per oficiální:
-> *"At Targito, we build long-term partnerships that extend the value of our platform. As a technology platform, we don't want to be a black box. On the contrary, we open up space for cooperation with various suppliers and agencies — because a good solution often consists of carefully selected components and people who know how to use them."*
+
+> _"At Targito, we build long-term partnerships that extend the value of our platform. As a technology platform, we don't want to be a black box. On the contrary, we open up space for cooperation with various suppliers and agencies — because a good solution often consists of carefully selected components and people who know how to use them."_
 
 ⚠️ **Open ecosystem** vs. monolithic platforms.
 
 ### 4.8 Vs. konkurence comparison
 
-| Aspect | Targito | Bloomreach | SALESmanago | Klaviyo | Ecomail |
-|---|---|---|---|---|---|
-| **Origin** | **🇨🇿 ČR (2012)** | 🇨🇿 ČR (2008) | 🇵🇱 PL (2011) | 🇺🇸 USA (2012) | 🇨🇿 ČR |
-| **CDP architecture** | **✅ native** | ✅ native | ✅ native | ✅ growing | částečně |
-| **Czech support** | **✅ native** | ✅ | omezeně | ❌ EN | ✅ |
-| **Czech skloňování** | ✅ | ✅ | ❌ | ❌ | ✅ |
-| **40+ modulů** | **✅ unique** | ne explicit | ne | ne | ne |
-| **AI generation** | **✅ Targito AI** | ✅ Brain | ✅ deep | ✅ | basic |
-| **Web personalizace** | ✅ | ✅ deepest | ✅ | ✅ | basic |
-| **Email** | ✅ | ✅ | ✅ | ✅✅ | ✅ |
-| **SMS** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Social** | ✅ | ✅ | ✅ | omezeně | omezeně |
-| **Offline** | ✅ | ✅ | ✅ | omezeně | ❌ |
-| **Onboarding PM** | **✅ included** | ✅ | ✅ | omezeně | basic |
-| **Velikost firmy** | mid (CZ-based) | velká (acq. 2024) | velká | velmi velká | mid |
-| **Sweet spot** | **Mid-market ČR/SK** | Enterprise globální | Mid PL/EU | DTC globální | SMB ČR |
-| **Pricing transparency** | ❌ custom | ❌ custom | částečně | ✅ tier | ✅ tier |
-| **Klíčový klient ČR** | ZOOT, Bonami, UniCredit | Mall.cz, Datart | various | various | various |
+| Aspect                   | Targito                 | Bloomreach          | SALESmanago  | Klaviyo       | Ecomail  |
+| ------------------------ | ----------------------- | ------------------- | ------------ | ------------- | -------- |
+| **Origin**               | **🇨🇿 ČR (2012)**        | 🇨🇿 ČR (2008)        | 🇵🇱 PL (2011) | 🇺🇸 USA (2012) | 🇨🇿 ČR    |
+| **CDP architecture**     | **✅ native**           | ✅ native           | ✅ native    | ✅ growing    | částečně |
+| **Czech support**        | **✅ native**           | ✅                  | omezeně      | ❌ EN         | ✅       |
+| **Czech skloňování**     | ✅                      | ✅                  | ❌           | ❌            | ✅       |
+| **40+ modulů**           | **✅ unique**           | ne explicit         | ne           | ne            | ne       |
+| **AI generation**        | **✅ Targito AI**       | ✅ Brain            | ✅ deep      | ✅            | basic    |
+| **Web personalizace**    | ✅                      | ✅ deepest          | ✅           | ✅            | basic    |
+| **Email**                | ✅                      | ✅                  | ✅           | ✅✅          | ✅       |
+| **SMS**                  | ✅                      | ✅                  | ✅           | ✅            | ✅       |
+| **Social**               | ✅                      | ✅                  | ✅           | omezeně       | omezeně  |
+| **Offline**              | ✅                      | ✅                  | ✅           | omezeně       | ❌       |
+| **Onboarding PM**        | **✅ included**         | ✅                  | ✅           | omezeně       | basic    |
+| **Velikost firmy**       | mid (CZ-based)          | velká (acq. 2024)   | velká        | velmi velká   | mid      |
+| **Sweet spot**           | **Mid-market ČR/SK**    | Enterprise globální | Mid PL/EU    | DTC globální  | SMB ČR   |
+| **Pricing transparency** | ❌ custom               | ❌ custom           | částečně     | ✅ tier       | ✅ tier  |
+| **Klíčový klient ČR**    | ZOOT, Bonami, UniCredit | Mall.cz, Datart     | various      | various       | various  |
 
 ---
 
@@ -471,12 +484,13 @@ Per oficiální:
 
 ### 5.1 Per oficiální definice
 
-> *"Targito CDP unifies data from all sources – website, e-shop, CRM, e-mails and another channels – into a single 360° view of the customer. All information is linked into a single profile that is always up to date and complete."*
+> _"Targito CDP unifies data from all sources – website, e-shop, CRM, e-mails and another channels – into a single 360° view of the customer. All information is linked into a single profile that is always up to date and complete."_
 
 ### 5.2 Co CDP řeší
 
 Per oficiální:
-> *"Today, e-shops are not only based on products and prices, but also on how well they understand their customers. Data on behavior, purchases, and preferences is available to you—it's just often scattered across CRM, simple e-shops, marketing tools and another systems. Targito CDP consolidates this data and transforms into personalized communication."*
+
+> _"Today, e-shops are not only based on products and prices, but also on how well they understand their customers. Data on behavior, purchases, and preferences is available to you—it's just often scattered across CRM, simple e-shops, marketing tools and another systems. Targito CDP consolidates this data and transforms into personalized communication."_
 
 ```
 CDP problem solving:
@@ -537,7 +551,7 @@ EXTERNAL:
 
 ### 5.4 Per oficiální benefit
 
-> *"Thanks to Targito, campaigns can be precisely targeted, communication personalized, and content delivered at the right time and through the preferred channel."*
+> _"Thanks to Targito, campaigns can be precisely targeted, communication personalized, and content delivered at the right time and through the preferred channel."_
 
 ### 5.5 Real-time activation
 
@@ -565,7 +579,7 @@ Latency: seconds
 
 ### 5.6 Per oficiální vs. fragmented data
 
-> *"Unified data only makes real sense when it is transformed into consistent communication. Targito CDP serves as the basis for omnichannel marketing, where every message is based on current data."*
+> _"Unified data only makes real sense when it is transformed into consistent communication. Targito CDP serves as the basis for omnichannel marketing, where every message is based on current data."_
 
 ⚠️ **Data foundation pro vše ostatní** v Targito.
 
@@ -575,16 +589,17 @@ Latency: seconds
 
 ### 6.1 Per oficiální positioning
 
-> *"AI – Artificial intelligence that makes money - not just advice."*
+> _"AI – Artificial intelligence that makes money - not just advice."_
 
-> *"Umělá inteligence, která vydělává – nejen radí."*
+> _"Umělá inteligence, která vydělává – nejen radí."_
 
 ⚠️ **AI focus na výsledky** (revenue), ne jen insights.
 
 ### 6.2 Targito AI capabilities
 
 Per oficiální:
-> *"A pokud je třeba ulehčit s tvorbou obsahu, je tu naše Targito AI – na základě vašich zadání a dat připravíme kompletní marketingovou zprávu, od vzhledu po vybrané produkty, při dodržení všech byznysových pravidel."*
+
+> _"A pokud je třeba ulehčit s tvorbou obsahu, je tu naše Targito AI – na základě vašich zadání a dat připravíme kompletní marketingovou zprávu, od vzhledu po vybrané produkty, při dodržení všech byznysových pravidel."_
 
 ```
 Targito AI capabilities:
@@ -629,7 +644,7 @@ Trustworthy for production use
 
 ### 6.4 Per oficiální user feedback
 
-> *"The constant updates and addition of new features move our emailing forward. This is positively reflected in the growing turnover from this channel."*
+> _"The constant updates and addition of new features move our emailing forward. This is positively reflected in the growing turnover from this channel."_
 
 ### 6.5 Use cases
 
@@ -660,9 +675,9 @@ GENERAL:
 
 ### 7.1 Per oficiální
 
-> *"Personalizace webu a obsahu – Každý zákazník vidí přesně to, co ho zajímá – automaticky."*
+> _"Personalizace webu a obsahu – Každý zákazník vidí přesně to, co ho zajímá – automaticky."_
 
-> *"Web and content personalisation – Every customer sees exactly what they are interested in - automatically."*
+> _"Web and content personalisation – Every customer sees exactly what they are interested in - automatically."_
 
 ### 7.2 Capabilities
 
@@ -715,7 +730,7 @@ Web personalizace × CDP:
 
 ### 7.4 Per oficiální omnichannel
 
-> *"And it is precisely for high-quality omnichannel communication that a high-quality CDP is essential – a unified customer database that enables reliable distribution of your messages."*
+> _"And it is precisely for high-quality omnichannel communication that a high-quality CDP is essential – a unified customer database that enables reliable distribution of your messages."_
 
 ---
 
@@ -723,9 +738,9 @@ Web personalizace × CDP:
 
 ### 8.1 Per oficiální
 
-> *"Omnichannel komunikace – Jedna data, jeden příběh – konzistentní napříč kanály."*
+> _"Omnichannel komunikace – Jedna data, jeden příběh – konzistentní napříč kanály."_
 
-> *"One data, one story - consistent across channels."*
+> _"One data, one story - consistent across channels."_
 
 ### 8.2 Channels supported
 
@@ -744,15 +759,16 @@ ADDITIONAL:
 - Sociální sítě (Facebook, Instagram)
 
 PER OFFICIAL (omnichannel page):
-"Targito enables consistent and personalized 
-communication across all channels – via e-mail, 
+"Targito enables consistent and personalized
+communication across all channels – via e-mail,
 SMS, website, social networks and offline environment."
 ```
 
 ### 8.3 Cross-channel orchestrace
 
 Per oficiální:
-> *"Thanks to interconnected data and 360° view of the customer it is possible to ensure that each interaction builds on the previous one and corresponds to the customer's current needs."*
+
+> _"Thanks to interconnected data and 360° view of the customer it is possible to ensure that each interaction builds on the previous one and corresponds to the customer's current needs."_
 
 ```
 Orchestration scenarios:
@@ -802,12 +818,13 @@ Omnichannel benefits:
 
 ### 9.1 Per oficiální detail
 
-> *"Email remains one of the most powerful channels for direct communication with customers. It also offers the most space for content, allowing you to take full advantage of the capabilities of our CDP – from recommended products over personalized texts to dynamic blocks changing according to the specific recipient."*
+> _"Email remains one of the most powerful channels for direct communication with customers. It also offers the most space for content, allowing you to take full advantage of the capabilities of our CDP – from recommended products over personalized texts to dynamic blocks changing according to the specific recipient."_
 
 ### 9.2 Editor capabilities
 
 Per oficiální:
-> *"You create templates using drag & drop editor that supports all the features you would expect from a modern tool: simple yet powerful template system, block replacement, conditional display and dynamic connection to external data sources. This allows you to create campaigns that are visually rich, precisely targeted, and technically flexible."*
+
+> _"You create templates using drag & drop editor that supports all the features you would expect from a modern tool: simple yet powerful template system, block replacement, conditional display and dynamic connection to external data sources. This allows you to create campaigns that are visually rich, precisely targeted, and technically flexible."_
 
 ```
 Email editor features:
@@ -841,7 +858,7 @@ ADVANCED:
 
 ### 9.3 Per user testimonial (oficiální)
 
-> *"Thanks to Targito, we have taken e-mailing one level higher. Faster newsletter creation, advanced automation, language mutations, detailed personalization, wide segmentation options, modern design and much more are what I appreciate about this tool."*
+> _"Thanks to Targito, we have taken e-mailing one level higher. Faster newsletter creation, advanced automation, language mutations, detailed personalization, wide segmentation options, modern design and much more are what I appreciate about this tool."_
 
 ### 9.4 Multi-language mutations
 
@@ -860,7 +877,8 @@ Important for CZ companies expanding to SK/PL
 ### 9.5 Recipient personalization
 
 Per oficiální:
-> *"With a 360° view of the customer, Targito enables you to deliver messages that are relevant, timely, and different for everyone. Campaigns can be easily personalized according to purchase history, interest or behavior on the web - include product recommendation, personaliz[ation]."*
+
+> _"With a 360° view of the customer, Targito enables you to deliver messages that are relevant, timely, and different for everyone. Campaigns can be easily personalized according to purchase history, interest or behavior on the web - include product recommendation, personaliz[ation]."_
 
 ⚠️ **Per-recipient unique emails** at scale.
 
@@ -870,14 +888,15 @@ Per oficiální:
 
 ### 10.1 Per oficiální
 
-> *"Automatizace & scénáře – Kampaně, které nastavíte jednou a vydělávají dlouhodobě."*
+> _"Automatizace & scénáře – Kampaně, které nastavíte jednou a vydělávají dlouhodobě."_
 
-> *"Automation & Scenarios – Campaigns that you set up once and make money in the long run."*
+> _"Automation & Scenarios – Campaigns that you set up once and make money in the long run."_
 
 ### 10.2 Drag & drop scenario builder
 
 Per oficiální:
-> *"Automation is created in a simple drag & drop editor, where you can build the logic of individual steps, conditions, and branching without programming. This keeps your work clear and easy to maintain."*
+
+> _"Automation is created in a simple drag & drop editor, where you can build the logic of individual steps, conditions, and branching without programming. This keeps your work clear and easy to maintain."_
 
 ```
 Automation features:
@@ -917,7 +936,7 @@ ACTIONS:
 
 ### 10.3 Per oficiální maintenance
 
-> *"This keeps your work clear and easy to maintain."*
+> _"This keeps your work clear and easy to maintain."_
 
 ⚠️ **Maintainability focus** – important for long-term operations.
 
@@ -968,7 +987,7 @@ RFM-BASED:
 
 ### 11.1 Per oficiální (Moduly page)
 
-> *"Working with purchasing behavior thanks to RFM segmentation"*
+> _"Working with purchasing behavior thanks to RFM segmentation"_
 
 ### 11.2 RFM segmentace
 
@@ -1045,7 +1064,7 @@ CUSTOM:
 
 ### 11.4 Per oficiální (segmentace claim)
 
-> *"Wide segmentation options"* (per Klára Borlová testimonial)
+> _"Wide segmentation options"_ (per Klára Borlová testimonial)
 
 ⚠️ **Comprehensive segmentation** = mid-market expectation.
 
@@ -1055,7 +1074,7 @@ CUSTOM:
 
 ### 12.1 Per oficiální (Moduly page)
 
-> *"Monitor communication frequency using contact policy"*
+> _"Monitor communication frequency using contact policy"_
 
 ### 12.2 Co je Contact Policy
 
@@ -1124,9 +1143,9 @@ Mature feature = signal of platform sophistication
 
 ### 13.1 Per oficiální
 
-> *"Analytika & reporting – Nejednejte naslepo – rozhodujte se na základě dat."*
+> _"Analytika & reporting – Nejednejte naslepo – rozhodujte se na základě dat."_
 
-> *"Analytics & reporting – Don't act blindly - make decisions based on data."*
+> _"Analytics & reporting – Don't act blindly - make decisions based on data."_
 
 ### 13.2 Reporting capabilities
 
@@ -1190,7 +1209,7 @@ Real-time monitoring:
 
 ### 13.4 Per oficiální positioning
 
-> *"Make decisions based on data."*
+> _"Make decisions based on data."_
 
 ⚠️ **Data-driven decision-making** = core value prop.
 
@@ -1200,7 +1219,7 @@ Real-time monitoring:
 
 ### 14.1 Per oficiální
 
-> *"Každý byznys je jiný. Proto máme více jak 40 modulů. Moduly v Targitu vám umožní výrazně rozšířit možnosti personalizace, segmentace, reportingu nebo automatizace – bez potřeby vývoje. Stačí je aktivovat a začít používat. Rozděleny jsou podle oblasti, kterou obohacují, nebo podle funkcionality, kterou přidávají."*
+> _"Každý byznys je jiný. Proto máme více jak 40 modulů. Moduly v Targitu vám umožní výrazně rozšířit možnosti personalizace, segmentace, reportingu nebo automatizace – bez potřeby vývoje. Stačí je aktivovat a začít používat. Rozděleny jsou podle oblasti, kterou obohacují, nebo podle funkcionality, kterou přidávají."_
 
 ### 14.2 Modular philosophy
 
@@ -1255,19 +1274,20 @@ INDUSTRY-SPECIFIC:
 
 ### 14.3 Per oficiální benefit
 
-> *"Stačí je aktivovat a začít používat."*
+> _"Stačí je aktivovat a začít používat."_
 
-> *"Just activate and start using them immediately work with your data – without development or complicated setup."*
+> _"Just activate and start using them immediately work with your data – without development or complicated setup."_
 
 ⚠️ **Plug-and-play activation** = velmi rychlý ROI per modul.
 
 ### 14.4 Příklady modulů
 
 Per oficiální:
-> *"Například moduly umožňují:*
-> *- Rozšířit možnosti personalizace a segmentace bez zásahu vývojářů*
-> *- Práce s nákupním chováním díky RFM segmentaci*
-> *- Sledování frekvence komunikace pomocí contact policy"*
+
+> _"Například moduly umožňují:_
+> _- Rozšířit možnosti personalizace a segmentace bez zásahu vývojářů_
+> _- Práce s nákupním chováním díky RFM segmentaci_
+> _- Sledování frekvence komunikace pomocí contact policy"_
 
 ```
 Concrete module examples:
@@ -1306,7 +1326,7 @@ Modular benefits:
 
 ### 15.1 Per oficiální E-commerce page
 
-> *"Connect data, customers, and channels—and turn purchases into long-term relationships. Today, e-shops are not only based on products and prices, but also on how well they understand their customers."*
+> _"Connect data, customers, and channels—and turn purchases into long-term relationships. Today, e-shops are not only based on products and prices, but also on how well they understand their customers."_
 
 ### 15.2 E-commerce capabilities
 
@@ -1358,13 +1378,13 @@ SG FURNITURE (Czech family business):
 - Improved customer experience
 
 Per oficiální:
-"With our client Bonami, we have managed an almost 
+"With our client Bonami, we have managed an almost
 unbelievable change. Within a month we reached 42%..."
 ```
 
 ### 15.4 Per oficiální E-commerce user
 
-> *"Targito is not just a tool for sending emails, but a comprehensive CDP (Customer Data Platform) that helps e-shops grow, take care of their customers, and achieve greater campaign effectiveness with less effort."*
+> _"Targito is not just a tool for sending emails, but a comprehensive CDP (Customer Data Platform) that helps e-shops grow, take care of their customers, and achieve greater campaign effectiveness with less effort."_
 
 ### 15.5 Mid-market e-commerce sweet spot
 
@@ -1386,9 +1406,9 @@ Targito e-commerce fit:
 
 ### 16.1 Per oficiální
 
-> *"Solution for B2B"* (mentioned across site)
+> _"Solution for B2B"_ (mentioned across site)
 
-> *"Solutions for B2B projects"*
+> _"Solutions for B2B projects"_
 
 ### 16.2 B2B capabilities
 
@@ -1426,14 +1446,16 @@ INTEGRATION:
 ### 16.3 UniCredit case study
 
 Per oficiální:
-> *"At UniCredit Group, we place maximum emphasis on the security of our clients' data. Therefore, every software and vendor selected must undergo a rigorous screening and selection process to ensure that all legal requirements for data security are met. Targito meets these high standards. We appreciate their ability to 'tailor' a product to our needs."*
+
+> _"At UniCredit Group, we place maximum emphasis on the security of our clients' data. Therefore, every software and vendor selected must undergo a rigorous screening and selection process to ensure that all legal requirements for data security are met. Targito meets these high standards. We appreciate their ability to 'tailor' a product to our needs."_
 
 ⚠️ **UniCredit = velký mezinárodní bank** = signal of enterprise-grade security + flexibility.
 
 ### 16.4 IEA 2019 award (Industrial Email Award)
 
 Per oficiální:
-> *"We have automated almost all of our communication with our customers and B2B partners, which was awarded first place in the categories of emailing campaigns and B2B services by the independent jury of the IEA competition in 2019."*
+
+> _"We have automated almost all of our communication with our customers and B2B partners, which was awarded first place in the categories of emailing campaigns and B2B services by the independent jury of the IEA competition in 2019."_
 
 ⚠️ **Independent award** = validation of B2B capabilities.
 
@@ -1457,7 +1479,7 @@ Targito B2B fit:
 
 ### 17.1 Per oficiální
 
-> *"If you are not working with a certified agency, our experienced project manager will guide you through the onboarding process. They will be available to you from day one, helping with implementation and ensuring that all steps go smoothly and according to plan. We have completed hundreds of implementations and know how to solve many of the pitfalls."*
+> _"If you are not working with a certified agency, our experienced project manager will guide you through the onboarding process. They will be available to you from day one, helping with implementation and ensuring that all steps go smoothly and according to plan. We have completed hundreds of implementations and know how to solve many of the pitfalls."_
 
 ### 17.2 Onboarding paths
 
@@ -1535,7 +1557,7 @@ STAGE 7: OPTIMIZATION (ongoing)
 
 ### 17.4 Per oficiální mature practice
 
-> *"We have completed hundreds of implementations and know how to solve many of the pitfalls."*
+> _"We have completed hundreds of implementations and know how to solve many of the pitfalls."_
 
 ⚠️ **"Stovky implementací"** = mature practice = lower risk for new customers.
 
@@ -1545,7 +1567,7 @@ STAGE 7: OPTIMIZATION (ongoing)
 
 ### 18.1 Per oficiální
 
-> *"At Targito, we build long-term partnerships that extend the value of our platform. As a technology platform, we don't want to be a black box. On the contrary, we open up space for cooperation with various suppliers and agencies — because a good solution often consists of carefully selected components and people who know how to use them."*
+> _"At Targito, we build long-term partnerships that extend the value of our platform. As a technology platform, we don't want to be a black box. On the contrary, we open up space for cooperation with various suppliers and agencies — because a good solution often consists of carefully selected components and people who know how to use them."_
 
 ### 18.2 Partner types
 
@@ -1594,7 +1616,7 @@ Vs. monolithic competitors
 
 ### 18.4 Per oficiální (partner page)
 
-> *"A good solution often consists of carefully selected components and people who know how to use them."*
+> _"A good solution often consists of carefully selected components and people who know how to use them."_
 
 ⚠️ **Pragmatic ecosystem strategy** vs. lock-in.
 
@@ -1606,18 +1628,19 @@ Vs. monolithic competitors
 
 Per oficiální:
 
-| Zákazník | Industry | Notable Result |
-|---|---|---|
-| **ZOOT** | Czech fashion e-shop | +400% Conversion Rate, +46% retention revenue share |
-| **Bonami** | Home goods e-shop | "42% za měsíc" (revenue lift) |
-| **SG Furniture** | Czech family business (since 2016) | Comprehensive automation |
-| **UniCredit Group** | International banking | Data security + custom tailoring |
-| **Various e-shops** | Multi-vertical | Hundreds of implementations |
+| Zákazník            | Industry                           | Notable Result                                      |
+| ------------------- | ---------------------------------- | --------------------------------------------------- |
+| **ZOOT**            | Czech fashion e-shop               | +400% Conversion Rate, +46% retention revenue share |
+| **Bonami**          | Home goods e-shop                  | "42% za měsíc" (revenue lift)                       |
+| **SG Furniture**    | Czech family business (since 2016) | Comprehensive automation                            |
+| **UniCredit Group** | International banking              | Data security + custom tailoring                    |
+| **Various e-shops** | Multi-vertical                     | Hundreds of implementations                         |
 
 ### 19.2 ZOOT story
 
 Per oficiální (Targito client outreach material):
-> *"ZOOT: +400% CR, +46% share of retention revenue"*
+
+> _"ZOOT: +400% CR, +46% share of retention revenue"_
 
 ```
 ZOOT context:
@@ -1635,7 +1658,8 @@ Major success story
 ### 19.3 Bonami case study
 
 Per oficiální:
-> *"We want to show off. With our client Bonami, we have managed an almost unbelievable change. Within a month we reached 42%..."*
+
+> _"We want to show off. With our client Bonami, we have managed an almost unbelievable change. Within a month we reached 42%..."_
 
 ```
 Bonami context:
@@ -1649,25 +1673,28 @@ Bonami context:
 ### 19.4 UniCredit Group testimonial
 
 Per oficiální:
-> *"At UniCredit Group, we place maximum emphasis on the security of our clients' data. Therefore, every software and vendor selected must undergo a rigorous screening and selection process to ensure that all legal requirements for data security are met. Targito meets these high standards. We appreciate their ability to 'tailor' a product to our needs."*
+
+> _"At UniCredit Group, we place maximum emphasis on the security of our clients' data. Therefore, every software and vendor selected must undergo a rigorous screening and selection process to ensure that all legal requirements for data security are met. Targito meets these high standards. We appreciate their ability to 'tailor' a product to our needs."_
 
 ⚠️ **Banking-grade security** validation = enterprise credibility.
 
 ### 19.5 SG Furniture
 
 Per oficiální:
-> *"SG Furniture is a Czech family company with a tradition since 2016. Their goal is to provide customers with quality, style..."*
+
+> _"SG Furniture is a Czech family company with a tradition since 2016. Their goal is to provide customers with quality, style..."_
 
 ⚠️ **Mid-market Czech family business** representative customer.
 
 ### 19.6 Customer testimonial pattern
 
 Per oficiální (multiple):
-> *"We appreciate its intuitive environment, high reliability and wide range of advanced personalization options, which have helped us achieve significantly better results in our email campaigns. The fast and professional customer support, which is always ready to advise, is also a great help."*
 
-> *"Thanks to Targito, we have taken e-mailing one level higher. Faster newsletter creation, advanced automation, language mutations, detailed personalization, wide segmentation options, modern design and much more are what I appreciate about this tool."*
+> _"We appreciate its intuitive environment, high reliability and wide range of advanced personalization options, which have helped us achieve significantly better results in our email campaigns. The fast and professional customer support, which is always ready to advise, is also a great help."_
 
-> *"We currently have several projects in the Targito platform and we are really happy that there is a tool on the market that we use not only as a CRM, but also as a data platform - for mailing, data analysis and data export to other tools and advertising portals."*
+> _"Thanks to Targito, we have taken e-mailing one level higher. Faster newsletter creation, advanced automation, language mutations, detailed personalization, wide segmentation options, modern design and much more are what I appreciate about this tool."_
+
+> _"We currently have several projects in the Targito platform and we are really happy that there is a tool on the market that we use not only as a CRM, but also as a data platform - for mailing, data analysis and data export to other tools and advertising portals."_
 
 ```
 Common customer praise themes:
@@ -1990,6 +2017,7 @@ Less transparent than larger competitors
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### Targito je dobrá volba pokud
+
 - Provozujete **český střední/velký e-shop** (5 000-500 000 kontaktů)
 - Cíl je **CDP foundation** (ne jen email tool)
 - Vyžadujete **40+ aktivovatelných modulů** flexibility
@@ -2011,6 +2039,7 @@ Less transparent than larger competitors
 - Cíl je **mid-market sweet spot** v ČR
 
 ### Targito není dobrá volba pokud
+
 - Provozujete **malý e-shop < 1000 kontaktů** (Leadhub / Ecomail lepší)
 - Cíl je **levný entry tier** (Targito mid-market+)
 - Hledáte **free plan** (Targito custom pricing only)
@@ -2032,22 +2061,22 @@ Less transparent than larger competitors
 
 ### Targito vs. konkurence
 
-| Konkurence | Kdy lepší než Targito |
-|---|---|
-| **Bloomreach Engagement** | Enterprise scale, global presence, post-acquisition rozšíření, deeper AI |
-| **Salesforce Marketing Cloud** | Fortune 500 enterprise, full Salesforce ecosystem, global scale |
-| **Klaviyo** | DTC ecommerce Shopify-native, predictive AI, transparent pricing, easier UX |
-| **SALESmanago** | PL mid-market focus, deeper AI features, lower entry barrier |
-| **Mailchimp** | Global SMB, easier UX, lower price, faster deploy |
-| **Brevo** | Cost-effective unlimited contacts, multilingual, SMS global |
-| **HubSpot** | B2B SaaS, full CRM, marketing + sales + service integration |
-| **Braze** | Mobile-first B2C, real-time scale, agentic AI |
-| **SAP Emarsys** | Retail enterprise, SAP customers |
-| **ActiveCampaign** | Mid-market automation, lower price point |
-| **Ecomail** | SMB Czech e-shop, lower price, simpler |
-| **SmartEmailing** | SMB Czech B2B/B2C, established |
-| **Leadhub** | Shoptet/Upgates deepest integration, SMB e-shop |
-| **Mailkit** | Transactional email infrastructure |
+| Konkurence                     | Kdy lepší než Targito                                                       |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| **Bloomreach Engagement**      | Enterprise scale, global presence, post-acquisition rozšíření, deeper AI    |
+| **Salesforce Marketing Cloud** | Fortune 500 enterprise, full Salesforce ecosystem, global scale             |
+| **Klaviyo**                    | DTC ecommerce Shopify-native, predictive AI, transparent pricing, easier UX |
+| **SALESmanago**                | PL mid-market focus, deeper AI features, lower entry barrier                |
+| **Mailchimp**                  | Global SMB, easier UX, lower price, faster deploy                           |
+| **Brevo**                      | Cost-effective unlimited contacts, multilingual, SMS global                 |
+| **HubSpot**                    | B2B SaaS, full CRM, marketing + sales + service integration                 |
+| **Braze**                      | Mobile-first B2C, real-time scale, agentic AI                               |
+| **SAP Emarsys**                | Retail enterprise, SAP customers                                            |
+| **ActiveCampaign**             | Mid-market automation, lower price point                                    |
+| **Ecomail**                    | SMB Czech e-shop, lower price, simpler                                      |
+| **SmartEmailing**              | SMB Czech B2B/B2C, established                                              |
+| **Leadhub**                    | Shoptet/Upgates deepest integration, SMB e-shop                             |
+| **Mailkit**                    | Transactional email infrastructure                                          |
 
 ### Targito sweet spot 2026
 
@@ -2069,4 +2098,4 @@ Ideal Targito customer:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů targito.com (Platform, CDP, AI, Omnichannel, Moduly, E-commerce, B2B, Partneři, Spolupráce & podpora), Sherpas Tech research (313 e-shopů sample), Obchodní rejstřík ČR (justice.cz, IČO 28445937), LinkedIn Targito, Penize.cz, Podnikatel.cz, Finance.cz, Firmy.cz, Targito blog. Pro nejaktuálnější pricing detaily je nutný kontakt s Targito sales prostřednictvím konzultace na targito.com.*
+_Dokument zpracován z oficiálních zdrojů targito.com (Platform, CDP, AI, Omnichannel, Moduly, E-commerce, B2B, Partneři, Spolupráce & podpora), Sherpas Tech research (313 e-shopů sample), Obchodní rejstřík ČR (justice.cz, IČO 28445937), LinkedIn Targito, Penize.cz, Podnikatel.cz, Finance.cz, Firmy.cz, Targito blog. Pro nejaktuálnější pricing detaily je nutný kontakt s Targito sales prostřednictvím konzultace na targito.com._

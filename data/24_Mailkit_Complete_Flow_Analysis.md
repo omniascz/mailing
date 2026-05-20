@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `23_Mailkit_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** Mailkit umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Premium positioning** – sales-driven, no self-serve, qualification process
 > - **Vlastní uzavřená infrastruktura** (no cloud, no third-party processors) – UNIKÁTNÍ
 > - **ISO certifikace 7 standardů** (27001, 27701, 9001, 22301, 27017, 27018, 20000)
@@ -129,20 +130,20 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Owner / Master Admin** | Created during contract | Full + billing + sub-accounts | Vše napříč sub-accounts |
-| **Administrator (Level 2)** | Pozvánka od Owner | Operational lead | Per account / sub-account |
-| **Marketing user (Level 3)** | Pozvánka | Daily marketing | Per permissions |
-| **Reporter (Level 4)** | Pozvánka | View reports only | Read-only |
-| **Cross-account user** | Master + sub-account access | Multi-account management | Per assigned scope |
-| **Subscriber / Contact** | Form, API, integration | Receives emails | Své emaily |
-| **API Client** | API key | Custom integration | Per scope |
-| **Data source** | Configured connection | Live data sync | Per integration scope |
-| **Mailkit Account Manager** | Dedicated per klient | Account success | Read access |
-| **Mailkit Implementation team** | During onboarding | Setup + integration | Per project scope |
-| **Mailkit Helpdesk** | Support requests | Issue resolution | Read access s consent |
-| **External agency** | Agency master account | Manage clients | Per sub-accounts |
+| Aktér                           | Vstupní bod                 | Co dělá                       | Co vidí                   |
+| ------------------------------- | --------------------------- | ----------------------------- | ------------------------- |
+| **Owner / Master Admin**        | Created during contract     | Full + billing + sub-accounts | Vše napříč sub-accounts   |
+| **Administrator (Level 2)**     | Pozvánka od Owner           | Operational lead              | Per account / sub-account |
+| **Marketing user (Level 3)**    | Pozvánka                    | Daily marketing               | Per permissions           |
+| **Reporter (Level 4)**          | Pozvánka                    | View reports only             | Read-only                 |
+| **Cross-account user**          | Master + sub-account access | Multi-account management      | Per assigned scope        |
+| **Subscriber / Contact**        | Form, API, integration      | Receives emails               | Své emaily                |
+| **API Client**                  | API key                     | Custom integration            | Per scope                 |
+| **Data source**                 | Configured connection       | Live data sync                | Per integration scope     |
+| **Mailkit Account Manager**     | Dedicated per klient        | Account success               | Read access               |
+| **Mailkit Implementation team** | During onboarding           | Setup + integration           | Per project scope         |
+| **Mailkit Helpdesk**            | Support requests            | Issue resolution              | Read access s consent     |
+| **External agency**             | Agency master account       | Manage clients                | Per sub-accounts          |
 
 ---
 
@@ -153,6 +154,7 @@ Mailkit NEPOUŽÍVÁ self-serve sign-up jako ExpertSender / SAP Emarsys.
 ### 2.1 Lead acquisition
 
 Typicky:
+
 - **Inbound** přes mailkit.com (contact form)
 - **Word-of-mouth** v industry
 - **CSA / M3AAWG** networking
@@ -184,7 +186,7 @@ Mailkit sales responds (typically 1-2 business days)
 ### 2.3 Qualification process
 
 Per oficiální:
-*"We want to get to know you better before establishing cooperation and if we find that something is preventing us from doing so with regard to best-practice procedures, we will try to find solution together."*
+_"We want to get to know you better before establishing cooperation and if we find that something is preventing us from doing so with regard to best-practice procedures, we will try to find solution together."_
 
 ```
 Mailkit evaluates:
@@ -269,6 +271,7 @@ Contract signed:
 ### 2.7 Pilot / POC (optional)
 
 For large deals:
+
 - 30-60 day pilot possible
 - Limited features / test environment
 - Use case validation
@@ -485,7 +488,7 @@ Compliance audits:
 ## 4. 4 levels of access rights
 
 Per oficiální features:
-*"Set up to 4 levels of access rights for each account and sub-account."*
+_"Set up to 4 levels of access rights for each account and sub-account."_
 
 ### 4.1 Level 1: Owner / Master Admin
 
@@ -548,6 +551,7 @@ For each account / sub-account separately:
 ### 4.6 Granular permissions per level
 
 Configurable per level:
+
 - **Account settings access**
 - **Billing visibility**
 - **User management**
@@ -566,54 +570,54 @@ Configurable per level:
 
 ### 4.7 Permission matrix (typical)
 
-| Akce | L1 Owner | L2 Admin | L3 Marketing | L4 Reporter |
-|---|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |
-| Close account | ✅ | ❌ | ❌ | ❌ |
-| Manage billing | ✅ | ❌ | ❌ | ❌ |
-| Account settings | ✅ | ✅ | ❌ | ❌ |
-| Create sub-accounts | ✅ | ❌ | ❌ | ❌ |
-| **User Management** |  |  |  |  |
-| Add/edit users (master) | ✅ | ❌ | ❌ | ❌ |
-| Add/edit users (sub-account) | ✅ | ✅ | ❌ | ❌ |
-| Cross-account access | ✅ | per scope | ❌ | ❌ |
-| **Contacts** |  |  |  |  |
-| View contacts | ✅ | ✅ | ✅ | view |
-| Edit contacts | ✅ | ✅ | ✅ | ❌ |
-| Import contacts | ✅ | ✅ | ✅ | ❌ |
-| Export contacts | ✅ | ✅ | per role | ❌ |
-| Delete contacts | ✅ | ✅ | per role | ❌ |
-| **Lists / Segments** |  |  |  |  |
-| Manage lists | ✅ | ✅ | ✅ | view |
-| Create segments | ✅ | ✅ | ✅ | view |
-| **Campaigns** |  |  |  |  |
-| Create / edit | ✅ | ✅ | ✅ | view |
-| Send | ✅ | ✅ | ✅ | ❌ |
-| **Automations** |  |  |  |  |
-| Create / edit | ✅ | ✅ | ✅ | view |
-| Activate | ✅ | ✅ | ✅ | ❌ |
-| **Templates** |  |  |  |  |
-| Create / edit | ✅ | ✅ | ✅ | view |
-| **SMS** |  |  |  |  |
-| Send SMS | ✅ | ✅ | ✅ | ❌ |
-| Manage credits | ✅ | ✅ | ❌ | ❌ |
-| **Transactional** |  |  |  |  |
-| API access | ✅ | ✅ | per role | ❌ |
-| **Engagement Score** |  |  |  |  |
-| View scores | ✅ | ✅ | ✅ | ✅ |
-| Configure scoring | ✅ | ✅ | ❌ | ❌ |
-| **Reports** |  |  |  |  |
-| View | ✅ | ✅ | ✅ | ✅ |
-| Custom dashboards | ✅ | ✅ | per role | view |
-| Export | ✅ | ✅ | per role | per role |
-| **Integrations** |  |  |  |  |
-| Manage | ✅ | ✅ | ❌ | ❌ |
-| **API** |  |  |  |  |
-| Manage API keys | ✅ | ✅ | ❌ | ❌ |
-| **Domains** |  |  |  |  |
-| Domain authentication | ✅ | ✅ | ❌ | ❌ |
-| **Audit Logs** |  |  |  |  |
-| View | ✅ | ✅ | ❌ | per role |
+| Akce                         | L1 Owner | L2 Admin  | L3 Marketing | L4 Reporter |
+| ---------------------------- | :------: | :-------: | :----------: | :---------: |
+| **Account & Billing**        |          |           |              |             |
+| Close account                |    ✅    |    ❌     |      ❌      |     ❌      |
+| Manage billing               |    ✅    |    ❌     |      ❌      |     ❌      |
+| Account settings             |    ✅    |    ✅     |      ❌      |     ❌      |
+| Create sub-accounts          |    ✅    |    ❌     |      ❌      |     ❌      |
+| **User Management**          |          |           |              |             |
+| Add/edit users (master)      |    ✅    |    ❌     |      ❌      |     ❌      |
+| Add/edit users (sub-account) |    ✅    |    ✅     |      ❌      |     ❌      |
+| Cross-account access         |    ✅    | per scope |      ❌      |     ❌      |
+| **Contacts**                 |          |           |              |             |
+| View contacts                |    ✅    |    ✅     |      ✅      |    view     |
+| Edit contacts                |    ✅    |    ✅     |      ✅      |     ❌      |
+| Import contacts              |    ✅    |    ✅     |      ✅      |     ❌      |
+| Export contacts              |    ✅    |    ✅     |   per role   |     ❌      |
+| Delete contacts              |    ✅    |    ✅     |   per role   |     ❌      |
+| **Lists / Segments**         |          |           |              |             |
+| Manage lists                 |    ✅    |    ✅     |      ✅      |    view     |
+| Create segments              |    ✅    |    ✅     |      ✅      |    view     |
+| **Campaigns**                |          |           |              |             |
+| Create / edit                |    ✅    |    ✅     |      ✅      |    view     |
+| Send                         |    ✅    |    ✅     |      ✅      |     ❌      |
+| **Automations**              |          |           |              |             |
+| Create / edit                |    ✅    |    ✅     |      ✅      |    view     |
+| Activate                     |    ✅    |    ✅     |      ✅      |     ❌      |
+| **Templates**                |          |           |              |             |
+| Create / edit                |    ✅    |    ✅     |      ✅      |    view     |
+| **SMS**                      |          |           |              |             |
+| Send SMS                     |    ✅    |    ✅     |      ✅      |     ❌      |
+| Manage credits               |    ✅    |    ✅     |      ❌      |     ❌      |
+| **Transactional**            |          |           |              |             |
+| API access                   |    ✅    |    ✅     |   per role   |     ❌      |
+| **Engagement Score**         |          |           |              |             |
+| View scores                  |    ✅    |    ✅     |      ✅      |     ✅      |
+| Configure scoring            |    ✅    |    ✅     |      ❌      |     ❌      |
+| **Reports**                  |          |           |              |             |
+| View                         |    ✅    |    ✅     |      ✅      |     ✅      |
+| Custom dashboards            |    ✅    |    ✅     |   per role   |    view     |
+| Export                       |    ✅    |    ✅     |   per role   |  per role   |
+| **Integrations**             |          |           |              |             |
+| Manage                       |    ✅    |    ✅     |      ❌      |     ❌      |
+| **API**                      |          |           |              |             |
+| Manage API keys              |    ✅    |    ✅     |      ❌      |     ❌      |
+| **Domains**                  |          |           |              |             |
+| Domain authentication        |    ✅    |    ✅     |      ❌      |     ❌      |
+| **Audit Logs**               |          |           |              |             |
+| View                         |    ✅    |    ✅     |      ❌      |  per role   |
 
 ---
 
@@ -769,6 +773,7 @@ Account closes per contract terms
 ### 6.1 Sub-account purposes
 
 #### Agency model
+
 ```
 Master Account (Agency)
 ├── Agency Owner / Master Admin
@@ -792,6 +797,7 @@ Master Account (Agency)
 ```
 
 #### Multi-market company
+
 ```
 Master Account (HQ)
 ├── Global team
@@ -814,6 +820,7 @@ Master Account (HQ)
 ```
 
 #### Multi-brand company
+
 ```
 Master Account (Parent corp)
 ├── Corporate HQ users
@@ -871,6 +878,7 @@ User logs in:
 ### 6.4 Sub-account isolation
 
 #### Data isolation (default)
+
 - Contacts isolated per sub-account
 - Lists / segments isolated
 - Campaigns isolated
@@ -878,6 +886,7 @@ User logs in:
 - Reports isolated
 
 #### Optional sharing (master settings)
+
 - Templates can be shared
 - Brand assets can be shared
 - API integrations can be shared
@@ -1188,6 +1197,7 @@ Actions:
 ### 10.1 Subscription creation paths
 
 #### A) API integration
+
 ```
 External system POSTs to Mailkit API
    ↓
@@ -1206,6 +1216,7 @@ Workflows trigger
 ```
 
 #### B) Form submission
+
 ```
 Visitor fills Mailkit form (or client form via API)
    ↓
@@ -1227,6 +1238,7 @@ Workflow trigger
 ```
 
 #### C) Data source sync
+
 ```
 External data source (CRM, e-commerce, ERP)
    ↓
@@ -1242,6 +1254,7 @@ Trigger workflows (if events match)
 ```
 
 #### D) Bulk import (CSV / SFTP)
+
 ```
 Admin: Import contacts
    ↓
@@ -1342,6 +1355,7 @@ Data retained per GDPR
 ### 10.6 Bounce + spam handling
 
 #### Hard bounce
+
 ```
 ISP 5xx
    ↓
@@ -1355,6 +1369,7 @@ Auto-suppression
 ```
 
 #### Spam complaint
+
 ```
 ISP FBL → Mailkit (direct relationships!)
    ↓
@@ -1542,7 +1557,7 @@ Workflow starts (e.g. VIP welcome, or re-engagement)
 
 ### 12.5 Advanced trigger campaigns
 
-Per testimonial: *"advanced trigger campaign creation"*
+Per testimonial: _"advanced trigger campaign creation"_
 
 - **Multi-condition triggers**
 - **Real-time event response**
@@ -1557,7 +1572,7 @@ Per testimonial: *"advanced trigger campaign creation"*
 ### 13.1 Engagement Score system
 
 Per oficiální:
-*"Our Engagement Score makes establishing and maintaining customer relationships way easier."*
+_"Our Engagement Score makes establishing and maintaining customer relationships way easier."_
 
 Proprietary scoring system per subscriber.
 
@@ -1622,17 +1637,20 @@ Use v campaigns + automations
 ### 13.5 Use cases
 
 #### Inbox placement optimization
+
 - Send to high engagers first
 - Better initial open rates = better ISP reputation
 - Suppress low engagers from broad sends
 
 #### Lifecycle management
+
 - Identify customer health trend
 - Predict churn risk
 - Trigger re-engagement campaigns
 - Identify upsell candidates
 
 #### Sender reputation protection
+
 - Avoid sending to consistently disengaged
 - Reduces spam complaint risk
 - Maintains Mailkit's premium reputation
@@ -1643,7 +1661,7 @@ Use v campaigns + automations
 
 ### 14.1 Per oficiální capabilities
 
-*"Work with variables, loops and conditions."*
+_"Work with variables, loops and conditions."_
 
 ### 14.2 Variables
 
@@ -1679,6 +1697,7 @@ At send time:
 ```
 
 Use cases:
+
 - **Cart contents** (abandonment emails)
 - **Order line items** (confirmation emails)
 - **Product recommendations** (multiple items)
@@ -1706,6 +1725,7 @@ Email template:
 ```
 
 Use cases:
+
 - **Loyalty tier differentiation**
 - **Gender-specific content**
 - **Geographic targeting**
@@ -1737,31 +1757,35 @@ Send via vlastní infrastruktura
 ### 15.1 AMP for Email
 
 Per oficiální:
-*"AMP support integrated directly into the editor"*
+_"AMP support integrated directly into the editor"_
 
 AMP for Email = interactive email standard supported by Gmail, Yahoo, Outlook.com.
 
 ### 15.2 AMP capabilities enabled
 
 #### Forms inside emails
+
 - Surveys
 - Reservations
 - Account updates
 - All without clicking link
 
 #### Real-time content
+
 - Live pricing
 - Inventory status
 - Account balance
 - Loyalty points
 
 #### Interactive elements
+
 - Carousels
 - Tabs / accordions
 - Selectors / picklists
 - Dynamic galleries
 
 #### Dynamic data
+
 - Live cart contents
 - Recent orders
 - Personalized recommendations
@@ -1947,7 +1971,7 @@ Logged v contact activity timeline
 Mailkit's preferred integration model is **API-first**, not plugin-based.
 
 Per testimonial:
-*"easy to connect our internal system via API, which was helped by very detailed and well written documentation"*
+_"easy to connect our internal system via API, which was helped by very detailed and well written documentation"_
 
 ### 18.2 API credentials creation
 
@@ -2022,12 +2046,14 @@ Monitoring + maintenance
 ### 18.5 Common integration patterns
 
 #### CRM integration
+
 - Real-time contact sync (CRM → Mailkit)
 - Engagement events sync (Mailkit → CRM)
 - Custom fields mapping
 - Lifecycle stage updates
 
 #### E-commerce integration
+
 - Customer create/update sync
 - Order events real-time
 - Cart abandonment events
@@ -2035,12 +2061,14 @@ Monitoring + maintenance
 - Revenue attribution
 
 #### ERP integration
+
 - Customer data master
 - Transactional events
 - Inventory data
 - Custom event triggers
 
 #### Custom data warehouses
+
 - Daily/hourly batch sync
 - Custom fields population
 - Segment-feeding queries
@@ -2080,7 +2108,7 @@ For bulk operations:
 ## 19. Data sources flow
 
 Per oficiální:
-*"Interconnect using the API or data sources."*
+_"Interconnect using the API or data sources."_
 
 ### 19.1 Data source vs. API
 
@@ -2090,18 +2118,21 @@ Per oficiální:
 ### 19.2 Data source types
 
 #### Direct database connections
+
 - MySQL, PostgreSQL, SQL Server, Oracle
 - Configured by Mailkit
 - Scheduled sync
 - Mapping defined
 
 #### File-based (SFTP)
+
 - CSV files placed on SFTP
 - Mailkit pulls automatically
 - Field mapping
 - Schedule (daily, hourly)
 
 #### Custom API polling
+
 - Mailkit calls external API
 - Schedule-based
 - Updates / inserts contacts
@@ -2367,41 +2398,41 @@ Provide to subscriber (30 days max per GDPR)
 
 ## 22. Datová mapa: co vidí kdo
 
-| Data | L1 Owner | L2 Admin | L3 Marketing | L4 Reporter | Subscriber | API | Account Mgr |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Master account settings | ✅ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| Sub-account creation | ✅ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| Sub-account settings | ✅ | ✅ | ❌ | ❌ | ❌ | per scope | read |
-| Cross-account view | ✅ | per scope | ❌ | per scope | ❌ | per scope | read |
-| User management (master) | ✅ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| User management (sub) | ✅ | ✅ | ❌ | ❌ | ❌ | per scope | read |
-| All contacts (per scope) | ✅ | ✅ | ✅ | view | jen sebe | ✅ | read |
-| Edit contacts | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Export contacts | ✅ | ✅ | per role | ❌ | request | per scope | ❌ |
-| GDPR delete | ✅ | ✅ | per role | ❌ | request | per scope | ❌ |
-| Lists / Segments | ✅ | ✅ | ✅ | view | – | ✅ | read |
-| Tags | ✅ | ✅ | ✅ | view | – | ✅ | read |
-| Campaigns | ✅ | ✅ | ✅ | view | jen co dostal | ✅ | read |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Automations | ✅ | ✅ | ✅ | view | ❌ | ✅ | read |
-| Templates | ✅ | ✅ | ✅ | view | – | ✅ | read |
-| Visual creator | ✅ | ✅ | ✅ | view | – | per scope | read |
-| AMP support | ✅ | ✅ | ✅ | view | (interactive) | per scope | read |
-| Variables/loops/conditions | ✅ | ✅ | ✅ | view | – | per scope | read |
-| Engagement Score | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | read |
-| Configure scoring | ✅ | ✅ | ❌ | ❌ | ❌ | per scope | read |
-| SMS module | ✅ | ✅ | ✅ | ❌ | – | per scope | read |
-| SMS credits | ✅ | ✅ | view | ❌ | – | per scope | read |
-| Transactional | ✅ | ✅ | per role | ❌ | – | ✅ | read |
-| Reports | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | read |
-| Cross-account reports | ✅ | per scope | ❌ | per scope | ❌ | per scope | read |
-| Integrations | ✅ | ✅ | ❌ | ❌ | ❌ | per scope | read |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | – | read |
-| Data sources | ✅ | ✅ | ❌ | ❌ | ❌ | per scope | read |
-| Domains | ✅ | ✅ | ❌ | ❌ | ❌ | per scope | read |
-| Audit logs | ✅ | ✅ | ❌ | per role | ❌ | per scope | read |
-| ISO certificates | ✅ | view | view | view | – | – | read |
+| Data                       | L1 Owner | L2 Admin  | L3 Marketing | L4 Reporter |  Subscriber   |    API    | Account Mgr |
+| -------------------------- | :------: | :-------: | :----------: | :---------: | :-----------: | :-------: | :---------: |
+| Master account settings    |    ✅    |    ❌     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| Billing                    |    ✅    |    ❌     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| Sub-account creation       |    ✅    |    ❌     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| Sub-account settings       |    ✅    |    ✅     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| Cross-account view         |    ✅    | per scope |      ❌      |  per scope  |      ❌       | per scope |    read     |
+| User management (master)   |    ✅    |    ❌     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| User management (sub)      |    ✅    |    ✅     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| All contacts (per scope)   |    ✅    |    ✅     |      ✅      |    view     |   jen sebe    |    ✅     |    read     |
+| Edit contacts              |    ✅    |    ✅     |      ✅      |     ❌      |      ❌       |    ✅     |     ❌      |
+| Export contacts            |    ✅    |    ✅     |   per role   |     ❌      |    request    | per scope |     ❌      |
+| GDPR delete                |    ✅    |    ✅     |   per role   |     ❌      |    request    | per scope |     ❌      |
+| Lists / Segments           |    ✅    |    ✅     |      ✅      |    view     |       –       |    ✅     |    read     |
+| Tags                       |    ✅    |    ✅     |      ✅      |    view     |       –       |    ✅     |    read     |
+| Campaigns                  |    ✅    |    ✅     |      ✅      |    view     | jen co dostal |    ✅     |    read     |
+| Send campaigns             |    ✅    |    ✅     |      ✅      |     ❌      |      ❌       |    ✅     |     ❌      |
+| Automations                |    ✅    |    ✅     |      ✅      |    view     |      ❌       |    ✅     |    read     |
+| Templates                  |    ✅    |    ✅     |      ✅      |    view     |       –       |    ✅     |    read     |
+| Visual creator             |    ✅    |    ✅     |      ✅      |    view     |       –       | per scope |    read     |
+| AMP support                |    ✅    |    ✅     |      ✅      |    view     | (interactive) | per scope |    read     |
+| Variables/loops/conditions |    ✅    |    ✅     |      ✅      |    view     |       –       | per scope |    read     |
+| Engagement Score           |    ✅    |    ✅     |      ✅      |     ✅      |      ❌       |    ✅     |    read     |
+| Configure scoring          |    ✅    |    ✅     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| SMS module                 |    ✅    |    ✅     |      ✅      |     ❌      |       –       | per scope |    read     |
+| SMS credits                |    ✅    |    ✅     |     view     |     ❌      |       –       | per scope |    read     |
+| Transactional              |    ✅    |    ✅     |   per role   |     ❌      |       –       |    ✅     |    read     |
+| Reports                    |    ✅    |    ✅     |      ✅      |     ✅      |      ❌       |    ✅     |    read     |
+| Cross-account reports      |    ✅    | per scope |      ❌      |  per scope  |      ❌       | per scope |    read     |
+| Integrations               |    ✅    |    ✅     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| API keys                   |    ✅    |    ✅     |      ❌      |     ❌      |      ❌       |     –     |    read     |
+| Data sources               |    ✅    |    ✅     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| Domains                    |    ✅    |    ✅     |      ❌      |     ❌      |      ❌       | per scope |    read     |
+| Audit logs                 |    ✅    |    ✅     |      ❌      |  per role   |      ❌       | per scope |    read     |
+| ISO certificates           |    ✅    |   view    |     view     |    view     |       –       |     –     |    read     |
 
 ---
 
@@ -2559,4 +2590,4 @@ Pokud Mailkit používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů mailkit.com a praktických zdrojů (G2, SMTPedia, Crunchbase, Email Vendor Selection, customer testimonials). Pro nejaktuálnější detaily je nutný engagement s Mailkit sales / account management teamem.*
+_Dokument zpracován z oficiálních zdrojů mailkit.com a praktických zdrojů (G2, SMTPedia, Crunchbase, Email Vendor Selection, customer testimonials). Pro nejaktuálnější detaily je nutný engagement s Mailkit sales / account management teamem._

@@ -113,7 +113,7 @@ export interface WinLossSummary {
   won: number;
   lost: number;
   open: number;
-  winRate: number;          // won / (won + lost); 0 when no closed deals
+  winRate: number; // won / (won + lost); 0 when no closed deals
   totalWonValue: number;
   totalLostValue: number;
   averageWonValue: number;

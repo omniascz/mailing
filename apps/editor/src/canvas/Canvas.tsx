@@ -94,7 +94,14 @@ interface DraggableBlockProps {
   onRemove: (path: BlockPath) => void;
 }
 
-function DraggableBlock({ block, path, isSelected, selectedPath, onSelect, onRemove }: DraggableBlockProps) {
+function DraggableBlock({
+  block,
+  path,
+  isSelected,
+  selectedPath,
+  onSelect,
+  onRemove,
+}: DraggableBlockProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `block:${block.id}`,
     data: { source: 'block', path },
@@ -132,7 +139,13 @@ function DraggableBlock({ block, path, isSelected, selectedPath, onSelect, onRem
       >
         ×
       </button>
-      <BlockBody block={block} path={path} selectedPath={selectedPath} onSelect={onSelect} onRemove={onRemove} />
+      <BlockBody
+        block={block}
+        path={path}
+        selectedPath={selectedPath}
+        onSelect={onSelect}
+        onRemove={onRemove}
+      />
     </div>
   );
 }
@@ -170,8 +183,11 @@ function BlockBody({ block, path, selectedPath, onSelect, onRemove }: BlockBodyP
     case 'image':
       return (
         <div style={{ padding, textAlign: block.align, backgroundColor: bg }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={block.src} alt={block.alt} style={{ maxWidth: '100%', display: 'inline-block' }} />
+          <img
+            src={block.src}
+            alt={block.alt}
+            style={{ maxWidth: '100%', display: 'inline-block' }}
+          />
         </div>
       );
 
@@ -181,7 +197,8 @@ function BlockBody({ block, path, selectedPath, onSelect, onRemove }: BlockBodyP
           <span
             style={{
               display: 'inline-block',
-              padding: block.size === 'sm' ? '8px 16px' : block.size === 'lg' ? '16px 32px' : '12px 24px',
+              padding:
+                block.size === 'sm' ? '8px 16px' : block.size === 'lg' ? '16px 32px' : '12px 24px',
               backgroundColor: block.backgroundColor,
               color: block.textColor,
               borderRadius: block.borderRadius,

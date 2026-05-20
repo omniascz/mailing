@@ -2,7 +2,9 @@ import { pgTable, uuid, varchar, timestamp, jsonb, boolean } from 'drizzle-orm/p
 import { users } from './users.js';
 
 export const twoFactorSecrets = pgTable('two_factor_secrets', {
-  userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
   secret: varchar('secret', { length: 64 }).notNull(),
   backupCodes: jsonb('backup_codes').$type<string[]>().notNull().default([]),
   enabled: boolean('enabled').notNull().default(false),

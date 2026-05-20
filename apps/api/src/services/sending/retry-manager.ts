@@ -29,12 +29,12 @@ import type { IspName } from './isp-throttle.js';
 
 /** Base delays in seconds (attempt index 1-6) */
 const BASE_DELAYS_SECONDS: Record<number, number> = {
-  1:  60,          // 1 min
-  2:  300,         // 5 min
-  3:  1_800,       // 30 min
-  4:  7_200,       // 2 h
-  5:  28_800,      // 8 h
-  6:  86_400,      // 24 h
+  1: 60, // 1 min
+  2: 300, // 5 min
+  3: 1_800, // 30 min
+  4: 7_200, // 2 h
+  5: 28_800, // 8 h
+  6: 86_400, // 24 h
 };
 
 /** Gmail multiplier — 3x longer to avoid aggressive retry penalties */
@@ -168,12 +168,7 @@ export async function permanentlyFail(messageId: string): Promise<void> {
  * Clear retry state after successful delivery.
  */
 export async function clearRetryState(messageId: string): Promise<void> {
-  await redis.del(
-    countKey(messageId),
-    nextAtKey(messageId),
-    ispKey(messageId),
-    failKey(messageId),
-  );
+  await redis.del(countKey(messageId), nextAtKey(messageId), ispKey(messageId), failKey(messageId));
 }
 
 /**

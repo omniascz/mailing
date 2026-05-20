@@ -56,19 +56,12 @@ export async function getProgramStats(
       expired: sql<number>`coalesce(abs(sum(points)) filter (where type = 'expire'), 0)::int`,
     })
     .from(loyaltyPoints)
-    .where(
-      and(eq(loyaltyPoints.orgId, orgId), gte(loyaltyPoints.createdAt, since)),
-    );
+    .where(and(eq(loyaltyPoints.orgId, orgId), gte(loyaltyPoints.createdAt, since)));
 
   const [redemStats] = await db
     .select({ total: count() })
     .from(loyaltyRedemptions)
-    .where(
-      and(
-        eq(loyaltyRedemptions.orgId, orgId),
-        gte(loyaltyRedemptions.createdAt, since),
-      ),
-    );
+    .where(and(eq(loyaltyRedemptions.orgId, orgId), gte(loyaltyRedemptions.createdAt, since)));
 
   return {
     totalMembers: memberStats?.total ?? 0,
@@ -159,10 +152,7 @@ export interface RewardStats {
   redemptionCount: number;
 }
 
-export async function getRewardStats(
-  orgId: string,
-  programId: string,
-): Promise<RewardStats[]> {
+export async function getRewardStats(orgId: string, programId: string): Promise<RewardStats[]> {
   const rows = await db
     .select({
       rewardId: loyaltyRewards.id,

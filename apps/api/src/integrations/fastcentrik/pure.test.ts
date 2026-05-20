@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  parseXml,
-  normalizeFastCentrikOrder,
-  parseFastCentrikOrdersFeed,
-} from './pure.js';
+import { parseXml, normalizeFastCentrikOrder, parseFastCentrikOrdersFeed } from './pure.js';
 
 describe('parseXml', () => {
   it('parses a simple XML tree', () => {

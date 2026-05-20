@@ -15,7 +15,7 @@ export interface LookalikeResult {
   lookalikeName: string;
   platformAudienceId: string;
   countryCode: string;
-  ratio: number;  // 0.01–0.20 (Facebook), ignored for others
+  ratio: number; // 0.01–0.20 (Facebook), ignored for others
 }
 
 // ── Facebook Lookalike ────────────────────────────────────────────────────────
@@ -27,24 +27,34 @@ async function createFacebookLookalike(
   ratio: number,
   name: string,
 ): Promise<LookalikeResult> {
-  const res = await fetch(`https://graph.facebook.com/v19.0/act_${account.platformAccountId}/customaudiences`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name,
-      subtype: 'LOOKALIKE',
-      origin_audience_id: sourceAudienceId,
-      lookalike_spec: {
-        type: 'similarity',
-        ratio,
-        country: countryCode,
-      },
-      access_token: account.accessToken,
-    }),
-  });
-  const json = await res.json() as { id?: string; error?: { message: string } };
-  if (!res.ok || !json.id) throw new Error(json.error?.message ?? 'Facebook lookalike creation failed');
-  return { platform: 'facebook_ads', lookalikeName: name, platformAudienceId: json.id, countryCode, ratio };
+  const res = await fetch(
+    `https://graph.facebook.com/v19.0/act_${account.platformAccountId}/customaudiences`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        subtype: 'LOOKALIKE',
+        origin_audience_id: sourceAudienceId,
+        lookalike_spec: {
+          type: 'similarity',
+          ratio,
+          country: countryCode,
+        },
+        access_token: account.accessToken,
+      }),
+    },
+  );
+  const json = (await res.json()) as { id?: string; error?: { message: string } };
+  if (!res.ok || !json.id)
+    throw new Error(json.error?.message ?? 'Facebook lookalike creation failed');
+  return {
+    platform: 'facebook_ads',
+    lookalikeName: name,
+    platformAudienceId: json.id,
+    countryCode,
+    ratio,
+  };
 }
 
 // ── LinkedIn Lookalike ────────────────────────────────────────────────────────
@@ -56,7 +66,7 @@ async function createLinkedInLookalike(
 ): Promise<LookalikeResult> {
   const res = await fetch('https://api.linkedin.com/v2/dmpSegments', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${account.accessToken}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       account: `urn:li:sponsoredAccount:${account.platformAccountId}`,
       name,
@@ -65,8 +75,14 @@ async function createLinkedInLookalike(
     }),
   });
   if (!res.ok) throw new Error(`LinkedIn lookalike failed: ${res.status}`);
-  const json = await res.json() as { id?: string };
-  return { platform: 'linkedin_ads', lookalikeName: name, platformAudienceId: String(json.id ?? ''), countryCode: 'US', ratio: 0.05 };
+  const json = (await res.json()) as { id?: string };
+  return {
+    platform: 'linkedin_ads',
+    lookalikeName: name,
+    platformAudienceId: String(json.id ?? ''),
+    countryCode: 'US',
+    ratio: 0.05,
+  };
 }
 
 // ── Google Similar Audiences (note: GAS are auto-generated, we just flag) ────
@@ -80,21 +96,23 @@ async function createGoogleLookalike(
   // We create a combined_audience user_list that references the source.
   const customerId = account.platformAccountId;
   const body = {
-    operations: [{
-      create: {
-        name,
-        description: `Lookalike for ${sourceListResourceName}`,
-        membershipLifeSpan: 30,
-        similarUserList: { seedUserList: sourceListResourceName },
+    operations: [
+      {
+        create: {
+          name,
+          description: `Lookalike for ${sourceListResourceName}`,
+          membershipLifeSpan: 30,
+          similarUserList: { seedUserList: sourceListResourceName },
+        },
       },
-    }],
+    ],
   };
   const res = await fetch(
     `https://googleads.googleapis.com/v16/customers/${customerId}/userLists:mutate`,
     {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${account.accessToken}`,
+        Authorization: `Bearer ${account.accessToken}`,
         'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? '',
         'Content-Type': 'application/json',
       },
@@ -102,19 +120,28 @@ async function createGoogleLookalike(
     },
   );
   if (!res.ok) throw new Error(`Google lookalike failed: ${res.status}`);
-  const json = await res.json() as { results?: Array<{ resourceName: string }> };
-  return { platform: 'google_ads', lookalikeName: name, platformAudienceId: json.results?.[0]?.resourceName ?? name, countryCode: 'US', ratio: 0.05 };
+  const json = (await res.json()) as { results?: Array<{ resourceName: string }> };
+  return {
+    platform: 'google_ads',
+    lookalikeName: name,
+    platformAudienceId: json.results?.[0]?.resourceName ?? name,
+    countryCode: 'US',
+    ratio: 0.05,
+  };
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-export async function createLookalikeAudience(orgId: string, input: {
-  adAccountId: string;
-  sourceSyncId: string;   // id of the adAudienceSyncs record to seed from
-  lookalikeName?: string;
-  countryCode?: string;
-  ratio?: number;
-}) {
+export async function createLookalikeAudience(
+  orgId: string,
+  input: {
+    adAccountId: string;
+    sourceSyncId: string; // id of the adAudienceSyncs record to seed from
+    lookalikeName?: string;
+    countryCode?: string;
+    ratio?: number;
+  },
+) {
   const [adAccount] = await db
     .select()
     .from(adAccounts)
@@ -137,10 +164,20 @@ export async function createLookalikeAudience(orgId: string, input: {
   let result: LookalikeResult;
   switch (platform) {
     case 'facebook_ads':
-      result = await createFacebookLookalike(adAccount, sourceSync.platformAudienceId, countryCode, ratio, lookalikeName);
+      result = await createFacebookLookalike(
+        adAccount,
+        sourceSync.platformAudienceId,
+        countryCode,
+        ratio,
+        lookalikeName,
+      );
       break;
     case 'linkedin_ads':
-      result = await createLinkedInLookalike(adAccount, sourceSync.platformAudienceId, lookalikeName);
+      result = await createLinkedInLookalike(
+        adAccount,
+        sourceSync.platformAudienceId,
+        lookalikeName,
+      );
       break;
     case 'google_ads':
       result = await createGoogleLookalike(adAccount, sourceSync.platformAudienceId, lookalikeName);

@@ -73,9 +73,7 @@ export function isValidRaynetInstance(name: string): boolean {
  * Flatten a Raynet /contacts/{id} payload. Raynet uses camelCase properties
  * under a top-level `data` or directly on the object depending on endpoint.
  */
-export function normalizeRaynetContact(
-  raw: Record<string, unknown>,
-): RaynetNormalizedContact {
+export function normalizeRaynetContact(raw: Record<string, unknown>): RaynetNormalizedContact {
   const data = (raw.data ?? raw) as Record<string, unknown>;
   const primaryEmail = resolvePrimary(data.contactInfo, 'email');
   const primaryPhone = resolvePrimary(data.contactInfo, 'tel');
@@ -94,9 +92,7 @@ export function normalizeRaynetContact(
 }
 
 /** Flatten a Raynet /companies/{id} payload. */
-export function normalizeRaynetCompany(
-  raw: Record<string, unknown>,
-): RaynetNormalizedCompany {
+export function normalizeRaynetCompany(raw: Record<string, unknown>): RaynetNormalizedCompany {
   const data = (raw.data ?? raw) as Record<string, unknown>;
   const addr = (data.primaryAddress as Record<string, unknown>) ?? {};
   return {
@@ -113,9 +109,7 @@ export function normalizeRaynetCompany(
 }
 
 /** Flatten a Raynet /businessCases/{id} (deal) payload. */
-export function normalizeRaynetDeal(
-  raw: Record<string, unknown>,
-): RaynetNormalizedDeal {
+export function normalizeRaynetDeal(raw: Record<string, unknown>): RaynetNormalizedDeal {
   const data = (raw.data ?? raw) as Record<string, unknown>;
   const price = data.priceMain as Record<string, unknown> | undefined;
   const company = data.company as Record<string, unknown> | undefined;
@@ -127,8 +121,7 @@ export function normalizeRaynetDeal(
     currency: String(price?.currency ?? 'CZK'),
     stage: asStringOrNull(data.state),
     companyExternalId: company?.id != null ? Number(company.id) : null,
-    primaryContactExternalId:
-      primaryContact?.id != null ? Number(primaryContact.id) : null,
+    primaryContactExternalId: primaryContact?.id != null ? Number(primaryContact.id) : null,
     closeDate: toDate(data.closeDate),
     updatedAt: toDate(data.lastActivity ?? data.updatedAt),
   };

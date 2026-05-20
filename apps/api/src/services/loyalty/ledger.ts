@@ -11,11 +11,7 @@
 
 import { and, desc, eq, gt, gte, lt, lte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  loyaltyPoints,
-  loyaltyMembers,
-  type LoyaltyPointTx,
-} from '../../db/schema/index.js';
+import { loyaltyPoints, loyaltyMembers, type LoyaltyPointTx } from '../../db/schema/index.js';
 
 // ─── Transaction history ──────────────────────────────────────────────────────
 
@@ -29,10 +25,7 @@ export async function getLedger(
   } = {},
 ): Promise<{ data: LoyaltyPointTx[]; cursor: string | null; hasMore: boolean }> {
   const limit = Math.min(opts.limit ?? 20, 100);
-  const conditions = [
-    eq(loyaltyPoints.orgId, orgId),
-    eq(loyaltyPoints.memberId, memberId),
-  ];
+  const conditions = [eq(loyaltyPoints.orgId, orgId), eq(loyaltyPoints.memberId, memberId)];
 
   if (opts.cursor) {
     conditions.push(lt(loyaltyPoints.createdAt, new Date(opts.cursor)));
@@ -228,12 +221,7 @@ export async function processPointExpiry(orgId: string): Promise<ExpiryRunResult
           await db
             .select({ sourceRef: loyaltyPoints.sourceRef })
             .from(loyaltyPoints)
-            .where(
-              and(
-                eq(loyaltyPoints.memberId, member.id),
-                eq(loyaltyPoints.type, 'expire'),
-              ),
-            )
+            .where(and(eq(loyaltyPoints.memberId, member.id), eq(loyaltyPoints.type, 'expire')))
         )
           .map((r) => r.sourceRef)
           .filter(Boolean),
@@ -294,9 +282,10 @@ export async function processPointExpiry(orgId: string): Promise<ExpiryRunResult
  * Compute and stamp `expiresAt` for a new earn transaction based on
  * the program's expiry policy. Returns null if policy is 'never'.
  */
-export function computeExpiresAt(
-  program: { expiryType: string; expiryValue?: string | null },
-): Date | null {
+export function computeExpiresAt(program: {
+  expiryType: string;
+  expiryValue?: string | null;
+}): Date | null {
   if (program.expiryType === 'rolling') {
     const days = Number(program.expiryValue ?? 0);
     if (days > 0) return new Date(Date.now() + days * 86_400_000);

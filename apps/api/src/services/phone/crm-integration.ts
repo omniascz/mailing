@@ -20,25 +20,28 @@ export interface CallActivityResult {
 
 // ─── Log call activity on contact/deal ───────────────────────────────────────
 
-export async function logCallActivity(
-  orgId: string,
-  callId: string,
-): Promise<CallActivityResult> {
-  const [call] = await db.select().from(calls)
-    .where(and(eq(calls.id, callId), eq(calls.orgId, orgId))).limit(1);
+export async function logCallActivity(orgId: string, callId: string): Promise<CallActivityResult> {
+  const [call] = await db
+    .select()
+    .from(calls)
+    .where(and(eq(calls.id, callId), eq(calls.orgId, orgId)))
+    .limit(1);
   if (!call) throw AppError.notFound('Call');
 
   const result: CallActivityResult = { callId };
   const body = buildCallNote(call);
 
   // Log on contact
-  const [contactNote] = await db.insert(crmNotes).values({
-    orgId,
-    contactId: call.contactId,
-    dealId: call.dealId ?? null,
-    authorUserId: call.agentId ?? null,
-    body,
-  }).returning();
+  const [contactNote] = await db
+    .insert(crmNotes)
+    .values({
+      orgId,
+      contactId: call.contactId,
+      dealId: call.dealId ?? null,
+      authorUserId: call.agentId ?? null,
+      body,
+    })
+    .returning();
   result.contactNoteId = contactNote!.id;
 
   // If deal is linked and distinct from the contact note, add a deal-specific note
@@ -91,29 +94,36 @@ export async function clickToDial(
   fromNumber: string,
   dealId?: string,
 ): Promise<ClickToDialResult> {
-  const [contact] = await db.select().from(contacts)
-    .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId))).limit(1);
+  const [contact] = await db
+    .select()
+    .from(contacts)
+    .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)))
+    .limit(1);
   if (!contact) throw AppError.notFound('Contact');
 
   const toNumber = contact.phone;
   if (!toNumber) throw AppError.badRequest('Contact has no phone number');
 
-  const [call] = await db.insert(calls).values({
-    orgId,
-    contactId,
-    agentId,
-    dealId: dealId ?? null,
-    direction: 'outbound',
-    fromNumber,
-    toNumber,
-    status: 'initiated',
-  }).returning();
+  const [call] = await db
+    .insert(calls)
+    .values({
+      orgId,
+      contactId,
+      agentId,
+      dealId: dealId ?? null,
+      direction: 'outbound',
+      fromNumber,
+      toNumber,
+      status: 'initiated',
+    })
+    .returning();
 
   const callId = call!.id;
   const twilioCallSid = await initiateTwilioCall(fromNumber, toNumber, callId, orgId);
 
   if (twilioCallSid) {
-    await db.update(calls)
+    await db
+      .update(calls)
       .set({ twilioCallSid, updatedAt: new Date() })
       .where(eq(calls.id, callId));
   }
@@ -133,24 +143,21 @@ async function initiateTwilioCall(
 
   if (!accountSid || !authToken) return null;
 
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        From: from,
-        To: to,
-        Url: `${base}/api/v1/phone/twiml/outbound?callId=${callId}&orgId=${orgId}`,
-        StatusCallback: `${base}/api/v1/webhooks/twilio/call-status`,
-        Record: 'true',
-        RecordingStatusCallback: `${base}/api/v1/webhooks/twilio/recording`,
-      }),
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
-  ).catch(() => null);
+    body: new URLSearchParams({
+      From: from,
+      To: to,
+      Url: `${base}/api/v1/phone/twiml/outbound?callId=${callId}&orgId=${orgId}`,
+      StatusCallback: `${base}/api/v1/webhooks/twilio/call-status`,
+      Record: 'true',
+      RecordingStatusCallback: `${base}/api/v1/webhooks/twilio/recording`,
+    }),
+  }).catch(() => null);
 
   if (!res?.ok) return null;
   const data = (await res.json()) as { sid?: string };

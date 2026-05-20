@@ -22,7 +22,7 @@ import { contactEngagement, contacts } from '../../db/schema/index.js';
 
 export interface PredictiveScore {
   contactId: string;
-  leadScore: number;                    // existing rule-based score
+  leadScore: number; // existing rule-based score
   predictedConversionProbability: number; // 0..1
   grade: 'A' | 'B' | 'C' | 'D';
   factors: {
@@ -70,11 +70,11 @@ export function scoreContact(inputs: {
   const leadScoreComponent = clamp(inputs.leadScore / 200, 0, 1);
 
   const raw =
-      0.45 * purchaseLikelihood
-    + 0.25 * leadScoreComponent
-    + 0.15 * rfmScore
-    + 0.10 * clvTier
-    - 0.25 * churnRisk;
+    0.45 * purchaseLikelihood +
+    0.25 * leadScoreComponent +
+    0.15 * rfmScore +
+    0.1 * clvTier -
+    0.25 * churnRisk;
 
   // Squash into [0, 1]; clamp rather than sigmoid for explainability.
   const probability = clamp(raw, 0, 1);
@@ -91,12 +91,19 @@ export function scoreContact(inputs: {
   };
 }
 
-export async function predictConversion(orgId: string, contactId: string): Promise<PredictiveScore | null> {
-  const [contact] = await db.select({ leadScore: contacts.leadScore }).from(contacts)
+export async function predictConversion(
+  orgId: string,
+  contactId: string,
+): Promise<PredictiveScore | null> {
+  const [contact] = await db
+    .select({ leadScore: contacts.leadScore })
+    .from(contacts)
     .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)));
   if (!contact) return null;
 
-  const [eng] = await db.select().from(contactEngagement)
+  const [eng] = await db
+    .select()
+    .from(contactEngagement)
     .where(and(eq(contactEngagement.contactId, contactId), eq(contactEngagement.orgId, orgId)));
 
   const leadScore = contact.leadScore ?? 0;
@@ -121,21 +128,25 @@ export async function predictConversion(orgId: string, contactId: string): Promi
  * Bulk variant — scores up to `limit` contacts sorted by leadScore desc.
  */
 export async function topPredictedContacts(orgId: string, limit = 100): Promise<PredictiveScore[]> {
-  const rows = await db.select({
-    id: contacts.id,
-    leadScore: contacts.leadScore,
-  }).from(contacts)
+  const rows = await db
+    .select({
+      id: contacts.id,
+      leadScore: contacts.leadScore,
+    })
+    .from(contacts)
     .where(and(eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
     .limit(limit);
 
   if (rows.length === 0) return [];
 
-  const ids = rows.map(r => r.id);
-  const engs = await db.select().from(contactEngagement)
+  const ids = rows.map((r) => r.id);
+  const engs = await db
+    .select()
+    .from(contactEngagement)
     .where(and(eq(contactEngagement.orgId, orgId), inArray(contactEngagement.contactId, ids)));
-  const engByContact = new Map(engs.map(e => [e.contactId, e]));
+  const engByContact = new Map(engs.map((e) => [e.contactId, e]));
 
-  const results = rows.map(r => {
+  const results = rows.map((r) => {
     const eng = engByContact.get(r.id);
     const leadScore = r.leadScore ?? 0;
     const { probability, factors } = scoreContact({
@@ -154,5 +165,7 @@ export async function topPredictedContacts(orgId: string, limit = 100): Promise<
     } satisfies PredictiveScore;
   });
 
-  return results.sort((a, b) => b.predictedConversionProbability - a.predictedConversionProbability);
+  return results.sort(
+    (a, b) => b.predictedConversionProbability - a.predictedConversionProbability,
+  );
 }

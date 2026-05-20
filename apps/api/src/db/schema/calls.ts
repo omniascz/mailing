@@ -1,5 +1,15 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, jsonb, integer, decimal, text, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  jsonb,
+  integer,
+  decimal,
+  text,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { campaigns } from './campaigns.js';
 import { contacts } from './contacts.js';
@@ -9,7 +19,9 @@ import { callStatusEnum } from './enums.js';
 export const calls = pgTable(
   'calls',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

@@ -15,7 +15,11 @@ import { contactEngagement, contacts, emailEvents } from '../../db/schema/index.
 
 // ─── Histogram maintenance ───────────────────────────────────────────────────
 
-export async function recordOpen(contactId: string, orgId: string, at: Date = new Date()): Promise<void> {
+export async function recordOpen(
+  contactId: string,
+  orgId: string,
+  at: Date = new Date(),
+): Promise<void> {
   const hour = at.getUTCHours();
   const day = at.getUTCDay();
 
@@ -122,15 +126,23 @@ export function localHourToUtc(date: Date, hour: number, minute: number, timezon
   try {
     const dtf = new Intl.DateTimeFormat('en-US', {
       timeZone: timezone,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
       hour12: false,
     });
     const parts = dtf.formatToParts(assumed);
     const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
     const tzDate = Date.UTC(
-      get('year'), get('month') - 1, get('day'),
-      get('hour'), get('minute'), get('second'),
+      get('year'),
+      get('month') - 1,
+      get('day'),
+      get('hour'),
+      get('minute'),
+      get('second'),
     );
     const offset = tzDate - assumed.getTime();
     return new Date(assumed.getTime() - offset);
@@ -174,17 +186,36 @@ export async function computeTimewarpSchedule(
 export function inferTimezoneFromCountry(country: string | null): string | null {
   if (!country) return null;
   const map: Record<string, string> = {
-    CZ: 'Europe/Prague', SK: 'Europe/Bratislava', DE: 'Europe/Berlin',
-    AT: 'Europe/Vienna', PL: 'Europe/Warsaw', HU: 'Europe/Budapest',
-    GB: 'Europe/London', IE: 'Europe/Dublin', FR: 'Europe/Paris',
-    ES: 'Europe/Madrid', IT: 'Europe/Rome', NL: 'Europe/Amsterdam',
-    BE: 'Europe/Brussels', CH: 'Europe/Zurich', SE: 'Europe/Stockholm',
-    NO: 'Europe/Oslo', DK: 'Europe/Copenhagen', FI: 'Europe/Helsinki',
-    US: 'America/New_York', CA: 'America/Toronto', MX: 'America/Mexico_City',
-    BR: 'America/Sao_Paulo', AR: 'America/Argentina/Buenos_Aires',
-    AU: 'Australia/Sydney', NZ: 'Pacific/Auckland',
-    JP: 'Asia/Tokyo', KR: 'Asia/Seoul', CN: 'Asia/Shanghai',
-    IN: 'Asia/Kolkata', SG: 'Asia/Singapore',
+    CZ: 'Europe/Prague',
+    SK: 'Europe/Bratislava',
+    DE: 'Europe/Berlin',
+    AT: 'Europe/Vienna',
+    PL: 'Europe/Warsaw',
+    HU: 'Europe/Budapest',
+    GB: 'Europe/London',
+    IE: 'Europe/Dublin',
+    FR: 'Europe/Paris',
+    ES: 'Europe/Madrid',
+    IT: 'Europe/Rome',
+    NL: 'Europe/Amsterdam',
+    BE: 'Europe/Brussels',
+    CH: 'Europe/Zurich',
+    SE: 'Europe/Stockholm',
+    NO: 'Europe/Oslo',
+    DK: 'Europe/Copenhagen',
+    FI: 'Europe/Helsinki',
+    US: 'America/New_York',
+    CA: 'America/Toronto',
+    MX: 'America/Mexico_City',
+    BR: 'America/Sao_Paulo',
+    AR: 'America/Argentina/Buenos_Aires',
+    AU: 'Australia/Sydney',
+    NZ: 'Pacific/Auckland',
+    JP: 'Asia/Tokyo',
+    KR: 'Asia/Seoul',
+    CN: 'Asia/Shanghai',
+    IN: 'Asia/Kolkata',
+    SG: 'Asia/Singapore',
   };
   return map[country.toUpperCase()] ?? null;
 }

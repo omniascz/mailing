@@ -6,7 +6,9 @@ import { suppressionReasonEnum } from './enums.js';
 export const suppressions = pgTable(
   'suppressions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }),
     email: varchar('email', { length: 255 }),
     phone: varchar('phone', { length: 32 }),

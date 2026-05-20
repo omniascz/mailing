@@ -16,10 +16,7 @@ const allowlist = ['contacts', 'email_events', 'campaigns'];
 
 describe('isSafeReadOnlySql', () => {
   it('accepts a clean SELECT', () => {
-    const v = isSafeReadOnlySql(
-      'SELECT id, email FROM contacts WHERE org_id = $1',
-      allowlist,
-    );
+    const v = isSafeReadOnlySql('SELECT id, email FROM contacts WHERE org_id = $1', allowlist);
     expect(v.safe).toBe(true);
   });
 
@@ -44,15 +41,11 @@ describe('isSafeReadOnlySql', () => {
   });
 
   it('rejects multi-statement SQL', () => {
-    expect(
-      isSafeReadOnlySql('SELECT 1; DROP TABLE contacts', allowlist).safe,
-    ).toBe(false);
+    expect(isSafeReadOnlySql('SELECT 1; DROP TABLE contacts', allowlist).safe).toBe(false);
   });
 
   it('rejects pg_sleep', () => {
-    expect(
-      isSafeReadOnlySql('SELECT pg_sleep(5) FROM contacts', allowlist).safe,
-    ).toBe(false);
+    expect(isSafeReadOnlySql('SELECT pg_sleep(5) FROM contacts', allowlist).safe).toBe(false);
   });
 
   it('rejects queries against non-allowlisted tables', () => {
@@ -62,10 +55,7 @@ describe('isSafeReadOnlySql', () => {
   });
 
   it('handles schema-qualified tables', () => {
-    const v = isSafeReadOnlySql(
-      'SELECT * FROM public.contacts',
-      allowlist,
-    );
+    const v = isSafeReadOnlySql('SELECT * FROM public.contacts', allowlist);
     expect(v.safe).toBe(true);
   });
 });
@@ -79,9 +69,7 @@ describe('extractReferencedTables', () => {
   });
 
   it('handles schema-qualified identifiers', () => {
-    expect(
-      extractReferencedTables('SELECT 1 FROM public.contacts'),
-    ).toEqual(['contacts']);
+    expect(extractReferencedTables('SELECT 1 FROM public.contacts')).toEqual(['contacts']);
   });
 });
 
@@ -93,29 +81,20 @@ describe('suggestChartType', () => {
   });
 
   it('line for date + number', () => {
-    expect(
-      suggestChartType([col('day', 'date'), col('sent', 'number')], 30),
-    ).toBe('line');
+    expect(suggestChartType([col('day', 'date'), col('sent', 'number')], 30)).toBe('line');
   });
 
   it('pie for small categorical breakdown', () => {
-    expect(
-      suggestChartType([col('status', 'string'), col('count', 'number')], 4),
-    ).toBe('pie');
+    expect(suggestChartType([col('status', 'string'), col('count', 'number')], 4)).toBe('pie');
   });
 
   it('bar for larger categorical breakdown', () => {
-    expect(
-      suggestChartType([col('campaign', 'string'), col('opens', 'number')], 50),
-    ).toBe('bar');
+    expect(suggestChartType([col('campaign', 'string'), col('opens', 'number')], 50)).toBe('bar');
   });
 
   it('table fallback', () => {
     expect(
-      suggestChartType(
-        [col('id', 'string'), col('email', 'string'), col('created', 'date')],
-        100,
-      ),
+      suggestChartType([col('id', 'string'), col('email', 'string'), col('created', 'date')], 100),
     ).toBe('table');
   });
 });
@@ -141,9 +120,7 @@ describe('lexicalVerdict', () => {
   });
 
   it('accepts a clean WITH-CTE query', () => {
-    expect(
-      lexicalVerdict('WITH x AS (SELECT id FROM contacts) SELECT * FROM x').safe,
-    ).toBe(true);
+    expect(lexicalVerdict('WITH x AS (SELECT id FROM contacts) SELECT * FROM x').safe).toBe(true);
   });
 
   it('accepts a trailing semicolon', () => {
@@ -185,7 +162,7 @@ describe('lexicalVerdict', () => {
       'LISTEN channel_x',
       'NOTIFY channel_x',
       'LO_IMPORT()',
-      'PG_READ_FILE(\'/etc/passwd\')',
+      "PG_READ_FILE('/etc/passwd')",
     ];
     for (const sql of violators) {
       expect(lexicalVerdict(sql).safe, `should reject: ${sql}`).toBe(false);
@@ -287,10 +264,7 @@ describe('describeSchemaForPrompt', () => {
   });
 
   it('appends the description when one is provided', () => {
-    const out = describeSchemaForPrompt(
-      { contacts: SCHEMAS.contacts! },
-      { contacts: 'People' },
-    );
+    const out = describeSchemaForPrompt({ contacts: SCHEMAS.contacts! }, { contacts: 'People' });
     expect(out).toMatch(/TABLE contacts -- People/);
   });
 });
@@ -303,12 +277,7 @@ describe('injectOrgFilter', () => {
   });
 
   it('escapes single quotes in orgId', () => {
-    const out = injectOrgFilter(
-      'SELECT * FROM contacts',
-      'contacts',
-      "x'; DROP TABLE--",
-      SCHEMAS,
-    );
+    const out = injectOrgFilter('SELECT * FROM contacts', 'contacts', "x'; DROP TABLE--", SCHEMAS);
     expect(out).toContain("WHERE org_id = 'x''; DROP TABLE--'");
     // The escaped form keeps the single quote inside the string literal so
     // the trailing payload is harmless.
@@ -320,8 +289,8 @@ describe('injectOrgFilter', () => {
   });
 
   it('throws on unknown primary table', () => {
-    expect(() =>
-      injectOrgFilter('SELECT 1 FROM x', 'unknown_table', 'o', SCHEMAS),
-    ).toThrow(/Unknown primary table/);
+    expect(() => injectOrgFilter('SELECT 1 FROM x', 'unknown_table', 'o', SCHEMAS)).toThrow(
+      /Unknown primary table/,
+    );
   });
 });

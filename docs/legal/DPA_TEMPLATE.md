@@ -16,19 +16,19 @@
 
 **Processor**
 ForgeMsg s.r.o. (operating as **Mailforge**)
-Registered office: ____________________________________
-Company number (IČO): ____________________________________
-VAT ID (DIČ): ____________________________________
-Represented by: ____________________________________
+Registered office: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
+Company number (IČO): **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
+VAT ID (DIČ): **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
+Represented by: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
 Data-protection contact: `dpo@mailforge.io`
 
 **Controller**
-Name: ____________________________________
-Registered office: ____________________________________
-Company number: ____________________________________
-VAT ID: ____________________________________
-Represented by: ____________________________________
-Data-protection contact: ____________________________________
+Name: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
+Registered office: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
+Company number: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
+VAT ID: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
+Represented by: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
+Data-protection contact: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
 
 ---
 
@@ -94,20 +94,20 @@ will agree appropriate additional safeguards.
 The Controller represents and warrants that:
 
 a. It has a lawful basis under Art. 6 GDPR for every category of
-   Personal Data it uploads to Mailforge, including a documented basis
-   for each marketing message it sends (typically consent under
-   Art. 6(1)(a) or legitimate interests under Art. 6(1)(f)).
+Personal Data it uploads to Mailforge, including a documented basis
+for each marketing message it sends (typically consent under
+Art. 6(1)(a) or legitimate interests under Art. 6(1)(f)).
 
 b. Where consent is the basis, it has captured consent in a manner
-   that satisfies Art. 4(11) and Art. 7 (freely given, specific,
-   informed, unambiguous), retains records sufficient to prove
-   consent, and provides recipients with an easy means of withdrawal.
+that satisfies Art. 4(11) and Art. 7 (freely given, specific,
+informed, unambiguous), retains records sufficient to prove
+consent, and provides recipients with an easy means of withdrawal.
 
 c. It maintains its own Article 13/14 notices and Article 30 records
-   of processing.
+of processing.
 
 d. The instructions it gives the Processor (via the Mailforge UI,
-   API, or written direction to support) are lawful and proportionate.
+API, or written direction to support) are lawful and proportionate.
 
 **Instructions.** The Controller's documented instructions to the
 Processor consist of:
@@ -335,6 +335,6 @@ lodge complaints with their national supervisory authority.
 
 ---
 
-*Owner: Mailforge legal + DPO team*
-*Last updated: 2026-05-19*
-*Versioning: changes tracked in Git history of this file.*
+_Owner: Mailforge legal + DPO team_
+_Last updated: 2026-05-19_
+_Versioning: changes tracked in Git history of this file._

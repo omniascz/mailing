@@ -270,7 +270,7 @@ export async function listDedicatedIps(
   if (opts.poolId) conditions.push(eq(dedicatedIps.poolId, opts.poolId));
   if (opts.status)
     conditions.push(
-      eq(dedicatedIps.status, opts.status as typeof dedicatedIps.status.enumValues[number]),
+      eq(dedicatedIps.status, opts.status as (typeof dedicatedIps.status.enumValues)[number]),
     );
   return db
     .select()
@@ -331,10 +331,7 @@ export async function updateIpStatus(
  * Strategy: prefer 'warm' > 'active' > 'warming'; within each tier, pick the
  * least-recently-used (lowest todaySent). Caps out at the warmup day's volume limit.
  */
-export async function pickIpForSend(
-  orgId: string,
-  poolId?: string,
-): Promise<DedicatedIp | null> {
+export async function pickIpForSend(orgId: string, poolId?: string): Promise<DedicatedIp | null> {
   // Active sanctions check would live in the abuse service; here we just pick IP.
   const conditions = [
     eq(dedicatedIps.orgId, orgId),
@@ -371,8 +368,10 @@ export async function pickIpForSend(
   // Prefer 'warm' IPs first
   eligible.sort((a, b) => {
     const order = { warm: 0, active: 1, warming: 2 };
-    return (order[a.status as 'warm' | 'active' | 'warming'] ?? 99)
-      - (order[b.status as 'warm' | 'active' | 'warming'] ?? 99);
+    return (
+      (order[a.status as 'warm' | 'active' | 'warming'] ?? 99) -
+      (order[b.status as 'warm' | 'active' | 'warming'] ?? 99)
+    );
   });
   return eligible[0] ?? null;
 }

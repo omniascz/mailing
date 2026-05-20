@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, integer, text, jsonb, timestamp, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  text,
+  jsonb,
+  timestamp,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 
@@ -6,7 +15,9 @@ export const productReviews = pgTable(
   'product_reviews',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     sku: varchar('sku', { length: 128 }).notNull(),
     contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
     rating: integer('rating').notNull(),

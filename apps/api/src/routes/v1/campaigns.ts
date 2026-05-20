@@ -14,6 +14,9 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { randomUUID } from 'node:crypto';
+import { db } from '../../db/client.js';
+import { emailEvents } from '../../db/schema/index.js';
 import {
   createCampaign,
   getCampaign,
@@ -27,6 +30,8 @@ import {
   cancelCampaign,
 } from '../../services/campaigns/index.js';
 import { scheduleResend } from '../../services/campaigns/auto-resend.js';
+import { campaignSplitterQueue, PRIORITY, sendTransactionalEmail } from '../../lib/queues.js';
+import { AppError } from '../../lib/app-error.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -169,12 +174,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
         })
         .parse(req.body);
 
-      const campaign = await scheduleCampaign(
-        req.user!.orgId,
-        id,
-        new Date(scheduledAt),
-        timezone,
-      );
+      const campaign = await scheduleCampaign(req.user!.orgId, id, new Date(scheduledAt), timezone);
       return { data: campaign };
     },
   );
@@ -193,36 +193,23 @@ export default async function campaignRoutes(app: FastifyInstance) {
       const { id } = idParam.parse(req.params);
       const campaign = await sendCampaign(req.user!.orgId, id);
 
-      // Enqueue the campaign splitter job
-      // In production, this import would be lazy to avoid circular deps
-      try {
-        const { campaignSplitterQueue, PRIORITY } = await import(
-          // @ts-expect-error — workers package
-          '@forgemsg/workers/queues'
-        ).catch(() => ({
-          campaignSplitterQueue: null,
-          PRIORITY: { CAMPAIGN: 3 },
-        }));
-
-        if (campaignSplitterQueue) {
-          await campaignSplitterQueue.add(`campaign-${id}`, {
-            campaignId: id,
-            orgId: req.user!.orgId,
-            listId: campaign.listId,
-            segmentId: campaign.segmentId,
-            excludeSegmentId: campaign.excludeSegmentId,
-            content: campaign.content,
-            subject: campaign.subject,
-            preheader: campaign.preheader,
-            fromName: campaign.fromName,
-            fromEmail: campaign.fromEmail,
-            replyTo: campaign.replyTo,
-            priority: PRIORITY.CAMPAIGN,
-          });
-        }
-      } catch {
-        // Queue not available — campaign status was still updated
-      }
+      // Enqueue the campaign splitter job. Worker (apps/workers) consumes
+      // the same Redis queue by name. If enqueue fails, the status flip
+      // already happened — surface the error so the caller can retry.
+      await campaignSplitterQueue.add(`campaign-${id}`, {
+        campaignId: id,
+        orgId: req.user!.orgId,
+        listId: campaign.listId,
+        segmentId: campaign.segmentId,
+        excludeSegmentId: campaign.excludeSegmentId,
+        content: campaign.content,
+        subject: campaign.subject,
+        preheader: campaign.preheader,
+        fromName: campaign.fromName,
+        fromEmail: campaign.fromEmail,
+        replyTo: campaign.replyTo,
+        priority: PRIORITY.CAMPAIGN,
+      });
 
       return { data: campaign };
     },
@@ -291,6 +278,72 @@ export default async function campaignRoutes(app: FastifyInstance) {
         .parse(req.body);
       const child = await scheduleResend(req.user!.orgId, id, body);
       return reply.code(201).send({ data: child });
+    },
+  );
+
+  /**
+   * POST /api/v1/campaigns/:id/test
+   * Send a one-off test of this campaign's current content to a specific
+   * email address. Lets marketers preview rendering + merge tags before
+   * committing to the broadcast.
+   *
+   * Logs a `send` event in email_events with `test: true` for audit,
+   * then enqueues a transactional job to the MTA pipeline. The actual
+   * SMTP delivery happens asynchronously via the Go MTA worker.
+   *
+   * Body: { to: email }
+   */
+  app.post(
+    '/api/v1/campaigns/:id/test',
+    { schema: { tags: ['Campaigns'], summary: 'Send a test of this campaign' } },
+    async (req, reply) => {
+      const { id } = idParam.parse(req.params);
+      const { to } = z.object({ to: z.string().email() }).parse(req.body);
+
+      const campaign = await getCampaign(req.user!.orgId, id);
+      const content = (campaign.content ?? {}) as { html?: string; plainText?: string };
+      if (!content.html && !content.plainText) {
+        throw AppError.badRequest('Campaign has no content to test — add HTML or plain text first');
+      }
+      if (!campaign.subject) {
+        throw AppError.badRequest('Campaign has no subject — set one before sending a test');
+      }
+
+      const messageId = `<test-${randomUUID()}@forgemsg>`;
+      await db.insert(emailEvents).values({
+        orgId: req.user!.orgId,
+        eventType: 'send',
+        messageId,
+        campaignId: campaign.id,
+        metadata: {
+          to,
+          test: true,
+          subject: campaign.subject,
+          fromEmail: campaign.fromEmail,
+          fromName: campaign.fromName,
+        },
+      });
+
+      // Enqueue the actual delivery. mta-other worker dispatches via gRPC
+      // to Go MTA. If MTA is unreachable we still recorded the audit row
+      // above, so monitoring catches "test send requested but never sent".
+      try {
+        await sendTransactionalEmail({
+          to,
+          from: campaign.fromEmail ?? `no-reply@${process.env.DOI_FROM_DOMAIN ?? 'example.com'}`,
+          fromName: campaign.fromName ?? undefined,
+          replyTo: campaign.replyTo ?? undefined,
+          subject: `[TEST] ${campaign.subject}`,
+          html: content.html ?? '',
+          text: content.plainText ?? undefined,
+          orgId: req.user!.orgId,
+        });
+      } catch (err) {
+        req.log.error({ err, event: 'campaign_test_enqueue_failed', campaignId: id, to });
+        // Don't fail the response — audit row exists, retry from UI is fine.
+      }
+
+      return reply.code(202).send({ data: { messageId, to, status: 'queued' } });
     },
   );
 }

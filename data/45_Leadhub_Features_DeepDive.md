@@ -15,6 +15,7 @@
 > **Pozice:** **český CDP pro e-shopy** s důrazem na: jednoduchost, ROI, ochotná česká podpora, nízké náklady, hluboká integrace se Shoptet a Upgates
 >
 > **Klíčové diferenciátory:**
+>
 > - **100% český nástroj** s českou podporou (české skloňování, vykání/tykání jedním klikem!)
 > - **Specializace na Shoptet a Upgates** (deepest integration in CZ market)
 > - **CDP funkce zdarma v rámci předplatného** (RFM analýza zdarma!)
@@ -33,7 +34,7 @@
 > - **21denní bezplatné zkušební období** (Platform Pro)
 > - **API dokumentace** (api.leadhub.co/docs)
 >
-> **Filozofie:** *"Marketing nemusí být složitý – stačí mít správný nástroj."*
+> **Filozofie:** _"Marketing nemusí být složitý – stačí mít správný nástroj."_
 
 ---
 
@@ -84,11 +85,11 @@
 
 ### Per oficiální popis
 
-> *"Leadhub je nástroj na e-mail marketing a marketingové automatizace, který doručí vhodnou zprávu příjemci v ten správný moment. Leadhub pomáhá zvyšovat e-shopům obrat při minimální časové a finanční investici."*
+> _"Leadhub je nástroj na e-mail marketing a marketingové automatizace, který doručí vhodnou zprávu příjemci v ten správný moment. Leadhub pomáhá zvyšovat e-shopům obrat při minimální časové a finanční investici."_
 
-> *"Leadhub zpracovává miliony událostí v reálném čase. Sbírá data z vašeho e-shopu. Zaznamená veškerou aktivitu zákazníků od otevření e-mailu nebo kliknutí na reklamu, přes zhlédnutí stránky nebo produktu až po průběh nákupu."*
+> _"Leadhub zpracovává miliony událostí v reálném čase. Sbírá data z vašeho e-shopu. Zaznamená veškerou aktivitu zákazníků od otevření e-mailu nebo kliknutí na reklamu, přes zhlédnutí stránky nebo produktu až po průběh nákupu."_
 
-> *"Naše Služba je marketingová platforma, jež je poskytována software-as-a-service (SaaS), která slouží zejména k vytváření e-mailových či facebookových kampaní, nastavení marketingových a reklamních kampaní, automatizaci, personalizaci, segmentaci a analytiku všech marketingových aktivit spojených primárně s e-mailingem."* (Podmínky použití)
+> _"Naše Služba je marketingová platforma, jež je poskytována software-as-a-service (SaaS), která slouží zejména k vytváření e-mailových či facebookových kampaní, nastavení marketingových a reklamních kampaní, automatizaci, personalizaci, segmentaci a analytiku všech marketingových aktivit spojených primárně s e-mailingem."_ (Podmínky použití)
 
 ### Pro koho je
 
@@ -105,7 +106,7 @@ Cílový profil Leadhub:
 
 ### Per oficiální Shoptet Marketplace
 
-> *"Leadhub je český CRM nástroj navržený výhradně pro e-shopy, které chtějí zvyšovat tržby e-mailingem a marketingovými automatizacemi. Je vhodný jak pro začátečníky, tak i specialisty a agentury."*
+> _"Leadhub je český CRM nástroj navržený výhradně pro e-shopy, které chtějí zvyšovat tržby e-mailingem a marketingovými automatizacemi. Je vhodný jak pro začátečníky, tak i specialisty a agentury."_
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -190,6 +191,7 @@ Cílový profil Leadhub:
 ### 2.1 Per oficiální ceník (leadhub.co/cenik)
 
 #### Starter (zdarma!)
+
 - **0–500 přihlášených**
 - **Cena: ZDARMA**
 - Všechny funkce
@@ -198,6 +200,7 @@ Cílový profil Leadhub:
 - Pro začínající online prodejce
 
 #### Platform Pro (nejpopulárnější)
+
 - **0–50 000 přihlášených**
 - **Cena: od 216 Kč/měsíc** (bez DPH 21%, při 0-500 přihlášených)
 - Všechny funkce
@@ -206,6 +209,7 @@ Cílový profil Leadhub:
 - Zvýhodněný plán pro zákazníky podporovaných platforem (Shoptet, Upgates)
 
 #### Individual (custom)
+
 - **∞ přihlášených** (neomezený účet)
 - **Cena: custom** (kontakt: podpora@leadhub.co)
 - Osobní Account Manager
@@ -215,6 +219,7 @@ Cílový profil Leadhub:
 ### 2.2 Cenová struktura Platform Pro
 
 Ceník odráží počet přihlášených (přihlášených = aktivní opt-in kontakty v databázi):
+
 - **0-500 přihlášených: 216 Kč/měsíc** (bez DPH)
 - škáluje až do 50 000 přihlášených
 - ⚠️ Konkrétní cenu nad 500 přihlášených není veřejně dostupná v rozsahu – nutný kontakt podpory pro upřesnění
@@ -224,12 +229,14 @@ Ceník odráží počet přihlášených (přihlášených = aktivní opt-in kon
 Per oficiální:
 
 #### Náhodné tel. číslo
+
 - **od 0,80 Kč/SMS**
 - bez měsíčního poplatku
 - nejlepší cena/SMS
 - možnost kdykoliv upgradovat na vlastního odesílatele
 
 #### Vlastní název odesílatele
+
 - **od 1,10 Kč/SMS**
 - bez měsíčního poplatku
 - příjemce uvidí automaticky vaše jméno / jméno firmy
@@ -284,21 +291,21 @@ Příklad měsíčního nákladu:
 
 ### 2.7 Per podmínky použití (oficiální)
 
-> *"Funkce v ceně zvoleného Předplaceného programu. Přehled funkcí zahrnutých do Předplacených programů Platform Pro a Individual jsou specifikovány v Ceníku."*
+> _"Funkce v ceně zvoleného Předplaceného programu. Přehled funkcí zahrnutých do Předplacených programů Platform Pro a Individual jsou specifikovány v Ceníku."_
 
-> *"V případě, že množství kontaktů ve Vaší Databázi překročí hranici Počtu přihlášených, ve kterém v okamžik překročení hranice využíváte naši Službu, upozorníme Vás na tuto skutečnost buď e-mailem. V návaznosti na to Vám příští Fakturační období strhneme naši Odměnu dle článku 6.7."*
+> _"V případě, že množství kontaktů ve Vaší Databázi překročí hranici Počtu přihlášených, ve kterém v okamžik překročení hranice využíváte naši Službu, upozorníme Vás na tuto skutečnost buď e-mailem. V návaznosti na to Vám příští Fakturační období strhneme naši Odměnu dle článku 6.7."_
 
 ### 2.8 Vs. konkurence pricing
 
-| Platforma | Vstupní cena | Pro 1 000 kontaktů | Pro 10 000 kontaktů |
-|---|---|---|---|
-| **Leadhub Starter** | **0 Kč** | 0 Kč (s logem) | N/A (limit 500) |
-| **Leadhub Platform Pro** | **216 Kč** | ~216 Kč+ | škáluje |
-| **Mailchimp Standard** | ~€20+ | ~€69+ | ~€100+ |
-| **Ecomail** | ~290 Kč | ~290 Kč | ~570 Kč |
-| **SmartEmailing** | ~349 Kč | ~349 Kč | ~990 Kč |
-| **Mailerlite** | $9+ | ~$15+ | ~$73+ |
-| **Klaviyo** | $20+ | ~$30+ | ~$150+ |
+| Platforma                | Vstupní cena | Pro 1 000 kontaktů | Pro 10 000 kontaktů |
+| ------------------------ | ------------ | ------------------ | ------------------- |
+| **Leadhub Starter**      | **0 Kč**     | 0 Kč (s logem)     | N/A (limit 500)     |
+| **Leadhub Platform Pro** | **216 Kč**   | ~216 Kč+           | škáluje             |
+| **Mailchimp Standard**   | ~€20+        | ~€69+              | ~€100+              |
+| **Ecomail**              | ~290 Kč      | ~290 Kč            | ~570 Kč             |
+| **SmartEmailing**        | ~349 Kč      | ~349 Kč            | ~990 Kč             |
+| **Mailerlite**           | $9+          | ~$15+              | ~$73+               |
+| **Klaviyo**              | $20+         | ~$30+              | ~$150+              |
 
 ⚠️ **Leadhub patří k nejlevnějším českým CDP/email marketing nástrojům**.
 
@@ -309,21 +316,25 @@ Příklad měsíčního nákladu:
 ### 3.1 Český nástroj s českou podporou
 
 Per Markéta Kocichová (cistedrevo.cz):
-> *"Velké plus je i to, že jde o českou platformu s velmi ochotnou a rychlou podporou, která nám vždy poradila, když jsme si s čímkoliv nevěděli rady."*
+
+> _"Velké plus je i to, že jde o českou platformu s velmi ochotnou a rychlou podporou, která nám vždy poradila, když jsme si s čímkoliv nevěděli rady."_
 
 Per Monika Moravčíková (moniel.cz):
-> *"Líbí se mi, že je to český nástroj a propojení s Shoptetem funguje na jedničku."*
+
+> _"Líbí se mi, že je to český nástroj a propojení s Shoptetem funguje na jedničku."_
 
 ⚠️ **Česká podpora = klíčový diferenciátor** vs. zahraniční nástroje.
 
 ### 3.2 České skloňování jmen (UNIKÁTNÍ!)
 
 Per oficiální (leadhub.co/cs/features):
-> *"Oslovení do předmětu nebo těla e-mailu a personalizaci textu podle pohlaví vložíte jedním kliknutím. Není třeba vkládat žádné složité merge tagy."*
 
-> *"Oslovení v 1. nebo 5. pádě. Automatické skloňování jména nebo příjmení. Budujte vztah s vašimi příjemci co nejosobnější komunikací."*
+> _"Oslovení do předmětu nebo těla e-mailu a personalizaci textu podle pohlaví vložíte jedním kliknutím. Není třeba vkládat žádné složité merge tagy."_
+
+> _"Oslovení v 1. nebo 5. pádě. Automatické skloňování jména nebo příjmení. Budujte vztah s vašimi příjemci co nejosobnější komunikací."_
 
 ⚠️ **Toto je naprosto unikátní pro CZ trh** – zahraniční nástroje (Mailchimp, Klaviyo) toto NEMAJÍ:
+
 - Skloňování v 1. pádě ("Pan Novák") vs. 5. pádě ("Pane Nováku")
 - Automatické rozlišení mužského a ženského rodu
 - Kontrola správnosti přímo v editoru
@@ -331,11 +342,13 @@ Per oficiální (leadhub.co/cs/features):
 ### 3.3 Specializace na Shoptet a Upgates
 
 Per Shoptet Doplňky:
-> *"Leadhub je český CRM nástroj navržený výhradně pro e-shopy."*
 
-> *"Po instalaci se do Leadhubu automaticky synchronizují objednávky, produkty i zákaznické profily. Díky tomu můžete během pár minut spouštět přesně cílené e‑mailové i SMS kampaně."*
+> _"Leadhub je český CRM nástroj navržený výhradně pro e-shopy."_
+
+> _"Po instalaci se do Leadhubu automaticky synchronizují objednávky, produkty i zákaznické profily. Díky tomu můžete během pár minut spouštět přesně cílené e‑mailové i SMS kampaně."_
 
 ⚠️ **Nejhlubší Shoptet integrace v ČR** – synchronizace:
+
 - Objednávky
 - Produkty
 - Zákaznické profily
@@ -345,9 +358,11 @@ Per Shoptet Doplňky:
 ### 3.4 RFM analýza zdarma
 
 Per oficiální:
-> *"V Leadhubu vytvoříte v rámci vašeho předplatného RFM analýzu zdarma. Začněte segmentovat vaše zákazníky chytře a posílejte jim personalizovaná sdělení na míru."*
+
+> _"V Leadhubu vytvoříte v rámci vašeho předplatného RFM analýzu zdarma. Začněte segmentovat vaše zákazníky chytře a posílejte jim personalizovaná sdělení na míru."_
 
 ⚠️ **RFM zdarma je velký diferenciátor**:
+
 - Konkurence často účtuje RFM jako add-on nebo enterprise feature
 - Leadhub poskytuje v rámci základního Platform Pro
 
@@ -368,23 +383,23 @@ Začínající e-shopy mohou testovat bez závazku
 
 ### 3.6 Vs. konkurence comparison
 
-| Aspect | Leadhub | Ecomail | SmartEmailing | Mailchimp | Klaviyo |
-|---|---|---|---|---|---|
-| **Origin** | **🇨🇿 Česko** | 🇨🇿 Česko | 🇨🇿 Česko | 🇺🇸 USA | 🇺🇸 USA |
-| **CZ podpora** | ✅ telefonní | ✅ | ✅ | ❌ EN | ❌ EN |
-| **Skloňování CZ jmen** | **✅ unikátní!** | částečně | ✅ | ❌ | ❌ |
-| **Shoptet integrace** | **✅ deepest** | ✅ | ✅ | omezená | ❌ |
-| **Upgates integrace** | **✅ native** | ✅ | ✅ | ❌ | ❌ |
-| **RFM analýza** | **✅ zdarma** | doplněk | ✅ | ❌ | ✅ |
-| **Free plan** | **✅ 500 přihlášených** | ✅ 200 | ❌ | ✅ 500 | ❌ |
-| **CDP funkce** | ✅ základní | částečně | ✅ | ❌ | ✅ pokročilé |
-| **SMS** | ✅ od 0,80 Kč | ✅ | ✅ | ❌ separátní | ✅ |
-| **Pop-up + web prvky** | ✅ | ✅ | ✅ | částečně | ✅ |
-| **Slevové kódy ze Shoptet** | **✅ bidirectional** | ✅ | ✅ | ❌ | ❌ |
-| **Sklik integrace** | **✅ unikátní pro CZ!** | částečně | částečně | ❌ | ❌ |
-| **Velikost firmy** | ~12 lidí | větší | větší | velká | velká |
-| **Cena (vstup)** | **0 Kč → 216 Kč** | 290 Kč | 349 Kč | $0+ | $20+ |
-| **API** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Aspect                      | Leadhub                 | Ecomail  | SmartEmailing | Mailchimp    | Klaviyo      |
+| --------------------------- | ----------------------- | -------- | ------------- | ------------ | ------------ |
+| **Origin**                  | **🇨🇿 Česko**            | 🇨🇿 Česko | 🇨🇿 Česko      | 🇺🇸 USA       | 🇺🇸 USA       |
+| **CZ podpora**              | ✅ telefonní            | ✅       | ✅            | ❌ EN        | ❌ EN        |
+| **Skloňování CZ jmen**      | **✅ unikátní!**        | částečně | ✅            | ❌           | ❌           |
+| **Shoptet integrace**       | **✅ deepest**          | ✅       | ✅            | omezená      | ❌           |
+| **Upgates integrace**       | **✅ native**           | ✅       | ✅            | ❌           | ❌           |
+| **RFM analýza**             | **✅ zdarma**           | doplněk  | ✅            | ❌           | ✅           |
+| **Free plan**               | **✅ 500 přihlášených** | ✅ 200   | ❌            | ✅ 500       | ❌           |
+| **CDP funkce**              | ✅ základní             | částečně | ✅            | ❌           | ✅ pokročilé |
+| **SMS**                     | ✅ od 0,80 Kč           | ✅       | ✅            | ❌ separátní | ✅           |
+| **Pop-up + web prvky**      | ✅                      | ✅       | ✅            | částečně     | ✅           |
+| **Slevové kódy ze Shoptet** | **✅ bidirectional**    | ✅       | ✅            | ❌           | ❌           |
+| **Sklik integrace**         | **✅ unikátní pro CZ!** | částečně | částečně      | ❌           | ❌           |
+| **Velikost firmy**          | ~12 lidí                | větší    | větší         | velká        | velká        |
+| **Cena (vstup)**            | **0 Kč → 216 Kč**       | 290 Kč   | 349 Kč        | $0+          | $20+         |
+| **API**                     | ✅                      | ✅       | ✅            | ✅           | ✅           |
 
 ⚠️ **Leadhub silně konkuruje na CZ trhu** v segmentu Shoptet/Upgates e-shopů.
 
@@ -395,11 +410,12 @@ Začínající e-shopy mohou testovat bez závazku
 ### 4.1 Co je CDP
 
 Per oficiální (leadhub.co/slovnik-pojmu/cdp):
-> *"CDP (Customer Data Platform) je platforma, která sbírá data o zákaznících z různých zdrojů – z e-shopu, e-mailových kampaní, SMS, webu i reklam. Ty pak spojuje do jednoho místa. Výsledkem jsou kompletní zákaznické 360° profily, na jejichž základě lze spouštět personalizovaný marketing přesně ve chvíli, kdy to dává největší smysl."*
+
+> _"CDP (Customer Data Platform) je platforma, která sbírá data o zákaznících z různých zdrojů – z e-shopu, e-mailových kampaní, SMS, webu i reklam. Ty pak spojuje do jednoho místa. Výsledkem jsou kompletní zákaznické 360° profily, na jejichž základě lze spouštět personalizovaný marketing přesně ve chvíli, kdy to dává největší smysl."_
 
 ### 4.2 Per oficiální detail
 
-> *"CDP je systém, který propojuje zákaznická data z různých zdrojů (CRM, web, e-shop, reklama, e-mailing, SMS,...) do jednoho místa a vytváří z nich ucelené profily jednotlivých zákazníků. Na rozdíl od CRM nebo e-mailového nástroje CDP nepracuje jen s kontakty. Komplexně sleduje chování zákazníků: co si prohlíželi, co koupili, kdy naposledy reagovali na kampaň nebo byli na webu, kolik utratili a jak se jejich chování mění v čase (s tím vám pomůže RFM analýza)."*
+> _"CDP je systém, který propojuje zákaznická data z různých zdrojů (CRM, web, e-shop, reklama, e-mailing, SMS,...) do jednoho místa a vytváří z nich ucelené profily jednotlivých zákazníků. Na rozdíl od CRM nebo e-mailového nástroje CDP nepracuje jen s kontakty. Komplexně sleduje chování zákazníků: co si prohlíželi, co koupili, kdy naposledy reagovali na kampaň nebo byli na webu, kolik utratili a jak se jejich chování mění v čase (s tím vám pomůže RFM analýza)."_
 
 ### 4.3 360° profil obsahuje
 
@@ -432,22 +448,23 @@ Leadhub 360° profil:
 
 ### 4.4 Per oficiální benefity CDP
 
-> *"Tato data pak slouží jako základ pro segmentaci, automatizaci a personalizaci. Místo rozesílání stejného newsletteru celé databázi víte přesně, komu poslat win-back kampaň, komu nabídnout slevu na další nákup a koho naopak z databáze vyřadit."*
+> _"Tato data pak slouží jako základ pro segmentaci, automatizaci a personalizaci. Místo rozesílání stejného newsletteru celé databázi víte přesně, komu poslat win-back kampaň, komu nabídnout slevu na další nákup a koho naopak z databáze vyřadit."_
 
 ### 4.5 Per oficiální funkční princip
 
-> *"CDP funguje jako centrální datový hub vašeho marketingu. V praxi to znamená:
+> \*"CDP funguje jako centrální datový hub vašeho marketingu. V praxi to znamená:
+>
 > - nejprve sbíráte data – aktivitu na webu i v kampaních, nákupní chování, preference
 > - každá interakce se přiřadí ke konkrétnímu profilu
-> - data efektivně využijte v marketingové komunikaci pomocí segmentace a automatické komunikace i personalizovaného obsahu"*
+> - data efektivně využijte v marketingové komunikaci pomocí segmentace a automatické komunikace i personalizovaného obsahu"\*
 
-> *"CDP umožňuje komunikovat s každým zákazníkem podle toho, kde se ve svém nákupním cyklu skutečně nachází."*
+> _"CDP umožňuje komunikovat s každým zákazníkem podle toho, kde se ve svém nákupním cyklu skutečně nachází."_
 
 ### 4.6 Per oficiální positioning
 
-> *"CDP má největší smysl pro e-shopy, které chtějí řidit marketing daty a proměnit je v efektivní, personalizované kampaně. Není to nástroj jen pro velké hráče. I menší e-shop s databází v řádu tisíců kontaktů z CDP dokáže vytěžit výrazně více než z klasického rozesílacího nástroje."*
+> _"CDP má největší smysl pro e-shopy, které chtějí řidit marketing daty a proměnit je v efektivní, personalizované kampaně. Není to nástroj jen pro velké hráče. I menší e-shop s databází v řádu tisíců kontaktů z CDP dokáže vytěžit výrazně více než z klasického rozesílacího nástroje."_
 
-> *"Leadhub je CDP nástroj navržený přímo pro potřeby e-shopů. Propojuje data z vašeho e-shopu a v reálném čase z nich vytváří 360° zákaznické profily, RFM segmenty a spouštěče pro automatické kampaně."*
+> _"Leadhub je CDP nástroj navržený přímo pro potřeby e-shopů. Propojuje data z vašeho e-shopu a v reálném čase z nich vytváří 360° zákaznické profily, RFM segmenty a spouštěče pro automatické kampaně."_
 
 ---
 
@@ -482,7 +499,7 @@ Kombinace dává RFM segmenty:
 
 ### 5.2 Per oficiální
 
-> *"V Leadhubu vytvoříte v rámci vašeho předplatného RFM analýzu zdarma. Začněte segmentovat vaše zákazníky chytře a posílejte jim personalizovaná sdělení na míru."*
+> _"V Leadhubu vytvoříte v rámci vašeho předplatného RFM analýzu zdarma. Začněte segmentovat vaše zákazníky chytře a posílejte jim personalizovaná sdělení na míru."_
 
 ⚠️ **RFM zdarma** = velký USP vs. konkurence, kde RFM často premium feature.
 
@@ -517,11 +534,12 @@ New Customers segment:
 
 ### 5.4 Per oficiální (CDP slovník)
 
-> *"Komplexně sleduje chování zákazníků: co si prohlíželi, co koupili, kdy naposledy reagovali na kampaň nebo byli na webu, kolik utratili a jak se jejich chování mění v čase (s tím vám pomůže RFM analýza)."*
+> _"Komplexně sleduje chování zákazníků: co si prohlíželi, co koupili, kdy naposledy reagovali na kampaň nebo byli na webu, kolik utratili a jak se jejich chování mění v čase (s tím vám pomůže RFM analýza)."_
 
 ### 5.5 Vizualizace RFM
 
 Leadhub vizualizuje RFM:
+
 - Matice 5x5 nebo 3x3
 - Barevné rozlišení segmentů
 - Počty zákazníků v každém segmentu
@@ -534,7 +552,7 @@ Leadhub vizualizuje RFM:
 
 ### 6.1 Per oficiální
 
-> *"Databáze všech zákazníků, návštěvníků webu a jejich chování. Sledovací pixel, který je nasazen na vašem webu, posílá do Leadhubu informace o chování všech zákazníků a návštěvníků webu (co prohlíží, nakupují,...). Na základě toho je jim pak doručeno relevantní sdělení a doporučovány produkty."*
+> _"Databáze všech zákazníků, návštěvníků webu a jejich chování. Sledovací pixel, který je nasazen na vašem webu, posílá do Leadhubu informace o chování všech zákazníků a návštěvníků webu (co prohlíží, nakupují,...). Na základě toho je jim pak doručeno relevantní sdělení a doporučovány produkty."_
 
 ### 6.2 Co pixel sleduje
 
@@ -556,13 +574,14 @@ Leadhub pixel sleduje:
 ### 6.3 GDPR compliance
 
 Per oficiální:
-> *"Pokud se návštěvník webu neodhlásí poté, co je o této skutečnosti informován pomocí Centra soukromí, bude jeho chování na webu sledováno v zájmu pro něj více relevantního, méně otravného marketingu."*
+
+> _"Pokud se návštěvník webu neodhlásí poté, co je o této skutečnosti informován pomocí Centra soukromí, bude jeho chování na webu sledováno v zájmu pro něj více relevantního, méně otravného marketingu."_
 
 ⚠️ Leadhub respektuje GDPR – Centrum soukromí umožňuje opt-out.
 
 ### 6.4 Per oficiální (Upgates Marketplace)
 
-> *"Leadhub zpracovává miliony událostí v reálném čase. Sbírá data z vašeho e-shopu. Zaznamená veškerou aktivitu zákazníků od otevření e-mailu nebo kliknutí na reklamu, přes zhlédnutí stránky nebo produktu až po průběh nákupu. Posbíraná data vyhodnotí a dokáže vaše zákazníky rozdělit do specificky definovaných segmentů."*
+> _"Leadhub zpracovává miliony událostí v reálném čase. Sbírá data z vašeho e-shopu. Zaznamená veškerou aktivitu zákazníků od otevření e-mailu nebo kliknutí na reklamu, přes zhlédnutí stránky nebo produktu až po průběh nákupu. Posbíraná data vyhodnotí a dokáže vaše zákazníky rozdělit do specificky definovaných segmentů."_
 
 ⚠️ **Real-time processing** – Leadhub zpracovává miliony událostí v reálném čase.
 
@@ -585,6 +604,7 @@ Behavior triggery v Leadhubu:
 ### 7.1 Drag & drop editor
 
 Per oficiální (leadhub.co/cs/features):
+
 - Intuitivní rozhraní
 - Předpřipravené šablony
 - Drag & drop bloky
@@ -593,27 +613,30 @@ Per oficiální (leadhub.co/cs/features):
 - Možnost vlastního HTML kódu
 
 Per Shoptet Marketplace:
-> *"Intuitivní drag&drop editor, ve kterém i začátečníci vytvoří krásné e-maily."*
+
+> _"Intuitivní drag&drop editor, ve kterém i začátečníci vytvoří krásné e-maily."_
 
 ### 7.2 Per oficiální detail
 
-> *"Leadhub umožňuje vkládání vlastního HTML kódu a přizpůsobení šablon přesně tak, jak potřebujete."*
+> _"Leadhub umožňuje vkládání vlastního HTML kódu a přizpůsobení šablon přesně tak, jak potřebujete."_
 
-> *"V editoru najdete všechny Google fonty. Můžete tak sjednotit design e-mailu s vaším webem. Do editoru můžeme přidat a jakýkoli jiný font na vaše požádání."*
+> _"V editoru najdete všechny Google fonty. Můžete tak sjednotit design e-mailu s vaším webem. Do editoru můžeme přidat a jakýkoli jiný font na vaše požádání."_
 
 ⚠️ **Custom fonty na vyžádání** – flexibility pro branding.
 
 ### 7.3 Testovací náhled
 
 Per oficiální:
-> *"Testovací náhled e-mail slouží k ověření správnosti všech použitých funkcionalit v kampani (personalizace, zobrazení, odkazy, ceny,..)"*
+
+> _"Testovací náhled e-mail slouží k ověření správnosti všech použitých funkcionalit v kampani (personalizace, zobrazení, odkazy, ceny,..)"_
 
 ⚠️ Důležité pro QA před send.
 
 ### 7.4 Odpočet času
 
 Per oficiální:
-> *"Jedním tahem myši umístěte do e-mailu odpočet, který pomáhá v příjemci vyvolat pocit ojedinělé a časově omezené nabídky. V automatickém e-mailu se odpočet aktivuje po doručení e-mailu do jeho schránky a každému příjemci tak doručíte e-mail s unikátním odpočtem."*
+
+> _"Jedním tahem myši umístěte do e-mailu odpočet, který pomáhá v příjemci vyvolat pocit ojedinělé a časově omezené nabídky. V automatickém e-mailu se odpočet aktivuje po doručení e-mailu do jeho schránky a každému příjemci tak doručíte e-mail s unikátním odpočtem."_
 
 ⚠️ **Per-recipient unikátní odpočet** – psychologický nátlak pro konverzi.
 
@@ -632,12 +655,13 @@ Leadhub email kampaně:
 
 ### 7.6 Per oficiální send timing
 
-> *"Rozesílku můžete odeslat ihned, jakmile ji máte připravenou nebo její odeslání můžete naplánovat do budoucna."*
+> _"Rozesílku můžete odeslat ihned, jakmile ji máte připravenou nebo její odeslání můžete naplánovat do budoucna."_
 
 ### 7.7 Skupiny kampaní
 
 Per oficiální:
-> *"Pro přehlednost uspořádejte kampaně do skupin podle jejich typu. Vždy budete mít také k dispozici detailní statistiky k jednotlivým kampaním a zároveň k celé skupině kampaní."*
+
+> _"Pro přehlednost uspořádejte kampaně do skupin podle jejich typu. Vždy budete mít také k dispozici detailní statistiky k jednotlivým kampaním a zároveň k celé skupině kampaní."_
 
 ⚠️ Organization s scale.
 
@@ -648,7 +672,8 @@ Per oficiální:
 ### 8.1 Co to znamená
 
 Per oficiální (leadhub.co/cs/features):
-> *"Před každou zkontrolujete přímo v editoru, zda je oslovení a personalizace textu správně nastavena pro muže a ženy, ale také pro kontakty, u kterých nemáte tyto údaje k dispozici. Oslovení v 1. nebo 5. pádě. Automatické skloňování jména nebo příjmení. Budujte vztah s vašimi příjemci co nejosobnější komunikací."*
+
+> _"Před každou zkontrolujete přímo v editoru, zda je oslovení a personalizace textu správně nastavena pro muže a ženy, ale také pro kontakty, u kterých nemáte tyto údaje k dispozici. Oslovení v 1. nebo 5. pádě. Automatické skloňování jména nebo příjmení. Budujte vztah s vašimi příjemci co nejosobnější komunikací."_
 
 ### 8.2 Příklady použití
 
@@ -672,16 +697,18 @@ Vyhnout se trapasům
 ### 8.3 Bez merge tagů
 
 Per oficiální:
-> *"Oslovení do předmětu nebo těla e-mailu a personalizaci textu podle pohlaví vložíte jedním kliknutím. Není třeba vkládat žádné složité merge tagy."*
+
+> _"Oslovení do předmětu nebo těla e-mailu a personalizaci textu podle pohlaví vložíte jedním kliknutím. Není třeba vkládat žádné složité merge tagy."_
 
 ⚠️ **Vs. konkurence:**
+
 - Mailchimp: `*|FNAME|*` merge tag bez skloňování
 - Klaviyo: `{{ first_name }}` bez skloňování
 - Leadhub: **klikni → vlož → automaticky správně**
 
 ### 8.4 Per oficiální (E-mail marketing page)
 
-> *"Leadhub je jediný český nástroj, kde personalizaci sdělení i produktové nabídky jednoduše naklikáte přímo v editoru – bez nutnosti programování a vkládání složitých merge tagů."*
+> _"Leadhub je jediný český nástroj, kde personalizaci sdělení i produktové nabídky jednoduše naklikáte přímo v editoru – bez nutnosti programování a vkládání složitých merge tagů."_
 
 ⚠️ **"Jediný český nástroj"** – marketing claim Leadhubu (silně argumentující své USP).
 
@@ -708,7 +735,7 @@ Confident send
 
 ### 9.1 Per oficiální
 
-> *"Leadhub je jediný český nástroj, kde personalizaci sdělení i produktové nabídky jednoduše naklikáte přímo v editoru – bez nutnosti programování a vkládání složitých merge tagů."*
+> _"Leadhub je jediný český nástroj, kde personalizaci sdělení i produktové nabídky jednoduše naklikáte přímo v editoru – bez nutnosti programování a vkládání složitých merge tagů."_
 
 ### 9.2 Co lze personalizovat
 
@@ -731,16 +758,19 @@ Personalizace v Leadhubu:
 ### 9.3 Produkty z poslední objednávky
 
 Per oficiální:
-> *"Produkty z poslední objednávky jsou vhodné do automatizací s žádostí o zpětnou vazbou po nákupu nebo do retenčních automatizací. Do e-mailu je vložíte pouhým kliknutím a po jejich odeslání se automaticky vygenerují příjemci produkty, které obsahovala jeho poslední objednávka."*
+
+> _"Produkty z poslední objednávky jsou vhodné do automatizací s žádostí o zpětnou vazbou po nákupu nebo do retenčních automatizací. Do e-mailu je vložíte pouhým kliknutím a po jejich odeslání se automaticky vygenerují příjemci produkty, které obsahovala jeho poslední objednávka."_
 
 ⚠️ **Per-recipient dynamic content** – každý dostane jiný email obsahu.
 
 ### 9.4 Dynamic slevové kódy
 
 Per oficiální:
-> *"Vkládání dynamických slevových kódů do e-mailu. Slevové kódy vložíte do e-mailu velice snadno. Kódy se načítají ze zásobníku nebo přímo z vaší e-shopové platformy."*
+
+> _"Vkládání dynamických slevových kódů do e-mailu. Slevové kódy vložíte do e-mailu velice snadno. Kódy se načítají ze zásobníku nebo přímo z vaší e-shopové platformy."_
 
 ⚠️ Bidirectional integration:
+
 - Slevové kódy generované v Shoptetu
 - Automaticky se přiřadí per-user v Leadhubu
 - Unikátní kód v každém emailu
@@ -751,7 +781,7 @@ Per oficiální:
 
 ### 10.1 Per oficiální
 
-> *"Nejpoužívanější automatizace ihned ke spuštění. Ve vašem účtu v Leadhubu najdete předpřipravené automatizace v designu e-shopu včetně nastaveného segmentu příjemců, na který se bude kampaň odesílat. Kampaně můžete upravit podle sebe nebo je ihned spustit."*
+> _"Nejpoužívanější automatizace ihned ke spuštění. Ve vašem účtu v Leadhubu najdete předpřipravené automatizace v designu e-shopu včetně nastaveného segmentu příjemců, na který se bude kampaň odesílat. Kampaně můžete upravit podle sebe nebo je ihned spustit."_
 
 ### 10.2 Předpřipravené automatizace (zdroje: oficiální + nápověda)
 
@@ -770,16 +800,17 @@ Z navigace nápovědy:
 
 ### 10.3 Per Upgates Marketplace
 
-> *"Předpřipravené automatické kampaně - nemusíte tápat a nemusíte na nic čekat."*
+> _"Předpřipravené automatické kampaně - nemusíte tápat a nemusíte na nic čekat."_
 
-> *"Pracuje za vás - automatické kampaně jednou nastavíte a ty pak pracují bez vašeho zásahu a vydělávají. Například předpřipravenou kampaň Sleva na první nákup (konverzně nejúspěšnější) můžete spustit okamžitě po instalaci Leadhubu."*
+> _"Pracuje za vás - automatické kampaně jednou nastavíte a ty pak pracují bez vašeho zásahu a vydělávají. Například předpřipravenou kampaň Sleva na první nákup (konverzně nejúspěšnější) můžete spustit okamžitě po instalaci Leadhubu."_
 
 ⚠️ **"Sleva na první nákup" označena jako konverzně nejúspěšnější**.
 
 ### 10.4 Test mode
 
 Per oficiální:
-> *"Spusťte automatizaci v testovacím módu a přesvědčte se, že se odesílá ve správný moment. V testovacím mód bude e-mail místo reálných příjemců doručen na vámi zadanou e-mailovou adresu."*
+
+> _"Spusťte automatizaci v testovacím módu a přesvědčte se, že se odesílá ve správný moment. V testovacím mód bude e-mail místo reálných příjemců doručen na vámi zadanou e-mailovou adresu."_
 
 ⚠️ Důležité pro testování automatizací před production.
 
@@ -789,7 +820,7 @@ Per oficiální:
 
 ### 11.1 Per Upgates Marketplace
 
-> *"Například předpřipravenou kampaň Sleva na první nákup (konverzně nejúspěšnější) můžete spustit okamžitě po instalaci Leadhubu."*
+> _"Například předpřipravenou kampaň Sleva na první nákup (konverzně nejúspěšnější) můžete spustit okamžitě po instalaci Leadhubu."_
 
 ⚠️ **Označená jako konverzně nejúspěšnější předpřipravená kampaň**.
 
@@ -840,7 +871,7 @@ Recovery rate optimalizace
 
 ### 12.2 Per oficiální (CDP)
 
-> *"Jakmile zákazník splní podmínku (opustí košík, přejde do rizikového RFM segmentu, uskuteční první nákup,...), CDP nástroj automaticky spustí odpovídající kampaň."*
+> _"Jakmile zákazník splní podmínku (opustí košík, přejde do rizikového RFM segmentu, uskuteční první nákup,...), CDP nástroj automaticky spustí odpovídající kampaň."_
 
 ### 12.3 Win-back kampaně
 
@@ -860,7 +891,7 @@ Win-back email s:
 
 ### 12.4 Per oficiální segmentace
 
-> *"Místo rozesílání stejného newsletteru celé databázi víte přesně, komu poslat win-back kampaň, komu nabídnout slevu na další nákup a koho naopak z databáze vyřadit."*
+> _"Místo rozesílání stejného newsletteru celé databázi víte přesně, komu poslat win-back kampaň, komu nabídnout slevu na další nákup a koho naopak z databáze vyřadit."_
 
 ---
 
@@ -868,13 +899,14 @@ Win-back email s:
 
 ### 13.1 Per oficiální (leadhub.co/dochazejici-produkty)
 
-> *"Připomeňte zákazníkům docházející produkty ve chvíli, kdy je nejspíš budou znovu potřebovat. Automatizace, která zvýší opakované nákupy – bez manuální práce a složitého nastavování."*
+> _"Připomeňte zákazníkům docházející produkty ve chvíli, kdy je nejspíš budou znovu potřebovat. Automatizace, která zvýší opakované nákupy – bez manuální práce a složitého nastavování."_
 
 ### 13.2 Mechanika
 
-> *"Každý zákazník má jinou spotřebu. Leadhub automaticky vypočítá, kdy mu produkty pravděpodobně docházejí – a přesně v ten moment odešle připomínkový e-mail. Díky tomu zákazník obdrží sdělení přesně tehdy, kdy je největší šance, že znovu nakoupí."*
+> _"Každý zákazník má jinou spotřebu. Leadhub automaticky vypočítá, kdy mu produkty pravděpodobně docházejí – a přesně v ten moment odešle připomínkový e-mail. Díky tomu zákazník obdrží sdělení přesně tehdy, kdy je největší šance, že znovu nakoupí."_
 
 ⚠️ **AI-like funkcionalita**:
+
 - Per-customer analýza nákupního cyklu
 - Predikce docházejících produktů
 - Automatický send v správný moment
@@ -894,9 +926,9 @@ Docházející produkty - ideální pro:
 
 ### 13.4 Per oficiální nastavení
 
-> *"Nastavit kampaň zvládnete během pár minut. Najdete ji už připravenou ve svém účtu – stačí ji jen spustit. Segmentace, obsah i automatické odesílání jsou nastavené tak, aby vám přinesly výsledky bez zbytečné práce navíc."*
+> _"Nastavit kampaň zvládnete během pár minut. Najdete ji už připravenou ve svém účtu – stačí ji jen spustit. Segmentace, obsah i automatické odesílání jsou nastavené tak, aby vám přinesly výsledky bez zbytečné práce navíc."_
 
-> *"Produkty vložíte do e-mailu jednoduše – tahem myši v drag & drop editoru. Bez programování, bez složitých merge tagů."*
+> _"Produkty vložíte do e-mailu jednoduše – tahem myši v drag & drop editoru. Bez programování, bez složitých merge tagů."_
 
 ⚠️ **Plug-and-play retention automation**.
 
@@ -945,6 +977,7 @@ Retention + LTV growth
 ### 15.1 Pop-up funkce
 
 Z navigace nápovědy a oficiální:
+
 - Pop-up okna na webu
 - Triggery (delay, exit intent, scroll)
 - Designable templates
@@ -994,9 +1027,9 @@ Možné webové efekty:
 
 ### 16.1 Per oficiální
 
-> *"V Leadhubu vytvoříte segmenty podle chování, nákupů i zájmů zákazníků – na pár kliknutí a bez složitého nastavování."*
+> _"V Leadhubu vytvoříte segmenty podle chování, nákupů i zájmů zákazníků – na pár kliknutí a bez složitého nastavování."_
 
-> *"Jednoduché nastavení a rozsáhlá segmentační pravidla. Rozdělte databázi kontaktů do menších segmentů podle jejich chování na webu a aktivity v e-mailových kampaních. Díky tomu oslovíte vždy pouze příjemce, pro které je vaše sdělení nebo nabídka relevantní. Intuitivní rozhraní vám umožní přidávat nejrůznější segmentační pravidla."*
+> _"Jednoduché nastavení a rozsáhlá segmentační pravidla. Rozdělte databázi kontaktů do menších segmentů podle jejich chování na webu a aktivity v e-mailových kampaních. Díky tomu oslovíte vždy pouze příjemce, pro které je vaše sdělení nebo nabídka relevantní. Intuitivní rozhraní vám umožní přidávat nejrůznější segmentační pravidla."_
 
 ### 16.2 Segmentační dimenze
 
@@ -1036,11 +1069,11 @@ Použitelné v kampaních
 
 ### 16.4 Per Klára Seidlová (recenze)
 
-> *"Tvorba e-mailových kampaní je velmi intuitivní, nabízí množství kreativních prvků a skvělé možnosti segmentace kontaktů, což nám umožňuje efektivně cílit na naše zákazníky."*
+> _"Tvorba e-mailových kampaní je velmi intuitivní, nabízí množství kreativních prvků a skvělé možnosti segmentace kontaktů, což nám umožňuje efektivně cílit na naše zákazníky."_
 
 ### 16.5 Per Alena Němcová (recenze)
 
-> *"Na Leadhubu oceňuji rozsáhlé možnosti segmentace databáze, přehledné vyhodnocování kampaní a celkově intuitivní ovládání platformy."*
+> _"Na Leadhubu oceňuji rozsáhlé možnosti segmentace databáze, přehledné vyhodnocování kampaní a celkově intuitivní ovládání platformy."_
 
 ---
 
@@ -1049,15 +1082,16 @@ Použitelné v kampaních
 ### 17.1 Pricing
 
 Per oficiální ceník:
+
 - **Náhodné tel. číslo:** **od 0,80 Kč/SMS**
 - **Vlastní název odesílatele:** **od 1,10 Kč/SMS**
 - **Bez měsíčního poplatku**
 
 ### 17.2 Per oficiální
 
-> *"SMS kampaně"* - feature v rámci platformy.
+> _"SMS kampaně"_ - feature v rámci platformy.
 
-> *"Leadhub je skvěle propracovaný nástroj pro e-mailový marketing, který se neustále vyvíjí a rozšiřuje o nové funkce – například SMS kampaně."* (Marika Tomanová, Synlab.cz)
+> _"Leadhub je skvěle propracovaný nástroj pro e-mailový marketing, který se neustále vyvíjí a rozšiřuje o nové funkce – například SMS kampaně."_ (Marika Tomanová, Synlab.cz)
 
 ⚠️ SMS je relativně **nová funkce** v Leadhubu, ale zákazníci si ji chválí.
 
@@ -1096,7 +1130,7 @@ Optimal cost/effectiveness mix
 
 ### 18.1 Per Shoptet Doplňky
 
-> *"Produktové šablony, díky kterým všechny produkty z vašeho feedu jednoduše vložíte do těla e-mailu a vždy budou vypadat skvěle."*
+> _"Produktové šablony, díky kterým všechny produkty z vašeho feedu jednoduše vložíte do těla e-mailu a vždy budou vypadat skvěle."_
 
 ### 18.2 Jak fungují
 
@@ -1116,7 +1150,8 @@ Marketér nemusí designovat každý produkt
 ### 18.3 Posledně prohlížené produkty
 
 Per oficiální (Shoptet Doplňky kritika):
-> *"Trošku nám chybí možnosti základních automatizací jako jsou naposledy prohlížené produkty, ale věřím, že se na ně brzy dostane."*
+
+> _"Trošku nám chybí možnosti základních automatizací jako jsou naposledy prohlížené produkty, ale věřím, že se na ně brzy dostane."_
 
 ⚠️ V dokumentaci nápovědy je sekce **"Prohlížené produkty a kategorie"** – nově dostupné.
 
@@ -1135,7 +1170,8 @@ Dynamic obsah:
 ### 18.5 Vkládání jedním klikem
 
 Per oficiální:
-> *"Do e-mailu je vložíte pouhým kliknutím."*
+
+> _"Do e-mailu je vložíte pouhým kliknutím."_
 
 ⚠️ Bez merge tagů, bez programování.
 
@@ -1145,11 +1181,11 @@ Per oficiální:
 
 ### 19.1 Per oficiální (leadhub.co/shoptet)
 
-> *"Spravujte slevové kódy přímo v Leadhubu. Odběratelům snadno odešlete unikátní kódy s časově omezenou platností – rychle, automatizovaně a bez zbytečné práce. Nastavení v Leadhubu totiž přesně odpovídá možnostem nastavení v Shoptetu."*
+> _"Spravujte slevové kódy přímo v Leadhubu. Odběratelům snadno odešlete unikátní kódy s časově omezenou platností – rychle, automatizovaně a bez zbytečné práce. Nastavení v Leadhubu totiž přesně odpovídá možnostem nastavení v Shoptetu."_
 
 ### 19.2 Per Markéta Kocichová (cistedrevo.cz)
 
-> *"Generování unikátních slevových kupónů přímo v prostředí Leadhubu a jejich automatický přenos do Shoptetu mi přijde přímo geniální. Práce s proměnnými je jednoduchá, nástroj celkově intuitivní."*
+> _"Generování unikátních slevových kupónů přímo v prostředí Leadhubu a jejich automatický přenos do Shoptetu mi přijde přímo geniální. Práce s proměnnými je jednoduchá, nástroj celkově intuitivní."_
 
 ### 19.3 Mechanika
 
@@ -1206,7 +1242,7 @@ Slevové kódy use cases:
 
 ### 20.1 Per oficiální (leadhub.co/shoptet)
 
-> *"Po instalaci se do Leadhubu automaticky synchronizují objednávky, produkty i zákaznické profily. Díky tomu můžete během pár minut spouštět přesně cílené e‑mailové i SMS kampaně."*
+> _"Po instalaci se do Leadhubu automaticky synchronizují objednávky, produkty i zákaznické profily. Díky tomu můžete během pár minut spouštět přesně cílené e‑mailové i SMS kampaně."_
 
 ### 20.2 Synchronizace
 
@@ -1224,25 +1260,27 @@ Automatic, real-time
 
 ### 20.3 Per Shoptet Doplňky recenze
 
-> *"Uživatelské rozhraní je velice přívětivé a funkční a nabízí spoustu možností a funkcí jak s newslettery pracovat. Zároveň musím vyzdvihnout naprosto perfektní podporu. Vždy vše vyřešeno k naší spokojenosti a navíc ještě opravdu velice rychle."*
+> _"Uživatelské rozhraní je velice přívětivé a funkční a nabízí spoustu možností a funkcí jak s newslettery pracovat. Zároveň musím vyzdvihnout naprosto perfektní podporu. Vždy vše vyřešeno k naší spokojenosti a navíc ještě opravdu velice rychle."_
 
-> *"S Leadhubem jsme spokojení. Veškeré nastavení bylo jednoduché a rychlé. Přecházeli jsme z jiného doplňku, takže jsme ocenili pomoc při přenosu šablon, ušetřilo nám to spoustu času."*
+> _"S Leadhubem jsme spokojení. Veškeré nastavení bylo jednoduché a rychlé. Přecházeli jsme z jiného doplňku, takže jsme ocenili pomoc při přenosu šablon, ušetřilo nám to spoustu času."_
 
 ### 20.4 Per Monika Moravčíková (moniel.cz)
 
-> *"Leadhub využíváme již několik let a jsme naprosto spokojení. Nastavení je velmi intuitivní a smysluplné. Líbí se mi, že je to český nástroj a propojení s Shoptetem funguje na jedničku."*
+> _"Leadhub využíváme již několik let a jsme naprosto spokojení. Nastavení je velmi intuitivní a smysluplné. Líbí se mi, že je to český nástroj a propojení s Shoptetem funguje na jedničku."_
 
 ### 20.5 Multi-shop management
 
 Per Markéta Kocichová:
-> *"Máme více e-shopů, mezi kterými jde v doplňku jednoduše přepínat a duplikovat kampaně z jednoho účtu do druhého."*
+
+> _"Máme více e-shopů, mezi kterými jde v doplňku jednoduše přepínat a duplikovat kampaně z jednoho účtu do druhého."_
 
 ⚠️ **Multi-shop friendly** – jeden Leadhub účet, více Shoptet e-shopů.
 
 ### 20.6 Cena pro Shoptet zákazníky
 
 Per oficiální:
-> *"Platform Pro - Zvýhodněný plán se všemi funkcemi pro zákazníky podporovaných platforem."*
+
+> _"Platform Pro - Zvýhodněný plán se všemi funkcemi pro zákazníky podporovaných platforem."_
 
 ⚠️ **Discount pro Shoptet/Upgates** zákazníky vs. neintegrované platformy.
 
@@ -1252,11 +1290,11 @@ Per oficiální:
 
 ### 21.1 Per Upgates Marketplace
 
-> *"S Leadhubem můžete začít vydělávat dřív než dokončíte kompletní nastavení."*
+> _"S Leadhubem můžete začít vydělávat dřív než dokončíte kompletní nastavení."_
 
 ### 21.2 Per oficiální Upgates description
 
-> *"Pracuje za vás - automatické kampaně jednou nastavíte a ty pak pracují bez vašeho zásahu a vydělávají. Například předpřipravenou kampaň Sleva na první nákup (konverzně nejúspěšnější) můžete spustit okamžitě po instalaci Leadhubu."*
+> _"Pracuje za vás - automatické kampaně jednou nastavíte a ty pak pracují bez vašeho zásahu a vydělávají. Například předpřipravenou kampaň Sleva na první nákup (konverzně nejúspěšnější) můžete spustit okamžitě po instalaci Leadhubu."_
 
 ### 21.3 Funkce přes Upgates
 
@@ -1289,13 +1327,13 @@ Stejná česká podpora
 
 ### 22.1 Per oficiální features
 
-> *"Na příjemce, kteří newsletter neotevřeli nebo z něj neprokliknuli, můžete zacílit reklamou na Facebooku. Reklamu vytvoříte přímo v Leadhubu a dle nastaveného času se začne tomuto publiku automaticky zobrazovat."*
+> _"Na příjemce, kteří newsletter neotevřeli nebo z něj neprokliknuli, můžete zacílit reklamou na Facebooku. Reklamu vytvoříte přímo v Leadhubu a dle nastaveného času se začne tomuto publiku automaticky zobrazovat."_
 
 ⚠️ **Retargeting non-openers na Facebooku** – přímo z Leadhubu.
 
 ### 22.2 Per Shoptet Doplňky
 
-> *"Propojení s Facebook (Meta) Business managerem - synchronizace audiencí, napojení na Lead Ads, vytváření reklam na FB a IG."*
+> _"Propojení s Facebook (Meta) Business managerem - synchronizace audiencí, napojení na Lead Ads, vytváření reklam na FB a IG."_
 
 ### 22.3 Možnosti
 
@@ -1346,13 +1384,15 @@ Lead capture bez landing page
 ### 23.1 Per nápovědy navigace
 
 V nápovědě jsou sekce:
+
 - **Google Ads** integrace
 - **Sklik** integrace (unikátní pro CZ!)
 
 ### 23.2 Sklik integrace (CZ unikátní)
 
 Per Sklik Nápověda (Seznam.cz):
-> *"Leadhub is a Czech tool for email marketing and marketing automation. Linking Leadhub with Sklik allows you to use e-mailing data for precise ad targeting. Precisely defined segments of potential customers that you have in the database can be captured at the right moment in the Seznam search engine and on other most visited Czech websites."*
+
+> _"Leadhub is a Czech tool for email marketing and marketing automation. Linking Leadhub with Sklik allows you to use e-mailing data for precise ad targeting. Precisely defined segments of potential customers that you have in the database can be captured at the right moment in the Seznam search engine and on other most visited Czech websites."_
 
 ⚠️ **Sklik integrace je unikátní pro CZ trh** – zahraniční nástroje (Klaviyo, Mailchimp) Sklik nemají.
 
@@ -1378,7 +1418,7 @@ Sklik (Seznam.cz):
 
 ### 23.5 Per Sklik (sběr výhod)
 
-> *"Precisely defined segments of potential customers that you have in the database can be captured at the right moment in the Seznam search engine and on other most visited Czech websites."*
+> _"Precisely defined segments of potential customers that you have in the database can be captured at the right moment in the Seznam search engine and on other most visited Czech websites."_
 
 ⚠️ **Reach na Seznam.cz ecosystem** – critical pro CZ.
 
@@ -1444,7 +1484,7 @@ API dokumentace: **api.leadhub.co/docs**
 
 ### 25.2 Per Sklik
 
-> *"On this page, you can find a list of our partners who have set up custom workflows in their platform using our API integration."*
+> _"On this page, you can find a list of our partners who have set up custom workflows in their platform using our API integration."_
 
 ⚠️ Leadhub má **REST API** pro programmatic přístup.
 
@@ -1487,7 +1527,7 @@ API use cases:
 
 ### 26.1 Per oficiální
 
-> *"U kampaní měříme tržby, míru prokliku, otevření i odhlášení, čas strávený na webu, počet upravených košíků, nákupy od stávajících a nových zákazníků, a mnoho dalšího."*
+> _"U kampaní měříme tržby, míru prokliku, otevření i odhlášení, čas strávený na webu, počet upravených košíků, nákupy od stávajících a nových zákazníků, a mnoho dalšího."_
 
 ### 26.2 Měřené metriky
 
@@ -1509,15 +1549,16 @@ Leadhub metriky:
 
 ### 26.3 Per oficiální (Shoptet)
 
-> *"Vždy budete mít také k dispozici detailní statistiky k jednotlivým kampaním a zároveň k celé skupině kampaní."*
+> _"Vždy budete mít také k dispozici detailní statistiky k jednotlivým kampaním a zároveň k celé skupině kampaní."_
 
 ### 26.4 Per Stanislava Musilová (recenze)
 
-> *"Detailní statistiky pro analýzu výkonnosti"* – uváděno jako přínos.
+> _"Detailní statistiky pro analýzu výkonnosti"_ – uváděno jako přínos.
 
 ### 26.5 A/B testy
 
 A/B testing je k dispozici – standardní funkce v drag & drop editoru pro:
+
 - Subject line variants
 - Content variants
 - CTA variants
@@ -1543,39 +1584,43 @@ Reporty:
 
 Per oficiální reference (leadhub.co/cenik):
 
-| Zákazník | Web | Recenze |
-|---|---|---|
-| **iuvenio.cz** | – | "Bez Leadhubu by to už v iuvenio 'nešlo'" |
-| **lobey.cz** | Alena Němcová | "rozsáhlé možnosti segmentace databáze" |
-| **koloshop.cz** | Jana Lužinová | "intuitivní mailingový nástroj" |
-| **littleshoes.cz** | Klára Borlová | "přechodu na Leadhub od konkurence" |
-| **optikdodomu.cz** | Klára Seidlová | "5 let spolupráce, maximální spokojenost" |
-| **Synlab.cz** | Marika Tomanová | "skvěle propracovaný nástroj" |
-| **cistedrevo.cz** | Markéta Kocichová | "nejlepší business rozhodnutí" |
-| **moniel.cz** | Monika Moravčíková | "několik let, naprosto spokojení" |
-| **bamboolik.cz** | Stanislava Musilová | "Tým Leadhubu opravdu ví, co e-shopař potřebuje" |
+| Zákazník           | Web                 | Recenze                                          |
+| ------------------ | ------------------- | ------------------------------------------------ |
+| **iuvenio.cz**     | –                   | "Bez Leadhubu by to už v iuvenio 'nešlo'"        |
+| **lobey.cz**       | Alena Němcová       | "rozsáhlé možnosti segmentace databáze"          |
+| **koloshop.cz**    | Jana Lužinová       | "intuitivní mailingový nástroj"                  |
+| **littleshoes.cz** | Klára Borlová       | "přechodu na Leadhub od konkurence"              |
+| **optikdodomu.cz** | Klára Seidlová      | "5 let spolupráce, maximální spokojenost"        |
+| **Synlab.cz**      | Marika Tomanová     | "skvěle propracovaný nástroj"                    |
+| **cistedrevo.cz**  | Markéta Kocichová   | "nejlepší business rozhodnutí"                   |
+| **moniel.cz**      | Monika Moravčíková  | "několik let, naprosto spokojení"                |
+| **bamboolik.cz**   | Stanislava Musilová | "Tým Leadhubu opravdu ví, co e-shopař potřebuje" |
 
 ### 27.2 Per RocketReach (kdyby firmy)
 
 Per RocketReach:
-> *"COGEBI a.s. · Atlas.cz a.s. · VOLNÝ, a.s. · HARIBO CZ s.r.o. · Greenlux s.r.o. · TEVA Czech Industries, s.r.o."*
+
+> _"COGEBI a.s. · Atlas.cz a.s. · VOLNÝ, a.s. · HARIBO CZ s.r.o. · Greenlux s.r.o. · TEVA Czech Industries, s.r.o."_
 
 ⚠️ Tyto firmy jsou v RocketReach asociovány s leadhub.co týmem (mohou to být ale pracovní historie team členů, ne nutně customers – nelze potvrdit jako reference).
 
 ### 27.3 Loyalty zákazníků
 
 Per Klára Seidlová (optikdodomu.cz):
-> *"S LeadHubem spolupracujeme téměř 5 let a jsme s jejich službami maximálně spokojeni."*
+
+> _"S LeadHubem spolupracujeme téměř 5 let a jsme s jejich službami maximálně spokojeni."_
 
 Per anonymní recenze:
-> *"Leadhub využíváme už více než sedm let a zatím jsme nenarazili na nic, co by nás omezovalo."*
+
+> _"Leadhub využíváme už více než sedm let a zatím jsme nenarazili na nic, co by nás omezovalo."_
 
 ⚠️ **Long-term retention** = 5-7+ let zákaznická loajalita.
 
 ### 27.4 Migrační reference
 
 Per Klára Borlová (littleshoes.cz):
-> *"Na Leadhub jsme přešli od konkurence. Potěšila nás aktivní podpora s celou migrací i vytvářením nových šablon a automatizací."*
+
+> _"Na Leadhub jsme přešli od konkurence. Potěšila nás aktivní podpora s celou migrací i vytvářením nových šablon a automatizací."_
 
 ⚠️ Customers **migrují k Leadhubu z konkurence** = winning over alternatives.
 
@@ -1673,7 +1718,8 @@ Vs. Zapier ecosystem (1000+ integrací):
 ### 28.6 Posledně prohlížené produkty - pomalejší rollout
 
 Per Shoptet Doplňky recenze (zákazník):
-> *"Trošku nám chybí možnosti základních automatizací jako jsou naposledy prohlížené produkty, ale věřím, že se na ně brzy dostane."*
+
+> _"Trošku nám chybí možnosti základních automatizací jako jsou naposledy prohlížené produkty, ale věřím, že se na ně brzy dostane."_
 
 ⚠️ Některé features přichází **postupně** (per recenze).
 
@@ -1807,6 +1853,7 @@ Vs. Mailchimp/Klaviyo:
 ## 29. Shrnutí: Pro koho a proti komu
 
 ### Leadhub je dobrá volba pokud
+
 - Provozujete **e-shop na Shoptet platformě** (deepest integration!)
 - Provozujete **e-shop na Upgates platformě** (native integration)
 - Hledáte **český nástroj s českou podporou** (telefonní + email!)
@@ -1828,6 +1875,7 @@ Vs. Mailchimp/Klaviyo:
 - Cíl je **dlouhodobá partnership** (5-7+ let retention u zákazníků)
 
 ### Leadhub není dobrá volba pokud
+
 - Provozujete **non-Shoptet/non-Upgates** e-shop (jiné nástroje lepší integrace)
 - Provozujete **B2B SaaS** – HubSpot / Customer.io / Marketo lepší
 - Provozujete **mobile app** – Braze / Klaviyo / OneSignal
@@ -1846,23 +1894,23 @@ Vs. Mailchimp/Klaviyo:
 
 ### Leadhub vs. konkurence
 
-| Konkurence | Kdy lepší než Leadhub |
-|---|---|
-| **Ecomail** | Větší tým, více features, podobné CZ zaměření |
-| **SmartEmailing** | Větší company, B2B silnější, transakční email |
-| **Mailkit** | Transakční email + SMTP infrastructure |
-| **Boldem** | CZ alternativa pro non-Shoptet |
-| **Mailchimp** | Globální brand, větší ekosystém, AI features |
-| **Klaviyo** | DTC e-commerce, predictive AI, enterprise scale |
-| **Brevo** | All-in-one s transactional, francouzský původ |
-| **MailerLite** | Levný globální, simpler design |
-| **GetResponse** | Více features, webinary |
-| **ActiveCampaign** | Sophistikovaná automatizace, CRM |
-| **Bloomreach Engagement** | Enterprise CDP, AI personalizace |
-| **SALESmanago** | PL AI-driven CDXP, mid-market |
-| **Braze** | Mobile-first, real-time, enterprise B2C |
-| **HubSpot** | B2B sales + marketing, full CRM |
+| Konkurence                | Kdy lepší než Leadhub                           |
+| ------------------------- | ----------------------------------------------- |
+| **Ecomail**               | Větší tým, více features, podobné CZ zaměření   |
+| **SmartEmailing**         | Větší company, B2B silnější, transakční email   |
+| **Mailkit**               | Transakční email + SMTP infrastructure          |
+| **Boldem**                | CZ alternativa pro non-Shoptet                  |
+| **Mailchimp**             | Globální brand, větší ekosystém, AI features    |
+| **Klaviyo**               | DTC e-commerce, predictive AI, enterprise scale |
+| **Brevo**                 | All-in-one s transactional, francouzský původ   |
+| **MailerLite**            | Levný globální, simpler design                  |
+| **GetResponse**           | Více features, webinary                         |
+| **ActiveCampaign**        | Sophistikovaná automatizace, CRM                |
+| **Bloomreach Engagement** | Enterprise CDP, AI personalizace                |
+| **SALESmanago**           | PL AI-driven CDXP, mid-market                   |
+| **Braze**                 | Mobile-first, real-time, enterprise B2C         |
+| **HubSpot**               | B2B sales + marketing, full CRM                 |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů leadhub.co a doprovodných platforem (Shoptet Doplňky, Upgates Marketplace, Capterra, GetApp, RocketReach, Sklik Nápověda). Pro nejaktuálnější detaily je nutný kontakt s Leadhub teamem (podpora@leadhub.co, +420 228 229 263) nebo registrace zkušebního účtu.*
+_Dokument zpracován z oficiálních zdrojů leadhub.co a doprovodných platforem (Shoptet Doplňky, Upgates Marketplace, Capterra, GetApp, RocketReach, Sklik Nápověda). Pro nejaktuálnější detaily je nutný kontakt s Leadhub teamem (podpora@leadhub.co, +420 228 229 263) nebo registrace zkušebního účtu._

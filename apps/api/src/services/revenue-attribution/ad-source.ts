@@ -19,7 +19,7 @@ export interface AdAttributionInput {
   utmCampaign?: string;
   utmContent?: string;
   utmTerm?: string;
-  adClickId?: string;   // fbclid, gclid, li_fat_id, ttclid
+  adClickId?: string; // fbclid, gclid, li_fat_id, ttclid
   viewThrough?: boolean;
   adPlatform?: string;
   adCampaignId?: string;
@@ -54,21 +54,25 @@ async function sendFacebookOfflineConversion(
 ) {
   const pixel = process.env.FACEBOOK_PIXEL_ID ?? account.platformAccountId;
   const body = {
-    data: [{
-      event_name: 'Purchase',
-      event_time: Math.floor((input.occurredAt ?? new Date()).getTime() / 1000),
-      user_data: { em: null, external_id: input.contactId },
-      custom_data: { currency: input.currency ?? 'USD', value: input.amount },
-      event_source_url: null,
-      action_source: 'other',
-    }],
+    data: [
+      {
+        event_name: 'Purchase',
+        event_time: Math.floor((input.occurredAt ?? new Date()).getTime() / 1000),
+        user_data: { em: null, external_id: input.contactId },
+        custom_data: { currency: input.currency ?? 'USD', value: input.amount },
+        event_source_url: null,
+        action_source: 'other',
+      },
+    ],
     access_token: account.accessToken,
   };
   await fetch(`https://graph.facebook.com/v19.0/${pixel}/events`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  }).catch(() => { /* best-effort */ });
+  }).catch(() => {
+    /* best-effort */
+  });
 }
 
 // Send offline conversion to Google Ads
@@ -82,7 +86,7 @@ async function sendGoogleOfflineConversion(
     {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${account.accessToken}`,
+        Authorization: `Bearer ${account.accessToken}`,
         'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? '',
         'Content-Type': 'application/json',
       },
@@ -90,7 +94,9 @@ async function sendGoogleOfflineConversion(
         job: { type: 'STORE_SALES_UPLOAD_FIRST_PARTY', storeSalesMetadata: {} },
       }),
     },
-  ).catch(() => { /* best-effort */ });
+  ).catch(() => {
+    /* best-effort */
+  });
 }
 
 // ── Main attribution function ─────────────────────────────────────────────────
@@ -106,12 +112,9 @@ export async function attributeRevenueToAd(input: AdAttributionInput) {
         utmSource: input.utmSource,
         utmMedium: input.utmMedium,
         utmCampaign: input.utmCampaign,
-        attributionModel: input.viewThrough ? 'view_through' as never : 'last_touch',
+        attributionModel: input.viewThrough ? ('view_through' as never) : 'last_touch',
       })
-      .where(and(
-        eq(revenueEvents.orgId, input.orgId),
-        eq(revenueEvents.orderId, input.orderId),
-      ));
+      .where(and(eq(revenueEvents.orgId, input.orgId), eq(revenueEvents.orderId, input.orderId)));
   }
 
   // Send offline conversion to ad platform
@@ -134,14 +137,20 @@ export async function attributeRevenueToAd(input: AdAttributionInput) {
 
 // ── UTM enrichment for standard purchase tracking ────────────────────────────
 
-export function extractAdAttribution(queryParams: Record<string, string>): Partial<AdAttributionInput> {
+export function extractAdAttribution(
+  queryParams: Record<string, string>,
+): Partial<AdAttributionInput> {
   return {
-    utmSource:   queryParams['utm_source'],
-    utmMedium:   queryParams['utm_medium'],
+    utmSource: queryParams['utm_source'],
+    utmMedium: queryParams['utm_medium'],
     utmCampaign: queryParams['utm_campaign'],
-    utmContent:  queryParams['utm_content'],
-    utmTerm:     queryParams['utm_term'],
-    adClickId:   queryParams['fbclid'] ?? queryParams['gclid'] ?? queryParams['li_fat_id'] ?? queryParams['ttclid'],
+    utmContent: queryParams['utm_content'],
+    utmTerm: queryParams['utm_term'],
+    adClickId:
+      queryParams['fbclid'] ??
+      queryParams['gclid'] ??
+      queryParams['li_fat_id'] ??
+      queryParams['ttclid'],
     viewThrough: false,
   };
 }

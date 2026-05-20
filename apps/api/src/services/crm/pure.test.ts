@@ -61,9 +61,7 @@ describe('computeMonthlyForecast', () => {
   });
 
   it('ignores deals without expectedCloseDate', () => {
-    const deals: OpenDealRow[] = [
-      { stageId: 'qual', value: 1000, expectedCloseDate: null },
-    ];
+    const deals: OpenDealRow[] = [{ stageId: 'qual', value: 1000, expectedCloseDate: null }];
     const { totals } = computeMonthlyForecast(deals, stages, 3, asOf);
     expect(totals.dealCount).toBe(0);
   });
@@ -89,7 +87,13 @@ describe('computeWinLoss', () => {
     { value: 5000, status: 'won', wonAt: new Date(), createdAt: new Date() },
     { value: 8000, status: 'lost', lostAt: new Date(), createdAt: new Date(), lostReason: 'price' },
     { value: 2000, status: 'lost', lostAt: new Date(), createdAt: new Date(), lostReason: 'price' },
-    { value: 3000, status: 'lost', lostAt: new Date(), createdAt: new Date(), lostReason: 'timing' },
+    {
+      value: 3000,
+      status: 'lost',
+      lostAt: new Date(),
+      createdAt: new Date(),
+      lostReason: 'timing',
+    },
     { value: 4000, status: 'open', createdAt: new Date() },
   ];
 
@@ -154,7 +158,10 @@ describe('computeStageDistribution', () => {
     const dist = computeStageDistribution(deals, stages);
     expect(dist).toHaveLength(4);
     expect(dist.map((s) => s.stageId)).toEqual(['new', 'qual', 'prop', 'won']);
-    expect(dist.find((s) => s.stageId === 'qual')).toMatchObject({ dealCount: 2, totalValue: 1200 });
+    expect(dist.find((s) => s.stageId === 'qual')).toMatchObject({
+      dealCount: 2,
+      totalValue: 1200,
+    });
     expect(dist.find((s) => s.stageId === 'new')).toMatchObject({ dealCount: 0, totalValue: 0 });
   });
 });
@@ -162,11 +169,35 @@ describe('computeStageDistribution', () => {
 describe('computeRepPerformance', () => {
   it('aggregates deals per owner with won value + win rate, sorted by won value', () => {
     const deals: ClosedDealRow[] = [
-      { value: 10000, status: 'won', createdAt: new Date(), wonAt: new Date(), ownerUserId: 'alice' },
-      { value: 5000, status: 'won', createdAt: new Date(), wonAt: new Date(), ownerUserId: 'alice' },
-      { value: 3000, status: 'lost', createdAt: new Date(), lostAt: new Date(), ownerUserId: 'alice' },
+      {
+        value: 10000,
+        status: 'won',
+        createdAt: new Date(),
+        wonAt: new Date(),
+        ownerUserId: 'alice',
+      },
+      {
+        value: 5000,
+        status: 'won',
+        createdAt: new Date(),
+        wonAt: new Date(),
+        ownerUserId: 'alice',
+      },
+      {
+        value: 3000,
+        status: 'lost',
+        createdAt: new Date(),
+        lostAt: new Date(),
+        ownerUserId: 'alice',
+      },
       { value: 8000, status: 'won', createdAt: new Date(), wonAt: new Date(), ownerUserId: 'bob' },
-      { value: 1000, status: 'lost', createdAt: new Date(), lostAt: new Date(), ownerUserId: 'bob' },
+      {
+        value: 1000,
+        status: 'lost',
+        createdAt: new Date(),
+        lostAt: new Date(),
+        ownerUserId: 'bob',
+      },
     ];
     const perf = computeRepPerformance(deals);
     expect(perf).toHaveLength(2);

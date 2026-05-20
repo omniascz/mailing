@@ -50,7 +50,7 @@
 
 ### Filozofie produktu
 
-MailerLite's marketing claim: *"Keep it Lite"* – **focus on usability**, ne kvantita features. Mnozí marketers volí MailerLite právě proto, že je **jednodušší než Mailchimp/HubSpot**.
+MailerLite's marketing claim: _"Keep it Lite"_ – **focus on usability**, ne kvantita features. Mnozí marketers volí MailerLite právě proto, že je **jednodušší než Mailchimp/HubSpot**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -164,16 +164,16 @@ MailerLite má v 2026 **4 hlavní plány** s velmi přehlednou strukturou.
 ### 2.5 Cenové tier examples (Advanced plan)
 
 | Subscribers | Price/měsíc |
-|---|---|
-| 500 | $20 |
-| 1 000 | $20–22 |
-| 2 500 | $36 |
-| 5 000 | $50 |
-| 10 000 | $80–90 |
-| 25 000 | $160 |
-| 50 000 | $300 |
-| 100 000 | $500 |
-| 500 000 | $1 900 |
+| ----------- | ----------- |
+| 500         | $20         |
+| 1 000       | $20–22      |
+| 2 500       | $36         |
+| 5 000       | $50         |
+| 10 000      | $80–90      |
+| 25 000      | $160        |
+| 50 000      | $300        |
+| 100 000     | $500        |
+| 500 000     | $1 900      |
 
 ⚠️ **95× price increase** od 500 → 500K subscribers na Advanced.
 
@@ -238,27 +238,27 @@ MailerLite účtuje **podle počtu aktivních subscribers**, ne podle počtu ema
 
 ### 3.3 Cena scaling
 
-| | Free | Growing Business | Advanced |
-|---|---|---|---|
-| 500 subscribers | $0 | $10 | $20 |
-| 2 500 | – | $21 | $36 |
-| 10 000 | – | $50 | $80 |
-| 50 000 | – | $230 | $300 |
-| 100 000 | – | $500 | $500+ |
+|                 | Free | Growing Business | Advanced |
+| --------------- | ---- | ---------------- | -------- |
+| 500 subscribers | $0   | $10              | $20      |
+| 2 500           | –    | $21              | $36      |
+| 10 000          | –    | $50              | $80      |
+| 50 000          | –    | $230             | $300     |
+| 100 000         | –    | $500             | $500+    |
 
 Po 100K → Enterprise plán s custom pricing.
 
 ### 3.4 Comparison s konkurencí (10K subscribers/month)
 
-| Platform | Cena/měsíc |
-|---|---|
-| **MailerLite Advanced** | $80–90 |
-| **Mailchimp Standard** | $135 |
-| **GetResponse Email Marketing** | $79 |
-| **Klaviyo Email** | $150 |
-| **Brevo Business** | $65 |
-| **ActiveCampaign Plus** | $179 |
-| **HubSpot Marketing Pro** | $890+ |
+| Platform                        | Cena/měsíc |
+| ------------------------------- | ---------- |
+| **MailerLite Advanced**         | $80–90     |
+| **Mailchimp Standard**          | $135       |
+| **GetResponse Email Marketing** | $79        |
+| **Klaviyo Email**               | $150       |
+| **Brevo Business**              | $65        |
+| **ActiveCampaign Plus**         | $179       |
+| **HubSpot Marketing Pro**       | $890+      |
 
 MailerLite je **typicky 30–40 % levnější** než Mailchimp na podobném tier, i když na 100K+ subscribers je rozdíl menší.
 
@@ -401,13 +401,13 @@ Active (paying tier; can receive)
 
 ### 6.1 Typy kampaní
 
-| Typ | Kdy použít |
-|---|---|
-| **Regular** | Standard newsletter / promo |
-| **A/B Split** | Test variants |
-| **Auto-resend** | Re-send to non-openers (Growing+) |
-| **RSS campaign** | Auto-generated from RSS feed |
-| **Automation email** | Email v rámci workflow |
+| Typ                  | Kdy použít                        |
+| -------------------- | --------------------------------- |
+| **Regular**          | Standard newsletter / promo       |
+| **A/B Split**        | Test variants                     |
+| **Auto-resend**      | Re-send to non-openers (Growing+) |
+| **RSS campaign**     | Auto-generated from RSS feed      |
+| **Automation email** | Email v rámci workflow            |
 
 ### 6.2 Campaign builder workflow
 
@@ -464,6 +464,7 @@ Confirm
 ### 6.4 Auto-resend campaigns
 
 **MailerLite-specific feature** (Growing+):
+
 - Original campaign sent
 - After X hours (default 24h), if subscriber didn't open:
 - **Auto re-send s different subject** to those non-openers
@@ -497,6 +498,7 @@ Confirm
 ### 7.1 Drag-and-drop editor
 
 #### Blocks
+
 - Text
 - Image (with built-in editor)
 - Button
@@ -512,6 +514,7 @@ Confirm
 - Form block
 
 #### Features
+
 - **Mobile responsive** automatic
 - **Live preview** (desktop, tablet, mobile)
 - **Brand kit** – save colors, fonts, logo
@@ -538,6 +541,7 @@ Confirm
 - **Advanced:** Same + custom HTML capability
 
 #### Template categories
+
 - Newsletters
 - Promotions
 - E-commerce (product showcase)
@@ -570,27 +574,30 @@ Workflow = **trigger** + **steps** (Rules + Actions).
 
 ### 8.2 Plan availability
 
-| Plán | Workflows | Triggers per workflow |
-|---|---|---|
-| Free | ✅ (basic) | 1 |
-| Growing Business | ✅ | 1 |
-| **Advanced** | ✅ | **Up to 3** |
-| Enterprise | ✅ | Up to 3 |
+| Plán             | Workflows  | Triggers per workflow |
+| ---------------- | ---------- | --------------------- |
+| Free             | ✅ (basic) | 1                     |
+| Growing Business | ✅         | 1                     |
+| **Advanced**     | ✅         | **Up to 3**           |
+| Enterprise       | ✅         | Up to 3               |
 
 **Key Advanced advantage:** multiple triggers = multiple entry paths to one workflow.
 
 ### 8.3 Triggers (7 default)
 
 #### A) Joins a group
+
 - Trigger when subscriber added to specific group
 - Most common for welcome sequences
 
 #### B) Updated field
+
 - Trigger when specific subscriber field updates
 - Manual update, survey submission, automation action
 - Use case: birthday reminders, status changes
 
 #### C) Date-based
+
 - Three sub-types:
   - **Anniversary trigger** – yearly recurring (birthdays, signup anniversaries)
   - **Exact date** – one-time scheduled
@@ -600,16 +607,20 @@ System checks date fields **daily at 4:00 AM GMT/UTC +00:00**.
 Date format required: **YYYY-MM-DD**.
 
 #### D) Clicks a link
+
 - Trigger when subscriber clicks specific link
 - Allow re-entry option (re-trigger every click)
 
 #### E) Form completion
+
 - Trigger when specific form submitted
 
 #### F) Joins a segment
+
 - Trigger when subscriber meets segment criteria
 
 #### G) E-commerce triggers (Growing+)
+
 - **Purchases a specific product**
 - **Abandoned cart**
 - **First purchase**
@@ -908,6 +919,7 @@ Subscriber continues to next step
 ### 13.2 E-commerce blocks
 
 **30+ e-commerce blocks** (Growing+):
+
 - Product showcase
 - Cart preview
 - Product recommendations
@@ -1134,13 +1146,13 @@ Pro firmy, které chtějí marketing + transactional v jedné platformě, je **B
 
 ### 17.3 Authentication
 
-| Protokol | Setup |
-|---|---|
-| **SPF** | Include for MailerLite |
-| **DKIM** | 2× CNAME records |
-| **DMARC** | TXT record |
-| **Sender verification** | Email + domain verification |
-| **Branded tracking domain** | CNAME (recommended) |
+| Protokol                    | Setup                       |
+| --------------------------- | --------------------------- |
+| **SPF**                     | Include for MailerLite      |
+| **DKIM**                    | 2× CNAME records            |
+| **DMARC**                   | TXT record                  |
+| **Sender verification**     | Email + domain verification |
+| **Branded tracking domain** | CNAME (recommended)         |
 
 ### 17.4 Domain authentication flow
 
@@ -1186,18 +1198,18 @@ Validate (5 min – 48h)
 
 ### 18.2 Hlavní API endpoints
 
-| Resource | Operace |
-|---|---|
-| `/subscribers` | CRUD subscribers |
-| `/groups` | Group management |
-| `/segments` | Read segments |
-| `/fields` | Custom field management |
-| `/campaigns` | Campaign CRUD |
-| `/automations` | Workflow info |
-| `/forms` | Form data |
-| `/webhooks` | Webhook subscriptions |
-| `/sites` | Website data |
-| `/stats` | Statistics |
+| Resource       | Operace                 |
+| -------------- | ----------------------- |
+| `/subscribers` | CRUD subscribers        |
+| `/groups`      | Group management        |
+| `/segments`    | Read segments           |
+| `/fields`      | Custom field management |
+| `/campaigns`   | Campaign CRUD           |
+| `/automations` | Workflow info           |
+| `/forms`       | Form data               |
+| `/webhooks`    | Webhook subscriptions   |
+| `/sites`       | Website data            |
+| `/stats`       | Statistics              |
 
 ### 18.3 Webhooks
 
@@ -1219,6 +1231,7 @@ Validate (5 min – 48h)
 **150+ integrations**, vybrané:
 
 #### E-commerce
+
 - Shopify
 - WooCommerce
 - BigCommerce
@@ -1227,37 +1240,46 @@ Validate (5 min – 48h)
 - PrestaShop
 
 #### Forms
+
 - Typeform
 - Jotform
 - Google Forms (via Zapier)
 
 #### CMS
+
 - WordPress (plugin)
 - Webflow
 
 #### Payment
+
 - Stripe (for paid newsletters, digital products)
 - PayPal
 
 #### Webinars
+
 - Zoom
 - Webinarjam
 
 #### Booking
+
 - Calendly
 
 #### Productivity
+
 - Slack
 - Google Workspace
 
 #### Analytics
+
 - Google Analytics
 
 #### Ads
+
 - Facebook/Meta (Custom Audiences sync – Advanced)
 - Google Ads
 
 #### iPaaS
+
 - **Zapier** – 5 000+ apps
 - **Make (Integromat)**
 - **Pabbly Connect**
@@ -1321,6 +1343,7 @@ Validate (5 min – 48h)
 ### 19.5 Anti-spam policy enforcement
 
 MailerLite je **přísný** s anti-spam:
+
 - **Purchased lists** – immediate suspension
 - **High bounce rate** – account review
 - **Spam complaints** – warnings → suspension
@@ -1409,6 +1432,7 @@ Toto je **double-edged sword:** podporuje quality deliverability, ale občas sus
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### MailerLite je dobrá volba pokud
+
 - Jste **solopreneur, content creator, blogger** s small list
 - Hledáte **best free plan** v industry (i s redukcí 2025)
 - Chcete **transparentní subscriber-based pricing** bez surprises
@@ -1421,6 +1445,7 @@ Toto je **double-edged sword:** podporuje quality deliverability, ale občas sus
 - Jste v **EU** a zajímá vás GDPR + EU hosting
 
 ### MailerLite není dobrá volba pokud
+
 - Pracujete primárně v **češtině/slovenštině** – UI nepodporuje
 - Provozujete **velký DTC e-commerce** (Klaviyo silnější)
 - Potřebujete **deep marketing automation** (ActiveCampaign, GetResponse, HubSpot lepší)
@@ -1434,18 +1459,18 @@ Toto je **double-edged sword:** podporuje quality deliverability, ale občas sus
 
 ### MailerLite vs. konkurence
 
-| Konkurence | Kdy lepší než MailerLite |
-|---|---|
-| **Mailchimp** | Brand recognition, větší template library, větší ecosystem |
-| **Brevo** | Volume-based pricing pro inactive lists, transactional v base, multichannel |
-| **GetResponse** | Webinars, courses, funnels built-in; 27 jazyků UI včetně CZ/SK |
-| **HubSpot** | Full B2B CRM, deep sales, multi-Hub |
-| **Klaviyo** | DTC e-commerce, Shopify depth, predictive analytics |
-| **ActiveCampaign** | Deep automation, branching, lead scoring |
-| **ConvertKit (Kit)** | Pure creator-focused, more author features |
-| **Beehiiv** | Newsletter-first, better monetization tools |
-| **Substack** | Subscription newsletter focus, viral mechanics |
+| Konkurence           | Kdy lepší než MailerLite                                                    |
+| -------------------- | --------------------------------------------------------------------------- |
+| **Mailchimp**        | Brand recognition, větší template library, větší ecosystem                  |
+| **Brevo**            | Volume-based pricing pro inactive lists, transactional v base, multichannel |
+| **GetResponse**      | Webinars, courses, funnels built-in; 27 jazyků UI včetně CZ/SK              |
+| **HubSpot**          | Full B2B CRM, deep sales, multi-Hub                                         |
+| **Klaviyo**          | DTC e-commerce, Shopify depth, predictive analytics                         |
+| **ActiveCampaign**   | Deep automation, branching, lead scoring                                    |
+| **ConvertKit (Kit)** | Pure creator-focused, more author features                                  |
+| **Beehiiv**          | Newsletter-first, better monetization tools                                 |
+| **Substack**         | Subscription newsletter focus, viral mechanics                              |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů mailerlite.com/help, mailerlite.com/pricing, mailerlite.com/features a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na mailerlite.com/pricing.*
+_Dokument zpracován z oficiálních zdrojů mailerlite.com/help, mailerlite.com/pricing, mailerlite.com/features a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na mailerlite.com/pricing._

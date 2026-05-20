@@ -62,14 +62,16 @@ const proto = ForgemsgClient.prototype as unknown as Record<string, unknown>;
 
 Object.defineProperty(proto, 'contacts', {
   get(this: ForgemsgClient) {
-    return (this as unknown as Record<string, unknown>)['_contacts'] ??= new ContactsResource(this);
+    return ((this as unknown as Record<string, unknown>)['_contacts'] ??= new ContactsResource(
+      this,
+    ));
   },
   enumerable: true,
 });
 
 Object.defineProperty(proto, 'events', {
   get(this: ForgemsgClient) {
-    return (this as unknown as Record<string, unknown>)['_events'] ??= new EventsResource(this);
+    return ((this as unknown as Record<string, unknown>)['_events'] ??= new EventsResource(this));
   },
   enumerable: true,
 });

@@ -295,14 +295,12 @@ export async function executeSandboxedQuery(
       await tx.execute(sql.raw(`SET LOCAL statement_timeout = ${timeoutMs}`));
       // Use pg_get_expr-safe raw SQL for the inner query; orgId is still
       // bound via a parameter in the outer layer.
-      const wrapped = sql.raw(
-        `SELECT * FROM (${inner}) AS __user_q LIMIT ${maxRows}`,
-      );
+      const wrapped = sql.raw(`SELECT * FROM (${inner}) AS __user_q LIMIT ${maxRows}`);
       const rows = await tx.execute(wrapped);
       // drizzle returns an array-like; normalise to plain array
       const arr = Array.isArray(rows)
         ? rows
-        : (rows as unknown as { rows?: unknown[] }).rows ?? [];
+        : ((rows as unknown as { rows?: unknown[] }).rows ?? []);
       return arr as unknown[];
     });
 
@@ -335,6 +333,7 @@ export async function executeSandboxedQuery(
  * NL planner (#269) which tells us the primary table.
  */
 export function injectOrgFilter(query: string, primaryTable: string, orgId: string): string {
-  if (!ALLOWED_TABLES[primaryTable]) throw AppError.badRequest(`Unknown primary table: ${primaryTable}`);
+  if (!ALLOWED_TABLES[primaryTable])
+    throw AppError.badRequest(`Unknown primary table: ${primaryTable}`);
   return injectOrgFilterPure(query, primaryTable, orgId, ALLOWED_TABLES);
 }

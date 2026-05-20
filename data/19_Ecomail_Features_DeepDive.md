@@ -60,6 +60,7 @@
 ### Filozofie produktu
 
 **"Lokální alternativa Mailchimpu/ActiveCampaign s důrazem na CEE region"** – primary diferenciátor je:
+
 - **Čeština v UI a supportu** (lidi, ne roboti)
 - **Lokální integrace** (Shoptet, FastCentrik, Upgates, Heureka, atd.)
 - **CZ/SK podpora** v pracovní době
@@ -197,17 +198,18 @@ Ecomail nabízí **transparentní pricing** s **3 hlavními tarify** + **free pl
 
 ### 2.6 Volba kredity vs. tarif
 
-| Vhodné | Kreditový balíček | Tarifní program |
-|---|---|---|
-| Frekvence rozesílky | Nepravidelná (1× za měsíc nebo méně) | Pravidelná |
-| Počet kontaktů | Neomezený | Limit podle pásma |
-| Počet e-mailů | Podle koupených kreditů | Neomezeno |
-| Pokročilé funkce | Základní | Plně dostupné |
-| Cena vstupu | Nižší | Vyšší |
+| Vhodné              | Kreditový balíček                    | Tarifní program   |
+| ------------------- | ------------------------------------ | ----------------- |
+| Frekvence rozesílky | Nepravidelná (1× za měsíc nebo méně) | Pravidelná        |
+| Počet kontaktů      | Neomezený                            | Limit podle pásma |
+| Počet e-mailů       | Podle koupených kreditů              | Neomezeno         |
+| Pokročilé funkce    | Základní                             | Plně dostupné     |
+| Cena vstupu         | Nižší                                | Vyšší             |
 
 ### 2.7 Cenová pásma podle kontaktů
 
 Cena tarifu se odvíjí od:
+
 - **Typu tarifu** (Profi / Marketer+ / CDP)
 - **Limitu unikátních aktivních kontaktů** v databázi
 - Cena škálovaná po pásmech (200, 500, 1 000, 2 500, 5 000, 10 000, atd.)
@@ -264,6 +266,7 @@ Cena tarifu se odvíjí od:
 ### 3.3 Plánovaná další expanze
 
 Per oficiální komunikace + Wikipedia:
+
 - Maďarsko, Rumunsko (zvažováno)
 - Plánovaná integrace **Darujme.cz** pro neziskovky
 
@@ -277,21 +280,25 @@ Per oficiální komunikace + Wikipedia:
 ### 3.5 Lokální integrace (klíčové diferenciátory)
 
 **České e-commerce platformy:**
+
 - **Shoptet** (deepest – #1 CZ platforma)
 - **FastCentrik**
 - **Upgates**
 - **Webnode shop**
 
 **Slovenské e-commerce platformy:**
+
 - **Eshop-rychlo.sk**
 - **Slovenia/Webglobe**
 
 **Polské e-commerce platformy** (postupně):
+
 - Shoper
 - IdoSell
 - PrestaShop (popular v PL)
 
 **Mezinárodní platformy:**
+
 - WooCommerce
 - Shopify
 - PrestaShop
@@ -335,6 +342,7 @@ Per oficiální komunikace + Wikipedia:
 ### 4.2 Speciální features pro česká jména
 
 **Unikátní pro Ecomail:**
+
 - **Automatické skloňování jmen** v češtině
 - **Automatické určení pohlaví** podle jména
 - **Automatické určení data svátku** podle jména
@@ -382,6 +390,7 @@ Per oficiální komunikace + Wikipedia:
 **Klíčový asset Ecomailu** – často chválený.
 
 #### Kritéria segmentace
+
 - **Vlastnosti kontaktu** (jméno, příjmení, pohlaví, atd.)
 - **Vlastní pole**
 - **Aktivita v kampaních** (otevřel, kliknul na konkrétní campaign)
@@ -399,6 +408,7 @@ Per oficiální komunikace + Wikipedia:
 - **Členství v jiných segmentech**
 
 #### Operátory
+
 - AND, OR, NOT
 - Datum: před, po, mezi, je
 - Číslo: rovno, menší, větší, mezi
@@ -406,6 +416,7 @@ Per oficiální komunikace + Wikipedia:
 - **Nested conditions** (závorky)
 
 #### Dynamické segmenty
+
 - **Real-time update**
 - Použití: cílení kampaní, trigger automatizací, reporting
 
@@ -429,6 +440,7 @@ Příklad 3: "Klesající retence: nenakoupili 6 měsíců"
 ### 4.8 Import a export
 
 #### Import
+
 - **CSV upload**
 - **Copy-paste**
 - **API import**
@@ -440,6 +452,7 @@ Příklad 3: "Klesající retence: nenakoupili 6 měsíců"
 - **Auto-skloňování jmen** po importu
 
 #### Export
+
 - **CSV download**
 - **Filter před exportem**
 - **Per-kontakt full data** (GDPR)
@@ -511,6 +524,7 @@ Příklad 3: "Klesající retence: nenakoupili 6 měsíců"
 ### 5.6 Produktový feed
 
 **Klíčový e-commerce feature:**
+
 - **Sync produktů** z e-shopu (Shoptet, WooCommerce, atd.)
 - **Auto-insert produktů** do emailů
 - **Personalizovaná doporučení** (CDP)
@@ -610,6 +624,7 @@ Automatizace = Trigger + "strom" akcí
 ### 7.2 Trigger typy
 
 #### Behavioral
+
 - **Nový odběratel** v seznamu
 - **Nová odběr e-mailem** (po sign-up)
 - **Aktivita v kampani** (otevřel/kliknul na konkrétní campaign)
@@ -618,6 +633,7 @@ Automatizace = Trigger + "strom" akcí
 - **Klik na konkrétní link**
 
 #### E-commerce (Shoptet, WooCommerce, atd.)
+
 - **Provedl objednávku**
 - **Opuštěný košík**
 - **První nákup**
@@ -626,32 +642,38 @@ Automatizace = Trigger + "strom" akcí
 - **Stav objednávky změněn**
 
 #### Date-based
+
 - **Datum v poli** (svátek, narozeniny, výročí)
 - **Konkrétní datum**
 - **Posun od data** (X dní před/po)
 - **Roční výročí** (recurring)
 
 #### Pohyb na webu
+
 - **Návštěva konkrétní stránky**
 - **Návštěva kategorie produktu**
 - **Cart event (opuštění košíku, přidání produktu)**
 
 #### Webhooks + API
+
 - **Externí trigger** přes API
 
 ### 7.3 Akce ve workflow
 
 #### Odesílání
+
 - **Odeslat e-mail** (design inline)
 - **Odeslat SMS** (s SMS kredity)
 - **Odeslat notification** (interní team)
 
 #### Manipulace s kontaktem
+
 - **Přidat/odebrat štítek**
 - **Přidat/odebrat ze seznamu**
 - **Aktualizovat pole**
 
 #### Logika / podmínky
+
 - **Čekat** (delay – minuty/hodiny/dny)
 - **Čekat do data**
 - **Větvení (Pokud/Jinak)** – yes/no
@@ -659,12 +681,14 @@ Automatizace = Trigger + "strom" akcí
 - **Goal** (cíl konverze – exit on success)
 
 #### Externí
+
 - **Webhook** – call external URL
 - **Facebook Audience** sync
 
 ### 7.4 Frekvence spouštění
 
 Per oficiální docs:
+
 - **Jednou per kontakt** (welcome series – jen 1×)
 - **Vícekrát** (re-engagement, opakovaně)
 - **S minimální mezerou** (X dní mezi opakováními)
@@ -672,6 +696,7 @@ Per oficiální docs:
 ### 7.5 Strom automatizace
 
 Visual canvas:
+
 - Drag-drop nodes
 - Vizuální větvení
 - Live testing
@@ -680,6 +705,7 @@ Visual canvas:
 ### 7.6 Heatmaps v automatizacích
 
 Per oficiální docs:
+
 - V automatizacích Ecomail **ukazuje:**
   - Zda kontakt do automatizace **vstoupil**
   - Jestli na něco **kliknul**
@@ -690,6 +716,7 @@ Per oficiální docs:
 ### 7.7 Časté patterny automatizací
 
 #### Welcome série
+
 ```
 Trigger: Nový odběratel
    ↓
@@ -711,6 +738,7 @@ Konec
 ```
 
 #### Opuštěný košík
+
 ```
 Trigger: Opuštěný košík (z e-shopu integrace)
    ↓
@@ -734,6 +762,7 @@ Konec
 ```
 
 #### Post-purchase + náhradní díly (z real case nanoSPACE)
+
 ```
 Trigger: Provedl objednávku konkrétního produktu (čistička vzduchu)
    ↓
@@ -786,6 +815,7 @@ Per oficiální docs, Ecomail nabízí **8+ předpřipravených automatizací**:
 ### 8.3 Časté kombinace
 
 **E-commerce essential set:**
+
 1. Welcome série (po sign-up)
 2. Opuštěný košík
 3. Sleva na první nákup
@@ -802,11 +832,12 @@ Per oficiální docs, Ecomail nabízí **8+ předpřipravených automatizací**:
 ### 9.1 Co je CDP tarif
 
 Per oficiální docs:
-*"Tarif CDP obsahuje všechny funkce tarifu Marketer+ a navíc je obohacen o pokročilý reporting ve formě CDP (Customer Data Platform Analytics)."*
+_"Tarif CDP obsahuje všechny funkce tarifu Marketer+ a navíc je obohacen o pokročilý reporting ve formě CDP (Customer Data Platform Analytics)."_
 
 ### 9.2 CDP komponenty
 
 #### RFM analýza
+
 - **Recency, Frequency, Monetary** scoring
 - **Automatické rozdělení databáze** dle:
   - **Frekvence objednávek**
@@ -822,6 +853,7 @@ Per oficiální docs:
   - Noví zákazníci
 
 #### Pokročilé konverzní reporty
+
 - **Měření vlivu e-mailingu na tržby**
 - **Per-kampaň revenue attribution**
 - **Per-segment revenue**
@@ -829,6 +861,7 @@ Per oficiální docs:
 - **AOV per segment**
 
 #### Produktová analýza
+
 - **Nejčastěji prodávané produkty**
 - **Cross-sell insights:**
   - "Co kontakty nakupují v rámci stejné objednávky"
@@ -837,6 +870,7 @@ Per oficiální docs:
 - **Per-kategorie performance**
 
 #### Sledování retence
+
 - **Pohyb mezi segmenty v čase**
 - **Cohort analysis**
 - **Retenční trendy**
@@ -845,6 +879,7 @@ Per oficiální docs:
 ### 9.3 Pro koho je CDP tarif
 
 Per oficiální comm:
+
 - **E-shopy s data ambicí**
 - **Mid-to-large** e-shopy s 5 000+ zákazníky
 - **Brand chtějící data-driven marketing**
@@ -853,6 +888,7 @@ Per oficiální comm:
 ### 9.4 Záchranné scénáře
 
 CDP umožňuje:
+
 - **Identifikovat zákazníky s klesající retencí včas**
 - **Spustit záchranné automatizace** dříve, než odejdou
 - **Personalizované re-engagement** dle minulých nákupů
@@ -867,6 +903,7 @@ CDP umožňuje:
 ### 9.6 Upgrade flow
 
 Per oficiální docs:
+
 ```
 Stávající tarif: Profi nebo Marketer+
    ↓
@@ -888,6 +925,7 @@ Doporučeno:
 ### 10.1 Co je RFM
 
 **Recency, Frequency, Monetary** scoring:
+
 - **R (Recency):** kdy naposledy nakoupil
 - **F (Frequency):** jak často nakupuje
 - **M (Monetary):** kolik utratil
@@ -895,6 +933,7 @@ Doporučeno:
 ### 10.2 RFM v Ecomail CDP
 
 Per oficiální docs:
+
 - **Automatické rozdělení databáze do segmentů**
 - **Score** per kontakt
 - **Cohort assignment** auto
@@ -902,6 +941,7 @@ Per oficiální docs:
 ### 10.3 RFM kohorty
 
 Typical Ecomail/RFM kohorty:
+
 - **Champions** (best customers, top R+F+M)
 - **Loyal Customers** (consistent)
 - **Potential Loyalists** (recent, multi-purchase)
@@ -936,7 +976,7 @@ Hibernating cohort:
 ### 10.5 Pohyb mezi segmenty
 
 Per oficiální docs:
-*"Sledujte pohyb uživatelů mezi segmenty v čase."*
+_"Sledujte pohyb uživatelů mezi segmenty v čase."_
 
 - **Time-series** analysis
 - **Cohort velocity** (jak rychle se kohorty mění)
@@ -1015,6 +1055,7 @@ Publikovat
 ### 12.1 Tracking script
 
 **JavaScript snippet** na webu:
+
 - Track page views per kontakt
 - Time on page
 - Custom events
@@ -1040,6 +1081,7 @@ Full timeline preserved
 ### 12.3 Use cases
 
 #### Segmentace dle pohybu
+
 ```
 Segment: "Viděli kategorii outdoor"
 - Site activity: visited /outdoor/* in last 7 days
@@ -1049,6 +1091,7 @@ Cílená kampaň: "Outdoor sezóna začíná"
 ```
 
 #### Trigger automatizace
+
 ```
 Trigger: Návštěva stránky /vans-bez-tkaniček/
 - Visit count >= 2
@@ -1078,6 +1121,7 @@ Workflow: "Personalizovaný e-mail s nabídkou Vans"
 ### 13.2 SMS kredity
 
 Per oficiální docs:
+
 - **Samostatné SMS kredity** (NE e-mailové)
 - **1 SMS ≠ 1 kredit** – počet kreditů per SMS varies podle země
 - **Pouze jako add-on** k tarifu (NE free plan)
@@ -1123,6 +1167,7 @@ Konec
 ### 14.1 Facebook Lead Ads integrace
 
 Per oficiální docs:
+
 - **Facebook Lead Ads** sync direct s Ecomailem
 - **Lead form submissions** → kontakty v Ecomailu
 - **Automatic import** po podaných žádostech
@@ -1139,6 +1184,7 @@ Per oficiální docs:
 ### 14.3 Use cases
 
 #### Lead acquisition
+
 ```
 Facebook Lead Ad campaign
    ↓
@@ -1152,6 +1198,7 @@ Nurture nové leady
 ```
 
 #### Re-targeting
+
 ```
 Segment: "Opuštěný košík + nenakoupil 7 dní"
    ↓
@@ -1244,6 +1291,7 @@ Auto-render per recipient:
 ### 16.3 Doporučení produktů (CDP)
 
 CDP tarif:
+
 - **AI doporučení** produktů per kontakt
 - **Based on:**
   - Browse history
@@ -1265,6 +1313,7 @@ CDP tarif:
 ### 17.1 Kampaně reporty
 
 #### Standard metriky
+
 - **Odesláno**
 - **Doručeno**
 - **Bounced** (hard + soft)
@@ -1277,6 +1326,7 @@ CDP tarif:
 - **Zařízení + email klient**
 
 #### Vizualizace
+
 - **Heatmapy** (click maps na emailu)
 - **24h chart** performance
 - **Komparace** s předchozími kampaněmi
@@ -1374,6 +1424,7 @@ CDP tarif:
 ### 18.4 Lokální integrace (klíčové)
 
 #### České e-commerce platformy
+
 - **Shoptet** (DEEPEST – #1 v CZ)
   - Real-time přenos kontaktů
   - Objednávky + slevové kupóny
@@ -1384,10 +1435,12 @@ CDP tarif:
 - **Webnode shop**
 
 #### Slovenské platformy
+
 - **Eshop-rychlo.sk**
 - **Webglobe / Slovenia**
 
 #### Polské platformy (in progress)
+
 - **Shoper**
 - **IdoSell**
 - **PrestaShop** (popular v PL)
@@ -1447,6 +1500,7 @@ CDP tarif:
 ### 19.2 Doručitelnost CZ schránek
 
 **Klíčový asset Ecomailu:**
+
 - **Partnerství s Seznam.cz**
 - Pravidelné statistiky doručitelnosti
 - 2023: 115+ milionů e-mailů na Seznam.cz schránek (Black Friday)
@@ -1454,13 +1508,13 @@ CDP tarif:
 
 ### 19.3 Authentication
 
-| Protokol | Setup |
-|---|---|
-| **SPF** | Include for Ecomail's mail servers |
-| **DKIM** | CNAME records |
-| **DMARC** | TXT record |
-| **Sender verification** | Email verification |
-| **Branded tracking domain** | CNAME setup |
+| Protokol                    | Setup                              |
+| --------------------------- | ---------------------------------- |
+| **SPF**                     | Include for Ecomail's mail servers |
+| **DKIM**                    | CNAME records                      |
+| **DMARC**                   | TXT record                         |
+| **Sender verification**     | Email verification                 |
+| **Branded tracking domain** | CNAME setup                        |
 
 ### 19.4 GDPR features
 
@@ -1545,6 +1599,7 @@ CDP tarif:
 ### 20.7 Spam handling
 
 Per Capterra review:
+
 - **Shoptet někdy zasílá spam adresy** do Ecomailu, které Ecomail automaticky nedetekuje
 - Vyžaduje **manuální cleanup** databáze
 - Better filtering wished
@@ -1552,6 +1607,7 @@ Per Capterra review:
 ### 20.8 Doplněk Shoptet limitations
 
 Per real reviews:
+
 - **Shoptet doplněk** je **placená 3-month minimum** subscription
 - **Zkušební doba** může být zavádějící
 - **Customer feedback:** "Bohužel, není možnost zrušit doplněk před 3 měsíci"
@@ -1570,12 +1626,12 @@ Per real reviews:
 
 ### 20.11 Cena srovnání s lokálními konkurenty
 
-| Lokální alternativa | Pozice |
-|---|---|
-| **SmartEmailing** | Similar pricing, podobné features, méně e-commerce focused |
-| **Mailkit** | Vyšší pricing, enterprise focus |
-| **Boldem** | Levnější, méně features |
-| **Leadhub/Targito** | Specifický pro media + B2B |
+| Lokální alternativa | Pozice                                                     |
+| ------------------- | ---------------------------------------------------------- |
+| **SmartEmailing**   | Similar pricing, podobné features, méně e-commerce focused |
+| **Mailkit**         | Vyšší pricing, enterprise focus                            |
+| **Boldem**          | Levnější, méně features                                    |
+| **Leadhub/Targito** | Specifický pro media + B2B                                 |
 
 ### 20.12 Mezinárodní expanze challenges
 
@@ -1588,6 +1644,7 @@ Per real reviews:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### Ecomail je dobrá volba pokud
+
 - Provozujete **český / slovenský / polský e-shop** (Shoptet, FastCentrik, WooCommerce, Shopify)
 - Cílíte **mid-market SMB** segment
 - Vážíte si **lokální podpory v češtině** (chat, telefon, email)
@@ -1604,6 +1661,7 @@ Per real reviews:
 - Provozujete **neziskovku** v CZ (50% sleva)
 
 ### Ecomail není dobrá volba pokud
+
 - Provozujete **mezinárodní enterprise** s 1M+ kontakty
 - Hledáte **deep B2B CRM** (deals, pipelines, lead scoring) – HubSpot, Salesforce, Pipedrive
 - Provozujete **DTC e-commerce na Shopify** s deep predictive analytics – Klaviyo
@@ -1619,22 +1677,22 @@ Per real reviews:
 
 ### Ecomail vs. konkurence
 
-| Konkurence | Kdy lepší než Ecomail |
-|---|---|
-| **SmartEmailing** | Větší brand recognition na CZ trhu, podobné features |
-| **Mailkit** | Enterprise B2C, transactional focus, dlouhá historie |
-| **Boldem** | Levnější, jednodušší pro malé klienty |
-| **Mailchimp** | Mezinárodní brand recognition, ekosystém, free tier |
-| **Klaviyo** | DTC e-commerce, predictive analytics, Shopify deep |
-| **HubSpot** | Full B2B CRM, sales-led, enterprise governance |
-| **ActiveCampaign** | Mid-market deep automation, 970+ integrations, B2B CRM |
-| **MailerLite** | Pure content creators, paid newsletters, simpler |
-| **GetResponse** | Webinars + courses + funnels, 27 jazyků UI |
-| **Brevo** | Volume-based pricing, transactional excellence, multilingual |
-| **SAP Emarsys** | Enterprise retail, loyalty, omnichannel |
-| **ExpertSender** | E-commerce CDP s dedicated CSM, polský origin |
-| **SALESmanago** | Polský trh deep, advanced B2B + AI |
+| Konkurence         | Kdy lepší než Ecomail                                        |
+| ------------------ | ------------------------------------------------------------ |
+| **SmartEmailing**  | Větší brand recognition na CZ trhu, podobné features         |
+| **Mailkit**        | Enterprise B2C, transactional focus, dlouhá historie         |
+| **Boldem**         | Levnější, jednodušší pro malé klienty                        |
+| **Mailchimp**      | Mezinárodní brand recognition, ekosystém, free tier          |
+| **Klaviyo**        | DTC e-commerce, predictive analytics, Shopify deep           |
+| **HubSpot**        | Full B2B CRM, sales-led, enterprise governance               |
+| **ActiveCampaign** | Mid-market deep automation, 970+ integrations, B2B CRM       |
+| **MailerLite**     | Pure content creators, paid newsletters, simpler             |
+| **GetResponse**    | Webinars + courses + funnels, 27 jazyků UI                   |
+| **Brevo**          | Volume-based pricing, transactional excellence, multilingual |
+| **SAP Emarsys**    | Enterprise retail, loyalty, omnichannel                      |
+| **ExpertSender**   | E-commerce CDP s dedicated CSM, polský origin                |
+| **SALESmanago**    | Polský trh deep, advanced B2B + AI                           |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů ecomail.cz, ecomail.app, help.ecomail.cz, support.ecomail.cz a praktických zdrojů (G2, Capterra, GetApp, Wikipedia.cz, Shoptet partneři, Loudavymkrokem.cz, Effectix). Pro nejaktuálnější ceny vždy ověřit na ecomail.cz/price.*
+_Dokument zpracován z oficiálních zdrojů ecomail.cz, ecomail.app, help.ecomail.cz, support.ecomail.cz a praktických zdrojů (G2, Capterra, GetApp, Wikipedia.cz, Shoptet partneři, Loudavymkrokem.cz, Effectix). Pro nejaktuálnější ceny vždy ověřit na ecomail.cz/price._

@@ -32,11 +32,11 @@ export interface WarmupPhase {
 }
 
 export const WARMUP_SCHEDULE: WarmupPhase[] = [
-  { fromDay: 1,  toDay: 3,   dailyLimit: 50,     label: 'Phase 1 — Initial' },
-  { fromDay: 4,  toDay: 7,   dailyLimit: 200,     label: 'Phase 2 — Ramp-up' },
-  { fromDay: 8,  toDay: 14,  dailyLimit: 1_000,   label: 'Phase 3 — Growth' },
-  { fromDay: 15, toDay: 21,  dailyLimit: 5_000,   label: 'Phase 4 — Acceleration' },
-  { fromDay: 22, toDay: 30,  dailyLimit: 20_000,  label: 'Phase 5 — High volume' },
+  { fromDay: 1, toDay: 3, dailyLimit: 50, label: 'Phase 1 — Initial' },
+  { fromDay: 4, toDay: 7, dailyLimit: 200, label: 'Phase 2 — Ramp-up' },
+  { fromDay: 8, toDay: 14, dailyLimit: 1_000, label: 'Phase 3 — Growth' },
+  { fromDay: 15, toDay: 21, dailyLimit: 5_000, label: 'Phase 4 — Acceleration' },
+  { fromDay: 22, toDay: 30, dailyLimit: 20_000, label: 'Phase 5 — High volume' },
 ];
 
 /** Day at which the IP is considered fully warmed up */
@@ -178,7 +178,11 @@ export async function advanceWarmupDay(ipAddress: string): Promise<number | null
   // Sync Redis
   await redis.set(warmupDayKey(ipAddress), String(newDay), 'EX', 86_400 * 35);
   // Reset today_sent counter for new day
-  const secondsUntilMidnight = 86_400 - (new Date().getUTCSeconds() + new Date().getUTCMinutes() * 60 + new Date().getUTCHours() * 3600);
+  const secondsUntilMidnight =
+    86_400 -
+    (new Date().getUTCSeconds() +
+      new Date().getUTCMinutes() * 60 +
+      new Date().getUTCHours() * 3600);
   await redis.set(todaySentKey(ipAddress), '0', 'EX', secondsUntilMidnight + 60);
 
   return newDay;
@@ -188,10 +192,7 @@ export async function advanceWarmupDay(ipAddress: string): Promise<number | null
  * Get warmup status for all IPs under an org.
  */
 export async function listWarmupStatuses(orgId: string): Promise<WarmupStatus[]> {
-  const rows = await db
-    .select()
-    .from(warmupIps)
-    .where(eq(warmupIps.orgId, orgId));
+  const rows = await db.select().from(warmupIps).where(eq(warmupIps.orgId, orgId));
 
   return Promise.all(
     rows.map(async (row) => {

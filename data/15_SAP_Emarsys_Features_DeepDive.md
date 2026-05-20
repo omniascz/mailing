@@ -5,6 +5,7 @@
 **Rozsah:** kompletní funkcionalita platformy v roce 2026 – Engagement Cloud (Emarsys Edition), omnichannel marketing automation, AI personalization, Tactics, Smart Insight, Predict, Loyalty, Mobile Engage, Web Channel + integrace s SAP ekosystémem.
 
 > **Důležitý kontext – rebrand 2025:** SAP **změnil název** "SAP Emarsys" na **"SAP Engagement Cloud"** v pozdním 2025. Současný stav (2026):
+>
 > - **SAP Engagement Cloud** = nová zastřešující značka (broader category)
 > - **Emarsys Edition** = legacy Emarsys platform (standalone, can be used without other SAP products)
 > - **Enterprise Edition** = nová edition s deep integrací do SAP ekosystému (S/4HANA, Sales Cloud, CDP, CDC)
@@ -61,6 +62,7 @@
 **"Built for marketers, not for developers"** – ne tak technicky jako Salesforce Marketing Cloud nebo Adobe Journey Optimizer. Důraz na **out-of-the-box use cases** s **60+ pre-built Tactics** pro retail.
 
 Klíčové diferenciátory vs. konkurence:
+
 - **Tactics library** – ready-to-deploy campaign blueprints
 - **Smart Insight** – built-in RFM + lifecycle segmentation
 - **Predict** – proprietary product recommendation engine
@@ -135,6 +137,7 @@ Pozdní 2025: SAP **rebranded "SAP Emarsys" na "SAP Engagement Cloud"** s **edit
 ### 2.2 Současné edition (2026)
 
 #### Emarsys Edition
+
 - **Pokračování legacy Emarsys produktu** – stejná platforma, stejné capabilities
 - **Standalone use** – lze používat **bez ostatních SAP produktů**
 - Pricing: contact-based + channel add-ons
@@ -143,6 +146,7 @@ Pozdní 2025: SAP **rebranded "SAP Emarsys" na "SAP Engagement Cloud"** s **edit
 - **Cílový klient:** mid-market retail/e-commerce bez SAP infrastruktury
 
 #### Enterprise Edition
+
 - **Nová edition** s deep integrací do SAP ekosystému
 - Built pro firmy už používající **SAP S/4HANA, Sales Cloud V2, Service Cloud V2, Commerce Cloud**
 - **Vyšší pricing** (often $5K-$20K+/měsíc)
@@ -153,6 +157,7 @@ Pozdní 2025: SAP **rebranded "SAP Emarsys" na "SAP Engagement Cloud"** s **edit
 ### 2.3 Důsledky pro existing customers
 
 Per oficiální SAP:
+
 - **"Continuity is paramount"**
 - Customers continue using their existing solution
 - **Same CSM** continues
@@ -175,6 +180,7 @@ Per oficiální SAP:
 ### 2.5 Naming v dokumentu
 
 V tomto dokumentu používáme:
+
 - **"Emarsys"** = legacy platforma (still official Emarsys Edition)
 - **"SAP Engagement Cloud"** = nová zastřešující značka
 - **"Enterprise Edition"** = pokud zmiňujeme nový enterprise tier specifically
@@ -199,45 +205,49 @@ Emarsys **nepoužívá self-serve pricing** ani public price list. Stejně jako 
 Per Spadoom 2026 pricing guide (industry analysis):
 
 #### Emarsys Edition
+
 - **Entry level:** $1 500 – $3 000/měsíc (small retailers, <100K contacts)
 - **Mid-market:** $3 000 – $5 000+/měsíc (100K–500K contacts)
 - **Large mid-market:** $5 000 – $10 000/měsíc (500K–1M contacts)
 - **Enterprise:** $10 000+ /měsíc (1M+ contacts)
 
 #### Enterprise Edition (s SAP integrace)
+
 - Začíná typicky $5 000+/měsíc
 - Často $20 000+ /měsíc pro full SAP deployment
 - Multi-year contracts s flexible add-ons
 
 ### 3.3 Pricing struktura
 
-| Komponent | Co ovlivňuje cenu |
-|---|---|
-| **Base platform fee** | Fixed core fee |
-| **Active contacts** | Per-tier (typically 50K, 100K, 250K, 500K, 1M+) |
-| **Email volume** | Some plans include unlimited, others metered |
-| **SMS volume** | Per-message (credits) |
-| **Mobile push volume** | Per-message or tier |
-| **Web push** | Often included |
-| **Channels enabled** | Email only / + SMS / + Push / Full omnichannel |
-| **Predict module** | Add-on (often included) |
-| **Smart Insight** | Add-on (often included) |
-| **Loyalty Cloud** | Add-on |
-| **Digital Ads connector** | Add-on |
-| **Direct Mail integration** | Add-on |
-| **Tactics package level** | Different Tactics tiers |
-| **CSM service level** | Standard / Premium / Strategic |
-| **API rate limits** | Higher tiers |
-| **Multi-account / multi-brand** | Add-on |
+| Komponent                       | Co ovlivňuje cenu                               |
+| ------------------------------- | ----------------------------------------------- |
+| **Base platform fee**           | Fixed core fee                                  |
+| **Active contacts**             | Per-tier (typically 50K, 100K, 250K, 500K, 1M+) |
+| **Email volume**                | Some plans include unlimited, others metered    |
+| **SMS volume**                  | Per-message (credits)                           |
+| **Mobile push volume**          | Per-message or tier                             |
+| **Web push**                    | Often included                                  |
+| **Channels enabled**            | Email only / + SMS / + Push / Full omnichannel  |
+| **Predict module**              | Add-on (often included)                         |
+| **Smart Insight**               | Add-on (often included)                         |
+| **Loyalty Cloud**               | Add-on                                          |
+| **Digital Ads connector**       | Add-on                                          |
+| **Direct Mail integration**     | Add-on                                          |
+| **Tactics package level**       | Different Tactics tiers                         |
+| **CSM service level**           | Standard / Premium / Strategic                  |
+| **API rate limits**             | Higher tiers                                    |
+| **Multi-account / multi-brand** | Add-on                                          |
 
 ### 3.4 Implementation costs
 
 Implementation (přes SAP partner nebo SAP Services):
+
 - **Small/mid retail:** $30K – $80K one-time
 - **Mid-market:** $80K – $200K
 - **Enterprise:** $200K – $500K+ (complex SAP integration scenarios)
 
 Includes:
+
 - Data migration
 - System integration (e-commerce platform, CDP, ERP)
 - Tactics setup
@@ -273,16 +283,16 @@ Includes:
 
 Per Spadoom analysis:
 
-| Platform | Mid-market starting | Enterprise typical |
-|---|---|---|
-| **Klaviyo** | $720/měsíc (50K) | $5K+/měsíc |
-| **HubSpot Marketing Hub Enterprise** | $3 600/měsíc | $10K+/měsíc |
-| **Salesforce Marketing Cloud** | $5K+/měsíc | $25K+/měsíc |
-| **Adobe Journey Optimizer** | $10K+/měsíc | $50K+/měsíc |
-| **Braze** | $4K+/měsíc | $20K+/měsíc |
-| **SAP Emarsys Edition** | **$1.5K – $5K/měsíc** | **$10K+/měsíc** |
-| **SAP Engagement Cloud Enterprise** | $5K+/měsíc | $20K+/měsíc |
-| **Bloomreach Engagement** | $3K+/měsíc | $15K+/měsíc |
+| Platform                             | Mid-market starting   | Enterprise typical |
+| ------------------------------------ | --------------------- | ------------------ |
+| **Klaviyo**                          | $720/měsíc (50K)      | $5K+/měsíc         |
+| **HubSpot Marketing Hub Enterprise** | $3 600/měsíc          | $10K+/měsíc        |
+| **Salesforce Marketing Cloud**       | $5K+/měsíc            | $25K+/měsíc        |
+| **Adobe Journey Optimizer**          | $10K+/měsíc           | $50K+/měsíc        |
+| **Braze**                            | $4K+/měsíc            | $20K+/měsíc        |
+| **SAP Emarsys Edition**              | **$1.5K – $5K/měsíc** | **$10K+/měsíc**    |
+| **SAP Engagement Cloud Enterprise**  | $5K+/měsíc            | $20K+/měsíc        |
+| **Bloomreach Engagement**            | $3K+/měsíc            | $15K+/měsíc        |
 
 Pozn.: Emarsys Edition **competitive** v mid-market, Enterprise Edition v enterprise tier.
 
@@ -302,6 +312,7 @@ Emarsys je **explicitly designed pro retail/e-commerce/B2C**. Toto je výrazný 
 ### 4.1 Primary verticals
 
 #### Retail (largest segment)
+
 - Fashion & apparel (PUMA, Reiss, etc.)
 - Beauty & cosmetics
 - Sport & outdoor
@@ -311,34 +322,40 @@ Emarsys je **explicitly designed pro retail/e-commerce/B2C**. Toto je výrazný 
 - Specialty retailers
 
 #### E-commerce (online + omnichannel)
+
 - D2C brands
 - Marketplace sellers
 - Subscription boxes
 - Cross-border e-commerce
 
 #### Travel & Hospitality
+
 - Hotel chains
 - Booking platforms
 - Tour operators
 - Cruise lines
 
 #### Sports & Entertainment
+
 - NHL teams (San Jose Sharks)
 - FC Bayern Munich
 - Other sports clubs
 - Entertainment venues
 
 #### Telecommunications
+
 - B2C telco
 - ISPs
 - Mobile carriers
 
 #### Financial Services (B2C)
+
 - Retail banks
 - Insurance B2C
 - Investment platforms
 
 #### Media & Publishing
+
 - News brands
 - Subscription content
 - Streaming services
@@ -350,12 +367,14 @@ Emarsys's flagship differentiator. **Out-of-the-box campaign templates** designe
 Examples per category:
 
 #### Acquisition tactics
+
 - Welcome series (multi-step)
 - Newsletter signup confirmation
 - First purchase incentive
 - Lead nurturing sequence
 
 #### Engagement tactics
+
 - Browse abandonment
 - Cart abandonment (multi-channel)
 - Wishlist reminders
@@ -363,6 +382,7 @@ Examples per category:
 - Stock alerts (back in stock)
 
 #### Retention tactics
+
 - Loyalty welcome
 - Birthday celebration
 - Anniversary
@@ -371,18 +391,21 @@ Examples per category:
 - Referral program
 
 #### Reactivation tactics
+
 - Win-back campaign (multi-stage)
 - Lapsed customer re-engagement
 - Lapsed VIP rescue
 - Unsubscribe save
 
 #### Lifecycle tactics
+
 - New customer (first 30/60/90 days)
 - Loyal customer cross-sell
 - At-risk customer retention
 - Hibernating winback
 
 #### Transactional tactics
+
 - Order confirmation
 - Shipping notifications
 - Delivery confirmation
@@ -392,6 +415,7 @@ Examples per category:
 ### 4.3 Tactics design
 
 Per oficiální Emarsys Help:
+
 - **Pre-built Automation Center programs** AND **Interactions programs**
 - **Each Tactic** has different versions per pricing package + add-ons
 - **Channel selection** during setup (email, SMS, push, web)
@@ -417,46 +441,55 @@ Emarsys uses **unified customer profile** across all channels and data sources.
 ### 5.1 Data ingestion sources
 
 #### E-commerce platforms
+
 - **SAP Commerce Cloud** (deepest plug-and-play)
 - Shopify, Magento (Adobe Commerce), BigCommerce, Salesforce Commerce Cloud
 - Custom platforms via API
 
 #### CRM systems
+
 - **SAP Sales Cloud V2** / Service Cloud V2 (native)
 - Salesforce CRM (via integration)
 - Custom CRMs via API
 
 #### ERP / Operational data
+
 - **SAP S/4HANA** (deep integration, real-time)
 - Other ERPs via API
 
 #### Customer Data
+
 - **SAP Customer Data Platform (CDP)**
 - **SAP Customer Identity (CDC)** for IAM
 - External CDPs via API
 
 #### Web tracking
+
 - **Web Extend** (Emarsys's tracking script)
 - Page views, product views, cart events, search queries
 - Custom events
 
 #### Mobile apps
+
 - **Mobile Engage SDK** (iOS + Android)
 - App events, in-app purchases
 - Push tokens
 
 #### POS / In-store
+
 - POS data via API
 - Loyalty card scans
 - In-store browse history
 
 #### Webhooks + API
+
 - Real-time events from any source
 - Custom integration
 
 ### 5.2 Single Customer Profile contents
 
 Each profile contains:
+
 - **Demographics & contact info** (name, email, phone, address)
 - **Preferences** (channel preferences, language, communication frequency)
 - **Subscription status per channel**
@@ -474,6 +507,7 @@ Each profile contains:
 ### 5.3 Relational data model
 
 Emarsys supports **relational data tables** (not just flat profile):
+
 - Customers → Orders → Line items → Products
 - Customers → Sessions → Pageviews
 - Customers → Loyalty → Points → Transactions
@@ -491,6 +525,7 @@ Enables **complex queries** for segmentation.
 ### 5.5 Open Data Access
 
 Per Q1 2026 release:
+
 - **Queryable access** to product identities, attributes, pricing, availability
 - **Full audit trail** for reporting
 - **Track price drops** over time
@@ -540,6 +575,7 @@ eRFM cohorts (refined):
 ### 6.2 eRFM customization
 
 Per oficiální Help:
+
 - **Setup during onboarding** s CSM
 - **Customizable scoring** per dimension (R, F, M)
 - **Time windows** configurable
@@ -562,6 +598,7 @@ Per oficiální Help:
 - Customer leaves cohort → tactic adjusts
 
 Example:
+
 ```
 Customer transitions to "At Risk"
    ↓
@@ -583,6 +620,7 @@ Emarsys's **proprietary recommendation engine**.
 ### 7.1 Predict capabilities
 
 Real-time **AI-driven product recommendations** in:
+
 - Emails (dynamic blocks per recipient)
 - On-site widgets (homepage, product page, cart, checkout)
 - Mobile push notifications
@@ -593,33 +631,43 @@ Real-time **AI-driven product recommendations** in:
 ### 7.2 Recommendation strategies
 
 #### Collaborative filtering
+
 "Customers like you bought X"
+
 - Based on aggregate customer behavior
 - Updates real-time as data grows
 
 #### Content-based
+
 "Similar to what you viewed"
+
 - Product attributes (category, brand, price)
 - Image similarity (some Predict variants)
 
 #### Personalized
+
 ML-driven per profile
+
 - Browse history weight
 - Purchase history weight
 - Wishlist signals
 - Cart events
 
 #### Trending
+
 Aggregate popular
+
 - Hot products right now
 - Per category trending
 
 #### Cross-sell / Upsell
+
 - Complementary products
 - Higher-priced alternatives
 - Bundle suggestions
 
 #### Search-based
+
 - Based on search queries
 - Search-to-purchase optimization
 
@@ -668,7 +716,7 @@ Browse abandonment email:
 
 Per oficiální Emarsys Help:
 
-*"Tactics are pre-built Automation Center and Interactions programs designed to achieve a specific marketing goal. Each one must be customized to a greater or lesser extent before you can use it."*
+_"Tactics are pre-built Automation Center and Interactions programs designed to achieve a specific marketing goal. Each one must be customized to a greater or lesser extent before you can use it."_
 
 ### 8.2 Categories of Tactics
 
@@ -685,6 +733,7 @@ Per oficiální Emarsys Help:
 ### 8.3 Tactic structure
 
 Each Tactic contains:
+
 - **Trigger** (entry condition)
 - **Channel sequence** (multi-channel orchestration)
 - **Pre-built segments** (Smart Insight + behavioral)
@@ -705,6 +754,7 @@ Each Tactic contains:
 ### 8.5 Customization required
 
 Tactics **must be customized** before activation:
+
 - Brand voice in templates
 - Specific products/offers
 - Timing per business
@@ -714,6 +764,7 @@ Tactics **must be customized** before activation:
 ### 8.6 Tactics customization limits
 
 Per oficiální docs:
+
 - Tactics use **pre-built segments only**
 - **Combined segments not supported** in Tactics
 - **Lifecycle stages cannot be redefined** at Tactic level
@@ -754,6 +805,7 @@ Activate
 ### 8.8 Tactics status tracking
 
 Programs grouped by status:
+
 - **Inactive** – not created yet
 - **In design** – being built/tested
 - **Active** – running
@@ -763,6 +815,7 @@ Programs grouped by status:
 ### 8.9 Strategic Dashboard integration
 
 Tactics linked to **Strategy** (e.g. "Increase repeat purchase rate"):
+
 - Strategic Dashboard shows strategy performance
 - Click "Get Better Results with Tactics" → see Tactics for that strategy
 - Performance per Tactic tracked at strategy level
@@ -795,16 +848,16 @@ Two parallel automation paradigms v Emarsys.
 
 ### 9.3 When to use what
 
-| Use case | Automation Center | Interactions |
-|---|---|---|
-| Welcome series (multi-step) | ✅ | ❌ |
-| Cart abandonment (multi-channel) | ✅ | ❌ |
-| Order confirmation (immediate) | ❌ | ✅ |
-| Birthday email | ✅ | ❌ |
-| Browse abandonment | ✅ | ✅ (depending) |
-| Lifecycle journey | ✅ | ❌ |
-| Real-time pricedrop alert | ❌ | ✅ |
-| Loyalty tier promotion | ✅ | ❌ |
+| Use case                         | Automation Center | Interactions   |
+| -------------------------------- | ----------------- | -------------- |
+| Welcome series (multi-step)      | ✅                | ❌             |
+| Cart abandonment (multi-channel) | ✅                | ❌             |
+| Order confirmation (immediate)   | ❌                | ✅             |
+| Birthday email                   | ✅                | ❌             |
+| Browse abandonment               | ✅                | ✅ (depending) |
+| Lifecycle journey                | ✅                | ❌             |
+| Real-time pricedrop alert        | ❌                | ✅             |
+| Loyalty tier promotion           | ✅                | ❌             |
 
 ### 9.4 Automation Center nodes
 
@@ -867,6 +920,7 @@ End
 ### 9.7 Frozen / Error states
 
 Programs can enter:
+
 - **Frozen** – paused due to errors or operational issues
 - **Error** – setup issue prevents execution
 - **Pending** – approval needed
@@ -882,6 +936,7 @@ Notifications sent to marketers automatically.
 ### 10.1 Visual Content Editor (VCE)
 
 Emarsys's email editor:
+
 - **Drag-and-drop** modern interface
 - **Block-based** structure
 - **Responsive design** automatic
@@ -981,6 +1036,7 @@ Emarsys's email editor:
 ### 11.4 SDK v Q1 2026
 
 Per release notes:
+
 - **SAP Engagement Cloud SDK** (pilot) – unifying iOS/Android/Web
 - **First-party data collection** uniform
 - **Mobile Push, Web Push, In-app** unified channel
@@ -1016,6 +1072,7 @@ Per release notes:
 ### 12.2 Content delivery
 
 Web Extend script delivers personalized content:
+
 - Replace static blocks s personalized
 - Show/hide elements based on segment
 - Dynamic product carousels
@@ -1065,6 +1122,7 @@ Web Extend script delivers personalized content:
 ### 13.3 Integration with channels
 
 SMS often used as **escalation** in multi-channel:
+
 - Email first → if no engagement, SMS as last resort
 - Or **complementary** – SMS for time-sensitive, email for content
 
@@ -1104,6 +1162,7 @@ SMS often used as **escalation** in multi-channel:
 ### 14.2 Loyalty data v profile
 
 Each profile shows:
+
 - Current tier
 - Points balance
 - Lifetime points earned
@@ -1202,6 +1261,7 @@ Send push: "Reminder – your Gold benefits"
 Emarsys traditionally focused na **predictive ML** (CLV, churn, recommendations) – ne generative AI.
 
 V 2024-2026 SAP integrace AI rozšiřuje:
+
 - **Joule AI** – SAP-wide generative AI integrated
 - **AI-Assisted Content Creation** (Q1 2026 release)
 - **AI subject line generation**
@@ -1212,6 +1272,7 @@ V 2024-2026 SAP integrace AI rozšiřuje:
 ### 16.2 Joule AI
 
 SAP's AI assistant integrated across SAP products including Engagement Cloud:
+
 - **Conversational interface** with marketers
 - **Generate campaign ideas**
 - **Suggest segments**
@@ -1237,6 +1298,7 @@ SAP's AI assistant integrated across SAP products including Engagement Cloud:
 ### 16.5 AI roadmap 2026
 
 Per Q1 2026 release:
+
 - **Universal Schema Builder** – AI-assisted data modeling
 - **AI-Assisted Content Creation** for all messages
 - **Enhanced AI-powered analytics**
@@ -1257,6 +1319,7 @@ Per Q1 2026 release:
 ### 17.2 API endpoints
 
 Per oficiální docs:
+
 - `/contacts` – CRUD contacts
 - `/contactlists` – list management
 - `/segments` – segment management
@@ -1299,6 +1362,7 @@ Per oficiální docs:
 **Key competitive advantage** post-acquisition.
 
 #### Plug-and-play (deep)
+
 - **SAP Commerce Cloud** – order confirmation, cart abandonment, post-purchase
 - **SAP Sales Cloud V2** – B2B lead nurturing, contact sync
 - **SAP Service Cloud V2** – service-marketing integration
@@ -1308,6 +1372,7 @@ Per oficiální docs:
 - **SAP Datasphere** – analytics data
 
 #### Use cases
+
 - Real-time inventory data → personalized recommendations
 - Order data from S/4HANA → triggered campaigns
 - CRM contact updates → segment refresh
@@ -1316,32 +1381,41 @@ Per oficiální docs:
 ### 17.7 Non-SAP integrace
 
 #### E-commerce
+
 - Shopify, Magento (Adobe Commerce), BigCommerce, Salesforce Commerce Cloud, custom
 
 #### CRM
+
 - Salesforce, Microsoft Dynamics, custom
 
 #### Analytics
+
 - Google Analytics, Adobe Analytics
 
 #### Customer Service
+
 - Zendesk, Salesforce Service Cloud, Freshdesk
 
 #### Ads
+
 - Meta, Google, TikTok, Pinterest, Snapchat
 
 #### Loyalty / Reviews
+
 - Yotpo, Bazaarvoice, Annex Cloud
 
 #### iPaaS
+
 - MuleSoft (SAP-owned), Workato, Boomi, Zapier (limited)
 
 #### Print
+
 - Direct mail providers
 
 ### 17.8 Implementation partners
 
 SAP Emarsys má large partner ecosystem:
+
 - **Publicare** (DACH, retail)
 - **Spadoom** (Switzerland, EU)
 - **Sybit** (DACH)
@@ -1357,9 +1431,10 @@ Většina enterprise implementations vyžaduje partner (ne self-implementation).
 ### 18.1 Dedicated CSM (Customer Success Manager)
 
 **Per oficiální SAP communication:**
-*"The Customer Success experience remains unchanged. Customers will continue working with the same dedicated Customer Success Manager and support teams who know their business, their goals, and their implementation."*
+_"The Customer Success experience remains unchanged. Customers will continue working with the same dedicated Customer Success Manager and support teams who know their business, their goals, and their implementation."_
 
 #### CSM responsibilities
+
 - **Strategic partnership** (ne pure technical support)
 - **Quarterly Business Reviews (QBR)**
 - **Performance optimization**
@@ -1428,6 +1503,7 @@ Phase 8: Go-live + Optimization (Ongoing)
 ### 18.3 Customer Success critique
 
 Some Gartner Peer Insights critique:
+
 - Implementation team variability ("copy/paste agenda" complaint)
 - Training "basic, not adapted to company situation"
 - CSM expertise varies per individual
@@ -1442,6 +1518,7 @@ Some Gartner Peer Insights critique:
 ### 18.5 Component / contact via SAP for Me
 
 Per docs:
+
 - Component: **CEC-EMA** (SAP support component)
 - Submit incidents via SAP for Me portal
 - Account Owner access required
@@ -1473,6 +1550,7 @@ Per docs:
 ### 19.3 Consent management
 
 Per oficiální Publicare partner documentation:
+
 - **Legally compliant opt-in/opt-out** flows
 - **GDPR-compliant channel-specific** subscription
 - **Per-channel preference centers**
@@ -1542,6 +1620,7 @@ Per oficiální Publicare partner documentation:
 ### 20.4 Tactics customization limits
 
 Per oficiální docs:
+
 - **Combined segments not supported** in Tactics
 - **Lifecycle stage definitions locked** at account level
 - **Pre-built segments only** in Tactic nodes
@@ -1557,10 +1636,11 @@ Per oficiální docs:
 ### 20.6 Implementation team variability
 
 Per Gartner Peer Insights critique:
-- *"Implementation team has no expertise whatsoever: they just seem to copy/paste the same implementation agenda"*
-- *"Training phase to fully understand how to use the tool was basic"*
-- *"When we asked for more guidance on specific use case, we're always redirected towards support team"*
-- *"Customer success team is supposed to share business expertise on the best way to use the tool"*
+
+- _"Implementation team has no expertise whatsoever: they just seem to copy/paste the same implementation agenda"_
+- _"Training phase to fully understand how to use the tool was basic"_
+- _"When we asked for more guidance on specific use case, we're always redirected towards support team"_
+- _"Customer success team is supposed to share business expertise on the best way to use the tool"_
 
 ⚠️ **Variability per CSM/implementation team** je documented issue.
 
@@ -1621,6 +1701,7 @@ Per Gartner Peer Insights critique:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### Emarsys (SAP Engagement Cloud) je dobrá volba pokud
+
 - Jste **mid-to-large retail / e-commerce brand** s 100K+ contacts
 - Hledáte **omnichannel platform** (email + SMS + push + web + ads + direct mail)
 - Vážíte si **pre-built Tactics** – nechcete budovat workflows from scratch
@@ -1637,6 +1718,7 @@ Per Gartner Peer Insights critique:
 - Provozujete **sport / entertainment** s fan engagement
 
 ### Emarsys není dobrá volba pokud
+
 - Jste **small business / startup** – overkill + nedostupné
 - Nemáte budget pro **$2K+/měsíc + implementation**
 - Hledáte **self-service / freemium** – Emarsys not free
@@ -1651,20 +1733,20 @@ Per Gartner Peer Insights critique:
 
 ### Emarsys vs. konkurence
 
-| Konkurence | Kdy lepší než Emarsys |
-|---|---|
-| **Klaviyo** | Pure DTC Shopify e-commerce, transparent pricing, AI agents, US-first |
-| **HubSpot** | Full B2B CRM, multi-Hub vision, sales-led organizations |
-| **Salesforce Marketing Cloud** | Pure enterprise, Salesforce ecosystem, custom development |
-| **Adobe Journey Optimizer** | Enterprise s Adobe Experience Cloud, content-heavy |
-| **Braze** | App-first companies, real-time messaging |
-| **Bloomreach Engagement** | DTC s deep content personalization |
-| **Mailchimp** | Small business, brand recognition, self-serve |
-| **MailerLite / Brevo** | SMB, simple use cases, transparent pricing |
-| **GetResponse** | Webinars + courses + funnels, 27 languages incl. CZ/SK |
-| **ActiveCampaign** | Mid-market deep automation, simpler than enterprise |
-| **ExpertSender** | Mid-market e-commerce s personalized service, polský / CEE origin |
+| Konkurence                     | Kdy lepší než Emarsys                                                 |
+| ------------------------------ | --------------------------------------------------------------------- |
+| **Klaviyo**                    | Pure DTC Shopify e-commerce, transparent pricing, AI agents, US-first |
+| **HubSpot**                    | Full B2B CRM, multi-Hub vision, sales-led organizations               |
+| **Salesforce Marketing Cloud** | Pure enterprise, Salesforce ecosystem, custom development             |
+| **Adobe Journey Optimizer**    | Enterprise s Adobe Experience Cloud, content-heavy                    |
+| **Braze**                      | App-first companies, real-time messaging                              |
+| **Bloomreach Engagement**      | DTC s deep content personalization                                    |
+| **Mailchimp**                  | Small business, brand recognition, self-serve                         |
+| **MailerLite / Brevo**         | SMB, simple use cases, transparent pricing                            |
+| **GetResponse**                | Webinars + courses + funnels, 27 languages incl. CZ/SK                |
+| **ActiveCampaign**             | Mid-market deep automation, simpler than enterprise                   |
+| **ExpertSender**               | Mid-market e-commerce s personalized service, polský / CEE origin     |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů emarsys.com, sap.com/products/crm, help.emarsys.com, help.sap.com, learning.sap.com a praktických zdrojů (Gartner, G2, Spadoom, Publicare, Sybit, FIS). Pro nejaktuálnější detaily je nutný demo s SAP sales teamem.*
+_Dokument zpracován z oficiálních zdrojů emarsys.com, sap.com/products/crm, help.emarsys.com, help.sap.com, learning.sap.com a praktických zdrojů (Gartner, G2, Spadoom, Publicare, Sybit, FIS). Pro nejaktuálnější detaily je nutný demo s SAP sales teamem._

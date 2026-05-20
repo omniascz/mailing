@@ -8,11 +8,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts, lifecycleStageHistory } from '../../db/schema/contacts.js';
 import { AppError } from '../../lib/app-error.js';
-import {
-  canTransition,
-  isLifecycleStage,
-  type LifecycleStage,
-} from './pure.js';
+import { canTransition, isLifecycleStage, type LifecycleStage } from './pure.js';
 
 export { type LifecycleStage } from './pure.js';
 
@@ -46,7 +42,11 @@ export async function transitionStage(
   if (!contact) throw AppError.notFound('Contact');
 
   const fromStage = contact.stage as LifecycleStage;
-  if (!canTransition(fromStage, toStage, { ...(opts.allowDowngrade != null ? { allowDowngrade: opts.allowDowngrade } : {}) })) {
+  if (
+    !canTransition(fromStage, toStage, {
+      ...(opts.allowDowngrade != null ? { allowDowngrade: opts.allowDowngrade } : {}),
+    })
+  ) {
     throw AppError.badRequest(
       `Disallowed lifecycle transition ${fromStage} → ${toStage}` +
         (opts.allowDowngrade ? '' : ' (pass allowDowngrade to force)'),
@@ -93,10 +93,7 @@ export async function getHistory(orgId: string, contactId: string, limit = 50) {
     .select()
     .from(lifecycleStageHistory)
     .where(
-      and(
-        eq(lifecycleStageHistory.orgId, orgId),
-        eq(lifecycleStageHistory.contactId, contactId),
-      ),
+      and(eq(lifecycleStageHistory.orgId, orgId), eq(lifecycleStageHistory.contactId, contactId)),
     )
     .orderBy(desc(lifecycleStageHistory.occurredAt))
     .limit(limit);

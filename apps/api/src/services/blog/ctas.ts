@@ -7,15 +7,14 @@
 
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  ctas,
-  ctaVariants,
-  ctaImpressions,
-  type Cta,
-} from '../../db/schema/ctas.js';
+import { ctas, ctaVariants, ctaImpressions, type Cta } from '../../db/schema/ctas.js';
 import { AppError } from '../../lib/app-error.js';
 import { pickCtaVariant, computeCtaPerformance } from './pure.js';
-import { matchesAllConditions, type VisitorContext, type SiteCondition } from '../site-messages/pure.js';
+import {
+  matchesAllConditions,
+  type VisitorContext,
+  type SiteCondition,
+} from '../site-messages/pure.js';
 
 // ─── CRUD ──────────────────────────────────────────────────────────────────
 
@@ -126,7 +125,9 @@ export async function serveCtas(input: ServeCtaInput): Promise<ServedCta[]> {
     served.push({
       ctaId: cta.id,
       variantId: chosen?.id ?? null,
-      content: chosen ? ((chosen as unknown as { content: Record<string, unknown> }).content) : (cta.content as Record<string, unknown>),
+      content: chosen
+        ? (chosen as unknown as { content: Record<string, unknown> }).content
+        : (cta.content as Record<string, unknown>),
     });
 
     await db.insert(ctaImpressions).values({

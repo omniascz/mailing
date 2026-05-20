@@ -13,6 +13,7 @@
 > **Velký pivot 2024–2025:** ActiveCampaign **přestal být pure email/CRM platform** a stal se **"AI-powered marketing platform"** s Active Intelligence engine. Současně přibyl **modulární add-on model** – Enhanced CRM (Pipelines / Sales Engagement), SMS, WhatsApp, Transactional Email, Custom Reporting jako separate add-ons.
 >
 > **Pricing 2024–2026 changes** kontroverzní:
+>
 > - **November 2025:** changed billing pro **new users** = **all contacts count toward billing** (incl. unsubscribed, bounced, unconfirmed). Old users grandfathered into per-active billing.
 > - **2024 pricing overhaul** přesunul features do vyšších tierů – mid-tier upgrades nucenější.
 > - Some users report **doubled bills** without feature changes.
@@ -195,14 +196,14 @@ ActiveCampaign nabízí **4 hlavní plány**:
 ### 2.2 Pricing per contact tier (Plus plan example, annual)
 
 | Subscribers | Plus price/měsíc |
-|---|---|
-| 1 000 | $49 |
-| 2 500 | $79–95 |
-| 5 000 | $145 |
-| 10 000 | $234 |
-| 25 000 | $399 |
-| 50 000 | $649 |
-| 100 000 | $1 199+ |
+| ----------- | ---------------- |
+| 1 000       | $49              |
+| 2 500       | $79–95           |
+| 5 000       | $145             |
+| 10 000      | $234             |
+| 25 000      | $399             |
+| 50 000      | $649             |
+| 100 000     | $1 199+          |
 
 ### 2.3 14-day free trial
 
@@ -238,35 +239,43 @@ PO Nov 2025 (new users):
 ActiveCampaign **modulární** model – základ plán + add-ons:
 
 #### Enhanced CRM add-on
+
 Two flavors:
+
 - **Pipelines** – B2C focused
 - **Sales Engagement** – B2B focused (more advanced)
 
 Pricing varies podle base plan + počet sales users:
+
 - ~$40–80/měsíc na user pro Pipelines
 - ~$95–180/měsíc na user pro Sales Engagement
 
 #### SMS add-on
+
 - Available na Plus, Pro, Enterprise
 - **Pre-paid credits** model (recurring monthly)
 - Per-message pricing varies podle země
 - ~$0.015–$0.045 per SMS
 
 #### MMS (US only)
+
 - Add-on (multimedia messages)
 
 #### WhatsApp Business
+
 - New 2024+
 - **Combine s Plus/Pro/Enterprise plan**
 - Specific WhatsApp plans dostupné
 
 #### Transactional Email
+
 - Powered by **Postmark** (acquired by ActiveCampaign 2022)
 - Pre-paid recurring credits
 - Use pro order confirmations, password resets, atd.
 - Add-on price varies podle volume
 
 #### Custom Reporting
+
 - Available add-on (Plus, Pro)
 - Included in Enterprise plan
 - Advanced report templates
@@ -281,22 +290,23 @@ Pricing varies podle base plan + počet sales users:
 
 ### 2.7 Cena vs. konkurence (10K subscribers)
 
-| Platform | Cena/měsíc (mid-tier) |
-|---|---|
-| **ActiveCampaign Plus** | $234 |
-| **ActiveCampaign Pro** | $400+ |
-| **Mailchimp Standard** | $135 |
-| **GetResponse Email Marketing** | $79 |
-| **Klaviyo Email** | $150 |
-| **Brevo Business** | $65 |
-| **MailerLite Advanced** | $80 |
-| **HubSpot Marketing Pro** | $890+ |
+| Platform                        | Cena/měsíc (mid-tier) |
+| ------------------------------- | --------------------- |
+| **ActiveCampaign Plus**         | $234                  |
+| **ActiveCampaign Pro**          | $400+                 |
+| **Mailchimp Standard**          | $135                  |
+| **GetResponse Email Marketing** | $79                   |
+| **Klaviyo Email**               | $150                  |
+| **Brevo Business**              | $65                   |
+| **MailerLite Advanced**         | $80                   |
+| **HubSpot Marketing Pro**       | $890+                 |
 
 ⚠️ ActiveCampaign **je na vyšší straně** v mid-tier kategorii. Cena ospravedlnitelná pouze pokud používáte **deep automation** features.
 
 ### 2.8 Recent pricing controversy
 
 V 2024–2026 ActiveCampaign zvedl ceny několikrát:
+
 - **2024 pricing overhaul** – přesun features do vyšších tierů
 - **November 2025** – billing change (all contacts)
 - Někteří users reportují **doubled bills** without feature changes
@@ -313,6 +323,7 @@ ROI ospravedlnitelný pokud **using advanced automation actively**.
 ### 3.1 Base plan components
 
 Každý plán includes:
+
 - Email marketing (campaigns, templates)
 - Marketing automation (depth varies per plan)
 - Basic CRM (contacts, lists, tags)
@@ -323,6 +334,7 @@ Každý plán includes:
 ### 3.2 Enhanced CRM (Pipelines)
 
 Add-on pro **B2C / e-commerce / SMB**:
+
 - Visual sales pipelines
 - Deal management
 - Stages + probability
@@ -337,6 +349,7 @@ Add-on pro **B2C / e-commerce / SMB**:
 ### 3.3 Sales Engagement (B2B advanced)
 
 Add-on pro **B2B sales-led**:
+
 - Vše z Pipelines +
 - **AI-powered win probability**
 - **Sentiment analysis** (analyzes 1:1 email replies)
@@ -389,7 +402,7 @@ Add-on pro **B2B sales-led**:
 ### 3.9 Modular benefit
 
 Per oficiální ActiveCampaign claim:
-*"ActiveCampaign's modular approach means you choose the plan and add-ons that fit your current needs, without being forced into bundles or paying for features you don't use."*
+_"ActiveCampaign's modular approach means you choose the plan and add-ons that fit your current needs, without being forced into bundles or paying for features you don't use."_
 
 ---
 
@@ -407,6 +420,7 @@ Per oficiální ActiveCampaign claim:
 ### 4.2 Lists
 
 Lists v ActiveCampaign jsou **multi-list architektura** (like Mailchimp Audiences, ale Multi-list):
+
 - Contact can be in **multiple lists simultaneously**
 - Per-list opt-in tracking
 - Per-list opt-out tracking
@@ -430,6 +444,7 @@ Lists v ActiveCampaign jsou **multi-list architektura** (like Mailchimp Audience
 ### 4.4 Custom fields
 
 #### Types
+
 - **Text** (single line)
 - **Paragraph** (multi-line)
 - **Number**
@@ -441,6 +456,7 @@ Lists v ActiveCampaign jsou **multi-list architektura** (like Mailchimp Audience
 - **Hidden** (technical fields)
 
 #### Use cases
+
 - Customer attributes (industry, role, segment)
 - Date triggers (birthday, anniversary, renewal)
 - Survey responses (preferences, NPS)
@@ -463,6 +479,7 @@ Lists v ActiveCampaign jsou **multi-list architektura** (like Mailchimp Audience
 **Powerful segment builder:**
 
 #### Filter criteria
+
 - **Contact data** (fields, tags, lists)
 - **Email engagement** (opened/clicked specific campaigns)
 - **Site activity** (visited specific pages, time spent)
@@ -476,15 +493,18 @@ Lists v ActiveCampaign jsou **multi-list architektura** (like Mailchimp Audience
 - **Deal data** (CRM)
 
 #### Operators
+
 - AND, OR, NOT
 - Nested conditions (parentheses)
 - Equal, contains, between, before/after, etc.
 
 #### Dynamic vs. static
+
 - **Saved segments** – dynamic, auto-update
 - **Real-time evaluation** – matches always current
 
 #### Segment types
+
 - **Smart segments** – AI-suggested based on patterns (Active Intelligence)
 - **Predefined** – common scenarios
 - **Custom** – fully flexible
@@ -525,14 +545,14 @@ Lists v ActiveCampaign jsou **multi-list architektura** (like Mailchimp Audience
 
 ### 5.1 Campaign types
 
-| Type | Use case |
-|---|---|
-| **Standard** | Normal newsletter/promo |
-| **Automated** | Sent from automation workflow |
-| **Auto-responder** | Single email triggered by signup |
-| **RSS triggered** | Auto-generated from RSS feed |
-| **Split test** | A/B test |
-| **Date-based** | Send on specific date or recurring |
+| Type               | Use case                           |
+| ------------------ | ---------------------------------- |
+| **Standard**       | Normal newsletter/promo            |
+| **Automated**      | Sent from automation workflow      |
+| **Auto-responder** | Single email triggered by signup   |
+| **RSS triggered**  | Auto-generated from RSS feed       |
+| **Split test**     | A/B test                           |
+| **Date-based**     | Send on specific date or recurring |
 
 ### 5.2 Drag-and-drop editor
 
@@ -627,6 +647,7 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 ### 6.1 Automation builder
 
 **Visual canvas**:
+
 - **Drag-and-drop nodes**
 - **Branching workflows**
 - **Nested conditions**
@@ -637,6 +658,7 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 ### 6.2 Triggers (entry points)
 
 #### Behavioral
+
 - **Subscribes** to list
 - **Tag added/removed**
 - **Submits form**
@@ -647,6 +669,7 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 - **Site message viewed/clicked**
 
 #### Transactional / E-commerce
+
 - **Order placed**
 - **Order updated**
 - **Product purchased** (specific)
@@ -655,12 +678,14 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 - **Refund / cancellation**
 
 #### Time-based
+
 - **Date in field** (birthday, anniversary, renewal)
 - **Specific date** (one-time)
 - **Recurring** (yearly, monthly)
 - **Anniversary trigger** (recurring annually)
 
 #### CRM-related
+
 - **Deal stage changed**
 - **Deal owner assigned**
 - **Deal won/lost**
@@ -668,6 +693,7 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 - **Account updated**
 
 #### Multi-trigger (Plus+)
+
 - **Up to 5 triggers** per automation
 - **OR logic** – any trigger fires entry
 - Useful for multi-entry path workflows
@@ -675,6 +701,7 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 ### 6.3 Actions (nodes)
 
 #### Sending
+
 - **Send email** (designed inline)
 - **Send notification email** (internal team)
 - **Send SMS** (add-on)
@@ -682,6 +709,7 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 - **Send site message** (Plus+)
 
 #### Contact manipulation
+
 - **Add/remove tag**
 - **Add/remove from list**
 - **Update field** (custom fields)
@@ -690,6 +718,7 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 - **Unsubscribe** from list/all
 
 #### Deal/CRM actions (s CRM add-on)
+
 - **Create deal**
 - **Update deal stage**
 - **Update deal owner**
@@ -698,6 +727,7 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 - **Update lead score**
 
 #### Conditions / Logic
+
 - **If/Else** (branching based on condition)
 - **Wait** (delay – time or until event)
 - **Goal** (conversion event, exit on success)
@@ -706,6 +736,7 @@ ActiveCampaign's **flagship feature** – often cited as **best automation engin
 - **Notify user** (internal alert)
 
 #### External
+
 - **Webhook** – call external URL
 - **API call** – trigger external action
 
@@ -721,6 +752,7 @@ If/Else node:
 ```
 
 Pro+ adds:
+
 - **A/B test in workflows** (split paths, measure performance)
 - **Conditional content** within automation emails
 
@@ -748,6 +780,7 @@ Pro+ adds:
 ### 6.7 Common automation patterns
 
 #### Welcome series
+
 ```
 Trigger: Subscribes to "Newsletter" list
    ↓
@@ -773,6 +806,7 @@ Send Email 3: "Customer success story"
 ```
 
 #### Cart abandonment
+
 ```
 Trigger: Cart abandoned (>1 hour without checkout)
    ↓
@@ -796,6 +830,7 @@ Exit
 ```
 
 #### Lead nurturing (B2B)
+
 ```
 Trigger: Downloaded whitepaper
    ↓
@@ -822,6 +857,7 @@ Send case study email
 ```
 
 #### Customer onboarding
+
 ```
 Trigger: Order placed (first time)
    ↓
@@ -862,6 +898,7 @@ If/Else: Score >= 9?
 ### 6.9 Per-group automation permissions (advanced)
 
 Per oficiální docs:
+
 - **Account Admin** can see all automations
 - **User groups can have restricted access** to specific automations
 - Per-group **Marketing vs. Sales** automation isolation
@@ -918,6 +955,7 @@ Activate
 ### 7.3 Recipe categories
 
 #### Welcome & Onboarding
+
 - Single welcome email
 - Welcome series (3-5 emails)
 - Course welcome
@@ -925,6 +963,7 @@ Activate
 - Free trial onboarding
 
 #### E-commerce
+
 - Abandoned cart (single email)
 - Multi-step abandoned cart
 - Post-purchase upsell
@@ -936,6 +975,7 @@ Activate
 - Replenishment reminder
 
 #### Lead Generation (B2B)
+
 - Lead magnet delivery
 - Educational nurturing
 - Webinar series
@@ -943,6 +983,7 @@ Activate
 - Sales-qualified handoff
 
 #### Customer Success
+
 - NPS survey + follow-up
 - Renewal reminders
 - Upsell automation
@@ -950,12 +991,14 @@ Activate
 - Customer education
 
 #### Re-engagement
+
 - Win-back inactive (4-step)
 - Sunset policy (final attempt + suppress)
 - Lapsed customer (e-commerce)
 - Re-permission campaigns
 
 #### Course & Education
+
 - Course welcome
 - Lesson reminders
 - Course completion
@@ -963,6 +1006,7 @@ Activate
 - Drip educational content
 
 #### Event
+
 - Event registration confirmation
 - Event reminders (X days, X hours)
 - Event follow-up
@@ -977,13 +1021,13 @@ Activate
 
 ### 7.5 Recipe vs. building from scratch
 
-| Aspekt | Recipe | From scratch |
-|---|---|---|
-| Speed | 5-15 min | Hours |
-| Best practices built-in | ✅ | depends |
-| Customization required | ✅ (minor) | full |
-| Learning curve | Low | Higher |
-| Originality | Common pattern | Unique |
+| Aspekt                  | Recipe         | From scratch |
+| ----------------------- | -------------- | ------------ |
+| Speed                   | 5-15 min       | Hours        |
+| Best practices built-in | ✅             | depends      |
+| Customization required  | ✅ (minor)     | full         |
+| Learning curve          | Low            | Higher       |
+| Originality             | Common pattern | Unique       |
 
 ---
 
@@ -1070,6 +1114,7 @@ ActiveCampaign's **AI engine** – mix of predictive ML + generative AI.
 ### 9.1 Forms
 
 #### Form types
+
 - **Inline** (embed v page)
 - **Floating bar** (top/bottom of page)
 - **Modal** (popup)
@@ -1077,6 +1122,7 @@ ActiveCampaign's **AI engine** – mix of predictive ML + generative AI.
 - **Floating box** (sticky on page)
 
 #### Features
+
 - **Drag-drop builder**
 - **Field types:** text, email, phone, dropdown, checkbox, radio, date, hidden, paragraph
 - **Conditional fields** (show/hide based on previous answers)
@@ -1127,6 +1173,7 @@ ActiveCampaign's **AI engine** – mix of predictive ML + generative AI.
 ### 10.1 Site Tracking
 
 **JavaScript snippet on website:**
+
 - Track page views per contact
 - Time on page
 - Custom events
@@ -1134,6 +1181,7 @@ ActiveCampaign's **AI engine** – mix of predictive ML + generative AI.
 - Returning vs. new visitor
 
 Use cases:
+
 - **Behavior-based automations** ("Visited pricing page" → sales follow-up)
 - **Lead scoring** updates
 - **Personalization** triggers
@@ -1158,6 +1206,7 @@ Use cases:
 ### 10.3 Use cases
 
 #### Returning customer
+
 ```
 Visitor returns to site (logged in)
    ↓
@@ -1167,6 +1216,7 @@ Site Message: "Welcome back, [Name]! Here's a 10% code"
 ```
 
 #### VIP segment
+
 ```
 VIP customer visits product page
    ↓
@@ -1174,6 +1224,7 @@ Site Message: "Exclusive VIP pricing on this product"
 ```
 
 #### Behavior trigger
+
 ```
 Visitor browsed 3+ products in last hour
    ↓
@@ -1226,17 +1277,20 @@ Pipeline (visual sales process)
 ### 11.3 Deal management
 
 #### Deal stages
+
 - **Custom stages** per pipeline
 - **Stage probabilities** (% of close)
 - **Forecast value** auto-calculated
 - **Stage automation** (auto-move based on conditions)
 
 #### Deal fields
+
 - **Standard:** value, expected close, owner, contact, account
 - **Custom fields** per deal
 - **Custom objects** (Enterprise) – relational data
 
 #### Deal automation
+
 - **Move to next stage** based on event
 - **Update deal field** based on contact action
 - **Create task** when entering stage
@@ -1246,6 +1300,7 @@ Pipeline (visual sales process)
 ### 11.4 Deal Roles
 
 Per oficiální docs:
+
 - **Default roles:** Contributor, Decision Maker
 - **Custom roles** can be created
 - **Per contact per deal** role assignment
@@ -1254,6 +1309,7 @@ Per oficiální docs:
 - **Use for segmentation** v marketing
 
 Example use:
+
 ```
 Deal: "Enterprise SaaS purchase"
 - Contact A: Decision Maker
@@ -1344,6 +1400,7 @@ Account (company)
 ### 12.2 Account fields
 
 #### Standard fields
+
 - Account name
 - Website
 - Industry
@@ -1352,6 +1409,7 @@ Account (company)
 - Phone
 
 #### Custom account fields
+
 - Per-account custom data
 - Use v segmentation
 
@@ -1400,18 +1458,18 @@ Account (company)
 
 ### 13.1 Sales Engagement vs. Pipelines
 
-| Feature | Pipelines (B2C) | Sales Engagement (B2B) |
-|---|---|---|
-| Pipelines + stages | ✅ | ✅ |
-| Deal management | ✅ | ✅ |
-| Tasks | ✅ | ✅ |
-| 1:1 emails | basic | advanced |
-| **AI Win Probability** | ❌ | ✅ |
-| **Sentiment Analysis** | ❌ | ✅ |
-| **Email sequences** | ❌ | ✅ |
-| **AI insights** | ❌ | ✅ |
-| **Salesforce deeper** | basic | ✅ |
-| Pricing | lower | higher |
+| Feature                | Pipelines (B2C) | Sales Engagement (B2B) |
+| ---------------------- | --------------- | ---------------------- |
+| Pipelines + stages     | ✅              | ✅                     |
+| Deal management        | ✅              | ✅                     |
+| Tasks                  | ✅              | ✅                     |
+| 1:1 emails             | basic           | advanced               |
+| **AI Win Probability** | ❌              | ✅                     |
+| **Sentiment Analysis** | ❌              | ✅                     |
+| **Email sequences**    | ❌              | ✅                     |
+| **AI insights**        | ❌              | ✅                     |
+| **Salesforce deeper**  | basic           | ✅                     |
+| Pricing                | lower           | higher                 |
 
 ### 13.2 Email sequences (Sales Engagement)
 
@@ -1455,12 +1513,14 @@ Account (company)
 ### 14.1 SMS
 
 #### Setup
+
 - **Add-on** (Plus+)
 - **Pre-paid credits** (recurring monthly)
 - Per-country pricing
 - Sender ID config per country
 
 #### Features
+
 - **Bulk SMS campaigns**
 - **SMS v automation actions**
 - **Two-way SMS** (limited regions)
@@ -1472,6 +1532,7 @@ Account (company)
 - **Opt-in tracking**
 
 #### Pricing
+
 - **$0.015–$0.045 per SMS** typical
 - Varies podle země a sender ID setup
 - Credits per month
@@ -1487,12 +1548,14 @@ Account (company)
 ### 14.3 WhatsApp Business
 
 #### Setup
+
 - **WhatsApp Business API**
 - **Phone number verification**
 - **Business profile setup**
 - **Approved templates** for transactional + marketing
 
 #### Features
+
 - **Bulk WhatsApp messages**
 - **WhatsApp v automation flows**
 - **Two-way conversations**
@@ -1502,11 +1565,13 @@ Account (company)
 - **Enterprise-level support**
 
 #### Pricing
+
 - **Combine s Plus/Pro/Enterprise plan**
 - Specific **WhatsApp plans** available
 - Per-conversation pricing (WhatsApp Business)
 
 #### Use cases
+
 - Customer service
 - Order confirmations
 - Shipping notifications
@@ -1525,7 +1590,7 @@ Wait 24h
    ↓
 If/Else: Email opened?
    YES → Wait + see if purchase happens
-   NO → SMS (opt-in required) 
+   NO → SMS (opt-in required)
    ↓
 Wait 48h, if no purchase:
    WhatsApp message: personal touch
@@ -1569,11 +1634,13 @@ Final: 10% discount email
 ### 15.4 Combined marketing + transactional
 
 ActiveCampaign advantage:
+
 - **Single platform** for marketing + transactional
 - **Unified contact view** (transactional events visible in profile)
 - **Trigger marketing workflows** from transactional events (order placed → post-purchase flow)
 
 Vs. competitors:
+
 - **Mailchimp + Mandrill** (similar setup)
 - **Brevo** (unified native, less separate)
 - **MailerLite + MailerSend** (separated, awkward)
@@ -1601,6 +1668,7 @@ Vs. competitors:
 ### 16.2 Scoring rules
 
 #### Point sources
+
 - **Email engagement** (+5 per open, +10 per click)
 - **Page visits** (+15 visited pricing page)
 - **Form submissions** (+25 per submit)
@@ -1609,6 +1677,7 @@ Vs. competitors:
 - **Deal stage** changes (in CRM)
 
 #### Negative scoring (decay)
+
 - **Time-based decay** (-5 per week without engagement)
 - **Negative actions** (-10 unsubscribed from list, -20 bounce)
 
@@ -1646,6 +1715,7 @@ Vs. competitors:
 ### 17.1 Standard reports
 
 #### Campaign reports
+
 - Sent, delivered, bounced
 - Opens (unique + total), open rate
 - Clicks, CTR, top links
@@ -1654,6 +1724,7 @@ Vs. competitors:
 - Comparison to previous campaigns
 
 #### Automation reports
+
 - Per-automation stats
 - Goal achievement rate
 - Per-step performance
@@ -1661,17 +1732,20 @@ Vs. competitors:
 - Time to conversion
 
 #### Contact reports
+
 - List growth over time
 - Source attribution
 - Engagement scores
 - Activity timeline
 
 #### Form reports
+
 - Submissions
 - Conversion rate
 - Per-form A/B results
 
 #### Site tracking reports
+
 - Top pages visited
 - Per-contact site activity
 - Conversion funnel
@@ -1727,6 +1801,7 @@ Vs. competitors:
 ### 18.1 Native e-commerce integrations
 
 #### Shopify (deepest)
+
 - **Customer + order + product sync**
 - **Real-time webhooks**
 - **Abandoned cart events**
@@ -1735,30 +1810,36 @@ Vs. competitors:
 - **Revenue attribution**
 
 #### WooCommerce
+
 - **Plugin-based**
 - **Same depth as Shopify**
 - WordPress native
 
 #### BigCommerce
+
 - **Native integration**
 - **Order + customer sync**
 
 #### Magento (Adobe Commerce)
+
 - **Native integration**
 - **Pro+ plan**
 
 #### Shopify Plus
+
 - **Enhanced features**
 - **Pro+ plan**
 
 ### 18.2 E-commerce automation patterns
 
 #### Abandoned cart
+
 - Triggered by cart event
 - Dynamic cart contents in email
 - Multi-step recovery
 
 #### Post-purchase
+
 - Order placed trigger
 - Welcome new customer
 - Cross-sell related products
@@ -1766,16 +1847,19 @@ Vs. competitors:
 - Replenishment (if repeating product)
 
 #### Browse abandonment
+
 - Track product views
 - Trigger if no purchase in X hours
 - Show recently viewed in email
 
 #### Customer LTV
+
 - Track lifetime value
 - Segment by CLV bands
 - VIP treatment for top spenders
 
 #### Win-back
+
 - No purchase in X days → automation
 - Multi-step re-engagement
 - Final offer
@@ -1847,42 +1931,55 @@ Vs. competitors:
 **Largest integration marketplace v mid-market segment**.
 
 #### E-commerce
+
 Shopify, WooCommerce, BigCommerce, Magento, Wix Stores, Squarespace Commerce, custom
 
 #### CRM
+
 Salesforce (deep), Microsoft Dynamics, HubSpot CRM, Pipedrive, Copper, Zoho CRM
 
 #### Payment
+
 Stripe, PayPal, Square
 
 #### Forms / Surveys
+
 Typeform, Jotform, Google Forms, SurveyMonkey, Gravity Forms, Ninja Forms
 
 #### Productivity
+
 Slack, Microsoft Teams, Google Workspace, Office 365, Asana, Trello, Monday.com, ClickUp
 
 #### Calendar / Booking
+
 Calendly, Acuity Scheduling, ScheduleOnce
 
 #### Webinars
+
 Zoom, GoToWebinar, WebinarJam, Demio
 
 #### Chat
+
 Intercom, Drift, LiveChat, Olark
 
 #### Social
+
 Facebook (Custom Audiences), Instagram, Twitter/X
 
 #### Ads
+
 Facebook Ads, Google Ads, Bing Ads, LinkedIn Ads (audience sync)
 
 #### Content / CMS
+
 WordPress, Webflow, Wix
 
 #### iPaaS
+
 **Zapier** (deep), **Make (Integromat)**, Tray.io, Workato, Pabbly Connect, Integrately
 
 #### Specialized
+
 ManyChat (chatbots), Convertful (popups), Sumo (lead gen), Privy, OptinMonster
 
 ### 19.5 ActiveCampaign App Store
@@ -2032,6 +2129,7 @@ ManyChat (chatbots), Convertful (popups), Sumo (lead gen), Privy, OptinMonster
 ### 20.15 Hidden costs awareness
 
 Per Marketer's Choice critique:
+
 - **Headline $15 price misleading** for actual business needs
 - **Plus jump $49** is "best value upgrade"
 - **Pro adds significant cost** ($60+ mid-tier)
@@ -2042,6 +2140,7 @@ Per Marketer's Choice critique:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### ActiveCampaign je dobrá volba pokud
+
 - **Mid-market firma** (10-500 zaměstnanců) hledající deep automation
 - **Behavior-based marketing** je core priority
 - Provozujete **growing e-commerce** (Shopify, WooCommerce) s automation needs
@@ -2058,6 +2157,7 @@ Per Marketer's Choice critique:
 - Provozujete subscription business s renewal cycles
 
 ### ActiveCampaign není dobrá volba pokud
+
 - **Small business / solopreneur** s tight budget – overkill
 - Pure **content creator** / newsletter publisher – MailerLite/Beehiiv lepší
 - **DTC e-commerce s Shopify deep** – Klaviyo silnější
@@ -2072,21 +2172,21 @@ Per Marketer's Choice critique:
 
 ### ActiveCampaign vs. konkurence
 
-| Konkurence | Kdy lepší než ActiveCampaign |
-|---|---|
-| **Mailchimp** | Brand recognition, simpler UI, free plan, basic needs |
-| **MailerLite** | Solopreneur simplicity, content creators, transparent pricing |
-| **Brevo** | Volume-based pricing, transactional v base, multilingual, transparent |
-| **Klaviyo** | DTC e-commerce, Shopify depth, predictive analytics, AI agents |
-| **HubSpot** | Full B2B CRM, multi-Hub, enterprise governance, marketing+sales+service |
-| **GetResponse** | Webinars + courses + funnels, 27 languages incl. CZ/SK |
-| **ConvertKit (Kit)** | Pure creator-focused, more author features |
-| **Drip** | Smaller e-commerce, simpler automation |
-| **Beehiiv** | Newsletter publishing, monetization |
-| **Salesforce Marketing Cloud** | Pure enterprise, Salesforce ecosystem |
-| **SAP Emarsys** | Enterprise B2C retail, omnichannel scale |
-| **ExpertSender** | E-commerce CDP s dedicated service |
+| Konkurence                     | Kdy lepší než ActiveCampaign                                            |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| **Mailchimp**                  | Brand recognition, simpler UI, free plan, basic needs                   |
+| **MailerLite**                 | Solopreneur simplicity, content creators, transparent pricing           |
+| **Brevo**                      | Volume-based pricing, transactional v base, multilingual, transparent   |
+| **Klaviyo**                    | DTC e-commerce, Shopify depth, predictive analytics, AI agents          |
+| **HubSpot**                    | Full B2B CRM, multi-Hub, enterprise governance, marketing+sales+service |
+| **GetResponse**                | Webinars + courses + funnels, 27 languages incl. CZ/SK                  |
+| **ConvertKit (Kit)**           | Pure creator-focused, more author features                              |
+| **Drip**                       | Smaller e-commerce, simpler automation                                  |
+| **Beehiiv**                    | Newsletter publishing, monetization                                     |
+| **Salesforce Marketing Cloud** | Pure enterprise, Salesforce ecosystem                                   |
+| **SAP Emarsys**                | Enterprise B2C retail, omnichannel scale                                |
+| **ExpertSender**               | E-commerce CDP s dedicated service                                      |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů activecampaign.com, help.activecampaign.com a praktických zdrojů (EmailVendorSelection, EmailToolTester, Sender, EngageBay, Marketer's Choice, GetAIPerks, Automation Atlas, BusinessEautomation, Spadoom). Pro nejaktuálnější ceny vždy ověřit na activecampaign.com/pricing.*
+_Dokument zpracován z oficiálních zdrojů activecampaign.com, help.activecampaign.com a praktických zdrojů (EmailVendorSelection, EmailToolTester, Sender, EngageBay, Marketer's Choice, GetAIPerks, Automation Atlas, BusinessEautomation, Spadoom). Pro nejaktuálnější ceny vždy ověřit na activecampaign.com/pricing._

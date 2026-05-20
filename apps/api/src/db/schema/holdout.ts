@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, decimal, boolean, timestamp, primaryKey, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  decimal,
+  boolean,
+  timestamp,
+  primaryKey,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 
@@ -6,7 +15,9 @@ export const holdoutGroups = pgTable(
   'holdout_groups',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
     description: varchar('description', { length: 1024 }),
     percentage: decimal('percentage', { precision: 5, scale: 2 }).notNull().default('5'),
@@ -19,8 +30,12 @@ export const holdoutGroups = pgTable(
 export const holdoutGroupMembers = pgTable(
   'holdout_group_members',
   {
-    groupId: uuid('group_id').notNull().references(() => holdoutGroups.id, { onDelete: 'cascade' }),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => holdoutGroups.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
     addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

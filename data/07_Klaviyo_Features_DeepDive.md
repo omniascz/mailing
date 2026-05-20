@@ -48,9 +48,10 @@
 
 ### Filozofie produktu
 
-Co-founder Andrew Bialecki: *"The fundamental unit in Klaviyo is a customer, or profile. Our products exist to allow you to understand your customers and maximize the relationships with them."*
+Co-founder Andrew Bialecki: _"The fundamental unit in Klaviyo is a customer, or profile. Our products exist to allow you to understand your customers and maximize the relationships with them."_
 
 Klaviyo je vystavěno **kolem customer profile** – ne kolem campaigns. Každý profile má kompletní historii včetně:
+
 - Order history
 - Browse behavior
 - Email/SMS engagement
@@ -149,15 +150,15 @@ Klaviyo má **3 hlavní self-serve plány** + **Enterprise (Klaviyo One)**:
 
 ### 2.5 Add-ons (samostatně účtované)
 
-| Add-on | Cena 2026 | Co dělá |
-|---|---|---|
-| **Reviews** | $25+/měsíc | Sběr a zobrazení produktových recenzí |
-| **Marketing Analytics** | $100+/měsíc (vyžaduje 1 001+ profiles) | Advanced BI dashboards, attribution |
-| **Customer Agent AI** | $140/měsíc intro / $200 regular | AI conversational support agent (50 conversations included, +$0.70/conv overage) |
-| **Customer Hub** | $30/měsíc | Customer-facing portal |
-| **Helpdesk** | $264/měsíc | Service ticketing |
-| **Advanced Data Platform** | $500/měsíc | Includes all Marketing Analytics + data warehousing |
-| **Dedicated IP** | Add-on, Pro+ contact required | Vlastní IP pro deliverability |
+| Add-on                     | Cena 2026                              | Co dělá                                                                          |
+| -------------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
+| **Reviews**                | $25+/měsíc                             | Sběr a zobrazení produktových recenzí                                            |
+| **Marketing Analytics**    | $100+/měsíc (vyžaduje 1 001+ profiles) | Advanced BI dashboards, attribution                                              |
+| **Customer Agent AI**      | $140/měsíc intro / $200 regular        | AI conversational support agent (50 conversations included, +$0.70/conv overage) |
+| **Customer Hub**           | $30/měsíc                              | Customer-facing portal                                                           |
+| **Helpdesk**               | $264/měsíc                             | Service ticketing                                                                |
+| **Advanced Data Platform** | $500/měsíc                             | Includes all Marketing Analytics + data warehousing                              |
+| **Dedicated IP**           | Add-on, Pro+ contact required          | Vlastní IP pro deliverability                                                    |
 
 > **Pozor:** Advanced Data Platform **zahrnuje** Marketing Analytics features – nepořizujete oba současně.
 
@@ -211,12 +212,12 @@ Klíčový model. **Active profile = subscribed contact, který CAN receive mark
 
 ### 3.4 Pre-Feb 2025 vs. post-Feb 2025
 
-| Aspect | Před | Po (současný stav) |
-|---|---|---|
-| Billing basis | Per send (kolik emailů poslala) | Per active profile |
-| Inactive profiles | Free if not emailed | Counted toward billing |
-| Predictability | Variable per month | Predictable per profile count |
-| Incentive | Send more (more cost) | Clean lists (less cost) |
+| Aspect            | Před                            | Po (současný stav)            |
+| ----------------- | ------------------------------- | ----------------------------- |
+| Billing basis     | Per send (kolik emailů poslala) | Per active profile            |
+| Inactive profiles | Free if not emailed             | Counted toward billing        |
+| Predictability    | Variable per month              | Predictable per profile count |
+| Incentive         | Send more (more cost)           | Clean lists (less cost)       |
 
 ---
 
@@ -237,10 +238,10 @@ Klíčový model. **Active profile = subscribed contact, který CAN receive mark
 
 ### 4.3 SMS Credit allocation per plan
 
-| Plan | Free SMS credits/měsíc |
-|---|---|
-| Free | 150 |
-| Email plan | 150 (token) |
+| Plan        | Free SMS credits/měsíc                    |
+| ----------- | ----------------------------------------- |
+| Free        | 150                                       |
+| Email plan  | 150 (token)                               |
 | Email + SMS | 1 250 (base tier) až 80 000+ (high tiers) |
 
 ### 4.4 Overage
@@ -321,6 +322,7 @@ Klaviyo's **central object**. Každý profile obsahuje:
 Klaviyo's **event-driven model**. Každá akce profile = event.
 
 **Default events** (auto-tracked via integrations):
+
 - **Active on Site** – page view
 - **Viewed Product**
 - **Added to Cart**
@@ -336,6 +338,7 @@ Klaviyo's **event-driven model**. Každá akce profile = event.
 - **Form Submission**
 
 **Custom events** – plně customizable via API:
+
 - Any action s libovolnými properties
 - e.g. "Started Quiz", "Booked Demo", "Completed Lesson"
 - Vyhledatelné, segmentovatelné, použitelné jako flow triggers
@@ -343,6 +346,7 @@ Klaviyo's **event-driven model**. Každá akce profile = event.
 ### 6.3 Lists
 
 **Static collections**:
+
 - **Newsletter list** – obecný list pro general subscribers
 - **List per source** – e.g. „Pop-up signups", „Footer signups"
 - **List per consent** – e.g. „SMS subscribers"
@@ -391,17 +395,18 @@ Profile může být v multiple lists současně.
 
 ### 6.5 Difference: List vs. Segment
 
-| | List | Segment |
-|---|---|---|
-| Type | Static | Dynamic |
-| Update | Manual | Auto |
-| Use | Source tracking, consent | Behavioral targeting |
-| Filter | None | Up to dozens of conditions |
-| Profile join | Manual or trigger | Auto-based on criteria |
+|              | List                     | Segment                    |
+| ------------ | ------------------------ | -------------------------- |
+| Type         | Static                   | Dynamic                    |
+| Update       | Manual                   | Auto                       |
+| Use          | Source tracking, consent | Behavioral targeting       |
+| Filter       | None                     | Up to dozens of conditions |
+| Profile join | Manual or trigger        | Auto-based on criteria     |
 
 ### 6.6 Tags
 
 Klaviyo nemá tagy ve smyslu Mailchimpu. Místo toho používá:
+
 - **Custom properties** – pro arbitrary labels
 - **Lists** – pro source/consent grouping
 - **Segments** – pro behavioral grouping
@@ -467,6 +472,7 @@ Available na **paid plans 1 001+ profiles**:
 Recency, Frequency, Monetary analysis – classic retail framework.
 
 **RFM Cohorts (default):**
+
 - **Champions** – best customers
 - **Loyal Customers**
 - **Potential Loyalists**
@@ -480,6 +486,7 @@ Recency, Frequency, Monetary analysis – classic retail framework.
 - **Lost**
 
 **Customization:**
+
 - Custom RFM scoring model
 - Exclude $0 orders or specific subscribers from RFM calculation
 - Auto-update jak data flow
@@ -504,6 +511,7 @@ Recency, Frequency, Monetary analysis – classic retail framework.
 ### 7.6 Marketing Agent (2025+)
 
 AI agent that:
+
 - Generates email content
 - Builds flows from prompt
 - Suggests segments
@@ -512,6 +520,7 @@ AI agent that:
 ### 7.7 Customer Agent AI (add-on, $140–200/měsíc)
 
 Autonomní conversational support AI:
+
 - Chats with customers
 - Resolves common issues
 - Escalates to human when needed
@@ -525,12 +534,12 @@ Klaviyo's **automation engine**. Called "Flows" not "Workflows" or "Journeys".
 
 ### 8.1 Flow vs. Campaign
 
-| | Flow | Campaign |
-|---|---|---|
-| Trigger | Automated event/action | Manual one-shot |
-| Audience | Dynamic, per-trigger | Static at send time |
-| Frequency | Continuous | Single send |
-| Use case | Welcome, abandoned cart, post-purchase | Newsletter, promo, announcement |
+|           | Flow                                   | Campaign                        |
+| --------- | -------------------------------------- | ------------------------------- |
+| Trigger   | Automated event/action                 | Manual one-shot                 |
+| Audience  | Dynamic, per-trigger                   | Static at send time             |
+| Frequency | Continuous                             | Single send                     |
+| Use case  | Welcome, abandoned cart, post-purchase | Newsletter, promo, announcement |
 
 ### 8.2 Flow triggers
 
@@ -561,15 +570,18 @@ Klaviyo's **automation engine**. Called "Flows" not "Workflows" or "Journeys".
 ### 8.3 Flow components
 
 #### Conditional splits
+
 - **If/else** based on profile properties, events, predictive metrics
 - Multi-branch
 - Up to dozens of conditions
 
 #### Trigger splits
+
 - Initial branching based on **trigger event properties**
 - e.g. abandoned cart with cart value > $X vs. < $X
 
 #### Time delays
+
 - Wait fixed period (minutes, hours, days)
 - **Smart Send Time** – Klaviyo AI picks optimal time per profile (Pro+)
 
@@ -587,6 +599,7 @@ Klaviyo's **automation engine**. Called "Flows" not "Workflows" or "Journeys".
 - **Send to ads audience** – sync to Meta/Google ads
 
 #### Flow filters
+
 - Apply at flow-level to **exclude profiles** from entering
 - Common: subscribed to email, not in test segment, not currently in another similar flow
 
@@ -701,6 +714,7 @@ Create campaign:
 #### Personalization syntax
 
 Klaviyo uses **handlebars-like** syntax:
+
 ```
 Hello {{ first_name|default:"there" }},
 
@@ -837,6 +851,7 @@ Marketing Analytics add-on ($100+/měsíc) přidává BI capabilities.
 ### 13.3 Advanced Data Platform ($500/měsíc)
 
 Includes Marketing Analytics + data warehousing:
+
 - **Bigger query** capabilities
 - **Custom SQL** access
 - **External data integration**
@@ -846,6 +861,7 @@ Includes Marketing Analytics + data warehousing:
 ### 13.4 Email/SMS-level metrics
 
 Per send:
+
 - Delivered, bounces (hard/soft)
 - Opens (raw + unique)
 - Clicks, CTR
@@ -872,6 +888,7 @@ Per send:
 ### 14.2 Marketing Agent (built-in)
 
 AI agent for marketing operations:
+
 - Generate campaign content
 - Build flows from natural language prompt
 - Suggest segments
@@ -882,6 +899,7 @@ AI agent for marketing operations:
 ### 14.3 Klaviyo AI strategy 2026
 
 Klaviyo positions itself as **„AI-first B2C CRM"** – heavy AI investment direction:
+
 - Multi-agent platform
 - Marketing Agent for ops
 - Customer Agent for support
@@ -895,6 +913,7 @@ Klaviyo positions itself as **„AI-first B2C CRM"** – heavy AI investment dir
 ### 15.1 Customer Hub (add-on, $30/měsíc)
 
 Customer-facing portal:
+
 - View order history
 - Manage subscriptions
 - Update preferences
@@ -906,6 +925,7 @@ Customer-facing portal:
 ### 15.2 Service Hub / Helpdesk (add-on, $264/měsíc)
 
 Full ticketing system:
+
 - Email + chat + SMS support inbox
 - AI-powered ticket tagging
 - Skills-based routing
@@ -961,14 +981,14 @@ Full ticketing system:
 
 ### 17.2 Authentication setup
 
-| Protokol | Setup |
-|---|---|
-| **SPF** | Add include for Klaviyo's sending servers |
-| **DKIM** | 2× CNAME records (configurable subdomain) |
-| **DMARC** | TXT record on _dmarc, recommended start at p=none |
-| **BIMI** | Per DMARC reject + verified logo |
-| **MX records** | Pro Reviews routing (optional) |
-| **Branded tracking domain** | Setup pro click links (replace klaviyo.com/click) |
+| Protokol                    | Setup                                              |
+| --------------------------- | -------------------------------------------------- |
+| **SPF**                     | Add include for Klaviyo's sending servers          |
+| **DKIM**                    | 2× CNAME records (configurable subdomain)          |
+| **DMARC**                   | TXT record on \_dmarc, recommended start at p=none |
+| **BIMI**                    | Per DMARC reject + verified logo                   |
+| **MX records**              | Pro Reviews routing (optional)                     |
+| **Branded tracking domain** | Setup pro click links (replace klaviyo.com/click)  |
 
 ### 17.3 Domain authentication flow
 
@@ -1042,24 +1062,24 @@ Emails now sign with your DKIM
 
 ### 18.3 Hlavní API endpoints
 
-| Resource | Operace |
-|---|---|
-| `/profiles` | CRUD profiles |
-| `/profiles/{id}` | Get/update specific |
-| `/lists` | List management |
-| `/segments` | Segment management |
-| `/events` | Track events |
-| `/metrics` | Metric definitions |
-| `/campaigns` | Campaign CRUD |
-| `/flows` | Flow management |
-| `/templates` | Template CRUD |
-| `/catalogs` | Product catalog |
-| `/coupons` / `/coupon-codes` | Coupon management |
-| `/reviews` | Reviews data |
-| `/forms` | Form data |
-| `/data-privacy/deletion-jobs` | GDPR delete |
-| `/accounts` | Account info |
-| `/webhooks` | Webhook subscriptions |
+| Resource                      | Operace               |
+| ----------------------------- | --------------------- |
+| `/profiles`                   | CRUD profiles         |
+| `/profiles/{id}`              | Get/update specific   |
+| `/lists`                      | List management       |
+| `/segments`                   | Segment management    |
+| `/events`                     | Track events          |
+| `/metrics`                    | Metric definitions    |
+| `/campaigns`                  | Campaign CRUD         |
+| `/flows`                      | Flow management       |
+| `/templates`                  | Template CRUD         |
+| `/catalogs`                   | Product catalog       |
+| `/coupons` / `/coupon-codes`  | Coupon management     |
+| `/reviews`                    | Reviews data          |
+| `/forms`                      | Form data             |
+| `/data-privacy/deletion-jobs` | GDPR delete           |
+| `/accounts`                   | Account info          |
+| `/webhooks`                   | Webhook subscriptions |
 
 ### 18.4 OAuth 2.0 (pro public apps)
 
@@ -1070,6 +1090,7 @@ Emails now sign with your DKIM
 ### 18.5 Webhooks
 
 Real-time event notifications:
+
 - Profile created/updated/subscribed
 - Campaign sent
 - Flow events
@@ -1090,6 +1111,7 @@ Real-time event notifications:
 **350+ integrations**, vybrané:
 
 #### E-commerce (deepest)
+
 - **Shopify** (flagship integration, deepest)
 - **WooCommerce**
 - **BigCommerce**
@@ -1100,10 +1122,12 @@ Real-time event notifications:
 - **Salesforce Commerce Cloud**
 
 #### Reviews
+
 - **Klaviyo Reviews** (native, recommended)
 - Yotpo, Judge.me, Stamped.io, Okendo
 
 #### Subscriptions
+
 - **Recharge** (deepest)
 - Bold Subscriptions
 - Stay AI
@@ -1111,15 +1135,19 @@ Real-time event notifications:
 - Subbly
 
 #### Shipping/Logistics
+
 - ShipStation, ShipBob, AfterShip
 
 #### Loyalty
+
 - Smile.io, Yotpo Loyalty, LoyaltyLion
 
 #### Customer Service
+
 - Gorgias, Zendesk, Re:amaze
 
 #### Ads
+
 - Meta Ads (audience sync)
 - Google Ads
 - TikTok Ads
@@ -1127,12 +1155,15 @@ Real-time event notifications:
 - Snapchat Ads
 
 #### Forms
+
 - Typeform, Jotform, OptinMonster, Privy, Justuno
 
 #### Analytics
+
 - Google Analytics, Triple Whale, Northbeam, Polar Analytics
 
 #### iPaaS
+
 - Zapier, Make, Workato, Tray.io
 
 ### 18.8 Klaviyo Tracking
@@ -1253,6 +1284,7 @@ Real-time event notifications:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### Klaviyo je dobrá volba pokud
+
 - Provozujete **DTC e-commerce store**, zejména **Shopify**
 - Hledáte **deepest e-commerce-specific features** (abandoned cart, post-purchase, RFM, CLV)
 - Chcete **predictive analytics** built-in (ne dodatečné add-ons)
@@ -1262,6 +1294,7 @@ Real-time event notifications:
 - Chcete **AI-powered personalization** out-of-the-box
 
 ### Klaviyo není dobrá volba pokud
+
 - Jste **B2B / SaaS** – HubSpot, Salesforce, ActiveCampaign lépe
 - Máte **velkou inactive databázi** – active profile pricing penalizuje
 - Vaše hlavní use case je **B2B sales pipeline** – Klaviyo není CRM v sales smyslu
@@ -1272,17 +1305,17 @@ Real-time event notifications:
 
 ### Klaviyo vs. konkurence
 
-| Konkurence | Kdy lepší než Klaviyo |
-|---|---|
-| **Mailchimp** | Small lists, basic email, casual sends |
-| **Brevo** | Volume-based pricing pro velké inactive lists; transactional focus |
-| **HubSpot** | B2B; full CRM s deals; multi-Hub vision |
-| **ActiveCampaign** | Deep automation logic, lower cost mid-tier |
-| **Omnisend** | Direct competitor, 40-60 % levnější u SMS-heavy use cases |
-| **Drip** | E-commerce alternativa, cheaper for some scenarios |
-| **Customer.io** | Product-led SaaS s event-driven journeys |
-| **Postmark / Mailgun** | Pure transactional fokus |
+| Konkurence             | Kdy lepší než Klaviyo                                              |
+| ---------------------- | ------------------------------------------------------------------ |
+| **Mailchimp**          | Small lists, basic email, casual sends                             |
+| **Brevo**              | Volume-based pricing pro velké inactive lists; transactional focus |
+| **HubSpot**            | B2B; full CRM s deals; multi-Hub vision                            |
+| **ActiveCampaign**     | Deep automation logic, lower cost mid-tier                         |
+| **Omnisend**           | Direct competitor, 40-60 % levnější u SMS-heavy use cases          |
+| **Drip**               | E-commerce alternativa, cheaper for some scenarios                 |
+| **Customer.io**        | Product-led SaaS s event-driven journeys                           |
+| **Postmark / Mailgun** | Pure transactional fokus                                           |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů help.klaviyo.com, developers.klaviyo.com, klaviyo.com/pricing a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na klaviyo.com/pricing.*
+_Dokument zpracován z oficiálních zdrojů help.klaviyo.com, developers.klaviyo.com, klaviyo.com/pricing a renomovaných analytických webů. Pro nejaktuálnější ceny vždy ověřit na klaviyo.com/pricing._

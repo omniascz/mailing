@@ -79,9 +79,9 @@
 - [ ] **API framework** — route structure, middleware
   - `CC` → "Nastav Fastify API framework: route autoloading z /routes adresáře, Zod request/response validation plugin, error handling (custom AppError class), rate limiting (Redis-based), request ID logging, OpenAPI auto-gen (fastify-swagger). Příklad route: GET /api/v1/contacts s paginací."
 
-- [ ] **Design system bootstrap** — *viz Fáze UI*
+- [ ] **Design system bootstrap** — _viz Fáze UI_
 
-- [ ] **Auth pages** — *viz Fáze UI*
+- [ ] **Auth pages** — _viz Fáze UI_
 
 - [ ] **Channel adapter interface** — od dne 1
   - TypeScript interface pro všechny budoucí kanály
@@ -105,9 +105,9 @@
   - Syntax check, MX lookup, disposable domain detection, role-based detection
   - `CC` → "Vytvoř email validation service: syntaxCheck (regex), mxLookup (dns.resolveMx), disposableCheck (seznam 30k+ disposable domén — stáhni z github.com/disposable-email-domains), roleBasedCheck (admin@, info@, support@...). Validuj při importu i při API create. Vrať score 0-100 a reason array."
 
-- [ ] **Contact list UI** — *viz Fáze UI*
+- [ ] **Contact list UI** — _viz Fáze UI_
 
-- [ ] **Import wizard UI** — *viz Fáze UI*
+- [ ] **Import wizard UI** — _viz Fáze UI_
 
 - [x] **Tag systém**
   - CRUD, barevné tagy, bulk tag/untag, auto-tagging rules
@@ -121,7 +121,7 @@
   - Dynamic SQL builder, AND/OR/NOT groups, nested conditions, event-based
   - `CC` → "Vytvoř segment query engine: tabulka segments (id, org_id, name, conditions JSONB). Conditions schema: {operator: 'AND'|'OR', rules: [{field, op: 'eq'|'neq'|'gt'|'lt'|'contains'|'not_contains'|'in'|'not_in'|'is_set'|'is_not_set', value}], groups: [nested conditions]}. buildSegmentQuery(conditions) → Drizzle SQL query. Podpora: contact fields, custom fields, tags (has_tag/not_has_tag), phone_district, phone_operator, event-based (opened_campaign, clicked_link v posledních N dnech). API: GET /segments/:id/count (preview), GET /segments/:id/contacts."
 
-- [ ] **Segment builder UI** — *viz Fáze UI*
+- [ ] **Segment builder UI** — _viz Fáze UI_
 
 - [x] 🤖 **AI segment z popisu**
   - Claude API přeloží "zákazníci co nekoupili 30 dní" na segment conditions
@@ -139,7 +139,7 @@
 
 - [x] 📡 **Auto-enrichment při importu**
   - Každé číslo při importu projde prefix parserem
-  - `CC` → "Uprav contact import pipeline: po validaci emailu spusť parsePhoneNumber na phone field. Výsledek zapiš do phone_* sloupců kontaktu. Pro pevné linky nastav phone_district z prefixu (okamžité, zdarma). Pro mobilní nastav phone_operator z prefixu. phone_district pro mobily zůstane NULL — doplní se v Fázi 8 přes HLR lookup."
+  - `CC` → "Uprav contact import pipeline: po validaci emailu spusť parsePhoneNumber na phone field. Výsledek zapiš do phone\_\* sloupců kontaktu. Pro pevné linky nastav phone_district z prefixu (okamžité, zdarma). Pro mobilní nastav phone_operator z prefixu. phone_district pro mobily zůstane NULL — doplní se v Fázi 8 přes HLR lookup."
 
 - [x] **Double opt-in flow**
   - Konfigurovatelný potvrzovací email, custom landing page, token expiry
@@ -173,26 +173,26 @@
 - [ ] **Email render engine** — JSON → responsive HTML
   - `CC` → "Vytvoř email render engine: renderEmail(schema: EmailSchema): string. Výstup: responsive HTML s inline CSS, table-based layout (pro Outlook), dark mode meta tag, max-width 600px container, responsive columns (media query stack na mobilu), automatic CSS inlining (juice), img alt texty, preheader text (hidden span trick). Testuj output přes Litmus/Email on Acid snapshot. Podporuj merge tagy {{first_name}} — renderuj s contact data nebo fallback."
 
-- [ ] **Drag-and-drop canvas** — *viz Fáze UI*
+- [ ] **Drag-and-drop canvas** — _viz Fáze UI_
 
-- [ ] **Undo/Redo** — *viz Fáze UI*
+- [ ] **Undo/Redo** — _viz Fáze UI_
 
 ### Týden 9 — Pokročilé bloky
 
-- [ ] 🔥 **Countdown timer block** — backend (GIF generátor) + *editor UI viz Fáze UI*
+- [ ] 🔥 **Countdown timer block** — backend (GIF generátor) + _editor UI viz Fáze UI_
   - `CC` → "Implementuj server-side countdown GIF generátor: POST /editor/countdown-gif {target_date, style}. Generuj animovaný GIF (sharp/canvas, 10fps, 5s loop). Fallback na statický text. AMP for Email živý countdown jako alternativa."
 
-- [ ] 🔥 **Product card block** — backend scraper + *editor UI viz Fáze UI*
+- [ ] 🔥 **Product card block** — backend scraper + _editor UI viz Fáze UI_
   - `API` → "Extrahuj z URL produktu: name, price, description, image URL, currency."
   - `CC` → "Implementuj POST /editor/scrape-product: fetch URL → Claude API extrahuje data → vrať {name, price, image, description}."
 
-- [ ] 🔥 **Dynamic content block** — render engine + *editor UI viz Fáze UI*
+- [ ] 🔥 **Dynamic content block** — render engine + _editor UI viz Fáze UI_
   - `CC` → "Implementuj evaluateCondition(condition: SegmentCondition, contact): boolean v render engine. DynamicBlock v renderEmail: evaluuj podmínku per kontakt → renderuj if nebo else větev."
 
-- [ ] 🔥 **Saved blocks API** — *editor UI viz Fáze UI*
+- [ ] 🔥 **Saved blocks API** — _editor UI viz Fáze UI_
   - `CC` → "Implementuj saved blocks API: tabulka saved_blocks (id, org_id, name, category, block_data JSONB). GET/POST /editor/saved-blocks."
 
-- [ ] 🔥 **Brand kit API** — *settings UI viz Fáze UI*
+- [ ] 🔥 **Brand kit API** — _settings UI viz Fáze UI_
   - `CC` → "Implementuj brand kit API: tabulka brand_kits (org_id, logo_url, primary_color, secondary_color, accent_color, font_heading, font_body, footer_text). GET/PUT /brand-kit."
 
 ### Týden 10 — Personalizace + HTML editor
@@ -205,7 +205,7 @@
   - Podmínky, loops, filtry v obsahu
   - `CC` → "Přidej Liquid templating support (liquidjs knihovna): podmínky {% if contact.tags contains 'VIP' %}...{% endif %}, loops {% for product in products %}...{% endfor %}, filtry {{ name | upcase }}, {{ date | date: '%d.%m.%Y' }}. Sandboxed execution (timeout 5s, no filesystem access). V editoru: syntax highlighting pro Liquid v text blocích."
 
-- [ ] **HTML editor** — *viz Fáze UI*
+- [ ] **HTML editor** — _viz Fáze UI_
 
 - [ ] 🔥 **HTML → blocks konverze**
   - Claude API analyzuje HTML → editovatelné bloky
@@ -213,18 +213,18 @@
 
 ### Týden 11 — Preview, šablony, QA
 
-- [ ] **Preview panel** — *viz Fáze UI*
+- [ ] **Preview panel** — _viz Fáze UI_
 
-- [ ] **Spam score checker** — backend API + *UI widget viz Fáze UI*
+- [ ] **Spam score checker** — backend API + _UI widget viz Fáze UI_
   - `CC` → "Implementuj POST /editor/spam-check: kontroly subject line (ALL CAPS, exclamation, spam keywords), HTML (link:text ratio, image:text ratio, broken links, missing alt texty), technické (List-Unsubscribe, From/Reply-To). Vrať score 0-10 a array doporučení."
 
-- [ ] **Link checker** — backend API + *UI viz Fáze UI*
+- [ ] **Link checker** — backend API + _UI viz Fáze UI_
   - `CC` → "Implementuj POST /editor/link-check: extrahuj URLs z HTML, HEAD request parallel (timeout 5s), report: working/redirect/broken/suspicious. Vrať JSON array."
 
-- [ ] 🤖 **Accessibility checker** — API endpoint + *UI viz Fáze UI*
+- [ ] 🤖 **Accessibility checker** — API endpoint + _UI viz Fáze UI_
   - `API` → "Analyzuj HTML email: alt texty, kontrast (WCAG AA), heading hierarchy, lang atribut. Vrať [{issue, severity, element, suggestion}]."
 
-- [ ] **Template library** — 100+ šablon — API + *UI viz Fáze UI*
+- [ ] **Template library** — 100+ šablon — API + _UI viz Fáze UI_
   - `CC` → "Vytvoř 100 email šablon jako JSON soubory (block schema). Kategorie: newsletter (20), promo/sales (20), transactional (15), event (10), onboarding (10), seasonal (10), e-commerce (15). API: GET /templates?category=..., POST /templates/:id/use (klonuj do kampaně)."
 
 - [ ] **Testy Fáze 2**
@@ -244,7 +244,7 @@
   - 2048-bit RSA, per-domain keys, rotation
   - `CC` → "Implementuj DKIM signing v Go MTA: generuj 2048-bit RSA keypair per customer domain, uložen v DB. Sign každý odchozí email (relaxed/relaxed canonicalization, sha256). API endpoint pro DNS record generování: POST /domains/:id/dkim → vrať TXT record který zákazník přidá do DNS. Verifikace: po přidání DNS záznamu zkontroluj (dns.LookupTXT) a označ doménu jako verified."
 
-- [ ] **SPF/DMARC wizard** — backend DNS verifikace + *wizard UI viz Fáze UI*
+- [ ] **SPF/DMARC wizard** — backend DNS verifikace + _wizard UI viz Fáze UI_
   - `CC` → "Implementuj doménový setup backend: generuj DNS záznamy (SPF include:, DKIM TXT, DMARC policy, Return-Path CNAME). GET /domains/:id/dns-records (vrať required records), POST /domains/:id/verify (DNS lookup → vrať per-record status). Aktualizuj domain.verified po úspěchu."
 
 - [ ] **Queue architecture** — BullMQ
@@ -284,9 +284,9 @@
 - [ ] **Event pipeline** — Kafka → ClickHouse
   - `CC` → "Implementuj event pipeline: Kafka topics: email_sends, email_deliveries, email_opens, email_clicks, email_bounces, email_unsubscribes, email_complaints. Kafka consumer → batch insert do ClickHouse (email_events table: event_type, campaign_id, contact_id, timestamp, metadata JSONB). Retention: 2 roky. Materialized views pro aggregace (per campaign, per day, per ISP)."
 
-- [ ] **Campaign wizard UI** — *viz Fáze UI*
+- [ ] **Campaign wizard UI** — _viz Fáze UI_
 
-- [ ] **Live campaign dashboard** — *viz Fáze UI*
+- [ ] **Live campaign dashboard** — _viz Fáze UI_
 
 - [ ] **A/B testing engine**
   - `CC` → "Implementuj A/B testing: campaign.ab_config JSONB: {variants: [{name, subject?, content?, sender?, percentage}], winner_metric: open_rate|click_rate, winner_after_hours: 4, auto_send_winner: true}. Při odeslání: rozděl audience podle percentage, odešli varianty, po winner_after_hours vyhodnoť winner (statistická signifikance — chi-square test, min p<0.05), auto-send winner na zbytek audience."
@@ -306,12 +306,12 @@
 - [x] **Campaign analytics API**
   - `CC` → "Implementuj campaign analytics API: GET /campaigns/:id/stats → {sent, delivered, delivery_rate, opens, unique_opens, open_rate, clicks, unique_clicks, click_rate, ctor, bounces, bounce_rate, hard_bounces, soft_bounces, unsubs, unsub_rate, complaints, complaint_rate}. GET /campaigns/:id/stats/timeline?interval=hour|day → time-series array. GET /campaigns/:id/stats/links → per-link clicks. GET /campaigns/:id/stats/devices → device breakdown. GET /campaigns/:id/stats/geo → open geo (IP → country/city via MaxMind GeoLite2)."
 
-- [ ] **Campaign report page** — *viz Fáze UI*
+- [ ] **Campaign report page** — _viz Fáze UI_
 
-- [x] 🔥 **Click heatmapa** — backend (Puppeteer screenshot, ClickHouse data) + *overlay UI viz Fáze UI*
+- [x] 🔥 **Click heatmapa** — backend (Puppeteer screenshot, ClickHouse data) + _overlay UI viz Fáze UI_
   - `CC` → "Implementuj GET /campaigns/:id/heatmap-data: per-link click counts z ClickHouse. POST /campaigns/:id/screenshot: Puppeteer render emailu → PNG → S3. API vrací screenshot URL + link click data pro overlay."
 
-- [ ] **Account dashboard** — *viz Fáze UI*
+- [ ] **Account dashboard** — _viz Fáze UI_
 
 - [x] 🔥 **Anomaly detection**
   - `CC` → "Implementuj anomaly detection: cron job (hourly) porovnává aktuální metriky s 30-day rolling average. Alerty: bounce rate > 2x average, complaint rate > 0.1%, open rate drop > 50%, sudden spike in unsubscribes. Notifikace: in-app notification + email na admina. Dashboard widget s alert timeline."
@@ -354,7 +354,7 @@
 
 ### Týden 21–23 — Engine + canvas
 
-- [ ] 🔥 **Visual workflow builder** — *viz Fáze UI*
+- [ ] 🔥 **Visual workflow builder** — _viz Fáze UI_
 
 - [x] **Workflow execution engine**
   - `CC` → "Implementuj workflow execution engine: tabulka workflow_runs (workflow_id, contact_id, current_node_id, status, data JSONB, next_execution_at). BullMQ scheduler: every minute check workflow_runs where next_execution_at <= now. Per node execution: TriggerNode (check condition → start), SendEmailNode (queue email), SendSMSNode (queue SMS), WaitNode (set next_execution_at), ConditionNode (evaluate → follow true/false edge), WebhookNode (HTTP POST). State machine per contact per workflow. Concurrency: max 10k simultaneous workflow runs."
@@ -380,7 +380,7 @@
 - [x] **Pre-built flows**
   - `CC` → "Vytvoř pre-built workflow templates (JSON): Welcome series (trigger: subscribe → email day 0 → wait 2d → email day 2 → wait 3d → email day 5, if not opened day 5 → SMS), Abandoned cart (trigger: cart_abandoned → wait 1h → email → wait 4h if not purchased → push → wait 24h → SMS to VIP only), Onboarding (trigger: signup → email welcome → wait 1d → email getting started → wait 3d → condition: completed setup? → if no: email reminder + push), Re-engagement (trigger: 30d no open → email → wait 7d → push → wait 7d → SMS → wait 14d if still no engagement → tag: inactive). API: GET /workflows/templates, POST /workflows/templates/:id/use (klonuj)."
 
-- [ ] **Flow analytics UI** — *viz Fáze UI*
+- [ ] **Flow analytics UI** — _viz Fáze UI_
 
 - [x] 🔥 **Lead scoring engine**
   - `CC` → "Implementuj lead scoring: tabulka lead_score_rules (org_id, event_type, points, decay_days). Výchozí pravidla: email open +1, email click +3, link click +5, page visit +2, form submit +10, purchase +20. Decay: -1 bod/den bez aktivity. Score uložen na kontaktu (contact.lead_score). Threshold akce: score > 50 → tag 'Hot lead' + webhook (notify sales). Score widget v kontaktním profilu. Segmentace: lead_score > X."
@@ -400,10 +400,10 @@
 - [ ] **REST API v1**
   - `CC` → "Vytvoř public REST API v1: /api/v1/contacts (CRUD, list, search, bulk), /api/v1/lists (CRUD, subscribe/unsubscribe), /api/v1/tags (CRUD), /api/v1/segments (CRUD, count, contacts), /api/v1/campaigns (CRUD, send, schedule, stats), /api/v1/templates (CRUD, render), /api/v1/workflows (CRUD, start, stop, stats), /api/v1/number-intel/lookup (HLR lookup), /api/v1/number-intel/parse (prefix parse), /api/v1/events (custom events pro triggers). Auth: API key v header (X-API-Key). Rate limiting: per plan tier (free: 100/min, pro: 1000/min, business: 5000/min). Pagination: cursor-based. Filtering: query params. Versioning: URL path (/v1/)."
 
-- [x] **Webhook systém** — backend + *management UI viz Fáze UI*
+- [x] **Webhook systém** — backend + _management UI viz Fáze UI_
   - `CC` → "Implementuj webhook systém: tabulka webhooks (org_id, url, events[], secret, active), webhook_deliveries. Events: contact.created/updated/deleted, campaign.sent, email.delivered/opened/clicked/bounced/unsubscribed/complained, sms.delivered/failed, workflow.completed, phone.validated, hlr.completed. Delivery: BullMQ job, retry (exponential backoff, max 5), HMAC-SHA256 signing. API: GET/POST/PUT/DELETE /webhooks, POST /webhooks/:id/test."
 
-- [ ] **API docs** — *viz Fáze UI*
+- [ ] **API docs** — _viz Fáze UI_
 
 - [x] **SDKs** — Python + Node.js
   - `CC` → "Generuj SDK pro Python a Node.js z OpenAPI spec: Python (requests-based, typed s dataclasses, published na PyPI jako forgemsg), Node.js (fetch-based, TypeScript, published na npm jako @forgemsg/sdk). Oba: auto-retry, rate limit handling, pagination helpers, webhook signature verification helper."
@@ -413,9 +413,9 @@
 - [ ] **Stripe billing**
   - `CC` → "Implementuj Stripe billing: plans table (name, stripe_price_id, contact_limit, email_limit, sms_rate, features JSONB). Stripe integration: createCustomer on org create, createSubscription on plan select, usage-based reporting (monthly email/sms count → Stripe usage records), invoice webhooks (payment_succeeded, payment_failed → update org.plan_status), proration on plan change. Overage: per email $0.001, per SMS pass-through + markup, per HLR lookup $0.005."
 
-- [ ] **Billing UI** — *viz Fáze UI*
+- [ ] **Billing UI** — _viz Fáze UI_
 
-- [x] **Signup forms** — backend + *form builder UI viz Fáze UI*
+- [x] **Signup forms** — backend + _form builder UI viz Fáze UI_
   - `CC` → "Implementuj signup form backend: tabulka signup_forms (org_id, list_id, fields JSONB, embed_type, config JSONB, active). API: GET/POST/PUT/DELETE /signup-forms, GET /signup-forms/:id/script (vrať JS snippet). Public endpoint: POST /public/forms/:id/submit → contact create + add to list + trigger workflow. Analytics: views/submissions tracking."
 
 - [x] **Zapier konektor**
@@ -442,7 +442,7 @@
 - [ ] **Provider routing engine**
   - `CC` → "Implementuj SMS routing engine: tabulka sms_routes (country_code, provider ENUM bulkgate|twilio, priority, active). Routing logic: lookup country_code z recipient čísla → select provider s highest priority kde active=true. Failover: pokud primary provider vrátí error → automatic switch na next priority. Cost tracking: log provider, cost per SMS, delivery success. Dashboard: provider performance comparison (delivery rate, latency, cost per country)."
 
-- [ ] **SMS campaign builder UI** — *viz Fáze UI*
+- [ ] **SMS campaign builder UI** — _viz Fáze UI_
 
 - [ ] **Two-way SMS**
   - `CC` → "Implementuj inbound SMS: webhook endpoint pro Twilio a Bulkgate, parse inbound SMS → match na contact (phone number lookup), keyword handling (STOP → auto-unsubscribe, HELP → send help message, custom keywords → trigger workflow), conversation view v unified inbox. Auto-response konfigurace per keyword."
@@ -455,7 +455,7 @@
 - [ ] **Meta Cloud API integrace**
   - `CC` → "Implementuj WhatsAppAdapter implements IChannelAdapter: Meta Cloud API (graph.facebook.com/v21.0), WABA (WhatsApp Business Account) provisioning flow, phone number registration. send() → POST /{phone_number_id}/messages. Webhook: příjem delivery receipts, read receipts, inbound messages. Config: access_token, phone_number_id, waba_id."
 
-- [ ] **Template management** — backend API + *template editor UI viz Fáze UI*
+- [ ] **Template management** — backend API + _template editor UI viz Fáze UI_
   - `CC` → "Implementuj WhatsApp template management API: CRUD pro templates, submit for Meta approval (POST /{waba_id}/message_templates), status tracking (APPROVED/REJECTED/PENDING), template kategorie (marketing, utility, authentication). API: GET/POST/PUT/DELETE /whatsapp/templates, POST /whatsapp/templates/:id/submit."
 
 - [ ] **Rich media + interactive**
@@ -472,7 +472,7 @@
 - [ ] **In-app messaging SDK**
   - `CC` → "Vytvoř in-app messaging JS SDK (<5KB gzipped): ForgeMsg.init({apiKey, contactId}), widget types: banner (top/bottom), modal (center), slideout (side panel). Targeting: page URL rules, segment membership, event triggers. API: GET /in-app/messages?contact_id=X&page_url=Y → return matching messages. Impression + click tracking. Frequency capping (max 1 per session per message). NPM package: @forgemsg/web-sdk."
 
-- [ ] **Unified inbox v1** — *viz Fáze UI*
+- [ ] **Unified inbox v1** — _viz Fáze UI_
 
 - [ ] **Testy Fáze 7**
   - `CC` → "Napiš testy: SMS delivery e2e (Twilio test credentials, send → verify delivery callback), SMS routing failover (mock Bulkgate failure → verify Twilio fallback), WhatsApp template approval flow (mock Meta API), push notification e2e (mock FCM, verify delivery + click tracking), unified inbox (create conversations across channels, verify timeline ordering)."
@@ -508,11 +508,11 @@
 - [ ] 📡 **Batch HLR processing**
   - `CC` → "Implementuj batch HLR: POST /number-intel/batch-enrich {filter: segment_id | list_id | all}. BullMQ job: query contacts matching filter where phone IS NOT NULL → queue individual enrichment jobs (rate limited: 50/sec across all providers, parallelizace přes 2 providery). Tabulka batch_jobs (id, org_id, type, total, processed, succeeded, failed, status, started_at, completed_at). WebSocket progress updates."
 
-- [ ] 📡 **Progress tracking UI** — *viz Fáze UI*
+- [ ] 📡 **Progress tracking UI** — _viz Fáze UI_
 
-- [ ] 📡 **Number intel dashboard** — *viz Fáze UI*
+- [ ] 📡 **Number intel dashboard** — _viz Fáze UI_
 
-- [ ] 📡 **Mapa ČR** — interaktivní — *viz Fáze UI*
+- [ ] 📡 **Mapa ČR** — interaktivní — _viz Fáze UI_
 
 - [ ] 📡 **Auto re-validace**
   - `CC` → "Implementuj scheduled re-validace: cron job (monthly): SELECT contacts WHERE phone_lookup_at < now() - interval '30 days' AND phone IS NOT NULL. Queue batch enrichment. Po dokončení: porovnej old vs new status, loguj změny (tabulka phone_status_changes: contact_id, old_status, new_status, old_operator, new_operator, changed_at). Alert pokud > 5% kontaktů změnilo status."
@@ -532,7 +532,7 @@
   - `API` model: `claude-sonnet-4-20250514`
   - `CC` → "Implementuj voice conversation engine: system prompt s instrukcemi pro telefonní hovor (buď stručný, jasný, přátelský, max 2 věty per response), scenario context (purpose: appointment reminder / NPS survey / verification), contact data (jméno, objednávka, termín...), conversation history (přidávej každou repliku). Branching: Claude rozhoduje na základě odpovědi (uživatel potvrdí → branch A, odmítne → branch B, požádá o přepojení → transfer to human). Sentiment detection: Claude vrátí sentiment tag (positive/neutral/negative) s každou odpovědí."
 
-- [ ] 🔥 **Voice scénář builder UI** — *viz Fáze UI*
+- [ ] 🔥 **Voice scénář builder UI** — _viz Fáze UI_
 
 - [ ] **Call management**
   - `CC` → "Implementuj call management: outbound dialer (queue contacts → rate limited calling: max 5 concurrent calls), voicemail detection (Twilio AMD — Answering Machine Detection, pokud voicemail → leave message nebo hangup), DTMF handling ('stiskněte 1 pro potvrzení'), call recording (Twilio recording, s úvodním upozorněním 'Tento hovor je nahráván'), recording storage (S3, encrypted). Call log: tabulka calls (id, campaign_id, contact_id, scenario_id, status: completed|no_answer|busy|voicemail|failed, duration_seconds, recording_url, transcript, ai_summary, outcome JSONB, cost, created_at)."
@@ -587,14 +587,14 @@
 - [ ] **Security hardening**
   - `CC` → "Security audit a hardening: OWASP Top 10 check (SQL injection → parameterized queries ✓, XSS → CSP headers + sanitize output, CSRF → SameSite cookies, rate limiting na auth endpoints: 5 attempts/15min), dependency audit (npm audit, snyk test), secrets rotation (90-day schedule), audit logging (tabulka audit_logs: user_id, action, resource, ip, timestamp — log všechny writes), pen test prep (document attack surface, prepare test accounts)."
 
-- [ ] **Onboarding flow** — backend progress tracking + *wizard UI viz Fáze UI*
+- [ ] **Onboarding flow** — backend progress tracking + _wizard UI viz Fáze UI_
   - `CC` → "Implementuj onboarding backend: onboarding_steps JSONB na org (krok 1-5, každý s completed: bool). API: GET /onboarding/status, POST /onboarding/step/:step/complete. Kroky: domain_verified, contacts_imported, campaign_created, test_email_sent, live."
 
-- [ ] 🔥 **Cmd+K command palette** — *viz Fáze UI*
+- [ ] 🔥 **Cmd+K command palette** — _viz Fáze UI_
 
 ### Týden 45–46 — Closed beta (50 uživatelů)
 
-- [ ] **Beta invite systém** — backend + *waitlist stránka viz Fáze UI*
+- [ ] **Beta invite systém** — backend + _waitlist stránka viz Fáze UI_
   - `CC` → "Implementuj beta backend: tabulky waitlist (email, joined_at), invite_codes (code, max_uses, used_count, active). API: POST /waitlist (join), POST /invites (generuj kód), POST /invites/:code/validate. Feedback: POST /feedback {category: bug|feature|ux, text} → ukládej do DB + forward do Linear API."
 
 - [ ] **Bug fixing sprint**
@@ -629,7 +629,7 @@
 - [ ] **Product Hunt launch**
   - `Chat` → "Navrhni Product Hunt launch strategii: timing (Tuesday-Thursday), prepare: 1-min video, 6 screenshots, compelling tagline, maker comment, first-day engagement plan."
 
-- [ ] **Developer docs site** — *viz Fáze UI*
+- [ ] **Developer docs site** — _viz Fáze UI_
 
 - [ ] **Content marketing**
   - `Chat` → "Vygeneruj 10 blog postů pro launch: 1) Why we built ForgeMsg, 2) ForgeMsg vs Mailchimp (comparison), 3) How AI is changing email marketing, 4) Complete guide to email deliverability, 5) SMS marketing in 2026, 6) WhatsApp Business API tutorial, 7) Building omnichannel workflows, 8) Phone number intelligence explained, 9) AI voice bots for business, 10) Migration guide from Mailchimp."
@@ -653,38 +653,38 @@
 
 ## Tech stack reference
 
-| Vrstva | Technologie | Poznámka |
-|--------|-------------|----------|
-| API | Fastify + TypeScript | Zod validation, OpenAPI auto-gen |
-| Frontend | Next.js 15 App Router | Tailwind, Zustand, React Query |
-| Email editor | React + DnD Kit | Block-based, JSON schema |
-| Email engine | Go | SMTP client, DKIM, MTA |
-| SMS gateway | Go (SMPP v3.4) | Multi-provider routing |
-| Voice bot | Node.js + WebSocket | Twilio Voice + STT/TTS |
-| Number intel | Node.js | HLR lookup, prefix DB |
-| DB (main) | PostgreSQL 16 | Drizzle ORM |
-| DB (analytics) | ClickHouse | Event pipeline, materialized views |
-| Cache | Redis 7 | Sessions, queue, rate limiting, HLR cache |
-| Queue | BullMQ → Kafka (later) | Priority queues, scheduled jobs |
-| Storage | S3 / MinIO | Images, attachments, recordings |
-| Search | Elasticsearch (later) | Full-text contact search |
-| Infra | Kubernetes (EKS) | Terraform, Helm, Graviton4 |
-| CI/CD | GitHub Actions → ArgoCD | Trunk-based development |
-| Monitoring | Grafana + Prometheus + Loki | PagerDuty alerts |
-| AI (product) | Claude API (Sonnet 4.6) | Copywriting, analysis, voice |
-| AI (moderation) | Claude API (Haiku 4.5) | Content check, spam detection |
-| AI (development) | Claude Code (Max plan) | Code generation, tests, docs |
+| Vrstva           | Technologie                 | Poznámka                                  |
+| ---------------- | --------------------------- | ----------------------------------------- |
+| API              | Fastify + TypeScript        | Zod validation, OpenAPI auto-gen          |
+| Frontend         | Next.js 15 App Router       | Tailwind, Zustand, React Query            |
+| Email editor     | React + DnD Kit             | Block-based, JSON schema                  |
+| Email engine     | Go                          | SMTP client, DKIM, MTA                    |
+| SMS gateway      | Go (SMPP v3.4)              | Multi-provider routing                    |
+| Voice bot        | Node.js + WebSocket         | Twilio Voice + STT/TTS                    |
+| Number intel     | Node.js                     | HLR lookup, prefix DB                     |
+| DB (main)        | PostgreSQL 16               | Drizzle ORM                               |
+| DB (analytics)   | ClickHouse                  | Event pipeline, materialized views        |
+| Cache            | Redis 7                     | Sessions, queue, rate limiting, HLR cache |
+| Queue            | BullMQ → Kafka (later)      | Priority queues, scheduled jobs           |
+| Storage          | S3 / MinIO                  | Images, attachments, recordings           |
+| Search           | Elasticsearch (later)       | Full-text contact search                  |
+| Infra            | Kubernetes (EKS)            | Terraform, Helm, Graviton4                |
+| CI/CD            | GitHub Actions → ArgoCD     | Trunk-based development                   |
+| Monitoring       | Grafana + Prometheus + Loki | PagerDuty alerts                          |
+| AI (product)     | Claude API (Sonnet 4.6)     | Copywriting, analysis, voice              |
+| AI (moderation)  | Claude API (Haiku 4.5)      | Content check, spam detection             |
+| AI (development) | Claude Code (Max plan)      | Code generation, tests, docs              |
 
 ---
 
 ## Cenový model
 
-| Plan | Cena | Kontakty | Emaily/m | SMS | AI calls |
-|------|------|----------|----------|-----|----------|
-| Free | $0 | 1 000 | 5 000 | 0 | 10/day |
-| Starter | $19/m | 10 000 | 50 000 | pay-per-use | 50/day |
-| Pro | $79/m | 50 000 | 250 000 | pay-per-use | 200/day |
-| Business | $199/m | 200 000 | 1 000 000 | pay-per-use | 500/day |
+| Plan       | Cena   | Kontakty  | Emaily/m  | SMS          | AI calls  |
+| ---------- | ------ | --------- | --------- | ------------ | --------- |
+| Free       | $0     | 1 000     | 5 000     | 0            | 10/day    |
+| Starter    | $19/m  | 10 000    | 50 000    | pay-per-use  | 50/day    |
+| Pro        | $79/m  | 50 000    | 250 000   | pay-per-use  | 200/day   |
+| Business   | $199/m | 200 000   | 1 000 000 | pay-per-use  | 500/day   |
 | Enterprise | custom | unlimited | unlimited | volume rates | unlimited |
 
 SMS/Voice/WhatsApp: pass-through cost + 2× markup.
@@ -695,47 +695,47 @@ Dedicated IP: $20/m add-on.
 
 ## Technický rozpočet (měsíčně, bez mezd)
 
-| Kategorie | MVP (0–1k users) | Growth (1–10k) | Scale (10–50k) |
-|-----------|-------------------|----------------|----------------|
-| Compute (K8s) | $350 | $1,430 | $5,420 |
-| Databáze | $140 | $820 | $3,000 |
-| Storage + CDN | $45 | $170 | $700 |
-| Email infra | $280 | $800 | $2,350 |
-| Message queue | $0 | $200 | $800 |
-| Claude API (product) | $100 | $950 | $5,300 |
-| Dev tools + Claude Code | $296 | $400 | $820 |
-| Monitoring | $95 | $230 | $660 |
-| Bezpečnost | $30 | $120 | $450 |
-| Third-party SaaS | $50 | $510 | $2,790 |
-| Doména + DNS | $15 | $35 | $215 |
-| SMS/Voice pass-through | $0 | $500 | $4,500 |
-| HLR lookups | $0 | $150 | $500 |
-| **Celkem** | **~$1,400** | **~$6,300** | **~$27,500** |
+| Kategorie               | MVP (0–1k users) | Growth (1–10k) | Scale (10–50k) |
+| ----------------------- | ---------------- | -------------- | -------------- |
+| Compute (K8s)           | $350             | $1,430         | $5,420         |
+| Databáze                | $140             | $820           | $3,000         |
+| Storage + CDN           | $45              | $170           | $700           |
+| Email infra             | $280             | $800           | $2,350         |
+| Message queue           | $0               | $200           | $800           |
+| Claude API (product)    | $100             | $950           | $5,300         |
+| Dev tools + Claude Code | $296             | $400           | $820           |
+| Monitoring              | $95              | $230           | $660           |
+| Bezpečnost              | $30              | $120           | $450           |
+| Third-party SaaS        | $50              | $510           | $2,790         |
+| Doména + DNS            | $15              | $35            | $215           |
+| SMS/Voice pass-through  | $0               | $500           | $4,500         |
+| HLR lookups             | $0               | $150           | $500           |
+| **Celkem**              | **~$1,400**      | **~$6,300**    | **~$27,500**   |
 
 ---
 
 ## Jednorázové náklady
 
-| Položka | Odhad | Poznámka |
-|---------|-------|----------|
-| SOC 2 Type II | $15k–40k | Odlož za launch |
-| Právní dokumenty | $3k–8k | Claude Chat draft → lawyer review |
-| Penetration test | $5k–15k | Roční |
-| Trademark (EU+US) | $2k–5k | — |
-| IP blok purchase | $5k–20k | Volitelný |
-| IP warmup (3 měs.) | $300–1k | SES costs |
-| 100 email šablon | $0 | Claude Code |
-| API docs + SDK | $0 | Claude Code |
-| Marketing web | $0 | Claude Code |
+| Položka            | Odhad    | Poznámka                          |
+| ------------------ | -------- | --------------------------------- |
+| SOC 2 Type II      | $15k–40k | Odlož za launch                   |
+| Právní dokumenty   | $3k–8k   | Claude Chat draft → lawyer review |
+| Penetration test   | $5k–15k  | Roční                             |
+| Trademark (EU+US)  | $2k–5k   | —                                 |
+| IP blok purchase   | $5k–20k  | Volitelný                         |
+| IP warmup (3 měs.) | $300–1k  | SES costs                         |
+| 100 email šablon   | $0       | Claude Code                       |
+| API docs + SDK     | $0       | Claude Code                       |
+| Marketing web      | $0       | Claude Code                       |
 
 **MVP start: ~$5k–15k jednorázově**
 **Full compliance (po launch): ~$25k–90k**
 
 ---
 
-*Dokument vytvořen: 10. dubna 2026*
-*Aktualizuj průběžně s každým sprintem.*
-*Používej Claude Code Max ($100–200/m per dev) pro maximální produktivitu.*
+_Dokument vytvořen: 10. dubna 2026_
+_Aktualizuj průběžně s každým sprintem._
+_Používej Claude Code Max ($100–200/m per dev) pro maximální produktivitu._
 
 ---
 
@@ -743,7 +743,7 @@ Dedicated IP: $20/m add-on.
 
 > **Tato fáze se implementuje AŽ PO DOKONČENÍ celého backend systému.**
 > Grafický design, UI komponenty a frontend stránky jsou záměrně odloženy.
-> Všechny úkoly označené *viz Fáze UI* v předchozích fázích patří sem.
+> Všechny úkoly označené _viz Fáze UI_ v předchozích fázích patří sem.
 
 ---
 

@@ -1,6 +1,14 @@
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, text, jsonb, timestamp, index, uniqueIndex, pgEnum,
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  jsonb,
+  timestamp,
+  index,
+  uniqueIndex,
+  pgEnum,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
@@ -18,25 +26,30 @@ import { organizations } from './organizations.js';
  * pipeline can't express.
  */
 
-export const pipelineStatusEnum = pgEnum('data_pipeline_status', [
-  'draft', 'active', 'inactive',
-]);
+export const pipelineStatusEnum = pgEnum('data_pipeline_status', ['draft', 'active', 'inactive']);
 
 export const pipelineSourceEnum = pgEnum('data_pipeline_source', [
-  'contacts', 'email_events', 'deals', 'orders', 'cdp_events',
+  'contacts',
+  'email_events',
+  'deals',
+  'orders',
+  'cdp_events',
 ]);
 
 export const pipelineTriggerEnum = pgEnum('data_pipeline_trigger', [
-  'manual',    // run on demand
+  'manual', // run on demand
   'scheduled', // cron
-  'event',     // fire on a source-table change
+  'event', // fire on a source-table change
 ]);
 
 export const dataPipelines = pgTable(
   'data_pipelines',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull()
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 128 }).notNull(),
     description: text('description'),
@@ -63,10 +76,14 @@ export const dataPipelines = pgTable(
 export const dataPipelineRuns = pgTable(
   'data_pipeline_runs',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    pipelineId: uuid('pipeline_id').notNull()
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    pipelineId: uuid('pipeline_id')
+      .notNull()
       .references(() => dataPipelines.id, { onDelete: 'cascade' }),
-    orgId: uuid('org_id').notNull()
+    orgId: uuid('org_id')
+      .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
     status: varchar('status', { length: 16 }).notNull().default('pending'),
     inputCount: varchar('input_count', { length: 16 }),
@@ -93,8 +110,14 @@ export type Predicate =
   | { and: Predicate[] }
   | { or: Predicate[] };
 
-export interface FilterStep { type: 'filter'; predicate: Predicate }
-export interface MapStep { type: 'map'; projection: Record<string, string | { $field: string }> }
+export interface FilterStep {
+  type: 'filter';
+  predicate: Predicate;
+}
+export interface MapStep {
+  type: 'map';
+  projection: Record<string, string | { $field: string }>;
+}
 export interface AggregateStep {
   type: 'aggregate';
   groupBy: string[];
@@ -107,11 +130,16 @@ export interface JoinStep {
   kind: 'inner' | 'left';
   select?: string[]; // columns from the right side to merge in
 }
-export interface LimitStep { type: 'limit'; count: number }
-export interface SortStep { type: 'sort'; by: Array<{ field: string; dir: 'asc' | 'desc' }> }
+export interface LimitStep {
+  type: 'limit';
+  count: number;
+}
+export interface SortStep {
+  type: 'sort';
+  by: Array<{ field: string; dir: 'asc' | 'desc' }>;
+}
 
-export type PipelineStep =
-  | FilterStep | MapStep | AggregateStep | JoinStep | LimitStep | SortStep;
+export type PipelineStep = FilterStep | MapStep | AggregateStep | JoinStep | LimitStep | SortStep;
 
 export type DataPipeline = typeof dataPipelines.$inferSelect;
 export type NewDataPipeline = typeof dataPipelines.$inferInsert;
@@ -120,20 +148,35 @@ export type DataPipelineRun = typeof dataPipelineRuns.$inferSelect;
 // For use when a pipeline row is also a predicate source.
 export function stepUsesField(step: PipelineStep): string[] {
   switch (step.type) {
-    case 'filter':    return collectPredicateFields(step.predicate);
-    case 'map':       return Object.values(step.projection)
-                        .map((v) => (typeof v === 'string' ? v : v.$field));
-    case 'aggregate': return [...step.groupBy,
-                        ...Object.values(step.metrics).map((m) => m.field).filter(Boolean) as string[]];
-    case 'join':      return [step.on.left];
-    case 'sort':      return step.by.map((b) => b.field);
-    case 'limit':     return [];
+    case 'filter':
+      return collectPredicateFields(step.predicate);
+    case 'map':
+      return Object.values(step.projection).map((v) => (typeof v === 'string' ? v : v.$field));
+    case 'aggregate':
+      return [
+        ...step.groupBy,
+        ...(Object.values(step.metrics)
+          .map((m) => m.field)
+          .filter(Boolean) as string[]),
+      ];
+    case 'join':
+      return [step.on.left];
+    case 'sort':
+      return step.by.map((b) => b.field);
+    case 'limit':
+      return [];
   }
 }
 
 function collectPredicateFields(p: Predicate, acc: string[] = []): string[] {
-  if ('and' in p) { for (const sub of p.and) collectPredicateFields(sub, acc); return acc; }
-  if ('or' in p)  { for (const sub of p.or)  collectPredicateFields(sub, acc); return acc; }
+  if ('and' in p) {
+    for (const sub of p.and) collectPredicateFields(sub, acc);
+    return acc;
+  }
+  if ('or' in p) {
+    for (const sub of p.or) collectPredicateFields(sub, acc);
+    return acc;
+  }
   acc.push(p.field);
   return acc;
 }

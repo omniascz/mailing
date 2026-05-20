@@ -14,7 +14,9 @@ export const frequencyChannelEnum = pgEnum('frequency_channel', [
 export const orgFrequencyRules = pgTable(
   'org_frequency_rules',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `27_CleverReach_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** CleverReach umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Německý produkt z Rastede (Niedersachsen, založeno 2007)** – jeden z předních DACH hráčů
 > - **"Made in Germany"** core branding – security + compliance focus
 > - **210 000+ klientů ve 152 zemích** (Spotify, DHL, Amnesty International)
@@ -138,21 +139,21 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Self-serve sign-up | Full + billing + close account | Vše |
-| **Administrator** | Pozvánka od Owner | Operational + user mgmt | Vše krom Owner exclusive |
-| **Marketing user** | Pozvánka | Daily marketing | Per granular permissions |
-| **Designer / Editor** | Pozvánka | Content + templates | Per role |
-| **Viewer / Read-only** | Pozvánka | View reports | Read-only |
-| **Custom role users** | Pozvánka s custom perms | Per granular config | Per assigned permissions |
-| **Recipient / Subscriber** | Form, integration | Receives emails | Své emaily |
-| **API Client** | API key | Per scope | Per scope |
-| **Shopware integration** | Plugin install | Sync data | Per integration scope |
-| **Shopify integration** | OAuth | Sync data | Per integration scope |
-| **WordPress plugin** | Plugin install | Form + tracking | Per integration scope |
-| **CleverReach Support** | Ticket / email | Issue resolution | Read s consent |
-| **Premium Support team** | Paid add-on | Faster response, phone | Read s consent |
+| Aktér                      | Vstupní bod             | Co dělá                        | Co vidí                  |
+| -------------------------- | ----------------------- | ------------------------------ | ------------------------ |
+| **Account Owner**          | Self-serve sign-up      | Full + billing + close account | Vše                      |
+| **Administrator**          | Pozvánka od Owner       | Operational + user mgmt        | Vše krom Owner exclusive |
+| **Marketing user**         | Pozvánka                | Daily marketing                | Per granular permissions |
+| **Designer / Editor**      | Pozvánka                | Content + templates            | Per role                 |
+| **Viewer / Read-only**     | Pozvánka                | View reports                   | Read-only                |
+| **Custom role users**      | Pozvánka s custom perms | Per granular config            | Per assigned permissions |
+| **Recipient / Subscriber** | Form, integration       | Receives emails                | Své emaily               |
+| **API Client**             | API key                 | Per scope                      | Per scope                |
+| **Shopware integration**   | Plugin install          | Sync data                      | Per integration scope    |
+| **Shopify integration**    | OAuth                   | Sync data                      | Per integration scope    |
+| **WordPress plugin**       | Plugin install          | Form + tracking                | Per integration scope    |
+| **CleverReach Support**    | Ticket / email          | Issue resolution               | Read s consent           |
+| **Premium Support team**   | Paid add-on             | Faster response, phone         | Read s consent           |
 
 ---
 
@@ -390,6 +391,7 @@ CleverReach's **multi-user s customizable access levels at no extra cost** je KE
 ### 4.1 Default roles (typical)
 
 #### Account Owner
+
 - **Highest tier** access
 - **Created during signup**
 - Cannot be deleted directly
@@ -398,6 +400,7 @@ CleverReach's **multi-user s customizable access levels at no extra cost** je KE
 - Manages all settings + users
 
 #### Administrator
+
 - **Full operational** access
 - User management
 - Integration management
@@ -405,6 +408,7 @@ CleverReach's **multi-user s customizable access levels at no extra cost** je KE
 - Cannot manage billing typically
 
 #### Marketing user
+
 - **Daily marketing** tasks
 - Campaigns + automations + segments
 - Content creation
@@ -413,17 +417,20 @@ CleverReach's **multi-user s customizable access levels at no extra cost** je KE
 - No billing
 
 #### Designer / Editor
+
 - **Content focused**
 - Templates + design
 - Limited recipient data
 - No send permissions typically
 
 #### Read-only / Viewer
+
 - **View reports** only
 - No editing
 - For stakeholders, executives
 
 #### Custom roles
+
 - **Fully customizable**
 - Per business needs
 - Granular permissions
@@ -431,11 +438,12 @@ CleverReach's **multi-user s customizable access levels at no extra cost** je KE
 ### 4.2 Granular permission categories
 
 Per EmailTooltester confirmed:
-*"You can assign specific permissions so each user only sees or manages certain areas, such as recipient data, reports, or campaigns."*
+_"You can assign specific permissions so each user only sees or manages certain areas, such as recipient data, reports, or campaigns."_
 
 Configurable per user:
 
 #### Account & Settings
+
 - Account info view/edit
 - Billing access
 - User management
@@ -444,6 +452,7 @@ Configurable per user:
 - API key management
 
 #### Recipients
+
 - View recipients
 - Edit recipients
 - Import recipients
@@ -451,11 +460,13 @@ Configurable per user:
 - Delete recipients
 
 #### Lists / Segments
+
 - View lists
 - Create/edit lists
 - Delete lists
 
 #### Campaigns
+
 - View campaigns
 - Create campaigns
 - Edit campaigns
@@ -463,68 +474,73 @@ Configurable per user:
 - Delete campaigns
 
 #### Automations (THEA Workflows)
+
 - View workflows
 - Create/edit workflows
 - Activate workflows
 
 #### Templates
+
 - View templates
 - Create/edit templates
 - Brand kit management
 
 #### Forms / Sign-ups
+
 - View forms
 - Create/edit forms
 - Publish forms
 
 #### Reports
+
 - View reports
 - Export reports
 
 #### Integrations
+
 - View integrations
 - Manage integrations
 
 ### 4.3 Permission matrix (typical defaults)
 
-| Akce | Owner | Admin | Marketing | Designer | Viewer | Custom |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |  |  |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Manage billing | ✅ | ❌ | ❌ | ❌ | ❌ | per role |
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **User Management** |  |  |  |  |  |  |
-| Add/edit/delete users | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Recipients** |  |  |  |  |  |  |
-| View recipients | ✅ | ✅ | ✅ | limited | view | per role |
-| Edit recipients | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| Import recipients | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| Export recipients | ✅ | ✅ | per role | ❌ | ❌ | per role |
-| Delete recipients | ✅ | ✅ | per role | ❌ | ❌ | per role |
-| **Lists / Segments** |  |  |  |  |  |  |
-| Manage lists | ✅ | ✅ | ✅ | ❌ | view | per role |
-| Create segments | ✅ | ✅ | ✅ | ❌ | view | per role |
-| **Campaigns** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| Send | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| **Automations (THEA)** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ❌ | view | per role |
-| Activate | ✅ | ✅ | ✅ | ❌ | ❌ | per role |
-| **Templates** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| Brand kit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| **Forms / Sign-ups** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ✅ | view | per role |
-| Publish | ✅ | ✅ | ✅ | per role | ❌ | per role |
-| **Reports** |  |  |  |  |  |  |
-| View | ✅ | ✅ | ✅ | view | ✅ | per role |
-| Export | ✅ | ✅ | per role | ❌ | per role | per role |
-| **Integrations** |  |  |  |  |  |  |
-| Manage | ✅ | ✅ | per role | ❌ | ❌ | per role |
-| **API** |  |  |  |  |  |  |
-| Manage API keys | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Domains** |  |  |  |  |  |  |
-| Domain authentication | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
+| Akce                   | Owner | Admin | Marketing | Designer |  Viewer  |  Custom  |
+| ---------------------- | :---: | :---: | :-------: | :------: | :------: | :------: |
+| **Account & Billing**  |       |       |           |          |          |          |
+| Close account          |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    |    ❌    |
+| Manage billing         |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    | per role |
+| Account settings       |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **User Management**    |       |       |           |          |          |          |
+| Add/edit/delete users  |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **Recipients**         |       |       |           |          |          |          |
+| View recipients        |  ✅   |  ✅   |    ✅     | limited  |   view   | per role |
+| Edit recipients        |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| Import recipients      |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| Export recipients      |  ✅   |  ✅   | per role  |    ❌    |    ❌    | per role |
+| Delete recipients      |  ✅   |  ✅   | per role  |    ❌    |    ❌    | per role |
+| **Lists / Segments**   |       |       |           |          |          |          |
+| Manage lists           |  ✅   |  ✅   |    ✅     |    ❌    |   view   | per role |
+| Create segments        |  ✅   |  ✅   |    ✅     |    ❌    |   view   | per role |
+| **Campaigns**          |       |       |           |          |          |          |
+| Create/edit            |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| Send                   |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| **Automations (THEA)** |       |       |           |          |          |          |
+| Create/edit            |  ✅   |  ✅   |    ✅     |    ❌    |   view   | per role |
+| Activate               |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    | per role |
+| **Templates**          |       |       |           |          |          |          |
+| Create/edit            |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| Brand kit              |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| **Forms / Sign-ups**   |       |       |           |          |          |          |
+| Create/edit            |  ✅   |  ✅   |    ✅     |    ✅    |   view   | per role |
+| Publish                |  ✅   |  ✅   |    ✅     | per role |    ❌    | per role |
+| **Reports**            |       |       |           |          |          |          |
+| View                   |  ✅   |  ✅   |    ✅     |   view   |    ✅    | per role |
+| Export                 |  ✅   |  ✅   | per role  |    ❌    | per role | per role |
+| **Integrations**       |       |       |           |          |          |          |
+| Manage                 |  ✅   |  ✅   | per role  |    ❌    |    ❌    | per role |
+| **API**                |       |       |           |          |          |          |
+| Manage API keys        |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
+| **Domains**            |       |       |           |          |          |          |
+| Domain authentication  |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    | per role |
 
 ### 4.4 User invitation flow
 
@@ -558,12 +574,14 @@ Sets password
 ### 4.5 Multi-user advantages
 
 **vs. competitors:**
+
 - **Mailchimp:** limited free users
 - **MailerLite:** 1 user free
 - **ActiveCampaign:** 1 Plus, 3 Pro
 - **CleverReach: UNLIMITED users at NO extra cost!**
 
 This is **significant cost advantage** pro:
+
 - Agencies managing multiple campaigns
 - Marketing teams s 5+ members
 - Client-agency collaboration
@@ -986,6 +1004,7 @@ Save
 ### 9.1 Recipient creation paths
 
 #### A) Form submission
+
 ```
 Visitor fills CleverReach form (embedded or basic popup)
    ↓
@@ -1007,6 +1026,7 @@ THEA workflow trigger fires
 ```
 
 #### B) Double opt-in (DACH standard)
+
 ```
 Form submission
    ↓
@@ -1028,6 +1048,7 @@ Welcome workflow triggers
 ```
 
 #### C) Shopware integration sync
+
 ```
 Customer registers na Shopware shop
    ↓
@@ -1043,9 +1064,11 @@ Welcome workflow trigger
 ```
 
 #### D) Shopify / WooCommerce sync
+
 Similar flow per integration.
 
 #### E) Manual import (CSV)
+
 ```
 Admin: Recipients → Import
    ↓
@@ -1068,6 +1091,7 @@ Import processed
 ```
 
 #### F) API import
+
 ```
 External system POST /receivers
    ↓
@@ -1153,6 +1177,7 @@ Data retained per GDPR
 ### 9.6 Bounce + spam handling
 
 #### Hard bounce
+
 ```
 ISP 5xx
    ↓
@@ -1164,6 +1189,7 @@ Auto-suppression
 ```
 
 #### Spam complaint
+
 ```
 ISP FBL → CleverReach
    ↓
@@ -1424,9 +1450,10 @@ Welcome workflow if configured
 ### 12.4 Form types limitations
 
 Per EmailTooltester:
-*"limited form types"*
+_"limited form types"_
 
 ⚠️ **Less variety** than competitors:
+
 - No native exit-intent (advanced)
 - No slider forms
 - No sticky bar
@@ -1505,6 +1532,7 @@ WooCommerce orders sync
 ### 13.4 What syncs
 
 #### Customer data
+
 - Email (primary)
 - Name, last name
 - Phone, address
@@ -1512,6 +1540,7 @@ WooCommerce orders sync
 - Registration date
 
 #### Order data
+
 - Order ID
 - Date
 - Status
@@ -1520,6 +1549,7 @@ WooCommerce orders sync
 - Shipping/payment method
 
 #### Product data
+
 - Product ID
 - Name (multi-language for international shops)
 - Category
@@ -1653,14 +1683,16 @@ Submissions flow to CleverReach
 ### 14.5 No native website tracking
 
 Per EmailTooltester critique:
-*"no native website tracking"*
+_"no native website tracking"_
 
 ⚠️ **CleverReach NEMÁ native site tracking script** like:
+
 - Klaviyo
 - ActiveCampaign
 - SmartEmailing
 
 **Implications:**
+
 - Less behavior-based automation
 - Less personalization data
 - Workarounds:
@@ -1707,14 +1739,14 @@ Action performed
 
 ### 15.3 API endpoints (typical)
 
-| Resource | Operace |
-|---|---|
-| `/groups` | Lists management |
-| `/receivers` | CRUD recipients |
-| `/forms` | Forms management |
-| `/mailings` | Campaigns |
-| `/events` | Event tracking |
-| `/reports` | Analytics |
+| Resource     | Operace          |
+| ------------ | ---------------- |
+| `/groups`    | Lists management |
+| `/receivers` | CRUD recipients  |
+| `/forms`     | Forms management |
+| `/mailings`  | Campaigns        |
+| `/events`    | Event tracking   |
+| `/reports`   | Analytics        |
 
 ### 15.4 Webhooks
 
@@ -1758,6 +1790,7 @@ Easy for non-technical users
 **CleverReach's AI marketing assistant.**
 
 THEA helps with:
+
 - Subject line optimization
 - Send time recommendations
 - Content suggestions
@@ -2061,7 +2094,7 @@ Multi-language (per platform language)
 ### 19.5 No live chat
 
 Per EmailTooltester:
-*"While there is no live chat assistance"*
+_"While there is no live chat assistance"_
 
 ⚠️ **No real-time chat** support – ticket/email only standard.
 
@@ -2069,30 +2102,30 @@ Per EmailTooltester:
 
 ## 20. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Marketing | Designer | Viewer | Custom | Subscriber | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Domains | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| All recipients | ✅ | ✅ | ✅ | limited | view | per role | jen sebe | ✅ |
-| Edit recipients | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ✅ |
-| Export recipients | ✅ | ✅ | per role | ❌ | ❌ | per role | request | per scope |
-| Lists | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Segments | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Tags | ✅ | ✅ | ✅ | ❌ | view | per role | – | ✅ |
-| Campaigns | ✅ | ✅ | ✅ | ✅ | view | per role | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ✅ |
-| THEA Workflows | ✅ | ✅ | ✅ | ❌ | view | per role | ❌ | ✅ |
-| THEA AI suggestions | ✅ | ✅ | ✅ | view | view | per role | – | per scope |
-| Templates | ✅ | ✅ | ✅ | ✅ | view | per role | – | ✅ |
-| Brand kit | ✅ | ✅ | ✅ | ✅ | view | per role | – | per scope |
-| Forms / Sign-ups | ✅ | ✅ | ✅ | ✅ | view | per role | submit | per scope |
-| Reports | ✅ | ✅ | ✅ | view | ✅ | per role | ❌ | ✅ |
-| Integrations | ✅ | ✅ | per role | ❌ | ❌ | per role | – | per scope |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | – |
-| GDPR delete | ✅ | ✅ | per role | ❌ | ❌ | per role | request | per scope |
-| Webinar access | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – |
+| Data                | Owner | Admin | Marketing | Designer | Viewer |  Custom  |  Subscriber   |    API    |
+| ------------------- | :---: | :---: | :-------: | :------: | :----: | :------: | :-----------: | :-------: |
+| Account settings    |  ✅   |  ✅   |    ❌     |    ❌    |   ❌   | per role |      ❌       | per scope |
+| Billing             |  ✅   |  ❌   |    ❌     |    ❌    |   ❌   | per role |      ❌       | per scope |
+| User management     |  ✅   |  ✅   |    ❌     |    ❌    |   ❌   | per role |      ❌       | per scope |
+| Domains             |  ✅   |  ✅   |    ❌     |    ❌    |   ❌   | per role |      ❌       | per scope |
+| All recipients      |  ✅   |  ✅   |    ✅     | limited  |  view  | per role |   jen sebe    |    ✅     |
+| Edit recipients     |  ✅   |  ✅   |    ✅     |    ❌    |   ❌   | per role |      ❌       |    ✅     |
+| Export recipients   |  ✅   |  ✅   | per role  |    ❌    |   ❌   | per role |    request    | per scope |
+| Lists               |  ✅   |  ✅   |    ✅     |    ❌    |  view  | per role |       –       |    ✅     |
+| Segments            |  ✅   |  ✅   |    ✅     |    ❌    |  view  | per role |       –       |    ✅     |
+| Tags                |  ✅   |  ✅   |    ✅     |    ❌    |  view  | per role |       –       |    ✅     |
+| Campaigns           |  ✅   |  ✅   |    ✅     |    ✅    |  view  | per role | jen co dostal |    ✅     |
+| Send campaigns      |  ✅   |  ✅   |    ✅     |    ❌    |   ❌   | per role |      ❌       |    ✅     |
+| THEA Workflows      |  ✅   |  ✅   |    ✅     |    ❌    |  view  | per role |      ❌       |    ✅     |
+| THEA AI suggestions |  ✅   |  ✅   |    ✅     |   view   |  view  | per role |       –       | per scope |
+| Templates           |  ✅   |  ✅   |    ✅     |    ✅    |  view  | per role |       –       |    ✅     |
+| Brand kit           |  ✅   |  ✅   |    ✅     |    ✅    |  view  | per role |       –       | per scope |
+| Forms / Sign-ups    |  ✅   |  ✅   |    ✅     |    ✅    |  view  | per role |    submit     | per scope |
+| Reports             |  ✅   |  ✅   |    ✅     |   view   |   ✅   | per role |      ❌       |    ✅     |
+| Integrations        |  ✅   |  ✅   | per role  |    ❌    |   ❌   | per role |       –       | per scope |
+| API keys            |  ✅   |  ✅   |    ❌     |    ❌    |   ❌   | per role |      ❌       |     –     |
+| GDPR delete         |  ✅   |  ✅   | per role  |    ❌    |   ❌   | per role |    request    | per scope |
+| Webinar access      |  ✅   |  ✅   |    ✅     |    ✅    |   ✅   |    ✅    |       –       |     –     |
 
 ---
 
@@ -2101,23 +2134,24 @@ Per EmailTooltester:
 ### 21.1 Pricing tier gaps
 
 Per Capterra:
-*"The pricing tiers jump from free, to €15 per month, to €41.25 per month and then an high volume option for €495 per month, which does not seem to make much sense."*
+_"The pricing tiers jump from free, to €15 per month, to €41.25 per month and then an high volume option for €495 per month, which does not seem to make much sense."_
 
 ⚠️ **Significant gaps** between tiers feel unnatural.
 
 ### 21.2 No live chat support
 
 Per EmailTooltester:
-*"While there is no live chat assistance"*
+_"While there is no live chat assistance"_
 
 ⚠️ Email/ticket only.
 
 ### 21.3 Limited form types
 
 Per EmailTooltester:
-*"limited form types"*
+_"limited form types"_
 
 ⚠️ Fewer form options vs. competitors:
+
 - No native exit-intent
 - No slider
 - No sticky bar
@@ -2127,9 +2161,10 @@ Per EmailTooltester:
 ### 21.4 No native website tracking
 
 Per EmailTooltester:
-*"no native website tracking"*
+_"no native website tracking"_
 
 ⚠️ Critical gap:
+
 - Less behavior-based automation
 - Less personalization data
 - Workarounds required
@@ -2137,7 +2172,7 @@ Per EmailTooltester:
 ### 21.5 Premium features add-ons
 
 Per EmailTooltester:
-*"Some features require paid add-ons or manual setup."*
+_"Some features require paid add-ons or manual setup."_
 
 - Premium support ($27/month)
 - Manual configuration sometimes required
@@ -2239,4 +2274,4 @@ Pokud CleverReach používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů cleverreach.com a praktických zdrojů (Capterra, GetApp, Research.com, EmailTooltester, SaaSworthy, Techjockey, ITQlick). Pro nejaktuálnější detaily je nutný engagement s CleverReach support teamem.*
+_Dokument zpracován z oficiálních zdrojů cleverreach.com a praktických zdrojů (Capterra, GetApp, Research.com, EmailTooltester, SaaSworthy, Techjockey, ITQlick). Pro nejaktuálnější detaily je nutný engagement s CleverReach support teamem._

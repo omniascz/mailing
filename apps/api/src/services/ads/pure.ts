@@ -95,12 +95,12 @@ export interface AdPerformanceInput {
 }
 
 export interface AdPerformanceMetrics {
-  ctr: number;               // clicks / impressions
-  cvr: number;               // conversions / clicks
-  cpc: number;               // cost per click
-  cpa: number;               // cost per acquisition (conversion)
-  roas: number;              // revenue / cost
-  profit: number;            // revenue - cost
+  ctr: number; // clicks / impressions
+  cvr: number; // conversions / clicks
+  cpc: number; // cost per click
+  cpa: number; // cost per acquisition (conversion)
+  roas: number; // revenue / cost
+  profit: number; // revenue - cost
 }
 
 export function computeAdPerformance(input: AdPerformanceInput): AdPerformanceMetrics {
@@ -124,7 +124,7 @@ export function computeAdPerformance(input: AdPerformanceInput): AdPerformanceMe
 
 export interface ClickEvent {
   ts: Date;
-  source: string;      // e.g. 'google', 'facebook'
+  source: string; // e.g. 'google', 'facebook'
   campaign: string;
 }
 

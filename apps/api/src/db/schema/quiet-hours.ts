@@ -1,11 +1,21 @@
-import { pgTable, uuid, varchar, integer, boolean, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  boolean,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 export const quietHours = pgTable(
   'quiet_hours',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     channel: varchar('channel', { length: 32 }).notNull().default('all'),
     startHour: integer('start_hour').notNull().default(21),
     endHour: integer('end_hour').notNull().default(8),

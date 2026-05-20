@@ -2,31 +2,187 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    { "idx": 0,  "version": "7", "when": 1775895477756, "tag": "0000_eager_bloodstorm",                "breakpoints": true },
-    { "idx": 1,  "version": "7", "when": 1776000000000, "tag": "0001_import_segments_frequency",       "breakpoints": true },
-    { "idx": 2,  "version": "7", "when": 1744574400000, "tag": "0002_custom_fields",                   "breakpoints": true },
-    { "idx": 3,  "version": "7", "when": 1744660800000, "tag": "0003_editor_saved_blocks_brand_kits",  "breakpoints": true },
-    { "idx": 4,  "version": "7", "when": 1744747200000, "tag": "0004_domains_warmup",                  "breakpoints": true },
-    { "idx": 5,  "version": "7", "when": 1744833600000, "tag": "0005_analytics_alerts",                "breakpoints": true },
-    { "idx": 6,  "version": "7", "when": 1744920000000, "tag": "0006_ai_usage",                        "breakpoints": true },
-    { "idx": 7,  "version": "7", "when": 1745006400000, "tag": "0007_workflows",                       "breakpoints": true },
-    { "idx": 8,  "version": "7", "when": 1745092800000, "tag": "0008_workflow_splits_lead_scoring",    "breakpoints": true },
-    { "idx": 9,  "version": "7", "when": 1745179200000, "tag": "0009_webhooks_apikeys",                "breakpoints": true },
-    { "idx": 10, "version": "7", "when": 1745265600000, "tag": "0010_calls_table",                     "breakpoints": true },
-    { "idx": 11, "version": "7", "when": 1745265601000, "tag": "0010_signup_forms_migrations",         "breakpoints": true },
-    { "idx": 12, "version": "7", "when": 1745352000000, "tag": "0011_sms_routing_compliance",          "breakpoints": true },
-    { "idx": 13, "version": "7", "when": 1745438400000, "tag": "0012_whatsapp_push_inapp",             "breakpoints": true },
-    { "idx": 14, "version": "7", "when": 1745611200000, "tag": "0014_mailchimp_parity",                "breakpoints": true },
-    { "idx": 15, "version": "7", "when": 1745697600000, "tag": "0015_klaviyo_parity",                  "breakpoints": true },
-    { "idx": 16, "version": "7", "when": 1745784000000, "tag": "0040_message_streams_integrations",    "breakpoints": true },
-    { "idx": 17, "version": "7", "when": 1745870400000, "tag": "0041_phone_helpdesk_routing",           "breakpoints": true },
-    { "idx": 18, "version": "7", "when": 1745956800000, "tag": "0042_meetings_cdp_sources",             "breakpoints": true },
-    { "idx": 19, "version": "7", "when": 1746043200000, "tag": "0043_cross_account_billing",            "breakpoints": true },
-    { "idx": 20, "version": "7", "when": 1746129600000, "tag": "0044_seo_modules",                      "breakpoints": true },
-    { "idx": 21, "version": "7", "when": 1746216000000, "tag": "0045_social_ads",                       "breakpoints": true },
-    { "idx": 22, "version": "7", "when": 1746302400000, "tag": "0046_ads_commerce",                     "breakpoints": true },
-    { "idx": 23, "version": "7", "when": 1746388800000, "tag": "0047_misc_lifecycle_video",              "breakpoints": true },
-    { "idx": 24, "version": "7", "when": 1746475200000, "tag": "0048_subscriptions",                      "breakpoints": true },
-    { "idx": 25, "version": "7", "when": 1746561600000, "tag": "0049_kb_embeddings",                      "breakpoints": true }
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1775895477756,
+      "tag": "0000_eager_bloodstorm",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776000000000,
+      "tag": "0001_import_segments_frequency",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1744574400000,
+      "tag": "0002_custom_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1744660800000,
+      "tag": "0003_editor_saved_blocks_brand_kits",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1744747200000,
+      "tag": "0004_domains_warmup",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1744833600000,
+      "tag": "0005_analytics_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1744920000000,
+      "tag": "0006_ai_usage",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1745006400000,
+      "tag": "0007_workflows",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1745092800000,
+      "tag": "0008_workflow_splits_lead_scoring",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1745179200000,
+      "tag": "0009_webhooks_apikeys",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1745265600000,
+      "tag": "0010_calls_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1745265601000,
+      "tag": "0010_signup_forms_migrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1745352000000,
+      "tag": "0011_sms_routing_compliance",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1745438400000,
+      "tag": "0012_whatsapp_push_inapp",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1745611200000,
+      "tag": "0014_mailchimp_parity",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1745697600000,
+      "tag": "0015_klaviyo_parity",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1745784000000,
+      "tag": "0040_message_streams_integrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1745870400000,
+      "tag": "0041_phone_helpdesk_routing",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1745956800000,
+      "tag": "0042_meetings_cdp_sources",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1746043200000,
+      "tag": "0043_cross_account_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1746129600000,
+      "tag": "0044_seo_modules",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1746216000000,
+      "tag": "0045_social_ads",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1746302400000,
+      "tag": "0046_ads_commerce",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1746388800000,
+      "tag": "0047_misc_lifecycle_video",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1746475200000,
+      "tag": "0048_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1746561600000,
+      "tag": "0049_kb_embeddings",
+      "breakpoints": true
+    }
   ]
 }

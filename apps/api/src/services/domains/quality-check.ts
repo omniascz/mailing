@@ -50,16 +50,11 @@ const DMARC_POLICY_RE = /\bp=(none|quarantine|reject)\b/i;
 const DMARC_RUA_RE = /\brua=mailto:/i;
 const BIMI_PASS_POLICIES = new Set(['quarantine', 'reject']);
 
-export async function runQualityCheck(
-  orgId: string,
-  domainId: string,
-): Promise<QualityReport> {
+export async function runQualityCheck(orgId: string, domainId: string): Promise<QualityReport> {
   const [row] = await db
     .select()
     .from(sendingDomains)
-    .where(
-      and(eq(sendingDomains.id, domainId), eq(sendingDomains.orgId, orgId)),
-    )
+    .where(and(eq(sendingDomains.id, domainId), eq(sendingDomains.orgId, orgId)))
     .limit(1);
 
   if (!row) throw AppError.notFound('SendingDomain');
@@ -84,9 +79,7 @@ export async function runQualityCheck(
   const checks: QualityCheck[] = [];
 
   // 1. SPF — mandatory; the SPF record must include forgemsg's IPs.
-  const spfRec = dnsVerification.records.find((r) =>
-    r.purpose.toLowerCase().startsWith('spf'),
-  );
+  const spfRec = dnsVerification.records.find((r) => r.purpose.toLowerCase().startsWith('spf'));
   checks.push({
     id: 'spf',
     label: 'SPF record published',
@@ -119,9 +112,7 @@ export async function runQualityCheck(
 
   // 3. DMARC — mandatory presence. Policy level (p=none/quarantine/reject)
   // is a separate advisory check below.
-  const dmarcRec = dnsVerification.records.find((r) =>
-    r.purpose.toLowerCase().startsWith('dmarc'),
-  );
+  const dmarcRec = dnsVerification.records.find((r) => r.purpose.toLowerCase().startsWith('dmarc'));
   checks.push({
     id: 'dmarc-present',
     label: 'DMARC record published',
@@ -193,8 +184,7 @@ export async function runQualityCheck(
     id: 'bimi-ready',
     label: 'BIMI readiness',
     severity: 'info',
-    passed:
-      dmarcPolicy !== null && BIMI_PASS_POLICIES.has(dmarcPolicy),
+    passed: dmarcPolicy !== null && BIMI_PASS_POLICIES.has(dmarcPolicy),
     message:
       dmarcPolicy === null
         ? 'BIMI requires DMARC to be in place first.'
@@ -208,9 +198,7 @@ export async function runQualityCheck(
   });
 
   const errorCount = checks.filter((c) => c.severity === 'error' && !c.passed).length;
-  const warningCount = checks.filter(
-    (c) => c.severity === 'warning' && !c.passed,
-  ).length;
+  const warningCount = checks.filter((c) => c.severity === 'warning' && !c.passed).length;
 
   return {
     domain,
@@ -234,9 +222,7 @@ async function fetchDmarcRecord(domain: string): Promise<string | null> {
   }
 }
 
-async function lookupDmarcPolicy(
-  domain: string,
-): Promise<'none' | 'quarantine' | 'reject' | null> {
+async function lookupDmarcPolicy(domain: string): Promise<'none' | 'quarantine' | 'reject' | null> {
   const rec = await fetchDmarcRecord(domain);
   if (!rec) return null;
   const match = rec.match(DMARC_POLICY_RE);

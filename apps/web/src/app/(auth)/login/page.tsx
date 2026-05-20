@@ -3,8 +3,17 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -26,8 +35,9 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/auth/login', {
+      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
@@ -78,7 +88,10 @@ export default function LoginPage() {
               <input type="checkbox" className="rounded border-secondary-300" />
               Remember me
             </label>
-            <Link href="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-primary-600 hover:text-primary-700"
+            >
               Forgot password?
             </Link>
           </div>

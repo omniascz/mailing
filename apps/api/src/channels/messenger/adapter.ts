@@ -45,29 +45,34 @@ export class MessengerAdapter extends BaseChannelAdapter {
   async send(message: UnifiedMessage, recipient: Recipient): Promise<DeliveryResult> {
     const psid = recipient.externalId ?? recipient.contactId;
     if (!psid) {
-      throw this.wrapError({ code: 'INVALID_RECIPIENT', message: 'Facebook Page-Scoped ID (PSID) is required', retryable: false });
+      throw this.wrapError({
+        code: 'INVALID_RECIPIENT',
+        message: 'Facebook Page-Scoped ID (PSID) is required',
+        retryable: false,
+      });
     }
 
     const text = this.extractText(message);
     if (!text) {
-      throw this.wrapError({ code: 'INVALID_CONTENT', message: 'Messenger message requires text content', retryable: false });
+      throw this.wrapError({
+        code: 'INVALID_CONTENT',
+        message: 'Messenger message requires text content',
+        retryable: false,
+      });
     }
 
-    const res = await fetch(
-      `https://graph.facebook.com/v19.0/${this.cfg.pageId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.cfg.pageAccessToken}`,
-        },
-        body: JSON.stringify({
-          recipient: { id: psid },
-          message: { text },
-          messaging_type: 'RESPONSE',
-        }),
+    const res = await fetch(`https://graph.facebook.com/v19.0/${this.cfg.pageId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.cfg.pageAccessToken}`,
       },
-    );
+      body: JSON.stringify({
+        recipient: { id: psid },
+        message: { text },
+        messaging_type: 'RESPONSE',
+      }),
+    });
 
     if (!res.ok) {
       const err = (await res.json()) as { error?: { message?: string; code?: number } };
@@ -94,40 +99,56 @@ export class MessengerAdapter extends BaseChannelAdapter {
   ): Promise<DeliveryResult> {
     const psid = recipient.externalId ?? recipient.contactId;
     if (!psid) {
-      throw this.wrapError({ code: 'INVALID_RECIPIENT', message: 'PSID is required', retryable: false });
+      throw this.wrapError({
+        code: 'INVALID_RECIPIENT',
+        message: 'PSID is required',
+        retryable: false,
+      });
     }
 
     // Generic template (button template)
-    const res = await fetch(
-      `https://graph.facebook.com/v19.0/${this.cfg.pageId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.cfg.pageAccessToken}`,
-        },
-        body: JSON.stringify({
-          recipient: { id: psid },
-          message: {
-            attachment: {
-              type: 'template',
-              payload: {
-                template_type: 'generic',
-                elements: [{ title: variables['title'] ?? templateId, subtitle: variables['subtitle'], ...variables }],
-              },
+    const res = await fetch(`https://graph.facebook.com/v19.0/${this.cfg.pageId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.cfg.pageAccessToken}`,
+      },
+      body: JSON.stringify({
+        recipient: { id: psid },
+        message: {
+          attachment: {
+            type: 'template',
+            payload: {
+              template_type: 'generic',
+              elements: [
+                {
+                  title: variables['title'] ?? templateId,
+                  subtitle: variables['subtitle'],
+                  ...variables,
+                },
+              ],
             },
           },
-        }),
-      },
-    );
+        },
+      }),
+    });
 
     if (!res.ok) {
       const err = (await res.json()) as { error?: { message?: string } };
-      throw this.wrapError({ code: 'SEND_FAILED', message: err.error?.message ?? `Meta API ${res.status}`, retryable: false });
+      throw this.wrapError({
+        code: 'SEND_FAILED',
+        message: err.error?.message ?? `Meta API ${res.status}`,
+        retryable: false,
+      });
     }
 
     const data = (await res.json()) as MetaMessagingResponse;
-    return { messageId: data.message_id, status: 'sent', provider: 'meta-messenger', recipientId: recipient.contactId };
+    return {
+      messageId: data.message_id,
+      status: 'sent',
+      provider: 'meta-messenger',
+      recipientId: recipient.contactId,
+    };
   }
 
   async getStatus(messageId: string): Promise<DeliveryStatus> {
@@ -140,7 +161,12 @@ export class MessengerAdapter extends BaseChannelAdapter {
   }
 
   async estimateCost(_message: UnifiedMessage, recipients: Recipient[]): Promise<CostEstimate> {
-    return { totalCost: 0, currency: 'USD', perRecipientCost: 0, recipientCount: recipients.length };
+    return {
+      totalCost: 0,
+      currency: 'USD',
+      perRecipientCost: 0,
+      recipientCount: recipients.length,
+    };
   }
 
   async handleInbound(payload: unknown): Promise<InboundMessage> {
@@ -172,9 +198,16 @@ export class MessengerAdapter extends BaseChannelAdapter {
     const errors: { field: string; message: string }[] = [];
     const content = template.content as unknown as Record<string, unknown>;
     if (!content.text && !content.templateType) {
-      errors.push({ field: 'text', message: 'text or templateType is required for Messenger messages' });
+      errors.push({
+        field: 'text',
+        message: 'text or templateType is required for Messenger messages',
+      });
     }
-    if (content.text && typeof content.text === 'string' && (content.text as string).length > 2000) {
+    if (
+      content.text &&
+      typeof content.text === 'string' &&
+      (content.text as string).length > 2000
+    ) {
       errors.push({ field: 'text', message: 'Messenger text must be 2000 characters or fewer' });
     }
     return { valid: errors.length === 0, errors };
@@ -197,7 +230,11 @@ export class MessengerAdapter extends BaseChannelAdapter {
 
 // ─── Webhook signature verification ──────────────────────────────────────────
 
-export function verifyMessengerWebhook(rawBody: string, signature: string, appSecret: string): boolean {
+export function verifyMessengerWebhook(
+  rawBody: string,
+  signature: string,
+  appSecret: string,
+): boolean {
   const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex')}`;
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));

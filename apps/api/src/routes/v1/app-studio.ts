@@ -53,13 +53,19 @@ export default async function appStudioRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/app-studio/apps',
-    { preHandler: app.requireAuth, schema: { tags: ['AppStudio'], summary: 'List installed apps' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['AppStudio'], summary: 'List installed apps' },
+    },
     async (req) => ({ data: await svc.listApps(req.user!.orgId) }),
   );
 
   app.post(
     '/api/v1/app-studio/apps',
-    { preHandler: app.requireAuth, schema: { tags: ['AppStudio'], summary: 'Install (or define) an app' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['AppStudio'], summary: 'Install (or define) an app' },
+    },
     async (req, reply) => {
       const body = installSchema.parse(req.body);
       const { app: row, accessToken } = await svc.installApp({ orgId: req.user!.orgId, ...body });
@@ -98,7 +104,10 @@ export default async function appStudioRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/app-studio/apps/:id/rotate-token',
-    { preHandler: app.requireAuth, schema: { tags: ['AppStudio'], summary: 'Rotate access token' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['AppStudio'], summary: 'Rotate access token' },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
       return { data: await svc.rotateAccessToken(req.user!.orgId, id) };
@@ -169,7 +178,10 @@ export default async function appStudioRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/app-studio/actions/:key/execute',
-    { preHandler: app.requireAuth, schema: { tags: ['AppStudio'], summary: 'Execute action with provided context' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['AppStudio'], summary: 'Execute action with provided context' },
+    },
     async (req) => {
       const { key } = z.object({ key: z.string() }).parse(req.params);
       const body = z.object({ context: z.record(z.unknown()) }).parse(req.body);
@@ -219,13 +231,18 @@ export default async function appStudioRoutes(app: FastifyInstance) {
       const installedApp = await svc.authenticateApp(token);
       if (!installedApp) throw AppError.unauthorized('Invalid app token');
 
-      const { appSlug, triggerKey } = z.object({ appSlug: z.string(), triggerKey: z.string() }).parse(req.params);
-      if (installedApp.slug !== appSlug) throw AppError.forbidden('Token does not belong to this app');
+      const { appSlug, triggerKey } = z
+        .object({ appSlug: z.string(), triggerKey: z.string() })
+        .parse(req.params);
+      if (installedApp.slug !== appSlug)
+        throw AppError.forbidden('Token does not belong to this app');
 
       const trigger = await svc.findTrigger(installedApp.orgId, installedApp.id, triggerKey);
       if (!trigger) throw AppError.notFound('Trigger');
 
-      const body = z.object({ contactId: z.string().uuid(), payload: z.record(z.unknown()).optional() }).parse(req.body);
+      const body = z
+        .object({ contactId: z.string().uuid(), payload: z.record(z.unknown()).optional() })
+        .parse(req.body);
       await onApiEvent(installedApp.orgId, body.contactId, trigger.eventName, body.payload ?? {});
       return reply.code(202).send({ data: { accepted: true } });
     },

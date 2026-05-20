@@ -126,9 +126,7 @@ export function chooseReuseTicket(opts: {
 
   const cutoff = opts.now.getTime() - windowMs;
   const contactPick = opts.candidatesByContact
-    .filter(
-      (c) => c.status === 'open' && c.lastMessageAt.getTime() >= cutoff,
-    )
+    .filter((c) => c.status === 'open' && c.lastMessageAt.getTime() >= cutoff)
     .sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime())[0];
   if (contactPick) return { ticketId: contactPick.ticketId, reason: 'contact' };
 

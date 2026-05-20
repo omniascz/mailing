@@ -16,14 +16,31 @@
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  helpdeskTickets, ticketMessages, contacts,
-  type HelpdeskTicket, type TicketMessage,
+  helpdeskTickets,
+  ticketMessages,
+  contacts,
+  type HelpdeskTicket,
+  type TicketMessage,
 } from '../../db/schema/index.js';
 
 export type InboxChannel =
-  | 'email' | 'chat' | 'sms' | 'whatsapp' | 'voice' | 'messenger'
-  | 'twitter' | 'instagram' | 'viber' | 'rcs' | 'telegram' | 'webchat'
-  | 'social_comment' | 'social_dm' | 'facebook' | 'linkedin' | 'tiktok';
+  | 'email'
+  | 'chat'
+  | 'sms'
+  | 'whatsapp'
+  | 'voice'
+  | 'messenger'
+  | 'twitter'
+  | 'instagram'
+  | 'viber'
+  | 'rcs'
+  | 'telegram'
+  | 'webchat'
+  | 'social_comment'
+  | 'social_dm'
+  | 'facebook'
+  | 'linkedin'
+  | 'tiktok';
 
 export interface InboundMessage {
   orgId: string;
@@ -81,9 +98,18 @@ function normSocial(v: string | undefined): string | null {
 }
 
 /** Pick the most identifying handle for this channel. */
-function pickPrimaryIdentity(channel: InboxChannel, ident: InboundMessage['identity']): string | null {
+function pickPrimaryIdentity(
+  channel: InboxChannel,
+  ident: InboundMessage['identity'],
+): string | null {
   if (channel === 'email') return normEmail(ident.email);
-  if (channel === 'sms' || channel === 'voice' || channel === 'whatsapp' || channel === 'rcs' || channel === 'viber') {
+  if (
+    channel === 'sms' ||
+    channel === 'voice' ||
+    channel === 'whatsapp' ||
+    channel === 'rcs' ||
+    channel === 'viber'
+  ) {
     return normPhone(ident.phone);
   }
   return normSocial(ident.socialId) ?? normEmail(ident.email) ?? normPhone(ident.phone);
@@ -103,14 +129,16 @@ async function resolveContact(
   const phone = normPhone(ident.phone);
 
   if (email) {
-    const [existing] = await db.select({ id: contacts.id })
+    const [existing] = await db
+      .select({ id: contacts.id })
       .from(contacts)
       .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
       .limit(1);
     if (existing) return existing.id;
   }
   if (phone) {
-    const [existing] = await db.select({ id: contacts.id })
+    const [existing] = await db
+      .select({ id: contacts.id })
       .from(contacts)
       .where(and(eq(contacts.orgId, orgId), eq(contacts.phone, phone)))
       .limit(1);
@@ -119,12 +147,15 @@ async function resolveContact(
 
   // Create if we have any identifier — otherwise the ticket is anonymous
   if (email || phone) {
-    const [created] = await db.insert(contacts).values({
-      orgId,
-      email: email ?? null,
-      phone: phone ?? null,
-      source: 'inbox',
-    }).returning({ id: contacts.id });
+    const [created] = await db
+      .insert(contacts)
+      .values({
+        orgId,
+        email: email ?? null,
+        phone: phone ?? null,
+        source: 'inbox',
+      })
+      .returning({ id: contacts.id });
     return created?.id ?? null;
   }
 
@@ -134,47 +165,61 @@ async function resolveContact(
 // ─── Thread routing ──────────────────────────────────────────────────────────
 
 async function findByExternalThread(
-  orgId: string, channel: InboxChannel, threadId: string,
+  orgId: string,
+  channel: InboxChannel,
+  threadId: string,
 ): Promise<HelpdeskTicket | null> {
-  const [row] = await db.select().from(helpdeskTickets)
-    .where(and(
-      eq(helpdeskTickets.orgId, orgId),
-      eq(helpdeskTickets.channel, channel),
-      eq(helpdeskTickets.externalThreadId, threadId),
-    ))
+  const [row] = await db
+    .select()
+    .from(helpdeskTickets)
+    .where(
+      and(
+        eq(helpdeskTickets.orgId, orgId),
+        eq(helpdeskTickets.channel, channel),
+        eq(helpdeskTickets.externalThreadId, threadId),
+      ),
+    )
     .orderBy(desc(helpdeskTickets.updatedAt))
     .limit(1);
   return row ?? null;
 }
 
 async function findOpenByIdentity(
-  orgId: string, channel: InboxChannel, identity: string,
+  orgId: string,
+  channel: InboxChannel,
+  identity: string,
 ): Promise<HelpdeskTicket | null> {
   const since = new Date(Date.now() - REUSE_OPEN_TICKET_WINDOW_MS);
-  const [row] = await db.select().from(helpdeskTickets)
-    .where(and(
-      eq(helpdeskTickets.orgId, orgId),
-      eq(helpdeskTickets.channel, channel),
-      eq(helpdeskTickets.externalIdentity, identity),
-      sql`${helpdeskTickets.status} <> 'closed'`,
-      gte(helpdeskTickets.updatedAt, since),
-    ))
+  const [row] = await db
+    .select()
+    .from(helpdeskTickets)
+    .where(
+      and(
+        eq(helpdeskTickets.orgId, orgId),
+        eq(helpdeskTickets.channel, channel),
+        eq(helpdeskTickets.externalIdentity, identity),
+        sql`${helpdeskTickets.status} <> 'closed'`,
+        gte(helpdeskTickets.updatedAt, since),
+      ),
+    )
     .orderBy(desc(helpdeskTickets.updatedAt))
     .limit(1);
   return row ?? null;
 }
 
-async function findOpenByContact(
-  orgId: string, contactId: string,
-): Promise<HelpdeskTicket | null> {
+async function findOpenByContact(orgId: string, contactId: string): Promise<HelpdeskTicket | null> {
   const since = new Date(Date.now() - REUSE_OPEN_TICKET_WINDOW_MS);
-  const [row] = await db.select().from(helpdeskTickets)
-    .where(and(
-      eq(helpdeskTickets.orgId, orgId),
-      eq(helpdeskTickets.contactId, contactId),
-      sql`${helpdeskTickets.status} <> 'closed'`,
-      gte(helpdeskTickets.updatedAt, since),
-    ))
+  const [row] = await db
+    .select()
+    .from(helpdeskTickets)
+    .where(
+      and(
+        eq(helpdeskTickets.orgId, orgId),
+        eq(helpdeskTickets.contactId, contactId),
+        sql`${helpdeskTickets.status} <> 'closed'`,
+        gte(helpdeskTickets.updatedAt, since),
+      ),
+    )
     .orderBy(desc(helpdeskTickets.updatedAt))
     .limit(1);
   return row ?? null;
@@ -215,22 +260,26 @@ export async function routeInbound(msg: InboundMessage): Promise<RouteResult> {
 
   // Step 4 — create a fresh ticket
   if (!ticket) {
-    const [fresh] = await db.insert(helpdeskTickets).values({
-      orgId: msg.orgId,
-      contactId: contactId ?? null,
-      subject: msg.subject ?? `Inbound ${msg.channel} message`,
-      channel: msg.channel,
-      externalThreadId: msg.externalThreadId ?? null,
-      externalIdentity: identity,
-      channelMetadata: msg.channelMetadata ?? {},
-      status: 'open',
-    }).returning();
+    const [fresh] = await db
+      .insert(helpdeskTickets)
+      .values({
+        orgId: msg.orgId,
+        contactId: contactId ?? null,
+        subject: msg.subject ?? `Inbound ${msg.channel} message`,
+        channel: msg.channel,
+        externalThreadId: msg.externalThreadId ?? null,
+        externalIdentity: identity,
+        channelMetadata: msg.channelMetadata ?? {},
+        status: 'open',
+      })
+      .returning();
     ticket = fresh!;
     created = true;
   } else {
     // Backfill identifying fields on older tickets
     const patch: Record<string, unknown> = { updatedAt: new Date() };
-    if (!ticket.externalThreadId && msg.externalThreadId) patch.externalThreadId = msg.externalThreadId;
+    if (!ticket.externalThreadId && msg.externalThreadId)
+      patch.externalThreadId = msg.externalThreadId;
     if (!ticket.externalIdentity && identity) patch.externalIdentity = identity;
     if (!ticket.contactId && contactId) patch.contactId = contactId;
     await db.update(helpdeskTickets).set(patch).where(eq(helpdeskTickets.id, ticket.id));
@@ -238,30 +287,37 @@ export async function routeInbound(msg: InboundMessage): Promise<RouteResult> {
 
   // Idempotent message insert — if this externalMessageId has already been
   // recorded against this ticket, reuse the existing row instead of duplicating.
-  let message: TicketMessage;
   if (msg.externalMessageId) {
-    const [existing] = await db.select().from(ticketMessages)
-      .where(and(
-        eq(ticketMessages.ticketId, ticket.id),
-        eq(ticketMessages.externalMessageId, msg.externalMessageId),
-      ))
+    const [existing] = await db
+      .select()
+      .from(ticketMessages)
+      .where(
+        and(
+          eq(ticketMessages.ticketId, ticket.id),
+          eq(ticketMessages.externalMessageId, msg.externalMessageId),
+        ),
+      )
       .limit(1);
     if (existing) {
       return { ticket, message: existing, matchReason, created };
     }
   }
 
-  const [inserted] = await db.insert(ticketMessages).values({
-    ticketId: ticket.id,
-    sender: 'customer',
-    direction: 'inbound',
-    externalMessageId: msg.externalMessageId ?? null,
-    body: msg.body,
-    attachments: msg.attachments ?? [],
-  }).returning();
-  message = inserted!;
+  const [inserted] = await db
+    .insert(ticketMessages)
+    .values({
+      ticketId: ticket.id,
+      sender: 'customer',
+      direction: 'inbound',
+      externalMessageId: msg.externalMessageId ?? null,
+      body: msg.body,
+      attachments: msg.attachments ?? [],
+    })
+    .returning();
+  const message: TicketMessage = inserted!;
 
-  await db.update(helpdeskTickets)
+  await db
+    .update(helpdeskTickets)
     .set({ updatedAt: new Date(), status: ticket.status === 'closed' ? 'open' : ticket.status })
     .where(eq(helpdeskTickets.id, ticket.id));
 
@@ -281,21 +337,27 @@ export async function recordOutbound(
     internal?: boolean;
   },
 ): Promise<TicketMessage> {
-  const [ticket] = await db.select().from(helpdeskTickets)
+  const [ticket] = await db
+    .select()
+    .from(helpdeskTickets)
     .where(and(eq(helpdeskTickets.id, ticketId), eq(helpdeskTickets.orgId, orgId)))
     .limit(1);
   if (!ticket) throw new Error('Ticket not found');
 
-  const [msg] = await db.insert(ticketMessages).values({
-    ticketId,
-    sender: input.internal ? 'system' : 'agent',
-    direction: input.internal ? 'internal' : 'outbound',
-    externalMessageId: input.externalMessageId ?? null,
-    body: input.body,
-    attachments: input.attachments ?? [],
-  }).returning();
+  const [msg] = await db
+    .insert(ticketMessages)
+    .values({
+      ticketId,
+      sender: input.internal ? 'system' : 'agent',
+      direction: input.internal ? 'internal' : 'outbound',
+      externalMessageId: input.externalMessageId ?? null,
+      body: input.body,
+      attachments: input.attachments ?? [],
+    })
+    .returning();
 
-  await db.update(helpdeskTickets)
+  await db
+    .update(helpdeskTickets)
     .set({ updatedAt: new Date() })
     .where(eq(helpdeskTickets.id, ticketId));
 
@@ -331,7 +393,9 @@ export async function listInbox(
   if (opts.assignedTo) conditions.push(eq(helpdeskTickets.assignedTo, opts.assignedTo));
   if (opts.cursor) conditions.push(sql`${helpdeskTickets.updatedAt} < ${new Date(opts.cursor)}`);
 
-  const tickets = await db.select().from(helpdeskTickets)
+  const tickets = await db
+    .select()
+    .from(helpdeskTickets)
     .where(and(...conditions))
     .orderBy(desc(helpdeskTickets.updatedAt))
     .limit(limit + 1);
@@ -341,14 +405,22 @@ export async function listInbox(
 
   // Fetch last message per ticket in a single pass
   const ticketIds = rows.map((t) => t.id);
-  const lastMessages = ticketIds.length > 0
-    ? await db.select().from(ticketMessages)
-        .where(and(
-          sql`${ticketMessages.ticketId} IN (${sql.join(ticketIds.map((id) => sql`${id}::uuid`), sql`, `)})`,
-          isNotNull(ticketMessages.id),
-        ))
-        .orderBy(desc(ticketMessages.createdAt))
-    : [];
+  const lastMessages =
+    ticketIds.length > 0
+      ? await db
+          .select()
+          .from(ticketMessages)
+          .where(
+            and(
+              sql`${ticketMessages.ticketId} IN (${sql.join(
+                ticketIds.map((id) => sql`${id}::uuid`),
+                sql`, `,
+              )})`,
+              isNotNull(ticketMessages.id),
+            ),
+          )
+          .orderBy(desc(ticketMessages.createdAt))
+      : [];
   const lastByTicket = new Map<string, TicketMessage>();
   for (const m of lastMessages) {
     if (!lastByTicket.has(m.ticketId)) lastByTicket.set(m.ticketId, m);
@@ -356,18 +428,28 @@ export async function listInbox(
 
   // Fetch contacts in a single pass
   const contactIds = Array.from(new Set(rows.map((t) => t.contactId).filter(Boolean) as string[]));
-  const contactRows = contactIds.length > 0
-    ? await db.select({
-        id: contacts.id, email: contacts.email, phone: contacts.phone,
-      }).from(contacts)
-        .where(sql`${contacts.id} IN (${sql.join(contactIds.map((id) => sql`${id}::uuid`), sql`, `)})`)
-    : [];
+  const contactRows =
+    contactIds.length > 0
+      ? await db
+          .select({
+            id: contacts.id,
+            email: contacts.email,
+            phone: contacts.phone,
+          })
+          .from(contacts)
+          .where(
+            sql`${contacts.id} IN (${sql.join(
+              contactIds.map((id) => sql`${id}::uuid`),
+              sql`, `,
+            )})`,
+          )
+      : [];
   const contactMap = new Map(contactRows.map((c) => [c.id, c]));
 
   const data: UnifiedThread[] = rows.map((ticket) => ({
     ticket,
     lastMessage: lastByTicket.get(ticket.id) ?? null,
-    contact: ticket.contactId ? contactMap.get(ticket.contactId) ?? null : null,
+    contact: ticket.contactId ? (contactMap.get(ticket.contactId) ?? null) : null,
   }));
 
   return {
@@ -382,7 +464,9 @@ export async function getUnifiedContactHistory(
   contactId: string,
   limit = 100,
 ): Promise<HelpdeskTicket[]> {
-  return db.select().from(helpdeskTickets)
+  return db
+    .select()
+    .from(helpdeskTickets)
     .where(and(eq(helpdeskTickets.orgId, orgId), eq(helpdeskTickets.contactId, contactId)))
     .orderBy(desc(helpdeskTickets.updatedAt))
     .limit(limit);

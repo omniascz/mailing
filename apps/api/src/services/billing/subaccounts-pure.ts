@@ -41,10 +41,7 @@ export interface ConsolidatedUsage {
  * Return every descendant org id (transitive), excluding the parent itself.
  * Detects cycles with a visited set.
  */
-export function descendantOrgIds(
-  parentOrgId: string,
-  allOrgs: OrgNode[],
-): string[] {
+export function descendantOrgIds(parentOrgId: string, allOrgs: OrgNode[]): string[] {
   const children = new Map<string, string[]>();
   for (const o of allOrgs) {
     if (o.parentOrgId) {
@@ -159,10 +156,7 @@ export function effectiveRole(
   );
 }
 
-export function canPerform(
-  userRole: OrgRole | null,
-  requiredRole: OrgRole,
-): boolean {
+export function canPerform(userRole: OrgRole | null, requiredRole: OrgRole): boolean {
   if (!userRole) return false;
   return ROLE_RANK[userRole] >= ROLE_RANK[requiredRole];
 }

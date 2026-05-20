@@ -33,10 +33,7 @@ import { sql } from 'drizzle-orm';
 // ─── Connection CRUD ──────────────────────────────────────────────────────────
 
 export async function listConnections(orgId: string): Promise<EcommerceConnection[]> {
-  return db
-    .select()
-    .from(ecommerceConnections)
-    .where(eq(ecommerceConnections.orgId, orgId));
+  return db.select().from(ecommerceConnections).where(eq(ecommerceConnections.orgId, orgId));
 }
 
 export async function getConnection(orgId: string, id: string): Promise<EcommerceConnection> {
@@ -51,7 +48,11 @@ export async function getConnection(orgId: string, id: string): Promise<Ecommerc
 
 export async function createConnection(
   orgId: string,
-  input: { platform: EcommerceConnection['platform']; name: string; credentials: EcommerceConnection['credentials'] },
+  input: {
+    platform: EcommerceConnection['platform'];
+    name: string;
+    credentials: EcommerceConnection['credentials'];
+  },
 ): Promise<EcommerceConnection> {
   const [conn] = await db
     .insert(ecommerceConnections)
@@ -103,16 +104,23 @@ export async function exchangeShopifyCode(
     body: JSON.stringify({ client_id: apiKey, client_secret: apiSecret, code }),
   });
   if (!res.ok) {
-    throw new AppError({ code: 'SHOPIFY_OAUTH_ERROR', message: 'Shopify OAuth token exchange failed', statusCode: 502 });
+    throw new AppError({
+      code: 'SHOPIFY_OAUTH_ERROR',
+      message: 'Shopify OAuth token exchange failed',
+      statusCode: 502,
+    });
   }
-  const data = await res.json() as { access_token: string; scope: string };
+  const data = (await res.json()) as { access_token: string; scope: string };
   return { accessToken: data.access_token, scope: data.scope };
 }
 
 /**
  * Register Shopify webhooks after OAuth completes.
  */
-export async function registerShopifyWebhooks(shopDomain: string, accessToken: string): Promise<void> {
+export async function registerShopifyWebhooks(
+  shopDomain: string,
+  accessToken: string,
+): Promise<void> {
   const webhookBase = `${process.env.API_BASE_URL ?? ''}/api/v1/ecommerce/webhooks/shopify`;
   const topics = ['orders/create', 'orders/updated', 'customers/create', 'app/uninstalled'];
 
@@ -258,7 +266,11 @@ export function verifyShopifyWebhook(rawBody: string, hmacHeader: string, secret
   }
 }
 
-export function verifyWooCommerceWebhook(rawBody: string, signatureHeader: string, secret: string): boolean {
+export function verifyWooCommerceWebhook(
+  rawBody: string,
+  signatureHeader: string,
+  secret: string,
+): boolean {
   const computed = crypto.createHmac('sha256', secret).update(rawBody, 'utf8').digest('base64');
   try {
     return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(signatureHeader));
@@ -267,7 +279,11 @@ export function verifyWooCommerceWebhook(rawBody: string, signatureHeader: strin
   }
 }
 
-export function verifyBigCommerceWebhook(rawBody: string, signatureHeader: string, secret: string): boolean {
+export function verifyBigCommerceWebhook(
+  rawBody: string,
+  signatureHeader: string,
+  secret: string,
+): boolean {
   // BigCommerce uses SHA-256 HMAC of the raw body, hex-encoded
   const computed = crypto.createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
   try {
@@ -342,7 +358,12 @@ export async function ingestOrder(
     const [contact] = await db
       .select({ id: contacts.id })
       .from(contacts)
-      .where(and(eq(contacts.orgId, connection.orgId), eq(contacts.email, order.customerEmail.toLowerCase())))
+      .where(
+        and(
+          eq(contacts.orgId, connection.orgId),
+          eq(contacts.email, order.customerEmail.toLowerCase()),
+        ),
+      )
       .limit(1);
     contactId = contact?.id;
   }
@@ -409,7 +430,7 @@ export async function ingestOrder(
 // ─── Platform-specific order normalizers ──────────────────────────────────────
 
 export function normalizeShopifyOrder(raw: Record<string, unknown>): NormalizedOrder {
-  const lineItems = (raw.line_items as Array<Record<string, unknown>> ?? []).map((item) => ({
+  const lineItems = ((raw.line_items as Array<Record<string, unknown>>) ?? []).map((item) => ({
     sku: (item.sku as string) || undefined,
     name: item.name as string,
     qty: Number(item.quantity),
@@ -420,17 +441,17 @@ export function normalizeShopifyOrder(raw: Record<string, unknown>): NormalizedO
   return {
     externalOrderId: String(raw.id),
     customerEmail: (raw.email as string) || null,
-    status: raw.financial_status as string ?? 'unknown',
-    totalAmount: raw.total_price as string ?? '0',
-    currency: raw.currency as string ?? 'USD',
+    status: (raw.financial_status as string) ?? 'unknown',
+    totalAmount: (raw.total_price as string) ?? '0',
+    currency: (raw.currency as string) ?? 'USD',
     items: lineItems,
     orderedAt: raw.created_at ? new Date(raw.created_at as string) : null,
   };
 }
 
 export function normalizeWooCommerceOrder(raw: Record<string, unknown>): NormalizedOrder {
-  const billing = raw.billing as Record<string, unknown> ?? {};
-  const lineItems = (raw.line_items as Array<Record<string, unknown>> ?? []).map((item) => ({
+  const billing = (raw.billing as Record<string, unknown>) ?? {};
+  const lineItems = ((raw.line_items as Array<Record<string, unknown>>) ?? []).map((item) => ({
     sku: (item.sku as string) || undefined,
     name: item.name as string,
     qty: Number(item.quantity),
@@ -441,16 +462,16 @@ export function normalizeWooCommerceOrder(raw: Record<string, unknown>): Normali
   return {
     externalOrderId: String(raw.id),
     customerEmail: (billing.email as string) || null,
-    status: raw.status as string ?? 'unknown',
-    totalAmount: raw.total as string ?? '0',
-    currency: raw.currency as string ?? 'USD',
+    status: (raw.status as string) ?? 'unknown',
+    totalAmount: (raw.total as string) ?? '0',
+    currency: (raw.currency as string) ?? 'USD',
     items: lineItems,
     orderedAt: raw.date_created ? new Date(raw.date_created as string) : null,
   };
 }
 
 export function normalizeBigCommerceOrder(raw: Record<string, unknown>): NormalizedOrder {
-  const lineItems = (raw.products as Array<Record<string, unknown>> ?? []).map((item) => ({
+  const lineItems = ((raw.products as Array<Record<string, unknown>>) ?? []).map((item) => ({
     sku: (item.sku as string) || undefined,
     name: item.name as string,
     qty: Number(item.quantity),
@@ -460,17 +481,17 @@ export function normalizeBigCommerceOrder(raw: Record<string, unknown>): Normali
 
   return {
     externalOrderId: String(raw.id),
-    customerEmail: (raw.billing_address as Record<string, unknown>)?.email as string || null,
-    status: raw.status as string ?? 'unknown',
-    totalAmount: raw.total_inc_tax as string ?? '0',
-    currency: raw.currency_code as string ?? 'USD',
+    customerEmail: ((raw.billing_address as Record<string, unknown>)?.email as string) || null,
+    status: (raw.status as string) ?? 'unknown',
+    totalAmount: (raw.total_inc_tax as string) ?? '0',
+    currency: (raw.currency_code as string) ?? 'USD',
     items: lineItems,
     orderedAt: raw.date_created ? new Date(raw.date_created as string) : null,
   };
 }
 
 export function normalizeMagentoOrder(raw: Record<string, unknown>): NormalizedOrder {
-  const lineItems = (raw.items as Array<Record<string, unknown>> ?? []).map((item) => ({
+  const lineItems = ((raw.items as Array<Record<string, unknown>>) ?? []).map((item) => ({
     sku: item.sku as string,
     name: item.name as string,
     qty: Number(item.qty_ordered),
@@ -479,11 +500,11 @@ export function normalizeMagentoOrder(raw: Record<string, unknown>): NormalizedO
   }));
 
   return {
-    externalOrderId: raw.increment_id as string ?? String(raw.entity_id),
-    customerEmail: raw.customer_email as string || null,
-    status: raw.status as string ?? 'unknown',
+    externalOrderId: (raw.increment_id as string) ?? String(raw.entity_id),
+    customerEmail: (raw.customer_email as string) || null,
+    status: (raw.status as string) ?? 'unknown',
     totalAmount: String(raw.grand_total ?? 0),
-    currency: raw.order_currency_code as string ?? 'USD',
+    currency: (raw.order_currency_code as string) ?? 'USD',
     items: lineItems,
     orderedAt: raw.created_at ? new Date(raw.created_at as string) : null,
   };
@@ -519,7 +540,9 @@ export function normalizeShoptetOrder(raw: Record<string, unknown>): NormalizedO
 }
 
 export function normalizePrestaShopOrder(raw: Record<string, unknown>): NormalizedOrder {
-  const lineItems = (raw.associations as Record<string, unknown>)?.order_rows as Array<Record<string, unknown>> ?? [];
+  const lineItems =
+    ((raw.associations as Record<string, unknown>)?.order_rows as Array<Record<string, unknown>>) ??
+    [];
   const items = lineItems.map((item) => ({
     sku: item.product_reference as string,
     name: item.product_name as string,
@@ -530,10 +553,10 @@ export function normalizePrestaShopOrder(raw: Record<string, unknown>): Normaliz
 
   return {
     externalOrderId: String(raw.id),
-    customerEmail: raw.customer_email as string || null,
+    customerEmail: (raw.customer_email as string) || null,
     status: String(raw.current_state ?? 'unknown'),
-    totalAmount: raw.total_paid as string ?? '0',
-    currency: raw.id_currency as string ?? 'EUR',
+    totalAmount: (raw.total_paid as string) ?? '0',
+    currency: (raw.id_currency as string) ?? 'EUR',
     items,
     orderedAt: raw.date_add ? new Date(raw.date_add as string) : null,
   };
@@ -541,15 +564,16 @@ export function normalizePrestaShopOrder(raw: Record<string, unknown>): Normaliz
 
 // ─── Connection test ──────────────────────────────────────────────────────────
 
-export async function testConnection(connection: EcommerceConnection): Promise<{ ok: boolean; error?: string }> {
+export async function testConnection(
+  connection: EcommerceConnection,
+): Promise<{ ok: boolean; error?: string }> {
   try {
     switch (connection.platform) {
       case 'shopify': {
         const creds = connection.credentials as ShopifyCredentials;
-        const res = await fetch(
-          `https://${creds.shopDomain}/admin/api/2024-01/shop.json`,
-          { headers: { 'X-Shopify-Access-Token': creds.accessToken } },
-        );
+        const res = await fetch(`https://${creds.shopDomain}/admin/api/2024-01/shop.json`, {
+          headers: { 'X-Shopify-Access-Token': creds.accessToken },
+        });
         return { ok: res.ok, error: res.ok ? undefined : `HTTP ${res.status}` };
       }
 
@@ -564,15 +588,12 @@ export async function testConnection(connection: EcommerceConnection): Promise<{
 
       case 'bigcommerce': {
         const creds = connection.credentials as BigCommerceCredentials;
-        const res = await fetch(
-          `https://api.bigcommerce.com/stores/${creds.storeHash}/v2/store`,
-          {
-            headers: {
-              'X-Auth-Token': creds.accessToken,
-              Accept: 'application/json',
-            },
+        const res = await fetch(`https://api.bigcommerce.com/stores/${creds.storeHash}/v2/store`, {
+          headers: {
+            'X-Auth-Token': creds.accessToken,
+            Accept: 'application/json',
           },
-        );
+        });
         return { ok: res.ok, error: res.ok ? undefined : `HTTP ${res.status}` };
       }
 

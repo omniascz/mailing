@@ -1,13 +1,28 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, text, timestamp, jsonb, boolean, integer, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  timestamp,
+  jsonb,
+  boolean,
+  integer,
+  uniqueIndex,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';
 
 export const complianceControls = pgTable(
   'compliance_controls',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     controlId: varchar('control_id', { length: 50 }).notNull(),
     category: varchar('category', { length: 50 }).notNull(),
     title: varchar('title', { length: 255 }).notNull(),
@@ -27,9 +42,15 @@ export const complianceControls = pgTable(
 export const accessReviews = pgTable(
   'access_reviews',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    reviewerUserId: uuid('reviewer_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    reviewerUserId: uuid('reviewer_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     usersReviewed: integer('users_reviewed').notNull().default(0),
     usersRevoked: integer('users_revoked').notNull().default(0),
     findings: text('findings'),
@@ -42,8 +63,12 @@ export const accessReviews = pgTable(
 export const dataRetentionPolicies = pgTable(
   'data_retention_policies',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     resource: varchar('resource', { length: 64 }).notNull(),
     retentionDays: integer('retention_days').notNull(),
     lastEnforcedAt: timestamp('last_enforced_at', { withTimezone: true }),

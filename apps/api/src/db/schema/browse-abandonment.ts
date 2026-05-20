@@ -38,12 +38,13 @@ export interface BrowseEventMeta {
 export const productPageViews = pgTable(
   'product_page_views',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
-    contactId: uuid('contact_id')
-      .references(() => contacts.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'cascade' }),
     /** Anonymous visitor token (before identification) */
     visitorToken: varchar('visitor_token', { length: 128 }),
     /** Product SKU viewed */
@@ -75,7 +76,9 @@ export const productPageViews = pgTable(
 export const browseAbandonmentFires = pgTable(
   'browse_abandonment_fires',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').notNull(),
     contactId: uuid('contact_id').notNull(),
     /** SKU that triggered this fire, or null for generic abandonment */

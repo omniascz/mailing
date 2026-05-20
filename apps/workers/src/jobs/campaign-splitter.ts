@@ -12,6 +12,7 @@
  */
 
 import { Worker, type Job } from 'bullmq';
+import { captureJobException } from '../lib/telemetry.js';
 import {
   connection,
   QUEUE_NAMES,
@@ -27,14 +28,10 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
 
   job.log(`Splitting campaign ${data.campaignId} for org ${data.orgId}`);
 
-  // Fetch contact IDs matching the audience criteria.
-  // In production this queries the DB; here we define the interface.
-  const contactIds = await fetchAudienceContactIds(
-    data.orgId,
-    data.listId,
-    data.segmentId,
-    data.excludeSegmentId,
-  );
+  // Fetch contact IDs from the API. Resolution is delegated to the API
+  // because it handles all audience strategies in one place — list +
+  // segment + exclude + parent-campaign non-opener resends.
+  const contactIds = await fetchAudienceContactIds(data.orgId, data.campaignId);
 
   job.log(`Total contacts: ${contactIds.length}`);
 
@@ -50,31 +47,36 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
   }
 
   // Enqueue batch jobs
-  const batchJobs = batches.map((batch, index): {
-    name: string;
-    data: BatchSenderJobData;
-    opts: { priority: number };
-  } => ({
-    name: `batch-${data.campaignId}-${index}`,
-    data: {
-      campaignId: data.campaignId,
-      orgId: data.orgId,
-      batchIndex: index,
-      contactIds: batch,
-      content: data.content,
-      subject: data.subject,
-      preheader: data.preheader,
-      fromName: data.fromName,
-      fromEmail: data.fromEmail,
-      replyTo: data.replyTo,
-      dkimDomain: data.dkimDomain,
-      dkimSelector: data.dkimSelector,
-      dkimPrivateKey: data.dkimPrivateKey,
-      priority: data.priority,
-      stream: data.stream ?? 'broadcast',
-    },
-    opts: { priority: data.priority },
-  }));
+  const batchJobs = batches.map(
+    (
+      batch,
+      index,
+    ): {
+      name: string;
+      data: BatchSenderJobData;
+      opts: { priority: number };
+    } => ({
+      name: `batch-${data.campaignId}-${index}`,
+      data: {
+        campaignId: data.campaignId,
+        orgId: data.orgId,
+        batchIndex: index,
+        contactIds: batch,
+        content: data.content,
+        subject: data.subject,
+        preheader: data.preheader,
+        fromName: data.fromName,
+        fromEmail: data.fromEmail,
+        replyTo: data.replyTo,
+        dkimDomain: data.dkimDomain,
+        dkimSelector: data.dkimSelector,
+        dkimPrivateKey: data.dkimPrivateKey,
+        priority: data.priority,
+        stream: data.stream ?? 'broadcast',
+      },
+      opts: { priority: data.priority },
+    }),
+  );
 
   await batchSenderQueue.addBulk(batchJobs);
 
@@ -97,24 +99,16 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
  * Queries: contacts WHERE org_id AND list_id, optionally filtered by segment,
  * minus contacts in excludeSegment, minus suppressed contacts.
  */
-async function fetchAudienceContactIds(
-  orgId: string,
-  listId: string,
-  segmentId?: string,
-  excludeSegmentId?: string,
-): Promise<string[]> {
-  // This will be replaced with actual DB queries importing from the API package.
-  // For now, the worker is structured to receive contact IDs from the splitter
-  // or fetch them via an internal API call.
-
+async function fetchAudienceContactIds(orgId: string, campaignId: string): Promise<string[]> {
   const url = `${process.env.API_URL ?? 'http://localhost:3001'}/api/v1/internal/audience`;
-  const params = new URLSearchParams({ orgId, listId });
-  if (segmentId) params.set('segmentId', segmentId);
-  if (excludeSegmentId) params.set('excludeSegmentId', excludeSegmentId);
+  const params = new URLSearchParams({ orgId, campaignId });
 
   try {
     const res = await fetch(`${url}?${params}`);
-    if (!res.ok) throw new Error(`API ${res.status}`);
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`API ${res.status} ${text.slice(0, 200)}`);
+    }
     const body = (await res.json()) as { data: { contactIds: string[] } };
     return body.data.contactIds;
   } catch (err) {
@@ -154,6 +148,14 @@ export function startCampaignSplitterWorker() {
 
   worker.on('failed', (job, err) => {
     console.error(`[campaign-splitter] Job ${job?.id} failed:`, err.message);
+    captureJobException(err, {
+      queue: 'campaign-splitter',
+      jobId: job?.id,
+      jobName: job?.name,
+      attempts: job?.attemptsMade,
+      orgId: (job?.data as { orgId?: string } | undefined)?.orgId,
+      campaignId: (job?.data as { campaignId?: string } | undefined)?.campaignId,
+    });
   });
 
   return worker;

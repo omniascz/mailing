@@ -38,11 +38,11 @@ export interface ContactData {
 }
 
 export type ActionResult =
-  | { type: 'next'; nextNodeId: string | null }          // proceed to next node on the given edge
-  | { type: 'branch'; branch: 'true' | 'false' }         // condition branch
-  | { type: 'wait'; until: Date }                         // schedule resume
-  | { type: 'complete' }                                  // terminal
-  | { type: 'error'; message: string };                   // failure
+  | { type: 'next'; nextNodeId: string | null } // proceed to next node on the given edge
+  | { type: 'branch'; branch: 'true' | 'false' } // condition branch
+  | { type: 'wait'; until: Date } // schedule resume
+  | { type: 'complete' } // terminal
+  | { type: 'error'; message: string }; // failure
 
 // ─── Merge tag substitution ───────────────────────────────────────────────────
 
@@ -81,17 +81,18 @@ async function executeSendEmail(
   // Queue email via BullMQ — workers/src handles the actual send
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   if (queues) {
-    await (queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>)
-      .email?.add('workflow-email', {
+    await (
+      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
+    ).email
+      ?.add('workflow-email', {
         orgId: ctx.orgId,
         contactId: run.contactId,
         workflowRunId: run.id,
         campaignId: config.campaignId,
         templateId: config.templateId,
-        subject: config.subject
-          ? substituteMergeTags(config.subject, ctx.contact)
-          : undefined,
-      }).catch(() => {});
+        subject: config.subject ? substituteMergeTags(config.subject, ctx.contact) : undefined,
+      })
+      .catch(() => {});
   }
 
   return { type: 'next', nextNodeId: null };
@@ -110,14 +111,17 @@ async function executeSendSms(
   // Queue SMS job
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   if (queues) {
-    await (queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>)
-      .sms?.add('workflow-sms', {
+    await (
+      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
+    ).sms
+      ?.add('workflow-sms', {
         orgId: ctx.orgId,
         contactId: run.contactId,
         workflowRunId: run.id,
         phone: ctx.contact.phone,
         message,
-      }).catch(() => {});
+      })
+      .catch(() => {});
   }
 
   return { type: 'next', nextNodeId: null };
@@ -188,9 +192,12 @@ async function executeWait(
   } else {
     const duration = config.duration ?? 1;
     const unit = config.unit ?? 'hours';
-    const ms = unit === 'minutes' ? duration * 60_000
-      : unit === 'hours' ? duration * 3_600_000
-      : duration * 86_400_000;
+    const ms =
+      unit === 'minutes'
+        ? duration * 60_000
+        : unit === 'hours'
+          ? duration * 3_600_000
+          : duration * 86_400_000;
     until = new Date(Date.now() + ms);
   }
 
@@ -285,19 +292,32 @@ function compareValues(actual: unknown, op: string, expected: unknown): boolean 
   const a = String(actual ?? '').toLowerCase();
   const e = String(expected ?? '').toLowerCase();
   switch (op) {
-    case 'eq': return a === e;
-    case 'neq': return a !== e;
-    case 'contains': return a.includes(e);
-    case 'not_contains': return !a.includes(e);
-    case 'starts_with': return a.startsWith(e);
-    case 'ends_with': return a.endsWith(e);
-    case 'is_set': return actual != null && actual !== '';
-    case 'is_not_set': return actual == null || actual === '';
-    case 'gt': return Number(actual) > Number(expected);
-    case 'gte': return Number(actual) >= Number(expected);
-    case 'lt': return Number(actual) < Number(expected);
-    case 'lte': return Number(actual) <= Number(expected);
-    default: return false;
+    case 'eq':
+      return a === e;
+    case 'neq':
+      return a !== e;
+    case 'contains':
+      return a.includes(e);
+    case 'not_contains':
+      return !a.includes(e);
+    case 'starts_with':
+      return a.startsWith(e);
+    case 'ends_with':
+      return a.endsWith(e);
+    case 'is_set':
+      return actual != null && actual !== '';
+    case 'is_not_set':
+      return actual == null || actual === '';
+    case 'gt':
+      return Number(actual) > Number(expected);
+    case 'gte':
+      return Number(actual) >= Number(expected);
+    case 'lt':
+      return Number(actual) < Number(expected);
+    case 'lte':
+      return Number(actual) <= Number(expected);
+    default:
+      return false;
   }
 }
 
@@ -346,9 +366,7 @@ async function executeRemoveTag(
   if (tag) {
     await db
       .delete(contactTags)
-      .where(
-        and(eq(contactTags.contactId, run.contactId), eq(contactTags.tagId, tag.id)),
-      )
+      .where(and(eq(contactTags.contactId, run.contactId), eq(contactTags.tagId, tag.id)))
       .catch(() => {});
   }
 
@@ -408,12 +426,7 @@ async function executeRemoveFromList(
   const { contactLists } = await import('../../db/schema/index.js');
   await db
     .delete(contactLists)
-    .where(
-      and(
-        eq(contactLists.contactId, run.contactId),
-        eq(contactLists.listId, config.listId),
-      ),
-    )
+    .where(and(eq(contactLists.contactId, run.contactId), eq(contactLists.listId, config.listId)))
     .catch(() => {});
 
   return { type: 'next', nextNodeId: null };
@@ -430,14 +443,17 @@ async function executeInternalNotification(
   // Queue notification email (fire-and-forget via BullMQ)
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   if (queues) {
-    await (queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>)
-      .email?.add('internal-notification', {
+    await (
+      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
+    ).email
+      ?.add('internal-notification', {
         orgId: ctx.orgId,
         to: config.to,
         subject: substituteMergeTags(config.subject, ctx.contact),
         body: config.body ? substituteMergeTags(config.body, ctx.contact) : undefined,
         workflowRunId: run.id,
-      }).catch(() => {});
+      })
+      .catch(() => {});
   }
 
   return { type: 'next', nextNodeId: null };
@@ -500,9 +516,7 @@ async function executeSplit(
 
   // Deterministic hash: sha256(contactId + nodeId) % total_weight
   const { createHash } = await import('node:crypto');
-  const hashHex = createHash('sha256')
-    .update(`${run.contactId}:${node.id}`)
-    .digest('hex');
+  const hashHex = createHash('sha256').update(`${run.contactId}:${node.id}`).digest('hex');
   const hashInt = parseInt(hashHex.slice(0, 8), 16); // first 4 bytes → 32-bit uint
   const total = weights.reduce((s, w) => s + w, 0);
   const bucket = hashInt % total;
@@ -599,8 +613,8 @@ async function executeCascade(
   }
 
   // Initialize cascade tracking on first execution
-  const cascadeData = run.data as Record<string, unknown> || {};
-  let currentStep = (cascadeData.cascadeStep as number) ?? 0;
+  const cascadeData = (run.data as Record<string, unknown>) || {};
+  const currentStep = (cascadeData.cascadeStep as number) ?? 0;
 
   // On resume/re-entry: evaluate condition from the step we just sent
   if (currentStep > 0 && cascadeData.cascadeStep !== undefined) {
@@ -645,16 +659,17 @@ async function executeSendViber(
   const config = node.config as { templateId?: string; body?: string };
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   if (queues) {
-    await (queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>)
-      .viber?.add('workflow-viber', {
+    await (
+      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
+    ).viber
+      ?.add('workflow-viber', {
         orgId: ctx.orgId,
         contactId: run.contactId,
         workflowRunId: run.id,
         templateId: config.templateId,
-        body: config.body
-          ? substituteMergeTags(config.body, ctx.contact)
-          : undefined,
-      }).catch(() => {});
+        body: config.body ? substituteMergeTags(config.body, ctx.contact) : undefined,
+      })
+      .catch(() => {});
   }
   return { type: 'next', nextNodeId: null };
 }
@@ -674,7 +689,9 @@ async function executeCascadeStep(
     switch (step.channel) {
       case 'email':
         if (queues && (queues as Record<string, unknown>).email) {
-          const emailQueue = (queues as Record<string, unknown>).email as { add: (name: string, data: unknown) => Promise<void> };
+          const emailQueue = (queues as Record<string, unknown>).email as {
+            add: (name: string, data: unknown) => Promise<void>;
+          };
           await emailQueue.add('cascade-email', {
             orgId: ctx.orgId,
             contactId: run.contactId,
@@ -685,7 +702,9 @@ async function executeCascadeStep(
 
       case 'sms':
         if (ctx.contact?.phone && queues && (queues as Record<string, unknown>).sms) {
-          const smsQueue = (queues as Record<string, unknown>).sms as { add: (name: string, data: unknown) => Promise<void> };
+          const smsQueue = (queues as Record<string, unknown>).sms as {
+            add: (name: string, data: unknown) => Promise<void>;
+          };
           await smsQueue.add('cascade-sms', {
             orgId: ctx.orgId,
             contactId: run.contactId,
@@ -702,7 +721,9 @@ async function executeCascadeStep(
 
       case 'viber':
         if (queues && (queues as Record<string, unknown>).viber) {
-          const viberQueue = (queues as Record<string, unknown>).viber as { add: (name: string, data: unknown) => Promise<void> };
+          const viberQueue = (queues as Record<string, unknown>).viber as {
+            add: (name: string, data: unknown) => Promise<void>;
+          };
           await viberQueue.add('cascade-viber', {
             orgId: ctx.orgId,
             contactId: run.contactId,
@@ -728,7 +749,7 @@ async function evaluateCascadeCondition(
   const { emailEvents } = await import('../../db/schema/index.js');
 
   switch (condition) {
-    case 'not_opened':
+    case 'not_opened': {
       // Check if any email_open event for this contact in the last window
       const [openEvent] = await db
         .select()
@@ -743,8 +764,9 @@ async function evaluateCascadeCondition(
         )
         .limit(1);
       return !openEvent;
+    }
 
-    case 'not_clicked':
+    case 'not_clicked': {
       const [clickEvent] = await db
         .select()
         .from(emailEvents)
@@ -758,8 +780,9 @@ async function evaluateCascadeCondition(
         )
         .limit(1);
       return !clickEvent;
+    }
 
-    case 'not_delivered':
+    case 'not_delivered': {
       const [deliveredEvent] = await db
         .select()
         .from(emailEvents)
@@ -773,6 +796,7 @@ async function evaluateCascadeCondition(
         )
         .limit(1);
       return !deliveredEvent;
+    }
 
     default:
       return true;
@@ -808,8 +832,10 @@ async function executeSendPersonalEmail(
 
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   if (queues) {
-    await (queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>)
-      .email?.add('personal-email', {
+    await (
+      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
+    ).email
+      ?.add('personal-email', {
         orgId: ctx.orgId,
         contactId: run.contactId,
         workflowRunId: run.id,
@@ -820,7 +846,8 @@ async function executeSendPersonalEmail(
         bodyText,
         bodyHtml,
         isPersonal: true,
-      }).catch(() => {});
+      })
+      .catch(() => {});
   }
 
   return { type: 'next', nextNodeId: null };
@@ -853,26 +880,26 @@ async function executeAssignTask(
   if (config.assigneeIds && config.assigneeIds.length > 0) {
     const rrKey = `rr:assign_task:${ctx.orgId}:${node.id}`;
     const idx = await redis.incr(rrKey);
-    assignedUserId = config.assigneeIds[((idx - 1) % config.assigneeIds.length)]!;
+    assignedUserId = config.assigneeIds[(idx - 1) % config.assigneeIds.length]!;
   } else {
     // Pick from org users
     const { users } = await import('../../db/schema/index.js');
     const { isNull: isNullDrizzle } = await import('drizzle-orm');
-    const orgUsers = await db.select({ id: users.id }).from(users)
+    const orgUsers = await db
+      .select({ id: users.id })
+      .from(users)
       .where(and(eq(users.orgId, ctx.orgId), isNullDrizzle(users.deletedAt)))
       .limit(50);
     if (orgUsers.length > 0) {
       const rrKey = `rr:assign_task:${ctx.orgId}:${node.id}`;
       const idx = await redis.incr(rrKey);
-      assignedUserId = orgUsers[((idx - 1) % orgUsers.length)]!.id;
+      assignedUserId = orgUsers[(idx - 1) % orgUsers.length]!.id;
     }
   }
 
   // Create the task
   const { createTask } = await import('../crm/tasks.js');
-  const dueAt = config.dueDays
-    ? new Date(Date.now() + config.dueDays * 86_400_000)
-    : undefined;
+  const dueAt = config.dueDays ? new Date(Date.now() + config.dueDays * 86_400_000) : undefined;
 
   await createTask(ctx.orgId, {
     title,
@@ -899,7 +926,8 @@ async function executeStartWorkflow(
     passData?: Record<string, unknown>;
   };
 
-  if (!config.workflowId) return { type: 'error', message: 'start_workflow: workflowId is required' };
+  if (!config.workflowId)
+    return { type: 'error', message: 'start_workflow: workflowId is required' };
 
   try {
     const { startWorkflowRun } = await import('./executor.js');
@@ -924,7 +952,8 @@ async function executeEnrollInLoyalty(
   ctx: ActionContext,
 ): Promise<ActionResult> {
   const config = node.config as { programId?: string };
-  if (!config.programId) return { type: 'error', message: 'enroll_in_loyalty: programId is required' };
+  if (!config.programId)
+    return { type: 'error', message: 'enroll_in_loyalty: programId is required' };
   if (!run.contactId) return { type: 'next', nextNodeId: null };
 
   try {
@@ -964,7 +993,13 @@ async function executeAwardLoyaltyPoints(
       // Fire tier-up trigger if applicable
       if (tieredUp && member.currentTierId && tierName) {
         const { onLoyaltyTierUp } = await import('./triggers.js');
-        await onLoyaltyTierUp(ctx.orgId, run.contactId, config.programId, member.currentTierId, tierName);
+        await onLoyaltyTierUp(
+          ctx.orgId,
+          run.contactId,
+          config.programId,
+          member.currentTierId,
+          tierName,
+        );
       }
     }
   } catch {
@@ -982,12 +1017,17 @@ async function executeSyncToAdAudience(
 ): Promise<ActionResult> {
   const config = node.config as { adAccountId?: string; audienceName?: string };
   if (!config.adAccountId || !config.audienceName) {
-    return { type: 'error', message: 'sync_to_ad_audience: adAccountId and audienceName are required' };
+    return {
+      type: 'error',
+      message: 'sync_to_ad_audience: adAccountId and audienceName are required',
+    };
   }
   try {
     if (!run.contactId) return { type: 'next', nextNodeId: null };
     const contactId = run.contactId;
-    const contact = await db.query.contacts.findFirst({ where: (c, { eq }) => eq(c.id, contactId) });
+    const contact = await db.query.contacts.findFirst({
+      where: (c, { eq }) => eq(c.id, contactId),
+    });
     if (!contact?.email) return { type: 'next', nextNodeId: null };
 
     const { syncAudienceToAdPlatform } = await import('../ads/audience-sync.js');
@@ -1008,8 +1048,9 @@ async function executeStripeRetryCharge(
   run: WorkflowRun,
   ctx: ActionContext,
 ): Promise<ActionResult> {
-  const invoiceId = (node.config as { invoiceId?: string }).invoiceId
-    ?? (run.data as { invoiceId?: string }).invoiceId;
+  const invoiceId =
+    (node.config as { invoiceId?: string }).invoiceId ??
+    (run.data as { invoiceId?: string }).invoiceId;
   if (!invoiceId) return { type: 'next', nextNodeId: null };
 
   try {
@@ -1033,13 +1074,16 @@ async function executeNotifyOwner(
     org_name: ctx.orgId,
   });
 
-  await redis.publish(`org:${ctx.orgId}:notifications`, JSON.stringify({
-    type: 'workflow_alert',
-    channel: config.channel ?? 'in_app',
-    message,
-    workflowRunId: run.id,
-    at: new Date().toISOString(),
-  }));
+  await redis.publish(
+    `org:${ctx.orgId}:notifications`,
+    JSON.stringify({
+      type: 'workflow_alert',
+      channel: config.channel ?? 'in_app',
+      message,
+      workflowRunId: run.id,
+      at: new Date().toISOString(),
+    }),
+  );
   return { type: 'next', nextNodeId: null };
 }
 

@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `15_SAP_Emarsys_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** Emarsys umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Enterprise platform** – ne self-service, vyžaduje 4-6 měsíců implementace
 > - **4 default roles** (Account Owner, Administrator, Operator, Restricted, BI Administrator) + custom roles s **page-level permissions**
 > - **Account Owner role je nejvyšší** – nemodifikovatelná, **created by SAP/CSM**
@@ -135,21 +136,21 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Created by SAP/CSM during setup | Full + security + multi-account | Vše |
-| **Administrator** | Pozvánka od Owner | Operational lead | Vše kromě Account Owner exclusives + Smart Insight |
-| **Operator (Marketer)** | Pozvánka | Daily marketing tasks | Marketing tools |
-| **Restricted** | Pozvánka (onboarding) | Minimal access for training | Limited |
-| **BI Administrator** | Pozvánka | Smart Insight + dashboards | Analytics only |
-| **Custom role users** | Pozvánka s custom permissions | Per definition | Per definition |
-| **Multi-account user** | Cross-account permission | Multiple regional/brand accounts | Per assigned accounts |
-| **Dedicated CSM** | Assigned at sign-up | Strategy, QBRs, optimization | Read access to account |
-| **Implementation partner** | Engaged during setup | Initial setup + ongoing services | Per RBAC granted |
-| **Customer / Profile** | Form, integration, anon tracking | Browses, buys, opens, engages | Své komunikace |
-| **API Client** | API credentials | Per endpoint permissions | Per scope |
-| **SAP integration** | Native integration | Auto-sync data | Per data model |
-| **External CSM read-only** | Special permission | View-only specific functions | Limited view |
+| Aktér                      | Vstupní bod                      | Co dělá                          | Co vidí                                            |
+| -------------------------- | -------------------------------- | -------------------------------- | -------------------------------------------------- |
+| **Account Owner**          | Created by SAP/CSM during setup  | Full + security + multi-account  | Vše                                                |
+| **Administrator**          | Pozvánka od Owner                | Operational lead                 | Vše kromě Account Owner exclusives + Smart Insight |
+| **Operator (Marketer)**    | Pozvánka                         | Daily marketing tasks            | Marketing tools                                    |
+| **Restricted**             | Pozvánka (onboarding)            | Minimal access for training      | Limited                                            |
+| **BI Administrator**       | Pozvánka                         | Smart Insight + dashboards       | Analytics only                                     |
+| **Custom role users**      | Pozvánka s custom permissions    | Per definition                   | Per definition                                     |
+| **Multi-account user**     | Cross-account permission         | Multiple regional/brand accounts | Per assigned accounts                              |
+| **Dedicated CSM**          | Assigned at sign-up              | Strategy, QBRs, optimization     | Read access to account                             |
+| **Implementation partner** | Engaged during setup             | Initial setup + ongoing services | Per RBAC granted                                   |
+| **Customer / Profile**     | Form, integration, anon tracking | Browses, buys, opens, engages    | Své komunikace                                     |
+| **API Client**             | API credentials                  | Per endpoint permissions         | Per scope                                          |
+| **SAP integration**        | Native integration               | Auto-sync data                   | Per data model                                     |
+| **External CSM read-only** | Special permission               | View-only specific functions     | Limited view                                       |
 
 ---
 
@@ -160,6 +161,7 @@ Emarsys NEPOUŽÍVÁ self-serve sign-up – jako ExpertSender.
 ### 2.1 Lead acquisition
 
 Typicky:
+
 - **Inbound** přes emarsys.com / sap.com
 - **SAP existing customer outreach** (cross-sell)
 - **Industry events / conferences** (NRF, K5, SAP Sapphire)
@@ -247,6 +249,7 @@ Demo 1 (60-90 min):
 ### 2.4 Pilot / POC option
 
 Pro large deals SAP may offer:
+
 - **30-60 day pilot** with limited features
 - **POC** with sandbox environment
 - **Use case validation** before full commitment
@@ -255,6 +258,7 @@ Pro large deals SAP may offer:
 ### 2.5 Partner selection
 
 Implementation typicky **přes partner** (ne SAP přímo):
+
 - **SAP recommends** based on geography + vertical
 - **Customer may have preference**
 - **RFP process** sometimes for partner selection
@@ -328,6 +332,7 @@ Architecture design:
 ### 3.3 Phase 3: Technical setup (Week 4-12)
 
 #### Account provisioning
+
 ```
 SAP provisions Emarsys account
    ↓
@@ -347,6 +352,7 @@ Security configuration:
 ```
 
 #### Data integration
+
 ```
 SAP ecosystem integration:
 - SAP Commerce Cloud plug-and-play
@@ -375,6 +381,7 @@ Mobile SDK integration (if applicable):
 ```
 
 #### Initial data load
+
 ```
 Historical data import:
 - Customers from CRM/e-commerce
@@ -644,57 +651,57 @@ Per oficiální docs:
 
 ### 4.6 Permission matrix (default roles)
 
-| Akce | Owner | Admin | Operator | Restricted | BI Admin |
-|---|:---:|:---:|:---:|:---:|:---:|
-| **Account & Security** |  |  |  |  |  |
-| Account Security Settings | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Email domain config | ✅ | view | ❌ | ❌ | ❌ |
-| IP allowlist | ✅ | ❌ | ❌ | ❌ | ❌ |
-| 2-step auth enforcement | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Multi-account permissions | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **User Management** |  |  |  |  |  |
-| Add/edit/delete users | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Create custom roles | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **API & Integrations** |  |  |  |  |  |
-| Create API credentials | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Manage API endpoints | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Setup integrations | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Customers (Contacts)** |  |  |  |  |  |
-| View contacts | ✅ | ✅ | ✅ | limited | view |
-| Edit contacts | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Import contacts | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Export contacts | ✅ | ✅ | limited | ❌ | ❌ |
-| **Segments** |  |  |  |  |  |
-| View segments | ✅ | ✅ | ✅ | view | ✅ |
-| Create/edit segments | ✅ | ✅ | ✅ | ❌ | ✅ |
-| **Email Campaigns** |  |  |  |  |  |
-| Create campaign | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Send campaign | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Automation Center** |  |  |  |  |  |
-| View programs | ✅ | ✅ | ✅ | view | view |
-| Create/edit programs | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Activate programs | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Tactics** |  |  |  |  |  |
-| Browse Tactics | ✅ | ✅ | ✅ | view | view |
-| Download + customize | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Templates** |  |  |  |  |  |
-| Create/edit templates | ✅ | ✅ | ✅ | limited | ❌ |
-| **Smart Insight** |  |  |  |  |  |
-| View Smart Insight | ✅ | per perm | ❌ | ❌ | ✅ |
-| Edit Smart Insight | ✅ | ❌ | ❌ | ❌ | ✅ |
-| **Predict** |  |  |  |  |  |
-| Use Predict | ✅ | ✅ | ✅ | ❌ | view |
-| **Strategic Dashboard** |  |  |  |  |  |
-| View dashboard | ✅ | ✅ | ✅ | ❌ | ✅ |
-| **Mobile Engage** |  |  |  |  |  |
-| Manage mobile push | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **SMS** |  |  |  |  |  |
-| Send SMS | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Loyalty** |  |  |  |  |  |
-| Manage loyalty | ✅ | ✅ | per perm | ❌ | view |
-| **Reports** |  |  |  |  |  |
-| View reports | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Custom dashboards | ✅ | ✅ | per perm | ❌ | ✅ |
+| Akce                      | Owner |  Admin   | Operator | Restricted | BI Admin |
+| ------------------------- | :---: | :------: | :------: | :--------: | :------: |
+| **Account & Security**    |       |          |          |            |          |
+| Account Security Settings |  ✅   |    ❌    |    ❌    |     ❌     |    ❌    |
+| Email domain config       |  ✅   |   view   |    ❌    |     ❌     |    ❌    |
+| IP allowlist              |  ✅   |    ❌    |    ❌    |     ❌     |    ❌    |
+| 2-step auth enforcement   |  ✅   |    ❌    |    ❌    |     ❌     |    ❌    |
+| Multi-account permissions |  ✅   |    ❌    |    ❌    |     ❌     |    ❌    |
+| **User Management**       |       |          |          |            |          |
+| Add/edit/delete users     |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    |
+| Create custom roles       |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    |
+| **API & Integrations**    |       |          |          |            |          |
+| Create API credentials    |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    |
+| Manage API endpoints      |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    |
+| Setup integrations        |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    |
+| **Customers (Contacts)**  |       |          |          |            |          |
+| View contacts             |  ✅   |    ✅    |    ✅    |  limited   |   view   |
+| Edit contacts             |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    |
+| Import contacts           |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    |
+| Export contacts           |  ✅   |    ✅    | limited  |     ❌     |    ❌    |
+| **Segments**              |       |          |          |            |          |
+| View segments             |  ✅   |    ✅    |    ✅    |    view    |    ✅    |
+| Create/edit segments      |  ✅   |    ✅    |    ✅    |     ❌     |    ✅    |
+| **Email Campaigns**       |       |          |          |            |          |
+| Create campaign           |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    |
+| Send campaign             |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    |
+| **Automation Center**     |       |          |          |            |          |
+| View programs             |  ✅   |    ✅    |    ✅    |    view    |   view   |
+| Create/edit programs      |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    |
+| Activate programs         |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    |
+| **Tactics**               |       |          |          |            |          |
+| Browse Tactics            |  ✅   |    ✅    |    ✅    |    view    |   view   |
+| Download + customize      |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    |
+| **Templates**             |       |          |          |            |          |
+| Create/edit templates     |  ✅   |    ✅    |    ✅    |  limited   |    ❌    |
+| **Smart Insight**         |       |          |          |            |          |
+| View Smart Insight        |  ✅   | per perm |    ❌    |     ❌     |    ✅    |
+| Edit Smart Insight        |  ✅   |    ❌    |    ❌    |     ❌     |    ✅    |
+| **Predict**               |       |          |          |            |          |
+| Use Predict               |  ✅   |    ✅    |    ✅    |     ❌     |   view   |
+| **Strategic Dashboard**   |       |          |          |            |          |
+| View dashboard            |  ✅   |    ✅    |    ✅    |     ❌     |    ✅    |
+| **Mobile Engage**         |       |          |          |            |          |
+| Manage mobile push        |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    |
+| **SMS**                   |       |          |          |            |          |
+| Send SMS                  |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    |
+| **Loyalty**               |       |          |          |            |          |
+| Manage loyalty            |  ✅   |    ✅    | per perm |     ❌     |   view   |
+| **Reports**               |       |          |          |            |          |
+| View reports              |  ✅   |    ✅    |    ✅    |     ❌     |    ✅    |
+| Custom dashboards         |  ✅   |    ✅    | per perm |     ❌     |    ✅    |
 
 ### 4.7 Special pravidla
 
@@ -709,6 +716,7 @@ Per oficiální docs:
 ### 4.8 Original creator privileges
 
 Pokud original creator user is **unavailable** (left company, etc.):
+
 - **Other users CAN change:** Link categories, standard segments, Campaigns, Automation Center programs, VCE campaigns
 - **Other users CANNOT change:** Voucher pools, Mailboxes, Exports, Forms
 - **Link categories cannot be deleted** by non-creator
@@ -750,6 +758,7 @@ Save role
 Each platform feature has **page-level permissions**. Examples:
 
 #### Contacts module
+
 - Contact List view
 - Contact create
 - Contact edit
@@ -758,6 +767,7 @@ Each platform feature has **page-level permissions**. Examples:
 - Contact delete
 
 #### Email Campaigns
+
 - Campaign list view
 - Campaign creation
 - Campaign edit
@@ -766,6 +776,7 @@ Each platform feature has **page-level permissions**. Examples:
 - Campaign reporting
 
 #### Automation Center
+
 - Program list view
 - Program creation
 - Program edit
@@ -773,6 +784,7 @@ Each platform feature has **page-level permissions**. Examples:
 - Program testing
 
 #### Smart Insight
+
 - Smart Insight access
 - eRFM view
 - eRFM edit
@@ -780,6 +792,7 @@ Each platform feature has **page-level permissions**. Examples:
 - Lifecycle stages view
 
 #### Personalization
+
 - VCE editor
 - Saved blocks
 - Personalization scripts
@@ -787,6 +800,7 @@ Each platform feature has **page-level permissions**. Examples:
 ### 5.3 Custom role examples
 
 #### "Email Campaign Manager"
+
 - Email campaigns: full control
 - Templates: edit
 - Segments: view + edit
@@ -795,6 +809,7 @@ Each platform feature has **page-level permissions**. Examples:
 - No user management
 
 #### "Analyst"
+
 - Smart Insight: view + edit
 - Strategic Dashboard: view
 - Reports: full
@@ -803,6 +818,7 @@ Each platform feature has **page-level permissions**. Examples:
 - No content editing
 
 #### "Designer"
+
 - Templates: full
 - VCE editor: full
 - Brand kit: edit
@@ -811,6 +827,7 @@ Each platform feature has **page-level permissions**. Examples:
 - No automation
 
 #### "External agency (limited)"
+
 - Campaigns: view + draft only
 - Templates: view + edit
 - Segments: view only
@@ -839,6 +856,7 @@ User receives email + activates
 ### 5.5 SSO/SAML configuration
 
 Per oficiální docs:
+
 - **SAP Cloud Identity (SCI)** integration
 - **OpenID Connect** + JWT
 - **SAML 2.0** support
@@ -899,6 +917,7 @@ Security review:
 ### 6.3 Kritické Account Owner exclusives
 
 #### Security Settings
+
 ```
 Account Settings → Security Settings
    ↓
@@ -917,6 +936,7 @@ Save settings
 ```
 
 #### Email domains
+
 ```
 Account Owner adds email domains:
 - Domain receives activation emails
@@ -927,6 +947,7 @@ Add additional domains as needed
 ```
 
 #### API credentials creation
+
 ```
 Account Settings → API Credentials
    ↓
@@ -965,6 +986,7 @@ Permission setup:
 ### 6.5 Ownership transfer
 
 Pokud Account Owner pohřešovaný / odejde:
+
 ```
 Contact SAP support
    ↓
@@ -1091,6 +1113,7 @@ Changes apply immediately to API clients using these credentials
 ### 7.6 Domain authentication
 
 Standard flow:
+
 - Add sending domain
 - DKIM + SPF + DMARC records
 - Validate
@@ -1581,11 +1604,13 @@ Customer can revoke CSM access anytime
 ### 12.5 CSM service tiers
 
 #### Standard CSM
+
 - Monthly touchpoints
 - Quarterly QBR
 - Standard SLA
 
 #### Premium CSM (strategic)
+
 - Bi-weekly touchpoints
 - Quarterly QBR + monthly deep dives
 - Faster escalation paths
@@ -1595,9 +1620,10 @@ Customer can revoke CSM access anytime
 ### 12.6 CSM critique (Gartner reviews)
 
 Some critique from real customers:
-- *"Customer success team is supposed to share business expertise on the best way to use the tool"* (implying gap)
+
+- _"Customer success team is supposed to share business expertise on the best way to use the tool"_ (implying gap)
 - Quality variability per CSM individual
-- *"Implementation team has no expertise whatsoever: they just seem to copy/paste the same implementation agenda"*
+- _"Implementation team has no expertise whatsoever: they just seem to copy/paste the same implementation agenda"_
 - Some customers feel CSM is "checkbox" not value-add
 
 ⚠️ **Variability** je documented issue – not all CSMs equally strategic.
@@ -1609,6 +1635,7 @@ Some critique from real customers:
 ### 13.1 Profile creation paths
 
 #### A) Anonymous Web Extend tracking
+
 ```
 Visitor lands on website (no cookie)
    ↓
@@ -1630,6 +1657,7 @@ NO email/phone yet
 ```
 
 #### B) Email capture (form, signup)
+
 ```
 Anonymous visitor (cookie set)
    ↓
@@ -1650,6 +1678,7 @@ Welcome program / Tactic activates
 ```
 
 #### C) E-commerce account creation
+
 ```
 Customer creates account on SAP Commerce / Shopify / etc.
    ↓
@@ -1666,6 +1695,7 @@ Emarsys:
 ```
 
 #### D) SAP ecosystem sync
+
 ```
 Customer record in SAP CDP / Sales Cloud / S/4HANA
    ↓
@@ -1683,6 +1713,7 @@ Relational data attached:
 ```
 
 #### E) Mobile app sign-up
+
 ```
 User installs mobile app
    ↓
@@ -1698,6 +1729,7 @@ Profile merged (mobile + web cross-device)
 ```
 
 #### F) POS / In-store (omnichannel)
+
 ```
 Customer makes purchase in physical store
    ↓
@@ -1806,6 +1838,7 @@ Profile data retained for legitimate interests
 ### 13.6 Bounce + complaint handling
 
 #### Hard bounce
+
 ```
 ISP returns 5xx
    ↓
@@ -1817,6 +1850,7 @@ Other channels still potentially active
 ```
 
 #### Spam complaint
+
 ```
 ISP FBL → Emarsys
    ↓
@@ -2158,6 +2192,7 @@ Suppression list for over-messaged customers
 ### 16.5 Contact-level channel preferences
 
 Profile-level:
+
 - "Prefers email" → email always primary
 - "Prefers push" → push first
 - "Quiet hours: 8pm-8am" → no sends in those hours
@@ -2296,6 +2331,7 @@ Application processes
 ### 17.6 SAP ecosystem deep integration
 
 #### SAP Commerce Cloud (deepest)
+
 ```
 Order placed in SAP Commerce
    ↓
@@ -2314,6 +2350,7 @@ Order data fully populated:
 ```
 
 #### SAP CDP integration
+
 ```
 Customer creates account / updates profile in SAP CDP
    ↓
@@ -2325,6 +2362,7 @@ Identity resolution across SAP systems
 ```
 
 #### SAP Sales Cloud V2 (B2B)
+
 ```
 Lead in SAP Sales Cloud
    ↓
@@ -2338,6 +2376,7 @@ SDR alerted when MQL → SQL
 ```
 
 #### SAP S/4HANA
+
 ```
 Inventory data in S/4HANA
    ↓
@@ -2349,6 +2388,7 @@ Out-of-stock alerts trigger different campaigns
 ```
 
 #### SAP Datasphere (analytics)
+
 ```
 Marketing data from Emarsys → Datasphere
    ↓
@@ -2457,6 +2497,7 @@ Download link provided
 ### 18.4 Consent tracking
 
 Per profile:
+
 - Email subscription consent (timestamp, IP, source, form)
 - SMS opt-in
 - Web push opt-in
@@ -2470,6 +2511,7 @@ Per profile:
 ### 18.5 Permission management
 
 Per oficiální Publicare partner documentation:
+
 - **Legally compliant opt-in/opt-out** flows
 - **GDPR-compliant channel-specific** subscription
 - **Custom preference centers** designable
@@ -2479,6 +2521,7 @@ Per oficiální Publicare partner documentation:
 ### 18.6 Security configuration
 
 #### Account Security Settings
+
 ```
 Account Owner: Security Settings
    ↓
@@ -2497,6 +2540,7 @@ SAP recommends enabling but denies responsibility if not used
 ```
 
 #### Audit logs
+
 - All admin actions logged
 - All data access logged
 - API calls logged
@@ -2533,37 +2577,37 @@ Issue tracking + resolution
 
 ## 19. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Operator | Restricted | BI Admin | Custom | CSM | Customer | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account Security | ✅ | ❌ | ❌ | ❌ | ❌ | per role | – | – | – |
-| Multi-account perms | ✅ | ❌ | ❌ | ❌ | ❌ | per role | – | – | – |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | per role | – | – | per scope |
-| API credentials | ✅ | ✅ | ❌ | ❌ | ❌ | per role | – | – | – |
-| API endpoint perms | ✅ | ✅ | ❌ | ❌ | ❌ | per role | – | – | – |
-| Email domain config | ✅ | view | ❌ | ❌ | ❌ | per role | – | – | per scope |
-| All customer profiles | ✅ | ✅ | ✅ | limited | view | per role | read | jen sebe | ✅ |
-| Edit customer profiles | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ❌ | ✅ |
-| Export customers | ✅ | ✅ | limited | ❌ | ❌ | per role | ❌ | request | per scope |
-| Segments | ✅ | ✅ | ✅ | view | ✅ | per role | read | ❌ | ✅ |
-| Smart Insight | ✅ | per perm | ❌ | ❌ | ✅ | per role | read | ❌ | ✅ |
-| eRFM cohort assignment | ✅ | ✅ | ✅ | view | ✅ | per role | read | ❌ | ✅ |
-| Predict | ✅ | ✅ | ✅ | ❌ | view | per role | – | – | ✅ |
-| Email campaigns | ✅ | ✅ | ✅ | view | ❌ | per role | read | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ❌ | ❌ | ✅ |
-| Automation Center | ✅ | ✅ | ✅ | view | view | per role | read | ❌ | ✅ |
-| Tactics | ✅ | ✅ | ✅ | view | view | per role | read | ❌ | ✅ |
-| Templates / VCE | ✅ | ✅ | ✅ | limited | ❌ | per role | read | ❌ | ✅ |
-| Mobile Engage | ✅ | ✅ | ✅ | ❌ | ❌ | per role | – | – | ✅ |
-| SMS | ✅ | ✅ | ✅ | ❌ | ❌ | per role | – | – | ✅ |
-| Web Channel | ✅ | ✅ | ✅ | ❌ | ❌ | per role | – | – | ✅ |
-| Loyalty Engine | ✅ | ✅ | per perm | ❌ | view | per role | – | – | ✅ |
-| Digital Ads | ✅ | ✅ | ✅ | ❌ | ❌ | per role | – | – | per scope |
-| Direct Mail | ✅ | ✅ | per perm | ❌ | ❌ | per role | – | – | per scope |
-| Reports & Strategic Dashboard | ✅ | ✅ | ✅ | ❌ | ✅ | per role | read | ❌ | ✅ |
-| Integrations | ✅ | ✅ | ❌ | ❌ | ❌ | per role | – | – | per scope |
-| Audit logs | ✅ | ✅ | ❌ | ❌ | ❌ | per role | – | – | per scope |
-| GDPR delete | ✅ | ✅ | per role | ❌ | per role | per role | – | request | per scope |
-| Cross-account view (multi) | ✅ | ❌ | ❌ | ❌ | ❌ | per role | per scope | ❌ | per scope |
+| Data                          | Owner |  Admin   | Operator | Restricted | BI Admin |  Custom  |    CSM    |   Customer    |    API    |
+| ----------------------------- | :---: | :------: | :------: | :--------: | :------: | :------: | :-------: | :-----------: | :-------: |
+| Account Security              |  ✅   |    ❌    |    ❌    |     ❌     |    ❌    | per role |     –     |       –       |     –     |
+| Multi-account perms           |  ✅   |    ❌    |    ❌    |     ❌     |    ❌    | per role |     –     |       –       |     –     |
+| User management               |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    | per role |     –     |       –       | per scope |
+| API credentials               |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    | per role |     –     |       –       |     –     |
+| API endpoint perms            |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    | per role |     –     |       –       |     –     |
+| Email domain config           |  ✅   |   view   |    ❌    |     ❌     |    ❌    | per role |     –     |       –       | per scope |
+| All customer profiles         |  ✅   |    ✅    |    ✅    |  limited   |   view   | per role |   read    |   jen sebe    |    ✅     |
+| Edit customer profiles        |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    | per role |    ❌     |      ❌       |    ✅     |
+| Export customers              |  ✅   |    ✅    | limited  |     ❌     |    ❌    | per role |    ❌     |    request    | per scope |
+| Segments                      |  ✅   |    ✅    |    ✅    |    view    |    ✅    | per role |   read    |      ❌       |    ✅     |
+| Smart Insight                 |  ✅   | per perm |    ❌    |     ❌     |    ✅    | per role |   read    |      ❌       |    ✅     |
+| eRFM cohort assignment        |  ✅   |    ✅    |    ✅    |    view    |    ✅    | per role |   read    |      ❌       |    ✅     |
+| Predict                       |  ✅   |    ✅    |    ✅    |     ❌     |   view   | per role |     –     |       –       |    ✅     |
+| Email campaigns               |  ✅   |    ✅    |    ✅    |    view    |    ❌    | per role |   read    | jen co dostal |    ✅     |
+| Send campaigns                |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    | per role |    ❌     |      ❌       |    ✅     |
+| Automation Center             |  ✅   |    ✅    |    ✅    |    view    |   view   | per role |   read    |      ❌       |    ✅     |
+| Tactics                       |  ✅   |    ✅    |    ✅    |    view    |   view   | per role |   read    |      ❌       |    ✅     |
+| Templates / VCE               |  ✅   |    ✅    |    ✅    |  limited   |    ❌    | per role |   read    |      ❌       |    ✅     |
+| Mobile Engage                 |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    | per role |     –     |       –       |    ✅     |
+| SMS                           |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    | per role |     –     |       –       |    ✅     |
+| Web Channel                   |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    | per role |     –     |       –       |    ✅     |
+| Loyalty Engine                |  ✅   |    ✅    | per perm |     ❌     |   view   | per role |     –     |       –       |    ✅     |
+| Digital Ads                   |  ✅   |    ✅    |    ✅    |     ❌     |    ❌    | per role |     –     |       –       | per scope |
+| Direct Mail                   |  ✅   |    ✅    | per perm |     ❌     |    ❌    | per role |     –     |       –       | per scope |
+| Reports & Strategic Dashboard |  ✅   |    ✅    |    ✅    |     ❌     |    ✅    | per role |   read    |      ❌       |    ✅     |
+| Integrations                  |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    | per role |     –     |       –       | per scope |
+| Audit logs                    |  ✅   |    ✅    |    ❌    |     ❌     |    ❌    | per role |     –     |       –       | per scope |
+| GDPR delete                   |  ✅   |    ✅    | per role |     ❌     | per role | per role |     –     |    request    | per scope |
+| Cross-account view (multi)    |  ✅   |    ❌    |    ❌    |     ❌     |    ❌    | per role | per scope |      ❌       | per scope |
 
 ---
 
@@ -2609,6 +2653,7 @@ Issue tracking + resolution
 ### 20.5 Tactic limitations
 
 Per oficiální docs:
+
 - **Combined segments NOT supported** in Tactics
 - **Lifecycle stage definitions cannot change** at Tactic level
 - **Pre-built segments only** in Tactic nodes
@@ -2626,9 +2671,10 @@ Per oficiální docs:
 ### 20.7 Implementation variability
 
 Per real Gartner reviews:
-- *"Implementation team has no expertise whatsoever"*
-- *"Training phase basic, no adaptation to company situation"*
-- *"Customer success team supposed to share business expertise"* (implying gap)
+
+- _"Implementation team has no expertise whatsoever"_
+- _"Training phase basic, no adaptation to company situation"_
+- _"Customer success team supposed to share business expertise"_ (implying gap)
 - **Quality varies per individual** (CSM, implementer)
 
 ### 20.8 AI features behind some competitors
@@ -2719,4 +2765,4 @@ Pokud Emarsys / Engagement Cloud používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů emarsys.com, sap.com/products/crm, help.emarsys.com, help.sap.com, learning.sap.com a praktických zdrojů (Gartner Peer Insights, G2, Spadoom, Publicare, Sybit). Pro nejaktuálnější detaily je nutný engagement s SAP / Emarsys sales + implementation teamem.*
+_Dokument zpracován z oficiálních zdrojů emarsys.com, sap.com/products/crm, help.emarsys.com, help.sap.com, learning.sap.com a praktických zdrojů (Gartner Peer Insights, G2, Spadoom, Publicare, Sybit). Pro nejaktuálnější detaily je nutný engagement s SAP / Emarsys sales + implementation teamem._

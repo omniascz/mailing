@@ -27,17 +27,15 @@ export default async function pushRoutes(app: FastifyInstance) {
     const { orgId } = req.user as { orgId: string };
 
     // Deactivate any existing key
-    await db
-      .update(vapidKeys)
-      .set({ active: false })
-      .where(eq(vapidKeys.orgId, orgId));
+    await db.update(vapidKeys).set({ active: false }).where(eq(vapidKeys.orgId, orgId));
 
     const { publicKey, privateKey } = await generateVapidKeyPair();
 
-    const [key] = await db
-      .insert(vapidKeys)
-      .values({ orgId, publicKey, privateKey })
-      .returning({ id: vapidKeys.id, publicKey: vapidKeys.publicKey, createdAt: vapidKeys.createdAt });
+    const [key] = await db.insert(vapidKeys).values({ orgId, publicKey, privateKey }).returning({
+      id: vapidKeys.id,
+      publicKey: vapidKeys.publicKey,
+      createdAt: vapidKeys.createdAt,
+    });
 
     return reply.status(201).send({ data: key });
   });
@@ -92,24 +90,33 @@ export default async function pushRoutes(app: FastifyInstance) {
   app.get('/api/v1/push/subscriptions', { preHandler: [app.authenticate] }, async (req) => {
     const { orgId } = req.user as { orgId: string };
     const subs = await db
-      .select({ id: pushSubscriptions.id, contactId: pushSubscriptions.contactId, active: pushSubscriptions.active, createdAt: pushSubscriptions.createdAt })
+      .select({
+        id: pushSubscriptions.id,
+        contactId: pushSubscriptions.contactId,
+        active: pushSubscriptions.active,
+        createdAt: pushSubscriptions.createdAt,
+      })
       .from(pushSubscriptions)
       .where(and(eq(pushSubscriptions.orgId, orgId), eq(pushSubscriptions.active, true)));
 
     return { data: subs };
   });
 
-  app.delete('/api/v1/push/subscriptions/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
-    const { orgId } = req.user as { orgId: string };
-    const { id } = req.params as { id: string };
+  app.delete(
+    '/api/v1/push/subscriptions/:id',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { orgId } = req.user as { orgId: string };
+      const { id } = req.params as { id: string };
 
-    await db
-      .update(pushSubscriptions)
-      .set({ active: false, unsubscribedAt: new Date() })
-      .where(and(eq(pushSubscriptions.id, id), eq(pushSubscriptions.orgId, orgId)));
+      await db
+        .update(pushSubscriptions)
+        .set({ active: false, unsubscribedAt: new Date() })
+        .where(and(eq(pushSubscriptions.id, id), eq(pushSubscriptions.orgId, orgId)));
 
-    return reply.status(204).send();
-  });
+      return reply.status(204).send();
+    },
+  );
 
   // ── Send ──────────────────────────────────────────────────────────────────
 

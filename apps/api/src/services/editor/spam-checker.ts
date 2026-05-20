@@ -34,18 +34,46 @@ export interface SpamCheckResult {
 // ---------------------------------------------------------------------------
 
 const SPAM_WORDS = [
-  'free', 'win', 'winner', 'cash', 'prize', 'click here', 'buy now',
-  'limited time', 'act now', 'urgent', 'guaranteed', 'no cost', 'earn money',
-  'make money', 'mlm', 'weight loss', 'lose weight', 'million dollars',
-  'congratulations', 'selected', 'dear friend', 'dear winner',
-  'increase sales', 'double your income', 'work from home', 'extra income',
-  'no obligation', 'free offer', 'once in a lifetime', 'risk free',
+  'free',
+  'win',
+  'winner',
+  'cash',
+  'prize',
+  'click here',
+  'buy now',
+  'limited time',
+  'act now',
+  'urgent',
+  'guaranteed',
+  'no cost',
+  'earn money',
+  'make money',
+  'mlm',
+  'weight loss',
+  'lose weight',
+  'million dollars',
+  'congratulations',
+  'selected',
+  'dear friend',
+  'dear winner',
+  'increase sales',
+  'double your income',
+  'work from home',
+  'extra income',
+  'no obligation',
+  'free offer',
+  'once in a lifetime',
+  'risk free',
 ];
 
 function checkSubject(subject: string): SpamIssue[] {
   const issues: SpamIssue[] = [];
   if (!subject) {
-    issues.push({ code: 'MISSING_SUBJECT', message: 'Email has no subject line', severity: 'high' });
+    issues.push({
+      code: 'MISSING_SUBJECT',
+      message: 'Email has no subject line',
+      severity: 'high',
+    });
     return issues;
   }
 
@@ -99,7 +127,10 @@ function checkSubject(subject: string): SpamIssue[] {
 
 // Very lightweight HTML helpers — no heavy DOM parser needed
 function extractText(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function extractLinks(html: string): string[] {
@@ -219,10 +250,7 @@ const SEVERITY_POINTS: Record<SpamIssue['severity'], number> = {
  * @param hasPlainText  Pass true if the caller is also sending a plain-text part
  */
 export function checkSpam(subject: string, html: string, hasPlainText = false): SpamCheckResult {
-  const issues: SpamIssue[] = [
-    ...checkSubject(subject),
-    ...checkHtml(html),
-  ];
+  const issues: SpamIssue[] = [...checkSubject(subject), ...checkHtml(html)];
 
   if (!hasPlainText) {
     issues.push({

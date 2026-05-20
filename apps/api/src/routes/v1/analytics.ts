@@ -162,7 +162,10 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     },
     async (req) => {
       const { ids } = z.object({ ids: z.string().min(1) }).parse(req.query);
-      const campaignIds = ids.split(',').map(s => s.trim()).filter(Boolean);
+      const campaignIds = ids
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
       z.array(z.string().uuid()).min(1).max(20).parse(campaignIds);
       const orgId = req.user!.orgId;
       return { data: await compareCampaigns(orgId, campaignIds) };
@@ -190,7 +193,16 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       const { id } = idParam.parse(req.params);
       const orgId = req.user!.orgId;
 
-      let puppeteer: { launch: (...args: unknown[]) => Promise<{ newPage: () => Promise<{ setViewport: (v: { width: number; height: number }) => Promise<void>; setContent: (h: string, o: unknown) => Promise<void>; screenshot: (o: unknown) => Promise<Buffer>; }>; close: () => Promise<void>; }> } | null = null;
+      let puppeteer: {
+        launch: (...args: unknown[]) => Promise<{
+          newPage: () => Promise<{
+            setViewport: (v: { width: number; height: number }) => Promise<void>;
+            setContent: (h: string, o: unknown) => Promise<void>;
+            screenshot: (o: unknown) => Promise<Buffer>;
+          }>;
+          close: () => Promise<void>;
+        }>;
+      } | null = null;
       try {
         const mod = await import('puppeteer');
         puppeteer = mod.default as unknown as typeof puppeteer;
@@ -198,7 +210,8 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         return {
           data: {
             screenshotUrl: null,
-            message: 'Puppeteer is not installed. Install it with: pnpm add puppeteer --filter @forgemsg/api',
+            message:
+              'Puppeteer is not installed. Install it with: pnpm add puppeteer --filter @forgemsg/api',
           },
         };
       }
@@ -221,7 +234,7 @@ export default async function analyticsRoutes(app: FastifyInstance) {
 
       const html =
         typeof campaign.content === 'object' && campaign.content !== null
-          ? (campaign.content as Record<string, unknown>).html as string | undefined
+          ? ((campaign.content as Record<string, unknown>).html as string | undefined)
           : undefined;
 
       if (!html) {
@@ -233,7 +246,9 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         };
       }
 
-      const browser = await puppeteer!.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      const browser = await puppeteer!.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
       const page = await browser.newPage();
       await page.setViewport({ width: 600, height: 800 });
       await page.setContent(html, { waitUntil: 'networkidle0' });

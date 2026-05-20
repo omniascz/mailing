@@ -11,28 +11,38 @@ import { enrichContact, bulkEnrichContacts } from '../../services/enrichment/soc
 
 const enrichmentRoutes: FastifyPluginAsync = async (app) => {
   // Single contact enrichment
-  app.post('/api/v1/enrichment/social/:contactId', {
-    preHandler: [app.authenticate],
-    schema: { tags: ['Enrichment'], summary: 'Enrich a contact with social profile data' },
-  }, async (req) => {
-    const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
-    const profile = await enrichContact(req.user!.orgId, contactId);
-    return { data: profile };
-  });
+  app.post(
+    '/api/v1/enrichment/social/:contactId',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Enrichment'], summary: 'Enrich a contact with social profile data' },
+    },
+    async (req) => {
+      const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
+      const profile = await enrichContact(req.user!.orgId, contactId);
+      return { data: profile };
+    },
+  );
 
   // Bulk enrichment
-  app.post('/api/v1/enrichment/social/bulk', {
-    preHandler: [app.authenticate, app.requireRole('admin', 'owner')],
-    schema: { tags: ['Enrichment'], summary: 'Bulk enrich contacts with social profile data' },
-  }, async (req) => {
-    const body = z.object({
-      contactIds: z.array(z.string().uuid()).min(1).max(500),
-    }).parse(req.body);
+  app.post(
+    '/api/v1/enrichment/social/bulk',
+    {
+      preHandler: [app.authenticate, app.requireRole('admin', 'owner')],
+      schema: { tags: ['Enrichment'], summary: 'Bulk enrich contacts with social profile data' },
+    },
+    async (req) => {
+      const body = z
+        .object({
+          contactIds: z.array(z.string().uuid()).min(1).max(500),
+        })
+        .parse(req.body);
 
-    // Run in background (fire-and-forget for large batches)
-    const result = await bulkEnrichContacts(req.user!.orgId, body.contactIds);
-    return { data: result };
-  });
+      // Run in background (fire-and-forget for large batches)
+      const result = await bulkEnrichContacts(req.user!.orgId, body.contactIds);
+      return { data: result };
+    },
+  );
 };
 
 export default enrichmentRoutes;

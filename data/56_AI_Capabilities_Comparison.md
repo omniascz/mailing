@@ -1640,9 +1640,9 @@ DIFERENCIÁTORY ZŮSTÁVAJÍ:
 ```
 INSIGHTS 2026:
 
-1. "Loomi", "Einstein", "Agentforce", "Breeze", "Sage" 
+1. "Loomi", "Einstein", "Agentforce", "Breeze", "Sage"
    = marketing brands pro AI vědy
-   
+
 2. Skutečná diferenciace = QUALITY OF DATA + EXECUTION
    - Bloomreach: 2. největší ecom dataset
    - Salesforce: CRM data depth
@@ -1687,4 +1687,4 @@ INSIGHTS 2026:
 
 ---
 
-*Tento dokument konsoliduje AI capabilities napříč 27 platformami z dokumentů 01-54. Pro detailní pohled na konkrétní AI features dané platformy viz příslušný Features DeepDive dokument.*
+_Tento dokument konsoliduje AI capabilities napříč 27 platformami z dokumentů 01-54. Pro detailní pohled na konkrétní AI features dané platformy viz příslušný Features DeepDive dokument._

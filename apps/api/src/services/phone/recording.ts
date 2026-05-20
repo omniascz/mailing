@@ -29,9 +29,7 @@ export async function storeRecording(
 ): Promise<RecordingInfo> {
   const recordingUrl = await downloadAndUpload(provider, providerRecordingSid, orgId, callId);
 
-  await db.update(calls)
-    .set({ recordingUrl, updatedAt: new Date() })
-    .where(eq(calls.id, callId));
+  await db.update(calls).set({ recordingUrl, updatedAt: new Date() }).where(eq(calls.id, callId));
 
   return {
     callId,
@@ -57,7 +55,10 @@ async function downloadAndUpload(
   return storageUrl;
 }
 
-async function getProviderRecordingUrl(provider: 'twilio' | 'telnyx', sid: string): Promise<string> {
+async function getProviderRecordingUrl(
+  provider: 'twilio' | 'telnyx',
+  sid: string,
+): Promise<string> {
   if (provider === 'twilio') {
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -99,8 +100,12 @@ async function uploadToS3(sourceUrl: string, key: string): Promise<string> {
 }
 
 async function getPresignedPutUrl(
-  endpoint: string, port: string, bucket: string, key: string,
-  _accessKey: string, _secretKey: string,
+  endpoint: string,
+  port: string,
+  bucket: string,
+  key: string,
+  _accessKey: string,
+  _secretKey: string,
 ): Promise<string> {
   // Simplified presigned URL generation — in production use @aws-sdk/s3-request-presigner
   const host = `${endpoint}:${port}`;

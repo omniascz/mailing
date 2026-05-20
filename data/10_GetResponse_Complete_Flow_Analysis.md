@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `09_GetResponse_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** GetResponse umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **3 predefinované role** (Administrator, Marketer, Designer) + **unlimited custom roles** s **role-based access control** (Marketer+)
 > - **Multi-user (Team feature)** jen jako add-on nebo include v MAX – ne unlimited zdarma jako Klaviyo
 > - **Multiple Accounts** (MAX/MAX2) – multi-brand / agency model
@@ -113,20 +114,20 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Account creation | Vše + billing + close account | Vše |
-| **Administrator** | Pozvánka od Owner | Vše krom billing, Team, Affiliate | Vše krom billing |
-| **Marketer** | Pozvánka | Email, automation, analytics | Marketing tools |
-| **Designer** | Pozvánka | Drafts only (newsletters, forms, landing pages) | Design + drafts |
-| **Custom Role User** | Pozvánka s custom role | Per role definition | Per role |
-| **Account-specific Admin (MAX)** | Created v parent account | Manage one specific account | One account |
-| **Subscriber / Contact** | Form, import, webhook, API | Otevírá emaily, klikne, registruje se na webinar | Své emaily + preference center |
-| **Webinar attendee** | Webinar registration | Watches webinar, chats, polls | Webinar interface |
-| **Course student** | Course enrollment | Watches lessons, takes quizzes | Course portal |
-| **API Client** | API key | Per scope | Per scope |
-| **Integration** (Shopify, WP) | OAuth/plugin | Sync data | Per OAuth scope |
-| **GetResponse Staff** | Interní s consentem | Debug/support | Limited |
+| Aktér                            | Vstupní bod                | Co dělá                                          | Co vidí                        |
+| -------------------------------- | -------------------------- | ------------------------------------------------ | ------------------------------ |
+| **Account Owner**                | Account creation           | Vše + billing + close account                    | Vše                            |
+| **Administrator**                | Pozvánka od Owner          | Vše krom billing, Team, Affiliate                | Vše krom billing               |
+| **Marketer**                     | Pozvánka                   | Email, automation, analytics                     | Marketing tools                |
+| **Designer**                     | Pozvánka                   | Drafts only (newsletters, forms, landing pages)  | Design + drafts                |
+| **Custom Role User**             | Pozvánka s custom role     | Per role definition                              | Per role                       |
+| **Account-specific Admin (MAX)** | Created v parent account   | Manage one specific account                      | One account                    |
+| **Subscriber / Contact**         | Form, import, webhook, API | Otevírá emaily, klikne, registruje se na webinar | Své emaily + preference center |
+| **Webinar attendee**             | Webinar registration       | Watches webinar, chats, polls                    | Webinar interface              |
+| **Course student**               | Course enrollment          | Watches lessons, takes quizzes                   | Course portal                  |
+| **API Client**                   | API key                    | Per scope                                        | Per scope                      |
+| **Integration** (Shopify, WP)    | OAuth/plugin               | Sync data                                        | Per OAuth scope                |
+| **GetResponse Staff**            | Interní s consentem        | Debug/support                                    | Limited                        |
 
 ---
 
@@ -137,12 +138,14 @@ GetResponse má **3 default predefinované role + unlimited custom roles**.
 ### 2.1 Tři predefinované role
 
 #### A) Administrator
+
 - **Full control** krom Billing, Team management, Affiliate program
 - Manage **vše** co Owner může krom finančních operací
 - **Can manage other users** (kromě Owner-level changes)
 - Most often role pro internal team leads
 
 #### B) Marketer
+
 - **Access to specific features** (configurable)
 - Plný přístup k:
   - Email marketing (create, send, view stats)
@@ -159,6 +162,7 @@ GetResponse má **3 default predefinované role + unlimited custom roles**.
 - **Per-list access** – může být restricted na specific lists
 
 #### C) Designer
+
 - **Design only role** – creates drafts
 - Permissions:
   - Design newsletters (CANNOT send)
@@ -174,16 +178,19 @@ GetResponse má **3 default predefinované role + unlimited custom roles**.
 Custom roles + predefined roles define permissions in těchto kategoriích:
 
 #### Account & Billing
+
 - Manage plan, billing
 - Account settings
 - Brand management
 
 #### User Management
+
 - Team management
 - Add/edit users
 - Create/edit roles
 
 #### Lists & Contacts
+
 - View contacts
 - Edit contacts
 - Import contacts
@@ -193,16 +200,19 @@ Custom roles + predefined roles define permissions in těchto kategoriích:
 - Suppression list
 
 #### Email Marketing (Newsletters)
+
 - No access
 - **Design only** (cannot send)
 - **Full control** (design + send)
 - View statistics
 
 #### Autoresponders
+
 - Manage autoresponders
 - View statistics
 
 #### Marketing Automation
+
 - View workflows
 - Create/edit workflows
 - Activate/deactivate workflows
@@ -210,110 +220,123 @@ Custom roles + predefined roles define permissions in těchto kategoriích:
 - **Note:** Access to MA automatically gives access to lists used in workflows (cross-permission!)
 
 #### Forms & Popups
+
 - No access
 - Design only
 - Full control
 - View statistics
 
 #### Landing Pages
+
 - No access
 - Design only
 - Full control
 - View statistics
 
 #### Websites
+
 - No access
 - Full control
 
 #### Webinars
+
 - No access
 - Schedule and manage (if has email send rights)
 - Full control
 
 #### Funnels
+
 - No access
 - Create funnels
 - Full control
 
 #### Live Chat (Chats)
+
 - View chats
 - Operator role (handle chats)
 - Full administrator
 
 #### Quick Transactional Emails
+
 - No access
 - Create/edit + view stats
 
 #### Online Courses (Content Monetization)
+
 - No access
 - Create/edit courses
 - Full control
 
 #### Push Notifications
+
 - No access
 - Create/edit/send
 
 #### SMS (MAX+)
+
 - No access
 - Full control
 
 #### Integrations
+
 - No access
 - Manage integrations
 
 #### API
+
 - No access
 - Manage API keys
 
 #### Reports
+
 - View specific reports
 
 ### 2.3 Permission matrix (predefined roles)
 
-| Akce | Owner | Administrator | Marketer | Designer |
-|---|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |
-| Manage plan, billing | ✅ | ❌ | ❌ | ❌ |
-| Close account | ✅ | ❌ | ❌ | ❌ |
-| Manage affiliate program | ✅ | ❌ | ❌ | ❌ |
-| **User Management** |  |  |  |  |
-| Manage Team (users + roles) | ✅ | ❌* | ❌ | ❌ |
-| **Lists & Contacts** |  |  |  |  |
-| View contacts | ✅ | ✅ | ✅ | ✅* |
-| Edit contacts | ✅ | ✅ | ✅ | ❌ |
-| Import contacts | ✅ | ✅ | ✅ | ❌ |
-| Export contacts | ✅ | ✅ | ✅ | ❌ |
-| **Email Marketing** |  |  |  |  |
-| Design newsletters | ✅ | ✅ | ✅ | ✅ |
-| Send newsletters | ✅ | ✅ | ✅ | ❌ |
-| View statistics | ✅ | ✅ | ✅ | ❌ |
-| **Marketing Automation** |  |  |  |  |
-| Create/edit workflows | ✅ | ✅ | ✅ | ❌ |
-| Activate workflows | ✅ | ✅ | ✅ | ❌ |
-| **Forms & Landing Pages** |  |  |  |  |
-| Design | ✅ | ✅ | ✅ | ✅ |
-| Publish | ✅ | ✅ | ✅ | ❌ |
-| **Webinars** |  |  |  |  |
-| Schedule webinars | ✅ | ✅ | ✅ | ❌ |
-| Run webinars | ✅ | ✅ | ✅ | ❌ |
-| **Online Courses** |  |  |  |  |
-| Create courses | ✅ | ✅ | ✅ | ❌ |
-| **Funnels** |  |  |  |  |
-| Create funnels | ✅ | ✅ | ✅ | ❌ |
-| **Live Chat** |  |  |  |  |
-| Handle chats | ✅ | ✅ | ✅ | ❌ |
-| Admin chat settings | ✅ | ✅ | ❌ | ❌ |
-| **Push Notifications** |  |  |  |  |
-| Create/send push | ✅ | ✅ | ✅ | ❌ |
-| **SMS (MAX+)** |  |  |  |  |
-| Send SMS | ✅ | ✅ | ✅ | ❌ |
-| **Integrations & API** |  |  |  |  |
-| Manage integrations | ✅ | ✅ | ❌ | ❌ |
-| Manage API keys | ✅ | ✅ | ❌ | ❌ |
-| **Reports** |  |  |  |  |
-| View reports | ✅ | ✅ | ✅ | view drafts only |
+| Akce                        | Owner | Administrator | Marketer |     Designer     |
+| --------------------------- | :---: | :-----------: | :------: | :--------------: |
+| **Account & Billing**       |       |               |          |                  |
+| Manage plan, billing        |  ✅   |      ❌       |    ❌    |        ❌        |
+| Close account               |  ✅   |      ❌       |    ❌    |        ❌        |
+| Manage affiliate program    |  ✅   |      ❌       |    ❌    |        ❌        |
+| **User Management**         |       |               |          |                  |
+| Manage Team (users + roles) |  ✅   |     ❌\*      |    ❌    |        ❌        |
+| **Lists & Contacts**        |       |               |          |                  |
+| View contacts               |  ✅   |      ✅       |    ✅    |       ✅\*       |
+| Edit contacts               |  ✅   |      ✅       |    ✅    |        ❌        |
+| Import contacts             |  ✅   |      ✅       |    ✅    |        ❌        |
+| Export contacts             |  ✅   |      ✅       |    ✅    |        ❌        |
+| **Email Marketing**         |       |               |          |                  |
+| Design newsletters          |  ✅   |      ✅       |    ✅    |        ✅        |
+| Send newsletters            |  ✅   |      ✅       |    ✅    |        ❌        |
+| View statistics             |  ✅   |      ✅       |    ✅    |        ❌        |
+| **Marketing Automation**    |       |               |          |                  |
+| Create/edit workflows       |  ✅   |      ✅       |    ✅    |        ❌        |
+| Activate workflows          |  ✅   |      ✅       |    ✅    |        ❌        |
+| **Forms & Landing Pages**   |       |               |          |                  |
+| Design                      |  ✅   |      ✅       |    ✅    |        ✅        |
+| Publish                     |  ✅   |      ✅       |    ✅    |        ❌        |
+| **Webinars**                |       |               |          |                  |
+| Schedule webinars           |  ✅   |      ✅       |    ✅    |        ❌        |
+| Run webinars                |  ✅   |      ✅       |    ✅    |        ❌        |
+| **Online Courses**          |       |               |          |                  |
+| Create courses              |  ✅   |      ✅       |    ✅    |        ❌        |
+| **Funnels**                 |       |               |          |                  |
+| Create funnels              |  ✅   |      ✅       |    ✅    |        ❌        |
+| **Live Chat**               |       |               |          |                  |
+| Handle chats                |  ✅   |      ✅       |    ✅    |        ❌        |
+| Admin chat settings         |  ✅   |      ✅       |    ❌    |        ❌        |
+| **Push Notifications**      |       |               |          |                  |
+| Create/send push            |  ✅   |      ✅       |    ✅    |        ❌        |
+| **SMS (MAX+)**              |       |               |          |                  |
+| Send SMS                    |  ✅   |      ✅       |    ✅    |        ❌        |
+| **Integrations & API**      |       |               |          |                  |
+| Manage integrations         |  ✅   |      ✅       |    ❌    |        ❌        |
+| Manage API keys             |  ✅   |      ✅       |    ❌    |        ❌        |
+| **Reports**                 |       |               |          |                  |
+| View reports                |  ✅   |      ✅       |    ✅    | view drafts only |
 
-*Asterisks:* Administrator může mít user management povolen, pokud Owner explicitně povolí v custom role.
+_Asterisks:_ Administrator může mít user management povolen, pokud Owner explicitně povolí v custom role.
 
 ### 2.4 Custom Roles
 
@@ -354,15 +377,15 @@ Save
 
 #### Per plan limity (default included)
 
-| Plán | Users included |
-|---|---|
-| Free | 1 (Owner only) |
-| Starter | 3 (Owner + 2) |
-| Marketer | 5 (Owner + 4) |
-| Creator | 5 (Owner + 4) |
-| Ecommerce Marketing | 5 (Owner + 4) |
-| MAX | 10+ (custom) |
-| MAX2 | Unlimited |
+| Plán                | Users included |
+| ------------------- | -------------- |
+| Free                | 1 (Owner only) |
+| Starter             | 3 (Owner + 2)  |
+| Marketer            | 5 (Owner + 4)  |
+| Creator             | 5 (Owner + 4)  |
+| Ecommerce Marketing | 5 (Owner + 4)  |
+| MAX                 | 10+ (custom)   |
+| MAX2                | Unlimited      |
 
 #### Team add-on
 
@@ -806,18 +829,21 @@ Save → applies to ALL users with this role
 ### 7.4 Common custom role examples
 
 #### "Copy Editor"
+
 - Newsletter: Design only
 - Lists: View only (specific lists)
 - Reports: No
 - Everything else: No
 
 #### "Webinar Manager"
+
 - Webinars: Full control
 - Newsletters: Design only (for webinar invites)
 - Marketing Automation: View workflow (for webinar workflows)
 - Everything else: No
 
 #### "Course Creator"
+
 - Online Courses: Full control
 - Newsletters: Send (for course communications)
 - Lists: Full (specific course lists)
@@ -825,6 +851,7 @@ Save → applies to ALL users with this role
 - Everything else: No
 
 #### "Reporting Analyst"
+
 - All sections: View only
 - Reports: Full view
 - No edit anywhere
@@ -938,6 +965,7 @@ Drill-down to specific account
 ### 9.1 Sign-up methods
 
 #### A) Form submission (popup, embedded)
+
 ```
 Visitor fills GetResponse form
    ↓
@@ -957,6 +985,7 @@ Workflow trigger fires (if active)
 ```
 
 #### B) Double opt-in (recommended)
+
 ```
 Form submission
    ↓
@@ -974,6 +1003,7 @@ Workflow trigger fires
 ```
 
 #### C) E-commerce integration sync
+
 ```
 Customer creates account on Shopify
    ↓
@@ -985,6 +1015,7 @@ Add to designated list (per integration config)
 ```
 
 #### D) Manual import (CSV)
+
 ```
 Admin: Contacts → Import contacts
    ↓
@@ -1006,6 +1037,7 @@ Contacts added
 ```
 
 #### E) API
+
 ```
 External system → POST /v3/contacts
    ↓
@@ -1101,6 +1133,7 @@ If was unsubscribed normally:
 ### 9.6 Bounce handling
 
 #### Hard bounce
+
 ```
 ISP returns 5xx
    ↓
@@ -1114,6 +1147,7 @@ Status: "Bounced"
 ```
 
 #### Soft bounce
+
 ```
 ISP returns 4xx (mailbox full, server issue)
    ↓
@@ -1399,13 +1433,13 @@ Reaches end of cycle → no more autoresponders
 
 ### 12.4 Autoresponders vs. Workflows
 
-| Aspect | Autoresponders | Workflows |
-|---|---|---|
-| Setup complexity | Simple | Medium |
-| Logic | Linear time-based | Conditional, event-based |
-| Available on | All plans | Marketer+ |
-| Best for | Simple welcome series, drip courses | Behavioral, complex journeys |
-| Coexists | Yes – runs in parallel | Yes – can reference autoresponders |
+| Aspect           | Autoresponders                      | Workflows                          |
+| ---------------- | ----------------------------------- | ---------------------------------- |
+| Setup complexity | Simple                              | Medium                             |
+| Logic            | Linear time-based                   | Conditional, event-based           |
+| Available on     | All plans                           | Marketer+                          |
+| Best for         | Simple welcome series, drip courses | Behavioral, complex journeys       |
+| Coexists         | Yes – runs in parallel              | Yes – can reference autoresponders |
 
 ### 12.5 Workflow referencing autoresponders
 
@@ -1961,6 +1995,7 @@ Provides download link (time-limited)
 ### 17.4 Consent tracking
 
 For each contact:
+
 - Per-consent field timestamp + IP
 - Opt-in source (form ID, import, API, integration)
 - Double opt-in audit (if applicable)
@@ -1969,6 +2004,7 @@ For each contact:
 ### 17.5 Consent Fields
 
 GetResponse-specific feature:
+
 ```
 Settings → Custom fields → Add consent field
    ↓
@@ -1992,31 +2028,31 @@ Workflow filter: "Consent value: yes for [field]"
 
 ## 18. Datová mapa: co vidí kdo
 
-| Data | Owner | Administrator | Marketer | Designer | Custom Role | MAX Account Admin | Subscriber | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Billing & subscription | ✅ | ❌ | ❌ | ❌ | per role | one account only | ❌ | per scope |
-| Team management | ✅ | per role | ❌ | ❌ | per role | one account only | ❌ | per scope |
-| All contacts | ✅ | ✅ | per role | view only | per role | one account only | jen sebe | ✅ |
-| Edit contacts | ✅ | ✅ | per role | ❌ | per role | one account | ❌ | ✅ |
-| Lists & segments | ✅ | ✅ | full/partial | view limited | per role | one account | – | ✅ |
-| Email campaigns | ✅ | ✅ | full | drafts only | per role | one account | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | full | ❌ | per role | one account | ❌ | ✅ |
-| Marketing Automation | ✅ | ✅ | full | ❌ | per role | one account | ❌ | ✅ |
-| Forms | ✅ | ✅ | full | drafts only | per role | one account | – | ✅ |
-| Landing pages | ✅ | ✅ | full | drafts only | per role | one account | – | ✅ |
-| Websites | ✅ | ✅ | per role | ❌ | per role | one account | – | per scope |
-| Webinars | ✅ | ✅ | full | ❌ | per role | one account | jen registr. | per scope |
-| Courses | ✅ | ✅ | full | ❌ | per role | one account | jen enrolled | per scope |
-| Funnels | ✅ | ✅ | full | ❌ | per role | one account | ❌ | per scope |
-| Live chat | ✅ | ✅ | operator | ❌ | per role | one account | own chats | per scope |
-| Push notifications | ✅ | ✅ | full | ❌ | per role | one account | jen co dostal | per scope |
-| SMS (MAX+) | ✅ | ✅ | full | ❌ | per role | one account | jen co dostal | per scope |
-| Reports | ✅ | ✅ | full | drafts only | per role | one account | ❌ | ✅ |
-| API keys | ✅ | ✅ | ❌ | ❌ | per role | one account | ❌ | – |
-| Integrations | ✅ | ✅ | ❌ | ❌ | per role | one account | ❌ | per scope |
-| Domain settings | ✅ | ✅ | ❌ | ❌ | per role | one account | ❌ | per scope |
-| GDPR delete | ✅ | ✅ | per role | ❌ | per role | one account | request | per scope |
-| Cross-account view (MAX2) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Data                      | Owner | Administrator |   Marketer   |   Designer   | Custom Role | MAX Account Admin |  Subscriber   |    API    |
+| ------------------------- | :---: | :-----------: | :----------: | :----------: | :---------: | :---------------: | :-----------: | :-------: |
+| Billing & subscription    |  ✅   |      ❌       |      ❌      |      ❌      |  per role   | one account only  |      ❌       | per scope |
+| Team management           |  ✅   |   per role    |      ❌      |      ❌      |  per role   | one account only  |      ❌       | per scope |
+| All contacts              |  ✅   |      ✅       |   per role   |  view only   |  per role   | one account only  |   jen sebe    |    ✅     |
+| Edit contacts             |  ✅   |      ✅       |   per role   |      ❌      |  per role   |    one account    |      ❌       |    ✅     |
+| Lists & segments          |  ✅   |      ✅       | full/partial | view limited |  per role   |    one account    |       –       |    ✅     |
+| Email campaigns           |  ✅   |      ✅       |     full     | drafts only  |  per role   |    one account    | jen co dostal |    ✅     |
+| Send campaigns            |  ✅   |      ✅       |     full     |      ❌      |  per role   |    one account    |      ❌       |    ✅     |
+| Marketing Automation      |  ✅   |      ✅       |     full     |      ❌      |  per role   |    one account    |      ❌       |    ✅     |
+| Forms                     |  ✅   |      ✅       |     full     | drafts only  |  per role   |    one account    |       –       |    ✅     |
+| Landing pages             |  ✅   |      ✅       |     full     | drafts only  |  per role   |    one account    |       –       |    ✅     |
+| Websites                  |  ✅   |      ✅       |   per role   |      ❌      |  per role   |    one account    |       –       | per scope |
+| Webinars                  |  ✅   |      ✅       |     full     |      ❌      |  per role   |    one account    | jen registr.  | per scope |
+| Courses                   |  ✅   |      ✅       |     full     |      ❌      |  per role   |    one account    | jen enrolled  | per scope |
+| Funnels                   |  ✅   |      ✅       |     full     |      ❌      |  per role   |    one account    |      ❌       | per scope |
+| Live chat                 |  ✅   |      ✅       |   operator   |      ❌      |  per role   |    one account    |   own chats   | per scope |
+| Push notifications        |  ✅   |      ✅       |     full     |      ❌      |  per role   |    one account    | jen co dostal | per scope |
+| SMS (MAX+)                |  ✅   |      ✅       |     full     |      ❌      |  per role   |    one account    | jen co dostal | per scope |
+| Reports                   |  ✅   |      ✅       |     full     | drafts only  |  per role   |    one account    |      ❌       |    ✅     |
+| API keys                  |  ✅   |      ✅       |      ❌      |      ❌      |  per role   |    one account    |      ❌       |     –     |
+| Integrations              |  ✅   |      ✅       |      ❌      |      ❌      |  per role   |    one account    |      ❌       | per scope |
+| Domain settings           |  ✅   |      ✅       |      ❌      |      ❌      |  per role   |    one account    |      ❌       | per scope |
+| GDPR delete               |  ✅   |      ✅       |   per role   |      ❌      |  per role   |    one account    |    request    | per scope |
+| Cross-account view (MAX2) |  ✅   |      ❌       |      ❌      |      ❌      |     ❌      |        ❌         |      ❌       |    ❌     |
 
 ---
 
@@ -2138,4 +2174,4 @@ Pokud GetResponse používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů getresponse.com/help, getresponse.com/features a praktických zdrojů (EmailVendorSelection, EmailToolTester, Sender, ITQlick, Research.com, TodayTesting, SoftHubTools, Tekpon, That Marketing Buddy, Ecommerce Paradise). Pro nejaktuálnější detaily vždy konzultovat GetResponse Help Center.*
+_Dokument zpracován z oficiálních zdrojů getresponse.com/help, getresponse.com/features a praktických zdrojů (EmailVendorSelection, EmailToolTester, Sender, ITQlick, Research.com, TodayTesting, SoftHubTools, Tekpon, That Marketing Buddy, Ecommerce Paradise). Pro nejaktuálnější detaily vždy konzultovat GetResponse Help Center._

@@ -37,13 +37,7 @@ const createSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().max(2000).optional(),
   winnerMetric: z
-    .enum([
-      'open_rate',
-      'click_rate',
-      'click_to_open_rate',
-      'conversion_rate',
-      'revenue_per_email',
-    ])
+    .enum(['open_rate', 'click_rate', 'click_to_open_rate', 'conversion_rate', 'revenue_per_email'])
     .optional(),
   testAudiencePercent: z.number().min(5).max(100).optional(),
   testWindowHours: z.number().min(1).max(168).optional(),

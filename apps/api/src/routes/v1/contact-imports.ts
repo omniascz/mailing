@@ -61,15 +61,22 @@ export default async function contactImportRoutes(app: FastifyInstance) {
       if (!format) throw AppError.badRequest('Unsupported file format (expected .csv or .xlsx)');
 
       await mkdir(UPLOAD_DIR, { recursive: true });
-      const storagePath = path.join(UPLOAD_DIR, `${crypto.randomUUID()}-${path.basename(mpFile.filename)}`);
+      const storagePath = path.join(
+        UPLOAD_DIR,
+        `${crypto.randomUUID()}-${path.basename(mpFile.filename)}`,
+      );
       let fileSize = 0;
 
-      await pipeline(mpFile.file, async function* (source) {
-        for await (const chunk of source) {
-          fileSize += (chunk as Buffer).length;
-          yield chunk;
-        }
-      }, createWriteStream(storagePath));
+      await pipeline(
+        mpFile.file,
+        async function* (source) {
+          for await (const chunk of source) {
+            fileSize += (chunk as Buffer).length;
+            yield chunk;
+          }
+        },
+        createWriteStream(storagePath),
+      );
 
       if (mpFile.file.truncated) {
         throw AppError.badRequest(`File exceeds max size of ${MAX_FILE_BYTES} bytes`);
@@ -172,7 +179,9 @@ export default async function contactImportRoutes(app: FastifyInstance) {
       const { id } = idParamSchema.parse(request.params);
       const job = await requireJob(request.user!.orgId, id);
       if (job.status !== 'mapped') {
-        throw AppError.badRequest(`Import must be in status 'mapped' to execute (was ${job.status})`);
+        throw AppError.badRequest(
+          `Import must be in status 'mapped' to execute (was ${job.status})`,
+        );
       }
 
       // Fire and forget — progress is persisted to the import_jobs row.

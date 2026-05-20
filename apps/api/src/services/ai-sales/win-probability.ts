@@ -12,14 +12,12 @@
 
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  deals, dealStageHistory, contacts, emailEvents,
-} from '../../db/schema/index.js';
+import { deals, dealStageHistory, contacts, emailEvents } from '../../db/schema/index.js';
 import { getPipeline, stageFromPipeline } from '../crm/pipelines.js';
 import { AppError } from '../../lib/app-error.js';
 
 export interface WinProbabilityFeatures {
-  stageProbability: number;     // 0..100 (from pipeline stage)
+  stageProbability: number; // 0..100 (from pipeline stage)
   dealAgeDays: number;
   daysInCurrentStage: number;
   daysPastExpectedClose: number; // negative = future
@@ -31,7 +29,7 @@ export interface WinProbabilityFeatures {
 
 export interface WinProbabilityResult {
   dealId: string;
-  probability: number;  // 0..1
+  probability: number; // 0..1
   confidence: 'low' | 'medium' | 'high';
   features: WinProbabilityFeatures;
   factors: Array<{ factor: string; impact: number; note: string }>;
@@ -41,12 +39,17 @@ function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
 }
 
-async function loadFeatures(orgId: string, dealId: string): Promise<{
+async function loadFeatures(
+  orgId: string,
+  dealId: string,
+): Promise<{
   features: WinProbabilityFeatures;
   deal: typeof deals.$inferSelect;
   stageProbability: number;
 }> {
-  const [deal] = await db.select().from(deals)
+  const [deal] = await db
+    .select()
+    .from(deals)
     .where(and(eq(deals.id, dealId), eq(deals.orgId, orgId), isNull(deals.deletedAt)));
   if (!deal) throw AppError.notFound('Deal not found');
   if (deal.status !== 'open') throw AppError.badRequest('Deal is already closed');
@@ -57,12 +60,17 @@ async function loadFeatures(orgId: string, dealId: string): Promise<{
 
   const now = Date.now();
   const dealAgeDays = Math.max(0, Math.floor((now - deal.createdAt.getTime()) / 86_400_000));
-  const daysInCurrentStage = Math.max(0, Math.floor((now - deal.stageChangedAt.getTime()) / 86_400_000));
+  const daysInCurrentStage = Math.max(
+    0,
+    Math.floor((now - deal.stageChangedAt.getTime()) / 86_400_000),
+  );
   const daysPastExpectedClose = deal.expectedCloseDate
     ? Math.floor((now - deal.expectedCloseDate.getTime()) / 86_400_000)
     : 0;
 
-  const historyRows = await db.select({ id: dealStageHistory.id }).from(dealStageHistory)
+  const historyRows = await db
+    .select({ id: dealStageHistory.id })
+    .from(dealStageHistory)
     .where(eq(dealStageHistory.dealId, dealId));
   const stageMoveCount = historyRows.length;
 
@@ -71,18 +79,19 @@ async function loadFeatures(orgId: string, dealId: string): Promise<{
   let recentEmailClicks30d = 0;
 
   if (deal.contactId) {
-    const [contact] = await db.select({ leadScore: contacts.leadScore })
-      .from(contacts).where(eq(contacts.id, deal.contactId));
+    const [contact] = await db
+      .select({ leadScore: contacts.leadScore })
+      .from(contacts)
+      .where(eq(contacts.id, deal.contactId));
     contactEngagementScore = clamp(contact?.leadScore ?? 0, 0, 100);
 
     const thirtyDaysAgo = new Date(now - 30 * 86_400_000);
-    const recentEvents = await db.select({
-      eventType: emailEvents.eventType,
-    }).from(emailEvents)
-      .where(and(
-        eq(emailEvents.contactId, deal.contactId),
-        eq(emailEvents.orgId, orgId),
-      ))
+    const recentEvents = await db
+      .select({
+        eventType: emailEvents.eventType,
+      })
+      .from(emailEvents)
+      .where(and(eq(emailEvents.contactId, deal.contactId), eq(emailEvents.orgId, orgId)))
       .orderBy(desc(emailEvents.createdAt))
       .limit(500);
 
@@ -124,14 +133,22 @@ function scoreFromFeatures(f: WinProbabilityFeatures): {
   if (f.daysInCurrentStage > 30) {
     const impact = -clamp((f.daysInCurrentStage - 30) / 200, 0, 0.2);
     score += impact;
-    factors.push({ factor: 'stagnation', impact, note: `${f.daysInCurrentStage}d in current stage` });
+    factors.push({
+      factor: 'stagnation',
+      impact,
+      note: `${f.daysInCurrentStage}d in current stage`,
+    });
   }
 
   // Overdue penalty
   if (f.daysPastExpectedClose > 0) {
     const impact = -clamp(f.daysPastExpectedClose / 100, 0, 0.25);
     score += impact;
-    factors.push({ factor: 'overdue', impact, note: `${f.daysPastExpectedClose}d past expected close` });
+    factors.push({
+      factor: 'overdue',
+      impact,
+      note: `${f.daysPastExpectedClose}d past expected close`,
+    });
   }
 
   // Forward momentum
@@ -149,14 +166,22 @@ function scoreFromFeatures(f: WinProbabilityFeatures): {
   } else if (f.contactEngagementScore < 10 && f.dealAgeDays > 14) {
     const impact = -0.07;
     score += impact;
-    factors.push({ factor: 'low_engagement', impact, note: `lead score ${f.contactEngagementScore}` });
+    factors.push({
+      factor: 'low_engagement',
+      impact,
+      note: `lead score ${f.contactEngagementScore}`,
+    });
   }
 
   // Recent activity
   if (f.recentEmailOpens30d + f.recentEmailClicks30d >= 3) {
     const impact = 0.05;
     score += impact;
-    factors.push({ factor: 'recent_activity', impact, note: `${f.recentEmailOpens30d} opens / ${f.recentEmailClicks30d} clicks in 30d` });
+    factors.push({
+      factor: 'recent_activity',
+      impact,
+      note: `${f.recentEmailOpens30d} opens / ${f.recentEmailClicks30d} clicks in 30d`,
+    });
   }
 
   return { probability: clamp(score, 0.02, 0.98), factors };
@@ -188,16 +213,22 @@ export async function winProbabilityForPipeline(
   pipelineId: string,
   limit = 100,
 ): Promise<WinProbabilityResult[]> {
-  const rows = await db.select({ id: deals.id }).from(deals)
-    .where(and(
-      eq(deals.orgId, orgId),
-      eq(deals.pipelineId, pipelineId),
-      eq(deals.status, 'open'),
-      isNull(deals.deletedAt),
-    ))
+  const rows = await db
+    .select({ id: deals.id })
+    .from(deals)
+    .where(
+      and(
+        eq(deals.orgId, orgId),
+        eq(deals.pipelineId, pipelineId),
+        eq(deals.status, 'open'),
+        isNull(deals.deletedAt),
+      ),
+    )
     .orderBy(desc(deals.updatedAt))
     .limit(limit);
 
-  const results = await Promise.allSettled(rows.map(r => winProbability(orgId, r.id)));
-  return results.filter((r): r is PromiseFulfilledResult<WinProbabilityResult> => r.status === 'fulfilled').map(r => r.value);
+  const results = await Promise.allSettled(rows.map((r) => winProbability(orgId, r.id)));
+  return results
+    .filter((r): r is PromiseFulfilledResult<WinProbabilityResult> => r.status === 'fulfilled')
+    .map((r) => r.value);
 }

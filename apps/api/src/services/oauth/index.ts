@@ -17,27 +17,42 @@ function randomToken(bytes = 32): string {
   return randomBytes(bytes).toString('base64url');
 }
 
-export async function registerApp(orgId: string, data: {
-  name: string; redirectUris: string[]; scopes: string[];
-}) {
+export async function registerApp(
+  orgId: string,
+  data: {
+    name: string;
+    redirectUris: string[];
+    scopes: string[];
+  },
+) {
   const clientId = randomToken(18);
   const clientSecret = randomToken(32);
-  const [row] = await db.insert(oauthApps).values({
-    orgId,
-    name: data.name,
-    clientId,
-    clientSecretHash: hash(clientSecret),
-    redirectUris: data.redirectUris,
-    scopes: data.scopes,
-  }).returning();
+  const [row] = await db
+    .insert(oauthApps)
+    .values({
+      orgId,
+      name: data.name,
+      clientId,
+      clientSecretHash: hash(clientSecret),
+      redirectUris: data.redirectUris,
+      scopes: data.scopes,
+    })
+    .returning();
   return { app: row!, clientSecret };
 }
 
 export async function issueAuthCode(params: {
-  clientId: string; userId: string; orgId: string; redirectUri: string; scopes: string[];
+  clientId: string;
+  userId: string;
+  orgId: string;
+  redirectUri: string;
+  scopes: string[];
 }): Promise<string> {
-  const [apprec] = await db.select().from(oauthApps)
-    .where(eq(oauthApps.clientId, params.clientId)).limit(1);
+  const [apprec] = await db
+    .select()
+    .from(oauthApps)
+    .where(eq(oauthApps.clientId, params.clientId))
+    .limit(1);
   if (!apprec) throw AppError.badRequest('Unknown client_id');
   if (!apprec.redirectUris.includes(params.redirectUri)) {
     throw AppError.badRequest('redirect_uri not registered');
@@ -57,10 +72,16 @@ export async function issueAuthCode(params: {
 }
 
 export async function exchangeCode(params: {
-  code: string; clientId: string; clientSecret: string; redirectUri: string;
+  code: string;
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
 }): Promise<{ accessToken: string; refreshToken: string; expiresIn: number; scope: string }> {
-  const [apprec] = await db.select().from(oauthApps)
-    .where(eq(oauthApps.clientId, params.clientId)).limit(1);
+  const [apprec] = await db
+    .select()
+    .from(oauthApps)
+    .where(eq(oauthApps.clientId, params.clientId))
+    .limit(1);
   if (!apprec) throw AppError.unauthorized('Invalid client');
 
   const hashBuf = Buffer.from(hash(params.clientSecret));
@@ -69,7 +90,9 @@ export async function exchangeCode(params: {
     throw AppError.unauthorized('Invalid client secret');
   }
 
-  const [cr] = await db.select().from(oauthCodes)
+  const [cr] = await db
+    .select()
+    .from(oauthCodes)
     .where(and(eq(oauthCodes.code, params.code), gt(oauthCodes.expiresAt, new Date())))
     .limit(1);
   if (!cr) throw AppError.badRequest('Code expired or invalid');
@@ -91,21 +114,30 @@ export async function exchangeCode(params: {
   return { accessToken, refreshToken, expiresIn: 3600, scope: cr.scopes.join(' ') };
 }
 
-export async function refreshToken(refreshTokenPlain: string): Promise<{ accessToken: string; expiresIn: number }> {
-  const [row] = await db.select().from(oauthTokens)
-    .where(eq(oauthTokens.refreshTokenHash, hash(refreshTokenPlain))).limit(1);
+export async function refreshToken(
+  refreshTokenPlain: string,
+): Promise<{ accessToken: string; expiresIn: number }> {
+  const [row] = await db
+    .select()
+    .from(oauthTokens)
+    .where(eq(oauthTokens.refreshTokenHash, hash(refreshTokenPlain)))
+    .limit(1);
   if (!row || row.revokedAt) throw AppError.unauthorized('Invalid refresh token');
 
   const accessToken = randomToken(32);
-  await db.update(oauthTokens)
+  await db
+    .update(oauthTokens)
     .set({ tokenHash: hash(accessToken), expiresAt: new Date(Date.now() + 3600_000) })
     .where(eq(oauthTokens.id, row.id));
   return { accessToken, expiresIn: 3600 };
 }
 
 export async function introspectToken(accessTokenPlain: string) {
-  const [row] = await db.select().from(oauthTokens)
-    .where(eq(oauthTokens.tokenHash, hash(accessTokenPlain))).limit(1);
+  const [row] = await db
+    .select()
+    .from(oauthTokens)
+    .where(eq(oauthTokens.tokenHash, hash(accessTokenPlain)))
+    .limit(1);
   if (!row || row.revokedAt || row.expiresAt < new Date()) return { active: false };
   return {
     active: true,
@@ -117,7 +149,8 @@ export async function introspectToken(accessTokenPlain: string) {
 }
 
 export async function revokeToken(accessTokenPlain: string): Promise<void> {
-  await db.update(oauthTokens)
+  await db
+    .update(oauthTokens)
     .set({ revokedAt: new Date() })
     .where(eq(oauthTokens.tokenHash, hash(accessTokenPlain)));
 }

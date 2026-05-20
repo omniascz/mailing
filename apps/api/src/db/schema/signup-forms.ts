@@ -15,12 +15,7 @@ import { contacts } from './contacts.js';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export const embedTypeEnum = pgEnum('embed_type', [
-  'inline',
-  'popup',
-  'slide',
-  'floating',
-]);
+export const embedTypeEnum = pgEnum('embed_type', ['inline', 'popup', 'slide', 'floating']);
 
 // ─── Signup form definition ───────────────────────────────────────────────────
 
@@ -29,7 +24,7 @@ export interface FormField {
   label: string;
   type: 'text' | 'email' | 'phone' | 'select' | 'checkbox' | 'hidden';
   required: boolean;
-  options?: string[];          // for select fields
+  options?: string[]; // for select fields
   placeholder?: string;
   defaultValue?: string;
 }
@@ -39,19 +34,21 @@ export interface FormConfig {
   successMessage?: string;
   redirectUrl?: string;
   doubleOptIn?: boolean;
-  tags?: string[];             // auto-apply these tags on submit
-  workflowId?: string;         // trigger this workflow on submit
+  tags?: string[]; // auto-apply these tags on submit
+  workflowId?: string; // trigger this workflow on submit
   styles?: Record<string, string>;
 }
 
 export const signupForms = pgTable(
   'signup_forms',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
-    listId: uuid('list_id'),  // optional: auto-add to this list
+    listId: uuid('list_id'), // optional: auto-add to this list
     name: varchar('name', { length: 255 }).notNull(),
     fields: jsonb('fields').$type<FormField[]>().notNull().default([]),
     embedType: embedTypeEnum('embed_type').notNull().default('inline'),
@@ -85,7 +82,9 @@ export const signupForms = pgTable(
 export const signupFormVariants = pgTable(
   'signup_form_variants',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     formId: uuid('form_id')
       .notNull()
       .references(() => signupForms.id, { onDelete: 'cascade' }),
@@ -119,7 +118,9 @@ export type NewSignupFormVariant = typeof signupFormVariants.$inferInsert;
 export const signupFormSubmissions = pgTable(
   'signup_form_submissions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     formId: uuid('form_id')
       .notNull()
       .references(() => signupForms.id, { onDelete: 'cascade' }),
@@ -170,13 +171,18 @@ export interface MigrationProgress {
 export const migrationJobs = pgTable(
   'migration_jobs',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
-    type: varchar('type', { length: 50 }).notNull(),   // 'mailchimp' | future providers
+    type: varchar('type', { length: 50 }).notNull(), // 'mailchimp' | future providers
     status: migrationJobStatusEnum('status').notNull().default('pending'),
-    progress: jsonb('progress').$type<MigrationProgress>().notNull().default(sql`'{}'::jsonb`),
+    progress: jsonb('progress')
+      .$type<MigrationProgress>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     errorMessage: varchar('error_message', { length: 2048 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     completedAt: timestamp('completed_at', { withTimezone: true }),

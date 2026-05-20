@@ -28,14 +28,24 @@ export async function getProgressiveFields(input: {
   const fieldsPerVisit = input.fieldsPerVisit ?? 2;
 
   // Load form
-  const [form] = await db.select().from(signupForms)
+  const [form] = await db
+    .select()
+    .from(signupForms)
     .where(and(eq(signupForms.id, input.formId), eq(signupForms.orgId, input.orgId)))
     .limit(1);
   if (!form || !form.active) throw AppError.notFound('Form not found or inactive');
 
   // Load contact
-  const [contact] = await db.select().from(contacts)
-    .where(and(eq(contacts.id, input.contactId), eq(contacts.orgId, input.orgId), isNull(contacts.deletedAt)))
+  const [contact] = await db
+    .select()
+    .from(contacts)
+    .where(
+      and(
+        eq(contacts.id, input.contactId),
+        eq(contacts.orgId, input.orgId),
+        isNull(contacts.deletedAt),
+      ),
+    )
     .limit(1);
   if (!contact) throw AppError.notFound('Contact not found');
 

@@ -31,41 +31,53 @@ interface MetaWebhookPayload {
 
 const messengerWebhookRoutes: FastifyPluginAsync = async (app) => {
   // Webhook verification (GET)
-  app.get('/api/v1/webhooks/messenger', {
-    schema: { tags: ['Webhooks', 'Messenger'] },
-  }, async (req, reply) => {
-    const { 'hub.mode': mode, 'hub.verify_token': token, 'hub.challenge': challenge } = req.query as Record<string, string>;
-    const expected = process.env.META_WEBHOOK_VERIFY_TOKEN ?? '';
-    if (mode === 'subscribe' && token === expected) {
-      return reply.send(challenge);
-    }
-    throw AppError.forbidden('Messenger webhook verification failed');
-  });
+  app.get(
+    '/api/v1/webhooks/messenger',
+    {
+      schema: { tags: ['Webhooks', 'Messenger'] },
+    },
+    async (req, reply) => {
+      const {
+        'hub.mode': mode,
+        'hub.verify_token': token,
+        'hub.challenge': challenge,
+      } = req.query as Record<string, string>;
+      const expected = process.env.META_WEBHOOK_VERIFY_TOKEN ?? '';
+      if (mode === 'subscribe' && token === expected) {
+        return reply.send(challenge);
+      }
+      throw AppError.forbidden('Messenger webhook verification failed');
+    },
+  );
 
   // Incoming events (POST)
-  app.post('/api/v1/webhooks/messenger', {
-    config: { rawBody: true },
-    schema: { tags: ['Webhooks', 'Messenger'] },
-  }, async (req, reply) => {
-    const appSecret = process.env.META_APP_SECRET ?? '';
-    const signature = (req.headers['x-hub-signature-256'] as string) ?? '';
-    const rawBody = (req as { rawBody?: string }).rawBody ?? JSON.stringify(req.body);
+  app.post(
+    '/api/v1/webhooks/messenger',
+    {
+      config: { rawBody: true },
+      schema: { tags: ['Webhooks', 'Messenger'] },
+    },
+    async (req, reply) => {
+      const appSecret = process.env.META_APP_SECRET ?? '';
+      const signature = (req.headers['x-hub-signature-256'] as string) ?? '';
+      const rawBody = (req as { rawBody?: string }).rawBody ?? JSON.stringify(req.body);
 
-    if (appSecret && !verifyMessengerWebhook(rawBody, signature, appSecret)) {
-      throw AppError.forbidden('Invalid Messenger webhook signature');
-    }
+      if (appSecret && !verifyMessengerWebhook(rawBody, signature, appSecret)) {
+        throw AppError.forbidden('Invalid Messenger webhook signature');
+      }
 
-    const payload = req.body as MetaWebhookPayload;
-    if (payload.object !== 'page') {
+      const payload = req.body as MetaWebhookPayload;
+      if (payload.object !== 'page') {
+        return reply.send({ received: true });
+      }
+
+      processMessengerEvents(payload).catch((err) => {
+        app.log.error({ err }, 'Messenger webhook processing error');
+      });
+
       return reply.send({ received: true });
-    }
-
-    processMessengerEvents(payload).catch((err) => {
-      app.log.error({ err }, 'Messenger webhook processing error');
-    });
-
-    return reply.send({ received: true });
-  });
+    },
+  );
 };
 
 async function processMessengerEvents(payload: MetaWebhookPayload): Promise<void> {
@@ -85,40 +97,54 @@ async function processMessengerEvents(payload: MetaWebhookPayload): Promise<void
       const [existing] = await db
         .select({ id: helpdeskTickets.id })
         .from(helpdeskTickets)
-        .where(and(
-          eq(helpdeskTickets.orgId, orgId),
-          eq(helpdeskTickets.channel, 'messenger'),
-          eq(helpdeskTickets.externalThreadId, psid),
-        ))
+        .where(
+          and(
+            eq(helpdeskTickets.orgId, orgId),
+            eq(helpdeskTickets.channel, 'messenger'),
+            eq(helpdeskTickets.externalThreadId, psid),
+          ),
+        )
         .limit(1);
 
       let ticketId: string;
       if (existing) {
         ticketId = existing.id;
-        await db.update(helpdeskTickets).set({ status: 'open', updatedAt: new Date() }).where(eq(helpdeskTickets.id, ticketId));
+        await db
+          .update(helpdeskTickets)
+          .set({ status: 'open', updatedAt: new Date() })
+          .where(eq(helpdeskTickets.id, ticketId));
       } else {
-        const [created] = await db.insert(helpdeskTickets).values({
-          orgId,
-          subject: `Messenger from ${psid}`,
-          channel: 'messenger',
-          externalThreadId: psid,
-          externalIdentity: psid,
-          channelMetadata: {
-            page_id: pageId,
-            has_attachments: (messaging.message?.attachments ?? []).length > 0,
-          },
-        }).returning({ id: helpdeskTickets.id });
+        const [created] = await db
+          .insert(helpdeskTickets)
+          .values({
+            orgId,
+            subject: `Messenger from ${psid}`,
+            channel: 'messenger',
+            externalThreadId: psid,
+            externalIdentity: psid,
+            channelMetadata: {
+              page_id: pageId,
+              has_attachments: (messaging.message?.attachments ?? []).length > 0,
+            },
+          })
+          .returning({ id: helpdeskTickets.id });
         ticketId = created!.id;
       }
 
-      await db.insert(ticketMessages).values({
-        ticketId,
-        sender: psid,
-        direction: 'inbound',
-        externalMessageId: mid ?? null,
-        body: messageText,
-        attachments: (messaging.message?.attachments ?? []) as Array<{ url: string; name: string }>,
-      }).onConflictDoNothing();
+      await db
+        .insert(ticketMessages)
+        .values({
+          ticketId,
+          sender: psid,
+          direction: 'inbound',
+          externalMessageId: mid ?? null,
+          body: messageText,
+          attachments: (messaging.message?.attachments ?? []) as Array<{
+            url: string;
+            name: string;
+          }>,
+        })
+        .onConflictDoNothing();
     }
   }
 }

@@ -15,21 +15,21 @@ export type BillingType = 'contact_based' | 'send_based' | 'payg';
 // ─── Contact-based plans (existing) ──────────────────────────────────────────
 
 export const CONTACT_PLANS = {
-  free:       { name: 'Free',       contacts: 500,       sends: 2_500,       priceUsd: 0 },
-  starter:    { name: 'Starter',    contacts: 2_500,     sends: 12_500,      priceUsd: 15 },
-  pro:        { name: 'Pro',        contacts: 10_000,    sends: 50_000,      priceUsd: 49 },
-  business:   { name: 'Business',   contacts: 50_000,    sends: 250_000,     priceUsd: 149 },
-  enterprise: { name: 'Enterprise', contacts: -1,        sends: -1,          priceUsd: -1 },
+  free: { name: 'Free', contacts: 500, sends: 2_500, priceUsd: 0 },
+  starter: { name: 'Starter', contacts: 2_500, sends: 12_500, priceUsd: 15 },
+  pro: { name: 'Pro', contacts: 10_000, sends: 50_000, priceUsd: 49 },
+  business: { name: 'Business', contacts: 50_000, sends: 250_000, priceUsd: 149 },
+  enterprise: { name: 'Enterprise', contacts: -1, sends: -1, priceUsd: -1 },
 } as const;
 
 // ─── Send-based plans (#281) ──────────────────────────────────────────────────
 
 export const SEND_PLANS = {
-  send_lite:    { name: 'Send Lite',    sendsPerMonth: 10_000,    priceUsd: 9,   overageUsd: 0.0009  },
-  send_starter: { name: 'Send Starter', sendsPerMonth: 50_000,    priceUsd: 25,  overageUsd: 0.0008  },
-  send_growth:  { name: 'Send Growth',  sendsPerMonth: 200_000,   priceUsd: 75,  overageUsd: 0.0006  },
-  send_pro:     { name: 'Send Pro',     sendsPerMonth: 1_000_000, priceUsd: 250, overageUsd: 0.00045 },
-  send_custom:  { name: 'Send Custom',  sendsPerMonth: -1,        priceUsd: -1,  overageUsd: -1      },
+  send_lite: { name: 'Send Lite', sendsPerMonth: 10_000, priceUsd: 9, overageUsd: 0.0009 },
+  send_starter: { name: 'Send Starter', sendsPerMonth: 50_000, priceUsd: 25, overageUsd: 0.0008 },
+  send_growth: { name: 'Send Growth', sendsPerMonth: 200_000, priceUsd: 75, overageUsd: 0.0006 },
+  send_pro: { name: 'Send Pro', sendsPerMonth: 1_000_000, priceUsd: 250, overageUsd: 0.00045 },
+  send_custom: { name: 'Send Custom', sendsPerMonth: -1, priceUsd: -1, overageUsd: -1 },
 } as const;
 
 export type ContactPlanTier = keyof typeof CONTACT_PLANS;
@@ -40,10 +40,14 @@ export type PlanTier = ContactPlanTier | SendPlanTier;
 
 export function listAllPlans() {
   const contactBased = Object.entries(CONTACT_PLANS).map(([tier, info]) => ({
-    tier, billingType: 'contact_based' as BillingType, ...info,
+    tier,
+    billingType: 'contact_based' as BillingType,
+    ...info,
   }));
   const sendBased = Object.entries(SEND_PLANS).map(([tier, info]) => ({
-    tier, billingType: 'send_based' as BillingType, ...info,
+    tier,
+    billingType: 'send_based' as BillingType,
+    ...info,
     contacts: -1,
     sends: info.sendsPerMonth,
   }));
@@ -51,11 +55,14 @@ export function listAllPlans() {
 }
 
 export function getSendPlan(tier: string) {
-  return (SEND_PLANS as Record<string, typeof SEND_PLANS[keyof typeof SEND_PLANS]>)[tier] ?? null;
+  return (SEND_PLANS as Record<string, (typeof SEND_PLANS)[keyof typeof SEND_PLANS]>)[tier] ?? null;
 }
 
 export function getContactPlan(tier: string) {
-  return (CONTACT_PLANS as Record<string, typeof CONTACT_PLANS[keyof typeof CONTACT_PLANS]>)[tier] ?? null;
+  return (
+    (CONTACT_PLANS as Record<string, (typeof CONTACT_PLANS)[keyof typeof CONTACT_PLANS]>)[tier] ??
+    null
+  );
 }
 
 // ─── Overage cost calculation ─────────────────────────────────────────────────

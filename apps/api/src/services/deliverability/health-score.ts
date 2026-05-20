@@ -33,9 +33,7 @@ export async function computeOrgHealth(
   const whereClauses: ReturnType<typeof sql>[] = [sql`org_id = ${opts.orgId}`];
   if (opts.domain) whereClauses.push(sql`sending_domain = ${opts.domain}`);
   if (opts.ip) whereClauses.push(sql`sending_ip = ${opts.ip}`);
-  const whereSql = whereClauses.reduce((acc, cur, i) =>
-    i === 0 ? cur : sql`${acc} AND ${cur}`,
-  );
+  const whereSql = whereClauses.reduce((acc, cur, i) => (i === 0 ? cur : sql`${acc} AND ${cur}`));
 
   const result = await db.execute<{
     sends: number;
@@ -65,18 +63,20 @@ export async function computeOrgHealth(
       AND created_at >= ${since}
   `);
 
-  const row = result[0] ?? ({
-    sends: 0,
-    delivered: 0,
-    bounces: 0,
-    hard_bounces: 0,
-    soft_bounces: 0,
-    complaints: 0,
-    opens: 0,
-    clicks: 0,
-    unsubscribes: 0,
-    blocks: 0,
-  } as const);
+  const row =
+    result[0] ??
+    ({
+      sends: 0,
+      delivered: 0,
+      bounces: 0,
+      hard_bounces: 0,
+      soft_bounces: 0,
+      complaints: 0,
+      opens: 0,
+      clicks: 0,
+      unsubscribes: 0,
+      blocks: 0,
+    } as const);
 
   const score = computeEmailHealthScore({
     sends: row.sends,

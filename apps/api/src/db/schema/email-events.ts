@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, jsonb, index, boolean, real } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  jsonb,
+  index,
+  boolean,
+  real,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { campaigns } from './campaigns.js';
 import { contacts } from './contacts.js';
@@ -13,7 +22,9 @@ import { emailEventTypeEnum, bounceTypeEnum, messageStreamEnum } from './enums.j
 export const emailEvents = pgTable(
   'email_events',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

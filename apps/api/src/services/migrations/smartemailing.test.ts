@@ -30,14 +30,14 @@ describe('SmartEmailing mapSubscriber', () => {
   });
 
   it('falls back to row.updated, then contact.created when gdpr.consent_at is missing', () => {
-    const sub1 = mapSubscriber(
-      row({ created: '2020-01-01T00:00:00Z' }),
-      ORG_ID,
-    );
+    const sub1 = mapSubscriber(row({ created: '2020-01-01T00:00:00Z' }), ORG_ID);
     expect(sub1!.customFields.imported_consent_at).toBe('2024-01-01T00:00:00Z');
 
     const sub2 = mapSubscriber(
-      { contact: { id: 1, emailaddress: 'a@b.cz', created: '2020-01-01T00:00:00Z' }, status: 'confirmed' } as Parameters<typeof mapSubscriber>[0],
+      {
+        contact: { id: 1, emailaddress: 'a@b.cz', created: '2020-01-01T00:00:00Z' },
+        status: 'confirmed',
+      } as Parameters<typeof mapSubscriber>[0],
       ORG_ID,
     );
     expect(sub2!.customFields.imported_consent_at).toBe('2020-01-01T00:00:00Z');
@@ -55,9 +55,7 @@ describe('SmartEmailing mapSubscriber', () => {
       ORG_ID,
     );
     expect(sub!.customFields.imported_consent_ip).toBe('203.0.113.42');
-    expect(sub!.customFields.imported_consent_note).toBe(
-      'Submitted via product page footer',
-    );
+    expect(sub!.customFields.imported_consent_note).toBe('Submitted via product page footer');
   });
 
   it('lowercases + trims emailaddress', () => {
@@ -67,9 +65,7 @@ describe('SmartEmailing mapSubscriber', () => {
 
   it('returns null for missing / malformed emails', () => {
     expect(mapSubscriber(row({ emailaddress: '' }), ORG_ID)).toBeNull();
-    expect(
-      mapSubscriber(row({ emailaddress: 'invalid-no-at' }), ORG_ID),
-    ).toBeNull();
+    expect(mapSubscriber(row({ emailaddress: 'invalid-no-at' }), ORG_ID)).toBeNull();
   });
 
   it('skips bounce and spam_complaint statuses', () => {

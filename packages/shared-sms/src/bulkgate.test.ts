@@ -164,8 +164,7 @@ describe('BulkGateClient.sendSingle', () => {
 
     const client = new BulkGateClient(DEFAULT_CONFIG);
 
-    await expect(client.sendSingle('+420601123456', 'Test'))
-      .rejects.toThrow(BulkGateError);
+    await expect(client.sendSingle('+420601123456', 'Test')).rejects.toThrow(BulkGateError);
 
     try {
       await client.sendSingle('+420601123456', 'Test');
@@ -181,8 +180,7 @@ describe('BulkGateClient.sendSingle', () => {
 
     const client = new BulkGateClient(DEFAULT_CONFIG);
 
-    await expect(client.sendSingle('+420601123456', 'Test'))
-      .rejects.toThrow(BulkGateError);
+    await expect(client.sendSingle('+420601123456', 'Test')).rejects.toThrow(BulkGateError);
 
     try {
       await client.sendSingle('+420601123456', 'Test');
@@ -298,9 +296,7 @@ describe('BulkGateClient.sendBulk', () => {
     );
 
     expect(result.accepted).toEqual(['+420601111111', '+420603333333']);
-    expect(result.rejected).toEqual([
-      { phone: '+420602222222', reason: 'Blacklisted' },
-    ]);
+    expect(result.rejected).toEqual([{ phone: '+420602222222', reason: 'Blacklisted' }]);
   });
 
   it('rejects all on missing response', async () => {
@@ -310,9 +306,7 @@ describe('BulkGateClient.sendBulk', () => {
     const result = await client.sendBulk(['+420601111111'], 'Test');
 
     expect(result.accepted).toEqual([]);
-    expect(result.rejected).toEqual([
-      { phone: '+420601111111', reason: 'provider_error' },
-    ]);
+    expect(result.rejected).toEqual([{ phone: '+420601111111', reason: 'provider_error' }]);
   });
 });
 

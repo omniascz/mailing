@@ -30,23 +30,30 @@ interface ScoreThreshold {
 }
 
 const SCORE_THRESHOLDS: ScoreThreshold[] = [
-  { score: 10,  tagName: 'lead_warm',    label: 'Warm lead'    },
-  { score: 50,  tagName: 'lead_hot',     label: 'Hot lead'     },
-  { score: 100, tagName: 'lead_mql',     label: 'MQL'          },
-  { score: 200, tagName: 'lead_sql',     label: 'SQL'          },
+  { score: 10, tagName: 'lead_warm', label: 'Warm lead' },
+  { score: 50, tagName: 'lead_hot', label: 'Hot lead' },
+  { score: 100, tagName: 'lead_mql', label: 'MQL' },
+  { score: 200, tagName: 'lead_sql', label: 'SQL' },
 ];
 
 // ─── Default rule seeds ───────────────────────────────────────────────────────
 
-export const DEFAULT_RULES: Array<Omit<LeadScoreRule, 'id' | 'orgId' | 'createdAt' | 'updatedAt' | 'active'>> = [
-  { eventType: 'email_open',    points: 1,   decayDays: 90,  description: 'Opened an email' },
-  { eventType: 'email_click',   points: 3,   decayDays: 90,  description: 'Clicked a link in email' },
-  { eventType: 'link_click',    points: 5,   decayDays: 90,  description: 'Clicked a tracked link' },
-  { eventType: 'page_visit',    points: 2,   decayDays: 90,  description: 'Visited a tracked page' },
-  { eventType: 'form_submit',   points: 10,  decayDays: 180, description: 'Submitted a form' },
-  { eventType: 'purchase',      points: 20,  decayDays: 365, description: 'Made a purchase' },
-  { eventType: 'email_unsubscribe', points: -10, decayDays: 365, description: 'Unsubscribed from emails' },
-  { eventType: 'spam_complaint',    points: -25, decayDays: 365, description: 'Marked email as spam' },
+export const DEFAULT_RULES: Array<
+  Omit<LeadScoreRule, 'id' | 'orgId' | 'createdAt' | 'updatedAt' | 'active'>
+> = [
+  { eventType: 'email_open', points: 1, decayDays: 90, description: 'Opened an email' },
+  { eventType: 'email_click', points: 3, decayDays: 90, description: 'Clicked a link in email' },
+  { eventType: 'link_click', points: 5, decayDays: 90, description: 'Clicked a tracked link' },
+  { eventType: 'page_visit', points: 2, decayDays: 90, description: 'Visited a tracked page' },
+  { eventType: 'form_submit', points: 10, decayDays: 180, description: 'Submitted a form' },
+  { eventType: 'purchase', points: 20, decayDays: 365, description: 'Made a purchase' },
+  {
+    eventType: 'email_unsubscribe',
+    points: -10,
+    decayDays: 365,
+    description: 'Unsubscribed from emails',
+  },
+  { eventType: 'spam_complaint', points: -25, decayDays: 365, description: 'Marked email as spam' },
 ];
 
 export async function seedDefaultRules(orgId: string): Promise<void> {
@@ -58,9 +65,7 @@ export async function seedDefaultRules(orgId: string): Promise<void> {
 
   if (existing.length > 0) return; // already seeded
 
-  await db.insert(leadScoreRules).values(
-    DEFAULT_RULES.map((r) => ({ ...r, orgId, active: true })),
-  );
+  await db.insert(leadScoreRules).values(DEFAULT_RULES.map((r) => ({ ...r, orgId, active: true })));
 }
 
 // ─── Apply score ──────────────────────────────────────────────────────────────
@@ -254,20 +259,11 @@ export async function deleteLeadScoreRule(id: string, orgId: string): Promise<vo
   if (!rule) throw AppError.notFound('LeadScoreRule');
 }
 
-export async function getContactLeadScoreHistory(
-  contactId: string,
-  orgId: string,
-  limit = 50,
-) {
+export async function getContactLeadScoreHistory(contactId: string, orgId: string, limit = 50) {
   return db
     .select()
     .from(leadScoreEvents)
-    .where(
-      and(
-        eq(leadScoreEvents.contactId, contactId),
-        eq(leadScoreEvents.orgId, orgId),
-      ),
-    )
+    .where(and(eq(leadScoreEvents.contactId, contactId), eq(leadScoreEvents.orgId, orgId)))
     .orderBy(desc(leadScoreEvents.createdAt))
     .limit(limit);
 }

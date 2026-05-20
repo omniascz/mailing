@@ -27,11 +27,14 @@ export async function getCluster(orgId: string, clusterId: string) {
   return row;
 }
 
-export async function createCluster(orgId: string, input: {
-  name: string;
-  description?: string;
-  status?: string;
-}) {
+export async function createCluster(
+  orgId: string,
+  input: {
+    name: string;
+    description?: string;
+    status?: string;
+  },
+) {
   const [row] = await db
     .insert(seoTopicClusters)
     .values({ orgId, ...input })
@@ -39,11 +42,15 @@ export async function createCluster(orgId: string, input: {
   return row;
 }
 
-export async function updateCluster(orgId: string, clusterId: string, input: {
-  name?: string;
-  description?: string;
-  status?: string;
-}) {
+export async function updateCluster(
+  orgId: string,
+  clusterId: string,
+  input: {
+    name?: string;
+    description?: string;
+    status?: string;
+  },
+) {
   const [row] = await db
     .update(seoTopicClusters)
     .set({ ...input, updatedAt: new Date() })
@@ -71,15 +78,19 @@ export async function listClusterPages(orgId: string, clusterId: string) {
     .orderBy(seoClusterPages.pageType, seoClusterPages.createdAt);
 }
 
-export async function addClusterPage(orgId: string, clusterId: string, input: {
-  pageType?: string;
-  title: string;
-  url?: string;
-  targetKeyword?: string;
-  status?: string;
-  wordCount?: number;
-  notes?: string;
-}) {
+export async function addClusterPage(
+  orgId: string,
+  clusterId: string,
+  input: {
+    pageType?: string;
+    title: string;
+    url?: string;
+    targetKeyword?: string;
+    status?: string;
+    wordCount?: number;
+    notes?: string;
+  },
+) {
   // Ensure cluster belongs to org
   await getCluster(orgId, clusterId);
 
@@ -90,15 +101,19 @@ export async function addClusterPage(orgId: string, clusterId: string, input: {
   return row;
 }
 
-export async function updateClusterPage(orgId: string, pageId: string, input: {
-  title?: string;
-  url?: string;
-  targetKeyword?: string;
-  pageType?: string;
-  status?: string;
-  wordCount?: number;
-  notes?: string;
-}) {
+export async function updateClusterPage(
+  orgId: string,
+  pageId: string,
+  input: {
+    title?: string;
+    url?: string;
+    targetKeyword?: string;
+    pageType?: string;
+    status?: string;
+    wordCount?: number;
+    notes?: string;
+  },
+) {
   const [row] = await db
     .update(seoClusterPages)
     .set({ ...input, updatedAt: new Date() })
@@ -121,7 +136,7 @@ export async function deleteClusterPage(orgId: string, pageId: string) {
 export async function getClusterWithPages(orgId: string, clusterId: string) {
   const cluster = await getCluster(orgId, clusterId);
   const pages = await listClusterPages(orgId, clusterId);
-  const pillar = pages.find(p => p.pageType === 'pillar') ?? null;
-  const spokes = pages.filter(p => p.pageType === 'spoke');
+  const pillar = pages.find((p) => p.pageType === 'pillar') ?? null;
+  const spokes = pages.filter((p) => p.pageType === 'spoke');
   return { ...cluster, pillar, spokes, spokeCount: spokes.length };
 }

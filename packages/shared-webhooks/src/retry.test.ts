@@ -14,11 +14,11 @@ import { DEFAULT_RETRY_CONFIG, type RetryConfig } from './types.js';
 
 describe('retryDelaySec', () => {
   it('uses default config (initial=30, mult=2)', () => {
-    expect(retryDelaySec(0)).toBe(30);    // 30 × 2^0 = 30
-    expect(retryDelaySec(1)).toBe(60);    // 30 × 2^1 = 60
-    expect(retryDelaySec(2)).toBe(120);   // 30 × 2^2 = 120
-    expect(retryDelaySec(3)).toBe(240);   // 30 × 2^3 = 240
-    expect(retryDelaySec(4)).toBe(480);   // 30 × 2^4 = 480
+    expect(retryDelaySec(0)).toBe(30); // 30 × 2^0 = 30
+    expect(retryDelaySec(1)).toBe(60); // 30 × 2^1 = 60
+    expect(retryDelaySec(2)).toBe(120); // 30 × 2^2 = 120
+    expect(retryDelaySec(3)).toBe(240); // 30 × 2^3 = 240
+    expect(retryDelaySec(4)).toBe(480); // 30 × 2^4 = 480
   });
 
   it('caps at maxDelaySec', () => {
@@ -36,11 +36,11 @@ describe('retryDelaySec', () => {
       backoffMultiplier: 2,
       autoDisableThreshold: 0,
     };
-    expect(retryDelaySec(0, config)).toBe(60);   // 60 × 2^0 = 60
-    expect(retryDelaySec(1, config)).toBe(120);  // 60 × 2^1 = 120
-    expect(retryDelaySec(2, config)).toBe(240);  // 60 × 2^2 = 240
-    expect(retryDelaySec(3, config)).toBe(480);  // 60 × 2^3 = 480
-    expect(retryDelaySec(4, config)).toBe(600);  // 60 × 2^4 = 960 → capped at 600
+    expect(retryDelaySec(0, config)).toBe(60); // 60 × 2^0 = 60
+    expect(retryDelaySec(1, config)).toBe(120); // 60 × 2^1 = 120
+    expect(retryDelaySec(2, config)).toBe(240); // 60 × 2^2 = 240
+    expect(retryDelaySec(3, config)).toBe(480); // 60 × 2^3 = 480
+    expect(retryDelaySec(4, config)).toBe(600); // 60 × 2^4 = 960 → capped at 600
   });
 
   it('handles non-power-of-2 multiplier', () => {
@@ -51,11 +51,11 @@ describe('retryDelaySec', () => {
       backoffMultiplier: 3,
       autoDisableThreshold: 0,
     };
-    expect(retryDelaySec(0, config)).toBe(10);   // 10 × 3^0 = 10
-    expect(retryDelaySec(1, config)).toBe(30);   // 10 × 3^1 = 30
-    expect(retryDelaySec(2, config)).toBe(90);   // 10 × 3^2 = 90
-    expect(retryDelaySec(3, config)).toBe(270);  // 10 × 3^3 = 270
-    expect(retryDelaySec(4, config)).toBe(810);  // 10 × 3^4 = 810
+    expect(retryDelaySec(0, config)).toBe(10); // 10 × 3^0 = 10
+    expect(retryDelaySec(1, config)).toBe(30); // 10 × 3^1 = 30
+    expect(retryDelaySec(2, config)).toBe(90); // 10 × 3^2 = 90
+    expect(retryDelaySec(3, config)).toBe(270); // 10 × 3^3 = 270
+    expect(retryDelaySec(4, config)).toBe(810); // 10 × 3^4 = 810
     expect(retryDelaySec(5, config)).toBe(1000); // 10 × 3^5 = 2430 → capped
   });
 });

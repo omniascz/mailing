@@ -60,7 +60,12 @@ describe('normalizeShoptetOrderPayload', () => {
       currency: 'CZK',
     });
     expect(order.items).toHaveLength(2);
-    expect(order.items[0]).toMatchObject({ sku: 'BOOK-01', name: 'Kniha o Praze', qty: 2, price: 499 });
+    expect(order.items[0]).toMatchObject({
+      sku: 'BOOK-01',
+      name: 'Kniha o Praze',
+      qty: 2,
+      price: 499,
+    });
     expect(order.orderedAt).toBeInstanceOf(Date);
   });
 

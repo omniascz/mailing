@@ -11,7 +11,10 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { organizations } from '../../db/schema/organizations.js';
 import { users } from '../../db/schema/users.js';
-import { organizationMembers, type OrganizationMember } from '../../db/schema/organization-members.js';
+import {
+  organizationMembers,
+  type OrganizationMember,
+} from '../../db/schema/organization-members.js';
 import { createSession } from './sessions.js';
 import { AppError } from '../../lib/app-error.js';
 import type { UserRole } from '@forgemsg/shared';
@@ -31,8 +34,11 @@ export async function getUserOrgs(userId: string): Promise<OrgAccess[]> {
   if (!user) throw AppError.notFound('User');
 
   // Primary org (from users.org_id)
-  const [primaryOrg] = await db.select().from(organizations)
-    .where(eq(organizations.id, user.orgId)).limit(1);
+  const [primaryOrg] = await db
+    .select()
+    .from(organizations)
+    .where(eq(organizations.id, user.orgId))
+    .limit(1);
 
   const result: OrgAccess[] = [];
   if (primaryOrg) {
@@ -46,18 +52,16 @@ export async function getUserOrgs(userId: string): Promise<OrgAccess[]> {
   }
 
   // Additional memberships
-  const memberships = await db.select({
-    orgId: organizationMembers.orgId,
-    role: organizationMembers.role,
-    orgName: organizations.name,
-    orgSlug: organizations.slug,
-  })
+  const memberships = await db
+    .select({
+      orgId: organizationMembers.orgId,
+      role: organizationMembers.role,
+      orgName: organizations.name,
+      orgSlug: organizations.slug,
+    })
     .from(organizationMembers)
     .innerJoin(organizations, eq(organizations.id, organizationMembers.orgId))
-    .where(and(
-      eq(organizationMembers.userId, userId),
-      eq(organizationMembers.status, 'active'),
-    ));
+    .where(and(eq(organizationMembers.userId, userId), eq(organizationMembers.status, 'active')));
 
   for (const m of memberships) {
     if (m.orgId === user.orgId) continue; // skip primary if also in members table
@@ -85,12 +89,17 @@ export async function switchOrg(userId: string, targetOrgId: string): Promise<st
     // Primary org — already have access
   } else {
     // Check membership
-    const [member] = await db.select().from(organizationMembers)
-      .where(and(
-        eq(organizationMembers.userId, userId),
-        eq(organizationMembers.orgId, targetOrgId),
-        eq(organizationMembers.status, 'active'),
-      )).limit(1);
+    const [member] = await db
+      .select()
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.orgId, targetOrgId),
+          eq(organizationMembers.status, 'active'),
+        ),
+      )
+      .limit(1);
     if (!member) throw AppError.forbidden('No access to this organisation');
     role = member.role;
   }
@@ -117,19 +126,24 @@ export async function inviteMember(
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
   // Find user account if exists
-  const [existingUser] = await db.select({ id: users.id }).from(users)
-    .where(eq(users.email, email)).limit(1);
+  const [existingUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
 
-  const [member] = await db.insert(organizationMembers).values({
-    orgId,
-    userId: existingUser?.id ?? null,
-    email,
-    role,
-    status: 'pending',
-    invitedByUserId,
-    invitationToken: token,
-    invitationExpiresAt: expiresAt,
-  })
+  const [member] = await db
+    .insert(organizationMembers)
+    .values({
+      orgId,
+      userId: existingUser?.id ?? null,
+      email,
+      role,
+      status: 'pending',
+      invitedByUserId,
+      invitationToken: token,
+      invitationExpiresAt: expiresAt,
+    })
     .onConflictDoUpdate({
       target: [organizationMembers.orgId, organizationMembers.email],
       set: {
@@ -147,12 +161,12 @@ export async function inviteMember(
 
 // ─── Accept invitation ────────────────────────────────────────────────────────
 
-export async function acceptInvitation(
-  token: string,
-  userId: string,
-): Promise<OrganizationMember> {
-  const [member] = await db.select().from(organizationMembers)
-    .where(eq(organizationMembers.invitationToken, token)).limit(1);
+export async function acceptInvitation(token: string, userId: string): Promise<OrganizationMember> {
+  const [member] = await db
+    .select()
+    .from(organizationMembers)
+    .where(eq(organizationMembers.invitationToken, token))
+    .limit(1);
 
   if (!member) throw AppError.notFound('Invitation');
   if (member.status !== 'pending') throw AppError.badRequest('Invitation already used');
@@ -160,7 +174,8 @@ export async function acceptInvitation(
     throw AppError.badRequest('Invitation expired');
   }
 
-  const [updated] = await db.update(organizationMembers)
+  const [updated] = await db
+    .update(organizationMembers)
     .set({
       userId,
       status: 'active',
@@ -181,7 +196,8 @@ export async function updateMemberRole(
   memberId: string,
   role: string,
 ): Promise<void> {
-  const [row] = await db.update(organizationMembers)
+  const [row] = await db
+    .update(organizationMembers)
     .set({ role, updatedAt: new Date() })
     .where(and(eq(organizationMembers.id, memberId), eq(organizationMembers.orgId, orgId)))
     .returning({ id: organizationMembers.id });
@@ -191,7 +207,8 @@ export async function updateMemberRole(
 // ─── Remove member ────────────────────────────────────────────────────────────
 
 export async function removeMember(orgId: string, memberId: string): Promise<void> {
-  const [row] = await db.update(organizationMembers)
+  const [row] = await db
+    .update(organizationMembers)
     .set({ status: 'removed', updatedAt: new Date() })
     .where(and(eq(organizationMembers.id, memberId), eq(organizationMembers.orgId, orgId)))
     .returning({ id: organizationMembers.id });

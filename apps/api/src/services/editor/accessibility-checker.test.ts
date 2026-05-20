@@ -50,7 +50,8 @@ describe('checkAccessibility — rule-based checks', () => {
   });
 
   it('does not flag tables with role=presentation', async () => {
-    const html = '<html lang="en"><body><table role="presentation"><tr><td>Cell</td></tr></table></body></html>';
+    const html =
+      '<html lang="en"><body><table role="presentation"><tr><td>Cell</td></tr></table></body></html>';
     const report = await checkAccessibility(html, undefined);
     const codes = report.issues.map((i) => i.issue);
     expect(codes.some((c) => c.includes('role="presentation"'))).toBe(false);

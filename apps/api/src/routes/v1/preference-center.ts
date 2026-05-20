@@ -11,10 +11,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import {
-  getPreferences,
-  updatePreferences,
-} from '../../services/preference-center/index.js';
+import { getPreferences, updatePreferences } from '../../services/preference-center/index.js';
 
 const updateBody = z.object({
   globalUnsubscribe: z.boolean().optional(),
@@ -25,26 +22,34 @@ const updateBody = z.object({
 });
 
 export default async function preferenceCenterRoutes(app: FastifyInstance) {
-  app.get('/p/center/:token', {
-    schema: {
-      tags: ['Preference Center'],
-      summary: "Public — recipient's current subscription preferences",
+  app.get(
+    '/p/center/:token',
+    {
+      schema: {
+        tags: ['Preference Center'],
+        summary: "Public — recipient's current subscription preferences",
+      },
     },
-  }, async (req, reply) => {
-    const { token } = req.params as { token: string };
-    const view = await getPreferences(token);
-    return reply.send({ data: view });
-  });
+    async (req, reply) => {
+      const { token } = req.params as { token: string };
+      const view = await getPreferences(token);
+      return reply.send({ data: view });
+    },
+  );
 
-  app.post('/p/center/:token', {
-    schema: {
-      tags: ['Preference Center'],
-      summary: 'Public — apply unsubscribe / resubscribe / per-list changes',
+  app.post(
+    '/p/center/:token',
+    {
+      schema: {
+        tags: ['Preference Center'],
+        summary: 'Public — apply unsubscribe / resubscribe / per-list changes',
+      },
     },
-  }, async (req, reply) => {
-    const { token } = req.params as { token: string };
-    const body = updateBody.parse(req.body ?? {});
-    const result = await updatePreferences(token, body);
-    return reply.send({ data: result });
-  });
+    async (req, reply) => {
+      const { token } = req.params as { token: string };
+      const body = updateBody.parse(req.body ?? {});
+      const result = await updatePreferences(token, body);
+      return reply.send({ data: result });
+    },
+  );
 }

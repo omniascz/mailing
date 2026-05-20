@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `07_Klaviyo_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** Klaviyo umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **7 default rolí** (Owner, Admin, Manager, Analyst, Campaign Coordinator, Content Creator, Support) – víc než Mailchimp (5), méně diferenciace než HubSpot
 > - **Custom User Roles** (2025+) s **permission sets** – lze build vlastní role
 > - **SCIM provisioning** podporováno (Enterprise) – auto user lifecycle
@@ -92,20 +93,20 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Owner** | Account creation | Vše + close account + transfer ownership | Vše |
-| **Admin** | Pozvánka od Owner/Admin | Vše krom close account | Vše |
-| **Manager** | Pozvánka | Core features + limited list/flow mgmt | Most |
-| **Analyst** | Pozvánka | Reports + view-only | Read-only |
-| **Campaign Coordinator** | Pozvánka | Create/send campaigns + edit templates | Campaigns + content |
-| **Content Creator** | Pozvánka | Design templates only | Templates only |
-| **Support** | Pozvánka | Inbox + Profile only | Customer service tools |
-| **Custom Role User** | Per role definition | Per permission sets | Per role |
-| **Profile / Customer** | Form, import, integration | Otevírá emaily, klikne, browses, nakupuje | Své emaily + preference center |
-| **API Client** | Private API key | Per scope (Full / Read-only / Custom) | Per scope |
-| **Integration** (Shopify) | OAuth/plugin | Sync data oboustranně | Per OAuth scope |
-| **Klaviyo Staff** | Interní s consentem | Debug/support | Limited |
+| Aktér                     | Vstupní bod               | Co dělá                                   | Co vidí                        |
+| ------------------------- | ------------------------- | ----------------------------------------- | ------------------------------ |
+| **Owner**                 | Account creation          | Vše + close account + transfer ownership  | Vše                            |
+| **Admin**                 | Pozvánka od Owner/Admin   | Vše krom close account                    | Vše                            |
+| **Manager**               | Pozvánka                  | Core features + limited list/flow mgmt    | Most                           |
+| **Analyst**               | Pozvánka                  | Reports + view-only                       | Read-only                      |
+| **Campaign Coordinator**  | Pozvánka                  | Create/send campaigns + edit templates    | Campaigns + content            |
+| **Content Creator**       | Pozvánka                  | Design templates only                     | Templates only                 |
+| **Support**               | Pozvánka                  | Inbox + Profile only                      | Customer service tools         |
+| **Custom Role User**      | Per role definition       | Per permission sets                       | Per role                       |
+| **Profile / Customer**    | Form, import, integration | Otevírá emaily, klikne, browses, nakupuje | Své emaily + preference center |
+| **API Client**            | Private API key           | Per scope (Full / Read-only / Custom)     | Per scope                      |
+| **Integration** (Shopify) | OAuth/plugin              | Sync data oboustranně                     | Per OAuth scope                |
+| **Klaviyo Staff**         | Interní s consentem       | Debug/support                             | Limited                        |
 
 ---
 
@@ -172,57 +173,57 @@ Klaviyo přechází od jednoduchého 5-role modelu (původně) na **7 static + c
 
 ### 2.8 Permission matrix
 
-| Akce | Owner | Admin | Manager | Analyst | Campaign Coord | Content Creator | Support |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |  |  |  |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Manage billing | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Transfer ownership | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **User management** |  |  |  |  |  |  |  |
-| Invite users | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Edit user roles | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Remove users | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Create custom roles | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **API & Security** |  |  |  |  |  |  |  |
-| Create API keys | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Manage SSO/SAML | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Profiles** |  |  |  |  |  |  |  |
-| View profiles | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Edit profiles | ✅ | ✅ | ✅ | ❌ | limited | ❌ | limited |
-| Delete profiles | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Import profiles | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Export profiles | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Lists & Segments** |  |  |  |  |  |  |  |
-| Create lists | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Edit lists | ✅ | ✅ | limited | ❌ | ❌ | ❌ | ❌ |
-| Delete lists | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Create segments | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Campaigns** |  |  |  |  |  |  |  |
-| Create campaign | ✅ | ✅ | ✅ | ❌ | ✅ | drafts only | ❌ |
-| Send campaign | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
-| Delete campaign | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Flows** |  |  |  |  |  |  |  |
-| Create flow | ✅ | ✅ | limited | ❌ | ❌ | ❌ | ❌ |
-| Activate flow | ✅ | ✅ | limited | ❌ | ❌ | ❌ | ❌ |
-| Edit live flow | ✅ | ✅ | limited | ❌ | ❌ | ❌ | ❌ |
-| **Templates** |  |  |  |  |  |  |  |
-| Create template | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
-| Edit template | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
-| Delete template | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
-| **Forms** |  |  |  |  |  |  |  |
-| Create form | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Edit form | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Reviews** (add-on) |  |  |  |  |  |  |  |
-| Manage reviews | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | limited |
-| **Reports & Analytics** |  |  |  |  |  |  |  |
-| View reports | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Create custom reports | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Domain & Deliverability** |  |  |  |  |  |  |  |
-| Manage domains | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Integrations** |  |  |  |  |  |  |  |
-| Connect integrations | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Coupons** |  |  |  |  |  |  |  |
-| Create/manage coupons | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+| Akce                        | Owner | Admin | Manager | Analyst | Campaign Coord | Content Creator | Support |
+| --------------------------- | :---: | :---: | :-----: | :-----: | :------------: | :-------------: | :-----: |
+| **Account & Billing**       |       |       |         |         |                |                 |         |
+| Close account               |  ✅   |  ❌   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Manage billing              |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Transfer ownership          |  ✅   |  ❌   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| **User management**         |       |       |         |         |                |                 |         |
+| Invite users                |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Edit user roles             |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Remove users                |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Create custom roles         |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| **API & Security**          |       |       |         |         |                |                 |         |
+| Create API keys             |  ✅   |  ✅   |   ✅    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Manage SSO/SAML             |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| **Profiles**                |       |       |         |         |                |                 |         |
+| View profiles               |  ✅   |  ✅   |   ✅    |   ✅    |       ✅       |       ❌        |   ✅    |
+| Edit profiles               |  ✅   |  ✅   |   ✅    |   ❌    |    limited     |       ❌        | limited |
+| Delete profiles             |  ✅   |  ✅   |   ✅    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Import profiles             |  ✅   |  ✅   |   ✅    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Export profiles             |  ✅   |  ✅   |   ✅    |   ✅    |       ❌       |       ❌        |   ❌    |
+| **Lists & Segments**        |       |       |         |         |                |                 |         |
+| Create lists                |  ✅   |  ✅   |   ✅    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Edit lists                  |  ✅   |  ✅   | limited |   ❌    |       ❌       |       ❌        |   ❌    |
+| Delete lists                |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Create segments             |  ✅   |  ✅   |   ✅    |   ❌    |       ❌       |       ❌        |   ❌    |
+| **Campaigns**               |       |       |         |         |                |                 |         |
+| Create campaign             |  ✅   |  ✅   |   ✅    |   ❌    |       ✅       |   drafts only   |   ❌    |
+| Send campaign               |  ✅   |  ✅   |   ✅    |   ❌    |       ✅       |       ❌        |   ❌    |
+| Delete campaign             |  ✅   |  ✅   |   ✅    |   ❌    |       ❌       |       ❌        |   ❌    |
+| **Flows**                   |       |       |         |         |                |                 |         |
+| Create flow                 |  ✅   |  ✅   | limited |   ❌    |       ❌       |       ❌        |   ❌    |
+| Activate flow               |  ✅   |  ✅   | limited |   ❌    |       ❌       |       ❌        |   ❌    |
+| Edit live flow              |  ✅   |  ✅   | limited |   ❌    |       ❌       |       ❌        |   ❌    |
+| **Templates**               |       |       |         |         |                |                 |         |
+| Create template             |  ✅   |  ✅   |   ✅    |   ❌    |       ✅       |       ✅        |   ❌    |
+| Edit template               |  ✅   |  ✅   |   ✅    |   ❌    |       ✅       |       ✅        |   ❌    |
+| Delete template             |  ✅   |  ✅   |   ✅    |   ❌    |       ✅       |       ❌        |   ❌    |
+| **Forms**                   |       |       |         |         |                |                 |         |
+| Create form                 |  ✅   |  ✅   |   ✅    |   ❌    |       ❌       |       ❌        |   ❌    |
+| Edit form                   |  ✅   |  ✅   |   ✅    |   ❌    |       ❌       |       ❌        |   ❌    |
+| **Reviews** (add-on)        |       |       |         |         |                |                 |         |
+| Manage reviews              |  ✅   |  ✅   |   ✅    |   ✅    |       ❌       |       ❌        | limited |
+| **Reports & Analytics**     |       |       |         |         |                |                 |         |
+| View reports                |  ✅   |  ✅   |   ✅    |   ✅    |       ✅       |       ❌        |   ❌    |
+| Create custom reports       |  ✅   |  ✅   |   ✅    |   ✅    |       ❌       |       ❌        |   ❌    |
+| **Domain & Deliverability** |       |       |         |         |                |                 |         |
+| Manage domains              |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| **Integrations**            |       |       |         |         |                |                 |         |
+| Connect integrations        |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |
+| **Coupons**                 |       |       |         |         |                |                 |         |
+| Create/manage coupons       |  ✅   |  ✅   |   ✅    |   ❌    |       ✅       |       ❌        |   ❌    |
 
 ### 2.9 Special pravidla
 
@@ -240,6 +241,7 @@ V 2025 Klaviyo zavedlo **Custom User Roles** – vlastní role složené z **Per
 ### 3.1 Co je Permission Set
 
 Atomic permission unit organized by product area. Příklady:
+
 - Content View
 - Content Edit
 - Campaigns Send
@@ -887,12 +889,12 @@ Lze resubscribe via form
 
 ### 11.8 Suppression vs. Unsubscribed
 
-| | Suppressed | Unsubscribed |
-|---|---|---|
-| Trigger | Bounce, complaint, manual | User opt-out |
-| Profile stays | Yes | Yes |
-| Counts in active profiles | No | No |
-| Auto-reversible | No (manual remove from supression) | Yes (resubscribe form) |
+|                           | Suppressed                         | Unsubscribed           |
+| ------------------------- | ---------------------------------- | ---------------------- |
+| Trigger                   | Bounce, complaint, manual          | User opt-out           |
+| Profile stays             | Yes                                | Yes                    |
+| Counts in active profiles | No                                 | No                     |
+| Auto-reversible           | No (manual remove from supression) | Yes (resubscribe form) |
 
 ### 11.9 Hard bounce flow
 
@@ -925,6 +927,7 @@ Klaviyo:
 ### 11.11 Profile activity timeline
 
 V profile UI vidíte chronological timeline:
+
 - Every event
 - Email sends, opens, clicks
 - SMS interactions
@@ -1451,6 +1454,7 @@ Provides download (or returns JSON)
 ### 17.3 Consent tracking
 
 For each profile:
+
 - Email subscription source + timestamp + IP
 - SMS opt-in source + timestamp + IP
 - WhatsApp opt-in
@@ -1472,27 +1476,27 @@ Public on klaviyo.com – includes AWS, Twilio (SMS), etc.
 
 ## 18. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Manager | Analyst | Campaign Coord | Content Creator | Support | Custom Role | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account & Billing | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per role | per scope |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per role | per scope |
-| All profiles | ✅ | ✅ | ✅ | view | view | ❌ | view | per role | ✅ |
-| Edit profiles | ✅ | ✅ | ✅ | ❌ | limited | ❌ | limited | per role | ✅ |
-| Lists | ✅ | ✅ | edit | view | ❌ | ❌ | ❌ | per role | ✅ |
-| Segments | ✅ | ✅ | edit | view | ❌ | ❌ | ❌ | per role | ✅ |
-| Campaigns | ✅ | ✅ | ✅ | view | ✅ | drafts | ❌ | per role | ✅ |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | per role | ✅ |
-| Flows | ✅ | ✅ | limited | view | ❌ | ❌ | ❌ | per role | ✅ |
-| Templates | ✅ | ✅ | ✅ | view | ✅ | ✅ | ❌ | per role | ✅ |
-| Forms | ✅ | ✅ | ✅ | view | ❌ | ❌ | ❌ | per role | ✅ |
-| Reviews (add-on) | ✅ | ✅ | ✅ | view | ❌ | ❌ | limited | per role | ✅ |
-| Reports | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ✅ |
-| Custom analytics | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ✅ |
-| Domains | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per role | per scope |
-| API keys | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role | – |
-| Integrations | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per role | per scope |
-| Predictive analytics | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | per role | ✅ |
-| GDPR delete | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per role | per scope |
+| Data                 | Owner | Admin | Manager | Analyst | Campaign Coord | Content Creator | Support | Custom Role |    API    |
+| -------------------- | :---: | :---: | :-----: | :-----: | :------------: | :-------------: | :-----: | :---------: | :-------: |
+| Account & Billing    |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |  per role   | per scope |
+| User management      |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |  per role   | per scope |
+| All profiles         |  ✅   |  ✅   |   ✅    |  view   |      view      |       ❌        |  view   |  per role   |    ✅     |
+| Edit profiles        |  ✅   |  ✅   |   ✅    |   ❌    |    limited     |       ❌        | limited |  per role   |    ✅     |
+| Lists                |  ✅   |  ✅   |  edit   |  view   |       ❌       |       ❌        |   ❌    |  per role   |    ✅     |
+| Segments             |  ✅   |  ✅   |  edit   |  view   |       ❌       |       ❌        |   ❌    |  per role   |    ✅     |
+| Campaigns            |  ✅   |  ✅   |   ✅    |  view   |       ✅       |     drafts      |   ❌    |  per role   |    ✅     |
+| Send campaigns       |  ✅   |  ✅   |   ✅    |   ❌    |       ✅       |       ❌        |   ❌    |  per role   |    ✅     |
+| Flows                |  ✅   |  ✅   | limited |  view   |       ❌       |       ❌        |   ❌    |  per role   |    ✅     |
+| Templates            |  ✅   |  ✅   |   ✅    |  view   |       ✅       |       ✅        |   ❌    |  per role   |    ✅     |
+| Forms                |  ✅   |  ✅   |   ✅    |  view   |       ❌       |       ❌        |   ❌    |  per role   |    ✅     |
+| Reviews (add-on)     |  ✅   |  ✅   |   ✅    |  view   |       ❌       |       ❌        | limited |  per role   |    ✅     |
+| Reports              |  ✅   |  ✅   |   ✅    |   ✅    |       ✅       |       ❌        |   ❌    |  per role   |    ✅     |
+| Custom analytics     |  ✅   |  ✅   |   ✅    |   ✅    |       ❌       |       ❌        |   ❌    |  per role   |    ✅     |
+| Domains              |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |  per role   | per scope |
+| API keys             |  ✅   |  ✅   |   ✅    |   ❌    |       ❌       |       ❌        |   ❌    |  per role   |     –     |
+| Integrations         |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |  per role   | per scope |
+| Predictive analytics |  ✅   |  ✅   |   ✅    |   ✅    |       ✅       |       ❌        |   ❌    |  per role   |    ✅     |
+| GDPR delete          |  ✅   |  ✅   |   ❌    |   ❌    |       ❌       |       ❌        |   ❌    |  per role   | per scope |
 
 ---
 
@@ -1596,4 +1600,4 @@ Pokud Klaviyo používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů help.klaviyo.com, developers.klaviyo.com, klaviyo.com a praktických zdrojů (CheckThat.ai, Stitchflow, FirstPier, Retainful, EmailToolTester, Hustler Marketing, Tekpon, Stormy AI, Flowium, Adviser Atlas). Pro nejaktuálnější detaily vždy konzultovat Klaviyo Help Center.*
+_Dokument zpracován z oficiálních zdrojů help.klaviyo.com, developers.klaviyo.com, klaviyo.com a praktických zdrojů (CheckThat.ai, Stitchflow, FirstPier, Retainful, EmailToolTester, Hustler Marketing, Tekpon, Stormy AI, Flowium, Adviser Atlas). Pro nejaktuálnější detaily vždy konzultovat Klaviyo Help Center._

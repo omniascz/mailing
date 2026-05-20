@@ -37,7 +37,9 @@ export class ContactsResource {
   }
 
   /** Bulk create contacts. Returns { imported, skipped, errors }. */
-  bulkCreate(contacts: CreateContactInput[]): Promise<{ data: { imported: number; skipped: number; errors: string[] } }> {
+  bulkCreate(
+    contacts: CreateContactInput[],
+  ): Promise<{ data: { imported: number; skipped: number; errors: string[] } }> {
     return this.client.post('/api/v1/contacts/bulk', { contacts });
   }
 

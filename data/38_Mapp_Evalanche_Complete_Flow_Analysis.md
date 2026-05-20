@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `37_Mapp_Evalanche_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** Mapp + Evalanche umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Dvě oddělené platformy** v jednom dokumentu (Mapp + Evalanche)
 > - **Mapp** = B2C/D2C enterprise CDP + cross-channel automation
 > - **Evalanche** = B2B marketing automation specialist (SC-Networks GmbH)
@@ -25,6 +26,7 @@
 ## Obsah
 
 ### Část 1: Mapp Marketing Cloud flows
+
 1. [Mapp aktéři](#1-mapp-aktéři)
 2. [Mapp sales flow](#2-mapp-sales)
 3. [Mapp onboarding](#3-mapp-onboarding)
@@ -36,6 +38,7 @@
 9. [Mapp recipient lifecycle](#9-mapp-recipient)
 
 ### Část 2: Evalanche (SC-Networks) flows
+
 10. [Evalanche aktéři](#10-evalanche-aktéři)
 11. [Evalanche sales flow](#11-evalanche-sales)
 12. [Evalanche PowerSets quick start flow](#12-powersets-flow)
@@ -50,6 +53,7 @@
 21. [Evalanche print + analog channel flow](#21-print-analog)
 
 ### Část 3: Společné aspekty
+
 22. [Email lifecycle (oba)](#22-email-lifecycle)
 23. [GDPR compliance flow (oba)](#23-gdpr-flow)
 24. [Datová mapa](#24-datová-mapa)
@@ -417,46 +421,55 @@ Pre-launch QA → Soft launch → Full launch → Hypercare
 ### 4.1 Typical roles
 
 #### Account Owner / Admin
+
 - Full control
 - Billing
 - User management
 
 #### CMO / Marketing Director
+
 - Strategic oversight
 - Reports + dashboards
 - Budget approval
 
 #### Email Marketing Specialist
+
 - Email campaigns
 - Templates
 - A/B testing
 
 #### CRM / Data Analyst
+
 - CDP exploration
 - Segment building
 - Reports
 
 #### Campaign Manager
+
 - Workflows
 - Cross-channel coordination
 - Goals tracking
 
 #### Content / Designer
+
 - Templates design
 - Content creation
 - Brand consistency
 
 #### Mobile Marketing Specialist
+
 - Push notifications
 - In-app messages
 - App-specific campaigns
 
 #### Analytics user
+
 - Reports + BI
 - Predictive insights
 - ROI tracking
 
 #### Read-only / Viewer
+
 - View only
 
 ### 4.2 Granular permissions
@@ -724,6 +737,7 @@ Reports show AI impact
 ### 8.3 Use cases
 
 #### Churn prevention
+
 ```
 AI flags: 1,200 customers at high churn risk
    ↓
@@ -735,6 +749,7 @@ Measure success: churn rate reduction
 ```
 
 #### CLV optimization
+
 ```
 AI segments customers by CLV:
 - Top 10%: VIP treatment
@@ -746,6 +761,7 @@ ROI-optimized marketing spend
 ```
 
 #### Next-best-action
+
 ```
 For each customer, AI recommends:
 - Best content to send
@@ -764,6 +780,7 @@ Higher conversion rates
 ### 9.1 Recipient creation paths
 
 #### A) Website form submission
+
 ```
 Visitor submits form
    ↓
@@ -779,6 +796,7 @@ Welcome workflow triggered
 ```
 
 #### B) Mobile app first launch
+
 ```
 App user installs + opens
    ↓
@@ -794,6 +812,7 @@ Active profile
 ```
 
 #### C) E-commerce purchase (Shopify/Magento/Shopware)
+
 ```
 Customer makes purchase
    ↓
@@ -807,6 +826,7 @@ Post-purchase workflow triggered
 ```
 
 #### D) CRM sync
+
 ```
 CRM customer added
    ↓
@@ -818,6 +838,7 @@ Marketing consent respected
 ```
 
 #### E) API integration
+
 ```
 External system POST to Mapp API
    ↓
@@ -1070,7 +1091,8 @@ Contract signing
 ### 12.1 PowerSets advantage
 
 Per oficiální:
-> *"Mit den Evalanche PowerSets startest Du schneller in die Marketing Automation."*
+
+> _"Mit den Evalanche PowerSets startest Du schneller in die Marketing Automation."_
 
 ```
 Without PowerSets: 3-6 months to implement
@@ -1271,41 +1293,49 @@ Pre-launch QA → Soft launch → Full launch → Hypercare
 ### 14.1 User roles (typical B2B)
 
 #### Account Owner / Admin
+
 - Full control
 - Billing
 - User management
 
 #### Marketing Lead
+
 - Strategy oversight
 - Reports + dashboards
 - Budget management
 
 #### Marketing Automation Specialist
+
 - Campaign Designer
 - Workflows
 - Templates
 
 #### Content Designer
+
 - Landing pages
 - Email templates
 - Brand consistency
 
 #### Lead Management Specialist
+
 - Scoring rules
 - Buyer Personas
 - Sales handoff
 
 #### Sales (CRM-integrated view)
+
 - Lead queue
 - Lead details
 - CRM sync visibility
 
 #### Analyst
+
 - Reports + BI
 - Marketing Cockpit
 - ROI tracking
 
 #### Read-only / Viewer
+
 - View only
 
 ### 14.2 Agency multi-tenant flow
@@ -1348,7 +1378,8 @@ Schunk Group:
 ### 15.1 Visual builder
 
 Per FlyMint:
-> *"Visueller Kampagnen-Designer (keine Programmierkenntnisse notwendig)"*
+
+> _"Visueller Kampagnen-Designer (keine Programmierkenntnisse notwendig)"_
 
 ```
 Campaign Designer interface
@@ -1411,7 +1442,8 @@ Exit campaign
 ### 15.3 Form-triggered campaigns
 
 Per V7:
-> *"You can now easily define that a campaign is started automatically after the completed form has been submitted."*
+
+> _"You can now easily define that a campaign is started automatically after the completed form has been submitted."_
 
 ```
 Lead fills form (e.g., whitepaper download)
@@ -1430,7 +1462,8 @@ Workflow continues
 ### 15.4 Dynamic profile entry
 
 Per V7:
-> *"profiles start the campaign dynamically as soon as they correspond to one of your predefined definitions"*
+
+> _"profiles start the campaign dynamically as soon as they correspond to one of your predefined definitions"_
 
 ```
 Profile updates (e.g., job title changes)
@@ -1445,7 +1478,8 @@ Workflow begins
 ### 15.5 Modular campaigns
 
 Per V7:
-> *"copying profiles from one campaign to another"*
+
+> _"copying profiles from one campaign to another"_
 
 - Cross-campaign profile movement
 - Modular scenarios
@@ -1458,7 +1492,8 @@ Per V7:
 ### 16.1 Lead Management end-to-end
 
 Per oficiální:
-> *"Mit Evalanche Lead Management automatisierst Du jeden Schritt im Verkaufsprozess: von der Lead-Generierung bis hin zur Übergabe an den Vertrieb."*
+
+> _"Mit Evalanche Lead Management automatisierst Du jeden Schritt im Verkaufsprozess: von der Lead-Generierung bis hin zur Übergabe an den Vertrieb."_
 
 ```
 [1. Lead Generation]
@@ -1566,7 +1601,8 @@ Lead score reaches threshold (e.g., 80)
 ### 17.1 Progressive Profiling concept
 
 Per FlyMint:
-> *"Progressive Profiling"*
+
+> _"Progressive Profiling"_
 
 **Idea:** Don't ask for all info at once. Build profile incrementally s each interaction.
 
@@ -1602,7 +1638,8 @@ High-quality lead
 ### 17.3 Smart forms
 
 Per FlyMint:
-> *"Smart, pre-filled entry forms"*
+
+> _"Smart, pre-filled entry forms"_
 
 - **Pre-fill known data**
 - **Reduce friction**
@@ -1611,7 +1648,7 @@ Per FlyMint:
 
 ### 17.4 Per oficiální V7
 
-> *"Boost your event marketing with highly selective content for a designated geo location."*
+> _"Boost your event marketing with highly selective content for a designated geo location."_
 
 - Smart forms can be **geo-targeted**
 - **Persona-aware**
@@ -1624,9 +1661,11 @@ Per FlyMint:
 ### 18.1 Best-of-Breed philosophy
 
 Per Business.digital:
-> *"Best-of-Breed-Ansatz integriert sich in bestehende Systeme statt sie zu ersetzen."*
+
+> _"Best-of-Breed-Ansatz integriert sich in bestehende Systeme statt sie zu ersetzen."_
 
 **Approach:**
+
 - **Doesn't replace** existing systems
 - **Integrates** s CRM, ERP, e-commerce
 - **Specialized marketing tool**
@@ -1675,6 +1714,7 @@ Evalanche benefits:
 ### 18.4 itmX CRM integration (DACH partner)
 
 Per LinkedIn (Jauch Quartz):
+
 ```
 itmX crm + Evalanche
    ↓
@@ -1695,7 +1735,8 @@ Use case: Jauch Quartz electrotechnical
 ### 18.5 Adapter hub (Marini Systems)
 
 Per V7:
-> *"With the adapter hub of our partner Marini Systems you have the possibility to configure connections of Evalanche to third-party systems independently"*
+
+> _"With the adapter hub of our partner Marini Systems you have the possibility to configure connections of Evalanche to third-party systems independently"_
 
 ```
 Marini Systems adapter hub
@@ -1727,6 +1768,7 @@ Clean data v Evalanche
 ### 18.7 SOAP + REST APIs
 
 Per V7:
+
 - **SOAP** (legacy enterprise systems)
 - **REST** (modern)
 - **Comprehensive** endpoints
@@ -1738,7 +1780,8 @@ Per V7:
 ### 19.1 Multi-tenant architecture
 
 Per oficiální:
-> *"Multi-Tenant ermöglicht separate Kampagnen für drei Produktmarken"*
+
+> _"Multi-Tenant ermöglicht separate Kampagnen für drei Produktmarken"_
 
 ```
 Group account
@@ -1769,6 +1812,7 @@ Group-level:
 ### 19.2 Use cases
 
 #### Multi-brand company
+
 ```
 Parent company s 3 brands
    ↓
@@ -1784,6 +1828,7 @@ Group sees consolidated reports
 ```
 
 #### Subsidiary management (Schunk example)
+
 ```
 Schunk Group s 34 subsidiaries
    ↓
@@ -1802,6 +1847,7 @@ Group-level:
 ```
 
 #### Agency use
+
 ```
 Marketing agency s 50 clients
    ↓
@@ -1817,7 +1863,7 @@ Agency staff:
 
 ### 19.3 Per oficiální V7 (multi-variant pro agencies)
 
-> *"In cooperation with nextage we now offer agencies a configuration set for multi-variant, multilingual template scenarios."*
+> _"In cooperation with nextage we now offer agencies a configuration set for multi-variant, multilingual template scenarios."_
 
 - **Agency-specific** templates
 - **Per-client variants**
@@ -1862,9 +1908,11 @@ Scoring update real-time
 ### 20.2 B2B Maschinenbauer example
 
 Per Business.digital:
-> *"Ein B2B-Maschinenbauer mit SAP CRM will Lead Management digitalisieren. Mit Evalanche: Landing Pages für Whitepaper-Downloads. Formulare erfassen Interessenten und scoren sie automatisch. Campaign Designer steuert Nurturing-Sequences: Nach Whitepaper kommt Case Study, dann Webinar-Einladung. Scoring identifiziert kaufbereite Leads und übergibt sie ans SAP CRM. Multi-Tenant ermöglicht separate Kampagnen für drei Produktmarken."*
+
+> _"Ein B2B-Maschinenbauer mit SAP CRM will Lead Management digitalisieren. Mit Evalanche: Landing Pages für Whitepaper-Downloads. Formulare erfassen Interessenten und scoren sie automatisch. Campaign Designer steuert Nurturing-Sequences: Nach Whitepaper kommt Case Study, dann Webinar-Einladung. Scoring identifiziert kaufbereite Leads und übergibt sie ans SAP CRM. Multi-Tenant ermöglicht separate Kampagnen für drei Produktmarken."_
 
 **Real-world flow:**
+
 ```
 1. Prospect visits landing page (whitepaper download)
    ↓
@@ -1902,7 +1950,8 @@ Per Business.digital:
 ### 20.3 Marketing Cockpit shows results
 
 Per Business.digital:
-> *"Marketing Cockpit zeigt Pipeline-Beitrag jeder Kampagne."*
+
+> _"Marketing Cockpit zeigt Pipeline-Beitrag jeder Kampagne."_
 
 - **Marketing Cockpit dashboard**
 - **Per-campaign pipeline contribution**
@@ -1916,9 +1965,11 @@ Per Business.digital:
 ### 21.1 Print integration
 
 Per FlyMint:
-> *"Gerade in Branchen, in denen Fax oder Brief weiterhin wichtige Kommunikationskanäle sind (z. B. Handwerk, Apotheken), hat Evalanche die passende Marketing-Power an Bord."*
+
+> _"Gerade in Branchen, in denen Fax oder Brief weiterhin wichtige Kommunikationskanäle sind (z. B. Handwerk, Apotheken), hat Evalanche die passende Marketing-Power an Bord."_
 
 **UNIKÁTNÍ pro DACH B2B:**
+
 - **Fax** still relevant (Handwerk, Apotheken)
 - **Direct mail / Brief**
 - **Combined s digital**
@@ -1948,9 +1999,11 @@ Step 4: Sales rep call (if engaged)
 ### 21.3 Why analog matters
 
 Per FlyMint:
-> *"Nutzt die haptischen Vorteile analoger Medien, um länger und nachhaltiger im Kopf zu bleiben: E-Mail ist ideal für schnelle 'Instant'-Kommunikation – Print punktet beim Brand Building und bei nachhaltiger Wirkung."*
+
+> _"Nutzt die haptischen Vorteile analoger Medien, um länger und nachhaltiger im Kopf zu bleiben: E-Mail ist ideal für schnelle 'Instant'-Kommunikation – Print punktet beim Brand Building und bei nachhaltiger Wirkung."_
 
 **Print advantages:**
+
 - **Tactile experience**
 - **Longer retention**
 - **Brand building**
@@ -1960,6 +2013,7 @@ Per FlyMint:
 ### 21.4 Use cases
 
 #### Handwerk (craftsmen)
+
 ```
 Local craftsman business
    ↓
@@ -1974,6 +2028,7 @@ Comprehensive reach
 ```
 
 #### Apotheken (pharmacies)
+
 ```
 Pharmacy customer communication
    ↓
@@ -2094,44 +2149,44 @@ Confirmation email (GDPR compliant)
 
 ### 24.1 Mapp datová mapa
 
-| Data | Owner | Marketing | Analyst | Designer | Mobile | API | Subscriber |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ❌ | ❌ | ❌ | ❌ | per scope | ❌ |
-| All profiles | ✅ | ✅ | ✅ | limited | per role | ✅ | jen sebe |
-| CDP unified data | ✅ | ✅ | ✅ | limited | view | ✅ | – |
-| AI predictive scores | ✅ | ✅ | ✅ | view | view | per scope | ❌ |
-| Email campaigns | ✅ | ✅ | view | ✅ | view | ✅ | jen co dostal |
-| SMS campaigns | ✅ | ✅ | view | view | view | ✅ | jen co dostal |
-| Mobile push | ✅ | per role | view | view | ✅ | ✅ | jen co dostal |
-| In-app messages | ✅ | per role | view | view | ✅ | ✅ | in-app |
-| Web banners | ✅ | ✅ | view | ✅ | view | ✅ | on website |
-| Workflows | ✅ | ✅ | view | view | view | ✅ | ❌ |
-| Activate workflows | ✅ | ✅ | ❌ | ❌ | per role | ✅ | ❌ |
-| Reports | ✅ | ✅ | ✅ | view | view | ✅ | ❌ |
-| Integrations | ✅ | per role | view | ❌ | ❌ | per scope | – |
-| API keys | ✅ | ❌ | ❌ | ❌ | ❌ | – | – |
-| GDPR delete | ✅ | per role | per role | ❌ | ❌ | ✅ | request |
+| Data                 | Owner | Marketing | Analyst  | Designer |  Mobile  |    API    |  Subscriber   |
+| -------------------- | :---: | :-------: | :------: | :------: | :------: | :-------: | :-----------: |
+| Account settings     |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    | per scope |      ❌       |
+| All profiles         |  ✅   |    ✅     |    ✅    | limited  | per role |    ✅     |   jen sebe    |
+| CDP unified data     |  ✅   |    ✅     |    ✅    | limited  |   view   |    ✅     |       –       |
+| AI predictive scores |  ✅   |    ✅     |    ✅    |   view   |   view   | per scope |      ❌       |
+| Email campaigns      |  ✅   |    ✅     |   view   |    ✅    |   view   |    ✅     | jen co dostal |
+| SMS campaigns        |  ✅   |    ✅     |   view   |   view   |   view   |    ✅     | jen co dostal |
+| Mobile push          |  ✅   | per role  |   view   |   view   |    ✅    |    ✅     | jen co dostal |
+| In-app messages      |  ✅   | per role  |   view   |   view   |    ✅    |    ✅     |    in-app     |
+| Web banners          |  ✅   |    ✅     |   view   |    ✅    |   view   |    ✅     |  on website   |
+| Workflows            |  ✅   |    ✅     |   view   |   view   |   view   |    ✅     |      ❌       |
+| Activate workflows   |  ✅   |    ✅     |    ❌    |    ❌    | per role |    ✅     |      ❌       |
+| Reports              |  ✅   |    ✅     |    ✅    |   view   |   view   |    ✅     |      ❌       |
+| Integrations         |  ✅   | per role  |   view   |    ❌    |    ❌    | per scope |       –       |
+| API keys             |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    |     –     |       –       |
+| GDPR delete          |  ✅   | per role  | per role |    ❌    |    ❌    |    ✅     |    request    |
 
 ### 24.2 Evalanche datová mapa
 
-| Data | Owner | Marketing | Lead Mgmt | Designer | Sales | Analyst | API | Subscriber |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope | ❌ |
-| All profiles | ✅ | ✅ | ✅ | limited | view (qualified) | ✅ | ✅ | jen sebe |
-| Multivariate scoring | ✅ | ✅ | ✅ | view | view | ✅ | ✅ | ❌ |
-| Buyer Personas | ✅ | ✅ | ✅ | view | view | view | ✅ | – |
-| Campaign Designer | ✅ | ✅ | view | view | view | view | ✅ | – |
-| Landing Pages | ✅ | ✅ | ✅ | ✅ | view | view | ✅ | submit |
-| Forms (Progressive) | ✅ | ✅ | ✅ | ✅ | view | view | ✅ | submit |
-| PowerSets | ✅ | ✅ | ✅ | ✅ | view | view | ✅ | – |
-| Lead Management | ✅ | ✅ | ✅ | view | ✅ | view | ✅ | – |
-| Sales handoff to CRM | ✅ | ✅ | ✅ | ❌ | receive | view | ✅ | ❌ |
-| Multi-tenant | ✅ | per tenant | per tenant | per tenant | per tenant | per tenant | per scope | per tenant |
-| Print campaigns | ✅ | ✅ | view | view | view | view | ✅ | receive |
-| Marketing Cockpit | ✅ | ✅ | ✅ | view | view | ✅ | ✅ | ❌ |
-| SAP CRM integration | ✅ | ✅ | ✅ | ❌ | ✅ | view | per scope | – |
-| API keys | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | – | – |
-| GDPR delete | ✅ | per role | ✅ | ❌ | per role | ❌ | ✅ | request |
+| Data                 | Owner | Marketing  | Lead Mgmt  |  Designer  |      Sales       |  Analyst   |    API    | Subscriber |
+| -------------------- | :---: | :--------: | :--------: | :--------: | :--------------: | :--------: | :-------: | :--------: |
+| Account settings     |  ✅   |     ❌     |     ❌     |     ❌     |        ❌        |     ❌     | per scope |     ❌     |
+| All profiles         |  ✅   |     ✅     |     ✅     |  limited   | view (qualified) |     ✅     |    ✅     |  jen sebe  |
+| Multivariate scoring |  ✅   |     ✅     |     ✅     |    view    |       view       |     ✅     |    ✅     |     ❌     |
+| Buyer Personas       |  ✅   |     ✅     |     ✅     |    view    |       view       |    view    |    ✅     |     –      |
+| Campaign Designer    |  ✅   |     ✅     |    view    |    view    |       view       |    view    |    ✅     |     –      |
+| Landing Pages        |  ✅   |     ✅     |     ✅     |     ✅     |       view       |    view    |    ✅     |   submit   |
+| Forms (Progressive)  |  ✅   |     ✅     |     ✅     |     ✅     |       view       |    view    |    ✅     |   submit   |
+| PowerSets            |  ✅   |     ✅     |     ✅     |     ✅     |       view       |    view    |    ✅     |     –      |
+| Lead Management      |  ✅   |     ✅     |     ✅     |    view    |        ✅        |    view    |    ✅     |     –      |
+| Sales handoff to CRM |  ✅   |     ✅     |     ✅     |     ❌     |     receive      |    view    |    ✅     |     ❌     |
+| Multi-tenant         |  ✅   | per tenant | per tenant | per tenant |    per tenant    | per tenant | per scope | per tenant |
+| Print campaigns      |  ✅   |     ✅     |    view    |    view    |       view       |    view    |    ✅     |  receive   |
+| Marketing Cockpit    |  ✅   |     ✅     |     ✅     |    view    |       view       |     ✅     |    ✅     |     ❌     |
+| SAP CRM integration  |  ✅   |     ✅     |     ✅     |     ❌     |        ✅        |    view    | per scope |     –      |
+| API keys             |  ✅   |     ❌     |     ❌     |     ❌     |        ❌        |     ❌     |     –     |     –      |
+| GDPR delete          |  ✅   |  per role  |     ✅     |     ❌     |     per role     |     ❌     |    ✅     |  request   |
 
 ---
 
@@ -2140,74 +2195,93 @@ Confirmation email (GDPR compliant)
 ### 25.1 Mapp limity
 
 #### Less market awareness
+
 - Limited brand recognition vs. HubSpot / Salesforce
 - Smaller community
 - Fewer integrations než market leaders
 
 #### Less granular segmentation
+
 - Per Research.com less granular than competitors
 
 #### Manual data import/export
+
 - Some manual workflows needed
 
 #### Email tool bugs
+
 - Per Capterra: HTML creator has bugs
 - Templates not always responsive
 
 #### Customer support varies
+
 - Per G2: support quality inconsistent
 
 #### Complexity
+
 - Steep learning curve
 
 #### Higher cost
+
 - Premium pricing
 - Not for SMB
 
 #### Limited UI languages
+
 - 5 only (EN, FR, DE, IT, ES)
 - No CEE (no CZ/SK/PL)
 
 #### B2C/D2C focus = limited B2B
+
 - B2B features less developed
 - B2B should use Evalanche
 
 ### 25.2 Evalanche limity
 
 #### Less SMB-friendly
+
 - Mid-market + enterprise only
 - Per Business.digital: "Für KMU gibt es zugänglichere Alternativen"
 
 #### Steep learning curve
+
 - Per OMR Reviews: complex
 - Initial setup difficult
 
 #### Higher pricing
+
 - Not for small budgets
 
 #### Outdated interface feel
+
 - Per OMR Reviews: "interface can feel outdated"
 - Despite V7 modernization
 
 #### Reporting could be improved
+
 - Per OMR Reviews
 
 #### B2B focus = limited B2C
+
 - B2C should use Mapp
 - DTC should use Klaviyo / Mapp
 
 #### Lower brand awareness
+
 - "Hidden Champion" status
 - Less international visibility
 
 #### No public pricing
+
 - Sales-driven only
 
 #### Limited integrations vs. market leaders
+
 - Best-of-Breed = fewer pre-built
 - Custom dev sometimes needed
 
 #### No autonomous AI
+
 - KI assistive only
 - Not full AI agents
 
@@ -2262,4 +2336,4 @@ Confirmation email (GDPR compliant)
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů mapp.com + sc-networks.com a praktických zdrojů (GetApp, Capterra, G2, OMR Reviews, SoftwareAdvice, SoftwareSuggest, Research.com, FitGap, Business.digital, FlyMint, email-marketing-forum.de, LinkedIn). Pro nejaktuálnější detaily je nutný engagement s Mapp / SC-Networks sales teamem.*
+_Dokument zpracován z oficiálních zdrojů mapp.com + sc-networks.com a praktických zdrojů (GetApp, Capterra, G2, OMR Reviews, SoftwareAdvice, SoftwareSuggest, Research.com, FitGap, Business.digital, FlyMint, email-marketing-forum.de, LinkedIn). Pro nejaktuálnější detaily je nutný engagement s Mapp / SC-Networks sales teamem._

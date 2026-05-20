@@ -115,7 +115,8 @@ async function executeNode(
 
   switch (result.type) {
     case 'next': {
-      const nextNodeId = result.nextNodeId ?? resolveNextNode(node.id, workflow.edges as WorkflowEdge[]);
+      const nextNodeId =
+        result.nextNodeId ?? resolveNextNode(node.id, workflow.edges as WorkflowEdge[]);
       if (!nextNodeId) {
         // Terminal — no more edges
         await completeRun(run.id, workflow.id);
@@ -320,12 +321,7 @@ export async function processWorkflowRuns(): Promise<{ processed: number; errors
   const dueRuns = await db
     .select()
     .from(workflowRuns)
-    .where(
-      and(
-        eq(workflowRuns.status, 'waiting'),
-        lte(workflowRuns.nextExecutionAt, now),
-      ),
-    )
+    .where(and(eq(workflowRuns.status, 'waiting'), lte(workflowRuns.nextExecutionAt, now)))
     .limit(500); // max 500 per tick to avoid overload
 
   let processed = 0;

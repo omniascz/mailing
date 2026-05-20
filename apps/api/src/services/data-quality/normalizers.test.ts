@@ -9,11 +9,17 @@ import {
 
 describe('normaliseEmail', () => {
   it('lower-cases and trims', () => {
-    expect(normaliseEmail('  Jane@EXAMPLE.com ')).toEqual({ value: 'jane@example.com', changed: true });
+    expect(normaliseEmail('  Jane@EXAMPLE.com ')).toEqual({
+      value: 'jane@example.com',
+      changed: true,
+    });
   });
 
   it('reports changed=false when already canonical', () => {
-    expect(normaliseEmail('jane@example.com')).toEqual({ value: 'jane@example.com', changed: false });
+    expect(normaliseEmail('jane@example.com')).toEqual({
+      value: 'jane@example.com',
+      changed: false,
+    });
   });
 
   it('returns null for missing @', () => {
@@ -36,15 +42,24 @@ describe('normaliseEmail', () => {
 
 describe('normalisePhone', () => {
   it('keeps a clean E.164 number', () => {
-    expect(normalisePhone('+420123456789', '420')).toEqual({ value: '+420123456789', changed: false });
+    expect(normalisePhone('+420123456789', '420')).toEqual({
+      value: '+420123456789',
+      changed: false,
+    });
   });
 
   it('strips formatting on E.164 input', () => {
-    expect(normalisePhone('+420 (123) 456-789', '420')).toEqual({ value: '+420123456789', changed: true });
+    expect(normalisePhone('+420 (123) 456-789', '420')).toEqual({
+      value: '+420123456789',
+      changed: true,
+    });
   });
 
   it('drops 00 international prefix', () => {
-    expect(normalisePhone('00420123456789', '420')).toEqual({ value: '+420123456789', changed: true });
+    expect(normalisePhone('00420123456789', '420')).toEqual({
+      value: '+420123456789',
+      changed: true,
+    });
   });
 
   it('prepends default country dial code on naked national numbers', () => {

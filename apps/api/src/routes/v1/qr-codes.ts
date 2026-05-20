@@ -12,24 +12,32 @@ import { z } from 'zod';
 import { createHash } from 'node:crypto';
 
 const qrCodeRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/api/v1/qr-codes', {
-    preHandler: [app.authenticate],
-    schema: { tags: ['QR Codes'] },
-  }, async (req, reply) => {
-    const q = z.object({
-      data: z.string().min(1).max(2000),
-      size: z.coerce.number().int().min(64).max(2048).default(512),
-      format: z.enum(['svg', 'png']).default('svg'),
-    }).parse(req.query);
+  app.get(
+    '/api/v1/qr-codes',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['QR Codes'] },
+    },
+    async (req, reply) => {
+      const q = z
+        .object({
+          data: z.string().min(1).max(2000),
+          size: z.coerce.number().int().min(64).max(2048).default(512),
+          format: z.enum(['svg', 'png']).default('svg'),
+        })
+        .parse(req.query);
 
-    if (q.format === 'svg') {
-      const svg = generateQrSvg(q.data, q.size);
-      return reply.header('Content-Type', 'image/svg+xml').send(svg);
-    }
-    // PNG would require a raster library — return a Google Charts fallback URL for now.
-    const url = `https://api.qrserver.com/v1/create-qr-code/?size=${q.size}x${q.size}&data=${encodeURIComponent(q.data)}`;
-    return reply.send({ data: { url, format: 'png', note: 'use data URL from external renderer' } });
-  });
+      if (q.format === 'svg') {
+        const svg = generateQrSvg(q.data, q.size);
+        return reply.header('Content-Type', 'image/svg+xml').send(svg);
+      }
+      // PNG would require a raster library — return a Google Charts fallback URL for now.
+      const url = `https://api.qrserver.com/v1/create-qr-code/?size=${q.size}x${q.size}&data=${encodeURIComponent(q.data)}`;
+      return reply.send({
+        data: { url, format: 'png', note: 'use data URL from external renderer' },
+      });
+    },
+  );
 };
 
 // ─── Minimal QR encoder — v1..v10, byte mode, ECC=L ──────────────────────────
@@ -38,12 +46,16 @@ function generateQrSvg(text: string, size: number): string {
   const matrix = encodeQr(text);
   const n = matrix.length;
   const cell = size / n;
-  const parts = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">`];
+  const parts = [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">`,
+  ];
   parts.push(`<rect width="${size}" height="${size}" fill="#fff"/>`);
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
       if (matrix[y]![x]) {
-        parts.push(`<rect x="${(x * cell).toFixed(2)}" y="${(y * cell).toFixed(2)}" width="${cell.toFixed(2)}" height="${cell.toFixed(2)}" fill="#000"/>`);
+        parts.push(
+          `<rect x="${(x * cell).toFixed(2)}" y="${(y * cell).toFixed(2)}" width="${cell.toFixed(2)}" height="${cell.toFixed(2)}" fill="#000"/>`,
+        );
       }
     }
   }
@@ -69,13 +81,16 @@ function encodeQr(text: string): number[][] {
 
   // Finder patterns (7x7 squares at TL, TR, BL).
   const finder = (r: number, c: number) => {
-    for (let dy = 0; dy < 7; dy++) for (let dx = 0; dx < 7; dx++) {
-      const edge = dy === 0 || dy === 6 || dx === 0 || dx === 6;
-      const inner = dy >= 2 && dy <= 4 && dx >= 2 && dx <= 4;
-      m[r + dy]![c + dx] = edge || inner ? 1 : 0;
-    }
+    for (let dy = 0; dy < 7; dy++)
+      for (let dx = 0; dx < 7; dx++) {
+        const edge = dy === 0 || dy === 6 || dx === 0 || dx === 6;
+        const inner = dy >= 2 && dy <= 4 && dx >= 2 && dx <= 4;
+        m[r + dy]![c + dx] = edge || inner ? 1 : 0;
+      }
   };
-  finder(0, 0); finder(0, 14); finder(14, 0);
+  finder(0, 0);
+  finder(0, 14);
+  finder(14, 0);
 
   // Data fill — zig-zag the bytes into remaining cells (simplified).
   let bitIdx = 0;
@@ -94,9 +109,7 @@ function encodeQr(text: string): number[][] {
 }
 
 function inFinder(x: number, y: number, n: number): boolean {
-  return (x < 8 && y < 8)
-      || (x >= n - 8 && y < 8)
-      || (x < 8 && y >= n - 8);
+  return (x < 8 && y < 8) || (x >= n - 8 && y < 8) || (x < 8 && y >= n - 8);
 }
 
 export default qrCodeRoutes;

@@ -14,29 +14,35 @@ export async function logAuditEvent(params: {
   ipAddress?: string | null;
   userAgent?: string | null;
 }) {
-  const [row] = await db.insert(auditLogs).values({
-    orgId: params.orgId,
-    userId: params.userId ?? null,
-    action: params.action,
-    resource: params.resource,
-    resourceId: params.resourceId ?? null,
-    changes: params.changes ?? undefined,
-    metadata: params.metadata ?? undefined,
-    ipAddress: params.ipAddress ?? null,
-    userAgent: params.userAgent ?? null,
-  }).returning();
+  const [row] = await db
+    .insert(auditLogs)
+    .values({
+      orgId: params.orgId,
+      userId: params.userId ?? null,
+      action: params.action,
+      resource: params.resource,
+      resourceId: params.resourceId ?? null,
+      changes: params.changes ?? undefined,
+      metadata: params.metadata ?? undefined,
+      ipAddress: params.ipAddress ?? null,
+      userAgent: params.userAgent ?? null,
+    })
+    .returning();
   return row!;
 }
 
-export async function listAuditLogs(orgId: string, opts: {
-  userId?: string;
-  resource?: string;
-  action?: string;
-  from?: Date;
-  to?: Date;
-  limit?: number;
-  cursor?: string;
-}) {
+export async function listAuditLogs(
+  orgId: string,
+  opts: {
+    userId?: string;
+    resource?: string;
+    action?: string;
+    from?: Date;
+    to?: Date;
+    limit?: number;
+    cursor?: string;
+  },
+) {
   const { userId, resource, action, from, to, limit = 50, cursor } = opts;
 
   const conditions = [eq(auditLogs.orgId, orgId)];

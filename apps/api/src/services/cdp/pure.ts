@@ -117,10 +117,12 @@ export interface TraitValue {
  */
 export function resolveTrait(values: TraitValue[]): TraitValue | null {
   if (values.length === 0) return null;
-  return [...values].sort((a, b) => {
-    const ac = a.confidence ?? 50;
-    const bc = b.confidence ?? 50;
-    if (ac !== bc) return bc - ac;
-    return b.updatedAt.getTime() - a.updatedAt.getTime();
-  })[0] ?? null;
+  return (
+    [...values].sort((a, b) => {
+      const ac = a.confidence ?? 50;
+      const bc = b.confidence ?? 50;
+      if (ac !== bc) return bc - ac;
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
+    })[0] ?? null
+  );
 }

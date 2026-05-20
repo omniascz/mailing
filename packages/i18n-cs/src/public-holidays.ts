@@ -35,17 +35,17 @@ interface FixedHoliday {
 
 /** Czech state holidays with stable `MM-DD` dates (zákon 245/2000 Sb.). */
 export const CZECH_FIXED_HOLIDAYS: readonly FixedHoliday[] = [
-  { key: '01-01', name: 'Den obnovy samostatného českého státu',  isWorkRest: true },
-  { key: '05-01', name: 'Svátek práce',                            isWorkRest: true },
-  { key: '05-08', name: 'Den vítězství',                           isWorkRest: true },
+  { key: '01-01', name: 'Den obnovy samostatného českého státu', isWorkRest: true },
+  { key: '05-01', name: 'Svátek práce', isWorkRest: true },
+  { key: '05-08', name: 'Den vítězství', isWorkRest: true },
   { key: '07-05', name: 'Den slovanských věrozvěstů Cyrila a Metoděje', isWorkRest: true },
-  { key: '07-06', name: 'Den upálení mistra Jana Husa',            isWorkRest: true },
-  { key: '09-28', name: 'Den české státnosti',                     isWorkRest: true },
+  { key: '07-06', name: 'Den upálení mistra Jana Husa', isWorkRest: true },
+  { key: '09-28', name: 'Den české státnosti', isWorkRest: true },
   { key: '10-28', name: 'Den vzniku samostatného československého státu', isWorkRest: true },
-  { key: '11-17', name: 'Den boje za svobodu a demokracii',        isWorkRest: true },
-  { key: '12-24', name: 'Štědrý den',                              isWorkRest: true },
-  { key: '12-25', name: '1. svátek vánoční',                       isWorkRest: true },
-  { key: '12-26', name: '2. svátek vánoční',                       isWorkRest: true },
+  { key: '11-17', name: 'Den boje za svobodu a demokracii', isWorkRest: true },
+  { key: '12-24', name: 'Štědrý den', isWorkRest: true },
+  { key: '12-25', name: '1. svátek vánoční', isWorkRest: true },
+  { key: '12-26', name: '2. svátek vánoční', isWorkRest: true },
 ];
 
 /**
@@ -71,16 +71,25 @@ export function easterSunday(year: number): [number, number, number] {
 }
 
 /** Movable Czech holidays expressed as offsets from Easter Sunday. */
-export const CZECH_EASTER_RELATIVE: ReadonlyArray<{ offset: number; name: string; isWorkRest: boolean }> = [
-  { offset: -2, name: 'Velký pátek',           isWorkRest: true }, // since 2016
-  { offset: 1,  name: 'Velikonoční pondělí',   isWorkRest: true },
+export const CZECH_EASTER_RELATIVE: ReadonlyArray<{
+  offset: number;
+  name: string;
+  isWorkRest: boolean;
+}> = [
+  { offset: -2, name: 'Velký pátek', isWorkRest: true }, // since 2016
+  { offset: 1, name: 'Velikonoční pondělí', isWorkRest: true },
 ];
 
 function pad2(n: number): string {
   return n < 10 ? `0${n}` : String(n);
 }
 
-function shiftDate(year: number, month1: number, day: number, offsetDays: number): { y: number; m: number; d: number } {
+function shiftDate(
+  year: number,
+  month1: number,
+  day: number,
+  offsetDays: number,
+): { y: number; m: number; d: number } {
   // JS Date is the easiest cross-month/year shifter.
   const dt = new Date(Date.UTC(year, month1 - 1, day + offsetDays));
   return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate() };
@@ -141,9 +150,9 @@ export function czechPublicHolidayOn(date: Date): PublicHoliday | null {
  * trigger works in late December).
  */
 export function holidaysInDays(date: Date, daysAhead: number): PublicHoliday[] {
-  const target = new Date(Date.UTC(
-    date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + daysAhead,
-  ));
+  const target = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + daysAhead),
+  );
   const targetIso = toIsoDate(target);
   const candidates = [
     ...czechHolidaysForYear(target.getUTCFullYear()),

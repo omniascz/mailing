@@ -11,12 +11,20 @@ const BASE = 'https://api.calendly.com';
 const TOKEN_URL = 'https://auth.calendly.com/oauth/token';
 
 export async function getConnection(orgId: string): Promise<CalendlyConnection> {
-  const [row] = await db.select().from(calendlyConnections).where(eq(calendlyConnections.orgId, orgId)).limit(1);
+  const [row] = await db
+    .select()
+    .from(calendlyConnections)
+    .where(eq(calendlyConnections.orgId, orgId))
+    .limit(1);
   if (!row) throw AppError.notFound('Calendly connection');
   return row;
 }
 
-export function authorizeUrl(input: { clientId: string; redirectUri: string; state: string }): string {
+export function authorizeUrl(input: {
+  clientId: string;
+  redirectUri: string;
+  state: string;
+}): string {
   const url = new URL('https://auth.calendly.com/oauth/authorize');
   url.searchParams.set('client_id', input.clientId);
   url.searchParams.set('redirect_uri', input.redirectUri);
@@ -39,9 +47,19 @@ export async function exchangeCode(input: {
     client_secret: input.clientSecret,
     redirect_uri: input.redirectUri,
   });
-  const res = await fetch(TOKEN_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body });
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body,
+  });
   if (!res.ok) throw AppError.badRequest(`Calendly token exchange failed (${res.status})`);
-  const data = (await res.json()) as { access_token: string; refresh_token?: string; expires_in?: number; owner?: string; organization?: string };
+  const data = (await res.json()) as {
+    access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
+    owner?: string;
+    organization?: string;
+  };
   const expiresAt = data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : null;
 
   const [row] = await db
@@ -69,7 +87,11 @@ export async function exchangeCode(input: {
   return row!;
 }
 
-async function refreshAccessToken(conn: CalendlyConnection, clientId: string, clientSecret: string): Promise<CalendlyConnection> {
+async function refreshAccessToken(
+  conn: CalendlyConnection,
+  clientId: string,
+  clientSecret: string,
+): Promise<CalendlyConnection> {
   if (!conn.refreshToken) throw AppError.badRequest('Calendly connection has no refresh token');
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
@@ -77,13 +99,26 @@ async function refreshAccessToken(conn: CalendlyConnection, clientId: string, cl
     client_id: clientId,
     client_secret: clientSecret,
   });
-  const res = await fetch(TOKEN_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body });
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body,
+  });
   if (!res.ok) throw AppError.badRequest(`Calendly token refresh failed (${res.status})`);
-  const data = (await res.json()) as { access_token: string; refresh_token?: string; expires_in?: number };
+  const data = (await res.json()) as {
+    access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
+  };
   const expiresAt = data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : null;
   const [row] = await db
     .update(calendlyConnections)
-    .set({ accessToken: data.access_token, refreshToken: data.refresh_token ?? conn.refreshToken, tokenExpiresAt: expiresAt, updatedAt: new Date() })
+    .set({
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token ?? conn.refreshToken,
+      tokenExpiresAt: expiresAt,
+      updatedAt: new Date(),
+    })
     .where(eq(calendlyConnections.orgId, conn.orgId))
     .returning();
   return row!;
@@ -123,18 +158,26 @@ export interface CalendlyWebhookSubscription {
   state: string;
 }
 
-export async function createWebhook(conn: CalendlyConnection, callbackUrl: string, signingKey: string): Promise<CalendlyWebhookSubscription> {
+export async function createWebhook(
+  conn: CalendlyConnection,
+  callbackUrl: string,
+  signingKey: string,
+): Promise<CalendlyWebhookSubscription> {
   if (!conn.organizationUri) throw AppError.badRequest('Calendly organization URI not set');
-  const result = await calendlyFetch<{ resource: CalendlyWebhookSubscription }>(conn, '/webhook_subscriptions', {
-    method: 'POST',
-    body: JSON.stringify({
-      url: callbackUrl,
-      events: ['invitee.created', 'invitee.canceled'],
-      organization: conn.organizationUri,
-      user: conn.userUri ?? undefined,
-      scope: conn.userUri ? 'user' : 'organization',
-      signing_key: signingKey,
-    }),
-  });
+  const result = await calendlyFetch<{ resource: CalendlyWebhookSubscription }>(
+    conn,
+    '/webhook_subscriptions',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        url: callbackUrl,
+        events: ['invitee.created', 'invitee.canceled'],
+        organization: conn.organizationUri,
+        user: conn.userUri ?? undefined,
+        scope: conn.userUri ? 'user' : 'organization',
+        signing_key: signingKey,
+      }),
+    },
+  );
   return result.resource;
 }

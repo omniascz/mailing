@@ -1,6 +1,15 @@
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, text, jsonb, timestamp, boolean, integer, index, uniqueIndex,
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  jsonb,
+  timestamp,
+  boolean,
+  integer,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
@@ -24,8 +33,12 @@ import { organizations } from './organizations.js';
 export const appStudioApps = pgTable(
   'app_studio_apps',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     /** snake_case slug, unique per org, e.g. "stripe-checkout" */
     slug: varchar('slug', { length: 64 }).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
@@ -48,9 +61,13 @@ export const appStudioApps = pgTable(
 export const appStudioWebhookSubscribers = pgTable(
   'app_studio_webhook_subscribers',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').notNull(),
-    appId: uuid('app_id').notNull().references(() => appStudioApps.id, { onDelete: 'cascade' }),
+    appId: uuid('app_id')
+      .notNull()
+      .references(() => appStudioApps.id, { onDelete: 'cascade' }),
     /** Event name, e.g. "contact.created" */
     event: varchar('event', { length: 100 }).notNull(),
     /** Where to deliver — usually an HTTPS URL hosted by the app. */
@@ -78,9 +95,13 @@ export const appStudioWebhookSubscribers = pgTable(
 export const appStudioActions = pgTable(
   'app_studio_actions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').notNull(),
-    appId: uuid('app_id').notNull().references(() => appStudioApps.id, { onDelete: 'cascade' }),
+    appId: uuid('app_id')
+      .notNull()
+      .references(() => appStudioApps.id, { onDelete: 'cascade' }),
     key: varchar('key', { length: 64 }).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
@@ -111,9 +132,13 @@ export const appStudioActions = pgTable(
 export const appStudioTriggers = pgTable(
   'app_studio_triggers',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').notNull(),
-    appId: uuid('app_id').notNull().references(() => appStudioApps.id, { onDelete: 'cascade' }),
+    appId: uuid('app_id')
+      .notNull()
+      .references(() => appStudioApps.id, { onDelete: 'cascade' }),
     key: varchar('key', { length: 64 }).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
     /** Workflow event name fired when this trigger receives a payload. */

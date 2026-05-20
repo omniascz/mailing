@@ -16,9 +16,9 @@ export interface LineItem {
   description?: string;
   qty: number;
   unitPrice: number;
-  discount?: number;       // percentage 0-100
-  taxRate?: number;        // percentage 0-100
-  total: number;           // computed: qty * unitPrice * (1 - discount/100)
+  discount?: number; // percentage 0-100
+  taxRate?: number; // percentage 0-100
+  total: number; // computed: qty * unitPrice * (1 - discount/100)
   recurring?: boolean;
   recurringInterval?: 'monthly' | 'yearly';
 }
@@ -31,7 +31,10 @@ export function computeLineItem(item: Omit<LineItem, 'total'>): LineItem {
 
 export function computeTotals(lineItems: LineItem[], taxRate = 0) {
   const subtotal = lineItems.reduce((s, i) => s + i.total, 0);
-  const discountTotal = lineItems.reduce((s, i) => s + (i.discount ? i.qty * i.unitPrice * (i.discount / 100) : 0), 0);
+  const discountTotal = lineItems.reduce(
+    (s, i) => s + (i.discount ? i.qty * i.unitPrice * (i.discount / 100) : 0),
+    0,
+  );
   const taxTotal = subtotal * (taxRate / 100);
   const total = subtotal + taxTotal;
   return {
@@ -44,55 +47,77 @@ export function computeTotals(lineItems: LineItem[], taxRate = 0) {
 
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 
-export async function listProducts(orgId: string, opts?: { active?: boolean; limit?: number; offset?: number }) {
+export async function listProducts(
+  orgId: string,
+  opts?: { active?: boolean; limit?: number; offset?: number },
+) {
   return db
     .select()
     .from(products)
-    .where(opts?.active !== undefined
-      ? and(eq(products.orgId, orgId), eq(products.active, opts.active))
-      : eq(products.orgId, orgId))
+    .where(
+      opts?.active !== undefined
+        ? and(eq(products.orgId, orgId), eq(products.active, opts.active))
+        : eq(products.orgId, orgId),
+    )
     .orderBy(desc(products.createdAt))
     .limit(opts?.limit ?? 100)
     .offset(opts?.offset ?? 0);
 }
 
 export async function getProduct(orgId: string, productId: string) {
-  const [row] = await db.select().from(products).where(and(eq(products.orgId, orgId), eq(products.id, productId)));
+  const [row] = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.orgId, orgId), eq(products.id, productId)));
   if (!row) throw AppError.notFound('Product not found');
   return row;
 }
 
-export async function createProduct(orgId: string, input: {
-  sku: string;
-  name: string;
-  description?: string;
-  price: number | string;
-  currency?: string;
-  imageUrl?: string;
-  url?: string;
-  categories?: string[];
-  tags?: string[];
-  stock?: number;
-  active?: boolean;
-  metadata?: Record<string, unknown>;
-}) {
-  const [row] = await db.insert(products).values({ orgId, ...input, price: String(input.price) }).returning();
+export async function createProduct(
+  orgId: string,
+  input: {
+    sku: string;
+    name: string;
+    description?: string;
+    price: number | string;
+    currency?: string;
+    imageUrl?: string;
+    url?: string;
+    categories?: string[];
+    tags?: string[];
+    stock?: number;
+    active?: boolean;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  const [row] = await db
+    .insert(products)
+    .values({ orgId, ...input, price: String(input.price) })
+    .returning();
   return row;
 }
 
-export async function updateProduct(orgId: string, productId: string, input: Partial<{
-  name: string;
-  description: string;
-  price: number | string;
-  currency: string;
-  imageUrl: string;
-  stock: number;
-  active: boolean;
-  metadata: Record<string, unknown>;
-}>) {
+export async function updateProduct(
+  orgId: string,
+  productId: string,
+  input: Partial<{
+    name: string;
+    description: string;
+    price: number | string;
+    currency: string;
+    imageUrl: string;
+    stock: number;
+    active: boolean;
+    metadata: Record<string, unknown>;
+  }>,
+) {
   const [row] = await db
     .update(products)
-    .set({ ...input, price: input.price != null ? String(input.price) : undefined, updatedAt: new Date() })
+    .set({
+      ...input,
+      price: input.price != null ? String(input.price) : undefined,
+      updatedAt: new Date(),
+    })
     .where(and(eq(products.orgId, orgId), eq(products.id, productId)))
     .returning();
   if (!row) throw AppError.notFound('Product not found');
@@ -109,17 +134,22 @@ export async function deleteProduct(orgId: string, productId: string) {
 }
 
 // Build line items from product IDs (for quote/invoice auto-fill)
-export async function buildLineItemsFromProducts(orgId: string, items: Array<{ productId: string; qty: number; discount?: number }>) {
-  return Promise.all(items.map(async (item) => {
-    const product = await getProduct(orgId, item.productId);
-    return computeLineItem({
-      productId: product.id,
-      sku: product.sku,
-      name: product.name,
-      description: product.description ?? undefined,
-      qty: item.qty,
-      unitPrice: parseFloat(String(product.price)),
-      discount: item.discount ?? 0,
-    });
-  }));
+export async function buildLineItemsFromProducts(
+  orgId: string,
+  items: Array<{ productId: string; qty: number; discount?: number }>,
+) {
+  return Promise.all(
+    items.map(async (item) => {
+      const product = await getProduct(orgId, item.productId);
+      return computeLineItem({
+        productId: product.id,
+        sku: product.sku,
+        name: product.name,
+        description: product.description ?? undefined,
+        qty: item.qty,
+        unitPrice: parseFloat(String(product.price)),
+        discount: item.discount ?? 0,
+      });
+    }),
+  );
 }

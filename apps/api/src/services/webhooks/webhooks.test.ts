@@ -34,24 +34,113 @@ vi.mock('../../lib/redis.js', () => ({
   },
 }));
 vi.mock('../../db/schema/index.js', () => ({
-  webhooks: { id: 'id', orgId: 'org_id', url: 'url', secret: 'secret', events: 'events', active: 'active', totalDeliveries: 'total_deliveries', failedDeliveries: 'failed_deliveries', lastDeliveredAt: 'last_delivered_at', description: 'description', updatedAt: 'updated_at', createdAt: 'created_at' },
-  webhookDeliveries: { id: 'id', webhookId: 'webhook_id', orgId: 'org_id', event: 'event', payload: 'payload', status: 'status', statusCode: 'status_code', responseBody: 'response_body', attempts: 'attempts', nextRetryAt: 'next_retry_at', deliveredAt: 'delivered_at', createdAt: 'created_at' },
-  apiKeys: { id: 'id', orgId: 'org_id', userId: 'user_id', name: 'name', keyHash: 'key_hash', keyPrefix: 'key_prefix', scopes: 'scopes', active: 'active', lastUsedAt: 'last_used_at', expiresAt: 'expires_at', createdAt: 'created_at' },
-  signupForms: { id: 'id', orgId: 'org_id', listId: 'list_id', name: 'name', fields: 'fields', embedType: 'embed_type', config: 'config', active: 'active', viewCount: 'view_count', submitCount: 'submit_count', createdAt: 'created_at', updatedAt: 'updated_at' },
-  signupFormSubmissions: { id: 'id', formId: 'form_id', orgId: 'org_id', contactId: 'contact_id', data: 'data', ipAddress: 'ip_address', userAgent: 'user_agent', submittedAt: 'submitted_at' },
-  contacts: { id: 'id', orgId: 'org_id', email: 'email', firstName: 'first_name', lastName: 'last_name', phone: 'phone', source: 'source', sourceDetails: 'source_details', updatedAt: 'updated_at' },
-  migrationJobs: { id: 'id', orgId: 'org_id', type: 'type', status: 'status', progress: 'progress', errorMessage: 'error_message', createdAt: 'created_at', completedAt: 'completed_at' },
+  webhooks: {
+    id: 'id',
+    orgId: 'org_id',
+    url: 'url',
+    secret: 'secret',
+    events: 'events',
+    active: 'active',
+    totalDeliveries: 'total_deliveries',
+    failedDeliveries: 'failed_deliveries',
+    lastDeliveredAt: 'last_delivered_at',
+    description: 'description',
+    updatedAt: 'updated_at',
+    createdAt: 'created_at',
+  },
+  webhookDeliveries: {
+    id: 'id',
+    webhookId: 'webhook_id',
+    orgId: 'org_id',
+    event: 'event',
+    payload: 'payload',
+    status: 'status',
+    statusCode: 'status_code',
+    responseBody: 'response_body',
+    attempts: 'attempts',
+    nextRetryAt: 'next_retry_at',
+    deliveredAt: 'delivered_at',
+    createdAt: 'created_at',
+  },
+  apiKeys: {
+    id: 'id',
+    orgId: 'org_id',
+    userId: 'user_id',
+    name: 'name',
+    keyHash: 'key_hash',
+    keyPrefix: 'key_prefix',
+    scopes: 'scopes',
+    active: 'active',
+    lastUsedAt: 'last_used_at',
+    expiresAt: 'expires_at',
+    createdAt: 'created_at',
+  },
+  signupForms: {
+    id: 'id',
+    orgId: 'org_id',
+    listId: 'list_id',
+    name: 'name',
+    fields: 'fields',
+    embedType: 'embed_type',
+    config: 'config',
+    active: 'active',
+    viewCount: 'view_count',
+    submitCount: 'submit_count',
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  },
+  signupFormSubmissions: {
+    id: 'id',
+    formId: 'form_id',
+    orgId: 'org_id',
+    contactId: 'contact_id',
+    data: 'data',
+    ipAddress: 'ip_address',
+    userAgent: 'user_agent',
+    submittedAt: 'submitted_at',
+  },
+  contacts: {
+    id: 'id',
+    orgId: 'org_id',
+    email: 'email',
+    firstName: 'first_name',
+    lastName: 'last_name',
+    phone: 'phone',
+    source: 'source',
+    sourceDetails: 'source_details',
+    updatedAt: 'updated_at',
+  },
+  migrationJobs: {
+    id: 'id',
+    orgId: 'org_id',
+    type: 'type',
+    status: 'status',
+    progress: 'progress',
+    errorMessage: 'error_message',
+    createdAt: 'created_at',
+    completedAt: 'completed_at',
+  },
   contactLists: { contactId: 'contact_id', listId: 'list_id' },
   tags: { id: 'id', name: 'name', orgId: 'org_id' },
   contactTags: { contactId: 'contact_id', tagId: 'tag_id' },
   lists: { id: 'id', orgId: 'org_id', name: 'name' },
-  templates: { id: 'id', orgId: 'org_id', name: 'name', category: 'category', subject: 'subject', blocks: 'blocks' },
+  templates: {
+    id: 'id',
+    orgId: 'org_id',
+    name: 'name',
+    category: 'category',
+    subject: 'subject',
+    blocks: 'blocks',
+  },
 }));
 vi.mock('../../lib/app-error.js', () => ({
   AppError: {
-    notFound: (r = 'Resource') => Object.assign(new Error(`${r} not found`), { statusCode: 404, code: 'NOT_FOUND' }),
-    badRequest: (msg: string) => Object.assign(new Error(msg), { statusCode: 400, code: 'BAD_REQUEST' }),
-    unauthorized: (msg: string) => Object.assign(new Error(msg), { statusCode: 401, code: 'UNAUTHORIZED' }),
+    notFound: (r = 'Resource') =>
+      Object.assign(new Error(`${r} not found`), { statusCode: 404, code: 'NOT_FOUND' }),
+    badRequest: (msg: string) =>
+      Object.assign(new Error(msg), { statusCode: 400, code: 'BAD_REQUEST' }),
+    unauthorized: (msg: string) =>
+      Object.assign(new Error(msg), { statusCode: 401, code: 'UNAUTHORIZED' }),
   },
 }));
 vi.mock('../../lib/queues.js', () => ({
@@ -105,7 +194,14 @@ describe('createApiKey', () => {
   });
 
   it('returns raw key and db record', async () => {
-    const fakeRecord = { id: 'k1', orgId: 'o1', name: 'test', keyHash: 'hash', keyPrefix: 'fm_live_xxxx', scopes: [] };
+    const fakeRecord = {
+      id: 'k1',
+      orgId: 'o1',
+      name: 'test',
+      keyHash: 'hash',
+      keyPrefix: 'fm_live_xxxx',
+      scopes: [],
+    };
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([fakeRecord]);
 
     const { createApiKey } = await import('./index.js');
@@ -115,9 +211,7 @@ describe('createApiKey', () => {
     expect(result.apiKey).toEqual(fakeRecord);
     // The stored hash should be SHA-256 of the raw key
     const expectedHash = createHash('sha256').update(result.rawKey).digest('hex');
-    expect(mockDb.values).toHaveBeenCalledWith(
-      expect.objectContaining({ keyHash: expectedHash }),
-    );
+    expect(mockDb.values).toHaveBeenCalledWith(expect.objectContaining({ keyHash: expectedHash }));
   });
 });
 
@@ -166,11 +260,21 @@ describe('createWebhook', () => {
   it('creates webhook and returns rawSecret', async () => {
     // Per-org limit check awaits at .where() and expects [{ count: N }].
     (mockDb.where as ReturnType<typeof vi.fn>).mockResolvedValueOnce([{ count: 0 }]);
-    const row = { id: 'w1', orgId: 'o1', url: 'https://example.com/hook', events: ['email.opened'], secret: 'raw', active: true };
+    const row = {
+      id: 'w1',
+      orgId: 'o1',
+      url: 'https://example.com/hook',
+      events: ['email.opened'],
+      secret: 'raw',
+      active: true,
+    };
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([row]);
 
     const { createWebhook } = await import('./index.js');
-    const result = await createWebhook('o1', { url: 'https://example.com/hook', events: ['email.opened'] });
+    const result = await createWebhook('o1', {
+      url: 'https://example.com/hook',
+      events: ['email.opened'],
+    });
 
     expect(result.rawSecret).toBeDefined();
     expect(result.rawSecret).toHaveLength(64); // 32 bytes hex
@@ -213,7 +317,14 @@ describe('dispatchEvent', () => {
   });
 
   it('creates delivery rows for matching webhooks', async () => {
-    const webhookRow = { id: 'w1', orgId: 'o1', url: 'https://hook.io', secret: 'sec', events: ['email.opened'], active: true };
+    const webhookRow = {
+      id: 'w1',
+      orgId: 'o1',
+      url: 'https://hook.io',
+      secret: 'sec',
+      events: ['email.opened'],
+      active: true,
+    };
     (mockDb.where as ReturnType<typeof vi.fn>).mockResolvedValueOnce([webhookRow]);
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([{ id: 'd1' }]);
 
@@ -240,9 +351,9 @@ describe('retry back-off logic', () => {
     // Verify via deliverWebhook that attempts cap at MAX_ATTEMPTS (5).
     // This is a structural test — actual timing tested via retryDelaySeconds formula.
     const delays = [0, 1, 2, 3, 4].map((attempt) => Math.min(30 * Math.pow(2, attempt), 600));
-    expect(delays[0]).toBe(30);   // 30 * 1 = 30
-    expect(delays[3]).toBe(240);  // 30 * 8 = 240
-    expect(delays[4]).toBe(480);  // 30 * 16 = 480 (cap hits at attempt ≥ 5)
+    expect(delays[0]).toBe(30); // 30 * 1 = 30
+    expect(delays[3]).toBe(240); // 30 * 8 = 240
+    expect(delays[4]).toBe(480); // 30 * 16 = 480 (cap hits at attempt ≥ 5)
   });
 });
 
@@ -271,7 +382,9 @@ describe('processFormSubmission', () => {
 
   it('returns failure when required field missing', async () => {
     const form = {
-      id: 'f1', orgId: 'o1', active: true,
+      id: 'f1',
+      orgId: 'o1',
+      active: true,
       fields: [{ name: 'email', label: 'Email', type: 'email', required: true }],
       config: {},
       listId: null,
@@ -286,14 +399,16 @@ describe('processFormSubmission', () => {
 
   it('creates a new contact for new email', async () => {
     const form = {
-      id: 'f1', orgId: 'o1', active: true,
+      id: 'f1',
+      orgId: 'o1',
+      active: true,
       fields: [{ name: 'email', label: 'Email', type: 'email', required: true }],
       config: {},
       listId: null,
     };
     (mockDb.limit as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce([form])    // form lookup
-      .mockResolvedValueOnce([]);       // existing contact lookup → none
+      .mockResolvedValueOnce([form]) // form lookup
+      .mockResolvedValueOnce([]); // existing contact lookup → none
 
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([{ id: 'c-new' }]);
     // update submitCount returns nothing important
@@ -333,15 +448,24 @@ describe('startMailchimpMigration', () => {
   });
 
   it('throws 400 for invalid API key', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve('Invalid API key') });
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve('Invalid API key'),
+    });
 
     const { startMailchimpMigration } = await import('../migrations/mailchimp.js');
-    await expect(startMailchimpMigration('o1', 'bad-key')).rejects.toMatchObject({ statusCode: 400 });
+    await expect(startMailchimpMigration('o1', 'bad-key')).rejects.toMatchObject({
+      statusCode: 400,
+    });
   });
 
   it('creates migration job for valid API key', async () => {
     // Mock successful ping
-    global.fetch = vi.fn().mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ health_status: 'Everything\'s Chimpy!' }) });
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ health_status: "Everything's Chimpy!" }),
+    });
 
     const jobRow = { id: 'job-1', orgId: 'o1', type: 'mailchimp', status: 'pending', progress: {} };
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([jobRow]);
@@ -380,7 +504,12 @@ describe('Mailchimp data mapping', () => {
   });
 
   it('handles missing merge fields gracefully', () => {
-    const member = { email_address: 'x@x.com', merge_fields: {} as Record<string, string>, tags: [], status: 'subscribed' };
+    const member = {
+      email_address: 'x@x.com',
+      merge_fields: {} as Record<string, string>,
+      tags: [],
+      status: 'subscribed',
+    };
     const firstName = member.merge_fields['FNAME'] || null;
     expect(firstName).toBeNull();
   });
@@ -399,7 +528,8 @@ describe('SDK verifyWebhookSignature', () => {
     function verify(s: string, p: string, sig: string): boolean {
       const exp = 'sha256=' + createHmac('sha256', s).update(p).digest('hex');
       if (exp.length !== sig.length) return false;
-      const a = Buffer.from(exp), b = Buffer.from(sig);
+      const a = Buffer.from(exp),
+        b = Buffer.from(sig);
       let diff = 0;
       for (let i = 0; i < a.length; i++) diff |= a[i]! ^ b[i]!;
       return diff === 0;

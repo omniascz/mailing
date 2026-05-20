@@ -52,7 +52,9 @@ export const mvVariantElementEnum = pgEnum('mv_variant_element', [
 export const multivariateTests = pgTable(
   'multivariate_tests',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -117,7 +119,9 @@ export const multivariateTests = pgTable(
 export const mvTestVariants = pgTable(
   'mv_test_variants',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     testId: uuid('test_id')
       .notNull()
       .references(() => multivariateTests.id, { onDelete: 'cascade' }),
@@ -158,10 +162,7 @@ export const mvTestVariants = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('mv_variants_test_idx').on(t.testId),
-    index('mv_variants_org_idx').on(t.orgId),
-  ],
+  (t) => [index('mv_variants_test_idx').on(t.testId), index('mv_variants_org_idx').on(t.orgId)],
 );
 
 // ─── Contact-Variant assignments ──────────────────────────────────────────────
@@ -173,7 +174,9 @@ export const mvTestVariants = pgTable(
 export const mvVariantAssignments = pgTable(
   'mv_variant_assignments',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     testId: uuid('test_id')
       .notNull()
       .references(() => multivariateTests.id, { onDelete: 'cascade' }),

@@ -22,7 +22,16 @@ import type { InboundMessage } from '@forgemsg/shared';
 
 // ─── Keyword groups ───────────────────────────────────────────────────────────
 
-const STOP_KEYWORDS = new Set(['STOP', 'UNSUBSCRIBE', 'QUIT', 'CANCEL', 'END', 'OPTOUT', 'OPT-OUT', 'OPT OUT']);
+const STOP_KEYWORDS = new Set([
+  'STOP',
+  'UNSUBSCRIBE',
+  'QUIT',
+  'CANCEL',
+  'END',
+  'OPTOUT',
+  'OPT-OUT',
+  'OPT OUT',
+]);
 const START_KEYWORDS = new Set(['START', 'YES', 'UNSTOP', 'OPTIN', 'OPT-IN', 'OPT IN']);
 const HELP_KEYWORDS = new Set(['HELP', 'INFO']);
 
@@ -107,12 +116,7 @@ async function resolveContactByPhone(orgId: string, phone: string) {
   const [contact] = await db
     .select({ id: contacts.id, phone: contacts.phone })
     .from(contacts)
-    .where(
-      and(
-        eq(contacts.orgId, orgId),
-        eq(contacts.phone, normalized),
-      ),
-    )
+    .where(and(eq(contacts.orgId, orgId), eq(contacts.phone, normalized)))
     .limit(1);
 
   return contact ?? null;

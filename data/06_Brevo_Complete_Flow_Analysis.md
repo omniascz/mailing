@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `05_Brevo_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** Brevo umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od Mailchimpu a HubSpotu:**
+>
 > - **Owner-Manager-Restricted User** model (3 role, ne 5 jako Mailchimp ani 100+ permission sets jako HubSpot)
 > - **Per-feature toggle permissions** od Business plánu (granulárnější než Mailchimp, méně než HubSpot Enterprise)
 > - **Sub-organizations** (jen Enterprise) pro multi-brand / agency model
@@ -101,21 +102,21 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Account creation | Billing, all features, user management | Vše |
-| **Manager** | Pozvánka od Owner | Marketing, Sales, contact mgmt, settings | Většina (no billing) |
-| **Restricted User** | Pozvánka od Owner/Manager | Jen toggled features | Jen toggled |
-| **User Role** (Enterprise) | Předdefinovaný set | Per role definition | Per role |
-| **Sub-organization User** (Enterprise) | Pozvánka z Admin Account | Pracuje v specific sub-org | Per sub-org access |
-| **Admin User** (Enterprise) | Pozvánka v Admin Account | Multi-org management | Cross-org |
-| **Marketing User** | Marketing seat | Marketing tools | Marketing features |
-| **Sales User** | Sales seat | Sales Platform | CRM + Sales |
-| **Phone User** | Phone seat | Brevo Phone | Phone interface |
-| **Contact / Subscriber** | Form, import, integration | Otevírá email, klikne, manage preferences | Své emaily + preference center |
-| **API Client** | API key | Cokoliv povolí scopes | Per scope |
-| **Integration** (Shopify, WP) | OAuth/plugin | Sync data | Per integration |
-| **Brevo Staff** | Interní | Debug/support s consentem | Limited |
+| Aktér                                  | Vstupní bod               | Co dělá                                   | Co vidí                        |
+| -------------------------------------- | ------------------------- | ----------------------------------------- | ------------------------------ |
+| **Account Owner**                      | Account creation          | Billing, all features, user management    | Vše                            |
+| **Manager**                            | Pozvánka od Owner         | Marketing, Sales, contact mgmt, settings  | Většina (no billing)           |
+| **Restricted User**                    | Pozvánka od Owner/Manager | Jen toggled features                      | Jen toggled                    |
+| **User Role** (Enterprise)             | Předdefinovaný set        | Per role definition                       | Per role                       |
+| **Sub-organization User** (Enterprise) | Pozvánka z Admin Account  | Pracuje v specific sub-org                | Per sub-org access             |
+| **Admin User** (Enterprise)            | Pozvánka v Admin Account  | Multi-org management                      | Cross-org                      |
+| **Marketing User**                     | Marketing seat            | Marketing tools                           | Marketing features             |
+| **Sales User**                         | Sales seat                | Sales Platform                            | CRM + Sales                    |
+| **Phone User**                         | Phone seat                | Brevo Phone                               | Phone interface                |
+| **Contact / Subscriber**               | Form, import, integration | Otevírá email, klikne, manage preferences | Své emaily + preference center |
+| **API Client**                         | API key                   | Cokoliv povolí scopes                     | Per scope                      |
+| **Integration** (Shopify, WP)          | OAuth/plugin              | Sync data                                 | Per integration                |
+| **Brevo Staff**                        | Interní                   | Debug/support s consentem                 | Limited                        |
 
 ---
 
@@ -126,6 +127,7 @@ Brevo používá **3-tier role model** + **per-feature toggle permissions** (Bus
 ### 2.1 Tři default role
 
 #### A) Owner
+
 - Top-level role
 - **Vždy 1 per account**
 - Plný přístup ke všemu
@@ -133,75 +135,77 @@ Brevo používá **3-tier role model** + **per-feature toggle permissions** (Bus
 - Billing, user management, all features
 
 #### B) Manager
+
 - Plný přístup **kromě managing company profile**
 - Může pozvat další users (pokud má permission)
 - Marketing + Sales + Contact management
 
 #### C) Restricted User
+
 - Custom permission toggles per feature area
 - **Pouze toggled features** dostupné
 - Granular access na Business+ plan
 
 ### 2.2 Permission matrix
 
-| Akce | Owner | Manager | Restricted User |
-|---|:---:|:---:|:---:|
-| **Account / Billing** |  |  |  |
-| Manage plan, billing, payment | ✅ | per perm | per perm |
-| Manage company profile | ✅ | ❌ | ❌ |
-| **User management** |  |  |  |
-| Invite users | ✅ | per perm | ❌ |
-| Edit user permissions | ✅ | per perm | ❌ |
-| Revoke user access | ✅ | per perm | ❌ |
-| Transfer ownership | ⚠️ (jen via support) | ❌ | ❌ |
-| **API & Security** |  |  |  |
-| Create API keys | ✅ | ✅ | per perm |
-| Create SMTP keys | ✅ | ✅ | per perm |
-| Manage authorized IPs | ✅ | ✅ | per perm |
-| **Contacts** |  |  |  |
-| View contacts | ✅ | ✅ | per perm |
-| Create/edit/delete contacts | ✅ | ✅ | per perm |
-| Import contacts | ✅ | ✅ | per perm |
-| Export contacts | ✅ | ✅ | per perm |
-| Manage attributes & CRM fields | ✅ | ✅ | per perm |
-| **Lists & Segments** |  |  |  |
-| Create/edit lists | ✅ | ✅ | per perm |
-| Create segments | ✅ | ✅ | per perm |
-| **Email Campaigns** |  |  |  |
-| Create/edit/delete campaigns | ✅ | ✅ | per perm |
-| Send/schedule/suspend | ✅ | ✅ | per perm |
-| **SMS Campaigns** |  |  |  |
-| Create/edit/delete SMS | ✅ | ✅ | per perm |
-| Send/schedule | ✅ | ✅ | per perm |
-| **Templates** |  |  |  |
-| Create/edit/delete templates | ✅ | ✅ | per perm |
-| Share templates | ✅ | ✅ | per perm |
-| **Automation** |  |  |  |
-| Create/edit/delete automations | ✅ | ✅ | per perm |
-| Activate/deactivate/pause | ✅ | ✅ | per perm |
-| Manage tracker settings | ✅ | ✅ | per perm |
-| **Landing Pages** |  |  |  |
-| Create/edit/publish/delete | ✅ | ✅ | per perm |
-| **Forms** |  |  |  |
-| Create/edit/delete | ✅ | ✅ | per perm |
-| **Facebook Ads** |  |  |  |
-| Create/edit/delete | ✅ | ✅ | per perm |
-| Schedule/pause | ✅ | ✅ | per perm |
-| **Push Notifications** |  |  |  |
-| View campaigns | ✅ | ✅ | per perm |
-| Create/edit/delete | ✅ | ✅ | per perm |
-| **Transactional** |  |  |  |
-| Access all transactional pages | ✅ | ✅ | per perm |
-| Preview/resend/delete logs | ✅ | ✅ | per perm |
-| **Sales features** |  |  |  |
-| Manage deals | ✅ | per perm | per perm |
-| Manage tasks | ✅ | per perm | per perm |
-| Manage meetings | ✅ | per perm | per perm |
-| **Reports & Analytics** (Admin level) |  |  |  |
-| Download data | ✅ | per perm | per perm |
-| Create alerts | ✅ | per perm | per perm |
-| Explore & create custom dashboards | ✅ | per perm | per perm |
-| Manage Looks | ✅ | per perm | per perm |
+| Akce                                  |        Owner         | Manager  | Restricted User |
+| ------------------------------------- | :------------------: | :------: | :-------------: |
+| **Account / Billing**                 |                      |          |                 |
+| Manage plan, billing, payment         |          ✅          | per perm |    per perm     |
+| Manage company profile                |          ✅          |    ❌    |       ❌        |
+| **User management**                   |                      |          |                 |
+| Invite users                          |          ✅          | per perm |       ❌        |
+| Edit user permissions                 |          ✅          | per perm |       ❌        |
+| Revoke user access                    |          ✅          | per perm |       ❌        |
+| Transfer ownership                    | ⚠️ (jen via support) |    ❌    |       ❌        |
+| **API & Security**                    |                      |          |                 |
+| Create API keys                       |          ✅          |    ✅    |    per perm     |
+| Create SMTP keys                      |          ✅          |    ✅    |    per perm     |
+| Manage authorized IPs                 |          ✅          |    ✅    |    per perm     |
+| **Contacts**                          |                      |          |                 |
+| View contacts                         |          ✅          |    ✅    |    per perm     |
+| Create/edit/delete contacts           |          ✅          |    ✅    |    per perm     |
+| Import contacts                       |          ✅          |    ✅    |    per perm     |
+| Export contacts                       |          ✅          |    ✅    |    per perm     |
+| Manage attributes & CRM fields        |          ✅          |    ✅    |    per perm     |
+| **Lists & Segments**                  |                      |          |                 |
+| Create/edit lists                     |          ✅          |    ✅    |    per perm     |
+| Create segments                       |          ✅          |    ✅    |    per perm     |
+| **Email Campaigns**                   |                      |          |                 |
+| Create/edit/delete campaigns          |          ✅          |    ✅    |    per perm     |
+| Send/schedule/suspend                 |          ✅          |    ✅    |    per perm     |
+| **SMS Campaigns**                     |                      |          |                 |
+| Create/edit/delete SMS                |          ✅          |    ✅    |    per perm     |
+| Send/schedule                         |          ✅          |    ✅    |    per perm     |
+| **Templates**                         |                      |          |                 |
+| Create/edit/delete templates          |          ✅          |    ✅    |    per perm     |
+| Share templates                       |          ✅          |    ✅    |    per perm     |
+| **Automation**                        |                      |          |                 |
+| Create/edit/delete automations        |          ✅          |    ✅    |    per perm     |
+| Activate/deactivate/pause             |          ✅          |    ✅    |    per perm     |
+| Manage tracker settings               |          ✅          |    ✅    |    per perm     |
+| **Landing Pages**                     |                      |          |                 |
+| Create/edit/publish/delete            |          ✅          |    ✅    |    per perm     |
+| **Forms**                             |                      |          |                 |
+| Create/edit/delete                    |          ✅          |    ✅    |    per perm     |
+| **Facebook Ads**                      |                      |          |                 |
+| Create/edit/delete                    |          ✅          |    ✅    |    per perm     |
+| Schedule/pause                        |          ✅          |    ✅    |    per perm     |
+| **Push Notifications**                |                      |          |                 |
+| View campaigns                        |          ✅          |    ✅    |    per perm     |
+| Create/edit/delete                    |          ✅          |    ✅    |    per perm     |
+| **Transactional**                     |                      |          |                 |
+| Access all transactional pages        |          ✅          |    ✅    |    per perm     |
+| Preview/resend/delete logs            |          ✅          |    ✅    |    per perm     |
+| **Sales features**                    |                      |          |                 |
+| Manage deals                          |          ✅          | per perm |    per perm     |
+| Manage tasks                          |          ✅          | per perm |    per perm     |
+| Manage meetings                       |          ✅          | per perm |    per perm     |
+| **Reports & Analytics** (Admin level) |                      |          |                 |
+| Download data                         |          ✅          | per perm |    per perm     |
+| Create alerts                         |          ✅          | per perm |    per perm     |
+| Explore & create custom dashboards    |          ✅          | per perm |    per perm     |
+| Manage Looks                          |          ✅          | per perm |    per perm     |
 
 ### 2.3 Permission groups
 
@@ -251,12 +255,14 @@ Admin features (jen Admin Account)
 ### 2.4 User Roles (Enterprise)
 
 **Vlastní předdefinované role** (similar to HubSpot Permission Sets):
+
 - Vytvořit user role s custom permission set
 - Re-use across users
 - **No charge for creating role**, charged jen when assigned
 - Edit later – pricing prorate při změně
 
 Příklady typických User Roles:
+
 - "Marketing Manager"
 - "Email Designer"
 - "SDR"
@@ -269,22 +275,26 @@ Příklady typických User Roles:
 ### 2.5 Seats and licensing
 
 #### Marketing seats
+
 - Každý account zahrnuje **1 marketing seat zdarma pro Ownera**
 - Dodatečné marketing seats = additional cost dle planu
 - Marketing seat dává access k Marketing features
 
 #### Sales seats
+
 - **Sales package** je add-on – samostatně cena
 - 1 Sales seat zdarma pro Ownera v default
 - Sales Essentials ~$27.92/user/měsíc
 - Sales Advanced ~$58.50/user/měsíc
 
 #### Phone seats
+
 - Brevo Phone má vlastní seat licensing
 - Per-user pricing
 - Plus call credits
 
 #### Conversations seats
+
 - Conversations plan $15/user/měsíc
 
 ### 2.6 Invitation flow
@@ -633,6 +643,7 @@ Then: Settings → User roles → 3-dot menu → Delete
 ### 7.1 Co je Sub-organization
 
 Až do října 2025 se to nazývalo "Sub-accounts". Sub-organization je **úplně oddělená Brevo entity** v rámci **Admin Account**:
+
 - Vlastní dashboard, lists, attributes
 - Vlastní API key
 - Vlastní dedicated IP (option)
@@ -733,6 +744,7 @@ User accepts → has access to those sub-orgs
 ### 7.8 Admin Users (Admin Account level)
 
 Separate od Sub-org users. Manage **Admin Account itself**.
+
 - Manage all sub-orgs
 - View aggregate reports
 - Configure SAML SSO
@@ -1464,6 +1476,7 @@ History saved
 ### 15.2 Multi-channel conversations
 
 Same Inbox handles:
+
 - Live chat
 - Email (shared inbox)
 - Facebook Messenger
@@ -1627,6 +1640,7 @@ Provides download link (time-limited)
 ### 17.4 Consent tracking
 
 For each contact:
+
 - Opt-in source URL
 - Opt-in IP
 - Opt-in timestamp
@@ -1637,6 +1651,7 @@ For each contact:
 ### 17.5 Sub-processor list
 
 Public: brevo.com/legal/list-of-sub-processors
+
 - AWS (US, EU regions)
 - Twilio (SMS)
 - Looker (Google) for analytics
@@ -1646,24 +1661,24 @@ Public: brevo.com/legal/list-of-sub-processors
 
 ## 18. Datová mapa: co vidí kdo
 
-| Data | Owner | Manager | Restricted (full toggles) | Restricted (limited) | Sub-org User | Admin User | Contact | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Billing & subscription | ✅ | per perm | per perm | ❌ | jen sub-org | jen Admin Account | ❌ | per scope |
-| User management | ✅ | per perm | ❌ | ❌ | per sub-org | Admin only | ❌ | per scope |
-| All contacts | ✅ | ✅ | per perm | per perm | jen sub-org | per access | jen sebe | ✅ |
-| Lists/Segments | ✅ | ✅ | per perm | per perm | jen sub-org | per access | – | ✅ |
-| Email campaigns | ✅ | ✅ | per perm | per perm | jen sub-org | per access | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | per perm | per perm | per perm | per access | ❌ | ✅ |
-| Templates | ✅ | ✅ | per perm | per perm | jen sub-org | per access | ❌ | ✅ |
-| Automations | ✅ | ✅ | per perm | per perm | jen sub-org | per access | ❌ | ✅ |
-| Sales features | ✅ | per perm | per perm | per perm | per perm | per access | ❌ | per scope |
-| Transactional logs | ✅ | ✅ | per perm | per perm | jen sub-org | per access | ❌ | ✅ |
-| API keys | per perm | per perm | per perm | ❌ | jen sub-org | per access | ❌ | – |
-| Reports | ✅ | ✅ | per perm | per perm | jen sub-org | aggregate | ❌ | ✅ |
-| Domain settings | ✅ | per perm | per perm | ❌ | jen sub-org | per access | ❌ | per scope |
-| Conversations | ✅ | ✅ | per perm | per perm | jen sub-org | per access | jen své | per scope |
-| Phone (calls, recordings) | ✅ | per perm | per perm | ❌ | jen sub-org | per access | jen své | per scope |
-| GDPR delete | ✅ | per perm | per perm | ❌ | jen sub-org | per access | request | per scope |
+| Data                      |  Owner   | Manager  | Restricted (full toggles) | Restricted (limited) | Sub-org User |    Admin User     |    Contact    |    API    |
+| ------------------------- | :------: | :------: | :-----------------------: | :------------------: | :----------: | :---------------: | :-----------: | :-------: |
+| Billing & subscription    |    ✅    | per perm |         per perm          |          ❌          | jen sub-org  | jen Admin Account |      ❌       | per scope |
+| User management           |    ✅    | per perm |            ❌             |          ❌          | per sub-org  |    Admin only     |      ❌       | per scope |
+| All contacts              |    ✅    |    ✅    |         per perm          |       per perm       | jen sub-org  |    per access     |   jen sebe    |    ✅     |
+| Lists/Segments            |    ✅    |    ✅    |         per perm          |       per perm       | jen sub-org  |    per access     |       –       |    ✅     |
+| Email campaigns           |    ✅    |    ✅    |         per perm          |       per perm       | jen sub-org  |    per access     | jen co dostal |    ✅     |
+| Send campaigns            |    ✅    |    ✅    |         per perm          |       per perm       |   per perm   |    per access     |      ❌       |    ✅     |
+| Templates                 |    ✅    |    ✅    |         per perm          |       per perm       | jen sub-org  |    per access     |      ❌       |    ✅     |
+| Automations               |    ✅    |    ✅    |         per perm          |       per perm       | jen sub-org  |    per access     |      ❌       |    ✅     |
+| Sales features            |    ✅    | per perm |         per perm          |       per perm       |   per perm   |    per access     |      ❌       | per scope |
+| Transactional logs        |    ✅    |    ✅    |         per perm          |       per perm       | jen sub-org  |    per access     |      ❌       |    ✅     |
+| API keys                  | per perm | per perm |         per perm          |          ❌          | jen sub-org  |    per access     |      ❌       |     –     |
+| Reports                   |    ✅    |    ✅    |         per perm          |       per perm       | jen sub-org  |     aggregate     |      ❌       |    ✅     |
+| Domain settings           |    ✅    | per perm |         per perm          |          ❌          | jen sub-org  |    per access     |      ❌       | per scope |
+| Conversations             |    ✅    |    ✅    |         per perm          |       per perm       | jen sub-org  |    per access     |    jen své    | per scope |
+| Phone (calls, recordings) |    ✅    | per perm |         per perm          |          ❌          | jen sub-org  |    per access     |    jen své    | per scope |
+| GDPR delete               |    ✅    | per perm |         per perm          |          ❌          | jen sub-org  |    per access     |    request    | per scope |
 
 ---
 
@@ -1765,4 +1780,4 @@ Pokud Brevo používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů help.brevo.com, developers.brevo.com, brevo.com a praktických příruček (Venture Harbour, Stitchflow, EmailToolTester, Sender, SalesHive, Marketing Automation Insider, That Marketing Buddy). Pro nejaktuálnější detaily vždy konzultovat Brevo Help Center.*
+_Dokument zpracován z oficiálních zdrojů help.brevo.com, developers.brevo.com, brevo.com a praktických příruček (Venture Harbour, Stitchflow, EmailToolTester, Sender, SalesHive, Marketing Automation Insider, That Marketing Buddy). Pro nejaktuálnější detaily vždy konzultovat Brevo Help Center._

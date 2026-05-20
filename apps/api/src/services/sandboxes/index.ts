@@ -55,14 +55,17 @@ export async function createSandbox(
 
   // 1. Create the sibling org, flagged as a sandbox of the parent.
   const sandboxSlug = `${parent.slug}-sbx-${Date.now().toString(36)}`;
-  const [sandboxOrg] = await db.insert(organizations).values({
-    name: `${parent.name} · ${input.name}`,
-    slug: sandboxSlug,
-    plan: parent.plan,
-    dataRegion: parent.dataRegion,
-    sandboxOfOrgId: parent.id,
-    sandboxMode: 'sandbox',
-  }).returning();
+  const [sandboxOrg] = await db
+    .insert(organizations)
+    .values({
+      name: `${parent.name} · ${input.name}`,
+      slug: sandboxSlug,
+      plan: parent.plan,
+      dataRegion: parent.dataRegion,
+      sandboxOfOrgId: parent.id,
+      sandboxMode: 'sandbox',
+    })
+    .returning();
   if (!sandboxOrg) throw AppError.internal('Failed to create sandbox organization');
 
   try {
@@ -72,61 +75,67 @@ export async function createSandbox(
     //    not replicate referential graphs (e.g. workflow steps across tables)
     //    — that's a future enhancement.
     if (seed.copyTemplates) {
-      const rows = await db.select().from(templates)
-        .where(eq(templates.orgId, parent.id));
+      const rows = await db.select().from(templates).where(eq(templates.orgId, parent.id));
       if (rows.length > 0) {
-        await db.insert(templates).values(rows.map((r) => ({
-          orgId: sandboxOrg.id,
-          name: r.name,
-          description: r.description,
-          category: r.category,
-          thumbnailUrl: r.thumbnailUrl,
-          subject: r.subject,
-          preheader: r.preheader,
-          blocks: r.blocks,
-          globalStyles: r.globalStyles,
-          isPublic: r.isPublic,
-          tags: r.tags,
-          locale: r.locale,
-        })));
+        await db.insert(templates).values(
+          rows.map((r) => ({
+            orgId: sandboxOrg.id,
+            name: r.name,
+            description: r.description,
+            category: r.category,
+            thumbnailUrl: r.thumbnailUrl,
+            subject: r.subject,
+            preheader: r.preheader,
+            blocks: r.blocks,
+            globalStyles: r.globalStyles,
+            isPublic: r.isPublic,
+            tags: r.tags,
+            locale: r.locale,
+          })),
+        );
       }
     }
 
     if (seed.copySavedBlocks) {
-      const rows = await db.select().from(savedBlocks)
-        .where(eq(savedBlocks.orgId, parent.id));
+      const rows = await db.select().from(savedBlocks).where(eq(savedBlocks.orgId, parent.id));
       if (rows.length > 0) {
-        await db.insert(savedBlocks).values(rows.map((r) => ({
-          orgId: sandboxOrg.id,
-          name: r.name,
-          category: r.category,
-          blockData: r.blockData,
-          thumbnailUrl: r.thumbnailUrl,
-          locale: r.locale,
-        })));
+        await db.insert(savedBlocks).values(
+          rows.map((r) => ({
+            orgId: sandboxOrg.id,
+            name: r.name,
+            category: r.category,
+            blockData: r.blockData,
+            thumbnailUrl: r.thumbnailUrl,
+            locale: r.locale,
+          })),
+        );
       }
     }
 
     if (seed.copyWorkflows) {
-      const rows = await db.select().from(workflows)
-        .where(eq(workflows.orgId, parent.id));
+      const rows = await db.select().from(workflows).where(eq(workflows.orgId, parent.id));
       if (rows.length > 0) {
-        await db.insert(workflows).values(rows.map((r) => ({
-          orgId: sandboxOrg.id,
-          name: r.name,
-          description: r.description,
-          status: 'draft' as const,
-          triggerType: r.triggerType,
-          triggerConfig: r.triggerConfig,
-          nodes: r.nodes,
-          edges: r.edges,
-        })));
+        await db.insert(workflows).values(
+          rows.map((r) => ({
+            orgId: sandboxOrg.id,
+            name: r.name,
+            description: r.description,
+            status: 'draft' as const,
+            triggerType: r.triggerType,
+            triggerConfig: r.triggerConfig,
+            nodes: r.nodes,
+            edges: r.edges,
+          })),
+        );
       }
     }
 
     if (seed.copyBrandKit) {
-      const [kit] = await db.select().from(brandKits)
-        .where(eq(brandKits.orgId, parent.id)).limit(1);
+      const [kit] = await db
+        .select()
+        .from(brandKits)
+        .where(eq(brandKits.orgId, parent.id))
+        .limit(1);
       if (kit) {
         await db.insert(brandKits).values({
           orgId: sandboxOrg.id,
@@ -159,22 +168,26 @@ export async function createSandbox(
     }
 
     // 4. Persist sandbox record.
-    const [record] = await db.insert(orgSandboxes).values({
-      orgId: parent.id,
-      sandboxOrgId: sandboxOrg.id,
-      name: input.name,
-      purpose: input.purpose ?? 'dev',
-      status: 'ready',
-      seedConfig: seed,
-      noOpMode: input.noOpMode ?? true,
-      createdBy: input.createdBy,
-      expiresAt: input.expiresAt ?? null,
-    }).returning();
+    const [record] = await db
+      .insert(orgSandboxes)
+      .values({
+        orgId: parent.id,
+        sandboxOrgId: sandboxOrg.id,
+        name: input.name,
+        purpose: input.purpose ?? 'dev',
+        status: 'ready',
+        seedConfig: seed,
+        noOpMode: input.noOpMode ?? true,
+        createdBy: input.createdBy,
+        expiresAt: input.expiresAt ?? null,
+      })
+      .returning();
     if (!record) throw AppError.internal('Failed to persist sandbox record');
     return record;
   } catch (err) {
     // Rollback-ish: mark the sandbox org deleted (FK cascades will clean up).
-    await db.update(organizations)
+    await db
+      .update(organizations)
       .set({ deletedAt: new Date() })
       .where(eq(organizations.id, sandboxOrg.id));
     throw err;
@@ -186,7 +199,9 @@ export async function listSandboxes(parentOrgId: string): Promise<OrgSandbox[]> 
 }
 
 export async function getSandbox(parentOrgId: string, sandboxId: string): Promise<OrgSandbox> {
-  const [row] = await db.select().from(orgSandboxes)
+  const [row] = await db
+    .select()
+    .from(orgSandboxes)
     .where(and(eq(orgSandboxes.id, sandboxId), eq(orgSandboxes.orgId, parentOrgId)))
     .limit(1);
   if (!row) throw AppError.notFound('Sandbox not found');
@@ -195,10 +210,12 @@ export async function getSandbox(parentOrgId: string, sandboxId: string): Promis
 
 export async function deleteSandbox(parentOrgId: string, sandboxId: string): Promise<void> {
   const row = await getSandbox(parentOrgId, sandboxId);
-  await db.update(organizations)
+  await db
+    .update(organizations)
     .set({ deletedAt: new Date() })
     .where(eq(organizations.id, row.sandboxOrgId));
-  await db.update(orgSandboxes)
+  await db
+    .update(orgSandboxes)
     .set({ status: 'archived', deletedAt: new Date() })
     .where(eq(orgSandboxes.id, row.id));
 }
@@ -209,9 +226,7 @@ export async function setNoOpMode(
   noOpMode: boolean,
 ): Promise<void> {
   const row = await getSandbox(parentOrgId, sandboxId);
-  await db.update(orgSandboxes)
-    .set({ noOpMode })
-    .where(eq(orgSandboxes.id, row.id));
+  await db.update(orgSandboxes).set({ noOpMode }).where(eq(orgSandboxes.id, row.id));
 }
 
 /**
@@ -220,11 +235,11 @@ export async function setNoOpMode(
  * event if it returns true.
  */
 export async function isSandboxNoOp(orgId: string): Promise<boolean> {
-  const [org] = await db.select().from(organizations)
-    .where(eq(organizations.id, orgId))
-    .limit(1);
+  const [org] = await db.select().from(organizations).where(eq(organizations.id, orgId)).limit(1);
   if (!org || org.sandboxMode !== 'sandbox' || !org.sandboxOfOrgId) return false;
-  const [sbx] = await db.select().from(orgSandboxes)
+  const [sbx] = await db
+    .select()
+    .from(orgSandboxes)
     .where(eq(orgSandboxes.sandboxOrgId, orgId))
     .limit(1);
   return Boolean(sbx?.noOpMode);

@@ -29,9 +29,19 @@ export interface EditorState {
 
 export type EditorAction =
   | { kind: 'select'; path: BlockPath | null }
-  | { kind: 'addBlock'; blockType: BlockType; parentPath?: BlockPath; index?: number; parentKey?: PathKey }
+  | {
+      kind: 'addBlock';
+      blockType: BlockType;
+      parentPath?: BlockPath;
+      index?: number;
+      parentKey?: PathKey;
+    }
   | { kind: 'removeBlock'; path: BlockPath }
-  | { kind: 'moveBlock'; from: BlockPath; to: { parentPath: BlockPath; parentKey: PathKey; index: number } }
+  | {
+      kind: 'moveBlock';
+      from: BlockPath;
+      to: { parentPath: BlockPath; parentKey: PathKey; index: number };
+    }
   | { kind: 'updateBlock'; path: BlockPath; patch: Record<string, unknown> }
   | { kind: 'updateEmail'; patch: Partial<EmailSchema> }
   | { kind: 'replaceEmail'; email: EmailSchema }
@@ -102,9 +112,16 @@ function resolveContainer(
 }
 
 /** Resolve a parent path to the container array without consuming a final index. */
-function resolveParent(email: EmailSchema, parentPath: BlockPath, parentKey: PathKey): Block[] | null {
+function resolveParent(
+  email: EmailSchema,
+  parentPath: BlockPath,
+  parentKey: PathKey,
+): Block[] | null {
   if (parentPath.length === 0) return email.blocks;
-  const { container, index } = resolveContainer(email, parentPath) ?? { container: null, index: -1 };
+  const { container, index } = resolveContainer(email, parentPath) ?? {
+    container: null,
+    index: -1,
+  };
   if (!container) return null;
   const parent = container[index];
   if (!parent) return null;
@@ -127,7 +144,8 @@ export function reducer(state: EditorState, action: EditorAction): EditorState {
       const next = cloneEmail(state.email);
       const parentPath = action.parentPath ?? [];
       const parentKey: PathKey = action.parentKey ?? 'root';
-      const parent = parentKey === 'root' ? next.blocks : resolveParent(next, parentPath, parentKey);
+      const parent =
+        parentKey === 'root' ? next.blocks : resolveParent(next, parentPath, parentKey);
       if (!parent) return state;
       const block = createBlock(action.blockType);
       const index = action.index ?? parent.length;
@@ -220,8 +238,10 @@ export function useEditor(initialEmail: EmailSchema) {
         opts: { parentPath?: BlockPath; parentKey?: PathKey; index?: number } = {},
       ) => dispatch({ kind: 'addBlock', blockType, ...opts }),
       removeBlock: (path: BlockPath) => dispatch({ kind: 'removeBlock', path }),
-      moveBlock: (from: BlockPath, to: { parentPath: BlockPath; parentKey: PathKey; index: number }) =>
-        dispatch({ kind: 'moveBlock', from, to }),
+      moveBlock: (
+        from: BlockPath,
+        to: { parentPath: BlockPath; parentKey: PathKey; index: number },
+      ) => dispatch({ kind: 'moveBlock', from, to }),
       updateBlock: (path: BlockPath, patch: Record<string, unknown>) =>
         dispatch({ kind: 'updateBlock', path, patch }),
       updateEmail: (patch: Partial<EmailSchema>) => dispatch({ kind: 'updateEmail', patch }),

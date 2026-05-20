@@ -40,25 +40,37 @@ export function startSocialSchedulerWorker() {
     { connection, concurrency: 1 },
   );
 
-  publishWorker.on('failed', (job, err) => console.error('[social-publish] failed', job?.id, err.message));
-  monitorWorker.on('failed', (job, err) => console.error('[social-monitor] failed', job?.id, err.message));
+  publishWorker.on('failed', (job, err) =>
+    console.error('[social-publish] failed', job?.id, err.message),
+  );
+  monitorWorker.on('failed', (job, err) =>
+    console.error('[social-monitor] failed', job?.id, err.message),
+  );
 
   return { publishWorker, monitorWorker };
 }
 
 export async function scheduleSocialJobs() {
   const existing = await socialPublishQueue.getRepeatableJobs();
-  if (!existing.find(j => j.name === 'dispatch-due-posts')) {
-    await socialPublishQueue.add('dispatch-due-posts', {}, {
-      repeat: { pattern: '* * * * *' }, // every minute
-      removeOnComplete: true,
-    });
+  if (!existing.find((j) => j.name === 'dispatch-due-posts')) {
+    await socialPublishQueue.add(
+      'dispatch-due-posts',
+      {},
+      {
+        repeat: { pattern: '* * * * *' }, // every minute
+        removeOnComplete: true,
+      },
+    );
   }
-  if (!existing.find(j => j.name === 'monitor-poll')) {
-    await socialMonitorQueue.add('monitor-poll', {}, {
-      repeat: { pattern: '*/15 * * * *' }, // every 15 min
-      removeOnComplete: true,
-    });
+  if (!existing.find((j) => j.name === 'monitor-poll')) {
+    await socialMonitorQueue.add(
+      'monitor-poll',
+      {},
+      {
+        repeat: { pattern: '*/15 * * * *' }, // every 15 min
+        removeOnComplete: true,
+      },
+    );
   }
   console.log('[social-scheduler] Jobs scheduled');
 }

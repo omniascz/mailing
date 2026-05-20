@@ -12,13 +12,16 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { parseArfReport, processFblComplaint } from '../../services/sending/fbl-processor.js';
 import { getThrottleState, resetThrottle } from '../../services/sending/isp-throttle.js';
-import { startWarmup, listWarmupStatuses, advanceWarmupDay } from '../../services/sending/ip-warmup.js';
+import {
+  startWarmup,
+  listWarmupStatuses,
+  advanceWarmupDay,
+} from '../../services/sending/ip-warmup.js';
 import { AppError } from '../../lib/app-error.js';
 
 const ISP_NAMES = ['gmail', 'microsoft', 'yahoo', 'other'] as const;
 
 export default async function sendingRoutes(app: FastifyInstance) {
-
   /**
    * POST /api/v1/sending/fbl-inbound
    * Inbound webhook for FBL / ARF complaint emails from ISPs.
@@ -78,9 +81,7 @@ export default async function sendingRoutes(app: FastifyInstance) {
       const { ip } = z.object({ ip: z.string().min(7).max(45) }).parse(req.query);
 
       const states = await Promise.all(
-        ISP_NAMES.map((isp) =>
-          getThrottleState(req.user!.orgId, isp, ip),
-        ),
+        ISP_NAMES.map((isp) => getThrottleState(req.user!.orgId, isp, ip)),
       );
 
       return { data: states };
@@ -134,9 +135,7 @@ export default async function sendingRoutes(app: FastifyInstance) {
     '/api/v1/sending/warmup',
     { schema: { tags: ['Sending'], summary: 'Start IP warmup' } },
     async (req, reply) => {
-      const { ip } = z
-        .object({ ip: z.string().min(7).max(45) })
-        .parse(req.body);
+      const { ip } = z.object({ ip: z.string().min(7).max(45) }).parse(req.body);
 
       await startWarmup(ip, req.user!.orgId);
       return reply.code(201).send({ data: { ip, status: 'warming', warmupDay: 1 } });

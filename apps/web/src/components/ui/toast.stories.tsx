@@ -15,9 +15,7 @@ function ToastDemo() {
   const { toast } = useToast();
   return (
     <div className="flex flex-wrap items-center gap-3 p-12">
-      <Button onClick={() => toast('success', 'Campaign sent successfully')}>
-        Show success
-      </Button>
+      <Button onClick={() => toast('success', 'Campaign sent successfully')}>Show success</Button>
       <Button variant="danger" onClick={() => toast('error', 'Failed to save changes')}>
         Show error
       </Button>

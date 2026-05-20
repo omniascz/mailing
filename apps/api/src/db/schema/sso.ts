@@ -2,7 +2,9 @@ import { pgTable, uuid, varchar, text, timestamp, boolean, index } from 'drizzle
 import { organizations } from './organizations.js';
 
 export const ssoConfigurations = pgTable('sso_configurations', {
-  orgId: uuid('org_id').primaryKey().references(() => organizations.id, { onDelete: 'cascade' }),
+  orgId: uuid('org_id')
+    .primaryKey()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
   type: varchar('type', { length: 10 }).notNull(),
   samlEntityId: varchar('saml_entity_id', { length: 512 }),
   samlSsoUrl: varchar('saml_sso_url', { length: 1024 }),
@@ -23,7 +25,9 @@ export const ssoLoginStates = pgTable(
   'sso_login_states',
   {
     state: varchar('state', { length: 64 }).primaryKey(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     redirectUri: varchar('redirect_uri', { length: 1024 }).notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

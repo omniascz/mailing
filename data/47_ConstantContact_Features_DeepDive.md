@@ -7,6 +7,7 @@
 > **Důležitý kontext:** **Constant Contact = americká klasika email marketingu pro SMB a nonprofits**, založená v roce 1995 (přes 30 let historie). Pozice 2026:
 >
 > **Společnost:** Constant Contact, Inc.
+>
 > - **HQ:** Waltham, Massachusetts, USA
 > - **Založení:** 1995 (jako Roving Software, rebrand 1998)
 > - **Historie:** Akvizice Endurance International Group (2015), prodej Clearlake Capital + Siris Capital (2021), nyní privátně držená
@@ -14,6 +15,7 @@
 > - **Brand:** silná v USA SMB segmentu, real estate, neziskovkách
 >
 > **Pozice 2026:** SMB & nonprofit email marketing platforma s důrazem na:
+>
 > - **Phone support na všech placených plánech** (unikátní v branži)
 > - **30+ let historie** = trust
 > - **Event management tools** integrované (unikátní!)
@@ -23,6 +25,7 @@
 > - **AI tools** (přidané 2025-2026): AI writing assistance, content recommendations, multichannel planner
 >
 > **Klíčové diferenciátory:**
+>
 > - **Phone support 6 dní v týdnu** na všech placených plánech
 > - **Event management** s registrací + payment processing (integrované)
 > - **30+ let provozní historie** (trust pro nonprofits a established SMB)
@@ -34,6 +37,7 @@
 > - **60denní free trial** (no credit card)
 >
 > **Klíčové problémy/kritika 2026:**
+>
 > - **Free plan zrušen v červnu 2025** (předtím existoval permanent free)
 > - **Vyšší ceny vs. konkurence** (premium pricing pro mid-tier features)
 > - **Slabší automatizace** (Premium tier nutný pro pokročilé workflows)
@@ -86,9 +90,9 @@
 
 ### Per oficiální popis
 
-> *"Reach the right people at the right moment across email, social, and text - so you can grow without the guesswork."*
+> _"Reach the right people at the right moment across email, social, and text - so you can grow without the guesswork."_
 
-> *"With Premium you can identify and segment unique audiences in our Marketing CRM, automate personalized and timely messages (and SMS) that nurture relationships, and create faster than ever with brilliant AI tools."*
+> _"With Premium you can identify and segment unique audiences in our Marketing CRM, automate personalized and timely messages (and SMS) that nurture relationships, and create faster than ever with brilliant AI tools."_
 
 ### Pro koho je
 
@@ -109,13 +113,13 @@ Cílový profil Constant Contact:
 
 ### Per Mailsoftly Review 2026
 
-> *"Constant Contact positions itself as the email marketing platform for small businesses and nonprofits. It has a strong brand presence in the United States and offers a product that emphasizes getting started quickly rather than providing deep customization."*
+> _"Constant Contact positions itself as the email marketing platform for small businesses and nonprofits. It has a strong brand presence in the United States and offers a product that emphasizes getting started quickly rather than providing deep customization."_
 
 ### Per Sonary user reviews
 
-> *"From my experience, Constant Contact is a communication tool instead of a real marketing tool. It lacks features that will help you get the most out of email marketing but is good at helping you stay in touch with users and has affordable pricing for larg..."*
+> _"From my experience, Constant Contact is a communication tool instead of a real marketing tool. It lacks features that will help you get the most out of email marketing but is good at helping you stay in touch with users and has affordable pricing for larg..."_
 
-> *"This is a great tool for smaller organizations with relatively simple email marketing needs. For the areas it covers, it does them very well and the interface is easy to learn."*
+> _"This is a great tool for smaller organizations with relatively simple email marketing needs. For the areas it covers, it does them very well and the interface is easy to learn."_
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -205,6 +209,7 @@ Cílový profil Constant Contact:
 ⚠️ **Důležité:** Constant Contact **zrušil permanent free plan v červnu 2025**. Nyní pouze **60denní free trial** (no credit card required) a poté placené plány.
 
 #### Lite plan
+
 - **Cena: $12/měsíc** (500 kontaktů)
 - 1 uživatel
 - 10× kontakty = monthly email volume (5 000 emailů při 500 kontaktech)
@@ -230,6 +235,7 @@ Cílový profil Constant Contact:
   - Logo Constant Contact ve footeru (per některé reviews)
 
 #### Standard plan
+
 - **Cena: $35/měsíc** (500 kontaktů)
 - 3 uživatelé
 - 12× kontakty = monthly email volume
@@ -249,6 +255,7 @@ Cílový profil Constant Contact:
   - Žádné Google/Facebook Ads integration
 
 #### Premium plan
+
 - **Cena: $80/měsíc** (500 kontaktů)
 - **Unlimited uživatelé**
 - 24× kontakty = monthly email volume
@@ -300,12 +307,14 @@ Premium plan scaling:
 ### 2.3 Auto-upgrade trap
 
 Per Mailsoftly review:
-> *"The auto-upgrade trap: if you exceed your plan's send limit, Constant Contact automatically moves you to the next billing tier mid-cycle without confirmation."*
+
+> _"The auto-upgrade trap: if you exceed your plan's send limit, Constant Contact automatically moves you to the next billing tier mid-cycle without confirmation."_
 
 ⚠️ **Riziko:** překročíš limit kontaktů → automaticky vyšší tarif → vyšší účet bez ohlášení.
 
 Per CheckThat.ai:
-> *"Worse: if you exceed your email send limit for two consecutive months, Constant Contact automatically upgrades you to a higher tier without asking. You'll just see a bigger charge."*
+
+> _"Worse: if you exceed your email send limit for two consecutive months, Constant Contact automatically upgrades you to a higher tier without asking. You'll just see a bigger charge."_
 
 ### 2.4 Overage fees
 
@@ -331,17 +340,17 @@ Constant Contact slevy:
 
 ### 2.6 Vs. konkurence pricing
 
-| Platforma | 500 kontaktů (vstup) | 5 000 kontaktů | 50 000 kontaktů |
-|---|---|---|---|
-| **Constant Contact Lite** | **$12/mo** | $80/mo | N/A (Lite není scalable) |
-| **Constant Contact Standard** | **$35/mo** | $110/mo | $370/mo |
-| **Constant Contact Premium** | **$80/mo** | $200/mo | $425/mo |
-| **Mailchimp Standard** | $20/mo | ~$75/mo | ~$185/mo |
-| **MailerLite Free** | $0 | $50/mo | $360/mo |
-| **Brevo Starter** | $9/mo (unl. cont.) | $25/mo (unl. cont.) | varies |
-| **ActiveCampaign Starter** | $15/mo | $79/mo | $345/mo |
-| **HubSpot Marketing Starter** | $20/mo | $90/mo+ | $800/mo+ |
-| **Klaviyo Email** | $20/mo | $60/mo | $720/mo |
+| Platforma                     | 500 kontaktů (vstup) | 5 000 kontaktů      | 50 000 kontaktů          |
+| ----------------------------- | -------------------- | ------------------- | ------------------------ |
+| **Constant Contact Lite**     | **$12/mo**           | $80/mo              | N/A (Lite není scalable) |
+| **Constant Contact Standard** | **$35/mo**           | $110/mo             | $370/mo                  |
+| **Constant Contact Premium**  | **$80/mo**           | $200/mo             | $425/mo                  |
+| **Mailchimp Standard**        | $20/mo               | ~$75/mo             | ~$185/mo                 |
+| **MailerLite Free**           | $0                   | $50/mo              | $360/mo                  |
+| **Brevo Starter**             | $9/mo (unl. cont.)   | $25/mo (unl. cont.) | varies                   |
+| **ActiveCampaign Starter**    | $15/mo               | $79/mo              | $345/mo                  |
+| **HubSpot Marketing Starter** | $20/mo               | $90/mo+             | $800/mo+                 |
+| **Klaviyo Email**             | $20/mo               | $60/mo              | $720/mo                  |
 
 ⚠️ **Constant Contact patří k dražším** mainstream nástrojům za své features (per industry reviews 2026).
 
@@ -352,17 +361,20 @@ Constant Contact slevy:
 ### 3.1 Phone Support na všech placených plánech
 
 Per EmailVendorSelection:
-> *"Constant Contact stands out for offering phone support on all paid plans. This is unusual for email marketing services. The times differ per region, but it is 6 days a week."*
+
+> _"Constant Contact stands out for offering phone support on all paid plans. This is unusual for email marketing services. The times differ per region, but it is 6 days a week."_
 
 ⚠️ **Unikátní v branži** – většina konkurence (Mailchimp, Klaviyo) nemá phone support na entry tiers.
 
 ### 3.2 Event Management Tools (UNIQUE!)
 
 Per EmailVendorSelection:
-> *"You run and promote events. Constant Contact's event marketing tools are an interesting functionality if you run online and in-person events. You can build a guest list, run promotions, and handle ticket sales from inside Constant Contact."*
+
+> _"You run and promote events. Constant Contact's event marketing tools are an interesting functionality if you run online and in-person events. You can build a guest list, run promotions, and handle ticket sales from inside Constant Contact."_
 
 Per CheckThat.ai:
-> *"Constant Contact's built-in event registration and payment processing come standard in Standard and Premium tiers; these features require integrations with some competitors."*
+
+> _"Constant Contact's built-in event registration and payment processing come standard in Standard and Premium tiers; these features require integrations with some competitors."_
 
 ⚠️ **Integrované event management** = klíčový důvod proč si nonprofits a real estate vybírají Constant Contact.
 
@@ -378,12 +390,14 @@ Constant Contact track record:
 ```
 
 Per Ecommerceparadise Review:
-> *"Constant Contact earns a 7.2/10 as a reliable, beginner-accessible email marketing platform whose core strengths — phone support, event management, deliverability, and brand familiarity — serve a specific, real audience well. The platform's 30-year track record is not marketing noise; it reflects genuine operational reliability that small business owners can depend on."*
+
+> _"Constant Contact earns a 7.2/10 as a reliable, beginner-accessible email marketing platform whose core strengths — phone support, event management, deliverability, and brand familiarity — serve a specific, real audience well. The platform's 30-year track record is not marketing noise; it reflects genuine operational reliability that small business owners can depend on."_
 
 ### 3.4 97% Deliverability Rate
 
 Per oficiální:
-> *"What good is your email campaign if a chunk of it never arrives? Other companies are strangely shy about their deliverability rates. We're not. Ours is 97%. And we're pretty proud of that."*
+
+> _"What good is your email campaign if a chunk of it never arrives? Other companies are strangely shy about their deliverability rates. We're not. Ours is 97%. And we're pretty proud of that."_
 
 ⚠️ **97% publikováno oficiálně** = transparency advantage vs. konkurence.
 
@@ -400,12 +414,14 @@ Nonprofit benefits:
 ```
 
 Per Sonary user:
-> *"The team got us set up and even reduced the price because we are a nonprofit."*
+
+> _"The team got us set up and even reduced the price because we are a nonprofit."_
 
 ### 3.6 60-day Free Trial
 
 Per Ecommerceparadise:
-> *"A 60-day free trial remains available with no credit card required — this is a meaningful trial period relative to the 7–14 day trials most competitors offer, and it gives businesses a genuine evaluation window before committing financially."*
+
+> _"A 60-day free trial remains available with no credit card required — this is a meaningful trial period relative to the 7–14 day trials most competitors offer, and it gives businesses a genuine evaluation window before committing financially."_
 
 ⚠️ **60 dní zdarma = nejdelší v branži** (konkurence obvykle 7-14 dní).
 
@@ -430,22 +446,22 @@ Klíčové integrace (per oficiální):
 
 ### 3.8 Vs. konkurence comparison
 
-| Aspect | Constant Contact | Mailchimp | MailerLite | Brevo | ActiveCampaign |
-|---|---|---|---|---|---|
-| **Origin** | 🇺🇸 USA (1995) | 🇺🇸 USA (2001) | 🇱🇹 Lithuania (2010) | 🇫🇷 France (2012) | 🇺🇸 USA (2003) |
-| **Free plan** | ❌ od června 2025 | ✅ 500 kontaktů | ✅ 1000 kontaktů | ✅ unlimited cont. | ❌ |
-| **Free trial** | ✅ 60 dní | ❌ | ❌ | ❌ | ✅ 14 dní |
-| **Phone support** | **✅ všechny placené** | enterprise only | omezeně | omezeně | omezeně |
-| **Event management** | **✅ integrované!** | ❌ | ❌ | ❌ | ❌ |
-| **AI tools** | ✅ writing + content | ✅ extensive | ✅ basic | ✅ growing | ✅ |
-| **Automation depth** | ❌ Premium only | ✅ | ✅ | ✅ | ✅✅✅ |
-| **SMS** | ✅ jen USA, Premium | $$$ add-on | ✅ | ✅ | $$$ add-on |
-| **Nonprofit discount** | **✅ až 30%** | 15% | ✅ | – | – |
-| **Deliverability** | **✅ 97% oficiální** | dobrá | dobrá | dobrá | dobrá |
-| **Free plan? (June 2025+)** | ❌ | ✅ | ✅ | ✅ | ❌ |
-| **Easy to cancel** | ❌ telefon nutný | ✅ self-serve | ✅ self-serve | ✅ | ✅ |
-| **Cena (vstup)** | **$12/mo** | $0/$20 | $0/$9 | $0/$9 | $15/mo |
-| **30-year track record** | **✅** | jen 25 let | 15 let | 14 let | 23 let |
+| Aspect                      | Constant Contact       | Mailchimp       | MailerLite          | Brevo              | ActiveCampaign |
+| --------------------------- | ---------------------- | --------------- | ------------------- | ------------------ | -------------- |
+| **Origin**                  | 🇺🇸 USA (1995)          | 🇺🇸 USA (2001)   | 🇱🇹 Lithuania (2010) | 🇫🇷 France (2012)   | 🇺🇸 USA (2003)  |
+| **Free plan**               | ❌ od června 2025      | ✅ 500 kontaktů | ✅ 1000 kontaktů    | ✅ unlimited cont. | ❌             |
+| **Free trial**              | ✅ 60 dní              | ❌              | ❌                  | ❌                 | ✅ 14 dní      |
+| **Phone support**           | **✅ všechny placené** | enterprise only | omezeně             | omezeně            | omezeně        |
+| **Event management**        | **✅ integrované!**    | ❌              | ❌                  | ❌                 | ❌             |
+| **AI tools**                | ✅ writing + content   | ✅ extensive    | ✅ basic            | ✅ growing         | ✅             |
+| **Automation depth**        | ❌ Premium only        | ✅              | ✅                  | ✅                 | ✅✅✅         |
+| **SMS**                     | ✅ jen USA, Premium    | $$$ add-on      | ✅                  | ✅                 | $$$ add-on     |
+| **Nonprofit discount**      | **✅ až 30%**          | 15%             | ✅                  | –                  | –              |
+| **Deliverability**          | **✅ 97% oficiální**   | dobrá           | dobrá               | dobrá              | dobrá          |
+| **Free plan? (June 2025+)** | ❌                     | ✅              | ✅                  | ✅                 | ❌             |
+| **Easy to cancel**          | ❌ telefon nutný       | ✅ self-serve   | ✅ self-serve       | ✅                 | ✅             |
+| **Cena (vstup)**            | **$12/mo**             | $0/$20          | $0/$9               | $0/$9              | $15/mo         |
+| **30-year track record**    | **✅**                 | jen 25 let      | 15 let              | 14 let             | 23 let         |
 
 ---
 
@@ -454,7 +470,8 @@ Klíčové integrace (per oficiální):
 ### 4.1 Editor
 
 Per oficiální:
-> *"To create and send an email campaign with Constant Contact, start by selecting one of our hundreds of premade templates. Use our drag-and-drop editor and AI-powered branding tools to quickly assemble, draft, and customize content to match your business."*
+
+> _"To create and send an email campaign with Constant Contact, start by selecting one of our hundreds of premade templates. Use our drag-and-drop editor and AI-powered branding tools to quickly assemble, draft, and customize content to match your business."_
 
 ```
 Drag & drop editor:
@@ -473,14 +490,16 @@ Drag & drop editor:
 ### 4.2 Templates 2026
 
 Per EmailVendorSelection:
-> *"Templates: Recent changes increased email templates to 200+. Some of the new ones are modern-looking."*
+
+> _"Templates: Recent changes increased email templates to 200+. Some of the new ones are modern-looking."_
 
 ⚠️ Templates byly historicky kritizovány jako "dated" – nyní 2025-2026 modernizováno.
 
 ### 4.3 Schedule sending
 
 Per oficiální:
-> *"You can also set up automated sending for specific events like welcome messages, birthday wishes, and resending to folks who don't open your email the first time around."*
+
+> _"You can also set up automated sending for specific events like welcome messages, birthday wishes, and resending to folks who don't open your email the first time around."_
 
 ```
 Send options:
@@ -515,7 +534,7 @@ Klaviyo editor:
 - Visual flow builder
 
 Per Mailsoftly review:
-"The drag-and-drop editor and event management tools 
+"The drag-and-drop editor and event management tools
 are genuine strengths"
 ```
 
@@ -540,7 +559,8 @@ BrandKit (oficiální):
 ### 5.1 AI tools přidané 2025-2026
 
 Per Ecommerceparadise Review:
-> *"In 2025 and 2026, Constant Contact has added AI tools (AI copy generator, AI-driven content recommendations, multichannel campaign planner) and expanded its Premium tier to include SEO tools and Google/Facebook ad integration."*
+
+> _"In 2025 and 2026, Constant Contact has added AI tools (AI copy generator, AI-driven content recommendations, multichannel campaign planner) and expanded its Premium tier to include SEO tools and Google/Facebook ad integration."_
 
 ### 5.2 AI Writing Assistant
 
@@ -580,7 +600,7 @@ AI Multichannel Planner:
 
 ### 5.5 Per oficiální Premium page
 
-> *"With Premium you can identify and segment unique audiences in our Marketing CRM, automate personalized and timely messages (and SMS) that nurture relationships, and create faster than ever with brilliant AI tools."*
+> _"With Premium you can identify and segment unique audiences in our Marketing CRM, automate personalized and timely messages (and SMS) that nurture relationships, and create faster than ever with brilliant AI tools."_
 
 ---
 
@@ -588,9 +608,9 @@ AI Multichannel Planner:
 
 ### 6.1 Per EmailVendorSelection
 
-> *"Has event management and SMS marketing: Constant Contact goes beyond email with integrated event management, social media marketing and SMS marketing for the US."*
+> _"Has event management and SMS marketing: Constant Contact goes beyond email with integrated event management, social media marketing and SMS marketing for the US."_
 
-> *"They have found a niche market by adding event management tools, and it's popular among real estate businesses that also like phone support."*
+> _"They have found a niche market by adding event management tools, and it's popular among real estate businesses that also like phone support."_
 
 ### 6.2 Event Management funkce
 
@@ -702,7 +722,7 @@ Nonprofit fundraiser:
 
 ### 6.5 Per CheckThat.ai
 
-> *"Constant Contact's built-in event registration and payment processing come standard in Standard and Premium tiers; these features require integrations with some competitors, but are not always a price advantage."*
+> _"Constant Contact's built-in event registration and payment processing come standard in Standard and Premium tiers; these features require integrations with some competitors, but are not always a price advantage."_
 
 ⚠️ **Event management = klíčový diferenciátor** + **embedded value** (často důvod ne-switch).
 
@@ -713,7 +733,8 @@ Nonprofit fundraiser:
 ### 7.1 Reality check 2026
 
 Per Mailsoftly Review:
-> *"Automation is where Constant Contact shows its age most clearly. The Lite plan offers only single-step automations: a welcome email when someone subscribes, a birthday message, or an anniversary email. That is the extent of it. There are no conditional branches, no behavior-based triggers, and no way to build sequences that respond to how subscribers interact with your content."*
+
+> _"Automation is where Constant Contact shows its age most clearly. The Lite plan offers only single-step automations: a welcome email when someone subscribes, a birthday message, or an anniversary email. That is the extent of it. There are no conditional branches, no behavior-based triggers, and no way to build sequences that respond to how subscribers interact with your content."_
 
 ### 7.2 Per tier breakdown
 
@@ -749,9 +770,9 @@ Premium plan automation:
 
 ### 7.3 Per EmailVendorSelection critique
 
-> *"Lack of automation: Constant Contact's lack of automation features surprises me. It treats it as a premium extra at a time when competitors have it standard."*
+> _"Lack of automation: Constant Contact's lack of automation features surprises me. It treats it as a premium extra at a time when competitors have it standard."_
 
-> *"You still don't get custom automations, only three pre-built workflows. For the cost of the Standard plan, this is a glaring omission. Both MailerLite and Brevo have features on their cheapest plans that Constant Contact will ask to upgrade to Premium to access."*
+> _"You still don't get custom automations, only three pre-built workflows. For the cost of the Standard plan, this is a glaring omission. Both MailerLite and Brevo have features on their cheapest plans that Constant Contact will ask to upgrade to Premium to access."_
 
 ⚠️ **Slabší automatizace** = klíčový pain point 2026.
 
@@ -815,7 +836,7 @@ Klaviyo Email ($20):
 
 ### 8.1 Per oficiální
 
-> *"Yes, we offer robust tools for attracting new customers, getting them onto your contact list, and segmenting your list for better personalization across all your marketing. You can segment your contact list based on behavior, engagement, and more."*
+> _"Yes, we offer robust tools for attracting new customers, getting them onto your contact list, and segmenting your list for better personalization across all your marketing. You can segment your contact list based on behavior, engagement, and more."_
 
 ### 8.2 Per tier segmentation
 
@@ -843,7 +864,8 @@ Premium plan segmentation:
 ### 8.3 Dynamic Content (Premium-only)
 
 Per oficiální:
-> *"Dynamic content blocks allow you to customize emails by showing or hiding content based on a recipient's contact details like city, state, job title, or other custom fields, so you can make sure each person sees only what's relevant to them."*
+
+> _"Dynamic content blocks allow you to customize emails by showing or hiding content based on a recipient's contact details like city, state, job title, or other custom fields, so you can make sure each person sees only what's relevant to them."_
 
 ```
 Dynamic content use cases:
@@ -879,7 +901,8 @@ Marketing CRM features (Premium):
 ### 9.1 Forms
 
 Per EmailVendorSelection:
-> *"Strong list-building options with 200+ forms and lead magnets. You can create engagement segments from tracking data for every contact."*
+
+> _"Strong list-building options with 200+ forms and lead magnets. You can create engagement segments from tracking data for every contact."_
 
 ```
 Form types:
@@ -936,7 +959,8 @@ Forms data flows to:
 ### 10.1 Dostupnost
 
 Per oficiální:
-> *"SMS is only available in the US for Standard and Premium plans."*
+
+> _"SMS is only available in the US for Standard and Premium plans."_
 
 ⚠️ **SMS jen USA** = velký limit pro mezinárodní businesses.
 
@@ -999,7 +1023,7 @@ Pro mezinárodní businesses:
 
 ### 11.1 Per oficiální
 
-> *"Put your business out there the easy way. Turn emails into social posts, share content to multiple platforms in a flash, and keep up with comments and mentions — all from one place."*
+> _"Put your business out there the easy way. Turn emails into social posts, share content to multiple platforms in a flash, and keep up with comments and mentions — all from one place."_
 
 ### 11.2 Social Posting capabilities
 
@@ -1048,7 +1072,8 @@ Coordinated multichannel from one tool
 ### 12.1 Premium-only feature
 
 Per oficiální:
-> *"Premium unlocks advanced features such as dynamic content personalization, AI-content generator, AI-driven recommendations, in-depth segmentation, social media ads/Google Ad Manager integration, landing pages, social media posts scheduling, and multi-channel campaigns."*
+
+> _"Premium unlocks advanced features such as dynamic content personalization, AI-content generator, AI-driven recommendations, in-depth segmentation, social media ads/Google Ad Manager integration, landing pages, social media posts scheduling, and multi-channel campaigns."_
 
 ### 12.2 Google Ads integration
 
@@ -1108,7 +1133,7 @@ SEO tools (Premium):
 
 ### 13.2 Per Flowium
 
-> *"Constant Contact Premium plan owners will get extensive omnichannel marketing capabilities, such as Facebook and Google Ads integration, as well as SEO tools."*
+> _"Constant Contact Premium plan owners will get extensive omnichannel marketing capabilities, such as Facebook and Google Ads integration, as well as SEO tools."_
 
 ### 13.3 Use case
 
@@ -1131,7 +1156,8 @@ SEO content strategy:
 ### 14.1 Integration
 
 Per oficiální:
-> *"Constant Contact integrates with Shopify and WooCommerce, but its e-commerce automation capabilities are limited compared to dedicated e-commerce email platforms."*
+
+> _"Constant Contact integrates with Shopify and WooCommerce, but its e-commerce automation capabilities are limited compared to dedicated e-commerce email platforms."_
 
 ### 14.2 Ecommerce features
 
@@ -1159,7 +1185,7 @@ PREMIUM tier:
 
 ### 14.3 Per Mailsoftly Review
 
-> *"Product recommendation engines, abandoned cart sequences with dynamic content, and revenue attribution are only available on the Premium plan. If e-commerce email is central to your business, you will likely need a platform with deeper automation at a lower price point."*
+> _"Product recommendation engines, abandoned cart sequences with dynamic content, and revenue attribution are only available on the Premium plan. If e-commerce email is central to your business, you will likely need a platform with deeper automation at a lower price point."_
 
 ⚠️ **Pro serious ecommerce = Klaviyo / Mailchimp / Omnisend lepší** – Constant Contact je **suboptimal pro DTC**.
 
@@ -1217,7 +1243,7 @@ Premium plan reporting:
 
 ### 15.2 Per Sonary
 
-> *"Marketers and business owners can keep track of major metrics like open, delivery, and conversion rates, all in one place. Furthermore, they can monitor their ecommerce activities within the reporting and analytics section of Constant Contact in real-time."*
+> _"Marketers and business owners can keep track of major metrics like open, delivery, and conversion rates, all in one place. Furthermore, they can monitor their ecommerce activities within the reporting and analytics section of Constant Contact in real-time."_
 
 ### 15.3 Reporting limitations
 
@@ -1236,10 +1262,11 @@ Reporting kritika:
 
 ### 16.1 Per oficiální + reviews
 
-> *"Get expert advice at every turn — from self-service video tutorials to one-on-one phone calls and messages with our marketing advisors."*
+> _"Get expert advice at every turn — from self-service video tutorials to one-on-one phone calls and messages with our marketing advisors."_
 
 Per EmailVendorSelection:
-> *"Constant Contact stands out for offering phone support on all paid plans. This is unusual for email marketing services. The times differ per region, but it is 6 days a week."*
+
+> _"Constant Contact stands out for offering phone support on all paid plans. This is unusual for email marketing services. The times differ per region, but it is 6 days a week."_
 
 ### 16.2 Support kanály
 
@@ -1278,9 +1305,10 @@ Phone support reality:
 ### 16.4 Per user reviews
 
 Per Sonary:
-> *"Whenever I go to a new company, I take Constant Contact with me. It is useful for the basics and does them very well."*
 
-> *"There are tools that require entire teams to manage then there's Constant Contact. The team got us set up and even reduced the price because we are a nonprofit."*
+> _"Whenever I go to a new company, I take Constant Contact with me. It is useful for the basics and does them very well."_
+
+> _"There are tools that require entire teams to manage then there's Constant Contact. The team got us set up and even reduced the price because we are a nonprofit."_
 
 ### 16.5 Onboarding
 
@@ -1301,6 +1329,7 @@ Onboarding flow:
 ### 17.1 Nonprofit positioning
 
 Constant Contact je historicky silný v **nonprofit segment**:
+
 - Donor communication
 - Fundraising emails
 - Volunteer coordination
@@ -1351,7 +1380,7 @@ Constant Contact nonprofit examples:
 
 ### 18.1 Per oficiální
 
-> *"Import your data using 300 integrations, including Google, Microsoft, Facebook, Canva, LinkedIn, Vimeo, Zapier, Shopify, Eventbrite and more!"*
+> _"Import your data using 300 integrations, including Google, Microsoft, Facebook, Canva, LinkedIn, Vimeo, Zapier, Shopify, Eventbrite and more!"_
 
 ### 18.2 Key integrace
 
@@ -1423,7 +1452,7 @@ Effective expansion od 300 native do thousands
 
 ### 18.4 Per CheckThat.ai
 
-> *"Constant Contact integrates with hundreds of apps for enhanced segmentation options and a simpler, connected workspace."*
+> _"Constant Contact integrates with hundreds of apps for enhanced segmentation options and a simpler, connected workspace."_
 
 ---
 
@@ -1431,7 +1460,7 @@ Effective expansion od 300 native do thousands
 
 ### 19.1 Per oficiální
 
-> *"What good is your email campaign if a chunk of it never arrives? Other companies are strangely shy about their deliverability rates. We're not. Ours is 97%. And we're pretty proud of that."*
+> _"What good is your email campaign if a chunk of it never arrives? Other companies are strangely shy about their deliverability rates. We're not. Ours is 97%. And we're pretty proud of that."_
 
 ### 19.2 Deliverability features
 
@@ -1451,7 +1480,8 @@ Deliverability infrastructure:
 ### 19.3 GDPR + CAN-SPAM compliance
 
 Per oficiální:
-> *"Absolutely. Constant Contact's email marketing platform is designed to help you comply with both GDPR and CAN-SPAM regulations."*
+
+> _"Absolutely. Constant Contact's email marketing platform is designed to help you comply with both GDPR and CAN-SPAM regulations."_
 
 ```
 Compliance:
@@ -1466,7 +1496,7 @@ Compliance:
 
 ### 19.4 Per Ecommerceparadise
 
-> *"The 97% deliverability rate is genuine, the interface is beginner-friendly, and phone support six days a week is a real differentiator for teams that want to speak to a human when things go wrong."*
+> _"The 97% deliverability rate is genuine, the interface is beginner-friendly, and phone support six days a week is a real differentiator for teams that want to speak to a human when things go wrong."_
 
 ⚠️ **Deliverability** = silná stránka i přes vyšší ceny.
 
@@ -1477,13 +1507,14 @@ Compliance:
 ### 20.1 Auto-upgrade mechanika
 
 Per CheckThat.ai:
-> *"Worse: if you exceed your email send limit for two consecutive months, Constant Contact automatically upgrades you to a higher tier without asking. You'll just see a bigger charge."*
+
+> _"Worse: if you exceed your email send limit for two consecutive months, Constant Contact automatically upgrades you to a higher tier without asking. You'll just see a bigger charge."_
 
 ### 20.2 Mailsoftly warning
 
-> *"The auto-upgrade trap: if you exceed your plan's send limit, Constant Contact automatically moves you to the next billing tier mid-cycle without confirmation."*
+> _"The auto-upgrade trap: if you exceed your plan's send limit, Constant Contact automatically moves you to the next billing tier mid-cycle without confirmation."_
 
-> *"Constant Contact automatically upgrades you to the next contact tier mid-billing-cycle. This happens without a confirmation prompt. For example, going from 5,000 to 5,001 contacts on the Lite plan jumps your bill from $80/mo to $120/mo."*
+> _"Constant Contact automatically upgrades you to the next contact tier mid-billing-cycle. This happens without a confirmation prompt. For example, going from 5,000 to 5,001 contacts on the Lite plan jumps your bill from $80/mo to $120/mo."_
 
 ### 20.3 Overage fee struktura
 
@@ -1502,7 +1533,7 @@ Příklady:
 
 ### 20.4 Per Sender Review
 
-> *"Email send limits on Lite and Standard plans—10 times or 12 times your subscriber list—can be restrictive, and the overage fees of $0.002 per extra email add up faster than you might expect."*
+> _"Email send limits on Lite and Standard plans—10 times or 12 times your subscriber list—can be restrictive, and the overage fees of $0.002 per extra email add up faster than you might expect."_
 
 ### 20.5 Hidden costs
 
@@ -1525,7 +1556,7 @@ Hidden costs beyond subscription:
 
 ### 21.1 Per EmailVendorSelection
 
-> *"Hard to cancel: Many users report difficulties cancelling their Constant Contact subscription. You have to call customer service and talk to them to cancel."*
+> _"Hard to cancel: Many users report difficulties cancelling their Constant Contact subscription. You have to call customer service and talk to them to cancel."_
 
 ### 21.2 Cancellation steps
 
@@ -1543,7 +1574,7 @@ Constant Contact cancellation:
 
 ### 21.3 Per Ecommerceparadise
 
-> *"The rating reflects the platform's real competitive position in 2026: it charges premium prices for a feature set that the broader market has moved beyond, lacks a permanent free plan, and makes cancellation unnecessarily difficult."*
+> _"The rating reflects the platform's real competitive position in 2026: it charges premium prices for a feature set that the broader market has moved beyond, lacks a permanent free plan, and makes cancellation unnecessarily difficult."_
 
 ⚠️ **Cancellation friction** = key complaint pattern v reviews.
 
@@ -1614,7 +1645,8 @@ Post-June 2025:
 ### 23.2 Premium pricing vs. mid-tier features
 
 Per Ecommerceparadise Review:
-> *"The core tension in evaluating Constant Contact in 2026 is that the platform charges premium-tier prices while delivering a feature set that the broader market now treats as mid-tier."*
+
+> _"The core tension in evaluating Constant Contact in 2026 is that the platform charges premium-tier prices while delivering a feature set that the broader market now treats as mid-tier."_
 
 ⚠️ **Strategic problem** pro Constant Contact.
 
@@ -1756,7 +1788,8 @@ Web-first design (desktop dominant)
 ### 23.14 Aging interface (relative)
 
 Per Mailsoftly Review:
-> *"Automation is where Constant Contact shows its age most clearly."*
+
+> _"Automation is where Constant Contact shows its age most clearly."_
 
 ⚠️ **Interface looks dated** vs. moderní MailerLite, Brevo, Mailchimp interfaces.
 
@@ -1838,6 +1871,7 @@ Pro B2B = HubSpot / ActiveCampaign / Brevo lepší
 ## 24. Shrnutí: Pro koho a proti komu
 
 ### Constant Contact je dobrá volba pokud
+
 - Provozujete **americkou SMB** s 500-5 000 kontakty
 - Cíl je **jednoduchá email marketing platforma** (bez složitostí)
 - Důležitý je **phone support 6 dní v týdnu** (real human help)
@@ -1855,6 +1889,7 @@ Pro B2B = HubSpot / ActiveCampaign / Brevo lepší
 - Vyžadujete **BrandKit** pro multi-location franchise
 
 ### Constant Contact není dobrá volba pokud
+
 - Cíl je **free plan** – ❌ zrušen v červnu 2025
 - Vyžadujete **pokročilou automatizaci** – ActiveCampaign / Klaviyo / MailerLite
 - Provozujete **DTC ecommerce serious** – Klaviyo / Mailchimp / Omnisend
@@ -1875,19 +1910,19 @@ Pro B2B = HubSpot / ActiveCampaign / Brevo lepší
 
 ### Constant Contact vs. konkurence
 
-| Konkurence | Kdy lepší než Constant Contact |
-|---|---|
-| **Mailchimp** | Lepší automatizace + AI features za podobnou cenu |
-| **MailerLite** | Free plan + lepší automation na nižších tiers + modern UI |
-| **Brevo** | Unlimited contacts pricing + better SMS (global) |
-| **ActiveCampaign** | 10× lepší automatizace + CRM integration |
-| **Klaviyo** | Ecommerce native + predictive AI + better ROI tracking |
-| **HubSpot** | Full CRM + B2B sales + marketing integrace |
-| **GetResponse** | Webinars + funnel features + lepší automation |
-| **Sender** | Levnější + similar features + better free plan |
-| **Omnisend** | Specifically ecommerce-focused, lepší than CC |
-| **Kit / ConvertKit** | Content creators, newsletter business |
-| **Beehiiv** | Paid newsletters, monetization tools |
+| Konkurence           | Kdy lepší než Constant Contact                            |
+| -------------------- | --------------------------------------------------------- |
+| **Mailchimp**        | Lepší automatizace + AI features za podobnou cenu         |
+| **MailerLite**       | Free plan + lepší automation na nižších tiers + modern UI |
+| **Brevo**            | Unlimited contacts pricing + better SMS (global)          |
+| **ActiveCampaign**   | 10× lepší automatizace + CRM integration                  |
+| **Klaviyo**          | Ecommerce native + predictive AI + better ROI tracking    |
+| **HubSpot**          | Full CRM + B2B sales + marketing integrace                |
+| **GetResponse**      | Webinars + funnel features + lepší automation             |
+| **Sender**           | Levnější + similar features + better free plan            |
+| **Omnisend**         | Specifically ecommerce-focused, lepší than CC             |
+| **Kit / ConvertKit** | Content creators, newsletter business                     |
+| **Beehiiv**          | Paid newsletters, monetization tools                      |
 
 ### Sweet spot pro Constant Contact 2026
 
@@ -1906,4 +1941,4 @@ Ideal Constant Contact customer:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů constantcontact.com (Pricing, Premium, About), G2 reviews, EmailVendorSelection (12/2025), Sender.net Review (1/2026), Flowium (1/2026), Mailsoftly (4/2026), CheckThat.ai (3/2026), Ecommerceparadise Review (4/2026). Pro nejaktuálnější detaily je nutný kontakt s Constant Contact (877-358-5969) nebo registrace 60denního zkušebního účtu.*
+_Dokument zpracován z oficiálních zdrojů constantcontact.com (Pricing, Premium, About), G2 reviews, EmailVendorSelection (12/2025), Sender.net Review (1/2026), Flowium (1/2026), Mailsoftly (4/2026), CheckThat.ai (3/2026), Ecommerceparadise Review (4/2026). Pro nejaktuálnější detaily je nutný kontakt s Constant Contact (877-358-5969) nebo registrace 60denního zkušebního účtu._

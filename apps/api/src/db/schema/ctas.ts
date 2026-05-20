@@ -4,7 +4,6 @@ import {
   pgEnum,
   uuid,
   varchar,
-
   integer,
   boolean,
   jsonb,
@@ -31,8 +30,12 @@ export const ctaTypeEnum = pgEnum('cta_type', [
 export const ctas = pgTable(
   'ctas',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
 
     name: varchar('name', { length: 255 }).notNull(),
     type: ctaTypeEnum('type').notNull().default('button'),
@@ -56,17 +59,18 @@ export const ctas = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
-  (t) => [
-    index('ctas_org_idx').on(t.orgId),
-    index('ctas_org_active_idx').on(t.orgId, t.active),
-  ],
+  (t) => [index('ctas_org_idx').on(t.orgId), index('ctas_org_active_idx').on(t.orgId, t.active)],
 );
 
 export const ctaVariants = pgTable(
   'cta_variants',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    ctaId: uuid('cta_id').notNull().references(() => ctas.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    ctaId: uuid('cta_id')
+      .notNull()
+      .references(() => ctas.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 128 }).notNull(),
     weight: integer('weight').notNull().default(1),
     content: jsonb('content').$type<Record<string, unknown>>().notNull().default({}),
@@ -78,9 +82,15 @@ export const ctaVariants = pgTable(
 export const ctaImpressions = pgTable(
   'cta_impressions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    ctaId: uuid('cta_id').notNull().references(() => ctas.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    ctaId: uuid('cta_id')
+      .notNull()
+      .references(() => ctas.id, { onDelete: 'cascade' }),
     variantId: uuid('variant_id'),
     visitorId: varchar('visitor_id', { length: 128 }),
     contactId: uuid('contact_id'),

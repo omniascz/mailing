@@ -27,7 +27,15 @@ const mockDb: Record<string, unknown> = {
 };
 vi.mock('../db/client.js', () => ({ db: mockDb }));
 vi.mock('../db/schema/index.js', () => ({
-  aiUsage: { orgId: 'org_id', model: 'model', feature: 'feature', inputTokens: 'input_tokens', outputTokens: 'output_tokens', costUsd: 'cost_usd', cached: 'cached' },
+  aiUsage: {
+    orgId: 'org_id',
+    model: 'model',
+    feature: 'feature',
+    inputTokens: 'input_tokens',
+    outputTokens: 'output_tokens',
+    costUsd: 'cost_usd',
+    cached: 'cached',
+  },
   organizations: { id: 'id', plan: 'plan' },
 }));
 vi.mock('../lib/app-error.js', () => ({
@@ -42,7 +50,7 @@ describe('AI cost calculation', () => {
   it('calculates Sonnet 4.6 cost correctly', () => {
     // $3/$15 per MTok
     const inputTokens = 1_000_000; // 1M input = $3
-    const outputTokens = 500_000;  // 0.5M output = $7.50
+    const outputTokens = 500_000; // 0.5M output = $7.50
     const costs = { inputPerMTok: 3.0, outputPerMTok: 15.0 };
     const cost =
       (inputTokens / 1_000_000) * costs.inputPerMTok +
@@ -217,7 +225,24 @@ describe('AI campaign summary (4.8)', () => {
       complaintRate: z.number(),
     });
 
-    const valid = { sent: 1000, delivered: 980, deliveryRate: 98, opens: 200, uniqueOpens: 180, openRate: 18.4, clicks: 40, uniqueClicks: 35, clickRate: 3.57, ctor: 19.4, bounces: 10, bounceRate: 1.02, unsubs: 5, unsubRate: 0.51, complaints: 0, complaintRate: 0 };
+    const valid = {
+      sent: 1000,
+      delivered: 980,
+      deliveryRate: 98,
+      opens: 200,
+      uniqueOpens: 180,
+      openRate: 18.4,
+      clicks: 40,
+      uniqueClicks: 35,
+      clickRate: 3.57,
+      ctor: 19.4,
+      bounces: 10,
+      bounceRate: 1.02,
+      unsubs: 5,
+      unsubRate: 0.51,
+      complaints: 0,
+      complaintRate: 0,
+    };
     expect(statsSchema.safeParse(valid).success).toBe(true);
   });
 });
@@ -226,7 +251,10 @@ describe('AI campaign summary (4.8)', () => {
 
 describe('AI translate (4.9)', () => {
   const translateBodySchema = z.object({
-    blocks: z.array(z.object({ type: z.string() }).passthrough()).min(1).max(100),
+    blocks: z
+      .array(z.object({ type: z.string() }).passthrough())
+      .min(1)
+      .max(100),
     sourceLang: z.string().min(2).max(10).optional().default('auto'),
     targetLang: z.string().min(2).max(10),
     brandVoice: z.record(z.unknown()).optional(),
@@ -264,7 +292,8 @@ describe('AI translate (4.9)', () => {
   });
 
   it('detects missing merge tags after translation', () => {
-    const original = '{"blocks":[{"type":"text","content":{"html":"Hi {{first_name}} and {{company}}"}}]}';
+    const original =
+      '{"blocks":[{"type":"text","content":{"html":"Hi {{first_name}} and {{company}}"}}]}';
     const brokenTranslation = '{"blocks":[{"type":"text","content":{"html":"Ahoj příteli"}}]}';
     const originalTags = [...original.matchAll(/\{\{[^}]+\}\}/g)].map((m) => m[0]);
     const missingTags = originalTags.filter((tag) => !brokenTranslation.includes(tag));

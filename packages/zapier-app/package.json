@@ -13,6 +13,11 @@
   "devDependencies": {
     "jest": "^29.0.0"
   },
-  "keywords": ["zapier", "forgemsg", "email", "marketing"],
+  "keywords": [
+    "zapier",
+    "forgemsg",
+    "email",
+    "marketing"
+  ],
   "license": "MIT"
 }

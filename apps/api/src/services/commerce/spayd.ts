@@ -84,7 +84,7 @@ function ensureNumeric(field: string, value: string, maxLen: number): void {
 
 function sanitize(value: string, maxLen: number): string {
   // SPAYD forbids `*` and `:` inside values; strip them plus control chars.
-  const cleaned = value.replace(/[\*\:\r\n\t]/g, ' ').trim();
+  const cleaned = value.replace(/[*:\r\n\t]/g, ' ').trim();
   return cleaned.length > maxLen ? cleaned.slice(0, maxLen) : cleaned;
 }
 

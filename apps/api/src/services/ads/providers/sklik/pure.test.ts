@@ -111,7 +111,9 @@ describe('computeStats', () => {
   });
 
   it('reports the right batch count for large lists', () => {
-    const members = new Array(SKLIK_BATCH_SIZE * 2 + 5).fill(0).map((_, i) => ({ email: `u${i}@x.com` }));
+    const members = new Array(SKLIK_BATCH_SIZE * 2 + 5)
+      .fill(0)
+      .map((_, i) => ({ email: `u${i}@x.com` }));
     const stats = computeStats(members);
     expect(stats.batches).toBe(3);
   });

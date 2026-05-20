@@ -37,13 +37,20 @@ export function declineName(name: string, cs: CzechCase, gender?: Gender): strin
   const g = gender ?? inferGender(trimmed);
 
   switch (cs) {
-    case 'nominative':   return trimmed;
-    case 'vocative':     return vocative(trimmed, g);
-    case 'genitive':     return g === 'female' ? femaleGenitive(trimmed) : maleGenitive(trimmed);
-    case 'dative':       return g === 'female' ? femaleDative(trimmed) : maleDative(trimmed);
-    case 'accusative':   return g === 'female' ? femaleAccusative(trimmed) : maleAccusative(trimmed);
-    case 'locative':     return g === 'female' ? femaleLocative(trimmed) : maleLocative(trimmed);
-    case 'instrumental': return g === 'female' ? femaleInstrumental(trimmed) : maleInstrumental(trimmed);
+    case 'nominative':
+      return trimmed;
+    case 'vocative':
+      return vocative(trimmed, g);
+    case 'genitive':
+      return g === 'female' ? femaleGenitive(trimmed) : maleGenitive(trimmed);
+    case 'dative':
+      return g === 'female' ? femaleDative(trimmed) : maleDative(trimmed);
+    case 'accusative':
+      return g === 'female' ? femaleAccusative(trimmed) : maleAccusative(trimmed);
+    case 'locative':
+      return g === 'female' ? femaleLocative(trimmed) : maleLocative(trimmed);
+    case 'instrumental':
+      return g === 'female' ? femaleInstrumental(trimmed) : maleInstrumental(trimmed);
   }
 }
 
@@ -52,9 +59,9 @@ export function declineName(name: string, cs: CzechCase, gender?: Gender): strin
 function maleGenitive(n: string): string {
   // Consonant → +a (Petr → Petra, Pavel → Pavla)
   const last = n.slice(-1).toLowerCase();
-  if (last === 'a') return n.slice(0, -1) + 'y';     // Honza → Honzy
-  if (last === 'e') return n + '';                   // already
-  if (last === 'í') return n;                        // Jiří invariant
+  if (last === 'a') return n.slice(0, -1) + 'y'; // Honza → Honzy
+  if (last === 'e') return n + ''; // already
+  if (last === 'í') return n; // Jiří invariant
   // Drop fleeting -e- for names like Pavel → Pavla, Karel → Karla
   if (n.slice(-2).toLowerCase() === 'el') return n.slice(0, -2) + 'la';
   return n + 'a';

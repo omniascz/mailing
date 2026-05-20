@@ -13,7 +13,10 @@ import type { SegmentConditions, SegmentRule, SegmentRuleOp } from '../../db/sch
  * - Event-based rules emit EXISTS subqueries against email_events.
  */
 
-const DIRECT_FIELDS: Record<string, { column: string; type: 'text' | 'enum' | 'number' | 'date' | 'bool' }> = {
+const DIRECT_FIELDS: Record<
+  string,
+  { column: string; type: 'text' | 'enum' | 'number' | 'date' | 'bool' }
+> = {
   email: { column: 'email', type: 'text' },
   phone: { column: 'phone', type: 'text' },
   first_name: { column: 'first_name', type: 'text' },
@@ -42,18 +45,18 @@ const DIRECT_FIELDS: Record<string, { column: string; type: 'text' | 'enum' | 'n
  * Usage in segment conditions: { field: 'engagement.total_orders', op: 'gte', value: 3 }
  */
 const ENGAGEMENT_FIELDS: Record<string, { column: string; type: 'number' | 'date' | 'text' }> = {
-  total_orders:          { column: 'total_orders',           type: 'number' },
-  total_revenue:         { column: 'total_revenue',          type: 'number' },
-  last_order_at:         { column: 'last_order_at',          type: 'date'   },
-  first_order_at:        { column: 'first_order_at',         type: 'date'   },
-  predicted_clv:         { column: 'predicted_clv',          type: 'number' },
-  purchase_likelihood:   { column: 'purchase_likelihood',    type: 'number' },
-  churn_risk:            { column: 'churn_risk',             type: 'number' },
-  rfm_segment:           { column: 'rfm_segment',            type: 'text'   },
-  rfm_score:             { column: 'rfm_score',              type: 'number' },
-  total_opens:           { column: 'total_opens',            type: 'number' },
-  total_clicks:          { column: 'total_clicks',           type: 'number' },
-  total_sends:           { column: 'total_sends',            type: 'number' },
+  total_orders: { column: 'total_orders', type: 'number' },
+  total_revenue: { column: 'total_revenue', type: 'number' },
+  last_order_at: { column: 'last_order_at', type: 'date' },
+  first_order_at: { column: 'first_order_at', type: 'date' },
+  predicted_clv: { column: 'predicted_clv', type: 'number' },
+  purchase_likelihood: { column: 'purchase_likelihood', type: 'number' },
+  churn_risk: { column: 'churn_risk', type: 'number' },
+  rfm_segment: { column: 'rfm_segment', type: 'text' },
+  rfm_score: { column: 'rfm_score', type: 'number' },
+  total_opens: { column: 'total_opens', type: 'number' },
+  total_clicks: { column: 'total_clicks', type: 'number' },
+  total_sends: { column: 'total_sends', type: 'number' },
   avg_order_interval_days: { column: 'avg_order_interval_days', type: 'number' },
 };
 
@@ -117,7 +120,8 @@ function buildRule(rule: SegmentRule): SQL {
         throw new SegmentQueryError('campaign id must be a string when provided');
       }
       const eventType = rule.op.includes('opened') ? 'open' : 'click';
-      const withinDays = typeof rule.withinDays === 'number' && rule.withinDays > 0 ? rule.withinDays : null;
+      const withinDays =
+        typeof rule.withinDays === 'number' && rule.withinDays > 0 ? rule.withinDays : null;
 
       const parts: SQL[] = [
         sql`SELECT 1 FROM email_events ee WHERE ee.contact_id = contacts.id AND ee.event_type = ${eventType}`,

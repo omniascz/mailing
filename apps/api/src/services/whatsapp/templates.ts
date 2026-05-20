@@ -15,10 +15,7 @@ const META_BASE = `https://graph.facebook.com/${API_VERSION}`;
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
-export async function listWaTemplates(
-  orgId: string,
-  status?: string,
-) {
+export async function listWaTemplates(orgId: string, status?: string) {
   if (status) {
     // Dynamic filter by status
     const rows = await db
@@ -215,7 +212,5 @@ export async function incrementTemplateUsage(orgId: string, templateName: string
         .where(and(eq(whatsappTemplates.orgId, orgId), eq(whatsappTemplates.name, templateName)))
         .limit(1) as unknown as number,
     })
-    .where(
-      and(eq(whatsappTemplates.orgId, orgId), eq(whatsappTemplates.name, templateName)),
-    );
+    .where(and(eq(whatsappTemplates.orgId, orgId), eq(whatsappTemplates.name, templateName)));
 }

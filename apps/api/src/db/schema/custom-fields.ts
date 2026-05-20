@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, boolean, jsonb, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  jsonb,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { customFieldTypeEnum } from './enums.js';
 
@@ -10,7 +18,9 @@ import { customFieldTypeEnum } from './enums.js';
 export const customFieldDefinitions = pgTable(
   'custom_field_definitions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

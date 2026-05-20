@@ -72,20 +72,26 @@ async function runSegmentOptimizerAgent(
 }
 
 export async function runAgent(input: AgentRunInput): Promise<AgentRunOutput> {
-  const agent = await db.select().from(aiAgents)
+  const agent = await db
+    .select()
+    .from(aiAgents)
     .where(and(eq(aiAgents.id, input.agentId), eq(aiAgents.orgId, input.orgId)))
-    .limit(1).then((r) => r[0]);
+    .limit(1)
+    .then((r) => r[0]);
 
   if (!agent) return { runId: '', status: 'failed', error: 'Agent not found' };
 
   // Create run record
-  const [run] = await db.insert(aiAgentRuns).values({
-    agentId: agent.id,
-    orgId: agent.orgId,
-    status: 'running',
-    input: input.context ?? {},
-    startedAt: new Date(),
-  }).returning();
+  const [run] = await db
+    .insert(aiAgentRuns)
+    .values({
+      agentId: agent.id,
+      orgId: agent.orgId,
+      status: 'running',
+      input: input.context ?? {},
+      startedAt: new Date(),
+    })
+    .returning();
 
   if (!run) return { runId: '', status: 'failed', error: 'Failed to create run' };
 
@@ -112,17 +118,24 @@ export async function runAgent(input: AgentRunInput): Promise<AgentRunOutput> {
       }
     }
 
-    await db.update(aiAgentRuns)
+    await db
+      .update(aiAgentRuns)
       .set({ status: 'completed', output: agentResult, completedAt: new Date() })
       .where(eq(aiAgentRuns.id, run.id));
 
     // Update agent lastRunAt
     await db.update(aiAgents).set({ lastRunAt: new Date() }).where(eq(aiAgents.id, agent.id));
 
-    return { runId: run.id, status: 'completed', result: agentResult, actions: agentResult.actions };
+    return {
+      runId: run.id,
+      status: 'completed',
+      result: agentResult,
+      actions: agentResult.actions,
+    };
   } catch (err) {
     const error = (err as Error).message;
-    await db.update(aiAgentRuns)
+    await db
+      .update(aiAgentRuns)
       .set({ status: 'failed', error, completedAt: new Date() })
       .where(eq(aiAgentRuns.id, run.id));
 

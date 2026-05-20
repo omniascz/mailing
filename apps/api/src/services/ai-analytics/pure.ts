@@ -25,12 +25,38 @@ export interface SandboxTableSchema {
 }
 
 const SANDBOX_FORBIDDEN_KEYWORDS = [
-  'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'DROP', 'ALTER', 'CREATE',
-  'GRANT', 'REVOKE', 'COPY', 'VACUUM', 'ANALYZE', 'CLUSTER', 'REINDEX',
-  'CALL', 'EXECUTE', 'DO', 'LOCK', 'BEGIN', 'COMMIT', 'ROLLBACK',
-  'SAVEPOINT', 'LISTEN', 'NOTIFY',
-  'PG_READ_FILE', 'PG_LS_DIR', 'PG_RELOAD_CONF',
-  'LO_IMPORT', 'LO_EXPORT', 'DBLINK', 'COPY_TO', 'COPY_FROM',
+  'INSERT',
+  'UPDATE',
+  'DELETE',
+  'TRUNCATE',
+  'DROP',
+  'ALTER',
+  'CREATE',
+  'GRANT',
+  'REVOKE',
+  'COPY',
+  'VACUUM',
+  'ANALYZE',
+  'CLUSTER',
+  'REINDEX',
+  'CALL',
+  'EXECUTE',
+  'DO',
+  'LOCK',
+  'BEGIN',
+  'COMMIT',
+  'ROLLBACK',
+  'SAVEPOINT',
+  'LISTEN',
+  'NOTIFY',
+  'PG_READ_FILE',
+  'PG_LS_DIR',
+  'PG_RELOAD_CONF',
+  'LO_IMPORT',
+  'LO_EXPORT',
+  'DBLINK',
+  'COPY_TO',
+  'COPY_FROM',
 ] as const;
 
 export const SANDBOX_FORBIDDEN_KEYWORDS_LIST = SANDBOX_FORBIDDEN_KEYWORDS;
@@ -129,7 +155,9 @@ export function describeSchemaForPrompt(
 ): string {
   return Object.values(schemas)
     .map((t) => {
-      const header = descriptions[t.name] ? `TABLE ${t.name} -- ${descriptions[t.name]}` : `TABLE ${t.name}`;
+      const header = descriptions[t.name]
+        ? `TABLE ${t.name} -- ${descriptions[t.name]}`
+        : `TABLE ${t.name}`;
       const cols = Object.entries(t.columns)
         .map(([c, type]) => `  ${c} ${type}`)
         .join(',\n');
@@ -156,8 +184,6 @@ export function injectOrgFilter(
 SELECT * FROM __user_q WHERE ${orgCol} = '${orgId.replace(/'/g, "''")}'`;
 }
 
-
-
 // ─── Lightweight allowlist guard (used by saved-queries / NL planner) ───────
 
 const DENY_PATTERNS: readonly RegExp[] = [
@@ -172,7 +198,7 @@ const DENY_PATTERNS: readonly RegExp[] = [
   /\bcreate\b/i,
   /\bcopy\b/i,
   /\bpg_sleep\b/i,
-  /\;.*\S/, // multi-statement
+  /;.*\S/, // multi-statement
 ];
 
 /**
@@ -180,10 +206,7 @@ const DENY_PATTERNS: readonly RegExp[] = [
  * NL→SQL layer prompts Claude to only emit SELECT, but we double-check at
  * runtime.
  */
-export function isSafeReadOnlySql(
-  sql: string,
-  allowedTables: readonly string[],
-): SafetyVerdict {
+export function isSafeReadOnlySql(sql: string, allowedTables: readonly string[]): SafetyVerdict {
   const trimmed = sql.trim().replace(/\s+/g, ' ');
   if (!/^\s*(?:with\b|select\b)/i.test(trimmed)) {
     return { safe: false, reason: 'SQL must start with SELECT or WITH' };
@@ -236,10 +259,7 @@ export interface ResultColumn {
  *   - 1 date + ≥1 numeric = line
  *   - otherwise table
  */
-export function suggestChartType(
-  columns: ResultColumn[],
-  rowCount: number,
-): ChartType {
+export function suggestChartType(columns: ResultColumn[], rowCount: number): ChartType {
   const nums = columns.filter((c) => c.kind === 'number').length;
   const strs = columns.filter((c) => c.kind === 'string').length;
   const dates = columns.filter((c) => c.kind === 'date').length;

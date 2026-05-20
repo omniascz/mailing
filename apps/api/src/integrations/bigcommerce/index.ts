@@ -20,7 +20,14 @@ const BC_V3_BASE = (storeHash: string) => `https://api.bigcommerce.com/stores/${
 
 export async function connect(
   orgId: string,
-  input: { storeHash: string; clientId: string; clientSecret: string; accessToken: string; name?: string; webhookSecret?: string },
+  input: {
+    storeHash: string;
+    clientId: string;
+    clientSecret: string;
+    accessToken: string;
+    name?: string;
+    webhookSecret?: string;
+  },
 ): Promise<{ connectionId: string }> {
   const credentials: BigCommerceCredentials = {
     storeHash: input.storeHash,
@@ -56,29 +63,64 @@ async function bcFetch(storeHash: string, clientId: string, accessToken: string,
   return res.json();
 }
 
-export async function fetchProducts(storeHash: string, clientId: string, accessToken: string, page = 1, limit = 50) {
-  return bcFetch(storeHash, clientId, accessToken, `/catalog/products?page=${page}&limit=${limit}&include=variants,images`);
+export async function fetchProducts(
+  storeHash: string,
+  clientId: string,
+  accessToken: string,
+  page = 1,
+  limit = 50,
+) {
+  return bcFetch(
+    storeHash,
+    clientId,
+    accessToken,
+    `/catalog/products?page=${page}&limit=${limit}&include=variants,images`,
+  );
 }
 
-export async function fetchOrders(storeHash: string, clientId: string, accessToken: string, page = 1, limit = 50) {
-  const res = await fetch(`${BC_API_BASE(storeHash)}/orders?page=${page}&limit=${limit}&sort=date_created:desc`, {
-    headers: { 'X-Auth-Token': accessToken, 'X-Auth-Client': clientId },
-  });
+export async function fetchOrders(
+  storeHash: string,
+  clientId: string,
+  accessToken: string,
+  page = 1,
+  limit = 50,
+) {
+  const res = await fetch(
+    `${BC_API_BASE(storeHash)}/orders?page=${page}&limit=${limit}&sort=date_created:desc`,
+    {
+      headers: { 'X-Auth-Token': accessToken, 'X-Auth-Client': clientId },
+    },
+  );
   if (!res.ok) throw AppError.badRequest(`BigCommerce API ${res.status}`);
   return res.json();
 }
 
-export async function fetchCustomers(storeHash: string, clientId: string, accessToken: string, page = 1, limit = 50) {
+export async function fetchCustomers(
+  storeHash: string,
+  clientId: string,
+  accessToken: string,
+  page = 1,
+  limit = 50,
+) {
   return bcFetch(storeHash, clientId, accessToken, `/customers?page=${page}&limit=${limit}`);
 }
 
-export async function registerWebhooks(storeHash: string, clientId: string, accessToken: string, deliveryUrl: string) {
+export async function registerWebhooks(
+  storeHash: string,
+  clientId: string,
+  accessToken: string,
+  deliveryUrl: string,
+) {
   const scopes = ['store/order/created', 'store/order/updated', 'store/customer/created'];
   const results = [];
   for (const scope of scopes) {
     const res = await fetch(`${BC_V3_BASE(storeHash)}/hooks`, {
       method: 'POST',
-      headers: { 'X-Auth-Token': accessToken, 'X-Auth-Client': clientId, 'Content-Type': 'application/json' },
+      headers: {
+        'X-Auth-Token': accessToken,
+        'X-Auth-Client': clientId,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ scope, destination: deliveryUrl, is_active: true, headers: {} }),
     });
     if (res.ok) results.push(await res.json());

@@ -25,9 +25,9 @@ describe('renderPlainText', () => {
   });
 
   it('includes the preheader on its own line', () => {
-    expect(
-      renderPlainText(baseSchema({ subject: 'Subj', preheader: 'Sneak peek' })),
-    ).toBe('Subj\n\nSneak peek');
+    expect(renderPlainText(baseSchema({ subject: 'Subj', preheader: 'Sneak peek' }))).toBe(
+      'Subj\n\nSneak peek',
+    );
   });
 
   it('renders text blocks and strips inline HTML', () => {
@@ -94,9 +94,7 @@ describe('renderPlainText', () => {
   it('renders dividers as ----------', () => {
     const out = renderPlainText(
       baseSchema({
-        blocks: [
-          { id: '1', type: 'divider', thickness: 1, color: '#000', widthPercent: 100 },
-        ],
+        blocks: [{ id: '1', type: 'divider', thickness: 1, color: '#000', widthPercent: 100 }],
       }),
     );
     expect(out).toContain('----------');

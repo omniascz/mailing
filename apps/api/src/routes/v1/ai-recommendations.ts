@@ -17,12 +17,16 @@ const recommendBodySchema = z.object({
 });
 
 export default async function aiRecommendationsRoutes(app: FastifyInstance) {
-  app.post('/api/v1/ai/recommend', {
-    schema: { tags: ['AI'] },
-  }, async (request, reply) => {
-    const { orgId } = request as unknown as { orgId: string };
-    const body = recommendBodySchema.parse(request.body);
-    const recommendations = await getRecommendations(orgId, body);
-    return reply.send({ data: recommendations });
-  });
+  app.post(
+    '/api/v1/ai/recommend',
+    {
+      schema: { tags: ['AI'] },
+    },
+    async (request, reply) => {
+      const { orgId } = request as unknown as { orgId: string };
+      const body = recommendBodySchema.parse(request.body);
+      const recommendations = await getRecommendations(orgId, body);
+      return reply.send({ data: recommendations });
+    },
+  );
 }

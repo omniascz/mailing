@@ -46,11 +46,7 @@ export function computeMrr(
 /**
  * Advance a date by N billing intervals. Mutates a copy, returns new Date.
  */
-export function addInterval(
-  base: Date,
-  interval: BillingInterval,
-  count: number,
-): Date {
+export function addInterval(base: Date, interval: BillingInterval, count: number): Date {
   const d = new Date(base);
   switch (interval) {
     case 'day':

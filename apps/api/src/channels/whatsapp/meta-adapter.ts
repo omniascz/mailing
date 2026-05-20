@@ -84,17 +84,17 @@ interface MetaStatusWebhook {
       value: {
         messaging_product: 'whatsapp';
         statuses?: Array<{
-          id: string;           // message wamid
-          status: string;       // "sent" | "delivered" | "read" | "failed"
+          id: string; // message wamid
+          status: string; // "sent" | "delivered" | "read" | "failed"
           timestamp: string;
           recipient_id: string;
           errors?: Array<{ code: number; title: string }>;
         }>;
         messages?: Array<{
           id: string;
-          from: string;         // wa_id (phone without +)
+          from: string; // wa_id (phone without +)
           timestamp: string;
-          type: string;         // "text" | "image" | "audio" | "interactive" | …
+          type: string; // "text" | "image" | "audio" | "interactive" | …
           text?: { body: string };
         }>;
       };
@@ -140,7 +140,11 @@ export class MetaWhatsAppAdapter extends BaseChannelAdapter {
 
   async send(message: UnifiedMessage, recipient: Recipient): Promise<DeliveryResult> {
     if (message.content.kind !== 'whatsapp') {
-      throw this.wrapError({ code: 'WRONG_CONTENT', message: 'Expected whatsapp content', retryable: false });
+      throw this.wrapError({
+        code: 'WRONG_CONTENT',
+        message: 'Expected whatsapp content',
+        retryable: false,
+      });
     }
 
     const { templateId, parameters, language } = message.content;
@@ -168,11 +172,7 @@ export class MetaWhatsAppAdapter extends BaseChannelAdapter {
    * Send a free-form text message (only allowed within 24-hour customer service window).
    * Use for replies to inbound messages.
    */
-  async sendText(
-    to: string,
-    text: string,
-    contactId: string,
-  ): Promise<DeliveryResult> {
+  async sendText(to: string, text: string, contactId: string): Promise<DeliveryResult> {
     const body: MetaTextMessage = {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
@@ -265,7 +265,10 @@ export class MetaWhatsAppAdapter extends BaseChannelAdapter {
     const content = template.content as Record<string, unknown>;
 
     if (!content.templateId || typeof content.templateId !== 'string') {
-      errors.push({ field: 'templateId', message: 'WhatsApp templateId (template name) is required' });
+      errors.push({
+        field: 'templateId',
+        message: 'WhatsApp templateId (template name) is required',
+      });
     }
 
     if (!content.parameters || typeof content.parameters !== 'object') {
@@ -279,7 +282,7 @@ export class MetaWhatsAppAdapter extends BaseChannelAdapter {
 
   getChannelLimits(): RateLimits {
     return {
-      maxPerSecond: 80,         // Meta Cloud API tier 2
+      maxPerSecond: 80, // Meta Cloud API tier 2
       maxPerMinute: 1_000,
       maxPerHour: 50_000,
       maxPerDay: 1_000_000,
@@ -295,26 +298,24 @@ export class MetaWhatsAppAdapter extends BaseChannelAdapter {
     let resp: MetaSendResponse;
 
     try {
-      const httpResp = await fetch(
-        `${BASE_URL}/${this.cfg.phoneNumberId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${this.cfg.accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-          signal: AbortSignal.timeout(30_000),
+      const httpResp = await fetch(`${BASE_URL}/${this.cfg.phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.cfg.accessToken}`,
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(30_000),
+      });
 
       resp = (await httpResp.json()) as MetaSendResponse;
 
       if (!httpResp.ok || resp.error) {
         const err = resp.error;
-        const mapped = err?.code !== undefined
-          ? (META_ERROR_MAP[err.code] ?? { code: 'PROVIDER_ERROR', retryable: false })
-          : { code: 'HTTP_ERROR', retryable: httpResp.status >= 500 };
+        const mapped =
+          err?.code !== undefined
+            ? (META_ERROR_MAP[err.code] ?? { code: 'PROVIDER_ERROR', retryable: false })
+            : { code: 'HTTP_ERROR', retryable: httpResp.status >= 500 };
 
         throw this.wrapError({
           code: mapped.code,
@@ -325,7 +326,11 @@ export class MetaWhatsAppAdapter extends BaseChannelAdapter {
       }
     } catch (err) {
       if ((err as Error).name === 'ChannelAdapterError') throw err;
-      throw this.wrapError({ code: 'NETWORK_ERROR', message: (err as Error).message, retryable: true });
+      throw this.wrapError({
+        code: 'NETWORK_ERROR',
+        message: (err as Error).message,
+        retryable: true,
+      });
     }
 
     const messageId = resp.messages?.[0]?.id ?? '';

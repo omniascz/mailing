@@ -71,53 +71,65 @@ const sendSchema = z.discriminatedUnion('channel', [
 // ── Route ─────────────────────────────────────────────────────────────────────
 
 const messagingSendRoutes: FastifyPluginAsync = async (app) => {
-  app.post('/api/v1/messaging/send', {
-    preHandler: [app.authenticate],
-    schema: { tags: ['Messaging'] },
-  }, async (req, reply) => {
-    const parsed = sendSchema.parse(req.body);
-    const orgId = req.user!.orgId;
+  app.post(
+    '/api/v1/messaging/send',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Messaging'] },
+    },
+    async (req, reply) => {
+      const parsed = sendSchema.parse(req.body);
+      const orgId = req.user!.orgId;
 
-    switch (parsed.channel) {
-      case 'email': {
-        const p = parsed.payload;
-        if (!p.html && !p.text && !p.templateId) {
-          return reply.code(400).send({ code: 'BODY_REQUIRED', message: 'Provide html, text, or templateId' });
+      switch (parsed.channel) {
+        case 'email': {
+          const p = parsed.payload;
+          if (!p.html && !p.text && !p.templateId) {
+            return reply
+              .code(400)
+              .send({ code: 'BODY_REQUIRED', message: 'Provide html, text, or templateId' });
+          }
+          const messageId = `<${randomUUID()}@forgemsg>`;
+          await db.insert(emailEvents).values({
+            orgId,
+            eventType: 'send',
+            messageId,
+            metadata: {
+              to: p.to,
+              transactional: true,
+              unified: true,
+              tags: p.tags ?? [],
+              scheduleAt: p.scheduleAt ?? null,
+              ...p.metadata,
+            },
+          });
+          return reply.code(202).send({
+            data: { channel: 'email', messageId, status: p.scheduleAt ? 'scheduled' : 'queued' },
+          });
         }
-        const messageId = `<${randomUUID()}@forgemsg>`;
-        await db.insert(emailEvents).values({
-          orgId,
-          eventType: 'send',
-          messageId,
-          metadata: {
-            to: p.to,
-            transactional: true,
-            unified: true,
-            tags: p.tags ?? [],
-            scheduleAt: p.scheduleAt ?? null,
-            ...p.metadata,
-          },
-        });
-        return reply.code(202).send({ data: { channel: 'email', messageId, status: p.scheduleAt ? 'scheduled' : 'queued' } });
-      }
 
-      case 'sms': {
-        const p = parsed.payload;
-        const { routedSmsSend } = await import('../../../services/sms/routing.js');
-        const result = await routedSmsSend(orgId, { text: p.text, from: p.from } as never, { phone: p.to } as never);
-        return reply.code(202).send({ data: { channel: 'sms', ...result } });
-      }
+        case 'sms': {
+          const p = parsed.payload;
+          const { routedSmsSend } = await import('../../../services/sms/routing.js');
+          const result = await routedSmsSend(
+            orgId,
+            { text: p.text, from: p.from } as never,
+            { phone: p.to } as never,
+          );
+          return reply.code(202).send({ data: { channel: 'sms', ...result } });
+        }
 
-      case 'whatsapp':
-      case 'push':
-      case 'in_app': {
-        return reply.code(501).send({
-          code: 'NOT_IMPLEMENTED',
-          message: `Channel '${parsed.channel}' is not yet wired into the unified messaging endpoint. Use the channel-specific route.`,
-        });
+        case 'whatsapp':
+        case 'push':
+        case 'in_app': {
+          return reply.code(501).send({
+            code: 'NOT_IMPLEMENTED',
+            message: `Channel '${parsed.channel}' is not yet wired into the unified messaging endpoint. Use the channel-specific route.`,
+          });
+        }
       }
-    }
-  });
+    },
+  );
 };
 
 export default messagingSendRoutes;

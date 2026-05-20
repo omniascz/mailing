@@ -7,15 +7,26 @@
 
 import { and, eq, or } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { associations, type Association, type AssociationEntityType } from '../../db/schema/associations.js';
+import {
+  associations,
+  type Association,
+  type AssociationEntityType,
+} from '../../db/schema/associations.js';
 import { AppError } from '../../lib/app-error.js';
 
 // ─── Normalisation ────────────────────────────────────────────────────────────
 
 function normalisePair(
-  aType: AssociationEntityType, aId: string,
-  bType: AssociationEntityType, bId: string,
-): { fromType: AssociationEntityType; fromId: string; toType: AssociationEntityType; toId: string } {
+  aType: AssociationEntityType,
+  aId: string,
+  bType: AssociationEntityType,
+  bId: string,
+): {
+  fromType: AssociationEntityType;
+  fromId: string;
+  toType: AssociationEntityType;
+  toId: string;
+} {
   const aKey = `${aType}:${aId}`;
   const bKey = `${bType}:${bId}`;
   if (aKey <= bKey) {
@@ -26,38 +37,51 @@ function normalisePair(
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
-export async function createAssociation(orgId: string, input: {
-  fromType: AssociationEntityType;
-  fromId: string;
-  toType: AssociationEntityType;
-  toId: string;
-  label?: string | null;
-  metadata?: Record<string, unknown>;
-}): Promise<Association> {
+export async function createAssociation(
+  orgId: string,
+  input: {
+    fromType: AssociationEntityType;
+    fromId: string;
+    toType: AssociationEntityType;
+    toId: string;
+    label?: string | null;
+    metadata?: Record<string, unknown>;
+  },
+): Promise<Association> {
   const pair = normalisePair(input.fromType, input.fromId, input.toType, input.toId);
   if (pair.fromType === pair.toType && pair.fromId === pair.toId) {
     throw AppError.badRequest('Cannot associate an entity to itself');
   }
 
-  const [row] = await db.insert(associations).values({
-    orgId,
-    fromType: pair.fromType,
-    fromId: pair.fromId,
-    toType: pair.toType,
-    toId: pair.toId,
-    label: input.label ?? null,
-    metadata: input.metadata ?? {},
-  })
-  .onConflictDoUpdate({
-    target: [associations.orgId, associations.fromType, associations.fromId, associations.toType, associations.toId, associations.label],
-    set: { metadata: input.metadata ?? {}, updatedAt: new Date() },
-  })
-  .returning();
+  const [row] = await db
+    .insert(associations)
+    .values({
+      orgId,
+      fromType: pair.fromType,
+      fromId: pair.fromId,
+      toType: pair.toType,
+      toId: pair.toId,
+      label: input.label ?? null,
+      metadata: input.metadata ?? {},
+    })
+    .onConflictDoUpdate({
+      target: [
+        associations.orgId,
+        associations.fromType,
+        associations.fromId,
+        associations.toType,
+        associations.toId,
+        associations.label,
+      ],
+      set: { metadata: input.metadata ?? {}, updatedAt: new Date() },
+    })
+    .returning();
   return row!;
 }
 
 export async function deleteAssociation(orgId: string, assocId: string): Promise<void> {
-  await db.delete(associations)
+  await db
+    .delete(associations)
     .where(and(eq(associations.orgId, orgId), eq(associations.id, assocId)));
 }
 
@@ -67,14 +91,17 @@ export async function cleanupEntity(
   entityType: AssociationEntityType,
   entityId: string,
 ): Promise<void> {
-  await db.delete(associations)
-    .where(and(
-      eq(associations.orgId, orgId),
-      or(
-        and(eq(associations.fromType, entityType), eq(associations.fromId, entityId)),
-        and(eq(associations.toType, entityType), eq(associations.toId, entityId)),
-      )!,
-    ));
+  await db
+    .delete(associations)
+    .where(
+      and(
+        eq(associations.orgId, orgId),
+        or(
+          and(eq(associations.fromType, entityType), eq(associations.fromId, entityId)),
+          and(eq(associations.toType, entityType), eq(associations.toId, entityId)),
+        )!,
+      ),
+    );
 }
 
 // ─── Lookup ───────────────────────────────────────────────────────────────────
@@ -85,26 +112,33 @@ export async function listAssociations(
   entityType: AssociationEntityType,
   entityId: string,
   peerType?: AssociationEntityType,
-): Promise<Array<{
-  id: string;
-  peerType: AssociationEntityType;
-  peerId: string;
-  label: string | null;
-  metadata: Record<string, unknown>;
-  createdAt: Date;
-}>> {
-  const rows = await db.select().from(associations)
-    .where(and(
-      eq(associations.orgId, orgId),
-      or(
-        and(eq(associations.fromType, entityType), eq(associations.fromId, entityId)),
-        and(eq(associations.toType, entityType), eq(associations.toId, entityId)),
-      )!,
-    ));
+): Promise<
+  Array<{
+    id: string;
+    peerType: AssociationEntityType;
+    peerId: string;
+    label: string | null;
+    metadata: Record<string, unknown>;
+    createdAt: Date;
+  }>
+> {
+  const rows = await db
+    .select()
+    .from(associations)
+    .where(
+      and(
+        eq(associations.orgId, orgId),
+        or(
+          and(eq(associations.fromType, entityType), eq(associations.fromId, entityId)),
+          and(eq(associations.toType, entityType), eq(associations.toId, entityId)),
+        )!,
+      ),
+    );
 
-  const result = rows.map(r => {
-    const peerType = (r.fromType === entityType && r.fromId === entityId
-      ? r.toType : r.fromType) as AssociationEntityType;
+  const result = rows.map((r) => {
+    const peerType = (
+      r.fromType === entityType && r.fromId === entityId ? r.toType : r.fromType
+    ) as AssociationEntityType;
     const peerId = r.fromType === entityType && r.fromId === entityId ? r.toId : r.fromId;
     return {
       id: r.id,
@@ -116,7 +150,7 @@ export async function listAssociations(
     };
   });
 
-  return peerType ? result.filter(x => x.peerType === peerType) : result;
+  return peerType ? result.filter((x) => x.peerType === peerType) : result;
 }
 
 /** Count associations for a given entity (dashboard widgets). */

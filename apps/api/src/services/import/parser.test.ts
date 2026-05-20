@@ -6,7 +6,8 @@ import { parsePhonePrefix } from './phone-prefix.js';
 
 describe('parseCsvString', () => {
   it('parses headers and rows with trimmed values', () => {
-    const csv = 'Email, Phone, First Name\n  alice@example.com ,+420602123456,Alice\nbob@test.cz,+420777000111,Bob';
+    const csv =
+      'Email, Phone, First Name\n  alice@example.com ,+420602123456,Alice\nbob@test.cz,+420777000111,Bob';
     const { columns, rows } = parseCsvString(csv);
     expect(columns).toEqual(['Email', 'Phone', 'First Name']);
     expect(rows).toHaveLength(2);
@@ -32,7 +33,13 @@ describe('detectFormat', () => {
 
 describe('detectColumnMapping', () => {
   it('maps common english header variations', () => {
-    const mapping = detectColumnMapping(['Email Address', 'Phone Number', 'First Name', 'Surname', 'Notes']);
+    const mapping = detectColumnMapping([
+      'Email Address',
+      'Phone Number',
+      'First Name',
+      'Surname',
+      'Notes',
+    ]);
     expect(mapping['Email Address']).toBe('email');
     expect(mapping['Phone Number']).toBe('phone');
     expect(mapping['First Name']).toBe('first_name');
@@ -63,7 +70,10 @@ describe('validateRow', () => {
   };
 
   it('accepts a valid row and enriches phone data', () => {
-    const result = validateRow({ Email: 'alice@example.com', Phone: '+420602123456', First: 'Alice' }, mapping);
+    const result = validateRow(
+      { Email: 'alice@example.com', Phone: '+420602123456', First: 'Alice' },
+      mapping,
+    );
     expect(result.ok).toBe(true);
     expect(result.row?.email).toBe('alice@example.com');
     expect(result.row?.phoneInfo?.operator).toBe('O2');
@@ -77,7 +87,10 @@ describe('validateRow', () => {
   });
 
   it('rejects an invalid email but keeps phone', () => {
-    const result = validateRow({ Email: 'not-an-email', Phone: '+420602123456', First: 'X' }, mapping);
+    const result = validateRow(
+      { Email: 'not-an-email', Phone: '+420602123456', First: 'X' },
+      mapping,
+    );
     expect(result.ok).toBe(false);
     expect(result.row?.email).toBeNull();
     expect(result.row?.phone).toBeTruthy();

@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, jsonb, boolean, integer, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  jsonb,
+  boolean,
+  integer,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 
@@ -16,8 +25,12 @@ export interface SurveyQuestion {
 export const surveys = pgTable(
   'surveys',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
     description: varchar('description', { length: 1024 }),
     questions: jsonb('questions').$type<SurveyQuestion[]>().notNull().default([]),
@@ -32,9 +45,15 @@ export const surveys = pgTable(
 export const surveyResponses = pgTable(
   'survey_responses',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    surveyId: uuid('survey_id').notNull().references(() => surveys.id, { onDelete: 'cascade' }),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    surveyId: uuid('survey_id')
+      .notNull()
+      .references(() => surveys.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
     answers: jsonb('answers').$type<Record<string, unknown>>().notNull().default({}),
     npsScore: integer('nps_score'),

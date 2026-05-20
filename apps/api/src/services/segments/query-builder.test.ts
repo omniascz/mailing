@@ -145,7 +145,10 @@ describe('buildSegmentWhere', () => {
 
   it('rejects deep nesting', () => {
     const depth = 12;
-    let node: SegmentConditions = { operator: 'AND', rules: [{ field: 'status', op: 'eq', value: 'active' }] };
+    let node: SegmentConditions = {
+      operator: 'AND',
+      rules: [{ field: 'status', op: 'eq', value: 'active' }],
+    };
     for (let i = 0; i < depth; i++) {
       node = { operator: 'AND', rules: [], groups: [node] };
     }

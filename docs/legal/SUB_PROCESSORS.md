@@ -237,7 +237,7 @@ without penalty.
 
 ---
 
-*Owner: Mailforge legal + DPO team*
-*Last updated: 2026-05-19*
-*Sub-processor change log: `/legal/sub-processors/CHANGELOG.md` (TBD
-once the docs site is live).*
+_Owner: Mailforge legal + DPO team_
+_Last updated: 2026-05-19_
+_Sub-processor change log: `/legal/sub-processors/CHANGELOG.md` (TBD
+once the docs site is live)._

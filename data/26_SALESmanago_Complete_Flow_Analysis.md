@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `25_SALESmanago_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** SALESmanago umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Polský produkt (Kraków, Benhauer sp. z o.o.)** – jeden z předních CEE hráčů
 > - **AI-driven CDXP** – Customer Data Platform + Customer Experience Platform v jedné
 > - **No-code platform** – marketing teams nepotřebují dev
@@ -130,22 +131,22 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner / Master Admin** | Created during contract setup | Full + billing + users | Vše |
-| **Marketing Manager** | Pozvánka | Operational lead | Per scope |
-| **Marketing user** | Pozvánka | Daily tasks | Per permissions |
-| **Analyst / Data user** | Pozvánka | CDP + reports + segments | Read + segment build |
-| **Designer / Editor** | Pozvánka | Content + templates | Per role |
-| **Read-only / Viewer** | Pozvánka | View reports only | Read-only |
-| **Anonymous visitor** | Website visit | Browses (tracked) | Své interaction |
-| **Identified Lead** | Form, identification | Receives marketing | Své komunikace |
-| **Customer** | Purchase | Receives campaigns + automations | Své komunikace |
-| **Customer in Preference Center** | Self-service portal | Manages preferences | Své account |
-| **Dedicated CSM (SALESmanago)** | Assigned at sign-up | Strategy, optimization | Read s consent |
-| **Partner Account Manager** | Per reseller partner | Implementation + support | Per client scope |
-| **Implementation Consultant** | During onboarding | Setup + training | Per project scope |
-| **API Client** | API credentials | Custom integration | Per scope |
+| Aktér                             | Vstupní bod                   | Co dělá                          | Co vidí              |
+| --------------------------------- | ----------------------------- | -------------------------------- | -------------------- |
+| **Account Owner / Master Admin**  | Created during contract setup | Full + billing + users           | Vše                  |
+| **Marketing Manager**             | Pozvánka                      | Operational lead                 | Per scope            |
+| **Marketing user**                | Pozvánka                      | Daily tasks                      | Per permissions      |
+| **Analyst / Data user**           | Pozvánka                      | CDP + reports + segments         | Read + segment build |
+| **Designer / Editor**             | Pozvánka                      | Content + templates              | Per role             |
+| **Read-only / Viewer**            | Pozvánka                      | View reports only                | Read-only            |
+| **Anonymous visitor**             | Website visit                 | Browses (tracked)                | Své interaction      |
+| **Identified Lead**               | Form, identification          | Receives marketing               | Své komunikace       |
+| **Customer**                      | Purchase                      | Receives campaigns + automations | Své komunikace       |
+| **Customer in Preference Center** | Self-service portal           | Manages preferences              | Své account          |
+| **Dedicated CSM (SALESmanago)**   | Assigned at sign-up           | Strategy, optimization           | Read s consent       |
+| **Partner Account Manager**       | Per reseller partner          | Implementation + support         | Per client scope     |
+| **Implementation Consultant**     | During onboarding             | Setup + training                 | Per project scope    |
+| **API Client**                    | API credentials               | Custom integration               | Per scope            |
 
 ---
 
@@ -201,6 +202,7 @@ SALESmanago sales responds (typically 1 business day)
 ### 2.3 Qualification criteria
 
 SALESmanago targets **mid-market e-commerce**:
+
 - **50K+ contacts ideally**
 - **€500K+ revenue/year**
 - **B2C focus** (some B2B works)
@@ -209,6 +211,7 @@ SALESmanago targets **mid-market e-commerce**:
 - **Budget €5K+/year** annual minimum typical
 
 For pricing entry (€199+/month):
+
 - Small mid-market (10K-50K contacts)
 - Lower complexity initially
 - Growth trajectory expected
@@ -262,7 +265,7 @@ Use case workshop:
 ### 2.6 Growth Plan creation
 
 Per oficiální:
-*"starting with a custom Growth Plan tailored to your business"*
+_"starting with a custom Growth Plan tailored to your business"_
 
 ```
 SALESmanago CSM + sales prepare Growth Plan:
@@ -327,6 +330,7 @@ Signed
 ### 3.1 Why Growth Plan matters
 
 **Consultative approach** differentiator:
+
 - Not just tool sale
 - Strategic partnership
 - Outcomes-focused
@@ -658,9 +662,10 @@ Full launch:
 ### 4.10 Integration health check
 
 Per Capterra critique:
-*"it would be helpful for the clients if SalesManago conducts a health check at the end of each integration"*
+_"it would be helpful for the clients if SalesManago conducts a health check at the end of each integration"_
 
 ⚠️ **Doporučení:** Request explicit health check post-implementation:
+
 - Verify purchases tracking
 - Verify dashboards
 - Verify automation triggers
@@ -692,6 +697,7 @@ Annual strategic review:
 ⚠️ Exact role naming not always publicly documented. Typical structure pro enterprise CDP+CEP platforms:
 
 #### Account Owner / Master Admin
+
 - **Highest tier**
 - Created during contract setup
 - **Full administrative control**
@@ -704,6 +710,7 @@ Annual strategic review:
 - Close account
 
 #### Marketing Manager / Administrator
+
 - **Operational lead**
 - User management within scope
 - Configuration changes
@@ -711,6 +718,7 @@ Annual strategic review:
 - Cannot close account
 
 #### Marketing user
+
 - **Daily operational tasks**
 - Campaigns + workflows + segments
 - Content creation
@@ -720,6 +728,7 @@ Annual strategic review:
 - No user management
 
 #### Analyst / Data user
+
 - **CDP + analytics focus**
 - Build audiences + segments
 - Reports + dashboards
@@ -727,12 +736,14 @@ Annual strategic review:
 - Read-heavy access
 
 #### Designer / Editor
+
 - **Content focused**
 - Templates + design
 - Limited customer data
 - No send permissions
 
 #### Read-only / Viewer
+
 - **View reports only**
 - No editing
 - Stakeholders, executives
@@ -740,6 +751,7 @@ Annual strategic review:
 ### 5.2 Permission categories
 
 #### Account & Settings
+
 - Account info
 - Billing access
 - User management
@@ -749,6 +761,7 @@ Annual strategic review:
 - Compliance settings
 
 #### CDP / Audiences
+
 - View contacts / profiles
 - Edit profiles
 - Build segments
@@ -756,72 +769,78 @@ Annual strategic review:
 - Import / export
 
 #### Email
+
 - Create campaigns
 - Edit campaigns
 - Send campaigns
 - Templates management
 
 #### Workflows / Automation
+
 - Create workflows
 - Edit workflows
 - Activate workflows
 
 #### Web Experience
+
 - Create pop-ups
 - Manage banners
 - On-site personalization
 
 #### AI Features
+
 - Use Recommendation Frames
 - Configure AI Email Design
 - ChatGPT integration
 
 #### Reports
+
 - View reports
 - Custom dashboards
 - Data export
 
 #### Integrations
+
 - View integrations
 - Manage integrations
 
 ### 5.3 Permission matrix (typical)
 
-| Akce | Master Admin | Mkt Manager | Mkt User | Analyst | Designer | Viewer |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |  |  |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Manage billing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **User Management** |  |  |  |  |  |  |
-| Add/edit users | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **CDP / Audiences** |  |  |  |  |  |  |
-| View profiles | ✅ | ✅ | ✅ | ✅ | limited | view |
-| Edit profiles | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Import/Export | ✅ | ✅ | per role | per role | ❌ | ❌ |
-| Build segments | ✅ | ✅ | ✅ | ✅ | ❌ | view |
-| **Email** |  |  |  |  |  |  |
-| Create campaigns | ✅ | ✅ | ✅ | ❌ | ✅ | view |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Templates | ✅ | ✅ | ✅ | ❌ | ✅ | view |
-| **Workflows** |  |  |  |  |  |  |
-| Create / edit | ✅ | ✅ | ✅ | ❌ | ❌ | view |
-| Activate | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Web Experience** |  |  |  |  |  |  |
-| Pop-ups / Banners | ✅ | ✅ | ✅ | ❌ | ✅ | view |
-| On-site personalization | ✅ | ✅ | ✅ | ❌ | per role | view |
-| **AI Features** |  |  |  |  |  |  |
-| Recommendation Frames | ✅ | ✅ | ✅ | view | per role | view |
-| AI Email Design | ✅ | ✅ | ✅ | ❌ | ✅ | view |
-| ChatGPT integration | ✅ | ✅ | ✅ | per role | per role | view |
-| **Reports** |  |  |  |  |  |  |
-| View | ✅ | ✅ | ✅ | ✅ | view | ✅ |
-| Custom dashboards | ✅ | ✅ | per role | ✅ | ❌ | view |
-| Export | ✅ | ✅ | per role | ✅ | ❌ | per role |
-| **Integrations** |  |  |  |  |  |  |
-| Manage | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **API** |  |  |  |  |  |  |
-| Manage API keys | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Akce                    | Master Admin | Mkt Manager | Mkt User | Analyst  | Designer |  Viewer  |
+| ----------------------- | :----------: | :---------: | :------: | :------: | :------: | :------: |
+| **Account & Billing**   |              |             |          |          |          |          |
+| Close account           |      ✅      |     ❌      |    ❌    |    ❌    |    ❌    |    ❌    |
+| Manage billing          |      ✅      |     ❌      |    ❌    |    ❌    |    ❌    |    ❌    |
+| Account settings        |      ✅      |     ✅      |    ❌    |    ❌    |    ❌    |    ❌    |
+| **User Management**     |              |             |          |          |          |          |
+| Add/edit users          |      ✅      |     ✅      |    ❌    |    ❌    |    ❌    |    ❌    |
+| **CDP / Audiences**     |              |             |          |          |          |          |
+| View profiles           |      ✅      |     ✅      |    ✅    |    ✅    | limited  |   view   |
+| Edit profiles           |      ✅      |     ✅      |    ✅    |    ✅    |    ❌    |    ❌    |
+| Import/Export           |      ✅      |     ✅      | per role | per role |    ❌    |    ❌    |
+| Build segments          |      ✅      |     ✅      |    ✅    |    ✅    |    ❌    |   view   |
+| **Email**               |              |             |          |          |          |          |
+| Create campaigns        |      ✅      |     ✅      |    ✅    |    ❌    |    ✅    |   view   |
+| Send campaigns          |      ✅      |     ✅      |    ✅    |    ❌    |    ❌    |    ❌    |
+| Templates               |      ✅      |     ✅      |    ✅    |    ❌    |    ✅    |   view   |
+| **Workflows**           |              |             |          |          |          |          |
+| Create / edit           |      ✅      |     ✅      |    ✅    |    ❌    |    ❌    |   view   |
+| Activate                |      ✅      |     ✅      |    ✅    |    ❌    |    ❌    |    ❌    |
+| **Web Experience**      |              |             |          |          |          |          |
+| Pop-ups / Banners       |      ✅      |     ✅      |    ✅    |    ❌    |    ✅    |   view   |
+| On-site personalization |      ✅      |     ✅      |    ✅    |    ❌    | per role |   view   |
+| **AI Features**         |              |             |          |          |          |          |
+| Recommendation Frames   |      ✅      |     ✅      |    ✅    |   view   | per role |   view   |
+| AI Email Design         |      ✅      |     ✅      |    ✅    |    ❌    |    ✅    |   view   |
+| ChatGPT integration     |      ✅      |     ✅      |    ✅    | per role | per role |   view   |
+| **Reports**             |              |             |          |          |          |          |
+| View                    |      ✅      |     ✅      |    ✅    |    ✅    |   view   |    ✅    |
+| Custom dashboards       |      ✅      |     ✅      | per role |    ✅    |    ❌    |   view   |
+| Export                  |      ✅      |     ✅      | per role |    ✅    |    ❌    | per role |
+| **Integrations**        |              |             |          |          |          |          |
+| Manage                  |      ✅      |     ✅      |    ❌    |    ❌    |    ❌    |    ❌    |
+| **API**                 |              |             |          |          |          |          |
+| Manage API keys         |      ✅      |     ✅      |    ❌    |    ❌    |    ❌    |    ❌    |
 
 ### 5.4 User invitation flow
 
@@ -1150,6 +1169,7 @@ Strategy adjustments
 ### 9.1 Profile creation paths
 
 #### A) Anonymous web tracking
+
 ```
 Visitor lands on website (no cookie)
    ↓
@@ -1169,6 +1189,7 @@ Track:
 ```
 
 #### B) Email capture (form)
+
 ```
 Anonymous visitor (cookie set)
    ↓
@@ -1189,6 +1210,7 @@ Welcome workflow activates
 ```
 
 #### C) E-commerce account creation
+
 ```
 Customer creates account na Shopify (etc.)
    ↓
@@ -1203,6 +1225,7 @@ SALESmanago:
 ```
 
 #### D) Order placement
+
 ```
 Customer purchases on Shopify
    ↓
@@ -1219,6 +1242,7 @@ Post-purchase workflow triggers
 ```
 
 #### E) Manual import / API
+
 ```
 External system POST to API
    ↓
@@ -1290,6 +1314,7 @@ Single Customer Profile
 ### 9.5 Predictive scores
 
 Per profile, SALESmanago calculates:
+
 - **Engagement Score**
 - **Customer Lifetime Value (CLV)**
 - **Churn probability**
@@ -1639,21 +1664,25 @@ Workflow triggers fire if segment-entry trigger configured
 ### 12.3 Segment use
 
 #### In campaigns
+
 - Audience selection
 - Exclusion segments
 - A/B test audiences
 
 #### In workflows
+
 - Entry trigger
 - Conditions within workflow
 - Exit conditions
 
 #### In Web Experience
+
 - Audience targeting
 - Personalized content
 - Pop-up audiences
 
 #### In Ad audiences
+
 - Sync to Facebook Custom Audiences
 - Sync to Google Ads
 - Lookalike sources
@@ -1988,24 +2017,29 @@ Real-time rendering
 ### 17.3 Pop-up types and use cases
 
 #### Welcome pop-up
+
 - New visitor (no cookie history)
 - After 5-10 seconds on site
 - Newsletter signup + 10% discount
 
 #### Exit-intent pop-up
+
 - Mouse leaves viewport
 - "Wait! Get 15% off"
 - Lead capture
 
 #### Cart abandonment pop-up
+
 - Cart abandoned > X minutes
 - "Forget something? Complete purchase + 5% off"
 
 #### Scroll-triggered
+
 - 70% scroll on product page
 - Related products + discount
 
 #### Time-based
+
 - 90 seconds on page
 - Newsletter signup
 
@@ -2323,7 +2357,7 @@ SALESmanago CSM:
 ### 21.4 Partner critique (positive)
 
 Per Capterra review:
-*"A big advantage was the excellent support from the partner program account manager, who guided me step by step and clearly explained how to use the tool."*
+_"A big advantage was the excellent support from the partner program account manager, who guided me step by step and clearly explained how to use the tool."_
 
 ### 21.5 Partner geographic strengths
 
@@ -2344,7 +2378,7 @@ Per Capterra review:
 ### 22.1 EU hosting
 
 Per oficiální:
-*"EU-based and GDPR-compliant – As a European provider, we ensure all data remains within the EU, offering industry-leading compliance and security."*
+_"EU-based and GDPR-compliant – As a European provider, we ensure all data remains within the EU, offering industry-leading compliance and security."_
 
 ⚠️ Note: Crunchbase indicates U.S. server location – pravděpodobně **multi-region** s EU primary.
 
@@ -2416,36 +2450,36 @@ Provide within 30 days
 
 ## 23. Datová mapa: co vidí kdo
 
-| Data | Master Admin | Mkt Mgr | Mkt User | Analyst | Designer | Viewer | Subscriber | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope |
-| Integration management | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope |
-| Domain settings | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope |
-| All CDP profiles | ✅ | ✅ | ✅ | ✅ | limited | view | jen sebe | ✅ |
-| Edit profiles | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Build segments | ✅ | ✅ | ✅ | ✅ | ❌ | view | ❌ | ✅ |
-| Audiences | ✅ | ✅ | ✅ | ✅ | view | view | – | ✅ |
-| Tags | ✅ | ✅ | ✅ | ✅ | view | view | – | ✅ |
-| Predictive scores | ✅ | ✅ | ✅ | ✅ | view | view | ❌ | ✅ |
-| Engagement Score | ✅ | ✅ | ✅ | ✅ | view | view | ❌ | ✅ |
-| Email campaigns | ✅ | ✅ | ✅ | view | ✅ | view | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| AI Email Design | ✅ | ✅ | ✅ | ❌ | ✅ | view | – | per scope |
-| Workflows | ✅ | ✅ | ✅ | view | view | view | ❌ | ✅ |
-| Activate workflows | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Web Experience | ✅ | ✅ | ✅ | view | ✅ | view | (sees on site) | per scope |
-| Pop-ups / Banners | ✅ | ✅ | ✅ | ❌ | ✅ | view | – | per scope |
-| Recommendation Frames | ✅ | ✅ | ✅ | view | per role | view | – | per scope |
-| Product Collections | ✅ | ✅ | ✅ | ✅ | view | view | – | per scope |
-| ChatGPT integration | ✅ | ✅ | ✅ | per role | per role | view | – | per scope |
-| Customer Preference Center | ✅ | ✅ | ✅ | view | ✅ | view | jen své | per scope |
-| Reports + dashboards | ✅ | ✅ | ✅ | ✅ | view | ✅ | ❌ | ✅ |
-| Custom dashboards | ✅ | ✅ | per role | ✅ | ❌ | view | ❌ | per scope |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | – |
-| Audit logs | ✅ | ✅ | ❌ | per role | ❌ | per role | ❌ | per scope |
-| GDPR delete | ✅ | ✅ | per role | per role | ❌ | ❌ | request | per scope |
+| Data                       | Master Admin | Mkt Mgr | Mkt User | Analyst  | Designer |  Viewer  |   Subscriber   |    API    |
+| -------------------------- | :----------: | :-----: | :------: | :------: | :------: | :------: | :------------: | :-------: |
+| Account settings           |      ✅      |   ✅    |    ❌    |    ❌    |    ❌    |    ❌    |       ❌       | per scope |
+| Billing                    |      ✅      |   ❌    |    ❌    |    ❌    |    ❌    |    ❌    |       ❌       | per scope |
+| User management            |      ✅      |   ✅    |    ❌    |    ❌    |    ❌    |    ❌    |       ❌       | per scope |
+| Integration management     |      ✅      |   ✅    |    ❌    |    ❌    |    ❌    |    ❌    |       ❌       | per scope |
+| Domain settings            |      ✅      |   ✅    |    ❌    |    ❌    |    ❌    |    ❌    |       ❌       | per scope |
+| All CDP profiles           |      ✅      |   ✅    |    ✅    |    ✅    | limited  |   view   |    jen sebe    |    ✅     |
+| Edit profiles              |      ✅      |   ✅    |    ✅    |    ✅    |    ❌    |    ❌    |       ❌       |    ✅     |
+| Build segments             |      ✅      |   ✅    |    ✅    |    ✅    |    ❌    |   view   |       ❌       |    ✅     |
+| Audiences                  |      ✅      |   ✅    |    ✅    |    ✅    |   view   |   view   |       –        |    ✅     |
+| Tags                       |      ✅      |   ✅    |    ✅    |    ✅    |   view   |   view   |       –        |    ✅     |
+| Predictive scores          |      ✅      |   ✅    |    ✅    |    ✅    |   view   |   view   |       ❌       |    ✅     |
+| Engagement Score           |      ✅      |   ✅    |    ✅    |    ✅    |   view   |   view   |       ❌       |    ✅     |
+| Email campaigns            |      ✅      |   ✅    |    ✅    |   view   |    ✅    |   view   | jen co dostal  |    ✅     |
+| Send campaigns             |      ✅      |   ✅    |    ✅    |    ❌    |    ❌    |    ❌    |       ❌       |    ✅     |
+| AI Email Design            |      ✅      |   ✅    |    ✅    |    ❌    |    ✅    |   view   |       –        | per scope |
+| Workflows                  |      ✅      |   ✅    |    ✅    |   view   |   view   |   view   |       ❌       |    ✅     |
+| Activate workflows         |      ✅      |   ✅    |    ✅    |    ❌    |    ❌    |    ❌    |       ❌       |    ✅     |
+| Web Experience             |      ✅      |   ✅    |    ✅    |   view   |    ✅    |   view   | (sees on site) | per scope |
+| Pop-ups / Banners          |      ✅      |   ✅    |    ✅    |    ❌    |    ✅    |   view   |       –        | per scope |
+| Recommendation Frames      |      ✅      |   ✅    |    ✅    |   view   | per role |   view   |       –        | per scope |
+| Product Collections        |      ✅      |   ✅    |    ✅    |    ✅    |   view   |   view   |       –        | per scope |
+| ChatGPT integration        |      ✅      |   ✅    |    ✅    | per role | per role |   view   |       –        | per scope |
+| Customer Preference Center |      ✅      |   ✅    |    ✅    |   view   |    ✅    |   view   |    jen své     | per scope |
+| Reports + dashboards       |      ✅      |   ✅    |    ✅    |    ✅    |   view   |    ✅    |       ❌       |    ✅     |
+| Custom dashboards          |      ✅      |   ✅    | per role |    ✅    |    ❌    |   view   |       ❌       | per scope |
+| API keys                   |      ✅      |   ✅    |    ❌    |    ❌    |    ❌    |    ❌    |       ❌       |     –     |
+| Audit logs                 |      ✅      |   ✅    |    ❌    | per role |    ❌    | per role |       ❌       | per scope |
+| GDPR delete                |      ✅      |   ✅    | per role | per role |    ❌    |    ❌    |    request     | per scope |
 
 ---
 
@@ -2464,9 +2498,10 @@ Provide within 30 days
 ### 24.2 Post-acquisition (SilverTree Equity)
 
 Per real customer review:
-*"Over the past three years, following the acquisition, SALESmanago has undergone significant shifts in strategy, personnel, board composition, and management—changes that at times made collaboration more difficult."*
+_"Over the past three years, following the acquisition, SALESmanago has undergone significant shifts in strategy, personnel, board composition, and management—changes that at times made collaboration more difficult."_
 
 ⚠️ **Acquisition caused growing pains:**
+
 - Strategy shifts
 - Personnel changes
 - Some collaboration challenges
@@ -2475,7 +2510,7 @@ Per real customer review:
 ### 24.3 Complexity / steep learning curve
 
 Per Capterra:
-*"Not all features are intuitive at first, especially when it comes to SMS campaigns."*
+_"Not all features are intuitive at first, especially when it comes to SMS campaigns."_
 
 - Requires training + workshops
 - Partner involvement often necessary
@@ -2484,35 +2519,35 @@ Per Capterra:
 ### 24.4 A/B testing limitations
 
 Per review:
-*"more efficient A/B testing for email subjects (currently, multiple emails have to be created for testing)"*
+_"more efficient A/B testing for email subjects (currently, multiple emails have to be created for testing)"_
 
 ⚠️ **A/B testing** less efficient than competitors – requires creating multiple emails vs. inline variant management.
 
 ### 24.5 Data extraction gaps
 
 Per review:
-*"expanded options for data extraction (e.g., you can extract data for users who opened an email but not for those who clicked)"*
+_"expanded options for data extraction (e.g., you can extract data for users who opened an email but not for those who clicked)"_
 
 ⚠️ **Granular data extraction** sometimes limited.
 
 ### 24.6 Mass management
 
 Per review:
-*"simpler, faster mass management of tags and user details"*
+_"simpler, faster mass management of tags and user details"_
 
 ⚠️ **Bulk operations** sometimes slow / unwieldy.
 
 ### 24.7 Integration health checks missing
 
 Per review:
-*"there were some gaps in the integration when I started using it... it would be helpful for the clients if SalesManago conducts a health check at the end of each integration"*
+_"there were some gaps in the integration when I started using it... it would be helpful for the clients if SalesManago conducts a health check at the end of each integration"_
 
 ⚠️ **Integration health checks** sometimes missed, leading to data gaps.
 
 ### 24.8 Non-typical use cases
 
 Per review:
-*"Since we're not a typical e-commerce company, we needed a more customized approach"*
+_"Since we're not a typical e-commerce company, we needed a more customized approach"_
 
 ⚠️ Less polished pro **non-e-commerce** use cases (B2B services, content businesses).
 
@@ -2538,7 +2573,7 @@ Per review:
 ### 24.12 SMS less intuitive
 
 Per review:
-*"Not all features are intuitive at first, especially when it comes to SMS campaigns."*
+_"Not all features are intuitive at first, especially when it comes to SMS campaigns."_
 
 ⚠️ SMS workflows complex.
 
@@ -2596,4 +2631,4 @@ Pokud SALESmanago používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů salesmanago.com a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Crunchbase, LinkedIn customer testimonials). Pro nejaktuálnější detaily je nutný engagement s SALESmanago sales / CSM teamem.*
+_Dokument zpracován z oficiálních zdrojů salesmanago.com a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Crunchbase, LinkedIn customer testimonials). Pro nejaktuálnější detaily je nutný engagement s SALESmanago sales / CSM teamem._

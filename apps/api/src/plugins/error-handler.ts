@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyError } from 'fastify';
 import fp from 'fastify-plugin';
 import { ZodError } from 'zod';
 import { AppError } from '../lib/app-error.js';
+import { captureException } from '../lib/telemetry.js';
 
 async function errorHandler(app: FastifyInstance) {
   app.setErrorHandler((error: FastifyError | AppError | ZodError, request, reply) => {
@@ -33,6 +34,12 @@ async function errorHandler(app: FastifyInstance) {
     }
 
     request.log.error({ err: error }, 'Unhandled error');
+    captureException(error, {
+      orgId: request.user?.orgId,
+      userId: request.user?.userId,
+      requestId: request.id,
+      route: `${request.method} ${request.routeOptions?.url ?? request.url}`,
+    });
     return reply.status(500).send({
       code: 'INTERNAL_ERROR',
       message: 'Internal server error',

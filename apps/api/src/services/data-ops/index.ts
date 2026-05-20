@@ -8,8 +8,10 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  dataPipelines, dataPipelineRuns,
-  type DataPipeline, type PipelineStep,
+  dataPipelines,
+  dataPipelineRuns,
+  type DataPipeline,
+  type PipelineStep,
 } from '../../db/schema/data-pipelines.js';
 import { AppError } from '../../lib/app-error.js';
 import { runPipeline, type Row } from './pipeline.js';
@@ -25,41 +27,52 @@ export interface CreatePipelineInput {
 }
 
 export async function createPipeline(
-  orgId: string, input: CreatePipelineInput,
+  orgId: string,
+  input: CreatePipelineInput,
 ): Promise<DataPipeline> {
-  const [row] = await db.insert(dataPipelines).values({
-    orgId,
-    name: input.name,
-    description: input.description,
-    source: input.source,
-    steps: input.steps,
-    trigger: input.trigger ?? 'manual',
-    schedule: input.schedule,
-    sinkWebhookUrl: input.sinkWebhookUrl,
-  }).returning();
+  const [row] = await db
+    .insert(dataPipelines)
+    .values({
+      orgId,
+      name: input.name,
+      description: input.description,
+      source: input.source,
+      steps: input.steps,
+      trigger: input.trigger ?? 'manual',
+      schedule: input.schedule,
+      sinkWebhookUrl: input.sinkWebhookUrl,
+    })
+    .returning();
   if (!row) throw AppError.internal('Failed to create pipeline');
   return row;
 }
 
 export async function listPipelines(orgId: string): Promise<DataPipeline[]> {
-  return db.select().from(dataPipelines).where(and(
-    eq(dataPipelines.orgId, orgId),
-    isNull(dataPipelines.deletedAt),
-  ));
+  return db
+    .select()
+    .from(dataPipelines)
+    .where(and(eq(dataPipelines.orgId, orgId), isNull(dataPipelines.deletedAt)));
 }
 
 export async function getPipeline(orgId: string, id: string): Promise<DataPipeline> {
-  const [row] = await db.select().from(dataPipelines).where(and(
-    eq(dataPipelines.orgId, orgId),
-    eq(dataPipelines.id, id),
-    isNull(dataPipelines.deletedAt),
-  )).limit(1);
+  const [row] = await db
+    .select()
+    .from(dataPipelines)
+    .where(
+      and(
+        eq(dataPipelines.orgId, orgId),
+        eq(dataPipelines.id, id),
+        isNull(dataPipelines.deletedAt),
+      ),
+    )
+    .limit(1);
   if (!row) throw AppError.notFound('Pipeline not found');
   return row;
 }
 
 export async function deletePipeline(orgId: string, id: string): Promise<void> {
-  await db.update(dataPipelines)
+  await db
+    .update(dataPipelines)
     .set({ deletedAt: new Date() })
     .where(and(eq(dataPipelines.orgId, orgId), eq(dataPipelines.id, id)));
 }
@@ -74,13 +87,16 @@ export async function executePipeline(
   sourceRows: Row[],
   fetchJoinRows?: (source: string) => Promise<Row[]>,
 ): Promise<{ runId: string; rows: Row[]; stats: Record<string, unknown> }> {
-  const [runRow] = await db.insert(dataPipelineRuns).values({
-    pipelineId: pipeline.id,
-    orgId: pipeline.orgId,
-    status: 'running',
-    inputCount: String(sourceRows.length),
-    startedAt: new Date(),
-  }).returning();
+  const [runRow] = await db
+    .insert(dataPipelineRuns)
+    .values({
+      pipelineId: pipeline.id,
+      orgId: pipeline.orgId,
+      status: 'running',
+      inputCount: String(sourceRows.length),
+      startedAt: new Date(),
+    })
+    .returning();
   const runId = runRow!.id;
 
   try {
@@ -89,7 +105,8 @@ export async function executePipeline(
       steps: pipeline.steps,
       fetchJoinRows,
     });
-    await db.update(dataPipelineRuns)
+    await db
+      .update(dataPipelineRuns)
       .set({
         status: 'completed',
         outputCount: String(result.rows.length),
@@ -99,7 +116,8 @@ export async function executePipeline(
       .where(eq(dataPipelineRuns.id, runId));
     return { runId, rows: result.rows, stats: result.stats };
   } catch (err) {
-    await db.update(dataPipelineRuns)
+    await db
+      .update(dataPipelineRuns)
       .set({
         status: 'failed',
         errorMessage: (err as Error).message,

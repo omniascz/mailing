@@ -12,33 +12,39 @@ import { db } from '../../../db/client.js';
 import { holdoutGroups, holdoutGroupMembers } from '../../../db/schema/index.js';
 
 const internalHoldoutBatchRoutes: FastifyPluginAsync = async (app) => {
-  app.post('/api/v1/internal/holdout/check-batch', {
-    schema: { tags: ['Internal'] },
-  }, async (req, reply) => {
-    const body = z.object({
-      orgId: z.string().uuid(),
-      contactIds: z.array(z.string().uuid()).max(1000),
-    }).parse(req.body);
+  app.post(
+    '/api/v1/internal/holdout/check-batch',
+    {
+      schema: { tags: ['Internal'] },
+    },
+    async (req, reply) => {
+      const body = z
+        .object({
+          orgId: z.string().uuid(),
+          contactIds: z.array(z.string().uuid()).max(1000),
+        })
+        .parse(req.body);
 
-    if (body.contactIds.length === 0) {
-      return reply.send({ data: { heldOut: [] } });
-    }
+      if (body.contactIds.length === 0) {
+        return reply.send({ data: { heldOut: [] } });
+      }
 
-    const rows = await db
-      .selectDistinct({ contactId: holdoutGroupMembers.contactId })
-      .from(holdoutGroupMembers)
-      .innerJoin(holdoutGroups, eq(holdoutGroups.id, holdoutGroupMembers.groupId))
-      .where(
-        and(
-          eq(holdoutGroups.orgId, body.orgId),
-          eq(holdoutGroups.active, true),
-          inArray(holdoutGroupMembers.contactId, body.contactIds),
-        ),
-      );
+      const rows = await db
+        .selectDistinct({ contactId: holdoutGroupMembers.contactId })
+        .from(holdoutGroupMembers)
+        .innerJoin(holdoutGroups, eq(holdoutGroups.id, holdoutGroupMembers.groupId))
+        .where(
+          and(
+            eq(holdoutGroups.orgId, body.orgId),
+            eq(holdoutGroups.active, true),
+            inArray(holdoutGroupMembers.contactId, body.contactIds),
+          ),
+        );
 
-    const heldOut = rows.map((r) => r.contactId);
-    return reply.send({ data: { heldOut } });
-  });
+      const heldOut = rows.map((r) => r.contactId);
+      return reply.send({ data: { heldOut } });
+    },
+  );
 };
 
 export default internalHoldoutBatchRoutes;

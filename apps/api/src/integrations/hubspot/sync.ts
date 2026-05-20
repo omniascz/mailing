@@ -31,7 +31,11 @@ export async function pushContactToHubSpot(orgId: string, contactId: string): Pr
   const conn = await getConnection(orgId);
   if (!conn.syncContacts) return;
 
-  const [contact] = await db.select().from(contacts).where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId))).limit(1);
+  const [contact] = await db
+    .select()
+    .from(contacts)
+    .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)))
+    .limit(1);
   if (!contact) return;
 
   const props: HsContactProperties = {
@@ -41,7 +45,11 @@ export async function pushContactToHubSpot(orgId: string, contactId: string): Pr
     phone: contact.phone ?? undefined,
   };
 
-  const [existing] = await db.select().from(hubspotContactMap).where(and(eq(hubspotContactMap.orgId, orgId), eq(hubspotContactMap.contactId, contactId))).limit(1);
+  const [existing] = await db
+    .select()
+    .from(hubspotContactMap)
+    .where(and(eq(hubspotContactMap.orgId, orgId), eq(hubspotContactMap.contactId, contactId)))
+    .limit(1);
 
   if (existing) {
     await updateContact(conn, String(existing.hubspotVid), props);
@@ -53,15 +61,26 @@ export async function pushContactToHubSpot(orgId: string, contactId: string): Pr
     } else {
       hsContact = await upsertContact(conn, props);
     }
-    await db.insert(hubspotContactMap).values({ orgId, contactId, hubspotVid: Number(hsContact.id) }).onConflictDoNothing();
+    await db
+      .insert(hubspotContactMap)
+      .values({ orgId, contactId, hubspotVid: Number(hsContact.id) })
+      .onConflictDoNothing();
   }
 }
 
-export async function pushDealToHubSpot(orgId: string, dealId: string, hsContactId?: string): Promise<void> {
+export async function pushDealToHubSpot(
+  orgId: string,
+  dealId: string,
+  hsContactId?: string,
+): Promise<void> {
   const conn = await getConnection(orgId);
   if (!conn.syncDeals) return;
 
-  const [deal] = await db.select().from(deals).where(and(eq(deals.id, dealId), eq(deals.orgId, orgId))).limit(1);
+  const [deal] = await db
+    .select()
+    .from(deals)
+    .where(and(eq(deals.id, dealId), eq(deals.orgId, orgId)))
+    .limit(1);
   if (!deal) return;
 
   const props: HsDealProperties = {
@@ -71,13 +90,20 @@ export async function pushDealToHubSpot(orgId: string, dealId: string, hsContact
     closedate: deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toISOString() : undefined,
   };
 
-  const [existing] = await db.select().from(hubspotDealMap).where(and(eq(hubspotDealMap.orgId, orgId), eq(hubspotDealMap.dealId, dealId))).limit(1);
+  const [existing] = await db
+    .select()
+    .from(hubspotDealMap)
+    .where(and(eq(hubspotDealMap.orgId, orgId), eq(hubspotDealMap.dealId, dealId)))
+    .limit(1);
 
   if (existing) {
     await updateDeal(conn, String(existing.hubspotDealId), props);
   } else {
     const hsDeal = await createDeal(conn, props);
-    await db.insert(hubspotDealMap).values({ orgId, dealId, hubspotDealId: Number(hsDeal.id) }).onConflictDoNothing();
+    await db
+      .insert(hubspotDealMap)
+      .values({ orgId, dealId, hubspotDealId: Number(hsDeal.id) })
+      .onConflictDoNothing();
     if (hsContactId) {
       await associateContactToDeal(conn, hsContactId, hsDeal.id);
     }
@@ -107,32 +133,44 @@ export async function pullContactsFromHubSpot(orgId: string): Promise<{ synced: 
 
       let contactId: string;
       if (existing) {
-        await db.update(contacts).set({
-          firstName: hsContact.properties.firstname ?? undefined,
-          lastName: hsContact.properties.lastname ?? undefined,
-          phone: hsContact.properties.phone ?? undefined,
-          updatedAt: new Date(),
-        }).where(eq(contacts.id, existing.id));
+        await db
+          .update(contacts)
+          .set({
+            firstName: hsContact.properties.firstname ?? undefined,
+            lastName: hsContact.properties.lastname ?? undefined,
+            phone: hsContact.properties.phone ?? undefined,
+            updatedAt: new Date(),
+          })
+          .where(eq(contacts.id, existing.id));
         contactId = existing.id;
       } else {
-        const [created] = await db.insert(contacts).values({
-          orgId,
-          email,
-          firstName: hsContact.properties.firstname ?? null,
-          lastName: hsContact.properties.lastname ?? null,
-          phone: hsContact.properties.phone ?? null,
-          source: 'hubspot',
-        } as typeof contacts.$inferInsert).returning({ id: contacts.id });
+        const [created] = await db
+          .insert(contacts)
+          .values({
+            orgId,
+            email,
+            firstName: hsContact.properties.firstname ?? null,
+            lastName: hsContact.properties.lastname ?? null,
+            phone: hsContact.properties.phone ?? null,
+            source: 'hubspot',
+          } as typeof contacts.$inferInsert)
+          .returning({ id: contacts.id });
         contactId = created!.id;
       }
 
-      await db.insert(hubspotContactMap).values({ orgId, contactId, hubspotVid: Number(hsContact.id) }).onConflictDoNothing();
+      await db
+        .insert(hubspotContactMap)
+        .values({ orgId, contactId, hubspotVid: Number(hsContact.id) })
+        .onConflictDoNothing();
       synced++;
     }
     after = page.paging?.next?.after;
   } while (after);
 
-  await db.update(hubspotConnections).set({ lastSyncedAt: new Date(), updatedAt: new Date() }).where(eq(hubspotConnections.orgId, orgId));
+  await db
+    .update(hubspotConnections)
+    .set({ lastSyncedAt: new Date(), updatedAt: new Date() })
+    .where(eq(hubspotConnections.orgId, orgId));
   return { synced };
 }
 
@@ -149,30 +187,47 @@ export async function pullDealsFromHubSpot(orgId: string): Promise<{ synced: num
       const [existing] = await db
         .select({ dealId: hubspotDealMap.dealId })
         .from(hubspotDealMap)
-        .where(and(eq(hubspotDealMap.orgId, orgId), eq(hubspotDealMap.hubspotDealId, Number(hsDeal.id))))
+        .where(
+          and(eq(hubspotDealMap.orgId, orgId), eq(hubspotDealMap.hubspotDealId, Number(hsDeal.id))),
+        )
         .limit(1);
 
       if (existing) {
-        await db.update(deals).set({
-          name: hsDeal.properties.dealname ?? undefined,
-          ...(hsDeal.properties.amount ? { value: hsDeal.properties.amount } : {}),
-          updatedAt: new Date(),
-        }).where(eq(deals.id, existing.dealId));
+        await db
+          .update(deals)
+          .set({
+            name: hsDeal.properties.dealname ?? undefined,
+            ...(hsDeal.properties.amount ? { value: hsDeal.properties.amount } : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(deals.id, existing.dealId));
       } else {
-        const [pipeline] = await db.select({ id: pipelines.id, stages: pipelines.stages })
-          .from(pipelines).where(eq(pipelines.orgId, orgId)).limit(1);
-        if (!pipeline) { synced++; continue; }
+        const [pipeline] = await db
+          .select({ id: pipelines.id, stages: pipelines.stages })
+          .from(pipelines)
+          .where(eq(pipelines.orgId, orgId))
+          .limit(1);
+        if (!pipeline) {
+          synced++;
+          continue;
+        }
         const firstStage = pipeline.stages[0]?.id ?? 'new';
-        const [created] = await db.insert(deals).values({
-          orgId,
-          pipelineId: pipeline.id,
-          stageId: hsDeal.properties.dealstage ?? firstStage,
-          name: hsDeal.properties.dealname ?? 'Untitled Deal',
-          value: hsDeal.properties.amount ?? '0',
-          source: 'hubspot',
-        } as typeof deals.$inferInsert).returning({ id: deals.id });
+        const [created] = await db
+          .insert(deals)
+          .values({
+            orgId,
+            pipelineId: pipeline.id,
+            stageId: hsDeal.properties.dealstage ?? firstStage,
+            name: hsDeal.properties.dealname ?? 'Untitled Deal',
+            value: hsDeal.properties.amount ?? '0',
+            source: 'hubspot',
+          } as typeof deals.$inferInsert)
+          .returning({ id: deals.id });
         if (created) {
-          await db.insert(hubspotDealMap).values({ orgId, dealId: created.id, hubspotDealId: Number(hsDeal.id) }).onConflictDoNothing();
+          await db
+            .insert(hubspotDealMap)
+            .values({ orgId, dealId: created.id, hubspotDealId: Number(hsDeal.id) })
+            .onConflictDoNothing();
         }
       }
       synced++;

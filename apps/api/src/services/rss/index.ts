@@ -6,8 +6,10 @@
 import { and, eq, lte } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  rssCampaigns, campaigns,
-  type RssCampaign, type NewRssCampaign,
+  rssCampaigns,
+  campaigns,
+  type RssCampaign,
+  type NewRssCampaign,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
@@ -19,12 +21,19 @@ export interface RssItem {
   pubDate?: Date;
 }
 
-export async function createRssCampaign(orgId: string, data: Omit<NewRssCampaign, 'id' | 'orgId'>): Promise<RssCampaign> {
-  const [row] = await db.insert(rssCampaigns).values({
-    ...data,
-    orgId,
-    nextRunAt: data.nextRunAt ?? computeNextRun(data.frequency ?? 'daily', data.sendTime ?? '09:00'),
-  }).returning();
+export async function createRssCampaign(
+  orgId: string,
+  data: Omit<NewRssCampaign, 'id' | 'orgId'>,
+): Promise<RssCampaign> {
+  const [row] = await db
+    .insert(rssCampaigns)
+    .values({
+      ...data,
+      orgId,
+      nextRunAt:
+        data.nextRunAt ?? computeNextRun(data.frequency ?? 'daily', data.sendTime ?? '09:00'),
+    })
+    .returning();
   return row!;
 }
 
@@ -33,8 +42,11 @@ export async function listRssCampaigns(orgId: string): Promise<RssCampaign[]> {
 }
 
 export async function getRssCampaign(id: string, orgId: string): Promise<RssCampaign> {
-  const [row] = await db.select().from(rssCampaigns)
-    .where(and(eq(rssCampaigns.id, id), eq(rssCampaigns.orgId, orgId))).limit(1);
+  const [row] = await db
+    .select()
+    .from(rssCampaigns)
+    .where(and(eq(rssCampaigns.id, id), eq(rssCampaigns.orgId, orgId)))
+    .limit(1);
   if (!row) throw AppError.notFound('RssCampaign');
   return row;
 }
@@ -79,7 +91,10 @@ export function parseRssXml(xml: string): RssItem[] {
 }
 
 function cleanText(s: string): string {
-  return s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, '').trim();
+  return s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .trim();
 }
 
 function computeNextRun(frequency: string, sendTime: string): Date {
@@ -97,10 +112,10 @@ function computeNextRun(frequency: string, sendTime: string): Date {
 
 /** Run any RSS campaigns that are due — called by worker cron. */
 export async function runDueRssCampaigns(now: Date = new Date()): Promise<{ processed: number }> {
-  const due = await db.select().from(rssCampaigns).where(and(
-    eq(rssCampaigns.active, true),
-    lte(rssCampaigns.nextRunAt, now),
-  ));
+  const due = await db
+    .select()
+    .from(rssCampaigns)
+    .where(and(eq(rssCampaigns.active, true), lte(rssCampaigns.nextRunAt, now)));
 
   let processed = 0;
   for (const rss of due) {
@@ -136,9 +151,12 @@ async function processOne(rss: RssCampaign): Promise<void> {
   }
 
   const newGuids = items.map((i) => i.guid).slice(0, 200);
-  await db.update(rssCampaigns).set({
-    lastSeenGuids: newGuids,
-    lastSentAt: fresh.length > 0 ? new Date() : rss.lastSentAt,
-    nextRunAt: computeNextRun(rss.frequency, rss.sendTime),
-  }).where(eq(rssCampaigns.id, rss.id));
+  await db
+    .update(rssCampaigns)
+    .set({
+      lastSeenGuids: newGuids,
+      lastSentAt: fresh.length > 0 ? new Date() : rss.lastSentAt,
+      nextRunAt: computeNextRun(rss.frequency, rss.sendTime),
+    })
+    .where(eq(rssCampaigns.id, rss.id));
 }

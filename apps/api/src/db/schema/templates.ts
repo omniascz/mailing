@@ -6,7 +6,9 @@ import { templateCategoryEnum } from './enums.js';
 export const templates = pgTable(
   'templates',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
     description: varchar('description', { length: 1000 }),

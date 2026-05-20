@@ -95,13 +95,15 @@ function ruleBasedChecks(html: string): { issues: AccessibilityIssue[]; totalChe
       issue: `${emptyLinks.length} link(s) have no visible text`,
       severity: 'error',
       element: '<a href="..."></a>',
-      suggestion: 'Provide descriptive link text or an aria-label so screen readers can announce it',
+      suggestion:
+        'Provide descriptive link text or an aria-label so screen readers can announce it',
     });
   }
 
   // 5. "Click here" / "Read more" generic link text
   totalChecks++;
-  const genericLinkRe = /<a[^>]+>[\s\r\n]*(click here|read more|here|více|klikněte zde)[\s\r\n]*<\/a>/gi;
+  const genericLinkRe =
+    /<a[^>]+>[\s\r\n]*(click here|read more|here|více|klikněte zde)[\s\r\n]*<\/a>/gi;
   const genericLinks = html.match(genericLinkRe) ?? [];
   if (genericLinks.length > 0) {
     issues.push({
@@ -181,7 +183,10 @@ async function aiChecks(html: string, apiKey: string): Promise<AccessibilityIssu
     content: Array<{ type: string; text: string }>;
   };
   const text = result.content.find((c) => c.type === 'text')?.text ?? '[]';
-  const cleaned = text.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\n?/, '')
+    .replace(/\n?```$/, '');
 
   try {
     const arr = JSON.parse(cleaned);
@@ -233,7 +238,10 @@ export async function checkAccessibility(
     (s, i) => s + (i.severity === 'error' ? 3 : i.severity === 'warning' ? 1 : 0),
     0,
   );
-  const score = Math.max(0, Math.round(((totalPoints - deductions) / Math.max(totalPoints, 1)) * 100));
+  const score = Math.max(
+    0,
+    Math.round(((totalPoints - deductions) / Math.max(totalPoints, 1)) * 100),
+  );
 
   const report: AccessibilityReport = { issues: allIssues, score };
 

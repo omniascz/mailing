@@ -96,7 +96,9 @@ export async function getCampaign(orgId: string, campaignId: string): Promise<Ca
   const [row] = await db
     .select()
     .from(campaigns)
-    .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId), isNull(campaigns.deletedAt)))
+    .where(
+      and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId), isNull(campaigns.deletedAt)),
+    )
     .limit(1);
 
   if (!row) throw AppError.notFound('Campaign');
@@ -113,17 +115,16 @@ export interface ListCampaignsOpts {
 export async function listCampaigns(opts: ListCampaignsOpts) {
   const limit = Math.min(opts.limit ?? 50, 100);
 
-  const conditions = [
-    eq(campaigns.orgId, opts.orgId),
-    isNull(campaigns.deletedAt),
-  ];
+  const conditions = [eq(campaigns.orgId, opts.orgId), isNull(campaigns.deletedAt)];
 
   if (opts.status) {
     conditions.push(eq(campaigns.status, opts.status));
   }
 
   if (opts.cursor) {
-    conditions.push(sql`${campaigns.createdAt} < (SELECT created_at FROM campaigns WHERE id = ${opts.cursor})`);
+    conditions.push(
+      sql`${campaigns.createdAt} < (SELECT created_at FROM campaigns WHERE id = ${opts.cursor})`,
+    );
   }
 
   const rows = await db
@@ -148,7 +149,9 @@ export async function updateCampaign(
   // Only allow updates on draft campaigns
   const current = await getCampaign(orgId, campaignId);
   if (current.status !== 'draft') {
-    throw AppError.badRequest(`Cannot update campaign in '${current.status}' status. Only draft campaigns can be edited.`);
+    throw AppError.badRequest(
+      `Cannot update campaign in '${current.status}' status. Only draft campaigns can be edited.`,
+    );
   }
 
   const [row] = await db
@@ -167,7 +170,9 @@ export async function updateCampaign(
 export async function deleteCampaign(orgId: string, campaignId: string): Promise<void> {
   const current = await getCampaign(orgId, campaignId);
   if (current.status === 'sending') {
-    throw AppError.badRequest('Cannot delete a campaign that is currently sending. Pause it first.');
+    throw AppError.badRequest(
+      'Cannot delete a campaign that is currently sending. Pause it first.',
+    );
   }
 
   const [row] = await db
@@ -287,12 +292,11 @@ export async function markCampaignSent(orgId: string, campaignId: string): Promi
 /**
  * Update status from worker (internal). Bypasses auth but validates transition.
  */
-export async function updateCampaignStatus(campaignId: string, status: CampaignStatus): Promise<void> {
-  const [current] = await db
-    .select()
-    .from(campaigns)
-    .where(eq(campaigns.id, campaignId))
-    .limit(1);
+export async function updateCampaignStatus(
+  campaignId: string,
+  status: CampaignStatus,
+): Promise<void> {
+  const [current] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId)).limit(1);
 
   if (!current) return;
 
@@ -320,8 +324,7 @@ function validateCampaignReadiness(campaign: Campaign): void {
 
   // Content must have either a templateId or block content
   const hasContent =
-    campaign.templateId ||
-    (campaign.content && Object.keys(campaign.content).length > 0);
+    campaign.templateId || (campaign.content && Object.keys(campaign.content).length > 0);
   if (!hasContent) errors.push('content or templateId is required');
 
   if (errors.length > 0) {
@@ -333,7 +336,14 @@ function validateCampaignReadiness(campaign: Campaign): void {
 
 export async function incrementCampaignStat(
   campaignId: string,
-  stat: 'totalSent' | 'totalDelivered' | 'totalOpens' | 'totalClicks' | 'totalBounces' | 'totalUnsubscribes' | 'totalComplaints',
+  stat:
+    | 'totalSent'
+    | 'totalDelivered'
+    | 'totalOpens'
+    | 'totalClicks'
+    | 'totalBounces'
+    | 'totalUnsubscribes'
+    | 'totalComplaints',
   amount = 1,
 ): Promise<void> {
   await db

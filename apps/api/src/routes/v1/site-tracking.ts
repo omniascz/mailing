@@ -14,7 +14,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import * as svc from '../../services/tracking/site-tracker.js';
 
-const TRACKER_JS = /* javascript */`
+const TRACKER_JS = /* javascript */ `
 (function(w,d,t){
   'use strict';
   var FM = w.__fm = w.__fm || {};
@@ -50,6 +50,10 @@ const TRACKER_JS = /* javascript */`
     send('/t/id',{email:email,traits:traits||{}});
   };
 
+  FM.revenue = function(orderId,amount,currency,items){
+    send('/t/rev',{orderId:orderId,amount:amount,currency:currency||'USD',items:items||[]});
+  };
+
   // Auto page view
   FM.page();
 
@@ -80,6 +84,30 @@ const eventBody = z.object({
   eventName: z.string().min(1).max(255),
   properties: z.record(z.unknown()).optional(),
   contactId: z.string().uuid().optional(),
+});
+
+const revenueBody = z.object({
+  siteToken: z.string().min(1),
+  visitorId: z.string().min(1),
+  orderId: z.string().max(128).optional(),
+  amount: z.number().nonnegative().max(10_000_000),
+  currency: z.string().length(3).optional(),
+  items: z
+    .array(
+      z.object({
+        sku: z.string().max(128),
+        name: z.string().max(255),
+        qty: z.number().int().min(1),
+        price: z.number().nonnegative(),
+      }),
+    )
+    .max(500)
+    .optional(),
+  utmSource: z.string().optional(),
+  utmMedium: z.string().optional(),
+  utmCampaign: z.string().optional(),
+  contactId: z.string().uuid().optional(),
+  email: z.string().email().optional(),
 });
 
 const identifyBody = z.object({
@@ -114,8 +142,24 @@ export default async function siteTrackingRoutes(app: FastifyInstance) {
       try {
         const body = eventBody.parse(req.body);
         await svc.recordEvent(body);
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
       return reply.code(202).send({ ok: true });
+    },
+  );
+
+  app.post(
+    '/t/rev',
+    { schema: { tags: ['SiteTracking'], summary: 'Record revenue event' } },
+    async (req, reply) => {
+      try {
+        const body = revenueBody.parse(req.body);
+        const result = await svc.recordRevenueEvent(body);
+        return reply.code(202).send(result);
+      } catch {
+        return reply.code(202).send({ ok: true });
+      }
     },
   );
 
@@ -139,10 +183,13 @@ export default async function siteTrackingRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const { siteToken } = z.object({ siteToken: z.string() }).parse(req.params);
       const apiBase = process.env.API_PUBLIC_URL ?? '';
-      const js = TRACKER_JS
-        .replace('__SITE_TOKEN__', siteToken)
-        .replace('__API_BASE__', apiBase);
-      return reply.type('application/javascript').send(js);
+      const js = TRACKER_JS.replace('__SITE_TOKEN__', siteToken).replace('__API_BASE__', apiBase);
+      // Cache 5 min at the edge + browser. Updates roll out within 5 min
+      // of a backend deploy without forcing every page-load to re-fetch.
+      return reply
+        .type('application/javascript')
+        .header('Cache-Control', 'public, max-age=300, s-maxage=300')
+        .send(js);
     },
   );
 
@@ -162,13 +209,19 @@ export default async function siteTrackingRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/sites',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteTracking'], summary: 'List tracked sites' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteTracking'], summary: 'List tracked sites' },
+    },
     async (req) => ({ data: await svc.listSites(req.user!.orgId) }),
   );
 
   app.post(
     '/api/v1/sites',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteTracking'], summary: 'Add tracked site' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteTracking'], summary: 'Add tracked site' },
+    },
     async (req, reply) => {
       const body = createSiteSchema.parse(req.body);
       return reply.code(201).send({ data: await svc.createSite(req.user!.orgId, body) });
@@ -177,7 +230,10 @@ export default async function siteTrackingRoutes(app: FastifyInstance) {
 
   app.put(
     '/api/v1/sites/:id',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteTracking'], summary: 'Update tracked site' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteTracking'], summary: 'Update tracked site' },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
       return { data: await svc.updateSite(req.user!.orgId, id, updateSiteSchema.parse(req.body)) };
@@ -186,7 +242,10 @@ export default async function siteTrackingRoutes(app: FastifyInstance) {
 
   app.delete(
     '/api/v1/sites/:id',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteTracking'], summary: 'Delete tracked site' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteTracking'], summary: 'Delete tracked site' },
+    },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
       await svc.deleteSite(req.user!.orgId, id);
@@ -196,7 +255,10 @@ export default async function siteTrackingRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/contacts/:contactId/page-views',
-    { preHandler: app.requireAuth, schema: { tags: ['SiteTracking'], summary: 'Get contact page views' } },
+    {
+      preHandler: app.requireAuth,
+      schema: { tags: ['SiteTracking'], summary: 'Get contact page views' },
+    },
     async (req) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
       return { data: await svc.getContactPageViews(req.user!.orgId, contactId) };

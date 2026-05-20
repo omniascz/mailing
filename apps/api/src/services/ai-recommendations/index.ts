@@ -31,7 +31,10 @@ export async function getRecommendations(
   context: RecommendationContext,
   model: 'claude-haiku-4-5-20251001' | 'claude-sonnet-4-6' = 'claude-haiku-4-5-20251001',
 ): Promise<Recommendation[]> {
-  const key = cacheKey('recommendations', `${orgId}:${context.currentPage}:${context.entityId ?? ''}`);
+  const key = cacheKey(
+    'recommendations',
+    `${orgId}:${context.currentPage}:${context.entityId ?? ''}`,
+  );
   const cached = await redis.get(key);
   if (cached) return JSON.parse(cached) as Recommendation[];
 

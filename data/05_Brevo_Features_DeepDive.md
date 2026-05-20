@@ -106,19 +106,20 @@ Brevo má v 2026 **čtyři hlavní marketing tarify** + samostatné Sales pricin
 
 ### 3.1 Marketing Platform tarify
 
-| Tarif | Cena (annual) | Měsíční emails | Kontakty | Klíčové |
-|---|---|---|---|---|
-| **Free** | $0 | **300/den** (~9 000/měsíc) | **až 100 000** | Drag-drop editor, basic automation (max 2 000 kontaktů ve workflow), transactional API, Aura AI assistant, Brevo branding |
-| **Starter** | od **$9/měsíc** (5 000 emails) až $69/měsíc (100 000 emails) | dle volby | unlimited | Basic email marketing, SMS, templates, segmentation; logo removal = +$10.80/měsíc add-on |
-| **Business / Standard** | $18 (5K) → $129/měsíc (100K) | dle volby | unlimited | + Marketing Automation (full), A/B testing, send time optimization (Aura), web & event tracking, landing pages, dynamic content, multi-user |
-| **Professional** | od **$499/měsíc** | vyšší volume | unlimited | + Contact scoring (RFM, CLV), advanced ecommerce (AI recommendations, back-in-stock, coupons), AI segmentation (Aura), AI Data Analyst, phone support, WhatsApp |
-| **Enterprise (Brevo Plus)** | **custom quote** | custom | 1M+ | + Sub-accounts/sub-organizations, dedicated IP, SSO/SAML, tailored onboarding, CSM support, custom integrations |
+| Tarif                       | Cena (annual)                                                | Měsíční emails             | Kontakty       | Klíčové                                                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------ | -------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Free**                    | $0                                                           | **300/den** (~9 000/měsíc) | **až 100 000** | Drag-drop editor, basic automation (max 2 000 kontaktů ve workflow), transactional API, Aura AI assistant, Brevo branding                                       |
+| **Starter**                 | od **$9/měsíc** (5 000 emails) až $69/měsíc (100 000 emails) | dle volby                  | unlimited      | Basic email marketing, SMS, templates, segmentation; logo removal = +$10.80/měsíc add-on                                                                        |
+| **Business / Standard**     | $18 (5K) → $129/měsíc (100K)                                 | dle volby                  | unlimited      | + Marketing Automation (full), A/B testing, send time optimization (Aura), web & event tracking, landing pages, dynamic content, multi-user                     |
+| **Professional**            | od **$499/měsíc**                                            | vyšší volume               | unlimited      | + Contact scoring (RFM, CLV), advanced ecommerce (AI recommendations, back-in-stock, coupons), AI segmentation (Aura), AI Data Analyst, phone support, WhatsApp |
+| **Enterprise (Brevo Plus)** | **custom quote**                                             | custom                     | 1M+            | + Sub-accounts/sub-organizations, dedicated IP, SSO/SAML, tailored onboarding, CSM support, custom integrations                                                 |
 
 > **Pozn.:** Cenové bandy se mohou lehce lišit podle regionu (USA vs. EU vs. další). Tarif "Business" byl v říjnu 2025 přejmenován na "Standard" + zaveden Professional tier. Aktuální stav viz brevo.com/pricing.
 
 ### 3.2 Pay-as-you-go (prepaid email credits)
 
 Pro low-volume nebo unpredictable senders. Koupíte balíček emails:
+
 - 5 000 credits za jednorázovou cenu
 - 10 000 credits
 - 20 000 credits
@@ -129,6 +130,7 @@ Pro low-volume nebo unpredictable senders. Koupíte balíček emails:
 ### 3.3 Sales Platform add-on (oddělené pricing)
 
 Samostatný produkt přidáván k Marketing Platform:
+
 - **Sales Free** – 1 user, basic CRM
 - **Sales Essentials** – ~$27.92/user/měsíc
 - **Sales Pro / Advanced** – ~$58.50/user/měsíc
@@ -171,6 +173,7 @@ Brevo ÚČTUJE za počet odeslaných emailů per měsíc.
 ```
 
 Důsledky:
+
 - Můžete mít **unlimited contacts** na všech placených plánech
 - Můžete mít 100 000 kontaktů na Free planu
 - **Unsubscribed kontakty se nepočítají do billing** (vs. Mailchimp, kde počítají)
@@ -180,18 +183,20 @@ Důsledky:
 
 Mailing scenario: **25 000 kontaktů**
 
-| Platform | Send frequency: 1× měsíc (25K emails) | 4× měsíc (100K emails) | 8× měsíc (200K emails) |
-|---|---|---|---|
-| **Brevo Standard** | ~$65/měsíc | ~$129/měsíc | ~$249/měsíc |
-| **Mailchimp Standard** | $260/měsíc | $260/měsíc | $260/měsíc |
-| **ActiveCampaign Plus** | $389/měsíc | $389/měsíc | $389/měsíc |
+| Platform                | Send frequency: 1× měsíc (25K emails) | 4× měsíc (100K emails) | 8× měsíc (200K emails) |
+| ----------------------- | ------------------------------------- | ---------------------- | ---------------------- |
+| **Brevo Standard**      | ~$65/měsíc                            | ~$129/měsíc            | ~$249/měsíc            |
+| **Mailchimp Standard**  | $260/měsíc                            | $260/měsíc             | $260/měsíc             |
+| **ActiveCampaign Plus** | $389/měsíc                            | $389/měsíc             | $389/měsíc             |
 
 Brevo wins meaningfully when:
+
 - Large list with **moderate send frequency**
 - E-commerce s velkou databází nepropagovaných customerů
 - Newsletters posílaný 1–2× týdně
 
 Mailchimp/AC wins when:
+
 - Small list (méně než 5 000) s velmi častými sends
 - Daily/twice-daily campaigns
 
@@ -223,50 +228,50 @@ Mailchimp/AC wins when:
 
 ### 5.2 Starter tier
 
-+ Basic email marketing
-+ Email + SMS sends (SMS credits separately)
-+ Industry templates
-+ AI content generator
-+ Advanced segmentation
-+ Forms (lead capture, auto-trigger emails)
-+ Basic reporting & analytics
-+ Email support (6 languages)
-+ **Add-on:** logo removal ($10.80/měsíc)
+- Basic email marketing
+- Email + SMS sends (SMS credits separately)
+- Industry templates
+- AI content generator
+- Advanced segmentation
+- Forms (lead capture, auto-trigger emails)
+- Basic reporting & analytics
+- Email support (6 languages)
+- **Add-on:** logo removal ($10.80/měsíc)
 
 ### 5.3 Business / Standard tier
 
-+ **Marketing Automation (plné):** drag-drop workflow editor, multi-step, branching
-+ **A/B testing** subject lines, content
-+ **AI send time optimization** (Aura)
-+ **Web & event tracking** (custom event triggers)
-+ **Landing pages** (1 page included)
-+ **No Brevo logo** (built-in, ne add-on)
-+ **Multi-user access** (per seat pricing)
-+ **Dynamic personalization** v emailech
-+ **Heat maps** v reports
+- **Marketing Automation (plné):** drag-drop workflow editor, multi-step, branching
+- **A/B testing** subject lines, content
+- **AI send time optimization** (Aura)
+- **Web & event tracking** (custom event triggers)
+- **Landing pages** (1 page included)
+- **No Brevo logo** (built-in, ne add-on)
+- **Multi-user access** (per seat pricing)
+- **Dynamic personalization** v emailech
+- **Heat maps** v reports
 
 ### 5.4 Professional tier
 
-+ **Contact scoring** – Recency Frequency Monetary (RFM), Customer Lifetime Value (CLV), Purchase Timing Deviation, custom rules
-+ **Advanced commerce features:** AI product recommendations, back-in-stock alerts, dynamic coupons
-+ **AI segmentation** – Aura suggests audience groups
-+ **AI Data Analyst** – natural language data questions
-+ **WhatsApp campaigns**
-+ **Phone support**
-+ **Predictive lead scoring** (2026+, novinka)
-+ **Dedicated IP** option (additional cost)
+- **Contact scoring** – Recency Frequency Monetary (RFM), Customer Lifetime Value (CLV), Purchase Timing Deviation, custom rules
+- **Advanced commerce features:** AI product recommendations, back-in-stock alerts, dynamic coupons
+- **AI segmentation** – Aura suggests audience groups
+- **AI Data Analyst** – natural language data questions
+- **WhatsApp campaigns**
+- **Phone support**
+- **Predictive lead scoring** (2026+, novinka)
+- **Dedicated IP** option (additional cost)
 
 ### 5.5 Enterprise (Brevo Plus)
 
-+ **Sub-organizations / sub-accounts** (multi-brand, agency management)
-+ **SSO & SAML** authentication
-+ **Tailored onboarding**
-+ **CSM (Customer Success Manager)** support
-+ **Custom integrations**
-+ **Custom data residency** options
-+ **Volume discounts** + custom contract
-+ **Advanced security features**
-+ **Custom data export & retention** options
+- **Sub-organizations / sub-accounts** (multi-brand, agency management)
+- **SSO & SAML** authentication
+- **Tailored onboarding**
+- **CSM (Customer Success Manager)** support
+- **Custom integrations**
+- **Custom data residency** options
+- **Volume discounts** + custom contract
+- **Advanced security features**
+- **Custom data export & retention** options
 
 ---
 
@@ -274,13 +279,13 @@ Mailchimp/AC wins when:
 
 ### 6.1 Typy kampaní
 
-| Typ | Kdy použít |
-|---|---|
-| **Regular campaign** | Single newsletter / promo |
-| **A/B test campaign** | 2 varianty (Business+) |
-| **Automated email** | Email odeslaný z automation workflow |
-| **RSS-to-email** | Auto-generated z RSS feedu |
-| **Transactional** | Přes API/SMTP, ne UI |
+| Typ                   | Kdy použít                           |
+| --------------------- | ------------------------------------ |
+| **Regular campaign**  | Single newsletter / promo            |
+| **A/B test campaign** | 2 varianty (Business+)               |
+| **Automated email**   | Email odeslaný z automation workflow |
+| **RSS-to-email**      | Auto-generated z RSS feedu           |
+| **Transactional**     | Přes API/SMTP, ne UI                 |
 
 ### 6.2 Email Editor
 
@@ -347,27 +352,30 @@ Mailchimp/AC wins when:
 ## 7. Marketing Automation
 
 Brevo má **dva paralelní editory**:
+
 - **Classic editor** – legacy
 - **New editor (BETA → GA 2026)** – moderní drag-drop canvas
 
 Probíhá postupná migrace na new editor. Termíny jsou:
+
 - **Entry points / Triggers** – classic vs. new
 - **Conditions / Rules** – classic vs. new
 - **Actions** – stejné napříč oběma
 
 ### 7.1 Workflow plán dostupnosti
 
-| Tarif | Co lze |
-|---|---|
-| Free | Basic, **max 2 000 contacts** v active workflows |
-| Starter | Bez full automation (jen základní auto-emails) |
+| Tarif               | Co lze                                               |
+| ------------------- | ---------------------------------------------------- |
+| Free                | Basic, **max 2 000 contacts** v active workflows     |
+| Starter             | Bez full automation (jen základní auto-emails)       |
 | Business / Standard | **Plné Marketing Automation** – plný workflow editor |
-| Professional | + Advanced features + AI |
-| Enterprise | + Sub-org workflow sharing |
+| Professional        | + Advanced features + AI                             |
+| Enterprise          | + Sub-org workflow sharing                           |
 
 ### 7.2 Triggers (Entry points) – plný výčet
 
 **List & Contact-based:**
+
 - **Contact added to list** – kontakt přidán do specific list
 - **Contact removed from list**
 - **Form submitted** – form ID specific
@@ -375,6 +383,7 @@ Probíhá postupná migrace na new editor. Termíny jsou:
 - **Subscription update** – subscribed/unsubscribed
 
 **Behavioral (with tracker):**
+
 - **Web page visited** – specific URL pattern
 - **Web event** – custom JS-tracked event
 - **Email opened** – specific campaign
@@ -382,6 +391,7 @@ Probíhá postupná migrace na new editor. Termíny jsou:
 - **Email engagement** – aggregate engagement metric
 
 **E-commerce events (s integrace):**
+
 - **Abandoned cart** – cart not checked out in X time
 - **Order placed**
 - **Product viewed**
@@ -389,31 +399,37 @@ Probíhá postupná migrace na new editor. Termíny jsou:
 - **Cart value > threshold**
 
 **Time-based:**
+
 - **Date-based** – e.g. birthday, anniversary, custom date attribute
 - **Scheduled** – recurring (daily/weekly/monthly)
 
 **SMS & WhatsApp events:**
+
 - SMS reply received
 - WhatsApp message received
 
 **CRM activity (with Sales Platform):**
+
 - Deal stage changed
 - Task completed
 - Meeting booked
 
 **API/Manual:**
+
 - **API trigger** – external system enrolls contact via API
 - **Manual enrollment**
 
 ### 7.3 Actions
 
 **Marketing:**
+
 - **Send an email** (configurable per step)
 - **Send an SMS**
 - **Send a WhatsApp message**
 - **Send a push notification** (web/mobile)
 
 **Contact management:**
+
 - **Add to list**
 - **Remove from list**
 - **Update contact attribute** – set hodnota
@@ -423,6 +439,7 @@ Probíhá postupná migrace na new editor. Termíny jsou:
 - **Add tag** / Remove tag
 
 **Workflow control:**
+
 - **Wait** – fixed delay (minutes, hours, days)
 - **Wait until event** – behavior-based wait
 - **Wait until date** – specific calendar date
@@ -433,6 +450,7 @@ Probíhá postupná migrace na new editor. Termíny jsou:
 - **End workflow**
 
 **Sales (with Sales Platform):**
+
 - **Create deal**
 - **Update deal**
 - **Assign deal owner**
@@ -440,10 +458,12 @@ Probíhá postupná migrace na new editor. Termíny jsou:
 - **Update task**
 
 **Notifications:**
+
 - **Email notification** – pošle interní notifikaci
 - **Slack notification** (via integration)
 
 **Webhooks / API:**
+
 - **Trigger webhook** – call external URL
 - **Custom API call**
 
@@ -488,12 +508,14 @@ Probíhá postupná migrace na new editor. Termíny jsou:
 ### 8.1 Forms
 
 **Typy:**
+
 - Embed form (HTML/JS code)
 - Pop-up form (modal, slide-in, banner)
 - Inline form (na landing page)
 - Subscription form
 
 **Features:**
+
 - Drag-drop builder
 - Field types: text, email, phone, dropdown, multi-select, radio, checkbox, date, hidden, GDPR consent
 - **Conditional logic** – pole se zobrazují/skrývají dle voleb
@@ -605,6 +627,7 @@ Limity: 1 landing page on Business, vyšší tier = více.
 ### 10.4 Webhooks
 
 Real-time event notifications:
+
 - **delivered**
 - **opened**
 - **clicked**
@@ -819,15 +842,18 @@ Brevo's AI vrstva. Launched May 2025 (subject lines, content gen, send-time). Po
 ### 16.1 Aura features (per tier)
 
 **Free / Starter / Business / Pro:**
+
 - **Aura content generator** – subject lines, body copy, tone adjustment, summarization
 - **AI translation** – emails in any language
 - **AI image generator** (limited credits per tier)
 
 **Business+:**
+
 - **AI send time optimization** – per-contact best time
 - **AI subject line testing** – predicts open rate
 
 **Professional+:**
+
 - **AI segmentation** – Aura suggests audience groups based on behavior
 - **AI Data Analyst** – natural language data questions ("how did last campaign perform vs. average?")
 - **Predictive lead scoring** (2026+)
@@ -852,14 +878,14 @@ Brevo's AI vrstva. Launched May 2025 (subject lines, content gen, send-time). Po
 
 ### 17.1 Contact data model
 
-| Atribut typu | Příklad |
-|---|---|
-| **Default attributes** | EMAIL, FIRSTNAME, LASTNAME, SMS, OPT_IN |
-| **Custom attributes** | text, number, date, boolean, category, multiple choice |
-| **Calculated attributes** | RFM score, CLV (Pro+) |
-| **Transactional attributes** | order count, last purchase, total spent |
-| **Behavioral data** | last email open, last page visit |
-| **System data** | created_at, source, IP, browser, language |
+| Atribut typu                 | Příklad                                                |
+| ---------------------------- | ------------------------------------------------------ |
+| **Default attributes**       | EMAIL, FIRSTNAME, LASTNAME, SMS, OPT_IN                |
+| **Custom attributes**        | text, number, date, boolean, category, multiple choice |
+| **Calculated attributes**    | RFM score, CLV (Pro+)                                  |
+| **Transactional attributes** | order count, last purchase, total spent                |
+| **Behavioral data**          | last email open, last page visit                       |
+| **System data**              | created_at, source, IP, browser, language              |
 
 ### 17.2 Lists
 
@@ -886,6 +912,7 @@ Brevo's AI vrstva. Launched May 2025 (subject lines, content gen, send-time). Po
 ### 17.4 Contact Scoring (Pro+)
 
 **Score types:**
+
 - **Recency** – jak nedávno engaged
 - **Frequency** – jak často engaged
 - **Monetary** – kolik utratil (s e-commerce sync)
@@ -893,6 +920,7 @@ Brevo's AI vrstva. Launched May 2025 (subject lines, content gen, send-time). Po
 - **Custom scoring rules** – per attribute, per event
 
 **Použití:**
+
 - Workflow triggers based on score threshold
 - Segment definition
 - Sales prioritization
@@ -974,14 +1002,14 @@ Brevo's AI vrstva. Launched May 2025 (subject lines, content gen, send-time). Po
 
 ### 19.2 Authentication
 
-| Protokol | Brevo setup |
-|---|---|
-| **SPF** | Add `include:spf.brevo.com` to your domain SPF record (recommended) |
-| **DKIM** | TXT record on subdomain (`mail._domainkey.yourdomain.com`) |
-| **DMARC** | TXT on _dmarc, start p=none → p=quarantine → p=reject |
-| **BIMI** | Po splnění DMARC reject + verified logo |
-| **Automatic configuration** | UI nudges + step-by-step DNS instructions |
-| **Brevo Authenticator** (2026+) | Auto-DNS configuration via integration partners |
+| Protokol                        | Brevo setup                                                         |
+| ------------------------------- | ------------------------------------------------------------------- |
+| **SPF**                         | Add `include:spf.brevo.com` to your domain SPF record (recommended) |
+| **DKIM**                        | TXT record on subdomain (`mail._domainkey.yourdomain.com`)          |
+| **DMARC**                       | TXT on \_dmarc, start p=none → p=quarantine → p=reject              |
+| **BIMI**                        | Po splnění DMARC reject + verified logo                             |
+| **Automatic configuration**     | UI nudges + step-by-step DNS instructions                           |
+| **Brevo Authenticator** (2026+) | Auto-DNS configuration via integration partners                     |
 
 ### 19.3 Sender verification
 
@@ -1033,30 +1061,30 @@ Brevo's AI vrstva. Launched May 2025 (subject lines, content gen, send-time). Po
 
 ### 20.2 Hlavní API endpoints
 
-| Resource | Operace |
-|---|---|
-| `/contacts` | CRUD contacts, attributes, lists |
-| `/contacts/lists` | List management |
-| `/contacts/folders` | Folder organization |
-| `/contacts/segments` | Read segments |
-| `/contacts/import` | Bulk import (async) |
-| `/contacts/export` | Bulk export |
-| `/emailCampaigns` | Create, send, schedule campaigns |
-| `/transactionalEmails` | Send transactional |
-| `/transactionalSMS/sms` | Send transactional SMS |
-| `/smtp/email` | Transactional via API |
-| `/smtp/templates` | Template management |
-| `/process` | Bulk operations status |
-| `/account` | Account info, plan, limits |
-| `/webhooks` | Webhook subscriptions |
-| `/senders` | Sender management |
-| `/domains` | Domain auth status |
-| `/automation` | Workflow management |
-| `/companies` | Companies (CRM) |
-| `/deals` | Deals (CRM) |
-| `/tasks` | Tasks (CRM) |
-| `/conversations` | Conversation management |
-| `/whatsappCampaigns` | WhatsApp campaigns |
+| Resource                | Operace                          |
+| ----------------------- | -------------------------------- |
+| `/contacts`             | CRUD contacts, attributes, lists |
+| `/contacts/lists`       | List management                  |
+| `/contacts/folders`     | Folder organization              |
+| `/contacts/segments`    | Read segments                    |
+| `/contacts/import`      | Bulk import (async)              |
+| `/contacts/export`      | Bulk export                      |
+| `/emailCampaigns`       | Create, send, schedule campaigns |
+| `/transactionalEmails`  | Send transactional               |
+| `/transactionalSMS/sms` | Send transactional SMS           |
+| `/smtp/email`           | Transactional via API            |
+| `/smtp/templates`       | Template management              |
+| `/process`              | Bulk operations status           |
+| `/account`              | Account info, plan, limits       |
+| `/webhooks`             | Webhook subscriptions            |
+| `/senders`              | Sender management                |
+| `/domains`              | Domain auth status               |
+| `/automation`           | Workflow management              |
+| `/companies`            | Companies (CRM)                  |
+| `/deals`                | Deals (CRM)                      |
+| `/tasks`                | Tasks (CRM)                      |
+| `/conversations`        | Conversation management          |
+| `/whatsappCampaigns`    | WhatsApp campaigns               |
 
 ### 20.3 Webhooks
 
@@ -1093,6 +1121,7 @@ Webhook signature verification.
 ### 20.6 Native integrace
 
 200+ aplikací včetně:
+
 - **CRM:** Salesforce, Pipedrive, HubSpot
 - **E-commerce:** Shopify, WooCommerce, Magento, BigCommerce
 - **Booking:** Calendly
@@ -1224,6 +1253,7 @@ Webhook signature verification.
 ## 23. Shrnutí: Pro koho a proti komu
 
 ### Brevo je dobrá volba pokud
+
 - Máte **velkou kontaktní databázi** + moderate send frequency (perfect fit)
 - Potřebujete **email + SMS + WhatsApp + transactional** v jednom systému
 - **GDPR-first approach** je důležitý (EU hosting)
@@ -1234,6 +1264,7 @@ Webhook signature verification.
 - **Bootstrappujete** nebo jste startup s tight budget
 
 ### Brevo není dobrá volba pokud
+
 - Potřebujete **enterprise-grade B2B CRM** (HubSpot/Salesforce lepší)
 - Vyžadujete **deep automation logic** s split-testing paths (ActiveCampaign deeper)
 - Posíláte **velmi často** malému listu (Mailchimp/MailerLite levnější)
@@ -1245,16 +1276,16 @@ Webhook signature verification.
 
 ### Brevo vs. konkurence (matice)
 
-| Konkurence | Kdy lepší než Brevo |
-|---|---|
-| **Mailchimp** | Brand recognition; ad-hoc malé sends; polished UI |
-| **HubSpot** | Enterprise B2B; deep CRM; account-based marketing; multi-Hub vision |
-| **ActiveCampaign** | Deep automation logic, split-test paths |
-| **Klaviyo** | Shopify-native e-commerce, AI product recommendations |
-| **Postmark / Mailgun** | Pure transactional focus, more developer features |
-| **MailerLite** | Cheaper for small lists |
-| **Salesforce Pardot** | Enterprise s existing SF investment |
+| Konkurence             | Kdy lepší než Brevo                                                 |
+| ---------------------- | ------------------------------------------------------------------- |
+| **Mailchimp**          | Brand recognition; ad-hoc malé sends; polished UI                   |
+| **HubSpot**            | Enterprise B2B; deep CRM; account-based marketing; multi-Hub vision |
+| **ActiveCampaign**     | Deep automation logic, split-test paths                             |
+| **Klaviyo**            | Shopify-native e-commerce, AI product recommendations               |
+| **Postmark / Mailgun** | Pure transactional focus, more developer features                   |
+| **MailerLite**         | Cheaper for small lists                                             |
+| **Salesforce Pardot**  | Enterprise s existing SF investment                                 |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů help.brevo.com, developers.brevo.com, brevo.com/pricing a renomovaných analytických webů (Venture Harbour, EmailToolTester, Sender, SalesHive, Stitchflow, Marketing Automation Insider, That Marketing Buddy, Authencio). Pro nejaktuálnější ceny vždy ověřit na brevo.com/pricing.*
+_Dokument zpracován z oficiálních zdrojů help.brevo.com, developers.brevo.com, brevo.com/pricing a renomovaných analytických webů (Venture Harbour, EmailToolTester, Sender, SalesHive, Stitchflow, Marketing Automation Insider, That Marketing Buddy, Authencio). Pro nejaktuálnější ceny vždy ověřit na brevo.com/pricing._

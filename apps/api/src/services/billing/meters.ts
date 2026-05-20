@@ -9,21 +9,25 @@
 
 import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { productUsageMeters, productMeterEvents, type MeterProduct } from '../../db/schema/product-meters.js';
+import {
+  productUsageMeters,
+  productMeterEvents,
+  type MeterProduct,
+} from '../../db/schema/product-meters.js';
 
 // ─── Per-product overage rates (USD per unit) ─────────────────────────────────
 
 const DEFAULT_OVERAGE_RATES: Record<string, number> = {
-  email:     0.0002,   // $0.20 / 1000
-  sms:       0.0075,   // $7.50 / 1000
-  whatsapp:  0.0100,   // $10   / 1000
-  voice:     0.020,    // $0.02 / minute
-  push:      0.0001,   // $0.10 / 1000
-  in_app:    0.0001,
-  viber:     0.0050,
-  rcs:       0.0030,
+  email: 0.0002, // $0.20 / 1000
+  sms: 0.0075, // $7.50 / 1000
+  whatsapp: 0.01, // $10   / 1000
+  voice: 0.02, // $0.02 / minute
+  push: 0.0001, // $0.10 / 1000
+  in_app: 0.0001,
+  viber: 0.005,
+  rcs: 0.003,
   ai_tokens: 0.000001, // $1 / 1M tokens (Haiku)
-  loyalty:   0.0002,
+  loyalty: 0.0002,
 };
 
 // ─── Current billing period ───────────────────────────────────────────────────
@@ -47,13 +51,15 @@ export async function recordUsage(
   const rate = DEFAULT_OVERAGE_RATES[product] ?? 0;
 
   // Atomic upsert on (orgId, product, period)
-  await db.insert(productUsageMeters).values({
-    orgId,
-    product,
-    period,
-    unitsUsed: units,
-    overageRateUsd: String(rate),
-  })
+  await db
+    .insert(productUsageMeters)
+    .values({
+      orgId,
+      product,
+      period,
+      unitsUsed: units,
+      overageRateUsd: String(rate),
+    })
     .onConflictDoUpdate({
       target: [productUsageMeters.orgId, productUsageMeters.product, productUsageMeters.period],
       set: {
@@ -63,13 +69,16 @@ export async function recordUsage(
     });
 
   // Append audit event (fire-and-forget)
-  await db.insert(productMeterEvents).values({
-    orgId,
-    product,
-    units,
-    referenceId,
-    referenceType,
-  }).catch(() => {});
+  await db
+    .insert(productMeterEvents)
+    .values({
+      orgId,
+      product,
+      units,
+      referenceId,
+      referenceType,
+    })
+    .catch(() => {});
 }
 
 // ─── Read usage ───────────────────────────────────────────────────────────────
@@ -78,13 +87,23 @@ export async function getProductUsage(
   orgId: string,
   product: MeterProduct,
   period = currentPeriod(),
-): Promise<{ unitsUsed: number; includedUnits: number; overageUnits: number; estimatedCostUsd: number }> {
-  const [row] = await db.select().from(productUsageMeters)
-    .where(and(
-      eq(productUsageMeters.orgId, orgId),
-      eq(productUsageMeters.product, product),
-      eq(productUsageMeters.period, period),
-    )).limit(1);
+): Promise<{
+  unitsUsed: number;
+  includedUnits: number;
+  overageUnits: number;
+  estimatedCostUsd: number;
+}> {
+  const [row] = await db
+    .select()
+    .from(productUsageMeters)
+    .where(
+      and(
+        eq(productUsageMeters.orgId, orgId),
+        eq(productUsageMeters.product, product),
+        eq(productUsageMeters.period, period),
+      ),
+    )
+    .limit(1);
 
   const used = row?.unitsUsed ?? 0;
   const included = row?.includedUnits ?? 0;
@@ -101,17 +120,13 @@ export async function getProductUsage(
 
 // ─── Full org summary ─────────────────────────────────────────────────────────
 
-export async function getOrgUsageSummary(
-  orgId: string,
-  period = currentPeriod(),
-) {
-  const rows = await db.select().from(productUsageMeters)
-    .where(and(
-      eq(productUsageMeters.orgId, orgId),
-      eq(productUsageMeters.period, period),
-    ));
+export async function getOrgUsageSummary(orgId: string, period = currentPeriod()) {
+  const rows = await db
+    .select()
+    .from(productUsageMeters)
+    .where(and(eq(productUsageMeters.orgId, orgId), eq(productUsageMeters.period, period)));
 
-  return rows.map(r => {
+  return rows.map((r) => {
     const overage = Math.max(0, r.unitsUsed - r.includedUnits);
     const rate = Number(r.overageRateUsd);
     return {

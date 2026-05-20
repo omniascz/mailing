@@ -6,7 +6,9 @@ export const anonymousProfiles = pgTable(
   'anonymous_profiles',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     visitorId: varchar('visitor_id', { length: 128 }).notNull(),
     deviceId: varchar('device_id', { length: 128 }),
     firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).notNull().defaultNow(),

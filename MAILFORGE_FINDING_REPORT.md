@@ -15,7 +15,7 @@ Analýza 27 platforem ukazuje **7 jasných whitespace opportunities** kde žádn
 
 Současně je tu **~30 must-have features**, které Mailforge nemá oproti tier-1 konkurenci (RFM auto-cohorts, predictive metrics CLV/churn, send-time optimization, custom events API, multichannel frequency cap, conditional content blocks, pre-built automation gallery, …). Většina je achievable v 2–4 týdnech každá nad existující infrastrukturou.
 
-**Klíčové strategické rozhodnutí**: Mailforge se musí rozhodnout, jestli je *CZ-first/EU-sovereign omnichannel platform* (pozice unikátní) nebo *next Mailchimp* (přesycený segment). Doporučení = první.
+**Klíčové strategické rozhodnutí**: Mailforge se musí rozhodnout, jestli je _CZ-first/EU-sovereign omnichannel platform_ (pozice unikátní) nebo _next Mailchimp_ (přesycený segment). Doporučení = první.
 
 ---
 
@@ -118,114 +118,114 @@ campaign-splitter, batch-sender, mta-sender, archive-email-events, seo-rank-poll
 
 ### 2.1 P0 — Must-have do MVP / Vlna 1 (CZ/SK SMB launch)
 
-| # | Feature | Zdroj | Implementační odhad |
-|---|---|---|---|
-| 1 | **RFM auto-cohorts** (Champions / At Risk / Lost / Hibernating + customizable) | Klaviyo, Ecomail CDP, Targito, SAP Emarsys, Leadhub | 2 týdny (ClickHouse materialized view + UI segment template) |
-| 2 | **Predictive metrics native**: CLV (365d forecast), Churn Risk (L/M/H), Predicted Next Order Date | Klaviyo, Mailchimp, Brevo | 4 týdny (Claude API pro initial, ML model pro Phase 5+) |
-| 3 | **Pre-built automation recipes gallery** (50+ scenarios: welcome / cart abandon / browse abandon / post-purchase / birthday / replenishment / win-back / lead nurture / event reg / quiz follow-up) | ActiveCampaign 900+, Ecomail 8+, SAP Emarsys Tactics, Mailchimp | 3 týdny (JSON templates + UI gallery) |
-| 4 | **Custom events API** s arbitrary properties `POST /api/v1/track` + jako automation trigger + segment filter | Klaviyo, SmartEmailing PRO, Boldem Profi, Bloomreach | 1 týden (events table v ClickHouse) |
-| 5 | **Send Time Optimization** ML model per kontakt | Mailchimp STO, Brevo Aura, Klaviyo Smart Send | 2 týdny (simple historical-open model, ne ML zatím) |
-| 6 | **Frequency cap / Contact Policy** napříč kanály per kontakt | Targito, Brevo, Klaviyo Smart Sending, HubSpot | 1 týden (Redis counter per contact_id) |
-| 7 | **Conditional Content blocks** v editoru (block-level visibility per segment) | ActiveCampaign Pro, Brevo, MailerLite | 1 týden (UI nad Liquid) |
-| 8 | **Auto-resend to non-openers** native | MailerLite, Ecomail | 3 dny (campaign clone + audience filter) |
-| 9 | **Lead scoring engine** s custom rules + AI threshold-based enrollment | ActiveCampaign, Brevo Pro, Evalanche, HubSpot | 1 týden (calculated_properties už máme) |
-| 10 | **Subscription Types** model (multiple subscription preferences per kontakt, granular preference center) | HubSpot | 1 týden (GDPR best practice) |
-| 11 | **Marketing vs Transactional IP pool separation** | EmailLabs, Braze | 3 dny (Go MTA config + routing) |
-| 12 | **Time-zone-aware send / Delivery by Time Zone** | Mailchimp Time-Warp, Brevo, MailerLite | 3 dny (campaign-splitter úprava) |
-| 13 | **Customer Preference Center / Zero-party data** (frequency + topic + channel preferences self-service) | SALESmanago, HubSpot | 1 týden (per-locale public form) |
-| 14 | **CZ/SK skloňování + gender inference + jmeniny + svátky** triggers — finalizovat | Leadhub, Ecomail, SmartEmailing | 1 týden (lookup table + Liquid filter + cron triggers) |
-| 15 | **Per-recipient unique discount codes** generated dynamically z Shoptetu | Leadhub, SmartEmailing | 1 týden (Liquid block s API fetch) |
-| 16 | **Shoptet + Upgates native OAuth integrace** s real-time product/order/customer sync | Leadhub (deepest CZ), Ecomail, SmartEmailing | 2 týdny (CZ market table-stakes) |
-| 17 | **One-click unsubscribe (RFC 8058)** + List-Unsubscribe-Post | Gmail/Yahoo 2024+ requirement | 1 den (header je už ready) |
-| 18 | **Public pricing transparency** (CZK + EUR tiers visible) | Inxmail, Mailchimp, MailerLite | 0 dnů (marketing decision) |
-| 19 | **Multi-account / Agency mode** (přepínání mezi e-shopy bez logout) | Leadhub, Ecomail, Mailkit, Boldem | 1 týden (UI work) |
-| 20 | **Browse abandonment ≠ Cart abandonment** oddělené pre-built flows | ExpertSender | 3 dny (taxonomy v gallery) |
+| #   | Feature                                                                                                                                                                                             | Zdroj                                                           | Implementační odhad                                          |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------ |
+| 1   | **RFM auto-cohorts** (Champions / At Risk / Lost / Hibernating + customizable)                                                                                                                      | Klaviyo, Ecomail CDP, Targito, SAP Emarsys, Leadhub             | 2 týdny (ClickHouse materialized view + UI segment template) |
+| 2   | **Predictive metrics native**: CLV (365d forecast), Churn Risk (L/M/H), Predicted Next Order Date                                                                                                   | Klaviyo, Mailchimp, Brevo                                       | 4 týdny (Claude API pro initial, ML model pro Phase 5+)      |
+| 3   | **Pre-built automation recipes gallery** (50+ scenarios: welcome / cart abandon / browse abandon / post-purchase / birthday / replenishment / win-back / lead nurture / event reg / quiz follow-up) | ActiveCampaign 900+, Ecomail 8+, SAP Emarsys Tactics, Mailchimp | 3 týdny (JSON templates + UI gallery)                        |
+| 4   | **Custom events API** s arbitrary properties `POST /api/v1/track` + jako automation trigger + segment filter                                                                                        | Klaviyo, SmartEmailing PRO, Boldem Profi, Bloomreach            | 1 týden (events table v ClickHouse)                          |
+| 5   | **Send Time Optimization** ML model per kontakt                                                                                                                                                     | Mailchimp STO, Brevo Aura, Klaviyo Smart Send                   | 2 týdny (simple historical-open model, ne ML zatím)          |
+| 6   | **Frequency cap / Contact Policy** napříč kanály per kontakt                                                                                                                                        | Targito, Brevo, Klaviyo Smart Sending, HubSpot                  | 1 týden (Redis counter per contact_id)                       |
+| 7   | **Conditional Content blocks** v editoru (block-level visibility per segment)                                                                                                                       | ActiveCampaign Pro, Brevo, MailerLite                           | 1 týden (UI nad Liquid)                                      |
+| 8   | **Auto-resend to non-openers** native                                                                                                                                                               | MailerLite, Ecomail                                             | 3 dny (campaign clone + audience filter)                     |
+| 9   | **Lead scoring engine** s custom rules + AI threshold-based enrollment                                                                                                                              | ActiveCampaign, Brevo Pro, Evalanche, HubSpot                   | 1 týden (calculated_properties už máme)                      |
+| 10  | **Subscription Types** model (multiple subscription preferences per kontakt, granular preference center)                                                                                            | HubSpot                                                         | 1 týden (GDPR best practice)                                 |
+| 11  | **Marketing vs Transactional IP pool separation**                                                                                                                                                   | EmailLabs, Braze                                                | 3 dny (Go MTA config + routing)                              |
+| 12  | **Time-zone-aware send / Delivery by Time Zone**                                                                                                                                                    | Mailchimp Time-Warp, Brevo, MailerLite                          | 3 dny (campaign-splitter úprava)                             |
+| 13  | **Customer Preference Center / Zero-party data** (frequency + topic + channel preferences self-service)                                                                                             | SALESmanago, HubSpot                                            | 1 týden (per-locale public form)                             |
+| 14  | **CZ/SK skloňování + gender inference + jmeniny + svátky** triggers — finalizovat                                                                                                                   | Leadhub, Ecomail, SmartEmailing                                 | 1 týden (lookup table + Liquid filter + cron triggers)       |
+| 15  | **Per-recipient unique discount codes** generated dynamically z Shoptetu                                                                                                                            | Leadhub, SmartEmailing                                          | 1 týden (Liquid block s API fetch)                           |
+| 16  | **Shoptet + Upgates native OAuth integrace** s real-time product/order/customer sync                                                                                                                | Leadhub (deepest CZ), Ecomail, SmartEmailing                    | 2 týdny (CZ market table-stakes)                             |
+| 17  | **One-click unsubscribe (RFC 8058)** + List-Unsubscribe-Post                                                                                                                                        | Gmail/Yahoo 2024+ requirement                                   | 1 den (header je už ready)                                   |
+| 18  | **Public pricing transparency** (CZK + EUR tiers visible)                                                                                                                                           | Inxmail, Mailchimp, MailerLite                                  | 0 dnů (marketing decision)                                   |
+| 19  | **Multi-account / Agency mode** (přepínání mezi e-shopy bez logout)                                                                                                                                 | Leadhub, Ecomail, Mailkit, Boldem                               | 1 týden (UI work)                                            |
+| 20  | **Browse abandonment ≠ Cart abandonment** oddělené pre-built flows                                                                                                                                  | ExpertSender                                                    | 3 dny (taxonomy v gallery)                                   |
 
 **Cumulative odhad P0:** ~14–18 týdnů jeden dev + Claude
 
 ### 2.2 P1 — Should-have (Vlna 2, V4+ expansion)
 
-| # | Feature | Zdroj |
-|---|---|---|
-| 21 | **Channel Scoring per recipient** (ML best-channel) — předpovídá který kanál preferovat | SARE Channel Scoring, Braze Intelligent Channel |
-| 22 | **A/B/X multivariate testing** (3+ variants, auto-winner) | SARE, Mailchimp Premium 8 variants, HubSpot Adaptive |
-| 23 | **AMP for Email** support v editoru | Mailkit, Salesforce MC |
-| 24 | **Audience sync to Meta / Google / TikTok / Pinterest / Sklik Ads** | Klaviyo, Ecomail, SmartEmailing Sklik, Leadhub |
-| 25 | **Web personalization module** (real-time dynamic content per visitor) | Targito, Bloomreach Weblayers |
-| 26 | **Identity resolution L2–L3** (cookie → email → SMS → external ID stitching) | Klaviyo KDP, Targito, Bloomreach |
-| 27 | **Reviews collection module** (post-delivery → star rating → social share / support) | Klaviyo Reviews |
-| 28 | **Digital Products + Paid Newsletters** native (Stripe Connect) | MailerLite, GetResponse Content Monetization |
-| 29 | **Customer Hub** — customer-facing portal s order history a preferences | Klaviyo Customer Hub, ActiveCampaign |
-| 30 | **Surveys & Quizzes builder** native | MailerLite, Mailchimp |
-| 31 | **RSS campaigns** auto-generated z blog/podcast | MailerLite, Mailchimp |
-| 32 | **GDPR evidence audit log** per kontakt (source + purpose + validity timestamp) | SmartEmailing |
-| 33 | **Automatická pre-send check** (spam-words, dead links, alt-text, plain-text) | Boldem |
-| 34 | **Engagement Score** proprietary per-kontakt + IP pool routing | Mailkit |
-| 35 | **Sub-account hierarchy / White-label agency mode** s per-sub-account brand + sender domains | Mailkit, Boldem, Brevo Enterprise |
-| 36 | **Replenishment / next-order ML prediction** (consumables vertical) | ExpertSender, Klaviyo |
-| 37 | **Slovak localization complete** (UI + skloňování + jmeniny + svátky kalendář + Mergado SK + Shoptet.sk) | Ecomail, Leadhub |
-| 38 | **DACH-grade compliance kit** (CSA membership, double opt-in enforced, German DPA template, ISO 27001 startup pre-cert) | Inxmail, rapidmail, CleverReach |
-| 39 | **Pay-per-send / prepaid credits tier** vedle subscription | rapidmail Pay-per-Mail, Inxmail per-emails, Newsletter2Go-Brevo |
-| 40 | **B2B vs B2C product positioning split** s two default playbooks | Mapp (B2C) vs Evalanche (B2B) |
-| 41 | **Connected Content / Liquid s HTTP fetch při render** | Braze Connected Content |
-| 42 | **Visual workflow canvas (React Flow)** s heatmap/funnel debugger | Ecomail heatmap v automation, ActiveCampaign |
-| 43 | **Sentiment Analysis** 1:1 email replies přes Claude | ActiveCampaign Sales Engagement |
-| 44 | **Bulk coupon zásobník** s per-recipient unique code | SmartEmailing, Ecomail |
-| 45 | **Relational Custom Data Structures** (loyalty points history, multi-order schema) | SmartEmailing PRO, ActiveCampaign Custom Objects |
-| 46 | **Site Messages** (in-app on-site message channel) přes channel adapter | ActiveCampaign |
-| 47 | **Reverse ETL** export profiles + events do BigQuery/Snowflake | Klaviyo Advanced Data Platform |
-| 48 | **Webinars** via integrace (Twilio/Daily.co) | GetResponse |
-| 49 | **Polish ISP pool + lokalizace UI/help** | GetResponse, EmailLabs, SARE |
-| 50 | **Funnel builder** = multi-step landing page → email sequence | GetResponse, ClickFunnels |
+| #   | Feature                                                                                                                 | Zdroj                                                           |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| 21  | **Channel Scoring per recipient** (ML best-channel) — předpovídá který kanál preferovat                                 | SARE Channel Scoring, Braze Intelligent Channel                 |
+| 22  | **A/B/X multivariate testing** (3+ variants, auto-winner)                                                               | SARE, Mailchimp Premium 8 variants, HubSpot Adaptive            |
+| 23  | **AMP for Email** support v editoru                                                                                     | Mailkit, Salesforce MC                                          |
+| 24  | **Audience sync to Meta / Google / TikTok / Pinterest / Sklik Ads**                                                     | Klaviyo, Ecomail, SmartEmailing Sklik, Leadhub                  |
+| 25  | **Web personalization module** (real-time dynamic content per visitor)                                                  | Targito, Bloomreach Weblayers                                   |
+| 26  | **Identity resolution L2–L3** (cookie → email → SMS → external ID stitching)                                            | Klaviyo KDP, Targito, Bloomreach                                |
+| 27  | **Reviews collection module** (post-delivery → star rating → social share / support)                                    | Klaviyo Reviews                                                 |
+| 28  | **Digital Products + Paid Newsletters** native (Stripe Connect)                                                         | MailerLite, GetResponse Content Monetization                    |
+| 29  | **Customer Hub** — customer-facing portal s order history a preferences                                                 | Klaviyo Customer Hub, ActiveCampaign                            |
+| 30  | **Surveys & Quizzes builder** native                                                                                    | MailerLite, Mailchimp                                           |
+| 31  | **RSS campaigns** auto-generated z blog/podcast                                                                         | MailerLite, Mailchimp                                           |
+| 32  | **GDPR evidence audit log** per kontakt (source + purpose + validity timestamp)                                         | SmartEmailing                                                   |
+| 33  | **Automatická pre-send check** (spam-words, dead links, alt-text, plain-text)                                           | Boldem                                                          |
+| 34  | **Engagement Score** proprietary per-kontakt + IP pool routing                                                          | Mailkit                                                         |
+| 35  | **Sub-account hierarchy / White-label agency mode** s per-sub-account brand + sender domains                            | Mailkit, Boldem, Brevo Enterprise                               |
+| 36  | **Replenishment / next-order ML prediction** (consumables vertical)                                                     | ExpertSender, Klaviyo                                           |
+| 37  | **Slovak localization complete** (UI + skloňování + jmeniny + svátky kalendář + Mergado SK + Shoptet.sk)                | Ecomail, Leadhub                                                |
+| 38  | **DACH-grade compliance kit** (CSA membership, double opt-in enforced, German DPA template, ISO 27001 startup pre-cert) | Inxmail, rapidmail, CleverReach                                 |
+| 39  | **Pay-per-send / prepaid credits tier** vedle subscription                                                              | rapidmail Pay-per-Mail, Inxmail per-emails, Newsletter2Go-Brevo |
+| 40  | **B2B vs B2C product positioning split** s two default playbooks                                                        | Mapp (B2C) vs Evalanche (B2B)                                   |
+| 41  | **Connected Content / Liquid s HTTP fetch při render**                                                                  | Braze Connected Content                                         |
+| 42  | **Visual workflow canvas (React Flow)** s heatmap/funnel debugger                                                       | Ecomail heatmap v automation, ActiveCampaign                    |
+| 43  | **Sentiment Analysis** 1:1 email replies přes Claude                                                                    | ActiveCampaign Sales Engagement                                 |
+| 44  | **Bulk coupon zásobník** s per-recipient unique code                                                                    | SmartEmailing, Ecomail                                          |
+| 45  | **Relational Custom Data Structures** (loyalty points history, multi-order schema)                                      | SmartEmailing PRO, ActiveCampaign Custom Objects                |
+| 46  | **Site Messages** (in-app on-site message channel) přes channel adapter                                                 | ActiveCampaign                                                  |
+| 47  | **Reverse ETL** export profiles + events do BigQuery/Snowflake                                                          | Klaviyo Advanced Data Platform                                  |
+| 48  | **Webinars** via integrace (Twilio/Daily.co)                                                                            | GetResponse                                                     |
+| 49  | **Polish ISP pool + lokalizace UI/help**                                                                                | GetResponse, EmailLabs, SARE                                    |
+| 50  | **Funnel builder** = multi-step landing page → email sequence                                                           | GetResponse, ClickFunnels                                       |
 
 ### 2.3 P2 — Nice-to-have / Phase 6–7
 
-| Feature | Zdroj |
-|---|---|
-| Reinforcement learning A/B (multi-armed bandit) místo statického A/B | Braze Decisioning Studio |
-| Conversational natural-language campaign builder | Braze Operator, Salesforce Agentforce |
-| Cross-journey orchestration + frequency caps cross-workflow | Salesforce Cross-Journey |
-| Custom Objects / Data Extensions (schemaless flexible data) | HubSpot Enterprise, Salesforce MC |
-| Multi-touch revenue attribution s linear / position / time-decay / custom modely | HubSpot Enterprise, Bloomreach |
-| Adaptive testing s AI multivariate selection | HubSpot Enterprise, Salesforce |
-| Hierarchical teams / partitioning per asset | HubSpot Enterprise |
-| Field-level / property-level security | HubSpot Enterprise, Salesforce |
-| Sandbox environments | HubSpot Enterprise, Salesforce |
-| Mobile SDK (iOS + Android + React Native) | Braze, Mapp, Salesforce |
-| Loyalty Cloud engine (tiers, points, rewards) — buy vs build | SAP Emarsys, Salesforce Loyalty |
-| Predictive Lead Scoring s trained model (closed-won/lost) | HubSpot Pro+, Bloomreach Loomi |
-| Zero-copy DWH triggers (Snowflake / BigQuery direct) | Braze, Salesforce Data Cloud |
-| AI Agent Console / Custom AI agents v workflow steps | Braze, Salesforce Agentforce |
-| WhatsApp Commerce / 2-way conversations / catalogs / payments | Braze, Salesforce |
-| Industry-specific playbooks (retail / fashion / B2B SaaS / nonprofit / events) | SAP Emarsys Tactics, Evalanche B2B |
-| AI Content QA / brand voice consistency checker | Braze AI Content QA |
-| SQL Query Builder s AI assistant nad event store | Braze, Bloomreach Premium |
-| Mobile push provisioning (FCM/APNs/VAPID) | Klaviyo, Braze, MailerLite |
-| BIMI configurable | All majors 2024+ |
-| Webinars native engine | GetResponse |
-| Event registration + ticketing | Constant Contact |
-| HIPAA mode (US healthcare) | Salesforce MC Health Cloud, HubSpot Enterprise |
-| FedRAMP certifikace (US gov) | Salesforce MC only |
+| Feature                                                                          | Zdroj                                          |
+| -------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Reinforcement learning A/B (multi-armed bandit) místo statického A/B             | Braze Decisioning Studio                       |
+| Conversational natural-language campaign builder                                 | Braze Operator, Salesforce Agentforce          |
+| Cross-journey orchestration + frequency caps cross-workflow                      | Salesforce Cross-Journey                       |
+| Custom Objects / Data Extensions (schemaless flexible data)                      | HubSpot Enterprise, Salesforce MC              |
+| Multi-touch revenue attribution s linear / position / time-decay / custom modely | HubSpot Enterprise, Bloomreach                 |
+| Adaptive testing s AI multivariate selection                                     | HubSpot Enterprise, Salesforce                 |
+| Hierarchical teams / partitioning per asset                                      | HubSpot Enterprise                             |
+| Field-level / property-level security                                            | HubSpot Enterprise, Salesforce                 |
+| Sandbox environments                                                             | HubSpot Enterprise, Salesforce                 |
+| Mobile SDK (iOS + Android + React Native)                                        | Braze, Mapp, Salesforce                        |
+| Loyalty Cloud engine (tiers, points, rewards) — buy vs build                     | SAP Emarsys, Salesforce Loyalty                |
+| Predictive Lead Scoring s trained model (closed-won/lost)                        | HubSpot Pro+, Bloomreach Loomi                 |
+| Zero-copy DWH triggers (Snowflake / BigQuery direct)                             | Braze, Salesforce Data Cloud                   |
+| AI Agent Console / Custom AI agents v workflow steps                             | Braze, Salesforce Agentforce                   |
+| WhatsApp Commerce / 2-way conversations / catalogs / payments                    | Braze, Salesforce                              |
+| Industry-specific playbooks (retail / fashion / B2B SaaS / nonprofit / events)   | SAP Emarsys Tactics, Evalanche B2B             |
+| AI Content QA / brand voice consistency checker                                  | Braze AI Content QA                            |
+| SQL Query Builder s AI assistant nad event store                                 | Braze, Bloomreach Premium                      |
+| Mobile push provisioning (FCM/APNs/VAPID)                                        | Klaviyo, Braze, MailerLite                     |
+| BIMI configurable                                                                | All majors 2024+                               |
+| Webinars native engine                                                           | GetResponse                                    |
+| Event registration + ticketing                                                   | Constant Contact                               |
+| HIPAA mode (US healthcare)                                                       | Salesforce MC Health Cloud, HubSpot Enterprise |
+| FedRAMP certifikace (US gov)                                                     | Salesforce MC only                             |
 
 ### 2.4 Co je v Mailforge kódu ALE konkurence (často) nemá
 
-| Mailforge má | Konkurenti |
-|---|---|
-| **125 Drizzle schemas vč. CDP-grade** (anonymous_profiles, identity_graph, calculated_properties, custom_objects, data_sets, saved_queries) | Jen Bloomreach + Targito + SALESmanago mají srovnatelné. Mailchimp / Brevo / MailerLite to nemají. |
-| **app_studio low-code builder** | NIKDO z 27 nemá user-buildable modules. Targito má 40+ aktivovatelných, ale ne user-buildable. |
-| **ai_agents + ai_agent_runs framework** | Klaviyo Marketing/Customer Agent jsou $140-200/mo add-on. Salesforce Agentforce premium. Mailforge to má vestavěné. |
-| **MCP server** | Žádný z 27 nemá nativní MCP/Claude integration. |
-| **Voice bot streaming API (WebSocket, STT/LLM/TTS adaptér)** | NIKDO z 27 nemá outbound voice campaigns. Jen Brevo Phone (VoIP PBX) a ActiveCampaign jako import. |
-| **i18n cs/sk/en s skloňováním + gender inference** | Globální (Mailchimp/Klaviyo/Brevo) nemají CZ vůbec. Lokální (Ecomail) má, ale shallower features. |
-| **kb_embeddings** (RAG vector store) | Jen Bloomreach Loomi a Salesforce Einstein mají. |
-| **9 channel adapters incl. viber, instagram, messenger** | Bloomreach + Braze + Salesforce mají srovnatelně. Mailchimp/MailerLite chybí. |
-| **calculated_properties + data_sets + saved_queries** | Jen ClickHouse-backed enterprise (Braze, Bloomreach). |
-| **app-platform schema** | Žádný z 27. Mailforge unikum. |
-| **CZ ISP-aware MTA headers** (Seznam, Volny, Centrum) | Jen Mailkit a SmartEmailing mají direct relationships. Mailforge má kód, ale ne contracts. |
-| **Loyalty subsystem (5 tabulek)** | Jen SAP Emarsys + Salesforce Loyalty. Bloomreach to nemá native. |
-| **Booking pages + Calendar + Calendly** | Žádný marketing platform to nemá nativní. Mailforge unique. |
-| **Surveys + Quizzes** | MailerLite a Mailchimp mají. |
-| **Blog + SEO modul** | GetResponse, HubSpot mají. MailerLite částečně. |
+| Mailforge má                                                                                                                                | Konkurenti                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **125 Drizzle schemas vč. CDP-grade** (anonymous_profiles, identity_graph, calculated_properties, custom_objects, data_sets, saved_queries) | Jen Bloomreach + Targito + SALESmanago mají srovnatelné. Mailchimp / Brevo / MailerLite to nemají.                  |
+| **app_studio low-code builder**                                                                                                             | NIKDO z 27 nemá user-buildable modules. Targito má 40+ aktivovatelných, ale ne user-buildable.                      |
+| **ai_agents + ai_agent_runs framework**                                                                                                     | Klaviyo Marketing/Customer Agent jsou $140-200/mo add-on. Salesforce Agentforce premium. Mailforge to má vestavěné. |
+| **MCP server**                                                                                                                              | Žádný z 27 nemá nativní MCP/Claude integration.                                                                     |
+| **Voice bot streaming API (WebSocket, STT/LLM/TTS adaptér)**                                                                                | NIKDO z 27 nemá outbound voice campaigns. Jen Brevo Phone (VoIP PBX) a ActiveCampaign jako import.                  |
+| **i18n cs/sk/en s skloňováním + gender inference**                                                                                          | Globální (Mailchimp/Klaviyo/Brevo) nemají CZ vůbec. Lokální (Ecomail) má, ale shallower features.                   |
+| **kb_embeddings** (RAG vector store)                                                                                                        | Jen Bloomreach Loomi a Salesforce Einstein mají.                                                                    |
+| **9 channel adapters incl. viber, instagram, messenger**                                                                                    | Bloomreach + Braze + Salesforce mají srovnatelně. Mailchimp/MailerLite chybí.                                       |
+| **calculated_properties + data_sets + saved_queries**                                                                                       | Jen ClickHouse-backed enterprise (Braze, Bloomreach).                                                               |
+| **app-platform schema**                                                                                                                     | Žádný z 27. Mailforge unikum.                                                                                       |
+| **CZ ISP-aware MTA headers** (Seznam, Volny, Centrum)                                                                                       | Jen Mailkit a SmartEmailing mají direct relationships. Mailforge má kód, ale ne contracts.                          |
+| **Loyalty subsystem (5 tabulek)**                                                                                                           | Jen SAP Emarsys + Salesforce Loyalty. Bloomreach to nemá native.                                                    |
+| **Booking pages + Calendar + Calendly**                                                                                                     | Žádný marketing platform to nemá nativní. Mailforge unique.                                                         |
+| **Surveys + Quizzes**                                                                                                                       | MailerLite a Mailchimp mají.                                                                                        |
+| **Blog + SEO modul**                                                                                                                        | GetResponse, HubSpot mají. MailerLite částečně.                                                                     |
 
 **Klíčové uvědomění:** Mailforge má **schéma a scaffolding pro ~70 % features**, které tier-1 enterprise konkurence (Bloomreach, Braze, SAP Emarsys, Salesforce) má. Implementační dluh je obrovský, ale architektonický plán je správný a ambiciózní.
 
@@ -236,12 +236,14 @@ campaign-splitter, batch-sender, mta-sender, archive-email-events, seo-rank-poll
 ### 3.1 Tržní pozice — kde jsme realisticky
 
 Per master srovnávací matrix (`55_Master_Srovnavaci_Matrix.md`) Mailforge **podle scope** patří do **"Mid-market omnichannel"** tieru (SALESmanago, Targito, Leadhub, ExpertSender, SARE). Tento tier má:
+
 - Cena $1.5K–7K/měs (~30k–140k Kč/měs)
 - Sales-driven onboarding
 - Custom pricing (opacní)
 - 5K–50K kontaktů sweet spot
 
 **Ale Mailforge má technologickou základnu pro Enterprise CDXP tier** (Bloomreach, SAP Emarsys, Salesforce MC, Braze):
+
 - Postgres + ClickHouse + Kafka event pipeline = potenciálně < 1s real-time (Tier B z `57_CDP_Capabilities`)
 - 125 entity schemas = srovnatelné s Bloomreach Customer Data Engine
 - 9 channel adapters = srovnatelné s Braze 13 channels
@@ -252,6 +254,7 @@ Tj. **Mailforge má potenciál nabízet enterprise architekturu za mid-market ce
 ### 3.2 AI tier classification (per `56_AI_Capabilities_Comparison.md`)
 
 Mailforge má technicky **Tier 2 (AI-enabled)** kapacitu:
+
 - Claude Sonnet 4.6 + Haiku 4.5 integrace s caching
 - ai_agents framework + ai_agent_runs
 - 7 implementovaných AI routes
@@ -262,6 +265,7 @@ Konkurence v Tier 2: Klaviyo, HubSpot, Mailchimp, GetResponse, ActiveCampaign, T
 Tier 1 (AI-native): Bloomreach Loomi, Salesforce Einstein/Agentforce, Braze Sage, SAP Emarsys AI Suite, SALESmanago.
 
 **Klíčové:** AI bez kvalitních dat = limited value. Mailforge pro SMB segment má méně dat než enterprise CDP. Strategie:
+
 - **Foundation modely (Claude) + per-org context caching**, NE training from scratch
 - AI included ve všech tieres (jako Klaviyo, Bloomreach), NE separate "Agentforce-style" trap
 - Voice AI = jediný unique tier 1 angle, kde nikdo jiný nemá
@@ -269,6 +273,7 @@ Tier 1 (AI-native): Bloomreach Loomi, Salesforce Einstein/Agentforce, Braze Sage
 ### 3.3 CDP capabilities reality check (per `57_CDP_Capabilities_DeepDive.md`)
 
 74 % platforem v sektoru se prezentuje jako CDP, ale **jen 7/27 je skutečný CDP**:
+
 1. Bloomreach Engagement (CDE in-memory)
 2. SAP Emarsys
 3. Salesforce Data Cloud + MC
@@ -278,6 +283,7 @@ Tier 1 (AI-native): Bloomreach Loomi, Salesforce Einstein/Agentforce, Braze Sage
 7. Braze (CDP-like CEP)
 
 Mailforge **má architekturu pro 8. místo v seznamu**, pokud postavíme:
+
 - Identity resolution L2 (deterministic: email + cookie + phone matching) — `identity_graph` schema už máme
 - Real-time event ingest přes Kafka → ClickHouse — část naplánovaná
 - Reverse ETL — naplánováno (`warehouse_sync`)
@@ -288,6 +294,7 @@ Mailforge **má architekturu pro 8. místo v seznamu**, pokud postavíme:
 ### 3.4 Deliverability standards 2026 (per `58_Deliverability_Compliance_Analysis.md`)
 
 Gmail/Yahoo 2024+ requirements (must-have v0):
+
 - ✅ SPF + DKIM + DMARC — Mailforge Go engine má DKIM, SPF/DMARC wizard plánovaný
 - ❌ One-click unsubscribe RFC 8058 — Header je v Mailforge engine, ale workflow nedopilovaný
 - ⚠️ Spam rate < 0.3% — abuse_detection schema máme, monitor v deliverability_insights TODO
@@ -296,6 +303,7 @@ Gmail/Yahoo 2024+ requirements (must-have v0):
 **BIMI je rising signal** — Gmail/Yahoo/Apple support, Mailforge by měl BIMI configurable v Phase 4+ (potřeba DMARC `p=quarantine` minimum).
 
 **Compliance certifikace roadmap:**
+
 - ISO 27001 (Year 1–2) — enterprise gate
 - SOC 2 Type II (Year 2) — US/global enterprise
 - ISO 27017/27018 (Year 3+) — cloud-specific
@@ -315,6 +323,7 @@ Klíčová pozorování pro Mailforge pricing:
 8. **Public pricing až do $30K+/mo** = competitive advantage vs sales-only enterprise
 
 **Doporučená Mailforge pricing tier struktura:**
+
 - **Free**: 1 000 kontaktů, 5 000 emailů/měs, no SMS/voice — akviziční
 - **Starter** 290 Kč / €15 / $19: 5 000 kontaktů, 25 000 emailů, SMS pay-per-use — pod Ecomail
 - **Growth** 990 Kč / €49 / $59: 25 000 kontaktů, 150 000 emailů, omnichannel — Brevo Business teritory
@@ -328,6 +337,7 @@ SMS / voice: pass-through cost + 2× markup.
 ### 3.6 Migration jako akviziční nástroj (per `60_Migration_Scenarios.md`)
 
 **P0 migration importers pro Mailforge:**
+
 1. **Mailchimp** — nejčastější source, API + CSV
 2. **Klaviyo** — DTC standard, API + segments + flows
 3. **Ecomail** — primární CZ switching, API/CSV + Mergado
@@ -340,6 +350,7 @@ SMS / voice: pass-through cost + 2× markup.
 **P2 (enterprise):** Salesforce MC, Bloomreach, Mailkit / Targito / Leadhub (partner-led).
 
 **Akviziční hooks:**
+
 - **"Migrate from Mailchimp v 1 dni"** — free guided wizard pro CZ/SK/EU SMB
 - **"Switch from Ecomail/SmartEmailing"** — native CZ migration s lokální PR
 - **"Escape Constant Contact"** — post-2025 free plan elimination
@@ -352,18 +363,18 @@ SMS / voice: pass-through cost + 2× markup.
 
 ### 4.1 TOP 10 unique opportunities (kde Mailforge má skutečný moat)
 
-| # | White space | Proč Mailforge | Implementační status |
-|---|---|---|---|
-| 1 | **AI voice agent jako kampaňový kanál** (outbound voice s Claude + ElevenLabs) | Twilio + Deepgram + ElevenLabs + Claude stack je v `apps/voice-bot`. Žádný z 27 to nemá. | Streaming API hotový, stub adapters — Phase 4–5 production wire |
-| 2 | **CZ/SK hluboká lokalizace + skloňování + gender + jmeniny + svátky + ISDOC + SPAYD QR + Sklik** s **globální feature parity** (predictive AI, omnichannel, sub-orgs, AMP) | Globální (Mailchimp/Klaviyo/Brevo) nemají CZ; lokální (Ecomail) má, ale shallower features. Mailforge má i18n cs/sk/en + skloňování plánované + 125 schemas. | i18n + i18n-sk packages existují; gender + skloňování v TODO Opus tier |
-| 3 | **Low-code app-studio user-extensible moduly** | Targito má 40+ aktivovatelných modulů ale ne user-buildable. Žádný z 27 nemá user-defined moduly. Mailforge `app_studio` schema unique. | Schema existuje, runtime engine TODO Opus #594 |
-| 4 | **AI agents jako first-class platform entity v Claude pricing tier** (Sonnet 4.6 + Haiku 4.5) | Klaviyo Marketing Agent $140-200/mo add-on, Salesforce Agentforce premium. Mailforge má `ai_agents` framework + MCP server + 7 routes — included v core. | Framework + MCP hotový; Voice/Campaign/Customer agents production wire TODO |
-| 5 | **EU-sovereign omnichannel s vlastním Go MTA + 9 channel adapters** | Mailkit má EU sovereignty ale shallow AI; US tools mají depth ale GDPR-suspect; Brevo je FR ale ne CZ. Mailforge = EU + CZ + AI + own MTA. | MTA engine 1 733 řádků Go, čeká na produkční wire-up |
-| 6 | **Unified omnichannel s shared frequency cap + Contact Policy napříč voice/SMS/email/WhatsApp/push** | Brevo má 6 oddělených produktů, Klaviyo nemá voice, Targito offline channel je integrace. Mailforge `IChannelAdapter` + frequency_rules schema = jediná architektura, která může nabídnout všechny 4+ kanály jako rovnocenné. | Schema + adapter pattern hotové; orchestrace logic TODO |
-| 7 | **Booking pages + Calendar + Calendly + Scheduling + Meetings** v messaging platform | Žádná z 27 nemá schedule-as-trigger nebo booking-page jako lead capture nativně. ActiveCampaign má Calendly jen jako data import. Mailforge schemas hotové. | Schema hotové, UI + workflow integration TODO |
-| 8 | **Calculated properties + Data sets + Saved queries user-defined** | Klaviyo má pre-defined predictive (CLV, churn) ale ne user-defined. ActiveCampaign Custom Objects jen Enterprise. Mailforge `calculated_properties` + `data_sets` + `saved_queries` = killer pro power-users + agencies. | Schema hotové, evaluator engine TODO Opus #598 |
-| 9 | **Open-source-ready vlastní Go MTA jako moat** | Žádná z 10 platforem nemá open-sourceable mail engine. Mailkit closed proprietary. Mailforge `apps/engine` mohl by být open-sourced pro enterprise self-host / on-prem demands → trust signal. | Existuje, license decision pending |
-| 10 | **Pricing transparency CZK/EUR + multi-region** + unlimited contacts + AI included + ISO 27001 (Year 2) — anti-enterprise-trap positioning | Targito/Leadhub/SALESmanago/Bloomreach jsou opaque custom pricing. Inxmail má public pricing ale EUR-only. Salesforce Premier 30% surprise. | Marketing/strategic decision, no dev needed |
+| #   | White space                                                                                                                                                                | Proč Mailforge                                                                                                                                                                                                                | Implementační status                                                        |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1   | **AI voice agent jako kampaňový kanál** (outbound voice s Claude + ElevenLabs)                                                                                             | Twilio + Deepgram + ElevenLabs + Claude stack je v `apps/voice-bot`. Žádný z 27 to nemá.                                                                                                                                      | Streaming API hotový, stub adapters — Phase 4–5 production wire             |
+| 2   | **CZ/SK hluboká lokalizace + skloňování + gender + jmeniny + svátky + ISDOC + SPAYD QR + Sklik** s **globální feature parity** (predictive AI, omnichannel, sub-orgs, AMP) | Globální (Mailchimp/Klaviyo/Brevo) nemají CZ; lokální (Ecomail) má, ale shallower features. Mailforge má i18n cs/sk/en + skloňování plánované + 125 schemas.                                                                  | i18n + i18n-sk packages existují; gender + skloňování v TODO Opus tier      |
+| 3   | **Low-code app-studio user-extensible moduly**                                                                                                                             | Targito má 40+ aktivovatelných modulů ale ne user-buildable. Žádný z 27 nemá user-defined moduly. Mailforge `app_studio` schema unique.                                                                                       | Schema existuje, runtime engine TODO Opus #594                              |
+| 4   | **AI agents jako first-class platform entity v Claude pricing tier** (Sonnet 4.6 + Haiku 4.5)                                                                              | Klaviyo Marketing Agent $140-200/mo add-on, Salesforce Agentforce premium. Mailforge má `ai_agents` framework + MCP server + 7 routes — included v core.                                                                      | Framework + MCP hotový; Voice/Campaign/Customer agents production wire TODO |
+| 5   | **EU-sovereign omnichannel s vlastním Go MTA + 9 channel adapters**                                                                                                        | Mailkit má EU sovereignty ale shallow AI; US tools mají depth ale GDPR-suspect; Brevo je FR ale ne CZ. Mailforge = EU + CZ + AI + own MTA.                                                                                    | MTA engine 1 733 řádků Go, čeká na produkční wire-up                        |
+| 6   | **Unified omnichannel s shared frequency cap + Contact Policy napříč voice/SMS/email/WhatsApp/push**                                                                       | Brevo má 6 oddělených produktů, Klaviyo nemá voice, Targito offline channel je integrace. Mailforge `IChannelAdapter` + frequency_rules schema = jediná architektura, která může nabídnout všechny 4+ kanály jako rovnocenné. | Schema + adapter pattern hotové; orchestrace logic TODO                     |
+| 7   | **Booking pages + Calendar + Calendly + Scheduling + Meetings** v messaging platform                                                                                       | Žádná z 27 nemá schedule-as-trigger nebo booking-page jako lead capture nativně. ActiveCampaign má Calendly jen jako data import. Mailforge schemas hotové.                                                                   | Schema hotové, UI + workflow integration TODO                               |
+| 8   | **Calculated properties + Data sets + Saved queries user-defined**                                                                                                         | Klaviyo má pre-defined predictive (CLV, churn) ale ne user-defined. ActiveCampaign Custom Objects jen Enterprise. Mailforge `calculated_properties` + `data_sets` + `saved_queries` = killer pro power-users + agencies.      | Schema hotové, evaluator engine TODO Opus #598                              |
+| 9   | **Open-source-ready vlastní Go MTA jako moat**                                                                                                                             | Žádná z 10 platforem nemá open-sourceable mail engine. Mailkit closed proprietary. Mailforge `apps/engine` mohl by být open-sourced pro enterprise self-host / on-prem demands → trust signal.                                | Existuje, license decision pending                                          |
+| 10  | **Pricing transparency CZK/EUR + multi-region** + unlimited contacts + AI included + ISO 27001 (Year 2) — anti-enterprise-trap positioning                                 | Targito/Leadhub/SALESmanago/Bloomreach jsou opaque custom pricing. Inxmail má public pricing ale EUR-only. Salesforce Premier 30% surprise.                                                                                   | Marketing/strategic decision, no dev needed                                 |
 
 ### 4.2 Sekundární whitespace
 
@@ -377,22 +388,22 @@ SMS / voice: pass-through cost + 2× markup.
 
 ## 5. Anti-patterns to avoid (z TCO + migration analýz)
 
-| Anti-pattern | Trap | Mailforge alternativa |
-|---|---|---|
-| **Event-based pricing** (Bloomreach) | Customers underestimate event count → upsell trap | Per-contact + per-send hybrid s capped overage |
-| **Auto-upgrade na vyšší tier po 2× překročení limitu** (Constant Contact) | Customer-hostile, často citováno v G2 reviews | Soft cap → email warning → manual upgrade prompt |
-| **Premier Success 30% add-on** (Salesforce) | Hidden Year 2+ cost | Support included v base price |
-| **Cancellation phone-only** (Constant Contact) | Customer-hostile retention | Self-service cancel button visible |
-| **AI jako separate tier** (Salesforce Agentforce, Klaviyo AI add-on) | Customer feels nickel-and-dimed | AI included napříč tiers s usage cap |
-| **All contacts incl. unsubscribed v billing** (Klaviyo Feb 2025) | Pricing trap pro velké databáze | Marketing Contact vs Non-Marketing flag (HubSpot model) |
-| **Per-seat pricing** (HubSpot Pro+) | Discourages collaboration | Unlimited seats v paid tieres |
-| **Mandatory $3K onboarding fee** (HubSpot Pro+ Pro Enterprise) | Akviziční bariéra | Self-service onboarding + optional paid concierge |
-| **Sales-only pricing** (Targito/Leadhub/SALESmanago/Bloomreach) | Friction pro mid-market self-serve | Public pricing až do Enterprise tier |
-| **Vendor-specific AI lock-in** (Klaviyo predictive, Bloomreach Loomi) | Migration = lose AI training | Foundation models (Claude) + portable per-org context |
-| **AMPscript-like proprietary language** (Salesforce) | Non-portable skills | Liquid (industry standard) + optional SSJS-style escape hatch |
-| **5 oddělených produktů** (Brevo Marketing + Sales + Conversations + Phone + CDP) | Confusing pricing, UX overhead | Unified product s modular toggles |
-| **Per-message SMS markup** (Mailchimp/HubSpot/Klaviyo separate SMS) | Surprise costs | Transparent pass-through + 2× markup, no monthly SMS fee |
-| **EU "data center selection" jako paid feature** | GDPR is not a feature | EU data residency default na všech tieres |
+| Anti-pattern                                                                      | Trap                                              | Mailforge alternativa                                         |
+| --------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- |
+| **Event-based pricing** (Bloomreach)                                              | Customers underestimate event count → upsell trap | Per-contact + per-send hybrid s capped overage                |
+| **Auto-upgrade na vyšší tier po 2× překročení limitu** (Constant Contact)         | Customer-hostile, často citováno v G2 reviews     | Soft cap → email warning → manual upgrade prompt              |
+| **Premier Success 30% add-on** (Salesforce)                                       | Hidden Year 2+ cost                               | Support included v base price                                 |
+| **Cancellation phone-only** (Constant Contact)                                    | Customer-hostile retention                        | Self-service cancel button visible                            |
+| **AI jako separate tier** (Salesforce Agentforce, Klaviyo AI add-on)              | Customer feels nickel-and-dimed                   | AI included napříč tiers s usage cap                          |
+| **All contacts incl. unsubscribed v billing** (Klaviyo Feb 2025)                  | Pricing trap pro velké databáze                   | Marketing Contact vs Non-Marketing flag (HubSpot model)       |
+| **Per-seat pricing** (HubSpot Pro+)                                               | Discourages collaboration                         | Unlimited seats v paid tieres                                 |
+| **Mandatory $3K onboarding fee** (HubSpot Pro+ Pro Enterprise)                    | Akviziční bariéra                                 | Self-service onboarding + optional paid concierge             |
+| **Sales-only pricing** (Targito/Leadhub/SALESmanago/Bloomreach)                   | Friction pro mid-market self-serve                | Public pricing až do Enterprise tier                          |
+| **Vendor-specific AI lock-in** (Klaviyo predictive, Bloomreach Loomi)             | Migration = lose AI training                      | Foundation models (Claude) + portable per-org context         |
+| **AMPscript-like proprietary language** (Salesforce)                              | Non-portable skills                               | Liquid (industry standard) + optional SSJS-style escape hatch |
+| **5 oddělených produktů** (Brevo Marketing + Sales + Conversations + Phone + CDP) | Confusing pricing, UX overhead                    | Unified product s modular toggles                             |
+| **Per-message SMS markup** (Mailchimp/HubSpot/Klaviyo separate SMS)               | Surprise costs                                    | Transparent pass-through + 2× markup, no monthly SMS fee      |
+| **EU "data center selection" jako paid feature**                                  | GDPR is not a feature                             | EU data residency default na všech tieres                     |
 
 ---
 
@@ -466,15 +477,19 @@ SMS / voice: pass-through cost + 2× markup.
 ### 7.2 Sub-positioning per persona
 
 **E-commerce manager (CZ/SK SMB):**
+
 > "Skončete s pěti samostatnými nástroji. Email kampaně, SMS reminders, voice survey hovor — všechno z jednoho dashboardu, lokalizované do češtiny i s 7 pády."
 
 **Mid-market retail (V4+):**
+
 > "Targito/Leadhub features za zlomek ceny. Transparent pricing, public tiers, žádný custom sales cycle."
 
 **B2B SaaS (CZ/SK/PL):**
+
 > "Marketing automation + sales sequences + AI voice screening. Pro firmy, které potřebují HubSpot, ale nemůžou si dovolit $5K/mo."
 
 **Agency (CZ/SK):**
+
 > "Multi-account přepínání, white-label režim, per-client billing, partner revenue share. Postaveno pro agentury obsluhující 10+ klientů."
 
 ### 7.3 Anti-positioning (čím Mailforge NE je)
@@ -518,12 +533,14 @@ SMS / voice: pass-through cost + 2× markup.
 ## 9. Klíčové akce — kde začít
 
 ### Krok 1 (P0, before any new feature work)
+
 1. **Diagnostický audit kódu** — `pnpm install && pnpm typecheck && pnpm test && pnpm build` na clean state. Zjistit kolik z 95k řádků reálně prochází tests + build.
 2. **Cleanup git working tree** — projít desítky modifikací, commitnout nebo zrušit, smazat orphaned `apps/number-intel/`.
 3. **Aktualizovat ROADMAP + TODO** — propsat realitu kódu (Mailforge JE Phase 5-6 ne Phase 0). todonow.md 316 položek redukovat na realistické TODO.
 4. **Infrastructure pivot implementace** — Hetzner + Vercel Terraform moduly (viz `infra/PIVOT_AWS_TO_HETZNER.md`).
 
 ### Krok 2 (P0 features pro MVP launch)
+
 5. **Subscription Types model** + Customer Preference Center (GDPR best practice + EU mid-market requirement)
 6. **RFM auto-cohorts** + **Lead scoring engine** (calculated_properties + ClickHouse materialized views — base hotov)
 7. **Frequency cap / Contact Policy** napříč kanály (frequency_rules schema + Redis counter)
@@ -537,6 +554,7 @@ SMS / voice: pass-through cost + 2× markup.
 15. **Multi-account / Agency mode** UI
 
 ### Krok 3 (P0 strategický)
+
 16. **Pricing tier finalizace** — public CZK/EUR/USD tiers
 17. **Brand name lock-in** — Mailforge vs ForgeMsg vs nové
 18. **Beta klient identification** — z PulseUp + Ticketarium network
@@ -575,7 +593,7 @@ SMS / voice: pass-through cost + 2× markup.
 
 ---
 
-*Dokument vytvořen: 2026-05-18*
-*Status: pracovní podklad pro product strategy + backlog priorities*
-*Vlastník: omniascz@gmail.com*
-*Příští revize: po implementaci P0 (Krok 2) sekce 9*
+_Dokument vytvořen: 2026-05-18_
+_Status: pracovní podklad pro product strategy + backlog priorities_
+_Vlastník: omniascz@gmail.com_
+_Příští revize: po implementaci P0 (Krok 2) sekce 9_

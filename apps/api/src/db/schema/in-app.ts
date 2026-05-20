@@ -16,11 +16,7 @@ import {
 
 // ─── Widget type ──────────────────────────────────────────────────────────────
 
-export const inAppWidgetTypeEnum = pgEnum('in_app_widget_type', [
-  'banner',
-  'modal',
-  'slideout',
-]);
+export const inAppWidgetTypeEnum = pgEnum('in_app_widget_type', ['banner', 'modal', 'slideout']);
 
 export const inAppPositionEnum = pgEnum('in_app_position', [
   'top',

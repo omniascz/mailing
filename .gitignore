@@ -37,3 +37,6 @@ docker-compose.override.yml
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+# Auto-generated hook artifact — captures session activity, no source of truth
+**/state/session_log.md

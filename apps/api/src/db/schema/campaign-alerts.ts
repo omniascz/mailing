@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, jsonb, boolean, index, pgEnum } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  jsonb,
+  boolean,
+  index,
+  pgEnum,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { campaigns } from './campaigns.js';
 
@@ -15,7 +24,9 @@ export const alertTypeEnum = pgEnum('alert_type', [
 export const campaignAlerts = pgTable(
   'campaign_alerts',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

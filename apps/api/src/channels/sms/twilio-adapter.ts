@@ -29,11 +29,11 @@ import {
 
 interface TwilioMessageResponse {
   sid: string;
-  status: string;    // "queued" | "sent" | "delivered" | "failed" | "undelivered"
+  status: string; // "queued" | "sent" | "delivered" | "failed" | "undelivered"
   to: string;
   from: string;
   body: string;
-  price?: string;   // negative number like "-0.0075"
+  price?: string; // negative number like "-0.0075"
   price_unit?: string;
   error_code?: number | null;
   error_message?: string | null;
@@ -41,7 +41,7 @@ interface TwilioMessageResponse {
 
 interface TwilioStatusCallbackPayload {
   MessageSid: string;
-  MessageStatus: string;  // "queued" | "sent" | "delivered" | "failed" | "undelivered" | "read"
+  MessageStatus: string; // "queued" | "sent" | "delivered" | "failed" | "undelivered" | "read"
   To: string;
   From: string;
   ErrorCode?: string;
@@ -61,8 +61,8 @@ const ERROR_CODE_MAP: Record<number, { code: string; retryable: boolean }> = {
   21211: { code: 'INVALID_NUMBER', retryable: false },
   21212: { code: 'INVALID_NUMBER', retryable: false },
   21408: { code: 'PERMISSION_DENIED', retryable: false },
-  21610: { code: 'BLACKLISTED', retryable: false },       // Message blocked
-  21614: { code: 'NOT_SMS_CAPABLE', retryable: false },   // Not an SMS number
+  21610: { code: 'BLACKLISTED', retryable: false }, // Message blocked
+  21614: { code: 'NOT_SMS_CAPABLE', retryable: false }, // Not an SMS number
   30003: { code: 'UNREACHABLE', retryable: true },
   30005: { code: 'UNKNOWN_DEST', retryable: false },
   30006: { code: 'LANDLINE', retryable: false },
@@ -85,9 +85,9 @@ const STATUS_MAP: Record<string, DeliveryStatusType> = {
 export interface TwilioConfig {
   accountSid: string;
   authToken: string;
-  fromNumber: string;             // E.164 default from number
+  fromNumber: string; // E.164 default from number
   statusCallbackBaseUrl?: string; // our API base URL
-  messagingServiceSid?: string;   // optional — for Copilot / pool
+  messagingServiceSid?: string; // optional — for Copilot / pool
 }
 
 export class TwilioSmsAdapter extends BaseChannelAdapter {
@@ -107,7 +107,11 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
 
   async send(message: UnifiedMessage, recipient: Recipient): Promise<DeliveryResult> {
     if (message.content.kind !== 'sms') {
-      throw this.wrapError({ code: 'WRONG_CONTENT', message: 'Expected sms content', retryable: false });
+      throw this.wrapError({
+        code: 'WRONG_CONTENT',
+        message: 'Expected sms content',
+        retryable: false,
+      });
     }
 
     const { body, senderId } = message.content;
@@ -120,7 +124,10 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
     } as Record<string, string>);
 
     if (this.cfg.statusCallbackBaseUrl) {
-      params.set('StatusCallback', `${this.cfg.statusCallbackBaseUrl}/api/v1/sms/webhooks/twilio/status`);
+      params.set(
+        'StatusCallback',
+        `${this.cfg.statusCallbackBaseUrl}/api/v1/sms/webhooks/twilio/status`,
+      );
     }
     if (this.cfg.messagingServiceSid) {
       params.set('MessagingServiceSid', this.cfg.messagingServiceSid);
@@ -139,13 +146,17 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
         signal: AbortSignal.timeout(30_000),
       });
 
-      const json = (await httpResp.json()) as TwilioMessageResponse & { code?: number; message?: string };
+      const json = (await httpResp.json()) as TwilioMessageResponse & {
+        code?: number;
+        message?: string;
+      };
 
       if (!httpResp.ok) {
         const errorCode = json.code ?? json.error_code;
-        const mapped = typeof errorCode === 'number'
-          ? (ERROR_CODE_MAP[errorCode] ?? { code: 'PROVIDER_ERROR', retryable: false })
-          : { code: 'HTTP_ERROR', retryable: httpResp.status >= 500 };
+        const mapped =
+          typeof errorCode === 'number'
+            ? (ERROR_CODE_MAP[errorCode] ?? { code: 'PROVIDER_ERROR', retryable: false })
+            : { code: 'HTTP_ERROR', retryable: httpResp.status >= 500 };
 
         throw this.wrapError({
           code: mapped.code,
@@ -158,7 +169,11 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
       resp = json;
     } catch (err) {
       if ((err as Error).name === 'ChannelAdapterError') throw err;
-      throw this.wrapError({ code: 'NETWORK_ERROR', message: (err as Error).message, retryable: true });
+      throw this.wrapError({
+        code: 'NETWORK_ERROR',
+        message: (err as Error).message,
+        retryable: true,
+      });
     }
 
     const cost = resp.price ? Math.abs(parseFloat(resp.price)) : undefined;
@@ -200,7 +215,11 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
       };
     } catch (err) {
       if ((err as Error).name === 'ChannelAdapterError') throw err;
-      throw this.wrapError({ code: 'NETWORK_ERROR', message: (err as Error).message, retryable: true });
+      throw this.wrapError({
+        code: 'NETWORK_ERROR',
+        message: (err as Error).message,
+        retryable: true,
+      });
     }
   }
 
@@ -208,7 +227,12 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
 
   async estimateCost(message: UnifiedMessage, recipients: Recipient[]): Promise<CostEstimate> {
     if (message.content.kind !== 'sms') {
-      return { totalCost: 0, currency: 'USD', perRecipientCost: 0, recipientCount: recipients.length };
+      return {
+        totalCost: 0,
+        currency: 'USD',
+        perRecipientCost: 0,
+        recipientCount: recipients.length,
+      };
     }
 
     const parts = this.segmentCount(message.content.body);
@@ -238,7 +262,12 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
         content: p.MessageStatus,
         receivedAt: new Date(),
         providerMessageId: p.MessageSid,
-        metadata: { type: 'status_callback', status: p.MessageStatus, errorCode: p.ErrorCode, raw: payload },
+        metadata: {
+          type: 'status_callback',
+          status: p.MessageStatus,
+          errorCode: p.ErrorCode,
+          raw: payload,
+        },
       };
     }
 
@@ -269,7 +298,10 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
         errors.push({ field: 'body', message: 'SMS body exceeds 1600 characters (10 segments)' });
       }
       if (this.segmentCount(body) > 3) {
-        warnings.push({ field: 'body', message: 'Message spans more than 3 SMS segments; cost will multiply' });
+        warnings.push({
+          field: 'body',
+          message: 'Message spans more than 3 SMS segments; cost will multiply',
+        });
       }
     }
 
@@ -280,7 +312,7 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
 
   getChannelLimits(): RateLimits {
     return {
-      maxPerSecond: 100,       // Twilio A2P 10DLC
+      maxPerSecond: 100, // Twilio A2P 10DLC
       maxPerMinute: 3_000,
       maxPerHour: 100_000,
       maxPerDay: 2_000_000,
@@ -291,7 +323,9 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
 
   private needsUnicode(text: string): boolean {
     // eslint-disable-next-line no-control-regex
-    return /[^\x00-\x7F£¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1BÆæßÉ !\"#$%&'()*+,\-./:;<=>?¡ÄÖÑÜà§¿äöñüà]/.test(text);
+    return /[^\x00-\x7F£¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1BÆæßÉ !"#$%&'()*+,\-./:;<=>?¡ÄÖÑÜà§¿äöñüà]/.test(
+      text,
+    );
   }
 
   private segmentCount(text: string): number {

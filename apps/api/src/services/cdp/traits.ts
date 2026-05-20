@@ -45,10 +45,7 @@ const ltvTrait: TraitDefinition<number> = {
     const [row] = await db
       .select({ total: sql<string>`COALESCE(SUM(${revenueEvents.amount}), 0)::text` })
       .from(revenueEvents)
-      .where(and(
-        eq(revenueEvents.orgId, orgId),
-        eq(revenueEvents.contactId, contactId),
-      ));
+      .where(and(eq(revenueEvents.orgId, orgId), eq(revenueEvents.contactId, contactId)));
     return Number(row?.total ?? 0);
   },
 };
@@ -60,10 +57,7 @@ const totalOrdersTrait: TraitDefinition<number> = {
     const [row] = await db
       .select({ count: sql<string>`COUNT(*)::text` })
       .from(revenueEvents)
-      .where(and(
-        eq(revenueEvents.orgId, orgId),
-        eq(revenueEvents.contactId, contactId),
-      ));
+      .where(and(eq(revenueEvents.orgId, orgId), eq(revenueEvents.contactId, contactId)));
     return Number(row?.count ?? 0);
   },
 };
@@ -75,10 +69,7 @@ const lastPurchaseAtTrait: TraitDefinition<string> = {
     const [row] = await db
       .select({ occurredAt: revenueEvents.occurredAt })
       .from(revenueEvents)
-      .where(and(
-        eq(revenueEvents.orgId, orgId),
-        eq(revenueEvents.contactId, contactId),
-      ))
+      .where(and(eq(revenueEvents.orgId, orgId), eq(revenueEvents.contactId, contactId)))
       .orderBy(sql`${revenueEvents.occurredAt} DESC`)
       .limit(1);
     return row?.occurredAt ? row.occurredAt.toISOString() : undefined;
@@ -92,10 +83,7 @@ const avgOrderValueTrait: TraitDefinition<number> = {
     const [row] = await db
       .select({ avg: sql<string>`COALESCE(AVG(${revenueEvents.amount}), 0)::text` })
       .from(revenueEvents)
-      .where(and(
-        eq(revenueEvents.orgId, orgId),
-        eq(revenueEvents.contactId, contactId),
-      ));
+      .where(and(eq(revenueEvents.orgId, orgId), eq(revenueEvents.contactId, contactId)));
     return Number(row?.avg ?? 0);
   },
 };
@@ -110,10 +98,7 @@ const emailEngagementRateTrait: TraitDefinition<number> = {
         sends: sql<string>`COUNT(*) FILTER (WHERE ${emailEvents.eventType} = 'sent')::text`,
       })
       .from(emailEvents)
-      .where(and(
-        eq(emailEvents.orgId, orgId),
-        eq(emailEvents.contactId, contactId),
-      ));
+      .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId)));
     const opens = Number(row?.opens ?? 0);
     const sends = Number(row?.sends ?? 0);
     if (sends === 0) return 0;
@@ -128,10 +113,7 @@ const lastPageViewAtTrait: TraitDefinition<string> = {
     const [row] = await db
       .select({ occurredAt: sitePageViews.occurredAt })
       .from(sitePageViews)
-      .where(and(
-        eq(sitePageViews.orgId, orgId),
-        eq(sitePageViews.contactId, contactId),
-      ))
+      .where(and(eq(sitePageViews.orgId, orgId), eq(sitePageViews.contactId, contactId)))
       .orderBy(sql`${sitePageViews.occurredAt} DESC`)
       .limit(1);
     return row?.occurredAt ? row.occurredAt.toISOString() : undefined;
@@ -147,10 +129,7 @@ const daysSinceLastPurchaseTrait: TraitDefinition<number> = {
         days: sql<string>`EXTRACT(DAY FROM (now() - MAX(${revenueEvents.occurredAt})))::text`,
       })
       .from(revenueEvents)
-      .where(and(
-        eq(revenueEvents.orgId, orgId),
-        eq(revenueEvents.contactId, contactId),
-      ));
+      .where(and(eq(revenueEvents.orgId, orgId), eq(revenueEvents.contactId, contactId)));
     const val = row?.days;
     return val != null ? Math.floor(Number(val)) : undefined;
   },
@@ -284,10 +263,7 @@ export async function recomputeAllTraits(
  * Called from the revenue-event write path to keep LTV fresh for a single
  * contact without running the whole trait set.
  */
-export async function bumpCommerceTraits(
-  orgId: string,
-  contactId: string,
-): Promise<void> {
+export async function bumpCommerceTraits(orgId: string, contactId: string): Promise<void> {
   const values: Record<string, unknown> = {};
   values.ltv = await ltvTrait.compute(orgId, contactId);
   values.total_orders = await totalOrdersTrait.compute(orgId, contactId);
@@ -321,7 +297,9 @@ export async function bumpCommerceTraits(
   await invalidateProfile(orgId, contactId);
 }
 
-export async function getTraitDefinitions(orgId: string): Promise<Array<{ key: string; label: string }>> {
+export async function getTraitDefinitions(
+  orgId: string,
+): Promise<Array<{ key: string; label: string }>> {
   return listTraitDefinitions(orgId).map((t) => ({ key: t.key, label: t.label }));
 }
 

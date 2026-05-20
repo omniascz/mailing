@@ -11,6 +11,7 @@
 > **Velikost:** **Customer base examples:** Microsoft, Etsy, HBO Max, Grubhub, McDonald's, Burger King, NBA, Panera Bread, Erewhon, Wellhub, Tonies, Bazaar.
 >
 > **Klíčové diferenciátory:**
+>
 > - **BrazeAI™ Suite** – AI-native orchestration (NE jen AI-assisted!)
 > - **13 digital channels** podpora (z jediné platformy)
 > - **Real-time stream processing** (NE batch!)
@@ -31,7 +32,7 @@
 > - **13-15% revenue invested in R&D**
 > - **Q3 FY2026 BrazeAI Decisioning Studio:** $4.8M revenue contribution
 >
-> **Filozofie:** *"Be Absolutely Engaging™"* – Braze umožňuje brands turn action into interaction through autonomous, 1:1 personalized experiences.
+> **Filozofie:** _"Be Absolutely Engaging™"_ – Braze umožňuje brands turn action into interaction through autonomous, 1:1 personalized experiences.
 
 ---
 
@@ -86,16 +87,19 @@
 ### Filozofie produktu
 
 Per oficiální (G2):
-> *"Braze is the leading customer engagement platform that empowers brands to Be Absolutely Engaging.™ Braze helps brands deliver great customer experiences that drive value both for consumers and for their businesses. Built on a foundation of composable intelligence, BrazeAI™ allows marketers to combine and activate AI agents, models, and features at every touchpoint throughout the Braze Customer Engagement Platform for smarter, faster, and more meaningful customer engagement."*
 
-> *"From cross-channel messaging and journey orchestration to AI-powered decisioning and optimization, Braze enables companies to turn action into interaction through autonomous, 1:1 personalized experiences."*
+> _"Braze is the leading customer engagement platform that empowers brands to Be Absolutely Engaging.™ Braze helps brands deliver great customer experiences that drive value both for consumers and for their businesses. Built on a foundation of composable intelligence, BrazeAI™ allows marketers to combine and activate AI agents, models, and features at every touchpoint throughout the Braze Customer Engagement Platform for smarter, faster, and more meaningful customer engagement."_
+
+> _"From cross-channel messaging and journey orchestration to AI-powered decisioning and optimization, Braze enables companies to turn action into interaction through autonomous, 1:1 personalized experiences."_
 
 ### Co Braze JE
 
 Per oficiální:
-> *"Braze is a customer engagement platform that powers lasting connections between consumers and brands they love. Braze allows any marketer to collect and take action on any amount of data from any source, so they can creatively engage with customers in real time, across channels from one platform."*
+
+> _"Braze is a customer engagement platform that powers lasting connections between consumers and brands they love. Braze allows any marketer to collect and take action on any amount of data from any source, so they can creatively engage with customers in real time, across channels from one platform."_
 
 **Klíčové:**
+
 - **Customer Engagement Platform** (NE marketing automation tool)
 - **Real-time** focus (NE batch processing)
 - **Cross-channel orchestration** (13 channels z jediné platformy)
@@ -120,7 +124,7 @@ Cílový profil:
 
 ### Per GetVero analysis
 
-> *"Your MAU count is in the hundreds of thousands or millions and you need real-time personalization at that scale. You need RCS, LINE, or WhatsApp Commerce — channels Customer.io doesn't offer. BrazeAI Decisioning Studio is a genuine requirement, not just a nice-to-have. You have (or plan to hire) a dedicated marketing operations team. You're in retail, media, gaming, travel, or financial services at enterprise scale. Your budget is $60K+/year and your implementation timeline is flexible."*
+> _"Your MAU count is in the hundreds of thousands or millions and you need real-time personalization at that scale. You need RCS, LINE, or WhatsApp Commerce — channels Customer.io doesn't offer. BrazeAI Decisioning Studio is a genuine requirement, not just a nice-to-have. You have (or plan to hire) a dedicated marketing operations team. You're in retail, media, gaming, travel, or financial services at enterprise scale. Your budget is $60K+/year and your implementation timeline is flexible."_
 
 ### Per Research.com use cases
 
@@ -233,7 +237,8 @@ testing to optimize campaigns, and increase customer lifetime value.
 ### 2.1 Value-based pricing (zveřejněno Jan 29, 2026)
 
 Per Vendr:
-> *"Braze pricing is structured around monthly active users (MAUs) and message volume, with costs scaling based on your audience size and engagement intensity. The platform offers multiple tiers—typically Core, Pro, and Enterprise—each unlocking additional features, channels, and support levels."*
+
+> _"Braze pricing is structured around monthly active users (MAUs) and message volume, with costs scaling based on your audience size and engagement intensity. The platform offers multiple tiers—typically Core, Pro, and Enterprise—each unlocking additional features, channels, and support levels."_
 
 ### 2.2 Pricing dimensions
 
@@ -247,6 +252,7 @@ Braze value-based pricing dimensions:
 ### 2.3 Tier overview
 
 #### Braze Core (entry-level)
+
 - Email
 - Push notifications
 - In-app messaging
@@ -255,6 +261,7 @@ Braze value-based pricing dimensions:
 - **Suitable for:** Companies beginning customer engagement journey
 
 #### Braze Pro (mid-tier)
+
 - Canvas Flow (multi-step journey orchestration)
 - Braze Intelligence Suite (predictive analytics, send-time optimization)
 - SMS channel
@@ -264,6 +271,7 @@ Braze value-based pricing dimensions:
 - **Pricing:** **$80,000-$250,000/year** (per Vendr)
 
 #### Braze Enterprise (top-tier)
+
 - Vše z Pro
 - **Braze Currents** (real-time data streaming)
 - Multiple workspaces
@@ -276,6 +284,7 @@ Braze value-based pricing dimensions:
 ### 2.4 Vendr enterprise data
 
 Per Vendr:
+
 - **Enterprise (2M+ MAUs):** $300K-$1M+/year
 - **Mid-market (500K-1.5M MAUs):** Pro tier negotiation
 - **Implementation:** $25K-$100K+ one-time
@@ -283,14 +292,16 @@ Per Vendr:
 
 ### 2.5 Per AIChief
 
-> *"Braze does not offer a free plan, but it operates on custom pricing based on usage volume, feature access, and integration requirements."*
+> _"Braze does not offer a free plan, but it operates on custom pricing based on usage volume, feature access, and integration requirements."_
 
 ### 2.6 Data point billing
 
 Per GetVero:
-> *"Braze bills on data points. Every custom event, attribute, or purchase logged to a user profile counts as a billable unit. Standard engagement data — email opens, push clicks — doesn't count, but custom data does. Teams with high-frequency event tracking can burn through their allocation faster than expected."*
+
+> _"Braze bills on data points. Every custom event, attribute, or purchase logged to a user profile counts as a billable unit. Standard engagement data — email opens, push clicks — doesn't count, but custom data does. Teams with high-frequency event tracking can burn through their allocation faster than expected."_
 
 ⚠️ **Critical billing detail:**
+
 - **Standard engagement data:** Free (opens, clicks)
 - **Custom data:** Billable (custom events, attributes, purchases)
 - **High-frequency event tracking:** Risk of overage
@@ -298,6 +309,7 @@ Per GetVero:
 ### 2.7 Pricing factors
 
 Per Vendr:
+
 ```
 Cost factors:
 - Platform fee (recurring base for platform access + baseline MAU)
@@ -327,25 +339,26 @@ Common add-ons:
 ### 2.9 Negotiation tactics
 
 Per Vendr:
-> *"Multi-year commitments and competitive evaluations commonly yield discounts off list pricing. Buyers who negotiate MAU overage rates and message volume caps upfront often achieve more predictable total costs."*
 
-> *"In Vendr's dataset, buyers with 500K–1.5M MAUs on Pro tier contracts often secure pricing through volume-based negotiation and competitive leverage."*
+> _"Multi-year commitments and competitive evaluations commonly yield discounts off list pricing. Buyers who negotiate MAU overage rates and message volume caps upfront often achieve more predictable total costs."_
+
+> _"In Vendr's dataset, buyers with 500K–1.5M MAUs on Pro tier contracts often secure pricing through volume-based negotiation and competitive leverage."_
 
 ### 2.10 Vs. competitors (Vendr data)
 
-| Vendor | Approach | Pricing model |
-|---|---|---|
-| **Braze** | CEP leader | Value-based: Platform + MAUs + Credits |
-| **Iterable** | Competitive alt | MAU-based, often more cost-effective |
-| **Klaviyo** | DTC e-commerce | Contact-based |
-| **Customer.io** | Product team-friendly | No data point limits |
-| **Salesforce MC** | Enterprise suite | Custom enterprise |
+| Vendor            | Approach              | Pricing model                          |
+| ----------------- | --------------------- | -------------------------------------- |
+| **Braze**         | CEP leader            | Value-based: Platform + MAUs + Credits |
+| **Iterable**      | Competitive alt       | MAU-based, often more cost-effective   |
+| **Klaviyo**       | DTC e-commerce        | Contact-based                          |
+| **Customer.io**   | Product team-friendly | No data point limits                   |
+| **Salesforce MC** | Enterprise suite      | Custom enterprise                      |
 
 ### 2.11 G2 reviewer concerns
 
-> *"As we lean more into Agentic workflows and AI-driven orchestration, the credit-based consumption or 'AI-utility' pricing can become unpredictable."*
+> _"As we lean more into Agentic workflows and AI-driven orchestration, the credit-based consumption or 'AI-utility' pricing can become unpredictable."_
 
-> *"Pricing has not been improved yet, the AI integration in in testing phase and there are some bugs in the outpur, Recommend to human verify the outputs."*
+> _"Pricing has not been improved yet, the AI integration in in testing phase and there are some bugs in the outpur, Recommend to human verify the outputs."_
 
 ---
 
@@ -354,16 +367,19 @@ Per Vendr:
 ### 3.1 BrazeAI™ Suite (composable intelligence)
 
 Per oficiální:
-> *"Built on a foundation of composable intelligence, BrazeAI™ allows marketers to combine and activate AI agents, models, and features at every touchpoint throughout the Braze Customer Engagement Platform."*
+
+> _"Built on a foundation of composable intelligence, BrazeAI™ allows marketers to combine and activate AI agents, models, and features at every touchpoint throughout the Braze Customer Engagement Platform."_
 
 ⚠️ **AI-native** (NE jen AI features přidaný k existing platformě)
 
 ### 3.2 13 digital channels
 
 Per FinancialContent:
-> *"Customer Engagement Platform (CEP): The core offering, providing real-time personalization and cross-channel messaging across 13 digital channels (mobile, web, email, SMS, connected TV, etc.)."*
+
+> _"Customer Engagement Platform (CEP): The core offering, providing real-time personalization and cross-channel messaging across 13 digital channels (mobile, web, email, SMS, connected TV, etc.)."_
 
 ⚠️ **Most channels v kategorii:**
+
 - Vs. Klaviyo: ~6 channels
 - Vs. Mailchimp: ~5 channels
 - Vs. Customer.io: ~8 channels
@@ -372,12 +388,15 @@ Per FinancialContent:
 ### 3.3 Real-time stream processing
 
 Per FinancialContent:
-> *"Real-Time Data Processing: Proprietary stream processing architecture for instant data processing, enabling truly real-time engagement."*
+
+> _"Real-Time Data Processing: Proprietary stream processing architecture for instant data processing, enabling truly real-time engagement."_
 
 Per oficiální:
-> *"Feel confident with a platform that operates with sub-second latency, regardless of your data and send volumes."*
+
+> _"Feel confident with a platform that operates with sub-second latency, regardless of your data and send volumes."_
 
 ⚠️ **NE batch processing** (jako mnoho ESP):
+
 - **Sub-second latency**
 - **Stream architecture**
 - **Truly real-time** trigger to delivery
@@ -386,14 +405,17 @@ Per oficiální:
 ### 3.4 Canvas (most mature journey builder)
 
 Per GetVero:
-> *"Braze Canvas is the most mature journey builder in the category. It includes Action Paths, Audience Paths, Experiment Paths, Delay Steps, and Message Steps. Canvas handles the most complex multi-channel, multi-step journeys that enterprise marketing teams run."*
+
+> _"Braze Canvas is the most mature journey builder in the category. It includes Action Paths, Audience Paths, Experiment Paths, Delay Steps, and Message Steps. Canvas handles the most complex multi-channel, multi-step journeys that enterprise marketing teams run."_
 
 ### 3.5 BrazeAI Decisioning Studio (vs. A/B testing)
 
 Per G2 reviewer:
-> *"Braze continues to outpace the market by shifting from simple automation to true AI-native orchestration. In 2026, the standout feature is definitely the BrazeAI™ Decisioning Studio. Unlike old-school A/B testing, it uses reinforcement learning to autonomously decide the best channel, timing, and offer for each user in real-time."*
+
+> _"Braze continues to outpace the market by shifting from simple automation to true AI-native orchestration. In 2026, the standout feature is definitely the BrazeAI™ Decisioning Studio. Unlike old-school A/B testing, it uses reinforcement learning to autonomously decide the best channel, timing, and offer for each user in real-time."_
 
 ⚠️ **Reinforcement learning** místo:
+
 - Manual A/B testing
 - Pre-set winner selection
 - Static decision rules
@@ -401,9 +423,11 @@ Per G2 reviewer:
 ### 3.6 OfferFit acquisition ($303.2M)
 
 Per FinancialContent:
-> *"A significant growth driver is Braze's strategic focus on artificial intelligence (AI), exemplified by the acquisition of OfferFit for approximately $303.2 million, which bolsters its AI capabilities."*
+
+> _"A significant growth driver is Braze's strategic focus on artificial intelligence (AI), exemplified by the acquisition of OfferFit for approximately $303.2 million, which bolsters its AI capabilities."_
 
 ⚠️ **Major AI acquisition 2025:**
+
 - **OfferFit** = AI experimentation platform
 - **$303.2M** acquisition value
 - **Agentic AI direction** strengthened
@@ -412,18 +436,22 @@ Per FinancialContent:
 ### 3.7 BrazeAI Q3 FY2026 revenue impact
 
 Per FinancialContent:
-> *"BrazeAI Decisioning Studio contributed $4.8 million in revenue during Q3 FY2026."*
+
+> _"BrazeAI Decisioning Studio contributed $4.8 million in revenue during Q3 FY2026."_
 
 ⚠️ **AI monetization** validated:
+
 - **$4.8M/quarter** just od Decisioning Studio
 - **AI-utility pricing** model working
 
 ### 3.8 Connected Content
 
 Per Gartner reviewer:
-> *"Canvas with all the messaging steps available, SQL Query Builder with AI assistant, Drag and Drop editor, duplication between different workspaces, Connected Content, Catalogues, API-Triggered messaging"*
+
+> _"Canvas with all the messaging steps available, SQL Query Builder with AI assistant, Drag and Drop editor, duplication between different workspaces, Connected Content, Catalogues, API-Triggered messaging"_
 
 **Connected Content:**
+
 - **API-driven personalization**
 - **Real-time content from APIs**
 - **Dynamic content blocks**
@@ -431,9 +459,11 @@ Per Gartner reviewer:
 ### 3.9 Zero-copy Canvas Triggers (2025)
 
 Per GetVero:
-> *"Braze introduced Zero-copy Canvas Triggers in 2025 for direct Snowflake and BigQuery segmentation."*
+
+> _"Braze introduced Zero-copy Canvas Triggers in 2025 for direct Snowflake and BigQuery segmentation."_
 
 ⚠️ **Enterprise data warehouse direct:**
+
 - **Snowflake** direct queries
 - **BigQuery** direct queries
 - **No data duplication**
@@ -441,23 +471,23 @@ Per GetVero:
 
 ### 3.10 Vs. konkurence comparison
 
-| Aspect | Braze | Klaviyo | Customer.io | Salesforce MC | Iterable |
-|---|---|---|---|---|---|
-| **Focus** | B2C / mobile-first CEP | DTC e-commerce | Product team-friendly | Enterprise suite | Cross-channel |
-| **Channels** | **13** | 6 | 8 | 10+ | 8 |
-| **Architecture** | **Stream (real-time)** | Stream | Stream | Batch + stream | Stream |
-| **Journey builder** | **Canvas (most mature)** | Flow | Journeys | Journey Builder | Workflow Studio |
-| **AI native** | **Yes (BrazeAI Suite)** | Klaviyo AI | LLM actions | Einstein | Workflow AI |
-| **Reinforcement learning** | **✅ Decisioning Studio** | ❌ | ❌ | Limited | ❌ |
-| **AI Agents** | **✅ Agent Console** | ❌ | ❌ | ❌ | ❌ |
-| **MAU billing** | ✅ + Credits + Data points | Contacts | No limits | Custom | MAU |
-| **Data warehouse direct** | **✅ Zero-copy Snowflake/BigQuery** | Limited | Limited | Limited | Limited |
-| **Mobile SDK** | **✅ Mature (10+ years)** | Limited | ✅ | ✅ | ✅ |
-| **WhatsApp Commerce** | **✅** | Limited | ❌ | ✅ | Limited |
-| **RCS** | **✅** | ❌ | ❌ | ✅ | ❌ |
-| **LINE** | **✅** | ❌ | ❌ | ✅ | ❌ |
-| **Public company** | ✅ NASDAQ: BRZE | ✅ NYSE: KVYO | ❌ Private | ✅ CRM | ❌ Private |
-| **Customer profile** | Enterprise B2C | DTC SMB→Mid | Product teams | Enterprise B2B+ | Mid→Enterprise |
+| Aspect                     | Braze                               | Klaviyo        | Customer.io           | Salesforce MC    | Iterable        |
+| -------------------------- | ----------------------------------- | -------------- | --------------------- | ---------------- | --------------- |
+| **Focus**                  | B2C / mobile-first CEP              | DTC e-commerce | Product team-friendly | Enterprise suite | Cross-channel   |
+| **Channels**               | **13**                              | 6              | 8                     | 10+              | 8               |
+| **Architecture**           | **Stream (real-time)**              | Stream         | Stream                | Batch + stream   | Stream          |
+| **Journey builder**        | **Canvas (most mature)**            | Flow           | Journeys              | Journey Builder  | Workflow Studio |
+| **AI native**              | **Yes (BrazeAI Suite)**             | Klaviyo AI     | LLM actions           | Einstein         | Workflow AI     |
+| **Reinforcement learning** | **✅ Decisioning Studio**           | ❌             | ❌                    | Limited          | ❌              |
+| **AI Agents**              | **✅ Agent Console**                | ❌             | ❌                    | ❌               | ❌              |
+| **MAU billing**            | ✅ + Credits + Data points          | Contacts       | No limits             | Custom           | MAU             |
+| **Data warehouse direct**  | **✅ Zero-copy Snowflake/BigQuery** | Limited        | Limited               | Limited          | Limited         |
+| **Mobile SDK**             | **✅ Mature (10+ years)**           | Limited        | ✅                    | ✅               | ✅              |
+| **WhatsApp Commerce**      | **✅**                              | Limited        | ❌                    | ✅               | Limited         |
+| **RCS**                    | **✅**                              | ❌             | ❌                    | ✅               | ❌              |
+| **LINE**                   | **✅**                              | ❌             | ❌                    | ✅               | ❌              |
+| **Public company**         | ✅ NASDAQ: BRZE                     | ✅ NYSE: KVYO  | ❌ Private            | ✅ CRM           | ❌ Private      |
+| **Customer profile**       | Enterprise B2C                      | DTC SMB→Mid    | Product teams         | Enterprise B2B+  | Mid→Enterprise  |
 
 ---
 
@@ -466,9 +496,10 @@ Per GetVero:
 ### 4.1 BrazeAI™ overview
 
 Per oficiální:
-> *"AI is everywhere—turn it into advantage. With Braze and BrazeAI™, you create faster, test smarter, and keep customer engagement personal at every step."*
 
-> *"Unify and activate your data in real time as fuel for BrazeAI™ to help anticipate customer behavior and to deliver relevant, impactful experiences—all without relying on technical teams."*
+> _"AI is everywhere—turn it into advantage. With Braze and BrazeAI™, you create faster, test smarter, and keep customer engagement personal at every step."_
+
+> _"Unify and activate your data in real time as fuel for BrazeAI™ to help anticipate customer behavior and to deliver relevant, impactful experiences—all without relying on technical teams."_
 
 ### 4.2 BrazeAI components
 
@@ -528,32 +559,37 @@ BrazeAI Suite (2026):
 ### 4.3 Launched at Forge 2025
 
 Per GetVero:
-> *"Braze launched three new AI products at Forge 2025:
+
+> \*"Braze launched three new AI products at Forge 2025:
+>
 > - BrazeAI Agent Console — create custom agents inside Canvas for content generation, data enrichment, and intelligent orchestration
 > - BrazeAI Decisioning Studio — replaces A/B testing with continuous AI personalization that optimizes toward any metric automatically
-> - BrazeAI Operator — a conversational, natural-language interface for building campaigns and querying data"*
+> - BrazeAI Operator — a conversational, natural-language interface for building campaigns and querying data"\*
 
 ⚠️ **Major 2025 launch** = current 2026 standard.
 
 ### 4.4 Shift toward AI-managed engagement
 
 Per GetVero:
-> *"The Intelligence Suite also includes Intelligent Timing and Intelligent Selection for Canvas. Intelligent Timing predicts optimal send times per user; Intelligent Selection auto-routes users to winning journey variants. Together, they represent a shift toward AI-managed engagement rather than AI-assisted campaign creation."*
+
+> _"The Intelligence Suite also includes Intelligent Timing and Intelligent Selection for Canvas. Intelligent Timing predicts optimal send times per user; Intelligent Selection auto-routes users to winning journey variants. Together, they represent a shift toward AI-managed engagement rather than AI-assisted campaign creation."_
 
 ⚠️ **AI-managed** ≠ **AI-assisted**:
+
 - AI-assisted: human builds, AI helps
 - **AI-managed: AI autonomously decides + executes**
 - Reinforcement learning self-improves
 
 ### 4.5 G2 reviewer feedback
 
-> *"Braze has integrate with AI into the platform and made our work much more easier by identifying new market opportunities and tailoring our marketing content based on the target segment which makes it more engaging for the users."*
+> _"Braze has integrate with AI into the platform and made our work much more easier by identifying new market opportunities and tailoring our marketing content based on the target segment which makes it more engaging for the users."_
 
-> *"The addition of AI Agents for content QA and localization has also streamlined our global operations, ensuring brand consistency across 10+ languages without manual bottlenecks."*
+> _"The addition of AI Agents for content QA and localization has also streamlined our global operations, ensuring brand consistency across 10+ languages without manual bottlenecks."_
 
 ### 4.6 AI revenue contribution
 
 Per FinancialContent:
+
 - **BrazeAI Decisioning Studio Q3 FY2026:** **$4.8M revenue**
 - **AI products monetizing actively**
 
@@ -564,10 +600,12 @@ Per FinancialContent:
 ### 5.1 Core concept
 
 Per GetVero:
-> *"BrazeAI Decisioning Studio — replaces A/B testing with continuous AI personalization that optimizes toward any metric automatically"*
+
+> _"BrazeAI Decisioning Studio — replaces A/B testing with continuous AI personalization that optimizes toward any metric automatically"_
 
 Per FinancialContent:
-> *"BrazeAI Decisioning Studio: Utilizes reinforcement learning for autonomous campaign optimization based on KPIs."*
+
+> _"BrazeAI Decisioning Studio: Utilizes reinforcement learning for autonomous campaign optimization based on KPIs."_
 
 ### 5.2 Reinforcement learning principle
 
@@ -621,7 +659,7 @@ Toward any metric:
 
 ### 5.4 Per G2 reviewer
 
-> *"In 2026, the standout feature is definitely the BrazeAI™ Decisioning Studio. Unlike old-school A/B testing, it uses reinforcement learning to autonomously decide the best channel, timing, and offer for each user in real-time."*
+> _"In 2026, the standout feature is definitely the BrazeAI™ Decisioning Studio. Unlike old-school A/B testing, it uses reinforcement learning to autonomously decide the best channel, timing, and offer for each user in real-time."_
 
 ### 5.5 Use case examples
 
@@ -659,6 +697,7 @@ Example 3: Onboarding
 ### 5.6 Vendr context
 
 Per Vendr:
+
 - **BrazeAI Decisioning Studio** = Pro tier+ feature
 - **Credit-based** pricing
 - **Additional cost** beyond base platform
@@ -666,6 +705,7 @@ Per Vendr:
 ### 5.7 OfferFit integration
 
 Per FinancialContent:
+
 - **OfferFit acquisition $303.2M (2025)**
 - **OfferFit** = reinforcement learning experimentation
 - **Strengthens Decisioning Studio**
@@ -678,10 +718,12 @@ Per FinancialContent:
 ### 6.1 Concept
 
 Per FinancialContent:
-> *"BrazeAI Agent Console: Allows creation and deployment of custom AI agents for automated workflows."*
+
+> _"BrazeAI Agent Console: Allows creation and deployment of custom AI agents for automated workflows."_
 
 Per GetVero:
-> *"BrazeAI Agent Console — create custom agents inside Canvas for content generation, data enrichment, and intelligent orchestration"*
+
+> _"BrazeAI Agent Console — create custom agents inside Canvas for content generation, data enrichment, and intelligent orchestration"_
 
 ### 6.2 What agents can do
 
@@ -724,7 +766,7 @@ Canvas journey s AI Agent step:
 
 ### 6.4 Per G2 reviewer
 
-> *"The addition of AI Agents for content QA and localization has also streamlined our global operations, ensuring brand consistency across 10+ languages without manual bottlenecks."*
+> _"The addition of AI Agents for content QA and localization has also streamlined our global operations, ensuring brand consistency across 10+ languages without manual bottlenecks."_
 
 ### 6.5 Use case examples
 
@@ -761,7 +803,8 @@ Data Enrichment Agent:
 ### 7.1 Concept
 
 Per GetVero:
-> *"BrazeAI Operator — a conversational, natural-language interface for building campaigns and querying data"*
+
+> _"BrazeAI Operator — a conversational, natural-language interface for building campaigns and querying data"_
 
 ### 7.2 What it does
 
@@ -817,7 +860,8 @@ Operator limitations:
 ### 8.1 Concept
 
 Per G2 reviewer:
-> *"I'm also incredibly impressed with the BrazeAI™ Liquid Assistant. It has turned complex Liquid coding into a conversational task, allowing our team to build hyper-personalized logic (like dynamic product catalogs) in minutes rather than hours."*
+
+> _"I'm also incredibly impressed with the BrazeAI™ Liquid Assistant. It has turned complex Liquid coding into a conversational task, allowing our team to build hyper-personalized logic (like dynamic product catalogs) in minutes rather than hours."_
 
 ### 8.2 What is Liquid
 
@@ -876,13 +920,14 @@ Liquid Assistant benefits:
 ### 9.1 Per oficiální
 
 Per oficiální:
-> *"Design, visualize, and launch dynamic user journeys with intuitive building block components."*
 
-> *"Automatically adapt your engagement strategy with branching logic that guides your audience down specific journey paths based on real-time preferences and behaviors."*
+> _"Design, visualize, and launch dynamic user journeys with intuitive building block components."_
+
+> _"Automatically adapt your engagement strategy with branching logic that guides your audience down specific journey paths based on real-time preferences and behaviors."_
 
 ### 9.2 Per GetVero
 
-> *"Braze Canvas is the most mature journey builder in the category. It includes Action Paths, Audience Paths, Experiment Paths, Delay Steps, and Message Steps. Canvas handles the most complex multi-channel, multi-step journeys that enterprise marketing teams run."*
+> _"Braze Canvas is the most mature journey builder in the category. It includes Action Paths, Audience Paths, Experiment Paths, Delay Steps, and Message Steps. Canvas handles the most complex multi-channel, multi-step journeys that enterprise marketing teams run."_
 
 ### 9.3 Canvas components
 
@@ -904,9 +949,11 @@ Canvas building blocks:
 ### 9.4 Canvas Flow
 
 Per Vendr:
-> *"Canvas Flow (multi-step journey orchestration)"*
+
+> _"Canvas Flow (multi-step journey orchestration)"_
 
 **Canvas Flow features:**
+
 - Visual drag-drop editor
 - Multi-channel orchestration
 - Real-time triggers
@@ -918,9 +965,11 @@ Per Vendr:
 ### 9.5 Pre-built journeys
 
 Per oficiální:
-> *"Simplify journey orchestration and establish best in class engagement with turnkey, pre-built journeys for key use cases and industries."*
+
+> _"Simplify journey orchestration and establish best in class engagement with turnkey, pre-built journeys for key use cases and industries."_
 
 **Pre-built journeys:**
+
 - Welcome series
 - Onboarding flows
 - Cart abandonment
@@ -932,17 +981,20 @@ Per oficiální:
 ### 9.6 Real-time trigger
 
 Per oficiální:
-> *"Automatically trigger journeys and messaging based on in-the-moment customer behaviors, cross-channel interactions, and updates happening within your tech stack."*
+
+> _"Automatically trigger journeys and messaging based on in-the-moment customer behaviors, cross-channel interactions, and updates happening within your tech stack."_
 
 ### 9.7 Bazaar case study
 
 Per oficiální:
-> *"Bazaar increased revenue by 21% using Canvas to trigger real-time restock journeys."*
+
+> _"Bazaar increased revenue by 21% using Canvas to trigger real-time restock journeys."_
 
 ### 9.8 Complexity tradeoff
 
 Per GetVero:
-> *"The complexity ceiling is also a usability challenge. G2 reviewers note that Canvas becomes difficult to navigate as journeys grow complex. Braze's ease of setup score on G2 is 7.5/10 — lower than most competitors in the category."*
+
+> _"The complexity ceiling is also a usability challenge. G2 reviewers note that Canvas becomes difficult to navigate as journeys grow complex. Braze's ease of setup score on G2 is 7.5/10 — lower than most competitors in the category."_
 
 ⚠️ Canvas = powerful BUT complex pro non-experts.
 
@@ -961,7 +1013,8 @@ Canvas s AI:
 ### 9.10 Audience Path usability issue
 
 Per G2 reviewer:
-> *"In the Audience Path: when we apply a filter and need to repeat the same filter by changing just one detail in the field, we have to redo it in all fields because there is no option to copy and paste. In the Canvas, we also cannot select and copy to paste in another part of the same canvas, nor can we select multiple items/fields at once."*
+
+> _"In the Audience Path: when we apply a filter and need to repeat the same filter by changing just one detail in the field, we have to redo it in all fields because there is no option to copy and paste. In the Canvas, we also cannot select and copy to paste in another part of the same canvas, nor can we select multiple items/fields at once."_
 
 ⚠️ Known usability limitations.
 
@@ -971,7 +1024,7 @@ Per G2 reviewer:
 
 ### 10.1 Per FinancialContent
 
-> *"Customer Engagement Platform (CEP): The core offering, providing real-time personalization and cross-channel messaging across 13 digital channels (mobile, web, email, SMS, connected TV, etc.)."*
+> _"Customer Engagement Platform (CEP): The core offering, providing real-time personalization and cross-channel messaging across 13 digital channels (mobile, web, email, SMS, connected TV, etc.)."_
 
 ### 10.2 Channel inventory
 
@@ -994,7 +1047,7 @@ Braze 13 channels (2026):
 
 ### 10.3 Per oficiální
 
-> *"Seamlessly blend in-product and out of product channels— including email, mobile app, SMS, WhatsApp, web, paid media—from one interface"*
+> _"Seamlessly blend in-product and out of product channels— including email, mobile app, SMS, WhatsApp, web, paid media—from one interface"_
 
 ### 10.4 In-product vs out-of-product
 
@@ -1080,7 +1133,7 @@ Braze email deliverability:
 
 ### 11.3 Per FinancialContent
 
-> *"Professional Services: Onboarding, email deliverability, and dedicated technical support."*
+> _"Professional Services: Onboarding, email deliverability, and dedicated technical support."_
 
 ### 11.4 Email + Connected Content
 
@@ -1100,9 +1153,11 @@ Not stale snapshot at send time
 ### 11.5 Interactive email components
 
 Per FinancialContent:
-> *"Smarter segments, interactive email components..."*
+
+> _"Smarter segments, interactive email components..."_
 
 **Interactive components:**
+
 - AMP for Email support
 - In-email forms
 - Carousels
@@ -1147,6 +1202,7 @@ Push notification features:
 ### 12.3 #1 G2 Push Notification Grid
 
 Per oficiální:
+
 - **#1 G2 Push Notification Grid**
 - **Category leader**
 - **Most mature mobile SDK**
@@ -1188,7 +1244,7 @@ In-App Messages:
 
 ### 13.2 Per Gartner reviewer
 
-> *"My favorite part of Braze was the ability to contact users in-app, without any overhead or bottlenecks from our engineering team."*
+> _"My favorite part of Braze was the ability to contact users in-app, without any overhead or bottlenecks from our engineering team."_
 
 ⚠️ Klíčové: Marketing team může nasadit IAM **bez engineering involvement** (vs. tradiční app features needing code release).
 
@@ -1253,7 +1309,8 @@ SMS features:
 ### 14.2 WhatsApp
 
 Per FinancialContent:
-> *"Expanded Channel Capabilities: Deepened support for WhatsApp Commerce, Flows, and Carousels"*
+
+> _"Expanded Channel Capabilities: Deepened support for WhatsApp Commerce, Flows, and Carousels"_
 
 ```
 WhatsApp Commerce:
@@ -1270,7 +1327,8 @@ WhatsApp Commerce:
 ### 14.3 RCS Messaging
 
 Per FinancialContent:
-> *"RCS Messaging"*
+
+> _"RCS Messaging"_
 
 ```
 RCS (Rich Communication Services):
@@ -1299,7 +1357,7 @@ LINE:
 
 ### 14.5 Per GetVero
 
-> *"You need RCS, LINE, or WhatsApp Commerce — channels Customer.io doesn't offer"*
+> _"You need RCS, LINE, or WhatsApp Commerce — channels Customer.io doesn't offer"_
 
 ⚠️ **Braze advantage** in messaging breadth.
 
@@ -1363,9 +1421,11 @@ Webhooks:
 ### 15.5 ChatGPT Native App SDK
 
 Per FinancialContent:
-> *"ChatGPT Native App SDK"*
+
+> _"ChatGPT Native App SDK"_
 
 ⚠️ **NEW channel:** ChatGPT app integration:
+
 - Direct integration s ChatGPT
 - Conversational engagement
 - AI-native customer touchpoint
@@ -1377,13 +1437,13 @@ Per FinancialContent:
 
 ### 16.1 Per FinancialContent
 
-> *"Real-Time Data Processing: Proprietary stream processing architecture for instant data processing, enabling truly real-time engagement."*
+> _"Real-Time Data Processing: Proprietary stream processing architecture for instant data processing, enabling truly real-time engagement."_
 
-> *"The Braze Data Platform (BDP) unifies and activates data from various sources."*
+> _"The Braze Data Platform (BDP) unifies and activates data from various sources."_
 
 ### 16.2 Per oficiální
 
-> *"Feel confident with a platform that operates with sub-second latency, regardless of your data and send volumes."*
+> _"Feel confident with a platform that operates with sub-second latency, regardless of your data and send volumes."_
 
 ### 16.3 Stream vs. Batch
 
@@ -1443,7 +1503,8 @@ Braze handles:
 ### 16.6 Patents
 
 Per FinancialContent:
-> *"Notable Patents: Braze has significantly grown its IP portfolio, with patents covering: Systems and methods for controlling contacts with a client's users (U.S..."*
+
+> _"Notable Patents: Braze has significantly grown its IP portfolio, with patents covering: Systems and methods for controlling contacts with a client's users (U.S..."_
 
 ⚠️ **Patent-protected** technology.
 
@@ -1454,7 +1515,8 @@ Per FinancialContent:
 ### 17.1 Connected Content concept
 
 Per Gartner reviewer:
-> *"Canvas with all the messaging steps available, SQL Query Builder with AI assistant, Drag and Drop editor, duplication between different workspaces, **Connected Content**, Catalogues, API-Triggered messaging"*
+
+> _"Canvas with all the messaging steps available, SQL Query Builder with AI assistant, Drag and Drop editor, duplication between different workspaces, **Connected Content**, Catalogues, API-Triggered messaging"_
 
 ### 17.2 What it does
 
@@ -1536,7 +1598,8 @@ Connected Content:
 ### 18.1 Catalogues feature
 
 Per Gartner reviewer:
-> *"Catalogues"*
+
+> _"Catalogues"_
 
 ### 18.2 What are Catalogues
 
@@ -1603,7 +1666,8 @@ Travel:
 ### 18.5 Catalogues + AI
 
 Per FinancialContent:
-> *"AI Recommendation Engine: Beta version uses ML for personalized item recommendations."*
+
+> _"AI Recommendation Engine: Beta version uses ML for personalized item recommendations."_
 
 ```
 AI + Catalogues:
@@ -1620,7 +1684,8 @@ AI + Catalogues:
 ### 19.1 Currents concept
 
 Per Vendr:
-> *"Braze Currents (data streaming) — Enterprise tier feature"*
+
+> _"Braze Currents (data streaming) — Enterprise tier feature"_
 
 ### 19.2 What Currents does
 
@@ -1687,7 +1752,7 @@ ML / Data Science:
 
 ### 19.5 Per GetVero
 
-> *"Braze Currents streams engagement data back out to warehouses in real time. For enterprise teams wanting bidirectional warehouse integration, Braze has closed a significant capability gap."*
+> _"Braze Currents streams engagement data back out to warehouses in real time. For enterprise teams wanting bidirectional warehouse integration, Braze has closed a significant capability gap."_
 
 ### 19.6 Currents pricing
 
@@ -1708,10 +1773,12 @@ Premium feature
 ### 20.1 SQL Query Builder
 
 Per Gartner reviewer:
-> *"SQL Query Builder with AI assistant"*
+
+> _"SQL Query Builder with AI assistant"_
 
 Per FinancialContent:
-> *"Generative AI: Enhancements in Query Builder and SQL Segment Extension for natural language reporting and segmentation."*
+
+> _"Generative AI: Enhancements in Query Builder and SQL Segment Extension for natural language reporting and segmentation."_
 
 ### 20.2 SQL capabilities
 
@@ -1788,10 +1855,11 @@ BrazeAI Liquid Assistant helps generate
 
 ### 21.1 Per GetVero
 
-> *"Braze introduced Zero-copy Canvas Triggers in 2025 for direct Snowflake and BigQuery segmentation."*
+> _"Braze introduced Zero-copy Canvas Triggers in 2025 for direct Snowflake and BigQuery segmentation."_
 
 Per FinancialContent:
-> *"Enhanced Data Agility: 'Zero-copy Canvas Triggers' for real-time access and action on warehouse data."*
+
+> _"Enhanced Data Agility: 'Zero-copy Canvas Triggers' for real-time access and action on warehouse data."_
 
 ### 21.2 Concept
 
@@ -1853,7 +1921,8 @@ Use case: E-commerce
 ### 21.5 Enterprise advantage
 
 Per GetVero:
-> *"For enterprise teams wanting bidirectional warehouse integration, Braze has closed a significant capability gap."*
+
+> _"For enterprise teams wanting bidirectional warehouse integration, Braze has closed a significant capability gap."_
 
 ⚠️ **Closed capability gap** vs. competitors.
 
@@ -1864,7 +1933,8 @@ Per GetVero:
 ### 22.1 Segmentation capabilities
 
 Per Research.com:
-> *"Its core strength lies in unifying user data from diverse sources to build detailed customer profiles, allowing marketers to segment audiences based on behavior, preferences, and demographics. This dynamic segmentation updates in real time, enabling highly targeted messaging tailored to individual user actions and needs."*
+
+> _"Its core strength lies in unifying user data from diverse sources to build detailed customer profiles, allowing marketers to segment audiences based on behavior, preferences, and demographics. This dynamic segmentation updates in real time, enabling highly targeted messaging tailored to individual user actions and needs."_
 
 ### 22.2 Segmentation features
 
@@ -1887,7 +1957,8 @@ Dynamic + real-time
 ### 22.3 Smarter Segments (AI)
 
 Per FinancialContent:
-> *"Smarter segments..."*
+
+> _"Smarter segments..."_
 
 ```
 Smarter Segments:
@@ -1901,10 +1972,12 @@ Smarter Segments:
 ### 22.4 Predictive AI
 
 Per FinancialContent:
-> *"Predictive Analytics: Machine learning forecasts user behavior."*
+
+> _"Predictive Analytics: Machine learning forecasts user behavior."_
 
 Per Research.com:
-> *"The platform also incorporates advanced personalization using machine learning and predictive analytics, which helps forecast user behavior and automate decision-making within campaigns."*
+
+> _"The platform also incorporates advanced personalization using machine learning and predictive analytics, which helps forecast user behavior and automate decision-making within campaigns."_
 
 ```
 Predictive features:
@@ -1920,7 +1993,8 @@ Predictive features:
 ### 22.5 AI Recommendation Engine (beta)
 
 Per FinancialContent:
-> *"AI Recommendation Engine: Beta version uses ML for personalized item recommendations."*
+
+> _"AI Recommendation Engine: Beta version uses ML for personalized item recommendations."_
 
 ```
 Item recommendations:
@@ -1934,7 +2008,8 @@ Item recommendations:
 ### 22.6 Automated identity resolution
 
 Per FinancialContent:
-> *"Usability and Optimization: Smarter segments, interactive email components, automated identity resolution, and message prioritization."*
+
+> _"Usability and Optimization: Smarter segments, interactive email components, automated identity resolution, and message prioritization."_
 
 ```
 Identity resolution:
@@ -1963,7 +2038,8 @@ Message prioritization:
 ### 23.1 OfferFit acquisition
 
 Per FinancialContent:
-> *"A significant growth driver is Braze's strategic focus on artificial intelligence (AI), exemplified by the acquisition of OfferFit for approximately $303.2 million, which bolsters its AI capabilities."*
+
+> _"A significant growth driver is Braze's strategic focus on artificial intelligence (AI), exemplified by the acquisition of OfferFit for approximately $303.2 million, which bolsters its AI capabilities."_
 
 ### 23.2 What was OfferFit
 
@@ -2029,7 +2105,7 @@ Future vision:
 
 ### 24.1 Per FinancialContent
 
-> *"Compliance and Security: Robust measures and compliance with global regulations (GDPR, CCPA, HIPAA) to ensure data protection and privacy."*
+> _"Compliance and Security: Robust measures and compliance with global regulations (GDPR, CCPA, HIPAA) to ensure data protection and privacy."_
 
 ### 24.2 Integration types
 
@@ -2078,9 +2154,9 @@ Warehouse integrations:
 
 ### 24.5 Per Gartner reviewer
 
-> *"Reliable and flexible data connectivity (import and export)"*
+> _"Reliable and flexible data connectivity (import and export)"_
 
-> *"Good documentation (e.g. 'see me in Postman' for REST Endpoints)"*
+> _"Good documentation (e.g. 'see me in Postman' for REST Endpoints)"_
 
 ### 24.6 REST API
 
@@ -2127,7 +2203,8 @@ Per-platform:
 ### 25.1 Forrester Total Economic Impact
 
 Per Braze publication:
-> *"Forrester TEI: 457% ROI, payback < 6 months"*
+
+> _"Forrester TEI: 457% ROI, payback < 6 months"_
 
 ⚠️ **Forrester TEI** = Total Economic Impact study commissioned for marketing claims.
 
@@ -2170,7 +2247,7 @@ Panera Bread:
 
 ### 25.4 Per oficiální case studies
 
-> *"Our long-standing partnership with Braze has allowed us to continuously refine our customer communication strategy. We've leveraged Braze's capabilities to optimize message timing and personalization, resulting in stronger engagement and a noticeable improvement in the overall customer experience."*
+> _"Our long-standing partnership with Braze has allowed us to continuously refine our customer communication strategy. We've leveraged Braze's capabilities to optimize message timing and personalization, resulting in stronger engagement and a noticeable improvement in the overall customer experience."_
 
 ---
 
@@ -2178,11 +2255,11 @@ Panera Bread:
 
 ### 26.1 Per FinancialContent
 
-> *"Compliance and Security: Robust measures and compliance with global regulations (GDPR, CCPA, HIPAA) to ensure data protection and privacy."*
+> _"Compliance and Security: Robust measures and compliance with global regulations (GDPR, CCPA, HIPAA) to ensure data protection and privacy."_
 
 ### 26.2 Per Research.com
 
-> *"Security and compliance with data privacy laws like GDPR and CCPA are built into the system, supporting user consent management and secure data handling."*
+> _"Security and compliance with data privacy laws like GDPR and CCPA are built into the system, supporting user consent management and secure data handling."_
 
 ### 26.3 Compliance frameworks
 
@@ -2245,11 +2322,13 @@ Security:
 Per multiple sources:
 
 **Enterprise B2C:**
+
 - **Microsoft**
 - **Etsy**
 - **HBO Max**
 
 **Food delivery / restaurants:**
+
 - **Grubhub**
 - **McDonald's**
 - **Burger King**
@@ -2257,15 +2336,19 @@ Per multiple sources:
 - **Erewhon**
 
 **Sports / Media:**
+
 - **NBA**
 
 **Consumer products:**
+
 - **Tonies** (children's audio)
 
 **Fitness:**
+
 - **Wellhub**
 
 **Other:**
+
 - **Bazaar** (e-commerce)
 - **Many more enterprise B2C brands**
 
@@ -2287,16 +2370,18 @@ Primary industries:
 
 ### 27.3 Per Gartner reviewer (10 years experience)
 
-> *"I've been working with the platform nearly 10 years, now in my 3rd company using it. What I like the most: reliable and flexible data connectivity (import and export), good documentation, intuitive and easy to use, making complex tech comprehensible for non-tech team members, matching well Marketing Engagement requirements towards building an omni-channel CRM, strong Customer Success Managers, Team is open for feedback, listens to the Customers and keeps improving the product, helpful in looking for workarounds when something is not available out-of-the-box, great community around the product (e.g. Braze Bonfire, all events)."*
+> _"I've been working with the platform nearly 10 years, now in my 3rd company using it. What I like the most: reliable and flexible data connectivity (import and export), good documentation, intuitive and easy to use, making complex tech comprehensible for non-tech team members, matching well Marketing Engagement requirements towards building an omni-channel CRM, strong Customer Success Managers, Team is open for feedback, listens to the Customers and keeps improving the product, helpful in looking for workarounds when something is not available out-of-the-box, great community around the product (e.g. Braze Bonfire, all events)."_
 
 ⚠️ **3 companies, 10 years** = customer loyalty + portability.
 
 ### 27.4 Braze Bonfire community
 
 Per Gartner reviewer:
-> *"great community around the product (e.g. Braze Bonfire, all events)"*
+
+> _"great community around the product (e.g. Braze Bonfire, all events)"_
 
 **Braze Bonfire:**
+
 - Community of customers
 - Events + meetups
 - Knowledge sharing
@@ -2304,9 +2389,9 @@ Per Gartner reviewer:
 
 ### 27.5 Per Cross The Tracks (festival)
 
-> *"At Cross The Tracks, what stands out most about Braze is how intuitive and powerful the platform is across the entire lifecycle of our campaigns. The UI/UX is a real highlight, particularly the Canvas builder, whose drag-and-drop interface and decision paths make it easy to create and manage complex customer journeys for different audience segments like early-bird buyers, VIPs, and returning attendees—saving us hours of manual work each week."*
+> _"At Cross The Tracks, what stands out most about Braze is how intuitive and powerful the platform is across the entire lifecycle of our campaigns. The UI/UX is a real highlight, particularly the Canvas builder, whose drag-and-drop interface and decision paths make it easy to create and manage complex customer journeys for different audience segments like early-bird buyers, VIPs, and returning attendees—saving us hours of manual work each week."_
 
-> *"Braze also integrates seamlessly with our ticketing platform and data warehouse, allowing us to use real-time purchase and engagement data to trigger highly relevant messaging, such as lineup announcements or last-call ticket pushes. In terms of performance, the platform is reliable even during high-pressure moments like ticket launches, ensuring messages are delivered quickly and consistently when timing is critical."*
+> _"Braze also integrates seamlessly with our ticketing platform and data warehouse, allowing us to use real-time purchase and engagement data to trigger highly relevant messaging, such as lineup announcements or last-call ticket pushes. In terms of performance, the platform is reliable even during high-pressure moments like ticket launches, ensuring messages are delivered quickly and consistently when timing is critical."_
 
 ---
 
@@ -2315,6 +2400,7 @@ Per Gartner reviewer:
 ### 28.1 NENÍ B2B SaaS / enterprise marketing tool
 
 ⚠️ **Klíčový limit:**
+
 - Braze = **B2C / D2C focused**
 - **NE B2B SaaS marketing automation**
 - Pro B2B: HubSpot / Marketo / Pardot lepší
@@ -2323,9 +2409,11 @@ Per Gartner reviewer:
 ### 28.2 No permanent free plan
 
 Per AIChief:
-> *"Braze does not offer a free plan"*
+
+> _"Braze does not offer a free plan"_
 
 ⚠️ Vyžaduje **custom contract**:
+
 - Sales-driven
 - Minimum commitment
 - Enterprise budgets
@@ -2333,6 +2421,7 @@ Per AIChief:
 ### 28.3 Higher cost barrier
 
 Per Vendr:
+
 - **Pro tier:** $80K-$250K/year
 - **Enterprise (2M+ MAUs):** $300K-$1M+/year
 - **Implementation:** $25K-$100K+
@@ -2342,9 +2431,11 @@ Per Vendr:
 ### 28.4 Complex implementation
 
 Per GetVero:
-> *"Common Braze criticism: complex setup, Canvas navigation at scale, and unexpected data point billing overages."*
+
+> _"Common Braze criticism: complex setup, Canvas navigation at scale, and unexpected data point billing overages."_
 
 ⚠️ **Implementation challenges:**
+
 - 3-6 months typical duration
 - Engineering resources required
 - Mobile SDK integration
@@ -2354,9 +2445,11 @@ Per GetVero:
 ### 28.5 Canvas complexity ceiling
 
 Per GetVero:
-> *"The complexity ceiling is also a usability challenge. G2 reviewers note that Canvas becomes difficult to navigate as journeys grow complex. Braze's ease of setup score on G2 is 7.5/10 — lower than most competitors in the category."*
+
+> _"The complexity ceiling is also a usability challenge. G2 reviewers note that Canvas becomes difficult to navigate as journeys grow complex. Braze's ease of setup score on G2 is 7.5/10 — lower than most competitors in the category."_
 
 ⚠️ Canvas = powerful BUT:
+
 - Hard to navigate at scale
 - Limited copy/paste
 - Multi-select missing
@@ -2364,18 +2457,20 @@ Per GetVero:
 
 ### 28.6 G2 reviewer usability issues
 
-> *"In the Audience Path: when we apply a filter and need to repeat the same filter by changing just one detail in the field, we have to redo it in all fields because there is no option to copy and paste. In the Canvas, we also cannot select and copy to paste in another part of the same canvas, nor can we select multiple items/fields at once."*
+> _"In the Audience Path: when we apply a filter and need to repeat the same filter by changing just one detail in the field, we have to redo it in all fields because there is no option to copy and paste. In the Canvas, we also cannot select and copy to paste in another part of the same canvas, nor can we select multiple items/fields at once."_
 
 ⚠️ **UX productivity issues** v Canvas.
 
 ### 28.7 Data point billing surprises
 
 Per GetVero:
-> *"Common Braze criticism: ... unexpected data point billing overages."*
 
-> *"Braze bills on data points. Every custom event, attribute, or purchase logged to a user profile counts as a billable unit. Teams with high-frequency event tracking can burn through their allocation faster than expected."*
+> _"Common Braze criticism: ... unexpected data point billing overages."_
+
+> _"Braze bills on data points. Every custom event, attribute, or purchase logged to a user profile counts as a billable unit. Teams with high-frequency event tracking can burn through their allocation faster than expected."_
 
 ⚠️ **Billing complexity:**
+
 - Custom events billable
 - High-frequency = overage risk
 - Hard to predict costs upfront
@@ -2384,9 +2479,11 @@ Per GetVero:
 ### 28.8 AI pricing unpredictability
 
 Per G2 reviewer:
-> *"As we lean more into Agentic workflows and AI-driven orchestration, the credit-based consumption or 'AI-utility' pricing can become unpredictable."*
+
+> _"As we lean more into Agentic workflows and AI-driven orchestration, the credit-based consumption or 'AI-utility' pricing can become unpredictable."_
 
 ⚠️ **AI-utility pricing:**
+
 - Credit-based consumption
 - Unpredictable spend
 - BrazeAI features add costs
@@ -2395,9 +2492,11 @@ Per G2 reviewer:
 ### 28.9 AI integration v testing phase
 
 Per G2 reviewer:
-> *"the AI integration in in testing phase and there are some bugs in the outpur, Recommend to human verify the outputs."*
+
+> _"the AI integration in in testing phase and there are some bugs in the outpur, Recommend to human verify the outputs."_
 
 ⚠️ AI products mature but:
+
 - Bugs occasionally
 - Human review recommended
 - Not 100% production-ready (some features)
@@ -2405,9 +2504,11 @@ Per G2 reviewer:
 ### 28.10 Help tickets quality issue
 
 Per Gartner reviewer:
-> *"help tickets becomes less helpful as you grow more experienced - responses do not match expectations/ depth"*
+
+> _"help tickets becomes less helpful as you grow more experienced - responses do not match expectations/ depth"_
 
 ⚠️ Support pro advanced users:
+
 - Generic responses sometimes
 - Doesn't match expert level
 - Becomes less helpful s experience
@@ -2415,9 +2516,11 @@ Per Gartner reviewer:
 ### 28.11 Pace of updates challenging
 
 Per Gartner reviewer:
-> *"pace of updates can be hard to follow"*
+
+> _"pace of updates can be hard to follow"_
 
 ⚠️ Rapid product development:
+
 - Hard to keep up with new features
 - Training needed continuously
 - Documentation may lag
@@ -2425,16 +2528,19 @@ Per Gartner reviewer:
 ### 28.12 Dashboard customization limited
 
 Per Gartner reviewer:
-> *"dashboard customisation per relevant features or per user role would be helpful"*
+
+> _"dashboard customisation per relevant features or per user role would be helpful"_
 
 ⚠️ Limited dashboard customization per role.
 
 ### 28.13 Uneven development focus
 
 Per Gartner reviewer:
-> *"uneven development focus - newer features get attention while existing limitations remain"*
+
+> _"uneven development focus - newer features get attention while existing limitations remain"_
 
 ⚠️ Strategic feature development:
+
 - New AI features prioritized
 - Older feature limitations persist
 - UX improvements slower
@@ -2442,9 +2548,11 @@ Per Gartner reviewer:
 ### 28.14 Transition learning curve
 
 Per G2 reviewer:
-> *"Transitioned from another CX platform, so there were some learnings and new processes to implement since Braze handles things like dynamic fields and user journeys differently compared to our previous provider."*
+
+> _"Transitioned from another CX platform, so there were some learnings and new processes to implement since Braze handles things like dynamic fields and user journeys differently compared to our previous provider."_
 
 ⚠️ Migration challenges:
+
 - Different paradigm (dynamic fields, journeys)
 - Re-training team
 - Process re-design
@@ -2468,9 +2576,11 @@ Braze weakness:
 ### 28.16 Less suited for SMB
 
 Per Research.com:
-> *"Braze is primarily designed for mid-to-large enterprises; however, small businesses with growing needs can also benefit from its capabilities."*
+
+> _"Braze is primarily designed for mid-to-large enterprises; however, small businesses with growing needs can also benefit from its capabilities."_
 
 ⚠️ **SMB unsuitable:**
+
 - Cost too high
 - Complexity overkill
 - Implementation too long
@@ -2512,6 +2622,7 @@ Not "plug and play"
 ## 29. Shrnutí: Pro koho a proti komu
 
 ### Braze je dobrá volba pokud
+
 - Provozujete **B2C / D2C consumer brand**
 - Provozujete **mobile-first business** (app-driven)
 - Cíl je **real-time customer engagement** (sub-second!)
@@ -2538,6 +2649,7 @@ Not "plug and play"
 - Cenu **Forrester TEI 457% ROI** validated
 
 ### Braze není dobrá volba pokud
+
 - Provozujete **B2B SaaS** – HubSpot / Marketo / Pardot lepší
 - Provozujete **SMB** – Mailchimp / Brevo / Klaviyo lepší
 - Budget **< $60K/year** – přístup nemožný (no free plan)
@@ -2557,23 +2669,23 @@ Not "plug and play"
 
 ### Braze vs. konkurence
 
-| Konkurence | Kdy lepší než Braze |
-|---|---|
-| **Klaviyo** | DTC Shopify-first, simpler, contact-based pricing |
-| **Iterable** | Cost-effective alt, similar capabilities |
-| **Customer.io** | Product teams, no data point billing, simpler |
-| **Salesforce Marketing Cloud** | Full Salesforce ecosystem, B2B+ |
-| **Adobe Journey Optimizer** | Adobe Experience Cloud ecosystem |
-| **HubSpot** | B2B sales-led, full CRM |
-| **Marketo / Pardot** | B2B SaaS marketing automation |
-| **Mailchimp** | SMB, simple, all-in-one starter |
-| **Brevo** | All-in-one s transactional, French |
-| **SALESmanago** | PL AI-driven CDXP, mid-market EU |
-| **Bloomreach Engagement** | CZ origin CDXP, less expensive |
-| **Insider** | Similar CEP, sometimes cost-competitive |
-| **MoEngage** | Asian markets specialist |
-| **CleverTap** | Mobile-first analytics + engagement |
+| Konkurence                     | Kdy lepší než Braze                               |
+| ------------------------------ | ------------------------------------------------- |
+| **Klaviyo**                    | DTC Shopify-first, simpler, contact-based pricing |
+| **Iterable**                   | Cost-effective alt, similar capabilities          |
+| **Customer.io**                | Product teams, no data point billing, simpler     |
+| **Salesforce Marketing Cloud** | Full Salesforce ecosystem, B2B+                   |
+| **Adobe Journey Optimizer**    | Adobe Experience Cloud ecosystem                  |
+| **HubSpot**                    | B2B sales-led, full CRM                           |
+| **Marketo / Pardot**           | B2B SaaS marketing automation                     |
+| **Mailchimp**                  | SMB, simple, all-in-one starter                   |
+| **Brevo**                      | All-in-one s transactional, French                |
+| **SALESmanago**                | PL AI-driven CDXP, mid-market EU                  |
+| **Bloomreach Engagement**      | CZ origin CDXP, less expensive                    |
+| **Insider**                    | Similar CEP, sometimes cost-competitive           |
+| **MoEngage**                   | Asian markets specialist                          |
+| **CleverTap**                  | Mobile-first analytics + engagement               |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů braze.com a praktických zdrojů (Gartner Peer Insights, G2, Vendr, SelectHub, Research.com, GetVero, AIChief, FinancialContent). Pro nejaktuálnější detaily je nutný engagement s Braze sales / consultant teamem.*
+_Dokument zpracován z oficiálních zdrojů braze.com a praktických zdrojů (Gartner Peer Insights, G2, Vendr, SelectHub, Research.com, GetVero, AIChief, FinancialContent). Pro nejaktuálnější detaily je nutný engagement s Braze sales / consultant teamem._

@@ -3,7 +3,8 @@ import { checkSpam } from './spam-checker.js';
 
 describe('checkSpam — subject line checks', () => {
   it('returns score 0 for a clean email', () => {
-    const html = '<html lang="en"><body><p>Hello, here is your monthly update.</p><p><a href="https://example.com/unsubscribe">Unsubscribe</a></p></body></html>';
+    const html =
+      '<html lang="en"><body><p>Hello, here is your monthly update.</p><p><a href="https://example.com/unsubscribe">Unsubscribe</a></p></body></html>';
     const result = checkSpam('Your monthly update', html, true);
     expect(result.score).toBeLessThan(3);
   });
@@ -34,7 +35,8 @@ describe('checkSpam — subject line checks', () => {
   });
 
   it('penalises subject over 70 chars', () => {
-    const longSubject = 'This is an extremely long subject line that goes way beyond seventy characters limit';
+    const longSubject =
+      'This is an extremely long subject line that goes way beyond seventy characters limit';
     const result = checkSpam(longSubject, '<p>Content</p>', true);
     const codes = result.issues.map((i) => i.code);
     expect(codes).toContain('SUBJECT_TOO_LONG');
@@ -50,14 +52,20 @@ describe('checkSpam — HTML body checks', () => {
   });
 
   it('penalises missing alt texts', () => {
-    const html = '<p>' + 'word '.repeat(50) + '</p><img src="test.jpg"><a href="https://example.com/unsubscribe">Unsubscribe</a>';
+    const html =
+      '<p>' +
+      'word '.repeat(50) +
+      '</p><img src="test.jpg"><a href="https://example.com/unsubscribe">Unsubscribe</a>';
     const result = checkSpam('Hello', html, true);
     const codes = result.issues.map((i) => i.code);
     expect(codes).toContain('MISSING_ALT_TEXTS');
   });
 
   it('penalises suspicious links', () => {
-    const html = '<p>' + 'word '.repeat(20) + '</p><a href="http://192.168.1.1/phish">Click</a><a href="https://example.com/unsubscribe">Unsubscribe</a>';
+    const html =
+      '<p>' +
+      'word '.repeat(20) +
+      '</p><a href="http://192.168.1.1/phish">Click</a><a href="https://example.com/unsubscribe">Unsubscribe</a>';
     const result = checkSpam('Hello', html, true);
     const codes = result.issues.map((i) => i.code);
     expect(codes).toContain('SUSPICIOUS_LINKS');
@@ -71,7 +79,8 @@ describe('checkSpam — HTML body checks', () => {
   });
 
   it('penalises missing plain-text alternative', () => {
-    const html = '<p>' + 'word '.repeat(20) + '</p><a href="https://example.com/unsubscribe">Unsubscribe</a>';
+    const html =
+      '<p>' + 'word '.repeat(20) + '</p><a href="https://example.com/unsubscribe">Unsubscribe</a>';
     const result = checkSpam('Hello', html, false);
     const codes = result.issues.map((i) => i.code);
     expect(codes).toContain('NO_PLAIN_TEXT');
@@ -88,7 +97,11 @@ describe('checkSpam — score and verdict', () => {
   });
 
   it('verdict reflects low score', () => {
-    const result = checkSpam('Monthly newsletter', '<p>' + 'word '.repeat(50) + '</p><a href="https://example.com/unsubscribe">Unsubscribe</a>', true);
+    const result = checkSpam(
+      'Monthly newsletter',
+      '<p>' + 'word '.repeat(50) + '</p><a href="https://example.com/unsubscribe">Unsubscribe</a>',
+      true,
+    );
     expect(result.verdict).toMatch(/excellent|good/i);
   });
 

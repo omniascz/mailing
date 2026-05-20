@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, timestamp, jsonb, index, uniqueIndex, integer } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  jsonb,
+  index,
+  uniqueIndex,
+  integer,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 
@@ -13,8 +22,12 @@ export const identitySignals = pgTable(
   'identity_signals',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
     // signal_type: email | phone | cookie | device_id | hashed_id | account_id | user_id | social_id | visitor_id
     signalType: varchar('signal_type', { length: 32 }).notNull(),
     // Canonical value (lowercased email, E.164 phone, sha256 for hashed_id, etc.)
@@ -27,8 +40,7 @@ export const identitySignals = pgTable(
     metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
   },
   (t) => [
-    uniqueIndex('identity_signals_org_type_value_uq')
-      .on(t.orgId, t.signalType, t.signalValue),
+    uniqueIndex('identity_signals_org_type_value_uq').on(t.orgId, t.signalType, t.signalValue),
     index('identity_signals_contact_idx').on(t.contactId),
     index('identity_signals_last_seen_idx').on(t.lastSeenAt),
   ],
@@ -42,7 +54,9 @@ export const identityMerges = pgTable(
   'identity_merges',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     winnerContactId: uuid('winner_contact_id').notNull(),
     loserContactId: uuid('loser_contact_id').notNull(),
     movedSignals: integer('moved_signals').notNull().default(0),
@@ -59,6 +73,12 @@ export type IdentitySignal = typeof identitySignals.$inferSelect;
 export type IdentityMerge = typeof identityMerges.$inferSelect;
 
 export type SignalType =
-  | 'email' | 'phone' | 'cookie' | 'device_id'
-  | 'hashed_id' | 'account_id' | 'user_id'
-  | 'social_id' | 'visitor_id';
+  | 'email'
+  | 'phone'
+  | 'cookie'
+  | 'device_id'
+  | 'hashed_id'
+  | 'account_id'
+  | 'user_id'
+  | 'social_id'
+  | 'visitor_id';

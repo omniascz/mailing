@@ -20,10 +20,7 @@ import { AppError } from '../../lib/app-error.js';
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 export async function listInAppMessages(orgId: string, activeOnly = false) {
-  const rows = await db
-    .select()
-    .from(inAppMessages)
-    .where(eq(inAppMessages.orgId, orgId));
+  const rows = await db.select().from(inAppMessages).where(eq(inAppMessages.orgId, orgId));
 
   return activeOnly ? rows.filter((r) => r.active) : rows;
 }
@@ -133,10 +130,14 @@ function matchRule(rule: InAppTargetingRule, ctx: MatchContext): boolean {
       if (!ctx.pageUrl) return false;
       const val = rule.value as string;
       switch (rule.operator) {
-        case 'is': return ctx.pageUrl === val;
-        case 'contains': return ctx.pageUrl.includes(val);
-        case 'starts_with': return ctx.pageUrl.startsWith(val);
-        default: return false;
+        case 'is':
+          return ctx.pageUrl === val;
+        case 'contains':
+          return ctx.pageUrl.includes(val);
+        case 'starts_with':
+          return ctx.pageUrl.startsWith(val);
+        default:
+          return false;
       }
     }
 

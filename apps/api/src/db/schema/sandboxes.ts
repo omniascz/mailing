@@ -19,7 +19,9 @@ import { organizations } from './organizations.js';
 export const orgSandboxes = pgTable(
   'org_sandboxes',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -31,13 +33,16 @@ export const orgSandboxes = pgTable(
     purpose: varchar('purpose', { length: 32 }).notNull().default('dev'),
     /** 'provisioning' | 'ready' | 'failed' | 'archived' */
     status: varchar('status', { length: 16 }).notNull().default('provisioning'),
-    seedConfig: jsonb('seed_config').$type<{
-      seedContacts?: number;
-      seedCampaigns?: number;
-      copyTemplates?: boolean;
-      copyWorkflows?: boolean;
-      copyBrandKit?: boolean;
-    }>().notNull().default({}),
+    seedConfig: jsonb('seed_config')
+      .$type<{
+        seedContacts?: number;
+        seedCampaigns?: number;
+        copyTemplates?: boolean;
+        copyWorkflows?: boolean;
+        copyBrandKit?: boolean;
+      }>()
+      .notNull()
+      .default({}),
     /** When true, outbound sends are silently swallowed (no external traffic). */
     noOpMode: boolean('no_op_mode').notNull().default(true),
     createdBy: uuid('created_by'),

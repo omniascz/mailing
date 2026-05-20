@@ -1,4 +1,14 @@
-import { pgTable, uuid, varchar, jsonb, timestamp, boolean, text, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  jsonb,
+  timestamp,
+  boolean,
+  text,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';
 
@@ -8,8 +18,12 @@ export const calendarIntegrations = pgTable(
   'calendar_integrations',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     provider: varchar('provider', { length: 32 }).notNull(), // 'google' | 'microsoft' | 'caldav'
     externalAccountId: varchar('external_account_id', { length: 255 }).notNull(),
     externalAccountEmail: varchar('external_account_email', { length: 255 }),
@@ -30,8 +44,7 @@ export const calendarIntegrations = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex('cal_int_user_provider_acct_uq')
-      .on(t.userId, t.provider, t.externalAccountId),
+    uniqueIndex('cal_int_user_provider_acct_uq').on(t.userId, t.provider, t.externalAccountId),
     index('cal_int_org_idx').on(t.orgId),
   ],
 );
@@ -42,8 +55,12 @@ export const calendarEvents = pgTable(
   'calendar_events',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    integrationId: uuid('integration_id').notNull().references(() => calendarIntegrations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    integrationId: uuid('integration_id')
+      .notNull()
+      .references(() => calendarIntegrations.id, { onDelete: 'cascade' }),
     externalEventId: varchar('external_event_id', { length: 255 }).notNull(),
     calendarId: varchar('calendar_id', { length: 255 }),
     title: varchar('title', { length: 1024 }),
@@ -52,7 +69,10 @@ export const calendarEvents = pgTable(
     allDay: boolean('all_day').notNull().default(false),
     status: varchar('status', { length: 32 }).notNull().default('confirmed'),
     busy: boolean('busy').notNull().default(true),
-    attendees: jsonb('attendees').$type<Array<{ email: string; responseStatus?: string }>>().notNull().default([]),
+    attendees: jsonb('attendees')
+      .$type<Array<{ email: string; responseStatus?: string }>>()
+      .notNull()
+      .default([]),
     // Link back to an internal booking record if the event was created by us
     internalBookingId: uuid('internal_booking_id'),
     rawMetadata: jsonb('raw_metadata').$type<Record<string, unknown>>().notNull().default({}),
@@ -72,8 +92,12 @@ export const bookings = pgTable(
   'bookings',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    hostUserId: uuid('host_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    hostUserId: uuid('host_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     inviteeEmail: varchar('invitee_email', { length: 255 }).notNull(),
     inviteeName: varchar('invitee_name', { length: 255 }),
     title: varchar('title', { length: 1024 }).notNull(),
@@ -86,7 +110,9 @@ export const bookings = pgTable(
     status: varchar('status', { length: 32 }).notNull().default('confirmed'),
     // External id assigned by the provider after push
     externalEventId: varchar('external_event_id', { length: 255 }),
-    integrationId: uuid('integration_id').references(() => calendarIntegrations.id, { onDelete: 'set null' }),
+    integrationId: uuid('integration_id').references(() => calendarIntegrations.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

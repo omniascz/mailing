@@ -14,7 +14,14 @@
 
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, text, integer, jsonb, timestamp, index,
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  integer,
+  jsonb,
+  timestamp,
+  index,
   vector,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
@@ -34,7 +41,9 @@ export type KbSourceType =
 export const kbDocuments = pgTable(
   'kb_documents',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -75,7 +84,9 @@ export const kbDocuments = pgTable(
 export const kbChunks = pgTable(
   'kb_chunks',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -96,10 +107,7 @@ export const kbChunks = pgTable(
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('kb_chunks_org_idx').on(t.orgId),
-    index('kb_chunks_doc_idx').on(t.documentId),
-  ],
+  (t) => [index('kb_chunks_org_idx').on(t.orgId), index('kb_chunks_doc_idx').on(t.documentId)],
 );
 
 export type KbDocument = typeof kbDocuments.$inferSelect;

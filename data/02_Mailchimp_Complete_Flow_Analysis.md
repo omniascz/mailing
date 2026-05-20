@@ -68,18 +68,18 @@ V Mailchimp ekosystému je sedm hlavních typů aktérů. **Pozor – Mailchimp 
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Owner** | Mailchimp login | Vše: billing, role, close account | Vše |
-| **Admin** | Pozvánka od Owner/Admin | Vše kromě close account | Vše |
-| **Manager** | Pozvánka od Admin+ | Posílá kampaně, audience, automation | Vše kromě billing, users |
-| **Author** | Pozvánka | Tvoří kampaně, **nemůže odeslat** | Designs, audience, ne reports detailně |
-| **Viewer** | Pozvánka | Read-only reports | Reports + dashboards |
-| **Subscriber** | Sign-up form / import | Otevírá, klikne, manage preferences, unsubscribe | Jen své emaily + preference center |
-| **API klient** | API key / OAuth | Cokoliv povolí klíč | Co API endpointy vrací |
-| **Integrace (Shopify, WP)** | OAuth/API | Synchronizuje data | Co umožní integrace |
-| **Mailchimp Staff** | Interní | Debug/support | Po explicitním souhlasu |
-| **ISP (Gmail, Outlook...)** | SMTP příjem | Doručuje / filtruje / posílá feedback | Email + autentizační hlavičky |
+| Aktér                       | Vstupní bod             | Co dělá                                          | Co vidí                                |
+| --------------------------- | ----------------------- | ------------------------------------------------ | -------------------------------------- |
+| **Owner**                   | Mailchimp login         | Vše: billing, role, close account                | Vše                                    |
+| **Admin**                   | Pozvánka od Owner/Admin | Vše kromě close account                          | Vše                                    |
+| **Manager**                 | Pozvánka od Admin+      | Posílá kampaně, audience, automation             | Vše kromě billing, users               |
+| **Author**                  | Pozvánka                | Tvoří kampaně, **nemůže odeslat**                | Designs, audience, ne reports detailně |
+| **Viewer**                  | Pozvánka                | Read-only reports                                | Reports + dashboards                   |
+| **Subscriber**              | Sign-up form / import   | Otevírá, klikne, manage preferences, unsubscribe | Jen své emaily + preference center     |
+| **API klient**              | API key / OAuth         | Cokoliv povolí klíč                              | Co API endpointy vrací                 |
+| **Integrace (Shopify, WP)** | OAuth/API               | Synchronizuje data                               | Co umožní integrace                    |
+| **Mailchimp Staff**         | Interní                 | Debug/support                                    | Po explicitním souhlasu                |
+| **ISP (Gmail, Outlook...)** | SMTP příjem             | Doručuje / filtruje / posílá feedback            | Email + autentizační hlavičky          |
 
 ---
 
@@ -89,53 +89,53 @@ Mailchimp používá **fixní 5-role model** bez možnosti custom rolí ani gran
 
 ### 2.1 Matrix permissions
 
-| Akce | Owner | Admin | Manager | Author | Viewer |
-|---|:---:|:---:|:---:|:---:|:---:|
-| **Billing** |  |  |  |  |  |
-| Změnit plán | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Aktualizovat kartu | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Stáhnout faktury | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Account management** |  |  |  |  |  |
-| Pozvat uživatele | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Změnit user role | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Revoke user access | ✅ | ✅ (krom Owner) | jen svůj | jen svůj | jen svůj |
-| Transfer Ownership | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Audience** |  |  |  |  |  |
-| Create audience | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Import contacts | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Export contacts | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Edit subscriber profile | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Delete subscriber (GDPR) | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Manage tags/groups/segments | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Manage signup forms | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Campaigns** |  |  |  |  |  |
-| Create campaign | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Edit campaign | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Send campaign** | ✅ | ✅ | ✅ | **❌** | ❌ |
-| Schedule campaign | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Cancel scheduled | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Pause/resume | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Templates** |  |  |  |  |  |
-| Create template | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Delete template | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Automation** |  |  |  |  |  |
-| Create flow | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Activate flow** | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Pause/edit live flow | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Integrations & API** |  |  |  |  |  |
-| Connect integration | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Create API key | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Manage webhooks | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Domains** |  |  |  |  |  |
-| Add/verify domain | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Manage DKIM/DMARC | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Reports** |  |  |  |  |  |
-| View reports | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Export reports | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Add-ons** |  |  |  |  |  |
-| Buy SMS credits | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Manage Mandrill | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Akce                        | Owner |      Admin      | Manager  |  Author  |  Viewer  |
+| --------------------------- | :---: | :-------------: | :------: | :------: | :------: |
+| **Billing**                 |       |                 |          |          |          |
+| Změnit plán                 |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| Aktualizovat kartu          |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| Stáhnout faktury            |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| **Account management**      |       |                 |          |          |          |
+| Pozvat uživatele            |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| Změnit user role            |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| Revoke user access          |  ✅   | ✅ (krom Owner) | jen svůj | jen svůj | jen svůj |
+| Transfer Ownership          |  ✅   |       ❌        |    ❌    |    ❌    |    ❌    |
+| Close account               |  ✅   |       ❌        |    ❌    |    ❌    |    ❌    |
+| **Audience**                |       |                 |          |          |          |
+| Create audience             |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| Import contacts             |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| Export contacts             |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| Edit subscriber profile     |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| Delete subscriber (GDPR)    |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| Manage tags/groups/segments |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| Manage signup forms         |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| **Campaigns**               |       |                 |          |          |          |
+| Create campaign             |  ✅   |       ✅        |    ✅    |    ✅    |    ❌    |
+| Edit campaign               |  ✅   |       ✅        |    ✅    |    ✅    |    ❌    |
+| **Send campaign**           |  ✅   |       ✅        |    ✅    |  **❌**  |    ❌    |
+| Schedule campaign           |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| Cancel scheduled            |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| Pause/resume                |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| **Templates**               |       |                 |          |          |          |
+| Create template             |  ✅   |       ✅        |    ✅    |    ✅    |    ❌    |
+| Delete template             |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| **Automation**              |       |                 |          |          |          |
+| Create flow                 |  ✅   |       ✅        |    ✅    |    ✅    |    ❌    |
+| **Activate flow**           |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| Pause/edit live flow        |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| **Integrations & API**      |       |                 |          |          |          |
+| Connect integration         |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| Create API key              |  ✅   |       ✅        |    ✅    |    ✅    |    ❌    |
+| Manage webhooks             |  ✅   |       ✅        |    ✅    |    ❌    |    ❌    |
+| **Domains**                 |       |                 |          |          |          |
+| Add/verify domain           |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| Manage DKIM/DMARC           |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| **Reports**                 |       |                 |          |          |          |
+| View reports                |  ✅   |       ✅        |    ✅    |    ✅    |    ✅    |
+| Export reports              |  ✅   |       ✅        |    ✅    |    ✅    |    ❌    |
+| **Add-ons**                 |       |                 |          |          |          |
+| Buy SMS credits             |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
+| Manage Mandrill             |  ✅   |       ✅        |    ❌    |    ❌    |    ❌    |
 
 ### 2.2 Speciální pravidla
 
@@ -684,6 +684,7 @@ Resume → kontakty pokračují
 ### 10.5 Customer Journeys API trigger (Standard+)
 
 Speciální typ triggeru pro externí systémy:
+
 ```
 Flow má "Customer Journey API condition" jako vstupní bod
    ↓
@@ -852,6 +853,7 @@ Vaše aplikace updatuje vlastní DB
 ### 12.4 Batch operations
 
 Pro bulk updates:
+
 ```
 POST /batches s array operací (max 500 per batch)
    ↓
@@ -974,6 +976,7 @@ Zobrazuje Admin v Reports + nudges ("Your bounce rate is high")
 ### 14.3 Postmaster tools
 
 Pro pokročilé sledování:
+
 - **Google Postmaster Tools** – Admin nastavuje DKIM domain → vidí Gmail-specific reputation, spam rate
 - **Microsoft SNDS** – pro Outlook/Hotmail
 - **Mailchimp neagreguje tyto** – Admin musí sledovat externě
@@ -1026,6 +1029,7 @@ Switch mezi účty
 ### 15.3 Tooly třetích stran (např. Leadsie)
 
 Pro snadné získání agenturního přístupu ke Mailchimp účtu klienta:
+
 ```
 Agentura používá Leadsie / podobný tool
    ↓
@@ -1042,22 +1046,22 @@ Pracuje normálně
 
 ## 16. Datová mapa: co vidí kdo
 
-| Datový bod | Owner | Admin | Manager | Author | Viewer | Subscriber | API klient |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Billing/faktury | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | jen s billing scope |
-| User list | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Audience contacts | ✅ | ✅ | ✅ | ✅* | ✅* | jen sebe | ✅ |
-| Profile merge fields | ✅ | ✅ | ✅ | ✅ | ✅ | jen své | ✅ |
-| Tags na kontaktech | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (skryto) | ✅ |
-| Groups (subscriberovo membership) | ✅ | ✅ | ✅ | ✅ | ✅ | jen své | ✅ |
-| Campaign content | ✅ | ✅ | ✅ | ✅ | ✅ | jen co dostal | ✅ |
-| Reports/stats | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Automation flows | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Domain settings | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| API keys | jen své | jen své | jen své | jen své | ❌ | ❌ | – |
-| E-commerce orders | ✅ | ✅ | ✅ | ✅ | ✅ | jen své | ✅ |
-| Survey responses | ✅ | ✅ | ✅ | ✅ | ✅ | jen své | ✅ |
-| Compliance audit trail | ✅ | ✅ | omezeně | ❌ | ❌ | jen export sebe | omezeně |
+| Datový bod                        |  Owner  |  Admin  | Manager | Author  | Viewer |   Subscriber    |     API klient      |
+| --------------------------------- | :-----: | :-----: | :-----: | :-----: | :----: | :-------------: | :-----------------: |
+| Billing/faktury                   |   ✅    |   ✅    |   ❌    |   ❌    |   ❌   |       ❌        | jen s billing scope |
+| User list                         |   ✅    |   ✅    |   ❌    |   ❌    |   ❌   |       ❌        |         ❌          |
+| Audience contacts                 |   ✅    |   ✅    |   ✅    |  ✅\*   |  ✅\*  |    jen sebe     |         ✅          |
+| Profile merge fields              |   ✅    |   ✅    |   ✅    |   ✅    |   ✅   |     jen své     |         ✅          |
+| Tags na kontaktech                |   ✅    |   ✅    |   ✅    |   ✅    |   ✅   |   ❌ (skryto)   |         ✅          |
+| Groups (subscriberovo membership) |   ✅    |   ✅    |   ✅    |   ✅    |   ✅   |     jen své     |         ✅          |
+| Campaign content                  |   ✅    |   ✅    |   ✅    |   ✅    |   ✅   |  jen co dostal  |         ✅          |
+| Reports/stats                     |   ✅    |   ✅    |   ✅    |   ✅    |   ✅   |       ❌        |         ✅          |
+| Automation flows                  |   ✅    |   ✅    |   ✅    |   ✅    |   ✅   |       ❌        |         ✅          |
+| Domain settings                   |   ✅    |   ✅    |   ❌    |   ❌    |   ❌   |       ❌        |         ❌          |
+| API keys                          | jen své | jen své | jen své | jen své |   ❌   |       ❌        |          –          |
+| E-commerce orders                 |   ✅    |   ✅    |   ✅    |   ✅    |   ✅   |     jen své     |         ✅          |
+| Survey responses                  |   ✅    |   ✅    |   ✅    |   ✅    |   ✅   |     jen své     |         ✅          |
+| Compliance audit trail            |   ✅    |   ✅    | omezeně |   ❌    |   ❌   | jen export sebe |       omezeně       |
 
 \* Author/Viewer mají read-only přístup k audience, ne edit.
 
@@ -1093,4 +1097,4 @@ Pokud Mailchimp používáte v týmu, doporučujeme zavést:
 
 ---
 
-*Dokument zpracován na základě oficiální Mailchimp dokumentace, podpůrných článků a praktických zkušeností z komunity (G2, Reddit r/Emailmarketing, Stitchflow user-management guide, Pure Firefly, Tailored Edge, ALM Corp).*
+_Dokument zpracován na základě oficiální Mailchimp dokumentace, podpůrných článků a praktických zkušeností z komunity (G2, Reddit r/Emailmarketing, Stitchflow user-management guide, Pure Firefly, Tailored Edge, ALM Corp)._

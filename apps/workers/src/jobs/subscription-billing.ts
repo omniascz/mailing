@@ -21,7 +21,9 @@ async function generateDue(): Promise<{ processed: number; generated: number; er
     body: JSON.stringify({ limit: 500 }),
   });
   if (!res.ok) throw new Error(`generate-due failed ${res.status}`);
-  const j = await res.json() as { data: { processed: number; generated: number; errors: number } };
+  const j = (await res.json()) as {
+    data: { processed: number; generated: number; errors: number };
+  };
   return j.data;
 }
 
@@ -37,18 +39,23 @@ export function startSubscriptionBillingWorker() {
   );
 
   worker.on('failed', (job, err) =>
-    console.error('[subscription-billing] failed', job?.id, err.message));
+    console.error('[subscription-billing] failed', job?.id, err.message),
+  );
 
   return worker;
 }
 
 export async function scheduleSubscriptionBillingJob() {
   const existing = await billingQueue.getRepeatableJobs();
-  if (!existing.find(j => j.name === 'subscription-billing-tick')) {
-    await billingQueue.add('subscription-billing-tick', {}, {
-      repeat: { pattern: '*/5 * * * *' }, // every 5 minutes
-      removeOnComplete: true,
-    });
+  if (!existing.find((j) => j.name === 'subscription-billing-tick')) {
+    await billingQueue.add(
+      'subscription-billing-tick',
+      {},
+      {
+        repeat: { pattern: '*/5 * * * *' }, // every 5 minutes
+        removeOnComplete: true,
+      },
+    );
   }
   console.log('[subscription-billing] cron scheduled every 5 minutes');
 }

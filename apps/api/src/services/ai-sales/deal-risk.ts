@@ -11,9 +11,7 @@
 
 import { and, desc, eq, gte, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  deals, dealStageHistory, emailEvents,
-} from '../../db/schema/index.js';
+import { deals, dealStageHistory, emailEvents } from '../../db/schema/index.js';
 
 export interface DealRiskFlags {
   stalled: boolean;
@@ -40,14 +38,19 @@ export interface DealRiskResult {
 }
 
 export interface DealRiskOptions {
-  stalledDays?: number;         // default 30
-  silentDays?: number;          // default 21
-  highValueThreshold?: number;  // default 10_000
-  limit?: number;               // default 200
+  stalledDays?: number; // default 30
+  silentDays?: number; // default 21
+  highValueThreshold?: number; // default 10_000
+  limit?: number; // default 200
 }
 
-async function lastActivity(orgId: string, dealId: string, contactId: string | null): Promise<Date | null> {
-  const [lastStage] = await db.select({ changedAt: dealStageHistory.changedAt })
+async function lastActivity(
+  orgId: string,
+  dealId: string,
+  contactId: string | null,
+): Promise<Date | null> {
+  const [lastStage] = await db
+    .select({ changedAt: dealStageHistory.changedAt })
     .from(dealStageHistory)
     .where(eq(dealStageHistory.dealId, dealId))
     .orderBy(desc(dealStageHistory.changedAt))
@@ -55,7 +58,8 @@ async function lastActivity(orgId: string, dealId: string, contactId: string | n
 
   let lastContactEvent: Date | null = null;
   if (contactId) {
-    const [ev] = await db.select({ createdAt: emailEvents.createdAt })
+    const [ev] = await db
+      .select({ createdAt: emailEvents.createdAt })
       .from(emailEvents)
       .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId)))
       .orderBy(desc(emailEvents.createdAt))
@@ -63,7 +67,9 @@ async function lastActivity(orgId: string, dealId: string, contactId: string | n
     lastContactEvent = ev?.createdAt ?? null;
   }
 
-  const candidates = [lastStage?.changedAt ?? null, lastContactEvent].filter((d): d is Date => d !== null);
+  const candidates = [lastStage?.changedAt ?? null, lastContactEvent].filter(
+    (d): d is Date => d !== null,
+  );
   if (candidates.length === 0) return null;
   return candidates.reduce((a, b) => (a.getTime() > b.getTime() ? a : b));
 }
@@ -77,12 +83,17 @@ export async function assessDealRisk(
   const silentDays = opts.silentDays ?? 21;
   const highValueThreshold = opts.highValueThreshold ?? 10_000;
 
-  const [deal] = await db.select().from(deals)
+  const [deal] = await db
+    .select()
+    .from(deals)
     .where(and(eq(deals.id, dealId), eq(deals.orgId, orgId), isNull(deals.deletedAt)));
   if (!deal || deal.status !== 'open') return null;
 
   const now = Date.now();
-  const daysInCurrentStage = Math.max(0, Math.floor((now - deal.stageChangedAt.getTime()) / 86_400_000));
+  const daysInCurrentStage = Math.max(
+    0,
+    Math.floor((now - deal.stageChangedAt.getTime()) / 86_400_000),
+  );
   const daysPastExpectedClose = deal.expectedCloseDate
     ? Math.floor((now - deal.expectedCloseDate.getTime()) / 86_400_000)
     : 0;
@@ -102,9 +113,18 @@ export async function assessDealRisk(
 
   const reasons: string[] = [];
   let score = 0;
-  if (flags.stalled)  { score += 30; reasons.push(`Stalled ${daysInCurrentStage}d in current stage`); }
-  if (flags.overdue)  { score += 35; reasons.push(`${daysPastExpectedClose}d past expected close`); }
-  if (flags.silent)   { score += 20; reasons.push(`No activity for ${daysSinceLastActivity}d`); }
+  if (flags.stalled) {
+    score += 30;
+    reasons.push(`Stalled ${daysInCurrentStage}d in current stage`);
+  }
+  if (flags.overdue) {
+    score += 35;
+    reasons.push(`${daysPastExpectedClose}d past expected close`);
+  }
+  if (flags.silent) {
+    score += 20;
+    reasons.push(`No activity for ${daysSinceLastActivity}d`);
+  }
   if (flags.highValue && (flags.stalled || flags.overdue || flags.silent)) {
     score += 15;
     reasons.push(`High-value deal (${value} ${deal.currency})`);
@@ -145,31 +165,33 @@ export async function atRiskDeals(
 
   const staleSince = new Date(Date.now() - (opts.stalledDays ?? 30) * 86_400_000);
 
-  const conds = [
-    eq(deals.orgId, orgId),
-    eq(deals.status, 'open'),
-    isNull(deals.deletedAt),
-  ];
+  const conds = [eq(deals.orgId, orgId), eq(deals.status, 'open'), isNull(deals.deletedAt)];
   if (opts.pipelineId) conds.push(eq(deals.pipelineId, opts.pipelineId));
 
-  const rows = await db.select({ id: deals.id, stageChangedAt: deals.stageChangedAt, expectedCloseDate: deals.expectedCloseDate })
+  const rows = await db
+    .select({
+      id: deals.id,
+      stageChangedAt: deals.stageChangedAt,
+      expectedCloseDate: deals.expectedCloseDate,
+    })
     .from(deals)
     .where(and(...conds))
     .limit(limit * 2);
 
   // Pre-filter to reduce DB reads in assessDealRisk: only deals with stale stage or past expected close
-  const candidates = rows.filter(r =>
-    r.stageChangedAt <= staleSince ||
-    (r.expectedCloseDate && r.expectedCloseDate.getTime() < Date.now()),
+  const candidates = rows.filter(
+    (r) =>
+      r.stageChangedAt <= staleSince ||
+      (r.expectedCloseDate && r.expectedCloseDate.getTime() < Date.now()),
   );
 
   const results = await Promise.allSettled(
-    candidates.slice(0, limit).map(r => assessDealRisk(orgId, r.id, opts)),
+    candidates.slice(0, limit).map((r) => assessDealRisk(orgId, r.id, opts)),
   );
 
   return results
     .filter((r): r is PromiseFulfilledResult<DealRiskResult | null> => r.status === 'fulfilled')
-    .map(r => r.value)
+    .map((r) => r.value)
     .filter((r): r is DealRiskResult => r !== null && r.riskScore >= minScore)
     .sort((a, b) => b.riskScore - a.riskScore);
 

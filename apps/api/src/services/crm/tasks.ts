@@ -5,19 +5,22 @@ import { AppError } from '../../lib/app-error.js';
 
 type TaskInsert = typeof crmTasks.$inferInsert;
 
-export async function createTask(orgId: string, input: {
-  type?: 'call' | 'email' | 'meeting' | 'todo';
-  status?: 'open' | 'completed' | 'cancelled';
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  title: string;
-  description?: string;
-  contactId?: string | null;
-  dealId?: string | null;
-  accountId?: string | null;
-  assignedUserId?: string | null;
-  createdByUserId?: string | null;
-  dueAt?: Date | null;
-}): Promise<CrmTask> {
+export async function createTask(
+  orgId: string,
+  input: {
+    type?: 'call' | 'email' | 'meeting' | 'todo';
+    status?: 'open' | 'completed' | 'cancelled';
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+    title: string;
+    description?: string;
+    contactId?: string | null;
+    dealId?: string | null;
+    accountId?: string | null;
+    assignedUserId?: string | null;
+    createdByUserId?: string | null;
+    dueAt?: Date | null;
+  },
+): Promise<CrmTask> {
   const values: TaskInsert = {
     orgId,
     type: input.type ?? 'todo',
@@ -38,23 +41,28 @@ export async function createTask(orgId: string, input: {
 }
 
 export async function getTask(orgId: string, id: string): Promise<CrmTask> {
-  const [row] = await db.select().from(crmTasks)
+  const [row] = await db
+    .select()
+    .from(crmTasks)
     .where(and(eq(crmTasks.id, id), eq(crmTasks.orgId, orgId), isNull(crmTasks.deletedAt)));
   if (!row) throw AppError.notFound('Task not found');
   return row;
 }
 
-export async function listTasks(orgId: string, opts: {
-  contactId?: string;
-  dealId?: string;
-  accountId?: string;
-  assignedUserId?: string;
-  status?: 'open' | 'completed' | 'cancelled';
-  type?: 'call' | 'email' | 'meeting' | 'todo';
-  overdue?: boolean;
-  limit?: number;
-  cursor?: string;
-} = {}): Promise<{ data: CrmTask[]; cursor: string | null }> {
+export async function listTasks(
+  orgId: string,
+  opts: {
+    contactId?: string;
+    dealId?: string;
+    accountId?: string;
+    assignedUserId?: string;
+    status?: 'open' | 'completed' | 'cancelled';
+    type?: 'call' | 'email' | 'meeting' | 'todo';
+    overdue?: boolean;
+    limit?: number;
+    cursor?: string;
+  } = {},
+): Promise<{ data: CrmTask[]; cursor: string | null }> {
   const limit = Math.min(opts.limit ?? 50, 200);
   const conditions = [eq(crmTasks.orgId, orgId), isNull(crmTasks.deletedAt)];
 
@@ -68,10 +76,14 @@ export async function listTasks(orgId: string, opts: {
     conditions.push(sql`${crmTasks.dueAt} < NOW() AND ${crmTasks.status} = 'open'`);
   }
   if (opts.cursor) {
-    conditions.push(sql`${crmTasks.createdAt} < (SELECT created_at FROM crm_tasks WHERE id = ${opts.cursor})`);
+    conditions.push(
+      sql`${crmTasks.createdAt} < (SELECT created_at FROM crm_tasks WHERE id = ${opts.cursor})`,
+    );
   }
 
-  const rows = await db.select().from(crmTasks)
+  const rows = await db
+    .select()
+    .from(crmTasks)
     .where(and(...conditions))
     .orderBy(desc(crmTasks.createdAt))
     .limit(limit + 1);
@@ -81,18 +93,22 @@ export async function listTasks(orgId: string, opts: {
   return { data, cursor: hasMore ? data[data.length - 1]!.id : null };
 }
 
-export async function updateTask(orgId: string, id: string, patch: {
-  title?: string;
-  description?: string | null;
-  type?: 'call' | 'email' | 'meeting' | 'todo';
-  status?: 'open' | 'completed' | 'cancelled';
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-  contactId?: string | null;
-  dealId?: string | null;
-  accountId?: string | null;
-  assignedUserId?: string | null;
-  dueAt?: Date | null;
-}): Promise<CrmTask> {
+export async function updateTask(
+  orgId: string,
+  id: string,
+  patch: {
+    title?: string;
+    description?: string | null;
+    type?: 'call' | 'email' | 'meeting' | 'todo';
+    status?: 'open' | 'completed' | 'cancelled';
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+    contactId?: string | null;
+    dealId?: string | null;
+    accountId?: string | null;
+    assignedUserId?: string | null;
+    dueAt?: Date | null;
+  },
+): Promise<CrmTask> {
   await getTask(orgId, id);
 
   const update: Partial<TaskInsert> = { updatedAt: new Date() };
@@ -110,7 +126,8 @@ export async function updateTask(orgId: string, id: string, patch: {
   if (patch.assignedUserId !== undefined) update.assignedUserId = patch.assignedUserId;
   if (patch.dueAt !== undefined) update.dueAt = patch.dueAt;
 
-  const [row] = await db.update(crmTasks)
+  const [row] = await db
+    .update(crmTasks)
     .set(update)
     .where(and(eq(crmTasks.id, id), eq(crmTasks.orgId, orgId)))
     .returning();
@@ -123,18 +140,23 @@ export async function completeTask(orgId: string, id: string): Promise<CrmTask> 
 
 export async function deleteTask(orgId: string, id: string): Promise<void> {
   await getTask(orgId, id);
-  await db.update(crmTasks)
+  await db
+    .update(crmTasks)
     .set({ deletedAt: new Date() })
     .where(and(eq(crmTasks.id, id), eq(crmTasks.orgId, orgId)));
 }
 
 export async function listOverdueTasks(orgId: string): Promise<CrmTask[]> {
-  return db.select().from(crmTasks).where(
-    and(
-      eq(crmTasks.orgId, orgId),
-      eq(crmTasks.status, 'open'),
-      isNull(crmTasks.deletedAt),
-      sql`${crmTasks.dueAt} IS NOT NULL AND ${crmTasks.dueAt} < NOW()`,
-    ),
-  ).orderBy(asc(crmTasks.dueAt));
+  return db
+    .select()
+    .from(crmTasks)
+    .where(
+      and(
+        eq(crmTasks.orgId, orgId),
+        eq(crmTasks.status, 'open'),
+        isNull(crmTasks.deletedAt),
+        sql`${crmTasks.dueAt} IS NOT NULL AND ${crmTasks.dueAt} < NOW()`,
+      ),
+    )
+    .orderBy(asc(crmTasks.dueAt));
 }

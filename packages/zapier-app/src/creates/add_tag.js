@@ -22,7 +22,11 @@ module.exports = {
         headers: { 'X-API-Key': bundle.authData.apiKey },
         body: { tagName: bundle.inputData.tagName },
       });
-      return { success: true, contactId: bundle.inputData.contactId, tagName: bundle.inputData.tagName };
+      return {
+        success: true,
+        contactId: bundle.inputData.contactId,
+        tagName: bundle.inputData.tagName,
+      };
     },
     sample: { success: true, contactId: 'abc-123', tagName: 'vip' },
   },

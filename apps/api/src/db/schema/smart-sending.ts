@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, integer, boolean, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  boolean,
+  timestamp,
+  uniqueIndex,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 
@@ -6,7 +15,9 @@ export const smartSendingRules = pgTable(
   'smart_sending_rules',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     channel: varchar('channel', { length: 32 }).notNull(),
     maxPerDay: integer('max_per_day').notNull().default(2),
     maxPerWeek: integer('max_per_week').notNull().default(7),
@@ -22,8 +33,12 @@ export const contactSendLog = pgTable(
   'contact_send_log',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
     channel: varchar('channel', { length: 32 }).notNull(),
     sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
   },

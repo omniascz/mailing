@@ -77,9 +77,7 @@ function toSupported(value: string | null | undefined): SupportedLocale | null {
     : null;
 }
 
-function parseAcceptLanguage(
-  header: string | null | undefined,
-): SupportedLocale | null {
+function parseAcceptLanguage(header: string | null | undefined): SupportedLocale | null {
   if (!header) return null;
   const ranges = header
     .split(',')

@@ -47,7 +47,9 @@ export const ipPoolTypeEnum = pgEnum('ip_pool_type', [
 export const ipPools = pgTable(
   'ip_pools',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -91,7 +93,9 @@ export const ipPools = pgTable(
 export const dedicatedIps = pgTable(
   'dedicated_ips',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
 
     /** IPv4 or IPv6 address */
     ipAddress: varchar('ip_address', { length: 45 }).notNull(),
@@ -160,7 +164,9 @@ export const dedicatedIps = pgTable(
 export const ipWarmupSchedules = pgTable(
   'ip_warmup_schedules',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     poolId: uuid('pool_id')
       .notNull()
       .references(() => ipPools.id, { onDelete: 'cascade' }),
@@ -170,9 +176,7 @@ export const ipWarmupSchedules = pgTable(
     maxVolume: integer('max_volume').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    uniqueIndex('ip_warmup_schedules_pool_day_idx').on(t.poolId, t.day),
-  ],
+  (t) => [uniqueIndex('ip_warmup_schedules_pool_day_idx').on(t.poolId, t.day)],
 );
 
 export type IpPool = typeof ipPools.$inferSelect;

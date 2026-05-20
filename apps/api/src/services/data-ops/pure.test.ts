@@ -45,7 +45,7 @@ describe('cmp', () => {
 
   it('numeric strings coerce', () => {
     expect(cmp('5', '3')).toBe(1); // strings: '5' > '3'
-    expect(cmp('5', 3)).toBe(2);   // mixed: numeric coerce
+    expect(cmp('5', 3)).toBe(2); // mixed: numeric coerce
   });
 
   it('returns 0 for incomparable types', () => {
@@ -129,18 +129,16 @@ describe('applyFilter', () => {
 
 describe('applyMap', () => {
   it('projects with bare-field strings', () => {
-    const out = applyMap(
-      { type: 'map', projection: { name: 'firstName', email: 'email' } },
-      [{ firstName: 'Jane', lastName: 'Doe', email: 'a@b.com' }],
-    );
+    const out = applyMap({ type: 'map', projection: { name: 'firstName', email: 'email' } }, [
+      { firstName: 'Jane', lastName: 'Doe', email: 'a@b.com' },
+    ]);
     expect(out).toEqual([{ name: 'Jane', email: 'a@b.com' }]);
   });
 
   it('supports {$field: ...} shape', () => {
-    const out = applyMap(
-      { type: 'map', projection: { id: { $field: 'user.id' } } },
-      [{ user: { id: 'u1' } }],
-    );
+    const out = applyMap({ type: 'map', projection: { id: { $field: 'user.id' } } }, [
+      { user: { id: 'u1' } },
+    ]);
     expect(out).toEqual([{ id: 'u1' }]);
   });
 });
@@ -220,13 +218,19 @@ describe('applySort', () => {
   const rows = [{ n: 3 }, { n: 1 }, { n: 2 }];
 
   it('ascending', () => {
-    expect(applySort({ type: 'sort', by: [{ field: 'n', dir: 'asc' }] }, rows))
-      .toEqual([{ n: 1 }, { n: 2 }, { n: 3 }]);
+    expect(applySort({ type: 'sort', by: [{ field: 'n', dir: 'asc' }] }, rows)).toEqual([
+      { n: 1 },
+      { n: 2 },
+      { n: 3 },
+    ]);
   });
 
   it('descending', () => {
-    expect(applySort({ type: 'sort', by: [{ field: 'n', dir: 'desc' }] }, rows))
-      .toEqual([{ n: 3 }, { n: 2 }, { n: 1 }]);
+    expect(applySort({ type: 'sort', by: [{ field: 'n', dir: 'desc' }] }, rows)).toEqual([
+      { n: 3 },
+      { n: 2 },
+      { n: 1 },
+    ]);
   });
 
   it('multi-key tie-breaks', () => {
@@ -236,7 +240,13 @@ describe('applySort', () => {
       { team: 't2', n: 5 },
     ];
     const out = applySort(
-      { type: 'sort', by: [{ field: 'team', dir: 'asc' }, { field: 'n', dir: 'asc' }] },
+      {
+        type: 'sort',
+        by: [
+          { field: 'team', dir: 'asc' },
+          { field: 'n', dir: 'asc' },
+        ],
+      },
       r,
     );
     expect(out).toEqual([

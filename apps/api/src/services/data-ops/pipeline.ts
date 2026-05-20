@@ -15,7 +15,12 @@
 
 import type { PipelineStep } from '../../db/schema/data-pipelines.js';
 import {
-  applyFilter, applyMap, applyAggregate, applyLimit, applySort, joinRows,
+  applyFilter,
+  applyMap,
+  applyAggregate,
+  applyLimit,
+  applySort,
+  joinRows,
   type Row,
 } from './pure.js';
 
@@ -63,11 +68,16 @@ async function applyStep(
   fetchJoinRows?: (source: string) => Promise<Row[]>,
 ): Promise<Row[]> {
   switch (step.type) {
-    case 'filter':    return applyFilter(step, rows);
-    case 'map':       return applyMap(step, rows);
-    case 'aggregate': return applyAggregate(step, rows);
-    case 'limit':     return applyLimit(step, rows);
-    case 'sort':      return applySort(step, rows);
+    case 'filter':
+      return applyFilter(step, rows);
+    case 'map':
+      return applyMap(step, rows);
+    case 'aggregate':
+      return applyAggregate(step, rows);
+    case 'limit':
+      return applyLimit(step, rows);
+    case 'sort':
+      return applySort(step, rows);
     case 'join': {
       if (!fetchJoinRows) return rows;
       const right = await fetchJoinRows(step.rightSource);

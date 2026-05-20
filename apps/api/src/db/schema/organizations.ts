@@ -5,7 +5,9 @@ import { planEnum, dataRegionEnum } from './enums.js';
 export const organizations = pgTable(
   'organizations',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     name: varchar('name', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 100 }).notNull().unique(),
     plan: planEnum('plan').notNull().default('free'),

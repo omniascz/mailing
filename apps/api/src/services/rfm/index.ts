@@ -5,20 +5,28 @@
  * is mapped to one of 11 named segments (Klaviyo-style: champions, loyal, at-risk…).
  */
 
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql, gt } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contactEngagement } from '../../db/schema/index.js';
 
 export type RfmSegment =
-  | 'champions' | 'loyal' | 'potential_loyalists' | 'recent_customers'
-  | 'promising' | 'needs_attention' | 'about_to_sleep'
-  | 'at_risk' | 'cant_lose' | 'hibernating' | 'lost';
+  | 'champions'
+  | 'loyal'
+  | 'potential_loyalists'
+  | 'recent_customers'
+  | 'promising'
+  | 'needs_attention'
+  | 'about_to_sleep'
+  | 'at_risk'
+  | 'cant_lose'
+  | 'hibernating'
+  | 'lost';
 
 export interface RfmScore {
-  recency: number;       // 1–5, 5 = most recent
-  frequency: number;     // 1–5, 5 = most orders
-  monetary: number;      // 1–5, 5 = highest spend
-  combined: number;      // R*100 + F*10 + M
+  recency: number; // 1–5, 5 = most recent
+  frequency: number; // 1–5, 5 = most orders
+  monetary: number; // 1–5, 5 = highest spend
+  combined: number; // R*100 + F*10 + M
   segment: RfmSegment;
 }
 
@@ -38,7 +46,14 @@ export function classifySegment(r: number, f: number, m: number): RfmSegment {
 }
 
 /** Buckets a value into 1–5 quintile based on the org-wide thresholds. */
-function bucket(value: number, q1: number, q2: number, q3: number, q4: number, invert = false): number {
+function bucket(
+  value: number,
+  q1: number,
+  q2: number,
+  q3: number,
+  q4: number,
+  invert = false,
+): number {
   let score: number;
   if (value <= q1) score = 1;
   else if (value <= q2) score = 2;
@@ -68,14 +83,27 @@ export async function refreshOrgRfm(orgId: string): Promise<{ scored: number }> 
   if (buyers.length === 0) return { scored: 0 };
 
   const now = Date.now();
-  const recencies = buyers.map((r) => Math.floor((now - r.lastOrderAt!.getTime()) / 86_400_000)).sort((a, b) => a - b);
+  const recencies = buyers
+    .map((r) => Math.floor((now - r.lastOrderAt!.getTime()) / 86_400_000))
+    .sort((a, b) => a - b);
   const frequencies = buyers.map((r) => r.totalOrders).sort((a, b) => a - b);
   const monetaries = buyers.map((r) => Number(r.totalRevenue ?? 0)).sort((a, b) => a - b);
 
-  const q = (arr: number[], p: number) => arr[Math.min(arr.length - 1, Math.floor(arr.length * p))]!;
+  const q = (arr: number[], p: number) =>
+    arr[Math.min(arr.length - 1, Math.floor(arr.length * p))]!;
   const rQ = [q(recencies, 0.2), q(recencies, 0.4), q(recencies, 0.6), q(recencies, 0.8)] as const;
-  const fQ = [q(frequencies, 0.2), q(frequencies, 0.4), q(frequencies, 0.6), q(frequencies, 0.8)] as const;
-  const mQ = [q(monetaries, 0.2), q(monetaries, 0.4), q(monetaries, 0.6), q(monetaries, 0.8)] as const;
+  const fQ = [
+    q(frequencies, 0.2),
+    q(frequencies, 0.4),
+    q(frequencies, 0.6),
+    q(frequencies, 0.8),
+  ] as const;
+  const mQ = [
+    q(monetaries, 0.2),
+    q(monetaries, 0.4),
+    q(monetaries, 0.6),
+    q(monetaries, 0.8),
+  ] as const;
 
   let scored = 0;
   for (const row of buyers) {
@@ -84,16 +112,27 @@ export async function refreshOrgRfm(orgId: string): Promise<{ scored: number }> 
     const f = bucket(row.totalOrders, fQ[0], fQ[1], fQ[2], fQ[3]);
     const m = bucket(Number(row.totalRevenue ?? 0), mQ[0], mQ[1], mQ[2], mQ[3]);
 
-    const intervalDays = row.firstOrderAt && row.totalOrders > 1
-      ? Math.max(1, Math.floor((row.lastOrderAt!.getTime() - row.firstOrderAt.getTime()) / 86_400_000 / Math.max(1, row.totalOrders - 1)))
-      : null;
+    const intervalDays =
+      row.firstOrderAt && row.totalOrders > 1
+        ? Math.max(
+            1,
+            Math.floor(
+              (row.lastOrderAt!.getTime() - row.firstOrderAt.getTime()) /
+                86_400_000 /
+                Math.max(1, row.totalOrders - 1),
+            ),
+          )
+        : null;
     const nextOrderAt = intervalDays
       ? new Date(row.lastOrderAt!.getTime() + intervalDays * 86_400_000)
       : null;
 
-    await db.update(contactEngagement)
+    await db
+      .update(contactEngagement)
       .set({
-        rfmRecency: r, rfmFrequency: f, rfmMonetary: m,
+        rfmRecency: r,
+        rfmFrequency: f,
+        rfmMonetary: m,
         rfmScore: r * 100 + f * 10 + m,
         rfmSegment: classifySegment(r, f, m),
         avgOrderIntervalDays: intervalDays,
@@ -105,7 +144,9 @@ export async function refreshOrgRfm(orgId: string): Promise<{ scored: number }> 
   return { scored };
 }
 
-export async function rfmDistribution(orgId: string): Promise<Array<{ segment: string; count: number }>> {
+export async function rfmDistribution(
+  orgId: string,
+): Promise<Array<{ segment: string; count: number }>> {
   const rs = await db.execute<{ segment: string; count: string }>(sql`
     SELECT rfm_segment AS segment, COUNT(*)::text AS count
     FROM contact_engagement
@@ -113,8 +154,69 @@ export async function rfmDistribution(orgId: string): Promise<Array<{ segment: s
     GROUP BY rfm_segment
   `);
   return (rs as unknown as Array<{ segment: string; count: string }>).map((r) => ({
-    segment: r.segment, count: Number(r.count),
+    segment: r.segment,
+    count: Number(r.count),
   }));
+}
+
+/**
+ * List contacts in a given RFM segment (paginated by contactId cursor).
+ * Used by campaign builder to target "Champions", "At Risk", etc.
+ */
+export async function listSegmentContacts(opts: {
+  orgId: string;
+  segment: RfmSegment;
+  cursor?: string;
+  limit?: number;
+}): Promise<{ contactIds: string[]; nextCursor: string | null }> {
+  const limit = Math.min(Math.max(opts.limit ?? 500, 1), 5000);
+  const conds = [
+    eq(contactEngagement.orgId, opts.orgId),
+    eq(contactEngagement.rfmSegment, opts.segment),
+  ];
+  if (opts.cursor) conds.push(gt(contactEngagement.contactId, opts.cursor));
+
+  const rows = await db
+    .select({ contactId: contactEngagement.contactId })
+    .from(contactEngagement)
+    .where(and(...conds))
+    .orderBy(contactEngagement.contactId)
+    .limit(limit + 1);
+
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  return {
+    contactIds: page.map((r) => r.contactId),
+    nextCursor: hasMore ? page[page.length - 1]!.contactId : null,
+  };
+}
+
+/**
+ * Refresh RFM scores for every org that has any contact_engagement rows.
+ * Called by the daily-run cron orchestrator; sequential per-org to keep
+ * connection-pool pressure predictable (each refreshOrgRfm does a full
+ * org scan + N updates).
+ */
+export async function refreshAllOrgsRfm(): Promise<{
+  orgs: number;
+  scored: number;
+  errors: number;
+}> {
+  const orgs = (await db.execute<{ org_id: string }>(sql`
+    SELECT DISTINCT org_id FROM contact_engagement WHERE total_orders > 0
+  `)) as unknown as Array<{ org_id: string }>;
+
+  let scored = 0;
+  let errors = 0;
+  for (const { org_id } of orgs) {
+    try {
+      const r = await refreshOrgRfm(org_id);
+      scored += r.scored;
+    } catch {
+      errors++;
+    }
+  }
+  return { orgs: orgs.length, scored, errors };
 }
 
 export async function getContactRfm(contactId: string): Promise<RfmScore | null> {
@@ -131,7 +233,10 @@ export async function getContactRfm(contactId: string): Promise<RfmScore | null>
     .limit(1);
   if (!row || row.r == null || row.f == null || row.m == null) return null;
   return {
-    recency: row.r, frequency: row.f, monetary: row.m,
-    combined: row.score!, segment: (row.segment ?? 'lost') as RfmSegment,
+    recency: row.r,
+    frequency: row.f,
+    monetary: row.m,
+    combined: row.score!,
+    segment: (row.segment ?? 'lost') as RfmSegment,
   };
 }

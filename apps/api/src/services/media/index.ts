@@ -10,12 +10,21 @@ import { db } from '../../db/client.js';
 import { mediaAssets, type MediaAsset, type NewMediaAsset } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
-export async function createMediaAsset(orgId: string, data: Omit<NewMediaAsset, 'id' | 'orgId'>): Promise<MediaAsset> {
-  const [row] = await db.insert(mediaAssets).values({ ...data, orgId }).returning();
+export async function createMediaAsset(
+  orgId: string,
+  data: Omit<NewMediaAsset, 'id' | 'orgId'>,
+): Promise<MediaAsset> {
+  const [row] = await db
+    .insert(mediaAssets)
+    .values({ ...data, orgId })
+    .returning();
   return row!;
 }
 
-export async function listMediaAssets(orgId: string, opts: { folder?: string; tag?: string } = {}): Promise<MediaAsset[]> {
+export async function listMediaAssets(
+  orgId: string,
+  opts: { folder?: string; tag?: string } = {},
+): Promise<MediaAsset[]> {
   const whereParts = [eq(mediaAssets.orgId, orgId), isNull(mediaAssets.deletedAt)];
   if (opts.folder) whereParts.push(eq(mediaAssets.folder, opts.folder));
   let rows = await db
@@ -38,12 +47,15 @@ export async function getMediaAsset(id: string, orgId: string): Promise<MediaAss
 }
 
 export async function deleteMediaAsset(id: string, orgId: string): Promise<void> {
-  await db.update(mediaAssets)
+  await db
+    .update(mediaAssets)
     .set({ deletedAt: new Date() })
     .where(and(eq(mediaAssets.id, id), eq(mediaAssets.orgId, orgId)));
 }
 
-export async function folderStats(orgId: string): Promise<Array<{ folder: string; count: number; totalBytes: number }>> {
+export async function folderStats(
+  orgId: string,
+): Promise<Array<{ folder: string; count: number; totalBytes: number }>> {
   const rows = await db.execute<{ folder: string; count: string; total: string }>(sql`
     SELECT folder, COUNT(*)::text AS count, COALESCE(SUM(size_bytes),0)::text AS total
     FROM media_assets

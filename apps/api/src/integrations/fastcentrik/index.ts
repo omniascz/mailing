@@ -9,11 +9,7 @@
  */
 
 import { AppError } from '../../lib/app-error.js';
-import {
-  createConnection,
-  ingestOrder,
-  getConnection,
-} from '../../services/ecommerce/index.js';
+import { createConnection, ingestOrder, getConnection } from '../../services/ecommerce/index.js';
 import type {
   FastCentrikCredentials,
   EcommerceConnection,
@@ -74,7 +70,10 @@ export async function registerConnection(
 export async function ingestFeed(connection: EcommerceConnection): Promise<{ ingested: number }> {
   const creds = connection.credentials as FastCentrikCredentials;
   const res = await fetch(creds.feedUrl, {
-    headers: { Accept: 'application/xml, text/xml', ...authHeaders(creds.feedUsername, creds.feedPassword) },
+    headers: {
+      Accept: 'application/xml, text/xml',
+      ...authHeaders(creds.feedUsername, creds.feedPassword),
+    },
   });
   if (!res.ok) {
     throw new AppError({

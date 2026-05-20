@@ -29,8 +29,12 @@ export const blogPostStatusEnum = pgEnum('blog_post_status', [
 export const blogCategories = pgTable(
   'blog_categories',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     slug: varchar('slug', { length: 128 }).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
@@ -47,8 +51,12 @@ export const blogCategories = pgTable(
 export const blogAuthors = pgTable(
   'blog_authors',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
     slug: varchar('slug', { length: 128 }).notNull(),
     displayName: varchar('display_name', { length: 255 }).notNull(),
@@ -67,8 +75,12 @@ export const blogAuthors = pgTable(
 export const blogPosts = pgTable(
   'blog_posts',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     authorId: uuid('author_id').references(() => blogAuthors.id, { onDelete: 'set null' }),
     categoryId: uuid('category_id').references(() => blogCategories.id, { onDelete: 'set null' }),
 
@@ -118,8 +130,12 @@ export const blogPosts = pgTable(
 export const blogPostRevisions = pgTable(
   'blog_post_revisions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    postId: uuid('post_id').notNull().references(() => blogPosts.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    postId: uuid('post_id')
+      .notNull()
+      .references(() => blogPosts.id, { onDelete: 'cascade' }),
     version: varchar('version', { length: 16 }).notNull(),
     title: varchar('title', { length: 255 }).notNull(),
     body: text('body').notNull(),

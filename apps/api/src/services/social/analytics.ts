@@ -7,7 +7,6 @@ import { eq, and, desc, gte } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { socialAnalyticsSnapshots, socialAccounts, socialPosts } from '../../db/schema/index.js';
 
-
 // ── Platform insight fetchers ─────────────────────────────────────────────────
 
 async function fetchFacebookInsights(account: typeof socialAccounts.$inferSelect) {
@@ -16,8 +15,13 @@ async function fetchFacebookInsights(account: typeof socialAccounts.$inferSelect
     `https://graph.facebook.com/v19.0/${account.platformUserId}?fields=${fields}&access_token=${account.accessToken}`,
   );
   if (!res.ok) return null;
-  const d = await res.json() as { followers_count?: number; fan_count?: number };
-  return { followers: d.followers_count ?? d.fan_count ?? 0, impressions: 0, reach: 0, engagements: 0 };
+  const d = (await res.json()) as { followers_count?: number; fan_count?: number };
+  return {
+    followers: d.followers_count ?? d.fan_count ?? 0,
+    impressions: 0,
+    reach: 0,
+    engagements: 0,
+  };
 }
 
 async function fetchInstagramInsights(account: typeof socialAccounts.$inferSelect) {
@@ -25,7 +29,7 @@ async function fetchInstagramInsights(account: typeof socialAccounts.$inferSelec
     `https://graph.facebook.com/v19.0/${account.platformUserId}?fields=followers_count&access_token=${account.accessToken}`,
   );
   if (!res.ok) return null;
-  const d = await res.json() as { followers_count?: number };
+  const d = (await res.json()) as { followers_count?: number };
   return { followers: d.followers_count ?? 0, impressions: 0, reach: 0, engagements: 0 };
 }
 
@@ -35,7 +39,7 @@ async function fetchLinkedInInsights(account: typeof socialAccounts.$inferSelect
     { headers: { Authorization: `Bearer ${account.accessToken}` } },
   );
   if (!res.ok) return null;
-  const d = await res.json() as { firstDegreeSize?: number };
+  const d = (await res.json()) as { firstDegreeSize?: number };
   return { followers: d.firstDegreeSize ?? 0, impressions: 0, reach: 0, engagements: 0 };
 }
 
@@ -45,17 +49,27 @@ async function fetchTwitterMetrics(account: typeof socialAccounts.$inferSelect) 
     { headers: { Authorization: `Bearer ${account.accessToken}` } },
   );
   if (!res.ok) return null;
-  const d = await res.json() as { data?: { public_metrics?: { followers_count?: number } } };
-  return { followers: d.data?.public_metrics?.followers_count ?? 0, impressions: 0, reach: 0, engagements: 0 };
+  const d = (await res.json()) as { data?: { public_metrics?: { followers_count?: number } } };
+  return {
+    followers: d.data?.public_metrics?.followers_count ?? 0,
+    impressions: 0,
+    reach: 0,
+    engagements: 0,
+  };
 }
 
 async function fetchPlatformInsights(account: typeof socialAccounts.$inferSelect) {
   switch (account.platform) {
-    case 'facebook': return fetchFacebookInsights(account);
-    case 'instagram': return fetchInstagramInsights(account);
-    case 'linkedin': return fetchLinkedInInsights(account);
-    case 'twitter': return fetchTwitterMetrics(account);
-    default: return null;
+    case 'facebook':
+      return fetchFacebookInsights(account);
+    case 'instagram':
+      return fetchInstagramInsights(account);
+    case 'linkedin':
+      return fetchLinkedInInsights(account);
+    case 'twitter':
+      return fetchTwitterMetrics(account);
+    default:
+      return null;
   }
 }
 
@@ -86,7 +100,9 @@ export async function syncAccountAnalytics(orgId: string) {
         .onConflictDoNothing();
 
       synced.push({ accountId: account.id, platform: account.platform, metrics });
-    } catch { /* skip failed accounts */ }
+    } catch {
+      /* skip failed accounts */
+    }
   }
   return synced;
 }
@@ -99,7 +115,9 @@ export async function getOrgAnalytics(orgId: string, days = 30) {
   const snapshots = await db
     .select()
     .from(socialAnalyticsSnapshots)
-    .where(and(eq(socialAnalyticsSnapshots.orgId, orgId), gte(socialAnalyticsSnapshots.date, since)))
+    .where(
+      and(eq(socialAnalyticsSnapshots.orgId, orgId), gte(socialAnalyticsSnapshots.date, since)),
+    )
     .orderBy(desc(socialAnalyticsSnapshots.date));
 
   return snapshots;
@@ -110,11 +128,13 @@ export async function getAccountAnalytics(orgId: string, accountId: string, days
   return db
     .select()
     .from(socialAnalyticsSnapshots)
-    .where(and(
-      eq(socialAnalyticsSnapshots.orgId, orgId),
-      eq(socialAnalyticsSnapshots.accountId, accountId),
-      gte(socialAnalyticsSnapshots.date, since),
-    ))
+    .where(
+      and(
+        eq(socialAnalyticsSnapshots.orgId, orgId),
+        eq(socialAnalyticsSnapshots.accountId, accountId),
+        gte(socialAnalyticsSnapshots.date, since),
+      ),
+    )
     .orderBy(desc(socialAnalyticsSnapshots.date));
 }
 

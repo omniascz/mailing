@@ -8,12 +8,18 @@ import {
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
-export async function createSurvey(orgId: string, data: {
-  name: string;
-  description?: string;
-  questions: SurveyQuestion[];
-}): Promise<Survey> {
-  const [row] = await db.insert(surveys).values({ ...data, orgId }).returning();
+export async function createSurvey(
+  orgId: string,
+  data: {
+    name: string;
+    description?: string;
+    questions: SurveyQuestion[];
+  },
+): Promise<Survey> {
+  const [row] = await db
+    .insert(surveys)
+    .values({ ...data, orgId })
+    .returning();
   return row!;
 }
 
@@ -22,16 +28,27 @@ export async function listSurveys(orgId: string): Promise<Survey[]> {
 }
 
 export async function getSurvey(id: string, orgId: string): Promise<Survey> {
-  const [row] = await db.select().from(surveys)
-    .where(and(eq(surveys.id, id), eq(surveys.orgId, orgId))).limit(1);
+  const [row] = await db
+    .select()
+    .from(surveys)
+    .where(and(eq(surveys.id, id), eq(surveys.orgId, orgId)))
+    .limit(1);
   if (!row) throw AppError.notFound('Survey');
   return row;
 }
 
-export async function updateSurvey(id: string, orgId: string, data: Partial<{
-  name: string; description: string; questions: SurveyQuestion[]; active: boolean;
-}>): Promise<Survey> {
-  const [row] = await db.update(surveys)
+export async function updateSurvey(
+  id: string,
+  orgId: string,
+  data: Partial<{
+    name: string;
+    description: string;
+    questions: SurveyQuestion[];
+    active: boolean;
+  }>,
+): Promise<Survey> {
+  const [row] = await db
+    .update(surveys)
     .set({ ...data, updatedAt: new Date() })
     .where(and(eq(surveys.id, id), eq(surveys.orgId, orgId)))
     .returning();
@@ -62,26 +79,35 @@ export async function submitResponse(input: {
     npsScore,
   });
 
-  await db.update(surveys)
+  await db
+    .update(surveys)
     .set({ submitCount: sql`${surveys.submitCount} + 1` })
     .where(eq(surveys.id, input.surveyId));
 }
 
-export async function getSurveyResults(surveyId: string, orgId: string): Promise<{
+export async function getSurveyResults(
+  surveyId: string,
+  orgId: string,
+): Promise<{
   submitCount: number;
-  npsScore: number | null;          // Net Promoter Score (-100 to 100)
+  npsScore: number | null; // Net Promoter Score (-100 to 100)
   byQuestion: Record<string, Record<string, number>>;
 }> {
   // Verify ownership.
   await getSurvey(surveyId, orgId);
 
-  const rs = await db.select({
-    answers: surveyResponses.answers,
-    nps: surveyResponses.npsScore,
-  }).from(surveyResponses).where(eq(surveyResponses.surveyId, surveyId));
+  const rs = await db
+    .select({
+      answers: surveyResponses.answers,
+      nps: surveyResponses.npsScore,
+    })
+    .from(surveyResponses)
+    .where(eq(surveyResponses.surveyId, surveyId));
 
   const byQuestion: Record<string, Record<string, number>> = {};
-  let promoters = 0, detractors = 0, npsTotal = 0;
+  let promoters = 0,
+    detractors = 0,
+    npsTotal = 0;
 
   for (const row of rs) {
     if (row.nps !== null && row.nps !== undefined) {

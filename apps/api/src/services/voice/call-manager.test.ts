@@ -3,7 +3,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createCall, getCall, completeCall, getCallStats, queueOutboundCall } from './call-manager.js';
+import {
+  createCall,
+  getCall,
+  completeCall,
+  getCallStats,
+  queueOutboundCall,
+} from './call-manager.js';
 
 // ─── Mock DB ──────────────────────────────────────────────────────────────────
 

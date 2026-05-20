@@ -13,10 +13,7 @@ import {
   vocative as vocativeCs,
   type CzechCase,
 } from '@forgemsg/i18n-cs';
-import {
-  declineName as declineSk,
-  type SlovakCase,
-} from '@forgemsg/i18n-sk';
+import { declineName as declineSk, type SlovakCase } from '@forgemsg/i18n-sk';
 
 const CS_CASES: Record<string, CzechCase> = {
   vocative: 'vocative',

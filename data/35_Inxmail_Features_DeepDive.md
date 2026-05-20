@@ -4,13 +4,14 @@
 **Zdroje:** oficiální dokumentace inxmail.de + analytické weby a recenze (GetApp, Capterra, Software Advice, OMR Reviews, SourceForge, TechnologyCounter) ověřené v dubnu–květnu 2026.
 **Rozsah:** kompletní funkcionalita platformy v roce 2026 – Inxmail Platform (full email marketing), Inxmail Mail Relay (transactional SMTP), modular architecture, drag-and-drop editor s AI-supported text suggestions, visual workflows, REST API, SSO, enterprise compliance.
 
-> **Důležitý kontext:** Inxmail je **německý produkt** založený **1999 ve Freiburgu im Breisgau** (Baden-Württemberg, Schwarzwald – stejné město jako rapidmail!). Mateřská společnost: **Inxmail GmbH**. Marketing positioning: *"service-oriented tech specialist for secure, data-driven communication"*.
+> **Důležitý kontext:** Inxmail je **německý produkt** založený **1999 ve Freiburgu im Breisgau** (Baden-Württemberg, Schwarzwald – stejné město jako rapidmail!). Mateřská společnost: **Inxmail GmbH**. Marketing positioning: _"service-oriented tech specialist for secure, data-driven communication"_.
 >
 > **Pozice:** **Mid-market+ → Enterprise DACH email platform** – jeden z hlavních DACH B2B/B2C platforms. **2,000+ customers** (per oficiální).
 >
-> **UNIKÁTNÍ historický kontext:** **Founding member Certified Senders Alliance (CSA)** – jedním z těch, kdo CSA založili. *"committed to permission-based email marketing from the very beginning"* (since 1999).
+> **UNIKÁTNÍ historický kontext:** **Founding member Certified Senders Alliance (CSA)** – jedním z těch, kdo CSA založili. _"committed to permission-based email marketing from the very beginning"_ (since 1999).
 >
 > **Klíčové diferenciátory:**
+>
 > - **"Made in Germany"** – servery EXCLUSIVELY v EU (German jurisdiction)
 > - **Founding member CSA** – not just member, ZAKLÁDAJÍCÍ člen
 > - **Owner-managed company** (Inhabergeführt) – stability + long-term vision
@@ -72,14 +73,16 @@
 - **Specializace:** **B2B + B2C** – retail, media, energy, tourism, insurance, manufacturing
 - **Lokalizace UI:** **9-10 jazyků** – German, Chinese (Simplified + Traditional), **Czech**, English, French, Italian, **Polish**, Spanish, Turkish
 - **Web:** inxmail.de / inxmail.com
-- **Per oficiální:** *"service-oriented tech specialist for secure, data-driven communication in email marketing"*
+- **Per oficiální:** _"service-oriented tech specialist for secure, data-driven communication in email marketing"_
 
 ### Filozofie produktu
 
 Per oficiální:
-> *"Since its founding, the principles of the owner-managed company with headquarters in Freiburg have been based on innovation, reliability, and customer proximity. Continuous development of the portfolio and the organization ensure growth and future security."*
+
+> _"Since its founding, the principles of the owner-managed company with headquarters in Freiburg have been based on innovation, reliability, and customer proximity. Continuous development of the portfolio and the organization ensure growth and future security."_
 
 **Klíčové principy:**
+
 - **Innovation** (continuous development)
 - **Reliability** (98% delivery rate)
 - **Customer proximity** (personal service, dedicated contacts)
@@ -88,9 +91,11 @@ Per oficiální:
 ### Founding member CSA
 
 Per oficiální:
-> *"As a founding member of the Certified Senders Alliance (CSA), Inxmail has been committed to permission-based email marketing from the very beginning."*
+
+> _"As a founding member of the Certified Senders Alliance (CSA), Inxmail has been committed to permission-based email marketing from the very beginning."_
 
 **UNIKÁTNÍ historical positioning:**
+
 - **Not just CSA member** – ZAKLÁDAJÍCÍ člen
 - **Since 1999** committed to permission-based email
 - **Industry credibility** unparalleled
@@ -99,6 +104,7 @@ Per oficiální:
 ### Reference customers
 
 Per oficiální + recenze:
+
 - **Mid-market businesses → large corporations** (Konzern-Infrastrukturen)
 - **B2B + B2C industries:**
   - **Retail**
@@ -108,13 +114,13 @@ Per oficiální + recenze:
   - **Insurance**
   - **Manufacturing**
 - Per real customer review:
-> *"Ich nutze die Software für Kleinstkunden mit nur wenigen E-Mails wie auch in Konzern-Infrastrukturen mit komplexen Anbindungen und sehr anspruchsvollen Anforderungen an Zuverlässigkeit, Geschwindigkeit und Funktionalität. Die Inxmail Produkte sind in 99.999% aller meiner Fälle mit Abstand die absolut beste Wahl für meine Kunden."*
+  > _"Ich nutze die Software für Kleinstkunden mit nur wenigen E-Mails wie auch in Konzern-Infrastrukturen mit komplexen Anbindungen und sehr anspruchsvollen Anforderungen an Zuverlässigkeit, Geschwindigkeit und Funktionalität. Die Inxmail Produkte sind in 99.999% aller meiner Fälle mit Abstand die absolut beste Wahl für meine Kunden."_
 
 ### Quotes from real customers (per Software Advice)
 
-> *"Beste Skalierbarkeit, hohe Performance, unerreichte Barrierefreiheit, Zustellbarkeit, Fälschungssicherheit, Zuverlässigkeit, tiefe Betriebskosten, Funktionsumfang, Deutsche Ansprechpartner, Nähe zur Software-Entwicklung, durchwegs gute Erfahrungen"*
+> _"Beste Skalierbarkeit, hohe Performance, unerreichte Barrierefreiheit, Zustellbarkeit, Fälschungssicherheit, Zuverlässigkeit, tiefe Betriebskosten, Funktionsumfang, Deutsche Ansprechpartner, Nähe zur Software-Entwicklung, durchwegs gute Erfahrungen"_
 
-> *"Benutzerfreundlichkeit, Zustellbarkeit, Skalierbarkeit, Flexibilität, Zuverlässigkeit, Übersichtlichkeit und Fälschungssicherheit suchen seinesgleichen."*
+> _"Benutzerfreundlichkeit, Zustellbarkeit, Skalierbarkeit, Flexibilität, Zuverlässigkeit, Übersichtlichkeit und Fälschungssicherheit suchen seinesgleichen."_
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -207,7 +213,7 @@ Per oficiální + recenze:
 
 ### Per oficiální (industry solutions page)
 
-> *"Inxmail is used in over 2,000 Unternehmen in a wide range of industries – from medium-sized businesses to large corporations, from media and retail to energy suppliers."*
+> _"Inxmail is used in over 2,000 Unternehmen in a wide range of industries – from medium-sized businesses to large corporations, from media and retail to energy suppliers."_
 
 ---
 
@@ -216,10 +222,12 @@ Per oficiální + recenze:
 ### 2.1 Public pricing approach (RARE!)
 
 Per oficiální inxmail.de/en/prices/:
+
 - **Inxmail Platform: od €200/měsíc**
 - **Inxmail Mail Relay: od €70/měsíc**
 
 ⚠️ **UNIKÁTNÍ pro enterprise/mid-market platform:**
+
 - **Public pricing transparent!** (vs. SAP Emarsys, SALESmanago, SARE which are sales-only)
 - **Clear starting prices**
 - **Volume-based** pricing model
@@ -227,9 +235,11 @@ Per oficiální inxmail.de/en/prices/:
 ### 2.2 Pricing model: per emails sent (NE per contacts!)
 
 Per oficiální:
-> *"We charge exclusively based on sending volume. Contacts are unlimited."*
+
+> _"We charge exclusively based on sending volume. Contacts are unlimited."_
 
 **UNIKÁTNÍ pro enterprise:**
+
 - **Charged per emails sent** monthly
 - **Contacts UNLIMITED**
 - **Similar to:** Brevo, Newsletter2Go (now Brevo), Mailjet
@@ -260,29 +270,30 @@ Per oficiální:
 
 ### 2.5 Comparing Platform vs. Mail Relay
 
-| Feature | Platform | Mail Relay |
-|---|:---:|:---:|
-| **Entry price** | €200+/měsíc | €70+/měsíc |
-| **Newsletter campaigns** | ✅ | ❌ |
-| **Drag-Drop editor** | ✅ | ❌ |
-| **Templates** | ✅ | ❌ |
-| **Visual workflows** | ✅ | ❌ |
-| **Marketing automation** | ✅ | ❌ |
-| **A/B testing** | ✅ | ❌ |
-| **Forms** | ✅ | ❌ |
-| **AI text suggestions** | ✅ | ❌ |
-| **Trigger-based transactional** | ✅ | ✅ |
-| **SMTP infrastructure** | ✅ | ✅ |
-| **REST API** | ✅ | ✅ |
-| **DKIM/SPF/DMARC** | ✅ | ✅ |
-| **Reports** | Full | Basic |
-| **Support hours/month** | 2h | 1h |
-| **Dedicated IPs** | Optional | Optional |
-| **SLAs** | On request | On request |
+| Feature                         |  Platform   | Mail Relay |
+| ------------------------------- | :---------: | :--------: |
+| **Entry price**                 | €200+/měsíc | €70+/měsíc |
+| **Newsletter campaigns**        |     ✅      |     ❌     |
+| **Drag-Drop editor**            |     ✅      |     ❌     |
+| **Templates**                   |     ✅      |     ❌     |
+| **Visual workflows**            |     ✅      |     ❌     |
+| **Marketing automation**        |     ✅      |     ❌     |
+| **A/B testing**                 |     ✅      |     ❌     |
+| **Forms**                       |     ✅      |     ❌     |
+| **AI text suggestions**         |     ✅      |     ❌     |
+| **Trigger-based transactional** |     ✅      |     ✅     |
+| **SMTP infrastructure**         |     ✅      |     ✅     |
+| **REST API**                    |     ✅      |     ✅     |
+| **DKIM/SPF/DMARC**              |     ✅      |     ✅     |
+| **Reports**                     |    Full     |   Basic    |
+| **Support hours/month**         |     2h      |     1h     |
+| **Dedicated IPs**               |  Optional   |  Optional  |
+| **SLAs**                        | On request  | On request |
 
 ### 2.6 What's included in pricing
 
 Per oficiální:
+
 - **CDN/webspace:** 1 GB per campaign space
 - **No traffic costs**
 - **Personal contact person**
@@ -301,7 +312,8 @@ Per oficiální:
 ### 2.8 Test accounts
 
 Per oficiální:
-> *"We offer test accounts separately (with special conditions)."*
+
+> _"We offer test accounts separately (with special conditions)."_
 
 - **Test access** available
 - **Special conditions** for testing
@@ -319,23 +331,24 @@ Per oficiální:
 
 For mid-market sending 100K emails/month:
 
-| Platform | Approx. monthly |
-|---|---|
-| **Inxmail Platform** | €200+ |
-| **rapidmail Premium** | €100-150 |
-| **CleverReach** | €100-150 |
-| **MailerLite Advanced** | $80-150 |
-| **Brevo Business** | €65-100 |
-| **Mailchimp Standard** | $135+ |
-| **Klaviyo** | $720+ (50K) |
-| **SAP Emarsys** | Custom (much higher) |
-| **SALESmanago** | €199+ |
+| Platform                | Approx. monthly      |
+| ----------------------- | -------------------- |
+| **Inxmail Platform**    | €200+                |
+| **rapidmail Premium**   | €100-150             |
+| **CleverReach**         | €100-150             |
+| **MailerLite Advanced** | $80-150              |
+| **Brevo Business**      | €65-100              |
+| **Mailchimp Standard**  | $135+                |
+| **Klaviyo**             | $720+ (50K)          |
+| **SAP Emarsys**         | Custom (much higher) |
+| **SALESmanago**         | €199+                |
 
 ⚠️ Inxmail's **per-volume model** is **enterprise-friendly** for unlimited contacts.
 
 ### 2.11 Why public pricing matters
 
 **Compared to enterprise competitors:**
+
 - **SAP Emarsys, Salesforce, Adobe** – sales-only pricing
 - **SALESmanago, SARE** – custom quotes
 - **Inxmail** – **PUBLIC starting prices**
@@ -349,18 +362,22 @@ For mid-market sending 100K emails/month:
 ### 3.1 Modular architecture
 
 Per oficiální:
-> *"Inxmail offers a modular platform for email marketing campaigns and trigger-based transactional emails."*
+
+> _"Inxmail offers a modular platform for email marketing campaigns and trigger-based transactional emails."_
 
 **Two-product approach:**
+
 - **Inxmail Platform** = full email marketing
 - **Inxmail Mail Relay** = transactional SMTP only
 
 ### 3.2 Inxmail Platform
 
 Per oficiální:
-> *"With the Inxmail Platform, you get everything you need for professional and reliable email marketing. You combine everything you need in one central account."*
+
+> _"With the Inxmail Platform, you get everything you need for professional and reliable email marketing. You combine everything you need in one central account."_
 
 **Full platform features:**
+
 - Newsletter campaigns
 - Trigger-based transactional emails
 - Visual workflows
@@ -377,6 +394,7 @@ Per oficiální:
 - 2h support/month
 
 **Pro koho:**
+
 - Companies with full marketing email needs
 - Newsletter + transactional combined
 - Marketing automation
@@ -386,9 +404,11 @@ Per oficiální:
 ### 3.3 Inxmail Mail Relay
 
 Per oficiální:
-> *"You only need a reliable infrastructure for your system-generated emails, without any additional functions? Then Inxmail Mail Relay is the right solution for you!"*
+
+> _"You only need a reliable infrastructure for your system-generated emails, without any additional functions? Then Inxmail Mail Relay is the right solution for you!"_
 
 **SMTP-only features:**
+
 - System-generated emails
 - Trigger-based transactional
 - High deliverability
@@ -399,6 +419,7 @@ Per oficiální:
 - No editor / templates / workflows
 
 **Pro koho:**
+
 - Companies needing only transactional SMTP
 - E-commerce order confirmations
 - Password resets
@@ -432,6 +453,7 @@ Marketing automation activated
 ### 3.6 Industry split
 
 **Platform users:**
+
 - Marketing teams
 - Newsletter publishers
 - B2C / B2B campaigns
@@ -439,6 +461,7 @@ Marketing automation activated
 - Multi-channel needs
 
 **Mail Relay users:**
+
 - IT departments
 - E-commerce transactional
 - SaaS companies
@@ -452,9 +475,11 @@ Marketing automation activated
 ### 4.1 Founding member CSA (UNIKÁTNÍ historical positioning)
 
 Per oficiální:
-> *"As a founding member of the Certified Senders Alliance (CSA), Inxmail has been committed to permission-based email marketing from the very beginning."*
+
+> _"As a founding member of the Certified Senders Alliance (CSA), Inxmail has been committed to permission-based email marketing from the very beginning."_
 
 **Co to znamená:**
+
 - **CSA založen** s pomocí Inxmail
 - **Industry standard-setter**
 - **Most senior CSA member** v DACH
@@ -472,9 +497,11 @@ Per oficiální:
 ### 4.3 98% delivery rate (11% above industry!)
 
 Per oficiální:
-> *"With an average delivery rate of 98%—11% above the industry average—Inxmail ensures that your emails arrive safely in the inbox thanks to CSA-certified servers, active monitoring, and consistent quality management."*
+
+> _"With an average delivery rate of 98%—11% above the industry average—Inxmail ensures that your emails arrive safely in the inbox thanks to CSA-certified servers, active monitoring, and consistent quality management."_
 
 **Key claim:**
+
 - **98% average delivery rate**
 - **11% above industry average**
 - **CSA-certified servers**
@@ -484,7 +511,8 @@ Per oficiální:
 ### 4.4 ISO 27001 certified
 
 Per oficiální:
-> *"Inxmail is ISO 27001 certified and processes personal data in accordance with the GDPR – with order processing."*
+
+> _"Inxmail is ISO 27001 certified and processes personal data in accordance with the GDPR – with order processing."_
 
 - **ISO 27001** (information security management)
 - **GDPR-compliant**
@@ -493,7 +521,8 @@ Per oficiální:
 ### 4.5 Made in Germany (EU servers exclusively)
 
 Per oficiální:
-> *"Inxmail places the highest value on data security, legal certainty and hosts its servers exclusively in the EU."*
+
+> _"Inxmail places the highest value on data security, legal certainty and hosts its servers exclusively in the EU."_
 
 - **Servers EXCLUSIVELY v EU**
 - **German jurisdiction**
@@ -503,9 +532,11 @@ Per oficiální:
 ### 4.6 Owner-managed company
 
 Per oficiální:
-> *"the principles of the owner-managed company with headquarters in Freiburg have been based on innovation, reliability, and customer proximity."*
+
+> _"the principles of the owner-managed company with headquarters in Freiburg have been based on innovation, reliability, and customer proximity."_
 
 **Inhabergeführt = owner-managed:**
+
 - **Stability**
 - **Long-term vision**
 - **No quarterly Wall Street pressure**
@@ -515,9 +546,11 @@ Per oficiální:
 ### 4.7 Multilingual UI (incl. CZ + PL!)
 
 Per GetApp:
-> *"Inxmail supports the following languages: German, Chinese (Simplified), Chinese (Traditional), Czech, English, French, Italian, Polish, Spanish, Turkish"*
+
+> _"Inxmail supports the following languages: German, Chinese (Simplified), Chinese (Traditional), Czech, English, French, Italian, Polish, Spanish, Turkish"_
 
 **9-10 jazyků UI:**
+
 - German (primary)
 - English
 - **Czech** (rare for DACH enterprise!)
@@ -530,6 +563,7 @@ Per GetApp:
 - Chinese (Traditional)
 
 **UNIKÁTNÍ kombinace:**
+
 - DACH leadership + CEE languages
 - B2B/B2C v PL/CZ markets
 - Chinese support pro DACH companies s Asian operations
@@ -537,6 +571,7 @@ Per GetApp:
 ### 4.8 Public pricing transparency
 
 ⚠️ **Mid-market+ enterprise s PUBLIC pricing:**
+
 - **€200+/měsíc Platform**
 - **€70+/měsíc Mail Relay**
 - **Transparent vs. competitors** (SAP Emarsys, Salesforce sales-only)
@@ -544,7 +579,8 @@ Per GetApp:
 ### 4.9 9.2/10 OMR Reviews
 
 Per oficiální:
-> *"With a score of 9.2 out of 10 on OMR Reviews, this is not just a promise, but confirmation of our proven service quality."*
+
+> _"With a score of 9.2 out of 10 on OMR Reviews, this is not just a promise, but confirmation of our proven service quality."_
 
 **OMR Reviews = German B2B software review platform** (similar to G2 / Capterra for DACH).
 
@@ -552,24 +588,24 @@ Per oficiální:
 
 ### 4.10 Vs. DACH competitors
 
-| Aspect | Inxmail | CleverReach | rapidmail | SAP Emarsys |
-|---|---|---|---|---|
-| **Origin** | DE (Freiburg, 1999) | DE (Rastede, 2007) | DE (Freiburg, 2008) | AT (Vienna, 2000) |
-| **Target segment** | Mid-market+ → Enterprise | SMB → Mid-market | SMB occasional senders | Enterprise retail |
-| **Customers** | 2,000+ | 210K+ | ~200K | Large corp focus |
-| **Public pricing** | ✅ €200+/měsíc | ✅ | ✅ | ❌ Custom |
-| **Pricing model** | Per emails sent | Subscription | Pay-per-Mail or sub | Custom enterprise |
-| **CSA status** | ✅ **Founding member** | Member | Member | Various |
-| **CDN included** | ✅ 1 GB/campaign | – | – | Custom |
-| **AI features** | AI text suggestions | Basic | – | Smart Insight AI |
-| **Visual workflows** | ✅ | ✅ | Basic | ✅ |
-| **REST API** | ✅ | ✅ | ❌ | ✅ |
-| **SSO** | ✅ | – | – | ✅ |
-| **UI languages** | 9-10 (incl. CZ+PL!) | 6 | 3 (EN/DE/FR) | Multi |
-| **ISO 27001** | ✅ | likely | likely | ✅ |
-| **Phone support** | ✅ paid hours | Premium | ✅ Free ~9 min | Premium |
-| **Industry presence** | 27 let | 18 let | 17 let | 25 let |
-| **Owner-managed** | ✅ | – | – | ❌ (SAP-owned) |
+| Aspect                | Inxmail                  | CleverReach        | rapidmail              | SAP Emarsys       |
+| --------------------- | ------------------------ | ------------------ | ---------------------- | ----------------- |
+| **Origin**            | DE (Freiburg, 1999)      | DE (Rastede, 2007) | DE (Freiburg, 2008)    | AT (Vienna, 2000) |
+| **Target segment**    | Mid-market+ → Enterprise | SMB → Mid-market   | SMB occasional senders | Enterprise retail |
+| **Customers**         | 2,000+                   | 210K+              | ~200K                  | Large corp focus  |
+| **Public pricing**    | ✅ €200+/měsíc           | ✅                 | ✅                     | ❌ Custom         |
+| **Pricing model**     | Per emails sent          | Subscription       | Pay-per-Mail or sub    | Custom enterprise |
+| **CSA status**        | ✅ **Founding member**   | Member             | Member                 | Various           |
+| **CDN included**      | ✅ 1 GB/campaign         | –                  | –                      | Custom            |
+| **AI features**       | AI text suggestions      | Basic              | –                      | Smart Insight AI  |
+| **Visual workflows**  | ✅                       | ✅                 | Basic                  | ✅                |
+| **REST API**          | ✅                       | ✅                 | ❌                     | ✅                |
+| **SSO**               | ✅                       | –                  | –                      | ✅                |
+| **UI languages**      | 9-10 (incl. CZ+PL!)      | 6                  | 3 (EN/DE/FR)           | Multi             |
+| **ISO 27001**         | ✅                       | likely             | likely                 | ✅                |
+| **Phone support**     | ✅ paid hours            | Premium            | ✅ Free ~9 min         | Premium           |
+| **Industry presence** | 27 let                   | 18 let             | 17 let                 | 25 let            |
+| **Owner-managed**     | ✅                       | –                  | –                      | ❌ (SAP-owned)    |
 
 ---
 
@@ -578,6 +614,7 @@ Per oficiální:
 ### 5.1 Recipients (Empfänger)
 
 #### Standard fields
+
 - Email (required)
 - Salutation
 - First name, last name
@@ -589,6 +626,7 @@ Per oficiální:
 - Custom fields
 
 #### Custom fields (Merkmale)
+
 - **Text, number, date, dropdown, multi-select**
 - Configure per business need
 - Used pro personalization + segmentation
@@ -604,7 +642,8 @@ Per oficiální:
 ### 5.3 Database management
 
 Per oficiální (B2B + B2C):
-> *"Inxmail offers interfaces to CRM, shop, and customer data platforms as well as a powerful REST API – for maximum flexibility."*
+
+> _"Inxmail offers interfaces to CRM, shop, and customer data platforms as well as a powerful REST API – for maximum flexibility."_
 
 - **Customer data platform** integration
 - **CRM bidirectional sync**
@@ -614,6 +653,7 @@ Per oficiální (B2B + B2C):
 ### 5.4 Segmentation
 
 #### Standard
+
 - Contact attributes
 - Custom fields
 - Behavioral data
@@ -621,6 +661,7 @@ Per oficiální (B2B + B2C):
 - Date conditions
 
 #### Advanced (visual workflows context)
+
 - Multi-condition
 - Nested logic
 - Cross-list
@@ -658,7 +699,8 @@ Transitions:
 ### 5.8 Role-based user management
 
 Per oficiální:
-> *"role-based user management"*
+
+> _"role-based user management"_
 
 - **Granular permissions**
 - **Multiple users per account**
@@ -672,7 +714,8 @@ Per oficiální:
 ### 6.1 Campaign creation
 
 Per oficiální:
-> *"With our platform, you can design professional emails in no time. Look forward to intuitive email creation with drag-and-drop, AI-supported text suggestions and personalized templates."*
+
+> _"With our platform, you can design professional emails in no time. Look forward to intuitive email creation with drag-and-drop, AI-supported text suggestions and personalized templates."_
 
 ### 6.2 Drag-and-drop editor
 
@@ -740,6 +783,7 @@ Confirm
 ### 6.4 Multi-language campaigns
 
 Per oficiální industry solutions (media):
+
 - **Per-recipient language**
 - **Multi-language content** in single campaign
 - **Auto-detect** recipient language
@@ -764,7 +808,8 @@ Per oficiální industry solutions (media):
 ### 6.7 Real customer praise
 
 Per Software Advice review:
-> *"Die Systematik von Inxmail ist gut verständlich und gibt keine Rätsel auf. Auf diese Weise ist es möglich Newsletter relativ schnell zu erstellen, individuelle Vorstellungen ohne großen Aufwand umzusetzen und dabei gute Resultate zu erzielen."*
+
+> _"Die Systematik von Inxmail ist gut verständlich und gibt keine Rätsel auf. Auf diese Weise ist es möglich Newsletter relativ schnell zu erstellen, individuelle Vorstellungen ohne großen Aufwand umzusetzen und dabei gute Resultate zu erzielen."_
 
 ---
 
@@ -773,9 +818,11 @@ Per Software Advice review:
 ### 7.1 AI text suggestions
 
 Per oficiální:
-> *"intuitive email creation with drag-and-drop, AI-supported text suggestions and personalized templates"*
+
+> _"intuitive email creation with drag-and-drop, AI-supported text suggestions and personalized templates"_
 
 **AI capabilities:**
+
 - **Text suggestions** for subject lines
 - **Body content suggestions**
 - **Personalization suggestions**
@@ -801,6 +848,7 @@ Improved content saved
 ### 7.3 AI vs. modern competitors
 
 ⚠️ Inxmail's AI is **less autonomous** than:
+
 - **Klaviyo Customer Agent**
 - **HubSpot Breeze**
 - **Brevo Aura**
@@ -821,7 +869,8 @@ But **practical text help** for European DACH context.
 ### 8.1 Templates library
 
 Per oficiální:
-> *"personalized templates"*
+
+> _"personalized templates"_
 
 - **Pre-built responsive templates**
 - **Categories:**
@@ -843,14 +892,16 @@ Per oficiální:
 ### 8.2 Custom templates
 
 Per Capterra review (older negative):
-> *"Um einen Artikel im Newsletter hinzuzufügen, zu löschen oder zu verschieben müssen wir den HTML-Code des Templates bearbeiten."*
+
+> _"Um einen Artikel im Newsletter hinzuzufügen, zu löschen oder zu verschieben müssen wir den HTML-Code des Templates bearbeiten."_
 
 ⚠️ **Some legacy templates** require HTML editing for content rearrangement (limit for non-technical users).
 
 ### 8.3 WYSIWYG capability
 
 Per Capterra:
-> *"What You See Is What You Get is a no-code tool that allows users to create and edit content using a visual interface"*
+
+> _"What You See Is What You Get is a no-code tool that allows users to create and edit content using a visual interface"_
 
 - **WYSIWYG editor** for modern templates
 - **Visual interface**
@@ -880,9 +931,11 @@ Per Capterra:
 ### 9.1 Visual workflows
 
 Per oficiální:
-> *"With our visual workflows, you can automate complex email campaigns or trigger emails based on actions and recipient reactions."*
+
+> _"With our visual workflows, you can automate complex email campaigns or trigger emails based on actions and recipient reactions."_
 
 **Visual workflow capabilities:**
+
 - **Drag-drop builder**
 - **Multi-step sequences**
 - **Branching conditions**
@@ -892,6 +945,7 @@ Per oficiální:
 ### 9.2 Workflow triggers
 
 #### Behavioral
+
 - Subscribed to list
 - Tag added/removed
 - Form submitted
@@ -899,6 +953,7 @@ Per oficiální:
 - Email opened/clicked
 
 #### Transactional / E-commerce (with integration)
+
 - Order placed
 - Cart abandoned (s Inxmail Commerce)
 - Product viewed
@@ -906,12 +961,14 @@ Per oficiální:
 - Customer milestone
 
 #### Date-based
+
 - Birthday
 - Anniversary
 - Custom date field
 - Recurring schedule
 
 #### External
+
 - API event
 - Webhook
 - CRM event sync
@@ -919,17 +976,20 @@ Per oficiální:
 ### 9.3 Workflow actions (nodes)
 
 #### Sending
+
 - Send email (newsletter)
 - Send trigger-based transactional
 - Send via Mail Relay
 
 #### Contact manipulation
+
 - Add / remove tag
 - Update field
 - Add / remove from segment
 - Move to list
 
 #### Logic
+
 - Wait (delay)
 - Condition (if/else)
 - A/B split
@@ -937,12 +997,14 @@ Per oficiální:
 - Random split
 
 #### External
+
 - Webhook (notify external system)
 - API call
 
 ### 9.4 Workflow examples
 
 #### Welcome series
+
 ```
 Trigger: Subscribed
    ↓
@@ -960,6 +1022,7 @@ End
 ```
 
 #### Cart abandonment (Inxmail Commerce)
+
 ```
 Trigger: Cart abandoned > 1h
    ↓
@@ -979,6 +1042,7 @@ Exit
 ```
 
 #### Subscription renewal (Media)
+
 ```
 Trigger: Subscription expires in 30 days
    ↓
@@ -1002,12 +1066,14 @@ Exit
 ### 9.5 Real customer praise
 
 Per Software Advice:
-> *"Save time through automation and increase your conversion rates at the same time. With our visual workflows, you can automate complex email campaigns or trigger emails based on actions and recipient reactions."*
+
+> _"Save time through automation and increase your conversion rates at the same time. With our visual workflows, you can automate complex email campaigns or trigger emails based on actions and recipient reactions."_
 
 ### 9.6 Per Inxmail Commerce
 
 Per Software Advice review:
-> *"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"* (wished for ability to develop custom actions)
+
+> _"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"_ (wished for ability to develop custom actions)
 
 ⚠️ **Inxmail Commerce visual builder** has limited custom actions vs. open dev frameworks.
 
@@ -1027,6 +1093,7 @@ Per Software Advice review:
 ### 10.2 Segmentation
 
 #### Filter criteria
+
 - **Contact attributes** (custom fields, tags)
 - **Email engagement** (campaigns, recency)
 - **Behavioral data** (page views, events)
@@ -1036,6 +1103,7 @@ Per Software Advice review:
 - **Source/campaign attribution**
 
 #### Operators
+
 - AND, OR, NOT
 - Nested conditions
 - Date ranges
@@ -1043,6 +1111,7 @@ Per Software Advice review:
 - Pattern matching
 
 #### Dynamic vs. static
+
 - **Dynamic segments** (auto-update)
 - **Static segments** (snapshot)
 - **Saved segments** reusable
@@ -1162,14 +1231,17 @@ Results tracked
 ### 13.1 Reports capabilities
 
 Per oficiální:
-> *"Transparent reports and KPIs for data-driven decisions in real time."*
+
+> _"Transparent reports and KPIs for data-driven decisions in real time."_
 
 Per real customer review:
-> *"Umfangreiche Berichte und Statistiken zu versandten Mailings."*
+
+> _"Umfangreiche Berichte und Statistiken zu versandten Mailings."_
 
 ### 13.2 Standard reports
 
 #### Campaign reports
+
 - Sent, delivered, bounced
 - Opens (unique + total), open rate
 - Clicks, CTR, top links
@@ -1180,6 +1252,7 @@ Per real customer review:
 - **Real-time updates**
 
 #### Workflow reports
+
 - Per-workflow performance
 - Per-step metrics
 - Drop-off analysis
@@ -1187,11 +1260,13 @@ Per real customer review:
 - Conversion tracking
 
 #### Recipient reports
+
 - Per-recipient timeline
 - Engagement patterns
 - Lifecycle progression
 
 #### Aggregate reports
+
 - Trends over time
 - Period comparison
 - Performance benchmarks
@@ -1200,7 +1275,8 @@ Per real customer review:
 ### 13.3 KPIs dashboard
 
 Per oficiální:
-> *"Transparent reports and KPIs for data-driven decisions in real time."*
+
+> _"Transparent reports and KPIs for data-driven decisions in real time."_
 
 - **Real-time KPI dashboard**
 - **Custom dashboards** (configurable)
@@ -1210,7 +1286,8 @@ Per oficiální:
 ### 13.4 Conversion tracking
 
 ⚠️ Per Software Advice review (older):
-> *"Ein JavaScript-Conversiontracking wäre ebenso gern gesehen wie die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können."*
+
+> _"Ein JavaScript-Conversiontracking wäre ebenso gern gesehen wie die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können."_
 
 ⚠️ **JavaScript conversion tracking** was historically requested feature – check current availability.
 
@@ -1236,9 +1313,11 @@ Per oficiální:
 ### 14.1 CSA founding member advantage
 
 Per oficiální:
-> *"As a founding member of the Certified Senders Alliance (CSA), Inxmail has been committed to permission-based email marketing from the very beginning."*
+
+> _"As a founding member of the Certified Senders Alliance (CSA), Inxmail has been committed to permission-based email marketing from the very beginning."_
 
 **Unique positioning:**
+
 - **CSA founding member** (since CSA's establishment)
 - **Industry standard-setter**
 - **Most senior CSA member** v DACH
@@ -1247,9 +1326,11 @@ Per oficiální:
 ### 14.2 98% delivery rate
 
 Per oficiální:
-> *"With an average delivery rate of 98%—11% above the industry average—Inxmail ensures that your emails arrive safely in the inbox thanks to CSA-certified servers, active monitoring, and consistent quality management."*
+
+> _"With an average delivery rate of 98%—11% above the industry average—Inxmail ensures that your emails arrive safely in the inbox thanks to CSA-certified servers, active monitoring, and consistent quality management."_
 
 **Key metrics:**
+
 - **98% average delivery rate**
 - **11% above industry average**
 - **CSA-certified servers**
@@ -1259,6 +1340,7 @@ Per oficiální:
 ### 14.3 DACH ISP whitelisting
 
 Whitelisted by:
+
 - **GMX**
 - **web.de**
 - **T-Online**
@@ -1269,7 +1351,8 @@ Whitelisted by:
 ### 14.4 Authentication setup
 
 Per oficiální:
-> *"TLS/SPF/DKIM/DMARC, dedicated IPs and SLAs on request"*
+
+> _"TLS/SPF/DKIM/DMARC, dedicated IPs and SLAs on request"_
 
 - **TLS** encryption
 - **SPF** records
@@ -1281,7 +1364,8 @@ Per oficiální:
 ### 14.5 EU hosting exclusive
 
 Per oficiální:
-> *"hosts its servers exclusively in the EU"*
+
+> _"hosts its servers exclusively in the EU"_
 
 - **EU servers only**
 - **German jurisdiction**
@@ -1317,7 +1401,8 @@ Per oficiální:
 ### 15.1 Inxmail Commerce overview
 
 Per Software Advice (in user review context):
-> *"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"*
+
+> _"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"_
 
 **Inxmail Commerce = E-commerce specialization**
 
@@ -1334,6 +1419,7 @@ Per Software Advice (in user review context):
 ### 15.3 E-commerce integrations
 
 Per GetApp + Software Advice:
+
 - **Adobe Commerce** (Magento 2)
 - **Magento**
 - **Shopware**
@@ -1345,7 +1431,8 @@ Per GetApp + Software Advice:
 ### 15.4 Inxmail Commerce limitations
 
 ⚠️ Per Software Advice review:
-> *"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"* (wished for ability to develop custom actions)
+
+> _"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"_ (wished for ability to develop custom actions)
 
 - **Limited custom action development**
 - **Pre-built actions** primary
@@ -1365,9 +1452,11 @@ Per GetApp + Software Advice:
 ### 16.1 Trigger-based transactional
 
 Per oficiální:
-> *"With the modular email marketing platform and excellent service over 2,000 customers realize campaigns and trigger-based transactional emails that ensure sustainable business success."*
+
+> _"With the modular email marketing platform and excellent service over 2,000 customers realize campaigns and trigger-based transactional emails that ensure sustainable business success."_
 
 **Trigger-based transactional capability:**
+
 - **Event-driven sending**
 - **API + Visual workflows triggers**
 - **High deliverability**
@@ -1434,9 +1523,11 @@ Logged in account + reports
 ### 17.1 Inxmail Mail Relay overview
 
 Per oficiální:
-> *"You only need a reliable infrastructure for your system-generated emails, without any additional functions? Then Inxmail Mail Relay is the right solution for you!"*
+
+> _"You only need a reliable infrastructure for your system-generated emails, without any additional functions? Then Inxmail Mail Relay is the right solution for you!"_
 
 **Pure SMTP infrastructure:**
+
 - **System-generated emails only**
 - **No marketing features**
 - **Reliable delivery**
@@ -1476,23 +1567,24 @@ Inxmail processes:
 
 ### 17.4 Mail Relay vs. Platform
 
-| Aspect | Mail Relay | Platform |
-|---|---|---|
-| **Price entry** | €70+/month | €200+/month |
-| **Marketing features** | ❌ | ✅ |
-| **Templates** | ❌ | ✅ |
-| **Workflows** | ❌ | ✅ |
-| **Forms** | ❌ | ✅ |
-| **Transactional** | ✅ | ✅ |
-| **REST API** | ✅ | ✅ |
-| **SMTP infrastructure** | ✅ | ✅ |
-| **Reports** | Basic | Full |
-| **Support hours** | 1h/month | 2h/month |
-| **CDN/webspace** | Optional | 1 GB included |
+| Aspect                  | Mail Relay | Platform      |
+| ----------------------- | ---------- | ------------- |
+| **Price entry**         | €70+/month | €200+/month   |
+| **Marketing features**  | ❌         | ✅            |
+| **Templates**           | ❌         | ✅            |
+| **Workflows**           | ❌         | ✅            |
+| **Forms**               | ❌         | ✅            |
+| **Transactional**       | ✅         | ✅            |
+| **REST API**            | ✅         | ✅            |
+| **SMTP infrastructure** | ✅         | ✅            |
+| **Reports**             | Basic      | Full          |
+| **Support hours**       | 1h/month   | 2h/month      |
+| **CDN/webspace**        | Optional   | 1 GB included |
 
 ### 17.5 Decision matrix
 
 **Choose Mail Relay if:**
+
 - Only system-generated emails needed
 - No marketing functionality
 - Lower budget pro transactional
@@ -1500,6 +1592,7 @@ Inxmail processes:
 - High-volume transactional only
 
 **Choose Platform if:**
+
 - Need both marketing + transactional
 - Marketing team needs editor
 - Want visual workflows
@@ -1513,12 +1606,15 @@ Inxmail processes:
 ### 18.1 REST API availability
 
 Per GetApp:
-> *"Q. Does Inxmail offer an API? **Yes, Inxmail has an API available for use.**"*
+
+> _"Q. Does Inxmail offer an API? **Yes, Inxmail has an API available for use.**"_
 
 Per oficiální:
-> *"Inxmail offers interfaces to CRM, shop, and customer data platforms as well as a powerful REST API – for maximum flexibility."*
+
+> _"Inxmail offers interfaces to CRM, shop, and customer data platforms as well as a powerful REST API – for maximum flexibility."_
 
 **REST API capabilities:**
+
 - **Comprehensive endpoints**
 - **OAuth authentication**
 - **Rate limits per plan**
@@ -1550,14 +1646,17 @@ Per oficiální:
 ### 18.4 Native integrations
 
 Per GetApp:
-> *"Inxmail integrates with the following applications: SAP Marketing Cloud, Sage CRM, Adobe Commerce, Google Analytics 360, CAS genesisWorld, SAP Sales Cloud, DynaCampaign, Shopware, Apteco Orbit, Dynamics 365, combit CRM, SAP Business One, Salesforce Sales Cloud, Spryker, Webtrends, Shopify"*
+
+> _"Inxmail integrates with the following applications: SAP Marketing Cloud, Sage CRM, Adobe Commerce, Google Analytics 360, CAS genesisWorld, SAP Sales Cloud, DynaCampaign, Shopware, Apteco Orbit, Dynamics 365, combit CRM, SAP Business One, Salesforce Sales Cloud, Spryker, Webtrends, Shopify"_
 
 **SAP ecosystem (DACH B2B!):**
+
 - **SAP Marketing Cloud**
 - **SAP Sales Cloud**
 - **SAP Business One**
 
 **CRM systems:**
+
 - **Sage CRM**
 - **CAS genesisWorld** (DACH CRM!)
 - **combit CRM** (DACH CRM!)
@@ -1566,6 +1665,7 @@ Per GetApp:
 - **Salesforce Sales Cloud**
 
 **E-commerce:**
+
 - **Adobe Commerce** (Magento 2)
 - **Magento**
 - **Shopware** (DACH e-commerce!)
@@ -1573,24 +1673,28 @@ Per GetApp:
 - **Spryker**
 
 **Analytics:**
+
 - **Google Analytics 360**
 - **Webtrends**
 - **Apteco Orbit**
 - **Econda**
 
 **Marketing tools:**
+
 - **DynaCampaign**
 - **advastamedia/O**
 - **Fiona CMS**
 - **Nosto** (recommendations)
 
 **Social:**
+
 - **Facebook**
 - **LinkedIn**
 
 ### 18.5 DACH-specific integrations
 
 **Unique pro DACH market:**
+
 - **SAP** ecosystem (DACH B2B leader)
 - **Shopware** (DACH e-commerce)
 - **CAS genesisWorld** (DACH CRM)
@@ -1613,9 +1717,11 @@ Per GetApp:
 ### 19.1 EU hosting exclusively
 
 Per oficiální:
-> *"Inxmail places the highest value on data security, legal certainty and hosts its servers exclusively in the EU."*
+
+> _"Inxmail places the highest value on data security, legal certainty and hosts its servers exclusively in the EU."_
 
 **Made in Germany / EU:**
+
 - **EU servers only**
 - **German jurisdiction**
 - **No US subprocessors for core**
@@ -1624,9 +1730,11 @@ Per oficiální:
 ### 19.2 ISO 27001 certified
 
 Per oficiální:
-> *"Inxmail is ISO 27001 certified"*
+
+> _"Inxmail is ISO 27001 certified"_
 
 **Information security management:**
+
 - **International standard**
 - **Comprehensive security framework**
 - **Risk assessment**
@@ -1636,7 +1744,8 @@ Per oficiální:
 ### 19.3 GDPR compliance
 
 Per oficiální:
-> *"processes personal data in accordance with the GDPR – with order processing"*
+
+> _"processes personal data in accordance with the GDPR – with order processing"_
 
 - **GDPR-compliant**
 - **DPA (Auftragsverarbeitungsvertrag) standard**
@@ -1648,7 +1757,8 @@ Per oficiální:
 ### 19.4 Security features
 
 Per oficiální:
-> *"double opt-in, encrypted sending, and role-based user management"*
+
+> _"double opt-in, encrypted sending, and role-based user management"_
 
 - **Double opt-in default**
 - **Encrypted sending** (TLS)
@@ -1681,9 +1791,11 @@ Per oficiální:
 ### 20.1 SSO support
 
 Per oficiální:
-> *"Seamless connection to your systems with APIs, SSO, and personal support."*
+
+> _"Seamless connection to your systems with APIs, SSO, and personal support."_
 
 **Enterprise SSO:**
+
 - **SAML 2.0 support**
 - **Active Directory** integration
 - **Google Workspace**
@@ -1694,7 +1806,8 @@ Per oficiální:
 ### 20.2 Role-based user management
 
 Per oficiální:
-> *"role-based user management"*
+
+> _"role-based user management"_
 
 - **Granular permissions**
 - **Per-feature access**
@@ -1705,7 +1818,8 @@ Per oficiální:
 ### 20.3 SLAs (on request)
 
 Per oficiální:
-> *"dedicated IPs and SLAs on request"*
+
+> _"dedicated IPs and SLAs on request"_
 
 - **Custom SLAs** per contract
 - **Uptime guarantees**
@@ -1722,7 +1836,8 @@ Per oficiální:
 ### 20.5 Staging environment
 
 Per oficiální:
-> *"staging is available as an option"*
+
+> _"staging is available as an option"_
 
 - **Pre-production environment**
 - **Test campaigns** safely
@@ -1732,7 +1847,8 @@ Per oficiální:
 ### 20.6 Test accounts
 
 Per oficiální:
-> *"We offer test accounts separately (with special conditions)."*
+
+> _"We offer test accounts separately (with special conditions)."_
 
 - **Test accounts** available
 - **Special conditions**
@@ -1741,7 +1857,8 @@ Per oficiální:
 ### 20.7 Personal contact person
 
 Per oficiální:
-> *"Personal contact person and 2 hours of user support/month (platform) or 1 hour/month (mail relay)."*
+
+> _"Personal contact person and 2 hours of user support/month (platform) or 1 hour/month (mail relay)."_
 
 - **Dedicated contact person** per klient
 - **Operational support**
@@ -1750,7 +1867,8 @@ Per oficiální:
 ### 20.8 Real customer praise
 
 Per Software Advice:
-> *"Deutsche Ansprechpartner, Nähe zur Software-Entwicklung, durchwegs gute Erfahrungen"*
+
+> _"Deutsche Ansprechpartner, Nähe zur Software-Entwicklung, durchwegs gute Erfahrungen"_
 
 - **German-speaking contacts**
 - **Close to development team**
@@ -1763,6 +1881,7 @@ Per Software Advice:
 ### 21.1 Industries served
 
 Per oficiální industry solutions:
+
 - **Retail**
 - **Media + publishing**
 - **Energy** (energy suppliers)
@@ -1773,7 +1892,8 @@ Per oficiální industry solutions:
 ### 21.2 Per industry positioning
 
 Per oficiální:
-> *"Inxmail is used in over 2,000 Unternehmen in a wide range of industries – from medium-sized businesses to large corporations, from media and retail to energy suppliers."*
+
+> _"Inxmail is used in over 2,000 Unternehmen in a wide range of industries – from medium-sized businesses to large corporations, from media and retail to energy suppliers."_
 
 ### 21.3 Retail solutions
 
@@ -1786,7 +1906,8 @@ Per oficiální:
 ### 21.4 Media + publishing solutions
 
 Per oficiální:
-> *"Automated newsletters, subscription communications, and ad marketing. With Inxmail, you can optimize your reader and advertising customer loyalty."*
+
+> _"Automated newsletters, subscription communications, and ad marketing. With Inxmail, you can optimize your reader and advertising customer loyalty."_
 
 - **Newsletter automation**
 - **Subscription communications**
@@ -1829,9 +1950,11 @@ Per oficiální:
 ### 22.1 UI languages
 
 Per GetApp:
-> *"Inxmail supports the following languages: German, Chinese (Simplified), Chinese (Traditional), Czech, English, French, Italian, Polish, Spanish, Turkish"*
+
+> _"Inxmail supports the following languages: German, Chinese (Simplified), Chinese (Traditional), Czech, English, French, Italian, Polish, Spanish, Turkish"_
 
 **9-10 languages:**
+
 - **German** (primary)
 - **English**
 - **Czech** (RARE for DACH enterprise!)
@@ -1846,12 +1969,14 @@ Per GetApp:
 ### 22.2 Why multilingual UI matters
 
 **Pro CEE companies:**
+
 - **Czech / Polish UI** = native experience pro CZ/SK/PL users
 - **Better team adoption**
 - **Lower training cost**
 - **Familiar terminology**
 
 **Pro international DACH companies:**
+
 - **Italian / French / Spanish** subsidiaries
 - **Turkish** market
 - **Chinese** market operations
@@ -1859,18 +1984,18 @@ Per GetApp:
 
 ### 22.3 Vs. competitors
 
-| Platform | UI languages |
-|---|---|
-| **Inxmail** | **9-10** (incl. CZ + PL + Chinese!) |
-| **CleverReach** | 6 |
-| **rapidmail** | 3 (EN/DE/FR) |
-| **Mailchimp** | English primary, some others |
-| **HubSpot** | Multiple |
-| **SAP Emarsys** | Multi |
-| **SARE** | 2 (PL + EN) |
-| **SmartEmailing** | CZ + SK |
-| **Ecomail** | CZ + SK + EN |
-| **GetResponse** | 27 (most among email platforms!) |
+| Platform          | UI languages                        |
+| ----------------- | ----------------------------------- |
+| **Inxmail**       | **9-10** (incl. CZ + PL + Chinese!) |
+| **CleverReach**   | 6                                   |
+| **rapidmail**     | 3 (EN/DE/FR)                        |
+| **Mailchimp**     | English primary, some others        |
+| **HubSpot**       | Multiple                            |
+| **SAP Emarsys**   | Multi                               |
+| **SARE**          | 2 (PL + EN)                         |
+| **SmartEmailing** | CZ + SK                             |
+| **Ecomail**       | CZ + SK + EN                        |
+| **GetResponse**   | 27 (most among email platforms!)    |
 
 ⚠️ **Inxmail's combination** (DACH leadership + CEE + Asian languages) je unikátní.
 
@@ -1888,9 +2013,11 @@ Per GetApp:
 ### 23.1 No free trial (limited)
 
 Per TechnologyCounter:
-> *"Currently, Inxmail does not offer trial access. However, you can still explore its capabilities through available product demos, feature guides, and customer reviews."*
+
+> _"Currently, Inxmail does not offer trial access. However, you can still explore its capabilities through available product demos, feature guides, and customer reviews."_
 
 ⚠️ **No standard free trial** (vs. modern platforms):
+
 - Test accounts available **special conditions**
 - Sales engagement required
 - Less self-serve evaluation
@@ -1906,66 +2033,76 @@ Per TechnologyCounter:
 ### 23.3 Less intuitive than SMB competitors
 
 Per Capterra real review:
-> *"Die Software ist im Vergleich zu Konkurrenzprodukten (mit ähnlichem Funktionsumfang) relativ schwierig zu bedienen."*
+
+> _"Die Software ist im Vergleich zu Konkurrenzprodukten (mit ähnlichem Funktionsumfang) relativ schwierig zu bedienen."_
 
 Per GetApp:
-> *"some say it is less intuitive than competitors and can be complicated for beginners"*
+
+> _"some say it is less intuitive than competitors and can be complicated for beginners"_
 
 ⚠️ **Learning curve** vs. Mailchimp / MailerLite simplicity.
 
 ### 23.4 HTML editing sometimes required
 
 Per Capterra real review:
-> *"Um einen Artikel im Newsletter hinzuzufügen, zu löschen oder zu verschieben müssen wir den HTML-Code des Templates bearbeiten."*
+
+> _"Um einen Artikel im Newsletter hinzuzufügen, zu löschen oder zu verschieben müssen wir den HTML-Code des Templates bearbeiten."_
 
 ⚠️ **Some operations require HTML editing** (legacy templates).
 
 ### 23.5 No JavaScript conversion tracking
 
 Per Software Advice review:
-> *"Ein JavaScript-Conversiontracking wäre ebenso gern gesehen wie die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können."*
+
+> _"Ein JavaScript-Conversiontracking wäre ebenso gern gesehen wie die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können."_
 
 ⚠️ **JavaScript conversion tracking** was historically requested feature. Check current state.
 
 ### 23.6 Inxmail Commerce custom actions limited
 
 Per Software Advice review:
-> *"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"*
+
+> _"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"_
 
 ⚠️ **Visual builder** doesn't allow custom action development – pre-built actions only.
 
 ### 23.7 Mobile views improvement needed
 
 Per Capterra review:
-> *"Mobilansichten mit besseren Funktionen ausstatten"*
+
+> _"Mobilansichten mit besseren Funktionen ausstatten"_
 
 ⚠️ **Mobile views** could use better functionality.
 
 ### 23.8 No switch to browser solution (historically)
 
 Per Capterra review:
-> *"Switch auf eine Browserlösung"*
+
+> _"Switch auf eine Browserlösung"_
 
 ⚠️ **Some legacy desktop client** aspects historically (may be resolved – check current state).
 
 ### 23.9 Signup process clunky
 
 Per Capterra review:
-> *"Anmeldeprozess hakelig"*
+
+> _"Anmeldeprozess hakelig"_
 
 ⚠️ **User onboarding** could be smoother.
 
 ### 23.10 User administration requires support
 
 Per GetApp:
-> *"user administration sometimes requires contacting support"*
+
+> _"user administration sometimes requires contacting support"_
 
 ⚠️ **User management UI** sometimes requires support involvement.
 
 ### 23.11 Support flexibility issues
 
 Per GetApp:
-> *"some feel it can be slow or less flexible for specific requests"*
+
+> _"some feel it can be slow or less flexible for specific requests"_
 
 ⚠️ **Some support requests** less flexible than expected.
 
@@ -2022,6 +2159,7 @@ Per GetApp:
 ### 23.19 Per-volume pricing scaling
 
 ⚠️ Pro very high-volume:
+
 - **Per-email pricing** scales linearly
 - **Compare to flat-fee** alternatives
 - **May be expensive** at scale (10M+ emails/month)
@@ -2031,6 +2169,7 @@ Per GetApp:
 ## 24. Shrnutí: Pro koho a proti komu
 
 ### Inxmail je dobrá volba pokud
+
 - Provozujete **DACH mid-market+ enterprise**
 - Hledáte **Made in Germany** (EU servers exclusively)
 - Vyžadujete **GDPR-strict compliance** + ISO 27001
@@ -2051,6 +2190,7 @@ Per GetApp:
 - Hodnotíte **public pricing transparency** (€200+/month entry)
 
 ### Inxmail není dobrá volba pokud
+
 - Hledáte **SMB freemium** – Mailchimp / MailerLite / Brevo lepší
 - Provozujete **SMB s €100/month budget** – CleverReach / rapidmail lepší
 - Cíl je **simple newsletter** pro non-technical – MailerLite / rapidmail
@@ -2069,22 +2209,22 @@ Per GetApp:
 
 ### Inxmail vs. konkurence
 
-| Konkurence | Kdy lepší než Inxmail |
-|---|---|
-| **CleverReach** (DE) | SMB free plan, unlimited users free, lower entry |
-| **rapidmail** (DE) | SMB occasional senders, Pay-per-Mail unique, free phone |
-| **SAP Emarsys** (AT) | Enterprise retail leader, deeper SAP integration, AI |
-| **Mailchimp** | Brand recognition, global ecosystem, free plan |
-| **MailerLite** | Solopreneur simplicity, lower entry, content creators |
-| **Brevo** | Multi-channel (SMS, WhatsApp), volume-based pricing, free tier |
-| **Klaviyo** | DTC Shopify deep, predictive AI |
-| **HubSpot** | Full B2B CRM, multi-Hub, autonomous AI |
-| **ActiveCampaign** | Deep automation, integrated CRM |
-| **GetResponse** | All-in-one growth, webinars + courses, 27 jazyků |
-| **SARE / SALESmanago** | Polish market + deeper omnichannel |
-| **SmartEmailing / Ecomail** | Native CZ/SK SMB focus |
-| **Bloomreach Engagement** | DTC personalization (CZ origin), deeper ML |
+| Konkurence                  | Kdy lepší než Inxmail                                          |
+| --------------------------- | -------------------------------------------------------------- |
+| **CleverReach** (DE)        | SMB free plan, unlimited users free, lower entry               |
+| **rapidmail** (DE)          | SMB occasional senders, Pay-per-Mail unique, free phone        |
+| **SAP Emarsys** (AT)        | Enterprise retail leader, deeper SAP integration, AI           |
+| **Mailchimp**               | Brand recognition, global ecosystem, free plan                 |
+| **MailerLite**              | Solopreneur simplicity, lower entry, content creators          |
+| **Brevo**                   | Multi-channel (SMS, WhatsApp), volume-based pricing, free tier |
+| **Klaviyo**                 | DTC Shopify deep, predictive AI                                |
+| **HubSpot**                 | Full B2B CRM, multi-Hub, autonomous AI                         |
+| **ActiveCampaign**          | Deep automation, integrated CRM                                |
+| **GetResponse**             | All-in-one growth, webinars + courses, 27 jazyků               |
+| **SARE / SALESmanago**      | Polish market + deeper omnichannel                             |
+| **SmartEmailing / Ecomail** | Native CZ/SK SMB focus                                         |
+| **Bloomreach Engagement**   | DTC personalization (CZ origin), deeper ML                     |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů inxmail.de a praktických zdrojů (GetApp, Capterra, Software Advice, OMR Reviews, SourceForge, TechnologyCounter). Pro nejaktuálnější detaily je nutný engagement s Inxmail sales / consultant teamem.*
+_Dokument zpracován z oficiálních zdrojů inxmail.de a praktických zdrojů (GetApp, Capterra, Software Advice, OMR Reviews, SourceForge, TechnologyCounter). Pro nejaktuálnější detaily je nutný engagement s Inxmail sales / consultant teamem._

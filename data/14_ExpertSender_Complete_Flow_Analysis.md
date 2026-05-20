@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `13_ExpertSender_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** ExpertSender umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Service-driven model** – každý klient má **dedicated Customer Success Manager** (CSM), ne self-service
 > - **No public pricing, no self-serve sign-up** – vstupní bod je demo + consultation
 > - **Strategic onboarding** 4–8+ týdnů, ne instant launch
@@ -107,20 +108,20 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Po contract signing | Vše + billing + close account | Vše |
-| **Administrator** | Pozvánka od Owner | Operational management | Vše krom billing |
-| **Marketer / Campaign Manager** | Pozvánka | Build + send campaigns, workflows | Marketing tools |
-| **Analyst** | Pozvánka | View reports & analytics | Read-only |
-| **Developer** | Pozvánka + API key | API integration, technical setup | Per role + API |
-| **Designer (custom)** | Pozvánka s custom role | Design templates | Per RBAC |
-| **Custom role users** | Pozvánka s custom RBAC | Per definition | Per definition |
-| **Dedicated CSM** | Assigned at onboarding | Strategy, reviews, optimization | Customer account read |
-| **Customer / Profile** | Form, integration, anon tracking | Browses, buys, opens emails | Své komunikace |
-| **API Client** | API key | Per scope | Per scope |
-| **E-commerce platform** | Plugin / integration | Sync data continuously | Per integration scope |
-| **ExpertSender Staff** | Interní | Support, deliverability, T&S | Limited |
+| Aktér                           | Vstupní bod                      | Co dělá                           | Co vidí               |
+| ------------------------------- | -------------------------------- | --------------------------------- | --------------------- |
+| **Account Owner**               | Po contract signing              | Vše + billing + close account     | Vše                   |
+| **Administrator**               | Pozvánka od Owner                | Operational management            | Vše krom billing      |
+| **Marketer / Campaign Manager** | Pozvánka                         | Build + send campaigns, workflows | Marketing tools       |
+| **Analyst**                     | Pozvánka                         | View reports & analytics          | Read-only             |
+| **Developer**                   | Pozvánka + API key               | API integration, technical setup  | Per role + API        |
+| **Designer (custom)**           | Pozvánka s custom role           | Design templates                  | Per RBAC              |
+| **Custom role users**           | Pozvánka s custom RBAC           | Per definition                    | Per definition        |
+| **Dedicated CSM**               | Assigned at onboarding           | Strategy, reviews, optimization   | Customer account read |
+| **Customer / Profile**          | Form, integration, anon tracking | Browses, buys, opens emails       | Své komunikace        |
+| **API Client**                  | API key                          | Per scope                         | Per scope             |
+| **E-commerce platform**         | Plugin / integration             | Sync data continuously            | Per integration scope |
+| **ExpertSender Staff**          | Interní                          | Support, deliverability, T&S      | Limited               |
 
 ---
 
@@ -192,6 +193,7 @@ Sign contract
 ### 2.3 Pilot / POC option
 
 For larger deals, ExpertSender může offer:
+
 - **30-90 day pilot** s limited features
 - POC proof-of-concept
 - Reduced commitment
@@ -406,11 +408,13 @@ ExpertSender používá **Role-Based Access Control (RBAC)** s custom roles. Mé
 Z reviews + dokumentace se objevují tyto základní role:
 
 #### A) Account Owner
+
 - 1 per account (or per sub-account in multi-account setup)
 - **Full access + billing + close account**
 - Cannot be removed without ownership transfer
 
 #### B) Administrator
+
 - Full operational access
 - User management
 - Integration management
@@ -418,6 +422,7 @@ Z reviews + dokumentace se objevují tyto základní role:
 - **No close account**
 
 #### C) Marketer / Campaign Manager
+
 - Campaign creation + sending
 - Workflow management
 - Segment management
@@ -425,17 +430,20 @@ Z reviews + dokumentace se objevují tyto základní role:
 - Limited admin
 
 #### D) Analyst / Reporting
+
 - Read-only access
 - Reports + analytics
 - No editing
 
 #### E) Developer / API user
+
 - API access management
 - Integration setup
 - Technical configuration
 - Custom event tracking setup
 
 #### F) Custom roles (RBAC)
+
 - Build per permission needs
 - Granular permissions per feature
 - Multi-account scoping possible
@@ -444,6 +452,7 @@ Z reviews + dokumentace se objevují tyto základní role:
 ### 4.2 Permission categories (granular)
 
 #### Account & Settings
+
 - Account management
 - Billing access
 - User management
@@ -452,6 +461,7 @@ Z reviews + dokumentace se objevují tyto základní role:
 - API key management
 
 #### Customer Data
+
 - View customer profiles
 - Edit customer profiles
 - Delete customer profiles
@@ -460,12 +470,14 @@ Z reviews + dokumentace se objevují tyto základní role:
 - View customer events
 
 #### Segmentation
+
 - View segments
 - Create/edit segments
 - Delete segments
 - View RFM analysis
 
 #### Campaigns
+
 - View campaigns
 - Create campaigns
 - Edit campaigns
@@ -474,6 +486,7 @@ Z reviews + dokumentace se objevují tyto základní role:
 - Delete campaigns
 
 #### Workflows
+
 - View workflows
 - Create/edit workflows
 - Activate workflows
@@ -481,12 +494,14 @@ Z reviews + dokumentace se objevují tyto základní role:
 - Delete workflows
 
 #### Templates
+
 - View templates
 - Create/edit templates
 - Delete templates
 - Brand kit management
 
 #### Channels
+
 - Email management
 - SMS management
 - Push notifications
@@ -494,54 +509,56 @@ Z reviews + dokumentace se objevují tyto základní role:
 - Per-channel permissions granular
 
 #### Reports
+
 - View reports
 - Create custom reports
 - Schedule reports
 - Export reports
 
 #### Technical
+
 - API access
 - Webhook configuration
 - Custom integration setup
 
 ### 4.3 Permission matrix (typical setup)
 
-| Akce | Owner | Admin | Marketer | Analyst | Developer | Custom |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |  |  |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Manage billing | ✅ | ❌ | ❌ | ❌ | ❌ | per role |
-| Manage users | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Customer Data** |  |  |  |  |  |  |
-| View customers | ✅ | ✅ | ✅ | ✅ | per role | per role |
-| Edit customers | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| Export customers | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| Import customers | ✅ | ✅ | ✅ | ❌ | ✅ | per role |
-| Delete customers | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Segmentation** |  |  |  |  |  |  |
-| View segments | ✅ | ✅ | ✅ | ✅ | per role | per role |
-| Create segments | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| RFM analysis | ✅ | ✅ | ✅ | ✅ | per role | per role |
-| **Campaigns** |  |  |  |  |  |  |
-| Create campaign | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| Send campaign | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| **Workflows** |  |  |  |  |  |  |
-| Build workflows | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| Activate workflows | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| **Templates** |  |  |  |  |  |  |
-| Create/edit | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| **Channels** |  |  |  |  |  |  |
-| Email send | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| SMS send | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| Push send | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| On-site management | ✅ | ✅ | ✅ | ❌ | per role | per role |
-| **Reports & Analytics** |  |  |  |  |  |  |
-| View reports | ✅ | ✅ | ✅ | ✅ | per role | per role |
-| Custom reports | ✅ | ✅ | ✅ | ✅ | per role | per role |
-| **Technical** |  |  |  |  |  |  |
-| Manage integrations | ✅ | ✅ | ❌ | ❌ | ✅ | per role |
-| Manage API keys | ✅ | ✅ | ❌ | ❌ | ✅ | per role |
-| Domain settings | ✅ | ✅ | ❌ | ❌ | ✅ | per role |
+| Akce                    | Owner | Admin | Marketer | Analyst | Developer |  Custom  |
+| ----------------------- | :---: | :---: | :------: | :-----: | :-------: | :------: |
+| **Account & Billing**   |       |       |          |         |           |          |
+| Close account           |  ✅   |  ❌   |    ❌    |   ❌    |    ❌     |    ❌    |
+| Manage billing          |  ✅   |  ❌   |    ❌    |   ❌    |    ❌     | per role |
+| Manage users            |  ✅   |  ✅   |    ❌    |   ❌    |    ❌     | per role |
+| **Customer Data**       |       |       |          |         |           |          |
+| View customers          |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |
+| Edit customers          |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| Export customers        |  ✅   |  ✅   |    ❌    |   ❌    |    ❌     | per role |
+| Import customers        |  ✅   |  ✅   |    ✅    |   ❌    |    ✅     | per role |
+| Delete customers        |  ✅   |  ✅   |    ❌    |   ❌    |    ❌     | per role |
+| **Segmentation**        |       |       |          |         |           |          |
+| View segments           |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |
+| Create segments         |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| RFM analysis            |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |
+| **Campaigns**           |       |       |          |         |           |          |
+| Create campaign         |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| Send campaign           |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| **Workflows**           |       |       |          |         |           |          |
+| Build workflows         |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| Activate workflows      |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| **Templates**           |       |       |          |         |           |          |
+| Create/edit             |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| **Channels**            |       |       |          |         |           |          |
+| Email send              |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| SMS send                |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| Push send               |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| On-site management      |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |
+| **Reports & Analytics** |       |       |          |         |           |          |
+| View reports            |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |
+| Custom reports          |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |
+| **Technical**           |       |       |          |         |           |          |
+| Manage integrations     |  ✅   |  ✅   |    ❌    |   ❌    |    ✅     | per role |
+| Manage API keys         |  ✅   |  ✅   |    ❌    |   ❌    |    ✅     | per role |
+| Domain settings         |  ✅   |  ✅   |    ❌    |   ❌    |    ✅     | per role |
 
 ### 4.4 Multi-account setup (Enterprise)
 
@@ -646,6 +663,7 @@ Strategic activities:
 ### 5.3 Kritické Owner-only akce
 
 #### Close account
+
 ```
 Owner → Settings → Account → Close account
    ↓
@@ -663,11 +681,13 @@ If proceeding:
 ```
 
 #### Manage contracts
+
 - Annual renewal discussions s CSM 60-90 days pre-renewal
 - Plan changes mid-contract require formal request
 - Add-on additions can be flexible
 
 #### Strategic relationship
+
 - Quarterly Business Reviews (QBR) s CSM + leadership
 - Roadmap input
 - Feature requests escalation
@@ -1006,6 +1026,7 @@ Annual strategic review:
 ### 8.4 CSM value claim
 
 ExpertSender's case studies cite **CSM impact** as key ROI driver:
+
 - 4F case study: dedicated strategist contributed to 12× ROI
 - Continuous optimization vs. static setup
 - "Partner not just tool" positioning
@@ -1013,6 +1034,7 @@ ExpertSender's case studies cite **CSM impact** as key ROI driver:
 ### 8.5 CSM critique
 
 Některé G2 reviews note:
+
 - **Quality of CSM varies** per individual
 - **Some CSMs more responsive** than others
 - **Coverage during off-hours** (different regions)
@@ -1025,6 +1047,7 @@ Některé G2 reviews note:
 ### 9.1 Identity creation paths
 
 #### A) Anonymous tracking (cookie)
+
 ```
 Visitor lands on website (no cookie)
    ↓
@@ -1045,6 +1068,7 @@ NO email/phone yet
 ```
 
 #### B) Email capture (form submission)
+
 ```
 Anonymous visitor (cookie set)
    ↓
@@ -1067,6 +1091,7 @@ Welcome series begins
 ```
 
 #### C) E-commerce account creation
+
 ```
 Customer creates account on Shopify (or other platform)
    ↓
@@ -1083,6 +1108,7 @@ ExpertSender:
 ```
 
 #### D) Purchase without account (guest checkout)
+
 ```
 Guest visitor places order
    ↓
@@ -1100,6 +1126,7 @@ If not: profile exists but no marketing communication
 ```
 
 #### E) Manual import (CSV / API)
+
 ```
 Admin: import contacts from CSV
    ↓
@@ -1120,6 +1147,7 @@ Import processed
 ```
 
 #### F) Mobile app sign-up
+
 ```
 User installs mobile app
    ↓
@@ -1220,6 +1248,7 @@ ExpertSender:
 ### 9.6 Bounce handling
 
 #### Hard bounce
+
 ```
 ISP returns 5xx
    ↓
@@ -1233,6 +1262,7 @@ Other channels still active (SMS, push)
 ```
 
 #### Soft bounce
+
 ```
 ISP returns 4xx
    ↓
@@ -1260,6 +1290,7 @@ Internal review if pattern emerges
 ### 9.8 Profile timeline
 
 V profile UI viditelný chronological timeline:
+
 - All page views
 - All product views, searches
 - All cart events
@@ -1306,11 +1337,11 @@ Cross-device stitching:
 Step 1: User visits site on iPhone (cookie A)
    - Anonymous profile A_iphone
    - Views products, adds to cart
-   
+
 Step 2: Same user visits on laptop (cookie B)
    - Anonymous profile B_laptop
    - Different session, no link yet
-   
+
 Step 3: User signs up on laptop (provides email)
    - Profile B_laptop identified
    - cookie B + email linked
@@ -1333,6 +1364,7 @@ Result: One profile s:
 ### 10.3 Merge conflict handling
 
 When two profiles merge, conflicts can arise:
+
 - **First name** differs → primary profile wins (last updated)
 - **Email** differs → both stored (additional emails property)
 - **Custom fields** → merge with conflict resolution rules
@@ -1342,6 +1374,7 @@ When two profiles merge, conflicts can arise:
 ### 10.4 Manual merge
 
 In rare cases, manual merge needed:
+
 ```
 Admin: Customers → Search for duplicate
    ↓
@@ -1646,6 +1679,7 @@ Exit workflow
 ### 13.4 Channel selection logic
 
 For each step, marketer chooses optimal channel:
+
 - **Email** – detailed content, longer engagement
 - **SMS** – urgent, time-sensitive, high open rate
 - **Web push** – passive reminder, no email needed
@@ -1827,6 +1861,7 @@ Real-time recommendations ready
 ### 15.2 Per-channel activation
 
 #### In emails
+
 ```
 Email template contains "Recommendations block"
    ↓
@@ -1840,6 +1875,7 @@ Personalized email per recipient
 ```
 
 #### On-site
+
 ```
 Customer browses website
    ↓
@@ -1855,6 +1891,7 @@ Widgets display
 ```
 
 #### Push notifications
+
 ```
 Workflow includes "Send push with recommendations"
    ↓
@@ -1867,6 +1904,7 @@ On execution:
 ### 15.3 Strategy selection
 
 Marketer can choose strategy per use case:
+
 - **Collaborative filtering** – "Customers like you bought X"
 - **Content-based** – "Similar to what you viewed"
 - **Personalized** – ML per profile
@@ -1926,6 +1964,7 @@ Logged in customer profile activity timeline
 **Key advantage:** transactional + marketing v jedné CDP.
 
 Benefits:
+
 - Customer profile shows BOTH marketing + transactional in single timeline
 - Transactional events trigger marketing workflows (e.g. order placed → post-purchase flow)
 - Unified analytics
@@ -2149,6 +2188,7 @@ Provides download (time-limited link)
 ### 18.4 Consent tracking
 
 For each profile:
+
 - Email subscription consent (timestamp, IP, source)
 - SMS opt-in (timestamp, IP)
 - Web push opt-in
@@ -2180,6 +2220,7 @@ Can be exported on request
 ### 18.6 Compliance scenarios
 
 #### Data Subject Access Request (DSAR)
+
 ```
 Customer requests their data
    ↓
@@ -2189,6 +2230,7 @@ Provide to customer within 30 days (GDPR requirement)
 ```
 
 #### Data deletion request
+
 ```
 Customer requests deletion
    ↓
@@ -2200,6 +2242,7 @@ Notify customer
 ```
 
 #### Consent withdrawal
+
 ```
 Customer unsubscribes
    ↓
@@ -2225,35 +2268,35 @@ Full deletion only on explicit request
 
 ## 19. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Marketer | Analyst | Developer | Custom | CSM | Customer | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account & Billing | ✅ | ❌ | ❌ | ❌ | ❌ | per role | read | ❌ | per scope |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | ❌ | per scope |
-| All customer profiles | ✅ | ✅ | ✅ | ✅ | per role | per role | read | jen sebe | ✅ |
-| Edit profiles | ✅ | ✅ | ✅ | ❌ | per role | per role | ❌ | ❌ | ✅ |
-| Export customers | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | request | ✅ |
-| Customer events | ✅ | ✅ | ✅ | ✅ | per role | per role | read | jen své | ✅ |
-| Segments | ✅ | ✅ | ✅ | ✅ | per role | per role | read | ❌ | ✅ |
-| RFM analysis | ✅ | ✅ | ✅ | ✅ | per role | per role | read | ❌ | ✅ |
-| Predictive scores | ✅ | ✅ | ✅ | ✅ | per role | per role | read | ❌ | ✅ |
-| Campaigns | ✅ | ✅ | ✅ | view | per role | per role | read | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | per role | per role | ❌ | ❌ | ✅ |
-| Workflows | ✅ | ✅ | ✅ | view | per role | per role | read | ❌ | ✅ |
-| Templates | ✅ | ✅ | ✅ | ❌ | per role | per role | read | ❌ | ✅ |
-| Email channel | ✅ | ✅ | ✅ | ❌ | per role | per role | – | – | ✅ |
-| SMS channel | ✅ | ✅ | ✅ | ❌ | per role | per role | – | – | ✅ |
-| Push channel | ✅ | ✅ | ✅ | ❌ | per role | per role | – | – | ✅ |
-| On-site (popups) | ✅ | ✅ | ✅ | ❌ | per role | per role | – | – | per scope |
-| Recommendations | ✅ | ✅ | ✅ | ❌ | per role | per role | – | – | per scope |
-| Transactional | ✅ | ✅ | per role | ❌ | ✅ | per role | – | – | ✅ |
-| Reports & analytics | ✅ | ✅ | ✅ | ✅ | per role | per role | read | ❌ | ✅ |
-| Custom reports | ✅ | ✅ | ✅ | ✅ | per role | per role | read | ❌ | ✅ |
-| Integrations | ✅ | ✅ | ❌ | ❌ | ✅ | per role | – | – | per scope |
-| API keys | ✅ | ✅ | ❌ | ❌ | ✅ | per role | – | – | – |
-| Domains | ✅ | ✅ | ❌ | ❌ | ✅ | per role | – | – | per scope |
-| Audit logs | ✅ | ✅ | ❌ | ❌ | ❌ | per role | – | – | per scope |
-| GDPR delete | ✅ | ✅ | per role | ❌ | per role | per role | – | request | per scope |
-| Multi-account view | ✅ | ✅ | ❌ | ❌ | ❌ | per role | per scope | ❌ | per scope |
+| Data                  | Owner | Admin | Marketer | Analyst | Developer |  Custom  |    CSM    |   Customer    |    API    |
+| --------------------- | :---: | :---: | :------: | :-----: | :-------: | :------: | :-------: | :-----------: | :-------: |
+| Account & Billing     |  ✅   |  ❌   |    ❌    |   ❌    |    ❌     | per role |   read    |      ❌       | per scope |
+| User management       |  ✅   |  ✅   |    ❌    |   ❌    |    ❌     | per role |    ❌     |      ❌       | per scope |
+| All customer profiles |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |   read    |   jen sebe    |    ✅     |
+| Edit profiles         |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |    ❌     |      ❌       |    ✅     |
+| Export customers      |  ✅   |  ✅   |    ❌    |   ❌    |    ❌     | per role |    ❌     |    request    |    ✅     |
+| Customer events       |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |   read    |    jen své    |    ✅     |
+| Segments              |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |   read    |      ❌       |    ✅     |
+| RFM analysis          |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |   read    |      ❌       |    ✅     |
+| Predictive scores     |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |   read    |      ❌       |    ✅     |
+| Campaigns             |  ✅   |  ✅   |    ✅    |  view   | per role  | per role |   read    | jen co dostal |    ✅     |
+| Send campaigns        |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |    ❌     |      ❌       |    ✅     |
+| Workflows             |  ✅   |  ✅   |    ✅    |  view   | per role  | per role |   read    |      ❌       |    ✅     |
+| Templates             |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |   read    |      ❌       |    ✅     |
+| Email channel         |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |     –     |       –       |    ✅     |
+| SMS channel           |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |     –     |       –       |    ✅     |
+| Push channel          |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |     –     |       –       |    ✅     |
+| On-site (popups)      |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |     –     |       –       | per scope |
+| Recommendations       |  ✅   |  ✅   |    ✅    |   ❌    | per role  | per role |     –     |       –       | per scope |
+| Transactional         |  ✅   |  ✅   | per role |   ❌    |    ✅     | per role |     –     |       –       |    ✅     |
+| Reports & analytics   |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |   read    |      ❌       |    ✅     |
+| Custom reports        |  ✅   |  ✅   |    ✅    |   ✅    | per role  | per role |   read    |      ❌       |    ✅     |
+| Integrations          |  ✅   |  ✅   |    ❌    |   ❌    |    ✅     | per role |     –     |       –       | per scope |
+| API keys              |  ✅   |  ✅   |    ❌    |   ❌    |    ✅     | per role |     –     |       –       |     –     |
+| Domains               |  ✅   |  ✅   |    ❌    |   ❌    |    ✅     | per role |     –     |       –       | per scope |
+| Audit logs            |  ✅   |  ✅   |    ❌    |   ❌    |    ❌     | per role |     –     |       –       | per scope |
+| GDPR delete           |  ✅   |  ✅   | per role |   ❌    | per role  | per role |     –     |    request    | per scope |
+| Multi-account view    |  ✅   |  ✅   |    ❌    |   ❌    |    ❌     | per role | per scope |      ❌       | per scope |
 
 ---
 
@@ -2387,4 +2430,4 @@ Pokud ExpertSender používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů expertsender.com a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Research.com, SpotSaaS, SoftwareSuggest, SoftwareFinder, Authencio, Shopify CDP guide, CDP.com). Pro nejaktuálnější detaily je nutný demo s ExpertSender sales teamem.*
+_Dokument zpracován z oficiálních zdrojů expertsender.com a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Research.com, SpotSaaS, SoftwareSuggest, SoftwareFinder, Authencio, Shopify CDP guide, CDP.com). Pro nejaktuálnější detaily je nutný demo s ExpertSender sales teamem._

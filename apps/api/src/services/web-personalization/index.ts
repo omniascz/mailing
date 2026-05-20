@@ -5,57 +5,81 @@ import { AppError } from '../../lib/app-error.js';
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
-export async function createRule(orgId: string, input: {
-  siteId?: string | null;
-  name: string;
-  selector: string;
-  action?: WebPersonalizationRule['action'];
-  value?: string | null;
-  urlPattern?: string | null;
-  audience?: WebPersonalizationRule['audience'];
-  priority?: string;
-}): Promise<WebPersonalizationRule> {
-  const [row] = await db.insert(webPersonalizationRules).values({
-    orgId,
-    siteId: input.siteId ?? null,
-    name: input.name,
-    selector: input.selector,
-    action: input.action ?? 'swap_text',
-    value: input.value ?? null,
-    urlPattern: input.urlPattern ?? null,
-    audience: input.audience ?? { type: 'all' },
-    priority: input.priority ?? '10',
-  }).returning();
+export async function createRule(
+  orgId: string,
+  input: {
+    siteId?: string | null;
+    name: string;
+    selector: string;
+    action?: WebPersonalizationRule['action'];
+    value?: string | null;
+    urlPattern?: string | null;
+    audience?: WebPersonalizationRule['audience'];
+    priority?: string;
+  },
+): Promise<WebPersonalizationRule> {
+  const [row] = await db
+    .insert(webPersonalizationRules)
+    .values({
+      orgId,
+      siteId: input.siteId ?? null,
+      name: input.name,
+      selector: input.selector,
+      action: input.action ?? 'swap_text',
+      value: input.value ?? null,
+      urlPattern: input.urlPattern ?? null,
+      audience: input.audience ?? { type: 'all' },
+      priority: input.priority ?? '10',
+    })
+    .returning();
   return row!;
 }
 
 export async function getRule(orgId: string, id: string): Promise<WebPersonalizationRule> {
-  const [row] = await db.select().from(webPersonalizationRules)
-    .where(and(eq(webPersonalizationRules.id, id), eq(webPersonalizationRules.orgId, orgId), isNull(webPersonalizationRules.deletedAt)));
+  const [row] = await db
+    .select()
+    .from(webPersonalizationRules)
+    .where(
+      and(
+        eq(webPersonalizationRules.id, id),
+        eq(webPersonalizationRules.orgId, orgId),
+        isNull(webPersonalizationRules.deletedAt),
+      ),
+    );
   if (!row) throw AppError.notFound('Personalization rule not found');
   return row;
 }
 
 export async function listRules(orgId: string, siteId?: string): Promise<WebPersonalizationRule[]> {
-  const conditions = [eq(webPersonalizationRules.orgId, orgId), isNull(webPersonalizationRules.deletedAt)];
+  const conditions = [
+    eq(webPersonalizationRules.orgId, orgId),
+    isNull(webPersonalizationRules.deletedAt),
+  ];
   if (siteId) conditions.push(eq(webPersonalizationRules.siteId, siteId));
-  return db.select().from(webPersonalizationRules)
+  return db
+    .select()
+    .from(webPersonalizationRules)
     .where(and(...conditions))
     .orderBy(desc(webPersonalizationRules.createdAt));
 }
 
-export async function updateRule(orgId: string, id: string, patch: Partial<{
-  name: string;
-  selector: string;
-  action: WebPersonalizationRule['action'];
-  value: string | null;
-  urlPattern: string | null;
-  audience: WebPersonalizationRule['audience'];
-  priority: string;
-  active: boolean;
-}>): Promise<WebPersonalizationRule> {
+export async function updateRule(
+  orgId: string,
+  id: string,
+  patch: Partial<{
+    name: string;
+    selector: string;
+    action: WebPersonalizationRule['action'];
+    value: string | null;
+    urlPattern: string | null;
+    audience: WebPersonalizationRule['audience'];
+    priority: string;
+    active: boolean;
+  }>,
+): Promise<WebPersonalizationRule> {
   await getRule(orgId, id);
-  const [row] = await db.update(webPersonalizationRules)
+  const [row] = await db
+    .update(webPersonalizationRules)
     .set({ ...patch, updatedAt: new Date() })
     .where(and(eq(webPersonalizationRules.id, id), eq(webPersonalizationRules.orgId, orgId)))
     .returning();
@@ -64,7 +88,8 @@ export async function updateRule(orgId: string, id: string, patch: Partial<{
 
 export async function deleteRule(orgId: string, id: string): Promise<void> {
   await getRule(orgId, id);
-  await db.update(webPersonalizationRules)
+  await db
+    .update(webPersonalizationRules)
     .set({ deletedAt: new Date() })
     .where(and(eq(webPersonalizationRules.id, id), eq(webPersonalizationRules.orgId, orgId)));
 }
@@ -86,13 +111,16 @@ export async function resolveRulesForVisitor(input: {
   const site = await getSiteByToken(input.siteToken);
   if (!site) return [];
 
-  const rules = await db.select().from(webPersonalizationRules).where(
-    and(
-      eq(webPersonalizationRules.orgId, site.orgId),
-      eq(webPersonalizationRules.active, true),
-      isNull(webPersonalizationRules.deletedAt),
-    ),
-  );
+  const rules = await db
+    .select()
+    .from(webPersonalizationRules)
+    .where(
+      and(
+        eq(webPersonalizationRules.orgId, site.orgId),
+        eq(webPersonalizationRules.active, true),
+        isNull(webPersonalizationRules.deletedAt),
+      ),
+    );
 
   return rules.filter((r) => {
     // Site scoping

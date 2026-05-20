@@ -5,22 +5,16 @@
  * in business-initiated messages.
  */
 
-import {
-  pgTable,
-  uuid,
-  varchar,
-  text,
-  jsonb,
-  timestamp,
-  index,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, jsonb, timestamp, index } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 export const viberTemplates = pgTable(
   'viber_templates',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     /** Template name registered with the provider */
     name: varchar('name', { length: 100 }).notNull(),
     /** Viber message type */

@@ -56,8 +56,10 @@ export async function generateDkimKeyPair(): Promise<DkimKeyPair> {
   const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
 
   // Strip PEM header/footer and newlines — DNS needs raw base64
-  const publicKeyBase64 = publicKeyPem
-    .replace(/-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\n/g, '');
+  const publicKeyBase64 = publicKeyPem.replace(
+    /-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\n/g,
+    '',
+  );
 
   // Standard DKIM TXT record value
   // v=DKIM1 — version
@@ -134,12 +136,13 @@ export function signEmailDkim(opts: {
   const { headers, body, privateKeyPem, domain, selector } = opts;
 
   // Relaxed body canonicalization: normalise whitespace, trim trailing CRLFs
-  const canonBody = body
-    .replace(/\t/g, ' ')           // tabs → spaces
-    .replace(/ +/g, ' ')           // collapse spaces
-    .replace(/\r?\n/g, '\r\n')     // normalise line endings
-    .replace(/(\r\n)+$/, '')       // strip trailing blank lines
-    + '\r\n';                      // required single trailing CRLF
+  const canonBody =
+    body
+      .replace(/\t/g, ' ') // tabs → spaces
+      .replace(/ +/g, ' ') // collapse spaces
+      .replace(/\r?\n/g, '\r\n') // normalise line endings
+      .replace(/(\r\n)+$/, '') + // strip trailing blank lines
+    '\r\n'; // required single trailing CRLF
 
   // Body hash
   const bodyHash = crypto.createHash('sha256').update(canonBody).digest('base64');
@@ -156,7 +159,8 @@ export function signEmailDkim(opts: {
   // Relaxed header canonicalization
   const canonHeaders = [
     ...signingHeaders.map((name) => {
-      const value = headers[name] ?? headers[name.replace(/-(.)/g, (_, c: string) => c.toUpperCase())] ?? '';
+      const value =
+        headers[name] ?? headers[name.replace(/-(.)/g, (_, c: string) => c.toUpperCase())] ?? '';
       return `${name.toLowerCase()}:${value.trim().replace(/\s+/g, ' ')}`;
     }),
     `dkim-signature:${partialSig} b=`,

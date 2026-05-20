@@ -12,17 +12,9 @@
  */
 
 import { and, eq, isNull, isNotNull } from 'drizzle-orm';
-import {
-  verifyTrackingToken,
-  type PreferenceCenterPayload,
-} from '@forgemsg/shared';
+import { verifyTrackingToken, type PreferenceCenterPayload } from '@forgemsg/shared';
 import { db } from '../../db/client.js';
-import {
-  contacts,
-  lists,
-  contactLists,
-  suppressions,
-} from '../../db/schema/index.js';
+import { contacts, lists, contactLists, suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 // ─── View shape returned by GET /p/center/:token ─────────────────────────────
@@ -101,9 +93,7 @@ export async function getPreferences(token: string): Promise<PreferenceCenterVie
     ? await db
         .select({ id: suppressions.id })
         .from(suppressions)
-        .where(
-          and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)),
-        )
+        .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)))
         .limit(1)
     : [];
 
@@ -117,11 +107,7 @@ export async function getPreferences(token: string): Promise<PreferenceCenterVie
     .from(contactLists)
     .innerJoin(lists, eq(lists.id, contactLists.listId))
     .where(
-      and(
-        eq(contactLists.contactId, contactId),
-        eq(lists.orgId, orgId),
-        isNull(lists.deletedAt),
-      ),
+      and(eq(contactLists.contactId, contactId), eq(lists.orgId, orgId), isNull(lists.deletedAt)),
     )
     .orderBy(lists.name);
 
@@ -162,10 +148,7 @@ export interface UpdateResult {
   listChanges: { listId: string; subscribed: boolean }[];
 }
 
-export async function updatePreferences(
-  token: string,
-  body: UpdateRequest,
-): Promise<UpdateResult> {
+export async function updatePreferences(token: string, body: UpdateRequest): Promise<UpdateResult> {
   const { orgId, contactId } = resolveToken(token);
 
   const [contact] = await db
@@ -200,9 +183,7 @@ export async function updatePreferences(
     // re-opt-in to each list explicitly.
     await db
       .delete(suppressions)
-      .where(
-        and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)),
-      );
+      .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)));
   }
 
   // 2. Per-list toggles
@@ -267,9 +248,7 @@ export async function updatePreferences(
         await db
           .select({ id: suppressions.id })
           .from(suppressions)
-          .where(
-            and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)),
-          )
+          .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)))
           .limit(1)
       ).length > 0
     : false;

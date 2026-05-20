@@ -27,15 +27,15 @@ export interface LineItem {
   isRecurring?: boolean;
   recurringPeriod?: 'monthly' | 'yearly';
   contractStart?: string; // ISO
-  contractEnd?: string;   // ISO
+  contractEnd?: string; // ISO
 }
 
 export interface RevenueScheduleRow {
   invoiceId: string;
   orgId: string;
-  period: string;      // YYYY-MM
+  period: string; // YYYY-MM
   description: string;
-  amount: number;      // recognised this period
+  amount: number; // recognised this period
   currency: string;
   type: 'one_time' | 'subscription';
 }
@@ -44,7 +44,7 @@ export interface MrrSnapshot {
   periodStart: Date;
   periodEnd: Date;
   mrr: number;
-  arr: number;      // mrr × 12
+  arr: number; // mrr × 12
   currency: string;
   invoiceCount: number;
 }
@@ -117,16 +117,17 @@ export function buildScheduleForInvoice(inv: {
 
 export async function computeMrrForPeriod(
   orgId: string,
-  period: Date,        // any date within the target month
+  period: Date, // any date within the target month
 ): Promise<MrrSnapshot> {
   const periodStart = new Date(Date.UTC(period.getUTCFullYear(), period.getUTCMonth(), 1));
-  const periodEnd = new Date(Date.UTC(period.getUTCFullYear(), period.getUTCMonth() + 1, 0, 23, 59, 59));
+  const periodEnd = new Date(
+    Date.UTC(period.getUTCFullYear(), period.getUTCMonth() + 1, 0, 23, 59, 59),
+  );
 
-  const paid = await db.select().from(invoices)
-    .where(and(
-      eq(invoices.orgId, orgId),
-      eq(invoices.status, 'paid'),
-    ));
+  const paid = await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.orgId, orgId), eq(invoices.status, 'paid')));
 
   let mrr = 0;
   let invoiceCount = 0;
@@ -172,12 +173,11 @@ export interface MrrMovement {
   netMrr: number;
 }
 
-export async function computeMrrMovement(
-  orgId: string,
-  currentPeriod: Date,
-): Promise<MrrMovement> {
+export async function computeMrrMovement(orgId: string, currentPeriod: Date): Promise<MrrMovement> {
   const current = await computeMrrForPeriod(orgId, currentPeriod);
-  const prevDate = new Date(Date.UTC(currentPeriod.getUTCFullYear(), currentPeriod.getUTCMonth() - 1, 15));
+  const prevDate = new Date(
+    Date.UTC(currentPeriod.getUTCFullYear(), currentPeriod.getUTCMonth() - 1, 15),
+  );
   const previous = await computeMrrForPeriod(orgId, prevDate);
 
   const diff = current.mrr - previous.mrr;
@@ -201,7 +201,9 @@ export async function computeDeferredRevenue(
   orgId: string,
   asOf: Date,
 ): Promise<{ deferred: number; currency: string }> {
-  const paid = await db.select().from(invoices)
+  const paid = await db
+    .select()
+    .from(invoices)
     .where(and(eq(invoices.orgId, orgId), eq(invoices.status, 'paid')));
 
   const asOfKey = `${asOf.getUTCFullYear()}-${String(asOf.getUTCMonth() + 1).padStart(2, '0')}`;

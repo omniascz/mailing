@@ -28,11 +28,13 @@ export default async function eventRoutes(app: FastifyInstance) {
     '/api/v1/events',
     { schema: { tags: ['Events'], summary: 'Track a custom event for workflow triggers' } },
     async (req) => {
-      const body = z.object({
-        contactId: z.string().uuid(),
-        eventName: z.string().min(1).max(255),
-        properties: z.record(z.unknown()).optional().default({}),
-      }).parse(req.body);
+      const body = z
+        .object({
+          contactId: z.string().uuid(),
+          eventName: z.string().min(1).max(255),
+          properties: z.record(z.unknown()).optional().default({}),
+        })
+        .parse(req.body);
 
       const orgId = req.user!.orgId;
 
@@ -80,11 +82,13 @@ export default async function eventRoutes(app: FastifyInstance) {
     '/api/v1/events',
     { schema: { tags: ['Events'], summary: 'List recent custom events' } },
     async (req) => {
-      const query = z.object({
-        contactId: z.string().uuid().optional(),
-        eventName: z.string().max(255).optional(),
-        limit: z.string().optional().default('50'),
-      }).parse(req.query);
+      const query = z
+        .object({
+          contactId: z.string().uuid().optional(),
+          eventName: z.string().max(255).optional(),
+          limit: z.string().optional().default('50'),
+        })
+        .parse(req.query);
 
       const orgId = req.user!.orgId;
       const limit = Math.min(parseInt(query.limit, 10) || 50, 200);

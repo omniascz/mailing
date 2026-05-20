@@ -109,12 +109,20 @@ function evaluateRule(rule: DynamicRule, contact: MergeTagContact | null | undef
     case 'contains': {
       const haystack = coerceString(value);
       const needle = coerceString(rule.value);
-      return haystack !== null && needle !== null && haystack.toLowerCase().includes(needle.toLowerCase());
+      return (
+        haystack !== null &&
+        needle !== null &&
+        haystack.toLowerCase().includes(needle.toLowerCase())
+      );
     }
     case 'not_contains': {
       const haystack = coerceString(value);
       const needle = coerceString(rule.value);
-      return !(haystack !== null && needle !== null && haystack.toLowerCase().includes(needle.toLowerCase()));
+      return !(
+        haystack !== null &&
+        needle !== null &&
+        haystack.toLowerCase().includes(needle.toLowerCase())
+      );
     }
     case 'in': {
       if (!Array.isArray(rule.value)) return false;

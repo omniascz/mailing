@@ -45,7 +45,9 @@ export function syntheticContactEmail(index: number): string {
 }
 
 /** Decide whether a parent org is allowed to spawn a sandbox. Sandboxes can't recurse. */
-export function canParentSpawnSandbox(parent: OrgLike): { ok: true } | { ok: false; reason: string } {
+export function canParentSpawnSandbox(
+  parent: OrgLike,
+): { ok: true } | { ok: false; reason: string } {
   if (parent.sandboxMode === 'sandbox') {
     return { ok: false, reason: 'Cannot create a sandbox of a sandbox' };
   }

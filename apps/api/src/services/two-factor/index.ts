@@ -11,7 +11,9 @@ import { AppError } from '../../lib/app-error.js';
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 function base32Encode(buf: Buffer): string {
-  let bits = 0, value = 0, out = '';
+  let bits = 0,
+    value = 0,
+    out = '';
   for (const b of buf) {
     value = (value << 8) | b;
     bits += 8;
@@ -26,7 +28,8 @@ function base32Encode(buf: Buffer): string {
 
 function base32Decode(str: string): Buffer {
   const clean = str.toUpperCase().replace(/=+$/, '').replace(/\s+/g, '');
-  let bits = 0, value = 0;
+  let bits = 0,
+    value = 0;
   const out: number[] = [];
   for (const ch of clean) {
     const idx = BASE32_ALPHABET.indexOf(ch);
@@ -51,10 +54,11 @@ export function generateTotpCode(secret: string, at: number = Date.now()): strin
   buf.writeBigUInt64BE(BigInt(counter));
   const hmac = createHmac('sha1', base32Decode(secret)).update(buf).digest();
   const offset = hmac[hmac.length - 1]! & 0x0f;
-  const binary = ((hmac[offset]! & 0x7f) << 24)
-               | ((hmac[offset + 1]! & 0xff) << 16)
-               | ((hmac[offset + 2]! & 0xff) << 8)
-               |  (hmac[offset + 3]! & 0xff);
+  const binary =
+    ((hmac[offset]! & 0x7f) << 24) |
+    ((hmac[offset + 1]! & 0xff) << 16) |
+    ((hmac[offset + 2]! & 0xff) << 8) |
+    (hmac[offset + 3]! & 0xff);
   return String(binary % 1_000_000).padStart(6, '0');
 }
 
@@ -77,28 +81,48 @@ export function otpAuthUrl(secret: string, label: string, issuer = 'MailForge'):
 export async function beginEnrollment(userId: string, label: string) {
   const secret = generateTotpSecret();
   const codes = generateBackupCodes();
-  await db.insert(twoFactorSecrets).values({
-    userId, secret, backupCodes: codes, enabled: false,
-  }).onConflictDoUpdate({
-    target: twoFactorSecrets.userId,
-    set: { secret, backupCodes: codes, enabled: false },
-  });
+  await db
+    .insert(twoFactorSecrets)
+    .values({
+      userId,
+      secret,
+      backupCodes: codes,
+      enabled: false,
+    })
+    .onConflictDoUpdate({
+      target: twoFactorSecrets.userId,
+      set: { secret, backupCodes: codes, enabled: false },
+    });
   return { secret, otpauthUrl: otpAuthUrl(secret, label), backupCodes: codes };
 }
 
 export async function confirmEnrollment(userId: string, code: string): Promise<void> {
-  const [row] = await db.select().from(twoFactorSecrets).where(eq(twoFactorSecrets.userId, userId)).limit(1);
+  const [row] = await db
+    .select()
+    .from(twoFactorSecrets)
+    .where(eq(twoFactorSecrets.userId, userId))
+    .limit(1);
   if (!row) throw AppError.notFound('2FA secret');
   if (!verifyTotpCode(row.secret, code)) throw AppError.badRequest('Invalid code');
-  await db.update(twoFactorSecrets).set({ enabled: true }).where(eq(twoFactorSecrets.userId, userId));
+  await db
+    .update(twoFactorSecrets)
+    .set({ enabled: true })
+    .where(eq(twoFactorSecrets.userId, userId));
 }
 
 export async function verifyForLogin(userId: string, code: string): Promise<boolean> {
-  const [row] = await db.select().from(twoFactorSecrets).where(eq(twoFactorSecrets.userId, userId)).limit(1);
+  const [row] = await db
+    .select()
+    .from(twoFactorSecrets)
+    .where(eq(twoFactorSecrets.userId, userId))
+    .limit(1);
   if (!row?.enabled) return false;
 
   if (verifyTotpCode(row.secret, code)) {
-    await db.update(twoFactorSecrets).set({ lastUsedAt: new Date() }).where(eq(twoFactorSecrets.userId, userId));
+    await db
+      .update(twoFactorSecrets)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(twoFactorSecrets.userId, userId));
     return true;
   }
   // Backup code consumption
@@ -106,7 +130,9 @@ export async function verifyForLogin(userId: string, code: string): Promise<bool
   if (idx >= 0) {
     const remaining = [...row.backupCodes];
     remaining.splice(idx, 1);
-    await db.update(twoFactorSecrets).set({ backupCodes: remaining, lastUsedAt: new Date() })
+    await db
+      .update(twoFactorSecrets)
+      .set({ backupCodes: remaining, lastUsedAt: new Date() })
       .where(eq(twoFactorSecrets.userId, userId));
     return true;
   }

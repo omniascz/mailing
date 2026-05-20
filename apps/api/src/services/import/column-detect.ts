@@ -13,9 +13,36 @@ export type ContactField =
   | 'ignore';
 
 const ALIASES: Record<Exclude<ContactField, 'ignore'>, string[]> = {
-  email: ['email', 'e-mail', 'e mail', 'emailaddress', 'email_address', 'mail', 'mailová adresa', 'mailova adresa'],
-  phone: ['phone', 'phonenumber', 'phone_number', 'telefon', 'tel', 'mobil', 'mobile', 'mobile_number'],
-  first_name: ['firstname', 'first_name', 'fname', 'given_name', 'jmeno', 'jméno', 'křestní jméno', 'krestni jmeno'],
+  email: [
+    'email',
+    'e-mail',
+    'e mail',
+    'emailaddress',
+    'email_address',
+    'mail',
+    'mailová adresa',
+    'mailova adresa',
+  ],
+  phone: [
+    'phone',
+    'phonenumber',
+    'phone_number',
+    'telefon',
+    'tel',
+    'mobil',
+    'mobile',
+    'mobile_number',
+  ],
+  first_name: [
+    'firstname',
+    'first_name',
+    'fname',
+    'given_name',
+    'jmeno',
+    'jméno',
+    'křestní jméno',
+    'krestni jmeno',
+  ],
   last_name: ['lastname', 'last_name', 'lname', 'surname', 'family_name', 'prijmeni', 'příjmení'],
   status: ['status', 'state', 'stav'],
   source: ['source', 'origin', 'zdroj'],
@@ -37,7 +64,10 @@ export function detectColumnMapping(columns: string[]): Record<string, ContactFi
   for (const col of columns) {
     const norm = normalize(col);
     let matched: ContactField = 'ignore';
-    for (const [field, aliases] of Object.entries(ALIASES) as [Exclude<ContactField, 'ignore'>, string[]][]) {
+    for (const [field, aliases] of Object.entries(ALIASES) as [
+      Exclude<ContactField, 'ignore'>,
+      string[],
+    ][]) {
       if (claimed.has(field)) continue;
       if (aliases.some((a) => normalize(a) === norm)) {
         matched = field;

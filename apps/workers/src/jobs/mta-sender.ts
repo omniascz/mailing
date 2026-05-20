@@ -14,11 +14,8 @@
  */
 
 import { Worker, type Job } from 'bullmq';
-import {
-  connection,
-  QUEUE_NAMES,
-  type MtaSendJobData,
-} from '../queues/index.js';
+import { captureJobException } from '../lib/telemetry.js';
+import { connection, QUEUE_NAMES, type MtaSendJobData } from '../queues/index.js';
 import * as mtaClient from '../lib/mta-grpc-client.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
@@ -196,7 +193,12 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
-      metadata: { bounceType: 'soft', smtpCode, smtpMessage: result.smtpMessage, attempt: job.attemptsMade },
+      metadata: {
+        bounceType: 'soft',
+        smtpCode,
+        smtpMessage: result.smtpMessage,
+        attempt: job.attemptsMade,
+      },
     });
     throw new Error(`Soft bounce (${smtpCode}): ${result.smtpMessage}`);
   }
@@ -252,7 +254,18 @@ export function startMtaSenderWorkers() {
     });
 
     worker.on('failed', (job, err) => {
-      console.error(`[${queueName}] Job ${job?.id} failed after ${job?.attemptsMade} attempts:`, err.message);
+      console.error(
+        `[${queueName}] Job ${job?.id} failed after ${job?.attemptsMade} attempts:`,
+        err.message,
+      );
+      captureJobException(err, {
+        queue: queueName,
+        jobId: job?.id,
+        jobName: job?.name,
+        attempts: job?.attemptsMade,
+        orgId: (job?.data as { orgId?: string } | undefined)?.orgId,
+        campaignId: (job?.data as { campaignId?: string } | undefined)?.campaignId,
+      });
     });
 
     console.log(`[${queueName}] Worker started (concurrency: 20)`);

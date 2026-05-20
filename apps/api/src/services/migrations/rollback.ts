@@ -57,11 +57,7 @@ export async function rollbackMigration(
   orgId: string,
   opts: RollbackOptions = {},
 ): Promise<RollbackResult> {
-  const [job] = await db
-    .select()
-    .from(migrationJobs)
-    .where(eq(migrationJobs.id, jobId))
-    .limit(1);
+  const [job] = await db.select().from(migrationJobs).where(eq(migrationJobs.id, jobId)).limit(1);
 
   if (!job || job.orgId !== orgId) {
     throw AppError.notFound('MigrationJob');
@@ -179,7 +175,7 @@ async function markRolledBack(
     .limit(1);
 
   const mergedProgress = {
-    ...(current?.progress as unknown as Record<string, unknown> ?? {}),
+    ...((current?.progress as unknown as Record<string, unknown>) ?? {}),
     rollback: {
       at: new Date().toISOString(),
       deletedCount: annotation.deletedCount,

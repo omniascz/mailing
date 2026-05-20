@@ -13,19 +13,28 @@
  */
 
 import { sql } from 'drizzle-orm';
-import {
-  pgTable, uuid, varchar, timestamp, jsonb, index, uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, jsonb, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 export type AssociationEntityType =
-  | 'contact' | 'company' | 'account' | 'deal' | 'ticket'
-  | 'quote' | 'invoice' | 'custom_object' | 'task' | 'note' | 'meeting';
+  | 'contact'
+  | 'company'
+  | 'account'
+  | 'deal'
+  | 'ticket'
+  | 'quote'
+  | 'invoice'
+  | 'custom_object'
+  | 'task'
+  | 'note'
+  | 'meeting';
 
 export const associations = pgTable(
   'associations',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -45,7 +54,14 @@ export const associations = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex('associations_pair_uq').on(t.orgId, t.fromType, t.fromId, t.toType, t.toId, t.label),
+    uniqueIndex('associations_pair_uq').on(
+      t.orgId,
+      t.fromType,
+      t.fromId,
+      t.toType,
+      t.toId,
+      t.label,
+    ),
     index('associations_from_idx').on(t.orgId, t.fromType, t.fromId),
     index('associations_to_idx').on(t.orgId, t.toType, t.toId),
   ],

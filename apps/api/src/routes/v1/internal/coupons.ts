@@ -11,18 +11,24 @@ import { z } from 'zod';
 import { allocateForBatch } from '../../../services/coupons/index.js';
 
 const internalCouponsRoutes: FastifyPluginAsync = async (app) => {
-  app.post('/api/v1/internal/coupons/allocate-batch', {
-    schema: { tags: ['Internal'] },
-  }, async (req, reply) => {
-    const body = z.object({
-      orgId: z.string().uuid(),
-      batchId: z.string().uuid(),
-      contactIds: z.array(z.string().uuid()).max(1000),
-    }).parse(req.body);
+  app.post(
+    '/api/v1/internal/coupons/allocate-batch',
+    {
+      schema: { tags: ['Internal'] },
+    },
+    async (req, reply) => {
+      const body = z
+        .object({
+          orgId: z.string().uuid(),
+          batchId: z.string().uuid(),
+          contactIds: z.array(z.string().uuid()).max(1000),
+        })
+        .parse(req.body);
 
-    const result = await allocateForBatch(body.orgId, body.batchId, body.contactIds);
-    return reply.send({ data: result });
-  });
+      const result = await allocateForBatch(body.orgId, body.batchId, body.contactIds);
+      return reply.send({ data: result });
+    },
+  );
 };
 
 export default internalCouponsRoutes;

@@ -7,12 +7,7 @@
  */
 
 import { SKLIK_API_BASE } from '../../../../integrations/sklik/pure.js';
-import {
-  buildAudiencePayload,
-  chunk,
-  type AudienceMember,
-  type SyncStats,
-} from './pure.js';
+import { buildAudiencePayload, chunk, type AudienceMember, type SyncStats } from './pure.js';
 
 export interface UploadOptions {
   accessToken: string;
@@ -55,7 +50,7 @@ export async function uploadToSklik(opts: UploadOptions): Promise<UploadResult> 
 
   const headers = {
     'content-type': 'application/json',
-    'authorization': `Bearer ${opts.accessToken}`,
+    authorization: `Bearer ${opts.accessToken}`,
   };
 
   // 1. Create with the first batch.
@@ -82,12 +77,15 @@ export async function uploadToSklik(opts: UploadOptions): Promise<UploadResult> 
     });
     if (!appendRes.ok) {
       const text = await appendRes.text().catch(() => '');
-      throw new Error(`Sklik audience append failed (batch ${i}): HTTP ${appendRes.status} ${text}`);
+      throw new Error(
+        `Sklik audience append failed (batch ${i}): HTTP ${appendRes.status} ${text}`,
+      );
     }
   }
 
   let hashedRows = 0;
-  for (const b of batches) hashedRows += buildAudiencePayload(opts.audienceName, b).customer_data.length;
+  for (const b of batches)
+    hashedRows += buildAudiencePayload(opts.audienceName, b).customer_data.length;
 
   return {
     audienceId,

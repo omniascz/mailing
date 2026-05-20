@@ -12,7 +12,6 @@ import { db } from '../../db/client.js';
 import { organizations } from '../../db/schema/organizations.js';
 import { billingSubscriptions } from '../../db/schema/billing.js';
 
-
 import { organizationMembers } from '../../db/schema/organization-members.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -43,10 +42,15 @@ export interface ConsolidatedReport {
 
 // ─── Get child orgs ───────────────────────────────────────────────────────────
 
-export async function getChildOrgs(parentOrgId: string): Promise<Array<{ id: string; name: string }>> {
-  const children = await db.select({ id: organizations.id, name: organizations.name })
+export async function getChildOrgs(
+  parentOrgId: string,
+): Promise<Array<{ id: string; name: string }>> {
+  const children = await db
+    .select({ id: organizations.id, name: organizations.name })
     .from(organizations)
-    .where(and(eq(organizations.parentOrgId, parentOrgId), sql`${organizations.deletedAt} IS NULL`));
+    .where(
+      and(eq(organizations.parentOrgId, parentOrgId), sql`${organizations.deletedAt} IS NULL`),
+    );
   return children;
 }
 
@@ -58,13 +62,16 @@ export async function getChildOrgs(parentOrgId: string): Promise<Array<{ id: str
  */
 export async function getEffectiveRole(userId: string, orgId: string): Promise<string | null> {
   // 1. Direct membership on this org
-  const direct = await db.select({ role: organizationMembers.role })
+  const direct = await db
+    .select({ role: organizationMembers.role })
     .from(organizationMembers)
-    .where(and(
-      eq(organizationMembers.userId, userId),
-      eq(organizationMembers.orgId, orgId),
-      eq(organizationMembers.status, 'active'),
-    ))
+    .where(
+      and(
+        eq(organizationMembers.userId, userId),
+        eq(organizationMembers.orgId, orgId),
+        eq(organizationMembers.status, 'active'),
+      ),
+    )
     .limit(1);
   if (direct[0]) return direct[0].role;
 
@@ -73,17 +80,22 @@ export async function getEffectiveRole(userId: string, orgId: string): Promise<s
   for (let i = 0; i < 5; i++) {
     const parentRow: { parentOrgId: string | null }[] = await db
       .select({ parentOrgId: organizations.parentOrgId })
-      .from(organizations).where(eq(organizations.id, currentOrgId)).limit(1);
+      .from(organizations)
+      .where(eq(organizations.id, currentOrgId))
+      .limit(1);
     const parentId: string | null = parentRow[0]?.parentOrgId ?? null;
     if (!parentId) return null;
 
-    const inherited = await db.select({ role: organizationMembers.role })
+    const inherited = await db
+      .select({ role: organizationMembers.role })
       .from(organizationMembers)
-      .where(and(
-        eq(organizationMembers.userId, userId),
-        eq(organizationMembers.orgId, parentId),
-        eq(organizationMembers.status, 'active'),
-      ))
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.orgId, parentId),
+          eq(organizationMembers.status, 'active'),
+        ),
+      )
       .limit(1);
     if (inherited[0]) return inherited[0].role;
 
@@ -96,8 +108,11 @@ export async function getEffectiveRole(userId: string, orgId: string): Promise<s
 export async function getBillingRootOrgId(orgId: string): Promise<string> {
   let currentOrgId = orgId;
   for (let i = 0; i < 5; i++) {
-    const row = await db.select({ parentOrgId: organizations.parentOrgId })
-      .from(organizations).where(eq(organizations.id, currentOrgId)).limit(1);
+    const row = await db
+      .select({ parentOrgId: organizations.parentOrgId })
+      .from(organizations)
+      .where(eq(organizations.id, currentOrgId))
+      .limit(1);
     const parentId = row[0]?.parentOrgId;
     if (!parentId) return currentOrgId;
     currentOrgId = parentId;
@@ -113,7 +128,7 @@ export async function getConsolidatedReport(
   periodEnd: Date,
 ): Promise<ConsolidatedReport> {
   const children = await getChildOrgs(parentOrgId);
-  const childOrgIds = children.map(c => c.id);
+  const childOrgIds = children.map((c) => c.id);
 
   // Include parent itself
   const allOrgIds = [parentOrgId, ...childOrgIds];
@@ -121,7 +136,7 @@ export async function getConsolidatedReport(
   const reports: ChildUsageReport[] = [];
 
   for (const orgId of allOrgIds) {
-    const org = children.find(c => c.id === orgId) ?? { id: orgId, name: 'Parent' };
+    const org = children.find((c) => c.id === orgId) ?? { id: orgId, name: 'Parent' };
 
     // Email stats
     const emailStats = await db.execute<{ sent: string; delivered: string }>(sql`
@@ -159,12 +174,15 @@ export async function getConsolidatedReport(
     });
   }
 
-  const totals = reports.reduce((acc, r) => ({
-    emailsSent: acc.emailsSent + r.emailsSent,
-    emailsDelivered: acc.emailsDelivered + r.emailsDelivered,
-    aiTokensUsed: acc.aiTokensUsed + r.aiTokensUsed,
-    aiCostUsd: acc.aiCostUsd + r.aiCostUsd,
-  }), { emailsSent: 0, emailsDelivered: 0, aiTokensUsed: 0, aiCostUsd: 0 });
+  const totals = reports.reduce(
+    (acc, r) => ({
+      emailsSent: acc.emailsSent + r.emailsSent,
+      emailsDelivered: acc.emailsDelivered + r.emailsDelivered,
+      aiTokensUsed: acc.aiTokensUsed + r.aiTokensUsed,
+      aiCostUsd: acc.aiCostUsd + r.aiCostUsd,
+    }),
+    { emailsSent: 0, emailsDelivered: 0, aiTokensUsed: 0, aiCostUsd: 0 },
+  );
 
   return { parentOrgId, periodStart, periodEnd, children: reports, totals };
 }
@@ -173,8 +191,11 @@ export async function getConsolidatedReport(
 
 export async function getEffectiveSubscription(orgId: string) {
   // Try own subscription first
-  const [own] = await db.select().from(billingSubscriptions)
-    .where(eq(billingSubscriptions.orgId, orgId)).limit(1);
+  const [own] = await db
+    .select()
+    .from(billingSubscriptions)
+    .where(eq(billingSubscriptions.orgId, orgId))
+    .limit(1);
   if (own) return own;
 
   // Fall back to parent's subscription
@@ -184,8 +205,11 @@ export async function getEffectiveSubscription(orgId: string) {
   const parentOrgId = parentRows[0]?.parent_org_id;
   if (!parentOrgId) return null;
 
-  const [parent] = await db.select().from(billingSubscriptions)
-    .where(eq(billingSubscriptions.orgId, parentOrgId)).limit(1);
+  const [parent] = await db
+    .select()
+    .from(billingSubscriptions)
+    .where(eq(billingSubscriptions.orgId, parentOrgId))
+    .limit(1);
   return parent ?? null;
 }
 
@@ -198,7 +222,7 @@ export async function buildInvoiceLineItems(
 ): Promise<Array<{ description: string; quantity: number; unitAmount: number }>> {
   const report = await getConsolidatedReport(parentOrgId, periodStart, periodEnd);
 
-  return report.children.map(child => ({
+  return report.children.map((child) => ({
     description: `${child.orgName} — ${child.emailsSent.toLocaleString()} emails sent`,
     quantity: child.emailsSent,
     unitAmount: 0, // priced by plan tier; actual amount from Stripe metered billing

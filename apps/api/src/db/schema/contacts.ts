@@ -1,17 +1,23 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, jsonb, boolean, index, integer } from 'drizzle-orm/pg-core';
-import { organizations } from './organizations.js';
 import {
-  contactStatusEnum,
-  phoneTypeEnum,
-  phoneStatusEnum,
-  lifecycleStageEnum,
-} from './enums.js';
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  jsonb,
+  boolean,
+  index,
+  integer,
+} from 'drizzle-orm/pg-core';
+import { organizations } from './organizations.js';
+import { contactStatusEnum, phoneTypeEnum, phoneStatusEnum, lifecycleStageEnum } from './enums.js';
 
 export const contacts = pgTable(
   'contacts',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -97,7 +103,9 @@ export const contacts = pgTable(
 export const lifecycleStageHistory = pgTable(
   'lifecycle_stage_history',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

@@ -31,6 +31,12 @@ const Env = z.object({
 
   // Tunables
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).default(10),
+
+  // Sentry — no-op when SENTRY_DSN is empty (default).
+  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.05),
+  SENTRY_RELEASE: z.string().optional(),
 });
 
 export type Env = z.infer<typeof Env>;
@@ -38,8 +44,13 @@ export type Env = z.infer<typeof Env>;
 function loadEnv(): Env {
   const parsed = Env.safeParse(process.env);
   if (!parsed.success) {
-    const issues = parsed.error.issues.map((i: { path: PropertyKey[]; message: string }) => `  - ${i.path.join('.') || '<root>'}: ${i.message}`).join('\n');
-    // eslint-disable-next-line no-console
+    const issues = parsed.error.issues
+      .map(
+        (i: { path: PropertyKey[]; message: string }) =>
+          `  - ${i.path.join('.') || '<root>'}: ${i.message}`,
+      )
+      .join('\n');
+
     console.error(`✖ Invalid environment configuration:\n${issues}`);
     if (isProduction) process.exit(1);
     throw new Error('Invalid environment configuration');

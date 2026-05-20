@@ -56,7 +56,12 @@ describe('renderLiquid (async)', () => {
 
   it('nested loops', async () => {
     const tpl = '{% for row in rows %}{% for cell in row %}{{ cell }},{% endfor %};{% endfor %}';
-    const out = await renderLiquid(tpl, { rows: [[1, 2], [3, 4]] });
+    const out = await renderLiquid(tpl, {
+      rows: [
+        [1, 2],
+        [3, 4],
+      ],
+    });
     expect(out).toBe('1,2,;3,4,;');
   });
 

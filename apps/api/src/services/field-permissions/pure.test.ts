@@ -46,7 +46,9 @@ describe('findUnwritableField', () => {
   });
 
   it('writable=["*"] = open', () => {
-    expect(findUnwritableField({ readable: [], hidden: [], writable: ['*'] }, { revenue: 1 })).toBeNull();
+    expect(
+      findUnwritableField({ readable: [], hidden: [], writable: ['*'] }, { revenue: 1 }),
+    ).toBeNull();
   });
 
   it('returns the first offending key', () => {

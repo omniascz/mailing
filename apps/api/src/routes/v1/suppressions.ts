@@ -7,12 +7,14 @@ import { AppError } from '../../lib/app-error.js';
 
 const REASON = ['hard_bounce', 'complaint', 'manual', 'unsubscribe'] as const;
 
-const createSchema = z.object({
-  email: z.string().email().max(255).optional(),
-  phone: z.string().max(32).optional(),
-  reason: z.enum(REASON),
-  notes: z.string().max(1000).optional(),
-}).refine((d) => d.email || d.phone, { message: 'At least one of email or phone is required' });
+const createSchema = z
+  .object({
+    email: z.string().email().max(255).optional(),
+    phone: z.string().max(32).optional(),
+    reason: z.enum(REASON),
+    notes: z.string().max(1000).optional(),
+  })
+  .refine((d) => d.email || d.phone, { message: 'At least one of email or phone is required' });
 
 const idParam = z.object({ id: z.string().uuid() });
 const listQuery = z.object({
@@ -43,7 +45,10 @@ export default async function suppressionRoutes(app: FastifyInstance) {
         conds.push(
           or(
             // biome-ignore lint/suspicious/noExplicitAny
-            ...([(db as any).sql`${suppressions.email} ILIKE ${like}`, (db as any).sql`${suppressions.phone} ILIKE ${like}`] as any[]),
+            ...([
+              (db as any).sql`${suppressions.email} ILIKE ${like}`,
+              (db as any).sql`${suppressions.phone} ILIKE ${like}`,
+            ] as any[]),
           )!,
         );
       }
@@ -74,7 +79,10 @@ export default async function suppressionRoutes(app: FastifyInstance) {
         .values({ orgId: req.user!.orgId, ...body })
         .returning()
         .catch((err: Error) => {
-          if (err.message.includes('suppressions_org_email_idx') || err.message.includes('suppressions_org_phone_idx')) {
+          if (
+            err.message.includes('suppressions_org_email_idx') ||
+            err.message.includes('suppressions_org_phone_idx')
+          ) {
             throw AppError.conflict('Address is already suppressed');
           }
           throw err;
@@ -122,7 +130,11 @@ export default async function suppressionRoutes(app: FastifyInstance) {
       if (body.phone) orConds.push(eq(suppressions.phone, body.phone));
       conds.push(or(...orConds)!);
 
-      const [hit] = await db.select().from(suppressions).where(and(...conds)).limit(1);
+      const [hit] = await db
+        .select()
+        .from(suppressions)
+        .where(and(...conds))
+        .limit(1);
       if (hit) {
         return { data: { suppressed: true, reason: hit.reason, id: hit.id } };
       }

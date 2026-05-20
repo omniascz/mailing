@@ -31,7 +31,7 @@ export interface SeoSpokeSuggestion {
   primaryKeyword: string;
   secondaryKeywords: string[];
   searchIntent: 'informational' | 'commercial' | 'transactional' | 'navigational';
-  outline: string[];          // H2 headings
+  outline: string[]; // H2 headings
   estimatedWordCount: number;
   internalLinkingTargets: string[]; // titles of other spokes / pillar
 }
@@ -114,7 +114,10 @@ export async function generateSeoStrategy(
   });
 
   const parsed = JSON.parse(result.text) as Omit<SeoStrategyResult, 'tokensUsed'>;
-  const output: SeoStrategyResult = { ...parsed, tokensUsed: (result.inputTokens + result.outputTokens) };
+  const output: SeoStrategyResult = {
+    ...parsed,
+    tokensUsed: result.inputTokens + result.outputTokens,
+  };
 
   await redis.set(key, JSON.stringify(output), 'EX', CACHE_TTL);
   return output;

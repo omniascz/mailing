@@ -21,7 +21,9 @@ import { organizations } from './organizations.js';
 export const sendingDomains = pgTable(
   'sending_domains',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -80,7 +82,9 @@ export type NewSendingDomain = typeof sendingDomains.$inferInsert;
 export const warmupIps = pgTable(
   'warmup_ips',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }),
     ipAddress: varchar('ip_address', { length: 45 }).notNull(),
     /** Day of warmup (1 = first day), incremented daily */

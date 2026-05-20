@@ -20,8 +20,12 @@ import { users } from './users.js';
 export const savedQueries = pgTable(
   'saved_queries',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     ownerUserId: uuid('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
 
     name: varchar('name', { length: 255 }).notNull(),

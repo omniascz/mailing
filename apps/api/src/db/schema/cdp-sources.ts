@@ -7,16 +7,27 @@
 
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar,jsonb,
-  timestamp, integer, text, index, uniqueIndex,
+  pgTable,
+  uuid,
+  varchar,
+  jsonb,
+  timestamp,
+  integer,
+  text,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 export const cdpSources = pgTable(
   'cdp_sources',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
 
     name: varchar('name', { length: 255 }).notNull(),
 
@@ -61,9 +72,15 @@ export const cdpSources = pgTable(
 export const cdpSyncRuns = pgTable(
   'cdp_sync_runs',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    sourceId: uuid('source_id').notNull().references(() => cdpSources.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    sourceId: uuid('source_id')
+      .notNull()
+      .references(() => cdpSources.id, { onDelete: 'cascade' }),
 
     /** pending | running | completed | failed */
     status: varchar('status', { length: 16 }).notNull().default('pending'),

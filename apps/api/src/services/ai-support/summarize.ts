@@ -33,17 +33,22 @@ export async function summarizeConversation(
   orgId: string,
   ticketId: string,
 ): Promise<ConversationSummary> {
-  const [ticket] = await db.select().from(helpdeskTickets)
-    .where(and(eq(helpdeskTickets.id, ticketId), eq(helpdeskTickets.orgId, orgId))).limit(1);
+  const [ticket] = await db
+    .select()
+    .from(helpdeskTickets)
+    .where(and(eq(helpdeskTickets.id, ticketId), eq(helpdeskTickets.orgId, orgId)))
+    .limit(1);
   if (!ticket) throw AppError.notFound('Ticket');
 
-  const messages = await db.select().from(ticketMessages)
+  const messages = await db
+    .select()
+    .from(ticketMessages)
     .where(eq(ticketMessages.ticketId, ticketId))
     .orderBy(ticketMessages.createdAt);
 
-  const transcript = messages.map(m =>
-    `[${m.direction === 'inbound' ? 'Customer' : 'Agent'}]: ${m.body}`,
-  ).join('\n');
+  const transcript = messages
+    .map((m) => `[${m.direction === 'inbound' ? 'Customer' : 'Agent'}]: ${m.body}`)
+    .join('\n');
 
   const cKey = cacheKey('aura_summarize', `${orgId}:${ticketId}:${messages.length}`);
   const cached = await redis.get(cKey);
@@ -73,7 +78,10 @@ export async function summarizeConversation(
     };
   }
 
-  const summary: ConversationSummary = { ...parsed, tokensUsed: (result.inputTokens + result.outputTokens) };
+  const summary: ConversationSummary = {
+    ...parsed,
+    tokensUsed: result.inputTokens + result.outputTokens,
+  };
   await redis.setex(cKey, CACHE_TTL, JSON.stringify(summary));
   return summary;
 }

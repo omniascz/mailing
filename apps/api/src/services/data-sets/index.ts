@@ -9,11 +9,7 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { dataSets, type DataSet } from '../../db/schema/data-sets.js';
 import { AppError } from '../../lib/app-error.js';
-import {
-  bindParameters,
-  findUndeclaredPlaceholders,
-  type ParameterSpec,
-} from './pure.js';
+import { bindParameters, findUndeclaredPlaceholders, type ParameterSpec } from './pure.js';
 import { isSafeReadOnlySql } from '../ai-analytics/pure.js';
 
 export interface CreateDataSetInput {
@@ -65,9 +61,7 @@ export async function getDataSet(orgId: string, id: string): Promise<DataSet> {
   const [row] = await db
     .select()
     .from(dataSets)
-    .where(
-      and(eq(dataSets.orgId, orgId), eq(dataSets.id, id), isNull(dataSets.deletedAt)),
-    )
+    .where(and(eq(dataSets.orgId, orgId), eq(dataSets.id, id), isNull(dataSets.deletedAt)))
     .limit(1);
   if (!row) throw AppError.notFound('Data set');
   return row;
@@ -119,11 +113,7 @@ export async function prepareQuery(
   allowedTables: readonly string[],
 ): Promise<{ sql: string; params: unknown[] }> {
   const ds = await getDataSet(orgId, id);
-  const bound = bindParameters(
-    ds.definition,
-    ds.parameters as ParameterSpec[],
-    params,
-  );
+  const bound = bindParameters(ds.definition, ds.parameters as ParameterSpec[], params);
   if (!bound.ok) throw AppError.badRequest(bound.error);
   const safety = isSafeReadOnlySql(bound.bound.sql, allowedTables);
   if (!safety.safe) {
@@ -134,10 +124,7 @@ export async function prepareQuery(
 
 // ─── Internals ──────────────────────────────────────────────────────────────
 
-function validateDefinition(
-  input: CreateDataSetInput,
-  allowedTables: readonly string[],
-): void {
+function validateDefinition(input: CreateDataSetInput, allowedTables: readonly string[]): void {
   const undeclared = findUndeclaredPlaceholders(input.definition, input.parameters);
   if (undeclared.length > 0) {
     throw AppError.badRequest(

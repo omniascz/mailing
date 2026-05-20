@@ -14,6 +14,7 @@
  * Enrichment: unified profile + traits.
  */
 
+import { createHash } from 'node:crypto';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
@@ -83,10 +84,7 @@ export async function createDestination(
 }
 
 export async function listDestinations(orgId: string): Promise<ActivationDestination[]> {
-  return db
-    .select()
-    .from(activationDestinations)
-    .where(eq(activationDestinations.orgId, orgId));
+  return db.select().from(activationDestinations).where(eq(activationDestinations.orgId, orgId));
 }
 
 export async function deleteDestination(orgId: string, id: string): Promise<void> {
@@ -125,10 +123,7 @@ async function resolveAudience(
 
 // ─── Row enrichment ──────────────────────────────────────────────────────────
 
-async function enrichRow(
-  orgId: string,
-  contactId: string,
-): Promise<ActivationPayloadRow | null> {
+async function enrichRow(orgId: string, contactId: string): Promise<ActivationPayloadRow | null> {
   try {
     const profile = await getUnifiedProfile(orgId, contactId);
     const traits = profile.traits ?? (await getTraits(orgId, contactId));
@@ -233,9 +228,7 @@ async function deliverMetaAds(
   const { createHash } = await import('node:crypto');
   const hashed = rows
     .filter((r) => typeof r.email === 'string' && r.email)
-    .map((r) => [
-      createHash('sha256').update(String(r.email).toLowerCase().trim()).digest('hex'),
-    ]);
+    .map((r) => [createHash('sha256').update(String(r.email).toLowerCase().trim()).digest('hex')]);
   const payload = {
     payload: { schema: ['EMAIL'], data: hashed },
     session: { session_id: Date.now(), batch_seq: 1, last_batch_flag: true },
@@ -264,18 +257,21 @@ async function deliverGoogleAds(
   const members = rows
     .filter((r) => typeof r.email === 'string' && r.email)
     .map((r) => ({
-      hashed_email: createHash('sha256')
-        .update(String(r.email).toLowerCase().trim())
-        .digest('hex'),
+      hashed_email: createHash('sha256').update(String(r.email).toLowerCase().trim()).digest('hex'),
     }));
-  const res = await fetch(`https://googleads.googleapis.com/v17/customers/${config.audienceId}:addOfflineUserDataJobOperations`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${config.apiKey}`,
+  const res = await fetch(
+    `https://googleads.googleapis.com/v17/customers/${config.audienceId}:addOfflineUserDataJobOperations`,
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        operations: members.map((m) => ({ create: { user_identifiers: [m] } })),
+      }),
     },
-    body: JSON.stringify({ operations: members.map((m) => ({ create: { user_identifiers: [m] } })) }),
-  });
+  );
   if (!res.ok) throw new Error(`google_ads ${res.status}: ${await res.text().catch(() => '')}`);
 }
 
@@ -307,7 +303,9 @@ async function deliverSalesforce(
   rows: Record<string, unknown>[],
 ): Promise<void> {
   if (!config.apiKey || !config.url) {
-    throw AppError.badRequest('Salesforce destination requires apiKey (access token) + url (instance URL)');
+    throw AppError.badRequest(
+      'Salesforce destination requires apiKey (access token) + url (instance URL)',
+    );
   }
   const records = rows.map((r) => ({ attributes: { type: 'Lead' }, ...r }));
   const res = await fetch(`${config.url}/services/data/v58.0/composite/tree/Lead`, {
@@ -332,20 +330,23 @@ async function deliverTiktokAds(
   const data = rows
     .filter((r) => typeof r.email === 'string' && r.email)
     .map((r) => createHash('sha256').update(String(r.email).toLowerCase().trim()).digest('hex'));
-  const res = await fetch('https://business-api.tiktok.com/open_api/v1.3/dmp/custom_audience/update/', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'access-token': config.apiKey,
+  const res = await fetch(
+    'https://business-api.tiktok.com/open_api/v1.3/dmp/custom_audience/update/',
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'access-token': config.apiKey,
+      },
+      body: JSON.stringify({
+        custom_audience_id: config.audienceId,
+        calculate_type: 'EMAIL_SHA256',
+        file_paths: [],
+        data,
+        action: 'APPEND',
+      }),
     },
-    body: JSON.stringify({
-      custom_audience_id: config.audienceId,
-      calculate_type: 'EMAIL_SHA256',
-      file_paths: [],
-      data,
-      action: 'APPEND',
-    }),
-  });
+  );
   if (!res.ok) throw new Error(`tiktok_ads ${res.status}: ${await res.text().catch(() => '')}`);
 }
 
@@ -379,10 +380,9 @@ export async function runActivation(
   const [dest] = await db
     .select()
     .from(activationDestinations)
-    .where(and(
-      eq(activationDestinations.id, destinationId),
-      eq(activationDestinations.orgId, orgId),
-    ))
+    .where(
+      and(eq(activationDestinations.id, destinationId), eq(activationDestinations.orgId, orgId)),
+    )
     .limit(1);
   if (!dest) throw AppError.notFound('ActivationDestination');
   if (dest.status !== 'active') throw AppError.badRequest('Destination is not active');
@@ -464,10 +464,7 @@ export async function listActivationRuns(
   return db
     .select()
     .from(activationRuns)
-    .where(and(
-      eq(activationRuns.orgId, orgId),
-      eq(activationRuns.destinationId, destinationId),
-    ))
+    .where(and(eq(activationRuns.orgId, orgId), eq(activationRuns.destinationId, destinationId)))
     .orderBy(sql`${activationRuns.startedAt} DESC`)
     .limit(limit);
 }
@@ -475,9 +472,7 @@ export async function listActivationRuns(
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function hashEmail(email: string): string {
-  // Mailchimp uses md5(lowercase). Node's crypto supports md5 via createHash.
-  // We don't import at top-level because it's only needed for the mailchimp path.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createHash } = require('node:crypto') as typeof import('node:crypto');
+  // Mailchimp ingestion path: md5(lowercase). Tree-shaken if the mailchimp
+  // destination isn't compiled in for this build, so cheap to keep imported.
   return createHash('md5').update(email.toLowerCase()).digest('hex');
 }

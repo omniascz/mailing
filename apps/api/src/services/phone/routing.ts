@@ -18,16 +18,29 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
-  huntGroups, ivrMenus, businessHours, agentPresence,
-  type HuntGroup, type IvrMenu, type BusinessHours,
-  type IvrOption, type BusinessHoursScheduleEntry, type BusinessHoursHoliday,
+  huntGroups,
+  ivrMenus,
+  businessHours,
+  agentPresence,
+  type HuntGroup,
+  type IvrMenu,
+  type BusinessHours,
+  type IvrOption,
+  type BusinessHoursScheduleEntry,
+  type BusinessHoursHoliday,
 } from '../../db/schema/call-routing.js';
 
 // ─── Decision shape ──────────────────────────────────────────────────────────
 
 export type RoutingAction =
   | { type: 'ring-agents'; userIds: string[]; ringTimeoutSeconds: number; overflow: RoutingAction }
-  | { type: 'play-ivr'; ivrId: string; greeting: string; options: IvrOption[]; timeoutSeconds: number }
+  | {
+      type: 'play-ivr';
+      ivrId: string;
+      greeting: string;
+      options: IvrOption[];
+      timeoutSeconds: number;
+    }
   | { type: 'voicemail'; prompt?: string; mailboxId?: string }
   | { type: 'voicebot'; scenarioId?: string }
   | { type: 'forward'; number: string }
@@ -52,15 +65,18 @@ export async function createHuntGroup(
     overflowTargetId?: string;
   },
 ): Promise<HuntGroup> {
-  const [row] = await db.insert(huntGroups).values({
-    orgId,
-    name: input.name,
-    strategy: input.strategy ?? 'ring-all',
-    memberUserIds: input.memberUserIds,
-    ringTimeoutSeconds: input.ringTimeoutSeconds ?? 30,
-    overflowTarget: input.overflowTarget ?? 'voicemail',
-    overflowTargetId: input.overflowTargetId ?? null,
-  }).returning();
+  const [row] = await db
+    .insert(huntGroups)
+    .values({
+      orgId,
+      name: input.name,
+      strategy: input.strategy ?? 'ring-all',
+      memberUserIds: input.memberUserIds,
+      ringTimeoutSeconds: input.ringTimeoutSeconds ?? 30,
+      overflowTarget: input.overflowTarget ?? 'voicemail',
+      overflowTargetId: input.overflowTargetId ?? null,
+    })
+    .returning();
   return row!;
 }
 
@@ -69,9 +85,12 @@ export async function listHuntGroups(orgId: string): Promise<HuntGroup[]> {
 }
 
 export async function updateHuntGroup(
-  orgId: string, id: string, patch: Partial<HuntGroup>,
+  orgId: string,
+  id: string,
+  patch: Partial<HuntGroup>,
 ): Promise<HuntGroup> {
-  const [row] = await db.update(huntGroups)
+  const [row] = await db
+    .update(huntGroups)
     .set({ ...patch, updatedAt: new Date() })
     .where(and(eq(huntGroups.id, id), eq(huntGroups.orgId, orgId)))
     .returning();
@@ -96,15 +115,18 @@ export async function createIvrMenu(
     invalidTarget?: IvrMenu['invalidTarget'];
   },
 ): Promise<IvrMenu> {
-  const [row] = await db.insert(ivrMenus).values({
-    orgId,
-    name: input.name,
-    greeting: input.greeting,
-    didNumber: input.didNumber ?? null,
-    options: input.options,
-    timeoutSeconds: input.timeoutSeconds ?? 10,
-    invalidTarget: input.invalidTarget ?? 'repeat',
-  }).returning();
+  const [row] = await db
+    .insert(ivrMenus)
+    .values({
+      orgId,
+      name: input.name,
+      greeting: input.greeting,
+      didNumber: input.didNumber ?? null,
+      options: input.options,
+      timeoutSeconds: input.timeoutSeconds ?? 10,
+      invalidTarget: input.invalidTarget ?? 'repeat',
+    })
+    .returning();
   return row!;
 }
 
@@ -113,9 +135,12 @@ export async function listIvrMenus(orgId: string): Promise<IvrMenu[]> {
 }
 
 export async function updateIvrMenu(
-  orgId: string, id: string, patch: Partial<IvrMenu>,
+  orgId: string,
+  id: string,
+  patch: Partial<IvrMenu>,
 ): Promise<IvrMenu> {
-  const [row] = await db.update(ivrMenus)
+  const [row] = await db
+    .update(ivrMenus)
     .set({ ...patch, updatedAt: new Date() })
     .where(and(eq(ivrMenus.id, id), eq(ivrMenus.orgId, orgId)))
     .returning();
@@ -150,8 +175,11 @@ export async function setBusinessHours(
     updatedAt: new Date(),
   };
   if (existing) {
-    const [row] = await db.update(businessHours).set(values)
-      .where(eq(businessHours.orgId, orgId)).returning();
+    const [row] = await db
+      .update(businessHours)
+      .set(values)
+      .where(eq(businessHours.orgId, orgId))
+      .returning();
     return row!;
   }
   const [row] = await db.insert(businessHours).values(values).returning();
@@ -159,8 +187,11 @@ export async function setBusinessHours(
 }
 
 export async function getBusinessHours(orgId: string): Promise<BusinessHours | null> {
-  const [row] = await db.select().from(businessHours)
-    .where(eq(businessHours.orgId, orgId)).limit(1);
+  const [row] = await db
+    .select()
+    .from(businessHours)
+    .where(eq(businessHours.orgId, orgId))
+    .limit(1);
   return row ?? null;
 }
 
@@ -169,13 +200,24 @@ function isWithinBusinessHours(bh: BusinessHours, at: Date = new Date()): boolea
   // Compute wall-clock day + minutes in the org's timezone
   const fmt = new Intl.DateTimeFormat('en-US', {
     timeZone: bh.timezone,
-    weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
-    year: 'numeric', month: '2-digit', day: '2-digit',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   });
   const parts = fmt.formatToParts(at);
   const p = (t: string): string => parts.find((x) => x.type === t)?.value ?? '';
   const weekdayMap: Record<string, number> = {
-    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
   };
   const day = weekdayMap[p('weekday')] ?? 0;
   const minutes = Number(p('hour')) * 60 + Number(p('minute'));
@@ -183,35 +225,53 @@ function isWithinBusinessHours(bh: BusinessHours, at: Date = new Date()): boolea
 
   if (bh.holidays?.some((h) => h.date === iso)) return false;
 
-  return bh.schedule.some((entry) =>
-    entry.day === day && minutes >= entry.openMinutes && minutes < entry.closeMinutes,
+  return bh.schedule.some(
+    (entry) => entry.day === day && minutes >= entry.openMinutes && minutes < entry.closeMinutes,
   );
 }
 
 // ─── Agent presence ──────────────────────────────────────────────────────────
 
 export async function setAgentPresence(
-  orgId: string, userId: string, status: 'available' | 'busy' | 'away' | 'offline',
+  orgId: string,
+  userId: string,
+  status: 'available' | 'busy' | 'away' | 'offline',
 ): Promise<void> {
-  await db.insert(agentPresence).values({
-    orgId, userId, status, lastActiveAt: new Date(),
-  }).onConflictDoUpdate({
-    target: [agentPresence.orgId, agentPresence.userId],
-    set: { status, lastActiveAt: new Date(), updatedAt: new Date() },
-  });
+  await db
+    .insert(agentPresence)
+    .values({
+      orgId,
+      userId,
+      status,
+      lastActiveAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [agentPresence.orgId, agentPresence.userId],
+      set: { status, lastActiveAt: new Date(), updatedAt: new Date() },
+    });
 }
 
 async function pickAvailableAgents(
-  orgId: string, candidateIds: string[], strategy: HuntGroup['strategy'], rrIndex: number,
+  orgId: string,
+  candidateIds: string[],
+  strategy: HuntGroup['strategy'],
+  rrIndex: number,
 ): Promise<{ userIds: string[]; nextRrIndex: number }> {
   if (candidateIds.length === 0) return { userIds: [], nextRrIndex: 0 };
 
   // Prefer candidates marked 'available' in presence
-  const rows = await db.select().from(agentPresence)
-    .where(and(
-      eq(agentPresence.orgId, orgId),
-      sql`${agentPresence.userId} IN (${sql.join(candidateIds.map((id) => sql`${id}::uuid`), sql`, `)})`,
-    ));
+  const rows = await db
+    .select()
+    .from(agentPresence)
+    .where(
+      and(
+        eq(agentPresence.orgId, orgId),
+        sql`${agentPresence.userId} IN (${sql.join(
+          candidateIds.map((id) => sql`${id}::uuid`),
+          sql`, `,
+        )})`,
+      ),
+    );
   const presenceByUser = new Map(rows.map((r) => [r.userId, r]));
   const available = candidateIds.filter((id) => presenceByUser.get(id)?.status === 'available');
   // If nobody marked available, fall back to all candidates — better to ring
@@ -236,13 +296,18 @@ async function pickAvailableAgents(
 }
 
 async function resolveOverflow(
-  orgId: string, target: HuntGroup['overflowTarget'], targetId: string | null,
+  orgId: string,
+  target: HuntGroup['overflowTarget'],
+  targetId: string | null,
 ): Promise<RoutingAction> {
   if (target === 'voicemail') return { type: 'voicemail' };
   if (target === 'voicebot') return { type: 'voicebot', scenarioId: targetId ?? undefined };
   if (target === 'ivr' && targetId) {
-    const menu = await db.select().from(ivrMenus)
-      .where(and(eq(ivrMenus.id, targetId), eq(ivrMenus.orgId, orgId))).limit(1);
+    const menu = await db
+      .select()
+      .from(ivrMenus)
+      .where(and(eq(ivrMenus.id, targetId), eq(ivrMenus.orgId, orgId)))
+      .limit(1);
     if (menu[0]) {
       return {
         type: 'play-ivr',
@@ -272,12 +337,18 @@ export async function route(input: {
   const bh = await getBusinessHours(input.orgId);
   if (bh && !isWithinBusinessHours(bh)) {
     trace.push(`outside business hours (tz=${bh.timezone})`);
-    const overflow = await resolveOverflow(input.orgId, bh.afterHoursTarget as HuntGroup['overflowTarget'], bh.afterHoursTargetId);
+    const overflow = await resolveOverflow(
+      input.orgId,
+      bh.afterHoursTarget as HuntGroup['overflowTarget'],
+      bh.afterHoursTargetId,
+    );
     return { action: overflow, trace };
   }
 
   // 2. DID → IVR menu
-  const [menu] = await db.select().from(ivrMenus)
+  const [menu] = await db
+    .select()
+    .from(ivrMenus)
     .where(and(eq(ivrMenus.orgId, input.orgId), eq(ivrMenus.didNumber, input.to)))
     .limit(1);
   if (menu) {
@@ -309,7 +380,9 @@ export async function resolveIvrChoice(
   digit: string,
 ): Promise<RoutingDecision> {
   const trace: string[] = [`ivr menu=${menuId} digit=${digit}`];
-  const [menu] = await db.select().from(ivrMenus)
+  const [menu] = await db
+    .select()
+    .from(ivrMenus)
     .where(and(eq(ivrMenus.id, menuId), eq(ivrMenus.orgId, orgId)))
     .limit(1);
   if (!menu) return { action: { type: 'hangup', reason: 'menu-missing' }, trace };
@@ -321,48 +394,66 @@ export async function resolveIvrChoice(
     if (menu.invalidTarget === 'voicemail') return { action: { type: 'voicemail' }, trace };
     return {
       action: {
-        type: 'play-ivr', ivrId: menu.id, greeting: menu.greeting,
-        options: menu.options, timeoutSeconds: menu.timeoutSeconds,
+        type: 'play-ivr',
+        ivrId: menu.id,
+        greeting: menu.greeting,
+        options: menu.options,
+        timeoutSeconds: menu.timeoutSeconds,
       },
       trace,
     };
   }
 
   if (opt.action === 'hangup') return { action: { type: 'hangup' }, trace };
-  if (opt.action === 'voicemail') return { action: { type: 'voicemail', mailboxId: opt.targetId }, trace };
-  if (opt.action === 'voicebot') return { action: { type: 'voicebot', scenarioId: opt.targetId }, trace };
+  if (opt.action === 'voicemail')
+    return { action: { type: 'voicemail', mailboxId: opt.targetId }, trace };
+  if (opt.action === 'voicebot')
+    return { action: { type: 'voicebot', scenarioId: opt.targetId }, trace };
   if (opt.action === 'external' && opt.externalNumber) {
     return { action: { type: 'forward', number: opt.externalNumber }, trace };
   }
   if (opt.action === 'ivr-menu' && opt.targetId) {
-    const [sub] = await db.select().from(ivrMenus)
+    const [sub] = await db
+      .select()
+      .from(ivrMenus)
       .where(and(eq(ivrMenus.id, opt.targetId), eq(ivrMenus.orgId, orgId)))
       .limit(1);
     if (!sub) return { action: { type: 'hangup', reason: 'submenu-missing' }, trace };
     return {
       action: {
-        type: 'play-ivr', ivrId: sub.id, greeting: sub.greeting,
-        options: sub.options, timeoutSeconds: sub.timeoutSeconds,
+        type: 'play-ivr',
+        ivrId: sub.id,
+        greeting: sub.greeting,
+        options: sub.options,
+        timeoutSeconds: sub.timeoutSeconds,
       },
       trace,
     };
   }
   if (opt.action === 'hunt-group' && opt.targetId) {
-    const [hg] = await db.select().from(huntGroups)
+    const [hg] = await db
+      .select()
+      .from(huntGroups)
       .where(and(eq(huntGroups.id, opt.targetId), eq(huntGroups.orgId, orgId)))
       .limit(1);
     if (!hg) return { action: { type: 'hangup', reason: 'hunt-group-missing' }, trace };
 
     const { userIds, nextRrIndex } = await pickAvailableAgents(
-      orgId, hg.memberUserIds, hg.strategy as HuntGroup['strategy'], hg.rrIndex,
+      orgId,
+      hg.memberUserIds,
+      hg.strategy as HuntGroup['strategy'],
+      hg.rrIndex,
     );
     if (hg.strategy === 'round-robin' && nextRrIndex !== hg.rrIndex) {
-      await db.update(huntGroups).set({ rrIndex: nextRrIndex })
-        .where(eq(huntGroups.id, hg.id));
+      await db.update(huntGroups).set({ rrIndex: nextRrIndex }).where(eq(huntGroups.id, hg.id));
     }
     trace.push(`hunt group "${hg.name}" strategy=${hg.strategy} rings ${userIds.length} agent(s)`);
 
-    const overflow = await resolveOverflow(orgId, hg.overflowTarget as HuntGroup['overflowTarget'], hg.overflowTargetId);
+    const overflow = await resolveOverflow(
+      orgId,
+      hg.overflowTarget as HuntGroup['overflowTarget'],
+      hg.overflowTargetId,
+    );
     if (userIds.length === 0) {
       trace.push('no available agents — jumping straight to overflow');
       return { action: overflow, trace };

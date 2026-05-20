@@ -113,7 +113,7 @@ describe('sumInTargetCurrency', () => {
     const total = sumInTargetCurrency(
       [
         { currency: 'CZK', amount: 2350 }, // 100 USD
-        { currency: 'EUR', amount: 92 },   // 100 USD
+        { currency: 'EUR', amount: 92 }, // 100 USD
         { currency: 'USD', amount: 100 },
       ],
       'USD',

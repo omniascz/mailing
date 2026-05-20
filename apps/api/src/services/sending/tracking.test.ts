@@ -234,8 +234,7 @@ describe('wrapLinks', () => {
   });
 
   it('wraps multiple links independently', () => {
-    const html =
-      '<a href="https://a.com">A</a> <a href="https://b.com">B</a>';
+    const html = '<a href="https://a.com">A</a> <a href="https://b.com">B</a>';
     const result = wrapLinks(html, baseUrl, orgId, campaignId, contactId);
     const matches = [...result.matchAll(/\/track\/c\/([^"]+)/g)];
     expect(matches.length).toBe(2);

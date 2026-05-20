@@ -69,7 +69,9 @@ export const abuseEventStatusEnum = pgEnum('abuse_event_status', [
 export const abuseRules = pgTable(
   'abuse_rules',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     /** NULL = global system rule; otherwise org-specific override */
     orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }),
 
@@ -111,7 +113,9 @@ export const abuseRules = pgTable(
 export const abuseEvents = pgTable(
   'abuse_events',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -167,7 +171,9 @@ export const abuseEvents = pgTable(
 export const abuseSanctions = pgTable(
   'abuse_sanctions',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -217,7 +223,9 @@ export const abuseSanctions = pgTable(
 export const spamTraps = pgTable(
   'spam_traps',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
 
     /** SHA-256 hex hash of the lowercase email address */
     emailHash: varchar('email_hash', { length: 64 }).notNull(),
@@ -244,7 +252,9 @@ export const spamTraps = pgTable(
 export const spamTrapHits = pgTable(
   'spam_trap_hits',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

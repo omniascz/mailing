@@ -102,7 +102,12 @@ export const whatsappConsents = pgTable(
 
 // ─── WhatsApp quality + tier tracking (7.9) ───────────────────────────────────
 
-export const waQualityRatingEnum = pgEnum('wa_quality_rating', ['GREEN', 'YELLOW', 'RED', 'UNKNOWN']);
+export const waQualityRatingEnum = pgEnum('wa_quality_rating', [
+  'GREEN',
+  'YELLOW',
+  'RED',
+  'UNKNOWN',
+]);
 
 export const whatsappPhoneNumbers = pgTable(
   'whatsapp_phone_numbers',

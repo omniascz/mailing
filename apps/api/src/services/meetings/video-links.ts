@@ -103,7 +103,8 @@ async function createGoogleMeetLink(_input: VideoLinkInput): Promise<string | nu
 
 function generateMeetCode(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz';
-  const rand = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const rand = (n: number) =>
+    Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   return `${rand(3)}-${rand(4)}-${rand(3)}`;
 }
 
@@ -116,19 +117,16 @@ async function createTeamsMeeting(input: VideoLinkInput): Promise<string | null>
   if (!tenantId || !clientId || !clientSecret) return null;
 
   // Get app token
-  const tokenRes = await fetch(
-    `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: clientId,
-        client_secret: clientSecret,
-        scope: 'https://graph.microsoft.com/.default',
-      }),
-    },
-  ).catch(() => null);
+  const tokenRes = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret,
+      scope: 'https://graph.microsoft.com/.default',
+    }),
+  }).catch(() => null);
   if (!tokenRes?.ok) return null;
   const { access_token } = (await tokenRes.json()) as { access_token: string };
 

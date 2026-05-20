@@ -41,57 +41,63 @@ export async function registerChannel(
   }
   const sharedSecret = crypto.randomBytes(32).toString('hex');
 
-  const [row] = await db.insert(customChannels).values({
-    orgId,
-    slug: input.slug,
-    name: input.name,
-    description: input.description,
-    outboundUrl: input.outboundUrl,
-    sharedSecret,
-    messageSchema: input.messageSchema ?? {},
-    rateLimits: input.rateLimits ?? {},
-  }).returning();
+  const [row] = await db
+    .insert(customChannels)
+    .values({
+      orgId,
+      slug: input.slug,
+      name: input.name,
+      description: input.description,
+      outboundUrl: input.outboundUrl,
+      sharedSecret,
+      messageSchema: input.messageSchema ?? {},
+      rateLimits: input.rateLimits ?? {},
+    })
+    .returning();
   if (!row) throw AppError.internal('Failed to register channel');
   return { channel: row, sharedSecret };
 }
 
 export async function listChannels(orgId: string): Promise<CustomChannel[]> {
-  return db.select().from(customChannels).where(and(
-    eq(customChannels.orgId, orgId),
-    isNull(customChannels.deletedAt),
-  ));
+  return db
+    .select()
+    .from(customChannels)
+    .where(and(eq(customChannels.orgId, orgId), isNull(customChannels.deletedAt)));
 }
 
-export async function getChannelBySlug(
-  orgId: string,
-  slug: string,
-): Promise<CustomChannel | null> {
-  const [row] = await db.select().from(customChannels).where(and(
-    eq(customChannels.orgId, orgId),
-    eq(customChannels.slug, slug),
-    isNull(customChannels.deletedAt),
-  )).limit(1);
+export async function getChannelBySlug(orgId: string, slug: string): Promise<CustomChannel | null> {
+  const [row] = await db
+    .select()
+    .from(customChannels)
+    .where(
+      and(
+        eq(customChannels.orgId, orgId),
+        eq(customChannels.slug, slug),
+        isNull(customChannels.deletedAt),
+      ),
+    )
+    .limit(1);
   return row ?? null;
 }
 
 export async function disableChannel(orgId: string, id: string): Promise<void> {
-  await db.update(customChannels)
+  await db
+    .update(customChannels)
     .set({ enabled: false })
     .where(and(eq(customChannels.orgId, orgId), eq(customChannels.id, id)));
 }
 
 export async function deleteChannel(orgId: string, id: string): Promise<void> {
-  await db.update(customChannels)
+  await db
+    .update(customChannels)
     .set({ deletedAt: new Date() })
     .where(and(eq(customChannels.orgId, orgId), eq(customChannels.id, id)));
 }
 
-export async function rotateSecret(
-  orgId: string,
-  id: string,
-): Promise<{ sharedSecret: string }> {
+export async function rotateSecret(orgId: string, id: string): Promise<{ sharedSecret: string }> {
   const sharedSecret = crypto.randomBytes(32).toString('hex');
-  await db.update(customChannels)
+  await db
+    .update(customChannels)
     .set({ sharedSecret, updatedAt: new Date() })
     .where(and(eq(customChannels.orgId, orgId), eq(customChannels.id, id)));
   return { sharedSecret };
@@ -105,7 +111,10 @@ export function signBody(secret: string, timestamp: number, body: string): strin
   return h.digest('hex');
 }
 
-export function buildSignatureHeader(secret: string, body: string): {
+export function buildSignatureHeader(
+  secret: string,
+  body: string,
+): {
   header: string;
   timestamp: number;
 } {
@@ -121,7 +130,12 @@ export function verifySignature(
 ): { ok: boolean; reason?: string } {
   if (!header) return { ok: false, reason: 'missing signature' };
   const parts = Object.fromEntries(
-    header.split(',').map((p) => p.trim().split('=').map((s) => s.trim())),
+    header.split(',').map((p) =>
+      p
+        .trim()
+        .split('=')
+        .map((s) => s.trim()),
+    ),
   ) as Record<string, string>;
   const t = Number(parts.t);
   const v1 = parts.v1;

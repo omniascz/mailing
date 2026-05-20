@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `33_SARE_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** SARE umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Polský produkt z Warszawy** – email marketing leader v Polsku
 > - **Součást Digitree Group** – parent company synergies
 > - **Annual revenue $12.4M v 2026**
@@ -169,24 +170,24 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Contract signing | Full + billing + users | Vše |
-| **Administrator** | Pozvánka od Owner | Operational lead + user mgmt | Per scope |
-| **Marketing user** | Pozvánka | Daily marketing tasks | Per permissions |
-| **Designer / Editor** | Pozvánka | Content + templates | Per role |
-| **Analyst / Data user** | Pozvánka | CDP + reports + BI | Read + segment build |
-| **Read-only / Viewer** | Pozvánka | View reports only | Read-only |
-| **Enterprise SSO user** | IdP login | Per IdP role | Per assigned |
-| **Recipient / Subscriber** | Form, integration | Receives multi-channel | Své emaily / messages |
-| **Dedicated Consultant** | Assigned at signup | Strategy + support | Read s consent |
-| **SARE Client Service** | Per-klient touchpoint | Daily operational help | Read s consent |
-| **SARE Sales** | Inquiry contact | Upgrades + new contracts | Read s consent |
-| **SARE Research team** | External | Publishes reports | – |
-| **API Client** | API key | Custom integration | Per scope |
-| **Shoper integration** | Native | E-commerce sync | Per integration scope |
-| **Shopify integration** | OAuth | E-commerce sync | Per integration scope |
-| **Zapier connection** | OAuth | iPaaS workflows | Per Zap scope |
+| Aktér                      | Vstupní bod           | Co dělá                      | Co vidí               |
+| -------------------------- | --------------------- | ---------------------------- | --------------------- |
+| **Account Owner**          | Contract signing      | Full + billing + users       | Vše                   |
+| **Administrator**          | Pozvánka od Owner     | Operational lead + user mgmt | Per scope             |
+| **Marketing user**         | Pozvánka              | Daily marketing tasks        | Per permissions       |
+| **Designer / Editor**      | Pozvánka              | Content + templates          | Per role              |
+| **Analyst / Data user**    | Pozvánka              | CDP + reports + BI           | Read + segment build  |
+| **Read-only / Viewer**     | Pozvánka              | View reports only            | Read-only             |
+| **Enterprise SSO user**    | IdP login             | Per IdP role                 | Per assigned          |
+| **Recipient / Subscriber** | Form, integration     | Receives multi-channel       | Své emaily / messages |
+| **Dedicated Consultant**   | Assigned at signup    | Strategy + support           | Read s consent        |
+| **SARE Client Service**    | Per-klient touchpoint | Daily operational help       | Read s consent        |
+| **SARE Sales**             | Inquiry contact       | Upgrades + new contracts     | Read s consent        |
+| **SARE Research team**     | External              | Publishes reports            | –                     |
+| **API Client**             | API key               | Custom integration           | Per scope             |
+| **Shoper integration**     | Native                | E-commerce sync              | Per integration scope |
+| **Shopify integration**    | OAuth                 | E-commerce sync              | Per integration scope |
+| **Zapier connection**      | OAuth                 | iPaaS workflows              | Per Zap scope         |
 
 ---
 
@@ -240,6 +241,7 @@ SARE Sales responds (typically 1-2 business days)
 ### 2.3 Qualification criteria
 
 SARE targets:
+
 - **Polish mid-market + enterprise**
 - **B2C + B2B both**
 - **Email volume:** 10K+ monthly emails typically
@@ -345,7 +347,8 @@ Dedicated Client Service consultant assigned
 ### 3.1 Self-serve trial signup
 
 Per GetApp:
-> *"Free Trial: Available (No Credit Card required)"*
+
+> _"Free Trial: Available (No Credit Card required)"_
 
 ```
 Visit sare.pl
@@ -641,10 +644,12 @@ Annual strategic review:
 ### 5.1 Why dedicated consultant matters
 
 Per Polish Stem Cell Bank reference:
-> *"We highly value the quality of customer service, and our dedicated consultant reliably supports us in our daily work with the system. They are always willing to share their knowledge, so we can say that the SARE system is a professional tool backed by the substantive expertise of its staff."*
+
+> _"We highly value the quality of customer service, and our dedicated consultant reliably supports us in our daily work with the system. They are always willing to share their knowledge, so we can say that the SARE system is a professional tool backed by the substantive expertise of its staff."_
 
 Per VB Leasing reference:
-> *"the invaluable assistance of the Client Service team"*
+
+> _"the invaluable assistance of the Client Service team"_
 
 **Consultative approach is KEY differentiator** of SARE.
 
@@ -705,6 +710,7 @@ Strategic alignment maintained
 ### 5.5 Consultant value proposition
 
 **Beyond tool support:**
+
 - **Industry expertise** sharing
 - **Strategic guidance**
 - **Research authority** (SARE publishes industry reports)
@@ -719,6 +725,7 @@ Strategic alignment maintained
 ### 6.1 Default roles (typical)
 
 #### Account Owner
+
 - **Highest tier** access
 - **Created during contract setup**
 - Full administrative control
@@ -728,6 +735,7 @@ Strategic alignment maintained
 - Close account
 
 #### Administrator
+
 - **Full operational** access
 - User management within scope
 - Integration management
@@ -735,6 +743,7 @@ Strategic alignment maintained
 - Cannot manage billing typically
 
 #### Marketing user
+
 - **Daily marketing** tasks
 - Campaigns + automation + segments
 - Content creation
@@ -743,12 +752,14 @@ Strategic alignment maintained
 - No billing
 
 #### Designer / Editor
+
 - **Content focused**
 - Templates + design
 - Limited recipient data
 - No send permissions typically
 
 #### Analyst / Data user
+
 - **CDP + analytics focus**
 - Build segments
 - Reports + BI dashboards
@@ -756,16 +767,19 @@ Strategic alignment maintained
 - No send permissions
 
 #### Read-only / Viewer
+
 - **View reports only**
 - For stakeholders, executives, auditors
 
 #### Custom roles
+
 - **Per business needs**
 - **Granular permissions**
 
 ### 6.2 Permission categories
 
 #### Account & Settings
+
 - Account info
 - Billing access
 - User management
@@ -774,6 +788,7 @@ Strategic alignment maintained
 - Integration management
 
 #### CDP / Databases
+
 - View contacts
 - Edit contacts
 - Build segments
@@ -781,28 +796,33 @@ Strategic alignment maintained
 - Import / export
 
 #### Email
+
 - Create campaigns
 - Edit campaigns
 - Send campaigns
 - Templates management
 
 #### Automation
+
 - Create workflows
 - Edit workflows
 - Activate workflows
 
 #### Channels
+
 - Email sending
 - SMS sending
 - Web push sending
 - Survey deployment
 
 #### Channel Scoring
+
 - View scores
 - Configure scoring rules
 - Use in workflows
 
 #### Reports & BI
+
 - View reports
 - Build dashboards
 - Export data
@@ -810,43 +830,43 @@ Strategic alignment maintained
 
 ### 6.3 Permission matrix (typical)
 
-| Akce | Owner | Admin | Marketing | Designer | Analyst | Viewer | Custom |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |  |  |  |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per role |
-| Manage billing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per role |
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role |
-| **User Management** |  |  |  |  |  |  |  |
-| Add/edit users | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role |
-| **CDP / Databases** |  |  |  |  |  |  |  |
-| View contacts | ✅ | ✅ | ✅ | limited | ✅ | view | per role |
-| Edit contacts | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | per role |
-| Build segments | ✅ | ✅ | ✅ | ❌ | ✅ | view | per role |
-| Export | ✅ | ✅ | per role | ❌ | ✅ | ❌ | per role |
-| **Email** |  |  |  |  |  |  |  |
-| Create campaigns | ✅ | ✅ | ✅ | ✅ | ❌ | view | per role |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Automation** |  |  |  |  |  |  |  |
-| Create workflows | ✅ | ✅ | ✅ | ❌ | view | view | per role |
-| Activate | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| **Channels** |  |  |  |  |  |  |  |
-| SMS sending | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| Web push | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | per role |
-| Surveys | ✅ | ✅ | ✅ | ✅ | view | view | per role |
-| **Channel Scoring** |  |  |  |  |  |  |  |
-| View scores | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | per role |
-| Configure scoring | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | per role |
-| **Reports & BI** |  |  |  |  |  |  |  |
-| View | ✅ | ✅ | ✅ | view | ✅ | ✅ | per role |
-| Build dashboards | ✅ | ✅ | per role | ❌ | ✅ | view | per role |
-| Export | ✅ | ✅ | per role | ❌ | ✅ | per role | per role |
-| **Integrations** |  |  |  |  |  |  |  |
-| Manage | ✅ | ✅ | per role | ❌ | view | ❌ | per role |
-| **API** |  |  |  |  |  |  |  |
-| Manage API keys | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role |
-| **Enterprise** |  |  |  |  |  |  |  |
-| SSO configuration | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | per role |
-| Audit logs | ✅ | ✅ | ❌ | ❌ | per role | per role | per role |
+| Akce                  | Owner | Admin | Marketing | Designer | Analyst  |  Viewer  |  Custom  |
+| --------------------- | :---: | :---: | :-------: | :------: | :------: | :------: | :------: |
+| **Account & Billing** |       |       |           |          |          |          |          |
+| Close account         |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    |    ❌    | per role |
+| Manage billing        |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    |    ❌    | per role |
+| Account settings      |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    | per role |
+| **User Management**   |       |       |           |          |          |          |          |
+| Add/edit users        |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    | per role |
+| **CDP / Databases**   |       |       |           |          |          |          |          |
+| View contacts         |  ✅   |  ✅   |    ✅     | limited  |    ✅    |   view   | per role |
+| Edit contacts         |  ✅   |  ✅   |    ✅     |    ❌    |    ✅    |    ❌    | per role |
+| Build segments        |  ✅   |  ✅   |    ✅     |    ❌    |    ✅    |   view   | per role |
+| Export                |  ✅   |  ✅   | per role  |    ❌    |    ✅    |    ❌    | per role |
+| **Email**             |       |       |           |          |          |          |          |
+| Create campaigns      |  ✅   |  ✅   |    ✅     |    ✅    |    ❌    |   view   | per role |
+| Send campaigns        |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |    ❌    | per role |
+| **Automation**        |       |       |           |          |          |          |          |
+| Create workflows      |  ✅   |  ✅   |    ✅     |    ❌    |   view   |   view   | per role |
+| Activate              |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |    ❌    | per role |
+| **Channels**          |       |       |           |          |          |          |          |
+| SMS sending           |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |    ❌    | per role |
+| Web push              |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |    ❌    | per role |
+| Surveys               |  ✅   |  ✅   |    ✅     |    ✅    |   view   |   view   | per role |
+| **Channel Scoring**   |       |       |           |          |          |          |          |
+| View scores           |  ✅   |  ✅   |    ✅     |    ✅    |    ✅    |    ✅    | per role |
+| Configure scoring     |  ✅   |  ✅   |    ❌     |    ❌    |    ✅    |    ❌    | per role |
+| **Reports & BI**      |       |       |           |          |          |          |          |
+| View                  |  ✅   |  ✅   |    ✅     |   view   |    ✅    |    ✅    | per role |
+| Build dashboards      |  ✅   |  ✅   | per role  |    ❌    |    ✅    |   view   | per role |
+| Export                |  ✅   |  ✅   | per role  |    ❌    |    ✅    | per role | per role |
+| **Integrations**      |       |       |           |          |          |          |          |
+| Manage                |  ✅   |  ✅   | per role  |    ❌    |   view   |    ❌    | per role |
+| **API**               |       |       |           |          |          |          |          |
+| Manage API keys       |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    | per role |
+| **Enterprise**        |       |       |           |          |          |          |          |
+| SSO configuration     |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    | per role |
+| Audit logs            |  ✅   |  ✅   |    ❌     |    ❌    | per role | per role | per role |
 
 ### 6.4 User invitation flow
 
@@ -875,6 +895,7 @@ User activates
 ### 6.5 Enterprise SSO
 
 For enterprise customers:
+
 - **SAML 2.0**
 - **Active Directory**
 - **Google Workspace**
@@ -1194,9 +1215,11 @@ Insights:
 ### 9.6 Industry research access
 
 Per Digitree:
-> *"SARE specialists have been conducting research and publishing reports on consumer behavior"*
+
+> _"SARE specialists have been conducting research and publishing reports on consumer behavior"_
 
 Analysts get access to:
+
 - Industry research reports
 - Benchmarks
 - Best practices
@@ -1209,6 +1232,7 @@ Analysts get access to:
 ### 10.1 Recipient creation paths
 
 #### A) Form submission
+
 ```
 Visitor fills SARE form (embedded or popup)
    ↓
@@ -1234,6 +1258,7 @@ Welcome workflow triggers
 ```
 
 #### B) Shoper integration (Polish e-commerce!)
+
 ```
 Customer registers v Shoper shop
    ↓
@@ -1251,6 +1276,7 @@ Welcome workflow if active
 ```
 
 #### C) Shopify / WooCommerce / PrestaShop integration
+
 ```
 E-commerce customer event
    ↓
@@ -1264,6 +1290,7 @@ Segment membership updated
 ```
 
 #### D) API integration
+
 ```
 External system POST to SARE API
    ↓
@@ -1277,6 +1304,7 @@ Channel Scoring starts
 ```
 
 #### E) Manual import (CSV)
+
 ```
 Admin: CDP → Import
    ↓
@@ -1567,10 +1595,12 @@ Continue until end / goal / removal
 **SARE's proprietary feature.**
 
 Per GetApp:
-> *"channel scoring, designed to assess user engagement in email and SMS channels"*
+
+> _"channel scoring, designed to assess user engagement in email and SMS channels"_
 
 Per Digitree:
-> *"Channel scoring identifies the most effective channels to drive conversions."*
+
+> _"Channel scoring identifies the most effective channels to drive conversions."_
 
 ### 13.2 Score calculation
 
@@ -1597,6 +1627,7 @@ Per recipient, SARE tracks:
 ### 13.3 Scoring factors
 
 #### Positive (+)
+
 - Recent email open → +X
 - Recent click → +Y
 - Engagement frequency → +Z
@@ -1604,12 +1635,14 @@ Per recipient, SARE tracks:
 - Survey response → +V
 
 #### Negative (-)
+
 - No engagement period → -X
 - Spam complaint → -∞ (immediate suppression)
 - Hard bounce → -∞ (immediate suppression)
 - Unsubscribe → 0 (channel off)
 
 #### Time decay
+
 - Recent activity weighted higher
 - Old activity gradually less weight
 - Frequency boosts consistent engagement
@@ -1617,6 +1650,7 @@ Per recipient, SARE tracks:
 ### 13.4 Score-based use cases
 
 #### Pre-send channel selection
+
 ```
 Workflow trigger: Send promotional message
    ↓
@@ -1633,6 +1667,7 @@ Higher engagement, better ROI
 ```
 
 #### Channel switching
+
 ```
 Recipient declines engagement:
 - Email score dropping over 30 days
@@ -1644,6 +1679,7 @@ Re-engagement attempt via better channel
 ```
 
 #### Multi-channel orchestration
+
 ```
 Workflow: Cart abandonment
    ↓
@@ -1656,6 +1692,7 @@ Channel Score check:
 ```
 
 #### Re-engagement
+
 ```
 Channel Score declining
    ↓
@@ -1874,7 +1911,8 @@ Real-time updates
 ### 16.1 A/B/X test creation
 
 Per Digitree:
-> *"The system provides A/B/X tests with automatic winner selection, allowing optimization to happen 'on the fly.'"*
+
+> _"The system provides A/B/X tests with automatic winner selection, allowing optimization to happen 'on the fly.'"_
 
 ```
 Marketer creates campaign
@@ -1983,6 +2021,7 @@ Save + Activate
 ### 17.2 Survey deployment
 
 #### Email embed
+
 ```
 In email: include survey link
    ↓
@@ -1996,6 +2035,7 @@ Data captured to profile
 ```
 
 #### Standalone URL
+
 ```
 Share via:
 - Email
@@ -2010,6 +2050,7 @@ Survey completed
 ```
 
 #### Triggered from automation
+
 ```
 Workflow node: Send survey
    ↓
@@ -2176,6 +2217,7 @@ Activate
 ### 19.2 Use cases
 
 #### Weekly digest
+
 ```
 Every Monday 9:00 AM:
 - Send weekly digest
@@ -2185,6 +2227,7 @@ Every Monday 9:00 AM:
 ```
 
 #### Monthly subscription reminder
+
 ```
 Every 1st of month:
 - Send subscription status
@@ -2194,6 +2237,7 @@ Every 1st of month:
 ```
 
 #### Birthday automation
+
 ```
 Daily check:
 - Recipients with birthday today
@@ -2203,7 +2247,7 @@ Daily check:
 
 ### 19.3 Per Digitree
 
-> *"Automated sends, abandoned cart flows, and recurring messages work around the clock."*
+> _"Automated sends, abandoned cart flows, and recurring messages work around the clock."_
 
 - **24/7 automation**
 - **No manual intervention**
@@ -2216,7 +2260,8 @@ Daily check:
 ### 20.1 API access
 
 Per GetApp:
-> *"Yes, SARE has an API available for use."*
+
+> _"Yes, SARE has an API available for use."_
 
 ```
 Admin: Settings → API
@@ -2516,17 +2561,20 @@ Quarterly reviews:
 ### 22.6 Regulatory compliance
 
 **Polish banking (KNF, UODO):**
+
 - Bank-specific compliance
 - Recordkeeping requirements
 - Banking secrecy
 - Customer data protection
 
 **EU:**
+
 - GDPR/RODO
 - MiFID II (financial)
 - PSD2 (banking)
 
 **Industry:**
+
 - ISO 27001 likely
 - SOC 2 (potentially)
 - Healthcare regulations (Polish)
@@ -2538,7 +2586,8 @@ Quarterly reviews:
 ### 23.1 Research authority
 
 Per Digitree:
-> *"SARE specialists have been conducting research and publishing reports on consumer behavior and marketing communication for years, which are widely cited in industry media and educational materials."*
+
+> _"SARE specialists have been conducting research and publishing reports on consumer behavior and marketing communication for years, which are widely cited in industry media and educational materials."_
 
 ### 23.2 Research process
 
@@ -2589,9 +2638,10 @@ SARE customers benefit from:
 
 ### 23.5 Per Digitree
 
-> *"Behind SARE are people who implement and run campaigns for demanding brands — and data you can rely on."*
+> _"Behind SARE are people who implement and run campaigns for demanding brands — and data you can rely on."_
 
 **Research authority creates trust:**
+
 - Customers see SARE as **expert partner**
 - Not just tool vendor
 - Strategic advisor positioning
@@ -2688,34 +2738,34 @@ Provide within 30 days (RODO requirement)
 
 ## 25. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Mkt User | Designer | Analyst | Viewer | Subscriber | API | Consultant |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| All CDP profiles | ✅ | ✅ | ✅ | limited | ✅ | view | jen sebe | ✅ | read |
-| Edit profiles | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Build segments | ✅ | ✅ | ✅ | ❌ | ✅ | view | – | ✅ | read |
-| Channel Scoring (view) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | read |
-| Channel Scoring (config) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | per scope | read |
-| Email campaigns | ✅ | ✅ | ✅ | ✅ | view | view | jen co dostal | ✅ | read |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Automation scenarios | ✅ | ✅ | ✅ | view | view | view | ❌ | ✅ | read |
-| Activate workflows | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| SMS sending | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Web push | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Surveys | ✅ | ✅ | ✅ | ✅ | view | view | submit | ✅ | read |
-| Secure SMTP | ✅ | ✅ | per role | ❌ | ❌ | ❌ | – | ✅ | read |
-| Templates | ✅ | ✅ | ✅ | ✅ | view | view | – | ✅ | read |
-| A/B/X tests | ✅ | ✅ | ✅ | view | view | view | – | ✅ | read |
-| Reports | ✅ | ✅ | ✅ | view | ✅ | ✅ | ❌ | ✅ | read |
-| BI dashboards | ✅ | ✅ | per role | ❌ | ✅ | view | ❌ | per scope | read |
-| Integrations | ✅ | ✅ | per role | ❌ | view | ❌ | – | per scope | read |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | – | read |
-| SSO config | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | – | read |
-| Audit logs | ✅ | ✅ | ❌ | ❌ | per role | per role | ❌ | per scope | read |
-| Industry research | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | provide |
-| RODO delete | ✅ | ✅ | per role | ❌ | per role | ❌ | request | ✅ | execute |
+| Data                     | Owner | Admin | Mkt User | Designer | Analyst  |  Viewer  |  Subscriber   |    API    | Consultant |
+| ------------------------ | :---: | :---: | :------: | :------: | :------: | :------: | :-----------: | :-------: | :--------: |
+| Account settings         |  ✅   |  ✅   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       | per scope |    read    |
+| Billing                  |  ✅   |  ❌   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       | per scope |    read    |
+| User management          |  ✅   |  ✅   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       | per scope |    read    |
+| All CDP profiles         |  ✅   |  ✅   |    ✅    | limited  |    ✅    |   view   |   jen sebe    |    ✅     |    read    |
+| Edit profiles            |  ✅   |  ✅   |    ✅    |    ❌    |    ✅    |    ❌    |      ❌       |    ✅     |     ❌     |
+| Build segments           |  ✅   |  ✅   |    ✅    |    ❌    |    ✅    |   view   |       –       |    ✅     |    read    |
+| Channel Scoring (view)   |  ✅   |  ✅   |    ✅    |    ✅    |    ✅    |    ✅    |      ❌       |    ✅     |    read    |
+| Channel Scoring (config) |  ✅   |  ✅   |    ❌    |    ❌    |    ✅    |    ❌    |      ❌       | per scope |    read    |
+| Email campaigns          |  ✅   |  ✅   |    ✅    |    ✅    |   view   |   view   | jen co dostal |    ✅     |    read    |
+| Send campaigns           |  ✅   |  ✅   |    ✅    |    ❌    |    ❌    |    ❌    |      ❌       |    ✅     |     ❌     |
+| Automation scenarios     |  ✅   |  ✅   |    ✅    |   view   |   view   |   view   |      ❌       |    ✅     |    read    |
+| Activate workflows       |  ✅   |  ✅   |    ✅    |    ❌    |    ❌    |    ❌    |      ❌       |    ✅     |     ❌     |
+| SMS sending              |  ✅   |  ✅   |    ✅    |    ❌    |    ❌    |    ❌    |      ❌       |    ✅     |     ❌     |
+| Web push                 |  ✅   |  ✅   |    ✅    |    ❌    |    ❌    |    ❌    |      ❌       |    ✅     |     ❌     |
+| Surveys                  |  ✅   |  ✅   |    ✅    |    ✅    |   view   |   view   |    submit     |    ✅     |    read    |
+| Secure SMTP              |  ✅   |  ✅   | per role |    ❌    |    ❌    |    ❌    |       –       |    ✅     |    read    |
+| Templates                |  ✅   |  ✅   |    ✅    |    ✅    |   view   |   view   |       –       |    ✅     |    read    |
+| A/B/X tests              |  ✅   |  ✅   |    ✅    |   view   |   view   |   view   |       –       |    ✅     |    read    |
+| Reports                  |  ✅   |  ✅   |    ✅    |   view   |    ✅    |    ✅    |      ❌       |    ✅     |    read    |
+| BI dashboards            |  ✅   |  ✅   | per role |    ❌    |    ✅    |   view   |      ❌       | per scope |    read    |
+| Integrations             |  ✅   |  ✅   | per role |    ❌    |   view   |    ❌    |       –       | per scope |    read    |
+| API keys                 |  ✅   |  ✅   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       |     –     |    read    |
+| SSO config               |  ✅   |  ✅   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       |     –     |    read    |
+| Audit logs               |  ✅   |  ✅   |    ❌    |    ❌    | per role | per role |      ❌       | per scope |    read    |
+| Industry research        |  ✅   |  ✅   |    ✅    |    ✅    |    ✅    |    ✅    |       –       |     –     |  provide   |
+| RODO delete              |  ✅   |  ✅   | per role |    ❌    | per role |    ❌    |    request    |    ✅     |  execute   |
 
 ---
 
@@ -2724,6 +2774,7 @@ Provide within 30 days (RODO requirement)
 ### 26.1 Polish-first focus
 
 ⚠️ SARE primárně **Polish market**:
+
 - Polish UI + support primary
 - English UI secondary
 - Polish team dominant
@@ -2848,4 +2899,4 @@ Pokud SARE používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů sare.pl a praktických zdrojů (GetApp, SoftwareSuggest, SoftwareWorld, SaaSCounter, Digitree, RocketReach, EmailExpert, EmailVendorSelection). Pro nejaktuálnější detaily je nutný engagement s SARE sales / consultant teamem.*
+_Dokument zpracován z oficiálních zdrojů sare.pl a praktických zdrojů (GetApp, SoftwareSuggest, SoftwareWorld, SaaSCounter, Digitree, RocketReach, EmailExpert, EmailVendorSelection). Pro nejaktuálnější detaily je nutný engagement s SARE sales / consultant teamem._

@@ -10,7 +10,14 @@
 
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, text, timestamp, integer, jsonb, index,
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  timestamp,
+  integer,
+  jsonb,
+  index,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';
@@ -21,7 +28,9 @@ import { contacts } from './contacts.js';
 export const videoMessages = pgTable(
   'video_messages',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -36,8 +45,8 @@ export const videoMessages = pgTable(
 
     /** Storage paths */
     originalObjectKey: text('original_object_key').notNull(), // MinIO/S3 key for uploaded mp4/webm
-    hlsManifestKey: text('hls_manifest_key'),                 // master.m3u8 once transcode finishes
-    thumbnailKey: text('thumbnail_key'),                      // jpg preview frame
+    hlsManifestKey: text('hls_manifest_key'), // master.m3u8 once transcode finishes
+    thumbnailKey: text('thumbnail_key'), // jpg preview frame
 
     /** Video metadata */
     durationSeconds: integer('duration_seconds'),
@@ -73,7 +82,9 @@ export const videoMessages = pgTable(
 export const videoPlayEvents = pgTable(
   'video_play_events',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

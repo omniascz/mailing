@@ -46,7 +46,9 @@ export default async function salesforceRoutes(app: FastifyInstance) {
     '/api/v1/integrations/salesforce/oauth/authorize-url',
     { schema: { tags: ['Salesforce'], summary: 'Build OAuth authorize URL' } },
     async (req) => {
-      const { loginHost } = z.object({ loginHost: z.string().url().optional() }).parse(req.body ?? {});
+      const { loginHost } = z
+        .object({ loginHost: z.string().url().optional() })
+        .parse(req.body ?? {});
       const state = `${req.user!.orgId}:${randomBytes(16).toString('hex')}`;
       const url = authorizeUrl({
         clientId: envOrThrow('SALESFORCE_CLIENT_ID'),
@@ -81,12 +83,14 @@ export default async function salesforceRoutes(app: FastifyInstance) {
     '/api/v1/integrations/salesforce/settings',
     { schema: { tags: ['Salesforce'], summary: 'Update sync settings' } },
     async (req) => {
-      const body = z.object({
-        syncContacts: z.boolean().optional(),
-        syncAccounts: z.boolean().optional(),
-        syncDeals: z.boolean().optional(),
-        fieldMap: z.record(z.record(z.string())).optional(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          syncContacts: z.boolean().optional(),
+          syncAccounts: z.boolean().optional(),
+          syncDeals: z.boolean().optional(),
+          fieldMap: z.record(z.record(z.string())).optional(),
+        })
+        .parse(req.body);
       const [row] = await db
         .update(salesforceConnections)
         .set({ ...body, updatedAt: new Date() })
@@ -101,7 +105,9 @@ export default async function salesforceRoutes(app: FastifyInstance) {
     '/api/v1/integrations/salesforce',
     { schema: { tags: ['Salesforce'], summary: 'Disconnect' } },
     async (req, reply) => {
-      await db.delete(salesforceConnections).where(eq(salesforceConnections.orgId, req.user!.orgId));
+      await db
+        .delete(salesforceConnections)
+        .where(eq(salesforceConnections.orgId, req.user!.orgId));
       return reply.code(204).send();
     },
   );
@@ -110,10 +116,14 @@ export default async function salesforceRoutes(app: FastifyInstance) {
     '/api/v1/integrations/salesforce/sync',
     { schema: { tags: ['Salesforce'], summary: 'Trigger sync' } },
     async (req) => {
-      const { direction } = z.object({ direction: z.enum(['push', 'pull', 'both']).optional() }).parse(req.body ?? {});
+      const { direction } = z
+        .object({ direction: z.enum(['push', 'pull', 'both']).optional() })
+        .parse(req.body ?? {});
       await getConnection(req.user!.orgId); // 404 if missing
       // Run async: don't block the request on a long sync.
-      void runSync(req.user!.orgId, { direction }).catch((err) => req.log.error({ err }, 'salesforce sync failed'));
+      void runSync(req.user!.orgId, { direction }).catch((err) =>
+        req.log.error({ err }, 'salesforce sync failed'),
+      );
       return { data: { started: true } };
     },
   );
@@ -122,7 +132,9 @@ export default async function salesforceRoutes(app: FastifyInstance) {
     '/api/v1/integrations/salesforce/sync-runs',
     { schema: { tags: ['Salesforce'], summary: 'List recent sync runs' } },
     async (req) => {
-      const { limit } = z.object({ limit: z.coerce.number().int().min(1).max(200).optional() }).parse(req.query);
+      const { limit } = z
+        .object({ limit: z.coerce.number().int().min(1).max(200).optional() })
+        .parse(req.query);
       return { data: await listSyncRuns(req.user!.orgId, limit) };
     },
   );

@@ -38,7 +38,10 @@ function PaletteItem({ type, label, icon }: PaletteItemProps) {
         isDragging ? 'opacity-40' : ''
       }`}
     >
-      <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded bg-secondary-100 text-secondary-600">
+      <span
+        aria-hidden
+        className="flex h-6 w-6 items-center justify-center rounded bg-secondary-100 text-secondary-600"
+      >
         {icon}
       </span>
       <span className="text-secondary-800">{label}</span>

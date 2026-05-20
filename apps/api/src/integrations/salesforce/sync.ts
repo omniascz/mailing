@@ -24,9 +24,15 @@ import {
 } from '../../db/schema/salesforce.js';
 import { contacts, accounts, deals } from '../../db/schema/index.js';
 import {
-  queryAccounts, queryContacts, queryOpportunities,
-  upsertAccount, upsertContact, upsertOpportunity,
-  type SfAccountRecord, type SfContactRecord, type SfOpportunityRecord,
+  queryAccounts,
+  queryContacts,
+  queryOpportunities,
+  upsertAccount,
+  upsertContact,
+  upsertOpportunity,
+  type SfAccountRecord,
+  type SfContactRecord,
+  type SfOpportunityRecord,
 } from './client.js';
 
 type EntityType = 'contact' | 'account' | 'deal';
@@ -34,29 +40,59 @@ type EntityType = 'contact' | 'account' | 'deal';
 function hashRecord(input: Record<string, unknown>): string {
   // Stable JSON: sort keys before hashing.
   const sorted: Record<string, unknown> = {};
-  Object.keys(input).sort().forEach((k) => { sorted[k] = input[k]; });
+  Object.keys(input)
+    .sort()
+    .forEach((k) => {
+      sorted[k] = input[k];
+    });
   return createHash('sha256').update(JSON.stringify(sorted)).digest('hex');
 }
 
-async function lookupSfId(orgId: string, type: EntityType, localId: string): Promise<string | null> {
+async function lookupSfId(
+  orgId: string,
+  type: EntityType,
+  localId: string,
+): Promise<string | null> {
   const [row] = await db
     .select({ sfId: salesforceIdMap.salesforceId })
     .from(salesforceIdMap)
-    .where(and(eq(salesforceIdMap.orgId, orgId), eq(salesforceIdMap.entityType, type), eq(salesforceIdMap.localId, localId)))
+    .where(
+      and(
+        eq(salesforceIdMap.orgId, orgId),
+        eq(salesforceIdMap.entityType, type),
+        eq(salesforceIdMap.localId, localId),
+      ),
+    )
     .limit(1);
   return row?.sfId ?? null;
 }
 
-async function lookupLocalId(orgId: string, type: EntityType, sfId: string): Promise<string | null> {
+async function lookupLocalId(
+  orgId: string,
+  type: EntityType,
+  sfId: string,
+): Promise<string | null> {
   const [row] = await db
     .select({ localId: salesforceIdMap.localId })
     .from(salesforceIdMap)
-    .where(and(eq(salesforceIdMap.orgId, orgId), eq(salesforceIdMap.entityType, type), eq(salesforceIdMap.salesforceId, sfId)))
+    .where(
+      and(
+        eq(salesforceIdMap.orgId, orgId),
+        eq(salesforceIdMap.entityType, type),
+        eq(salesforceIdMap.salesforceId, sfId),
+      ),
+    )
     .limit(1);
   return row?.localId ?? null;
 }
 
-async function recordMapping(orgId: string, type: EntityType, localId: string, sfId: string, hash: string): Promise<void> {
+async function recordMapping(
+  orgId: string,
+  type: EntityType,
+  localId: string,
+  sfId: string,
+  hash: string,
+): Promise<void> {
   await db
     .insert(salesforceIdMap)
     .values({ orgId, entityType: type, localId, salesforceId: sfId, lastSyncedHash: hash })
@@ -96,10 +132,19 @@ function dealToSfBody(d: typeof deals.$inferSelect): Partial<SfOpportunityRecord
   };
 }
 
-export async function pushContacts(conn: SalesforceConnection, since?: Date): Promise<{ inserted: number; updated: number; failed: number }> {
+export async function pushContacts(
+  conn: SalesforceConnection,
+  since?: Date,
+): Promise<{ inserted: number; updated: number; failed: number }> {
   const sinceCond = since ? gte(contacts.updatedAt, since) : sql`true`;
-  const rows = await db.select().from(contacts).where(and(eq(contacts.orgId, conn.orgId), isNull(contacts.deletedAt), sinceCond)).limit(500);
-  let inserted = 0, updated = 0, failed = 0;
+  const rows = await db
+    .select()
+    .from(contacts)
+    .where(and(eq(contacts.orgId, conn.orgId), isNull(contacts.deletedAt), sinceCond))
+    .limit(500);
+  let inserted = 0,
+    updated = 0,
+    failed = 0;
   for (const c of rows) {
     try {
       const body = contactToSfBody(c);
@@ -122,10 +167,19 @@ export async function pushContacts(conn: SalesforceConnection, since?: Date): Pr
   return { inserted, updated, failed };
 }
 
-export async function pushAccounts(conn: SalesforceConnection, since?: Date): Promise<{ inserted: number; updated: number; failed: number }> {
+export async function pushAccounts(
+  conn: SalesforceConnection,
+  since?: Date,
+): Promise<{ inserted: number; updated: number; failed: number }> {
   const sinceCond = since ? gte(accounts.updatedAt, since) : sql`true`;
-  const rows = await db.select().from(accounts).where(and(eq(accounts.orgId, conn.orgId), isNull(accounts.deletedAt), sinceCond)).limit(500);
-  let inserted = 0, updated = 0, failed = 0;
+  const rows = await db
+    .select()
+    .from(accounts)
+    .where(and(eq(accounts.orgId, conn.orgId), isNull(accounts.deletedAt), sinceCond))
+    .limit(500);
+  let inserted = 0,
+    updated = 0,
+    failed = 0;
   for (const a of rows) {
     try {
       const body = accountToSfBody(a);
@@ -147,10 +201,19 @@ export async function pushAccounts(conn: SalesforceConnection, since?: Date): Pr
   return { inserted, updated, failed };
 }
 
-export async function pushDeals(conn: SalesforceConnection, since?: Date): Promise<{ inserted: number; updated: number; failed: number }> {
+export async function pushDeals(
+  conn: SalesforceConnection,
+  since?: Date,
+): Promise<{ inserted: number; updated: number; failed: number }> {
   const sinceCond = since ? gte(deals.updatedAt, since) : sql`true`;
-  const rows = await db.select().from(deals).where(and(eq(deals.orgId, conn.orgId), isNull(deals.deletedAt), sinceCond)).limit(500);
-  let inserted = 0, updated = 0, failed = 0;
+  const rows = await db
+    .select()
+    .from(deals)
+    .where(and(eq(deals.orgId, conn.orgId), isNull(deals.deletedAt), sinceCond))
+    .limit(500);
+  let inserted = 0,
+    updated = 0,
+    failed = 0;
   for (const d of rows) {
     try {
       const body = dealToSfBody(d);
@@ -174,9 +237,14 @@ export async function pushDeals(conn: SalesforceConnection, since?: Date): Promi
 
 // ─── PULL: Salesforce → ForgeMsg ─────────────────────────────────────────────
 
-export async function pullContacts(conn: SalesforceConnection, since?: Date): Promise<{ inserted: number; updated: number; failed: number }> {
+export async function pullContacts(
+  conn: SalesforceConnection,
+  since?: Date,
+): Promise<{ inserted: number; updated: number; failed: number }> {
   const result = await queryContacts(conn, since?.toISOString());
-  let inserted = 0, updated = 0, failed = 0;
+  let inserted = 0,
+    updated = 0,
+    failed = 0;
   for (const c of result.records) {
     try {
       const body = { FirstName: c.FirstName, LastName: c.LastName, Email: c.Email, Phone: c.Phone };
@@ -185,14 +253,27 @@ export async function pullContacts(conn: SalesforceConnection, since?: Date): Pr
       if (localId) {
         await db
           .update(contacts)
-          .set({ firstName: c.FirstName ?? null, lastName: c.LastName ?? null, email: c.Email ?? null, phone: c.Phone ?? null, updatedAt: new Date() })
+          .set({
+            firstName: c.FirstName ?? null,
+            lastName: c.LastName ?? null,
+            email: c.Email ?? null,
+            phone: c.Phone ?? null,
+            updatedAt: new Date(),
+          })
           .where(eq(contacts.id, localId));
         updated++;
         await recordMapping(conn.orgId, 'contact', localId, c.Id, hash);
       } else {
         const [row] = await db
           .insert(contacts)
-          .values({ orgId: conn.orgId, firstName: c.FirstName, lastName: c.LastName, email: c.Email, phone: c.Phone, source: 'salesforce' })
+          .values({
+            orgId: conn.orgId,
+            firstName: c.FirstName,
+            lastName: c.LastName,
+            email: c.Email,
+            phone: c.Phone,
+            source: 'salesforce',
+          })
           .returning({ id: contacts.id });
         inserted++;
         if (row) await recordMapping(conn.orgId, 'contact', row.id, c.Id, hash);
@@ -204,12 +285,23 @@ export async function pullContacts(conn: SalesforceConnection, since?: Date): Pr
   return { inserted, updated, failed };
 }
 
-export async function pullAccounts(conn: SalesforceConnection, since?: Date): Promise<{ inserted: number; updated: number; failed: number }> {
+export async function pullAccounts(
+  conn: SalesforceConnection,
+  since?: Date,
+): Promise<{ inserted: number; updated: number; failed: number }> {
   const result = await queryAccounts(conn, since?.toISOString());
-  let inserted = 0, updated = 0, failed = 0;
+  let inserted = 0,
+    updated = 0,
+    failed = 0;
   for (const a of result.records) {
     try {
-      const body = { Name: a.Name, Website: a.Website, Industry: a.Industry, AnnualRevenue: a.AnnualRevenue, NumberOfEmployees: a.NumberOfEmployees };
+      const body = {
+        Name: a.Name,
+        Website: a.Website,
+        Industry: a.Industry,
+        AnnualRevenue: a.AnnualRevenue,
+        NumberOfEmployees: a.NumberOfEmployees,
+      };
       const hash = hashRecord(body);
       const localId = await lookupLocalId(conn.orgId, 'account', a.Id);
       if (localId) {
@@ -248,12 +340,22 @@ export async function pullAccounts(conn: SalesforceConnection, since?: Date): Pr
   return { inserted, updated, failed };
 }
 
-export async function pullOpportunities(conn: SalesforceConnection, since?: Date): Promise<{ inserted: number; updated: number; failed: number }> {
+export async function pullOpportunities(
+  conn: SalesforceConnection,
+  since?: Date,
+): Promise<{ inserted: number; updated: number; failed: number }> {
   const result = await queryOpportunities(conn, since?.toISOString());
-  let inserted = 0, updated = 0, failed = 0;
+  const inserted = 0;
+  let updated = 0,
+    failed = 0;
   for (const o of result.records) {
     try {
-      const body = { Name: o.Name, StageName: o.StageName, Amount: o.Amount, CloseDate: o.CloseDate };
+      const body = {
+        Name: o.Name,
+        StageName: o.StageName,
+        Amount: o.Amount,
+        CloseDate: o.CloseDate,
+      };
       const hash = hashRecord(body);
       const localId = await lookupLocalId(conn.orgId, 'deal', o.Id);
       const status: 'open' | 'won' | 'lost' = o.IsClosed ? (o.IsWon ? 'won' : 'lost') : 'open';
@@ -287,25 +389,41 @@ export async function pullOpportunities(conn: SalesforceConnection, since?: Date
 
 // ─── Top-level sync run ──────────────────────────────────────────────────────
 
-export async function runSync(orgId: string, opts: { direction?: 'push' | 'pull' | 'both' } = {}): Promise<void> {
+export async function runSync(
+  orgId: string,
+  opts: { direction?: 'push' | 'pull' | 'both' } = {},
+): Promise<void> {
   const direction = opts.direction ?? 'both';
-  const [conn] = await db.select().from(salesforceConnections).where(eq(salesforceConnections.orgId, orgId)).limit(1);
+  const [conn] = await db
+    .select()
+    .from(salesforceConnections)
+    .where(eq(salesforceConnections.orgId, orgId))
+    .limit(1);
   if (!conn) throw new Error('Salesforce connection not configured');
   const since = conn.lastSyncAt ?? undefined;
   const startedAt = new Date();
 
   if (direction === 'push' || direction === 'both') {
-    if (conn.syncContacts) await runStep(orgId, 'push', 'contact', () => pushContacts(conn, since), startedAt);
-    if (conn.syncAccounts) await runStep(orgId, 'push', 'account', () => pushAccounts(conn, since), startedAt);
-    if (conn.syncDeals) await runStep(orgId, 'push', 'deal', () => pushDeals(conn, since), startedAt);
+    if (conn.syncContacts)
+      await runStep(orgId, 'push', 'contact', () => pushContacts(conn, since), startedAt);
+    if (conn.syncAccounts)
+      await runStep(orgId, 'push', 'account', () => pushAccounts(conn, since), startedAt);
+    if (conn.syncDeals)
+      await runStep(orgId, 'push', 'deal', () => pushDeals(conn, since), startedAt);
   }
   if (direction === 'pull' || direction === 'both') {
-    if (conn.syncContacts) await runStep(orgId, 'pull', 'contact', () => pullContacts(conn, since), startedAt);
-    if (conn.syncAccounts) await runStep(orgId, 'pull', 'account', () => pullAccounts(conn, since), startedAt);
-    if (conn.syncDeals) await runStep(orgId, 'pull', 'deal', () => pullOpportunities(conn, since), startedAt);
+    if (conn.syncContacts)
+      await runStep(orgId, 'pull', 'contact', () => pullContacts(conn, since), startedAt);
+    if (conn.syncAccounts)
+      await runStep(orgId, 'pull', 'account', () => pullAccounts(conn, since), startedAt);
+    if (conn.syncDeals)
+      await runStep(orgId, 'pull', 'deal', () => pullOpportunities(conn, since), startedAt);
   }
 
-  await db.update(salesforceConnections).set({ lastSyncAt: new Date() }).where(eq(salesforceConnections.orgId, orgId));
+  await db
+    .update(salesforceConnections)
+    .set({ lastSyncAt: new Date() })
+    .where(eq(salesforceConnections.orgId, orgId));
 }
 
 async function runStep(

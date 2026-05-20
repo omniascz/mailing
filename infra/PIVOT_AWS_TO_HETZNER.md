@@ -8,12 +8,12 @@
 
 ## Proč pivotujeme
 
-| Faktor | AWS EKS plán | Reálné riziko / problém |
-|---|---|---|
-| **Marketing mail allowance** | Závisel na AWS SES nebo vlastním MTA na EC2 | SES uživatele odmítl; EC2 SMTP port 25 je defaultně blokovaný a uvolnění vyžaduje schválení které u marketing mailů často nepřijde |
-| **Cena Compute** | Graviton4 ARM, ale stále premium AWS pricing | Při 1M mailů/měs a omnichannel scope ~$1 400 → $27 500 přes 3 fáze |
-| **IP reputace** | Sdílené IPs (SES) nebo EIP omezené na 5/účet | Nemůžeme stavět IP pool s diverzifikovaným AS pro snowshoe resistance |
-| **Lock-in** | EKS, RDS, ElastiCache, S3, Route53, ACM, IAM | Migrace později = přepsání IaC a všech provozních runbooků |
+| Faktor                       | AWS EKS plán                                 | Reálné riziko / problém                                                                                                            |
+| ---------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Marketing mail allowance** | Závisel na AWS SES nebo vlastním MTA na EC2  | SES uživatele odmítl; EC2 SMTP port 25 je defaultně blokovaný a uvolnění vyžaduje schválení které u marketing mailů často nepřijde |
+| **Cena Compute**             | Graviton4 ARM, ale stále premium AWS pricing | Při 1M mailů/měs a omnichannel scope ~$1 400 → $27 500 přes 3 fáze                                                                 |
+| **IP reputace**              | Sdílené IPs (SES) nebo EIP omezené na 5/účet | Nemůžeme stavět IP pool s diverzifikovaným AS pro snowshoe resistance                                                              |
+| **Lock-in**                  | EKS, RDS, ElastiCache, S3, Route53, ACM, IAM | Migrace později = přepsání IaC a všech provozních runbooků                                                                         |
 
 **Co tím neřešíme:** Kompetenci AWS pro veřejné API/web nebo S3. AWS jsme nezatratili — jen je nevhodný pro **odesílací infrastrukturu marketing emailů.**
 
@@ -72,32 +72,32 @@
 
 ## Mapování komponent: AWS → Hetzner + Vercel
 
-| Vrstva | AWS plán (TECH_STACK.md 2026-04-11) | Pivot (2026-05-18) | Poznámka |
-|---|---|---|---|
-| **Frontend hosting** | EKS pod (apps/web) + ALB | **Vercel** (Frankfurt region) | Next.js 15 native; Edge runtime; preview deployments per PR |
-| **API hosting** | EKS pod (apps/api) | **Hetzner Cloud + Coolify** | Fastify chce dlouhý běh, ne serverless |
-| **Worker hosting** | EKS pod (apps/workers) | **Hetzner Cloud + Coolify** | BullMQ jobs, není stateless serverless |
-| **MTA cluster** | EKS pod (apps/engine) na EC2 | **Hetzner Dedicated bare-metal** | Engine musí mít fixní IPs s rDNS — kontejner s NAT to neumí |
-| **SMS gateway** | EKS pod (apps/sms-gateway) | **Hetzner Cloud + Coolify** | SMPP TCP perzistent connections — Cloud VM stačí |
-| **Voice bot** | EKS pod (apps/voice-bot) | **Hetzner Cloud + Coolify** | WebSocket + Twilio Voice — Cloud VM stačí |
-| **MCP server** | EKS pod (apps/mcp-server) | **Hetzner Cloud + Coolify** | Náhrada za AWS Fargate task |
-| **Postgres primary** | RDS Multi-AZ | **Hetzner Dedicated** + manual replica | $30/měs server vs $400/měs RDS na ekvivalentu |
-| **Postgres backup** | RDS automated snapshots | **Hetzner Storage Box** (1 TB ~€3/měs) + pg_basebackup + WAL archiv | + Volitelně Cloudflare R2 jako off-site |
-| **ClickHouse** | EKS StatefulSet | **Hetzner Dedicated** OR **ClickHouse Cloud** | Doporučení: ClickHouse Cloud (managed, ~$50/měs starter) v Phase 0–4, Hetzner dedicated od Phase 5+ |
-| **Redis** | ElastiCache Cluster | **Hetzner Cloud + Redis na Coolify** | Pro queue + cache; HA = Sentinel mode později |
-| **Kafka** | MSK | **Hetzner Cloud + Kafka KRaft** | KRaft eliminuje Zookeeper. 3-node cluster od Phase 3+ |
-| **Object storage** | S3 | **Cloudflare R2** | S3-compatible API, žádné egress fee, $0.015/GB/měs storage |
-| **CDN** | CloudFront | **Cloudflare** | Free tier pokrývá 99 % našeho traffic; tracking pixely na own subdomain přes Cloudflare Workers |
-| **DNS** | Route53 | **Cloudflare DNS** | $0/měs; lepší propagation; API friendly |
-| **TLS certifikáty** | ACM | **Cloudflare TLS + Caddy reverse proxy** na Coolify | Coolify má auto-Let's-Encrypt vestavěno |
-| **Identity** | IAM + Cognito | **Vlastní auth (existující plán)** | JWT + Redis session zůstává |
-| **Secret management** | AWS Secrets Manager | **Doppler** OR **HashiCorp Vault** OR Coolify env vars | Doporučení: Doppler ($0 do 5 users) v MVP |
-| **Container orchestration** | EKS + ArgoCD + Helm | **Coolify** (MVP) → **k3s** (Phase 5+) | Coolify = self-hosted Vercel/Heroku, krásné UI, Git deploys |
-| **IaC** | Terraform AWS provider | **Terraform Hetzner provider** + **Pulumi pro Vercel** | Stav v Hetzner Storage Box, ne v S3 |
-| **CI/CD** | GitHub Actions → ECR → ArgoCD | **GitHub Actions → Coolify webhook** + **Vercel Git integration** | Trunk-based development zůstává |
-| **Monitoring** | Grafana Cloud | **Grafana Cloud** (beze změny) | Provider-agnostic |
-| **Logs** | CloudWatch | **Better Stack (Logtail)** OR Loki na Grafana Cloud | $0 free tier do 1 GB/měs |
-| **Alerting** | PagerDuty | **Better Stack on-call** OR PagerDuty | Better Stack je 5× levnější pro malý tým |
+| Vrstva                      | AWS plán (TECH_STACK.md 2026-04-11) | Pivot (2026-05-18)                                                  | Poznámka                                                                                            |
+| --------------------------- | ----------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Frontend hosting**        | EKS pod (apps/web) + ALB            | **Vercel** (Frankfurt region)                                       | Next.js 15 native; Edge runtime; preview deployments per PR                                         |
+| **API hosting**             | EKS pod (apps/api)                  | **Hetzner Cloud + Coolify**                                         | Fastify chce dlouhý běh, ne serverless                                                              |
+| **Worker hosting**          | EKS pod (apps/workers)              | **Hetzner Cloud + Coolify**                                         | BullMQ jobs, není stateless serverless                                                              |
+| **MTA cluster**             | EKS pod (apps/engine) na EC2        | **Hetzner Dedicated bare-metal**                                    | Engine musí mít fixní IPs s rDNS — kontejner s NAT to neumí                                         |
+| **SMS gateway**             | EKS pod (apps/sms-gateway)          | **Hetzner Cloud + Coolify**                                         | SMPP TCP perzistent connections — Cloud VM stačí                                                    |
+| **Voice bot**               | EKS pod (apps/voice-bot)            | **Hetzner Cloud + Coolify**                                         | WebSocket + Twilio Voice — Cloud VM stačí                                                           |
+| **MCP server**              | EKS pod (apps/mcp-server)           | **Hetzner Cloud + Coolify**                                         | Náhrada za AWS Fargate task                                                                         |
+| **Postgres primary**        | RDS Multi-AZ                        | **Hetzner Dedicated** + manual replica                              | $30/měs server vs $400/měs RDS na ekvivalentu                                                       |
+| **Postgres backup**         | RDS automated snapshots             | **Hetzner Storage Box** (1 TB ~€3/měs) + pg_basebackup + WAL archiv | + Volitelně Cloudflare R2 jako off-site                                                             |
+| **ClickHouse**              | EKS StatefulSet                     | **Hetzner Dedicated** OR **ClickHouse Cloud**                       | Doporučení: ClickHouse Cloud (managed, ~$50/měs starter) v Phase 0–4, Hetzner dedicated od Phase 5+ |
+| **Redis**                   | ElastiCache Cluster                 | **Hetzner Cloud + Redis na Coolify**                                | Pro queue + cache; HA = Sentinel mode později                                                       |
+| **Kafka**                   | MSK                                 | **Hetzner Cloud + Kafka KRaft**                                     | KRaft eliminuje Zookeeper. 3-node cluster od Phase 3+                                               |
+| **Object storage**          | S3                                  | **Cloudflare R2**                                                   | S3-compatible API, žádné egress fee, $0.015/GB/měs storage                                          |
+| **CDN**                     | CloudFront                          | **Cloudflare**                                                      | Free tier pokrývá 99 % našeho traffic; tracking pixely na own subdomain přes Cloudflare Workers     |
+| **DNS**                     | Route53                             | **Cloudflare DNS**                                                  | $0/měs; lepší propagation; API friendly                                                             |
+| **TLS certifikáty**         | ACM                                 | **Cloudflare TLS + Caddy reverse proxy** na Coolify                 | Coolify má auto-Let's-Encrypt vestavěno                                                             |
+| **Identity**                | IAM + Cognito                       | **Vlastní auth (existující plán)**                                  | JWT + Redis session zůstává                                                                         |
+| **Secret management**       | AWS Secrets Manager                 | **Doppler** OR **HashiCorp Vault** OR Coolify env vars              | Doporučení: Doppler ($0 do 5 users) v MVP                                                           |
+| **Container orchestration** | EKS + ArgoCD + Helm                 | **Coolify** (MVP) → **k3s** (Phase 5+)                              | Coolify = self-hosted Vercel/Heroku, krásné UI, Git deploys                                         |
+| **IaC**                     | Terraform AWS provider              | **Terraform Hetzner provider** + **Pulumi pro Vercel**              | Stav v Hetzner Storage Box, ne v S3                                                                 |
+| **CI/CD**                   | GitHub Actions → ECR → ArgoCD       | **GitHub Actions → Coolify webhook** + **Vercel Git integration**   | Trunk-based development zůstává                                                                     |
+| **Monitoring**              | Grafana Cloud                       | **Grafana Cloud** (beze změny)                                      | Provider-agnostic                                                                                   |
+| **Logs**                    | CloudWatch                          | **Better Stack (Logtail)** OR Loki na Grafana Cloud                 | $0 free tier do 1 GB/měs                                                                            |
+| **Alerting**                | PagerDuty                           | **Better Stack on-call** OR PagerDuty                               | Better Stack je 5× levnější pro malý tým                                                            |
 
 ---
 
@@ -141,43 +141,43 @@ Zaniká: `AWS_*`, `MINIO_*` (prod), všechny AWS-specific proměnné.
 
 ### MVP fáze (0–1k users, ~0.1M mailů/měs)
 
-| Položka | AWS plán | Hetzner+Vercel | Úspora |
-|---|---|---|---|
-| Compute (K8s) | $350 | $80 (3× CX22 Cloud + Coolify) | -77 % |
-| Postgres | RDS db.t4g.micro | Hetzner CCX13 €15 | -50 % |
-| ClickHouse | EKS StatefulSet ~$60 | ClickHouse Cloud Dev $50 | -17 % |
-| Cache | ElastiCache t4g.micro | Redis na Coolify $0 | -100 % |
-| Object storage | S3 + CloudFront | Cloudflare R2 | -80 % |
-| **MTA cluster** | EC2 t4g.small + EIP | **2× Hetzner EX44** dedicated €78 | base |
-| **IPs** | 2× EIP $7 | **8× Hetzner IPv4** €12 | base |
-| Vercel | — | Hobby $0 / Pro $20 | + |
-| Domain + DNS | Route53 $15 | Cloudflare $0 | -100 % |
-| Monitoring | Grafana Cloud | Grafana Cloud | = |
-| **Celkem MVP** | **~$1 400/měs** | **~$350/měs** | **-75 %** |
+| Položka         | AWS plán              | Hetzner+Vercel                    | Úspora    |
+| --------------- | --------------------- | --------------------------------- | --------- |
+| Compute (K8s)   | $350                  | $80 (3× CX22 Cloud + Coolify)     | -77 %     |
+| Postgres        | RDS db.t4g.micro      | Hetzner CCX13 €15                 | -50 %     |
+| ClickHouse      | EKS StatefulSet ~$60  | ClickHouse Cloud Dev $50          | -17 %     |
+| Cache           | ElastiCache t4g.micro | Redis na Coolify $0               | -100 %    |
+| Object storage  | S3 + CloudFront       | Cloudflare R2                     | -80 %     |
+| **MTA cluster** | EC2 t4g.small + EIP   | **2× Hetzner EX44** dedicated €78 | base      |
+| **IPs**         | 2× EIP $7             | **8× Hetzner IPv4** €12           | base      |
+| Vercel          | —                     | Hobby $0 / Pro $20                | +         |
+| Domain + DNS    | Route53 $15           | Cloudflare $0                     | -100 %    |
+| Monitoring      | Grafana Cloud         | Grafana Cloud                     | =         |
+| **Celkem MVP**  | **~$1 400/měs**       | **~$350/měs**                     | **-75 %** |
 
 ### Growth fáze (1–10k users, ~5M mailů/měs)
 
-| Položka | AWS plán | Hetzner+Vercel |
-|---|---|---|
-| Compute | $1 430 | $300 (5× CCX23 + Coolify HA) |
-| DB primary + replica | $820 | €120 (Hetzner AX42 + AX42) |
-| ClickHouse | $300 | $200 (Cloud Production) |
-| **MTA cluster** | EKS + 8× EIP $200 | **4× EX44 + 16 IPs** €170 |
-| Object storage | $170 | $40 R2 |
-| Vercel | — | Pro $20 + extras $100 |
-| **Celkem Growth** | **~$6 300/měs** | **~$1 100/měs** | 
+| Položka              | AWS plán          | Hetzner+Vercel               |
+| -------------------- | ----------------- | ---------------------------- |
+| Compute              | $1 430            | $300 (5× CCX23 + Coolify HA) |
+| DB primary + replica | $820              | €120 (Hetzner AX42 + AX42)   |
+| ClickHouse           | $300              | $200 (Cloud Production)      |
+| **MTA cluster**      | EKS + 8× EIP $200 | **4× EX44 + 16 IPs** €170    |
+| Object storage       | $170              | $40 R2                       |
+| Vercel               | —                 | Pro $20 + extras $100        |
+| **Celkem Growth**    | **~$6 300/měs**   | **~$1 100/měs**              |
 
 ### Scale fáze (10–50k users, ~30M mailů/měs)
 
-| Položka | AWS plán | Hetzner+Vercel |
-|---|---|---|
-| Compute | $5 420 | $1 200 (k3s cluster 8 nodes) |
-| DB | $3 000 | €400 (AX52 primary + 2 replicas) |
-| ClickHouse | $1 200 | $800 |
-| **MTA cluster** | $2 350 | **8× EX44 + 32 IPs + ASN diversity** ~€500 |
-| Object storage | $700 | $150 R2 |
-| Vercel | — | Enterprise $500 |
-| **Celkem Scale** | **~$27 500/měs** | **~$4 500/měs** | 
+| Položka          | AWS plán         | Hetzner+Vercel                             |
+| ---------------- | ---------------- | ------------------------------------------ |
+| Compute          | $5 420           | $1 200 (k3s cluster 8 nodes)               |
+| DB               | $3 000           | €400 (AX52 primary + 2 replicas)           |
+| ClickHouse       | $1 200           | $800                                       |
+| **MTA cluster**  | $2 350           | **8× EX44 + 32 IPs + ASN diversity** ~€500 |
+| Object storage   | $700             | $150 R2                                    |
+| Vercel           | —                | Enterprise $500                            |
+| **Celkem Scale** | **~$27 500/měs** | **~$4 500/měs**                            |
 
 **Sumární úspora ~75–85 %** napříč fázemi.
 
@@ -185,14 +185,14 @@ Zaniká: `AWS_*`, `MINIO_*` (prod), všechny AWS-specific proměnné.
 
 ## Trade-offs přijaté pivotem
 
-| Kompromis | Důsledek | Mitigace |
-|---|---|---|
-| **Hetzner SLA** je horší než AWS (99.9 % vs 99.99 % per service) | Občasné outages datacentra (FSN1, NBG1 měly několik incidentů ročně) | Multi-DC od Phase 5+ (Falkenstein + Helsinki), client failover na DNS úrovni |
-| **Sami provozujeme Postgres** místo RDS | Backupy, replikace, upgrady jsou naše | Hetzner Storage Box + pg_basebackup + barman + měsíční DR drill |
-| **Sami provozujeme Redis a Kafka** | Operační režie | Coolify zjednodušuje; ne-HA v MVP, HA v Phase 3+ |
-| **Coolify zatím nemá multi-region** | Single region (DE/FI) v MVP | Plánovaný přesun na k3s v Phase 5+ pro multi-region |
-| **Vercel není v EU s data residency garancí pro všechny edge nodes** | Customer compute běží globálně | Edge funkce pro statiku/UI; všechen citlivý compute (API, DB, MTA) v EU jen |
-| **Hetzner zakazuje SMTP defaultně, musí se žádat** | Onboarding 24–72h delay | Žádat hned v Týdnu 1, mít fallback OVH/Vultr account ready |
+| Kompromis                                                            | Důsledek                                                             | Mitigace                                                                     |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Hetzner SLA** je horší než AWS (99.9 % vs 99.99 % per service)     | Občasné outages datacentra (FSN1, NBG1 měly několik incidentů ročně) | Multi-DC od Phase 5+ (Falkenstein + Helsinki), client failover na DNS úrovni |
+| **Sami provozujeme Postgres** místo RDS                              | Backupy, replikace, upgrady jsou naše                                | Hetzner Storage Box + pg_basebackup + barman + měsíční DR drill              |
+| **Sami provozujeme Redis a Kafka**                                   | Operační režie                                                       | Coolify zjednodušuje; ne-HA v MVP, HA v Phase 3+                             |
+| **Coolify zatím nemá multi-region**                                  | Single region (DE/FI) v MVP                                          | Plánovaný přesun na k3s v Phase 5+ pro multi-region                          |
+| **Vercel není v EU s data residency garancí pro všechny edge nodes** | Customer compute běží globálně                                       | Edge funkce pro statiku/UI; všechen citlivý compute (API, DB, MTA) v EU jen  |
+| **Hetzner zakazuje SMTP defaultně, musí se žádat**                   | Onboarding 24–72h delay                                              | Žádat hned v Týdnu 1, mít fallback OVH/Vultr account ready                   |
 
 ---
 
@@ -262,6 +262,6 @@ Existující kód v `apps/` zatím obsahuje pouze scaffolding (per `ls` apps/api
 
 ---
 
-*Dokument vytvořen: 2026-05-18*
-*Vlastník: omniascz@gmail.com*
-*Status: schváleno pro implementaci ve Fázi 0.5*
+_Dokument vytvořen: 2026-05-18_
+_Vlastník: omniascz@gmail.com_
+_Status: schváleno pro implementaci ve Fázi 0.5_

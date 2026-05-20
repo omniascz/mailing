@@ -91,9 +91,7 @@ export async function anonymizeContact(
         ipAddress: null,
         userAgent: null,
       })
-      .where(
-        and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId)),
-      )
+      .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId)))
       .returning({ id: emailEvents.id });
     emailEventsScrubbed = updateRes.length;
   } catch {
@@ -159,10 +157,7 @@ export interface GdprDataExport {
  * to another ESP. Limited to the last 365 days of email events to
  * keep the payload bounded.
  */
-export async function exportContactData(
-  orgId: string,
-  contactId: string,
-): Promise<GdprDataExport> {
+export async function exportContactData(orgId: string, contactId: string): Promise<GdprDataExport> {
   const [contact] = await db
     .select()
     .from(contacts)

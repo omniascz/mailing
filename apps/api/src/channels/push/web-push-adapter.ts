@@ -31,7 +31,6 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { pushSubscriptions, pushSendLog } from '../../db/schema/push.js';
 
-
 export interface WebPushConfig {
   /** VAPID public key (base64url) */
   vapidPublicKey: string;
@@ -138,7 +137,11 @@ async function encryptPushPayload(
   const ikm = await globalThis.crypto.subtle.exportKey('raw', sharedSecret);
 
   const prk = await globalThis.crypto.subtle.importKey(
-    'raw', new Uint8Array(ikm), { name: 'HKDF' }, false, ['deriveKey'],
+    'raw',
+    new Uint8Array(ikm),
+    { name: 'HKDF' },
+    false,
+    ['deriveKey'],
   );
 
   const contentKey = await globalThis.crypto.subtle.deriveKey(
@@ -184,7 +187,11 @@ export class WebPushAdapter extends BaseChannelAdapter {
 
   async send(message: UnifiedMessage, recipient: Recipient): Promise<DeliveryResult> {
     if (message.content.kind !== 'push') {
-      throw this.wrapError({ code: 'WRONG_CONTENT', message: 'Expected push content', retryable: false });
+      throw this.wrapError({
+        code: 'WRONG_CONTENT',
+        message: 'Expected push content',
+        retryable: false,
+      });
     }
 
     const { title, body, url, icon, image, actions, badge } = message.content;
@@ -231,7 +238,8 @@ export class WebPushAdapter extends BaseChannelAdapter {
     try {
       await this.deliverToEndpoint(sub.endpoint, sub.p256dh, sub.auth, notificationPayload);
 
-      await db.update(pushSendLog)
+      await db
+        .update(pushSendLog)
         .set({ status: 'sent', sentAt: new Date() })
         .where(eq(pushSendLog.id, logId));
 
@@ -247,12 +255,14 @@ export class WebPushAdapter extends BaseChannelAdapter {
 
       if (isGone) {
         // Subscription expired — mark as unsubscribed
-        await db.update(pushSubscriptions)
+        await db
+          .update(pushSubscriptions)
           .set({ active: false, unsubscribedAt: new Date() })
           .where(eq(pushSubscriptions.id, sub.id));
       }
 
-      await db.update(pushSendLog)
+      await db
+        .update(pushSendLog)
         .set({ status: 'failed', errorMessage: (err as Error).message })
         .where(eq(pushSendLog.id, logId));
 
@@ -267,11 +277,7 @@ export class WebPushAdapter extends BaseChannelAdapter {
   // ── getStatus ─────────────────────────────────────────────────────────────
 
   async getStatus(messageId: string): Promise<DeliveryStatus> {
-    const [log] = await db
-      .select()
-      .from(pushSendLog)
-      .where(eq(pushSendLog.id, messageId))
-      .limit(1);
+    const [log] = await db.select().from(pushSendLog).where(eq(pushSendLog.id, messageId)).limit(1);
 
     return {
       messageId,
@@ -369,10 +375,10 @@ export class WebPushAdapter extends BaseChannelAdapter {
     }
 
     const headers: Record<string, string> = {
-      'Authorization': `vapid t=${jwt},k=${this.cfg.vapidPublicKey}`,
+      Authorization: `vapid t=${jwt},k=${this.cfg.vapidPublicKey}`,
       'Content-Type': 'application/octet-stream',
       'Content-Encoding': encrypted ? 'aesgcm' : 'identity',
-      'TTL': '86400',
+      TTL: '86400',
     };
 
     if (encrypted) {

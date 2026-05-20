@@ -37,10 +37,7 @@ describe('Ecomail mapSubscriber', () => {
   });
 
   it('lowercases + trims the email', () => {
-    const sub = mapSubscriber(
-      { email: '  HELLO@Example.CZ  ', status: 'subscribed' },
-      ORG_ID,
-    );
+    const sub = mapSubscriber({ email: '  HELLO@Example.CZ  ', status: 'subscribed' }, ORG_ID);
     expect(sub!.email).toBe('hello@example.cz');
   });
 
@@ -50,12 +47,8 @@ describe('Ecomail mapSubscriber', () => {
   });
 
   it('skips hard-bounced and spam-complaint records', () => {
-    expect(
-      mapSubscriber({ email: 'a@b.cz', status: 'hard_bounce' }, ORG_ID),
-    ).toBeNull();
-    expect(
-      mapSubscriber({ email: 'a@b.cz', status: 'spam_complaint' }, ORG_ID),
-    ).toBeNull();
+    expect(mapSubscriber({ email: 'a@b.cz', status: 'hard_bounce' }, ORG_ID)).toBeNull();
+    expect(mapSubscriber({ email: 'a@b.cz', status: 'spam_complaint' }, ORG_ID)).toBeNull();
   });
 
   it('maps subscribed → active', () => {
@@ -92,10 +85,7 @@ describe('Ecomail mapSubscriber', () => {
   });
 
   it('preserves the source-side numeric ID for round-trip debugging', () => {
-    const sub = mapSubscriber(
-      { id: 42, email: 'a@b.cz', status: 'subscribed' },
-      ORG_ID,
-    );
+    const sub = mapSubscriber({ id: 42, email: 'a@b.cz', status: 'subscribed' }, ORG_ID);
     expect(sub!.customFields.imported_external_id).toBe('42');
   });
 

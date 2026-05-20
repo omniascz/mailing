@@ -21,14 +21,7 @@ import { redis } from '../../lib/redis.js';
 // observed throttle behavior (sub-5K/h triggers temp-defer). Limits below
 // mirror RecommendedThrottle() in apps/engine/internal/email/headers.go.
 
-export type IspName =
-  | 'gmail'
-  | 'microsoft'
-  | 'yahoo'
-  | 'seznam'
-  | 'volny'
-  | 'centrum'
-  | 'other';
+export type IspName = 'gmail' | 'microsoft' | 'yahoo' | 'seznam' | 'volny' | 'centrum' | 'other';
 
 interface IspConfig {
   /** Base hourly limit per sending IP */
@@ -196,11 +189,7 @@ export async function getThrottleState(
 /**
  * Reset throttle counters for an ISP (admin action or after IP change).
  */
-export async function resetThrottle(
-  orgId: string,
-  isp: IspName,
-  sendingIp: string,
-): Promise<void> {
+export async function resetThrottle(orgId: string, isp: IspName, sendingIp: string): Promise<void> {
   await redis.del(
     tokenKey(orgId, isp, sendingIp),
     reducedKey(orgId, isp, sendingIp),

@@ -5,8 +5,7 @@ export const cs: EmailsBundle = {
     brand: 'ForgeMsg',
     view_in_browser: 'Zobrazit v prohlížeči',
     footer_sent_by: 'Tento e-mail vám byl odeslán službou {{org}}.',
-    footer_no_longer:
-      'Pokud již nechcete dostávat tyto e-maily, můžete se {{unsubscribe_link}}.',
+    footer_no_longer: 'Pokud již nechcete dostávat tyto e-maily, můžete se {{unsubscribe_link}}.',
     unsubscribe_link_label: 'odhlásit zde',
   },
 
@@ -60,24 +59,21 @@ export const cs: EmailsBundle = {
     body_intro:
       'Obdrželi jsme žádost o obnovení hesla k vašemu účtu {{email}}. Kliknutím na odkaz níže nastavíte nové heslo.',
     cta: 'Obnovit heslo',
-    ignore_if_not_yours:
-      'Pokud jste obnovení hesla nevyžádali, tento e-mail ignorujte.',
+    ignore_if_not_yours: 'Pokud jste obnovení hesla nevyžádali, tento e-mail ignorujte.',
     expires_in: 'Odkaz je platný 60 minut.',
   },
 
   email_verification: {
     subject: 'Ověřte svůj e-mail',
     heading: 'Ověřte svou e-mailovou adresu',
-    body_intro:
-      'Vítejte v {{brand}}! Kliknutím na odkaz níže ověřte, že {{email}} je vaše adresa.',
+    body_intro: 'Vítejte v {{brand}}! Kliknutím na odkaz níže ověřte, že {{email}} je vaše adresa.',
     cta: 'Ověřit e-mail',
   },
 
   team_invite: {
     subject: '{{inviter}} vás zve do {{org}}',
     heading: 'Byli jste pozváni do týmu',
-    body_intro:
-      '{{inviter}} vás zve ke spolupráci v organizaci {{org}} na {{brand}}.',
+    body_intro: '{{inviter}} vás zve ke spolupráci v organizaci {{org}} na {{brand}}.',
     cta: 'Přijmout pozvánku',
   },
 };

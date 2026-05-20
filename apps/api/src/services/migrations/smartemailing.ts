@@ -20,12 +20,7 @@
 
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  migrationJobs,
-  contacts,
-  lists,
-  type MigrationProgress,
-} from '../../db/schema/index.js';
+import { migrationJobs, contacts, lists, type MigrationProgress } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 // ─── SmartEmailing API client ────────────────────────────────────────────────
@@ -120,9 +115,7 @@ export async function startSmartEmailingMigration(
   try {
     await seGet<SePing>(username, apiKey, '/ping');
   } catch (err) {
-    throw AppError.badRequest(
-      `Invalid SmartEmailing credentials: ${(err as Error).message}`,
-    );
+    throw AppError.badRequest(`Invalid SmartEmailing credentials: ${(err as Error).message}`);
   }
 
   const [job] = await db
@@ -171,7 +164,7 @@ async function updateProgress(jobId: string, progress: Partial<MigrationProgress
     .limit(1);
 
   const merged = {
-    ...(current?.progress as unknown as Record<string, unknown> ?? {}),
+    ...((current?.progress as unknown as Record<string, unknown>) ?? {}),
     ...progress,
   };
 
@@ -187,10 +180,7 @@ export async function processSmartEmailingMigration(
   username: string,
   apiKey: string,
 ): Promise<void> {
-  await db
-    .update(migrationJobs)
-    .set({ status: 'running' })
-    .where(eq(migrationJobs.id, jobId));
+  await db.update(migrationJobs).set({ status: 'running' }).where(eq(migrationJobs.id, jobId));
 
   const errors: string[] = [];
   let totalImported = 0;
@@ -281,12 +271,18 @@ export async function processSmartEmailingMigration(
               });
             listImported++;
           } catch (err) {
-            errors.push(`Insert failed for ${sub.contact?.emailaddress}: ${(err as Error).message}`);
+            errors.push(
+              `Insert failed for ${sub.contact?.emailaddress}: ${(err as Error).message}`,
+            );
             listSkipped++;
           }
         }
 
-        if (pageRes.meta?.page_count && pageRes.meta.current_page && pageRes.meta.current_page >= pageRes.meta.page_count) {
+        if (
+          pageRes.meta?.page_count &&
+          pageRes.meta.current_page &&
+          pageRes.meta.current_page >= pageRes.meta.page_count
+        ) {
           break;
         }
         if (batch.length < limit) break;
@@ -354,10 +350,7 @@ interface MappedContact {
  * imported_consent_* keys. The Sprint D consent migration will lift these into
  * processing_purposes rows.
  */
-export function mapSubscriber(
-  row: SeContactListContact,
-  orgId: string,
-): MappedContact | null {
+export function mapSubscriber(row: SeContactListContact, orgId: string): MappedContact | null {
   const c = row.contact;
   if (!c?.emailaddress || !c.emailaddress.includes('@')) return null;
 
@@ -375,22 +368,13 @@ export function mapSubscriber(
     imported_consent_at: consentAt,
     imported_consent_status: status || 'subscribed',
     ...(c.id != null ? { imported_external_id: String(c.id) } : {}),
-    ...(c.gdpr?.consent_source
-      ? { imported_consent_source: c.gdpr.consent_source }
-      : {}),
-    ...(c.gdpr?.consent_ip
-      ? { imported_consent_ip: c.gdpr.consent_ip }
-      : {}),
-    ...(c.gdpr?.consent_note
-      ? { imported_consent_note: c.gdpr.consent_note }
-      : {}),
+    ...(c.gdpr?.consent_source ? { imported_consent_source: c.gdpr.consent_source } : {}),
+    ...(c.gdpr?.consent_ip ? { imported_consent_ip: c.gdpr.consent_ip } : {}),
+    ...(c.gdpr?.consent_note ? { imported_consent_note: c.gdpr.consent_note } : {}),
     ...(c.customfields_values && c.customfields_values.length > 0
       ? {
           smartemailing_custom: Object.fromEntries(
-            c.customfields_values.map((cf) => [
-              cf.name ?? `cf_${cf.id}`,
-              cf.value,
-            ]),
+            c.customfields_values.map((cf) => [cf.name ?? `cf_${cf.id}`, cf.value]),
           ),
         }
       : {}),

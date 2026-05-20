@@ -1,4 +1,12 @@
-import { pgTable, uuid, varchar, boolean, integer, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  integer,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { organizations } from './organizations.js';
 import { lists } from './lists.js';
@@ -7,7 +15,9 @@ export const smsKeywords = pgTable(
   'sms_keywords',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     keyword: varchar('keyword', { length: 32 }).notNull(),
     action: varchar('action', { length: 32 }).notNull(),
     listId: uuid('list_id').references(() => lists.id, { onDelete: 'set null' }),

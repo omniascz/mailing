@@ -233,12 +233,7 @@ export async function dispatchEvent(
   const subs = await db
     .select()
     .from(webhooks)
-    .where(
-      and(
-        eq(webhooks.orgId, orgId),
-        eq(webhooks.active, true),
-      ),
-    );
+    .where(and(eq(webhooks.orgId, orgId), eq(webhooks.active, true)));
 
   const matching = subs.filter((w) => {
     const events = w.events as string[];
@@ -272,8 +267,11 @@ export async function dispatchEvent(
     // Queue via BullMQ
     const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
     if (queues) {
-      await (queues as unknown as Record<string, { add: (n: string, d: unknown) => Promise<unknown> }>)
-        .webhook?.add('webhook-deliver', { deliveryId: delivery.id }).catch(() => {});
+      await (
+        queues as unknown as Record<string, { add: (n: string, d: unknown) => Promise<unknown> }>
+      ).webhook
+        ?.add('webhook-deliver', { deliveryId: delivery.id })
+        .catch(() => {});
     }
   }
 }
@@ -350,7 +348,14 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
   if (success) {
     await db
       .update(webhookDeliveries)
-      .set({ status: 'success', statusCode, responseBody, attempts, deliveredAt: now, nextRetryAt: null })
+      .set({
+        status: 'success',
+        statusCode,
+        responseBody,
+        attempts,
+        deliveredAt: now,
+        nextRetryAt: null,
+      })
       .where(eq(webhookDeliveries.id, deliveryId));
 
     // Update webhook stats
@@ -373,7 +378,9 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
       .set({ failedDeliveries: webhook.failedDeliveries + 1, updatedAt: now })
       .where(eq(webhooks.id, webhook.id));
   } else {
-    const nextRetry = new Date(now.getTime() + retryDelaySec(attempts, MAILFORGE_RETRY_CONFIG) * 1000);
+    const nextRetry = new Date(
+      now.getTime() + retryDelaySec(attempts, MAILFORGE_RETRY_CONFIG) * 1000,
+    );
     await db
       .update(webhookDeliveries)
       .set({ status: 'retrying', statusCode, responseBody, attempts, nextRetryAt: nextRetry })
@@ -390,19 +397,17 @@ export async function processRetryQueue(): Promise<{ queued: number }> {
   const due = await db
     .select({ id: webhookDeliveries.id })
     .from(webhookDeliveries)
-    .where(
-      and(
-        eq(webhookDeliveries.status, 'retrying'),
-        lte(webhookDeliveries.nextRetryAt, now),
-      ),
-    )
+    .where(and(eq(webhookDeliveries.status, 'retrying'), lte(webhookDeliveries.nextRetryAt, now)))
     .limit(100);
 
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   for (const d of due) {
     if (queues) {
-      await (queues as Record<string, { add: (n: string, data: unknown) => Promise<unknown> }>)
-        .webhook?.add('webhook-deliver', { deliveryId: d.id }).catch(() => {});
+      await (
+        queues as Record<string, { add: (n: string, data: unknown) => Promise<unknown> }>
+      ).webhook
+        ?.add('webhook-deliver', { deliveryId: d.id })
+        .catch(() => {});
     }
   }
 
@@ -412,7 +417,10 @@ export async function processRetryQueue(): Promise<{ queued: number }> {
 /**
  * Sends a test delivery (payload with synthetic data) to the webhook URL.
  */
-export async function testWebhook(id: string, orgId: string): Promise<{ success: boolean; statusCode?: number }> {
+export async function testWebhook(
+  id: string,
+  orgId: string,
+): Promise<{ success: boolean; statusCode?: number }> {
   const [webhook] = await db
     .select()
     .from(webhooks)
@@ -443,7 +451,7 @@ export async function testWebhook(id: string, orgId: string): Promise<{ success:
       signal: AbortSignal.timeout(10_000),
     });
     return { success: res.ok, statusCode: res.status };
-  } catch (err) {
+  } catch (_err) {
     return { success: false };
   }
 }
@@ -452,12 +460,7 @@ export async function listDeliveries(webhookId: string, orgId: string, limit = 5
   return db
     .select()
     .from(webhookDeliveries)
-    .where(
-      and(
-        eq(webhookDeliveries.webhookId, webhookId),
-        eq(webhookDeliveries.orgId, orgId),
-      ),
-    )
+    .where(and(eq(webhookDeliveries.webhookId, webhookId), eq(webhookDeliveries.orgId, orgId)))
     .orderBy(desc(webhookDeliveries.createdAt))
     .limit(limit);
 }

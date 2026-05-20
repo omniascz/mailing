@@ -8,11 +8,21 @@ export { RichWhatsAppSender } from './rich-messaging.js';
 // Re-export the private builder functions for unit testing
 // by duplicating the pure logic here (no side effects).
 
-export type { ButtonMessage, ListMessage, MediaMessage, LocationMessage } from './rich-messaging.js';
+export type {
+  ButtonMessage,
+  ListMessage,
+  MediaMessage,
+  LocationMessage,
+} from './rich-messaging.js';
 
 export function buildButtonPayloadForTest(
   to: string,
-  msg: { body: string; buttons: Array<{ id: string; title: string }>; header?: string; footer?: string },
+  msg: {
+    body: string;
+    buttons: Array<{ id: string; title: string }>;
+    header?: string;
+    footer?: string;
+  },
 ) {
   return {
     messaging_product: 'whatsapp',

@@ -45,7 +45,8 @@ function getAdOAuthConfig(platform: AdPlatform): AdOAuthConfig {
       clientId: process.env.LINKEDIN_CLIENT_ID ?? '',
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET ?? '',
       scope: 'r_ads,w_ads,r_ads_reporting',
-      accountsUrl: 'https://api.linkedin.com/v2/adAccountsV2?q=search&search.status.values[0]=ACTIVE',
+      accountsUrl:
+        'https://api.linkedin.com/v2/adAccountsV2?q=search&search.status.values[0]=ACTIVE',
     },
     tiktok_ads: {
       authUrl: 'https://ads.tiktok.com/marketing_api/auth',
@@ -72,7 +73,12 @@ function getAdOAuthConfig(platform: AdPlatform): AdOAuthConfig {
 
 // ── Initiate OAuth ────────────────────────────────────────────────────────────
 
-export async function initiateAdOAuth(orgId: string, userId: string, platform: AdPlatform, callbackBase: string) {
+export async function initiateAdOAuth(
+  orgId: string,
+  userId: string,
+  platform: AdPlatform,
+  callbackBase: string,
+) {
   const cfg = getAdOAuthConfig(platform);
   if (!cfg.clientId) throw AppError.badRequest(`${platform} OAuth not configured`);
 
@@ -101,41 +107,57 @@ export async function initiateAdOAuth(orgId: string, userId: string, platform: A
 
 async function fetchAdAccounts(platform: AdPlatform, accessToken: string, cfg: AdOAuthConfig) {
   const headers: Record<string, string> = { Authorization: `Bearer ${accessToken}` };
-  if (platform === 'google_ads') headers['developer-token'] = process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? '';
+  if (platform === 'google_ads')
+    headers['developer-token'] = process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? '';
 
   const res = await fetch(cfg.accountsUrl, { headers });
   if (!res.ok) return [];
 
-  const json = await res.json() as Record<string, unknown>;
+  const json = (await res.json()) as Record<string, unknown>;
 
   switch (platform) {
     case 'facebook_ads': {
       const data = (json.data as Array<{ id: string; name: string }>) ?? [];
-      return data.map(a => ({ id: a.id.replace('act_', ''), name: a.name }));
+      return data.map((a) => ({ id: a.id.replace('act_', ''), name: a.name }));
     }
     case 'google_ads': {
       const ids = (json.resourceNames as string[]) ?? [];
-      return ids.map(r => ({ id: r.replace('customers/', ''), name: r }));
+      return ids.map((r) => ({ id: r.replace('customers/', ''), name: r }));
     }
     case 'linkedin_ads': {
-      const elements = (json.elements as Array<{ id: string; name?: { localized?: { en_US?: string } } }>) ?? [];
-      return elements.map(e => ({ id: String(e.id), name: e.name?.localized?.en_US ?? String(e.id) }));
+      const elements =
+        (json.elements as Array<{ id: string; name?: { localized?: { en_US?: string } } }>) ?? [];
+      return elements.map((e) => ({
+        id: String(e.id),
+        name: e.name?.localized?.en_US ?? String(e.id),
+      }));
     }
     case 'tiktok_ads': {
-      const list = ((json.data as Record<string, unknown>)?.list as Array<{ advertiser_id: string; advertiser_name: string }>) ?? [];
-      return list.map(a => ({ id: a.advertiser_id, name: a.advertiser_name }));
+      const list =
+        ((json.data as Record<string, unknown>)?.list as Array<{
+          advertiser_id: string;
+          advertiser_name: string;
+        }>) ?? [];
+      return list.map((a) => ({ id: a.advertiser_id, name: a.advertiser_name }));
     }
-    default: return [];
+    default:
+      return [];
   }
 }
 
-export async function handleAdOAuthCallback(platform: AdPlatform, code: string, state: string, callbackBase: string) {
+export async function handleAdOAuthCallback(
+  platform: AdPlatform,
+  code: string,
+  state: string,
+  callbackBase: string,
+) {
   const [stateRow] = await db
     .select()
     .from(socialOauthStates)
     .where(eq(socialOauthStates.state, state));
 
-  if (!stateRow || stateRow.expiresAt < new Date()) throw AppError.badRequest('Invalid or expired OAuth state');
+  if (!stateRow || stateRow.expiresAt < new Date())
+    throw AppError.badRequest('Invalid or expired OAuth state');
   await db.delete(socialOauthStates).where(eq(socialOauthStates.state, state));
 
   const cfg = getAdOAuthConfig(platform);
@@ -144,10 +166,20 @@ export async function handleAdOAuthCallback(platform: AdPlatform, code: string, 
   const tokenRes = await fetch(cfg.tokenUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: redirectUri, client_id: cfg.clientId, client_secret: cfg.clientSecret }).toString(),
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+      client_id: cfg.clientId,
+      client_secret: cfg.clientSecret,
+    }).toString(),
   });
   if (!tokenRes.ok) throw AppError.badRequest(`Token exchange failed: ${tokenRes.status}`);
-  const tokens = await tokenRes.json() as { access_token: string; refresh_token?: string; expires_in?: number };
+  const tokens = (await tokenRes.json()) as {
+    access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
+  };
 
   const adAccountList = await fetchAdAccounts(platform, tokens.access_token, cfg);
   const tokenExpiresAt = tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null;
@@ -169,7 +201,12 @@ export async function handleAdOAuthCallback(platform: AdPlatform, code: string, 
       })
       .onConflictDoUpdate({
         target: [adAccounts.orgId, adAccounts.platform, adAccounts.platformAccountId],
-        set: { accessToken: tokens.access_token, refreshToken: tokens.refresh_token ?? undefined, active: true, updatedAt: new Date() },
+        set: {
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token ?? undefined,
+          active: true,
+          updatedAt: new Date(),
+        },
       })
       .returning();
     connected.push({ id: row!.id, platform, accountName: acc.name });
@@ -180,7 +217,10 @@ export async function handleAdOAuthCallback(platform: AdPlatform, code: string, 
 // ── List / disconnect ─────────────────────────────────────────────────────────
 
 export async function listAdAccounts(orgId: string) {
-  const rows = await db.select().from(adAccounts).where(and(eq(adAccounts.orgId, orgId), eq(adAccounts.active, true)));
+  const rows = await db
+    .select()
+    .from(adAccounts)
+    .where(and(eq(adAccounts.orgId, orgId), eq(adAccounts.active, true)));
   return rows.map(({ accessToken: _, refreshToken: __, ...rest }) => rest);
 }
 

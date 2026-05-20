@@ -5,7 +5,16 @@
  * their assignment to users/departments, and porting requests.
  */
 
-import { pgTable, uuid, varchar, boolean, jsonb, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  jsonb,
+  timestamp,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';
 
@@ -13,7 +22,9 @@ export const phoneNumbers = pgTable(
   'phone_numbers',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     /** E.164 number, e.g. +14155551234 */
     number: varchar('number', { length: 32 }).notNull(),
     /** twilio | telnyx */
@@ -52,7 +63,9 @@ export const phoneNumberPortRequests = pgTable(
   'phone_number_port_requests',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     numbers: jsonb('numbers').$type<string[]>().notNull(),
     losingCarrier: varchar('losing_carrier', { length: 255 }),
     accountNumber: varchar('account_number', { length: 255 }),

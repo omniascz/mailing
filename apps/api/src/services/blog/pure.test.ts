@@ -80,15 +80,11 @@ describe('isDueToPublish', () => {
   const now = new Date('2026-04-24T12:00:00Z');
 
   it('fires when scheduled time elapsed', () => {
-    expect(
-      isDueToPublish('scheduled', new Date('2026-04-24T11:00:00Z'), now),
-    ).toBe(true);
+    expect(isDueToPublish('scheduled', new Date('2026-04-24T11:00:00Z'), now)).toBe(true);
   });
 
   it('skips when future-scheduled', () => {
-    expect(
-      isDueToPublish('scheduled', new Date('2026-04-24T13:00:00Z'), now),
-    ).toBe(false);
+    expect(isDueToPublish('scheduled', new Date('2026-04-24T13:00:00Z'), now)).toBe(false);
   });
 
   it('skips non-scheduled statuses', () => {

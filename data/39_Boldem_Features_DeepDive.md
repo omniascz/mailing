@@ -4,13 +4,14 @@
 **Zdroje:** oficiální dokumentace boldem.cz + Shoptet doplňky + analytické weby (Freshstart.cz) ověřené v dubnu–květnu 2026.
 **Rozsah:** kompletní funkcionalita platformy v roce 2026 – e-mailing, hromadné SMS, PUSH oznámení, In-App zprávy, transakční e-maily, CDP (Customer Data Platform), automatizace, agenturní účty s white-label.
 
-> **Důležitý kontext:** Boldem je **český produkt** provozovaný na zabezpečeném cloudu **v České republice** (vlastní servery). Per oficiální positioning *"ryze české řešení provozované na zabezpečeném cloudu v České republice"*.
+> **Důležitý kontext:** Boldem je **český produkt** provozovaný na zabezpečeném cloudu **v České republice** (vlastní servery). Per oficiální positioning _"ryze české řešení provozované na zabezpečeném cloudu v České republice"_.
 >
 > **Historie:** Boldem **čerpá zkušenosti ze svého předchůdce – MailKompletu** (per Freshstart.cz). MailKomplet byl jeden z **klasických českých e-mail marketing tools** – Boldem je jeho modernější nástupce/evoluce.
 >
 > **Pozice:** **Český e-mailing + CDP** pro malé až střední e-shopy + agentury + středně velké firmy. **Růstová pozice na CZ trhu** vs. zavedení hráči (Ecomail, SmartEmailing, Mailkit).
 >
 > **Klíčové diferenciátory:**
+>
 > - **Plně české řešení** (vlastní servery v ČR!)
 > - **Český tým podpory** (telefon, e-mail, chat – skuteční lidé)
 > - **CDP funkce** (Customer Data Platform – data ze všech zdrojů na jednom místě)
@@ -25,7 +26,7 @@
 > - **AI testování 4 variant** (více než Ecomail/SmartEmailing s 2 variantami)
 > - **Transakční e-maily** integrované
 >
-> **Filozofie:** *"Velká databáze kontaktů zbytečně nepřidělává starosti"* – Boldem se snaží být moderní český CDP nástroj. Pravidelně organizují akce **"O marketingu bez obleků"** (community + thought leadership).
+> **Filozofie:** _"Velká databáze kontaktů zbytečně nepřidělává starosti"_ – Boldem se snaží být moderní český CDP nástroj. Pravidelně organizují akce **"O marketingu bez obleků"** (community + thought leadership).
 
 ---
 
@@ -70,18 +71,21 @@
 ### Filozofie produktu
 
 Per Shoptet:
-> *"Plně české řešení – Boldem je na rozdíl od jiných platforem ryze české řešení provozované na zabezpečeném cloudu v České republice."*
 
-> *"Vysoká doručitelnost – Boldem díky provozování vlastních serverů zajišťuje bezproblémové doručení všech vašich e-mailových kampaní."*
+> _"Plně české řešení – Boldem je na rozdíl od jiných platforem ryze české řešení provozované na zabezpečeném cloudu v České republice."_
 
-> *"Spolehlivá zákaznická podpora – Český tým zákaznické podpory je vám k dispozici prostřednictvím telefonu, e-mailu nebo chatu, kde se o vás postarají skuteční lidé."*
+> _"Vysoká doručitelnost – Boldem díky provozování vlastních serverů zajišťuje bezproblémové doručení všech vašich e-mailových kampaní."_
+
+> _"Spolehlivá zákaznická podpora – Český tým zákaznické podpory je vám k dispozici prostřednictvím telefonu, e-mailu nebo chatu, kde se o vás postarají skuteční lidé."_
 
 ### Historie + dědictví MailKompletu
 
 Per Freshstart.cz:
-> *"Boldem, ačkoliv je nováčkem na trhu e-mailových nástrojů, čerpá zkušenosti ze svého předchůdce, MailKompletu, a vyniká hlavně v přizpůsobení a využití umělé inteligence. Navíc nabízí atraktivní cenovou politiku, což z něj dělá vhodnou volbu pro menší e-shopy."*
+
+> _"Boldem, ačkoliv je nováčkem na trhu e-mailových nástrojů, čerpá zkušenosti ze svého předchůdce, MailKompletu, a vyniká hlavně v přizpůsobení a využití umělé inteligence. Navíc nabízí atraktivní cenovou politiku, což z něj dělá vhodnou volbu pro menší e-shopy."_
 
 **Klíčové:**
+
 - **Nový brand**, ale s deep CZ experience
 - **MailKomplet legacy** – many years experience
 - **AI features** modern addition
@@ -90,6 +94,7 @@ Per Freshstart.cz:
 ### Reference customers (per oficiální + Shoptet)
 
 #### Sportovní kluby
+
 - **Fotbalový klub Zbrojovka Brno**
 - **Hokejový klub Banská Bystrica**
 - **Športový klub Slovan Bratislava**
@@ -97,27 +102,31 @@ Per Freshstart.cz:
 - **Fotbalový klub Baník Ostrava**
 
 Per oficiální:
-> *"Boldem usnadňuje cílení na poli marketingu – pomáháme s newslettery, šablonami, usnadňujeme komunikaci s fanoušky, vytváříme systémy na prodej lístků a zařizujeme související marketingové aktivity."*
+
+> _"Boldem usnadňuje cílení na poli marketingu – pomáháme s newslettery, šablonami, usnadňujeme komunikaci s fanoušky, vytváříme systémy na prodej lístků a zařizujeme související marketingové aktivity."_
 
 #### Neziskový sektor
+
 - **Štěpán Hon kalendář** (12 osobností) – generoval **1 368 000+ Kč v 2024** pro Cestu domů a Arkadii (direct mailing + správa webů)
 
 #### E-shopy
+
 - **wineofitaly.cz** (Tomáš Kopanica) - per Shoptet review
 - **scandishop.cz** (Lukáš Nejedlý) - per Shoptet review
 
 ### Reference quotes
 
 Per Shoptet:
-> *"Zatím funguje zcela bez problémů, kvalitní podpora."* – Tomáš Kopanica, wineofitaly.cz, 06.02.2025
 
-> *"E-mailing je nedílnou součástí naší komunikace se zákazníky. Líbí se nám, že v Boldemu velice rychle připravíme kampaň v rychlém editoru. Využíváme i pokročilé kampaně jako opuštěný košík, welcome kampaň a jiné. Určitě doporučujeme."* – Lukáš Nejedlý, scandishop.cz, 22.02.2023
+> _"Zatím funguje zcela bez problémů, kvalitní podpora."_ – Tomáš Kopanica, wineofitaly.cz, 06.02.2025
+
+> _"E-mailing je nedílnou součástí naší komunikace se zákazníky. Líbí se nám, že v Boldemu velice rychle připravíme kampaň v rychlém editoru. Využíváme i pokročilé kampaně jako opuštěný košík, welcome kampaň a jiné. Určitě doporučujeme."_ – Lukáš Nejedlý, scandishop.cz, 22.02.2023
 
 ### Per Shoptet doplňky positioning
 
-> *"Boldem poskytuje malým e-shopům nástroje, které jim umožňují nastavit automatické oslovování zákazníků pomocí marketingových kampaní."*
+> _"Boldem poskytuje malým e-shopům nástroje, které jim umožňují nastavit automatické oslovování zákazníků pomocí marketingových kampaní."_
 >
-> *"Pro střední a větší e-shopy nabízí Boldem kompletní CDP řešení šité na míru, které je navrženo pro automatizovanou komunikaci."*
+> _"Pro střední a větší e-shopy nabízí Boldem kompletní CDP řešení šité na míru, které je navrženo pro automatizovanou komunikaci."_
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -197,23 +206,28 @@ Per Shoptet:
 ### 2.1 Pricing approach
 
 Per Shoptet:
-> *"Boldem nabízí mnohem víc... cenová flexibilita – škálovatelné plány dle velikosti databáze a požadovaných funkcí."*
+
+> _"Boldem nabízí mnohem víc... cenová flexibilita – škálovatelné plány dle velikosti databáze a požadovaných funkcí."_
 
 **Tarify rozdělené:**
+
 - **Boldem E-mailing** (samostatný ceník)
 - **Hromadné SMS** (samostatný ceník)
 - **CDP Boldem** (komplexní tarif pro CDP funkce)
 
 Per oficiální FAQ:
-> *"Ano, Boldem je komplexní nástroj pro digitální marketing. Najdete v něm jak nástroj pro e-mail marketing, tak možnost hromadných SMS či transakčních e-mailů. Součástí tarifu CDP Boldem je navíc možnost pracovat s nasbíranými daty a událostmi dle libosti."*
+
+> _"Ano, Boldem je komplexní nástroj pro digitální marketing. Najdete v něm jak nástroj pro e-mail marketing, tak možnost hromadných SMS či transakčních e-mailů. Součástí tarifu CDP Boldem je navíc možnost pracovat s nasbíranými daty a událostmi dle libosti."_
 
 ### 2.2 Tarif Profi
 
 Per oficiální:
-> *"Limiter mají k dispozici uživatelé v účtu s tarifem Profi."*
-> *"Účet Boldem s tarifem Profi"* (pro vlastní události)
+
+> _"Limiter mají k dispozici uživatelé v účtu s tarifem Profi."_
+> _"Účet Boldem s tarifem Profi"_ (pro vlastní události)
 
 **Tarif Profi obsahuje:**
+
 - Limiter (rozdělení rozesílky)
 - Vlastní události (custom event tracking)
 - Rozšířená segmentace
@@ -224,9 +238,11 @@ Per oficiální:
 ### 2.3 CDP Boldem
 
 Per oficiální:
-> *"Pro střední a větší e-shopy nabízí Boldem kompletní CDP řešení šité na míru, které je navrženo pro automatizovanou komunikaci."*
+
+> _"Pro střední a větší e-shopy nabízí Boldem kompletní CDP řešení šité na míru, které je navrženo pro automatizovanou komunikaci."_
 
 **CDP řešení:**
+
 - **Šité na míru**
 - **Automatizovaná komunikace**
 - **Sběr dat o chování zákazníků**
@@ -250,7 +266,8 @@ Pricing factors:
 ### 2.5 Free / trial
 
 Per Shoptet:
-> *"Na základě domluvy může být součástí i dočasný přístup do systému."*
+
+> _"Na základě domluvy může být součástí i dočasný přístup do systému."_
 
 - **Dočasný přístup možný** (s obchodníkem domluvit)
 - **Konzultace s obchodníkem** se systémem
@@ -260,9 +277,11 @@ Per Shoptet:
 ### 2.6 Tarifní limity
 
 Per oficiální FAQ:
-> *"Upozorníme vás na to a vyzveme vás k navýšení tarifu. Pro transakce kartou se toto děje automaticky a ostatní případy budou řešeny naším obchodním oddělením. Automatizace a transakční e-maily budou stále aktivní, přičemž kampaně jsou zastropovány aktuálním tarifem, který platíte."*
+
+> _"Upozorníme vás na to a vyzveme vás k navýšení tarifu. Pro transakce kartou se toto děje automaticky a ostatní případy budou řešeny naším obchodním oddělením. Automatizace a transakční e-maily budou stále aktivní, přičemž kampaně jsou zastropovány aktuálním tarifem, který platíte."_
 
 **Behavior při překročení:**
+
 - **Notification** o překročení
 - **Card transactions:** auto-renewal
 - **Other cases:** sales department řeší
@@ -272,6 +291,7 @@ Per oficiální FAQ:
 ### 2.7 Pricing transparency
 
 ⚠️ Boldem nemá zcela public detailní pricing - **kombinace public (e-mailing/SMS) + custom (CDP řešení)**:
+
 - E-mailing ceník publicky dostupný (boldem-e-mailing-cenik)
 - SMS ceník publicky dostupný
 - **CDP custom pricing** (sales-driven)
@@ -283,9 +303,11 @@ Per oficiální FAQ:
 ### 3.1 Plně české řešení + vlastní servery
 
 Per Shoptet:
-> *"Plně české řešení – Boldem je na rozdíl od jiných platforem ryze české řešení provozované na zabezpečeném cloudu v České republice."*
+
+> _"Plně české řešení – Boldem je na rozdíl od jiných platforem ryze české řešení provozované na zabezpečeném cloudu v České republice."_
 
 **Klíčové:**
+
 - **Vlastní servery v ČR**
 - **Zabezpečený cloud**
 - **Plně české řešení**
@@ -294,9 +316,11 @@ Per Shoptet:
 ### 3.2 Český tým podpory (telefon + e-mail + chat)
 
 Per Shoptet:
-> *"Český tým zákaznické podpory je vám k dispozici prostřednictvím telefonu, e-mailu nebo chatu, kde se o vás postarají skuteční lidé."*
+
+> _"Český tým zákaznické podpory je vám k dispozici prostřednictvím telefonu, e-mailu nebo chatu, kde se o vás postarají skuteční lidé."_
 
 **Multi-channel CZ podpora:**
+
 - **Telefon**
 - **E-mail** (support@boldem.cz)
 - **Chat**
@@ -305,9 +329,11 @@ Per Shoptet:
 ### 3.3 MailKomplet legacy
 
 Per Freshstart.cz:
-> *"Boldem, ačkoliv je nováčkem na trhu e-mailových nástrojů, čerpá zkušenosti ze svého předchůdce, MailKompletu."*
+
+> _"Boldem, ačkoliv je nováčkem na trhu e-mailových nástrojů, čerpá zkušenosti ze svého předchůdce, MailKompletu."_
 
 **UNIKÁTNÍ:**
+
 - **Dlouhá CZ e-mail marketing zkušenost**
 - **MailKomplet** = klasický CZ tool
 - **Modernizovaný v Boldem**
@@ -316,9 +342,11 @@ Per Freshstart.cz:
 ### 3.4 CDP integrované
 
 Per oficiální:
-> *"Pro střední a větší e-shopy nabízí Boldem kompletní CDP řešení šité na míru, které je navrženo pro automatizovanou komunikaci."*
+
+> _"Pro střední a větší e-shopy nabízí Boldem kompletní CDP řešení šité na míru, které je navrženo pro automatizovanou komunikaci."_
 
 **CDP differentiator:**
+
 - **Customer Data Platform**
 - **Data ze všech zdrojů na jednom místě**
 - **360° pohled na zákazníka**
@@ -328,9 +356,11 @@ Per oficiální:
 ### 3.5 Multikanálovost (email + SMS + PUSH + In-App)
 
 Per oficiální:
-> *"Automatizace vícekálové komunikace – úspora času díky rozesílání e-mailů, zpráv SMS a PUSH oznámení z jedné platformy."*
+
+> _"Automatizace vícekálové komunikace – úspora času díky rozesílání e-mailů, zpráv SMS a PUSH oznámení z jedné platformy."_
 
 **Channels native:**
+
 - **E-mail**
 - **SMS** (hromadné + transakční)
 - **PUSH oznámení**
@@ -339,11 +369,13 @@ Per oficiální:
 ### 3.6 Agenturní účty + white-label
 
 Per oficiální FAQ:
-> *"Ano. Boldem nabízí možnost agenturního účtu. Počet uživatelů k jednomu účtu není omezen a každému můžete nastavit různá práva."*
 
-> *"Pokud provozujete agenturu, nebo spravujete portfolio více klientů, můžete mít pod sebou v Boldem všechny účty, ke kterým vám vaši klienti udělí přístup."*
+> _"Ano. Boldem nabízí možnost agenturního účtu. Počet uživatelů k jednomu účtu není omezen a každému můžete nastavit různá práva."_
+
+> _"Pokud provozujete agenturu, nebo spravujete portfolio více klientů, můžete mít pod sebou v Boldem všechny účty, ke kterým vám vaši klienti udělí přístup."_
 
 **Agency features:**
+
 - **Neomezený počet uživatelů**
 - **Per-uživatel práva**
 - **Multi-client portfolio**
@@ -353,7 +385,8 @@ Per oficiální FAQ:
 ### 3.7 AI v editoru
 
 Per Freshstart.cz:
-> *"vyniká hlavně v přizpůsobení a využití umělé inteligence"*
+
+> _"vyniká hlavně v přizpůsobení a využití umělé inteligence"_
 
 - **AI v editoru**
 - **Inteligentní přizpůsobení**
@@ -362,7 +395,8 @@ Per Freshstart.cz:
 ### 3.8 Atraktivní cenová politika
 
 Per Freshstart.cz:
-> *"nabízí atraktivní cenovou politiku, což z něj dělá vhodnou volbu pro menší e-shopy"*
+
+> _"nabízí atraktivní cenovou politiku, což z něj dělá vhodnou volbu pro menší e-shopy"_
 
 - **Cenově dostupnější** než hlavní konkurenti
 - **Vhodné pro menší e-shopy**
@@ -371,9 +405,11 @@ Per Freshstart.cz:
 ### 3.9 A/B testing až 4 varianty
 
 Per Freshstart.cz:
-> *"Boldem umožňuje otestovat až 4 varianty. Ecomail a základní verze SmartEmailingu nabízejí testování 2 variant."*
+
+> _"Boldem umožňuje otestovat až 4 varianty. Ecomail a základní verze SmartEmailingu nabízejí testování 2 variant."_
 
 ⚠️ **Více variant než konkurence:**
+
 - **Boldem:** 4 varianty
 - **Ecomail / SmartEmailing základní:** 2 varianty
 - **SmartEmailing PRO:** neomezeně
@@ -381,9 +417,11 @@ Per Freshstart.cz:
 ### 3.10 Limiter (warm-up + protection)
 
 Per oficiální:
-> *"Záleží nám na tom, aby vám velká databáze kontaktů zbytečně nepřidělávala starosti. Proto máte v Boldem k dispozici funkci Rozdělení rozesílky. Při prvních rozesílkách v novém nástroji je u větší databáze vždy potřeba 'zahřívat'."*
+
+> _"Záleží nám na tom, aby vám velká databáze kontaktů zbytečně nepřidělávala starosti. Proto máte v Boldem k dispozici funkci Rozdělení rozesílky. Při prvních rozesílkách v novém nástroji je u větší databáze vždy potřeba 'zahřívat'."_
 
 **Limiter use cases:**
+
 - **Warm-up** nového účtu / domény
 - **Protection** před přetížením webu
 - **Customer support** ochrana
@@ -392,9 +430,11 @@ Per oficiální:
 ### 3.11 Power BI + Looker Studio reporty
 
 Per oficiální:
-> *"Transparentní reporting – interaktivní dashboardy v Power BI či Looker Studiu pro vyhodnocení výkonu."*
+
+> _"Transparentní reporting – interaktivní dashboardy v Power BI či Looker Studiu pro vyhodnocení výkonu."_
 
 ⚠️ **Advanced reporting** vs. CZ konkurence:
+
 - **Power BI** integration
 - **Looker Studio** integration
 - **Custom dashboards**
@@ -402,9 +442,11 @@ Per oficiální:
 ### 3.12 Vlastní události (custom event tracking)
 
 Per oficiální:
-> *"Sledujte události a aktivitu na webu, ve vaší aplikaci, nebo na dalších platformách. Sami si určíte, které události chcete sledovat."*
+
+> _"Sledujte události a aktivitu na webu, ve vaší aplikaci, nebo na dalších platformách. Sami si určíte, které události chcete sledovat."_
 
 **Vlastní události:**
+
 - **Custom event tracking**
 - **Web + app + další platformy**
 - **Library tagging**
@@ -413,36 +455,38 @@ Per oficiální:
 ### 3.13 Tržby přímo v aplikaci
 
 Per oficiální:
-> *"Díky nové funkci máte přímo v aplikaci přehled o tržbách a všech důležitých statistikách e-mailových kampaní na jednom místě."*
+
+> _"Díky nové funkci máte přímo v aplikaci přehled o tržbách a všech důležitých statistikách e-mailových kampaní na jednom místě."_
 
 **Revenue attribution:**
+
 - **Tržby v aplikaci**
 - **Nemusíte spoléhat na Google Analytics**
 - **Reálná data v Boldem**
 
 ### 3.14 Vs. CZ konkurence
 
-| Aspect | Boldem | Ecomail | SmartEmailing | Mailkit |
-|---|---|---|---|---|
-| **Origin** | CZ (vlastní servery) | CZ (Brno-Slezská 14) | CZ (Brno 2009) | CZ (Praha 2005) |
-| **Předchůdce** | MailKomplet | – | – | – |
-| **Target** | SMB → mid-market | SMB → mid-market | SMB → mid-market | Premium |
-| **CDP integrované** | ✅ Explicit | Limited | Limited | Limited |
-| **AI features** | ✅ AI editor | Some AI | Some AI | Limited |
-| **A/B varianty** | **4** | 2 | 2 (PRO neomezeně) | 2-3 |
-| **Multikanál** | Email+SMS+PUSH+In-App | Email+SMS+FB | Email+SMS | Email |
-| **Agency white-label** | ✅ | Limited | ✅ | – |
-| **Vlastní servery v ČR** | ✅ | – | – | ✅ |
-| **Shoptet integrace** | ✅ Native | ✅ Deep | ✅ | ✅ |
-| **Shopify integrace** | ✅ Native | ✅ | ✅ | ✅ |
-| **Upgates** | ✅ Native | ✅ | ✅ | – |
-| **Rocketoo** | ✅ Native (UNIKÁTNÍ) | – | – | – |
-| **Cena (relative)** | Atraktivní | Mid | Mid-high | Higher |
-| **Sportovní reference** | ✅ Sportovní kluby | Limited | – | – |
-| **API + Webhooks** | ✅ | ✅ | ✅ | ✅ |
-| **Power BI / Looker Studio** | ✅ | Limited | Limited | – |
-| **Multi-jazyková UI** | CZ primary | CZ/SK/EN | CZ/SK/EN | CZ |
-| **CSA / ISO certifikace** | – | – | – | 7 ISO |
+| Aspect                       | Boldem                | Ecomail              | SmartEmailing     | Mailkit         |
+| ---------------------------- | --------------------- | -------------------- | ----------------- | --------------- |
+| **Origin**                   | CZ (vlastní servery)  | CZ (Brno-Slezská 14) | CZ (Brno 2009)    | CZ (Praha 2005) |
+| **Předchůdce**               | MailKomplet           | –                    | –                 | –               |
+| **Target**                   | SMB → mid-market      | SMB → mid-market     | SMB → mid-market  | Premium         |
+| **CDP integrované**          | ✅ Explicit           | Limited              | Limited           | Limited         |
+| **AI features**              | ✅ AI editor          | Some AI              | Some AI           | Limited         |
+| **A/B varianty**             | **4**                 | 2                    | 2 (PRO neomezeně) | 2-3             |
+| **Multikanál**               | Email+SMS+PUSH+In-App | Email+SMS+FB         | Email+SMS         | Email           |
+| **Agency white-label**       | ✅                    | Limited              | ✅                | –               |
+| **Vlastní servery v ČR**     | ✅                    | –                    | –                 | ✅              |
+| **Shoptet integrace**        | ✅ Native             | ✅ Deep              | ✅                | ✅              |
+| **Shopify integrace**        | ✅ Native             | ✅                   | ✅                | ✅              |
+| **Upgates**                  | ✅ Native             | ✅                   | ✅                | –               |
+| **Rocketoo**                 | ✅ Native (UNIKÁTNÍ)  | –                    | –                 | –               |
+| **Cena (relative)**          | Atraktivní            | Mid                  | Mid-high          | Higher          |
+| **Sportovní reference**      | ✅ Sportovní kluby    | Limited              | –                 | –               |
+| **API + Webhooks**           | ✅                    | ✅                   | ✅                | ✅              |
+| **Power BI / Looker Studio** | ✅                    | Limited              | Limited           | –               |
+| **Multi-jazyková UI**        | CZ primary            | CZ/SK/EN             | CZ/SK/EN          | CZ              |
+| **CSA / ISO certifikace**    | –                     | –                    | –                 | 7 ISO           |
 
 ---
 
@@ -451,9 +495,11 @@ Per oficiální:
 ### 4.1 E-mail kampaně
 
 Per Shoptet:
-> *"Intuitivní editor kampaní: Snadné a rychlé e-mailové kampaně s inteligentním přizpůsobením barev a loga."*
+
+> _"Intuitivní editor kampaní: Snadné a rychlé e-mailové kampaně s inteligentním přizpůsobením barev a loga."_
 
 **Editor features:**
+
 - **Drag-and-drop**
 - **Inteligentní přizpůsobení** (AI)
 - **Barvy + logo auto-detection**
@@ -500,9 +546,11 @@ Potvrdit
 ### 4.3 Automatická kontrola kampaní
 
 Per Shoptet:
-> *"Automatická kontrola kampaní: Všechny kampaně se prověřují na potenciální problémy, jako jsou nevhodná slova nebo chybějící odkazy."*
+
+> _"Automatická kontrola kampaní: Všechny kampaně se prověřují na potenciální problémy, jako jsou nevhodná slova nebo chybějící odkazy."_
 
 **Pre-send safety:**
+
 - **Spam slova** detection
 - **Chybějící odkazy** check
 - **HTML validation**
@@ -516,23 +564,27 @@ Per Shoptet:
 - **Mobile responsive**
 
 ⚠️ Per Freshstart.cz:
-> *"Začínající uživatelé by mohli postrádat předpřipravené šablony pro automatizaci."*
+
+> _"Začínající uživatelé by mohli postrádat předpřipravené šablony pro automatizaci."_
 
 - **Automation templates** méně rozsáhlé než konkurence
 
 ### 4.5 Personalizace tokens
 
 Per Freshstart.cz:
-> *"Ecomail a Smartemailing nabízí snadný výběr těchto funkcí. U Boldem je potřeba znát definici proměnné nebo ji vyhledat v nápovědě."*
+
+> _"Ecomail a Smartemailing nabízí snadný výběr těchto funkcí. U Boldem je potřeba znát definici proměnné nebo ji vyhledat v nápovědě."_
 
 ⚠️ **Personalizace tokens vyžadují znalost** (méně user-friendly UI vs. Ecomail/SmartEmailing).
 
 ### 4.6 Validace e-mailů při importu
 
 Per Freshstart.cz:
-> *"Nástroje také nabízí ověřování platnosti e-mailových adres. Během importu identifikují a vyřazují nevalidní e-maily. Boldem a SmartEmailing hodnotí adresy podle doručovací historie."*
+
+> _"Nástroje také nabízí ověřování platnosti e-mailových adres. Během importu identifikují a vyřazují nevalidní e-maily. Boldem a SmartEmailing hodnotí adresy podle doručovací historie."_
 
 **Boldem + SmartEmailing:**
+
 - **Doručovací historie hodnocení**
 - **Auto-cleanup**
 - **Vs. Ecomail (Contact Spotlight)**
@@ -540,9 +592,11 @@ Per Freshstart.cz:
 ### 4.7 Slučování a rozdělování seznamů
 
 Per Freshstart.cz:
-> *"Boldem přidává funkci sloučení a rovnoměrného rozdělení seznamů podle potřeby."*
+
+> _"Boldem přidává funkci sloučení a rovnoměrného rozdělení seznamů podle potřeby."_
 
 ⚠️ **UNIKÁTNÍ vs. CZ konkurence:**
+
 - **Funkce sloučení seznamů**
 - **Rovnoměrné rozdělení**
 - **Ecomail vyžaduje ruční merge**
@@ -556,9 +610,11 @@ Per Freshstart.cz:
 ### 5.1 Recipient management
 
 Per oficiální:
-> *"Konsolidace dat: Boldem centralizuje data z různých zdrojů, jako jsou webové stránky, CRM systémy, e-mailové kampaně a sociální média, do jednoho systému."*
+
+> _"Konsolidace dat: Boldem centralizuje data z různých zdrojů, jako jsou webové stránky, CRM systémy, e-mailové kampaně a sociální média, do jednoho systému."_
 
 **Recipient features:**
+
 - **Multi-list architecture**
 - **CDP centralizace**
 - **Custom fields**
@@ -576,7 +632,8 @@ Per oficiální:
 ### 5.3 Custom fields + Tagging
 
 Per oficiální:
-> *"Libovolné tagování (označování) uživatelů. Rozšířená segmentace uživatelů."*
+
+> _"Libovolné tagování (označování) uživatelů. Rozšířená segmentace uživatelů."_
 
 - **Tagging** (custom)
 - **Custom fields**
@@ -599,9 +656,11 @@ Transitions:
 ### 5.5 Double Opt-in (CZ standard)
 
 Per oficiální FAQ:
-> *"Je to proces, kdy nový kontakt, který se přihlásí přes formulář do vašeho seznamu, musí potvrdit odběr vašich zpráv kliknutím na odkaz v e-mailu. Je tím tak zabráněno nevyžádanému posílání na nepotvrzené e-maily a na neplatné e-maily."*
+
+> _"Je to proces, kdy nový kontakt, který se přihlásí přes formulář do vašeho seznamu, musí potvrdit odběr vašich zpráv kliknutím na odkaz v e-mailu. Je tím tak zabráněno nevyžádanému posílání na nepotvrzené e-maily a na neplatné e-maily."_
 
 **DOI default:**
+
 - **Confirmation email** automaticky
 - **Klik na odkaz** vyžadován
 - **GDPR audit trail**
@@ -610,9 +669,11 @@ Per oficiální FAQ:
 ### 5.6 Bounce management
 
 Per oficiální FAQ:
-> *"Bounce e-maily, tedy vrácené e-maily, jsou nedoručené zprávy."*
+
+> _"Bounce e-maily, tedy vrácené e-maily, jsou nedoručené zprávy."_
 
 **Automatický bounce management:**
+
 - **Hard bounces** auto-suppression
 - **Soft bounces** retry
 - **Reputation protection**
@@ -620,9 +681,11 @@ Per oficiální FAQ:
 ### 5.7 Import dat
 
 Per oficiální FAQ:
-> *"Samozřejmě. Běžně pomáháme klientům přenést data při přechodu z jiného systému. Vhodné je se na přenosu domluvit předem. Stačí napsat do chatu naší zákaznické podpoře, nebo na e-mail support@boldem.cz."*
+
+> _"Samozřejmě. Běžně pomáháme klientům přenést data při přechodu z jiného systému. Vhodné je se na přenosu domluvit předem. Stačí napsat do chatu naší zákaznické podpoře, nebo na e-mail support@boldem.cz."_
 
 **Migration support:**
+
 - **Pomoc s přenosem** z jiných systémů
 - **Domluva předem**
 - **Chat / e-mail podpora**
@@ -630,9 +693,11 @@ Per oficiální FAQ:
 ### 5.8 Seznamy a segmenty
 
 Per oficiální:
-> *"Současní vývojáři e-mailových nástrojů upřednostňují koncept jednoho seznamu příjemců s možností segmentace."*
+
+> _"Současní vývojáři e-mailových nástrojů upřednostňují koncept jednoho seznamu příjemců s možností segmentace."_
 
 **Multi-list + segmentation hybrid:**
+
 - **Více seznamů** (legacy/CZ tradition)
 - **Segmentace v rámci seznamu**
 - **Cross-seznam segmenty**
@@ -644,9 +709,11 @@ Per oficiální:
 ### 6.1 Automatizace capabilities
 
 Per Shoptet:
-> *"Automatizace: Neomezené automatizované procesy pro získávání nových zákazníků a udržení těch stávajících, včetně funkcí jako je vítání nových uživatelů, sledování opuštěných košíků a reaktivace dřívějších zájemců o vaše produkty."*
+
+> _"Automatizace: Neomezené automatizované procesy pro získávání nových zákazníků a udržení těch stávajících, včetně funkcí jako je vítání nových uživatelů, sledování opuštěných košíků a reaktivace dřívějších zájemců o vaše produkty."_
 
 **Automation features:**
+
 - **Welcome** kampaně (vítání nových uživatelů)
 - **Opuštěný košík** sledování
 - **Reaktivace** dřívějších zájemců
@@ -654,11 +721,12 @@ Per Shoptet:
 
 ### 6.2 Per oficiální
 
-> *"Nechte automatizace pracovat za vás – od opuštěných košíků, přes testování rozesílek, až po sbírání příjemců pomocí formulářů. Budujte svou databázi efektivně pomocí automatických funkcí, šetřete čas a zlepšujte vztahy se zákazníky."*
+> _"Nechte automatizace pracovat za vás – od opuštěných košíků, přes testování rozesílek, až po sbírání příjemců pomocí formulářů. Budujte svou databázi efektivně pomocí automatických funkcí, šetřete čas a zlepšujte vztahy se zákazníky."_
 
 ### 6.3 Triggery
 
 #### Behavioral
+
 - Přihlášení do seznamu (welcome)
 - Tag přidán/odebrán
 - Otevření e-mailu
@@ -667,11 +735,13 @@ Per Shoptet:
 - Vlastní událost (Tarif Profi)
 
 #### Transactional / E-commerce
+
 - Opuštěný košík (cart abandonment)
 - Objednávka dokončena (post-purchase)
 - Zákazník neaktivní (reaktivace)
 
 #### Date-based
+
 - Narozeniny
 - Výročí
 - Recurring schedules
@@ -690,6 +760,7 @@ Per Shoptet:
 ### 6.5 Use case příklady
 
 #### Welcome kampaň
+
 ```
 Trigger: Přihlášení do seznamu
    ↓
@@ -703,6 +774,7 @@ End
 ```
 
 #### Opuštěný košík
+
 ```
 Trigger: Cart abandoned 1h
    ↓
@@ -718,6 +790,7 @@ End
 ```
 
 #### Reaktivace
+
 ```
 Trigger: Customer neaktivní 90 dní
    ↓
@@ -730,14 +803,15 @@ If still inactive: Send special offer
 
 ### 6.6 Per FAQ
 
-> *"Automatizace a transakční e-maily budou stále aktivní, přičemž kampaně jsou zastropovány aktuálním tarifem, který platíte."*
+> _"Automatizace a transakční e-maily budou stále aktivní, přičemž kampaně jsou zastropovány aktuálním tarifem, který platíte."_
 
 ⚠️ **Automation + transactional zůstávají aktivní** i po vyčerpání limitu (kampaně se zastropí).
 
 ### 6.7 Předpřipravené šablony automatizace
 
 ⚠️ Per Freshstart.cz:
-> *"Začínající uživatelé by mohli postrádat předpřipravené šablony pro automatizaci."*
+
+> _"Začínající uživatelé by mohli postrádat předpřipravené šablony pro automatizaci."_
 
 - **Méně pre-built templates** než Ecomail/SmartEmailing
 - **Build from scratch** častěji vyžadováno
@@ -750,9 +824,11 @@ If still inactive: Send special offer
 ### 7.1 SMS capabilities
 
 Per ceník:
-> *"Základní funkce pro rozesílání hromadných a transakčních SMS, PUSH oznámení a In-App zpráv v rámci aplikaci."*
+
+> _"Základní funkce pro rozesílání hromadných a transakčních SMS, PUSH oznámení a In-App zpráv v rámci aplikaci."_
 
 **SMS features:**
+
 - **Hromadné SMS kampaně**
 - **Transakční SMS**
 - **Personalizace**
@@ -761,11 +837,13 @@ Per ceník:
 ### 7.2 Use cases
 
 #### Marketing
+
 - Promo kampaně
 - Časově citlivé nabídky
 - Eventy + akce
 
 #### Transactional
+
 - Order confirmations
 - Shipping notifications
 - One-time passwords (OTP)
@@ -773,7 +851,7 @@ Per ceník:
 
 ### 7.3 Per oficiální FAQ
 
-> *"Ano, Boldem je komplexní nástroj pro digitální marketing. Najdete v něm jak nástroj pro e-mail marketing, tak možnost hromadných SMS či transakčních e-mailů."*
+> _"Ano, Boldem je komplexní nástroj pro digitální marketing. Najdete v něm jak nástroj pro e-mail marketing, tak možnost hromadných SMS či transakčních e-mailů."_
 
 ### 7.4 SMS pricing (samostatný)
 
@@ -801,9 +879,11 @@ Reports
 ### 8.1 PUSH + In-App
 
 Per ceník + oficiální:
-> *"PUSH oznámení a In-App zpráv v rámci aplikaci"*
+
+> _"PUSH oznámení a In-App zpráv v rámci aplikaci"_
 
 **Kanály:**
+
 - **PUSH oznámení** (browser web push)
 - **In-App zprávy** (mobile app)
 
@@ -825,12 +905,14 @@ Per ceník + oficiální:
 ### 8.4 Use cases
 
 #### Push
+
 - Cart abandonment (silent reminder)
 - Promo alerts
 - Stock alerts
 - Order updates
 
 #### In-App
+
 - Onboarding flows
 - Feature announcements
 - Promotional offers
@@ -850,9 +932,11 @@ Per ceník + oficiální:
 ### 9.1 Transakční e-maily
 
 Per FAQ:
-> *"Ano, Boldem je komplexní nástroj pro digitální marketing. Najdete v něm jak nástroj pro e-mail marketing, tak možnost hromadných SMS či transakčních e-mailů."*
+
+> _"Ano, Boldem je komplexní nástroj pro digitální marketing. Najdete v něm jak nástroj pro e-mail marketing, tak možnost hromadných SMS či transakčních e-mailů."_
 
 **Capabilities:**
+
 - **Order confirmations**
 - **Password resets**
 - **Receipts**
@@ -868,7 +952,7 @@ Per FAQ:
 
 ### 9.3 Always-on per FAQ
 
-> *"Automatizace a transakční e-maily budou stále aktivní, přičemž kampaně jsou zastropovány aktuálním tarifem, který platíte."*
+> _"Automatizace a transakční e-maily budou stále aktivní, přičemž kampaně jsou zastropovány aktuálním tarifem, který platíte."_
 
 ⚠️ **Transakční e-maily mají prioritu** - zůstávají aktivní i po vyčerpání marketing limitu.
 
@@ -899,9 +983,11 @@ Sportovní klub:
 ### 10.1 CDP capabilities
 
 Per oficiální:
-> *"Pro střední a větší e-shopy nabízí Boldem kompletní CDP řešení šité na míru, které je navrženo pro automatizovanou komunikaci. Toto řešení umožňuje sbírat data o chování zákazníků a bezpečně je ukládat na jedno místo. Díky tomu mohou e-shopy přesněji cílit a vytvářet kampaně přizpůsobené individuálním potřebám jednotlivců nebo specifických skupin zákazníků."*
+
+> _"Pro střední a větší e-shopy nabízí Boldem kompletní CDP řešení šité na míru, které je navrženo pro automatizovanou komunikaci. Toto řešení umožňuje sbírat data o chování zákazníků a bezpečně je ukládat na jedno místo. Díky tomu mohou e-shopy přesněji cílit a vytvářet kampaně přizpůsobené individuálním potřebám jednotlivců nebo specifických skupin zákazníků."_
 
 **CDP features:**
+
 - **Centralizace dat** ze všech zdrojů
 - **360° zákaznický profil**
 - **Behavioral tracking**
@@ -911,9 +997,10 @@ Per oficiální:
 ### 10.2 Per CDP positioning
 
 Per oficiální (hlavní stránka):
-> *"Boldem CDP systém pro marketingovou komunikaci"*
 
-> *"Získejte kompletní přehled o vašich zákaznících a jejich potřebách. Naše platforma shromažďuje data ze všech zdrojů a vytváří ucelený obraz o každém zákazníkovi."*
+> _"Boldem CDP systém pro marketingovou komunikaci"_
+
+> _"Získejte kompletní přehled o vašich zákaznících a jejich potřebách. Naše platforma shromažďuje data ze všech zdrojů a vytváří ucelený obraz o každém zákazníkovi."_
 
 ### 10.3 Data sources
 
@@ -952,11 +1039,12 @@ Automatizace dle všech signálů
 ### 10.5 CDP advantages
 
 Per oficiální:
-> *"Jednotná datová základna – snadný přístup ke všem kanálům klienta na jednom místě."*
 
-> *"Rychlé nasazení kampaní – předpřipravené segmenty i vlastní události pro okamžité spuštění multikanálových kampaní."*
+> _"Jednotná datová základna – snadný přístup ke všem kanálům klienta na jednom místě."_
 
-> *"Škálovatelné procesy – správa stovek klientů v jedné platformě s možností white-label řešení."*
+> _"Rychlé nasazení kampaní – předpřipravené segmenty i vlastní události pro okamžité spuštění multikanálových kampaní."_
+
+> _"Škálovatelné procesy – správa stovek klientů v jedné platformě s možností white-label řešení."_
 
 ---
 
@@ -965,9 +1053,11 @@ Per oficiální:
 ### 11.1 Vlastní události (Tarif Profi)
 
 Per oficiální:
-> *"Sledujte události a aktivitu na webu, ve vaší aplikaci, nebo na dalších platformách. Sami si určíte, které události chcete sledovat a na základě nasbíraných dat si pak vytvoříte marketingové scénáře podle vlastních potřeb."*
+
+> _"Sledujte události a aktivitu na webu, ve vaší aplikaci, nebo na dalších platformách. Sami si určíte, které události chcete sledovat a na základě nasbíraných dat si pak vytvoříte marketingové scénáře podle vlastních potřeb."_
 
 **Custom event tracking:**
+
 - **Web + app + další platformy**
 - **Per business need**
 - **Marketing scénáře na míru**
@@ -976,13 +1066,16 @@ Per oficiální:
 ### 11.2 Requirements
 
 Per oficiální:
-> *"Požadavky:*
-> - *Dostatečný počet uživatelů webu nebo aplikace, se kterými budete prostřednictvím vlastních událostí pracovat.*
-> - *Vydefinované události, které chcete sledovat.*
-> - *Vývojáře, kteří umí pracovat s rozhraním API a dokážou události implementovat do kódu vaší aplikace nebo webu.*
-> - *Účet Boldem s tarifem Profi."*
+
+> _"Požadavky:_
+>
+> - _Dostatečný počet uživatelů webu nebo aplikace, se kterými budete prostřednictvím vlastních událostí pracovat._
+> - _Vydefinované události, které chcete sledovat._
+> - _Vývojáře, kteří umí pracovat s rozhraním API a dokážou události implementovat do kódu vaší aplikace nebo webu._
+> - _Účet Boldem s tarifem Profi."_
 
 **Pro custom events potřebujete:**
+
 - Dostatečnou bázi uživatelů
 - Definovat události
 - Vývojáře (API integrace)
@@ -991,7 +1084,8 @@ Per oficiální:
 ### 11.3 Tagování
 
 Per oficiální:
-> *"Libovolné tagování (označování) uživatelů."*
+
+> _"Libovolné tagování (označování) uživatelů."_
 
 - **Libovolné tagy**
 - **Multi-tag** per kontakt
@@ -1001,14 +1095,16 @@ Per oficiální:
 ### 11.4 Benefity vlastních událostí
 
 Per oficiální:
-> *"Libovolné tagování (označování) uživatelů.*
-> *Rozšířená segmentace uživatelů.*
-> *Lepší personalizace.*
-> *Přesnější cílení na uživatele.*
-> *Vytváření automatizací na míru – nemusíte se upínat jen na předdefinované aktivity na webu.*
-> *Automatická aktualizace údajů – nepotřebujete nekonečné množství uživatelských sloupců, prostor s vlastními událostmi je flexibilní a upravovatelný."*
+
+> _"Libovolné tagování (označování) uživatelů._
+> _Rozšířená segmentace uživatelů._
+> _Lepší personalizace._
+> _Přesnější cílení na uživatele._
+> _Vytváření automatizací na míru – nemusíte se upínat jen na předdefinované aktivity na webu._
+> _Automatická aktualizace údajů – nepotřebujete nekonečné množství uživatelských sloupců, prostor s vlastními událostmi je flexibilní a upravovatelný."_
 
 **Benefity:**
+
 - Tagování flexibilní
 - Rozšířená segmentace
 - Lepší personalizace
@@ -1042,9 +1138,11 @@ Sportovní klub:
 ### 12.1 Segmentation capabilities
 
 Per oficiální:
-> *"Segmentace: Možnost cílit na specifické skupiny zákazníků na základě přesně definovaných kritérií."*
+
+> _"Segmentace: Možnost cílit na specifické skupiny zákazníků na základě přesně definovaných kritérií."_
 
 **Segmentation features:**
+
 - **Predefined segments**
 - **Custom segments**
 - **Dynamic segments**
@@ -1080,7 +1178,7 @@ Per oficiální:
 
 ### 12.5 Per Freshstart.cz
 
-> *"U Boldem je potřeba znát definici proměnné nebo ji vyhledat v nápovědě."*
+> _"U Boldem je potřeba znát definici proměnné nebo ji vyhledat v nápovědě."_
 
 ⚠️ **Personalization tokens** méně user-friendly UI než Ecomail/SmartEmailing.
 
@@ -1091,9 +1189,11 @@ Per oficiální:
 ### 13.1 A/B testing
 
 Per Freshstart.cz:
-> *"Boldem umožňuje otestovat až 4 varianty. Ecomail a základní verze SmartEmailingu nabízejí testování 2 variant."*
+
+> _"Boldem umožňuje otestovat až 4 varianty. Ecomail a základní verze SmartEmailingu nabízejí testování 2 variant."_
 
 ⚠️ **UNIKÁTNÍ:**
+
 - **Boldem: až 4 varianty**
 - **Ecomail / SmartEmailing základní: 2 varianty**
 - **SmartEmailing PRO: neomezeně**
@@ -1132,9 +1232,11 @@ Results tracked
 ### 14.1 Limiter funkce
 
 Per oficiální:
-> *"Záleží nám na tom, aby vám velká databáze kontaktů zbytečně nepřidělávala starosti. Proto máte v Boldem k dispozici funkci Rozdělení rozesílky."*
+
+> _"Záleží nám na tom, aby vám velká databáze kontaktů zbytečně nepřidělávala starosti. Proto máte v Boldem k dispozici funkci Rozdělení rozesílky."_
 
 **Use cases:**
+
 - **Warm-up** nového účtu / domény
 - **Warm-up** importovaných seznamů
 - **Protection webu** před přetížením
@@ -1142,14 +1244,15 @@ Per oficiální:
 
 ### 14.2 Per oficiální
 
-> *"Při prvních rozesílkách v novém nástroji je u větší databáze vždy potřeba 'zahřívat'. To stejné platí i pro nově importované seznamy s větším počtem příjemců."*
+> _"Při prvních rozesílkách v novém nástroji je u větší databáze vždy potřeba 'zahřívat'. To stejné platí i pro nově importované seznamy s větším počtem příjemců."_
 
-> *"Využití najdete také při komunikaci akce, u které může zvýšený počet návštěvníků omezit fungování webu nebo při posílání oznámení, které může zatížit vaši zákaznickou podporu."*
+> _"Využití najdete také při komunikaci akce, u které může zvýšený počet návštěvníků omezit fungování webu nebo při posílání oznámení, které může zatížit vaši zákaznickou podporu."_
 
 ### 14.3 Limiter availability
 
 Per oficiální:
-> *"Limiter mají k dispozici uživatelé v účtu s tarifem Profi. Využít ho můžete při rozesílce, ve které je více než 1 000 příjemců."*
+
+> _"Limiter mají k dispozici uživatelé v účtu s tarifem Profi. Využít ho můžete při rozesílce, ve které je více než 1 000 příjemců."_
 
 - **Tarif Profi only**
 - **1 000+ příjemců** minimum
@@ -1183,10 +1286,12 @@ Protection + warm-up
 ### 15.1 Reports capabilities
 
 Per Shoptet:
-> *"Reporty a analýzy: Detailní zprávy a analýzy výkonu vašich e-mailových kampaní pro lepší strategické rozhodování."*
+
+> _"Reporty a analýzy: Detailní zprávy a analýzy výkonu vašich e-mailových kampaní pro lepší strategické rozhodování."_
 
 Per oficiální:
-> *"Jednoduché reporty – srozumitelné přehledy o výkonu kampaní a návratnosti investic."*
+
+> _"Jednoduché reporty – srozumitelné přehledy o výkonu kampaní a návratnosti investic."_
 
 ### 15.2 Standard reports
 
@@ -1202,11 +1307,13 @@ Per oficiální:
 ### 15.3 Tržby reporting (NEW v 2025)
 
 Per oficiální blog:
-> *"Díky nové funkci máte přímo v aplikaci přehled o tržbách a všech důležitých statistikách e-mailových kampaní na jednom místě. Šetřete čas s Boldem."*
 
-> *"Díky sledování tržeb v Boldem přesně víte, jak si jednotlivé kampaně vedou, a na základě reálných dat můžete snadno přizpůsobit své marketingové strategie. Už se nemusíte spoléhat na Google Analytics, protože všechny důležité metriky máte nyní na jednom místě."*
+> _"Díky nové funkci máte přímo v aplikaci přehled o tržbách a všech důležitých statistikách e-mailových kampaní na jednom místě. Šetřete čas s Boldem."_
+
+> _"Díky sledování tržeb v Boldem přesně víte, jak si jednotlivé kampaně vedou, a na základě reálných dat můžete snadno přizpůsobit své marketingové strategie. Už se nemusíte spoléhat na Google Analytics, protože všechny důležité metriky máte nyní na jednom místě."_
 
 **Revenue tracking:**
+
 - **Tržby přímo v aplikaci**
 - **Per-campaign revenue**
 - **ROI calculation**
@@ -1215,9 +1322,11 @@ Per oficiální blog:
 ### 15.4 Power BI + Looker Studio
 
 Per oficiální:
-> *"Transparentní reporting – interaktivní dashboardy v Power BI či Looker Studiu pro vyhodnocení výkonu."*
+
+> _"Transparentní reporting – interaktivní dashboardy v Power BI či Looker Studiu pro vyhodnocení výkonu."_
 
 ⚠️ **Advanced reporting:**
+
 - **Power BI** integration
 - **Looker Studio** integration
 - **Custom dashboards**
@@ -1238,11 +1347,13 @@ Per oficiální:
 ### 16.1 E-commerce integrace
 
 Per oficiální:
-> *"Web nebo e-shop propojíte buď předpřipraveným doplňkem (Shoptet, Upgates, Rocketoo), nebo vložením kódu do hlavičky."*
 
-> *"Aktuálně podporujeme instantní propojení s platformami Shoptet, Shopify a Upgates."*
+> _"Web nebo e-shop propojíte buď předpřipraveným doplňkem (Shoptet, Upgates, Rocketoo), nebo vložením kódu do hlavičky."_
+
+> _"Aktuálně podporujeme instantní propojení s platformami Shoptet, Shopify a Upgates."_
 
 **Native integrations:**
+
 - **Shoptet** (CZ leader!)
 - **Shopify**
 - **Upgates** (CZ e-shop platform)
@@ -1251,9 +1362,11 @@ Per oficiální:
 ### 16.2 Shoptet integrace (UNIKÁTNÍ v CZ)
 
 Per Shoptet doplňky:
-> *"Spusťte instalaci kliknutím na Objednat doplněk. Zkontrolujte e-mailovou schránku, na kterou máte zaregistrovaný účet Shoptet. V e-mailu najdete ověřovací kód."*
+
+> _"Spusťte instalaci kliknutím na Objednat doplněk. Zkontrolujte e-mailovou schránku, na kterou máte zaregistrovaný účet Shoptet. V e-mailu najdete ověřovací kód."_
 
 **Shoptet flow:**
+
 1. Objednat doplněk
 2. Kontrola e-mailové schránky
 3. Ověřovací kód
@@ -1278,6 +1391,7 @@ Per Shoptet doplňky:
 ### 16.5 Rocketoo integrace
 
 ⚠️ **UNIKÁTNÍ pro Boldem:**
+
 - Rocketoo = CZ niche e-shop platform
 - Native integration
 - Vs. konkurence (jen Boldem to nabízí explicitně)
@@ -1285,7 +1399,8 @@ Per Shoptet doplňky:
 ### 16.6 Custom integration
 
 Per oficiální:
-> *"vložením kódu do hlavičky"*
+
+> _"vložením kódu do hlavičky"_
 
 - **Tracking script** custom
 - **API přístup**
@@ -1298,9 +1413,11 @@ Per oficiální:
 ### 17.1 API capabilities
 
 Per oficiální:
-> *"V případě Boldem můžete prostřednictvím API využívat marketingové funkce přímo ve vaší aplikaci, nebo v podnikovém systému a jednoduše je automatizovat."*
+
+> _"V případě Boldem můžete prostřednictvím API využívat marketingové funkce přímo ve vaší aplikaci, nebo v podnikovém systému a jednoduše je automatizovat."_
 
 **API features:**
+
 - **REST API**
 - **Marketing functions** v aplikaci
 - **Automation** prostřednictvím API
@@ -1309,10 +1426,13 @@ Per oficiální:
 ### 17.2 Webhook support
 
 Per oficiální:
-> *"Specifický způsob komunikace, který umožňuje odeslat na adresu URL vaší aplikace informaci okamžitě poté, co v aplikaci Boldem dojde k nějaké akci, kterou potřebujete sledovat. Může jít například o:*
-> - *nedoručení e-mailu z nezávažného či závažného důvodu (tzv. soft bounce vs. hard bounce)"*
+
+> _"Specifický způsob komunikace, který umožňuje odeslat na adresu URL vaší aplikace informaci okamžitě poté, co v aplikaci Boldem dojde k nějaké akci, kterou potřebujete sledovat. Může jít například o:_
+>
+> - _nedoručení e-mailu z nezávažného či závažného důvodu (tzv. soft bounce vs. hard bounce)"_
 
 **Webhook events:**
+
 - Soft bounces
 - Hard bounces
 - Spam complaints
@@ -1338,9 +1458,11 @@ Marketing functions via API:
 ### 17.4 API pro e-shop doplňky
 
 Per oficiální:
-> *"Rozhraní API využíváme také při přípravě doplňků pro různé e-shopové platformy. V takovém případě nemusíte nic programovat a stačí si doplněk nainstalovat v administraci dané platformy."*
+
+> _"Rozhraní API využíváme také při přípravě doplňků pro různé e-shopové platformy. V takovém případě nemusíte nic programovat a stačí si doplněk nainstalovat v administraci dané platformy."_
 
 **API = základ pro:**
+
 - Shoptet doplněk
 - Shopify integration
 - Upgates plugin
@@ -1350,7 +1472,8 @@ Per oficiální:
 ### 17.5 Vlastní události via API
 
 Per oficiální:
-> *"Pomocí API a vlastních událostí... Sledujte události a aktivitu na webu."*
+
+> _"Pomocí API a vlastních událostí... Sledujte události a aktivitu na webu."_
 
 **Custom events via API** = klíčový use case Tarif Profi.
 
@@ -1361,9 +1484,11 @@ Per oficiální:
 ### 18.1 Agenturní účty
 
 Per oficiální FAQ:
-> *"Ano. Boldem nabízí možnost agenturního účtu. Počet uživatelů k jednomu účtu není omezen a každému můžete nastavit různá práva."*
+
+> _"Ano. Boldem nabízí možnost agenturního účtu. Počet uživatelů k jednomu účtu není omezen a každému můžete nastavit různá práva."_
 
 **Agency features:**
+
 - **Neomezený počet uživatelů** v účtu
 - **Per-uživatel práva**
 - **Granular permissions**
@@ -1371,9 +1496,11 @@ Per oficiální FAQ:
 ### 18.2 Multi-client portfolio
 
 Per FAQ:
-> *"Pokud provozujete agenturu, nebo spravujete portfolio více klientů, můžete mít pod sebou v Boldem všechny účty, ke kterým vám vaši klienti udělí přístup."*
+
+> _"Pokud provozujete agenturu, nebo spravujete portfolio více klientů, můžete mít pod sebou v Boldem všechny účty, ke kterým vám vaši klienti udělí přístup."_
 
 **Portfolio management:**
+
 - **Více klientů pod jedním přístupem**
 - **Per-client account**
 - **Single sign-on** napříč klienty
@@ -1382,9 +1509,11 @@ Per FAQ:
 ### 18.3 White-label
 
 Per oficiální:
-> *"Škálovatelné procesy – správa stovek klientů v jedné platformě s možností white-label řešení."*
+
+> _"Škálovatelné procesy – správa stovek klientů v jedné platformě s možností white-label řešení."_
 
 ⚠️ **White-label řešení:**
+
 - **Stovky klientů** v jedné platformě
 - **Custom branding** per klient
 - **Agency-friendly**
@@ -1408,9 +1537,11 @@ Marketing agentura s 50+ klienty:
 ### 18.5 Use cases sportovních klubů
 
 Per oficiální:
-> *"Boldem usnadňuje cílení na poli marketingu – pomáháme s newslettery, šablonami, usnadňujeme komunikaci s fanoušky, vytváříme systémy na prodej lístků a zařizujeme související marketingové aktivity."*
+
+> _"Boldem usnadňuje cílení na poli marketingu – pomáháme s newslettery, šablonami, usnadňujeme komunikaci s fanoušky, vytváříme systémy na prodej lístků a zařizujeme související marketingové aktivity."_
 
 **Sportovní klub jako "klient agentury":**
+
 - White-label setup
 - Multi-čat (různé komunikační kanály)
 - Newsletter pro fanoušky
@@ -1424,12 +1555,15 @@ Per oficiální:
 ### 19.1 AI v editoru
 
 Per Freshstart.cz:
-> *"vyniká hlavně v přizpůsobení a využití umělé inteligence"*
+
+> _"vyniká hlavně v přizpůsobení a využití umělé inteligence"_
 
 Per Shoptet:
-> *"Intuitivní editor kampaní: Snadné a rychlé e-mailové kampaně s inteligentním přizpůsobením barev a loga."*
+
+> _"Intuitivní editor kampaní: Snadné a rychlé e-mailové kampaně s inteligentním přizpůsobením barev a loga."_
 
 **AI features:**
+
 - **AI v editoru** (přizpůsobení)
 - **Inteligentní brand detection** (barvy + logo)
 - **AI suggestions** (typically)
@@ -1466,9 +1600,11 @@ Boldem AI je rapidly evolving - per Freshstart.cz "vyniká hlavně v přizpůsob
 ### 20.1 Vlastní infrastruktura
 
 Per Shoptet:
-> *"Vysoká doručitelnost – Boldem díky provozování vlastních serverů zajišťuje bezproblémové doručení všech vašich e-mailových kampaní."*
+
+> _"Vysoká doručitelnost – Boldem díky provozování vlastních serverů zajišťuje bezproblémové doručení všech vašich e-mailových kampaní."_
 
 **Klíčové:**
+
 - **Vlastní servery v ČR**
 - **Plná kontrola nad infrastructure**
 - **Better than shared SMTP**
@@ -1476,11 +1612,12 @@ Per Shoptet:
 
 ### 20.2 Per oficiální
 
-> *"Plně české řešení – Boldem je na rozdíl od jiných platforem ryze české řešení provozované na zabezpečeném cloudu v České republice."*
+> _"Plně české řešení – Boldem je na rozdíl od jiných platforem ryze české řešení provozované na zabezpečeném cloudu v České republice."_
 
 ### 20.3 Authentication
 
 Standard email authentication:
+
 - **DKIM signing**
 - **SPF records**
 - **DMARC alignment**
@@ -1489,7 +1626,8 @@ Standard email authentication:
 ### 20.4 Limiter pro warm-up
 
 Per oficiální:
-> *"Při prvních rozesílkách v novém nástroji je u větší databáze vždy potřeba 'zahřívat'."*
+
+> _"Při prvních rozesílkách v novém nástroji je u větší databáze vždy potřeba 'zahřívat'."_
 
 - **Limiter = warm-up tool**
 - **Gradual sending**
@@ -1520,9 +1658,11 @@ Per oficiální:
 ### 21.1 Vlastní servery v ČR
 
 Per Shoptet:
-> *"ryze české řešení provozované na zabezpečeném cloudu v České republice"*
+
+> _"ryze české řešení provozované na zabezpečeném cloudu v České republice"_
 
 **Made in Czech Republic:**
+
 - **Servery exclusivně v ČR**
 - **CZ jurisdikce**
 - **No cross-border transfers**
@@ -1539,9 +1679,10 @@ Per Shoptet:
 
 ### 21.3 Per Ecomail comparison (Freshstart.cz)
 
-> *"Ecomail je v českém prostoru dobře známý, hlavně díky své silné veřejné prezentaci. Jeho klíčovou výhodou je mnoho integrací s e-shopovými platformami a komplexní nabídka funkcí. Má však otázky týkající se zabezpečení dat uživatelů na zahraničních serverech."*
+> _"Ecomail je v českém prostoru dobře známý, hlavně díky své silné veřejné prezentaci. Jeho klíčovou výhodou je mnoho integrací s e-shopovými platformami a komplexní nabídka funkcí. Má však otázky týkající se zabezpečení dat uživatelů na zahraničních serverech."_
 
 ⚠️ **Boldem advantage:**
+
 - **CZ servery only** (vs. Ecomail zahraniční)
 - **No data security questions**
 - **CZ jurisdikce guaranteed**
@@ -1558,9 +1699,11 @@ Per Shoptet:
 ### 21.5 Data centralizace
 
 Per Shoptet:
-> *"Konsolidace dat: Boldem centralizuje data z různých zdrojů, jako jsou webové stránky, CRM systémy, e-mailové kampaně a sociální média, do jednoho systému, což výrazně zjednodušuje jejich správu a analýzu."*
+
+> _"Konsolidace dat: Boldem centralizuje data z různých zdrojů, jako jsou webové stránky, CRM systémy, e-mailové kampaně a sociální média, do jednoho systému, což výrazně zjednodušuje jejich správu a analýzu."_
 
 **Data v jednom místě:**
+
 - **CDP centralizace**
 - **Easier compliance**
 - **Single point of control**
@@ -1573,9 +1716,11 @@ Per Shoptet:
 ### 22.1 Sportovní kluby
 
 Per oficiální:
-> *"Fotbalový klub Zbrojovka Brno, Hokejový klub Banská Bystrica, Športový klub Slovan Bratislava, Hokejový klub Slovan Bratislava, nebo Fotbalový klub Baník Ostrava"*
+
+> _"Fotbalový klub Zbrojovka Brno, Hokejový klub Banská Bystrica, Športový klub Slovan Bratislava, Hokejový klub Slovan Bratislava, nebo Fotbalový klub Baník Ostrava"_
 
 **Boldem služby pro sportovní kluby:**
+
 - **Newslettery**
 - **Šablony**
 - **Komunikace s fanoušky**
@@ -1587,9 +1732,11 @@ Per oficiální:
 ### 22.2 Neziskový sektor
 
 Per oficiální:
-> *"Štěpán Hon každý rok představuje kalendář s 12 známými osobnostmi v jejich domovech. Jsme rádi, že i díky naší spolupráci týkající se správy webů a poskytnutí aplikace k direct mailingu se mu opět daří generovat spoustu peněz pro neziskové organizace Cesta domů a Arkadie. Během roku 2024 se Štěpánovi podařilo skrze prodej kalendářů vybrat více než 1 368 000 korun!"*
+
+> _"Štěpán Hon každý rok představuje kalendář s 12 známými osobnostmi v jejich domovech. Jsme rádi, že i díky naší spolupráci týkající se správy webů a poskytnutí aplikace k direct mailingu se mu opět daří generovat spoustu peněz pro neziskové organizace Cesta domů a Arkadie. Během roku 2024 se Štěpánovi podařilo skrze prodej kalendářů vybrat více než 1 368 000 korun!"_
 
 **Neziskové reference:**
+
 - **Štěpán Hon kalendář**
 - **Cesta domů**
 - **Arkadie**
@@ -1598,9 +1745,11 @@ Per oficiální:
 ### 22.3 Community + thought leadership
 
 Per oficiální:
-> *"Boldem CDP není jen technologická platforma – budujeme živou komunitu odborníků, kteří věří v otevřený a praktický přístup k marketingu. Pravidelně proto pořádáme zdarma akce O marketingu bez obleků."*
+
+> _"Boldem CDP není jen technologická platforma – budujeme živou komunitu odborníků, kteří věří v otevřený a praktický přístup k marketingu. Pravidelně proto pořádáme zdarma akce O marketingu bez obleků."_
 
 **"O marketingu bez obleků":**
+
 - **Free CZ marketing events**
 - **Praktická prezentace** od hosta z praxe
 - **Reference hosts:** CEO Angry Beards, CMO Textilomanie, apod.
@@ -1610,6 +1759,7 @@ Per oficiální:
 ### 22.4 E-shop reference
 
 Per Shoptet:
+
 - **wineofitaly.cz** (Tomáš Kopanica)
 - **scandishop.cz** (Lukáš Nejedlý)
 
@@ -1634,14 +1784,16 @@ Boldem se uplatňuje v:
 ### 23.1 Méně předpřipravených šablon automatizace
 
 Per Freshstart.cz:
-> *"Začínající uživatelé by mohli postrádat předpřipravené šablony pro automatizaci."*
+
+> _"Začínající uživatelé by mohli postrádat předpřipravené šablony pro automatizaci."_
 
 ⚠️ **Méně automation templates** než Ecomail / SmartEmailing.
 
 ### 23.2 Personalizace tokens méně user-friendly
 
 Per Freshstart.cz:
-> *"Ecomail a Smartemailing nabízí snadný výběr těchto funkcí. U Boldem je potřeba znát definici proměnné nebo ji vyhledat v nápovědě."*
+
+> _"Ecomail a Smartemailing nabízí snadný výběr těchto funkcí. U Boldem je potřeba znát definici proměnné nebo ji vyhledat v nápovědě."_
 
 ⚠️ **Personalization UI** méně intuitivní.
 
@@ -1674,9 +1826,11 @@ Per Freshstart.cz:
 ### 23.7 Méně Sklik / sociální integrace
 
 Per Freshstart.cz:
-> *"Ecomail a SmartEmailing nabízejí funkci pro rozesílání promovaných příspěvků na sociální sítě nebo pro vytváření remarketingových kampaní přes Sklik."*
+
+> _"Ecomail a SmartEmailing nabízejí funkci pro rozesílání promovaných příspěvků na sociální sítě nebo pro vytváření remarketingových kampaní přes Sklik."_
 
 ⚠️ **Boldem nemá zmíněnou:**
+
 - **Sklik integration**
 - **Sociální sítě remarketing**
 - (potřeba ověřit aktuální stav)
@@ -1733,6 +1887,7 @@ Per Freshstart.cz:
 ## 24. Shrnutí: Pro koho a proti komu
 
 ### Boldem je dobrá volba pokud
+
 - Provozujete **CZ/SK SMB e-shop** s Shoptet/Shopify/Upgates
 - Hledáte **ryze české řešení** s **CZ servery**
 - Vyžadujete **GDPR-strict compliance** s CZ jurisdikcí
@@ -1751,6 +1906,7 @@ Per Freshstart.cz:
 - Migrujete z **MailKompletu** (Boldem = nástupce)
 
 ### Boldem není dobrá volba pokud
+
 - Hledáte **deep webinars + courses business** – GetResponse lepší
 - Provozujete **enterprise globální** (SAP / Salesforce / Adobe scale)
 - Provozujete **content creator business** – Beehiiv / Kit / Substack
@@ -1766,28 +1922,28 @@ Per Freshstart.cz:
 
 ### Boldem vs. konkurence v CZ
 
-| Konkurence | Kdy lepší než Boldem |
-|---|---|
-| **Ecomail** (CZ) | Více integrací, větší brand recognition, více automation templates |
-| **SmartEmailing** (CZ) | Více automation features, neomezené A/B v PRO, Sklik/sociální integrace |
-| **Mailkit** (CZ) | Premium positioning, 7 ISO certifikací, vlastní deep infrastructure |
-| **Bloomreach Engagement** (CZ origin) | DTC personalization deep, predictive ML |
+| Konkurence                            | Kdy lepší než Boldem                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| **Ecomail** (CZ)                      | Více integrací, větší brand recognition, více automation templates      |
+| **SmartEmailing** (CZ)                | Více automation features, neomezené A/B v PRO, Sklik/sociální integrace |
+| **Mailkit** (CZ)                      | Premium positioning, 7 ISO certifikací, vlastní deep infrastructure     |
+| **Bloomreach Engagement** (CZ origin) | DTC personalization deep, predictive ML                                 |
 
 ### Boldem vs. konkurence mezinárodně
 
-| Konkurence | Kdy lepší než Boldem |
-|---|---|
-| **Mailchimp** | Brand recognition, global ecosystem, free plan |
-| **MailerLite** | Solopreneur simplicity, content creators, free plan |
-| **Brevo** | Multi-channel WhatsApp + Facebook Messenger |
-| **Klaviyo** | DTC Shopify deep, predictive AI |
-| **HubSpot** | Full B2B CRM |
-| **ActiveCampaign** | Deep automation + integrated CRM |
-| **GetResponse** | All-in-one + webinars + courses |
-| **CleverReach** | DACH SMB free plan |
-| **SALESmanago** | AI-driven CDXP s on-site personalization |
-| **SAP Emarsys** | Enterprise retail |
+| Konkurence         | Kdy lepší než Boldem                                |
+| ------------------ | --------------------------------------------------- |
+| **Mailchimp**      | Brand recognition, global ecosystem, free plan      |
+| **MailerLite**     | Solopreneur simplicity, content creators, free plan |
+| **Brevo**          | Multi-channel WhatsApp + Facebook Messenger         |
+| **Klaviyo**        | DTC Shopify deep, predictive AI                     |
+| **HubSpot**        | Full B2B CRM                                        |
+| **ActiveCampaign** | Deep automation + integrated CRM                    |
+| **GetResponse**    | All-in-one + webinars + courses                     |
+| **CleverReach**    | DACH SMB free plan                                  |
+| **SALESmanago**    | AI-driven CDXP s on-site personalization            |
+| **SAP Emarsys**    | Enterprise retail                                   |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů boldem.cz + Shoptet doplňky a praktických zdrojů (Freshstart.cz). Pro nejaktuálnější detaily je nutný engagement s Boldem sales / consultant teamem.*
+_Dokument zpracován z oficiálních zdrojů boldem.cz + Shoptet doplňky a praktických zdrojů (Freshstart.cz). Pro nejaktuálnější detaily je nutný engagement s Boldem sales / consultant teamem._

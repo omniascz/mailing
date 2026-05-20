@@ -21,25 +21,34 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { contacts, lists, contactLists, suppressions, organizations } from '../../db/schema/index.js';
+import {
+  contacts,
+  lists,
+  contactLists,
+  suppressions,
+  organizations,
+} from '../../db/schema/index.js';
 import { redis } from '../../lib/redis.js';
+import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 import { t, resolveLocale, type SupportedLocale } from '@forgemsg/shared';
 
 const DOI_TTL = 60 * 60 * 48; // 48 hours
 const UNSUB_TTL = 60 * 60 * 24 * 7; // 7 days
 
-function doiKey(token: string) { return `doi:${token}`; }
-function unsubKey(token: string) { return `unsub:${token}`; }
-function prefKey(token: string) { return `pref:${token}`; }
+function doiKey(token: string) {
+  return `doi:${token}`;
+}
+function unsubKey(token: string) {
+  return `unsub:${token}`;
+}
+function prefKey(token: string) {
+  return `pref:${token}`;
+}
 
 // ─── HTML helpers ─────────────────────────────────────────────────────────────
 
-function htmlPage(
-  title: string,
-  body: string,
-  locale: SupportedLocale = 'cs',
-) {
+function htmlPage(title: string, body: string, locale: SupportedLocale = 'cs') {
   return `<!DOCTYPE html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:system-ui,sans-serif;max-width:500px;margin:60px auto;padding:0 20px;color:#1e293b}h1{color:#0f172a}p{color:#475569}.btn{display:inline-block;padding:10px 20px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:6px;margin-top:16px}</style></head><body>${body}</body></html>`;
 }
 
@@ -95,7 +104,6 @@ function pageFromKey(
 }
 
 export default async function subscriptionRoutes(app: FastifyInstance) {
-
   // ── Double opt-in subscribe ───────────────────────────────────────────────
 
   /**
@@ -130,7 +138,13 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       let [contact] = await db
         .select()
         .from(contacts)
-        .where(and(eq(contacts.orgId, orgId), eq(contacts.email, body.email.toLowerCase()), isNull(contacts.deletedAt)))
+        .where(
+          and(
+            eq(contacts.orgId, orgId),
+            eq(contacts.email, body.email.toLowerCase()),
+            isNull(contacts.deletedAt),
+          ),
+        )
         .limit(1);
 
       if (!contact) {
@@ -156,15 +170,44 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         JSON.stringify({ contactId: contact.id, listId, orgId }),
       );
 
-      // TODO (Phase 3): send confirmation email with link /confirm/:token
-      // For now, log the token so it can be used in dev/tests
+      // Send confirmation email via the transactional pipeline.
+      const apiPublicUrl =
+        process.env.API_PUBLIC_URL ?? process.env.APP_URL ?? 'http://localhost:3001';
+      const confirmUrl = `${apiPublicUrl}/api/v1/confirm/${token}`;
+      const greeting = body.firstName ? `Hi ${body.firstName},` : 'Hi,';
+
+      try {
+        await sendTransactionalEmail({
+          to: body.email,
+          toName: [body.firstName, body.lastName].filter(Boolean).join(' ') || undefined,
+          from: process.env.DOI_FROM_EMAIL ?? 'no-reply@example.com',
+          fromName: list.name,
+          subject: `Confirm your subscription to ${list.name}`,
+          html: `<!doctype html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:40px auto;padding:24px;color:#1e293b">
+<p style="font-size:16px">${greeting}</p>
+<p style="font-size:16px">You signed up to receive emails from <strong>${list.name}</strong>. Click below to confirm.</p>
+<p style="margin:32px 0"><a href="${confirmUrl}" style="display:inline-block;background:#0ea5e9;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600">Confirm subscription</a></p>
+<p style="font-size:13px;color:#64748b">If you didn't sign up, ignore this — no further messages will arrive. The link expires in 48 hours.</p>
+</body></html>`,
+          text: `${greeting}\n\nYou signed up to receive emails from ${list.name}. Confirm here:\n${confirmUrl}\n\nLink expires in 48 hours.`,
+          orgId,
+          contactId: contact.id,
+        });
+      } catch (err) {
+        app.log.error({ err, event: 'doi_email_enqueue_failed', email: body.email, listId });
+      }
+
       app.log.info({ event: 'doi_token_generated', token, email: body.email, listId });
 
       return reply.code(202).send({
         data: {
           message: 'Confirmation email sent. Please check your inbox.',
-          // Include token in dev mode only
-          ...(process.env.NODE_ENV !== 'production' && { _devToken: token }),
+          // Dev-only convenience — exposes the token + URL so testers
+          // don't need an inbox to follow the flow.
+          ...(process.env.NODE_ENV !== 'production' && {
+            _devToken: token,
+            _confirmUrl: confirmUrl,
+          }),
         },
       });
     },
@@ -187,7 +230,11 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         return reply.code(400).header('Content-Type', 'text/html').send(page.html);
       }
 
-      const { contactId, listId, orgId } = JSON.parse(raw) as { contactId: string; listId: string; orgId: string };
+      const { contactId, listId, orgId } = JSON.parse(raw) as {
+        contactId: string;
+        listId: string;
+        orgId: string;
+      };
 
       // Activate contact
       await db
@@ -273,7 +320,11 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       if (!contact) throw AppError.notFound('Contact');
 
       const memberships = await db
-        .select({ list: lists, addedAt: contactLists.addedAt, confirmedAt: contactLists.confirmedAt })
+        .select({
+          list: lists,
+          addedAt: contactLists.addedAt,
+          confirmedAt: contactLists.confirmedAt,
+        })
         .from(contactLists)
         .innerJoin(lists, and(eq(lists.id, contactLists.listId), isNull(lists.deletedAt)))
         .where(eq(contactLists.contactId, contactId));
@@ -321,7 +372,10 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         // Auto-add to suppression list
         const [c] = await db.select().from(contacts).where(eq(contacts.id, contactId)).limit(1);
         if (c?.email) {
-          await db.insert(suppressions).values({ orgId, email: c.email, reason: 'unsubscribe', notes: body.reason }).onConflictDoNothing();
+          await db
+            .insert(suppressions)
+            .values({ orgId, email: c.email, reason: 'unsubscribe', notes: body.reason })
+            .onConflictDoNothing();
         }
       } else if (body.listIdsToRemove?.length) {
         // Remove from specific lists only
@@ -345,9 +399,7 @@ async function resolveUnsubToken(token: string): Promise<{ contactId: string; or
   return JSON.parse(raw) as { contactId: string; orgId: string };
 }
 
-async function processUnsubscribe(
-  token: string,
-): Promise<{ contactId: string; orgId: string }> {
+async function processUnsubscribe(token: string): Promise<{ contactId: string; orgId: string }> {
   const raw = await redis.get(unsubKey(token));
   if (!raw) throw AppError.badRequest('Invalid or expired unsubscribe token');
 

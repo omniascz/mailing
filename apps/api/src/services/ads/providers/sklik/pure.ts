@@ -45,7 +45,10 @@ export interface SklikAudiencePayload {
  * Build the request body to upload a single batch to Sklik. Members with no
  * usable email or phone are filtered out — Sklik rejects empty rows.
  */
-export function buildAudiencePayload(audienceName: string, members: AudienceMember[]): SklikAudiencePayload {
+export function buildAudiencePayload(
+  audienceName: string,
+  members: AudienceMember[],
+): SklikAudiencePayload {
   const trimmedName = audienceName.trim();
   if (!trimmedName) throw new Error('Sklik audience name is required');
   if (trimmedName.length > SKLIK_AUDIENCE_NAME_MAX) {

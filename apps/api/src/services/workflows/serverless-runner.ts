@@ -25,8 +25,8 @@
 
 import vm from 'node:vm';
 
-const MAX_SCRIPT_BYTES = 64 * 1024;     // 64 KiB
-const MAX_OUTPUT_BYTES = 64 * 1024;     // 64 KiB
+const MAX_SCRIPT_BYTES = 64 * 1024; // 64 KiB
+const MAX_OUTPUT_BYTES = 64 * 1024; // 64 KiB
 const DEFAULT_TIMEOUT_MS = 2_000;
 const HARD_TIMEOUT_CEILING_MS = 10_000; // upper bound regardless of caller
 
@@ -131,7 +131,9 @@ export async function runUserCode(input: RunUserCodeInput): Promise<RunUserCodeR
     const maxOut = input.maxOutputBytes ?? MAX_OUTPUT_BYTES;
     if (Buffer.byteLength(serialized, 'utf8') > maxOut) {
       return {
-        ok: false, logs, durationMs: Date.now() - started,
+        ok: false,
+        logs,
+        durationMs: Date.now() - started,
         error: `Output exceeds ${maxOut}-byte limit`,
       };
     }

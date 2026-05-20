@@ -40,11 +40,11 @@ export interface GraymailDecision {
 export function classifyGraymail(
   signals: GraymailSignals,
   thresholds: {
-    staleDays?: number;        // days without engagement → graymail
-    dormantDays?: number;      // days without engagement → dormant
+    staleDays?: number; // days without engagement → graymail
+    dormantDays?: number; // days without engagement → dormant
     minSendsBeforeSuppress?: number; // don't suppress brand-new contacts
-    minEngagementRate?: number;      // engagement rate floor
-    newContactGraceDays?: number;    // skip classification for fresh contacts
+    minEngagementRate?: number; // engagement rate floor
+    newContactGraceDays?: number; // skip classification for fresh contacts
   } = {},
 ): GraymailDecision {
   const staleDays = thresholds.staleDays ?? 90;
@@ -53,10 +53,7 @@ export function classifyGraymail(
   const minRate = thresholds.minEngagementRate ?? 0.02; // 2%
   const graceDays = thresholds.newContactGraceDays ?? 14;
 
-  const rate =
-    signals.sendsInWindow > 0
-      ? signals.engagementsInWindow / signals.sendsInWindow
-      : 0;
+  const rate = signals.sendsInWindow > 0 ? signals.engagementsInWindow / signals.sendsInWindow : 0;
 
   // Never penalise contacts we haven't tried hard enough to engage yet.
   if (signals.ageInDays < graceDays || signals.sendsInWindow < minSends) {
@@ -74,10 +71,7 @@ export function classifyGraymail(
     signals.daysSinceLastEngagement === null &&
     signals.engagementsInWindow === 0 &&
     signals.sendsInWindow >= Math.max(minSends * 5, 20);
-  if (
-    (signals.daysSinceLastEngagement ?? -1) >= dormantDays ||
-    veryHighSendNeverEngaged
-  ) {
+  if ((signals.daysSinceLastEngagement ?? -1) >= dormantDays || veryHighSendNeverEngaged) {
     return {
       tier: 'dormant',
       engagementRate: rate,
@@ -90,8 +84,7 @@ export function classifyGraymail(
   // `daysSinceLastEngagement` (never engaged at all) counts as stale when
   // sends cross the minSends threshold.
   const effectiveStale =
-    signals.daysSinceLastEngagement ??
-    (signals.engagementsInWindow === 0 ? staleDays : 0);
+    signals.daysSinceLastEngagement ?? (signals.engagementsInWindow === 0 ? staleDays : 0);
   if (effectiveStale >= staleDays) {
     return {
       tier: 'graymail',
@@ -131,7 +124,7 @@ export interface EmailHealthMetrics {
   opens: number;
   clicks: number;
   unsubscribes: number;
-  blocks?: number;          // optional — SMTP 5xx blocks
+  blocks?: number; // optional — SMTP 5xx blocks
 }
 
 export interface EmailHealthScore {
@@ -167,9 +160,7 @@ export interface EmailHealthScore {
  * Each metric is clamped to sensible bounds so a single blip doesn't pin the
  * score at 0. The grade mapping mirrors school-grade conventions.
  */
-export function computeEmailHealthScore(
-  metrics: EmailHealthMetrics,
-): EmailHealthScore {
+export function computeEmailHealthScore(metrics: EmailHealthMetrics): EmailHealthScore {
   const delivered = Math.max(0, metrics.delivered);
   const sends = Math.max(0, metrics.sends);
   const safe = (numerator: number, denominator: number) =>

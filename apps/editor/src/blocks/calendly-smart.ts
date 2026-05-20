@@ -49,11 +49,13 @@ export function renderSmartScheduleBlock(opts: SmartScheduleBlockOptions): strin
     fallbackCta = 'Book a meeting',
   } = opts;
 
-  const slotButtons = slots.length > 0
-    ? slots.map((slot) => {
-      const encoded = encodeURIComponent(slot.startUtc);
-      const url = `${bookingUrl}?slot=${encoded}&tz=${encodeURIComponent(slot.timezone)}`;
-      return `
+  const slotButtons =
+    slots.length > 0
+      ? slots
+          .map((slot) => {
+            const encoded = encodeURIComponent(slot.startUtc);
+            const url = `${bookingUrl}?slot=${encoded}&tz=${encodeURIComponent(slot.timezone)}`;
+            return `
         <tr>
           <td align="center" style="padding:4px 0;">
             <a href="${escapeAttr(url)}"
@@ -73,8 +75,9 @@ export function renderSmartScheduleBlock(opts: SmartScheduleBlockOptions): strin
             </a>
           </td>
         </tr>`;
-    }).join('\n')
-    : `
+          })
+          .join('\n')
+      : `
       <tr>
         <td align="center" style="padding:4px 0;">
           <a href="${escapeAttr(bookingUrl)}"
@@ -109,12 +112,16 @@ export function renderSmartScheduleBlock(opts: SmartScheduleBlockOptions): strin
     </td>
   </tr>
   ${slotButtons}
-  ${slots.length > 0 ? `
+  ${
+    slots.length > 0
+      ? `
   <tr>
     <td align="center" style="padding-top:12px;">
       <a href="${escapeAttr(bookingUrl)}" style="font-size:12px;color:#6b7280;">See all available times</a>
     </td>
-  </tr>` : ''}
+  </tr>`
+      : ''
+  }
 </table>
 <!-- [/ForgeMsg Smart Schedule Block] -->`.trim();
 }

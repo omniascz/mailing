@@ -58,6 +58,7 @@
 ExpertSender se distancuje od **"general email tools"** (Mailchimp, MailerLite). Marketing claim: **"Marketing Automation that actually drives e-commerce sales"** – kritika ostatních platforem za to, že automatizace sama o sobě negeneruje ROI bez data + segmentation + správného timing.
 
 Velký důraz na:
+
 - **Dedicated account manager** pro každého klienta
 - **Strategic onboarding** – ne self-service jako u Mailchimpu
 - **Migration assistance** zdarma (vlastní migration team)
@@ -139,20 +140,20 @@ ExpertSender explicitně uvádí, kdo je vhodný klient:
 
 ### 2.4 Pricing struktura (typically)
 
-| Komponent | Co ovlivňuje cenu |
-|---|---|
-| **Active contacts** | Hlavní pricing driver |
-| **Channels enabled** | Email only / + SMS / + Push / Full omnichannel |
-| **Volume of messages** | Per channel monthly volume |
-| **Dedicated IP** | Add-on (placeno per IP + maintenance fee) |
-| **Custom integrations** | Per project |
-| **Service level** | Onboarding hours, strategy consulting |
-| **API request volume** | Higher tiers |
-| **Account managers count** | 1 standard, multiple Enterprise |
+| Komponent                  | Co ovlivňuje cenu                              |
+| -------------------------- | ---------------------------------------------- |
+| **Active contacts**        | Hlavní pricing driver                          |
+| **Channels enabled**       | Email only / + SMS / + Push / Full omnichannel |
+| **Volume of messages**     | Per channel monthly volume                     |
+| **Dedicated IP**           | Add-on (placeno per IP + maintenance fee)      |
+| **Custom integrations**    | Per project                                    |
+| **Service level**          | Onboarding hours, strategy consulting          |
+| **API request volume**     | Higher tiers                                   |
+| **Account managers count** | 1 standard, multiple Enterprise                |
 
 ### 2.5 Pricing nejasnosti (industry critique)
 
-G2 review: *"It should allow users to buy/add/remove dedicated IP to/from their pools, without the need to ask the technical support team to do it and more importantly paying only for the new IP (instead of paying for the new IP and for the 'adding a new IP cost')."*
+G2 review: _"It should allow users to buy/add/remove dedicated IP to/from their pools, without the need to ask the technical support team to do it and more importantly paying only for the new IP (instead of paying for the new IP and for the 'adding a new IP cost')."_
 
 - **Dedicated IP changes manual** – ne self-service
 - **Některé operations s extra fee** (IP přidání)
@@ -250,7 +251,7 @@ ExpertSender se v 2025+ pozicionuje primárně jako **CDP (Customer Data Platfor
 
 ### 4.1 Co je ExpertSender CDP
 
-Per Shopify CDP guide (2026): *"Automation-centric CDPs, like ExpertSender CDP, are designed to simplify campaign execution. They can automatically perform marketing actions like sending an email, triggering a push notification, or implementing ad retargeting, all based on customer behavior."*
+Per Shopify CDP guide (2026): _"Automation-centric CDPs, like ExpertSender CDP, are designed to simplify campaign execution. They can automatically perform marketing actions like sending an email, triggering a push notification, or implementing ad retargeting, all based on customer behavior."_
 
 Architectural shift od ESP k CDP:
 
@@ -279,6 +280,7 @@ CDP architectura (ExpertSender 2025+):
 ExpertSender CDP přijímá data z:
 
 #### E-commerce platforms
+
 - Shopify, WooCommerce, Magento, PrestaShop
 - Customer accounts
 - Order events (placed, shipped, delivered, returned, refunded)
@@ -286,16 +288,19 @@ ExpertSender CDP přijímá data z:
 - Product views, searches
 
 #### CRM systems
+
 - Salesforce, HubSpot, custom CRMs
 - Customer data sync
 - Deal/opportunity data
 
 #### POS systems
+
 - In-store purchase data
 - Loyalty program activity
 - Cross-channel attribution
 
 #### Web tracking
+
 - Site visits via JS snippet
 - Pages viewed
 - Time on page
@@ -303,12 +308,14 @@ ExpertSender CDP přijímá data z:
 - Custom events
 
 #### Mobile apps
+
 - SDK integration
 - App events
 - In-app purchases
 - Push subscription state
 
 #### External
+
 - Webhooks
 - API ingestion
 - Custom imports (CSV, SFTP)
@@ -340,6 +347,7 @@ Real-time activation
 ### 4.5 Real-time vs. batch
 
 ExpertSender CDP funguje **real-time**:
+
 - Customer browses → events recorded immediately
 - Predictive scores update na novou událost
 - Segments re-evaluate continuously
@@ -386,12 +394,14 @@ Single unified profile across all touchpoints
 ### 5.3 Single Customer 360° Profile contains
 
 #### Demographics
+
 - Name, age, gender (if collected)
 - Location (city, region, country)
 - Language preference
 - Consent status per channel
 
 #### Transactional
+
 - Order history (all orders chronologically)
 - AOV (current + historic)
 - Total spent
@@ -401,6 +411,7 @@ Single unified profile across all touchpoints
 - Loyalty status
 
 #### Behavioral
+
 - Page views (chronological)
 - Time on site sessions
 - Search queries
@@ -410,12 +421,14 @@ Single unified profile across all touchpoints
 - Custom events
 
 #### Engagement
+
 - Email: sent, opened, clicked, bounced, unsubscribed
 - SMS: delivered, clicked, opted-out
 - Push: delivered, clicked, opt-in state
 - On-site: popups seen, dismissed, converted
 
 #### Predictive scores (ML-generated)
+
 - **CLV (Customer Lifetime Value)** – predicted total spend
 - **Churn probability** – % likely to churn next N days
 - **Next purchase date (NPD)** – predicted timing
@@ -424,6 +437,7 @@ Single unified profile across all touchpoints
 - **Discount sensitivity** – respond to discounts vs. brand
 
 #### Segments
+
 - Membership in dynamic segments
 - RFM cohort (Champions, Loyal, etc.)
 - Custom segments
@@ -463,6 +477,7 @@ ExpertSender's **segmentation strength** je často citována v reviews jako klí
 ExpertSender automaticky vypočítává RFM scores per profile (1–5 per dimension, total 1–15 nebo per dimension 1–125):
 
 Common cohorts:
+
 - **Champions** – best customers (high R, F, M)
 - **Loyal Customers** – consistent buyers
 - **Potential Loyalists** – new but engaged
@@ -495,28 +510,33 @@ SMS (if opted in): time-sensitive offer
 ### 6.4 Segment types
 
 #### Behavioral segments
+
 - "Viewed product X but didn't buy"
 - "Added to cart, abandoned within 24h"
 - "Opened last 3 newsletters but no purchase"
 - "Browsed category Y in last 7 days"
 
 #### Transactional segments
+
 - "Top 10% by lifetime value"
 - "Purchased category X, never Y"
 - "AOV > €100"
 - "More than 5 orders last 12 months"
 
 #### Predictive segments
+
 - "Predicted CLV > €500"
 - "Churn risk High + still subscribed"
 - "Predicted next purchase within 7 days"
 
 #### Engagement segments
+
 - "Engaged email subscribers (opened last 30 days)"
 - "Cold list (no open last 90 days)"
 - "Web push subscribers active last 14 days"
 
 #### Hybrid (most powerful)
+
 - "Champions cohort + opened last 14 days + browsed jewelry category"
 - "At Risk + predicted CLV > €1000 + email engaged"
 
@@ -527,12 +547,14 @@ SMS (if opted in): time-sensitive offer
 ### 7.1 Email capabilities
 
 #### Editor types
+
 - **Drag-and-drop editor** (intuitive, modern)
 - **HTML editor** (custom code)
 - **Hybrid** – drag-drop with HTML blocks
 - **Saved templates** library
 
 #### Personalization
+
 - **Merge fields** s syntax `[[field_name]]`
 - **Dynamic content blocks** (per segment)
 - **Product recommendations** blocks (AI-powered)
@@ -541,6 +563,7 @@ SMS (if opted in): time-sensitive offer
 - **Dynamic images** (per profile)
 
 #### Send-time options
+
 - Send now
 - Schedule
 - **Send Time Optimization (STO)** – AI per user
@@ -576,7 +599,7 @@ ExpertSender's **deliverability infrastructure** je often citována jako klíčo
 - **MX records monitoring**
 - **Spam test pre-send**
 
-G2 review: *"It has almost all the crucial and strategic features any experienced email marketing could dream about. Throttling and IP reputation still are game changers and it will allow you go that in-depth."*
+G2 review: _"It has almost all the crucial and strategic features any experienced email marketing could dream about. Throttling and IP reputation still are game changers and it will allow you go that in-depth."_
 
 ### 7.5 Per-email tracking
 
@@ -660,6 +683,7 @@ G2 review: *"It has almost all the crucial and strategic features any experience
 ### 9.3 Anonymous user push
 
 **Key advantage:** Web push works for **anonymous visitors** who haven't given email yet:
+
 - Visitor consents to push
 - Cookie ID stored
 - Push subscription linked to anonymous profile
@@ -777,6 +801,7 @@ If no convert in 24h:
 ### 12.2 Workflow triggers
 
 #### Behavioral
+
 - Page visited (specific URL)
 - Custom event (any tracked event)
 - Form submission
@@ -786,6 +811,7 @@ If no convert in 24h:
 - Wishlist add
 
 #### Transactional
+
 - Order placed
 - Specific product purchased
 - Order cancelled / refunded
@@ -794,12 +820,14 @@ If no convert in 24h:
 - AOV threshold reached
 
 #### Engagement
+
 - Email opened / clicked
 - SMS clicked
 - Push opened
 - On-site popup converted
 
 #### Lifecycle
+
 - Subscribed to channel
 - Unsubscribed
 - Bounced
@@ -807,12 +835,14 @@ If no convert in 24h:
 - Left segment
 
 #### Predictive
+
 - Churn risk threshold
 - CLV threshold
 - Predicted purchase date approaching
 - Affinity score change
 
 #### Date-based
+
 - Anniversary (birthday, signup)
 - Specific date
 - Date offset from custom field
@@ -845,6 +875,7 @@ If no convert in 24h:
 ### 12.5 Common workflow patterns
 
 #### Welcome series (multichannel)
+
 ```
 Trigger: Subscribed to email
    ↓
@@ -870,6 +901,7 @@ Send SMS (if opt-in): final offer
 ```
 
 #### Abandoned cart (multichannel)
+
 ```
 Trigger: Cart abandoned (>30 min)
    ↓
@@ -893,6 +925,7 @@ After 48h, condition: Purchased?
 ```
 
 #### Post-purchase upsell
+
 ```
 Trigger: Order placed (specific category)
    ↓
@@ -916,9 +949,10 @@ Trigger: Predicted next purchase date approaching?
 
 ### 12.6 Workflow weakness (G2 critique)
 
-Některá G2 review uvádí: *"Automation tools and features are really weak compared to the competition."*
+Některá G2 review uvádí: _"Automation tools and features are really weak compared to the competition."_
 
 Toto je **kontroverzní bod** – jiné reviews chválí automation. Pravděpodobně závisí na use case:
+
 - Klaviyo má hlubší automation pro DTC
 - ActiveCampaign má pokročilejší branching logic
 - ExpertSender je solidní mid-market, ne best-in-class
@@ -929,13 +963,14 @@ Toto je **kontroverzní bod** – jiné reviews chválí automation. Pravděpodo
 
 ### 13.1 ExpertSender's AI approach
 
-**Důležitý disclaimer per Authencio review:** *"It is important to distinguish this from Generative AI (like ChatGPT). ExpertSender's AI focuses on backend logistics using machine learning."*
+**Důležitý disclaimer per Authencio review:** _"It is important to distinguish this from Generative AI (like ChatGPT). ExpertSender's AI focuses on backend logistics using machine learning."_
 
 ExpertSender používá **traditional ML pro marketing automation**, ne generative AI pro content creation (na rozdíl od Klaviyo Marketing Agent / HubSpot Breeze).
 
 ### 13.2 Predictive scores
 
 #### CLV (Customer Lifetime Value)
+
 - Historic + Predicted (next 12 months)
 - ML model trained on order history + behavior
 - Use cases:
@@ -945,6 +980,7 @@ ExpertSender používá **traditional ML pro marketing automation**, ne generati
   - Branch flows by spend power
 
 #### Churn Probability
+
 - ML predicts % likely to churn next N days
 - Based on engagement decline + purchase patterns
 - Use cases:
@@ -953,11 +989,13 @@ ExpertSender používá **traditional ML pro marketing automation**, ne generati
   - Discount targeting
 
 #### Predicted Next Purchase Date (NPD)
+
 - ML predicts when next purchase likely
 - Trigger replenishment X days before
 - Especially powerful pro **consumables** (kosmetika, doplňky, krmivo)
 
 #### Send Time Optimization (STO)
+
 - Per-user optimal send time
 - Based na historical engagement patterns
 - Increases open rates significantly
@@ -989,22 +1027,27 @@ ExpertSender's **proprietary product recommendation engine**.
 ### 14.1 Recommendation strategies
 
 #### Collaborative filtering
+
 - "Customers who bought X also bought Y"
 - Based on aggregate customer behavior
 
 #### Content-based
+
 - "Similar to what you viewed"
 - Based on product attributes (category, price, brand)
 
 #### Personalized
+
 - Per profile preferences + history
 - ML-driven
 
 #### Trending
+
 - Hot products right now
 - Based on real-time aggregate behavior
 
 #### Cross-sell / Upsell
+
 - Complementary products
 - Higher-priced alternatives
 
@@ -1053,6 +1096,7 @@ ExpertSender's **proprietary product recommendation engine**.
 **ExpertSender advantage:** transactional + marketing v jedné platformě (na rozdíl od MailerLite ↔ MailerSend split).
 
 Benefits:
+
 - Unified customer profile
 - Single dashboard
 - One billing
@@ -1078,14 +1122,14 @@ Brevo i ExpertSender mají integrated transactional + marketing. ExpertSender je
 
 ### 16.2 Authentication setup
 
-| Protokol | Setup |
-|---|---|
-| **SPF** | Include for ExpertSender's sending servers |
-| **DKIM** | CNAME records on sending subdomain |
-| **DMARC** | TXT record on _dmarc |
-| **BIMI** | After DMARC reject + verified logo |
-| **Sender ID** | Microsoft authentication |
-| **Branded tracking domain** | Setup pro click links |
+| Protokol                    | Setup                                      |
+| --------------------------- | ------------------------------------------ |
+| **SPF**                     | Include for ExpertSender's sending servers |
+| **DKIM**                    | CNAME records on sending subdomain         |
+| **DMARC**                   | TXT record on \_dmarc                      |
+| **BIMI**                    | After DMARC reject + verified logo         |
+| **Sender ID**               | Microsoft authentication                   |
+| **Branded tracking domain** | Setup pro click links                      |
 
 ### 16.3 Domain authentication flow
 
@@ -1141,27 +1185,28 @@ Emails signed with your domain
 - **API authentication** (key-based)
 - **Rate limits** vary by plan
 - **High-volume support** pro enterprise
-- G2 reviews: *"Its API works very well too"*
+- G2 reviews: _"Its API works very well too"_
 
 ### 17.2 Hlavní API endpoints
 
-| Resource | Operace |
-|---|---|
-| `/subscribers` | CRUD subscribers |
-| `/lists` | List management |
-| `/segments` | Segment management |
-| `/campaigns` | Campaign CRUD |
-| `/workflows` | Automation management |
+| Resource         | Operace                   |
+| ---------------- | ------------------------- |
+| `/subscribers`   | CRUD subscribers          |
+| `/lists`         | List management           |
+| `/segments`      | Segment management        |
+| `/campaigns`     | Campaign CRUD             |
+| `/workflows`     | Automation management     |
 | `/transactional` | Send transactional emails |
-| `/events` | Track custom events |
-| `/products` | Product catalog |
-| `/orders` | Order data ingestion |
-| `/reports` | Reports access |
-| `/webhooks` | Webhook subscriptions |
+| `/events`        | Track custom events       |
+| `/products`      | Product catalog           |
+| `/orders`        | Order data ingestion      |
+| `/reports`       | Reports access            |
+| `/webhooks`      | Webhook subscriptions     |
 
 ### 17.3 Webhooks
 
 Real-time event notifications:
+
 - Subscriber events (subscribed, unsubscribed, bounced)
 - Campaign events (sent, opened, clicked)
 - E-commerce events (order, cart abandon)
@@ -1171,6 +1216,7 @@ Real-time event notifications:
 ### 17.4 Native integrace
 
 **Klíčové e-commerce integrace** (deep):
+
 - **Magento / Adobe Commerce**
 - **Shopify** + Shopify Plus
 - **WooCommerce**
@@ -1181,24 +1227,29 @@ Real-time event notifications:
 ### 17.5 Další integrace
 
 #### CRM
+
 - Salesforce
 - HubSpot
 - Microsoft Dynamics
 - Pipedrive
 
 #### Analytics
+
 - Google Analytics
 - Adobe Analytics
 
 #### Customer Service
+
 - Zendesk
 - Freshdesk
 
 #### Ads
+
 - Facebook/Meta Ads (Custom Audiences sync)
 - Google Ads (audiences)
 
 #### iPaaS
+
 - Zapier
 - Make (Integromat)
 - Workato
@@ -1226,6 +1277,7 @@ ExpertSender's klíčový diferenciátor je **service-driven approach** vs. self
 ### 18.1 Dedicated Account Manager
 
 **Každý klient dostává:**
+
 - Dedicated point of contact
 - Knows your business + data
 - Helps design campaigns
@@ -1268,13 +1320,15 @@ ExpertSender's klíčový diferenciátor je **service-driven approach** vs. self
 ### 18.6 Support critique
 
 G2 reviews převážně **positivní** o supportu:
-- *"Customer support is very friendly and will provide detailed explanations"*
-- *"Support always helpful... didn't have any unsolved issues"*
-- *"Excellent communicators"*
-- *"Brilliant customer care"*
+
+- _"Customer support is very friendly and will provide detailed explanations"_
+- _"Support always helpful... didn't have any unsolved issues"_
+- _"Excellent communicators"_
+- _"Brilliant customer care"_
 
 Some critique:
-- *"Slow response times or system lags during off-hours or on slower networks"*
+
+- _"Slow response times or system lags during off-hours or on slower networks"_
 - Dedicated IP changes require support intervention
 
 ---
@@ -1304,6 +1358,7 @@ Some critique:
 ### 19.3 Consent tracking
 
 Per profile:
+
 - Email subscription consent (timestamp, IP, source)
 - SMS opt-in
 - Web push opt-in
@@ -1334,6 +1389,7 @@ Per profile:
 ### 19.6 Industry compliance
 
 ExpertSender member organizací podle reviews:
+
 - Email marketing best practices initiatives
 - GDPR working groups
 - ECO (Electronic Commerce Organization) Germany
@@ -1355,8 +1411,8 @@ ExpertSender member organizací podle reviews:
 
 - **"Utilitarian and feature-dense"** UI (Authencio review)
 - **Steep learning curve** pro beginners
-- *"Interface can feel a bit dated and overwhelming for new users"* (G2)
-- *"Marketing Manager used to the simplicity of Mailchimp may find the workflow logic and data mapping intimidating initially"*
+- _"Interface can feel a bit dated and overwhelming for new users"_ (G2)
+- _"Marketing Manager used to the simplicity of Mailchimp may find the workflow logic and data mapping intimidating initially"_
 - **Drag-and-drop editor** OK ale not best-in-class
 - **Tech-heavy product** – designed for power users
 - **Mobile interface** less polished
@@ -1371,7 +1427,7 @@ ExpertSender member organizací podle reviews:
 
 ### 20.4 Automation depth critique
 
-- *"Automation tools and features are really weak compared to the competition"* (G2)
+- _"Automation tools and features are really weak compared to the competition"_ (G2)
 - Méně sofistikované branching než ActiveCampaign / Klaviyo
 - Less templates v automation library
 - Some workflow logic limitations
@@ -1400,7 +1456,7 @@ ExpertSender member organizací podle reviews:
 
 ### 20.8 Reporting limitations
 
-- *"More built-in templates and easier third-party integrations would enhance the overall user experience"*
+- _"More built-in templates and easier third-party integrations would enhance the overall user experience"_
 - **Can't save report templates** – musí reconfigure each time
 - **Custom dashboards** more limited
 - **Multi-touch attribution** less sophisticated
@@ -1436,6 +1492,7 @@ ExpertSender member organizací podle reviews:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### ExpertSender je dobrá volba pokud
+
 - Provozujete **mid-to-large e-commerce** (30K+ visits/měsíc minimum)
 - Hledáte **multichannel platform** (email + SMS + push + on-site v jednom)
 - Vážíte si **dedicated account manager** + strategic guidance
@@ -1451,6 +1508,7 @@ ExpertSender member organizací podle reviews:
 - Chcete **traditional ML** předpovědi (CLV, churn, NPD)
 
 ### ExpertSender není dobrá volba pokud
+
 - Jste **small business / solopreneur** – overkill + nedostupné
 - Hledáte **self-service free trial / freemium** – ExpertSender neoffer
 - Pracujete v **češtině/slovenštině** – UI nepodporuje (jen EN/PL/PT)
@@ -1466,19 +1524,19 @@ ExpertSender member organizací podle reviews:
 
 ### ExpertSender vs. konkurence
 
-| Konkurence | Kdy lepší než ExpertSender |
-|---|---|
-| **Klaviyo** | Pure DTC e-commerce, Shopify deeper, predictive analytics + AI agents, US-focused |
-| **Mailchimp** | Small business, brand recognition, simple UI, self-serve |
-| **Brevo** | Multi-vertical (ne jen e-commerce), volume-based pricing, transparent self-serve, multilingual |
-| **HubSpot** | Full B2B CRM, multi-Hub vision, complete revenue platform |
-| **ActiveCampaign** | Deeper automation, more sophisticated workflows |
-| **GetResponse** | Webinars, courses, content monetization, 27 languages incl. CZ/SK |
-| **SAP Emarsys** | Enterprise loyalty, complex retail org structures |
-| **Bloomreach** | Bigger DTC + content personalization, more enterprise |
-| **Salesforce Marketing Cloud** | Pure enterprise, Salesforce ecosystem integration |
-| **MailerLite** | Solopreneurs, content creators, simple use cases |
+| Konkurence                     | Kdy lepší než ExpertSender                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **Klaviyo**                    | Pure DTC e-commerce, Shopify deeper, predictive analytics + AI agents, US-focused              |
+| **Mailchimp**                  | Small business, brand recognition, simple UI, self-serve                                       |
+| **Brevo**                      | Multi-vertical (ne jen e-commerce), volume-based pricing, transparent self-serve, multilingual |
+| **HubSpot**                    | Full B2B CRM, multi-Hub vision, complete revenue platform                                      |
+| **ActiveCampaign**             | Deeper automation, more sophisticated workflows                                                |
+| **GetResponse**                | Webinars, courses, content monetization, 27 languages incl. CZ/SK                              |
+| **SAP Emarsys**                | Enterprise loyalty, complex retail org structures                                              |
+| **Bloomreach**                 | Bigger DTC + content personalization, more enterprise                                          |
+| **Salesforce Marketing Cloud** | Pure enterprise, Salesforce ecosystem integration                                              |
+| **MailerLite**                 | Solopreneurs, content creators, simple use cases                                               |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů expertsender.com a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Research.com, SpotSaaS, SoftwareSuggest, SoftwareFinder, Authencio, Shopify CDP guide, CDP.com). Pro nejaktuálnější detaily je nutný demo s ExpertSender sales teamem (no public pricing).*
+_Dokument zpracován z oficiálních zdrojů expertsender.com a praktických zdrojů (G2, Capterra, GetApp, SoftwareAdvice, Research.com, SpotSaaS, SoftwareSuggest, SoftwareFinder, Authencio, Shopify CDP guide, CDP.com). Pro nejaktuálnější detaily je nutný demo s ExpertSender sales teamem (no public pricing)._

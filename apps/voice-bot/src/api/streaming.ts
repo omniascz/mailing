@@ -102,7 +102,11 @@ function cancelInFlight(state: SessionState): void {
   state.ttsAbort = null;
 }
 
-async function runAssistantTurn(state: SessionState, userText: string, opts: StreamingServerOptions): Promise<void> {
+async function runAssistantTurn(
+  state: SessionState,
+  userText: string,
+  opts: StreamingServerOptions,
+): Promise<void> {
   cancelInFlight(state);
   state.transcript.push({ role: 'user', content: userText });
 
@@ -188,7 +192,10 @@ async function pumpStt(state: SessionState, opts: StreamingServerOptions): Promi
   }
 }
 
-export function createStreamingServer(opts: StreamingServerOptions): { wss: WebSocketServer; close: () => Promise<void> } {
+export function createStreamingServer(opts: StreamingServerOptions): {
+  wss: WebSocketServer;
+  close: () => Promise<void>;
+} {
   const port = opts.port ?? 8787;
   const wss = new WebSocketServer({ port });
 
@@ -200,7 +207,8 @@ export function createStreamingServer(opts: StreamingServerOptions): { wss: WebS
       sampleRate: 16000,
       language: opts.defaultLanguage ?? 'en',
       voiceId: opts.defaultVoiceId ?? 'default',
-      systemPrompt: opts.defaultSystemPrompt ?? 'You are a helpful voice assistant. Reply concisely.',
+      systemPrompt:
+        opts.defaultSystemPrompt ?? 'You are a helpful voice assistant. Reply concisely.',
       transcript: [],
       sttStream: null,
       llmAbort: null,
@@ -209,8 +217,12 @@ export function createStreamingServer(opts: StreamingServerOptions): { wss: WebS
 
     ws.on('message', (raw: Buffer) => {
       let msg: Record<string, unknown>;
-      try { msg = JSON.parse(raw.toString('utf8')) as Record<string, unknown>; }
-      catch { send(ws, { type: 'error', code: 'BAD_JSON', message: 'expected JSON frame' }); return; }
+      try {
+        msg = JSON.parse(raw.toString('utf8')) as Record<string, unknown>;
+      } catch {
+        send(ws, { type: 'error', code: 'BAD_JSON', message: 'expected JSON frame' });
+        return;
+      }
 
       const type = msg.type;
       if (type === 'start') {
@@ -227,7 +239,10 @@ export function createStreamingServer(opts: StreamingServerOptions): { wss: WebS
       }
 
       if (type === 'audio') {
-        if (!state.sttStream) { send(ws, { type: 'error', code: 'NOT_STARTED', message: 'send "start" first' }); return; }
+        if (!state.sttStream) {
+          send(ws, { type: 'error', code: 'NOT_STARTED', message: 'send "start" first' });
+          return;
+        }
         const b64 = typeof msg.pcm === 'string' ? msg.pcm : '';
         if (b64) state.sttStream.pushAudio(Buffer.from(b64, 'base64'));
         return;
@@ -250,7 +265,11 @@ export function createStreamingServer(opts: StreamingServerOptions): { wss: WebS
         return;
       }
 
-      send(ws, { type: 'error', code: 'UNKNOWN_TYPE', message: `unknown frame type: ${String(type)}` });
+      send(ws, {
+        type: 'error',
+        code: 'UNKNOWN_TYPE',
+        message: `unknown frame type: ${String(type)}`,
+      });
     });
 
     ws.on('close', () => {
@@ -273,29 +292,39 @@ export function createStreamingServer(opts: StreamingServerOptions): { wss: WebS
 export function createStubAdapters(): { stt: SttAdapter; llm: LlmAdapter; tts: TtsAdapter } {
   const stt: SttAdapter = {
     open({ sampleRate, language }) {
-      void sampleRate; void language;
+      void sampleRate;
+      void language;
       const queue: Array<{ type: 'partial' | 'final'; text: string; endOfSpeech?: boolean }> = [];
-      let resolve: ((v: IteratorResult<typeof queue[number]>) => void) | null = null;
+      let resolve: ((v: IteratorResult<(typeof queue)[number]>) => void) | null = null;
       let closed = false;
-      const events: AsyncIterable<typeof queue[number]> = {
+      const events: AsyncIterable<(typeof queue)[number]> = {
         [Symbol.asyncIterator]() {
           return {
             next() {
               if (queue.length > 0) return Promise.resolve({ value: queue.shift()!, done: false });
               if (closed) return Promise.resolve({ value: undefined as never, done: true });
-              return new Promise<IteratorResult<typeof queue[number]>>(r => { resolve = r; });
+              return new Promise<IteratorResult<(typeof queue)[number]>>((r) => {
+                resolve = r;
+              });
             },
           };
         },
       };
       return {
-        pushAudio() { /* stub ignores PCM */ },
+        pushAudio() {
+          /* stub ignores PCM */
+        },
         finalize() {
           closed = true;
-          if (resolve) { resolve({ value: undefined as never, done: true }); resolve = null; }
+          if (resolve) {
+            resolve({ value: undefined as never, done: true });
+            resolve = null;
+          }
         },
         events,
-        close() { closed = true; },
+        close() {
+          closed = true;
+        },
       };
     },
   };

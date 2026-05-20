@@ -4,15 +4,16 @@
 **Zdroje:** oficiální dokumentace sare.pl + analytické weby a recenze (GetApp, SoftwareSuggest, SoftwareWorld, SaaSCounter, Digitree, RocketReach, EmailExpert, EmailVendorSelection) ověřené v dubnu–květnu 2026.
 **Rozsah:** kompletní funkcionalita platformy v roce 2026 – email marketing, marketing automation, omnichannel (email + SMS + web push + surveys), CDP, ML-driven targeting, channel scoring.
 
-> **Důležitý kontext:** SARE je **polský produkt** s HQ ve **Varšavě** (Mazowieckie). Mateřská společnost: **SARE S.A.** – součást **Digitree Group** (oznámeno jako *"part of the Digitree Group"* na oficiálním webu).
+> **Důležitý kontext:** SARE je **polský produkt** s HQ ve **Varšavě** (Mazowieckie). Mateřská společnost: **SARE S.A.** – součást **Digitree Group** (oznámeno jako _"part of the Digitree Group"_ na oficiálním webu).
 >
-> **Pozice:** **Email marketing leader v Polsku** (per oficiální claim *"We are the email marketing leader in Poland"*). **Top 4-5 hráč na polském trhu** spolu s GetResponse, MailerLite (post-FreshMail), SALESmanago a ExpertSender.
+> **Pozice:** **Email marketing leader v Polsku** (per oficiální claim _"We are the email marketing leader in Poland"_). **Top 4-5 hráč na polském trhu** spolu s GetResponse, MailerLite (post-FreshMail), SALESmanago a ExpertSender.
 >
 > **Velikost firmy:** **Annual revenue $12.4M v 2026** (per RocketReach), Warszawa HQ.
 >
-> **Historie:** SARE pracuje s klienty od **2009+** (per VB Leasing reference: *"We have been using the SARE system for nearly 14 years. Our first mailings were sent out in 2009"*).
+> **Historie:** SARE pracuje s klienty od **2009+** (per VB Leasing reference: _"We have been using the SARE system for nearly 14 years. Our first mailings were sent out in 2009"_).
 >
 > **Klíčové diferenciátory:**
+>
 > - **Polish market expertise** – leading position v Polsku
 > - **Omnichannel** (email + SMS + web push + surveys)
 > - **ML-driven** targeting + automation
@@ -73,15 +74,17 @@
 **"Email marketing leader v Polsku"** – marketing positioning.
 
 Per oficiální:
-> *"We are the email marketing leader in Poland. We have been developing email communication strategies. We provide tools and knowledge in the field, we build relationships with clients, and help ensure their loyalty. For years, we have been cooperating with leading Polish and international brands – helping them to create their success."*
+
+> _"We are the email marketing leader in Poland. We have been developing email communication strategies. We provide tools and knowledge in the field, we build relationships with clients, and help ensure their loyalty. For years, we have been cooperating with leading Polish and international brands – helping them to create their success."_
 
 ### Per Digitree group (parent):
 
-> *"We are part of the Digitree Group, providing comprehensive and effective digital campaigns, thanks to our own technology and tools, unique data, knowledge and experience of specialists. SAREsystem - tools for email marketing communication and marketing automation."*
+> _"We are part of the Digitree Group, providing comprehensive and effective digital campaigns, thanks to our own technology and tools, unique data, knowledge and experience of specialists. SAREsystem - tools for email marketing communication and marketing automation."_
 
 ### Reference customers
 
 **Notable Polish brands (per oficiální):**
+
 - **VB Leasing** (since 2009 – Independent e-Marketing Specialist Maciej Tykarski)
 - **Polish Stem Cell Bank S.A.** (Łukasz Więcek, Multi-channel Sales Manager)
 - **Leading Polish + international brands**
@@ -170,7 +173,7 @@ Per oficiální:
 
 ### Per Digitree review
 
-> *"SARE is a platform that scales with your marketing: from the first newsletter to complex automation scenarios."*
+> _"SARE is a platform that scales with your marketing: from the first newsletter to complex automation scenarios."_
 
 ---
 
@@ -179,6 +182,7 @@ Per oficiální:
 ### 2.1 Pricing approach
 
 Per SoftwareWorld:
+
 - **No free version** (paid only)
 - **Free trial available** (no credit card required)
 - **Subscription pricing model**
@@ -187,7 +191,8 @@ Per SoftwareWorld:
 ### 2.2 Free trial
 
 Per GetApp:
-> *"Pricing model: Subscription. Free Trial: Available (No Credit Card required)"*
+
+> _"Pricing model: Subscription. Free Trial: Available (No Credit Card required)"_
 
 - **Free trial period** (terms TBD)
 - **No credit card** required
@@ -199,6 +204,7 @@ Per GetApp:
 ⚠️ SARE **doesn't publish public pricing** – custom quote per klient.
 
 Per Digitree segmentation recommendations:
+
 - **Starter:** Drag-Drop editor + basic automation (SMB entry)
 - **E-commerce:** Retargeting, integrations, dedicated reports
 - **Corporate / Banking:** SSO, permissions, audits, SLA, regulatory compliance
@@ -269,17 +275,17 @@ Contract negotiation
 
 Per industry context (custom pricing, ranges estimovány):
 
-| Platform | Mid-market entry |
-|---|---|
-| **SARE** | Custom (Polish market) |
-| **SALESmanago** | €199+/měsíc |
-| **ExpertSender** | $450+/měsíc |
-| **GetResponse** | $79+/měsíc |
-| **MailerLite** | $15+/měsíc |
-| **Klaviyo** | $720+/měsíc (50K) |
-| **HubSpot Marketing Hub** | $890+/měsíc |
-| **ActiveCampaign** | $234+/měsíc (10K) |
-| **Brevo Business** | €65+/měsíc (10K) |
+| Platform                  | Mid-market entry       |
+| ------------------------- | ---------------------- |
+| **SARE**                  | Custom (Polish market) |
+| **SALESmanago**           | €199+/měsíc            |
+| **ExpertSender**          | $450+/měsíc            |
+| **GetResponse**           | $79+/měsíc             |
+| **MailerLite**            | $15+/měsíc             |
+| **Klaviyo**               | $720+/měsíc (50K)      |
+| **HubSpot Marketing Hub** | $890+/měsíc            |
+| **ActiveCampaign**        | $234+/měsíc (10K)      |
+| **Brevo Business**        | €65+/měsíc (10K)       |
 
 ⚠️ **SARE competitive for Polish market** s native expertise.
 
@@ -290,9 +296,11 @@ Per industry context (custom pricing, ranges estimovány):
 ### 3.1 Polish market leadership
 
 Per oficiální:
-> *"We are the email marketing leader in Poland."*
+
+> _"We are the email marketing leader in Poland."_
 
 **Polish market expertise:**
+
 - **15+ let v industry** (klienti od 2009)
 - **Native Polish team**
 - **Polish regulatory knowledge** (UODO compliance, Polish banking)
@@ -302,9 +310,11 @@ Per oficiální:
 ### 3.2 Part of Digitree Group
 
 Per oficiální:
-> *"We are part of the Digitree Group, providing comprehensive and effective digital campaigns, thanks to our own technology and tools, unique data, knowledge and experience of specialists."*
+
+> _"We are part of the Digitree Group, providing comprehensive and effective digital campaigns, thanks to our own technology and tools, unique data, knowledge and experience of specialists."_
 
 **Digitree Group ecosystem:**
+
 - **Comprehensive digital campaigns**
 - **Own technology + tools**
 - **Unique data**
@@ -314,9 +324,11 @@ Per oficiální:
 ### 3.3 Channel Scoring (UNIKÁTNÍ)
 
 Per GetApp:
-> *"a specialized feature called channel scoring, designed to assess user engagement in email and SMS channels"*
+
+> _"a specialized feature called channel scoring, designed to assess user engagement in email and SMS channels"_
 
 **Channel Scoring:**
+
 - **Proprietary feature**
 - **Assesses user engagement** per channel
 - **Email + SMS scoring**
@@ -324,12 +336,14 @@ Per GetApp:
 - **Drives conversions optimization**
 
 Per Digitree:
-> *"Channel scoring identifies the most effective channels to drive conversions."*
+
+> _"Channel scoring identifies the most effective channels to drive conversions."_
 
 ### 3.4 ML-driven targeting
 
 Per GetApp:
-> *"SARE is a cloud-based email marketing tool that utilizes machine learning (ML) capabilities to facilitate automated and targeted communication"*
+
+> _"SARE is a cloud-based email marketing tool that utilizes machine learning (ML) capabilities to facilitate automated and targeted communication"_
 
 - **Machine learning** capabilities
 - **Targeting optimization**
@@ -340,9 +354,11 @@ Per GetApp:
 ### 3.5 Industry research + reports publishing
 
 Per Digitree:
-> *"SARE specialists have been conducting research and publishing reports on consumer behavior and marketing communication for years, which are widely cited in industry media and educational materials."*
+
+> _"SARE specialists have been conducting research and publishing reports on consumer behavior and marketing communication for years, which are widely cited in industry media and educational materials."_
 
 **Thought leadership:**
+
 - **Industry research** publishing
 - **Consumer behavior reports**
 - **Marketing communication studies**
@@ -354,12 +370,15 @@ This is **unique market positioning** – not just tool, but **research authorit
 ### 3.6 Dedicated Client Service team
 
 Per real customer (VB Leasing):
-> *"In addition to the obvious benefits of the system, such as ease of use and continuous platform development, it's essential to emphasize the invaluable assistance of the Client Service team."*
+
+> _"In addition to the obvious benefits of the system, such as ease of use and continuous platform development, it's essential to emphasize the invaluable assistance of the Client Service team."_
 
 Per Polish Stem Cell Bank:
-> *"We highly value the quality of customer service, and our dedicated consultant reliably supports us in our daily work with the system. They are always willing to share their knowledge, so we can say that the SARE system is a professional tool backed by the substantive expertise of its staff."*
+
+> _"We highly value the quality of customer service, and our dedicated consultant reliably supports us in our daily work with the system. They are always willing to share their knowledge, so we can say that the SARE system is a professional tool backed by the substantive expertise of its staff."_
 
 **Consultative approach:**
+
 - **Dedicated consultant** per klient
 - **Knowledge sharing**
 - **Substantive expertise**
@@ -368,9 +387,11 @@ Per Polish Stem Cell Bank:
 ### 3.7 Comprehensive omnichannel
 
 Per Digitree:
-> *"The platform supports omnichannel: email, SMS, web push, surveys/questionnaires, and a secure SMTP server for transactional and marketing sends."*
+
+> _"The platform supports omnichannel: email, SMS, web push, surveys/questionnaires, and a secure SMTP server for transactional and marketing sends."_
 
 **All channels v one platform:**
+
 - Email
 - SMS
 - Web Push
@@ -380,9 +401,11 @@ Per Digitree:
 ### 3.8 Enterprise compliance
 
 Per Digitree:
-> *"for corporations and banks – SSO, permissions, audits, SLA, and regulatory compliance"*
+
+> _"for corporations and banks – SSO, permissions, audits, SLA, and regulatory compliance"_
 
 **Enterprise features:**
+
 - **SSO (Single Sign-On)**
 - **Granular permissions**
 - **Audit logs**
@@ -391,18 +414,18 @@ Per Digitree:
 
 ### 3.9 Vs. Polish competitors
 
-| Aspect | SARE | GetResponse | SALESmanago | ExpertSender |
-|---|---|---|---|---|
-| **Origin** | PL (Warszawa) | PL (Gdańsk) | PL (Kraków) | PL (Gdańsk) |
-| **Founded** | 1990s-2000s era (active 2009+) | 1998 | 2011-ish | 2009 |
-| **Target segment** | Mid-market + enterprise | SMB → enterprise | Mid-market e-commerce | E-commerce CDP |
-| **Channels** | Email, SMS, web push, surveys | Email, SMS, webinars, courses, landing pages | Email, SMS, web push, ads, on-site | Email, SMS, web push, ads, mobile push |
-| **CDP** | ✅ (database management) | Limited | ✅ Full CDP+CEP | ✅ Full CDP |
-| **AI/ML** | ML targeting + Channel Scoring | AI suite | AI-driven (Recommendation Frames) | ML personalization |
-| **Webinars built-in** | ❌ | ✅ UNIKÁTNÍ | ❌ | ❌ |
-| **International reach** | Polish + selected international | 183 countries | 50 countries, 3000+ klientů | 1000+ klientů |
-| **Self-serve** | Free trial | ✅ Full self-serve | ❌ Sales-driven | ❌ Sales-driven |
-| **Reports thought leadership** | ✅ Industry research | Limited | Limited | Limited |
+| Aspect                         | SARE                            | GetResponse                                  | SALESmanago                        | ExpertSender                           |
+| ------------------------------ | ------------------------------- | -------------------------------------------- | ---------------------------------- | -------------------------------------- |
+| **Origin**                     | PL (Warszawa)                   | PL (Gdańsk)                                  | PL (Kraków)                        | PL (Gdańsk)                            |
+| **Founded**                    | 1990s-2000s era (active 2009+)  | 1998                                         | 2011-ish                           | 2009                                   |
+| **Target segment**             | Mid-market + enterprise         | SMB → enterprise                             | Mid-market e-commerce              | E-commerce CDP                         |
+| **Channels**                   | Email, SMS, web push, surveys   | Email, SMS, webinars, courses, landing pages | Email, SMS, web push, ads, on-site | Email, SMS, web push, ads, mobile push |
+| **CDP**                        | ✅ (database management)        | Limited                                      | ✅ Full CDP+CEP                    | ✅ Full CDP                            |
+| **AI/ML**                      | ML targeting + Channel Scoring  | AI suite                                     | AI-driven (Recommendation Frames)  | ML personalization                     |
+| **Webinars built-in**          | ❌                              | ✅ UNIKÁTNÍ                                  | ❌                                 | ❌                                     |
+| **International reach**        | Polish + selected international | 183 countries                                | 50 countries, 3000+ klientů        | 1000+ klientů                          |
+| **Self-serve**                 | Free trial                      | ✅ Full self-serve                           | ❌ Sales-driven                    | ❌ Sales-driven                        |
+| **Reports thought leadership** | ✅ Industry research            | Limited                                      | Limited                            | Limited                                |
 
 **SARE's niche:** **Polish market expertise + research authority + dedicated service + comprehensive omnichannel**.
 
@@ -413,9 +436,11 @@ Per Digitree:
 ### 4.1 SAREsystem overview
 
 Per oficiální:
-> *"SAREsystem - tools for email marketing communication and marketing automation."*
+
+> _"SAREsystem - tools for email marketing communication and marketing automation."_
 
 **SAREsystem = core platform** containing:
+
 - Email marketing
 - Marketing automation
 - CDP
@@ -445,9 +470,11 @@ SAREsystem core
 ### 4.3 Scalable platform
 
 Per Digitree:
-> *"SARE is a platform that scales with your marketing: from the first newsletter to complex automation scenarios."*
+
+> _"SARE is a platform that scales with your marketing: from the first newsletter to complex automation scenarios."_
 
 **Scale options:**
+
 - **Starter:** Email + basic automation
 - **Growth:** + Omnichannel + segmentation
 - **Enterprise:** + SSO + audit + SLA + regulatory compliance
@@ -460,9 +487,11 @@ Per Digitree:
 ### 5.1 CDP capabilities
 
 Per Digitree:
-> *"Segmentation and personalization work both at the database level (CDP & database management) and within automation scenarios."*
+
+> _"Segmentation and personalization work both at the database level (CDP & database management) and within automation scenarios."_
 
 **CDP & database management:**
+
 - **Centralized customer database**
 - **360° customer profiles**
 - **Behavioral + transactional + demographic data**
@@ -473,9 +502,11 @@ Per Digitree:
 ### 5.2 Data sources
 
 Per GetApp:
-> *"personalized messaging based on transactional, behavioral, and demographic data"*
+
+> _"personalized messaging based on transactional, behavioral, and demographic data"_
 
 **Data captured:**
+
 - **Transactional data** (orders, AOV, frequency)
 - **Behavioral data** (clicks, opens, page views)
 - **Demographic data** (location, age, gender, etc.)
@@ -514,7 +545,8 @@ Per GetApp:
 ### 6.1 Email marketing core
 
 Per Digitree:
-> *"SARE combines email marketing and automation with an intuitive Drag&Drop editor and a library of ready-made components, which speeds up campaign preparation."*
+
+> _"SARE combines email marketing and automation with an intuitive Drag&Drop editor and a library of ready-made components, which speeds up campaign preparation."_
 
 ### 6.2 Drag-and-drop editor
 
@@ -538,7 +570,8 @@ Per Digitree:
 ### 6.3 Component library
 
 Per Digitree:
-> *"a library of ready-made components"*
+
+> _"a library of ready-made components"_
 
 - **Pre-built reusable components**
 - **Speeds up campaign preparation**
@@ -599,12 +632,15 @@ Confirm
 ### 7.1 Automation capabilities
 
 Per Digitree:
-> *"Marketing automation: the system should enable scenario triggering, path building, content personalization, and audience segmentation based on data."*
+
+> _"Marketing automation: the system should enable scenario triggering, path building, content personalization, and audience segmentation based on data."_
 
 Per oficiální (referenced in review):
-> *"marketing automation cycles"*
+
+> _"marketing automation cycles"_
 
 **SARE automation:**
+
 - **Scenarios + path building**
 - **Visual workflow builder**
 - **Multi-step sequences**
@@ -615,6 +651,7 @@ Per oficiální (referenced in review):
 ### 7.2 Triggers
 
 #### Behavioral
+
 - Subscribed to list/database
 - Tag added/removed
 - Form submitted
@@ -623,6 +660,7 @@ Per oficiální (referenced in review):
 - Email opened/clicked
 
 #### Transactional / E-commerce
+
 - Order placed (s integration)
 - Cart abandoned
 - Product page viewed (abandoned)
@@ -630,18 +668,21 @@ Per oficiální (referenced in review):
 - Refund
 
 #### Date-based
+
 - Birthday
 - Anniversary
 - Custom date in field
 - Recurring schedule
 
 #### Engagement-based
+
 - Channel Score threshold
 - Engagement decline
 - Re-activation triggers
 - Custom event
 
 #### External
+
 - API event
 - Webhook
 - CDP segment change
@@ -649,18 +690,21 @@ Per oficiální (referenced in review):
 ### 7.3 Actions (nodes)
 
 #### Sending
+
 - Send email
 - Send SMS
 - Send web push
 - Send survey
 
 #### Contact manipulation
+
 - Add / remove tag
 - Update field
 - Update Channel Score
 - Add / remove from segment
 
 #### Logic
+
 - Wait (delay)
 - Condition (if/else)
 - A/B split
@@ -668,12 +712,14 @@ Per oficiální (referenced in review):
 - Random split
 
 #### External
+
 - Webhook
 - API call
 
 ### 7.4 Use case examples
 
 #### Welcome series
+
 ```
 Trigger: Subscribed to database
    ↓
@@ -691,6 +737,7 @@ End
 ```
 
 #### Cart abandonment s Channel Scoring
+
 ```
 Trigger: Cart abandoned > 1h
    ↓
@@ -709,6 +756,7 @@ Exit
 ```
 
 #### Product page abandonment
+
 ```
 Trigger: Product page visited > 5 min, no purchase
    ↓
@@ -729,7 +777,8 @@ Continue based on engagement
 ### 8.1 Channel Scoring overview
 
 Per GetApp:
-> *"a specialized feature called channel scoring, designed to assess user engagement in email and SMS channels to..."*
+
+> _"a specialized feature called channel scoring, designed to assess user engagement in email and SMS channels to..."_
 
 **Proprietary feature** assessing user engagement per channel.
 
@@ -757,9 +806,10 @@ Use in:
 
 ### 8.3 Per Digitree
 
-> *"Channel scoring identifies the most effective channels to drive conversions."*
+> _"Channel scoring identifies the most effective channels to drive conversions."_
 
 **Use cases:**
+
 - **Pre-send channel selection:** Pick best channel per recipient
 - **Channel switching:** Move to better channel if engagement drops
 - **Campaign budgeting:** Allocate to most effective channels
@@ -782,6 +832,7 @@ Optimal channel selected per recipient
 ### 8.5 Why this matters
 
 **vs. competitors:**
+
 - **Most platforms:** broadcast or basic preferences
 - **SARE Channel Scoring:** ML-driven per recipient
 - **Higher engagement** rates
@@ -795,7 +846,8 @@ Optimal channel selected per recipient
 ### 9.1 Omnichannel capabilities
 
 Per Digitree:
-> *"The platform supports omnichannel: email, SMS, web push, surveys/questionnaires, and a secure SMTP server for transactional and marketing sends."*
+
+> _"The platform supports omnichannel: email, SMS, web push, surveys/questionnaires, and a secure SMTP server for transactional and marketing sends."_
 
 ### 9.2 Email
 
@@ -816,6 +868,7 @@ Per Digitree:
 - **STOP keyword** auto-handling
 
 Use cases:
+
 - Order/shipping notifications
 - Time-sensitive promos
 - Cart abandonment escalation
@@ -831,6 +884,7 @@ Use cases:
 - **Targeting based on behavior**
 
 Use cases:
+
 - Cart abandonment (silent)
 - Promotional alerts
 - Stock alerts
@@ -848,6 +902,7 @@ Use cases:
 - **Reports + analytics**
 
 Use cases:
+
 - NPS surveys
 - Customer satisfaction
 - Preference collection
@@ -857,7 +912,8 @@ Use cases:
 ### 9.6 Secure SMTP
 
 Per Digitree:
-> *"a secure SMTP server for transactional and marketing sends"*
+
+> _"a secure SMTP server for transactional and marketing sends"_
 
 - **Dedicated SMTP infrastructure**
 - **High deliverability**
@@ -879,9 +935,11 @@ Per Digitree:
 ### 10.1 Segmentation capabilities
 
 Per Digitree:
-> *"Segmentation and personalization work both at the database level (CDP & database management) and within automation scenarios."*
+
+> _"Segmentation and personalization work both at the database level (CDP & database management) and within automation scenarios."_
 
 **Multi-level segmentation:**
+
 - **Database level** (overall CDP segmentation)
 - **Automation scenarios** (per workflow)
 - **Campaign-level** (per send)
@@ -937,9 +995,11 @@ Per Digitree:
 ### 11.1 A/B/X testing
 
 Per Digitree:
-> *"The system provides A/B/X tests with automatic winner selection, allowing optimization to happen 'on the fly.'"*
+
+> _"The system provides A/B/X tests with automatic winner selection, allowing optimization to happen 'on the fly.'"_
 
 **A/B/X testing** = multiple variants (not just 2):
+
 - **A/B:** 2 variants
 - **A/B/C:** 3 variants
 - **A/B/X:** N variants
@@ -1011,7 +1071,8 @@ Winner determination criteria:
 ### 12.2 Component library
 
 Per Digitree:
-> *"a library of ready-made components"*
+
+> _"a library of ready-made components"_
 
 - **Reusable components**
 - **Mix-and-match**
@@ -1032,14 +1093,17 @@ Per Digitree:
 ### 13.1 Advanced reporting
 
 Per GetApp:
-> *"advanced reporting and analytics features"*
+
+> _"advanced reporting and analytics features"_
 
 Per Digitree:
-> *"reports that clearly show the impact of actions on results"*
+
+> _"reports that clearly show the impact of actions on results"_
 
 ### 13.2 Standard reports
 
 #### Campaign reports
+
 - Sent, delivered, bounced
 - Opens (unique + total)
 - Clicks, CTR, top links
@@ -1048,6 +1112,7 @@ Per Digitree:
 - Channel Score impact
 
 #### Automation reports
+
 - Per-workflow performance
 - Per-step metrics
 - Drop-off analysis
@@ -1055,12 +1120,14 @@ Per Digitree:
 - Channel routing analytics
 
 #### CDP reports
+
 - Database size trends
 - Segment performance
 - Engagement distribution
 - Channel Score distribution
 
 #### Omnichannel reports
+
 - Per-channel performance
 - Cross-channel attribution
 - Channel Score effectiveness
@@ -1069,9 +1136,11 @@ Per Digitree:
 ### 13.3 Business Intelligence (BI)
 
 Per GetApp:
-> *"business intelligence"*
+
+> _"business intelligence"_
 
 **BI capabilities:**
+
 - **Custom dashboards**
 - **Multi-source data views**
 - **Trend analysis**
@@ -1082,7 +1151,8 @@ Per GetApp:
 ### 13.4 Real-time optimization
 
 Per Digitree:
-> *"Advanced analytics and reporting help optimize in real time."*
+
+> _"Advanced analytics and reporting help optimize in real time."_
 
 - **Real-time stats**
 - **Live monitoring**
@@ -1103,13 +1173,15 @@ Per Digitree:
 ### 14.1 E-commerce automation
 
 Per GetApp:
-> *"Other capabilities include facilitating abandoned cart and product page communication"*
+
+> _"Other capabilities include facilitating abandoned cart and product page communication"_
 
 ### 14.2 Abandoned cart
 
 **Trigger:** Cart created but checkout abandoned (X minutes/hours)
 
 **Standard workflow:**
+
 ```
 Cart abandoned > 1h
    ↓
@@ -1136,6 +1208,7 @@ Exit
 **Trigger:** Product page viewed but no purchase
 
 **Standard workflow:**
+
 ```
 Product page > 5 min visit
    ↓
@@ -1168,9 +1241,11 @@ Follow-up sequence
 ### 15.1 Recurring messages capabilities
 
 Per GetApp:
-> *"delivering automated recurring messages"*
+
+> _"delivering automated recurring messages"_
 
 **Use cases:**
+
 - **Weekly digests**
 - **Monthly reports**
 - **Subscription renewals**
@@ -1197,7 +1272,7 @@ Activate
 
 ### 15.3 Per Digitree
 
-> *"Automated sends, abandoned cart flows, and recurring messages work around the clock."*
+> _"Automated sends, abandoned cart flows, and recurring messages work around the clock."_
 
 - **24/7 automation**
 - **No manual intervention**
@@ -1210,9 +1285,11 @@ Activate
 ### 16.1 Surveys module
 
 Per Digitree:
-> *"The platform supports omnichannel: email, SMS, web push, surveys/questionnaires"*
+
+> _"The platform supports omnichannel: email, SMS, web push, surveys/questionnaires"_
 
 **Surveys capabilities:**
+
 - **In-platform builder**
 - **Question types:**
   - Open text
@@ -1266,9 +1343,11 @@ Per Digitree:
 ### 17.1 E-commerce integrations
 
 Per GetApp:
-> *"SARE also facilitates third-party integration with various eCommerce platforms such as Zapier, PrestaShop, WooCommerce, Shoper, and Shopify."*
+
+> _"SARE also facilitates third-party integration with various eCommerce platforms such as Zapier, PrestaShop, WooCommerce, Shoper, and Shopify."_
 
 #### Shopify
+
 - **OAuth connection**
 - **Customer sync**
 - **Order sync**
@@ -1276,16 +1355,19 @@ Per GetApp:
 - **Product feed**
 
 #### WooCommerce (WordPress)
+
 - **WordPress plugin** s API
 - **Customer + order sync**
 - **WooCommerce hooks**
 
 #### PrestaShop
+
 - **Native integration**
 - **DACH + European e-commerce platform**
 - **Customer + order data**
 
 #### Shoper (POLISH e-commerce platform!)
+
 - **DACH-PL specific advantage**
 - **Native integration**
 - **Customer + order data**
@@ -1296,6 +1378,7 @@ Per GetApp:
 **Shoper = jeden z hlavních Polish e-commerce platform** (similar to CZ Shoptet).
 
 SARE's native Shoper integration:
+
 - **Polish market specific**
 - **Strong local advantage**
 - **Vs. SALESmanago / ExpertSender** Polish positioning
@@ -1303,7 +1386,8 @@ SARE's native Shoper integration:
 ### 17.3 Other integrations
 
 Per GetApp:
-> *"WooCommerce, Google Analytics 360, PrestaShop, Zapier, Facebook Apps and Tabs, WordPress"*
+
+> _"WooCommerce, Google Analytics 360, PrestaShop, Zapier, Facebook Apps and Tabs, WordPress"_
 
 - **Google Analytics 360** (enterprise GA)
 - **Facebook Apps + Tabs**
@@ -1324,9 +1408,11 @@ Per GetApp:
 ### 18.1 API access
 
 Per GetApp:
-> *"Q. Does SARE offer an API? **Yes, SARE has an API available for use.**"*
+
+> _"Q. Does SARE offer an API? **Yes, SARE has an API available for use.**"_
 
 **REST API capabilities:**
+
 - **Comprehensive endpoints**
 - **Documentation available**
 - **OAuth authentication**
@@ -1372,9 +1458,11 @@ Per GetApp:
 ### 19.1 Secure SMTP capability
 
 Per Digitree:
-> *"a secure SMTP server for transactional and marketing sends"*
+
+> _"a secure SMTP server for transactional and marketing sends"_
 
 **Dedicated SMTP:**
+
 - **Transactional emails**
 - **Marketing emails**
 - **High deliverability**
@@ -1384,6 +1472,7 @@ Per Digitree:
 ### 19.2 Use cases
 
 #### Transactional emails
+
 - Order confirmations
 - Shipping notifications
 - Password resets
@@ -1393,6 +1482,7 @@ Per Digitree:
 - Payment notifications
 
 #### Marketing via SMTP
+
 - Some advanced configurations
 - Custom application sends
 - API-driven sends
@@ -1400,9 +1490,11 @@ Per Digitree:
 ### 19.3 Polish ISP optimization
 
 Per Digitree:
-> *"the tool should offer a stable SMTP server, a good IP reputation, and DMARC/SPF/DKIM support to ensure messages land in the inbox, not spam"*
+
+> _"the tool should offer a stable SMTP server, a good IP reputation, and DMARC/SPF/DKIM support to ensure messages land in the inbox, not spam"_
 
 **Polish ISP relationships:**
+
 - **WP.pl**
 - **Onet.pl**
 - **Interia.pl**
@@ -1423,7 +1515,8 @@ Per Digitree:
 ### 20.1 Enterprise capabilities
 
 Per Digitree:
-> *"for corporations and banks – SSO, permissions, audits, SLA, and regulatory compliance"*
+
+> _"for corporations and banks – SSO, permissions, audits, SLA, and regulatory compliance"_
 
 ### 20.2 SSO (Single Sign-On)
 
@@ -1462,12 +1555,14 @@ Per Digitree:
 ### 20.6 Regulatory compliance
 
 **Polish banking compliance:**
+
 - **UODO (Polish data protection)**
 - **KNF (Financial supervision authority)**
 - **Banking secrecy**
 - **Recordkeeping requirements**
 
 **EU compliance:**
+
 - **GDPR/RODO**
 - **MiFID II** (financial services)
 - **PSD2** (banking)
@@ -1540,9 +1635,11 @@ Per Digitree:
 ### 22.1 Research authority
 
 Per Digitree:
-> *"SARE specialists have been conducting research and publishing reports on consumer behavior and marketing communication for years, which are widely cited in industry media and educational materials."*
+
+> _"SARE specialists have been conducting research and publishing reports on consumer behavior and marketing communication for years, which are widely cited in industry media and educational materials."_
 
 **SARE's unique market position:**
+
 - **Industry research publishing**
 - **Consumer behavior studies**
 - **Marketing communication reports**
@@ -1570,29 +1667,31 @@ Per Digitree:
 ### 22.4 Why it matters
 
 **For clients:**
+
 - **Strategic guidance** (not just tool)
 - **Industry benchmarking**
 - **Best practices learning**
 - **Continuous education**
 
 **For Polish industry:**
+
 - **Thought leadership**
 - **Industry standard-setting**
 - **Educational contribution**
 
 ### 22.5 Vs. competitors
 
-| Vendor | Industry research |
-|---|---|
-| **SARE** | ✅ Active publishing |
-| **GetResponse** | Some research |
-| **MailerLite** | Limited |
-| **SALESmanago** | Some thought leadership |
-| **ExpertSender** | Limited |
-| **Mailchimp** | Industry reports |
-| **Klaviyo** | DTC-specific reports |
-| **HubSpot** | Extensive content |
-| **Brevo** | Some content |
+| Vendor           | Industry research       |
+| ---------------- | ----------------------- |
+| **SARE**         | ✅ Active publishing    |
+| **GetResponse**  | Some research           |
+| **MailerLite**   | Limited                 |
+| **SALESmanago**  | Some thought leadership |
+| **ExpertSender** | Limited                 |
+| **Mailchimp**    | Industry reports        |
+| **Klaviyo**      | DTC-specific reports    |
+| **HubSpot**      | Extensive content       |
+| **Brevo**        | Some content            |
 
 ---
 
@@ -1601,6 +1700,7 @@ Per Digitree:
 ### 23.1 Polish-first focus
 
 ⚠️ SARE primárně **Polish market**:
+
 - **Polish UI + support primary**
 - **English UI available** but secondary
 - **Polish team** dominant
@@ -1706,6 +1806,7 @@ Per Digitree:
 ## 24. Shrnutí: Pro koho a proti komu
 
 ### SARE je dobrá volba pokud
+
 - Provozujete **business v Polsku** (primárně)
 - Hledáte **Polish market expertise**
 - Vyžadujete **RODO + UODO compliance** native
@@ -1721,6 +1822,7 @@ Per Digitree:
 - Budget pro **mid-market+ price range**
 
 ### SARE není dobrá volba pokud
+
 - Pracujete primárně **mimo Polsko** (DACH, US, Asia)
 - Hledáte **pure SMB freemium** – Mailchimp, MailerLite, Brevo lepší
 - Pracujete primárně **v češtině / slovenštině** – Ecomail / SmartEmailing
@@ -1736,21 +1838,21 @@ Per Digitree:
 
 ### SARE vs. konkurence
 
-| Konkurence | Kdy lepší než SARE |
-|---|---|
-| **GetResponse** (PL) | Self-serve, webinars + courses, 27 jazyků UI |
-| **SALESmanago** (PL) | AI-driven CDXP, 3000+ klientů, Starbucks/Lacoste reference |
-| **ExpertSender** (PL) | E-commerce CDP, deeper Shopify, mid-market e-commerce |
-| **MailerLite** | Solopreneur simplicity, content creators, free plan |
-| **Mailchimp** | Brand recognition, global ecosystem, free plan |
-| **Brevo** | Multi-channel (SMS, WhatsApp), volume-based pricing, free tier |
-| **Klaviyo** | DTC Shopify deep, predictive AI |
-| **HubSpot** | Full B2B CRM, multi-Hub |
-| **ActiveCampaign** | Deep automation, integrated CRM |
-| **CleverReach** | DACH SMB, multi-user free, generous free plan |
-| **Mailkit** | CZ premium, vlastní infra, 7 ISO certifikací |
-| **SmartEmailing / Ecomail** | Native CZ/SK markets |
+| Konkurence                  | Kdy lepší než SARE                                             |
+| --------------------------- | -------------------------------------------------------------- |
+| **GetResponse** (PL)        | Self-serve, webinars + courses, 27 jazyků UI                   |
+| **SALESmanago** (PL)        | AI-driven CDXP, 3000+ klientů, Starbucks/Lacoste reference     |
+| **ExpertSender** (PL)       | E-commerce CDP, deeper Shopify, mid-market e-commerce          |
+| **MailerLite**              | Solopreneur simplicity, content creators, free plan            |
+| **Mailchimp**               | Brand recognition, global ecosystem, free plan                 |
+| **Brevo**                   | Multi-channel (SMS, WhatsApp), volume-based pricing, free tier |
+| **Klaviyo**                 | DTC Shopify deep, predictive AI                                |
+| **HubSpot**                 | Full B2B CRM, multi-Hub                                        |
+| **ActiveCampaign**          | Deep automation, integrated CRM                                |
+| **CleverReach**             | DACH SMB, multi-user free, generous free plan                  |
+| **Mailkit**                 | CZ premium, vlastní infra, 7 ISO certifikací                   |
+| **SmartEmailing / Ecomail** | Native CZ/SK markets                                           |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů sare.pl a praktických zdrojů (GetApp, SoftwareSuggest, SoftwareWorld, SaaSCounter, Digitree, RocketReach, EmailExpert, EmailVendorSelection). Pro nejaktuálnější detaily je nutný engagement s SARE sales / consultant teamem.*
+_Dokument zpracován z oficiálních zdrojů sare.pl a praktických zdrojů (GetApp, SoftwareSuggest, SoftwareWorld, SaaSCounter, Digitree, RocketReach, EmailExpert, EmailVendorSelection). Pro nejaktuálnější detaily je nutný engagement s SARE sales / consultant teamem._

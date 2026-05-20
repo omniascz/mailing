@@ -19,7 +19,13 @@ interface DropdownProps {
   className?: string;
 }
 
-export function Dropdown({ trigger, items, onSelect, placeholder = 'Select...', className }: DropdownProps) {
+export function Dropdown({
+  trigger,
+  items,
+  onSelect,
+  placeholder = 'Select...',
+  className,
+}: DropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 

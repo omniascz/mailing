@@ -21,7 +21,9 @@ import { users } from './users.js';
 export const teams = pgTable(
   'teams',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -33,16 +35,15 @@ export const teams = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
-  (t) => [
-    uniqueIndex('teams_org_slug_uq').on(t.orgId, t.slug),
-    index('teams_org_idx').on(t.orgId),
-  ],
+  (t) => [uniqueIndex('teams_org_slug_uq').on(t.orgId, t.slug), index('teams_org_idx').on(t.orgId)],
 );
 
 export const teamMembers = pgTable(
   'team_members',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

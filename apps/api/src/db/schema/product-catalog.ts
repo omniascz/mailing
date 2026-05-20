@@ -1,12 +1,26 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, decimal, jsonb, integer, boolean, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  decimal,
+  jsonb,
+  integer,
+  boolean,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 export const products = pgTable(
   'products',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     sku: varchar('sku', { length: 128 }).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
     description: varchar('description', { length: 2048 }),
@@ -22,10 +36,7 @@ export const products = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('products_org_idx').on(t.orgId),
-    index('products_sku_idx').on(t.orgId, t.sku),
-  ],
+  (t) => [index('products_org_idx').on(t.orgId), index('products_sku_idx').on(t.orgId, t.sku)],
 );
 
 export type Product = typeof products.$inferSelect;

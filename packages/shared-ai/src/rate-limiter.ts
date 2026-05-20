@@ -19,12 +19,7 @@ export interface RateLimitConfig {
    * Error factory — called when limit is exceeded.
    * Return an Error (or subclass) that will be thrown.
    */
-  createError: (info: {
-    feature: string;
-    plan: string;
-    limit: number;
-    used: number;
-  }) => Error;
+  createError: (info: { feature: string; plan: string; limit: number; used: number }) => Error;
 }
 
 /**

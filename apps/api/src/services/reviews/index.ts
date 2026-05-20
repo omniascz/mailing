@@ -20,27 +20,34 @@ export interface CreateReviewInput {
   autoApprove?: boolean;
 }
 
-export async function createReview(orgId: string, input: CreateReviewInput): Promise<ProductReview> {
+export async function createReview(
+  orgId: string,
+  input: CreateReviewInput,
+): Promise<ProductReview> {
   if (input.rating < 1 || input.rating > 5) {
     throw AppError.badRequest('Rating must be 1–5');
   }
-  const [row] = await db.insert(productReviews).values({
-    orgId,
-    sku: input.sku,
-    contactId: input.contactId ?? null,
-    rating: input.rating,
-    title: input.title ?? null,
-    body: input.body ?? null,
-    authorName: input.authorName ?? null,
-    photos: input.photos ?? [],
-    status: input.autoApprove ? 'approved' : 'pending',
-    approvedAt: input.autoApprove ? new Date() : null,
-  }).returning();
+  const [row] = await db
+    .insert(productReviews)
+    .values({
+      orgId,
+      sku: input.sku,
+      contactId: input.contactId ?? null,
+      rating: input.rating,
+      title: input.title ?? null,
+      body: input.body ?? null,
+      authorName: input.authorName ?? null,
+      photos: input.photos ?? [],
+      status: input.autoApprove ? 'approved' : 'pending',
+      approvedAt: input.autoApprove ? new Date() : null,
+    })
+    .returning();
   return row!;
 }
 
 export async function approveReview(orgId: string, reviewId: string): Promise<ProductReview> {
-  const [row] = await db.update(productReviews)
+  const [row] = await db
+    .update(productReviews)
     .set({ status: 'approved', approvedAt: new Date() })
     .where(and(eq(productReviews.id, reviewId), eq(productReviews.orgId, orgId)))
     .returning();
@@ -49,7 +56,8 @@ export async function approveReview(orgId: string, reviewId: string): Promise<Pr
 }
 
 export async function rejectReview(orgId: string, reviewId: string): Promise<ProductReview> {
-  const [row] = await db.update(productReviews)
+  const [row] = await db
+    .update(productReviews)
     .set({ status: 'rejected' })
     .where(and(eq(productReviews.id, reviewId), eq(productReviews.orgId, orgId)))
     .returning();
@@ -57,19 +65,30 @@ export async function rejectReview(orgId: string, reviewId: string): Promise<Pro
   return row;
 }
 
-export async function listReviewsBySku(orgId: string, sku: string, opts?: {
-  status?: 'pending' | 'approved' | 'rejected'; minRating?: number; limit?: number;
-}): Promise<ProductReview[]> {
+export async function listReviewsBySku(
+  orgId: string,
+  sku: string,
+  opts?: {
+    status?: 'pending' | 'approved' | 'rejected';
+    minRating?: number;
+    limit?: number;
+  },
+): Promise<ProductReview[]> {
   const conds = [eq(productReviews.orgId, orgId), eq(productReviews.sku, sku)];
   if (opts?.status) conds.push(eq(productReviews.status, opts.status));
   if (opts?.minRating) conds.push(gte(productReviews.rating, opts.minRating));
-  return db.select().from(productReviews).where(and(...conds))
+  return db
+    .select()
+    .from(productReviews)
+    .where(and(...conds))
     .orderBy(desc(productReviews.createdAt))
     .limit(opts?.limit ?? 50);
 }
 
 export async function moderationQueue(orgId: string, limit = 50): Promise<ProductReview[]> {
-  return db.select().from(productReviews)
+  return db
+    .select()
+    .from(productReviews)
     .where(and(eq(productReviews.orgId, orgId), eq(productReviews.status, 'pending')))
     .orderBy(asc(productReviews.createdAt))
     .limit(limit);
@@ -97,5 +116,10 @@ export async function reviewSummary(orgId: string, sku: string): Promise<ReviewS
     total += c;
     weightedSum += r.rating * c;
   }
-  return { sku, total, average: total > 0 ? Math.round((weightedSum / total) * 10) / 10 : 0, histogram };
+  return {
+    sku,
+    total,
+    average: total > 0 ? Math.round((weightedSum / total) * 10) / 10 : 0,
+    histogram,
+  };
 }

@@ -53,27 +53,26 @@ export interface PreferenceCenterPayload {
   ts: number;
 }
 
-export type TrackingPayload =
-  | OpenTrackingPayload
-  | ClickTrackingPayload
-  | PreferenceCenterPayload;
+export type TrackingPayload = OpenTrackingPayload | ClickTrackingPayload | PreferenceCenterPayload;
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
 
 function toBase64Url(buf: Buffer | string): string {
-  const b64 = typeof buf === 'string' ? Buffer.from(buf).toString('base64') : buf.toString('base64');
+  const b64 =
+    typeof buf === 'string' ? Buffer.from(buf).toString('base64') : buf.toString('base64');
   return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
 function fromBase64Url(str: string): Buffer {
-  const padded = str.replace(/-/g, '+').replace(/_/g, '/').padEnd(str.length + (4 - (str.length % 4)) % 4, '=');
+  const padded = str
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(str.length + ((4 - (str.length % 4)) % 4), '=');
   return Buffer.from(padded, 'base64');
 }
 
 function sign(payload: string): string {
-  return toBase64Url(
-    crypto.createHmac('sha256', TRACKING_SECRET).update(payload).digest(),
-  );
+  return toBase64Url(crypto.createHmac('sha256', TRACKING_SECRET).update(payload).digest());
 }
 
 /**
@@ -100,10 +99,7 @@ export function verifyTrackingToken(token: string): TrackingPayload | null {
   const sigBuf = Buffer.from(sig);
   const expectedBuf = Buffer.from(expectedSig);
   // Constant-time comparison to prevent timing attacks
-  if (
-    sigBuf.length !== expectedBuf.length ||
-    !crypto.timingSafeEqual(sigBuf, expectedBuf)
-  ) {
+  if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
     return null;
   }
 
@@ -190,10 +186,10 @@ const SKIP_URL_PATTERNS = [
   /^mailto:/i,
   /^tel:/i,
   /^sms:/i,
-  /\{\{.*unsubscribe/i,           // merge-tag unsubscribe links
-  /\/unsubscribe/i,               // unsubscribe paths
-  /\/track\/(o|c)\//i,            // already tracked
-  /^#/,                           // anchor-only links
+  /\{\{.*unsubscribe/i, // merge-tag unsubscribe links
+  /\/unsubscribe/i, // unsubscribe paths
+  /\/track\/(o|c)\//i, // already tracked
+  /^#/, // anchor-only links
   /^javascript:/i,
 ];
 

@@ -35,10 +35,7 @@ export function verifyUpgatesWebhookSignature(
   signatureHeader: string,
   secret: string,
 ): boolean {
-  const computed = crypto
-    .createHmac('sha256', secret)
-    .update(rawBody, 'utf8')
-    .digest('hex');
+  const computed = crypto.createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
   try {
     return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(signatureHeader));
   } catch {
@@ -52,9 +49,7 @@ export function verifyUpgatesWebhookSignature(
  *     customer: { email, firstname_invoice, surname_invoice, phone },
  *     products: [{ code, title, quantity, unit_price_with_vat, ... }] }
  */
-export function normalizeUpgatesOrderPayload(
-  raw: Record<string, unknown>,
-): UpgatesNormalizedOrder {
+export function normalizeUpgatesOrderPayload(raw: Record<string, unknown>): UpgatesNormalizedOrder {
   const customer = (raw.customer as Record<string, unknown>) ?? {};
   const rawItems = ((raw.products ?? raw.items) as Array<Record<string, unknown>>) ?? [];
   const items: UpgatesNormalizedOrderItem[] = rawItems.map((item) => {
@@ -64,9 +59,7 @@ export function normalizeUpgatesOrderPayload(
       ...(typeof sku === 'string' ? { sku } : {}),
       name: String(item.title ?? item.name ?? ''),
       qty: Number(item.quantity ?? item.amount ?? 1),
-      price: Number(
-        item.unit_price_with_vat ?? item.unitPriceWithVat ?? item.price ?? 0,
-      ),
+      price: Number(item.unit_price_with_vat ?? item.unitPriceWithVat ?? item.price ?? 0),
       ...(productId != null ? { productId: String(productId) } : {}),
     };
   });

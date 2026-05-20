@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `17_ActiveCampaign_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** ActiveCampaign umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Group-based permissions** (ne user-based) – uživatelé patří do groups, groups mají permissions
 > - **Žádné pre-defined role** – všechno custom groups (kromě Admin)
 > - **Account Admin** = nejvyšší role (always v Admin group)
@@ -127,20 +128,20 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Admin** | First user during signup | Vše + billing + close account + user management | Vše |
-| **Admin group users** | Pozvánka do Admin group | Full access | Vše |
-| **Marketing user** | Pozvánka do Marketing group | Marketing tasks per permissions | Per group perms |
-| **Sales user** | Pozvánka do Sales group | CRM tasks per permissions | Per group perms |
-| **Designer user** | Pozvánka s custom group | Template + landing page work | Per role |
-| **External agency** | Pozvánka s restricted group | Limited per permissions | Per role |
-| **Read-only user** | Pozvánka s view-only group | View reports only | Per role |
-| **Contact / Customer** | Form, integration, anon tracking | Receives emails, browses, buys | Své komunikace |
-| **API Client** | Per-user API key | Per scope | Per scope |
-| **Integration (Shopify, WP)** | OAuth via user | Sync data | Per integration scope |
-| **Postmark API** | API key (Transactional add-on) | Transactional sends | Postmark scope |
-| **ActiveCampaign Staff** | Interní s consent | Support, debug | Limited |
+| Aktér                         | Vstupní bod                      | Co dělá                                         | Co vidí               |
+| ----------------------------- | -------------------------------- | ----------------------------------------------- | --------------------- |
+| **Account Admin**             | First user during signup         | Vše + billing + close account + user management | Vše                   |
+| **Admin group users**         | Pozvánka do Admin group          | Full access                                     | Vše                   |
+| **Marketing user**            | Pozvánka do Marketing group      | Marketing tasks per permissions                 | Per group perms       |
+| **Sales user**                | Pozvánka do Sales group          | CRM tasks per permissions                       | Per group perms       |
+| **Designer user**             | Pozvánka s custom group          | Template + landing page work                    | Per role              |
+| **External agency**           | Pozvánka s restricted group      | Limited per permissions                         | Per role              |
+| **Read-only user**            | Pozvánka s view-only group       | View reports only                               | Per role              |
+| **Contact / Customer**        | Form, integration, anon tracking | Receives emails, browses, buys                  | Své komunikace        |
+| **API Client**                | Per-user API key                 | Per scope                                       | Per scope             |
+| **Integration (Shopify, WP)** | OAuth via user                   | Sync data                                       | Per integration scope |
+| **Postmark API**              | API key (Transactional add-on)   | Transactional sends                             | Postmark scope        |
+| **ActiveCampaign Staff**      | Interní s consent                | Support, debug                                  | Limited               |
 
 ---
 
@@ -169,11 +170,13 @@ ActiveCampaign:
 Each group has 3 tabs of configuration:
 
 #### "Info" tab
+
 - **Title** (group name)
 - **Description**
 - **Lists access** – which contact lists this group can see
 
 #### "Permissions" tab
+
 - Per-feature permissions across all platform sections:
   - Contacts
   - Campaigns
@@ -190,6 +193,7 @@ Each group has 3 tabs of configuration:
   - and more
 
 Each section has granular checkboxes:
+
 - View
 - Create
 - Edit
@@ -200,6 +204,7 @@ Each section has granular checkboxes:
 - Per-feature specifics
 
 #### "Limits" tab
+
 - **Limit campaigns sent** per group
 - **Limit contacts** they can manage
 - **Limit features** they can use beyond X
@@ -210,6 +215,7 @@ Each section has granular checkboxes:
 **Advantage:** Highly flexible per business needs. No "wasted" permissions on built-in roles.
 
 **Disadvantage:**
+
 - **Steeper learning curve** vs. predefined roles
 - **More configuration** required upfront
 - **Easier to misconfigure**
@@ -224,6 +230,7 @@ Each section has granular checkboxes:
 ### 2.5 Per-feature permission examples
 
 #### Marketing group (typical)
+
 - **Campaigns:** View, Create, Edit, Send
 - **Templates:** View, Create, Edit
 - **Forms:** View, Create, Edit
@@ -234,6 +241,7 @@ Each section has granular checkboxes:
 - **No access:** Deals (CRM), Account settings, Billing, User management
 
 #### Sales group (typical)
+
 - **Deals:** View, Create, Edit, Delete (with deal owner rules)
 - **Tasks:** Full
 - **Accounts:** View, Create, Edit
@@ -243,6 +251,7 @@ Each section has granular checkboxes:
 - **No access:** Campaigns, Automations (typically), Account settings
 
 #### Designer group (typical)
+
 - **Templates:** View, Create, Edit
 - **Landing pages:** View, Create, Edit
 - **Forms:** View, Create, Edit
@@ -251,6 +260,7 @@ Each section has granular checkboxes:
 - **No access:** Deals, Automations editing, Settings, Billing
 
 #### Stakeholder / Executive (typical)
+
 - **All sections:** View only
 - **Reports:** View
 - **No edit anywhere**
@@ -268,68 +278,68 @@ Each section has granular checkboxes:
 
 ### 2.7 Permission matrix (typical custom groups)
 
-| Akce | Admin | Marketing | Sales | Designer | View-only |
-|---|:---:|:---:|:---:|:---:|:---:|
-| **Account & Billing** |  |  |  |  |  |
-| Account settings | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Close account | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **User Management** |  |  |  |  |  |
-| Add/edit/delete users | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Manage groups | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Contacts** |  |  |  |  |  |
-| View contacts | ✅ | ✅ | per list | view | view |
-| Add/edit contacts | ✅ | ✅ | per list | ❌ | ❌ |
-| Export contacts | ✅ | per perm | per perm | ❌ | ❌ |
-| Import contacts | ✅ | ✅ | per perm | ❌ | ❌ |
-| Delete contacts | ✅ | per perm | ❌ | ❌ | ❌ |
-| **Campaigns** |  |  |  |  |  |
-| View | ✅ | ✅ | ❌ | ✅ | view |
-| Create/edit | ✅ | ✅ | ❌ | ✅ | ❌ |
-| Send | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Automations** |  |  |  |  |  |
-| View | ✅ | ✅ | per perm | ❌ | view |
-| Create/edit | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Activate | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Per-automation access | ✅ | per perm | per perm | ❌ | ❌ |
-| **Forms / Landing pages** |  |  |  |  |  |
-| View | ✅ | ✅ | ❌ | ✅ | view |
-| Create/edit | ✅ | ✅ | ❌ | ✅ | ❌ |
-| Publish | ✅ | ✅ | ❌ | per perm | ❌ |
-| **Templates** |  |  |  |  |  |
-| View | ✅ | ✅ | ❌ | ✅ | view |
-| Create/edit | ✅ | ✅ | ❌ | ✅ | ❌ |
-| **Deals (CRM)** |  |  |  |  |  |
-| View deals | ✅ | ❌ | own only | ❌ | view |
-| Create/edit deals | ✅ | ❌ | ✅ | ❌ | ❌ |
-| Pipeline access | ✅ | ❌ | per pipeline | ❌ | ❌ |
-| Reassign deals | ✅ | ❌ | per perm | ❌ | ❌ |
-| **Accounts (B2B)** |  |  |  |  |  |
-| View accounts | ✅ | view | ✅ | ❌ | view |
-| Edit accounts | ✅ | ❌ | ✅ | ❌ | ❌ |
-| Reassign accounts | ✅ | ❌ | per perm | ❌ | ❌ |
-| **Tasks & Activities** |  |  |  |  |  |
-| Manage tasks | ✅ | ❌ | ✅ | ❌ | view |
-| **Reports** |  |  |  |  |  |
-| View | ✅ | ✅ | per perm | ❌ | ✅ |
-| Custom reports | ✅ | per perm | per perm | ❌ | view |
-| **Integrations** |  |  |  |  |  |
-| Manage | ✅ | per perm | ❌ | ❌ | ❌ |
-| **API** |  |  |  |  |  |
-| Manage API keys | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Per-user API key | ✅ (own) | per perm | per perm | per perm | per perm |
-| **Settings** |  |  |  |  |  |
-| Account settings | ✅ | ❌ | ❌ | ❌ | ❌ |
-| User settings | each user own | each user own | each user own | each user own | each user own |
+| Akce                      |     Admin     |   Marketing   |     Sales     |   Designer    |   View-only   |
+| ------------------------- | :-----------: | :-----------: | :-----------: | :-----------: | :-----------: |
+| **Account & Billing**     |               |               |               |               |               |
+| Account settings          |      ✅       |      ❌       |      ❌       |      ❌       |      ❌       |
+| Billing                   |      ✅       |      ❌       |      ❌       |      ❌       |      ❌       |
+| Close account             |      ✅       |      ❌       |      ❌       |      ❌       |      ❌       |
+| **User Management**       |               |               |               |               |               |
+| Add/edit/delete users     |      ✅       |      ❌       |      ❌       |      ❌       |      ❌       |
+| Manage groups             |      ✅       |      ❌       |      ❌       |      ❌       |      ❌       |
+| **Contacts**              |               |               |               |               |               |
+| View contacts             |      ✅       |      ✅       |   per list    |     view      |     view      |
+| Add/edit contacts         |      ✅       |      ✅       |   per list    |      ❌       |      ❌       |
+| Export contacts           |      ✅       |   per perm    |   per perm    |      ❌       |      ❌       |
+| Import contacts           |      ✅       |      ✅       |   per perm    |      ❌       |      ❌       |
+| Delete contacts           |      ✅       |   per perm    |      ❌       |      ❌       |      ❌       |
+| **Campaigns**             |               |               |               |               |               |
+| View                      |      ✅       |      ✅       |      ❌       |      ✅       |     view      |
+| Create/edit               |      ✅       |      ✅       |      ❌       |      ✅       |      ❌       |
+| Send                      |      ✅       |      ✅       |      ❌       |      ❌       |      ❌       |
+| **Automations**           |               |               |               |               |               |
+| View                      |      ✅       |      ✅       |   per perm    |      ❌       |     view      |
+| Create/edit               |      ✅       |      ✅       |      ❌       |      ❌       |      ❌       |
+| Activate                  |      ✅       |      ✅       |      ❌       |      ❌       |      ❌       |
+| Per-automation access     |      ✅       |   per perm    |   per perm    |      ❌       |      ❌       |
+| **Forms / Landing pages** |               |               |               |               |               |
+| View                      |      ✅       |      ✅       |      ❌       |      ✅       |     view      |
+| Create/edit               |      ✅       |      ✅       |      ❌       |      ✅       |      ❌       |
+| Publish                   |      ✅       |      ✅       |      ❌       |   per perm    |      ❌       |
+| **Templates**             |               |               |               |               |               |
+| View                      |      ✅       |      ✅       |      ❌       |      ✅       |     view      |
+| Create/edit               |      ✅       |      ✅       |      ❌       |      ✅       |      ❌       |
+| **Deals (CRM)**           |               |               |               |               |               |
+| View deals                |      ✅       |      ❌       |   own only    |      ❌       |     view      |
+| Create/edit deals         |      ✅       |      ❌       |      ✅       |      ❌       |      ❌       |
+| Pipeline access           |      ✅       |      ❌       | per pipeline  |      ❌       |      ❌       |
+| Reassign deals            |      ✅       |      ❌       |   per perm    |      ❌       |      ❌       |
+| **Accounts (B2B)**        |               |               |               |               |               |
+| View accounts             |      ✅       |     view      |      ✅       |      ❌       |     view      |
+| Edit accounts             |      ✅       |      ❌       |      ✅       |      ❌       |      ❌       |
+| Reassign accounts         |      ✅       |      ❌       |   per perm    |      ❌       |      ❌       |
+| **Tasks & Activities**    |               |               |               |               |               |
+| Manage tasks              |      ✅       |      ❌       |      ✅       |      ❌       |     view      |
+| **Reports**               |               |               |               |               |               |
+| View                      |      ✅       |      ✅       |   per perm    |      ❌       |      ✅       |
+| Custom reports            |      ✅       |   per perm    |   per perm    |      ❌       |     view      |
+| **Integrations**          |               |               |               |               |               |
+| Manage                    |      ✅       |   per perm    |      ❌       |      ❌       |      ❌       |
+| **API**                   |               |               |               |               |               |
+| Manage API keys           |      ✅       |      ❌       |      ❌       |      ❌       |      ❌       |
+| Per-user API key          |   ✅ (own)    |   per perm    |   per perm    |   per perm    |   per perm    |
+| **Settings**              |               |               |               |               |               |
+| Account settings          |      ✅       |      ❌       |      ❌       |      ❌       |      ❌       |
+| User settings             | each user own | each user own | each user own | each user own | each user own |
 
 ### 2.8 User seat allowances per plan
 
-| Plán | Users incl. |
-|---|---|
-| **Starter** | 1 |
-| **Plus** | 1 (purchase more) |
-| **Pro** | 3 |
-| **Enterprise** | 5 |
+| Plán           | Users incl.       |
+| -------------- | ----------------- |
+| **Starter**    | 1                 |
+| **Plus**       | 1 (purchase more) |
+| **Pro**        | 3                 |
+| **Enterprise** | 5                 |
 
 - **Additional seats purchasable** from Billing & Upgrade
 - **Sub-accounts** (multi-account) at higher tiers
@@ -357,28 +367,33 @@ Admin must create custom groups as needed
 Most accounts build groups per team structure:
 
 #### Marketing
+
 - Marketing manager
 - Email specialist
 - Content creator
 - Marketing coordinator
 
 #### Sales
+
 - Sales manager
 - SDR (Sales Development Rep)
 - AE (Account Executive)
 - Customer Success
 
 #### Operations
+
 - Marketing operations
 - Sales operations
 - Data analyst
 
 #### External
+
 - Agency partners
 - Contractors
 - Freelancers
 
 #### Special
+
 - Executives (read-only)
 - Auditors
 - Compliance team
@@ -516,6 +531,7 @@ Confirm purchase
 ### 4.5 User profile
 
 Each user has:
+
 - **Personal info** (name, email, phone)
 - **API credentials** (per-user, view from profile)
 - **Multi-Factor Auth setting**
@@ -583,6 +599,7 @@ Strategic:
 ### 5.3 Kritické Admin akce
 
 #### Billing management
+
 ```
 Account → Billing & Upgrade
    ↓
@@ -604,6 +621,7 @@ Actions:
 ```
 
 #### Manage users + groups
+
 ```
 Settings → Users and Groups
    ↓
@@ -620,6 +638,7 @@ Save changes
 ```
 
 #### Account settings
+
 ```
 Settings → various sections:
 - Account Info
@@ -857,6 +876,7 @@ Publish
 ### 6.6 Marketing user limits
 
 Per group configuration, marketing user typically **cannot**:
+
 - Manage other users
 - Access billing
 - Configure account settings
@@ -916,6 +936,7 @@ Activity recorded:
 ### 7.3 Deal Roles management
 
 Per oficiální docs:
+
 ```
 Open deal record
    ↓
@@ -962,6 +983,7 @@ Send
 ### 7.5 1:1 Email visibility rules
 
 Per oficiální docs:
+
 ```
 Both contact AND email permissions checked:
 
@@ -1064,7 +1086,7 @@ Each user has:
 **Pokud user deletion → integrations break.**
 
 Per oficiální docs:
-*"If integrations are set up with a user's API credentials, deleting the user will cause integrations to break. You must update affected integrations with another user's API credentials, since there is no account-default API."*
+_"If integrations are set up with a user's API credentials, deleting the user will cause integrations to break. You must update affected integrations with another user's API credentials, since there is no account-default API."_
 
 ### 8.3 Best practice flow
 
@@ -1255,6 +1277,7 @@ Trial ends:
 ### 10.1 Contact creation paths
 
 #### A) Form submission
+
 ```
 Visitor fills form
    ↓
@@ -1275,6 +1298,7 @@ Automation trigger fires
 ```
 
 #### B) Double opt-in
+
 ```
 Form submission
    ↓
@@ -1292,6 +1316,7 @@ Welcome workflow triggers
 ```
 
 #### C) E-commerce integration
+
 ```
 Customer creates account na Shopify
    ↓
@@ -1309,6 +1334,7 @@ Workflow trigger
 ```
 
 #### D) Manual import (CSV)
+
 ```
 Admin: Contacts → Import
    ↓
@@ -1330,6 +1356,7 @@ Import processed
 ```
 
 #### E) API
+
 ```
 External system POST /contacts
    ↓
@@ -1343,6 +1370,7 @@ Trigger automations
 ```
 
 #### F) Site tracking + form
+
 ```
 Anonymous visitor browses (cookie tracked)
    ↓
@@ -1417,6 +1445,7 @@ Data retained per GDPR
 ### 10.5 Bounce handling
 
 #### Hard bounce
+
 ```
 ISP returns 5xx
    ↓
@@ -1428,6 +1457,7 @@ Status: Bounced
 ```
 
 #### Soft bounce
+
 ```
 ISP returns 4xx
    ↓
@@ -1859,6 +1889,7 @@ B) Move to: Lost (0%) ← lost
 ### 14.4 Deal automation
 
 Sales automations trigger on:
+
 - Deal created
 - Stage changed
 - Field updated
@@ -1866,6 +1897,7 @@ Sales automations trigger on:
 - Won/lost
 
 Actions:
+
 - Send 1:1 email
 - Create task
 - Update field
@@ -1877,6 +1909,7 @@ Actions:
 ### 14.5 Deal ownership rules
 
 Per oficiální docs:
+
 ```
 Admin sees ALL deals regardless of ownership.
 
@@ -1962,6 +1995,7 @@ For B2B with multiple buyer companies:
 ### 15.4 Account activity stream
 
 Per oficiální docs:
+
 ```
 Account Recent Activity stream shows:
 - Contact + deal actions related to account
@@ -1983,6 +2017,7 @@ Activity types:
 ### 15.5 Account ownership
 
 Per oficiální docs:
+
 ```
 "Account Owner" field on every account
    ↓
@@ -2017,6 +2052,7 @@ Account removed
 ### 16.1 Sales Engagement features
 
 **B2B advanced add-on**:
+
 - Email sequences (multi-step 1:1)
 - AI Win Probability
 - Sentiment Analysis
@@ -2305,22 +2341,26 @@ Application processes
 ### 18.4 Integration types
 
 #### Native integrations (970+)
+
 - Pre-built, maintained by AC
 - OAuth-based typically
 - Real-time sync via webhooks
 - Bi-directional in many cases
 
 #### Zapier
+
 - 5 000+ apps
 - May have delays
 - Per-event triggers
 
 #### Make (Integromat)
+
 - Similar to Zapier
 - Visual workflow builder
 - More complex automation possible
 
 #### Custom API
+
 - Direct API calls
 - Full control
 - Webhook-based real-time
@@ -2409,6 +2449,7 @@ Provided to contact
 ### 19.4 Consent tracking
 
 Per contact:
+
 - Per-list opt-in timestamp + IP
 - Source (form, import, API, integration)
 - Double opt-in audit (if applicable)
@@ -2450,36 +2491,36 @@ Per contact:
 
 ## 20. Datová mapa: co vidí kdo
 
-| Data | Admin | Marketing | Sales | Designer | View-only | Custom | Contact | API |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| User management | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| Group permissions | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| All contacts | ✅ | per lists | per lists | limited | view | per role | jen sebe | ✅ |
-| Edit contacts | ✅ | ✅ | per lists | ❌ | ❌ | per role | ❌ | ✅ |
-| Export contacts | ✅ | per role | per role | ❌ | ❌ | per role | request | per scope |
-| Lists | ✅ | per lists | per lists | per lists | per lists | per role | – | ✅ |
-| Tags | ✅ | ✅ | per role | ❌ | view | per role | – | ✅ |
-| Segments | ✅ | ✅ | per role | ❌ | view | per role | – | ✅ |
-| Campaigns | ✅ | ✅ | ❌ | ✅ | view | per role | jen co dostal | ✅ |
-| Send campaigns | ✅ | ✅ | ❌ | ❌ | ❌ | per role | ❌ | ✅ |
-| Automations | ✅ | ✅ | per perm | ❌ | view | per role | ❌ | ✅ |
-| Per-automation access | ✅ | per group | per group | per group | per group | per role | ❌ | per scope |
-| Forms / Landing pages | ✅ | ✅ | ❌ | ✅ | view | per role | submit | per scope |
-| Templates | ✅ | ✅ | ❌ | ✅ | view | per role | – | ✅ |
-| Site Messages | ✅ | ✅ | ❌ | ❌ | view | per role | view (on site) | per scope |
-| Deals | ✅ | ❌ | own/all | ❌ | view | per role | ❌ | ✅ |
-| Pipelines | ✅ | ❌ | per perm | ❌ | view | per role | ❌ | per scope |
-| Accounts (B2B) | ✅ | view | ✅ | ❌ | view | per role | ❌ | ✅ |
-| 1:1 emails | ✅ | per role | ✅ | ❌ | per role | per role | jen své | per scope |
-| Tasks | ✅ | per role | ✅ | ❌ | view | per role | ❌ | per scope |
-| Reports | ✅ | ✅ | per role | ❌ | ✅ | per role | ❌ | ✅ |
-| Custom Reports | ✅ | per role | per role | ❌ | view | per role | ❌ | per scope |
-| Integrations | ✅ | per perm | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| API keys (per user) | own + manage all | own only | own only | own only | own only | own only | ❌ | – |
-| Audit logs | ✅ | ❌ | ❌ | ❌ | ❌ | per role | ❌ | per scope |
-| GDPR delete | ✅ | per role | per role | ❌ | ❌ | per role | request | per scope |
+| Data                  |      Admin       | Marketing |   Sales   | Designer  | View-only |  Custom  |    Contact     |    API    |
+| --------------------- | :--------------: | :-------: | :-------: | :-------: | :-------: | :------: | :------------: | :-------: |
+| Account settings      |        ✅        |    ❌     |    ❌     |    ❌     |    ❌     | per role |       ❌       | per scope |
+| Billing               |        ✅        |    ❌     |    ❌     |    ❌     |    ❌     | per role |       ❌       | per scope |
+| User management       |        ✅        |    ❌     |    ❌     |    ❌     |    ❌     | per role |       ❌       | per scope |
+| Group permissions     |        ✅        |    ❌     |    ❌     |    ❌     |    ❌     | per role |       ❌       | per scope |
+| All contacts          |        ✅        | per lists | per lists |  limited  |   view    | per role |    jen sebe    |    ✅     |
+| Edit contacts         |        ✅        |    ✅     | per lists |    ❌     |    ❌     | per role |       ❌       |    ✅     |
+| Export contacts       |        ✅        | per role  | per role  |    ❌     |    ❌     | per role |    request     | per scope |
+| Lists                 |        ✅        | per lists | per lists | per lists | per lists | per role |       –        |    ✅     |
+| Tags                  |        ✅        |    ✅     | per role  |    ❌     |   view    | per role |       –        |    ✅     |
+| Segments              |        ✅        |    ✅     | per role  |    ❌     |   view    | per role |       –        |    ✅     |
+| Campaigns             |        ✅        |    ✅     |    ❌     |    ✅     |   view    | per role | jen co dostal  |    ✅     |
+| Send campaigns        |        ✅        |    ✅     |    ❌     |    ❌     |    ❌     | per role |       ❌       |    ✅     |
+| Automations           |        ✅        |    ✅     | per perm  |    ❌     |   view    | per role |       ❌       |    ✅     |
+| Per-automation access |        ✅        | per group | per group | per group | per group | per role |       ❌       | per scope |
+| Forms / Landing pages |        ✅        |    ✅     |    ❌     |    ✅     |   view    | per role |     submit     | per scope |
+| Templates             |        ✅        |    ✅     |    ❌     |    ✅     |   view    | per role |       –        |    ✅     |
+| Site Messages         |        ✅        |    ✅     |    ❌     |    ❌     |   view    | per role | view (on site) | per scope |
+| Deals                 |        ✅        |    ❌     |  own/all  |    ❌     |   view    | per role |       ❌       |    ✅     |
+| Pipelines             |        ✅        |    ❌     | per perm  |    ❌     |   view    | per role |       ❌       | per scope |
+| Accounts (B2B)        |        ✅        |   view    |    ✅     |    ❌     |   view    | per role |       ❌       |    ✅     |
+| 1:1 emails            |        ✅        | per role  |    ✅     |    ❌     | per role  | per role |    jen své     | per scope |
+| Tasks                 |        ✅        | per role  |    ✅     |    ❌     |   view    | per role |       ❌       | per scope |
+| Reports               |        ✅        |    ✅     | per role  |    ❌     |    ✅     | per role |       ❌       |    ✅     |
+| Custom Reports        |        ✅        | per role  | per role  |    ❌     |   view    | per role |       ❌       | per scope |
+| Integrations          |        ✅        | per perm  |    ❌     |    ❌     |    ❌     | per role |       ❌       | per scope |
+| API keys (per user)   | own + manage all | own only  | own only  | own only  | own only  | own only |       ❌       |     –     |
+| Audit logs            |        ✅        |    ❌     |    ❌     |    ❌     |    ❌     | per role |       ❌       | per scope |
+| GDPR delete           |        ✅        | per role  | per role  |    ❌     |    ❌     | per role |    request     | per scope |
 
 ---
 
@@ -2638,4 +2679,4 @@ Pokud ActiveCampaign používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů activecampaign.com, help.activecampaign.com a praktických zdrojů (EmailVendorSelection, EmailToolTester, Sender, EngageBay, Marketer's Choice, GetAIPerks, Automation Atlas, BusinessEautomation, Spadoom). Pro nejaktuálnější detaily je nutný engagement s ActiveCampaign sales / support teamem.*
+_Dokument zpracován z oficiálních zdrojů activecampaign.com, help.activecampaign.com a praktických zdrojů (EmailVendorSelection, EmailToolTester, Sender, EngageBay, Marketer's Choice, GetAIPerks, Automation Atlas, BusinessEautomation, Spadoom). Pro nejaktuálnější detaily je nutný engagement s ActiveCampaign sales / support teamem._

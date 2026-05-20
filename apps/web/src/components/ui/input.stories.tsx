@@ -5,7 +5,13 @@ const meta: Meta<typeof Input> = {
   title: 'UI/Input',
   component: Input,
   tags: ['autodocs'],
-  decorators: [(Story) => <div className="w-80"><Story /></div>],
+  decorators: [
+    (Story) => (
+      <div className="w-80">
+        <Story />
+      </div>
+    ),
+  ],
   args: {
     label: 'Email',
     placeholder: 'you@company.com',

@@ -17,18 +17,8 @@ export function extractTag(html: string, tag: string): string | null {
 /** Extract a named `<meta>` tag's content attribute. */
 export function extractMeta(html: string, name: string): string | null {
   const m =
-    html.match(
-      new RegExp(
-        `<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']*)["']`,
-        'i',
-      ),
-    ) ||
-    html.match(
-      new RegExp(
-        `<meta[^>]+content=["']([^"']*)["'][^>]+name=["']${name}["']`,
-        'i',
-      ),
-    );
+    html.match(new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']*)["']`, 'i')) ||
+    html.match(new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+name=["']${name}["']`, 'i'));
   return m && m[1] ? m[1].trim() : null;
 }
 
@@ -71,7 +61,10 @@ export function extractImages(html: string): Array<{ src: string; alt: string | 
 
 /** Word count after stripping tags. */
 export function countWords(html: string): number {
-  const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const text = html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   return text.split(' ').filter(Boolean).length;
 }
 
@@ -192,7 +185,11 @@ export function detectIssues(data: AuditSignals): SeoIssue[] {
   }
 
   if (data.internalLinks.length === 0) {
-    issues.push({ type: 'no_internal_links', severity: 'info', message: 'No internal links found' });
+    issues.push({
+      type: 'no_internal_links',
+      severity: 'info',
+      message: 'No internal links found',
+    });
   }
 
   return issues;
@@ -264,7 +261,10 @@ export function renderRobotsTxt(options: {
  * Compute the canonical URL for a page: drop tracking params + fragment,
  * lowercase host, strip trailing slash unless root.
  */
-export function canonicalize(url: string, trackingParams: string[] = DEFAULT_TRACKING_PARAMS): string | null {
+export function canonicalize(
+  url: string,
+  trackingParams: string[] = DEFAULT_TRACKING_PARAMS,
+): string | null {
   try {
     const u = new URL(url);
     u.hash = '';

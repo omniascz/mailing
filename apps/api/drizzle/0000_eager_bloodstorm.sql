@@ -1,3 +1,10 @@
+-- Required extensions — `vector` powers embeddings columns (used by
+-- ai_agents + segment cohort search). `uuid-ossp` is kept for back-compat
+-- though we mostly use gen_random_uuid() from pgcrypto/built-in. Both
+-- are IF NOT EXISTS so re-running this migration is a no-op for
+-- environments already provisioned manually.
+CREATE EXTENSION IF NOT EXISTS vector;--> statement-breakpoint
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";--> statement-breakpoint
 CREATE TYPE "public"."auth_provider" AS ENUM('email', 'google');--> statement-breakpoint
 CREATE TYPE "public"."bounce_type" AS ENUM('none', 'hard', 'soft', 'block');--> statement-breakpoint
 CREATE TYPE "public"."campaign_status" AS ENUM('draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled');--> statement-breakpoint

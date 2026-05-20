@@ -21,12 +21,12 @@ import { dmarcReports } from '../../db/schema/index.js';
 // ─── XML parser (lightweight, no deps) ───────────────────────────────────────
 
 function xmlText(xml: string, tag: string): string {
-  const m = xml.match(new RegExp(`<${tag}[^>]*>([^<]*)<\/${tag}>`, 's'));
+  const m = xml.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 's'));
   return m?.[1]?.trim() ?? '';
 }
 
 function xmlAll(xml: string, tag: string): string[] {
-  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\/${tag}>`, 'g');
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'g');
   const results: string[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(xml)) !== null) {
@@ -71,7 +71,8 @@ export function parseDmarcXml(xml: string): ParsedDmarcReport {
   const dateEndTs = parseInt(xmlText(xml, 'end'), 10);
 
   // Policy
-  const policySection = xmlAll(xml, 'policy_published')[0] ?? xmlAll(xml, 'policy-published')[0] ?? '';
+  const policySection =
+    xmlAll(xml, 'policy_published')[0] ?? xmlAll(xml, 'policy-published')[0] ?? '';
   const policyDomain = xmlText(policySection, 'domain') || domain;
   const policyAdkim = xmlText(policySection, 'adkim') || 'r';
   const policyAspf = xmlText(policySection, 'aspf') || 'r';
@@ -85,18 +86,23 @@ export function parseDmarcXml(xml: string): ParsedDmarcReport {
     const authXml = xmlAll(rec, 'auth_results')[0] ?? xmlAll(rec, 'auth-results')[0] ?? rec;
     const identXml = xmlAll(rec, 'identifiers')[0] ?? rec;
 
-    const dkimResult = xmlAll(authXml, 'dkim')
-      .map((d) => xmlText(d, 'result'))
-      .find((r) => r === 'pass') ?? xmlText(authXml, 'result') ?? 'fail';
+    const dkimResult =
+      xmlAll(authXml, 'dkim')
+        .map((d) => xmlText(d, 'result'))
+        .find((r) => r === 'pass') ??
+      xmlText(authXml, 'result') ??
+      'fail';
 
-    const spfResult = xmlAll(authXml, 'spf')
-      .map((s) => xmlText(s, 'result'))
-      .find((r) => r === 'pass') ?? 'fail';
+    const spfResult =
+      xmlAll(authXml, 'spf')
+        .map((s) => xmlText(s, 'result'))
+        .find((r) => r === 'pass') ?? 'fail';
 
     return {
       sourceIp: xmlText(rowXml, 'source_ip') || xmlText(rowXml, 'source-ip'),
       count: parseInt(xmlText(rowXml, 'count') || '1', 10),
-      disposition: xmlText(xmlAll(rowXml, 'policy_evaluated')[0] ?? rowXml, 'disposition') || 'none',
+      disposition:
+        xmlText(xmlAll(rowXml, 'policy_evaluated')[0] ?? rowXml, 'disposition') || 'none',
       dkim: dkimResult,
       spf: spfResult,
       headerFrom: xmlText(identXml, 'header_from') || xmlText(identXml, 'header-from'),
@@ -170,9 +176,7 @@ export async function listDmarcReports(
   const conditions = [eq(dmarcReports.orgId, orgId)];
   if (opts.domain) conditions.push(eq(dmarcReports.domain, opts.domain));
   if (opts.cursor) {
-    conditions.push(
-      sql`${dmarcReports.dateEnd} < ${new Date(opts.cursor).toISOString()}`,
-    );
+    conditions.push(sql`${dmarcReports.dateEnd} < ${new Date(opts.cursor).toISOString()}`);
   }
 
   const rows = await db

@@ -22,18 +22,26 @@ interface AdMetrics {
 
 // ── Platform fetchers ─────────────────────────────────────────────────────────
 
-async function fetchFacebookMetrics(account: typeof adAccounts.$inferSelect, date: string): Promise<AdMetrics[]> {
-  const fields = 'campaign_id,campaign_name,adset_id,impressions,clicks,spend,actions,action_values';
+async function fetchFacebookMetrics(
+  account: typeof adAccounts.$inferSelect,
+  date: string,
+): Promise<AdMetrics[]> {
+  const fields =
+    'campaign_id,campaign_name,adset_id,impressions,clicks,spend,actions,action_values';
   const res = await fetch(
     `https://graph.facebook.com/v19.0/act_${account.platformAccountId}/insights?fields=${fields}&time_range[since]=${date}&time_range[until]=${date}&level=adset&access_token=${account.accessToken}`,
   );
   if (!res.ok) return [];
-  const json = await res.json() as { data?: Array<Record<string, unknown>> };
-  return (json.data ?? []).map(row => {
+  const json = (await res.json()) as { data?: Array<Record<string, unknown>> };
+  return (json.data ?? []).map((row) => {
     const actions = (row.actions as Array<{ action_type: string; value: string }>) ?? [];
     const actionValues = (row.action_values as Array<{ action_type: string; value: string }>) ?? [];
-    const conversions = actions.filter(a => a.action_type === 'purchase').reduce((s, a) => s + parseFloat(a.value ?? '0'), 0);
-    const revenue = actionValues.filter(a => a.action_type === 'purchase').reduce((s, a) => s + parseFloat(a.value ?? '0'), 0);
+    const conversions = actions
+      .filter((a) => a.action_type === 'purchase')
+      .reduce((s, a) => s + parseFloat(a.value ?? '0'), 0);
+    const revenue = actionValues
+      .filter((a) => a.action_type === 'purchase')
+      .reduce((s, a) => s + parseFloat(a.value ?? '0'), 0);
     return {
       campaignId: String(row.campaign_id ?? ''),
       campaignName: String(row.campaign_name ?? ''),
@@ -47,14 +55,17 @@ async function fetchFacebookMetrics(account: typeof adAccounts.$inferSelect, dat
   });
 }
 
-async function fetchGoogleAdsMetrics(account: typeof adAccounts.$inferSelect, date: string): Promise<AdMetrics[]> {
+async function fetchGoogleAdsMetrics(
+  account: typeof adAccounts.$inferSelect,
+  date: string,
+): Promise<AdMetrics[]> {
   const query = `SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions, metrics.conversions_value FROM campaign WHERE segments.date = '${date}'`;
   const res = await fetch(
     `https://googleads.googleapis.com/v16/customers/${account.platformAccountId}/googleAds:searchStream`,
     {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${account.accessToken}`,
+        Authorization: `Bearer ${account.accessToken}`,
         'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? '',
         'Content-Type': 'application/json',
       },
@@ -62,8 +73,8 @@ async function fetchGoogleAdsMetrics(account: typeof adAccounts.$inferSelect, da
     },
   );
   if (!res.ok) return [];
-  const lines = await res.json() as Array<{ results?: Array<Record<string, unknown>> }>;
-  return (lines[0]?.results ?? []).map(row => {
+  const lines = (await res.json()) as Array<{ results?: Array<Record<string, unknown>> }>;
+  return (lines[0]?.results ?? []).map((row) => {
     const campaign = row.campaign as Record<string, unknown>;
     const metrics = row.metrics as Record<string, unknown>;
     return {
@@ -78,14 +89,17 @@ async function fetchGoogleAdsMetrics(account: typeof adAccounts.$inferSelect, da
   });
 }
 
-async function fetchLinkedInMetrics(account: typeof adAccounts.$inferSelect, date: string): Promise<AdMetrics[]> {
+async function fetchLinkedInMetrics(
+  account: typeof adAccounts.$inferSelect,
+  date: string,
+): Promise<AdMetrics[]> {
   const res = await fetch(
-    `https://api.linkedin.com/v2/adAnalyticsV2?q=analytics&pivot=CAMPAIGN&dateRange.start.year=${date.slice(0,4)}&dateRange.start.month=${parseInt(date.slice(5,7))}&dateRange.start.day=${parseInt(date.slice(8,10))}&dateRange.end.year=${date.slice(0,4)}&dateRange.end.month=${parseInt(date.slice(5,7))}&dateRange.end.day=${parseInt(date.slice(8,10))}&accounts=urn:li:sponsoredAccount:${account.platformAccountId}`,
+    `https://api.linkedin.com/v2/adAnalyticsV2?q=analytics&pivot=CAMPAIGN&dateRange.start.year=${date.slice(0, 4)}&dateRange.start.month=${parseInt(date.slice(5, 7))}&dateRange.start.day=${parseInt(date.slice(8, 10))}&dateRange.end.year=${date.slice(0, 4)}&dateRange.end.month=${parseInt(date.slice(5, 7))}&dateRange.end.day=${parseInt(date.slice(8, 10))}&accounts=urn:li:sponsoredAccount:${account.platformAccountId}`,
     { headers: { Authorization: `Bearer ${account.accessToken}` } },
   );
   if (!res.ok) return [];
-  const json = await res.json() as { elements?: Array<Record<string, unknown>> };
-  return (json.elements ?? []).map(row => ({
+  const json = (await res.json()) as { elements?: Array<Record<string, unknown>> };
+  return (json.elements ?? []).map((row) => ({
     campaignId: String((row.pivotValue as string)?.split(':').pop() ?? ''),
     campaignName: '',
     impressions: parseInt(String(row.impressions ?? '0')),
@@ -111,10 +125,17 @@ export async function syncAdPerformance(orgId: string, date?: string) {
     try {
       let metrics: AdMetrics[] = [];
       switch (account.platform as AdPlatform) {
-        case 'facebook_ads': metrics = await fetchFacebookMetrics(account, targetDate); break;
-        case 'google_ads':   metrics = await fetchGoogleAdsMetrics(account, targetDate); break;
-        case 'linkedin_ads': metrics = await fetchLinkedInMetrics(account, targetDate); break;
-        default: continue;
+        case 'facebook_ads':
+          metrics = await fetchFacebookMetrics(account, targetDate);
+          break;
+        case 'google_ads':
+          metrics = await fetchGoogleAdsMetrics(account, targetDate);
+          break;
+        case 'linkedin_ads':
+          metrics = await fetchLinkedInMetrics(account, targetDate);
+          break;
+        default:
+          continue;
       }
 
       for (const m of metrics) {
@@ -138,7 +159,9 @@ export async function syncAdPerformance(orgId: string, date?: string) {
           .onConflictDoNothing();
         total++;
       }
-    } catch { /* skip failed accounts */ }
+    } catch {
+      /* skip failed accounts */
+    }
   }
   return { date: targetDate, rowsInserted: total };
 }

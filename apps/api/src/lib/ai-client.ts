@@ -60,7 +60,7 @@ async function trackUsage(record: AiUsageRecord): Promise<void> {
     .values({
       orgId: record.tenantId,
       model: record.model,
-      feature: record.feature as typeof aiUsage.$inferInsert['feature'],
+      feature: record.feature as (typeof aiUsage.$inferInsert)['feature'],
       inputTokens: record.inputTokens,
       outputTokens: record.outputTokens,
       costUsd: record.costUsd.toFixed(6),

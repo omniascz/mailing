@@ -258,9 +258,7 @@ function renderColumns(
     .map((colBlocks, i) => {
       const ratio = block.columnRatios[i] ?? 1;
       const colWidth = Math.floor((ratio / totalRatio) * width);
-      const inner = colBlocks
-        .map((b) => renderBlock(b, schema, ctx, previewAll, links))
-        .join('');
+      const inner = colBlocks.map((b) => renderBlock(b, schema, ctx, previewAll, links)).join('');
       // Each column is its own table so the sub-blocks (which are <tr>s) have
       // a parent <table> wrapper. On mobile the <td class="fm-col"> becomes a
       // block so columns stack naturally.
@@ -300,8 +298,12 @@ function renderDynamic(
   links: string[],
 ): string {
   if (previewAll) {
-    const ifHtml = block.ifContent.map((b) => renderBlock(b, schema, ctx, previewAll, links)).join('');
-    const elseHtml = block.elseContent.map((b) => renderBlock(b, schema, ctx, previewAll, links)).join('');
+    const ifHtml = block.ifContent
+      .map((b) => renderBlock(b, schema, ctx, previewAll, links))
+      .join('');
+    const elseHtml = block.elseContent
+      .map((b) => renderBlock(b, schema, ctx, previewAll, links))
+      .join('');
     const label = escapeHtml(block.label ?? 'Dynamic block');
     return (
       `<tr><td style="padding:0;"><!-- dynamic:${block.id} if -->` +
@@ -324,10 +326,7 @@ function renderDynamic(
 // ---------------------------------------------------------------------------
 
 function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function escapeAttr(s: string): string {

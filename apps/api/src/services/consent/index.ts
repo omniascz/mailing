@@ -11,10 +11,7 @@
 
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  contactChannelConsents,
-  type ContactChannelConsent,
-} from '../../db/schema/index.js';
+import { contactChannelConsents, type ContactChannelConsent } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 /**
@@ -159,10 +156,7 @@ export async function getChannelStates(
     .select()
     .from(contactChannelConsents)
     .where(
-      and(
-        eq(contactChannelConsents.orgId, orgId),
-        eq(contactChannelConsents.contactId, contactId),
-      ),
+      and(eq(contactChannelConsents.orgId, orgId), eq(contactChannelConsents.contactId, contactId)),
     );
   return new Map(rows.map((r) => [r.channel, r]));
 }

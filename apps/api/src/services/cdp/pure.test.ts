@@ -62,9 +62,7 @@ describe('shouldMergeProfiles', () => {
     const right = [mk('email', 'PETR@example.cz'), mk('phone', '+420777123456')];
     const res = shouldMergeProfiles(left, right);
     expect(res.merge).toBe(true);
-    expect(res.score).toBe(
-      DEFAULT_SIGNAL_CONFIDENCE.email + DEFAULT_SIGNAL_CONFIDENCE.phone,
-    );
+    expect(res.score).toBe(DEFAULT_SIGNAL_CONFIDENCE.email + DEFAULT_SIGNAL_CONFIDENCE.phone);
     expect(res.overlap).toHaveLength(2);
   });
 
@@ -77,12 +75,7 @@ describe('shouldMergeProfiles', () => {
   });
 
   it('returns 0 when no overlap', () => {
-    expect(
-      shouldMergeProfiles(
-        [mk('email', 'a@x.cz')],
-        [mk('email', 'b@x.cz')],
-      ).score,
-    ).toBe(0);
+    expect(shouldMergeProfiles([mk('email', 'a@x.cz')], [mk('email', 'b@x.cz')]).score).toBe(0);
   });
 });
 

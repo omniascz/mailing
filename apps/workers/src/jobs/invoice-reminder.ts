@@ -40,27 +40,39 @@ export function startInvoiceReminderWorker() {
     { connection, concurrency: 1 },
   );
 
-  worker.on('failed', (job, err) => console.error('[invoice-reminder] failed', job?.id, err.message));
-  adPerfWorker.on('failed', (job, err) => console.error('[ad-perf-sync] failed', job?.id, err.message));
+  worker.on('failed', (job, err) =>
+    console.error('[invoice-reminder] failed', job?.id, err.message),
+  );
+  adPerfWorker.on('failed', (job, err) =>
+    console.error('[ad-perf-sync] failed', job?.id, err.message),
+  );
 
   return { worker, adPerfWorker };
 }
 
 export async function scheduleCommerceJobs() {
   const existing = await reminderQueue.getRepeatableJobs();
-  if (!existing.find(j => j.name === 'daily-invoice-check')) {
-    await reminderQueue.add('daily-invoice-check', {}, {
-      repeat: { pattern: '0 8 * * *' }, // 08:00 UTC daily
-      removeOnComplete: true,
-    });
+  if (!existing.find((j) => j.name === 'daily-invoice-check')) {
+    await reminderQueue.add(
+      'daily-invoice-check',
+      {},
+      {
+        repeat: { pattern: '0 8 * * *' }, // 08:00 UTC daily
+        removeOnComplete: true,
+      },
+    );
   }
 
   const adExisting = await adPerfQueue.getRepeatableJobs();
-  if (!adExisting.find(j => j.name === 'daily-ad-perf')) {
-    await adPerfQueue.add('daily-ad-perf', {}, {
-      repeat: { pattern: '0 7 * * *' }, // 07:00 UTC daily
-      removeOnComplete: true,
-    });
+  if (!adExisting.find((j) => j.name === 'daily-ad-perf')) {
+    await adPerfQueue.add(
+      'daily-ad-perf',
+      {},
+      {
+        repeat: { pattern: '0 7 * * *' }, // 07:00 UTC daily
+        removeOnComplete: true,
+      },
+    );
   }
 
   console.log('[commerce] Invoice reminder + ad perf sync jobs scheduled');

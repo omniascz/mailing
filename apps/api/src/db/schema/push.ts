@@ -2,17 +2,7 @@
  * Push notification schema: subscriptions, VAPID keys, send log (task 7.10).
  */
 
-import {
-  pgTable,
-  text,
-  boolean,
-  timestamp,
-  uuid,
-
-
-  index,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { pgTable, text, boolean, timestamp, uuid, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 // ─── VAPID key pairs (org-level) ──────────────────────────────────────────────
 

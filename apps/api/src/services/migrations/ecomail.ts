@@ -30,12 +30,7 @@
 
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  migrationJobs,
-  contacts,
-  lists,
-  type MigrationProgress,
-} from '../../db/schema/index.js';
+import { migrationJobs, contacts, lists, type MigrationProgress } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 // ─── Ecomail API client ──────────────────────────────────────────────────────
@@ -156,7 +151,7 @@ async function updateProgress(jobId: string, progress: Partial<MigrationProgress
     .limit(1);
 
   const merged = {
-    ...(current?.progress as unknown as Record<string, unknown> ?? {}),
+    ...((current?.progress as unknown as Record<string, unknown>) ?? {}),
     ...progress,
   };
 
@@ -171,10 +166,7 @@ export async function processEcomailMigration(
   orgId: string,
   apiKey: string,
 ): Promise<void> {
-  await db
-    .update(migrationJobs)
-    .set({ status: 'running' })
-    .where(eq(migrationJobs.id, jobId));
+  await db.update(migrationJobs).set({ status: 'running' }).where(eq(migrationJobs.id, jobId));
 
   const errors: string[] = [];
   let totalImported = 0;
@@ -276,7 +268,11 @@ export async function processEcomailMigration(
         }
 
         // Pagination — Ecomail uses last_page indicator
-        if (pageRes.last_page && pageRes.current_page && pageRes.current_page >= pageRes.last_page) {
+        if (
+          pageRes.last_page &&
+          pageRes.current_page &&
+          pageRes.current_page >= pageRes.last_page
+        ) {
           break;
         }
         if (batch.length < pageSize) break;

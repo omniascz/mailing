@@ -48,11 +48,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md' }
       }}
     >
       <div
-        className={cn(
-          'w-full rounded-lg bg-white shadow-xl',
-          sizeClasses[size],
-          className,
-        )}
+        className={cn('w-full rounded-lg bg-white shadow-xl', sizeClasses[size], className)}
         role="dialog"
         aria-modal="true"
         aria-label={title}

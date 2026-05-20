@@ -4,12 +4,12 @@ import { redis } from '../../lib/redis.js';
 const CACHE_TTL = 3600; // 1h
 
 export interface CampaignBuildInput {
-  goal: string;           // e.g. "Promote summer sale to VIP customers"
+  goal: string; // e.g. "Promote summer sale to VIP customers"
   audienceDescription: string;
   brandVoice?: string;
   productContext?: string;
   channelPreference?: 'email' | 'sms' | 'whatsapp' | 'viber';
-  language?: string;      // default 'cs' for CZ market
+  language?: string; // default 'cs' for CZ market
 }
 
 export interface CampaignBuildResult {
@@ -76,7 +76,10 @@ Output JSON:
   });
 
   const parsed = JSON.parse(result.text) as Omit<CampaignBuildResult, 'tokensUsed'>;
-  const output: CampaignBuildResult = { ...parsed, tokensUsed: (result.inputTokens + result.outputTokens) };
+  const output: CampaignBuildResult = {
+    ...parsed,
+    tokensUsed: result.inputTokens + result.outputTokens,
+  };
 
   await redis.set(key, JSON.stringify(output), 'EX', CACHE_TTL);
   return output;

@@ -61,10 +61,11 @@ describe('buildUtmUrl', () => {
   });
 
   it('overwrites existing UTM keys', () => {
-    const out = buildUtmUrl(
-      'https://example.cz/p?utm_source=old',
-      { source: 'new', medium: 'cpc', campaign: 'x' },
-    );
+    const out = buildUtmUrl('https://example.cz/p?utm_source=old', {
+      source: 'new',
+      medium: 'cpc',
+      campaign: 'x',
+    });
     expect(out).toContain('utm_source=new');
     expect(out).not.toContain('utm_source=old');
   });
@@ -93,7 +94,11 @@ describe('computeAdPerformance', () => {
 
   it('handles zero impressions gracefully', () => {
     const m = computeAdPerformance({
-      impressions: 0, clicks: 0, conversions: 0, cost: 0, revenue: 0,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      cost: 0,
+      revenue: 0,
     });
     expect(m.ctr).toBe(0);
     expect(m.cpc).toBe(0);
@@ -110,27 +115,21 @@ describe('attributeConversion', () => {
   });
 
   it('picks most recent in-window click', () => {
-    const click = attributeConversion(
-      { ts: now, value: 100 },
-      [mk(20, 'google'), mk(3, 'facebook'), mk(10, 'linkedin')],
-    );
+    const click = attributeConversion({ ts: now, value: 100 }, [
+      mk(20, 'google'),
+      mk(3, 'facebook'),
+      mk(10, 'linkedin'),
+    ]);
     expect(click?.source).toBe('facebook');
   });
 
   it('skips direct source', () => {
-    const click = attributeConversion(
-      { ts: now, value: 100 },
-      [mk(1, 'direct'), mk(5, 'google')],
-    );
+    const click = attributeConversion({ ts: now, value: 100 }, [mk(1, 'direct'), mk(5, 'google')]);
     expect(click?.source).toBe('google');
   });
 
   it('respects lookback window', () => {
-    const click = attributeConversion(
-      { ts: now, value: 100 },
-      [mk(60, 'google')],
-      30,
-    );
+    const click = attributeConversion({ ts: now, value: 100 }, [mk(60, 'google')], 30);
     expect(click).toBeNull();
   });
 

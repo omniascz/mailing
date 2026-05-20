@@ -5,15 +5,18 @@
 // messages without knowing provider details. New channels are added by
 // implementing this interface; nothing else needs to change.
 
-export type Channel = 'email' | 'sms' | 'whatsapp' | 'push' | 'voice' | 'in_app' | 'viber' | 'instagram' | 'messenger';
+export type Channel =
+  | 'email'
+  | 'sms'
+  | 'whatsapp'
+  | 'push'
+  | 'voice'
+  | 'in_app'
+  | 'viber'
+  | 'instagram'
+  | 'messenger';
 
-export type DeliveryStatusType =
-  | 'queued'
-  | 'sent'
-  | 'delivered'
-  | 'read'
-  | 'failed'
-  | 'bounced';
+export type DeliveryStatusType = 'queued' | 'sent' | 'delivered' | 'read' | 'failed' | 'bounced';
 
 // ============================================================================
 // Per-channel content shapes

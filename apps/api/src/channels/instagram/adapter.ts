@@ -44,30 +44,34 @@ export class InstagramAdapter extends BaseChannelAdapter {
   async send(message: UnifiedMessage, recipient: Recipient): Promise<DeliveryResult> {
     const igUserId = recipient.externalId ?? recipient.contactId;
     if (!igUserId) {
-      throw this.wrapError({ code: 'INVALID_RECIPIENT', message: 'Instagram IGSID is required', retryable: false });
+      throw this.wrapError({
+        code: 'INVALID_RECIPIENT',
+        message: 'Instagram IGSID is required',
+        retryable: false,
+      });
     }
 
     const text = this.extractText(message);
     if (!text) {
-      throw this.wrapError({ code: 'INVALID_CONTENT', message: 'Instagram DM requires text content', retryable: false });
+      throw this.wrapError({
+        code: 'INVALID_CONTENT',
+        message: 'Instagram DM requires text content',
+        retryable: false,
+      });
     }
 
-
-    const res = await fetch(
-      `https://graph.facebook.com/v19.0/${this.cfg.pageId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.cfg.pageAccessToken}`,
-        },
-        body: JSON.stringify({
-          recipient: { id: igUserId },
-          message: { text },
-          messaging_type: 'RESPONSE',
-        }),
+    const res = await fetch(`https://graph.facebook.com/v19.0/${this.cfg.pageId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.cfg.pageAccessToken}`,
       },
-    );
+      body: JSON.stringify({
+        recipient: { id: igUserId },
+        message: { text },
+        messaging_type: 'RESPONSE',
+      }),
+    });
 
     if (!res.ok) {
       const err = (await res.json()) as { error?: { message?: string } };
@@ -100,7 +104,12 @@ export class InstagramAdapter extends BaseChannelAdapter {
 
   async estimateCost(_message: UnifiedMessage, recipients: Recipient[]): Promise<CostEstimate> {
     // Instagram Messaging API is currently free within rate limits
-    return { totalCost: 0, currency: 'USD', perRecipientCost: 0, recipientCount: recipients.length };
+    return {
+      totalCost: 0,
+      currency: 'USD',
+      perRecipientCost: 0,
+      recipientCount: recipients.length,
+    };
   }
 
   async handleInbound(payload: unknown): Promise<InboundMessage> {
@@ -152,7 +161,11 @@ export class InstagramAdapter extends BaseChannelAdapter {
 
 import crypto from 'node:crypto';
 
-export function verifyInstagramWebhook(rawBody: string, signature: string, appSecret: string): boolean {
+export function verifyInstagramWebhook(
+  rawBody: string,
+  signature: string,
+  appSecret: string,
+): boolean {
   const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex')}`;
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));

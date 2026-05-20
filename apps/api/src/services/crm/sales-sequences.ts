@@ -10,49 +10,73 @@ import {
   type SequenceStep,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
-import { buildMergeVars, substitutePersonalMergeTags, buildPersonalHtml } from './one-to-one-email.js';
+import {
+  buildMergeVars,
+  substitutePersonalMergeTags,
+  buildPersonalHtml,
+} from './one-to-one-email.js';
 
 // ─── Sequence CRUD ────────────────────────────────────────────────────────────
 
-export async function createSequence(orgId: string, input: {
-  name: string;
-  description?: string;
-  steps?: SequenceStep[];
-  exitOnReply?: boolean;
-  exitOnUnsubscribe?: boolean;
-}): Promise<SalesSequence> {
-  const [row] = await db.insert(salesSequences).values({
-    orgId,
-    name: input.name,
-    description: input.description ?? null,
-    steps: input.steps ?? [],
-    exitOnReply: input.exitOnReply ?? true,
-    exitOnUnsubscribe: input.exitOnUnsubscribe ?? true,
-  }).returning();
+export async function createSequence(
+  orgId: string,
+  input: {
+    name: string;
+    description?: string;
+    steps?: SequenceStep[];
+    exitOnReply?: boolean;
+    exitOnUnsubscribe?: boolean;
+  },
+): Promise<SalesSequence> {
+  const [row] = await db
+    .insert(salesSequences)
+    .values({
+      orgId,
+      name: input.name,
+      description: input.description ?? null,
+      steps: input.steps ?? [],
+      exitOnReply: input.exitOnReply ?? true,
+      exitOnUnsubscribe: input.exitOnUnsubscribe ?? true,
+    })
+    .returning();
   return row!;
 }
 
 export async function getSequence(orgId: string, id: string): Promise<SalesSequence> {
-  const [row] = await db.select().from(salesSequences)
-    .where(and(eq(salesSequences.id, id), eq(salesSequences.orgId, orgId), isNull(salesSequences.deletedAt)));
+  const [row] = await db
+    .select()
+    .from(salesSequences)
+    .where(
+      and(
+        eq(salesSequences.id, id),
+        eq(salesSequences.orgId, orgId),
+        isNull(salesSequences.deletedAt),
+      ),
+    );
   if (!row) throw AppError.notFound('Sequence not found');
   return row;
 }
 
 export async function listSequences(orgId: string): Promise<SalesSequence[]> {
-  return db.select().from(salesSequences)
+  return db
+    .select()
+    .from(salesSequences)
     .where(and(eq(salesSequences.orgId, orgId), isNull(salesSequences.deletedAt)))
     .orderBy(desc(salesSequences.createdAt));
 }
 
-export async function updateSequence(orgId: string, id: string, patch: {
-  name?: string;
-  description?: string;
-  steps?: SequenceStep[];
-  exitOnReply?: boolean;
-  exitOnUnsubscribe?: boolean;
-  active?: boolean;
-}): Promise<SalesSequence> {
+export async function updateSequence(
+  orgId: string,
+  id: string,
+  patch: {
+    name?: string;
+    description?: string;
+    steps?: SequenceStep[];
+    exitOnReply?: boolean;
+    exitOnUnsubscribe?: boolean;
+    active?: boolean;
+  },
+): Promise<SalesSequence> {
   await getSequence(orgId, id);
   const update: Partial<typeof salesSequences.$inferInsert> = { updatedAt: new Date() };
   if (patch.name !== undefined) update.name = patch.name;
@@ -62,7 +86,9 @@ export async function updateSequence(orgId: string, id: string, patch: {
   if (patch.exitOnUnsubscribe !== undefined) update.exitOnUnsubscribe = patch.exitOnUnsubscribe;
   if (patch.active !== undefined) update.active = patch.active;
 
-  const [row] = await db.update(salesSequences).set(update)
+  const [row] = await db
+    .update(salesSequences)
+    .set(update)
     .where(and(eq(salesSequences.id, id), eq(salesSequences.orgId, orgId)))
     .returning();
   return row!;
@@ -70,35 +96,47 @@ export async function updateSequence(orgId: string, id: string, patch: {
 
 export async function deleteSequence(orgId: string, id: string): Promise<void> {
   await getSequence(orgId, id);
-  await db.update(salesSequences).set({ deletedAt: new Date() })
+  await db
+    .update(salesSequences)
+    .set({ deletedAt: new Date() })
     .where(and(eq(salesSequences.id, id), eq(salesSequences.orgId, orgId)));
 }
 
 // ─── Enrollment ───────────────────────────────────────────────────────────────
 
-export async function enrollContact(orgId: string, input: {
-  sequenceId: string;
-  contactId: string;
-  dealId?: string | null;
-  enrolledByUserId?: string | null;
-  senderEmail?: string | null;
-  senderName?: string | null;
-}): Promise<SequenceEnrollment> {
+export async function enrollContact(
+  orgId: string,
+  input: {
+    sequenceId: string;
+    contactId: string;
+    dealId?: string | null;
+    enrolledByUserId?: string | null;
+    senderEmail?: string | null;
+    senderName?: string | null;
+  },
+): Promise<SequenceEnrollment> {
   const seq = await getSequence(orgId, input.sequenceId);
   if (!seq.active) throw AppError.badRequest('Sequence is not active');
   if (seq.steps.length === 0) throw AppError.badRequest('Sequence has no steps');
 
   // Upsert — if already enrolled reuse the existing row
-  const existing = await db.select().from(sequenceEnrollments)
-    .where(and(
-      eq(sequenceEnrollments.sequenceId, input.sequenceId),
-      eq(sequenceEnrollments.contactId, input.contactId),
-    )).limit(1);
+  const existing = await db
+    .select()
+    .from(sequenceEnrollments)
+    .where(
+      and(
+        eq(sequenceEnrollments.sequenceId, input.sequenceId),
+        eq(sequenceEnrollments.contactId, input.contactId),
+      ),
+    )
+    .limit(1);
 
   if (existing.length > 0) {
-    if (existing[0]!.status === 'active') throw AppError.conflict('Contact is already enrolled in this sequence');
+    if (existing[0]!.status === 'active')
+      throw AppError.conflict('Contact is already enrolled in this sequence');
     // Re-enroll: reset from the beginning
-    const [row] = await db.update(sequenceEnrollments)
+    const [row] = await db
+      .update(sequenceEnrollments)
       .set({
         status: 'active',
         currentStepIndex: 0,
@@ -113,37 +151,50 @@ export async function enrollContact(orgId: string, input: {
     return row!;
   }
 
-  const [row] = await db.insert(sequenceEnrollments).values({
-    orgId,
-    sequenceId: input.sequenceId,
-    contactId: input.contactId,
-    dealId: input.dealId ?? null,
-    enrolledByUserId: input.enrolledByUserId ?? null,
-    senderEmail: input.senderEmail ?? null,
-    senderName: input.senderName ?? null,
-    nextStepAt: new Date(), // first step is due immediately
-  }).returning();
+  const [row] = await db
+    .insert(sequenceEnrollments)
+    .values({
+      orgId,
+      sequenceId: input.sequenceId,
+      contactId: input.contactId,
+      dealId: input.dealId ?? null,
+      enrolledByUserId: input.enrolledByUserId ?? null,
+      senderEmail: input.senderEmail ?? null,
+      senderName: input.senderName ?? null,
+      nextStepAt: new Date(), // first step is due immediately
+    })
+    .returning();
   return row!;
 }
 
-export async function unenrollContact(orgId: string, enrollmentId: string, reason: SequenceEnrollment['status'] = 'cancelled'): Promise<void> {
-  await db.update(sequenceEnrollments)
+export async function unenrollContact(
+  orgId: string,
+  enrollmentId: string,
+  reason: SequenceEnrollment['status'] = 'cancelled',
+): Promise<void> {
+  await db
+    .update(sequenceEnrollments)
     .set({ status: reason, updatedAt: new Date() })
     .where(and(eq(sequenceEnrollments.id, enrollmentId), eq(sequenceEnrollments.orgId, orgId)));
 }
 
-export async function listEnrollments(orgId: string, opts: {
-  contactId?: string;
-  sequenceId?: string;
-  status?: SequenceEnrollment['status'];
-  limit?: number;
-} = {}): Promise<SequenceEnrollment[]> {
+export async function listEnrollments(
+  orgId: string,
+  opts: {
+    contactId?: string;
+    sequenceId?: string;
+    status?: SequenceEnrollment['status'];
+    limit?: number;
+  } = {},
+): Promise<SequenceEnrollment[]> {
   const conditions = [eq(sequenceEnrollments.orgId, orgId)];
   if (opts.contactId) conditions.push(eq(sequenceEnrollments.contactId, opts.contactId));
   if (opts.sequenceId) conditions.push(eq(sequenceEnrollments.sequenceId, opts.sequenceId));
   if (opts.status) conditions.push(eq(sequenceEnrollments.status, opts.status));
 
-  return db.select().from(sequenceEnrollments)
+  return db
+    .select()
+    .from(sequenceEnrollments)
     .where(and(...conditions))
     .orderBy(desc(sequenceEnrollments.createdAt))
     .limit(opts.limit ?? 100);
@@ -154,12 +205,18 @@ export async function listEnrollments(orgId: string, opts: {
 /**
  * Execute all due enrollment steps across all orgs (called by periodic job).
  */
-export async function processDueSequenceSteps(opts: { limit?: number } = {}): Promise<{ processed: number }> {
-  const due = await db.select().from(sequenceEnrollments)
-    .where(and(
-      eq(sequenceEnrollments.status, 'active'),
-      lte(sequenceEnrollments.nextStepAt, new Date()),
-    ))
+export async function processDueSequenceSteps(
+  opts: { limit?: number } = {},
+): Promise<{ processed: number }> {
+  const due = await db
+    .select()
+    .from(sequenceEnrollments)
+    .where(
+      and(
+        eq(sequenceEnrollments.status, 'active'),
+        lte(sequenceEnrollments.nextStepAt, new Date()),
+      ),
+    )
     .limit(opts.limit ?? 200);
 
   let processed = 0;
@@ -175,8 +232,12 @@ export async function processDueSequenceSteps(opts: { limit?: number } = {}): Pr
 }
 
 async function executeNextStep(enrollment: SequenceEnrollment): Promise<void> {
-  const seq = await db.select().from(salesSequences)
-    .where(eq(salesSequences.id, enrollment.sequenceId)).limit(1).then(r => r[0]);
+  const seq = await db
+    .select()
+    .from(salesSequences)
+    .where(eq(salesSequences.id, enrollment.sequenceId))
+    .limit(1)
+    .then((r) => r[0]);
   if (!seq || !seq.active) {
     await unenrollContact(enrollment.orgId, enrollment.id, 'cancelled');
     return;
@@ -187,7 +248,8 @@ async function executeNextStep(enrollment: SequenceEnrollment): Promise<void> {
 
   // Sequence complete
   if (stepIndex >= steps.length) {
-    await db.update(sequenceEnrollments)
+    await db
+      .update(sequenceEnrollments)
       .set({ status: 'completed', completedAt: new Date(), updatedAt: new Date() })
       .where(eq(sequenceEnrollments.id, enrollment.id));
     return;
@@ -196,8 +258,11 @@ async function executeNextStep(enrollment: SequenceEnrollment): Promise<void> {
   const step = steps[stepIndex]!;
 
   // Fetch contact data for merge tags
-  const [contact] = await db.select().from(contacts)
-    .where(eq(contacts.id, enrollment.contactId)).limit(1);
+  const [contact] = await db
+    .select()
+    .from(contacts)
+    .where(eq(contacts.id, enrollment.contactId))
+    .limit(1);
 
   await runStep(step, enrollment, contact ?? null);
 
@@ -218,7 +283,8 @@ async function executeNextStep(enrollment: SequenceEnrollment): Promise<void> {
     ? new Date(Date.now() + (nextStep.delayDays ?? 1) * 86_400_000)
     : null;
 
-  await db.update(sequenceEnrollments)
+  await db
+    .update(sequenceEnrollments)
     .set({
       currentStepIndex: nextIndex,
       nextStepAt: nextStepAt,
@@ -249,8 +315,13 @@ async function runStep(
       // Queue via BullMQ
       const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
       if (queues) {
-        await (queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>)
-          .email?.add('sequence-email', {
+        await (
+          queues as unknown as Record<
+            string,
+            { add: (name: string, data: unknown) => Promise<void> }
+          >
+        ).email
+          ?.add('sequence-email', {
             orgId: enrollment.orgId,
             contactId: enrollment.contactId,
             sequenceEnrollmentId: enrollment.id,
@@ -261,7 +332,8 @@ async function runStep(
             bodyText,
             bodyHtml,
             isPersonal: true,
-          }).catch(() => {});
+          })
+          .catch(() => {});
       }
       break;
     }
@@ -271,13 +343,19 @@ async function runStep(
       const message = substitutePersonalMergeTags(config.message ?? '', vars);
       const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
       if (queues && contact?.phone) {
-        await (queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>)
-          .sms?.add('sequence-sms', {
+        await (
+          queues as unknown as Record<
+            string,
+            { add: (name: string, data: unknown) => Promise<void> }
+          >
+        ).sms
+          ?.add('sequence-sms', {
             orgId: enrollment.orgId,
             contactId: enrollment.contactId,
             phone: contact.phone,
             message,
-          }).catch(() => {});
+          })
+          .catch(() => {});
       }
       break;
     }
@@ -286,7 +364,10 @@ async function runStep(
     case 'linkedin': {
       const { createTask } = await import('./tasks.js');
       await createTask(enrollment.orgId, {
-        type: step.type === 'linkedin' ? 'todo' : (config.taskType as 'call' | 'email' | 'meeting' | 'todo' ?? 'todo'),
+        type:
+          step.type === 'linkedin'
+            ? 'todo'
+            : ((config.taskType as 'call' | 'email' | 'meeting' | 'todo') ?? 'todo'),
         title: config.title ?? (step.type === 'linkedin' ? 'LinkedIn touch' : 'Follow up'),
         contactId: enrollment.contactId,
         dealId: enrollment.dealId ?? null,

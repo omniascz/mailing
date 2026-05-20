@@ -5,7 +5,7 @@ describe('cs vocative', () => {
   it('applies exception table', () => {
     expect(vocative('Pavel', 'male')).toBe('Pavle');
     expect(vocative('Karel', 'male')).toBe('Karle');
-    expect(vocative('Petr',  'male')).toBe('Petře');
+    expect(vocative('Petr', 'male')).toBe('Petře');
   });
 
   it('handles common male rules', () => {

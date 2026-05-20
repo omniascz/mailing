@@ -37,10 +37,7 @@ export function verifyShoptetWebhookSignature(
   signatureHeader: string,
   secret: string,
 ): boolean {
-  const computed = crypto
-    .createHmac('sha256', secret)
-    .update(rawBody, 'utf8')
-    .digest('hex');
+  const computed = crypto.createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
   try {
     return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(signatureHeader));
   } catch {
@@ -55,9 +52,7 @@ export function verifyShoptetWebhookSignature(
  *     customer: { email, firstName, lastName, phone },
  *     items:    [{ name, amount, itemPriceWithVat, code?, productGuid? }] }
  */
-export function normalizeShoptetOrderPayload(
-  raw: Record<string, unknown>,
-): ShoptetNormalizedOrder {
+export function normalizeShoptetOrderPayload(raw: Record<string, unknown>): ShoptetNormalizedOrder {
   const customer = (raw.customer as Record<string, unknown>) ?? {};
   const rawItems = (raw.items as Array<Record<string, unknown>>) ?? [];
   const items: ShoptetNormalizedOrderItem[] = rawItems.map((item) => {

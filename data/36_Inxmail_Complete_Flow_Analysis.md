@@ -6,6 +6,7 @@
 > Tento dokument doplňuje `35_Inxmail_Features_DeepDive.md` o **procesní pohled**. Zatímco první dokument popisuje, **co** Inxmail umí, tento popisuje, **kdo s tím interaguje a jak data tečou**.
 
 > **Klíčové rozdíly od ostatních platforem v této sérii:**
+>
 > - **Německý produkt z Freiburgu** (1999, **27+ let** v industry – jeden z nejstarších DACH platforms)
 > - **Founding member CSA** – industry standard-setter
 > - **Owner-managed company** (Inhabergeführt) – stability + long-term vision
@@ -197,25 +198,25 @@
 
 ### Aktéři detailněji
 
-| Aktér | Vstupní bod | Co dělá | Co vidí |
-|---|---|---|---|
-| **Account Owner** | Contract signing | Full + billing + users | Vše |
-| **Administrator** | Pozvánka | Operational lead, user mgmt | Per scope |
-| **Marketing user** | Pozvánka | Daily marketing tasks | Per permissions |
-| **Designer / Editor** | Pozvánka | Content + templates | Per role |
-| **Analyst / Reports** | Pozvánka | Reports + BI | Read + analyze |
-| **Read-only / Viewer** | Pozvánka | View only | Read-only |
-| **Enterprise SSO user** | IdP login | Per IdP role | Per assigned |
-| **Recipient / Subscriber** | Form, integration | Receives emails | Své emaily |
-| **Personal Contact Person** | Assigned per klient | Strategy + ops support | Read s consent |
-| **Inxmail Support** | Email, phone, ticket | Issue resolution | Read s consent |
-| **Inxmail Sales** | Inquiry contact | Upgrades + new contracts | Read s consent |
-| **Implementation specialist** | Project assignment | Setup + integration | Read s consent |
-| **Industry vertical specialist** | Per industry | Industry guidance | Read s consent |
-| **API Client** | API key | Custom integration | Per scope |
-| **SAP integration** | OAuth / API | Bidirectional sync | Per integration scope |
-| **CRM integration** | OAuth / API | Customer sync | Per integration scope |
-| **Shopware integration** | OAuth / Plugin | E-commerce sync | Per integration scope |
+| Aktér                            | Vstupní bod          | Co dělá                     | Co vidí               |
+| -------------------------------- | -------------------- | --------------------------- | --------------------- |
+| **Account Owner**                | Contract signing     | Full + billing + users      | Vše                   |
+| **Administrator**                | Pozvánka             | Operational lead, user mgmt | Per scope             |
+| **Marketing user**               | Pozvánka             | Daily marketing tasks       | Per permissions       |
+| **Designer / Editor**            | Pozvánka             | Content + templates         | Per role              |
+| **Analyst / Reports**            | Pozvánka             | Reports + BI                | Read + analyze        |
+| **Read-only / Viewer**           | Pozvánka             | View only                   | Read-only             |
+| **Enterprise SSO user**          | IdP login            | Per IdP role                | Per assigned          |
+| **Recipient / Subscriber**       | Form, integration    | Receives emails             | Své emaily            |
+| **Personal Contact Person**      | Assigned per klient  | Strategy + ops support      | Read s consent        |
+| **Inxmail Support**              | Email, phone, ticket | Issue resolution            | Read s consent        |
+| **Inxmail Sales**                | Inquiry contact      | Upgrades + new contracts    | Read s consent        |
+| **Implementation specialist**    | Project assignment   | Setup + integration         | Read s consent        |
+| **Industry vertical specialist** | Per industry         | Industry guidance           | Read s consent        |
+| **API Client**                   | API key              | Custom integration          | Per scope             |
+| **SAP integration**              | OAuth / API          | Bidirectional sync          | Per integration scope |
+| **CRM integration**              | OAuth / API          | Customer sync               | Per integration scope |
+| **Shopware integration**         | OAuth / Plugin       | E-commerce sync             | Per integration scope |
 
 ---
 
@@ -274,6 +275,7 @@ Inxmail Sales responds (typically 1-2 business days)
 ### 2.3 Qualification criteria
 
 Inxmail targets:
+
 - **DACH mid-market+ enterprise**
 - **B2B + B2C** both
 - **Email volume:** Significant monthly (justifies €200+/month)
@@ -330,7 +332,8 @@ Use case workshop:
 ### 2.6 Test account activation
 
 Per oficiální:
-> *"We offer test accounts separately (with special conditions)."*
+
+> _"We offer test accounts separately (with special conditions)."_
 
 ```
 After demo:
@@ -405,7 +408,8 @@ Personal contact person assigned
 ### 3.1 Demo request
 
 Per oficiální:
-> *"We would be happy to present a live demo to you in a personal initial consultation. Simply go to the page: Request demo – we will clarify your volume and requirements and recommend the right package or quota for you."*
+
+> _"We would be happy to present a live demo to you in a personal initial consultation. Simply go to the page: Request demo – we will clarify your volume and requirements and recommend the right package or quota for you."_
 
 ```
 Visit inxmail.de
@@ -437,7 +441,8 @@ Initial consultation call:
 ### 3.2 Product tour
 
 Per oficiální:
-> *"You can get a quick look at the tool via our product tour."*
+
+> _"You can get a quick look at the tool via our product tour."_
 
 - **Self-guided product tour**
 - **No sales engagement** initially
@@ -474,7 +479,8 @@ Follow-up:
 ### 4.1 Test account
 
 Per oficiální:
-> *"We offer test accounts separately (with special conditions)."*
+
+> _"We offer test accounts separately (with special conditions)."_
 
 ```
 Sales-approved test account
@@ -501,9 +507,11 @@ Decision to proceed
 ### 4.2 Staging environment (paid option)
 
 Per oficiální:
-> *"Yes, staging is available as an option."*
+
+> _"Yes, staging is available as an option."_
 
 **For paid customers:**
+
 - **Pre-production environment**
 - **Test campaigns safely**
 - **Integration testing**
@@ -533,6 +541,7 @@ Promote to production
 ### 4.3 Why staging matters
 
 **Pro enterprise:**
+
 - **Risk reduction**
 - **Compliance testing**
 - **Custom dev validation**
@@ -573,6 +582,7 @@ Question 5: Need both?
 ### 5.2 Customer profile mapping
 
 #### Inxmail Platform (€200+/month):
+
 - **Marketing team** users
 - **Newsletter publishers**
 - **B2C + B2B campaigns**
@@ -583,6 +593,7 @@ Question 5: Need both?
 - **A/B testing**
 
 #### Inxmail Mail Relay (€70+/month):
+
 - **IT department** users
 - **Pure transactional needs**
 - **High-volume system emails**
@@ -872,9 +883,11 @@ Annual strategic review:
 ### 7.1 Role-based user management
 
 Per oficiální:
-> *"role-based user management"*
+
+> _"role-based user management"_
 
 **Role-based access control:**
+
 - **Multiple default roles**
 - **Custom roles** possible
 - **Granular permissions**
@@ -884,6 +897,7 @@ Per oficiální:
 ### 7.2 Default roles (typical)
 
 #### Account Owner
+
 - **Highest tier** access
 - **Created during contract setup**
 - Full administrative control
@@ -893,6 +907,7 @@ Per oficiální:
 - Close account
 
 #### Administrator
+
 - **Full operational** access
 - User management
 - Integration management
@@ -900,6 +915,7 @@ Per oficiální:
 - Cannot manage billing typically
 
 #### Marketing user
+
 - **Daily marketing** tasks
 - Campaigns + workflows + segments
 - Content creation
@@ -907,46 +923,50 @@ Per oficiální:
 - No user management
 
 #### Designer / Editor
+
 - **Content focused**
 - Templates + design
 - Limited recipient data
 - No send permissions typically
 
 #### Analyst / Reports user
+
 - **Reports + analytics**
 - Build dashboards
 - Data export
 - No send permissions
 
 #### Read-only / Viewer
+
 - **View only**
 - For executives, auditors
 
 #### Custom roles
+
 - **Per business needs**
 - **Granular permissions**
 
 ### 7.3 Permission matrix (typical)
 
-| Akce | Owner | Admin | Marketing | Designer | Analyst | Viewer |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Recipients view | ✅ | ✅ | ✅ | limited | view | view |
-| Recipients edit | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Segments build | ✅ | ✅ | ✅ | ❌ | view | view |
-| Templates | ✅ | ✅ | ✅ | ✅ | view | view |
-| Campaigns create | ✅ | ✅ | ✅ | ✅ | ❌ | view |
-| Campaigns send | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Workflows create | ✅ | ✅ | ✅ | view | view | view |
-| Workflows activate | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Forms | ✅ | ✅ | ✅ | ✅ | view | view |
-| Reports | ✅ | ✅ | ✅ | view | ✅ | ✅ |
-| Integrations | ✅ | ✅ | per role | ❌ | view | ❌ |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| SSO config | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Audit logs | ✅ | ✅ | ❌ | ❌ | per role | per role |
+| Akce               | Owner | Admin | Marketing | Designer | Analyst  |  Viewer  |
+| ------------------ | :---: | :---: | :-------: | :------: | :------: | :------: |
+| Account settings   |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    |
+| Billing            |  ✅   |  ❌   |    ❌     |    ❌    |    ❌    |    ❌    |
+| User management    |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    |
+| Recipients view    |  ✅   |  ✅   |    ✅     | limited  |   view   |   view   |
+| Recipients edit    |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |    ❌    |
+| Segments build     |  ✅   |  ✅   |    ✅     |    ❌    |   view   |   view   |
+| Templates          |  ✅   |  ✅   |    ✅     |    ✅    |   view   |   view   |
+| Campaigns create   |  ✅   |  ✅   |    ✅     |    ✅    |    ❌    |   view   |
+| Campaigns send     |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |    ❌    |
+| Workflows create   |  ✅   |  ✅   |    ✅     |   view   |   view   |   view   |
+| Workflows activate |  ✅   |  ✅   |    ✅     |    ❌    |    ❌    |    ❌    |
+| Forms              |  ✅   |  ✅   |    ✅     |    ✅    |   view   |   view   |
+| Reports            |  ✅   |  ✅   |    ✅     |   view   |    ✅    |    ✅    |
+| Integrations       |  ✅   |  ✅   | per role  |    ❌    |   view   |    ❌    |
+| API keys           |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    |
+| SSO config         |  ✅   |  ✅   |    ❌     |    ❌    |    ❌    |    ❌    |
+| Audit logs         |  ✅   |  ✅   |    ❌     |    ❌    | per role | per role |
 
 ### 7.4 User invitation flow
 
@@ -975,7 +995,8 @@ User activates + sets password
 ### 7.5 User administration sometimes requires support
 
 Per GetApp:
-> *"user administration sometimes requires contacting support"*
+
+> _"user administration sometimes requires contacting support"_
 
 ⚠️ **Some user management operations** require Inxmail support help (especially complex setups).
 
@@ -986,9 +1007,11 @@ Per GetApp:
 ### 8.1 SSO support
 
 Per oficiální:
-> *"Seamless connection to your systems with APIs, SSO, and personal support."*
+
+> _"Seamless connection to your systems with APIs, SSO, and personal support."_
 
 **Enterprise SSO:**
+
 - **SAML 2.0 support**
 - **Active Directory** integration
 - **Google Workspace**
@@ -1038,9 +1061,11 @@ Role mapping:
 ### 9.1 Personal contact person
 
 Per oficiální:
-> *"Personal contact person and 2 hours of user support/month (platform) or 1 hour/month (mail relay)."*
+
+> _"Personal contact person and 2 hours of user support/month (platform) or 1 hour/month (mail relay)."_
 
 **Dedicated person per klient:**
+
 - **Long-term relationship**
 - **Operational support**
 - **Strategic guidance**
@@ -1088,7 +1113,8 @@ Support hours used for:
 ### 9.4 More support hours optional
 
 Per oficiální:
-> *"More support/SLAs optional."*
+
+> _"More support/SLAs optional."_
 
 - **Additional hours** purchasable
 - **Premium SLA** tiers
@@ -1097,13 +1123,14 @@ Per oficiální:
 ### 9.5 Real customer praise
 
 Per Software Advice:
-> *"Deutsche Ansprechpartner, Nähe zur Software-Entwicklung, durchwegs gute Erfahrungen"*
 
-> *"Users think Inxmail offers responsive and knowledgeable customer support, with fast answers and helpful service for most needs."*
+> _"Deutsche Ansprechpartner, Nähe zur Software-Entwicklung, durchwegs gute Erfahrungen"_
+
+> _"Users think Inxmail offers responsive and knowledgeable customer support, with fast answers and helpful service for most needs."_
 
 ### 9.6 Per GetApp
 
-> *"Widespread user sentiment highlights fast, competent, and solution-oriented support for both standard and complex issues."*
+> _"Widespread user sentiment highlights fast, competent, and solution-oriented support for both standard and complex issues."_
 
 ---
 
@@ -1259,6 +1286,7 @@ Daily activities (mostly automated):
 ### 11.2 No marketing features
 
 ⚠️ Mail Relay users **don't:**
+
 - Build campaigns
 - Use drag-drop editor
 - Create workflows
@@ -1291,6 +1319,7 @@ Reports show:
 ### 11.4 Mail Relay reports
 
 Limited vs. Platform:
+
 - Sent volume
 - Delivery rate
 - Bounce rate
@@ -1305,6 +1334,7 @@ Limited vs. Platform:
 ### 12.1 Recipient creation paths
 
 #### A) Form submission s Double Opt-in
+
 ```
 Visitor fills Inxmail form (embedded)
    ↓
@@ -1334,6 +1364,7 @@ Welcome workflow triggers
 ```
 
 #### B) Shopware integration (DACH e-commerce!)
+
 ```
 Customer registers v Shopware shop
    ↓
@@ -1351,6 +1382,7 @@ Welcome workflow if active
 ```
 
 #### C) SAP Marketing Cloud sync
+
 ```
 Customer v SAP Marketing Cloud
    ↓
@@ -1364,6 +1396,7 @@ Inxmail handles email delivery
 ```
 
 #### D) CRM sync (CAS / combit / CURSOR / Salesforce / Dynamics)
+
 ```
 CRM contact updated
    ↓
@@ -1377,6 +1410,7 @@ Segments updated
 ```
 
 #### E) REST API integration
+
 ```
 External system POST to Inxmail API
    ↓
@@ -1388,6 +1422,7 @@ Creates/updates recipient
 ```
 
 #### F) Manual import (CSV)
+
 ```
 Admin: Recipients → Import
    ↓
@@ -1666,7 +1701,8 @@ Continue until end / goal / removal
 ### 15.1 AI flow
 
 Per oficiální:
-> *"intuitive email creation with drag-and-drop, AI-supported text suggestions"*
+
+> _"intuitive email creation with drag-and-drop, AI-supported text suggestions"_
 
 ```
 Marketer writes initial draft v editor
@@ -1908,6 +1944,7 @@ Activate
 ### 18.3 E-commerce automation flows
 
 #### Cart abandonment
+
 ```
 Customer adds to cart
    ↓
@@ -1936,6 +1973,7 @@ Exit
 ```
 
 #### Browse abandonment
+
 ```
 Customer views product
    ↓
@@ -1955,9 +1993,11 @@ Track engagement
 ### 18.4 Limitations
 
 Per Software Advice review:
-> *"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"*
+
+> _"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"_
 
 ⚠️ **Custom actions** in visual builder limited:
+
 - Pre-built actions primary
 - Less custom dev v workflow
 - Workaround via API + workflows
@@ -2135,6 +2175,7 @@ ROI attribution
 ### 20.5 DACH CRM integrations (UNIKÁTNÍ pro DACH B2B)
 
 #### CAS genesisWorld
+
 ```
 CAS genesisWorld → Inxmail
    ↓
@@ -2146,6 +2187,7 @@ Bidirectional updates
 ```
 
 #### combit CRM
+
 ```
 combit CRM ←→ Inxmail
    ↓
@@ -2155,6 +2197,7 @@ Contact + opportunity data
 ```
 
 #### CURSOR-CRM
+
 ```
 CURSOR-CRM ←→ Inxmail
    ↓
@@ -2219,6 +2262,7 @@ On event:
 ### 21.1 Multi-language UI per user
 
 Each user selects preferred UI language:
+
 - German (default)
 - English
 - **Czech (UNIKÁTNÍ pro DACH!)**
@@ -2275,6 +2319,7 @@ Reports show:
 ### 21.4 Use cases
 
 #### B2B DACH company with CEE operations
+
 ```
 Inxmail Platform:
 - German variant for DACH audience
@@ -2286,6 +2331,7 @@ One campaign → 4 native experiences
 ```
 
 #### Tourism company across Europe
+
 ```
 Inxmail:
 - Multi-language campaigns
@@ -2297,6 +2343,7 @@ ROI increase from native-language messaging
 ```
 
 #### Manufacturing with international sales
+
 ```
 - German for DACH
 - French for FR/BE
@@ -2366,7 +2413,8 @@ Reports show:
 ### 23.1 EU hosting exclusively
 
 Per oficiální:
-> *"Inxmail places the highest value on data security, legal certainty and hosts its servers exclusively in the EU."*
+
+> _"Inxmail places the highest value on data security, legal certainty and hosts its servers exclusively in the EU."_
 
 ```
 Data flow:
@@ -2379,7 +2427,8 @@ Data flow:
 ### 23.2 ISO 27001 + GDPR
 
 Per oficiální:
-> *"Inxmail is ISO 27001 certified and processes personal data in accordance with the GDPR – with order processing."*
+
+> _"Inxmail is ISO 27001 certified and processes personal data in accordance with the GDPR – with order processing."_
 
 - **ISO 27001 certified**
 - **GDPR-compliant**
@@ -2388,7 +2437,8 @@ Per oficiální:
 ### 23.3 Double Opt-in default
 
 Per oficiální:
-> *"double opt-in, encrypted sending, and role-based user management"*
+
+> _"double opt-in, encrypted sending, and role-based user management"_
 
 - **Double Opt-in default ON**
 - **DACH standard**
@@ -2445,9 +2495,11 @@ Provide within 30 days (GDPR requirement)
 ### 24.1 SLA on request
 
 Per oficiální:
-> *"dedicated IPs and SLAs on request"*
+
+> _"dedicated IPs and SLAs on request"_
 
 **Enterprise SLA includes:**
+
 - Uptime guarantee (99.9%+)
 - Response time SLAs
 - Issue resolution targets
@@ -2504,7 +2556,8 @@ Escalation paths:
 ### 24.5 More support optional
 
 Per oficiální:
-> *"More support/SLAs optional."*
+
+> _"More support/SLAs optional."_
 
 - **Additional support hours** purchasable
 - **Premium SLA tiers**
@@ -2515,29 +2568,29 @@ Per oficiální:
 
 ## 25. Datová mapa: co vidí kdo
 
-| Data | Owner | Admin | Mkt User | Designer | Analyst | Viewer | Subscriber | API | Contact Person |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Account settings | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| Billing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| User management | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | per scope | read |
-| All recipients | ✅ | ✅ | ✅ | limited | view | view | jen sebe | ✅ | read |
-| Edit recipients | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Build segments | ✅ | ✅ | ✅ | ❌ | view | view | – | ✅ | read |
-| Email campaigns | ✅ | ✅ | ✅ | ✅ | view | view | jen co dostal | ✅ | read |
-| Send campaigns | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Workflows | ✅ | ✅ | ✅ | view | view | view | ❌ | ✅ | read |
-| Activate workflows | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Templates | ✅ | ✅ | ✅ | ✅ | view | view | – | ✅ | read |
-| Forms | ✅ | ✅ | ✅ | ✅ | view | view | submit | ✅ | read |
-| A/B tests | ✅ | ✅ | ✅ | view | view | view | – | ✅ | read |
-| Reports | ✅ | ✅ | ✅ | view | ✅ | ✅ | ❌ | ✅ | read |
-| Inxmail Commerce | ✅ | ✅ | per role | view | view | view | – | ✅ | read |
-| Integrations | ✅ | ✅ | per role | ❌ | view | ❌ | – | per scope | read |
-| API keys | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | – | read |
-| SSO config | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | – | read |
-| Audit logs | ✅ | ✅ | ❌ | ❌ | per role | per role | ❌ | per scope | read |
-| Mail Relay config | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | – | ✅ | read |
-| GDPR delete | ✅ | ✅ | per role | ❌ | per role | ❌ | request | ✅ | execute |
+| Data               | Owner | Admin | Mkt User | Designer | Analyst  |  Viewer  |  Subscriber   |    API    | Contact Person |
+| ------------------ | :---: | :---: | :------: | :------: | :------: | :------: | :-----------: | :-------: | :------------: |
+| Account settings   |  ✅   |  ✅   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       | per scope |      read      |
+| Billing            |  ✅   |  ❌   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       | per scope |      read      |
+| User management    |  ✅   |  ✅   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       | per scope |      read      |
+| All recipients     |  ✅   |  ✅   |    ✅    | limited  |   view   |   view   |   jen sebe    |    ✅     |      read      |
+| Edit recipients    |  ✅   |  ✅   |    ✅    |    ❌    |    ❌    |    ❌    |      ❌       |    ✅     |       ❌       |
+| Build segments     |  ✅   |  ✅   |    ✅    |    ❌    |   view   |   view   |       –       |    ✅     |      read      |
+| Email campaigns    |  ✅   |  ✅   |    ✅    |    ✅    |   view   |   view   | jen co dostal |    ✅     |      read      |
+| Send campaigns     |  ✅   |  ✅   |    ✅    |    ❌    |    ❌    |    ❌    |      ❌       |    ✅     |       ❌       |
+| Workflows          |  ✅   |  ✅   |    ✅    |   view   |   view   |   view   |      ❌       |    ✅     |      read      |
+| Activate workflows |  ✅   |  ✅   |    ✅    |    ❌    |    ❌    |    ❌    |      ❌       |    ✅     |       ❌       |
+| Templates          |  ✅   |  ✅   |    ✅    |    ✅    |   view   |   view   |       –       |    ✅     |      read      |
+| Forms              |  ✅   |  ✅   |    ✅    |    ✅    |   view   |   view   |    submit     |    ✅     |      read      |
+| A/B tests          |  ✅   |  ✅   |    ✅    |   view   |   view   |   view   |       –       |    ✅     |      read      |
+| Reports            |  ✅   |  ✅   |    ✅    |   view   |    ✅    |    ✅    |      ❌       |    ✅     |      read      |
+| Inxmail Commerce   |  ✅   |  ✅   | per role |   view   |   view   |   view   |       –       |    ✅     |      read      |
+| Integrations       |  ✅   |  ✅   | per role |    ❌    |   view   |    ❌    |       –       | per scope |      read      |
+| API keys           |  ✅   |  ✅   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       |     –     |      read      |
+| SSO config         |  ✅   |  ✅   |    ❌    |    ❌    |    ❌    |    ❌    |      ❌       |     –     |      read      |
+| Audit logs         |  ✅   |  ✅   |    ❌    |    ❌    | per role | per role |      ❌       | per scope |      read      |
+| Mail Relay config  |  ✅   |  ✅   |    ❌    |    ❌    |    ❌    |    ❌    |       –       |    ✅     |      read      |
+| GDPR delete        |  ✅   |  ✅   | per role |    ❌    | per role |    ❌    |    request    |    ✅     |    execute     |
 
 ---
 
@@ -2546,6 +2599,7 @@ Per oficiální:
 ### 26.1 No standard free trial
 
 ⚠️ **No public free trial:**
+
 - Test accounts s special conditions
 - Sales engagement required
 - Less self-serve evaluation
@@ -2561,56 +2615,64 @@ Per oficiální:
 ### 26.3 Less intuitive than SMB competitors
 
 Per Capterra:
-> *"Die Software ist im Vergleich zu Konkurrenzprodukten (mit ähnlichem Funktionsumfang) relativ schwierig zu bedienen."*
+
+> _"Die Software ist im Vergleich zu Konkurrenzprodukten (mit ähnlichem Funktionsumfang) relativ schwierig zu bedienen."_
 
 ⚠️ **Learning curve** higher than Mailchimp / MailerLite simplicity.
 
 ### 26.4 HTML editing sometimes needed
 
 Per Capterra:
-> *"Um einen Artikel im Newsletter hinzuzufügen, zu löschen oder zu verschieben müssen wir den HTML-Code des Templates bearbeiten."*
+
+> _"Um einen Artikel im Newsletter hinzuzufügen, zu löschen oder zu verschieben müssen wir den HTML-Code des Templates bearbeiten."_
 
 ⚠️ **Some operations require HTML editing** v legacy templates.
 
 ### 26.5 No JavaScript conversion tracking
 
 Per Software Advice:
-> *"Ein JavaScript-Conversiontracking wäre ebenso gern gesehen"*
+
+> _"Ein JavaScript-Conversiontracking wäre ebenso gern gesehen"_
 
 ⚠️ Historically missing – check current state.
 
 ### 26.6 Inxmail Commerce custom actions limited
 
 Per Software Advice:
-> *"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"*
+
+> _"die Möglichkeit im visuellen Kampagnen-Builder von Inxmail Commerce eigene Actions entwickeln zu können"_
 
 ⚠️ **Pre-built actions only** v visual builder.
 
 ### 26.7 Mobile views need improvement
 
 Per Capterra:
-> *"Mobilansichten mit besseren Funktionen ausstatten"*
+
+> _"Mobilansichten mit besseren Funktionen ausstatten"_
 
 ⚠️ **Mobile UI** less polished.
 
 ### 26.8 Sign-up process clunky
 
 Per Capterra:
-> *"Anmeldeprozess hakelig"*
+
+> _"Anmeldeprozess hakelig"_
 
 ⚠️ **Onboarding flow** could be smoother.
 
 ### 26.9 User administration requires support
 
 Per GetApp:
-> *"user administration sometimes requires contacting support"*
+
+> _"user administration sometimes requires contacting support"_
 
 ⚠️ **Complex user management** sometimes requires support.
 
 ### 26.10 Support flexibility issues
 
 Per GetApp:
-> *"some feel it can be slow or less flexible for specific requests"*
+
+> _"some feel it can be slow or less flexible for specific requests"_
 
 ⚠️ **Some support requests** less flexible.
 
@@ -2653,6 +2715,7 @@ Per GetApp:
 ### 26.17 Per-volume pricing scaling at high volume
 
 ⚠️ Pro velmi high-volume (10M+ emails/month):
+
 - **Per-email pricing** scales linearly
 - **Compare to flat-fee** alternatives
 - **May be expensive** at scale
@@ -2701,4 +2764,4 @@ Pokud Inxmail používáte v týmu, doporučujeme:
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů inxmail.de a praktických zdrojů (GetApp, Capterra, Software Advice, OMR Reviews, SourceForge, TechnologyCounter). Pro nejaktuálnější detaily je nutný engagement s Inxmail sales / personal contact person teamem.*
+_Dokument zpracován z oficiálních zdrojů inxmail.de a praktických zdrojů (GetApp, Capterra, Software Advice, OMR Reviews, SourceForge, TechnologyCounter). Pro nejaktuálnější detaily je nutný engagement s Inxmail sales / personal contact person teamem._

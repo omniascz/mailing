@@ -5,7 +5,9 @@ export const scheduledReports = pgTable(
   'scheduled_reports',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
     reportType: varchar('report_type', { length: 64 }).notNull(),
     params: jsonb('params').$type<Record<string, unknown>>().notNull().default({}),

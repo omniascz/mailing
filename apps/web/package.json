@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
     "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test",
     "clean": "rm -rf .next",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
@@ -16,9 +17,10 @@
   "dependencies": {
     "@forgemsg/editor": "workspace:*",
     "@forgemsg/shared": "workspace:*",
+    "@sentry/nextjs": "^8.0.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.8.0",
-    "next": "^15.3.0",
+    "next": "^15.5.18",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -27,6 +29,7 @@
     "@storybook/addon-docs": "9.1.10",
     "@storybook/nextjs": "9.1.10",
     "@tailwindcss/postcss": "^4.1.0",
+    "@playwright/test": "^1.49.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "eslint": "^9.25.0",

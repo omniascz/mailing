@@ -109,7 +109,10 @@ export default async function customObjectRoutes(app: FastifyInstance) {
     async (req) => {
       const { objectKey } = z.object({ objectKey: z.string() }).parse(req.params);
       const { limit, cursor } = z
-        .object({ limit: z.coerce.number().int().min(1).max(200).optional(), cursor: z.string().optional() })
+        .object({
+          limit: z.coerce.number().int().min(1).max(200).optional(),
+          cursor: z.string().optional(),
+        })
         .parse(req.query);
       return svc.listRecords({ orgId: req.user!.orgId, objectKey, limit, cursor });
     },

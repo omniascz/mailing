@@ -26,9 +26,14 @@ export interface FunnelResult {
  * Events are taken from `email_events.event_type` (sends, opens, clicks…) and
  * `revenue_events.event_type` (purchase, …) — caller can mix them freely.
  */
-export async function computeFunnel(orgId: string, input: {
-  events: string[]; windowDays?: number; since?: Date;
-}): Promise<FunnelResult> {
+export async function computeFunnel(
+  orgId: string,
+  input: {
+    events: string[];
+    windowDays?: number;
+    since?: Date;
+  },
+): Promise<FunnelResult> {
   if (input.events.length < 2) throw AppError.badRequest('Need at least 2 events');
   if (input.events.length > 8) throw AppError.badRequest('Maximum 8 funnel steps');
   const windowDays = input.windowDays ?? 30;
@@ -49,7 +54,11 @@ export async function computeFunnel(orgId: string, input: {
   `);
 
   const byContact = new Map<string, Array<{ type: string; at: Date }>>();
-  for (const r of rows as unknown as Array<{ contact_id: string; event_type: string; created_at: Date }>) {
+  for (const r of rows as unknown as Array<{
+    contact_id: string;
+    event_type: string;
+    created_at: Date;
+  }>) {
     if (!byContact.has(r.contact_id)) byContact.set(r.contact_id, []);
     byContact.get(r.contact_id)!.push({ type: r.event_type, at: new Date(r.created_at) });
   }
@@ -76,9 +85,10 @@ export async function computeFunnel(orgId: string, input: {
   const total = counts[0] ?? 0;
   const steps: FunnelStep[] = input.events.map((event, i) => {
     const c = counts[i] ?? 0;
-    const prev = i === 0 ? c : counts[i - 1] ?? 0;
+    const prev = i === 0 ? c : (counts[i - 1] ?? 0);
     return {
-      event, count: c,
+      event,
+      count: c,
       conversionFromStart: total > 0 ? Math.round((c / total) * 1000) / 10 : 0,
       conversionFromPrev: prev > 0 ? Math.round((c / prev) * 1000) / 10 : 0,
     };

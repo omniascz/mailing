@@ -13,12 +13,17 @@ import { adAccounts } from '../../../db/schema/index.js';
 const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
   // Facebook Lead Ads webhook verification + delivery
   app.get('/api/v1/webhooks/ads/facebook/leads', async (req, reply) => {
-    const q = z.object({
-      'hub.mode': z.string(),
-      'hub.challenge': z.string(),
-      'hub.verify_token': z.string(),
-    }).parse(req.query);
-    if (q['hub.mode'] === 'subscribe' && q['hub.verify_token'] === (process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? '')) {
+    const q = z
+      .object({
+        'hub.mode': z.string(),
+        'hub.challenge': z.string(),
+        'hub.verify_token': z.string(),
+      })
+      .parse(req.query);
+    if (
+      q['hub.mode'] === 'subscribe' &&
+      q['hub.verify_token'] === (process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? '')
+    ) {
       return reply.send(q['hub.challenge']);
     }
     return reply.code(403).send('Verification failed');
@@ -26,7 +31,9 @@ const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
 
   app.post('/api/v1/webhooks/ads/facebook/leads', async (req, reply) => {
     const body = req.body as Record<string, unknown>;
-    const entries = (body.entry as Array<{ id: string; changes: Array<{ value: Record<string, unknown> }> }>) ?? [];
+    const entries =
+      (body.entry as Array<{ id: string; changes: Array<{ value: Record<string, unknown> }> }>) ??
+      [];
 
     for (const entry of entries) {
       for (const change of entry.changes ?? []) {
@@ -37,7 +44,12 @@ const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
           const [account] = await db
             .select()
             .from(adAccounts)
-            .where(and(eq(adAccounts.platform, 'facebook_ads'), eq(adAccounts.platformAccountId, pageId)))
+            .where(
+              and(
+                eq(adAccounts.platform, 'facebook_ads'),
+                eq(adAccounts.platformAccountId, pageId),
+              ),
+            )
             .limit(1);
 
           if (!account) continue;

@@ -47,9 +47,11 @@ describe('planTeamScope', () => {
   });
 
   it('respects includeUnowned=false on in-set', () => {
-    expect(
-      planTeamScope({ bypass: false, teamIds: ['t1'] }, { includeUnowned: false }),
-    ).toEqual({ kind: 'in-set', teamIds: ['t1'], includeUnowned: false });
+    expect(planTeamScope({ bypass: false, teamIds: ['t1'] }, { includeUnowned: false })).toEqual({
+      kind: 'in-set',
+      teamIds: ['t1'],
+      includeUnowned: false,
+    });
   });
 });
 
@@ -82,9 +84,10 @@ describe('membershipCacheKey', () => {
 
 describe('normaliseTeamIds', () => {
   it('de-dupes and sorts', () => {
-    expect(
-      normaliseTeamIds([{ teamId: 't2' }, { teamId: 't1' }, { teamId: 't2' }]),
-    ).toEqual(['t1', 't2']);
+    expect(normaliseTeamIds([{ teamId: 't2' }, { teamId: 't1' }, { teamId: 't2' }])).toEqual([
+      't1',
+      't2',
+    ]);
   });
 
   it('handles empty input', () => {
@@ -98,7 +101,9 @@ describe('anyCrossTeamAccess', () => {
   });
 
   it('all-false stays false', () => {
-    expect(anyCrossTeamAccess([{ crossTeamAccess: false }, { crossTeamAccess: false }])).toBe(false);
+    expect(anyCrossTeamAccess([{ crossTeamAccess: false }, { crossTeamAccess: false }])).toBe(
+      false,
+    );
   });
 
   it('empty stays false', () => {

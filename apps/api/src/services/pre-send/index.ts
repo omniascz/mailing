@@ -28,26 +28,52 @@ Reply with a JSON array of objects {severity, category, message}.
 severity ∈ {info, warn, error}. category ∈ {subject, content, deliverability, timing, accessibility}.
 Keep each message under 160 characters. Do not include tips that are obviously satisfied.`;
 
-export async function generatePreSendTips(orgId: string, input: PreSendInput): Promise<PreSendTip[]> {
+export async function generatePreSendTips(
+  orgId: string,
+  input: PreSendInput,
+): Promise<PreSendTip[]> {
   const tips: PreSendTip[] = [];
 
   // Deterministic checks first.
   if (input.subject.length < 10) {
-    tips.push({ severity: 'warn', category: 'subject', message: 'Subject is under 10 characters; consider making it more descriptive.' });
+    tips.push({
+      severity: 'warn',
+      category: 'subject',
+      message: 'Subject is under 10 characters; consider making it more descriptive.',
+    });
   }
   if (input.subject.length > 80) {
-    tips.push({ severity: 'warn', category: 'subject', message: 'Subject over 80 chars may be truncated in inbox previews.' });
+    tips.push({
+      severity: 'warn',
+      category: 'subject',
+      message: 'Subject over 80 chars may be truncated in inbox previews.',
+    });
   }
   if (!input.preheader) {
-    tips.push({ severity: 'info', category: 'content', message: 'No preheader set — add one to boost open rate by ~7%.' });
+    tips.push({
+      severity: 'info',
+      category: 'content',
+      message: 'No preheader set — add one to boost open rate by ~7%.',
+    });
   }
   const spam = checkSpam(input.subject, input.htmlOrText);
   if (spam.score >= 5) {
-    const reasons = spam.issues.slice(0, 2).map((i) => i.message).join('; ');
-    tips.push({ severity: 'warn', category: 'deliverability', message: `Spam score ${spam.score}/10 — ${reasons}` });
+    const reasons = spam.issues
+      .slice(0, 2)
+      .map((i) => i.message)
+      .join('; ');
+    tips.push({
+      severity: 'warn',
+      category: 'deliverability',
+      message: `Spam score ${spam.score}/10 — ${reasons}`,
+    });
   }
   if (input.recipientCount > 50_000) {
-    tips.push({ severity: 'info', category: 'timing', message: 'Large audience: enable batch delivery to smooth ISP throughput.' });
+    tips.push({
+      severity: 'info',
+      category: 'timing',
+      message: 'Large audience: enable batch delivery to smooth ISP throughput.',
+    });
   }
 
   try {

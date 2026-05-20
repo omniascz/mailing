@@ -22,32 +22,43 @@ import {
 } from '../../services/assets/shared.js';
 
 const sharedAssetsRoutes: FastifyPluginAsync = async (app) => {
+  app.get(
+    '/api/v1/shared-assets/saved-blocks',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Shared Assets'] },
+    },
+    async (req, reply) => {
+      const { category } = z.object({ category: z.string().optional() }).parse(req.query);
+      const blocks = await listSavedBlocksWithShared(req.user!.orgId, category);
+      return reply.send({ data: blocks });
+    },
+  );
 
-  app.get('/api/v1/shared-assets/saved-blocks', {
-    preHandler: [app.authenticate],
-    schema: { tags: ['Shared Assets'] },
-  }, async (req, reply) => {
-    const { category } = z.object({ category: z.string().optional() }).parse(req.query);
-    const blocks = await listSavedBlocksWithShared(req.user!.orgId, category);
-    return reply.send({ data: blocks });
-  });
+  app.get(
+    '/api/v1/shared-assets/templates',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Shared Assets'] },
+    },
+    async (req, reply) => {
+      const { category } = z.object({ category: z.string().optional() }).parse(req.query);
+      const rows = await listTemplatesWithShared(req.user!.orgId, category);
+      return reply.send({ data: rows });
+    },
+  );
 
-  app.get('/api/v1/shared-assets/templates', {
-    preHandler: [app.authenticate],
-    schema: { tags: ['Shared Assets'] },
-  }, async (req, reply) => {
-    const { category } = z.object({ category: z.string().optional() }).parse(req.query);
-    const rows = await listTemplatesWithShared(req.user!.orgId, category);
-    return reply.send({ data: rows });
-  });
-
-  app.get('/api/v1/shared-assets/brand-kit', {
-    preHandler: [app.authenticate],
-    schema: { tags: ['Shared Assets'] },
-  }, async (req, reply) => {
-    const kit = await getEffectiveBrandKit(req.user!.orgId);
-    return reply.send({ data: kit });
-  });
+  app.get(
+    '/api/v1/shared-assets/brand-kit',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Shared Assets'] },
+    },
+    async (req, reply) => {
+      const kit = await getEffectiveBrandKit(req.user!.orgId);
+      return reply.send({ data: kit });
+    },
+  );
 };
 
 export default sharedAssetsRoutes;

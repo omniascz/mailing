@@ -5,10 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BulkgateSmsAdapter } from './bulkgate-adapter.js';
 import { TwilioSmsAdapter } from './twilio-adapter.js';
-import {
-  checkTcpaQuietHours,
-  appendOptOutText,
-} from '../../services/sms/compliance.js';
+import { checkTcpaQuietHours, appendOptOutText } from '../../services/sms/compliance.js';
 import { phoneToCountry } from '../../services/sms/routing.js';
 import type { UnifiedMessage, Recipient } from '@forgemsg/shared';
 
@@ -57,7 +54,9 @@ describe('BulkgateSmsAdapter', () => {
   });
 
   it('throws on API error with error_code mapping', async () => {
-    const errorBody = JSON.stringify({ data: { status: 'error', error_code: 14, error: 'Number is blacklisted' } });
+    const errorBody = JSON.stringify({
+      data: { status: 'error', error_code: 14, error: 'Number is blacklisted' },
+    });
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       text: async () => errorBody,
@@ -133,7 +132,12 @@ describe('BulkgateSmsAdapter', () => {
   });
 
   it('handleInbound parses DLR payload', async () => {
-    const dlr = { sms_id: 'bg-001', number: '12025550100', status: 'delivered', time: '2026-04-12T10:00:00Z' };
+    const dlr = {
+      sms_id: 'bg-001',
+      number: '12025550100',
+      status: 'delivered',
+      time: '2026-04-12T10:00:00Z',
+    };
     const inbound = await adapter.handleInbound(dlr);
 
     expect(inbound.channel).toBe('sms');
@@ -253,7 +257,9 @@ describe('TwilioSmsAdapter', () => {
     const twilio = new TwilioSmsAdapter({ accountSid: 'AC', authToken: 'at', fromNumber: '+1' });
     const bulkgate = new BulkgateSmsAdapter({ applicationId: 'a', applicationToken: 'b' });
 
-    expect(twilio.getChannelLimits().maxPerSecond).toBeGreaterThan(bulkgate.getChannelLimits().maxPerSecond);
+    expect(twilio.getChannelLimits().maxPerSecond).toBeGreaterThan(
+      bulkgate.getChannelLimits().maxPerSecond,
+    );
   });
 });
 
@@ -268,7 +274,7 @@ describe('phoneToCountry', () => {
     ['+48123456789', 'PL'],
     ['+61412345678', 'AU'],
     ['+81312345678', 'JP'],
-    ['+9991234567', 'XX'],  // unknown prefix (999 not assigned)
+    ['+9991234567', 'XX'], // unknown prefix (999 not assigned)
   ])('maps %s → %s', (phone, expected) => {
     expect(phoneToCountry(phone)).toBe(expected);
   });

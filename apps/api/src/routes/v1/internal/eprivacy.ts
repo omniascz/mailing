@@ -24,43 +24,46 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { organizations } from '../../../db/schema/index.js';
-import {
-  listOptedInContacts,
-  KNOWN_CHANNELS,
-} from '../../../services/consent/index.js';
+import { listOptedInContacts, KNOWN_CHANNELS } from '../../../services/consent/index.js';
 
 const internalEPrivacyRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/api/v1/internal/org/tracking-strict', {
-    schema: { tags: ['Internal'] },
-  }, async (req, reply) => {
-    const { orgId } = z.object({ orgId: z.string().uuid() }).parse(req.query);
+  app.get(
+    '/api/v1/internal/org/tracking-strict',
+    {
+      schema: { tags: ['Internal'] },
+    },
+    async (req, reply) => {
+      const { orgId } = z.object({ orgId: z.string().uuid() }).parse(req.query);
 
-    const [row] = await db
-      .select({ strict: organizations.trackingEuStrict })
-      .from(organizations)
-      .where(eq(organizations.id, orgId))
-      .limit(1);
+      const [row] = await db
+        .select({ strict: organizations.trackingEuStrict })
+        .from(organizations)
+        .where(eq(organizations.id, orgId))
+        .limit(1);
 
-    return reply.send({ data: { strict: row?.strict ?? false } });
-  });
+      return reply.send({ data: { strict: row?.strict ?? false } });
+    },
+  );
 
-  app.post('/api/v1/internal/consent/opted-in-batch', {
-    schema: { tags: ['Internal'] },
-  }, async (req, reply) => {
-    const body = z.object({
-      orgId: z.string().uuid(),
-      channel: z.enum(KNOWN_CHANNELS),
-      contactIds: z.array(z.string().uuid()).max(1000),
-    }).parse(req.body);
+  app.post(
+    '/api/v1/internal/consent/opted-in-batch',
+    {
+      schema: { tags: ['Internal'] },
+    },
+    async (req, reply) => {
+      const body = z
+        .object({
+          orgId: z.string().uuid(),
+          channel: z.enum(KNOWN_CHANNELS),
+          contactIds: z.array(z.string().uuid()).max(1000),
+        })
+        .parse(req.body);
 
-    const optedInSet = await listOptedInContacts(
-      body.orgId,
-      body.channel,
-      body.contactIds,
-    );
+      const optedInSet = await listOptedInContacts(body.orgId, body.channel, body.contactIds);
 
-    return reply.send({ data: { optedIn: Array.from(optedInSet) } });
-  });
+      return reply.send({ data: { optedIn: Array.from(optedInSet) } });
+    },
+  );
 };
 
 export default internalEPrivacyRoutes;

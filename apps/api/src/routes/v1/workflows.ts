@@ -24,6 +24,7 @@ import {
   activateWorkflow,
   deactivateWorkflow,
   listWorkflowRuns,
+  getWorkflowRun,
   cancelWorkflowRun,
 } from '../../services/workflows/index.js';
 import { triggerManual } from '../../services/workflows/triggers.js';
@@ -55,8 +56,14 @@ const createSchema = z.object({
   description: z.string().max(1024).optional(),
   triggerType: z.enum(triggerTypeValues).optional().default('manual'),
   triggerConfig: z.record(z.unknown()).optional().default({}),
-  nodes: z.array(z.object({ id: z.string(), type: z.string() }).passthrough()).optional().default([]),
-  edges: z.array(z.object({ id: z.string(), source: z.string(), target: z.string() }).passthrough()).optional().default([]),
+  nodes: z
+    .array(z.object({ id: z.string(), type: z.string() }).passthrough())
+    .optional()
+    .default([]),
+  edges: z
+    .array(z.object({ id: z.string(), source: z.string(), target: z.string() }).passthrough())
+    .optional()
+    .default([]),
 });
 
 const updateSchema = z.object({
@@ -66,13 +73,18 @@ const updateSchema = z.object({
   triggerType: z.enum(triggerTypeValues).optional(),
   triggerConfig: z.record(z.unknown()).optional(),
   nodes: z.array(z.object({ id: z.string(), type: z.string() }).passthrough()).optional(),
-  edges: z.array(z.object({ id: z.string(), source: z.string(), target: z.string() }).passthrough()).optional(),
+  edges: z
+    .array(z.object({ id: z.string(), source: z.string(), target: z.string() }).passthrough())
+    .optional(),
 });
 
 const listQuerySchema = z.object({
   status: z.enum(workflowStatusValues).optional(),
   cursor: z.string().uuid().optional(),
-  limit: z.string().transform((v) => parseInt(v, 10)).optional(),
+  limit: z
+    .string()
+    .transform((v) => parseInt(v, 10))
+    .optional(),
 });
 
 export default async function workflowRoutes(app: FastifyInstance) {
@@ -101,7 +113,13 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/workflows/:id',
-    { schema: { tags: ['Workflows'], summary: 'Get workflow', params: { type: 'object', properties: { id: { type: 'string' } } } } },
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'Get workflow',
+        params: { type: 'object', properties: { id: { type: 'string' } } },
+      },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
       const orgId = req.user!.orgId;
@@ -111,7 +129,13 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.put(
     '/api/v1/workflows/:id',
-    { schema: { tags: ['Workflows'], summary: 'Update workflow', params: { type: 'object', properties: { id: { type: 'string' } } } } },
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'Update workflow',
+        params: { type: 'object', properties: { id: { type: 'string' } } },
+      },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
       const body = updateSchema.parse(req.body);
@@ -122,7 +146,13 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.delete(
     '/api/v1/workflows/:id',
-    { schema: { tags: ['Workflows'], summary: 'Delete workflow', params: { type: 'object', properties: { id: { type: 'string' } } } } },
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'Delete workflow',
+        params: { type: 'object', properties: { id: { type: 'string' } } },
+      },
+    },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
       const orgId = req.user!.orgId;
@@ -133,7 +163,13 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/workflows/:id/activate',
-    { schema: { tags: ['Workflows'], summary: 'Activate workflow', params: { type: 'object', properties: { id: { type: 'string' } } } } },
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'Activate workflow',
+        params: { type: 'object', properties: { id: { type: 'string' } } },
+      },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
       const orgId = req.user!.orgId;
@@ -143,7 +179,13 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/workflows/:id/deactivate',
-    { schema: { tags: ['Workflows'], summary: 'Deactivate workflow', params: { type: 'object', properties: { id: { type: 'string' } } } } },
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'Deactivate workflow',
+        params: { type: 'object', properties: { id: { type: 'string' } } },
+      },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
       const orgId = req.user!.orgId;
@@ -153,7 +195,13 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/workflows/:id/trigger',
-    { schema: { tags: ['Workflows'], summary: 'Manually trigger workflow for a contact', params: { type: 'object', properties: { id: { type: 'string' } } } } },
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'Manually trigger workflow for a contact',
+        params: { type: 'object', properties: { id: { type: 'string' } } },
+      },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.body);
@@ -165,15 +213,33 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/workflows/:id/runs',
-    { schema: { tags: ['Workflows'], summary: 'List workflow runs', params: { type: 'object', properties: { id: { type: 'string' } } } } },
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'List workflow runs',
+        params: { type: 'object', properties: { id: { type: 'string' } } },
+      },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
-      const query = z.object({ cursor: z.string().optional(), limit: z.string().optional() }).parse(req.query);
+      const query = z
+        .object({ cursor: z.string().optional(), limit: z.string().optional() })
+        .parse(req.query);
       const orgId = req.user!.orgId;
       return listWorkflowRuns(id, orgId, {
         cursor: query.cursor,
         limit: query.limit ? parseInt(query.limit, 10) : undefined,
       });
+    },
+  );
+
+  app.get(
+    '/api/v1/workflows/:id/runs/:runId',
+    { schema: { tags: ['Workflows'], summary: 'Get a single workflow run' } },
+    async (req) => {
+      const { runId } = runParam.parse(req.params);
+      const orgId = req.user!.orgId;
+      return { data: await getWorkflowRun(runId, orgId) };
     },
   );
 
@@ -191,7 +257,12 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/workflows/map',
-    { schema: { tags: ['Workflows'], summary: 'Automation map — graph of all workflow connections' } },
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'Automation map — graph of all workflow connections',
+      },
+    },
     async (req) => {
       return { data: await buildWorkflowMap(req.user!.orgId) };
     },
@@ -204,7 +275,7 @@ export default async function workflowRoutes(app: FastifyInstance) {
     { schema: { tags: ['Workflows'], summary: 'List pre-built workflow templates' } },
     async (_req, reply) => {
       return reply.send({
-        data: FLOW_TEMPLATES.map(({ nodes, edges, ...meta }) => meta),
+        data: FLOW_TEMPLATES.map(({ nodes: _nodes, edges: _edges, ...meta }) => meta),
       });
     },
   );
@@ -215,7 +286,8 @@ export default async function workflowRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const { templateId } = req.params as { templateId: string };
       const template = getFlowTemplate(templateId);
-      if (!template) return reply.status(404).send({ code: 'NOT_FOUND', message: 'Template not found' });
+      if (!template)
+        return reply.status(404).send({ code: 'NOT_FOUND', message: 'Template not found' });
       return reply.send({ data: template });
     },
   );
@@ -226,7 +298,8 @@ export default async function workflowRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const { templateId } = req.params as { templateId: string };
       const template = getFlowTemplate(templateId);
-      if (!template) return reply.status(404).send({ code: 'NOT_FOUND', message: 'Template not found' });
+      if (!template)
+        return reply.status(404).send({ code: 'NOT_FOUND', message: 'Template not found' });
 
       const body = z.object({ name: z.string().min(1).max(255).optional() }).parse(req.body ?? {});
       const orgId = req.user!.orgId;

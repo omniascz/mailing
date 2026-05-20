@@ -70,10 +70,7 @@ export function parseArfReport(rawEmail: string): ArfReport {
     null;
 
   // Original-Message-ID
-  const originalMessageId =
-    headerMap['original-message-id'] ||
-    headerMap['message-id'] ||
-    null;
+  const originalMessageId = headerMap['original-message-id'] || headerMap['message-id'] || null;
 
   // Reporting-MTA
   const reportingMta = headerMap['reporting-mta']
@@ -87,10 +84,7 @@ export function parseArfReport(rawEmail: string): ArfReport {
     : 'other';
 
   // Source ISP from From / Received headers
-  const source =
-    headerMap['from']
-      ? headerMap['from'].match(/@([\w.-]+)/)?.[1] ?? null
-      : null;
+  const source = headerMap['from'] ? (headerMap['from'].match(/@([\w.-]+)/)?.[1] ?? null) : null;
 
   return {
     originalRecipient,
@@ -199,16 +193,13 @@ async function addToSuppression(
   email: string,
   reason: 'complaint' | 'hard_bounce',
 ): Promise<void> {
-  await db
-    .insert(suppressions)
-    .values({ orgId, email, reason })
-    .onConflictDoNothing();
+  await db.insert(suppressions).values({ orgId, email, reason }).onConflictDoNothing();
 }
 
 // ─── Complaint rate alerting ──────────────────────────────────────────────────
 
 const COMPLAINT_RATE_THRESHOLD = 0.001; // 0.1%
-const ALERT_COOLDOWN_SECONDS = 3600;    // 1 h between alerts
+const ALERT_COOLDOWN_SECONDS = 3600; // 1 h between alerts
 
 /**
  * Check if the org's complaint rate exceeds 0.1% (industry danger threshold).
@@ -242,7 +233,9 @@ async function checkComplaintRateAlert(orgId: string): Promise<boolean> {
 
     // In production: publish to an alerts Kafka topic or send admin notification
     // For now: log (the caller/route layer is responsible for forwarding)
-    console.warn(`[FBL ALERT] org=${orgId} complaint_rate=${(rate * 100).toFixed(3)}% (${complaintsRaw}/${sent})`);
+    console.warn(
+      `[FBL ALERT] org=${orgId} complaint_rate=${(rate * 100).toFixed(3)}% (${complaintsRaw}/${sent})`,
+    );
     return true;
   }
 

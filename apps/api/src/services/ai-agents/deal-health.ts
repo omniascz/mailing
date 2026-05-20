@@ -83,17 +83,29 @@ export async function analyzeLossPatterns(
 
   const since = new Date(Date.now() - windowDays * DAY_MS);
 
-  const lost = await db.select().from(deals).where(and(
-    eq(deals.orgId, orgId),
-    eq(deals.status, 'lost'),
-    sql`${deals.actualCloseDate} >= ${since}`,
-  )).limit(500);
+  const lost = await db
+    .select()
+    .from(deals)
+    .where(
+      and(
+        eq(deals.orgId, orgId),
+        eq(deals.status, 'lost'),
+        sql`${deals.actualCloseDate} >= ${since}`,
+      ),
+    )
+    .limit(500);
 
-  const won = await db.select().from(deals).where(and(
-    eq(deals.orgId, orgId),
-    eq(deals.status, 'won'),
-    sql`${deals.actualCloseDate} >= ${since}`,
-  )).limit(500);
+  const won = await db
+    .select()
+    .from(deals)
+    .where(
+      and(
+        eq(deals.orgId, orgId),
+        eq(deals.status, 'won'),
+        sql`${deals.actualCloseDate} >= ${since}`,
+      ),
+    )
+    .limit(500);
 
   if (lost.length === 0) {
     return {
@@ -118,9 +130,12 @@ export async function analyzeLossPatterns(
     reasonCounts.set(r, (reasonCounts.get(r) ?? 0) + 1);
   }
   const topLossReasons = [...reasonCounts.entries()]
-    .sort((a, b) => b[1] - a[1]).slice(0, 10)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
     .map(([reason, count]) => ({
-      reason, count, share: Math.round((count / lost.length) * 1000) / 1000,
+      reason,
+      count,
+      share: Math.round((count / lost.length) * 1000) / 1000,
     }));
 
   const avgLostVal = avgValue(lost);
@@ -177,7 +192,7 @@ Return strict JSON:
     medianLostCycleDays: medLostCycle,
     medianWonCycleDays: medWonCycle,
     summary: parsed.summary ?? '',
-    tokensUsed: (result.inputTokens + result.outputTokens),
+    tokensUsed: result.inputTokens + result.outputTokens,
   };
 
   await redis.set(key, JSON.stringify(output), 'EX', CACHE_TTL);
@@ -191,11 +206,11 @@ export async function scoreOpenDeals(
   opts?: { limit?: number; notifyOnRisk?: boolean },
 ): Promise<DealHealthScore[]> {
   const limit = opts?.limit ?? 500;
-  const open = await db.select().from(deals).where(and(
-    eq(deals.orgId, orgId),
-    eq(deals.status, 'open'),
-    sql`${deals.deletedAt} IS NULL`,
-  )).limit(limit);
+  const open = await db
+    .select()
+    .from(deals)
+    .where(and(eq(deals.orgId, orgId), eq(deals.status, 'open'), sql`${deals.deletedAt} IS NULL`))
+    .limit(limit);
   if (open.length === 0) return [];
 
   // Pull last-activity for the batch in one query.
@@ -206,13 +221,17 @@ export async function scoreOpenDeals(
     GROUP BY deal_id
   `);
   const activity = new Map<string, Date>();
-  for (const r of (activityRows as unknown as Array<{ deal_id: string; last_activity_at: Date }>)) {
+  for (const r of activityRows as unknown as Array<{ deal_id: string; last_activity_at: Date }>) {
     if (r.last_activity_at) activity.set(r.deal_id, new Date(r.last_activity_at));
   }
 
   // Loss analysis once, share across all deals.
   let analysis: LossAnalysis | null = null;
-  try { analysis = await analyzeLossPatterns(orgId); } catch { /* ignore */ }
+  try {
+    analysis = await analyzeLossPatterns(orgId);
+  } catch {
+    /* ignore */
+  }
 
   const now = Date.now();
   const scores: DealHealthScore[] = [];
@@ -223,7 +242,9 @@ export async function scoreOpenDeals(
     const lastActivityDays = la ? Math.floor((now - la.getTime()) / DAY_MS) : null;
 
     const { score, risk, reasons } = computeRuleScore(d, {
-      stageAgeDays, lastActivityDays, medianWonCycle: analysis?.medianWonCycleDays ?? 30,
+      stageAgeDays,
+      lastActivityDays,
+      medianWonCycle: analysis?.medianWonCycleDays ?? 30,
     });
     scores.push({
       dealId: d.id,
@@ -243,9 +264,15 @@ export async function scoreOpenDeals(
       try {
         const { onApiEvent } = await import('../workflows/triggers.js');
         await onApiEvent(orgId, d.contactId, 'deal_at_risk', {
-          dealId: d.id, dealName: d.name, risk, score, reasons,
+          dealId: d.id,
+          dealName: d.name,
+          risk,
+          score,
+          reasons,
         });
-      } catch { /* non-fatal */ }
+      } catch {
+        /* non-fatal */
+      }
     }
   }
 
@@ -262,9 +289,14 @@ function avgValue(ds: Deal[]): number {
 function medianCycle(ds: Deal[]): number {
   const cycles = ds
     .filter((d) => d.actualCloseDate)
-    .map((d) => Math.max(0, Math.floor(
-      (new Date(d.actualCloseDate!).getTime() - new Date(d.createdAt).getTime()) / DAY_MS,
-    )))
+    .map((d) =>
+      Math.max(
+        0,
+        Math.floor(
+          (new Date(d.actualCloseDate!).getTime() - new Date(d.createdAt).getTime()) / DAY_MS,
+        ),
+      ),
+    )
     .sort((a, b) => a - b);
   if (cycles.length === 0) return 0;
   const mid = Math.floor(cycles.length / 2);
@@ -278,25 +310,37 @@ function computeRuleScore(
   let score = 100;
   const reasons: string[] = [];
 
-  if (ctx.stageAgeDays > 30) { score -= 30; reasons.push(`stuck in current stage ${ctx.stageAgeDays}d`); }
-  else if (ctx.stageAgeDays > 14) { score -= 15; reasons.push(`slow stage progression (${ctx.stageAgeDays}d)`); }
+  if (ctx.stageAgeDays > 30) {
+    score -= 30;
+    reasons.push(`stuck in current stage ${ctx.stageAgeDays}d`);
+  } else if (ctx.stageAgeDays > 14) {
+    score -= 15;
+    reasons.push(`slow stage progression (${ctx.stageAgeDays}d)`);
+  }
 
   if (ctx.lastActivityDays == null) {
-    score -= 15; reasons.push('no logged activity');
+    score -= 15;
+    reasons.push('no logged activity');
   } else if (ctx.lastActivityDays > 21) {
-    score -= 25; reasons.push(`no activity for ${ctx.lastActivityDays}d`);
+    score -= 25;
+    reasons.push(`no activity for ${ctx.lastActivityDays}d`);
   } else if (ctx.lastActivityDays > 10) {
-    score -= 10; reasons.push(`activity older than 10 days`);
+    score -= 10;
+    reasons.push(`activity older than 10 days`);
   }
 
   if (d.expectedCloseDate) {
-    const daysToClose = Math.floor(
-      (new Date(d.expectedCloseDate).getTime() - Date.now()) / DAY_MS,
-    );
-    if (daysToClose < 0) { score -= 20; reasons.push(`past expected close by ${Math.abs(daysToClose)}d`); }
-    else if (daysToClose < 7) { score -= 5; reasons.push('close date within 7 days'); }
+    const daysToClose = Math.floor((new Date(d.expectedCloseDate).getTime() - Date.now()) / DAY_MS);
+    if (daysToClose < 0) {
+      score -= 20;
+      reasons.push(`past expected close by ${Math.abs(daysToClose)}d`);
+    } else if (daysToClose < 7) {
+      score -= 5;
+      reasons.push('close date within 7 days');
+    }
   } else {
-    score -= 5; reasons.push('no expected close date');
+    score -= 5;
+    reasons.push('no expected close date');
   }
 
   if (ctx.medianWonCycle > 0) {
@@ -309,16 +353,16 @@ function computeRuleScore(
 
   score = Math.max(0, Math.min(100, score));
   const risk: DealRisk =
-    score >= 75 ? 'healthy' :
-    score >= 55 ? 'watch' :
-    score >= 35 ? 'at_risk' : 'critical';
+    score >= 75 ? 'healthy' : score >= 55 ? 'watch' : score >= 35 ? 'at_risk' : 'critical';
   return { score, risk, reasons };
 }
 
 function recommendationFor(risk: DealRisk, reasons: string[]): string {
   if (risk === 'healthy') return 'Keep cadence; advance to next stage when criteria met.';
   if (risk === 'watch') return 'Schedule a check-in this week; confirm next step with champion.';
-  const noActivity = reasons.some((r) => r.includes('no activity') || r.includes('no logged activity'));
+  const noActivity = reasons.some(
+    (r) => r.includes('no activity') || r.includes('no logged activity'),
+  );
   if (risk === 'at_risk') {
     return noActivity
       ? 'Send a re-engagement message today and log a discovery call within 48h.'
@@ -333,16 +377,19 @@ export async function getStageVelocity(
   orgId: string,
   pipelineId: string,
 ): Promise<Array<{ stageId: string; medianDurationDays: number; samples: number }>> {
-  const rows = await db.select({
-    stage: dealStageHistory.fromStageId,
-    duration: dealStageHistory.durationSeconds,
-  })
+  const rows = await db
+    .select({
+      stage: dealStageHistory.fromStageId,
+      duration: dealStageHistory.durationSeconds,
+    })
     .from(dealStageHistory)
-    .where(and(
-      eq(dealStageHistory.orgId, orgId),
-      isNotNull(dealStageHistory.fromStageId),
-      isNotNull(dealStageHistory.durationSeconds),
-    ))
+    .where(
+      and(
+        eq(dealStageHistory.orgId, orgId),
+        isNotNull(dealStageHistory.fromStageId),
+        isNotNull(dealStageHistory.durationSeconds),
+      ),
+    )
     .orderBy(desc(dealStageHistory.changedAt))
     .limit(2000);
 
@@ -354,16 +401,18 @@ export async function getStageVelocity(
     groups.set(r.stage, arr);
   }
 
-  return [...groups.entries()].map(([stageId, seconds]) => {
-    const sorted = seconds.sort((a, b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
-    const medianSec = sorted.length % 2 === 0
-      ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
-      : sorted[mid]!;
-    return {
-      stageId,
-      medianDurationDays: Math.round(medianSec / 86_400),
-      samples: sorted.length,
-    };
-  }).sort((a, b) => b.samples - a.samples).concat(pipelineId ? [] : []);
+  return [...groups.entries()]
+    .map(([stageId, seconds]) => {
+      const sorted = seconds.sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      const medianSec =
+        sorted.length % 2 === 0 ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2) : sorted[mid]!;
+      return {
+        stageId,
+        medianDurationDays: Math.round(medianSec / 86_400),
+        samples: sorted.length,
+      };
+    })
+    .sort((a, b) => b.samples - a.samples)
+    .concat(pipelineId ? [] : []);
 }

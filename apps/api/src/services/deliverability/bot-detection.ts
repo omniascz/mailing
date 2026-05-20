@@ -144,7 +144,9 @@ export async function scoreAndPersist(eventId: string, evt: EventForScoring): Pr
  * processed. Designed to run as a periodic job after a deploy that introduces
  * new heuristics.
  */
-export async function backfillScores(opts: { orgId?: string; limit?: number } = {}): Promise<number> {
+export async function backfillScores(
+  opts: { orgId?: string; limit?: number } = {},
+): Promise<number> {
   const limit = Math.min(opts.limit ?? 1000, 10_000);
   const rows = (await db.execute(sql`
     SELECT id, event_type, user_agent, ip_address, campaign_id, contact_id, message_id, created_at
@@ -155,8 +157,14 @@ export async function backfillScores(opts: { orgId?: string; limit?: number } = 
     ORDER BY created_at DESC
     LIMIT ${limit}
   `)) as unknown as Array<{
-    id: string; event_type: string; user_agent: string | null; ip_address: string | null;
-    campaign_id: string | null; contact_id: string | null; message_id: string | null; created_at: Date;
+    id: string;
+    event_type: string;
+    user_agent: string | null;
+    ip_address: string | null;
+    campaign_id: string | null;
+    contact_id: string | null;
+    message_id: string | null;
+    created_at: Date;
   }>;
 
   for (const r of rows) {

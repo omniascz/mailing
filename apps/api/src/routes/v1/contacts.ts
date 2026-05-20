@@ -10,7 +10,11 @@ import {
   type ListContactsOpts,
 } from '../../services/contacts/index.js';
 import { validateEmail } from '../../services/email-validation/index.js';
-import { getContactActivity, formatActivityCsv, generateFilename } from '../../services/contacts/activity-export.js';
+import {
+  getContactActivity,
+  formatActivityCsv,
+  generateFilename,
+} from '../../services/contacts/activity-export.js';
 import { anonymizeContact, exportContactData } from '../../services/contacts/gdpr.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
@@ -222,6 +226,25 @@ export default async function contactRoutes(app: FastifyInstance) {
   );
 
   /**
+   * GET /api/v1/contacts/:id/activity
+   * JSON timeline used by the contact detail page. Same source as
+   * /activity-export, just unwrapped. Limited to 100 rows by default
+   * since the UI paginates client-side via "load more".
+   */
+  app.get(
+    '/api/v1/contacts/:id/activity',
+    { schema: { tags: ['Contacts'], summary: 'Get contact activity timeline (JSON)' } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const q = z
+        .object({ limit: z.coerce.number().int().min(1).max(500).optional() })
+        .parse(req.query);
+      const activities = await getContactActivity(req.user!.orgId, id, q.limit ?? 100);
+      return { data: activities };
+    },
+  );
+
+  /**
    * GET /api/v1/contacts/:id/activity-export
    * Export contact activity (emails, orders, events, tickets) as CSV.
    */
@@ -230,7 +253,9 @@ export default async function contactRoutes(app: FastifyInstance) {
     { schema: { tags: ['Contacts'], summary: 'Download contact activity as CSV' } },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
-      const q = z.object({ limit: z.coerce.number().int().min(1).max(50_000).optional() }).parse(req.query);
+      const q = z
+        .object({ limit: z.coerce.number().int().min(1).max(50_000).optional() })
+        .parse(req.query);
       const contact = await getContact(req.user!.orgId, id);
       const activities = await getContactActivity(req.user!.orgId, id, q.limit);
       const csv = formatActivityCsv(contact, activities);

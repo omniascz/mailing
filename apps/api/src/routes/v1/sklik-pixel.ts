@@ -92,7 +92,10 @@ export default async function sklikPixelRoutes(app: FastifyInstance) {
       if (event) {
         // Fire-and-forget so the pixel response stays fast.
         void recordPixelEvent({ id: site.id, orgId: site.orgId }, event).catch((err) => {
-          request.log.warn({ err, siteToken: request.params.siteToken }, 'sklik pixel record failed');
+          request.log.warn(
+            { err, siteToken: request.params.siteToken },
+            'sklik pixel record failed',
+          );
         });
       }
       return reply.send(TRANSPARENT_GIF);

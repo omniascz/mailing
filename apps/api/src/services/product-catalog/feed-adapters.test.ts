@@ -113,7 +113,10 @@ describe('parseGoogleShoppingFeed', () => {
 
 describe('parseProductFeed (dispatch)', () => {
   it('routes to the correct adapter', () => {
-    const heu = parseProductFeed('heureka', '<SHOP><SHOPITEM><ITEM_ID>1</ITEM_ID></SHOPITEM></SHOP>');
+    const heu = parseProductFeed(
+      'heureka',
+      '<SHOP><SHOPITEM><ITEM_ID>1</ITEM_ID></SHOPITEM></SHOP>',
+    );
     const zbo = parseProductFeed('zbozi', '<SHOP><ITEM><ITEM_ID>z1</ITEM_ID></ITEM></SHOP>');
     expect(heu).toHaveLength(1);
     expect(zbo).toHaveLength(1);

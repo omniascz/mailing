@@ -1,11 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  createAiClient,
-  calculateCost,
-  cacheKey,
-  resolveModel,
-  parseJsonSafe,
-} from './client.js';
+import { createAiClient, calculateCost, cacheKey, resolveModel, parseJsonSafe } from './client.js';
 import type { AiCacheAdapter, AiProviderConfig } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -156,15 +150,16 @@ describe('createAiClient', () => {
   function mockFetchSuccess(text = 'Hello', inputTokens = 100, outputTokens = 50) {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        id: 'msg_001',
-        type: 'message',
-        role: 'assistant',
-        content: [{ type: 'text', text }],
-        model: 'claude-sonnet-4-6',
-        stop_reason: 'end_turn',
-        usage: { input_tokens: inputTokens, output_tokens: outputTokens },
-      }),
+      json: () =>
+        Promise.resolve({
+          id: 'msg_001',
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'text', text }],
+          model: 'claude-sonnet-4-6',
+          stop_reason: 'end_turn',
+          usage: { input_tokens: inputTokens, output_tokens: outputTokens },
+        }),
     }) as unknown as typeof fetch;
   }
 
@@ -331,9 +326,9 @@ describe('createAiClient', () => {
     delete process.env.ANTHROPIC_API_KEY;
     const { callClaude } = createAiClient();
 
-    await expect(
-      callClaude({ model: 'sonnet', system: 'sys', user: 'usr' }),
-    ).rejects.toThrow('ANTHROPIC_API_KEY');
+    await expect(callClaude({ model: 'sonnet', system: 'sys', user: 'usr' })).rejects.toThrow(
+      'ANTHROPIC_API_KEY',
+    );
   });
 
   it('throws on non-retryable API error', async () => {
@@ -345,9 +340,9 @@ describe('createAiClient', () => {
 
     const { callClaude } = createAiClient();
 
-    await expect(
-      callClaude({ model: 'sonnet', system: 'sys', user: 'usr' }),
-    ).rejects.toThrow('Claude API error 400');
+    await expect(callClaude({ model: 'sonnet', system: 'sys', user: 'usr' })).rejects.toThrow(
+      'Claude API error 400',
+    );
   });
 
   it('passes extra params to API body', async () => {
@@ -362,7 +357,8 @@ describe('createAiClient', () => {
     });
 
     const body = JSON.parse(
-      ((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit).body as string,
+      ((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit)
+        .body as string,
     );
     expect(body.temperature).toBe(0.5);
   });

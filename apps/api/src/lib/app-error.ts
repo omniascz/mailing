@@ -3,7 +3,12 @@ export class AppError extends Error {
   readonly statusCode: number;
   readonly details?: Record<string, unknown>;
 
-  constructor(opts: { code: string; message: string; statusCode: number; details?: Record<string, unknown> }) {
+  constructor(opts: {
+    code: string;
+    message: string;
+    statusCode: number;
+    details?: Record<string, unknown>;
+  }) {
     super(opts.message);
     this.code = opts.code;
     this.statusCode = opts.statusCode;

@@ -11,7 +11,11 @@ const KEY_RE = /^[a-z][a-z0-9_]{0,98}$/;
 
 const createSchema = z.object({
   name: z.string().min(1).max(100),
-  key: z.string().min(1).max(100).regex(KEY_RE, 'Key must be snake_case (letters, digits, underscores)'),
+  key: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(KEY_RE, 'Key must be snake_case (letters, digits, underscores)'),
   fieldType: z.enum(['text', 'number', 'date', 'select', 'boolean']),
   options: z.array(z.string().min(1).max(200)).min(1).max(100).optional(),
   required: z.boolean().optional(),
@@ -91,7 +95,9 @@ export default async function customFieldRoutes(app: FastifyInstance) {
       const [row] = await db
         .select()
         .from(customFieldDefinitions)
-        .where(and(eq(customFieldDefinitions.id, id), eq(customFieldDefinitions.orgId, req.user!.orgId)))
+        .where(
+          and(eq(customFieldDefinitions.id, id), eq(customFieldDefinitions.orgId, req.user!.orgId)),
+        )
         .limit(1);
       if (!row) throw AppError.notFound('Custom field definition');
       return { data: row };
@@ -112,7 +118,9 @@ export default async function customFieldRoutes(app: FastifyInstance) {
       const [row] = await db
         .update(customFieldDefinitions)
         .set({ ...patch, updatedAt: new Date() })
-        .where(and(eq(customFieldDefinitions.id, id), eq(customFieldDefinitions.orgId, req.user!.orgId)))
+        .where(
+          and(eq(customFieldDefinitions.id, id), eq(customFieldDefinitions.orgId, req.user!.orgId)),
+        )
         .returning();
       if (!row) throw AppError.notFound('Custom field definition');
       return { data: row };
@@ -131,7 +139,9 @@ export default async function customFieldRoutes(app: FastifyInstance) {
       const { id } = idParam.parse(req.params);
       const [row] = await db
         .delete(customFieldDefinitions)
-        .where(and(eq(customFieldDefinitions.id, id), eq(customFieldDefinitions.orgId, req.user!.orgId)))
+        .where(
+          and(eq(customFieldDefinitions.id, id), eq(customFieldDefinitions.orgId, req.user!.orgId)),
+        )
         .returning();
       if (!row) throw AppError.notFound('Custom field definition');
       return reply.code(204).send();

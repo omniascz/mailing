@@ -12,12 +12,7 @@ vi.mock('../../lib/redis.js', () => ({
   },
 }));
 
-import {
-  detectIsp,
-  checkThrottle,
-  recordThrottleSignal,
-  resetThrottle,
-} from './isp-throttle.js';
+import { detectIsp, checkThrottle, recordThrottleSignal, resetThrottle } from './isp-throttle.js';
 import { redis } from '../../lib/redis.js';
 
 describe('detectIsp', () => {
@@ -77,7 +72,7 @@ describe('checkThrottle', () => {
     (redis.exists as ReturnType<typeof vi.fn>).mockResolvedValueOnce(1);
     // effectiveLimit calls redis.get(reducedKey) first, then checkThrottle calls redis.get(tokenKey)
     (redis.get as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce(null)   // reducedKey → not reduced
+      .mockResolvedValueOnce(null) // reducedKey → not reduced
       .mockResolvedValueOnce('100'); // tokenKey → 100 remaining
     const result = await checkThrottle('org1', 'gmail.com', '1.2.3.4');
     expect(result.allowed).toBe(true);
@@ -88,7 +83,7 @@ describe('checkThrottle', () => {
     (redis.exists as ReturnType<typeof vi.fn>).mockResolvedValueOnce(1);
     (redis.get as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce(null) // reduced check
-      .mockResolvedValueOnce('0');  // tokens
+      .mockResolvedValueOnce('0'); // tokens
     const result = await checkThrottle('org1', 'gmail.com', '1.2.3.4');
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
@@ -109,12 +104,7 @@ describe('recordThrottleSignal', () => {
 
   it('sets the reduced key with 30-minute TTL', async () => {
     await recordThrottleSignal('org1', 'gmail', '1.2.3.4');
-    expect(redis.set).toHaveBeenCalledWith(
-      expect.stringContaining('reduced'),
-      '1',
-      'EX',
-      30 * 60,
-    );
+    expect(redis.set).toHaveBeenCalledWith(expect.stringContaining('reduced'), '1', 'EX', 30 * 60);
   });
 });
 

@@ -60,23 +60,30 @@ export async function fetchShopifyProducts(shopDomain: string, accessToken: stri
   return data.products;
 }
 
-export async function fetchShopifyCustomer(shopDomain: string, accessToken: string, customerId: string) {
-  const res = await fetch(
-    `https://${shopDomain}/admin/api/2024-01/customers/${customerId}.json`,
-    { headers: { 'X-Shopify-Access-Token': accessToken } },
-  );
+export async function fetchShopifyCustomer(
+  shopDomain: string,
+  accessToken: string,
+  customerId: string,
+) {
+  const res = await fetch(`https://${shopDomain}/admin/api/2024-01/customers/${customerId}.json`, {
+    headers: { 'X-Shopify-Access-Token': accessToken },
+  });
   if (!res.ok) throw new Error(`Shopify API ${res.status}`);
   const data = (await res.json()) as { customer: unknown };
   return data.customer;
 }
 
-export async function fetchShopifyOrders(shopDomain: string, accessToken: string, sinceId?: string, limit = 50) {
+export async function fetchShopifyOrders(
+  shopDomain: string,
+  accessToken: string,
+  sinceId?: string,
+  limit = 50,
+) {
   const params = new URLSearchParams({ limit: String(limit), status: 'any' });
   if (sinceId) params.set('since_id', sinceId);
-  const res = await fetch(
-    `https://${shopDomain}/admin/api/2024-01/orders.json?${params}`,
-    { headers: { 'X-Shopify-Access-Token': accessToken } },
-  );
+  const res = await fetch(`https://${shopDomain}/admin/api/2024-01/orders.json?${params}`, {
+    headers: { 'X-Shopify-Access-Token': accessToken },
+  });
   if (!res.ok) throw new Error(`Shopify API ${res.status}`);
   const data = (await res.json()) as { orders: unknown[] };
   return data.orders;

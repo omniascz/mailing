@@ -14,7 +14,15 @@
 
 import { sql } from 'drizzle-orm';
 import {
-  pgTable, uuid, varchar, text, jsonb, timestamp, boolean, index, uniqueIndex,
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  jsonb,
+  timestamp,
+  boolean,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';
@@ -22,8 +30,12 @@ import { users } from './users.js';
 export const permissionSets = pgTable(
   'permission_sets',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
 
     name: varchar('name', { length: 128 }).notNull(),
     description: text('description'),
@@ -47,14 +59,23 @@ export const permissionSets = pgTable(
 export const userPermissionSets = pgTable(
   'user_permission_sets',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    permissionSetId: uuid('permission_set_id').notNull()
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    permissionSetId: uuid('permission_set_id')
+      .notNull()
       .references(() => permissionSets.id, { onDelete: 'cascade' }),
 
     /** Audit trail. */
-    grantedByUserId: uuid('granted_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    grantedByUserId: uuid('granted_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

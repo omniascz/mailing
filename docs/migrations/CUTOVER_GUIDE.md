@@ -18,6 +18,7 @@ Run through these **before** touching anything in production. Most
 problems we see come from skipping this list.
 
 ### Account state
+
 - [ ] List of every sender domain currently in use (look at the **From:**
       headers on the last 30 days of sends).
 - [ ] Note your current daily / monthly send volume from the source
@@ -33,6 +34,7 @@ problems we see come from skipping this list.
       not first.
 
 ### Compliance + audit
+
 - [ ] Verify your privacy policy + cookie banner references the new
       processor (Mailforge) before any consent-bearing forms are
       switched over.
@@ -42,6 +44,7 @@ problems we see come from skipping this list.
       the audit trail survives the move.
 
 ### Technical
+
 - [ ] Mailforge admin account created, organization configured.
 - [ ] You have **write** access to the DNS zone for every sender domain.
       (CNAME / TXT / MX edits aren't optional — if you can't change DNS
@@ -55,6 +58,7 @@ problems we see come from skipping this list.
 ## 2. Day-of plan (T-0)
 
 ### Hour 0 — Import
+
 1. Open Mailforge → Migrations → "Start import from {source}".
 2. Paste your source-platform API key (Mailchimp / Klaviyo / Ecomail /
    SmartEmailing). For SmartEmailing, also supply the account username.
@@ -64,6 +68,7 @@ problems we see come from skipping this list.
    running tally of `imported` / `skipped` / `errors`.
 
 What Mailforge **automatically** does at import:
+
 - Lower-cases + trims every email so dedup works across CRMs.
 - Drops `hard_bounce` and `spam_complaint` records before they ever
   reach the contacts table.
@@ -73,6 +78,7 @@ What Mailforge **automatically** does at import:
   `confirmed` → `active`, everything else → `unsubscribed`.
 
 What it **does not** do (you do these next):
+
 - Re-subscribe `NEVER_SUBSCRIBED` profiles. Never assume implicit consent.
 - Import templates. (Sprint C scope is contacts + lists only; the
   template-import endpoint lands in a follow-up sprint.)
@@ -160,6 +166,7 @@ your campaigns from each side. Why:
   the old platform while we diagnose.
 
 Practical pattern:
+
 - Days 1–3: 10% of broadcasts on Mailforge, 90% on the old platform.
 - Days 4–7: 30/70.
 - Days 8–10: 50/50.
@@ -184,6 +191,7 @@ Body: {}
 ```
 
 What it does:
+
 - Soft-deletes every contact this job introduced (filtered by
   `customFields.imported_from = {source}` AND createdAt within the job
   window — a later re-import from the same source isn't touched).
@@ -194,6 +202,7 @@ What it does:
   progress.rollback annotated with deleted count + timestamp.
 
 **Limits:**
+
 - Window: 24 hours after `completedAt`. Pass `{ "force": true }` to
   override (admin/owner role required).
 - Only `completed` and `failed` jobs are eligible. A running job must
@@ -206,18 +215,21 @@ What it does:
 ## 5. Common pitfalls
 
 ### "My open rates dropped 50% on Day 1"
+
 Almost always Apple Mail Privacy Protection (MPP) timing, not real
 engagement loss. Mailforge logs both raw opens and bot-filtered opens
 (MPP-aware) on every campaign — compare the second metric across
 platforms for a real signal.
 
 ### "Gmail puts everything in Promotions"
+
 Expected for marketing sends during the first 30 days on a new
 sending pattern. Engagement (opens + clicks + replies) over the
 warm-up period is what moves you out. Don't fight it by changing
 subject lines daily; consistency wins.
 
 ### "Some contacts came in as 'unsubscribed' but they're active in {source}"
+
 Check `customFields.imported_consent_status` on the contact in
 Mailforge — it's the verbatim string from the source. The most common
 cause is Klaviyo's `NEVER_SUBSCRIBED` profiles (people who landed in
@@ -226,18 +238,21 @@ We import them as `unsubscribed` deliberately; you can re-opt them in
 with a permission-pass campaign.
 
 ### "Missing DKIM signature on test sends"
+
 Mailforge only signs once the sending domain's `dkimVerified` flag
 flips true (after DNS propagation). Until then, sends go out unsigned
 and Gmail will reject them silently after a few hours. Verify the
 domain before sending more than a friendly test batch.
 
 ### "My automation in {source} isn't running in Mailforge"
+
 Sprint C scope is contacts + lists. Automation translation is a
 separate sprint (Sprint D + UI). For now: re-build flows manually in
 Mailforge → Workflows, or pause them in the source platform until we
 ship the auto-translator.
 
 ### "I re-imported and now I have duplicate contacts"
+
 You shouldn't — every connector uses `ON CONFLICT (org_id, email) DO
 UPDATE`. If you see duplicates check the **case** of the email: the
 mapper lowercases on import, but if a contact was added manually
@@ -250,6 +265,7 @@ duplicates`) finds these.
 ## 6. Day 15+ ongoing health
 
 Once you're 100% on Mailforge:
+
 - **Daily**: glance at Domains → Reputation panel. Gmail's domain
   reputation score is the leading indicator; if it dips below "High,"
   pause new campaigns and audit recent sends.
@@ -275,7 +291,7 @@ Once you're 100% on Mailforge:
 
 ---
 
-*Owner: Mailforge CSM team*
-*Last updated: 2026-05-19*
-*Source corpus: MAILFORGE_FINDING_REPORT §60, EMAIL_DEEP_ANALYSIS §C.13,
-data/60_Migration_Scenarios.md*
+_Owner: Mailforge CSM team_
+_Last updated: 2026-05-19_
+_Source corpus: MAILFORGE_FINDING_REPORT §60, EMAIL_DEEP_ANALYSIS §C.13,
+data/60_Migration_Scenarios.md_

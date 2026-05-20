@@ -63,7 +63,9 @@ export async function createEarningRule(
 export async function updateEarningRule(
   orgId: string,
   ruleId: string,
-  patch: Partial<Omit<LoyaltyEarningRule, 'id' | 'orgId' | 'programId' | 'createdAt' | 'updatedAt'>>,
+  patch: Partial<
+    Omit<LoyaltyEarningRule, 'id' | 'orgId' | 'programId' | 'createdAt' | 'updatedAt'>
+  >,
 ): Promise<LoyaltyEarningRule> {
   const [updated] = await db
     .update(loyaltyEarningRules)
@@ -190,15 +192,10 @@ export async function processEarnEvent(
 
   if (totalPoints === 0) return null;
 
-  const { newBalance, tieredUp, tierName } = await creditPoints(
-    orgId,
-    member.id,
-    totalPoints,
-    {
-      description: `${event.eventType} event`,
-      type: 'earn',
-    },
-  );
+  const { newBalance, tieredUp, tierName } = await creditPoints(orgId, member.id, totalPoints, {
+    description: `${event.eventType} event`,
+    type: 'earn',
+  });
 
   return { pointsEarned: totalPoints, rulesApplied, newBalance, tieredUp, tierName };
 }

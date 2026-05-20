@@ -28,48 +28,67 @@ function todayStr(): string {
 
 // ── SERP fetch ────────────────────────────────────────────────────────────────
 
-async function fetchSerpPosition(keyword: string, targetUrl: string, language: string, country: string) {
+async function fetchSerpPosition(
+  keyword: string,
+  targetUrl: string,
+  language: string,
+  country: string,
+) {
   const auth = dfsCreds();
   const res = await fetch(`${DATAFORSEO_BASE}/serp/google/organic/live/regular`, {
     method: 'POST',
-    headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
-    body: JSON.stringify([{
-      keyword,
-      language_code: language,
-      location_code: countryToLocation(country),
-      depth: 100,
-    }]),
+    headers: { Authorization: auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      {
+        keyword,
+        language_code: language,
+        location_code: countryToLocation(country),
+        depth: 100,
+      },
+    ]),
   });
   if (!res.ok) throw AppError.badRequest(`DataForSEO SERP error: ${res.status}`);
-  const json = await res.json() as {
+  const json = (await res.json()) as {
     tasks: Array<{
       result: Array<{
-        items: Array<{ type: string; rank_absolute: number; url: string; title: string }>
-      }>
-    }>
+        items: Array<{ type: string; rank_absolute: number; url: string; title: string }>;
+      }>;
+    }>;
   };
 
   const items = json.tasks[0]?.result[0]?.items ?? [];
   const targetBase = new URL(targetUrl).hostname;
   const match = items
-    .filter(i => i.type === 'organic')
-    .find(i => {
-      try { return new URL(i.url).hostname === targetBase; } catch { return false; }
+    .filter((i) => i.type === 'organic')
+    .find((i) => {
+      try {
+        return new URL(i.url).hostname === targetBase;
+      } catch {
+        return false;
+      }
     });
 
   return match
-    ? { position: match.rank_absolute, url: match.url, title: match.title, rawData: { items: items.slice(0, 10) } }
+    ? {
+        position: match.rank_absolute,
+        url: match.url,
+        title: match.title,
+        rawData: { items: items.slice(0, 10) },
+      }
     : { position: null, url: null, title: null, rawData: { items: items.slice(0, 10) } };
 }
 
 // ── Tracking CRUD ─────────────────────────────────────────────────────────────
 
-export async function addTrackedKeyword(orgId: string, input: {
-  keyword: string;
-  url: string;
-  language?: string;
-  country?: string;
-}) {
+export async function addTrackedKeyword(
+  orgId: string,
+  input: {
+    keyword: string;
+    url: string;
+    language?: string;
+    country?: string;
+  },
+) {
   const [row] = await db
     .insert(seoRankTracking)
     .values({
@@ -80,7 +99,12 @@ export async function addTrackedKeyword(orgId: string, input: {
       country: input.country ?? 'US',
     })
     .onConflictDoUpdate({
-      target: [seoRankTracking.orgId, seoRankTracking.keyword, seoRankTracking.url, seoRankTracking.country],
+      target: [
+        seoRankTracking.orgId,
+        seoRankTracking.keyword,
+        seoRankTracking.url,
+        seoRankTracking.country,
+      ],
       set: { active: true },
     })
     .returning();
@@ -113,7 +137,12 @@ export async function fetchRankSnapshot(trackingId: string) {
   if (!tracker) throw AppError.notFound('Tracked keyword not found');
 
   const today = todayStr();
-  const serp = await fetchSerpPosition(tracker.keyword, tracker.url, tracker.language, tracker.country);
+  const serp = await fetchSerpPosition(
+    tracker.keyword,
+    tracker.url,
+    tracker.language,
+    tracker.country,
+  );
 
   const [row] = await db
     .insert(seoRankSnapshots)

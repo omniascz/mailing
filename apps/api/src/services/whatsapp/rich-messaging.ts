@@ -33,7 +33,7 @@ export interface ButtonMessage {
   body: string;
   /** Max 3 buttons */
   buttons: Array<{
-    id: string;   // your identifier, returned on click
+    id: string; // your identifier, returned on click
     title: string; // max 20 chars
   }>;
   header?: string; // optional text header
@@ -164,7 +164,10 @@ export class RichWhatsAppSender {
       signal: AbortSignal.timeout(30_000),
     });
 
-    const json = (await resp.json()) as { messages?: Array<{ id: string }>; error?: { message: string; code: number } };
+    const json = (await resp.json()) as {
+      messages?: Array<{ id: string }>;
+      error?: { message: string; code: number };
+    };
 
     if (!resp.ok || json.error) {
       throw new Error(json.error?.message ?? `Meta API HTTP ${resp.status}`);
@@ -210,25 +213,18 @@ export class RichWhatsAppSender {
    * Upload a file to Meta's media endpoint and return the media_id.
    * Use the returned id in sendMedia({id: '...'}).
    */
-  async uploadMedia(
-    mimeType: string,
-    fileBuffer: Buffer,
-    fileName: string,
-  ): Promise<string> {
+  async uploadMedia(mimeType: string, fileBuffer: Buffer, fileName: string): Promise<string> {
     const formData = new FormData();
     formData.append('messaging_product', 'whatsapp');
     formData.append('type', mimeType);
     formData.append('file', new Blob([new Uint8Array(fileBuffer)], { type: mimeType }), fileName);
 
-    const resp = await fetch(
-      `${META_BASE}/${this.cfg.phoneNumberId}/media`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${this.cfg.accessToken}` },
-        body: formData,
-        signal: AbortSignal.timeout(60_000),
-      },
-    );
+    const resp = await fetch(`${META_BASE}/${this.cfg.phoneNumberId}/media`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${this.cfg.accessToken}` },
+      body: formData,
+      signal: AbortSignal.timeout(60_000),
+    });
 
     const json = (await resp.json()) as { id?: string; error?: { message: string } };
 

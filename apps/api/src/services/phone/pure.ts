@@ -30,10 +30,7 @@ export interface BusinessHoursConfig {
  * timezone? When schedule is empty we treat as always-open (off-hours
  * routing is opt-in).
  */
-export function isWithinBusinessHours(
-  bh: BusinessHoursConfig,
-  at: Date = new Date(),
-): boolean {
+export function isWithinBusinessHours(bh: BusinessHoursConfig, at: Date = new Date()): boolean {
   if (!bh.schedule || bh.schedule.length === 0) return true;
 
   const fmt = new Intl.DateTimeFormat('en-US', {
@@ -67,10 +64,7 @@ export function isWithinBusinessHours(
   if (bh.holidays?.some((h) => h.date === iso)) return false;
 
   return bh.schedule.some(
-    (entry) =>
-      entry.day === day &&
-      minutes >= entry.openMinutes &&
-      minutes < entry.closeMinutes,
+    (entry) => entry.day === day && minutes >= entry.openMinutes && minutes < entry.closeMinutes,
   );
 }
 
@@ -128,9 +122,7 @@ export function selectHuntPool(
   if (candidates.length === 0) return { userIds: [], nextRrIndex: 0 };
 
   const presenceByUser = new Map(presence.map((p) => [p.userId, p]));
-  const available = candidates.filter(
-    (id) => presenceByUser.get(id)?.status === 'available',
-  );
+  const available = candidates.filter((id) => presenceByUser.get(id)?.status === 'available');
   const pool = available.length > 0 ? available : candidates;
 
   if (strategy === 'ring-all') {

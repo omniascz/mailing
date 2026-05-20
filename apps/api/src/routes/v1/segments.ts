@@ -74,21 +74,29 @@ function mapQueryError(err: unknown): never {
 export default async function segmentRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
-  app.get('/api/v1/segments', { schema: { tags: ['Segments'], summary: 'List segments' } }, async (req) => {
-    const orgId = req.user!.orgId;
-    const rows = await listSegments(orgId);
-    return { data: rows };
-  });
+  app.get(
+    '/api/v1/segments',
+    { schema: { tags: ['Segments'], summary: 'List segments' } },
+    async (req) => {
+      const orgId = req.user!.orgId;
+      const rows = await listSegments(orgId);
+      return { data: rows };
+    },
+  );
 
-  app.post('/api/v1/segments', { schema: { tags: ['Segments'], summary: 'Create segment' } }, async (req) => {
-    const body = createSchema.parse(req.body);
-    try {
-      const row = await createSegment({ orgId: req.user!.orgId, ...body });
-      return { data: row };
-    } catch (err) {
-      mapQueryError(err);
-    }
-  });
+  app.post(
+    '/api/v1/segments',
+    { schema: { tags: ['Segments'], summary: 'Create segment' } },
+    async (req) => {
+      const body = createSchema.parse(req.body);
+      try {
+        const row = await createSegment({ orgId: req.user!.orgId, ...body });
+        return { data: row };
+      } catch (err) {
+        mapQueryError(err);
+      }
+    },
+  );
 
   app.get(
     '/api/v1/segments/:id',
@@ -158,7 +166,10 @@ export default async function segmentRoutes(app: FastifyInstance) {
     async (req) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
       const query = z
-        .object({ cursor: z.string().uuid().optional(), limit: z.coerce.number().int().min(1).max(500).optional() })
+        .object({
+          cursor: z.string().uuid().optional(),
+          limit: z.coerce.number().int().min(1).max(500).optional(),
+        })
         .parse(req.query);
       const seg = await getSegment(req.user!.orgId, id);
       try {

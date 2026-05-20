@@ -184,7 +184,7 @@ Output JSON:
       similarity: h.similarity,
     })),
     suggestedTags: parsed.suggestedTags ?? [],
-    tokensUsed: (result.inputTokens + result.outputTokens),
+    tokensUsed: result.inputTokens + result.outputTokens,
   };
 }
 

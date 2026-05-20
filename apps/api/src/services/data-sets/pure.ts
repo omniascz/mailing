@@ -142,10 +142,7 @@ function coerceValue(value: unknown, type: ParamType): unknown | typeof INVALID 
  * Cheap template-lint: make sure every `:name` in the SQL is declared.
  * Used by the save route so editors can't save broken templates.
  */
-export function findUndeclaredPlaceholders(
-  template: string,
-  specs: ParameterSpec[],
-): string[] {
+export function findUndeclaredPlaceholders(template: string, specs: ParameterSpec[]): string[] {
   const declared = new Set(specs.map((s) => s.name));
   const found = new Set<string>();
   const re = /:([a-zA-Z_][a-zA-Z0-9_]*)/g;

@@ -17,13 +17,18 @@ const internalCommerceRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.post('/api/v1/internal/ads/sync-performance', async (_req, reply) => {
-    const orgs = await db.select({ id: organizations.id }).from(organizations).where(sql`deleted_at IS NULL`);
+    const orgs = await db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(sql`deleted_at IS NULL`);
     let total = 0;
     for (const org of orgs) {
       try {
         const result = await syncAdPerformance(org.id);
         total += result.rowsInserted;
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
     return reply.send({ data: { orgsProcessed: orgs.length, rowsInserted: total } });
   });

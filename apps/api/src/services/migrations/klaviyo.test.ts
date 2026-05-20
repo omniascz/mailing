@@ -81,9 +81,7 @@ describe('Klaviyo mapProfile', () => {
       ORG_ID,
     );
     expect(sub!.customFields.imported_consent_method).toBe('FORM');
-    expect(sub!.customFields.imported_consent_method_detail).toBe(
-      'Shopify checkout footer',
-    );
+    expect(sub!.customFields.imported_consent_method_detail).toBe('Shopify checkout footer');
   });
 
   it('falls back to attributes.created when consent_timestamp is missing', () => {

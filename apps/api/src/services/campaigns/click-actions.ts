@@ -105,7 +105,8 @@ export async function executeClickAction(
 
 async function addTagToContact(orgId: string, contactId: string, tagName: string): Promise<void> {
   // Find or create the tag
-  let [tag] = await db.select({ id: tags.id })
+  let [tag] = await db
+    .select({ id: tags.id })
     .from(tags)
     .where(and(eq(tags.orgId, orgId), eq(tags.name, tagName)))
     .limit(1);
@@ -116,26 +117,31 @@ async function addTagToContact(orgId: string, contactId: string, tagName: string
   if (!tag) return;
 
   // Upsert contact_tag (ignore duplicate)
-  await db.insert(contactTags)
-    .values({ contactId, tagId: tag.id })
-    .onConflictDoNothing();
+  await db.insert(contactTags).values({ contactId, tagId: tag.id }).onConflictDoNothing();
 }
 
-async function removeTagFromContact(orgId: string, contactId: string, tagName: string): Promise<void> {
-  const [tag] = await db.select({ id: tags.id })
+async function removeTagFromContact(
+  orgId: string,
+  contactId: string,
+  tagName: string,
+): Promise<void> {
+  const [tag] = await db
+    .select({ id: tags.id })
     .from(tags)
     .where(and(eq(tags.orgId, orgId), eq(tags.name, tagName)))
     .limit(1);
   if (!tag) return;
 
   // Remove from contact_tags by querying contact first to confirm org ownership
-  const [contact] = await db.select({ id: contacts.id })
+  const [contact] = await db
+    .select({ id: contacts.id })
     .from(contacts)
     .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
     .limit(1);
   if (!contact) return;
 
-  await db.delete(contactTags)
+  await db
+    .delete(contactTags)
     .where(and(eq(contactTags.contactId, contactId), eq(contactTags.tagId, tag.id)));
 }
 
@@ -147,23 +153,32 @@ async function updateContactField(
 ): Promise<void> {
   // Only allow updating known safe fields or custom fields
   const ALLOWED_COLUMNS = new Set([
-    'firstName', 'lastName', 'phone', 'company', 'city', 'country', 'address',
+    'firstName',
+    'lastName',
+    'phone',
+    'company',
+    'city',
+    'country',
+    'address',
   ]);
 
   if (ALLOWED_COLUMNS.has(field)) {
-    await db.update(contacts)
+    await db
+      .update(contacts)
       .set({ [field]: value, updatedAt: new Date() })
       .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
   } else {
     // Custom field — update JSONB via raw merge
-    const [contact] = await db.select({ customFields: contacts.customFields })
+    const [contact] = await db
+      .select({ customFields: contacts.customFields })
       .from(contacts)
       .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
       .limit(1);
     if (!contact) return;
 
     const existing = (contact.customFields ?? {}) as Record<string, unknown>;
-    await db.update(contacts)
+    await db
+      .update(contacts)
       .set({ customFields: { ...existing, [field]: value }, updatedAt: new Date() })
       .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
   }

@@ -27,53 +27,97 @@ import {
   processDailyNameDayTriggers,
   processDailyHolidayTriggers,
 } from '../../../services/workflows/triggers.js';
+import { refreshAllOrgsRfm } from '../../../services/rfm/index.js';
+import { refreshAllOrgsPredictions } from '../../../services/predictive-segmentation/index.js';
 
 interface RunSummary {
   date: { triggered: number; error?: string };
   nameDay: { triggered: number; error?: string };
   holiday: { triggered: number; error?: string };
+  rfm: { orgs: number; scored: number; errors: number; error?: string };
+  predictions: { orgs: number; updated: number; errors: number; error?: string };
   totalTriggered: number;
 }
 
 const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
-  app.post('/api/v1/internal/triggers/daily-run', {
-    schema: {
-      tags: ['Internal'],
-      summary: 'Run all daily workflow triggers (date/name-day/holiday)',
+  app.post(
+    '/api/v1/internal/triggers/daily-run',
+    {
+      schema: {
+        tags: ['Internal'],
+        summary: 'Run all daily workflow triggers (date/name-day/holiday)',
+      },
     },
-  }, async (_req, reply) => {
-    // Run all three in parallel — they touch disjoint workflows
-    // (filtered by triggerType) so there's no DB contention to fear.
-    const [dateResult, nameDayResult, holidayResult] = await Promise.allSettled([
-      processDailyDateTriggers(),
-      processDailyNameDayTriggers(),
-      processDailyHolidayTriggers(),
-    ]);
+    async (_req, reply) => {
+      // Run all three in parallel — they touch disjoint workflows
+      // (filtered by triggerType) so there's no DB contention to fear.
+      const [dateResult, nameDayResult, holidayResult, rfmResult, predResult] =
+        await Promise.allSettled([
+          processDailyDateTriggers(),
+          processDailyNameDayTriggers(),
+          processDailyHolidayTriggers(),
+          refreshAllOrgsRfm(),
+          refreshAllOrgsPredictions(),
+        ]);
 
-    const summary: RunSummary = {
-      date:
-        dateResult.status === 'fulfilled'
-          ? { triggered: dateResult.value.triggered }
-          : { triggered: 0, error: String((dateResult.reason as Error)?.message ?? dateResult.reason) },
-      nameDay:
-        nameDayResult.status === 'fulfilled'
-          ? { triggered: nameDayResult.value.triggered }
-          : { triggered: 0, error: String((nameDayResult.reason as Error)?.message ?? nameDayResult.reason) },
-      holiday:
-        holidayResult.status === 'fulfilled'
-          ? { triggered: holidayResult.value.triggered }
-          : { triggered: 0, error: String((holidayResult.reason as Error)?.message ?? holidayResult.reason) },
-      totalTriggered: 0,
-    };
-    summary.totalTriggered =
-      summary.date.triggered + summary.nameDay.triggered + summary.holiday.triggered;
+      const summary: RunSummary = {
+        date:
+          dateResult.status === 'fulfilled'
+            ? { triggered: dateResult.value.triggered }
+            : {
+                triggered: 0,
+                error: String((dateResult.reason as Error)?.message ?? dateResult.reason),
+              },
+        nameDay:
+          nameDayResult.status === 'fulfilled'
+            ? { triggered: nameDayResult.value.triggered }
+            : {
+                triggered: 0,
+                error: String((nameDayResult.reason as Error)?.message ?? nameDayResult.reason),
+              },
+        holiday:
+          holidayResult.status === 'fulfilled'
+            ? { triggered: holidayResult.value.triggered }
+            : {
+                triggered: 0,
+                error: String((holidayResult.reason as Error)?.message ?? holidayResult.reason),
+              },
+        rfm:
+          rfmResult.status === 'fulfilled'
+            ? rfmResult.value
+            : {
+                orgs: 0,
+                scored: 0,
+                errors: 0,
+                error: String((rfmResult.reason as Error)?.message ?? rfmResult.reason),
+              },
+        predictions:
+          predResult.status === 'fulfilled'
+            ? predResult.value
+            : {
+                orgs: 0,
+                updated: 0,
+                errors: 0,
+                error: String((predResult.reason as Error)?.message ?? predResult.reason),
+              },
+        totalTriggered: 0,
+      };
+      summary.totalTriggered =
+        summary.date.triggered + summary.nameDay.triggered + summary.holiday.triggered;
 
-    // 207 Multi-Status if any sub-task errored; 200 only when everything
-    // ran cleanly. Lets monitoring distinguish "no triggers due today"
-    // from "the holiday processor threw".
-    const anyFailed = !!(summary.date.error || summary.nameDay.error || summary.holiday.error);
-    return reply.code(anyFailed ? 207 : 200).send({ data: summary });
-  });
+      // 207 Multi-Status if any sub-task errored; 200 only when everything
+      // ran cleanly. Lets monitoring distinguish "no triggers due today"
+      // from "the holiday processor threw".
+      const anyFailed = !!(
+        summary.date.error ||
+        summary.nameDay.error ||
+        summary.holiday.error ||
+        summary.rfm.error ||
+        summary.predictions.error
+      );
+      return reply.code(anyFailed ? 207 : 200).send({ data: summary });
+    },
+  );
 };
 
 export default internalTriggersRoutes;

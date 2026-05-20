@@ -4,13 +4,14 @@
 **Zdroje:** oficiální dokumentace rapidmail.com + analytické weby a recenze (GetApp, Software Advice, Software Suggest, EmailTooltester, EuropeanStack, European Purpose, EU Picks, Trusted, Business Digital, Newsletter-tools.de) ověřené v dubnu–květnu 2026.
 **Rozsah:** kompletní funkcionalita platformy v roce 2026 – email marketing newsletter focus, drag-and-drop editor, sign-up forms, basic automation, pay-per-mail pricing model, DACH deliverability.
 
-> **Důležitý kontext:** rapidmail je **německý produkt** založený **2008 ve Freiburgu im Breisgau** (Baden-Württemberg, Schwarzwald). Mateřská společnost: **rapidmail GmbH**. Marketing positioning: *"Einfaches DSGVO-konformes E-Mail-Marketing aus Deutschland"*.
+> **Důležitý kontext:** rapidmail je **německý produkt** založený **2008 ve Freiburgu im Breisgau** (Baden-Württemberg, Schwarzwald). Mateřská společnost: **rapidmail GmbH**. Marketing positioning: _"Einfaches DSGVO-konformes E-Mail-Marketing aus Deutschland"_.
 >
 > **Pozice:** **DACH SMB newsletter specialist** – jeden z dlouhodobých DE hráčů. **~200 000+ zákazníků** (per některé zdroje 80 000+ – inkonzistence v sourcing, vendor potvrzuje rostoucí customer base).
 >
 > **UNIKÁTNÍ diferenciátor:** **Pay-per-mail pricing model** – pay only when you send, no subscription required. **Krédity validní 12 měsíců**. Pro occasional senders **dramaticky levnější** než subscription competitors.
 >
 > **Klíčové diferenciátory:**
+>
 > - **"Made in Germany"** – servers EXCLUSIVELY v Německu (Freiburg)
 > - **CSA-certified sender** – whitelisted by major DE/EU ISPs (GMX, web.de, T-Online)
 > - **Pay-per-mail OR subscription** – flexible model
@@ -22,7 +23,7 @@
 > - **1.5+ million free images** library
 > - **Self-claimed "easiest tool" v DACH**
 >
-> **Filozofie:** *"Weniger ist mehr"* (Less is more). Per oficiální positioning: rapidmail aktivně **nedělá** CRM, SMS, landing pages, complex automation. Soustředí se na **klean, reliable email newsletter** s **best deliverability v DACH**.
+> **Filozofie:** _"Weniger ist mehr"_ (Less is more). Per oficiální positioning: rapidmail aktivně **nedělá** CRM, SMS, landing pages, complex automation. Soustředí se na **klean, reliable email newsletter** s **best deliverability v DACH**.
 
 ---
 
@@ -61,38 +62,41 @@
 - **Specializace:** **Small-to-medium businesses (SMB)**, freelancers, associations, non-profits v DACH
 - **Lokalizace UI:** **3 jazyky** – English, German (native), French. **Žádná čeština/slovenština/polština/španělština/italština/holandština**.
 - **Web:** rapidmail.com / rapidmail.de
-- **Marketing claim:** *"Einfach. Sicher. Erfolgreich."* (Simple. Safe. Successful.)
+- **Marketing claim:** _"Einfach. Sicher. Erfolgreich."_ (Simple. Safe. Successful.)
 
 ### Filozofie produktu
 
 **"Weniger ist mehr"** (Less is more) – core philosophy.
 
 Per EuropeanStack:
-> *"rapidmail does not try to be everything. It does not offer CRM, SMS, landing pages, or marketing automation."*
-> *"What it offers is a clean, reliable email marketing tool with a pricing model that respects how many businesses actually use email marketing — intermittently, pragmatically, and on a budget."*
+
+> _"rapidmail does not try to be everything. It does not offer CRM, SMS, landing pages, or marketing automation."_
+> _"What it offers is a clean, reliable email marketing tool with a pricing model that respects how many businesses actually use email marketing — intermittently, pragmatically, and on a budget."_
 
 Per Business.digital:
-> *"Was rapidmail von CleverReach oder Brevo unterscheidet, ist das Preismodell: Neben monatlichen Volumentarifen gibt es eine Pay-per-Mail-Option. Wer nur gelegentlich Newsletter verschickt (monatlich oder quartalsweise) und keine monatliche Grundgebühr zahlen will, kann nach tatsächlich versendeten E-Mails abrechnen."*
+
+> _"Was rapidmail von CleverReach oder Brevo unterscheidet, ist das Preismodell: Neben monatlichen Volumentarifen gibt es eine Pay-per-Mail-Option. Wer nur gelegentlich Newsletter verschickt (monatlich oder quartalsweise) und keine monatliche Grundgebühr zahlen will, kann nach tatsächlich versendeten E-Mails abrechnen."_
 
 ### Reference customers / typical users
 
 **rapidmail's primary audience:**
+
 - **Yoga studios** sending monthly schedules
 - **Accountancy firms** with quarterly newsletters
 - **Seasonal retailers** (Christmas peaks, January quiet)
 - **Local German businesses**
 - **Associations + non-profits**
 - **Freelancers** s small lists
-- **Handwerksbetriebe** (craftsmen, Per Business.digital: *"Ein Handwerksbetrieb verschickt viermal im Jahr einen Saisonalnewsletter an 800 Kunden"*)
+- **Handwerksbetriebe** (craftsmen, Per Business.digital: _"Ein Handwerksbetrieb verschickt viermal im Jahr einen Saisonalnewsletter an 800 Kunden"_)
 - **Regulated DACH industries** vyžadující jurisdictional security
 
 ### Quotes from real customers (per Software Advice)
 
-> *"Bei Rapidmail konnte ich sofort loslegen, alles ganz einfach, kein Stress. Innerhalb weniger Minuten erste Umsetzungsergebnisse. Mein Fazit: Auch für absolute Anfänger super geeignet!!"*
+> _"Bei Rapidmail konnte ich sofort loslegen, alles ganz einfach, kein Stress. Innerhalb weniger Minuten erste Umsetzungsergebnisse. Mein Fazit: Auch für absolute Anfänger super geeignet!!"_
 
-> *"Am besten gefallen hat mir der Support. Der ist aussergewöhnlich!!! Sofort immer ein kompetenter Ansprechpartner. Das findet sich in Deutschland sehr selten!"*
+> _"Am besten gefallen hat mir der Support. Der ist aussergewöhnlich!!! Sofort immer ein kompetenter Ansprechpartner. Das findet sich in Deutschland sehr selten!"_
 
-> *"Using it since many years. Best tool on the european market! Very good deliverability and support."*
+> _"Using it since many years. Best tool on the european market! Very good deliverability and support."_
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -163,7 +167,7 @@ Per Business.digital:
 
 ### Per Business.digital classification
 
-> *"rapidmail ist für KMU mit gelegentlichem Versandbedarf die günstigste und einfachste deutsche Option. Serverstandort Deutschland, Pay-per-Mail ohne Monatsbindung, einfache Bedienung. Wer mehr Automation oder Multi-Kanal braucht, wächst über rapidmail hinaus."*
+> _"rapidmail ist für KMU mit gelegentlichem Versandbedarf die günstigste und einfachste deutsche Option. Serverstandort Deutschland, Pay-per-Mail ohne Monatsbindung, einfache Bedienung. Wer mehr Automation oder Multi-Kanal braucht, wächst über rapidmail hinaus."_
 
 ---
 
@@ -172,13 +176,16 @@ Per Business.digital:
 ### 2.1 4 tarify (per oficiální 2026)
 
 #### 1. Free / Konto
+
 - **Up to 10 recipients** FREE always
 - All core features for testing
 - No credit card required
 
 #### 2. Pro Versand (Pay-per-Mail) – UNIKÁTNÍ
+
 **Per EuropeanStack:**
-> *"Pay-as-you-go option requires no subscription: you purchase mailing credits, with pricing starting from EUR 16 per mailing for up to 250 recipients. Credits remain valid for 12 months."*
+
+> _"Pay-as-you-go option requires no subscription: you purchase mailing credits, with pricing starting from EUR 16 per mailing for up to 250 recipients. Credits remain valid for 12 months."_
 
 - **No subscription** required
 - **Pay only when you send**
@@ -190,23 +197,26 @@ Per Business.digital:
 - **3 automated mailings** max
 
 #### 3. Starter (Subscription)
+
 - **From €9-15/měsíc**
 - **250 recipients** to start
 - **Unlimited mailings**
 - **Email support**
 - Core features
-- Per EuropeanStack: *"Starter plan at EUR 9 per month covers up to 250 recipients with unlimited mailings"*
+- Per EuropeanStack: _"Starter plan at EUR 9 per month covers up to 250 recipients with unlimited mailings"_
 
 #### 4. Premium / Performance (Subscription)
+
 - **€25-29/měsíc** for 1 000 recipients
 - **Advanced segmentation**
 - **A/B testing**
 - **Priority support**
 - **More automation**
 - **Multiple users**
-- Per EuropeanStack: *"Premium plan at EUR 29 per month extends to 1,000 recipients with advanced segmentation and priority support"*
+- Per EuropeanStack: _"Premium plan at EUR 29 per month extends to 1,000 recipients with advanced segmentation and priority support"_
 
 #### 5. Unlimited / Enterprise
+
 - **Custom pricing** (on demand)
 - **Unlimited everything** (automations, forms, lists, sender addresses, users)
 - **5 mailing attachments**
@@ -217,21 +227,23 @@ Per Business.digital:
 ### 2.2 Pay-per-mail pricing examples (per EuropeanStack + Trusted)
 
 | Recipients | Pay-per-send |
-|---|---|
-| 250 | €16 |
-| 500 | ~€25-30 |
-| 1 000 | ~€40-50 |
-| 2 500 | ~€80-100 |
-| 5 000 | ~€150-200 |
-| 10 000 | ~€300+ |
-| 25 000 | Custom |
+| ---------- | ------------ |
+| 250        | €16          |
+| 500        | ~€25-30      |
+| 1 000      | ~€40-50      |
+| 2 500      | ~€80-100     |
+| 5 000      | ~€150-200    |
+| 10 000     | ~€300+       |
+| 25 000     | Custom       |
 
 ### 2.3 Pay-per-mail benefits
 
 Per EuropeanStack:
-> *"For businesses sending fewer than 12 newsletters per year, this is dramatically cheaper than any subscription-based competitor."*
+
+> _"For businesses sending fewer than 12 newsletters per year, this is dramatically cheaper than any subscription-based competitor."_
 
 Example calculation:
+
 - **Yoga studio** sends 4x/year to 800 recipients
 - Pay-per-mail: ~4× €25 = **€100/year**
 - Subscription (CleverReach €15/měsíc): **€180/year**
@@ -240,7 +252,8 @@ Example calculation:
 ### 2.4 Subscription benefits
 
 Per Business.digital:
-> *"Volumentarife ab €9/Monat für 1.000 Empfänger, monatlich kündbar. Jahrestarife günstiger."*
+
+> _"Volumentarife ab €9/Monat für 1.000 Empfänger, monatlich kündbar. Jahrestarife günstiger."_
 
 - **Unlimited mailings/month**
 - **Predictable costs**
@@ -251,7 +264,8 @@ Per Business.digital:
 ### 2.5 Transactional email add-on
 
 Per Trusted:
-> *"Sie können bei Bedarf das Add-on für den Versand von Transaktions-E-Mails buchen."*
+
+> _"Sie können bei Bedarf das Add-on für den Versand von Transaktions-E-Mails buchen."_
 
 - **Add-on** (extra cost)
 - For order confirmations, password resets, etc.
@@ -266,30 +280,31 @@ Per Trusted:
 
 ### 2.7 Cenové porovnání (10K recipients regular sending, 2026)
 
-| Platform | Cena/měsíc |
-|---|---|
-| **rapidmail Premium** | ~€100-150 |
-| **CleverReach** | ~€100 |
-| **MailerLite Advanced** | ~$80 (€75) |
-| **Brevo Business** | ~€65 |
-| **Mailchimp Standard** | ~$135 (€125) |
+| Platform                | Cena/měsíc   |
+| ----------------------- | ------------ |
+| **rapidmail Premium**   | ~€100-150    |
+| **CleverReach**         | ~€100        |
+| **MailerLite Advanced** | ~$80 (€75)   |
+| **Brevo Business**      | ~€65         |
+| **Mailchimp Standard**  | ~$135 (€125) |
 
 ### 2.8 Cenové porovnání (occasional sending, 4x/year, 1000 recipients)
 
-| Platform | Cena/rok |
-|---|---|
-| **rapidmail Pay-per-Mail** | ~€100-180 |
-| **CleverReach Free → upgrade** | ~€180+ |
-| **MailerLite Free** | Free (limited features) |
-| **Mailchimp Free** | Free (limited features) |
-| **Brevo Free** | Free (300 emails/day) |
+| Platform                       | Cena/rok                |
+| ------------------------------ | ----------------------- |
+| **rapidmail Pay-per-Mail**     | ~€100-180               |
+| **CleverReach Free → upgrade** | ~€180+                  |
+| **MailerLite Free**            | Free (limited features) |
+| **Mailchimp Free**             | Free (limited features) |
+| **Brevo Free**                 | Free (300 emails/day)   |
 
 ⚠️ rapidmail's pay-per-mail je **uniquely advantageous** pro occasional senders s 250-2000 recipients.
 
 ### 2.9 Pricing critique
 
 Per EmailTooltester (DE):
-> *"Im Vergleich zu anderen Newsletter-Tools wie CleverReach empfinde ich aber auch den Performance Tarif von rapidmail als etwas überteuert"*
+
+> _"Im Vergleich zu anderen Newsletter-Tools wie CleverReach empfinde ich aber auch den Performance Tarif von rapidmail als etwas überteuert"_
 
 - **Subscription tiers** slightly higher than CleverReach
 - **Justified by:** simplicity + phone support + Made in Germany
@@ -302,6 +317,7 @@ Per EmailTooltester (DE):
 ### 3.1 Pay-per-mail pricing model (UNIKÁTNÍ)
 
 **No competitor offers** comparable pay-per-mail option:
+
 - **No subscription** required
 - **Credits valid 12 months**
 - **Perfect for occasional senders**
@@ -309,7 +325,8 @@ Per EmailTooltester (DE):
 ### 3.2 100% Made in Germany infrastructure
 
 Per EuropeanStack:
-> *"rapidmail is based in Freiburg, Germany, and stores all data exclusively on German servers."*
+
+> _"rapidmail is based in Freiburg, Germany, and stores all data exclusively on German servers."_
 
 - **Servers EXCLUSIVELY v Německu** (ne EU general)
 - **NO cross-border data transfers**
@@ -317,14 +334,17 @@ Per EuropeanStack:
 - **Pro DACH regulated industries critical**
 
 Per EuropeanStack:
-> *"For businesses in regulated industries or those that have experienced scrutiny from German data protection authorities, rapidmail provides a level of jurisdictional certainty that US-based platforms simply cannot match."*
+
+> _"For businesses in regulated industries or those that have experienced scrutiny from German data protection authorities, rapidmail provides a level of jurisdictional certainty that US-based platforms simply cannot match."_
 
 ### 3.3 CSA certification + DACH whitelisting
 
 Per EuropeanStack:
-> *"As a CSA-certified sender, rapidmail benefits from whitelisting by major German and European ISPs including GMX, Web.de, T-Online, and others. This translates to strong inbox placement rates, particularly for the DACH market."*
+
+> _"As a CSA-certified sender, rapidmail benefits from whitelisting by major German and European ISPs including GMX, Web.de, T-Online, and others. This translates to strong inbox placement rates, particularly for the DACH market."_
 
 **Whitelisted by:**
+
 - **GMX**
 - **web.de**
 - **T-Online**
@@ -334,21 +354,25 @@ Per EuropeanStack:
 ### 3.4 Free phone support v němčině (~9 min response!)
 
 Per European Purpose:
-> *"All customers receive free support via phone, email, and the ticket system, with the team based in Freiburg providing native German-language assistance. The average response time is reported to be approximately 9 minutes, which is exceptional for a SaaS platform."*
+
+> _"All customers receive free support via phone, email, and the ticket system, with the team based in Freiburg providing native German-language assistance. The average response time is reported to be approximately 9 minutes, which is exceptional for a SaaS platform."_
 
 **UNIKÁTNÍ pro SaaS platform:**
+
 - **Free phone support** all plans
 - **~9 minutes average response**
 - **Native German team**
 - **Freiburg-based**
-- Per Newsletter-tools.de: *"Telefon-Support inklusive"*
+- Per Newsletter-tools.de: _"Telefon-Support inklusive"_
 
 ### 3.5 Simplicity-first philosophy
 
 Per EuropeanStack:
-> *"rapidmail does not try to be everything. It does not offer CRM, SMS, landing pages, or marketing automation."*
+
+> _"rapidmail does not try to be everything. It does not offer CRM, SMS, landing pages, or marketing automation."_
 
 **Deliberately limited scope:**
+
 - Newsletter focus
 - Basic automation
 - Forms
@@ -359,18 +383,21 @@ Per EuropeanStack:
 - No multi-channel
 
 **Why this matters:**
+
 - **Easy to learn** (minutes to first newsletter)
 - **No feature bloat**
 - **Beginner-friendly**
 - **No learning curve**
 
 Per real customer:
-> *"Bei Rapidmail konnte ich sofort loslegen, alles ganz einfach, kein Stress."*
+
+> _"Bei Rapidmail konnte ich sofort loslegen, alles ganz einfach, kein Stress."_
 
 ### 3.6 1.5 million+ free images library
 
 Per Software Suggest:
-> *"over 1.5 million free images"*
+
+> _"over 1.5 million free images"_
 
 - Built-in stock photo library
 - No external service needed
@@ -388,25 +415,26 @@ Per Software Suggest:
 
 ### 3.8 Vs. DACH competitors
 
-| Aspect | rapidmail | CleverReach | Inxmail | Mapp/Evalanche |
-|---|---|---|---|---|
-| **Origin** | DE (Freiburg, 2008) | DE (Rastede, 2007) | DE | CH/AT |
-| **Target segment** | SMB + occasional | SMB → mid-market | Mid-market → enterprise | Mid-market |
-| **Pricing model** | Pay-per-mail OR sub | Subscription only | Subscription only | Subscription only |
-| **Free plan** | 10 recipients free | 250 recipients free | ❌ | ❌ |
-| **Pay-per-mail** | ✅ UNIKÁTNÍ! | ❌ | ❌ | ❌ |
-| **UI languages** | 3 (EN, DE, FR) | 6 | Multilingual | Multilingual |
-| **Phone support** | ✅ Free | Premium add-on | Yes | Yes |
-| **CSA certified** | ✅ | ✅ likely | ✅ | varies |
-| **Made in Germany** | ✅ exclusive servers | ✅ EU hosting | ✅ | DACH region |
-| **API** | ❌ NO API! | ✅ | ✅ | ✅ |
-| **Multi-user** | Limited per plan | ✅ unlimited free | Per plan | Per plan |
-| **Automation depth** | Basic | Basic-mid | Advanced | Advanced |
-| **Complexity** | Lowest (simplicity) | Mid | Higher | Higher |
+| Aspect               | rapidmail            | CleverReach         | Inxmail                 | Mapp/Evalanche    |
+| -------------------- | -------------------- | ------------------- | ----------------------- | ----------------- |
+| **Origin**           | DE (Freiburg, 2008)  | DE (Rastede, 2007)  | DE                      | CH/AT             |
+| **Target segment**   | SMB + occasional     | SMB → mid-market    | Mid-market → enterprise | Mid-market        |
+| **Pricing model**    | Pay-per-mail OR sub  | Subscription only   | Subscription only       | Subscription only |
+| **Free plan**        | 10 recipients free   | 250 recipients free | ❌                      | ❌                |
+| **Pay-per-mail**     | ✅ UNIKÁTNÍ!         | ❌                  | ❌                      | ❌                |
+| **UI languages**     | 3 (EN, DE, FR)       | 6                   | Multilingual            | Multilingual      |
+| **Phone support**    | ✅ Free              | Premium add-on      | Yes                     | Yes               |
+| **CSA certified**    | ✅                   | ✅ likely           | ✅                      | varies            |
+| **Made in Germany**  | ✅ exclusive servers | ✅ EU hosting       | ✅                      | DACH region       |
+| **API**              | ❌ NO API!           | ✅                  | ✅                      | ✅                |
+| **Multi-user**       | Limited per plan     | ✅ unlimited free   | Per plan                | Per plan          |
+| **Automation depth** | Basic                | Basic-mid           | Advanced                | Advanced          |
+| **Complexity**       | Lowest (simplicity)  | Mid                 | Higher                  | Higher            |
 
 ### 3.9 Filosofie "Weniger ist mehr"
 
 rapidmail záměrně **omezuje features** pro:
+
 - Maximální jednoduchost
 - Beginner-friendly experience
 - Reliable core functionality
@@ -421,6 +449,7 @@ rapidmail záměrně **omezuje features** pro:
 ### 4.1 Recipients
 
 #### Standard fields
+
 - Email (required)
 - First name, last name
 - Company
@@ -431,6 +460,7 @@ rapidmail záměrně **omezuje features** pro:
 - Custom fields
 
 #### Custom fields
+
 - **Text, number, date, dropdown**
 - Configure per business need
 - Used pro personalization + segmentation
@@ -445,11 +475,13 @@ rapidmail záměrně **omezuje features** pro:
 ### 4.3 Segmentation (basic)
 
 Per EmailTooltester:
+
 - **Basic segmentation** in Starter
 - **Erweiterte Segmentierungen** v Premium / Performance
 - **Unlimited segments** v Unlimited tier
 
 #### Filter criteria
+
 - **Contact attributes** (custom fields, tags)
 - **Email engagement** (opened/clicked specific campaigns)
 - **Subscription date**
@@ -457,6 +489,7 @@ Per EmailTooltester:
 - **Custom fields**
 
 #### Operators
+
 - Basic AND, OR, NOT
 - Equal, contains, between
 - Date ranges
@@ -484,7 +517,7 @@ Transitions:
 ### 4.6 Import & Export
 
 Per Software Advice:
-*"automatic bounce management, unsubscribing options, subscription notices, blacklists, recipient segmentation"*
+_"automatic bounce management, unsubscribing options, subscription notices, blacklists, recipient segmentation"_
 
 - **CSV upload**
 - **Copy-paste**
@@ -497,22 +530,26 @@ Per Software Advice:
 ### 4.7 Limity per plan (per Trusted)
 
 **Pro Versand (Pay-per-Mail):**
+
 - 1 user
 - 3 automated mailings max
 - Limited segmentation
 
 **Starter:**
+
 - 1-2 users typically
 - More automation options
 - Standard segmentation
 
 **Premium / Performance:**
+
 - Multiple users
 - Advanced segmentation
 - More automation
 - Limited forms (1-5 typically)
 
 **Unlimited:**
+
 - Unlimited users
 - Unlimited automation
 - Unlimited forms
@@ -526,6 +563,7 @@ Per Software Advice:
 ### 5.1 Campaign creation
 
 Per oficiální + recenze:
+
 - **Visual drag-and-drop editor**
 - **Intuitive interface**
 - **Pre-built blocks**
@@ -585,12 +623,14 @@ Confirm
 ### 5.4 Editor UX praise
 
 Per real customer:
-> *"Am besten gefällt mir die Anwenderfreundlichkeit. Im Vergleich zu anderen Softwares, hab ich hier eine absolut übersichtliche und sofort, intuitiv verständliche Anwenderoberfläche. Ich bin absoluter Anfänger in dem Bereich Onlinemarketing und habe bereits mehrere andere Newsletter Softwares ausprobiert. Bei der Konkurenz war es immer das selbe: purer Stress beim Einrichten, weil viel zu komplex und scheinbar von irgendwelchen Technikfreaks eingerichtet."*
+
+> _"Am besten gefällt mir die Anwenderfreundlichkeit. Im Vergleich zu anderen Softwares, hab ich hier eine absolut übersichtliche und sofort, intuitiv verständliche Anwenderoberfläche. Ich bin absoluter Anfänger in dem Bereich Onlinemarketing und habe bereits mehrere andere Newsletter Softwares ausprobiert. Bei der Konkurenz war es immer das selbe: purer Stress beim Einrichten, weil viel zu komplex und scheinbar von irgendwelchen Technikfreaks eingerichtet."_
 
 ### 5.5 1-Click-Design (Performance+)
 
 Per EmailTooltester:
-> *"1-Klick-Design zur automatischen Generierung von Templates im Unternehmensdesign"*
+
+> _"1-Klick-Design zur automatischen Generierung von Templates im Unternehmensdesign"_
 
 - **AI-assisted template generation** from website
 - Auto-detects brand colors, fonts, logo
@@ -616,7 +656,7 @@ Per EmailTooltester:
 ### 6.1 Template library
 
 Per Software Suggest:
-*"250 free templates and over 1.5 million free images"*
+_"250 free templates and over 1.5 million free images"_
 
 - **250+ responsive templates**
 - Categories:
@@ -647,7 +687,8 @@ Per Software Suggest:
 ### 6.4 German design conventions
 
 Per EU Picks:
-> *"Templates folgen deutschen Designkonventionen."*
+
+> _"Templates folgen deutschen Designkonventionen."_
 
 - **DACH-appropriate** designs
 - **Professional, conservative styling**
@@ -661,9 +702,11 @@ Per EU Picks:
 ### 7.1 Form types
 
 Per Newsletter-tools.de:
-> *"rapidmail stellt verschiedene Formulartypen bereit: klassische Anmeldeboxen, Pop-ups und Exit-Intent-Layer."*
+
+> _"rapidmail stellt verschiedene Formulartypen bereit: klassische Anmeldeboxen, Pop-ups und Exit-Intent-Layer."_
 
 **Multiple form types:**
+
 - **Klassische Anmeldeboxen** (classic sign-up boxes, embedded)
 - **Pop-ups** (modal)
 - **Exit-Intent-Layer** (exit-intent popups)
@@ -685,9 +728,11 @@ Per Newsletter-tools.de:
 ### 7.3 Double opt-in pre-configured
 
 Per EU Picks:
-> *"Double-Opt-in ist standardmäßig aktiviert (nicht in den Einstellungen versteckt)."*
+
+> _"Double-Opt-in ist standardmäßig aktiviert (nicht in den Einstellungen versteckt)."_
 
 **UNIKÁTNÍ approach:**
+
 - **Default ON** (not hidden v settings!)
 - DACH compliance built-in
 - No risk of forgetting
@@ -701,7 +746,8 @@ Per EU Picks:
 ### 7.5 Form limitations
 
 Per EmailTooltester:
-> *"Sie nur bis zu 5 Anmeldeformula..."* (limited to 5 sign-up forms v Performance plan)
+
+> _"Sie nur bis zu 5 Anmeldeformula..."_ (limited to 5 sign-up forms v Performance plan)
 
 - **Limit on forms** per plan
 - **Performance:** up to 5 forms
@@ -714,9 +760,11 @@ Per EmailTooltester:
 ### 8.1 Automation capabilities
 
 Per Newsletter-tools.de:
-> *"rapidmail bietet grundlegende Automation-Funktionen für Willkommens-E-Mails, Geburtstagsmailings und einfache Follow-up-Sequenzen. Für komplexere Marketing-Automationen ist die Plattform jedoch nicht ausgelegt."*
+
+> _"rapidmail bietet grundlegende Automation-Funktionen für Willkommens-E-Mails, Geburtstagsmailings und einfache Follow-up-Sequenzen. Für komplexere Marketing-Automationen ist die Plattform jedoch nicht ausgelegt."_
 
 **rapidmail focuses on BASIC automation:**
+
 - **Welcome emails** (Willkommens-E-Mails)
 - **Birthday mailings** (Geburtstagsmailings)
 - **Simple follow-up sequences**
@@ -747,11 +795,13 @@ Per Newsletter-tools.de:
 ### 8.5 Automation limitations
 
 Per EU Picks:
-> *"rapidmail bietet einfache Autoresponder: Willkommens-E-Mails, Geburtstagsnachrichten, Follow-up-Sequenzen. Die funktionieren gut für einfache Bedürfnisse."*
+
+> _"rapidmail bietet einfache Autoresponder: Willkommens-E-Mails, Geburtstagsnachrichten, Follow-up-Sequenzen. Die funktionieren gut für einfache Bedürfnisse."_
 >
-> *"Brevo bietet volle Marketing-Automation: Multi-Channel-Workflows mit bedingter Logik, Lead-Scoring und CRM-Integration. Wenn du 'E-Mail Tag 1 senden, prüfen ob geklickt, SMS an Nicht-Klicker Tag 3, Konvertierer in Deal-Pipeline' brauchst, kann das nur Brevo."*
+> _"Brevo bietet volle Marketing-Automation: Multi-Channel-Workflows mit bedingter Logik, Lead-Scoring und CRM-Integration. Wenn du 'E-Mail Tag 1 senden, prüfen ob geklickt, SMS an Nicht-Klicker Tag 3, Konvertierer in Deal-Pipeline' brauchst, kann das nur Brevo."_
 
 ⚠️ **rapidmail NEMÁ:**
+
 - **Complex branching workflows**
 - **Multi-channel orchestration**
 - **Lead scoring**
@@ -770,7 +820,8 @@ Per EU Picks:
 ### 8.7 No advanced workflows
 
 Per Newsletter-tools.de:
-> *"Wer ausgefeilte Customer Journeys mit vielen Verzweigungen benötigt, sollte sich eher bei ActiveCampaign oder Brevo umsehen."*
+
+> _"Wer ausgefeilte Customer Journeys mit vielen Verzweigungen benötigt, sollte sich eher bei ActiveCampaign oder Brevo umsehen."_
 
 For complex automation **migrate to ActiveCampaign, Brevo, CleverReach, or other platforms**.
 
@@ -787,6 +838,7 @@ For complex automation **migrate to ActiveCampaign, Brevo, CleverReach, or other
 ### 9.2 Personalization vs. SmartEmailing
 
 ⚠️ rapidmail's personalization is **basic vs. SmartEmailing**:
+
 - No Czech 5. pád handling
 - No advanced German case forms (limited)
 - No CZ/SK calendar (no jmeniny)
@@ -801,19 +853,23 @@ For complex automation **migrate to ActiveCampaign, Brevo, CleverReach, or other
 ### 9.4 Segmentation capabilities
 
 #### Basic (Starter)
+
 - Standard fields
 - List membership
 - Basic engagement
 
 #### Advanced (Premium/Performance+)
+
 Per EmailTooltester:
-> *"erweiterte Segmentierungen"*
+
+> _"erweiterte Segmentierungen"_
 
 - More criteria
 - Combinations
 - Multi-condition
 
 #### Unlimited (Unlimited tier)
+
 - All criteria
 - Complex combinations
 - No artificial limits
@@ -832,7 +888,8 @@ Per EmailTooltester:
 ### 10.2 Plan limitations
 
 Per EmailTooltester:
-> *"Bei anderen Anbietern in einer ähnlichen Preisklasse wie GetResponse, sind Optionen wie A/B Tests und mehr, bereits im günstigsten Abonnement enthalten."*
+
+> _"Bei anderen Anbietern in einer ähnlichen Preisklasse wie GetResponse, sind Optionen wie A/B Tests und mehr, bereits im günstigsten Abonnement enthalten."_
 
 ⚠️ **A/B testing v Essential tier není** – pouze v Performance+ a vyšších tarifech.
 
@@ -859,7 +916,7 @@ Track results
 ### 10.4 Spam Test
 
 Per Software Advice:
-*"spam scoring"*
+_"spam scoring"_
 
 - **Built-in spam test**
 - Pre-send quality check
@@ -873,7 +930,7 @@ Per Software Advice:
 ### 11.1 Real-time statistics
 
 Per oficiální:
-*"A short look at the statistics serves as an analysis"*
+_"A short look at the statistics serves as an analysis"_
 
 - **Sent, delivered, bounced**
 - **Opens** (unique + total), open rate
@@ -903,7 +960,8 @@ Per oficiální:
 ### 11.5 Performance tier expansion
 
 Per EmailTooltester:
-> *"erweiterte Statistiken"* (advanced statistics) in Performance tier.
+
+> _"erweiterte Statistiken"_ (advanced statistics) in Performance tier.
 
 ### 11.6 Export options
 
@@ -913,6 +971,7 @@ Per EmailTooltester:
 ### 11.7 Reporting limitations
 
 ⚠️ **Less sophisticated** than competitors:
+
 - No multi-touch attribution
 - Limited custom dashboards
 - Basic export options
@@ -926,9 +985,11 @@ Per EmailTooltester:
 ### 12.1 CSA Membership
 
 Per oficiální + EuropeanStack:
-> *"Our membership in the 'Certified Senders Alliance' guarantees a good email delivery rate of your mailing."*
+
+> _"Our membership in the 'Certified Senders Alliance' guarantees a good email delivery rate of your mailing."_
 
 **Certified Senders Alliance:**
+
 - **Whitelisting** by major German + EU ISPs
 - **Strict sender reputation standards**
 - **Continuous monitoring**
@@ -937,9 +998,11 @@ Per oficiální + EuropeanStack:
 ### 12.2 Made in Germany infrastructure
 
 Per EuropeanStack:
-> *"rapidmail is based in Freiburg, Germany, and stores all data exclusively on German servers."*
+
+> _"rapidmail is based in Freiburg, Germany, and stores all data exclusively on German servers."_
 
 **Key advantages:**
+
 - **German servers only**
 - **No US-based subprocessors**
 - **No Schrems II issues**
@@ -948,6 +1011,7 @@ Per EuropeanStack:
 ### 12.3 DACH ISP whitelisting
 
 Whitelisted by:
+
 - **GMX**
 - **web.de**
 - **T-Online**
@@ -955,25 +1019,28 @@ Whitelisted by:
 - **Other major DACH ISPs**
 
 Per EU Picks:
-> *"rapidmail unterhält dedizierte IP-Pools für den DACH-Markt und hat etablierte Sender-Reputationen bei deutschen ISPs (GMX, Web.de, T-Online). Für Unternehmen, die primär an deutsche Empfänger versenden, bedeutet das höhere Posteingangsraten."*
+
+> _"rapidmail unterhält dedizierte IP-Pools für den DACH-Markt und hat etablierte Sender-Reputationen bei deutschen ISPs (GMX, Web.de, T-Online). Für Unternehmen, die primär an deutsche Empfänger versenden, bedeutet das höhere Posteingangsraten."_
 
 ### 12.4 Authentication setup
 
 Per EuropeanStack:
-> *"The platform handles SPF, DKIM, and DMARC configuration"*
 
-| Protokol | Setup |
-|---|---|
-| **SPF** | rapidmail handles |
-| **DKIM** | rapidmail handles |
-| **DMARC** | rapidmail handles |
+> _"The platform handles SPF, DKIM, and DMARC configuration"_
+
+| Protokol                | Setup              |
+| ----------------------- | ------------------ |
+| **SPF**                 | rapidmail handles  |
+| **DKIM**                | rapidmail handles  |
+| **DMARC**               | rapidmail handles  |
 | **Sender verification** | Email verification |
-| **Dedicated IP** | High-volume option |
+| **Dedicated IP**        | High-volume option |
 
 ### 12.5 Dedicated IP
 
 Per EuropeanStack:
-> *"provides dedicated IP options for high-volume senders"*
+
+> _"provides dedicated IP options for high-volume senders"_
 
 - **Available pro Premium+/Enterprise**
 - **High-volume senders** benefit
@@ -982,7 +1049,7 @@ Per EuropeanStack:
 ### 12.6 Automatic bounce management
 
 Per Software Advice:
-*"automatic bounce management"*
+_"automatic bounce management"_
 
 - **Hard bounces** auto-suppressed
 - **Soft bounces** monitoring + retry
@@ -998,10 +1065,12 @@ Per Software Advice:
 ### 12.8 Customer praise on deliverability
 
 Per Software Advice:
-> *"Very good deliverability and support."*
+
+> _"Very good deliverability and support."_
 
 Per EU Picks:
-> *"Hervorragende Zustellbarkeit im DACH-Raum"*
+
+> _"Hervorragende Zustellbarkeit im DACH-Raum"_
 
 ---
 
@@ -1010,7 +1079,7 @@ Per EU Picks:
 ### 13.1 Spam test (Vorab-Spam-Test)
 
 Per Trusted:
-*"Vorab-Spam-Test"*
+_"Vorab-Spam-Test"_
 
 - **Pre-send spam analysis**
 - **Score prediction**
@@ -1020,7 +1089,7 @@ Per Trusted:
 ### 13.2 Deliverability test (Zustellbarkeitstest)
 
 Per Software Suggest:
-*"Companies can carry out deliverability tests to identify weak points in the mailing and rectify them before sending."*
+_"Companies can carry out deliverability tests to identify weak points in the mailing and rectify them before sending."_
 
 - **Pre-send deliverability check**
 - **Domain authentication verification**
@@ -1041,7 +1110,7 @@ Per Software Suggest:
 ### 14.1 Display test capabilities
 
 Per Software Suggest:
-*"Display tests simulate the view on different devices."*
+_"Display tests simulate the view on different devices."_
 
 - **Desktop preview**
 - **Tablet preview**
@@ -1068,9 +1137,11 @@ Per Software Suggest:
 ### 15.1 Free phone support – core differentiator
 
 Per European Purpose:
-> *"All customers receive free support via phone, email, and the ticket system, with the team based in Freiburg providing native German-language assistance."*
+
+> _"All customers receive free support via phone, email, and the ticket system, with the team based in Freiburg providing native German-language assistance."_
 
 **UNIKÁTNÍ:**
+
 - **Phone support FREE** for ALL plans (including Pay-per-mail!)
 - **Native German team** v Freiburgu
 - **Email + ticket** support also
@@ -1079,11 +1150,13 @@ Per European Purpose:
 ### 15.2 Response time excellence
 
 Per European Purpose:
-> *"The average response time is reported to be approximately 9 minutes, which is exceptional for a SaaS platform."*
+
+> _"The average response time is reported to be approximately 9 minutes, which is exceptional for a SaaS platform."_
 
 **~9 min average response** = **exceptional for SaaS!**
 
 Most competitors:
+
 - 24-48 hour response standard
 - Premium tier needed for faster
 - No phone support typically
@@ -1091,14 +1164,16 @@ Most competitors:
 ### 15.3 Support quality praise
 
 Per real customer reviews:
-> *"Am besten gefallen hat mir der Support. Der ist aussergewöhnlich!!! Sofort immer ein kompetenter Ansprechpartner. Das findet sich in Deutschland sehr selten!"*
 
-> *"rapidmail ist wirklich einfach zu bedienen. Und der Support hat bei einer Frage umgehend geantwortet."*
+> _"Am besten gefallen hat mir der Support. Der ist aussergewöhnlich!!! Sofort immer ein kompetenter Ansprechpartner. Das findet sich in Deutschland sehr selten!"_
+
+> _"rapidmail ist wirklich einfach zu bedienen. Und der Support hat bei einer Frage umgehend geantwortet."_
 
 ### 15.4 Support team capabilities
 
 Per European Purpose:
-> *"The support team can help with everything from technical questions about template design to strategic advice on campaign optimization."*
+
+> _"The support team can help with everything from technical questions about template design to strategic advice on campaign optimization."_
 
 - Technical support
 - Template design help
@@ -1109,7 +1184,7 @@ Per European Purpose:
 ### 15.5 Multi-channel support
 
 Per GetApp:
-*"rapidmail offers the following support options: Email/Help Desk, Phone Support, Knowledge Base, Chat, FAQs/Forum"*
+_"rapidmail offers the following support options: Email/Help Desk, Phone Support, Knowledge Base, Chat, FAQs/Forum"_
 
 - **Phone support** (free!)
 - **Email/Help Desk**
@@ -1128,29 +1203,35 @@ Per GetApp:
 rapidmail má **limited native integrations** vs. competitors:
 
 #### E-commerce
+
 - **Shopify** (basic integration)
 - **WooCommerce** (WordPress plugin)
 - **Magento** (limited)
 - **Shopware** (limited)
-- Per Software Suggest: *"seamless e-commerce integration"*
+- Per Software Suggest: _"seamless e-commerce integration"_
 
 #### CMS
+
 - **WordPress** (plugin)
 - **Joomla** (limited)
 
 #### CRM
+
 - Limited native CRM integration
-- Per Newsletter-tools.de: *"There is no built-in CRM"*
+- Per Newsletter-tools.de: _"There is no built-in CRM"_
 
 #### Other
+
 - Some integrations via Zapier (limited)
 
 ### 16.2 Notable limitation: NO API
 
 Per GetApp:
-> *"Q. Does rapidmail offer an API? **No, rapidmail does not have an API available.**"*
+
+> _"Q. Does rapidmail offer an API? **No, rapidmail does not have an API available.**"_
 
 ⚠️ **CRITICAL limitation:**
+
 - **No public API** (typical features documented)
 - **Limited custom integration** possible
 - **Less developer-friendly**
@@ -1172,9 +1253,11 @@ Per GetApp:
 ### 16.5 Integration philosophy
 
 Per Business.digital + EU Picks:
-> *"rapidmail does not try to be everything"*
+
+> _"rapidmail does not try to be everything"_
 
 **Limited integrations are intentional:**
+
 - **Focus on core newsletter**
 - **Avoid feature bloat**
 - **Simplicity first**
@@ -1188,7 +1271,8 @@ For complex integrations: **outgrow rapidmail to other platforms**.
 ### 17.1 Transactional add-on
 
 Per Trusted:
-> *"Sie können bei Bedarf das Add-on für den Versand von Transaktions-E-Mails buchen."*
+
+> _"Sie können bei Bedarf das Add-on für den Versand von Transaktions-E-Mails buchen."_
 
 - **Add-on feature** (separate cost)
 - **Order confirmations**
@@ -1209,7 +1293,8 @@ Per Trusted:
 ### 18.1 100% Made in Germany
 
 Per EuropeanStack:
-> *"rapidmail is based in Freiburg, Germany, and stores all data exclusively on German servers."*
+
+> _"rapidmail is based in Freiburg, Germany, and stores all data exclusively on German servers."_
 
 - **Servers EXCLUSIVELY v Německu** (ne EU general!)
 - **NO cross-border transfers**
@@ -1224,12 +1309,13 @@ Per EuropeanStack:
 - **Right to be Forgotten**
 - **Data export** per subscriber
 - **DPA available**
-- Per EU Picks: *"DSGVO-Konformität ist vorbildlich"*
+- Per EU Picks: _"DSGVO-Konformität ist vorbildlich"_
 
 ### 18.3 Auftragsverarbeitungsvertrag (DPA)
 
 Per EuropeanStack:
-> *"provides built-in double opt-in, consent tracking, and data processing agreements as standard."*
+
+> _"provides built-in double opt-in, consent tracking, and data processing agreements as standard."_
 
 - **DPA as standard** (Auftragsverarbeitungsvertrag)
 - **Pre-prepared** v němčině
@@ -1239,9 +1325,11 @@ Per EuropeanStack:
 ### 18.4 German jurisdiction advantages
 
 Per EuropeanStack:
-> *"For businesses in regulated industries or those that have experienced scrutiny from German data protection authorities, rapidmail provides a level of jurisdictional certainty that US-based platforms simply cannot match."*
+
+> _"For businesses in regulated industries or those that have experienced scrutiny from German data protection authorities, rapidmail provides a level of jurisdictional certainty that US-based platforms simply cannot match."_
 
 **Pro regulated industries:**
+
 - **Banking**
 - **Healthcare**
 - **Government**
@@ -1266,7 +1354,8 @@ Per EuropeanStack:
 ### 18.7 Pro DACH advantage
 
 Per EuropeanStack:
-> *"German and DACH-market businesses that value CSA certification, German-language support, and the jurisdictional security of a fully German hosting infrastructure."*
+
+> _"German and DACH-market businesses that value CSA certification, German-language support, and the jurisdictional security of a fully German hosting infrastructure."_
 
 ---
 
@@ -1275,9 +1364,10 @@ Per EuropeanStack:
 ### 19.1 No public API limitation
 
 Per GetApp:
-*"Q. Does rapidmail offer an API? **No, rapidmail does not have an API available.**"*
+_"Q. Does rapidmail offer an API? **No, rapidmail does not have an API available.**"_
 
 ⚠️ **Major limitation pro developers:**
+
 - **No public REST API**
 - **No documentation pro API**
 - **Custom integrations limited**
@@ -1321,9 +1411,11 @@ Per GetApp:
 ### 20.2 Limited automation
 
 Per Newsletter-tools.de:
-> *"Für komplexere Marketing-Automationen ist die Plattform jedoch nicht ausgelegt."*
+
+> _"Für komplexere Marketing-Automationen ist die Plattform jedoch nicht ausgelegt."_
 
 ⚠️ **rapidmail NEMÁ:**
+
 - Complex branching workflows
 - Multi-channel orchestration (email only)
 - Lead scoring
@@ -1336,9 +1428,11 @@ Per Newsletter-tools.de:
 ### 20.3 No CRM, SMS, landing pages
 
 Per EuropeanStack:
-> *"It does not offer CRM, SMS, landing pages, or marketing automation."*
+
+> _"It does not offer CRM, SMS, landing pages, or marketing automation."_
 
 **Intentional limitation:**
+
 - Email newsletter only
 - For multi-channel: outgrow to Brevo, CleverReach, ActiveCampaign
 
@@ -1352,7 +1446,8 @@ Per EuropeanStack:
 ### 20.5 Higher pricing vs. budget competitors
 
 Per EmailTooltester:
-> *"Im Vergleich zu anderen Newsletter-Tools wie CleverReach empfinde ich aber auch den Performance Tarif von rapidmail als etwas überteuert"*
+
+> _"Im Vergleich zu anderen Newsletter-Tools wie CleverReach empfinde ich aber auch den Performance Tarif von rapidmail als etwas überteuert"_
 
 - **Subscription tiers slightly higher** than CleverReach (similar features)
 - **Justified by:** simplicity + phone support
@@ -1361,7 +1456,8 @@ Per EmailTooltester:
 ### 20.6 Form limits per plan
 
 Per EmailTooltester:
-> *"Sie nur bis zu 5 Anmeldeformula..."* (only up to 5 sign-up forms v Performance)
+
+> _"Sie nur bis zu 5 Anmeldeformula..."_ (only up to 5 sign-up forms v Performance)
 
 - **Form count limits** lower tiers
 - **Unlimited** only v Unlimited tier
@@ -1369,14 +1465,16 @@ Per EmailTooltester:
 ### 20.7 A/B testing in higher tiers only
 
 Per EmailTooltester:
-> *"Bei anderen Anbietern in einer ähnlichen Preisklasse wie GetResponse, sind Optionen wie A/B Tests und mehr, bereits im günstigsten Abonnement enthalten."*
+
+> _"Bei anderen Anbietern in einer ähnlichen Preisklasse wie GetResponse, sind Optionen wie A/B Tests und mehr, bereits im günstigsten Abonnement enthalten."_
 
 ⚠️ **A/B testing nedostupné v Essential** tier.
 
 ### 20.8 Less advanced features
 
 Per EmailTooltester:
-> *"Die Auswahl an erweiterten Profifunktionen ist recht begrenzt"*
+
+> _"Die Auswahl an erweiterten Profifunktionen ist recht begrenzt"_
 
 ⚠️ Pro advanced needs **migrate to other platforms**.
 
@@ -1439,6 +1537,7 @@ Per EmailTooltester:
 ## 21. Shrnutí: Pro koho a proti komu
 
 ### rapidmail je dobrá volba pokud
+
 - Provozujete **DACH SMB business**
 - Vážíte si **simplicity + ease of use** (newsletter-only focus)
 - Hledáte **Made in Germany** (servers exclusively v Německu!)
@@ -1454,6 +1553,7 @@ Per EmailTooltester:
 - Nepotřebujete CRM/SMS/landing pages/complex automation
 
 ### rapidmail není dobrá volba pokud
+
 - Hledáte **multi-channel marketing** (SMS + email + push) – Brevo / SALESmanago lepší
 - Potřebujete **complex automation** s branching workflows – ActiveCampaign / Brevo / Klaviyo
 - Provozujete **DTC Shopify** s deep needs – Klaviyo
@@ -1470,21 +1570,21 @@ Per EmailTooltester:
 
 ### rapidmail vs. konkurence
 
-| Konkurence | Kdy lepší než rapidmail |
-|---|---|
-| **CleverReach** (DE) | More features, unlimited users free, more integrations, API |
-| **Inxmail** (DE) | Enterprise DACH, deeper automation, larger scale |
-| **Mapp / Evalanche** (DACH) | Mid-market+ s deeper personalization |
-| **Mailchimp** | Brand recognition, larger ecosystem, API, more integrations |
-| **MailerLite** | Solopreneur simplicity + lower entry, content creators |
-| **Brevo** | Multi-channel (SMS, WhatsApp, CRM), volume-based pricing, free tier |
-| **Klaviyo** | DTC Shopify deep, predictive AI |
-| **HubSpot** | Full B2B CRM, multi-Hub |
-| **ActiveCampaign** | Deep automation, integrated CRM, API |
-| **GetResponse** | Webinars + courses + 27 languages |
-| **Mailkit** (CZ) | Premium positioning, vlastní infra, 7 ISO certifikací |
-| **SmartEmailing / Ecomail** (CZ) | Native CZ/SK, Shoptet integration |
+| Konkurence                       | Kdy lepší než rapidmail                                             |
+| -------------------------------- | ------------------------------------------------------------------- |
+| **CleverReach** (DE)             | More features, unlimited users free, more integrations, API         |
+| **Inxmail** (DE)                 | Enterprise DACH, deeper automation, larger scale                    |
+| **Mapp / Evalanche** (DACH)      | Mid-market+ s deeper personalization                                |
+| **Mailchimp**                    | Brand recognition, larger ecosystem, API, more integrations         |
+| **MailerLite**                   | Solopreneur simplicity + lower entry, content creators              |
+| **Brevo**                        | Multi-channel (SMS, WhatsApp, CRM), volume-based pricing, free tier |
+| **Klaviyo**                      | DTC Shopify deep, predictive AI                                     |
+| **HubSpot**                      | Full B2B CRM, multi-Hub                                             |
+| **ActiveCampaign**               | Deep automation, integrated CRM, API                                |
+| **GetResponse**                  | Webinars + courses + 27 languages                                   |
+| **Mailkit** (CZ)                 | Premium positioning, vlastní infra, 7 ISO certifikací               |
+| **SmartEmailing / Ecomail** (CZ) | Native CZ/SK, Shoptet integration                                   |
 
 ---
 
-*Dokument zpracován z oficiálních zdrojů rapidmail.com a praktických zdrojů (GetApp, Software Advice, Software Suggest, EmailTooltester, EuropeanStack, European Purpose, EU Picks, Trusted, Business Digital, Newsletter-tools.de, customer testimonials). Pro nejaktuálnější ceny vždy ověřit na rapidmail.com.*
+_Dokument zpracován z oficiálních zdrojů rapidmail.com a praktických zdrojů (GetApp, Software Advice, Software Suggest, EmailTooltester, EuropeanStack, European Purpose, EU Picks, Trusted, Business Digital, Newsletter-tools.de, customer testimonials). Pro nejaktuálnější ceny vždy ověřit na rapidmail.com._

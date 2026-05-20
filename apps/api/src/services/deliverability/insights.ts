@@ -58,22 +58,40 @@ async function gatherTotals(orgId: string, sinceDays: number): Promise<Totals> {
     .groupBy(emailEvents.eventType, emailEvents.bounceType);
 
   const t: Totals = {
-    send: 0, deliver: 0, open: 0, click: 0,
-    hardBounce: 0, softBounce: 0, complaint: 0, unsubscribe: 0,
+    send: 0,
+    deliver: 0,
+    open: 0,
+    click: 0,
+    hardBounce: 0,
+    softBounce: 0,
+    complaint: 0,
+    unsubscribe: 0,
   };
   for (const r of rows) {
     const n = Number(r.count) || 0;
     switch (r.eventType) {
-      case 'send':        t.send += n; break;
-      case 'deliver':     t.deliver += n; break;
-      case 'open':        t.open += n; break;
-      case 'click':       t.click += n; break;
+      case 'send':
+        t.send += n;
+        break;
+      case 'deliver':
+        t.deliver += n;
+        break;
+      case 'open':
+        t.open += n;
+        break;
+      case 'click':
+        t.click += n;
+        break;
       case 'bounce':
         if (r.bounceType === 'hard') t.hardBounce += n;
         else t.softBounce += n;
         break;
-      case 'complaint':   t.complaint += n; break;
-      case 'unsubscribe': t.unsubscribe += n; break;
+      case 'complaint':
+        t.complaint += n;
+        break;
+      case 'unsubscribe':
+        t.unsubscribe += n;
+        break;
     }
   }
   return t;
@@ -94,18 +112,15 @@ export async function computeInsights(input: InsightInput): Promise<Insight[]> {
   const openRate = t.deliver > 0 ? t.open / t.deliver : 0;
   const clickRate = t.open > 0 ? t.click / t.open : 0;
 
-  const rule = (
-    id: string,
-    cond: boolean,
-    factory: () => Omit<Insight, 'ruleId'>,
-  ): void => {
+  const rule = (id: string, cond: boolean, factory: () => Omit<Insight, 'ruleId'>): void => {
     if (cond && !ignored.has(id)) out.push({ ruleId: id, ...factory() });
   };
 
   rule('hard-bounce-rate', hardRate > 0.02, () => ({
     severity: hardRate > 0.05 ? 'critical' : 'warn',
     title: `Hard bounce rate ${(hardRate * 100).toFixed(2)}% (last ${window}d)`,
-    detail: 'Hard bounces above 2% will hurt your sender reputation and may trigger ISP rate-limiting.',
+    detail:
+      'Hard bounces above 2% will hurt your sender reputation and may trigger ISP rate-limiting.',
     metrics: { hardRate, hardCount: t.hardBounce, sent: sentOrDelivered },
     suggestions: [
       'Enable double opt-in for new signups.',
@@ -122,7 +137,7 @@ export async function computeInsights(input: InsightInput): Promise<Insight[]> {
     suggestions: [
       'Double-check your unsubscribe link is visible in every template.',
       'Audit recent campaigns — were recipients re-engaged or long-cold?',
-      'Consider a sunset policy for contacts who haven\'t opened in 6+ months.',
+      "Consider a sunset policy for contacts who haven't opened in 6+ months.",
     ],
   }));
 
@@ -152,7 +167,8 @@ export async function computeInsights(input: InsightInput): Promise<Insight[]> {
   rule('low-click-rate', t.open > 200 && clickRate < 0.02, () => ({
     severity: 'info',
     title: `Click-through rate ${(clickRate * 100).toFixed(1)}% (of opens)`,
-    detail: 'People are opening but not engaging — either the CTA is unclear or the content does not match the subject line.',
+    detail:
+      'People are opening but not engaging — either the CTA is unclear or the content does not match the subject line.',
     metrics: { clickRate, clicks: t.click, opens: t.open },
     suggestions: [
       'Make the primary CTA a button, not just a link.',
