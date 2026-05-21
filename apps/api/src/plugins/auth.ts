@@ -13,6 +13,8 @@ declare module 'fastify' {
     requireAuth: (request: FastifyRequest) => Promise<void>;
     authenticate: (request: FastifyRequest) => Promise<void>;
     requireRole: (...roles: UserRole[]) => (request: FastifyRequest) => Promise<void>;
+    /** Gate /superadmin/* routes — only role=system_admin passes. */
+    requireSystemAdmin: (request: FastifyRequest) => Promise<void>;
   }
 }
 
@@ -66,6 +68,11 @@ async function authPlugin(app: FastifyInstance) {
     editor: 2,
     admin: 3,
     owner: 4,
+    // system_admin is platform-level, not in the org hierarchy. Treated
+    // as max rank for requireRole so it implicitly bypasses per-org checks
+    // — useful when system_admin needs to call regular endpoints during
+    // support intervention.
+    system_admin: 99,
   };
 
   app.decorate('requireRole', (...roles: UserRole[]) => {
@@ -77,6 +84,13 @@ async function authPlugin(app: FastifyInstance) {
         throw AppError.forbidden(`Requires one of: ${roles.join(', ')}`);
       }
     };
+  });
+
+  app.decorate('requireSystemAdmin', async (request: FastifyRequest) => {
+    if (!request.user) throw AppError.unauthorized('Authentication required');
+    if (request.user.role !== 'system_admin') {
+      throw AppError.forbidden('System admin only');
+    }
   });
 }
 

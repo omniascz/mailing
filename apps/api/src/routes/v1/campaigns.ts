@@ -31,6 +31,7 @@ import {
 } from '../../services/campaigns/index.js';
 import { scheduleResend } from '../../services/campaigns/auto-resend.js';
 import { campaignSplitterQueue, PRIORITY, sendTransactionalEmail } from '../../lib/queues.js';
+import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 
 const idParam = z.object({ id: z.string().uuid() });
@@ -191,6 +192,13 @@ export default async function campaignRoutes(app: FastifyInstance) {
     { schema: { tags: ['Campaigns'], summary: 'Send campaign immediately' } },
     async (req) => {
       const { id } = idParam.parse(req.params);
+      // Plan + suspended check before flipping status. We don't know the
+      // exact recipient count yet (splitter resolves audience), so pass
+      // adding=1 as a sentinel — checkSendCapacity blocks when monthly
+      // cap is already reached. Real metered overage is enforced by the
+      // splitter later.
+      await checkSendCapacity(req.user!.orgId, 1);
+
       const campaign = await sendCampaign(req.user!.orgId, id);
 
       // Enqueue the campaign splitter job. Worker (apps/workers) consumes

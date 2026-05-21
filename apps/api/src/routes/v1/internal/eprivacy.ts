@@ -45,6 +45,23 @@ const internalEPrivacyRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  // Workers consult this before processing a batch. Returns true when
+  // platform admin has flipped settings.suspended via /superadmin/orgs/:id/suspend.
+  app.get(
+    '/api/v1/internal/org/suspended',
+    { schema: { tags: ['Internal'] } },
+    async (req, reply) => {
+      const { orgId } = z.object({ orgId: z.string().uuid() }).parse(req.query);
+      const [row] = await db
+        .select({ settings: organizations.settings })
+        .from(organizations)
+        .where(eq(organizations.id, orgId))
+        .limit(1);
+      const suspended = (row?.settings as { suspended?: boolean } | undefined)?.suspended === true;
+      return reply.send({ data: { suspended } });
+    },
+  );
+
   app.post(
     '/api/v1/internal/consent/opted-in-batch',
     {

@@ -15,6 +15,7 @@ import {
 } from '../../services/auth/google-oauth.js';
 import { AppError } from '../../lib/app-error.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
+import { notifyOperatorOfSignup } from '../../services/notifications/operator-alerts.js';
 
 const SESSION_COOKIE = 'fm_session';
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days
@@ -145,6 +146,14 @@ export default async function authRoutes(app: FastifyInstance) {
       }).catch((err) =>
         request.log.error({ err, event: 'verify_email_enqueue_failed', userId: user.id }),
       );
+
+      // Notify platform operator (no-op when OPERATOR_EMAIL unset).
+      notifyOperatorOfSignup({
+        orgId: org.id,
+        orgName: org.name,
+        ownerEmail: user.email,
+        ownerName: user.name,
+      }).catch(() => {});
 
       return reply.status(201).send({
         user: {

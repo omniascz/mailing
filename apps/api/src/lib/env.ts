@@ -51,6 +51,10 @@ const RecommendedSchema = z.object({
   SENTRY_ENVIRONMENT: z.string().optional(),
   SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.05),
   SENTRY_RELEASE: z.string().optional(),
+  // ─── Platform operator alerts ──────────────────────────────────────────────
+  // Address to notify on platform events (new signups, abuse reports).
+  // When unset, alerts are a no-op.
+  OPERATOR_EMAIL: z.string().email().optional(),
 });
 
 const Schema = RequiredSchema.merge(RecommendedSchema);

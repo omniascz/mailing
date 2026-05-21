@@ -117,71 +117,330 @@
     {
       "idx": 16,
       "version": "7",
+      "when": 1776281948200,
+      "tag": "0021_viber_sklik",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1776281926613,
+      "tag": "0022_eu_data_residency",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1776320822498,
+      "tag": "0023_multivariate_tests",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1776320839350,
+      "tag": "0024_dedicated_ips",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1776320864561,
+      "tag": "0025_abuse_detection",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1776322800757,
+      "tag": "0026_isp_fbl",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1776322813673,
+      "tag": "0027_ecommerce_integrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1776322818529,
+      "tag": "0028_signup_form_variants",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1776323638321,
+      "tag": "0029_browse_abandonment",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1776325720329,
+      "tag": "0030_inbound_sso_compliance",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1776327180740,
+      "tag": "0031_audit_logs_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1776329430871,
+      "tag": "0032_sales_crm",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1776343573435,
+      "tag": "0033_custom_objects_salesforce_app_studio",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1776344653854,
+      "tag": "0034_crm_tasks_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1776345860246,
+      "tag": "0035_site_tracking_sequences_chat",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1776356435427,
+      "tag": "0036_dmarc_loyalty",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1776357055567,
+      "tag": "0037_hipaa_saml",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1776358008619,
+      "tag": "0038_phone_meetings_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1776358490374,
+      "tag": "0039_cdp_events_traits",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
       "when": 1745784000000,
       "tag": "0040_message_streams_integrations",
       "breakpoints": true
     },
     {
-      "idx": 17,
+      "idx": 36,
       "version": "7",
       "when": 1745870400000,
       "tag": "0041_phone_helpdesk_routing",
       "breakpoints": true
     },
     {
-      "idx": 18,
+      "idx": 37,
       "version": "7",
       "when": 1745956800000,
       "tag": "0042_meetings_cdp_sources",
       "breakpoints": true
     },
     {
-      "idx": 19,
+      "idx": 38,
       "version": "7",
       "when": 1746043200000,
       "tag": "0043_cross_account_billing",
       "breakpoints": true
     },
     {
-      "idx": 20,
+      "idx": 39,
       "version": "7",
       "when": 1746129600000,
       "tag": "0044_seo_modules",
       "breakpoints": true
     },
     {
-      "idx": 21,
+      "idx": 40,
       "version": "7",
       "when": 1746216000000,
       "tag": "0045_social_ads",
       "breakpoints": true
     },
     {
-      "idx": 22,
+      "idx": 41,
       "version": "7",
       "when": 1746302400000,
       "tag": "0046_ads_commerce",
       "breakpoints": true
     },
     {
-      "idx": 23,
+      "idx": 42,
       "version": "7",
       "when": 1746388800000,
       "tag": "0047_misc_lifecycle_video",
       "breakpoints": true
     },
     {
-      "idx": 24,
+      "idx": 43,
       "version": "7",
       "when": 1746475200000,
       "tag": "0048_subscriptions",
       "breakpoints": true
     },
     {
-      "idx": 25,
+      "idx": 44,
       "version": "7",
       "when": 1746561600000,
       "tag": "0049_kb_embeddings",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1776495756881,
+      "tag": "0050_teams_fperms_custom_channels",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1777032653706,
+      "tag": "0051_name_day_trigger",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1777033296422,
+      "tag": "0052_shoptet_platform",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1777034229575,
+      "tag": "0053_upgates_fastcentrik_platforms",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1777034452627,
+      "tag": "0054_raynet_crm",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1777034749871,
+      "tag": "0055_product_feeds",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1777034907394,
+      "tag": "0056_lifecycle_stages",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1777039695654,
+      "tag": "0057_blog_ctas",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1777040267473,
+      "tag": "0058_saved_queries",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1777040475505,
+      "tag": "0059_data_sets",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1779125012362,
+      "tag": "0060_cz_isp_fbl",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1779173406675,
+      "tag": "0061_migration_rolled_back",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1779174908048,
+      "tag": "0062_contact_lists_per_list_unsub",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1779178749263,
+      "tag": "0063_contact_channel_consents",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1779179376343,
+      "tag": "0064_org_tracking_eu_strict",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1779181035739,
+      "tag": "0065_campaign_parent_resend",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1779190728522,
+      "tag": "0066_inbox_preview_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1779313343662,
+      "tag": "0067_system_admin_role",
       "breakpoints": true
     }
   ]

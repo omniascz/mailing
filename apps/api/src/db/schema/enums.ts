@@ -2,7 +2,16 @@ import { pgEnum } from 'drizzle-orm/pg-core';
 
 export const planEnum = pgEnum('plan', ['free', 'starter', 'pro', 'business', 'enterprise']);
 
-export const userRoleEnum = pgEnum('user_role', ['owner', 'admin', 'editor', 'viewer']);
+export const userRoleEnum = pgEnum('user_role', [
+  'owner',
+  'admin',
+  'editor',
+  'viewer',
+  // Platform-level role. NOT scoped to a specific org — system_admin sees
+  // and acts across all tenants via /superadmin/* routes. Set only by
+  // direct DB intervention (psql or seed); never via UI promotion.
+  'system_admin',
+]);
 
 export const authProviderEnum = pgEnum('auth_provider', ['email', 'google', 'sso']);
 

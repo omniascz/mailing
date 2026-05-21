@@ -56,6 +56,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly string[]> = {
     'segments:read',
     'workflows:read',
   ],
+  // Platform-level role. Bypasses per-org scoping; uses /superadmin/*
+  // routes with their own middleware. '*' = unrestricted.
+  system_admin: ['*'],
 };
 
 /**

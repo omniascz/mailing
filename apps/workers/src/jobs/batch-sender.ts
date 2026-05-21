@@ -52,6 +52,14 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     `Processing batch ${data.batchIndex} for campaign ${data.campaignId} stream=${stream} (${data.contactIds.length} contacts)`,
   );
 
+  // Platform-admin suspended this org while jobs were already enqueued —
+  // skip the whole batch. Plan-enforcement on POST /campaigns/:id/send
+  // catches new sends, this catches in-flight ones.
+  if (await fetchOrgSuspended(data.orgId)) {
+    job.log(`[suspended] Org ${data.orgId} is suspended by platform admin. Skipping batch.`);
+    return { sent: 0, skipped: data.contactIds.length, reason: 'org_suspended' };
+  }
+
   // Load contacts from the API
   const contacts = await fetchContacts(data.orgId, data.contactIds);
 
@@ -485,6 +493,24 @@ async function fetchTrackingStrict(orgId: string): Promise<boolean> {
     if (!res.ok) return false;
     const body = (await res.json()) as { data: { strict: boolean } };
     return body.data.strict === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Returns true when platform admin has flipped settings.suspended via
+ * /superadmin/orgs/:id/suspend. Fail-safe to false on transient errors
+ * — we don't want a network blip to silently freeze legit sends. The
+ * /superadmin/orgs/:id/send endpoint already refuses new sends, so the
+ * only thing this catches is jobs already on the queue.
+ */
+async function fetchOrgSuspended(orgId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/org/suspended?orgId=${orgId}`);
+    if (!res.ok) return false;
+    const body = (await res.json()) as { data: { suspended: boolean } };
+    return body.data.suspended === true;
   } catch {
     return false;
   }

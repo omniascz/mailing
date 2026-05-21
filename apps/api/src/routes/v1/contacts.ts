@@ -10,6 +10,7 @@ import {
   type ListContactsOpts,
 } from '../../services/contacts/index.js';
 import { validateEmail } from '../../services/email-validation/index.js';
+import { checkContactCapacity } from '../../services/billing/plan-enforcement.js';
 import {
   getContactActivity,
   formatActivityCsv,
@@ -98,6 +99,9 @@ export default async function contactRoutes(app: FastifyInstance) {
     '/api/v1/contacts',
     { schema: { tags: ['Contacts'], summary: 'Create contact' } },
     async (req, reply) => {
+      // Plan gate: free tier refuses past contact limit.
+      await checkContactCapacity(req.user!.orgId, 1);
+
       const body = contactWriteSchema.parse(req.body);
       let emailValidationScore: string | undefined;
       let emailValidatedAt: Date | undefined;

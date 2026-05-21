@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { billingSubscriptions, contacts } from '../../db/schema/index.js';
+import { billingSubscriptions, contacts, organizations } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 // Plan catalogue — kept in sync with Stripe product catalogue.
@@ -187,6 +187,12 @@ async function dispatchEvent(type: string, obj: Record<string, unknown>) {
         .update(billingSubscriptions)
         .set({ stripeCustomerId: customerId, updatedAt: new Date() })
         .where(eq(billingSubscriptions.orgId, orgId));
+      // Mirror onto organizations table — that's the column read by
+      // plan-enforcement middleware and superadmin UIs.
+      await db
+        .update(organizations)
+        .set({ stripeCustomerId: customerId })
+        .where(eq(organizations.id, orgId));
     }
   }
 
@@ -207,6 +213,12 @@ async function dispatchEvent(type: string, obj: Record<string, unknown>) {
         updatedAt: new Date(),
       })
       .where(eq(billingSubscriptions.stripeCustomerId, customerId));
+
+    // Mirror tier + stripeSubscriptionId to organizations table.
+    await db
+      .update(organizations)
+      .set({ plan: tier, stripeSubscriptionId: obj['id'] as string })
+      .where(eq(organizations.stripeCustomerId, customerId));
   }
 
   if (type === 'customer.subscription.deleted') {
@@ -221,6 +233,12 @@ async function dispatchEvent(type: string, obj: Record<string, unknown>) {
         updatedAt: new Date(),
       })
       .where(eq(billingSubscriptions.stripeCustomerId, customerId));
+
+    // Downgrade plan on organizations table.
+    await db
+      .update(organizations)
+      .set({ plan: 'free', stripeSubscriptionId: null })
+      .where(eq(organizations.stripeCustomerId, customerId));
   }
 
   // ── E-commerce events (#228) ──────────────────────────────────────────────

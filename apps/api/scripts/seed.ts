@@ -36,6 +36,13 @@ const ORG_SLUG = 'acme-demo';
 const OWNER_EMAIL = 'demo@acme.test';
 const OWNER_PASSWORD = 'Demo1234!';
 
+// Platform operator (system_admin role). Lives in the same demo org so
+// FK constraints are satisfied, but their role bypasses per-org scoping
+// in the /superadmin/* routes. For real production deploy, create this
+// user manually with a strong password and unique email.
+const SYSADMIN_EMAIL = 'admin@mailforge.test';
+const SYSADMIN_PASSWORD = 'SysAdmin1234!';
+
 async function main() {
   const force = process.env.SEED_FORCE === '1';
 
@@ -79,6 +86,18 @@ async function main() {
     name: 'Demo Owner',
     passwordHash,
     role: 'owner',
+    emailVerified: true,
+  });
+
+  // 3b) Platform operator (system_admin)
+  console.log('Creating platform admin user…');
+  const sysadminHash = await hashPassword(SYSADMIN_PASSWORD);
+  await db.insert(users).values({
+    orgId: org.id, // FK satisfied; role bypasses per-org scoping
+    email: SYSADMIN_EMAIL,
+    name: 'Platform Admin',
+    passwordHash: sysadminHash,
+    role: 'system_admin',
     emailVerified: true,
   });
 
@@ -193,8 +212,10 @@ async function main() {
 
   console.log('\n✓ Seed complete.');
   console.log('─────────────────────────────────────────');
-  console.log(`Login:    ${OWNER_EMAIL}`);
-  console.log(`Password: ${OWNER_PASSWORD}`);
+  console.log('Tenant owner (per-org dashboard):');
+  console.log(`  ${OWNER_EMAIL} / ${OWNER_PASSWORD}`);
+  console.log('Platform admin (/superadmin/* routes):');
+  console.log(`  ${SYSADMIN_EMAIL} / ${SYSADMIN_PASSWORD}`);
   console.log(`Org slug: ${ORG_SLUG}`);
   console.log('─────────────────────────────────────────');
   process.exit(0);

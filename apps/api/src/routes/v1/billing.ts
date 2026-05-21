@@ -8,6 +8,7 @@ import {
   cancelSubscription,
   handleStripeWebhook,
 } from '../../services/billing/index.js';
+import { getPlanCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 
 const billingRoutes: FastifyPluginAsync = async (app) => {
@@ -30,6 +31,21 @@ const billingRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       return reply.send({ data: await getSubscription(req.user!.orgId) });
+    },
+  );
+
+  // Current plan capacity (contacts/sends used vs limit). Used by UI
+  // banners + the /settings/billing page. Distinct from billing-extended's
+  // /billing/usage which surfaces metered product summary (events, AI
+  // tokens) — kept as separate path to avoid duplicate-route conflicts.
+  app.get(
+    '/api/v1/billing/capacity',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Billing'] },
+    },
+    async (req, reply) => {
+      return reply.send({ data: await getPlanCapacity(req.user!.orgId) });
     },
   );
 

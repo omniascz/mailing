@@ -14,7 +14,7 @@ export interface AppError {
   details?: Record<string, unknown>;
 }
 
-export type UserRole = 'owner' | 'admin' | 'editor' | 'viewer';
+export type UserRole = 'owner' | 'admin' | 'editor' | 'viewer' | 'system_admin';
 
 export type ContactStatus = 'active' | 'unsubscribed' | 'bounced' | 'complained' | 'pending';
 

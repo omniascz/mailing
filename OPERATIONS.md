@@ -24,6 +24,33 @@ frontend. Adjust paths if your topology differs.
 | Roll back a deploy                | Coolify → app → Deployments → "Restore"                         |
 | Backup the DB                     | See [§5 Backups](#5-backups)                                    |
 | Audit who did what                | Dashboard → Settings → Audit log                                |
+| **List all orgs**                 | `https://app.<domain>/superadmin/orgs` (login as system_admin)  |
+| **Suspend/resume an org**         | `/superadmin/orgs/<id>` → Suspend button                        |
+| **Change an org's plan**          | `/superadmin/orgs/<id>` → plan dropdown + Apply                 |
+| **Inspect queue depth**           | `/superadmin/queues`                                            |
+| **Read failed jobs**              | `/superadmin/queues/<name>`                                     |
+| **See abuse events**              | `/superadmin/abuse`                                             |
+| **Platform-wide stats**           | `/superadmin` (overview)                                        |
+
+---
+
+## 0. Operator account
+
+You access platform-admin tooling via a regular login session where the
+user row has `role = 'system_admin'`. The seed script creates one for
+local dev (`admin@mailforge.test` / `SysAdmin1234!`). In production:
+
+1. Register normally through the public signup flow (creates a user with
+   role=owner).
+2. Promote via psql:
+   ```sql
+   update users set role = 'system_admin' where email = 'you@yourdomain.cz';
+   ```
+3. Sign out + back in to refresh the JWT.
+
+The `system_admin` role is NEVER assigned via UI. The promotion command
+above is the only path — keeps the platform tooling unreachable from
+self-service flows.
 
 ---
 

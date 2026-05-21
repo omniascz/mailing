@@ -124,8 +124,27 @@ values (cross-reference `apps/api/.env.example` for the full inventory):
 - [ ] `CORS_ORIGIN` — `https://app.<domain>`
 - [ ] `INTERNAL_API_SECRET` — random 32+ chars; workers ↔ API auth
 - [ ] `ANTHROPIC_API_KEY` — for AI features
-- [ ] `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` — when billing goes live
 - [ ] `DOI_FROM_EMAIL` — verified address (e.g. `no-reply@<domain>`)
+- [ ] `OPERATOR_EMAIL` — your address for new-signup + abuse alerts (Sprint T.4)
+- [ ] Stripe — create Products in Stripe Dashboard first, then set:
+  - [ ] `STRIPE_SECRET_KEY` (`sk_live_...`)
+  - [ ] `STRIPE_WEBHOOK_SECRET` (`whsec_...` — generated when you add the
+        webhook endpoint in Stripe Dashboard pointing at
+        `https://api.<domain>/api/v1/billing/webhook`)
+  - [ ] `STRIPE_PRICE_STARTER` — Price ID for the Starter plan
+  - [ ] `STRIPE_PRICE_PRO` — Price ID for the Pro plan
+  - [ ] `STRIPE_PRICE_BUSINESS` — Price ID for the Business plan
+- [ ] `SENTRY_DSN` (api), `NEXT_PUBLIC_SENTRY_DSN` (web) — error tracking
+      (Sprint J + O)
+
+After Stripe is configured, set up the webhook in Stripe Dashboard with
+these events:
+
+- `checkout.session.completed`
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.payment_failed`
 
 Wire Doppler into Coolify per-app via the Doppler CLI or the integration.
 

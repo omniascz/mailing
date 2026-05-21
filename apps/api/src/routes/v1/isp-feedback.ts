@@ -14,7 +14,8 @@ import type { FastifyPluginAsync } from 'fastify';
 import { timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { db } from '../../db/client.js';
-import { ispFblRegistrations } from '../../db/schema/index.js';
+import { ispFblRegistrations, organizations } from '../../db/schema/index.js';
+import { notifyOperatorOfAbuse } from '../../services/notifications/operator-alerts.js';
 import { and, desc, eq } from 'drizzle-orm';
 import {
   parseArfReport,
@@ -68,6 +69,27 @@ const ispFeedbackRoutes: FastifyPluginAsync = async (app) => {
       const rawEmail = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
       const report = parseArfReport(rawEmail);
       const result = await processFblComplaint(report, orgId, campaignId);
+
+      // Notify platform operator (no-op when OPERATOR_EMAIL is unset).
+      // Best-effort: don't fail the FBL response if the alert enqueue trips.
+      try {
+        const [org] = await db
+          .select({ name: organizations.name })
+          .from(organizations)
+          .where(eq(organizations.id, orgId))
+          .limit(1);
+        if (org) {
+          notifyOperatorOfAbuse({
+            orgId,
+            orgName: org.name,
+            reportedAt: new Date(),
+            reason: `${report.feedbackType ?? 'abuse'}${report.source ? ` (via ${report.source})` : ''}`,
+            recipient: report.originalRecipient ?? undefined,
+          }).catch(() => {});
+        }
+      } catch (err) {
+        req.log.warn({ err }, 'operator abuse alert failed (best-effort)');
+      }
 
       return reply.code(200).send({ data: result });
     },
