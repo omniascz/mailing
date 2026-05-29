@@ -12,11 +12,49 @@ import {
  * before it lands in a gallery the user can fork.
  */
 describe('WORKFLOW_TEMPLATES registry', () => {
-  it('has at least 15 recipes spanning multiple categories', () => {
-    expect(WORKFLOW_TEMPLATES.length).toBeGreaterThanOrEqual(15);
+  it('has at least 50 recipes spanning multiple categories', () => {
+    expect(WORKFLOW_TEMPLATES.length).toBeGreaterThanOrEqual(50);
     const cats = new Set<TemplateCategory>();
     WORKFLOW_TEMPLATES.forEach((t) => cats.add(t.category));
-    expect(cats.size).toBeGreaterThanOrEqual(10);
+    expect(cats.size).toBeGreaterThanOrEqual(15);
+  });
+
+  it('every category has at least one recipe', () => {
+    const cats = new Set<TemplateCategory>();
+    WORKFLOW_TEMPLATES.forEach((t) => cats.add(t.category));
+    // Sanity: registry should cover each declared category — if a category is
+    // added to the type but no recipe ships, the gallery sidebar shows an
+    // empty pane.
+    const expected: TemplateCategory[] = [
+      'welcome',
+      'abandoned_cart',
+      'post_purchase',
+      'winback',
+      'birthday',
+      'browse_abandonment',
+      'vip_loyalty',
+      'lead_nurture',
+      'event',
+      'feedback_nps',
+      'cross_sell',
+      'onboarding',
+      'churn_prevention',
+      'date_triggered',
+      'subscription_renewal',
+      'transactional',
+      'review_request',
+      'replenishment',
+    ];
+    for (const cat of expected) {
+      expect(cats.has(cat), `category "${cat}" has no recipes`).toBe(true);
+    }
+  });
+
+  it('locale coverage includes en + cs + sk', () => {
+    const locales = new Set(WORKFLOW_TEMPLATES.map((t) => t.locale));
+    expect(locales.has('en')).toBe(true);
+    expect(locales.has('cs')).toBe(true);
+    expect(locales.has('sk')).toBe(true);
   });
 
   it('slugs are unique', () => {
