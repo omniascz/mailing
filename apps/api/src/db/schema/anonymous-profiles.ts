@@ -16,6 +16,15 @@ export const anonymousProfiles = pgTable(
     mergedInto: uuid('merged_into').references(() => contacts.id, { onDelete: 'set null' }),
     mergedAt: timestamp('merged_at', { withTimezone: true }),
     properties: jsonb('properties').$type<Record<string, unknown>>().notNull().default({}),
+
+    // L3 probabilistic fingerprint (§9 P1). All non-PII: ip_prefix is /24
+    // for IPv4 (~256 households), full hashes for UA + accept-language,
+    // raw locale + screen_sig.
+    ipPrefix: varchar('ip_prefix', { length: 16 }),
+    userAgentHash: varchar('user_agent_hash', { length: 64 }),
+    acceptLanguageHash: varchar('accept_language_hash', { length: 64 }),
+    locale: varchar('locale', { length: 16 }),
+    screenSig: varchar('screen_sig', { length: 32 }),
   },
   (t) => [
     uniqueIndex('anon_profiles_org_visitor_uq').on(t.orgId, t.visitorId),

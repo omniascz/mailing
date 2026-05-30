@@ -13,6 +13,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import * as svc from '../../services/tracking/site-tracker.js';
+import { recordVisitorFingerprint } from '../../services/identity-resolution/index.js';
+import { buildFingerprint } from '../../services/identity-resolution/pure.js';
 
 const TRACKER_JS = /* javascript */ `
 (function(w,d,t){
@@ -128,6 +130,23 @@ export default async function siteTrackingRoutes(app: FastifyInstance) {
       try {
         const body = pageViewBody.parse(req.body);
         const result = await svc.recordPageView(body);
+
+        // L3 fingerprint capture — best-effort, non-blocking. Extracts
+        // non-PII features from request headers and stashes them onto
+        // the anonymous_profiles row for the visitor so probabilistic
+        // matching has something to compare against.
+        const site = await svc.getSiteByToken(body.siteToken).catch(() => null);
+        if (site) {
+          const ip = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim()
+            ?? req.ip;
+          const fp = buildFingerprint({
+            ip,
+            userAgent: req.headers['user-agent'],
+            acceptLanguage: req.headers['accept-language'],
+          });
+          recordVisitorFingerprint(site.orgId, body.visitorId, fp).catch(() => {});
+        }
+
         return reply.code(202).send(result);
       } catch {
         return reply.code(202).send({ ok: true }); // Never fail — 202 always
