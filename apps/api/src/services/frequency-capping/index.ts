@@ -2,8 +2,19 @@ import { and, eq } from 'drizzle-orm';
 import type { Redis } from 'ioredis';
 import { redis as defaultRedis } from '../../lib/redis.js';
 import { db } from '../../db/client.js';
-import { orgFrequencyRules, type OrgFrequencyRule } from '../../db/schema/index.js';
+import {
+  frequencySuppressions,
+  orgFrequencyRules,
+  type OrgFrequencyRule,
+} from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import {
+  filterApplicableRules,
+  isInQuietHours,
+  type EngagementBand,
+  type MessagePriority,
+  type SuppressionReason,
+} from './pure.js';
 
 export type FrequencyChannel = 'email' | 'sms' | 'push' | 'whatsapp' | 'voice' | 'all';
 
@@ -11,13 +22,20 @@ export interface FrequencyCheckInput {
   orgId: string;
   contactId: string;
   channel: Exclude<FrequencyChannel, 'all'>;
+  /** Marketing by default — pass 'transactional' for receipts so caps bypass when configured. */
+  priority?: MessagePriority;
+  /** Optional engagement band so band-scoped rules can apply. */
+  band?: EngagementBand | null;
   now?: number; // ms epoch, override for tests
+  /** When true (default), a denied result is logged to frequency_suppressions. */
+  logSuppression?: boolean;
 }
 
 export interface FrequencyCheckResult {
   allowed: boolean;
   blockedBy: OrgFrequencyRule | null;
   currentCount: number;
+  reason: SuppressionReason | null;
 }
 
 function freqKey(orgId: string, contactId: string, channel: FrequencyChannel): string {
@@ -58,12 +76,41 @@ export async function checkFrequencyCap(
   redis: Redis = defaultRedis,
 ): Promise<FrequencyCheckResult> {
   const now = input.now ?? Date.now();
-  const rules = await getRulesForChannel(input.orgId, input.channel, redis);
+  const priority: MessagePriority = input.priority ?? 'marketing';
+  const allRules = await getRulesForChannel(input.orgId, input.channel, redis);
+  const rules = filterApplicableRules(allRules, input.channel, priority, input.band ?? null);
 
   if (rules.length === 0) {
-    return { allowed: true, blockedBy: null, currentCount: 0 };
+    return { allowed: true, blockedBy: null, currentCount: 0, reason: null };
   }
 
+  // 1. Quiet hours — any matching rule that is currently in its quiet
+  //    window blocks the send, regardless of count. Suppression reason
+  //    captures the distinction so reports can split "we hit the cap" vs
+  //    "we waited politely".
+  for (const rule of rules) {
+    if (
+      isInQuietHours({
+        start: rule.quietHoursStart ?? null,
+        end: rule.quietHoursEnd ?? null,
+        timezone: rule.timezone ?? null,
+        now: new Date(now),
+      })
+    ) {
+      const result: FrequencyCheckResult = {
+        allowed: false,
+        blockedBy: rule,
+        currentCount: 0,
+        reason: 'quiet_hours',
+      };
+      if (input.logSuppression !== false) {
+        await logSuppression(input, rule, 'quiet_hours', priority).catch(() => {});
+      }
+      return result;
+    }
+  }
+
+  // 2. Count-based cap — check each rule against the window.
   for (const rule of rules) {
     const windowMs = rule.periodHours * 3600 * 1000;
     const min = now - windowMs;
@@ -75,11 +122,43 @@ export async function checkFrequencyCap(
       count += await redis.zcount(key, min, now);
     }
     if (count >= rule.maxCount) {
-      return { allowed: false, blockedBy: rule, currentCount: count };
+      const reason: SuppressionReason = rule.engagementBand ? 'band_locked' : 'cap_exceeded';
+      const result: FrequencyCheckResult = {
+        allowed: false,
+        blockedBy: rule,
+        currentCount: count,
+        reason,
+      };
+      if (input.logSuppression !== false) {
+        await logSuppression(input, rule, reason, priority).catch(() => {});
+      }
+      return result;
     }
   }
 
-  return { allowed: true, blockedBy: null, currentCount: 0 };
+  return { allowed: true, blockedBy: null, currentCount: 0, reason: null };
+}
+
+async function logSuppression(
+  input: FrequencyCheckInput,
+  rule: OrgFrequencyRule,
+  reason: SuppressionReason,
+  priority: MessagePriority,
+): Promise<void> {
+  await db.insert(frequencySuppressions).values({
+    orgId: input.orgId,
+    contactId: input.contactId,
+    channel: input.channel,
+    reason,
+    ruleId: rule.id,
+    priority,
+    metadata: {
+      ruleChannel: rule.channel,
+      maxCount: rule.maxCount,
+      periodHours: rule.periodHours,
+      ...(rule.engagementBand ? { engagementBand: rule.engagementBand } : {}),
+    },
+  });
 }
 
 /**
@@ -126,17 +205,49 @@ export async function listRules(orgId: string) {
 
 export async function upsertRule(
   orgId: string,
-  input: { channel: FrequencyChannel; maxCount: number; periodHours: number },
+  input: {
+    channel: FrequencyChannel;
+    maxCount: number;
+    periodHours: number;
+    quietHoursStart?: number | null;
+    quietHoursEnd?: number | null;
+    timezone?: string | null;
+    engagementBand?: EngagementBand | null;
+    priorityFloor?: MessagePriority | null;
+  },
 ) {
   if (input.maxCount <= 0 || input.periodHours <= 0) {
     throw AppError.badRequest('maxCount and periodHours must be positive');
+  }
+  if (
+    input.quietHoursStart !== null &&
+    input.quietHoursStart !== undefined &&
+    (input.quietHoursStart < 0 || input.quietHoursStart > 23)
+  ) {
+    throw AppError.badRequest('quietHoursStart must be 0..23');
+  }
+  if (
+    input.quietHoursEnd !== null &&
+    input.quietHoursEnd !== undefined &&
+    (input.quietHoursEnd < 0 || input.quietHoursEnd > 23)
+  ) {
+    throw AppError.badRequest('quietHoursEnd must be 0..23');
   }
   const [row] = await db
     .insert(orgFrequencyRules)
     .values({ orgId, ...input })
     .onConflictDoUpdate({
       target: [orgFrequencyRules.orgId, orgFrequencyRules.channel],
-      set: { maxCount: input.maxCount, periodHours: input.periodHours, updatedAt: new Date() },
+      set: {
+        maxCount: input.maxCount,
+        periodHours: input.periodHours,
+        quietHoursStart: input.quietHoursStart,
+        quietHoursEnd: input.quietHoursEnd,
+        timezone: input.timezone,
+        engagementBand: input.engagementBand,
+        priorityFloor: input.priorityFloor,
+        updatedAt: new Date(),
+      },
     })
     .returning();
   await invalidateRuleCache(orgId);

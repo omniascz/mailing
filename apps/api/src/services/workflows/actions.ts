@@ -103,9 +103,22 @@ async function executeSendSms(
   run: WorkflowRun,
   ctx: ActionContext,
 ): Promise<ActionResult> {
-  const config = node.config as { message: string };
+  const config = node.config as { message: string; priority?: 'transactional' | 'marketing' | 'promotional' };
   if (!config.message) return { type: 'error', message: 'SMS message text is required' };
   if (!ctx.contact?.phone) return { type: 'next', nextNodeId: null }; // skip if no phone
+  if (!run.contactId) return { type: 'next', nextNodeId: null };
+
+  // Cross-channel frequency cap (§9 P1) — skip + log suppression when blocked.
+  const { checkFrequencyCap } = await import('../frequency-capping/index.js');
+  const cap = await checkFrequencyCap({
+    orgId: ctx.orgId,
+    contactId: run.contactId,
+    channel: 'sms',
+    priority: config.priority ?? 'marketing',
+  });
+  if (!cap.allowed) {
+    return { type: 'next', nextNodeId: null };
+  }
 
   const message = substituteMergeTags(config.message, ctx.contact);
   // Queue SMS job
