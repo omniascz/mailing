@@ -167,6 +167,7 @@ import internalEPrivacyRoutes from './routes/v1/internal/eprivacy.js';
 import internalAudienceRoutes from './routes/v1/internal/audience.js';
 import internalCouponsRoutes from './routes/v1/internal/coupons.js';
 import internalTriggersRoutes from './routes/v1/internal/triggers.js';
+import statusPageInternalRoutes from './routes/v1/internal/status-page.js';
 import internalRfmRoutes from './routes/v1/internal/rfm.js';
 import internalPredictiveRoutes from './routes/v1/internal/predictive.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
@@ -381,6 +382,7 @@ export async function buildApp() {
   await app.register(internalAudienceRoutes);
   await app.register(internalCouponsRoutes);
   await app.register(internalTriggersRoutes);
+  await app.register(statusPageInternalRoutes);
   await app.register(internalRfmRoutes);
   await app.register(internalPredictiveRoutes);
   await app.register(messagingSendRoutes);

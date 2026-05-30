@@ -55,6 +55,12 @@ const RecommendedSchema = z.object({
   // Address to notify on platform events (new signups, abuse reports).
   // When unset, alerts are a no-op.
   OPERATOR_EMAIL: z.string().email().optional(),
+  // ─── Instatus status page (Sprint H.5) ─────────────────────────────────────
+  // Both keys must be set together. When either is unset, the status-page
+  // client is a no-op so the `/internal/status-page/*` endpoints respond
+  // { status: 'noop', available: false } instead of erroring.
+  INSTATUS_API_KEY: z.string().optional(),
+  INSTATUS_PAGE_ID: z.string().optional(),
 });
 
 const Schema = RequiredSchema.merge(RecommendedSchema);
