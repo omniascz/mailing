@@ -1,6 +1,10 @@
 /**
  * Audience sync: CRM segments/lists → Ad platform Custom Audiences (#302).
- * Hashes contact emails (SHA-256) before upload per platform requirements.
+ *
+ * Per-platform hashers + HTTP transport live in their own provider
+ * directories (services/ads/providers/{meta,google,tiktok,sklik}/).
+ * This module is the org-scoped orchestrator that decides which
+ * provider to call and persists the audit row.
  */
 
 import { createHash } from 'node:crypto';
@@ -10,6 +14,9 @@ import { adAccounts, adAudienceSyncs, contacts } from '../../db/schema/index.js'
 import { AppError } from '../../lib/app-error.js';
 import type { AdPlatform } from '../../db/schema/ad-accounts.js';
 import { uploadToSklik } from './providers/sklik/audience-sync.js';
+import { uploadToMeta } from './providers/meta/audience-sync.js';
+import { uploadToGoogle } from './providers/google/audience-sync.js';
+import { uploadToTikTok } from './providers/tiktok/audience-sync.js';
 
 function sha256(value: string) {
   return createHash('sha256').update(value.toLowerCase().trim()).digest('hex');
@@ -18,78 +25,56 @@ function sha256(value: string) {
 // ── Per-platform audience upload ──────────────────────────────────────────────
 
 async function uploadToFacebookAds(
+  orgId: string,
   account: typeof adAccounts.$inferSelect,
   audienceName: string,
-  emails: string[],
-) {
-  // Create custom audience
-  const createRes = await fetch(
-    `https://graph.facebook.com/v19.0/act_${account.platformAccountId}/customaudiences`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: audienceName,
-        subtype: 'CUSTOM',
-        description: 'ForgeMsg CRM audience sync',
-        customer_file_source: 'USER_PROVIDED_ONLY',
-        access_token: account.accessToken,
-      }),
-    },
-  );
-  const createData = (await createRes.json()) as { id?: string; error?: { message: string } };
-  if (!createRes.ok || !createData.id)
-    throw new Error(createData.error?.message ?? 'Failed to create FB audience');
-
-  const audienceId = createData.id;
-
-  // Upload hashed emails in batches of 10k
-  for (let i = 0; i < emails.length; i += 10_000) {
-    const batch = emails.slice(i, i + 10_000);
-    await fetch(`https://graph.facebook.com/v19.0/${audienceId}/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        payload: {
-          schema: ['EMAIL_SHA256'],
-          data: batch.map((e) => [sha256(e)]),
-        },
-        access_token: account.accessToken,
-      }),
-    });
-  }
-  return audienceId;
+  contactLimit: number | undefined,
+): Promise<string> {
+  const rows = await db
+    .select({
+      email: contacts.email,
+      phone: contacts.phone,
+      firstName: contacts.firstName,
+      lastName: contacts.lastName,
+    })
+    .from(contacts)
+    .where(eq(contacts.orgId, orgId))
+    .limit(contactLimit ?? 500_000);
+  const result = await uploadToMeta({
+    accessToken: account.accessToken,
+    adAccountId: account.platformAccountId,
+    audienceName,
+    members: rows,
+  });
+  return result.audienceId;
 }
 
 async function uploadToGoogleAds(
+  orgId: string,
   account: typeof adAccounts.$inferSelect,
   audienceName: string,
-  _emails: string[],
-) {
-  // Google Ads Customer Match via offline user data job
-  const customerId = account.platformAccountId;
-  const createRes = await fetch(
-    `https://googleads.googleapis.com/v16/customers/${customerId}/offlineUserDataJobs`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${account.accessToken}`,
-        'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? '',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        job: {
-          type: 'CUSTOMER_MATCH_USER_LIST',
-          customerMatchUserListMetadata: {
-            userList: `customers/${customerId}/userLists/${audienceName.replace(/\s+/g, '_')}`,
-          },
-        },
-      }),
-    },
-  );
-  if (!createRes.ok) throw new Error(`Google Ads audience creation failed: ${createRes.status}`);
-  const createData = (await createRes.json()) as { resourceName?: string };
-  return createData.resourceName ?? audienceName;
+  contactLimit: number | undefined,
+): Promise<string> {
+  const devToken = process.env.GOOGLE_ADS_DEVELOPER_TOKEN;
+  if (!devToken) throw new Error('GOOGLE_ADS_DEVELOPER_TOKEN env var is not set');
+  const rows = await db
+    .select({
+      email: contacts.email,
+      phone: contacts.phone,
+      firstName: contacts.firstName,
+      lastName: contacts.lastName,
+    })
+    .from(contacts)
+    .where(eq(contacts.orgId, orgId))
+    .limit(contactLimit ?? 500_000);
+  const result = await uploadToGoogle({
+    accessToken: account.accessToken,
+    developerToken: devToken,
+    customerId: account.platformAccountId,
+    audienceName,
+    members: rows,
+  });
+  return result.jobResourceName;
 }
 
 async function uploadToLinkedInAds(
@@ -127,25 +112,23 @@ async function uploadToLinkedInAds(
 }
 
 async function uploadToTikTokAds(
+  orgId: string,
   account: typeof adAccounts.$inferSelect,
   audienceName: string,
-  _emails: string[],
-) {
-  const createRes = await fetch(
-    'https://business-api.tiktok.com/open_api/v1.3/dmp/custom_audience/create/',
-    {
-      method: 'POST',
-      headers: { 'Access-Token': account.accessToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        advertiser_id: account.platformAccountId,
-        custom_audience_name: audienceName,
-        audience_sub_type: 'NORMAL',
-      }),
-    },
-  );
-  if (!createRes.ok) throw new Error(`TikTok audience creation failed: ${createRes.status}`);
-  const createData = (await createRes.json()) as { data?: { custom_audience_id: string } };
-  return createData.data?.custom_audience_id ?? audienceName;
+  contactLimit: number | undefined,
+): Promise<string> {
+  const rows = await db
+    .select({ email: contacts.email, phone: contacts.phone })
+    .from(contacts)
+    .where(eq(contacts.orgId, orgId))
+    .limit(contactLimit ?? 500_000);
+  const result = await uploadToTikTok({
+    accessToken: account.accessToken,
+    advertiserId: account.platformAccountId,
+    audienceName,
+    members: rows,
+  });
+  return result.customAudienceId;
 }
 
 // ── Main sync function ────────────────────────────────────────────────────────
@@ -194,16 +177,31 @@ export async function syncAudienceToAdPlatform(
     const platform = adAccount.platform as AdPlatform;
     switch (platform) {
       case 'facebook_ads':
-        platformAudienceId = await uploadToFacebookAds(adAccount, input.audienceName, emails);
+        platformAudienceId = await uploadToFacebookAds(
+          orgId,
+          adAccount,
+          input.audienceName,
+          input.contactLimit,
+        );
         break;
       case 'google_ads':
-        platformAudienceId = await uploadToGoogleAds(adAccount, input.audienceName, emails);
+        platformAudienceId = await uploadToGoogleAds(
+          orgId,
+          adAccount,
+          input.audienceName,
+          input.contactLimit,
+        );
         break;
       case 'linkedin_ads':
         platformAudienceId = await uploadToLinkedInAds(adAccount, input.audienceName, emails);
         break;
       case 'tiktok_ads':
-        platformAudienceId = await uploadToTikTokAds(adAccount, input.audienceName, emails);
+        platformAudienceId = await uploadToTikTokAds(
+          orgId,
+          adAccount,
+          input.audienceName,
+          input.contactLimit,
+        );
         break;
       case 'sklik': {
         // Sklik accepts both email + phone hashes — fetch both columns.
