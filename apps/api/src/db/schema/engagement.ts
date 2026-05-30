@@ -66,6 +66,16 @@ export const contactEngagement = pgTable(
     predictedNextOrderAt: timestamp('predicted_next_order_at', { withTimezone: true }),
     avgOrderIntervalDays: integer('avg_order_interval_days'),
 
+    // Channel scoring per recipient (§9 P1). 0–100 per channel; null when
+    // no signal at all. preferred_channel is argmax cached on write.
+    emailScore: integer('email_score'),
+    smsScore: integer('sms_score'),
+    whatsappScore: integer('whatsapp_score'),
+    voiceScore: integer('voice_score'),
+    pushScore: integer('push_score'),
+    preferredChannel: varchar('preferred_channel', { length: 16 }),
+    channelScoredAt: timestamp('channel_scored_at', { withTimezone: true }),
+
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('contact_engagement_org_idx').on(t.orgId)],

@@ -29,6 +29,7 @@ import {
 } from '../../../services/workflows/triggers.js';
 import { refreshAllOrgsRfm } from '../../../services/rfm/index.js';
 import { refreshAllOrgsPredictions } from '../../../services/predictive-segmentation/index.js';
+import { refreshAllOrgsChannelScores } from '../../../services/channel-scoring/index.js';
 
 interface RunSummary {
   date: { triggered: number; error?: string };
@@ -36,6 +37,7 @@ interface RunSummary {
   holiday: { triggered: number; error?: string };
   rfm: { orgs: number; scored: number; errors: number; error?: string };
   predictions: { orgs: number; updated: number; errors: number; error?: string };
+  channelScores: { orgs: number; scored: number; errors: number; error?: string };
   totalTriggered: number;
 }
 
@@ -51,14 +53,21 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
     async (_req, reply) => {
       // Run all three in parallel — they touch disjoint workflows
       // (filtered by triggerType) so there's no DB contention to fear.
-      const [dateResult, nameDayResult, holidayResult, rfmResult, predResult] =
-        await Promise.allSettled([
-          processDailyDateTriggers(),
-          processDailyNameDayTriggers(),
-          processDailyHolidayTriggers(),
-          refreshAllOrgsRfm(),
-          refreshAllOrgsPredictions(),
-        ]);
+      const [
+        dateResult,
+        nameDayResult,
+        holidayResult,
+        rfmResult,
+        predResult,
+        channelResult,
+      ] = await Promise.allSettled([
+        processDailyDateTriggers(),
+        processDailyNameDayTriggers(),
+        processDailyHolidayTriggers(),
+        refreshAllOrgsRfm(),
+        refreshAllOrgsPredictions(),
+        refreshAllOrgsChannelScores(),
+      ]);
 
       const summary: RunSummary = {
         date:
@@ -100,6 +109,17 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
                 errors: 0,
                 error: String((predResult.reason as Error)?.message ?? predResult.reason),
               },
+        channelScores:
+          channelResult.status === 'fulfilled'
+            ? channelResult.value
+            : {
+                orgs: 0,
+                scored: 0,
+                errors: 0,
+                error: String(
+                  (channelResult.reason as Error)?.message ?? channelResult.reason,
+                ),
+              },
         totalTriggered: 0,
       };
       summary.totalTriggered =
@@ -113,7 +133,8 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         summary.nameDay.error ||
         summary.holiday.error ||
         summary.rfm.error ||
-        summary.predictions.error
+        summary.predictions.error ||
+        summary.channelScores.error
       );
       return reply.code(anyFailed ? 207 : 200).send({ data: summary });
     },

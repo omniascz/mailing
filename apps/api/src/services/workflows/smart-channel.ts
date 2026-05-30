@@ -1,14 +1,12 @@
 /**
  * Smart channel selector (task 5.6).
  *
- * Analyzes a contact's engagement history across channels and picks the
- * channel most likely to produce a positive outcome.
- *
- * Decision logic (rules-based, fast path):
- *   1. email open-rate > 30 % → email
- *   2. sms open-rate  > 80 % → sms
- *   3. has push token         → push
- *   4. fallback               → email
+ * Two-tier decision:
+ *   tier 1 — cached channel score from contact_engagement (§9 P1
+ *            Channel Scoring per recipient). Computed nightly by
+ *            services/channel-scoring/index.ts.
+ *   tier 2 — legacy rules + live email-events aggregation when no
+ *            cached score is available yet (new contacts, fresh org).
  *
  * Optional enhancement: when `useAi` is true, Claude Haiku supplements
  * the rules with a one-sentence reasoning string.
@@ -18,6 +16,8 @@ import { and, eq, count, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/index.js';
 import { redis } from '../../lib/redis.js';
+import { getContactChannelScores } from '../channel-scoring/index.js';
+import { confidenceBand, type ChannelKind } from '../channel-scoring/pure.js';
 
 export type Channel = 'email' | 'sms' | 'push' | 'whatsapp' | 'in_app';
 
@@ -85,6 +85,17 @@ async function getContactChannelStats(
     smsOpenRate,
     hasPushToken,
   };
+}
+
+// ─── Channel kind mapping ─────────────────────────────────────────────────────
+
+function mapChannelKindToChannel(kind: ChannelKind): Channel {
+  // Channel Scoring uses 'voice' to mirror the engine adapter names; the
+  // workflow Channel union uses 'whatsapp' + 'in_app' + 'push' but no
+  // 'voice'. Until voice is added to the workflow Channel union, fall
+  // back to email when voice wins — voice campaigns trigger separately.
+  if (kind === 'voice') return 'email';
+  return kind;
 }
 
 // ─── Rules-based selector ─────────────────────────────────────────────────────
@@ -162,6 +173,28 @@ export async function selectBestChannel(
     }
   }
 
+  // Tier 1: persisted Channel Scoring (§9 P1). When the nightly job has
+  // run for this org, prefer the cached preferredChannel — it has
+  // multi-channel signal (SMS replies, voice answers, push clicks) the
+  // legacy rules can't see.
+  const persisted = await getContactChannelScores(contactId);
+  if (persisted && persisted.preferredChannel) {
+    const band = confidenceBand(persisted.scores);
+    if (band !== 'low' && band !== 'none') {
+      const stats = await getContactChannelStats(contactId, orgId);
+      const channelScore = persisted.scores[persisted.preferredChannel] ?? 0;
+      const result: SmartChannelResult = {
+        channel: mapChannelKindToChannel(persisted.preferredChannel),
+        confidence: channelScore / 100,
+        reason: `Channel Scoring picked ${persisted.preferredChannel} (score ${channelScore}, ${band} confidence)`,
+        stats,
+      };
+      await redis.setex(cacheKey, 900, JSON.stringify(result));
+      return result;
+    }
+  }
+
+  // Tier 2 fallback: live aggregation + rules-based selector.
   const stats = await getContactChannelStats(contactId, orgId);
   const result = rulesBasedSelect(stats, preferred);
 

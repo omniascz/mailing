@@ -70,6 +70,17 @@ vi.mock('../../db/schema/index.js', () => ({
   },
   tags: { id: 'id', name: 'name', orgId: 'org_id' },
   contactTags: { contactId: 'contact_id', tagId: 'tag_id' },
+  contactEngagement: {
+    contactId: 'contact_id',
+    orgId: 'org_id',
+    emailScore: 'email_score',
+    smsScore: 'sms_score',
+    whatsappScore: 'whatsapp_score',
+    voiceScore: 'voice_score',
+    pushScore: 'push_score',
+    preferredChannel: 'preferred_channel',
+    channelScoredAt: 'channel_scored_at',
+  },
 }));
 vi.mock('../../lib/app-error.js', () => ({
   AppError: {
@@ -89,6 +100,10 @@ describe('selectBestChannel', () => {
     (mockDb.from as ReturnType<typeof vi.fn>).mockReturnThis();
     (mockDb.where as ReturnType<typeof vi.fn>).mockReturnThis();
     (mockDb.groupBy as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    // getContactChannelScores reads contactEngagement via .limit(1).
+    // Default to no cached scores so legacy rules-based path runs in tests
+    // that don't explicitly opt in to the persisted-score branch.
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]);
   });
 
   it('returns email when open rate > 30%', async () => {
