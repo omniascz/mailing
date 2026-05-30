@@ -170,6 +170,8 @@ import internalTriggersRoutes from './routes/v1/internal/triggers.js';
 import statusPageInternalRoutes from './routes/v1/internal/status-page.js';
 import internalChannelScoringRoutes from './routes/v1/internal/channel-scoring.js';
 import channelScoringRoutes from './routes/v1/channel-scoring.js';
+import internalEngagementScoreRoutes from './routes/v1/internal/engagement-score.js';
+import engagementScoreRoutes from './routes/v1/engagement-score.js';
 import internalRfmRoutes from './routes/v1/internal/rfm.js';
 import internalPredictiveRoutes from './routes/v1/internal/predictive.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
@@ -387,6 +389,8 @@ export async function buildApp() {
   await app.register(statusPageInternalRoutes);
   await app.register(internalChannelScoringRoutes);
   await app.register(channelScoringRoutes);
+  await app.register(internalEngagementScoreRoutes);
+  await app.register(engagementScoreRoutes);
   await app.register(internalRfmRoutes);
   await app.register(internalPredictiveRoutes);
   await app.register(messagingSendRoutes);

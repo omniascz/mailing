@@ -76,6 +76,12 @@ export const contactEngagement = pgTable(
     preferredChannel: varchar('preferred_channel', { length: 16 }),
     channelScoredAt: timestamp('channel_scored_at', { withTimezone: true }),
 
+    // Engagement Score proprietary (§9 P1). Cross-channel composite 0-100;
+    // band is one of highly_engaged / engaged / at_risk / dormant / cold.
+    engagementScore: integer('engagement_score'),
+    engagementBand: varchar('engagement_band', { length: 20 }),
+    engagementScoredAt: timestamp('engagement_scored_at', { withTimezone: true }),
+
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('contact_engagement_org_idx').on(t.orgId)],

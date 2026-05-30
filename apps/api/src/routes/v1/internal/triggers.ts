@@ -30,6 +30,7 @@ import {
 import { refreshAllOrgsRfm } from '../../../services/rfm/index.js';
 import { refreshAllOrgsPredictions } from '../../../services/predictive-segmentation/index.js';
 import { refreshAllOrgsChannelScores } from '../../../services/channel-scoring/index.js';
+import { refreshAllOrgsEngagement } from '../../../services/engagement-score/index.js';
 
 interface RunSummary {
   date: { triggered: number; error?: string };
@@ -38,6 +39,7 @@ interface RunSummary {
   rfm: { orgs: number; scored: number; errors: number; error?: string };
   predictions: { orgs: number; updated: number; errors: number; error?: string };
   channelScores: { orgs: number; scored: number; errors: number; error?: string };
+  engagement: { orgs: number; scored: number; errors: number; error?: string };
   totalTriggered: number;
 }
 
@@ -60,6 +62,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         rfmResult,
         predResult,
         channelResult,
+        engagementResult,
       ] = await Promise.allSettled([
         processDailyDateTriggers(),
         processDailyNameDayTriggers(),
@@ -67,6 +70,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         refreshAllOrgsRfm(),
         refreshAllOrgsPredictions(),
         refreshAllOrgsChannelScores(),
+        refreshAllOrgsEngagement(),
       ]);
 
       const summary: RunSummary = {
@@ -120,6 +124,17 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
                   (channelResult.reason as Error)?.message ?? channelResult.reason,
                 ),
               },
+        engagement:
+          engagementResult.status === 'fulfilled'
+            ? engagementResult.value
+            : {
+                orgs: 0,
+                scored: 0,
+                errors: 0,
+                error: String(
+                  (engagementResult.reason as Error)?.message ?? engagementResult.reason,
+                ),
+              },
         totalTriggered: 0,
       };
       summary.totalTriggered =
@@ -134,7 +149,8 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         summary.holiday.error ||
         summary.rfm.error ||
         summary.predictions.error ||
-        summary.channelScores.error
+        summary.channelScores.error ||
+        summary.engagement.error
       );
       return reply.code(anyFailed ? 207 : 200).send({ data: summary });
     },
