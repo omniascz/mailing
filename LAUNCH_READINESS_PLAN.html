@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>MailForge — Launch Readiness Plan</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    color: #1a1a1a;
+  }
+  h1 {
+    font-size: 22pt;
+    margin: 0 0 4pt 0;
+    color: #0b3d91;
+    letter-spacing: -0.5pt;
+  }
+  h1 + .subtitle {
+    color: #555;
+    font-size: 11pt;
+    margin-bottom: 20pt;
+    border-bottom: 1pt solid #ddd;
+    padding-bottom: 10pt;
+  }
+  h2 {
+    font-size: 14pt;
+    color: #0b3d91;
+    margin: 22pt 0 8pt 0;
+    border-bottom: 0.8pt solid #c5d4ec;
+    padding-bottom: 4pt;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12pt;
+    margin: 14pt 0 6pt 0;
+    color: #2a2a2a;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 11pt;
+    margin: 10pt 0 4pt 0;
+    color: #444;
+    page-break-after: avoid;
+  }
+  p { margin: 4pt 0; }
+  ul, ol { margin: 4pt 0 4pt 0; padding-left: 22pt; }
+  li { margin: 2pt 0; }
+  li.no-bullet { list-style: none; padding-left: 0; margin-left: -22pt; }
+  small, .muted { color: #666; font-size: 9pt; }
+  code {
+    background: #f3f3f3;
+    padding: 1pt 4pt;
+    border-radius: 2pt;
+    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 9pt;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6pt 0 12pt 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #f1f5fb;
+    text-align: left;
+    padding: 5pt 6pt;
+    border-bottom: 1pt solid #c5d4ec;
+    font-weight: 600;
+    color: #0b3d91;
+  }
+  td {
+    padding: 5pt 6pt;
+    border-bottom: 0.5pt solid #e8e8e8;
+    vertical-align: top;
+  }
+  .checkbox {
+    display: inline-block;
+    width: 11pt;
+    height: 11pt;
+    border: 1.2pt solid #555;
+    border-radius: 2pt;
+    margin-right: 6pt;
+    vertical-align: -2pt;
+    background: #fff;
+  }
+  .checklist li {
+    list-style: none;
+    margin-left: -22pt;
+    padding-left: 0;
+    padding: 3pt 0;
+    page-break-inside: avoid;
+  }
+  .checklist li .checkbox {
+    margin-right: 8pt;
+  }
+  .priority {
+    display: inline-block;
+    padding: 1pt 6pt;
+    border-radius: 3pt;
+    font-size: 8pt;
+    font-weight: 600;
+    margin-right: 6pt;
+    color: #fff;
+    letter-spacing: 0.3pt;
+    vertical-align: 1pt;
+  }
+  .p0 { background: #c0392b; }
+  .p1 { background: #d68910; }
+  .p2 { background: #229954; }
+  .p3 { background: #5d6d7e; }
+  .status-pill {
+    display: inline-block;
+    padding: 1pt 6pt;
+    border-radius: 3pt;
+    font-size: 8pt;
+    font-weight: 600;
+  }
+  .done {
+    background: #d4efdf;
+    color: #196f3d;
+  }
+  .partial {
+    background: #fcf3cf;
+    color: #7d6608;
+  }
+  .todo {
+    background: #fadbd8;
+    color: #922b21;
+  }
+  .callout {
+    background: #f8f9fc;
+    border-left: 3pt solid #0b3d91;
+    padding: 8pt 12pt;
+    margin: 10pt 0 14pt 0;
+    border-radius: 0 3pt 3pt 0;
+    page-break-inside: avoid;
+  }
+  .timeline-row {
+    display: flex;
+    margin-bottom: 6pt;
+    border-bottom: 0.4pt solid #eee;
+    padding-bottom: 6pt;
+  }
+  .timeline-row .week {
+    width: 60pt;
+    color: #0b3d91;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .timeline-row .what {
+    flex: 1;
+  }
+  .timeline-row .who {
+    width: 90pt;
+    text-align: right;
+    color: #666;
+    font-size: 9pt;
+  }
+  .pagebreak { page-break-before: always; }
+  .signoff {
+    margin-top: 30pt;
+    border-top: 1pt solid #ddd;
+    padding-top: 10pt;
+    color: #666;
+    font-size: 9pt;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8pt;
+    margin: 12pt 0;
+  }
+  .meta-card {
+    border: 0.5pt solid #c5d4ec;
+    border-radius: 4pt;
+    padding: 8pt 10pt;
+    background: #f8fafd;
+  }
+  .meta-card .label {
+    color: #0b3d91;
+    font-weight: 600;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    margin-bottom: 4pt;
+  }
+  .meta-card .value {
+    font-size: 12pt;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<h1>MailForge — Launch Readiness Plan</h1>
+<div class="subtitle">Cesta od dnešního stavu k tvrdému komerčnímu provozu · checklist verze</div>
+
+<div class="meta-grid">
+  <div class="meta-card">
+    <div class="label">Aktuální stav backendu</div>
+    <div class="value">1557 testů / 0 chyb</div>
+  </div>
+  <div class="meta-card">
+    <div class="label">Hotová logika</div>
+    <div class="value">10 packages, 70+ migrací</div>
+  </div>
+  <div class="meta-card">
+    <div class="label">Web UI scaffolded</div>
+    <div class="value">60 stránek, 18 dashboard routes</div>
+  </div>
+  <div class="meta-card">
+    <div class="label">Reálný launch ETA</div>
+    <div class="value">7 týdnů (sólo + Claude)</div>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Hlavní zjištění:</strong> nákup serveru <em>není</em> blokátor — runbook v <code>DEPLOY.md</code> + <code>infra/HOSTING_DETAIL.md</code> je hotový.
+  Reálné blokátory jsou: Stripe KYC (5–7 dní), SMTP unblock u Hetzneru (24–72 h), IP warmup (14 dní reálného času), UI shippability audit a legal review DPA.
+</div>
+
+<h2>Legenda priorit</h2>
+<table>
+  <thead>
+    <tr><th style="width: 70pt">Značka</th><th>Význam</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="priority p0">P0</span></td><td>Tvrdý blokátor pro public launch — bez tohoto nelze prodávat.</td></tr>
+    <tr><td><span class="priority p1">P1</span></td><td>Mělo by být do prvního týdne provozu, jinak se vrátí jako incident.</td></tr>
+    <tr><td><span class="priority p2">P2</span></td><td>Důležité pro růst, lze odložit pár měsíců po launchi.</td></tr>
+    <tr><td><span class="priority p3">P3</span></td><td>Enterprise / nice-to-have. Lze odložit na Year 2.</td></tr>
+  </tbody>
+</table>
+
+<!-- =================================================================== -->
+
+<h2>Fáze A — Stav kódu a quick fixy <small>(1 týden)</small></h2>
+
+<h3>A.1 — Vědomé resty v kódu</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>Web vitest config exclude e2e/</strong> — vitest grabbuje Playwright spec, padá <code>pnpm test</code> v rootu. Quick fix.
+    <br><small>Soubor: <code>apps/web/vitest.config.ts</code> (nový) · ETA 5 min</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>Linux build verify</strong> — <code>pnpm build</code> selhává na Windows (symlink permission Next standalone). Ověřit, že v Linux CI projde.
+    <br><small>Trigger: GitHub Actions CI nebo Docker build · ETA 30 min</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong><code>.env.production.example</code></strong> — snapshot z <code>.env.example</code> s production hodnotami a komentáři co je povinné.
+    <br><small>ETA 30 min</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p2">P2</span>
+    <strong>Lint warnings cleanup</strong> — 8 warnings <code>@typescript-eslint/no-explicit-any</code> v test souborech. Akceptabilní pro launch, ale uklidit.
+    <br><small>ETA 1 h</small>
+  </li>
+</ul>
+
+<h3>A.2 — Cenová strategie v kódu</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Multi-currency price config</strong> — rozšířit <code>services/billing/plans.ts</code> o <code>priceCzk / priceEur / priceUsd / priceGbp</code> místo jen <code>priceUsd</code>.
+    <br><small>ETA 1 den</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Annual discount field</strong> — <code>annualDiscountPct: 20</code> na každý tier + Stripe coupon mapping.
+    <br><small>ETA 0,5 dne</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>AI quota denní enforcement</strong> — <code>plan-enforcement.ts</code> rozšířit o <code>checkAiQuota</code> z <code>ai_usage</code> tabulky (Starter 10/den, Pro 100/den, Business 1000/den).
+    <br><small>ETA 1 den</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>Currency selector na <code>organizations.settings</code></strong> — <code>billingCurrency: 'czk' | 'eur' | 'usd' | 'gbp'</code> defaultně podle <code>dataRegion</code>.
+    <br><small>ETA 0,5 dne</small>
+  </li>
+</ul>
+
+<h3>A.3 — Zbylé P1 z §9 (feature parity)</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>DNS health monitor</strong> — periodic check MX/SPF/DKIM/DMARC drift, alert at status-page.
+    <br><small>ETA 1 den</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>Auto-pause anomaly</strong> — spike-detect bounces &gt;5 % / complaints &gt;0,3 % → auto-pause kampaně + alert.
+    <br><small>ETA 1 den</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>Send-after-conversion suppression</strong> — workflow respektuje <code>purchase</code> event a vyřadí kontakty z remaining sends.
+    <br><small>ETA 0,5 dne</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p2">P2</span>
+    <strong>Connected Content (Liquid HTTP fetch)</strong> — fetch externí JSON na render time, použít v šabloně.
+    <br><small>ETA 1 den, security-sensitive</small>
+  </li>
+</ul>
+
+<!-- =================================================================== -->
+
+<h2 class="pagebreak">Fáze B — UI shippability <small>(2–3 týdny)</small></h2>
+
+<p>18 dashboard routes existuje. Hard work je projít každou a označit per stránka <strong>✅ done / 🟡 needs polish / ❌ placeholder</strong>. Tahle fáze je závislá víc na fyzickém klikání než na psaní kódu.</p>
+
+<h3>B.1 — Audit dashboard routes</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <code>(dashboard)/page.tsx</code> — landing, KPI cards, recent activity</li>
+  <li><span class="checkbox"></span> <code>contacts/</code> — list + import CSV + detail + activity timeline</li>
+  <li><span class="checkbox"></span> <code>lists/</code> — CRUD</li>
+  <li><span class="checkbox"></span> <code>segments/</code> — rule builder UI</li>
+  <li><span class="checkbox"></span> <code>tags/</code> — CRUD</li>
+  <li><span class="checkbox"></span> <code>custom-fields/</code> — schema editor</li>
+  <li><span class="checkbox"></span> <code>signup-forms/</code> — forms + embed code</li>
+  <li><span class="checkbox"></span> <code>templates/</code> — list + duplicate + delete</li>
+  <li><span class="checkbox"></span> <code>campaigns/</code> — list + create wizard + Go/No-Go panel UI</li>
+  <li><span class="checkbox"></span> <code>workflows/</code> — list + React Flow canvas editor + runs viewer</li>
+  <li><span class="checkbox"></span> <code>lead-scoring/</code> — rules editor</li>
+  <li><span class="checkbox"></span> <code>ai-agents/</code> — admin</li>
+  <li><span class="checkbox"></span> <code>domains/</code> — sending domains + DKIM/SPF/DMARC wizard</li>
+  <li><span class="checkbox"></span> <code>inbox-preview/</code> — Litmus/EmailOnAcid client + result viewer</li>
+  <li><span class="checkbox"></span> <code>settings/</code> — org settings, workspace, billing, team, API keys</li>
+  <li><span class="checkbox"></span> <code>editor/campaigns/[id]</code> — block editor (existing)</li>
+</ul>
+
+<h3>B.2 — Auth + Public flow</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <strong>Sign-up</strong> — email + password + workspace name + ToS gate</li>
+  <li><span class="checkbox"></span> <strong>Sign-in</strong> + magic link + password reset (backend hotový)</li>
+  <li><span class="checkbox"></span> <strong>Email verification</strong> — UI propojený s <code>POST /auth/verify-email/:token</code></li>
+  <li><span class="checkbox"></span> <strong>Onboarding wizard</strong> — industry + size + migration source + AI brand kit + Entri auto-DNS</li>
+  <li><span class="checkbox"></span> <strong>Public preference center</strong> <code>/p/center/:token</code> — backend hotový (Sprint D.1), UI render</li>
+  <li><span class="checkbox"></span> <strong>Marketing landing</strong> <code>/</code> + <strong>Pricing</strong> <code>/pricing</code></li>
+  <li><span class="checkbox"></span> <strong>Migration landing pages</strong> <code>/migrate-from-{mailchimp,klaviyo,ecomail,smartemailing}</code></li>
+  <li><span class="checkbox"></span> <strong>Status page redirect</strong> <code>/status</code> → <code>status.mailforge.io</code> Instatus</li>
+</ul>
+
+<h3>B.3 — Superadmin (operator)</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <code>/superadmin</code> — platform KPIs (Sprint T hotový)</li>
+  <li><span class="checkbox"></span> <code>/superadmin/orgs</code> — list + suspend + plan change</li>
+  <li><span class="checkbox"></span> <code>/superadmin/queues</code> — BullMQ depth + failed jobs</li>
+  <li><span class="checkbox"></span> <code>/superadmin/abuse</code> — abuse events feed</li>
+</ul>
+
+<!-- =================================================================== -->
+
+<h2 class="pagebreak">Fáze C — Infrastructure setup <small>(1 týden + 1–2 týdny čekání)</small></h2>
+
+<h3>C.1 — Doména a DNS</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Registrovat apex doménu</strong> u Cloudflare Registrar
+    <br><small>Cena ~€10/rok · ETA 30 min</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Cloudflare DNS plán</strong> — Free tier pokrývá vše do enterprise
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Subdomény</strong> nastavit dle <code>DEPLOY.md</code>:
+    <ul>
+      <li><code>app.&lt;domain&gt;</code> → Vercel web</li>
+      <li><code>api.&lt;domain&gt;</code> → Hetzner API</li>
+      <li><code>mail.&lt;domain&gt;</code> → Hetzner MTA</li>
+      <li><code>t.&lt;domain&gt;</code> → tracking pixel</li>
+      <li><code>status.&lt;domain&gt;</code> → Instatus</li>
+      <li><code>docs.&lt;domain&gt;</code> → Mintlify</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>C.2 — Hetzner servery</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Hetzner Cloud CCX23</strong> (<code>mailforge-app01</code>)
+    <br><small>4 vCPU dedicated / 16 GB RAM / 160 GB SSD · €23,99/měs · API, workers, voice-bot, sms-gateway přes Coolify</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Hetzner Dedicated EX44 nebo AX52</strong> (<code>mailforge-mta01</code>)
+    <br><small>€39–69/měs + €99 setup · Go MTA engine + Postgres primary · žádat /29 IPv4 subnet</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>SMTP port 25 unblock ticket</strong> u Hetzner support — schválení 24–72 h
+    <br><small>Otevřít den 1, ne den před launch</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>Hetzner Storage Box</strong> — pro backupy Postgres + MinIO snapshots
+    <br><small>€3,49/měs za 1 TB</small>
+  </li>
+</ul>
+
+<h3>C.3 — Third-party účty</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Cloudflare</strong> — DNS + R2 object storage (zdarma)</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Vercel</strong> — web frontend hosting (Hobby zdarma, Pro $20/měs)</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Doppler</strong> — secrets management (Free tier OK pro start)</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Sentry</strong> — error tracking, DSN do prod env (Free tier 5K events/měs)</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Instatus</strong> status page — integrace v kódu hotová (<code>3396cd3</code>) · Free tier 10 subscribers nebo $20/měs</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Better Stack uptime</strong> — monitor <code>/health/ready</code> (Free tier)</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Grafana Cloud</strong> — metriky + logs (Free tier)</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Crisp nebo Intercom</strong> — customer support widget (Crisp Free, Intercom $74/měs)</li>
+</ul>
+
+<h3>C.4 — Stripe</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Stripe účet pro CZ s.r.o.</strong> + KYC dokumenty (občanka, výpis z OR, bank account)
+    <br><small>Schválení 5–7 dní</small>
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Stripe products + prices</strong>: 4 tiery × 4 měny × 2 cykly = 32 prices ve Stripe dashboardu
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Stripe webhook endpoint</strong> → <code>api.&lt;domain&gt;/webhooks/stripe</code> (kód hotový)
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Switch z test do live keys</strong> v Doppler
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>VAT registrace</strong> — povinná nad €10K obratu/rok v EU
+  </li>
+</ul>
+
+<h3>C.5 — Deploy pipeline</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Coolify install</strong> na <code>mailforge-app01</code> přes <code>curl</code> bootstrap
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Coolify připojit na GitHub repo</strong> — deploy keys auto-generated
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>CI/CD pipeline aktivní</strong> — <code>.github/workflows/{ci,cd}.yml</code> existuje, ověřit s reálným GHCR
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>DB migration CI gate</strong> — <code>db-migrations.yml</code> existuje (drift-check + apply-dry-run)
+  </li>
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>Terraform apply</strong> na staging — <code>infra/terraform/envs/staging/</code> hotový
+  </li>
+</ul>
+
+<!-- =================================================================== -->
+
+<h2 class="pagebreak">Fáze D — Deliverability (kritická pro email business)</h2>
+
+<h3>D.1 — Email autentizace</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>DKIM</strong> pro <code>mail.&lt;domain&gt;</code> — selektor + 2048-bit klíč (kód hotový)</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>SPF</strong> — <code>v=spf1 ip4:&lt;Hetzner /29&gt; ~all</code></li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>DMARC</strong> — start s <code>p=none rua=mailto:dmarc@&lt;domain&gt;</code></li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>BIMI</strong> — VMC certifikát ~$1500/rok, lze odložit</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>rDNS</strong> — Hetzner panel, set per IP na <code>mail-N.&lt;domain&gt;</code></li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>MX záznam</strong> pro inbound bounces a FBL</li>
+</ul>
+
+<h3>D.2 — IP warmup</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Warmup automation aktivní</strong> — kód hotový, nastavit <code>warmupStartDate</code></li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Day 1–14:</strong> ramping z 50/den na full volume (background, real time)</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Postmaster Tools (Google)</strong> — verify ownership <code>mail.&lt;domain&gt;</code></li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>SNDS (Microsoft)</strong> — register IP rozsah</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Seznam Postmaster</strong> — kód hotový (Sprint L0 #387)</li>
+</ul>
+
+<h3>D.3 — Feedback loops (FBL)</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>AOL/Verizon FBL</strong> — register</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Microsoft JMRP</strong> — register</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Yahoo Complaint Feedback Loop</strong> — register</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Seznam.cz FBL</strong> — pokud existuje CZ specific</li>
+</ul>
+
+<!-- =================================================================== -->
+
+<h2>Fáze E — Legal a business setup <small>(paralelně)</small></h2>
+
+<h3>E.1 — Právní</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>DPA review CZ advokátem</strong> — template existuje (Sprint D.5), ale neproshel review
+    <br><small>~€1500–3000 jednorázově · 1–2 týdny</small>
+  </li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Terms of Service</strong> + <strong>Privacy Policy</strong> + <strong>Acceptable Use Policy</strong></li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Cookies policy</strong> + cookie banner (UI)</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Sub-processor list</strong> aktualizovat — Hetzner, Stripe, Twilio, ElevenLabs, Deepgram, Sentry, Cloudflare</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>GDPR DPO</strong> — externí kontakt, ne nutně in-house</li>
+</ul>
+
+<h3>E.2 — Firma + pojištění</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>s.r.o. registrace + VAT</strong> (pokud ještě není)</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Bank account</strong> propojený se Stripe payout</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Cyber liability + professional indemnity</strong> — ~€500–1500/rok</li>
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>D&amp;O pojištění</strong> — později, pokud bude board</li>
+</ul>
+
+<h3>E.3 — Customer support setup</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>support@&lt;domain&gt;</strong> alias + routing do widget</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Crisp/Intercom widget</strong> embed v app + marketing site</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>SLA polite reply</strong> — 24 h business hours pro placené plány</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Help center</strong> — Mintlify nebo Crisp Helpdesk</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Incident postmortem template</strong></li>
+</ul>
+
+<!-- =================================================================== -->
+
+<h2 class="pagebreak">Fáze F — GTM (Go-to-Market) <small>(paralelně)</small></h2>
+
+<h3>F.1 — Content + SEO</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p1">P1</span>
+    <strong>10 SEO blog posts seedovat na prod</strong> — fixtures hotové, jen <code>pnpm seed:marketing-blog</code> na prod DB
+  </li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Mintlify docs deploy</strong> na <code>docs.&lt;domain&gt;</code></li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>API reference</strong> — z <code>/docs/json</code> Swagger spec auto-gen</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Migration guide pages</strong> (UI) — z marketing-blog postů</li>
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>Sklik kampaně</strong> — migration keywords ("migrate from mailchimp", "alternativa ecomail")</li>
+</ul>
+
+<h3>F.2 — Beta tester pipeline</h3>
+<ul class="checklist">
+  <li>
+    <span class="checkbox"></span>
+    <span class="priority p0">P0</span>
+    <strong>Identifikovat 30–50 friendly users</strong> z LinkedIn + PulseUp + Ticketarium síť
+  </li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Onboarding concierge calls</strong> s prvními 10–20</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Beta podmínky</strong> — kratší ToS, časově omezený, slíbit credit / discount za feedback</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Feedback kanál</strong> — exklusivní Slack/Discord channel pro beta usery</li>
+</ul>
+
+<h3>F.3 — Migration GTM</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Konektory v UI</strong> — Mailchimp, Klaviyo, Ecomail, SmartEmailing (backend hotový, Sprint C.2–C.5)</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Migration wizard UI</strong> (Sprint C.6)</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Cutover guidance docs</strong> — <code>/docs/migration-cutover</code> (Sprint C.10 hotový jako markdown)</li>
+</ul>
+
+<!-- =================================================================== -->
+
+<h2 class="pagebreak">Fáze G — Day-2 ops (jakmile produkce běží)</h2>
+
+<h3>G.1 — Monitoring + alerting</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Sentry DSN</strong> aktivní v API + workers + voice-bot + web</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Sentry alerts</strong> — emailové na critical errors</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Instatus components</strong> setup (API, Database, Queue, Email Sending, SMS, Tracking, Webhooks, Auth) — names matchnout s <code>COMPONENT_SLUGS</code> v kódu</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Better Stack uptime</strong> — monitory na <code>/health</code> + <code>/health/ready</code></li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>PagerDuty nebo SMS escalation</strong> na osobní telefon pro P0 incidenty</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Grafana dashboard</strong> — BullMQ depth, send rate, ISP rejection rate</li>
+</ul>
+
+<h3>G.2 — Backup + disaster recovery</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Postgres automated backup</strong> na Storage Box (pg_basebackup + WAL archive)</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Restore drill</strong> — jednou nacvičit restore na staging</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Backup retention</strong> 30 days minimum</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Postgres replica</strong> na druhém Hetzner serveru (read-only failover candidate)</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>MinIO/R2 bucket replication</strong> pro media assets</li>
+</ul>
+
+<h3>G.3 — Security ongoing</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>Secrets v Doppler</strong>, žádné <code>.env</code> committed</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>JWT_SECRET</strong>, <strong>SESSION_SECRET</strong>, <strong>INTERNAL_API_SECRET</strong> — fresh 32+ chars, rotated quarterly</li>
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>pnpm audit</strong> non-blocking CI job aktivní</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Pen-test</strong> před prvním enterprise dealem (~€5–10k)</li>
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>SOC 2 Type II audit</strong> — Year 2+</li>
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>ISO 27001</strong> — Year 2+</li>
+</ul>
+
+<h3>G.4 — Incident response</h3>
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p0">P0</span> <strong>On-call rotation</strong> — pro solo to jsi ty, nastavit do telefonu</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Incident response runbook</strong> — DB down, queue stuck, send paused</li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Postmortem template</strong> v <code>OPERATIONS.md</code></li>
+  <li><span class="checkbox"></span> <span class="priority p1">P1</span> <strong>Status page komunikace</strong> — kdo updatuje, jak často</li>
+</ul>
+
+<!-- =================================================================== -->
+
+<h2 class="pagebreak">Fáze H — Časový plán (re-kalibrovaný)</h2>
+
+<div class="timeline-row">
+  <div class="week">Týden 1</div>
+  <div class="what">Web vitest fix · Linux build verify · multi-currency plans · AI quotas · zbylé P1 §9</div>
+  <div class="who">Claude</div>
+</div>
+<div class="timeline-row">
+  <div class="week">Týden 1–2</div>
+  <div class="what">Doména + Cloudflare DNS · Doppler/Sentry/Instatus/Vercel účty · Stripe KYC submitted</div>
+  <div class="who">Ty</div>
+</div>
+<div class="timeline-row">
+  <div class="week">Týden 2–3</div>
+  <div class="what">UI shippability audit + fixy · Mintlify docs deploy · Marketing landing pages</div>
+  <div class="who">Claude + ty</div>
+</div>
+<div class="timeline-row">
+  <div class="week">Týden 3</div>
+  <div class="what">Hetzner servery objednat · Coolify install · SMTP unblock ticket · DNS pro mail subdomain</div>
+  <div class="who">Ty (runbook)</div>
+</div>
+<div class="timeline-row">
+  <div class="week">Týden 3–4</div>
+  <div class="what">Terraform apply staging · Postgres backups · monitoring live · Sentry alerts</div>
+  <div class="who">Ty + Claude</div>
+</div>
+<div class="timeline-row">
+  <div class="week">Týden 4</div>
+  <div class="what">IP warmup start (background, 14 dní reálného času) · friendly user na staging</div>
+  <div class="who">Auto + ty</div>
+</div>
+<div class="timeline-row">
+  <div class="week">Týden 4–6</div>
+  <div class="what">DPA legal review (paralelně) · bug fixing z reálného použití · Stripe live mode</div>
+  <div class="who">Advokát + Claude</div>
+</div>
+<div class="timeline-row">
+  <div class="week">Týden 5–6</div>
+  <div class="what">Beta tester outreach · onboarding concierge calls · feedback kanál</div>
+  <div class="who">Ty</div>
+</div>
+<div class="timeline-row">
+  <div class="week">Týden 7</div>
+  <div class="what">🚀 Public alpha launch · status page live · marketing site live · Sklik kampaně</div>
+  <div class="who">All</div>
+</div>
+
+<!-- =================================================================== -->
+
+<h2 class="pagebreak">Fáze I — Co lze odložit (po launchi)</h2>
+
+<ul class="checklist">
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>BIMI certifikát</strong> ($1500/rok) — až po prvních placených klientech</li>
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>CSA membership</strong> (€1500–3000/rok) — po DACH launchi</li>
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>Multi-region (EU + AP)</strong> — schema připravené (<code>dataRegion</code>), apply až bude klient</li>
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>Webinars native engine</strong></li>
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>Polish ISP pool + lokalizace</strong></li>
+  <li><span class="checkbox"></span> <span class="priority p2">P2</span> <strong>Funnel builder UI</strong></li>
+  <li><span class="checkbox"></span> <span class="priority p3">P3</span> <strong>SOC 2 Type II</strong> — Year 2+ enterprise</li>
+  <li><span class="checkbox"></span> <span class="priority p3">P3</span> <strong>ISO 27001</strong> — Year 2+</li>
+  <li><span class="checkbox"></span> <span class="priority p3">P3</span> <strong>HIPAA mode</strong> — US healthcare, deferred</li>
+  <li><span class="checkbox"></span> <span class="priority p3">P3</span> <strong>FedRAMP</strong> — SKIP</li>
+</ul>
+
+<h2>Shrnutí "co skutečně blokuje"</h2>
+
+<div class="callout">
+  <strong>Tři tvrdé blokátory s reálnou čekací dobou:</strong>
+  <ol>
+    <li><strong>Stripe KYC</strong> — 5–7 dní po submission</li>
+    <li><strong>Hetzner SMTP port 25 unblock</strong> — 24–72 h</li>
+    <li><strong>IP warmup</strong> — 14 dní real time</li>
+  </ol>
+  Tyhle tři běží paralelně, ale dohromady tvoří ~3 týdny dead-time. Cokoliv ostatního v plánu se dá udělat během této doby.
+</div>
+
+<div class="callout">
+  <strong>Server pick NENÍ blokátor.</strong> Rozhodnutí trvá 30 minut, nákup další hodinu. Reálný blok je SMTP unblock ticket, který může běžet od stejného dne.
+</div>
+
+<div class="signoff">
+  Vygenerováno z aktuálního stavu repository · 10 commitů této session · 1557 testů zelených · typecheck čistý · 70 migrací · 60 frontend stránek scaffolded.
+  <br>Tento plán je živý dokument — checkboxy slouží k iteraci, ne k jednorázovému splnění.
+</div>
+
+</body>
+</html>
