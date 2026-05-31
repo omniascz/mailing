@@ -9,8 +9,8 @@
  */
 import { eq, sql, and, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { organizations, contacts, emailEvents } from '../../db/schema/index.js';
-import { CONTACT_PLANS, type ContactPlanTier } from './plans.js';
+import { organizations, contacts, emailEvents, aiUsage } from '../../db/schema/index.js';
+import { CONTACT_PLANS, getAiQuotaPerDay, type ContactPlanTier } from './plans.js';
 import { AppError } from '../../lib/app-error.js';
 
 export interface PlanCapacity {
@@ -120,4 +120,68 @@ export async function checkSendCapacity(orgId: string, adding = 1): Promise<Plan
     }
   }
   return cap;
+}
+
+// ─── AI quota enforcement ──────────────────────────────────────────────────
+
+export interface AiQuotaStatus {
+  plan: ContactPlanTier;
+  limitPerDay: number;
+  used24h: number;
+  remaining: number;
+  pctUsed: number;
+}
+
+/**
+ * Return the org's daily AI generation cap + how many they've burned in the
+ * last 24h. Pure read — never throws on its own. Used by the dashboard
+ * banner ("you've used 78% of today's AI quota") and by the enforcement
+ * helper below.
+ */
+export async function getAiQuotaStatus(orgId: string): Promise<AiQuotaStatus> {
+  const [org] = await db
+    .select({ plan: organizations.plan })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1);
+  const plan = (org?.plan ?? 'free') as ContactPlanTier;
+  const limitPerDay = getAiQuotaPerDay(plan);
+
+  const [row] = await db
+    .select({ n: sql<number>`COUNT(*)::int` })
+    .from(aiUsage)
+    .where(
+      and(
+        eq(aiUsage.orgId, orgId),
+        sql`${aiUsage.createdAt} >= NOW() - INTERVAL '24 hours'`,
+      ),
+    );
+  const used24h = row?.n ?? 0;
+
+  const remaining = Number.isFinite(limitPerDay)
+    ? Math.max(0, limitPerDay - used24h)
+    : Number.POSITIVE_INFINITY;
+  const pctUsed = Number.isFinite(limitPerDay) && limitPerDay > 0
+    ? (used24h / limitPerDay) * 100
+    : 0;
+
+  return { plan, limitPerDay, used24h, remaining, pctUsed };
+}
+
+/**
+ * Throw 429 when the org has exceeded its plan's daily AI generation quota.
+ * Call this BEFORE invoking the Claude API so the cost is never incurred
+ * for over-quota requests.
+ *
+ * Wired into shared-ai callClaude through the rateLimiter adapter (set up
+ * in apps/api/src/lib/ai-client.ts).
+ */
+export async function checkAiQuota(orgId: string): Promise<AiQuotaStatus> {
+  const status = await getAiQuotaStatus(orgId);
+  if (Number.isFinite(status.limitPerDay) && status.used24h >= status.limitPerDay) {
+    throw AppError.tooManyRequests(
+      `AI quota exceeded for plan "${status.plan}" — used ${status.used24h}/${status.limitPerDay} generations in the last 24h. Upgrade or wait.`,
+    );
+  }
+  return status;
 }

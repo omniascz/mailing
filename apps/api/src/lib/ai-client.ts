@@ -19,6 +19,7 @@ import { db } from '../db/client.js';
 import { aiUsage, organizations } from '../db/schema/index.js';
 import { redis } from './redis.js';
 import { AppError } from './app-error.js';
+import { CONTACT_PLANS, getAiQuotaPerDay } from '../services/billing/plans.js';
 
 // ─── Re-exports for convenience ──────────────────────────────────────────────
 
@@ -43,14 +44,18 @@ export type AiFeature =
   | 'other';
 
 // ─── Plan limits ─────────────────────────────────────────────────────────────
+//
+// Single source of truth lives in `services/billing/plans.ts` so the pricing
+// page, dashboard quota banner, and rate-limiter never drift. -1 (Enterprise)
+// becomes Infinity at the helper layer; rate-limiter expects a finite int so
+// we clamp to a very large value that effectively never trips.
 
-const PLAN_LIMITS: Record<string, number> = {
-  free: 10,
-  starter: 50,
-  pro: 100,
-  business: 500,
-  enterprise: 2000,
-};
+const PLAN_LIMITS: Record<string, number> = Object.fromEntries(
+  Object.keys(CONTACT_PLANS).map((tier) => {
+    const q = getAiQuotaPerDay(tier);
+    return [tier, Number.isFinite(q) ? q : 1_000_000];
+  }),
+);
 
 // ─── Usage tracker (Drizzle → ai_usage table) ───────────────────────────────
 
@@ -73,7 +78,7 @@ async function trackUsage(record: AiUsageRecord): Promise<void> {
 
 const rateLimiter = createRateLimiter({
   planLimits: PLAN_LIMITS,
-  defaultLimit: PLAN_LIMITS.free!,
+  defaultLimit: PLAN_LIMITS.free ?? 5,
   cache: redis,
   async getPlan(tenantId: string): Promise<string> {
     const [org] = await db
