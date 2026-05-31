@@ -1,0 +1,46 @@
+{
+  "name": "@forgemsg/react-email",
+  "version": "0.1.0",
+  "description": "React Email adapter for ForgeMsg — drop-in replacement for Resend's React Email integration",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "forgemsg",
+    "mailforge",
+    "react-email",
+    "email",
+    "react"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@forgemsg/sdk": "workspace:*",
+    "react": ">=18 <20"
+  },
+  "peerDependenciesMeta": {
+    "@forgemsg/sdk": { "optional": false },
+    "react": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "react": "^19.2.5",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

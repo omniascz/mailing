@@ -47,6 +47,18 @@ export type {
 import { ForgemsgClient } from './client.js';
 import { ContactsResource } from './resources/contacts.js';
 import { EventsResource } from './resources/events.js';
+import { EmailsResource } from './resources/emails.js';
+
+export type {
+  SendEmailParams,
+  SendEmailResult,
+  EmailDetail,
+  EmailTag,
+  EmailAttachment,
+  EmailRecipient,
+  BatchSendResult,
+  SendOptions,
+} from './resources/emails.js';
 
 // ─── Augment ForgemsgClient with resource namespaces ──────────────────────────
 
@@ -54,6 +66,7 @@ declare module './client.js' {
   interface ForgemsgClient {
     readonly contacts: ContactsResource;
     readonly events: EventsResource;
+    readonly emails: EmailsResource;
   }
 }
 
@@ -72,6 +85,13 @@ Object.defineProperty(proto, 'contacts', {
 Object.defineProperty(proto, 'events', {
   get(this: ForgemsgClient) {
     return ((this as unknown as Record<string, unknown>)['_events'] ??= new EventsResource(this));
+  },
+  enumerable: true,
+});
+
+Object.defineProperty(proto, 'emails', {
+  get(this: ForgemsgClient) {
+    return ((this as unknown as Record<string, unknown>)['_emails'] ??= new EmailsResource(this));
   },
   enumerable: true,
 });

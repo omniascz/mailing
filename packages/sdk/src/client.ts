@@ -40,12 +40,19 @@ export class ForgemsgClient {
 
   // ─── HTTP ────────────────────────────────────────────────────────────────────
 
-  private async request<T>(method: string, path: string, body?: unknown, retries = 0): Promise<T> {
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    extraHeaders: Record<string, string> = {},
+    retries = 0,
+  ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
       'X-API-Key': this.apiKey,
       'Content-Type': 'application/json',
       'User-Agent': '@forgemsg/sdk/0.1.0',
+      ...extraHeaders,
     };
 
     const res = await fetch(url, {
@@ -59,7 +66,7 @@ export class ForgemsgClient {
     if ((res.status === 429 || res.status >= 500) && retries < this.maxRetries) {
       const delay = Math.min(200 * Math.pow(2, retries), 5000);
       await new Promise((r) => setTimeout(r, delay));
-      return this.request<T>(method, path, body, retries + 1);
+      return this.request<T>(method, path, body, extraHeaders, retries + 1);
     }
 
     if (!res.ok) {
@@ -86,6 +93,10 @@ export class ForgemsgClient {
 
   post<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>('POST', path, body);
+  }
+
+  postWithHeaders<T>(path: string, body: unknown, headers: Record<string, string>): Promise<T> {
+    return this.request<T>('POST', path, body, headers);
   }
 
   put<T>(path: string, body?: unknown): Promise<T> {

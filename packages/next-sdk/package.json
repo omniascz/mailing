@@ -1,0 +1,46 @@
+{
+  "name": "@forgemsg/next",
+  "version": "0.1.0",
+  "description": "ForgeMsg SDK with Next.js + Edge runtime defaults",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./edge": {
+      "import": "./dist/edge.js",
+      "types": "./dist/edge.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "forgemsg",
+    "mailforge",
+    "email",
+    "next",
+    "nextjs",
+    "edge",
+    "vercel",
+    "resend-compatible"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@forgemsg/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

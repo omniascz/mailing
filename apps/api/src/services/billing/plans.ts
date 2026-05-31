@@ -23,13 +23,48 @@ export const CONTACT_PLANS = {
 } as const;
 
 // ─── Send-based plans (#281) ──────────────────────────────────────────────────
+//
+// Pricing positioned against Resend (their Pro tier is $20/month for 50K
+// transactional emails). Our Send Starter matches that at $19, with the
+// same overage rate, and our lower / upper tiers fill out the curve more
+// granularly than Resend does.
 
 export const SEND_PLANS = {
-  send_lite: { name: 'Send Lite', sendsPerMonth: 10_000, priceUsd: 9, overageUsd: 0.0009 },
-  send_starter: { name: 'Send Starter', sendsPerMonth: 50_000, priceUsd: 25, overageUsd: 0.0008 },
-  send_growth: { name: 'Send Growth', sendsPerMonth: 200_000, priceUsd: 75, overageUsd: 0.0006 },
-  send_pro: { name: 'Send Pro', sendsPerMonth: 1_000_000, priceUsd: 250, overageUsd: 0.00045 },
-  send_custom: { name: 'Send Custom', sendsPerMonth: -1, priceUsd: -1, overageUsd: -1 },
+  send_lite: {
+    name: 'Send Lite',
+    sendsPerMonth: 10_000,
+    priceUsd: 9,
+    overageUsd: 0.0009,
+    positioning: 'Hobby projects, side-projects, MVP transactional volumes.',
+  },
+  send_starter: {
+    name: 'Send Starter',
+    sendsPerMonth: 50_000,
+    priceUsd: 19, // matches Resend Pro at $20 within rounding
+    overageUsd: 0.0008,
+    positioning: 'Drop-in for Resend Pro. Same transactional ergonomics, plus marketing.',
+  },
+  send_growth: {
+    name: 'Send Growth',
+    sendsPerMonth: 200_000,
+    priceUsd: 59,
+    overageUsd: 0.0006,
+    positioning: 'SaaS startups outgrowing Resend Pro before Resend Business kicks in.',
+  },
+  send_pro: {
+    name: 'Send Pro',
+    sendsPerMonth: 1_000_000,
+    priceUsd: 189,
+    overageUsd: 0.00045,
+    positioning: 'High-volume product email — matches Resend Scale at lower per-email cost.',
+  },
+  send_custom: {
+    name: 'Send Custom',
+    sendsPerMonth: -1,
+    priceUsd: -1,
+    overageUsd: -1,
+    positioning: 'Enterprise volume — talk to sales for committed-use pricing.',
+  },
 } as const;
 
 export type ContactPlanTier = keyof typeof CONTACT_PLANS;

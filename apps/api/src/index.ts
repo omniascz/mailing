@@ -174,6 +174,7 @@ import internalEngagementScoreRoutes from './routes/v1/internal/engagement-score
 import engagementScoreRoutes from './routes/v1/engagement-score.js';
 import identityResolutionRoutes from './routes/v1/identity-resolution.js';
 import frequencySuppressionsRoutes from './routes/v1/frequency-suppressions.js';
+import emailsRoutes from './routes/v1/emails.js';
 import internalRfmRoutes from './routes/v1/internal/rfm.js';
 import internalPredictiveRoutes from './routes/v1/internal/predictive.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
@@ -395,6 +396,7 @@ export async function buildApp() {
   await app.register(engagementScoreRoutes);
   await app.register(identityResolutionRoutes);
   await app.register(frequencySuppressionsRoutes);
+  await app.register(emailsRoutes);
   await app.register(internalRfmRoutes);
   await app.register(internalPredictiveRoutes);
   await app.register(messagingSendRoutes);
