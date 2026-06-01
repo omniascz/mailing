@@ -66,6 +66,8 @@ const sendEmailBody = z.object({
   subject: z.string().min(1).max(998), // RFC 5322 line cap
   html: z.string().optional(),
   text: z.string().optional(),
+  /** Optional AMP4EMAIL body — placed as text/x-amp-html before text/html. */
+  amp_html: z.string().max(75 * 1024).optional(),
   cc: recipientList.optional(),
   bcc: recipientList.optional(),
   reply_to: recipientList.optional(),
@@ -175,6 +177,19 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
+      // AMP for Email — validate strictly so a malformed amp_html doesn't
+      // produce mail Gmail will refuse anyway. We drop the AMP part on
+      // validation failure rather than failing the whole request, so the
+      // regular HTML delivery still goes through.
+      let ampHtmlPart: string | null = null;
+      let ampWarnings: string[] = [];
+      if (body.amp_html) {
+        const { renderAmp } = await import('../../services/editor/amp-renderer.js');
+        const rendered = renderAmp(body.amp_html);
+        ampHtmlPart = rendered.amp || null;
+        ampWarnings = [...rendered.report.errors, ...rendered.report.warnings];
+      }
+
       const idemKey = req.headers['idempotency-key'] as string | undefined;
       const { cached, setCacheTag } = await idempotencyCheck(req.user!.orgId, idemKey);
       if (cached) return reply.send(cached);
@@ -204,6 +219,8 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
           transactional: true,
           scheduledAt: body.scheduled_at ?? null,
           tracking: body.tracking ?? null,
+          ampHtml: ampHtmlPart,
+          ampWarnings,
           source: 'resend-compatible',
           // Test-mode events are persisted so the developer can audit what
           // would have been sent; workers + analytics skip them.
