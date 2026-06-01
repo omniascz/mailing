@@ -122,3 +122,4 @@ export * from './custom-channels.js';
 export * from './calculated-properties.js';
 export * from './data-sync-mappings.js';
 export * from './data-pipelines.js';
+export * from './reviews.js';

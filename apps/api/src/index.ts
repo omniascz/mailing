@@ -183,6 +183,7 @@ import domainsResendRoutes from './routes/v1/resend-compat/domains.js';
 import dnsHealthRoutes from './routes/v1/dns-health.js';
 import anomalyDetectorInternalRoutes from './routes/v1/internal/anomaly-detector.js';
 import emailValidationRoutes from './routes/v1/email-validation.js';
+import reviewsV2Routes from './routes/v1/reviews-v2.js';
 import internalRfmRoutes from './routes/v1/internal/rfm.js';
 import internalPredictiveRoutes from './routes/v1/internal/predictive.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
@@ -413,6 +414,7 @@ export async function buildApp() {
   await app.register(dnsHealthRoutes);
   await app.register(anomalyDetectorInternalRoutes);
   await app.register(emailValidationRoutes);
+  await app.register(reviewsV2Routes);
   await app.register(internalRfmRoutes);
   await app.register(internalPredictiveRoutes);
   await app.register(messagingSendRoutes);
