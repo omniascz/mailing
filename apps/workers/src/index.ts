@@ -28,6 +28,10 @@ import {
   startSubscriptionBillingWorker,
   scheduleSubscriptionBillingJob,
 } from './jobs/subscription-billing.js';
+import {
+  startAnomalyDetectorWorker,
+  scheduleAnomalyDetector,
+} from './jobs/anomaly-detector.js';
 import { QUEUE_NAMES } from './queues/index.js';
 import { initTelemetry, flushTelemetry } from './lib/telemetry.js';
 
@@ -51,6 +55,8 @@ const videoTranscodeWorker = startVideoTranscodeWorker();
 scheduleVideoTranscode().catch(console.error);
 const subscriptionBillingWorker = startSubscriptionBillingWorker();
 scheduleSubscriptionBillingJob().catch(console.error);
+const anomalyDetectorWorker = startAnomalyDetectorWorker();
+scheduleAnomalyDetector().catch(console.error);
 
 console.log('All workers started. Waiting for jobs...');
 
@@ -70,6 +76,7 @@ async function shutdown() {
     adPerfWorker.close(),
     videoTranscodeWorker.close(),
     subscriptionBillingWorker.close(),
+    anomalyDetectorWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');
