@@ -72,6 +72,7 @@ export const QUEUE_NAMES = {
   AD_PERF_SYNC: 'ad-perf-sync',
   VIDEO_TRANSCODE: 'video-transcode',
   SUBSCRIPTION_BILLING: 'subscription-billing',
+  ANOMALY_DETECTOR: 'anomaly-detector',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

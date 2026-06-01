@@ -21,6 +21,15 @@ const DEFAULT_MAX_TOKENS = 2048;
 const DEFAULT_CACHE_TTL = 60 * 60 * 24; // 24h
 const DEFAULT_MAX_RETRIES = 3;
 
+/**
+ * Minimum system-prompt length for Anthropic prompt caching to be worth it.
+ * Anthropic charges a 25% premium on cache writes; cached reads are 10% of
+ * the normal input price. Break-even is the system prompt being reused once.
+ * We trigger the cache for any system prompt >= 1024 characters (~256 tokens)
+ * — below that the savings are noise and the cache-write surcharge dominates.
+ */
+const PROMPT_CACHE_MIN_SYSTEM_CHARS = 1024;
+
 // ─── Cost calculation ────────────────────────────────────────────────────────
 
 /**
@@ -139,10 +148,26 @@ export function createAiClient(config: AiProviderConfig = {}) {
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
+        // Anthropic prompt caching: for any non-trivial system prompt we
+        // wrap it as a structured content block with cache_control. Claude
+        // re-uses the cached system tokens for 5 minutes, charging only 10%
+        // of normal input price on a hit. Subsequent calls within that
+        // window with the same system prompt save ~90% on system tokens.
+        const useCacheControl = opts.system.length >= PROMPT_CACHE_MIN_SYSTEM_CHARS;
+        const systemField = useCacheControl
+          ? [
+              {
+                type: 'text' as const,
+                text: opts.system,
+                cache_control: { type: 'ephemeral' as const },
+              },
+            ]
+          : opts.system;
+
         const body: Record<string, unknown> = {
           model,
           max_tokens: opts.maxTokens ?? defaultMaxTokens,
-          system: opts.system,
+          system: systemField,
           messages: [{ role: 'user', content: opts.user }],
           ...opts.extra,
         };
@@ -176,9 +201,29 @@ export function createAiClient(config: AiProviderConfig = {}) {
           .map((c) => c.text)
           .join('');
 
-        const inputTokens = result.usage?.input_tokens ?? 0;
-        const outputTokens = result.usage?.output_tokens ?? 0;
-        const costUsd = calculateCost(model, inputTokens, outputTokens);
+        // Anthropic returns split usage when prompt caching is used:
+        //   input_tokens                — fresh input not served from cache
+        //   cache_creation_input_tokens — wrote to cache this turn (1.25×)
+        //   cache_read_input_tokens     — served from cache this turn (0.10×)
+        const usage = result.usage as
+          | {
+              input_tokens?: number;
+              output_tokens?: number;
+              cache_creation_input_tokens?: number;
+              cache_read_input_tokens?: number;
+            }
+          | undefined;
+        const freshInput = usage?.input_tokens ?? 0;
+        const cacheWriteInput = usage?.cache_creation_input_tokens ?? 0;
+        const cacheReadInput = usage?.cache_read_input_tokens ?? 0;
+        const outputTokens = usage?.output_tokens ?? 0;
+        // Cost: fresh input at 1×, cache write at 1.25×, cache read at 0.10×.
+        const baseInputCost = calculateCost(model, freshInput, 0);
+        const cacheWriteCost = calculateCost(model, cacheWriteInput, 0) * 1.25;
+        const cacheReadCost = calculateCost(model, cacheReadInput, 0) * 0.1;
+        const outputCost = calculateCost(model, 0, outputTokens);
+        const costUsd = baseInputCost + cacheWriteCost + cacheReadCost + outputCost;
+        const inputTokens = freshInput + cacheWriteInput + cacheReadInput;
 
         // 4. Cache the response
         if (!opts.noCache && config.cache) {

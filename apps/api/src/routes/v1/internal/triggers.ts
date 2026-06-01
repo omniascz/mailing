@@ -31,6 +31,7 @@ import { refreshAllOrgsRfm } from '../../../services/rfm/index.js';
 import { refreshAllOrgsPredictions } from '../../../services/predictive-segmentation/index.js';
 import { refreshAllOrgsChannelScores } from '../../../services/channel-scoring/index.js';
 import { refreshAllOrgsEngagement } from '../../../services/engagement-score/index.js';
+import { runDnsHealthSweep } from '../../../services/deliverability/dns-health.js';
 
 interface RunSummary {
   date: { triggered: number; error?: string };
@@ -40,6 +41,12 @@ interface RunSummary {
   predictions: { orgs: number; updated: number; errors: number; error?: string };
   channelScores: { orgs: number; scored: number; errors: number; error?: string };
   engagement: { orgs: number; scored: number; errors: number; error?: string };
+  dnsHealth: {
+    domainsChecked: number;
+    domainsDrifted: number;
+    errors: number;
+    error?: string;
+  };
   totalTriggered: number;
 }
 
@@ -63,6 +70,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         predResult,
         channelResult,
         engagementResult,
+        dnsHealthResult,
       ] = await Promise.allSettled([
         processDailyDateTriggers(),
         processDailyNameDayTriggers(),
@@ -71,6 +79,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         refreshAllOrgsPredictions(),
         refreshAllOrgsChannelScores(),
         refreshAllOrgsEngagement(),
+        runDnsHealthSweep(),
       ]);
 
       const summary: RunSummary = {
@@ -135,6 +144,21 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
                   (engagementResult.reason as Error)?.message ?? engagementResult.reason,
                 ),
               },
+        dnsHealth:
+          dnsHealthResult.status === 'fulfilled'
+            ? {
+                domainsChecked: dnsHealthResult.value.domainsChecked,
+                domainsDrifted: dnsHealthResult.value.domainsDrifted,
+                errors: dnsHealthResult.value.errors,
+              }
+            : {
+                domainsChecked: 0,
+                domainsDrifted: 0,
+                errors: 0,
+                error: String(
+                  (dnsHealthResult.reason as Error)?.message ?? dnsHealthResult.reason,
+                ),
+              },
         totalTriggered: 0,
       };
       summary.totalTriggered =
@@ -150,7 +174,8 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         summary.rfm.error ||
         summary.predictions.error ||
         summary.channelScores.error ||
-        summary.engagement.error
+        summary.engagement.error ||
+        summary.dnsHealth.error
       );
       return reply.code(anyFailed ? 207 : 200).send({ data: summary });
     },
