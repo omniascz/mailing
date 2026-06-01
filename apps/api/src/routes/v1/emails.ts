@@ -49,6 +49,13 @@ const attachment = z.object({
   content_id: z.string().max(255).optional(),
 });
 
+const trackingFlags = z
+  .object({
+    opens: z.boolean().optional(),
+    clicks: z.boolean().optional(),
+  })
+  .strict();
+
 const sendEmailBody = z.object({
   from: z
     .string()
@@ -68,6 +75,8 @@ const sendEmailBody = z.object({
   attachments: z.array(attachment).max(40).optional(),
   /** ISO timestamp. */
   scheduled_at: z.string().datetime().optional(),
+  /** Per-email tracking toggle. Defaults to org-level setting when omitted. */
+  tracking: trackingFlags.optional(),
 });
 
 const batchBody = z.array(sendEmailBody).min(1).max(100);
@@ -194,7 +203,11 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
           })),
           transactional: true,
           scheduledAt: body.scheduled_at ?? null,
+          tracking: body.tracking ?? null,
           source: 'resend-compatible',
+          // Test-mode events are persisted so the developer can audit what
+          // would have been sent; workers + analytics skip them.
+          testMode: req.user?.apiKeyMode === 'test',
         },
       });
 
@@ -266,7 +279,9 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
             batch: true,
             transactional: true,
             scheduledAt: item.scheduled_at ?? null,
+            tracking: item.tracking ?? null,
             source: 'resend-compatible',
+            testMode: req.user?.apiKeyMode === 'test',
           },
         });
         data.push(
@@ -403,6 +418,126 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
             createdAt: r.createdAt,
           });
         }),
+      });
+    },
+  );
+
+  /**
+   * PATCH /api/v1/emails/:id — update scheduled send time.
+   * Mirrors Resend's API for adjusting a scheduled send (e.g. moving by
+   * +1h). Only `scheduled_at` is mutable; everything else stays frozen.
+   */
+  app.patch(
+    '/api/v1/emails/:id',
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        tags: ['Resend-compatible'],
+        summary: 'Update a scheduled email (move scheduled_at)',
+      },
+    },
+    async (req, reply) => {
+      const { id } = z.object({ id: z.string().min(1).max(255) }).parse(req.params);
+      const body = z
+        .object({ scheduled_at: z.string().datetime() })
+        .safeParse(req.body);
+      if (!body.success) {
+        return reply.code(422).send({
+          statusCode: 422,
+          name: 'validation_error',
+          message: 'scheduled_at must be a valid ISO timestamp',
+        });
+      }
+
+      const candidates = [id, `<${id}@forgemsg>`];
+      const [row] = await db
+        .select()
+        .from(emailEvents)
+        .where(
+          and(
+            eq(emailEvents.orgId, req.user!.orgId),
+            eq(emailEvents.eventType, 'send'),
+            sql`${emailEvents.messageId} IN (${sql.join(
+              candidates.map((c) => sql`${c}`),
+              sql`, `,
+            )})`,
+          ),
+        )
+        .orderBy(desc(emailEvents.createdAt))
+        .limit(1);
+      if (!row) {
+        return reply.code(404).send({
+          statusCode: 404,
+          name: 'not_found',
+          message: `Email with id ${id} not found.`,
+        });
+      }
+
+      const meta = (row.metadata ?? {}) as Record<string, unknown>;
+      meta.scheduledAt = body.data.scheduled_at;
+      await db
+        .update(emailEvents)
+        .set({ metadata: meta })
+        .where(eq(emailEvents.id, row.id));
+
+      return reply.send({
+        object: 'email',
+        id: stripMessageIdBrackets(row.messageId!),
+      });
+    },
+  );
+
+  /**
+   * DELETE /api/v1/emails/:id — cancel a scheduled email.
+   * Mirrors Resend's cancel endpoint. Only effective while the message
+   * hasn't actually been queued to the engine yet.
+   */
+  app.delete(
+    '/api/v1/emails/:id',
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        tags: ['Resend-compatible'],
+        summary: 'Cancel a scheduled email',
+      },
+    },
+    async (req, reply) => {
+      const { id } = z.object({ id: z.string().min(1).max(255) }).parse(req.params);
+      const candidates = [id, `<${id}@forgemsg>`];
+      const [row] = await db
+        .select()
+        .from(emailEvents)
+        .where(
+          and(
+            eq(emailEvents.orgId, req.user!.orgId),
+            eq(emailEvents.eventType, 'send'),
+            sql`${emailEvents.messageId} IN (${sql.join(
+              candidates.map((c) => sql`${c}`),
+              sql`, `,
+            )})`,
+          ),
+        )
+        .orderBy(desc(emailEvents.createdAt))
+        .limit(1);
+      if (!row) {
+        return reply.code(404).send({
+          statusCode: 404,
+          name: 'not_found',
+          message: `Email with id ${id} not found.`,
+        });
+      }
+
+      const meta = (row.metadata ?? {}) as Record<string, unknown>;
+      meta.cancelled = true;
+      meta.cancelledAt = new Date().toISOString();
+      await db
+        .update(emailEvents)
+        .set({ metadata: meta })
+        .where(eq(emailEvents.id, row.id));
+
+      return reply.send({
+        object: 'email',
+        id: stripMessageIdBrackets(row.messageId!),
       });
     },
   );

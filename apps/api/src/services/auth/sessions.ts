@@ -11,6 +11,12 @@ export interface SessionData {
   orgId: string;
   email: string;
   role: UserRole;
+  /**
+   * When the request authenticated via an API key, this carries the
+   * key's mode: 'live' performs real sends, 'test' is a no-op sandbox
+   * (Resend parity). Undefined for JWT-based sessions.
+   */
+  apiKeyMode?: 'live' | 'test';
 }
 
 export interface JwtPayload extends SessionData {

@@ -145,6 +145,8 @@ export const apiKeys = pgTable(
       .notNull()
       .default(sql`'{}'::text[]`),
     active: boolean('active').notNull().default(true),
+    /** 'live' (default) hits the MTA; 'test' (Resend parity) is a no-op. */
+    mode: varchar('mode', { length: 8 }).notNull().default('live'),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

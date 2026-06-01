@@ -48,6 +48,10 @@ import { ForgemsgClient } from './client.js';
 import { ContactsResource } from './resources/contacts.js';
 import { EventsResource } from './resources/events.js';
 import { EmailsResource } from './resources/emails.js';
+import { AudiencesResource } from './resources/audiences.js';
+import { BroadcastsResource } from './resources/broadcasts.js';
+import { ApiKeysResource } from './resources/api-keys.js';
+import { DomainsResource } from './resources/domains.js';
 
 export type {
   SendEmailParams,
@@ -59,6 +63,26 @@ export type {
   BatchSendResult,
   SendOptions,
 } from './resources/emails.js';
+export type {
+  Audience,
+  AudienceContact,
+  CreateAudienceParams,
+  CreateContactParams,
+  UpdateContactParams,
+} from './resources/audiences.js';
+export type {
+  Broadcast,
+  CreateBroadcastParams,
+  UpdateBroadcastParams,
+  SendBroadcastParams,
+} from './resources/broadcasts.js';
+export type { ApiKey, CreateApiKeyParams } from './resources/api-keys.js';
+export type {
+  Domain,
+  DomainRecord,
+  CreateDomainParams,
+  UpdateDomainParams,
+} from './resources/domains.js';
 
 // ─── Augment ForgemsgClient with resource namespaces ──────────────────────────
 
@@ -67,6 +91,10 @@ declare module './client.js' {
     readonly contacts: ContactsResource;
     readonly events: EventsResource;
     readonly emails: EmailsResource;
+    readonly audiences: AudiencesResource;
+    readonly broadcasts: BroadcastsResource;
+    readonly apiKeys: ApiKeysResource;
+    readonly domains: DomainsResource;
   }
 }
 
@@ -92,6 +120,38 @@ Object.defineProperty(proto, 'events', {
 Object.defineProperty(proto, 'emails', {
   get(this: ForgemsgClient) {
     return ((this as unknown as Record<string, unknown>)['_emails'] ??= new EmailsResource(this));
+  },
+  enumerable: true,
+});
+
+Object.defineProperty(proto, 'audiences', {
+  get(this: ForgemsgClient) {
+    return ((this as unknown as Record<string, unknown>)['_audiences'] ??= new AudiencesResource(
+      this,
+    ));
+  },
+  enumerable: true,
+});
+
+Object.defineProperty(proto, 'broadcasts', {
+  get(this: ForgemsgClient) {
+    return ((this as unknown as Record<string, unknown>)['_broadcasts'] ??= new BroadcastsResource(
+      this,
+    ));
+  },
+  enumerable: true,
+});
+
+Object.defineProperty(proto, 'apiKeys', {
+  get(this: ForgemsgClient) {
+    return ((this as unknown as Record<string, unknown>)['_apiKeys'] ??= new ApiKeysResource(this));
+  },
+  enumerable: true,
+});
+
+Object.defineProperty(proto, 'domains', {
+  get(this: ForgemsgClient) {
+    return ((this as unknown as Record<string, unknown>)['_domains'] ??= new DomainsResource(this));
   },
   enumerable: true,
 });

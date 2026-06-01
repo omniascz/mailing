@@ -41,12 +41,15 @@ async function authPlugin(app: FastifyInstance) {
     if (apiKeyHeader) {
       const key = await lookupApiKey(apiKeyHeader).catch(() => null);
       if (key) {
-        // Build a minimal SessionData from the API key
+        // Build a minimal SessionData from the API key. `mode` carries
+        // the sandbox flag through so routes like /emails can short-circuit
+        // MTA dispatch when the caller used a test key.
         request.user = {
           userId: key.userId ?? key.id,
           orgId: key.orgId,
           role: 'admin' as UserRole,
           email: '',
+          apiKeyMode: ((key as { mode?: 'live' | 'test' }).mode ?? 'live') as 'live' | 'test',
         };
         return;
       }

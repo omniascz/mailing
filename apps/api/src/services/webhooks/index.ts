@@ -46,14 +46,16 @@ export async function createApiKey(
   name: string,
   scopes: string[] = [],
   expiresAt?: Date,
+  mode: 'live' | 'test' = 'live',
 ): Promise<{ apiKey: typeof apiKeys.$inferSelect; rawKey: string }> {
-  const raw = `fm_live_${randomBytes(24).toString('hex')}`;
+  const prefix = mode === 'test' ? 'fm_test_' : 'fm_live_';
+  const raw = `${prefix}${randomBytes(24).toString('hex')}`;
   const keyHash = hashApiKey(raw);
   const keyPrefix = raw.slice(0, 12);
 
   const [key] = await db
     .insert(apiKeys)
-    .values({ orgId, userId, name, keyHash, keyPrefix, scopes, expiresAt })
+    .values({ orgId, userId, name, keyHash, keyPrefix, scopes, expiresAt, mode })
     .returning();
 
   if (!key) throw AppError.internal('Failed to create API key');
