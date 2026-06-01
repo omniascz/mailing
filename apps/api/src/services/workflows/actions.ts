@@ -18,6 +18,7 @@ import {
   type WorkflowRun,
 } from '../../db/schema/index.js';
 import { redis } from '../../lib/redis.js';
+import { shouldSuppressDueToConversion } from './conversion-suppression.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,6 +79,13 @@ async function executeSendEmail(
     templateId?: string;
   };
 
+  // §9 P1 — send-after-conversion suppression. If the run already hit a
+  // Goal node, downstream sends become no-ops so we don't pester someone
+  // who already bought.
+  if (shouldSuppressDueToConversion(run)) {
+    return { type: 'next', nextNodeId: null };
+  }
+
   // Queue email via BullMQ — workers/src handles the actual send
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   if (queues) {
@@ -107,6 +115,11 @@ async function executeSendSms(
   if (!config.message) return { type: 'error', message: 'SMS message text is required' };
   if (!ctx.contact?.phone) return { type: 'next', nextNodeId: null }; // skip if no phone
   if (!run.contactId) return { type: 'next', nextNodeId: null };
+
+  // §9 P1 — send-after-conversion suppression.
+  if (shouldSuppressDueToConversion(run)) {
+    return { type: 'next', nextNodeId: null };
+  }
 
   // Cross-channel frequency cap (§9 P1) — skip + log suppression when blocked.
   const { checkFrequencyCap } = await import('../frequency-capping/index.js');
@@ -670,6 +683,9 @@ async function executeSendViber(
   ctx: ActionContext,
 ): Promise<ActionResult> {
   const config = node.config as { templateId?: string; body?: string };
+  if (shouldSuppressDueToConversion(run)) {
+    return { type: 'next', nextNodeId: null };
+  }
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   if (queues) {
     await (
@@ -833,6 +849,10 @@ async function executeSendPersonalEmail(
 
   if (!config.fromEmail || !config.subject || !config.body) {
     return { type: 'error', message: 'send_personal_email requires fromEmail, subject, and body' };
+  }
+
+  if (shouldSuppressDueToConversion(run)) {
+    return { type: 'next', nextNodeId: null };
   }
 
   const { buildMergeVars, substitutePersonalMergeTags, buildPersonalHtml } =

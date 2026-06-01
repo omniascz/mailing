@@ -180,6 +180,8 @@ import audiencesResendRoutes from './routes/v1/resend-compat/audiences.js';
 import broadcastsResendRoutes from './routes/v1/resend-compat/broadcasts.js';
 import apiKeysResendRoutes from './routes/v1/resend-compat/api-keys.js';
 import domainsResendRoutes from './routes/v1/resend-compat/domains.js';
+import dnsHealthRoutes from './routes/v1/dns-health.js';
+import anomalyDetectorInternalRoutes from './routes/v1/internal/anomaly-detector.js';
 import internalRfmRoutes from './routes/v1/internal/rfm.js';
 import internalPredictiveRoutes from './routes/v1/internal/predictive.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
@@ -407,6 +409,8 @@ export async function buildApp() {
   await app.register(broadcastsResendRoutes);
   await app.register(apiKeysResendRoutes);
   await app.register(domainsResendRoutes);
+  await app.register(dnsHealthRoutes);
+  await app.register(anomalyDetectorInternalRoutes);
   await app.register(internalRfmRoutes);
   await app.register(internalPredictiveRoutes);
   await app.register(messagingSendRoutes);
