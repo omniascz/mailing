@@ -26,13 +26,15 @@ import {
 import { redis } from '../../lib/redis.js';
 import {
   signPayload,
+  signPayloadWithTimestamp,
   verifySignature,
+  verifyTimestampedSignature,
   generateWebhookSecret,
   retryDelaySec,
 } from '@shared/webhooks';
 
 // Re-export signing functions for consumers (SDK verify, route handlers)
-export { signPayload, verifySignature };
+export { signPayload, signPayloadWithTimestamp, verifySignature, verifyTimestampedSignature };
 
 // ─── API key management ───────────────────────────────────────────────────────
 
@@ -318,7 +320,17 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
   }
 
   const body = JSON.stringify(delivery.payload);
+  // Two signatures so consumers can pick what they support:
+  //   X-ForgeMsg-Signature      legacy `sha256=hex` over the body
+  //   X-ForgeMsg-Signature-V2   Stripe-style `t=epoch,v1=hex` — timestamp
+  //                             is bound into the HMAC so replays past
+  //                             the verifier's tolerance window fail.
+  //   X-ForgeMsg-Timestamp      same epoch in seconds, exposed plain so
+  //                             consumers can age-check without parsing
+  //                             the v2 envelope.
+  const timestamp = Math.floor(Date.now() / 1000);
   const signature = signPayload(webhook.secret, body);
+  const signatureV2 = signPayloadWithTimestamp(webhook.secret, body, timestamp);
   const attempts = delivery.attempts + 1;
 
   let statusCode: number | undefined;
@@ -331,6 +343,8 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
       headers: {
         'Content-Type': 'application/json',
         'X-ForgeMsg-Signature': signature,
+        'X-ForgeMsg-Signature-V2': signatureV2,
+        'X-ForgeMsg-Timestamp': String(timestamp),
         'X-ForgeMsg-Event': delivery.event,
         'X-ForgeMsg-Delivery': deliveryId,
       },
@@ -438,7 +452,9 @@ export async function testWebhook(
     data: { message: 'This is a test delivery from ForgeMsg' },
   });
 
+  const testTimestamp = Math.floor(Date.now() / 1000);
   const signature = signPayload(webhook.secret, body);
+  const signatureV2 = signPayloadWithTimestamp(webhook.secret, body, testTimestamp);
 
   try {
     const res = await fetch(webhook.url, {
@@ -446,6 +462,8 @@ export async function testWebhook(
       headers: {
         'Content-Type': 'application/json',
         'X-ForgeMsg-Signature': signature,
+        'X-ForgeMsg-Signature-V2': signatureV2,
+        'X-ForgeMsg-Timestamp': String(testTimestamp),
         'X-ForgeMsg-Event': 'webhook.test',
         'X-ForgeMsg-Delivery': 'test',
       },

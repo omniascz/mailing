@@ -416,7 +416,7 @@ export default async function domainRoutes(app: FastifyInstance) {
 // ─── Helper: strip private key ────────────────────────────────────────────────
 
 function sanitise(row: typeof sendingDomains.$inferSelect) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { dkimPrivateKey: _priv, ...safe } = row;
+  void _priv;
   return safe;
 }

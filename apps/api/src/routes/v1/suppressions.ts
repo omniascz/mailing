@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { and, desc, eq, or } from 'drizzle-orm';
+import { and, desc, eq, or, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -41,14 +41,10 @@ export default async function suppressionRoutes(app: FastifyInstance) {
       if (q.reason) conds.push(eq(suppressions.reason, q.reason));
       if (q.search) {
         const like = `%${q.search}%`;
-        // raw ilike: drizzle supports ilike for pg
         conds.push(
           or(
-            // biome-ignore lint/suspicious/noExplicitAny
-            ...([
-              (db as any).sql`${suppressions.email} ILIKE ${like}`,
-              (db as any).sql`${suppressions.phone} ILIKE ${like}`,
-            ] as any[]),
+            sql`${suppressions.email} ILIKE ${like}`,
+            sql`${suppressions.phone} ILIKE ${like}`,
           )!,
         );
       }

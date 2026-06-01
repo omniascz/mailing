@@ -181,8 +181,9 @@ describe('RichWhatsAppSender payload builders', () => {
       caption: 'Check this out!',
     });
     expect(payload.type).toBe('image');
-    expect((payload as any).image.link).toBe('https://example.com/img.jpg');
-    expect((payload as any).image.caption).toBe('Check this out!');
+    const p = payload as { image?: { link?: string; caption?: string } };
+    expect(p.image?.link).toBe('https://example.com/img.jpg');
+    expect(p.image?.caption).toBe('Check this out!');
   });
 
   it('media payload document includes filename', () => {
@@ -191,7 +192,8 @@ describe('RichWhatsAppSender payload builders', () => {
       link: 'https://example.com/file.pdf',
       filename: 'invoice.pdf',
     });
-    expect((payload as any).document.filename).toBe('invoice.pdf');
+    const p = payload as { document?: { filename?: string } };
+    expect(p.document?.filename).toBe('invoice.pdf');
   });
 
   it('media payload video has no filename field', () => {
@@ -199,7 +201,8 @@ describe('RichWhatsAppSender payload builders', () => {
       type: 'video',
       link: 'https://example.com/video.mp4',
     });
-    expect((payload as any).video.filename).toBeUndefined();
+    const p = payload as { video?: { filename?: string } };
+    expect(p.video?.filename).toBeUndefined();
   });
 });
 
