@@ -4,6 +4,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -26,6 +27,16 @@ type Config struct {
 
 	// Metrics / logging
 	LogLevel string
+
+	// Redis (used for IP warmup enforcement)
+	// Empty = warmup disabled.
+	RedisURL string
+
+	// SendingIPs is an optional comma-separated list of local IP addresses
+	// the engine can bind to when dialling outbound SMTP connections.
+	// When set, the warmup manager selects the best IP per send.
+	// Example: "1.2.3.4,1.2.3.5"
+	SendingIPs []string
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -39,6 +50,8 @@ func Load() *Config {
 		PoolIdleTimeout:       envDuration("POOL_IDLE_TIMEOUT", 5*time.Minute),
 		TLSPreferred:          envBool("TLS_PREFERRED", true),
 		LogLevel:              envOrDefault("LOG_LEVEL", "info"),
+		RedisURL:              envOrDefault("REDIS_URL", ""),
+		SendingIPs:            envStringSlice("SENDING_IPS"),
 	}
 }
 
@@ -65,6 +78,21 @@ func envDuration(key string, def time.Duration) time.Duration {
 		}
 	}
 	return def
+}
+
+func envStringSlice(key string) []string {
+	v := os.Getenv(key)
+	if v == "" {
+		return nil
+	}
+	var out []string
+	for _, s := range strings.Split(v, ",") {
+		s = strings.TrimSpace(s)
+		if s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 func envBool(key string, def bool) bool {

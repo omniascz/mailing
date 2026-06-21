@@ -10,6 +10,7 @@ import (
 	"github.com/forgemsg/engine/internal/inbound"
 	"github.com/forgemsg/engine/internal/pool"
 	"github.com/forgemsg/engine/internal/server"
+	"github.com/forgemsg/engine/internal/warmup"
 )
 
 const version = "0.1.0"
@@ -31,8 +32,19 @@ func main() {
 	})
 	defer connPool.Close()
 
+	// Optional IP warmup enforcement.
+	// Enabled when REDIS_URL + SENDING_IPS are both configured.
+	warmupMgr, err := warmup.New(cfg.RedisURL)
+	if err != nil {
+		log.Fatalf("warmup: %v", err)
+	}
+	defer warmupMgr.Close()
+	if warmupMgr != nil && len(cfg.SendingIPs) > 0 {
+		log.Printf("IP warmup enforcement enabled for %d IPs: %v", len(cfg.SendingIPs), cfg.SendingIPs)
+	}
+
 	// Start gRPC server
-	srv := server.New(connPool, version)
+	srv := server.New(connPool, warmupMgr, cfg.SendingIPs, version)
 
 	go func() {
 		if err := srv.ListenAndServe(cfg.GRPCAddr); err != nil {

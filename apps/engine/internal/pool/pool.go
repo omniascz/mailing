@@ -5,6 +5,7 @@
 package pool
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -142,6 +143,70 @@ func (p *Pool) Discard(c *Conn) {
 	p.mu.Lock()
 	p.activeConns--
 	p.mu.Unlock()
+}
+
+// DialFrom creates a direct SMTP connection to domain, binding the local TCP
+// socket to localIP. The connection is NOT placed in the pool cache — the
+// caller owns it and must call Discard when done.
+//
+// Used by the warmup subsystem: during warm-up phases only a small number of
+// emails are sent per IP per day, so connection reuse is not critical.
+func (p *Pool) DialFrom(domain, localIP string) (*Conn, error) {
+	host, err := resolveMX(domain)
+	if err != nil {
+		return nil, fmt.Errorf("pool: resolve MX for %s: %w", domain, err)
+	}
+
+	addr := net.JoinHostPort(host, "25")
+
+	var netConn net.Conn
+	if localIP != "" {
+		local := net.ParseIP(localIP)
+		if local == nil {
+			return nil, fmt.Errorf("pool: invalid local IP %q", localIP)
+		}
+		dialer := &net.Dialer{
+			LocalAddr: &net.TCPAddr{IP: local},
+			Timeout:   p.connectTimeout,
+		}
+		netConn, err = dialer.DialContext(context.Background(), "tcp", addr)
+	} else {
+		netConn, err = net.DialTimeout("tcp", addr, p.connectTimeout)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("pool: dial %s from %s: %w", addr, localIP, err)
+	}
+
+	client, err := smtp.NewClient(netConn, host)
+	if err != nil {
+		netConn.Close()
+		return nil, fmt.Errorf("pool: smtp new client %s: %w", addr, err)
+	}
+
+	hostname, _ := hostName()
+	if err := client.Hello(hostname); err != nil {
+		client.Close()
+		return nil, fmt.Errorf("pool: EHLO %s: %w", addr, err)
+	}
+
+	useTLS := false
+	if p.preferStartTLS {
+		if ok, _ := client.Extension("STARTTLS"); ok {
+			tlsCfg := &tls.Config{ServerName: host}
+			if err := client.StartTLS(tlsCfg); err == nil {
+				useTLS = true
+			}
+		}
+	}
+
+	now := time.Now()
+	return &Conn{
+		Client:    client,
+		Domain:    domain,
+		CreatedAt: now,
+		LastUsed:  now,
+		UseTLS:    useTLS,
+	}, nil
 }
 
 // Stats returns pool statistics.

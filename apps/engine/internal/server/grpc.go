@@ -11,6 +11,7 @@ import (
 	"github.com/forgemsg/engine/internal/dkim"
 	"github.com/forgemsg/engine/internal/pool"
 	smtpsend "github.com/forgemsg/engine/internal/smtp"
+	"github.com/forgemsg/engine/internal/warmup"
 	pb "github.com/forgemsg/engine/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -25,9 +26,10 @@ type MTAServer struct {
 }
 
 // New creates a new MTAServer.
-func New(p *pool.Pool, version string) *MTAServer {
+// Pass a non-nil warmupMgr and at least one sendingIP to enable warmup enforcement.
+func New(p *pool.Pool, warmupMgr *warmup.Manager, sendingIPs []string, version string) *MTAServer {
 	return &MTAServer{
-		sender:  smtpsend.NewSender(p),
+		sender:  smtpsend.NewSender(p, warmupMgr, sendingIPs),
 		pool:    p,
 		version: version,
 	}

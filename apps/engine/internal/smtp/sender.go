@@ -5,13 +5,16 @@
 package smtp
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
 	"github.com/forgemsg/engine/internal/dkim"
 	"github.com/forgemsg/engine/internal/email"
 	"github.com/forgemsg/engine/internal/pool"
+	"github.com/forgemsg/engine/internal/warmup"
 )
 
 // Message represents a fully structured outgoing email.
@@ -48,17 +51,21 @@ type Result struct {
 
 // Sender sends emails via the connection pool.
 type Sender struct {
-	pool *pool.Pool
+	pool       *pool.Pool
+	warmupMgr  *warmup.Manager
+	sendingIPs []string
 }
 
 // NewSender creates a Sender backed by the given pool.
-func NewSender(p *pool.Pool) *Sender {
-	return &Sender{pool: p}
+// Pass a non-nil warmupMgr and at least one IP to enable warmup enforcement.
+func NewSender(p *pool.Pool, mgr *warmup.Manager, ips []string) *Sender {
+	return &Sender{pool: p, warmupMgr: mgr, sendingIPs: ips}
 }
 
 // Send delivers a single email message.
 func (s *Sender) Send(msg *Message) *Result {
 	start := time.Now()
+	ctx := context.Background()
 
 	domain := extractDomain(msg.ToEmail)
 	if domain == "" {
@@ -66,6 +73,31 @@ func (s *Sender) Send(msg *Message) *Result {
 			MessageID: msg.MessageID,
 			Error:     "invalid recipient email: no domain",
 		}
+	}
+
+	// IP warmup enforcement.
+	//
+	// When the engine is configured with sending IPs and a warmup manager, we
+	// select the best available IP before connecting. The selection prefers warm
+	// (fully ramped) IPs; among warming IPs it picks the one with the most
+	// remaining daily capacity.
+	//
+	// If msg.SendingIP is already set (explicit caller override), skip selection.
+	selectedIP := msg.SendingIP
+	useWarmupDial := false
+
+	if selectedIP == "" && s.warmupMgr != nil && len(s.sendingIPs) > 0 {
+		ip, err := s.warmupMgr.SelectIP(ctx, s.sendingIPs)
+		if err != nil {
+			// All IPs at daily cap — reject rather than queue behind the wrong IP.
+			return &Result{
+				MessageID:  msg.MessageID,
+				Error:      err.Error(),
+				DurationMs: time.Since(start).Milliseconds(),
+			}
+		}
+		selectedIP = ip
+		useWarmupDial = true
 	}
 
 	// Build the raw RFC 5322 message
@@ -83,12 +115,21 @@ func (s *Sender) Send(msg *Message) *Result {
 		rawMsg = "DKIM-Signature: " + sig + "\r\n" + rawMsg
 	}
 
-	// Get a connection from the pool
-	conn, err := s.pool.Get(domain)
-	if err != nil {
+	// Get a connection.
+	// When a specific local IP is required (warmup or explicit override), dial
+	// directly — pool.DialFrom binds the socket to that IP and skips the cache.
+	// For the default path (no IP configured) use the pool for connection reuse.
+	var conn *pool.Conn
+	var connErr error
+	if useWarmupDial && selectedIP != "" {
+		conn, connErr = s.pool.DialFrom(domain, selectedIP)
+	} else {
+		conn, connErr = s.pool.Get(domain)
+	}
+	if connErr != nil {
 		return &Result{
 			MessageID:  msg.MessageID,
-			Error:      fmt.Sprintf("connect: %v", err),
+			Error:      fmt.Sprintf("connect: %v", connErr),
 			DurationMs: time.Since(start).Milliseconds(),
 		}
 	}
@@ -154,8 +195,17 @@ func (s *Sender) Send(msg *Message) *Result {
 		}
 	}
 
-	// Return the connection for reuse
-	s.pool.Put(conn)
+	// Return the connection for reuse (warmup connections are always discarded
+	// since they are not tracked in the pool cache).
+	if useWarmupDial {
+		s.pool.Discard(conn)
+		// Record the send against the warmup counter for this IP.
+		if err := s.warmupMgr.RecordSend(ctx, selectedIP); err != nil {
+			log.Printf("[warmup] RecordSend %s: %v", selectedIP, err)
+		}
+	} else {
+		s.pool.Put(conn)
+	}
 
 	return &Result{
 		MessageID:   msg.MessageID,
