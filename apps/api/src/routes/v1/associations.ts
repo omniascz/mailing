@@ -10,6 +10,9 @@ import {
   listAssociations,
   countAssociations,
 } from '../../services/associations/index.js';
+import { and, eq, sql } from 'drizzle-orm';
+import { db } from '../../db/client.js';
+import { associations } from '../../db/schema/index.js';
 
 const ENTITY_TYPES = [
   'contact',
@@ -73,6 +76,60 @@ export default async function associationRoutes(app: FastifyInstance) {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
     const orgId = (req.user as { orgId: string }).orgId;
     await deleteAssociation(orgId, id);
+    return reply.status(204).send();
+  });
+
+  // ─── Label management (#321) ──────────────────────────────────────────────
+
+  /**
+   * GET /api/v1/associations/labels
+   * Returns all distinct labels used in this org's associations.
+   */
+  app.get('/api/v1/associations/labels', async (req, reply) => {
+    const orgId = (req.user as { orgId: string }).orgId;
+    const rows = await db
+      .selectDistinct({ label: associations.label })
+      .from(associations)
+      .where(and(eq(associations.orgId, orgId), sql`${associations.label} IS NOT NULL`))
+      .orderBy(associations.label);
+    const labels = rows.map((r) => r.label).filter(Boolean);
+    return reply.send({ data: labels });
+  });
+
+  /**
+   * PUT /api/v1/associations/labels/rename
+   * Renames all associations with oldLabel to newLabel within the org.
+   */
+  app.put('/api/v1/associations/labels/rename', async (req, reply) => {
+    const orgId = (req.user as { orgId: string }).orgId;
+    const { oldLabel, newLabel } = z
+      .object({
+        oldLabel: z.string().min(1).max(64),
+        newLabel: z.string().min(1).max(64),
+      })
+      .parse(req.body);
+
+    const result = await db
+      .update(associations)
+      .set({ label: newLabel, updatedAt: new Date() })
+      .where(and(eq(associations.orgId, orgId), eq(associations.label, oldLabel)));
+
+    return reply.send({ data: { updated: (result as unknown as { rowCount: number }).rowCount ?? 0 } });
+  });
+
+  /**
+   * DELETE /api/v1/associations/labels/:label
+   * Removes the label from all associations (sets label to NULL).
+   */
+  app.delete('/api/v1/associations/labels/:label', async (req, reply) => {
+    const orgId = (req.user as { orgId: string }).orgId;
+    const { label } = z.object({ label: z.string().min(1).max(64) }).parse(req.params);
+
+    await db
+      .update(associations)
+      .set({ label: null, updatedAt: new Date() })
+      .where(and(eq(associations.orgId, orgId), eq(associations.label, label)));
+
     return reply.status(204).send();
   });
 }

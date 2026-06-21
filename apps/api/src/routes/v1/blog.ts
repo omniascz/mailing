@@ -4,6 +4,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { randomUUID } from 'node:crypto';
 import {
   listPosts,
   getPost,
@@ -19,6 +20,10 @@ import {
   listAuthors,
   createAuthor,
 } from '../../services/blog/index.js';
+import { and, eq, asc } from 'drizzle-orm';
+import { db } from '../../db/client.js';
+import { blogPostRevisions, blogPosts } from '../../db/schema/index.js';
+import { redis } from '../../lib/redis.js';
 
 const blogRoutes: FastifyPluginAsync = async (app) => {
   // Posts
@@ -210,6 +215,188 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.body);
       return reply.code(201).send({ data: await createAuthor(req.user!.orgId, body) });
+    },
+  );
+
+  // ─── Content staging / versioning (#339) ─────────────────────────────────
+
+  /**
+   * GET /api/v1/blog/posts/:id/revisions
+   * Lists all saved revisions for a post, newest first.
+   */
+  app.get(
+    '/api/v1/blog/posts/:id/revisions',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Blog'], summary: 'List post revisions' },
+    },
+    async (req) => {
+      const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+      const orgId = req.user!.orgId;
+
+      // Verify post belongs to org
+      const [post] = await db
+        .select({ id: blogPosts.id })
+        .from(blogPosts)
+        .where(and(eq(blogPosts.id, id), eq(blogPosts.orgId, orgId)))
+        .limit(1);
+      if (!post) throw { statusCode: 404, code: 'POST_NOT_FOUND', message: 'Post not found' };
+
+      const revisions = await db
+        .select()
+        .from(blogPostRevisions)
+        .where(eq(blogPostRevisions.postId, id))
+        .orderBy(asc(blogPostRevisions.createdAt));
+
+      return { data: revisions };
+    },
+  );
+
+  /**
+   * POST /api/v1/blog/posts/:id/revisions/:version/restore
+   * Restores a post to a specific revision (overwrites current draft body).
+   */
+  app.post(
+    '/api/v1/blog/posts/:id/revisions/:version/restore',
+    {
+      preHandler: [app.authenticate, app.requireRole('editor', 'admin', 'owner')],
+      schema: { tags: ['Blog'], summary: 'Restore post to a prior revision' },
+    },
+    async (req) => {
+      const { id, version } = z
+        .object({ id: z.string().uuid(), version: z.string().min(1).max(16) })
+        .parse(req.params);
+      const orgId = req.user!.orgId;
+
+      const [rev] = await db
+        .select()
+        .from(blogPostRevisions)
+        .where(and(eq(blogPostRevisions.postId, id), eq(blogPostRevisions.version, version)))
+        .limit(1);
+      if (!rev) throw { statusCode: 404, code: 'REVISION_NOT_FOUND', message: 'Revision not found' };
+
+      const [updated] = await db
+        .update(blogPosts)
+        .set({
+          title: rev.title,
+          body: rev.body,
+          excerpt: rev.excerpt ?? undefined,
+          status: 'draft', // restoring sets back to draft for review
+          updatedAt: new Date(),
+        })
+        .where(and(eq(blogPosts.id, id), eq(blogPosts.orgId, orgId)))
+        .returning();
+      if (!updated) throw { statusCode: 404, code: 'POST_NOT_FOUND', message: 'Post not found' };
+      return { data: updated };
+    },
+  );
+
+  /**
+   * GET /api/v1/blog/posts/:id/revisions/:vA/diff/:vB
+   * Returns a character-level diff summary between two revision bodies.
+   */
+  app.get(
+    '/api/v1/blog/posts/:id/revisions/:vA/diff/:vB',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Blog'], summary: 'Diff two post revisions' },
+    },
+    async (req) => {
+      const { id, vA, vB } = z
+        .object({ id: z.string().uuid(), vA: z.string().min(1), vB: z.string().min(1) })
+        .parse(req.params);
+      const orgId = req.user!.orgId;
+
+      const [post] = await db
+        .select({ id: blogPosts.id })
+        .from(blogPosts)
+        .where(and(eq(blogPosts.id, id), eq(blogPosts.orgId, orgId)))
+        .limit(1);
+      if (!post) throw { statusCode: 404, code: 'POST_NOT_FOUND', message: 'Post not found' };
+
+      const revs = await db
+        .select()
+        .from(blogPostRevisions)
+        .where(eq(blogPostRevisions.postId, id));
+
+      const revA = revs.find((r) => r.version === vA);
+      const revB = revs.find((r) => r.version === vB);
+      if (!revA || !revB) throw { statusCode: 404, code: 'REVISION_NOT_FOUND', message: 'One or both revisions not found' };
+
+      // Simple line-count diff (no external diff library required)
+      const linesA = revA.body.split('\n');
+      const linesB = revB.body.split('\n');
+      const added = linesB.filter((l) => !linesA.includes(l)).length;
+      const removed = linesA.filter((l) => !linesB.includes(l)).length;
+
+      return {
+        data: {
+          vA,
+          vB,
+          titleChanged: revA.title !== revB.title,
+          bodyChangedLines: { added, removed },
+          charDiff: revB.body.length - revA.body.length,
+        },
+      };
+    },
+  );
+
+  /**
+   * POST /api/v1/blog/posts/:id/preview-token
+   * Generates a time-limited (15min) preview token for sharing a draft.
+   * Returns: { previewToken, previewUrl }
+   */
+  app.post(
+    '/api/v1/blog/posts/:id/preview-token',
+    {
+      preHandler: [app.authenticate, app.requireRole('editor', 'admin', 'owner')],
+      schema: { tags: ['Blog'], summary: 'Generate a time-limited preview URL for a draft post' },
+    },
+    async (req) => {
+      const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+      const orgId = req.user!.orgId;
+
+      const [post] = await db
+        .select({ slug: blogPosts.slug })
+        .from(blogPosts)
+        .where(and(eq(blogPosts.id, id), eq(blogPosts.orgId, orgId)))
+        .limit(1);
+      if (!post) throw { statusCode: 404, code: 'POST_NOT_FOUND', message: 'Post not found' };
+
+      const token = randomUUID();
+      await redis.set(`blog:preview:${token}`, JSON.stringify({ postId: id, orgId }), 'EX', 900);
+
+      return {
+        data: {
+          previewToken: token,
+          expiresInSeconds: 900,
+          // Frontend would use: /blog/preview?token=<token>
+          previewUrl: `/api/v1/blog/preview?token=${token}`,
+        },
+      };
+    },
+  );
+
+  /**
+   * GET /api/v1/blog/preview?token=
+   * Public endpoint to view a draft post via preview token (15min TTL).
+   */
+  app.get(
+    '/api/v1/blog/preview',
+    { schema: { tags: ['Blog'], summary: 'View a draft post via preview token' } },
+    async (req, reply) => {
+      const { token } = z.object({ token: z.string().uuid() }).parse(req.query);
+      const raw = await redis.get(`blog:preview:${token}`);
+      if (!raw) return reply.code(401).send({ code: 'INVALID_TOKEN', message: 'Preview token expired or invalid' });
+
+      const { postId } = JSON.parse(raw) as { postId: string; orgId: string };
+      const [post] = await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.id, postId))
+        .limit(1);
+      if (!post) return reply.code(404).send({ code: 'POST_NOT_FOUND' });
+      return { data: post };
     },
   );
 

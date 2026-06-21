@@ -360,18 +360,48 @@ async function runStep(
       break;
     }
 
-    case 'task':
     case 'linkedin': {
+      // Try to send a LinkedIn InMail; fall back to a task if no token configured (#328)
+      const { sendLinkedInInMail } = await import('./linkedin-inmail.js');
+      const vars = buildMergeVars(contact ?? {});
+      const subject = substitutePersonalMergeTags(config.subject ?? 'Following up', vars);
+      const body = substitutePersonalMergeTags(config.body ?? config.message ?? '', vars);
+      const recipientUrn = config.recipientUrn ?? null;
+
+      let sentViaLinkedIn = false;
+      if (recipientUrn && body) {
+        const result = await sendLinkedInInMail({
+          orgId: enrollment.orgId,
+          recipientUrn,
+          subject,
+          body,
+        }).catch(() => ({ success: false as const, manualFallback: true }));
+        sentViaLinkedIn = result.success;
+      }
+
+      // Fall back to creating a task when InMail couldn't be sent
+      if (!sentViaLinkedIn) {
+        const { createTask } = await import('./tasks.js');
+        await createTask(enrollment.orgId, {
+          type: 'todo',
+          title: config.title ?? 'Send LinkedIn InMail',
+          description: body || undefined,
+          contactId: enrollment.contactId,
+          dealId: enrollment.dealId ?? null,
+          dueAt: new Date(Date.now() + 86_400_000),
+        }).catch(() => {});
+      }
+      break;
+    }
+
+    case 'task': {
       const { createTask } = await import('./tasks.js');
       await createTask(enrollment.orgId, {
-        type:
-          step.type === 'linkedin'
-            ? 'todo'
-            : ((config.taskType as 'call' | 'email' | 'meeting' | 'todo') ?? 'todo'),
-        title: config.title ?? (step.type === 'linkedin' ? 'LinkedIn touch' : 'Follow up'),
+        type: (config.taskType as 'call' | 'email' | 'meeting' | 'todo') ?? 'todo',
+        title: config.title ?? 'Follow up',
         contactId: enrollment.contactId,
         dealId: enrollment.dealId ?? null,
-        dueAt: new Date(Date.now() + 86_400_000), // due tomorrow
+        dueAt: new Date(Date.now() + 86_400_000),
       }).catch(() => {});
       break;
     }

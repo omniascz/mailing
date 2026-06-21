@@ -19,14 +19,29 @@ export const embedTypeEnum = pgEnum('embed_type', ['inline', 'popup', 'slide', '
 
 // ─── Signup form definition ───────────────────────────────────────────────────
 
+export interface FormFieldVisibilityRule {
+  /** Name of the field this condition depends on */
+  dependsOn: string;
+  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'is_empty' | 'is_not_empty';
+  value?: string;
+}
+
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'phone' | 'select' | 'checkbox' | 'hidden';
+  type: 'text' | 'email' | 'phone' | 'select' | 'checkbox' | 'hidden' | 'textarea' | 'number' | 'date';
   required: boolean;
   options?: string[]; // for select fields
   placeholder?: string;
   defaultValue?: string;
+  /**
+   * Smart/dependent form logic (#341).
+   * When set, this field is only shown when ALL rules evaluate to true.
+   * If hidden, the field is excluded from submission processing.
+   */
+  visibilityRules?: FormFieldVisibilityRule[];
+  /** How multiple rules are combined: 'and' (default) | 'or' */
+  visibilityLogic?: 'and' | 'or';
 }
 
 export interface FormConfig {

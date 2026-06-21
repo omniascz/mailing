@@ -13,6 +13,7 @@ import { emailEvents, campaigns } from '../../db/schema/index.js';
 import { redis } from '../../lib/redis.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
+import { and, eq, gte, lte } from 'drizzle-orm';
 
 const transactionalRoutes: FastifyPluginAsync = async (app) => {
   // ── Send transactional email ──────────────────────────────────────────────
@@ -362,6 +363,77 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           results,
         },
       });
+    },
+  );
+
+  // ── Activity export (#223) ────────────────────────────────────────────────
+  // GET /api/v1/transactional/export?format=csv|json&dateFrom&dateTo&eventType
+  app.get(
+    '/api/v1/transactional/export',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Transactional'], summary: 'Export transactional activity (CSV or JSON)' },
+    },
+    async (req, reply) => {
+      const q = z
+        .object({
+          format: z.enum(['csv', 'json']).default('json'),
+          dateFrom: z.string().datetime().optional(),
+          dateTo: z.string().datetime().optional(),
+          eventType: z
+            .enum(['send', 'open', 'click', 'bounce', 'complaint', 'unsubscribe'])
+            .optional(),
+          limit: z.coerce.number().int().min(1).max(50_000).default(10_000),
+        })
+        .parse(req.query);
+
+      const orgId = req.user!.orgId;
+
+      const conditions = [eq(emailEvents.orgId, orgId)];
+      if (q.dateFrom) conditions.push(gte(emailEvents.createdAt, new Date(q.dateFrom)));
+      if (q.dateTo) conditions.push(lte(emailEvents.createdAt, new Date(q.dateTo)));
+      if (q.eventType) conditions.push(eq(emailEvents.eventType, q.eventType));
+
+      const rows = await db
+        .select({
+          id: emailEvents.id,
+          messageId: emailEvents.messageId,
+          campaignId: emailEvents.campaignId,
+          contactId: emailEvents.contactId,
+          eventType: emailEvents.eventType,
+          metadata: emailEvents.metadata,
+          createdAt: emailEvents.createdAt,
+        })
+        .from(emailEvents)
+        .where(and(...conditions))
+        .limit(q.limit);
+
+      if (q.format === 'json') {
+        return reply.send({ data: rows, total: rows.length });
+      }
+
+      // CSV format
+      const header = 'id,messageId,campaignId,contactId,eventType,createdAt\n';
+      const csvRows = rows
+        .map(
+          (r) =>
+            [
+              r.id,
+              r.messageId ?? '',
+              r.campaignId ?? '',
+              r.contactId ?? '',
+              r.eventType,
+              r.createdAt?.toISOString() ?? '',
+            ]
+              .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+              .join(','),
+        )
+        .join('\n');
+
+      return reply
+        .header('Content-Type', 'text/csv')
+        .header('Content-Disposition', `attachment; filename="transactional-export.csv"`)
+        .send(header + csvRows);
     },
   );
 

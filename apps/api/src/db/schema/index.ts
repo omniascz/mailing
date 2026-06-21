@@ -135,3 +135,8 @@ export * from './ab-tests.js';
 export * from './newsletter-tiers.js';
 export * from './newsletter-referrals.js';
 export * from './bimi.js';
+export * from './playbooks.js';
+export * from './rotation-config.js';
+export * from './quote-templates.js';
+export * from './intent-signals.js';
+export * from './crm-extension-cards.js';

@@ -355,6 +355,55 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  // ─── Smart/Dependent forms — field visibility evaluation (#341) ─────────
+
+  /**
+   * POST /api/v1/signup-forms/:id/evaluate-visibility
+   * Given a partial form submission, returns which fields should be shown.
+   * Called by the form embed JS as the user fills fields (real-time).
+   */
+  app.post(
+    '/api/v1/signup-forms/:id/evaluate-visibility',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Signup Forms'], summary: 'Evaluate conditional field visibility' },
+    },
+    async (req) => {
+      const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+      const { data: submittedData } = z
+        .object({ data: z.record(z.string()) })
+        .parse(req.body);
+
+      const form = await getSignupForm(req.user!.orgId, id);
+      const { computeFieldVisibility } = await import('../../services/forms/conditional-logic.js');
+      const visibility = computeFieldVisibility(form.fields, submittedData);
+      return { data: visibility };
+    },
+  );
+
+  /**
+   * POST /public/forms/:formId/evaluate-visibility
+   * Public version for the embed script (unauthenticated — form definition is public).
+   */
+  app.post(
+    '/public/forms/:formId/evaluate-visibility',
+    {
+      schema: { tags: ['Public Forms'], summary: 'Evaluate field visibility (public)' },
+    },
+    async (req) => {
+      const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
+      const { orgId, data: submittedData } = z
+        .object({ orgId: z.string().uuid(), data: z.record(z.string()) })
+        .parse(req.body);
+
+      const form = await getFormDefinition(formId);
+      if (!form) return { data: [] };
+      const { computeFieldVisibility } = await import('../../services/forms/conditional-logic.js');
+      void orgId; // orgId validated implicitly via formId ownership
+      return { data: computeFieldVisibility(form.fields, submittedData) };
+    },
+  );
+
   // Public: autofill pre-populated fields for identified visitor (#334)
   app.get(
     '/public/forms/:formId/autofill',

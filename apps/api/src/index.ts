@@ -240,6 +240,11 @@ import workflowExportRoutes from './routes/v1/workflow-export.js';
 import cohortAnalyticsRoutes from './routes/v1/cohort-analytics.js';
 import surveysNpsRoutes from './routes/v1/surveys-nps.js';
 import { externalFeedsRoutes } from './routes/v1/external-feeds.js';
+import playbookRoutes from './routes/v1/crm/playbooks.js';
+import rotationRoutes from './routes/v1/crm/rotation.js';
+import quoteTemplateRoutes from './routes/v1/commerce/quote-templates.js';
+import intentSignalRoutes from './routes/v1/intent-signals.js';
+import extensionCardRoutes from './routes/v1/crm/extension-cards.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -491,6 +496,11 @@ export async function buildApp() {
   await app.register(newsletterTierRoutes);
   await app.register(newsletterReferralRoutes);
   await app.register(bimiRoutes);
+  await app.register(playbookRoutes);
+  await app.register(rotationRoutes);
+  await app.register(quoteTemplateRoutes);
+  await app.register(intentSignalRoutes);
+  await app.register(extensionCardRoutes);
 
   return app;
 }
