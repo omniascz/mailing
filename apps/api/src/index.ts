@@ -252,6 +252,17 @@ import newsletterAdRoutes from './routes/v1/newsletter-ads.js';
 import newsletterAnalyticsRoutes from './routes/v1/newsletter-analytics.js';
 import allegroRoutes from './routes/v1/integrations/allegro.js';
 import mallCzRoutes from './routes/v1/integrations/mallcz.js';
+import personasRoutes from './routes/v1/personas.js';
+import zeroPartyDataRoutes from './routes/v1/zero-party-data.js';
+import consentGraphRoutes from './routes/v1/consent-graph.js';
+import coMarketingRoutes from './routes/v1/co-marketing.js';
+import dynamicContentRoutes from './routes/v1/dynamic-content.js';
+import competitiveMonitorRoutes from './routes/v1/competitive-monitor.js';
+import newsletterPaywallRoutes from './routes/v1/newsletter-paywall.js';
+import deliverabilityCoachRoutes from './routes/v1/deliverability-coach.js';
+import campaignFatigueRoutes from './routes/v1/campaign-fatigue.js';
+import whatIfSimulatorRoutes from './routes/v1/what-if-simulator.js';
+import shoptetAdvancedRoutes from './routes/v1/integrations/shoptet-advanced.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -515,6 +526,17 @@ export async function buildApp() {
   await app.register(newsletterAnalyticsRoutes);
   await app.register(allegroRoutes);
   await app.register(mallCzRoutes);
+  await app.register(personasRoutes);
+  await app.register(zeroPartyDataRoutes);
+  await app.register(consentGraphRoutes);
+  await app.register(coMarketingRoutes);
+  await app.register(dynamicContentRoutes);
+  await app.register(competitiveMonitorRoutes);
+  await app.register(newsletterPaywallRoutes);
+  await app.register(deliverabilityCoachRoutes);
+  await app.register(campaignFatigueRoutes);
+  await app.register(whatIfSimulatorRoutes);
+  await app.register(shoptetAdvancedRoutes);
 
   return app;
 }
