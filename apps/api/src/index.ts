@@ -245,6 +245,13 @@ import rotationRoutes from './routes/v1/crm/rotation.js';
 import quoteTemplateRoutes from './routes/v1/commerce/quote-templates.js';
 import intentSignalRoutes from './routes/v1/intent-signals.js';
 import extensionCardRoutes from './routes/v1/crm/extension-cards.js';
+import brandVoiceRoutes from './routes/v1/brand-voice.js';
+import nbaRoutes from './routes/v1/nba.js';
+import attributionRoutes from './routes/v1/attribution.js';
+import newsletterAdRoutes from './routes/v1/newsletter-ads.js';
+import newsletterAnalyticsRoutes from './routes/v1/newsletter-analytics.js';
+import allegroRoutes from './routes/v1/integrations/allegro.js';
+import mallCzRoutes from './routes/v1/integrations/mallcz.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -501,6 +508,13 @@ export async function buildApp() {
   await app.register(quoteTemplateRoutes);
   await app.register(intentSignalRoutes);
   await app.register(extensionCardRoutes);
+  await app.register(brandVoiceRoutes);
+  await app.register(nbaRoutes);
+  await app.register(attributionRoutes);
+  await app.register(newsletterAdRoutes);
+  await app.register(newsletterAnalyticsRoutes);
+  await app.register(allegroRoutes);
+  await app.register(mallCzRoutes);
 
   return app;
 }

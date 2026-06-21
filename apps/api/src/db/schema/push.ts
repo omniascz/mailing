@@ -2,7 +2,7 @@
  * Push notification schema: subscriptions, VAPID keys, send log (task 7.10).
  */
 
-import { pgTable, text, boolean, timestamp, uuid, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, boolean, timestamp, uuid, index, uniqueIndex, jsonb } from 'drizzle-orm/pg-core';
 
 // ─── VAPID key pairs (org-level) ──────────────────────────────────────────────
 
@@ -69,6 +69,16 @@ export const pushSendLog = pgTable(
     errorCode: text('error_code'),
     errorMessage: text('error_message'),
     campaignId: uuid('campaign_id'),
+    /** Rich media image shown below notification text */
+    imageUrl: text('image_url'),
+    /** Small icon URL override */
+    iconUrl: text('icon_url'),
+    /** iOS badge count */
+    badge: text('badge'),
+    /** Action buttons e.g. [{action:'confirm',title:'Yes'},{action:'dismiss',title:'No'}] */
+    actionButtons: jsonb('action_buttons').$type<Array<{ action: string; title: string; icon?: string }>>(),
+    /** Which action button was clicked */
+    actionClicked: text('action_clicked'),
     clickedAt: timestamp('clicked_at', { withTimezone: true }),
     sentAt: timestamp('sent_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

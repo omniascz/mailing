@@ -68,6 +68,10 @@ export const smsSendLog = pgTable(
     errorMessage: text('error_message'),
     sentAt: timestamp('sent_at', { withTimezone: true }),
     deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+    /** MMS: URL to media attachment (image, video, audio) */
+    mmsUrl: text('mms_url'),
+    /** MMS: MIME type of attached media e.g. 'image/jpeg', 'video/mp4' */
+    mediaType: text('media_type'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

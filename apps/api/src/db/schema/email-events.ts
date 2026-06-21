@@ -54,6 +54,11 @@ export const emailEvents = pgTable(
     /** Comma-separated rule ids that flagged the event (e.g., "ua-pattern,fast-click"). */
     botReason: varchar('bot_reason', { length: 255 }),
 
+    /** Apple Mail Privacy Protection: true when open was triggered by MPP prefetch (not real human open) */
+    mppDetected: boolean('mpp_detected').notNull().default(false),
+    /** Estimated real open probability 0-1 when mppDetected=true (inferred from subsequent clicks) */
+    mppRealOpenProb: real('mpp_real_open_prob'),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

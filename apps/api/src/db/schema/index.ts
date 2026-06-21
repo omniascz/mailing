@@ -140,3 +140,6 @@ export * from './rotation-config.js';
 export * from './quote-templates.js';
 export * from './intent-signals.js';
 export * from './crm-extension-cards.js';
+export * from './brand-voice.js';
+export * from './nba-scores.js';
+export * from './newsletter-ads.js';

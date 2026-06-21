@@ -364,4 +364,168 @@ export default async function whatsappRoutes(app: FastifyInstance) {
 
     return reply.status(200).send({ ok: true });
   });
+
+  // ── WhatsApp Catalog Messages ─────────────────────────────────────────────
+
+  /**
+   * POST /api/v1/whatsapp/send/catalog
+   * Send a product catalog message (requires WhatsApp Business Account with catalog).
+   */
+  app.post(
+    '/api/v1/whatsapp/send/catalog',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const body = z.object({
+        phoneNumberId: z.string().min(1),
+        to: z.string().min(5),
+        bodyText: z.string().min(1).max(1024),
+        footerText: z.string().max(60).optional(),
+        /** WhatsApp Business catalog ID */
+        catalogId: z.string().min(1),
+        /** Optional single product ID to highlight */
+        productRetailerId: z.string().optional(),
+        /** For multi-product messages: sections with products */
+        sections: z.array(z.object({
+          title: z.string().max(24),
+          productItems: z.array(z.object({ productRetailerId: z.string() })).max(30),
+        })).max(10).optional(),
+      }).parse(req.body);
+
+      const token = process.env.WHATSAPP_ACCESS_TOKEN ?? '';
+      const metaApiVersion = process.env.META_API_VERSION ?? 'v18.0';
+
+      let interactivePayload: Record<string, unknown>;
+      if (body.productRetailerId && !body.sections) {
+        // Single product message
+        interactivePayload = {
+          type: 'product',
+          body: { text: body.bodyText },
+          ...(body.footerText ? { footer: { text: body.footerText } } : {}),
+          action: { catalog_id: body.catalogId, product_retailer_id: body.productRetailerId },
+        };
+      } else {
+        // Multi-product message
+        interactivePayload = {
+          type: 'product_list',
+          header: { type: 'text', text: body.bodyText.slice(0, 60) },
+          body: { text: body.bodyText },
+          ...(body.footerText ? { footer: { text: body.footerText } } : {}),
+          action: {
+            catalog_id: body.catalogId,
+            sections: (body.sections ?? []).map((s) => ({
+              title: s.title,
+              product_items: s.productItems.map((p) => ({ product_retailer_id: p.productRetailerId })),
+            })),
+          },
+        };
+      }
+
+      const resp = await fetch(
+        `https://graph.facebook.com/${metaApiVersion}/${body.phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messaging_product: 'whatsapp', to: body.to, type: 'interactive', interactive: interactivePayload }),
+        },
+      );
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({})) as Record<string, unknown>;
+        return reply.status(resp.status).send({ code: 'META_API_ERROR', detail: err });
+      }
+
+      const result = await resp.json() as Record<string, unknown>;
+      return reply.send({ data: { messageId: (result['messages'] as Array<Record<string, string>>)?.[0]?.id } });
+    },
+  );
+
+  // ── WhatsApp Flows ────────────────────────────────────────────────────────
+
+  /**
+   * POST /api/v1/whatsapp/flows
+   * Create a new WhatsApp Flow via Meta Flows API.
+   */
+  app.post('/api/v1/whatsapp/flows', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const body = z.object({
+      wabaId: z.string().min(1),
+      name: z.string().min(1).max(100),
+      categories: z.array(z.enum(['SIGN_UP', 'SIGN_IN', 'APPOINTMENT_BOOKING', 'LEAD_GENERATION', 'CONTACT_US', 'CUSTOMER_SUPPORT', 'SURVEY', 'OTHER'])).min(1),
+    }).parse(req.body);
+
+    const token = process.env.WHATSAPP_ACCESS_TOKEN ?? '';
+    const metaApiVersion = process.env.META_API_VERSION ?? 'v18.0';
+
+    const resp = await fetch(`https://graph.facebook.com/${metaApiVersion}/${body.wabaId}/flows`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: body.name, categories: body.categories }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({})) as Record<string, unknown>;
+      return reply.status(resp.status).send({ code: 'META_API_ERROR', detail: err });
+    }
+
+    return reply.status(201).send({ data: await resp.json() });
+  });
+
+  /**
+   * POST /api/v1/whatsapp/flows/:flowId/send
+   * Send a WhatsApp Flow to a contact via interactive flow message.
+   */
+  app.post(
+    '/api/v1/whatsapp/flows/:flowId/send',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { flowId } = req.params as { flowId: string };
+      const body = z.object({
+        phoneNumberId: z.string().min(1),
+        to: z.string().min(5),
+        headerText: z.string().max(60),
+        bodyText: z.string().max(1024),
+        footerText: z.string().max(60).optional(),
+        ctaButtonText: z.string().max(20).default('Open'),
+        flowToken: z.string().optional().default('unused'),
+        mode: z.enum(['draft', 'published']).optional().default('published'),
+      }).parse(req.body);
+
+      const token = process.env.WHATSAPP_ACCESS_TOKEN ?? '';
+      const metaApiVersion = process.env.META_API_VERSION ?? 'v18.0';
+
+      const interactive = {
+        type: 'flow',
+        header: { type: 'text', text: body.headerText },
+        body: { text: body.bodyText },
+        ...(body.footerText ? { footer: { text: body.footerText } } : {}),
+        action: {
+          name: 'flow',
+          parameters: {
+            flow_message_version: '3',
+            flow_token: body.flowToken,
+            flow_id: flowId,
+            flow_cta: body.ctaButtonText,
+            flow_action: 'navigate',
+            mode: body.mode,
+          },
+        },
+      };
+
+      const resp = await fetch(
+        `https://graph.facebook.com/${metaApiVersion}/${body.phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messaging_product: 'whatsapp', to: body.to, type: 'interactive', interactive }),
+        },
+      );
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({})) as Record<string, unknown>;
+        return reply.status(resp.status).send({ code: 'META_API_ERROR', detail: err });
+      }
+
+      const result = await resp.json() as Record<string, unknown>;
+      return reply.send({ data: { messageId: (result['messages'] as Array<Record<string, string>>)?.[0]?.id } });
+    },
+  );
 }
