@@ -493,3 +493,51 @@ export function classifyScheduledTime(input: {
     title: 'Scheduled within engagement window',
   };
 }
+
+/**
+ * Classify IP warmup capacity vs. campaign size.
+ *
+ * @param totalDailyCapacity  Sum of remainingToday across all warming IPs (-1 = fully warm pool)
+ * @param recipientCount      Estimated recipients this campaign will reach
+ */
+export function classifyWarmupCapacity(input: {
+  totalDailyCapacity: number;
+  recipientCount: number;
+}): CheckResult {
+  if (input.totalDailyCapacity < 0) {
+    return {
+      id: 'ip-warmup',
+      category: 'deliverability',
+      severity: 'pass',
+      title: 'Sending pool fully warmed',
+    };
+  }
+  if (input.totalDailyCapacity === 0) {
+    return {
+      id: 'ip-warmup',
+      category: 'deliverability',
+      severity: 'fail',
+      title: 'IP warmup daily limit reached',
+      detail: 'All sending IPs have hit their daily cap. Remaining emails will queue until tomorrow.',
+      metrics: { remainingCapacity: 0 },
+    };
+  }
+  if (input.recipientCount > input.totalDailyCapacity) {
+    const overflow = input.recipientCount - input.totalDailyCapacity;
+    return {
+      id: 'ip-warmup',
+      category: 'deliverability',
+      severity: 'warn',
+      title: `IP warmup: only ${input.totalDailyCapacity.toLocaleString()} of ${input.recipientCount.toLocaleString()} can send today`,
+      detail: `${overflow.toLocaleString()} emails will queue until tomorrow due to IP warmup limits.`,
+      metrics: { remainingCapacity: input.totalDailyCapacity, overflow },
+    };
+  }
+  return {
+    id: 'ip-warmup',
+    category: 'deliverability',
+    severity: 'pass',
+    title: `IP warmup: capacity for ${input.totalDailyCapacity.toLocaleString()} emails today`,
+    metrics: { remainingCapacity: input.totalDailyCapacity },
+  };
+}

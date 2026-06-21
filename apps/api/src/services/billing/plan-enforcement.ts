@@ -9,7 +9,13 @@
  */
 import { eq, sql, and, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { organizations, contacts, emailEvents, aiUsage } from '../../db/schema/index.js';
+import {
+  organizations,
+  contacts,
+  emailEvents,
+  aiUsage,
+  billingSubscriptions,
+} from '../../db/schema/index.js';
 import { SEND_PLANS, type SendPlanTier } from './plans.js';
 import { CONTACT_PLANS, getAiQuotaPerDay, type ContactPlanTier } from './plans.js';
 import { AppError } from '../../lib/app-error.js';
@@ -57,8 +63,16 @@ export async function getPlanCapacity(orgId: string): Promise<PlanCapacity> {
     .where(and(eq(contacts.orgId, orgId), isNull(contacts.deletedAt)));
   const contactCount = contactRow?.n ?? 0;
 
-  // Sends in the current billing month (calendar month for now; tie to
-  // billing_subscriptions.current_period_start once Stripe is configured).
+  // Sends in the current billing period.
+  // Prefer Stripe's actual period start (billing_subscriptions); fall back to
+  // calendar month start when no subscription exists (free plan / pre-Stripe).
+  const [sub] = await db
+    .select({ periodStart: billingSubscriptions.currentPeriodStart })
+    .from(billingSubscriptions)
+    .where(eq(billingSubscriptions.orgId, orgId))
+    .limit(1);
+  const periodStart: Date = sub?.periodStart ?? new Date(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1);
+
   const [sendRow] = await db
     .select({ n: sql<number>`COUNT(*)::int` })
     .from(emailEvents)
@@ -66,7 +80,7 @@ export async function getPlanCapacity(orgId: string): Promise<PlanCapacity> {
       and(
         eq(emailEvents.orgId, orgId),
         eq(emailEvents.eventType, 'send'),
-        sql`${emailEvents.createdAt} >= DATE_TRUNC('month', NOW())`,
+        sql`${emailEvents.createdAt} >= ${periodStart}`,
       ),
     );
   const sendCount = sendRow?.n ?? 0;

@@ -40,6 +40,7 @@ import {
   classifySubject,
   classifyUnsubscribeLink,
   classifySuppression,
+  classifyWarmupCapacity,
   countBySeverity,
   prioritise,
   type CheckResult,
@@ -47,6 +48,7 @@ import {
   type Verdict,
 } from './go-no-go-pure.js';
 import { checkFrequencyCap } from '../frequency-capping/index.js';
+import { listWarmupStatuses } from '../sending/ip-warmup.js';
 
 export interface GoNoGoReport {
   campaignId: string;
@@ -123,6 +125,17 @@ export async function runPreSendChecks(
     }),
   );
   checks.push(classifyPlainText({ hasPlainText: hasPlainTextPart(campaign) }));
+
+  // IP warmup — sum remainingToday across all non-warm IPs. If the pool is
+  // fully warm (-1 = unlimited), pass. Only emitted when org has tracked IPs.
+  const warmupStatuses = await listWarmupStatuses(orgId).catch(() => []);
+  if (warmupStatuses.length > 0) {
+    const allWarm = warmupStatuses.every((s) => s.isWarm);
+    const totalDailyCapacity = allWarm
+      ? -1
+      : warmupStatuses.filter((s) => !s.isWarm).reduce((sum, s) => sum + s.remainingToday, 0);
+    checks.push(classifyWarmupCapacity({ totalDailyCapacity, recipientCount }));
+  }
 
   // ─── Reputation ──────────────────────────────────────────────────────────
   const recent = await fetchRecentRates(orgId);
