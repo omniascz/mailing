@@ -165,7 +165,11 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
-      metadata: { smtpCode: result.smtpCode, durationMs: result.durationMs },
+      metadata: {
+        smtpCode: result.smtpCode,
+        durationMs: result.durationMs,
+        ...(data.abVariantId ? { abVariantId: data.abVariantId } : {}),
+      },
     });
     return { status: 'sent', messageId: data.messageId, durationMs: result.durationMs };
   }

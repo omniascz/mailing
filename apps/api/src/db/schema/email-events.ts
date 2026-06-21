@@ -44,6 +44,9 @@ export const emailEvents = pgTable(
 
     metadata: jsonb('metadata').$type<Record<string, unknown>>(),
 
+    /** A/B variant id (from ab_config.variants[].id). Null for non-A/B sends. */
+    abVariantId: varchar('ab_variant_id', { length: 100 }),
+
     /** True when bot-detection classified this open/click as automated (security scanner, prefetch, etc.). */
     isBot: boolean('is_bot').notNull().default(false),
     /** Confidence 0.0-1.0 from bot scoring. */
@@ -59,6 +62,7 @@ export const emailEvents = pgTable(
     index('email_events_contact_id_idx').on(t.contactId),
     index('email_events_type_idx').on(t.eventType),
     index('email_events_created_at_idx').on(t.createdAt),
+    index('email_events_ab_variant_idx').on(t.campaignId, t.abVariantId),
   ],
 );
 

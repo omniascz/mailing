@@ -17,8 +17,10 @@ import {
   connection,
   QUEUE_NAMES,
   batchSenderQueue,
+  abWinnerQueue,
   type CampaignSplitterJobData,
   type BatchSenderJobData,
+  type AbWinnerJobData,
 } from '../queues/index.js';
 
 const BATCH_SIZE = 1000;
@@ -38,6 +40,8 @@ interface AbConfig {
   variants: AbVariant[];
   winnerCriteria?: 'open_rate' | 'click_rate';
   testDurationHours?: number;
+  autoSendWinner?: boolean;
+  confidenceThreshold?: number;
 }
 
 function parseAbConfig(raw: Record<string, unknown> | undefined): AbConfig | null {
@@ -74,7 +78,12 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
 
   if (abConfig && abConfig.variants.length >= 2) {
     // ── A/B split: distribute contacts across variants by percentage ───────
+    // Variants may sum to < 100%, e.g. 40% A + 40% B = 80%.
+    // The remaining 20% (holdback) is dispatched to the winner after the test window.
     job.log(`A/B test: ${abConfig.variants.length} variants`);
+
+    const totalVariantPct = abConfig.variants.reduce((s, v) => s + v.percentage, 0);
+    const holdbackPct = Math.max(0, 100 - totalVariantPct);
 
     let cursor = 0;
     for (const variant of abConfig.variants) {
@@ -108,6 +117,7 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
           priority: data.priority,
           stream,
           timewarp: data.timewarp,
+          abVariantId: variant.id,
         } satisfies BatchSenderJobData,
         opts: { priority: data.priority },
       }));
@@ -115,6 +125,36 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
       await batchSenderQueue.addBulk(batchJobs);
       totalBatches += variantBatches.length;
       job.log(`Variant ${variant.id}: ${variantIds.length} contacts, ${variantBatches.length} batches`);
+    }
+
+    // ── Holdback: store remaining contacts + schedule winner dispatch ──────
+    if (holdbackPct > 0 && abConfig.testDurationHours && abConfig.autoSendWinner !== false) {
+      const holdbackIds = contactIds.slice(cursor);
+      job.log(`Holdback: ${holdbackIds.length} contacts (${holdbackPct.toFixed(1)}%) for winner dispatch`);
+
+      if (holdbackIds.length > 0) {
+        await storeHoldback(data.orgId, data.campaignId, holdbackIds);
+      }
+
+      // Schedule delayed winner job — fires after test window elapses
+      const delayMs = abConfig.testDurationHours * 3600_000;
+      const winnerJobData: AbWinnerJobData = {
+        campaignId: data.campaignId,
+        orgId: data.orgId,
+        fromName: data.fromName,
+        fromEmail: data.fromEmail,
+        replyTo: data.replyTo,
+        dkimDomain: data.dkimDomain,
+        dkimSelector: data.dkimSelector,
+        dkimPrivateKey: data.dkimPrivateKey,
+        priority: data.priority,
+      };
+      await abWinnerQueue.add(
+        `winner-${data.campaignId}`,
+        winnerJobData,
+        { delay: delayMs, jobId: `ab-winner-${data.campaignId}`, removeOnComplete: true },
+      );
+      job.log(`Scheduled winner dispatch in ${abConfig.testDurationHours}h`);
     }
   } else {
     // ── Standard split ─────────────────────────────────────────────────────
@@ -177,6 +217,22 @@ async function fetchAudienceContactIds(orgId: string, campaignId: string): Promi
   }
   const body = (await res.json()) as { data: { contactIds: string[] } };
   return body.data.contactIds;
+}
+
+async function storeHoldback(orgId: string, campaignId: string, contactIds: string[]): Promise<void> {
+  const url = `${process.env.API_URL ?? 'http://localhost:3001'}/api/v1/internal/campaigns/${campaignId}/ab-holdback`;
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
+      },
+      body: JSON.stringify({ orgId, contactIds }),
+    });
+  } catch (err) {
+    console.error('storeHoldback failed:', err);
+  }
 }
 
 async function updateCampaignStatus(campaignId: string, status: string): Promise<void> {

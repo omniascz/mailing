@@ -246,6 +246,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         dkimPrivateKey: data.dkimPrivateKey,
         priority: data.priority,
         stream,
+        abVariantId: data.abVariantId,
       },
       opts: delay !== undefined ? { priority: data.priority, delay } : { priority: data.priority },
     });

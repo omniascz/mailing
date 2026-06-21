@@ -77,6 +77,7 @@ export const QUEUE_NAMES = {
   EXTERNAL_FEED_POLL: 'external-feed-poll',
   WARMUP_ADVANCE: 'warmup-advance',
   DMARC_IMAP_POLL: 'dmarc-imap-poll',
+  AB_WINNER: 'ab-winner',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -98,6 +99,7 @@ export type MessageStream = 'broadcast' | 'transactional' | 'triggered';
 // ─── Queue instances ─────────────────────────────────────────────────────────
 
 export const campaignSplitterQueue = new Queue(QUEUE_NAMES.CAMPAIGN_SPLITTER, defaultOpts);
+export const abWinnerQueue = new Queue(QUEUE_NAMES.AB_WINNER, defaultOpts);
 
 export const batchSenderQueues = {
   broadcast: new Queue(QUEUE_NAMES.BATCH_SENDER, defaultOpts),
@@ -190,6 +192,8 @@ export interface BatchSenderJobData {
   timewarp?: TimewarpConfig;
   priority: Priority;
   stream: MessageStream;
+  /** A/B variant id to tag on email_events rows. Null for non-A/B sends. */
+  abVariantId?: string;
 }
 
 export interface MtaSendJobData {
@@ -211,6 +215,24 @@ export interface MtaSendJobData {
   dkimPrivateKey?: string;
   priority: Priority;
   stream: MessageStream;
+  /** A/B variant id propagated from BatchSenderJobData for event tagging. */
+  abVariantId?: string;
+}
+
+export interface AbWinnerJobData {
+  campaignId: string;
+  orgId: string;
+  /** Subject line of the winning variant — resolved by the worker after computing winner. */
+  winnerSubject?: string;
+  winnerPreheader?: string;
+  winnerContent?: Record<string, unknown>;
+  fromName?: string;
+  fromEmail?: string;
+  replyTo?: string;
+  dkimDomain?: string;
+  dkimSelector?: string;
+  dkimPrivateKey?: string;
+  priority?: number;
 }
 
 /**

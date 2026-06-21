@@ -186,6 +186,7 @@ import emailValidationRoutes from './routes/v1/email-validation.js';
 import reviewsV2Routes from './routes/v1/reviews-v2.js';
 import internalRfmRoutes from './routes/v1/internal/rfm.js';
 import internalPredictiveRoutes from './routes/v1/internal/predictive.js';
+import internalEventsRoutes from './routes/v1/internal/events.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
 import seoClustersRoutes from './routes/v1/seo/clusters.js';
 import seoKeywordsRoutes from './routes/v1/seo/keywords.js';
@@ -431,6 +432,7 @@ export async function buildApp() {
   await app.register(reviewsV2Routes);
   await app.register(internalRfmRoutes);
   await app.register(internalPredictiveRoutes);
+  await app.register(internalEventsRoutes);
   await app.register(messagingSendRoutes);
   await app.register(seoClustersRoutes);
   await app.register(seoKeywordsRoutes);

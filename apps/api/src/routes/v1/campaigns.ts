@@ -30,6 +30,13 @@ import {
   cancelCampaign,
 } from '../../services/campaigns/index.js';
 import { scheduleResend } from '../../services/campaigns/auto-resend.js';
+import {
+  computeAbWinner,
+  getAbTestResult,
+  getHoldbackPage,
+  markWinnerDispatched,
+  storeHoldback,
+} from '../../services/campaigns/ab-winner.js';
 import { campaignSplitterQueue, PRIORITY, sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
@@ -352,6 +359,100 @@ export default async function campaignRoutes(app: FastifyInstance) {
       }
 
       return reply.code(202).send({ data: { messageId, to, status: 'queued' } });
+    },
+  );
+
+  // ── A/B winner endpoints ──────────────────────────────────────────────────
+
+  /**
+   * GET /api/v1/campaigns/:id/ab-result
+   * Returns the stored A/B test result (winner, confidence, rankings) for a campaign.
+   */
+  app.get(
+    '/api/v1/campaigns/:id/ab-result',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Campaigns'], summary: 'Get A/B test result for a campaign' },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const result = await getAbTestResult(req.user!.orgId, id);
+      return { data: result };
+    },
+  );
+
+  // ── Internal endpoints (called by ab-winner BullMQ worker) ───────────────
+
+  /**
+   * POST /api/v1/internal/campaigns/:id/ab-winner-compute
+   * Computes the winning variant and stores the result. Idempotent.
+   * Protected by x-internal-secret header.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/:id/ab-winner-compute',
+    { schema: { tags: ['Internal'] } },
+    async (req, reply) => {
+      const secret = req.headers['x-internal-secret'];
+      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+      const { id } = idParam.parse(req.params);
+      const { orgId } = z.object({ orgId: z.string().uuid() }).parse(req.body);
+      const result = await computeAbWinner(orgId, id);
+      return { data: result };
+    },
+  );
+
+  /**
+   * GET /api/v1/internal/campaigns/:id/ab-holdback
+   * Paginated list of holdback contact IDs for dispatching winner.
+   * Protected by x-internal-secret header.
+   */
+  app.get(
+    '/api/v1/internal/campaigns/:id/ab-holdback',
+    { schema: { tags: ['Internal'] } },
+    async (req, reply) => {
+      const secret = req.headers['x-internal-secret'];
+      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+      const { id } = idParam.parse(req.params);
+      const q = z
+        .object({ limit: z.coerce.number().int().min(1).max(5000).default(1000), cursor: z.string().uuid().optional() })
+        .parse(req.query);
+      const page = await getHoldbackPage(id, q.limit, q.cursor);
+      return { data: page };
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/campaigns/:id/ab-holdback
+   * Bulk-store holdback contacts (called by campaign-splitter after enqueuing variants).
+   */
+  app.post(
+    '/api/v1/internal/campaigns/:id/ab-holdback',
+    { schema: { tags: ['Internal'] } },
+    async (req, reply) => {
+      const secret = req.headers['x-internal-secret'];
+      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+      const { id } = idParam.parse(req.params);
+      const { orgId, contactIds } = z
+        .object({ orgId: z.string().uuid(), contactIds: z.array(z.string().uuid()).max(100_000) })
+        .parse(req.body);
+      await storeHoldback(orgId, id, contactIds);
+      return reply.code(201).send({ data: { stored: contactIds.length } });
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/campaigns/:id/ab-winner-dispatched
+   * Called by the worker to mark the winner dispatch as completed.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/:id/ab-winner-dispatched',
+    { schema: { tags: ['Internal'] } },
+    async (req, reply) => {
+      const secret = req.headers['x-internal-secret'];
+      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+      const { id } = idParam.parse(req.params);
+      await markWinnerDispatched(id);
+      return { data: { ok: true } };
     },
   );
 }

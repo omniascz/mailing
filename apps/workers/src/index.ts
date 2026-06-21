@@ -36,6 +36,7 @@ import { startViberSenderWorker } from './jobs/viber-sender.js';
 import { startExternalFeedPollWorker, scheduleExternalFeedPoll } from './jobs/external-feed-poll.js';
 import { startWarmupAdvanceWorker, scheduleWarmupAdvance } from './jobs/warmup-advance.js';
 import { startDmarcImapPollWorker, scheduleDmarcImapPoll } from './jobs/dmarc-imap-poll.js';
+import { startAbWinnerWorker } from './jobs/ab-winner.js';
 import { QUEUE_NAMES } from './queues/index.js';
 import { initTelemetry, flushTelemetry } from './lib/telemetry.js';
 import { registerCzSkMergeFilters } from './lib/merge-filters-cz-sk.js';
@@ -71,6 +72,7 @@ const warmupAdvanceWorker = startWarmupAdvanceWorker();
 scheduleWarmupAdvance().catch(console.error);
 const dmarcImapPollWorker = startDmarcImapPollWorker();
 scheduleDmarcImapPoll().catch(console.error);
+const abWinnerWorker = startAbWinnerWorker();
 
 console.log('All workers started. Waiting for jobs...');
 
@@ -95,6 +97,7 @@ async function shutdown() {
     externalFeedPollWorker.close(),
     warmupAdvanceWorker.close(),
     dmarcImapPollWorker.close(),
+    abWinnerWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');
