@@ -37,6 +37,7 @@ import { startExternalFeedPollWorker, scheduleExternalFeedPoll } from './jobs/ex
 import { startWarmupAdvanceWorker, scheduleWarmupAdvance } from './jobs/warmup-advance.js';
 import { startDmarcImapPollWorker, scheduleDmarcImapPoll } from './jobs/dmarc-imap-poll.js';
 import { startAbWinnerWorker } from './jobs/ab-winner.js';
+import { startBlacklistMonitorWorker, scheduleBlacklistMonitor } from './jobs/blacklist-monitor.js';
 import { QUEUE_NAMES } from './queues/index.js';
 import { initTelemetry, flushTelemetry } from './lib/telemetry.js';
 import { registerCzSkMergeFilters } from './lib/merge-filters-cz-sk.js';
@@ -73,6 +74,8 @@ scheduleWarmupAdvance().catch(console.error);
 const dmarcImapPollWorker = startDmarcImapPollWorker();
 scheduleDmarcImapPoll().catch(console.error);
 const abWinnerWorker = startAbWinnerWorker();
+const blacklistMonitorWorker = startBlacklistMonitorWorker();
+scheduleBlacklistMonitor().catch(console.error);
 
 console.log('All workers started. Waiting for jobs...');
 
@@ -98,6 +101,7 @@ async function shutdown() {
     warmupAdvanceWorker.close(),
     dmarcImapPollWorker.close(),
     abWinnerWorker.close(),
+    blacklistMonitorWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');

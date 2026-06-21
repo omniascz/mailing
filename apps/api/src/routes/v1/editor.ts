@@ -5,6 +5,7 @@
  *  - POST /api/v1/editor/html-to-blocks      — convert HTML email to block JSON
  *  - POST /api/v1/editor/spam-check          — spam score analysis
  *  - POST /api/v1/editor/accessibility-check — WCAG accessibility audit
+ *  - POST /api/v1/editor/dark-mode-check     — dark mode colour risk analysis
  *  - GET/POST/PUT/DELETE /api/v1/saved-blocks — reusable block library
  *  - GET/PUT /api/v1/brand-kit               — org visual identity
  */
@@ -372,4 +373,134 @@ export default async function editorRoutes(app: FastifyInstance) {
       return { data: row };
     },
   );
+
+  /**
+   * POST /api/v1/editor/dark-mode-check
+   * Analyse email schema for dark-mode colour risks.
+   *
+   * Returns a list of findings:
+   *  - near-white text on white background (invisible in light → invisible in dark forced inversion)
+   *  - near-black text on dark hero backgrounds (may wash out)
+   *  - pure-white (#fff / #ffffff) background containers — dark clients may force-invert
+   *  - missing dark-mode-safe image alternative (images without alt text)
+   *  - hardcoded hex colours that are problematic in dark mode
+   */
+  app.post(
+    '/api/v1/editor/dark-mode-check',
+    { schema: { tags: ['Editor'], summary: 'Dark mode colour risk analysis' } },
+    async (req) => {
+      const body = z.object({ schema: z.record(z.unknown()) }).parse(req.body);
+      const findings = analyzeDarkModeRisks(body.schema);
+      return { data: { findings, safe: findings.length === 0 } };
+    },
+  );
+}
+
+// ─── Dark mode risk analyser (pure function) ──────────────────────────────────
+
+interface DarkModeRisk {
+  severity: 'high' | 'medium' | 'low';
+  type: string;
+  description: string;
+  blockId?: string;
+}
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  const h = hex.replace('#', '');
+  if (h.length !== 6 && h.length !== 3) return null;
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const n = parseInt(full, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function relativeLuminance(r: number, g: number, b: number): number {
+  const sRGB = [r, g, b].map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  }) as [number, number, number];
+  return 0.2126 * sRGB[0] + 0.7152 * sRGB[1] + 0.0722 * sRGB[2];
+}
+
+function contrastRatio(hex1: string, hex2: string): number {
+  const c1 = hexToRgb(hex1);
+  const c2 = hexToRgb(hex2);
+  if (!c1 || !c2) return 21;
+  const l1 = relativeLuminance(...c1);
+  const l2 = relativeLuminance(...c2);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function analyzeDarkModeRisks(schema: Record<string, unknown>): DarkModeRisk[] {
+  const findings: DarkModeRisk[] = [];
+  const gs = (schema.globalStyles ?? {}) as Record<string, string>;
+  const contentBg = gs.contentBackgroundColor ?? '#ffffff';
+  const textColor = gs.textColor ?? '#1f2937';
+
+  // 1. Body background is pure white — forced dark mode will make it very dark
+  const contentRgb = hexToRgb(contentBg);
+  if (contentRgb) {
+    const lum = relativeLuminance(...contentRgb);
+    if (lum > 0.9) {
+      findings.push({
+        severity: 'medium',
+        type: 'white_background',
+        description:
+          `Content background ${contentBg} is near-white. Dark mode clients may force it to near-black, causing light-coloured text to disappear.`,
+      });
+    }
+  }
+
+  // 2. Low contrast between default text and content background
+  const ratio = contrastRatio(textColor, contentBg);
+  if (ratio < 4.5) {
+    findings.push({
+      severity: 'high',
+      type: 'low_contrast',
+      description: `Text colour ${textColor} on ${contentBg} has contrast ratio ${ratio.toFixed(1)}:1 — below WCAG AA (4.5:1). Will be unreadable in dark mode.`,
+    });
+  }
+
+  // 3. Scan blocks for problematic inline colours
+  const blocks = Array.isArray(schema.blocks) ? (schema.blocks as Record<string, unknown>[]) : [];
+
+  for (const block of blocks) {
+    const id = typeof block.id === 'string' ? block.id : undefined;
+    const bg = typeof block.backgroundColor === 'string' ? block.backgroundColor : null;
+
+    // Hero with very dark background AND dark text color set
+    if (block.type === 'hero' && bg) {
+      const bgRgb = hexToRgb(bg);
+      if (bgRgb && relativeLuminance(...bgRgb) < 0.05) {
+        const content = Array.isArray(block.content) ? (block.content as Record<string, unknown>[]) : [];
+        for (const child of content) {
+          const childColor = typeof child.color === 'string' ? child.color : null;
+          if (childColor) {
+            const childRgb = hexToRgb(childColor);
+            if (childRgb && relativeLuminance(...childRgb) < 0.05) {
+              findings.push({ severity: 'high', type: 'invisible_on_dark_hero', blockId: id, description: `Hero block ${id} has dark background ${bg} with dark text ${childColor}. Invisible in both light and dark mode.` });
+            }
+          }
+        }
+      }
+    }
+
+    // Button: check contrast
+    if (block.type === 'button') {
+      const btnBg = typeof block.backgroundColor === 'string' ? block.backgroundColor : '#2563eb';
+      const btnText = typeof block.textColor === 'string' ? block.textColor : '#ffffff';
+      const btnRatio = contrastRatio(btnText, btnBg);
+      if (btnRatio < 3.0) {
+        findings.push({ severity: 'medium', type: 'button_low_contrast', blockId: id, description: `Button ${id} has low contrast ${btnRatio.toFixed(1)}:1 (${btnText} on ${btnBg}). Consider darker bg or lighter text.` });
+      }
+    }
+
+    // Images without alt text — dark mode may invert them and alt is needed for context
+    if (block.type === 'image' && !block.alt) {
+      findings.push({ severity: 'low', type: 'missing_alt', blockId: id, description: `Image block ${id} has no alt text. Dark mode forced-inversion may render the image unrecognisable.` });
+    }
+  }
+
+  return findings;
 }

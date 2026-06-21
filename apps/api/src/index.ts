@@ -187,6 +187,9 @@ import reviewsV2Routes from './routes/v1/reviews-v2.js';
 import internalRfmRoutes from './routes/v1/internal/rfm.js';
 import internalPredictiveRoutes from './routes/v1/internal/predictive.js';
 import internalEventsRoutes from './routes/v1/internal/events.js';
+import internalBlacklistCheckRoutes from './routes/v1/internal/blacklist-check.js';
+import newsletterTierRoutes from './routes/v1/newsletter-tiers.js';
+import newsletterReferralRoutes from './routes/v1/newsletter-referrals.js';
 import messagingSendRoutes from './routes/v1/messaging/send.js';
 import seoClustersRoutes from './routes/v1/seo/clusters.js';
 import seoKeywordsRoutes from './routes/v1/seo/keywords.js';
@@ -481,6 +484,9 @@ export async function buildApp() {
   await app.register(cohortAnalyticsRoutes);
   await app.register(surveysNpsRoutes);
   await app.register(externalFeedsRoutes);
+  await app.register(internalBlacklistCheckRoutes);
+  await app.register(newsletterTierRoutes);
+  await app.register(newsletterReferralRoutes);
 
   return app;
 }

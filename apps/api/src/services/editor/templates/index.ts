@@ -2,11 +2,13 @@
  * Built-in email template library.
  *
  * Each template is a full EmailSchema-compatible JSON object.
- * Categories: newsletter, promo, transactional, event, onboarding, seasonal, ecommerce
+ * Categories: newsletter, promo, transactional, event, onboarding, seasonal, ecommerce, b2b, saas
  *
  * The list is intentionally kept as plain TS data (no filesystem reads at runtime)
  * so the templates work in any environment without file-system access.
  */
+
+import { EXTENDED_TEMPLATES } from './extended.js';
 
 export type TemplateCategory =
   | 'newsletter'
@@ -15,7 +17,9 @@ export type TemplateCategory =
   | 'event'
   | 'onboarding'
   | 'seasonal'
-  | 'ecommerce';
+  | 'ecommerce'
+  | 'b2b'
+  | 'saas';
 
 export interface TemplateMeta {
   id: string;
@@ -962,6 +966,9 @@ export const TEMPLATES: TemplateMeta[] = [
     },
   },
 ];
+
+// Merge core + extended (40 additional templates → 50+ total)
+TEMPLATES.push(...EXTENDED_TEMPLATES);
 
 // ─── Lookup helpers ───────────────────────────────────────────────────────────
 

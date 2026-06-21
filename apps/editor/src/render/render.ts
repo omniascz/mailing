@@ -80,14 +80,32 @@ export function renderEmail(schema: EmailSchema, opts: RenderOptions = {}): Rend
     .fm-container { width: 100% !important; max-width: 100% !important; }
     .fm-col { display: block !important; width: 100% !important; max-width: 100% !important; }
   }
+  /* Dark mode overrides (Apple Mail, Samsung Mail, Outlook.com dark mode).
+     We use :root[data-ogsc] (Outlook.com) and [data-ogsb] as extra selectors.
+     !important is intentional — inline styles must be overridden in dark clients. */
+  @media (prefers-color-scheme: dark) {
+    body, .fm-body-bg { background-color: #1a1a2e !important; }
+    .fm-content-bg { background-color: #16213e !important; }
+    .fm-text-default { color: #e2e8f0 !important; }
+    .fm-link { color: #93c5fd !important; }
+    .fm-divider { border-color: #334155 !important; }
+    .fm-footer-text { color: #64748b !important; }
+    /* Invert logos marked data-dark-invert */
+    img[data-dark-invert] { filter: invert(1) !important; }
+  }
+  /* Outlook.com dark mode selector */
+  [data-ogsc] body, [data-ogsc] .fm-body-bg { background-color: #1a1a2e !important; }
+  [data-ogsc] .fm-content-bg { background-color: #16213e !important; }
+  [data-ogsc] .fm-text-default { color: #e2e8f0 !important; }
+  [data-ogsc] .fm-link { color: #93c5fd !important; }
 </style>
 </head>
-<body style="margin:0;padding:0;background-color:${gs.backgroundColor};font-family:${gs.fontFamily};color:${gs.textColor};">
+<body class="fm-body-bg" style="margin:0;padding:0;background-color:${gs.backgroundColor};font-family:${gs.fontFamily};color:${gs.textColor};">
 <span class="preheader">${preheader}</span>
-<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="${gs.backgroundColor}">
+<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" class="fm-body-bg" bgcolor="${gs.backgroundColor}">
   <tr>
     <td align="center" style="padding:24px 8px;">
-      <table role="presentation" class="fm-container" width="${width}" border="0" cellpadding="0" cellspacing="0" style="width:${width}px;max-width:${width}px;background-color:${gs.contentBackgroundColor};">
+      <table role="presentation" class="fm-container fm-content-bg" width="${width}" border="0" cellpadding="0" cellspacing="0" style="width:${width}px;max-width:${width}px;background-color:${gs.contentBackgroundColor};">
         ${body}
       </table>
     </td>

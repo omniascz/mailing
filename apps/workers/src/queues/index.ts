@@ -78,6 +78,7 @@ export const QUEUE_NAMES = {
   WARMUP_ADVANCE: 'warmup-advance',
   DMARC_IMAP_POLL: 'dmarc-imap-poll',
   AB_WINNER: 'ab-winner',
+  BLACKLIST_MONITOR: 'blacklist-monitor',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
