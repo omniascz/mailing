@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { newsletterAds, newsletterAdSlots } from '../../db/schema/newsletter-ads.js';
 
@@ -121,14 +121,18 @@ export default async function newsletterAdRoutes(app: FastifyInstance) {
   // POST /api/v1/newsletter-ads/:id/track-impression
   app.post('/api/v1/newsletter-ads/:id/track-impression', async (req, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    await db.execute(`UPDATE newsletter_ads SET impressions = impressions + 1 WHERE id = '${id}' AND org_id = '${req.user!.orgId}'`);
+    await db.execute(
+      sql`UPDATE newsletter_ads SET impressions = impressions + 1 WHERE id = ${id} AND org_id = ${req.user!.orgId}`,
+    );
     return reply.status(204).send();
   });
 
   // POST /api/v1/newsletter-ads/:id/track-click
   app.post('/api/v1/newsletter-ads/:id/track-click', async (req, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    await db.execute(`UPDATE newsletter_ads SET clicks = clicks + 1 WHERE id = '${id}' AND org_id = '${req.user!.orgId}'`);
+    await db.execute(
+      sql`UPDATE newsletter_ads SET clicks = clicks + 1 WHERE id = ${id} AND org_id = ${req.user!.orgId}`,
+    );
     return reply.status(204).send();
   });
 }

@@ -150,3 +150,5 @@ export * from './co-marketing.js';
 export * from './dynamic-content.js';
 export * from './competitive-monitor.js';
 export * from './newsletter-paywall.js';
+export * from './brand-guidelines.js';
+export * from './inbox-placement.js';

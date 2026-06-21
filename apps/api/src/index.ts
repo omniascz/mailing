@@ -263,6 +263,12 @@ import deliverabilityCoachRoutes from './routes/v1/deliverability-coach.js';
 import campaignFatigueRoutes from './routes/v1/campaign-fatigue.js';
 import whatIfSimulatorRoutes from './routes/v1/what-if-simulator.js';
 import shoptetAdvancedRoutes from './routes/v1/integrations/shoptet-advanced.js';
+import brandGuidelinesRoutes from './routes/v1/brand-guidelines.js';
+import emailAnnotationsRoutes from './routes/v1/email-annotations.js';
+import inboxPlacementRoutes from './routes/v1/inbox-placement.js';
+import currencyAnalyticsRoutes from './routes/v1/currency-analytics.js';
+import emailThreadRoutes from './routes/v1/email-thread.js';
+import crossChannelAttributionRoutes from './routes/v1/cross-channel-attribution.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -537,6 +543,12 @@ export async function buildApp() {
   await app.register(campaignFatigueRoutes);
   await app.register(whatIfSimulatorRoutes);
   await app.register(shoptetAdvancedRoutes);
+  await app.register(brandGuidelinesRoutes);
+  await app.register(emailAnnotationsRoutes);
+  await app.register(inboxPlacementRoutes);
+  await app.register(currencyAnalyticsRoutes);
+  await app.register(emailThreadRoutes);
+  await app.register(crossChannelAttributionRoutes);
 
   return app;
 }
