@@ -23,6 +23,8 @@ import {
   workflowRuns,
   workflowEvents,
   deals,
+  rssCampaigns,
+  contacts,
   type WorkflowRun,
 } from '../../db/schema/index.js';
 import { redis } from '../../lib/redis.js';
@@ -679,4 +681,308 @@ export async function onLoyaltyRewardRedeemed(
       });
     }),
   );
+}
+
+// ─── GDPR consent triggers ────────────────────────────────────────────────────
+
+/**
+ * Fire all active workflows with trigger 'consent_granted'.
+ * config: { purposeId?: string }  — optional filter by specific purpose.
+ *
+ * Called from grantConsent() in the GDPR service.
+ */
+export async function onConsentGranted(
+  orgId: string,
+  contactId: string,
+  purposeId: string,
+  purposeSlug: string,
+): Promise<void> {
+  const activeWorkflows = await db
+    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, 'consent_granted' as never),
+        isNull(workflows.deletedAt),
+      ),
+    );
+
+  await Promise.allSettled(
+    activeWorkflows.map(async (w) => {
+      const config = w.triggerConfig as { purposeId?: string };
+      if (config.purposeId && config.purposeId !== purposeId) return;
+      await safeStartRun(w.id, orgId, contactId, {
+        triggerType: 'consent_granted',
+        purposeId,
+        purposeSlug,
+      });
+    }),
+  );
+}
+
+/**
+ * Fire all active workflows with trigger 'consent_revoked'.
+ * config: { purposeId?: string }
+ *
+ * Called from revokeConsent() in the GDPR service.
+ */
+export async function onConsentRevoked(
+  orgId: string,
+  contactId: string,
+  purposeId: string,
+  purposeSlug: string,
+  reason?: string,
+): Promise<void> {
+  const activeWorkflows = await db
+    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, 'consent_revoked' as never),
+        isNull(workflows.deletedAt),
+      ),
+    );
+
+  await Promise.allSettled(
+    activeWorkflows.map(async (w) => {
+      const config = w.triggerConfig as { purposeId?: string };
+      if (config.purposeId && config.purposeId !== purposeId) return;
+      await safeStartRun(w.id, orgId, contactId, {
+        triggerType: 'consent_revoked',
+        purposeId,
+        purposeSlug,
+        reason,
+      });
+    }),
+  );
+}
+
+/**
+ * Fire all active workflows with trigger 'consent_expired'.
+ * Called nightly by the expireStaleConsents() cron job after marking records expired.
+ *
+ * config: { purposeId?: string }
+ */
+export async function onConsentExpired(
+  orgId: string,
+  contactId: string,
+  purposeId: string,
+  purposeSlug: string,
+): Promise<void> {
+  const activeWorkflows = await db
+    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, 'consent_expired' as never),
+        isNull(workflows.deletedAt),
+      ),
+    );
+
+  await Promise.allSettled(
+    activeWorkflows.map(async (w) => {
+      const config = w.triggerConfig as { purposeId?: string };
+      if (config.purposeId && config.purposeId !== purposeId) return;
+      await safeStartRun(w.id, orgId, contactId, {
+        triggerType: 'consent_expired',
+        purposeId,
+        purposeSlug,
+      });
+    }),
+  );
+}
+
+/**
+ * Fire workflows triggered by company events (#322).
+ * eventType: 'company_enriched' | 'company_deal_won' | 'company_arr_threshold'
+ * config: { eventType?: string; threshold?: number }
+ */
+export async function onCompanyEvent(
+  orgId: string,
+  contactId: string,
+  eventType: string,
+  data: Record<string, unknown> = {},
+): Promise<void> {
+  const activeWorkflows = await db
+    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, 'company_event' as never),
+        isNull(workflows.deletedAt),
+      ),
+    );
+
+  await Promise.allSettled(
+    activeWorkflows.map(async (w) => {
+      const config = w.triggerConfig as { eventType?: string; threshold?: number };
+      if (config.eventType && config.eventType !== eventType) return;
+      if (config.threshold && eventType === 'company_arr_threshold') {
+        const arr = data['annualRevenueUsd'] as number | undefined;
+        if (!arr || arr < config.threshold) return;
+      }
+      await safeStartRun(w.id, orgId, contactId, { triggerType: 'company_event', eventType, ...data });
+    }),
+  );
+}
+
+/**
+ * Fire workflows triggered by helpdesk ticket events (#323).
+ * eventType: 'ticket_created' | 'ticket_sla_breached' | 'ticket_reopened' | 'ticket_resolved'
+ * config: { eventType?: string; priority?: string }
+ */
+export async function onTicketEvent(
+  orgId: string,
+  contactId: string,
+  ticketId: string,
+  eventType: string,
+  data: Record<string, unknown> = {},
+): Promise<void> {
+  const activeWorkflows = await db
+    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, 'ticket_event' as never),
+        isNull(workflows.deletedAt),
+      ),
+    );
+
+  await Promise.allSettled(
+    activeWorkflows.map(async (w) => {
+      const config = w.triggerConfig as { eventType?: string; priority?: string };
+      if (config.eventType && config.eventType !== eventType) return;
+      if (config.priority && data['priority'] !== config.priority) return;
+      await safeStartRun(w.id, orgId, contactId, { triggerType: 'ticket_event', ticketId, eventType, ...data });
+    }),
+  );
+}
+
+/**
+ * Fire workflows triggered by a tracked email link click (#481).
+ * config: { urlPattern?: string } — optional substring match on the clicked URL.
+ */
+export async function onEmailLinkClick(
+  orgId: string,
+  contactId: string,
+  campaignId: string,
+  clickedUrl: string,
+): Promise<void> {
+  const activeWorkflows = await db
+    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, 'email_link_click' as never),
+        isNull(workflows.deletedAt),
+      ),
+    );
+
+  await Promise.allSettled(
+    activeWorkflows.map(async (w) => {
+      const config = w.triggerConfig as { urlPattern?: string; campaignId?: string };
+      if (config.campaignId && config.campaignId !== campaignId) return;
+      if (config.urlPattern && !clickedUrl.includes(config.urlPattern)) return;
+      await safeStartRun(w.id, orgId, contactId, {
+        triggerType: 'email_link_click',
+        campaignId,
+        clickedUrl,
+      });
+    }),
+  );
+}
+
+// ─── Blog post publish (#337) ─────────────────────────────────────────────────
+
+/**
+ * Called when a blog post is published. Fires the `new_blog_post_published`
+ * api_event trigger for all opted-in contacts in the org, and enqueues an RSS
+ * campaign dispatch if the org has a blog-linked RSS campaign configured.
+ */
+export async function onNewBlogPost(
+  orgId: string,
+  post: { id: string; title: string; slug: string; excerpt?: string | null },
+): Promise<void> {
+  // 1. Find workflows listening for new_blog_post_published api_event
+  const activeWorkflows = await db
+    .select({ id: workflows.id })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, 'api_event' as never),
+        isNull(workflows.deletedAt),
+      ),
+    );
+
+  const blogWorkflows = activeWorkflows.filter((w) => {
+    const cfg = (w as unknown as { triggerConfig: { eventName?: string } }).triggerConfig;
+    return cfg?.eventName === 'new_blog_post_published';
+  });
+
+  if (blogWorkflows.length > 0) {
+    // Fire for all active (non-unsubscribed) contacts in org
+    const orgContacts = await db
+      .select({ id: contacts.id })
+      .from(contacts)
+      .where(
+        and(
+          eq(contacts.orgId, orgId),
+          eq(contacts.status, 'active' as never),
+          isNull(contacts.deletedAt),
+        ),
+      )
+      .limit(5000);
+
+    for (const wf of blogWorkflows) {
+      await Promise.allSettled(
+        orgContacts.map((c) =>
+          safeStartRun(wf.id, orgId, c.id, {
+            triggerType: 'api_event',
+            eventName: 'new_blog_post_published',
+            blogPostId: post.id,
+            blogPostTitle: post.title,
+            blogPostSlug: post.slug,
+          }),
+        ),
+      );
+    }
+  }
+
+  // 2. Enqueue RSS campaigns linked to blog (feedUrl = 'blog://internal')
+  const blogRssCampaigns = await db
+    .select()
+    .from(rssCampaigns)
+    .where(
+      and(
+        eq(rssCampaigns.orgId, orgId),
+        eq(rssCampaigns.active, true),
+        eq(rssCampaigns.feedUrl, 'blog://internal'),
+      ),
+    );
+
+  if (blogRssCampaigns.length > 0) {
+    // Defer to RSS campaign worker via redis queue
+    for (const rss of blogRssCampaigns) {
+      await redis
+        .lpush(
+          'queue:rss_campaign_dispatch',
+          JSON.stringify({ rssCampaignId: rss.id, blogPostId: post.id }),
+        )
+        .catch(() => {});
+    }
+  }
 }

@@ -372,6 +372,12 @@ importers:
       '@forgemsg/editor':
         specifier: workspace:*
         version: link:../editor
+      '@forgemsg/i18n-cs':
+        specifier: workspace:*
+        version: link:../../packages/i18n-cs
+      '@forgemsg/i18n-sk':
+        specifier: workspace:*
+        version: link:../../packages/i18n-sk
       '@forgemsg/shared':
         specifier: workspace:*
         version: link:../../packages/shared

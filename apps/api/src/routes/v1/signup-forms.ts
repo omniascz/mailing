@@ -354,6 +354,40 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
       return reply.send({ data: variant });
     },
   );
+
+  // Public: autofill pre-populated fields for identified visitor (#334)
+  app.get(
+    '/public/forms/:formId/autofill',
+    {
+      schema: {
+        tags: ['Public Forms'],
+        summary: 'Pre-fill form fields for an identified visitor',
+        description: 'Provide fmid (tracking cookie) or fmcid (encrypted contact ID in URL) to get safe pre-fill data.',
+      },
+    },
+    async (req, reply) => {
+      const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
+      const { fmid, fmcid, orgId } = z
+        .object({
+          fmid: z.string().max(256).optional(),
+          fmcid: z.string().max(512).optional(),
+          orgId: z.string().uuid(),
+        })
+        .parse(req.query);
+
+      const { resolveContactFromTracking, buildAutofillPayload } = await import(
+        '../../services/signup-forms/autofill.js'
+      );
+
+      const contactId = await resolveContactFromTracking(fmid, fmcid);
+      if (!contactId) {
+        return reply.send({ data: null });
+      }
+
+      const payload = await buildAutofillPayload(orgId, formId, contactId);
+      return reply.send({ data: payload });
+    },
+  );
 };
 
 export default signupFormRoutes;

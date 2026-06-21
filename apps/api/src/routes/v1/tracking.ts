@@ -12,6 +12,8 @@ import type { FastifyInstance } from 'fastify';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/index.js';
 import { verifyTrackingToken, isAppleMpp } from '../../services/sending/tracking.js';
+import { scoreAndPersist } from '../../services/deliverability/bot-detection.js';
+import { eq, and } from 'drizzle-orm';
 
 /**
  * 1×1 transparent GIF (35 bytes, base64-encoded).
@@ -60,7 +62,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
       if (payload && payload.type === 'open') {
         const mpp = isAppleMpp(userAgent);
 
-        await db
+        const [row] = await db
           .insert(emailEvents)
           .values({
             orgId: payload.orgId,
@@ -74,9 +76,20 @@ export default async function trackingRoutes(app: FastifyInstance) {
               botReason: mpp ? 'apple_mpp' : null,
             },
           })
-          .catch(() => {
-            // Non-fatal: best-effort tracking
-          });
+          .returning({ id: emailEvents.id })
+          .catch(() => []);
+
+        // BotSense scoring — async, non-blocking (#484)
+        if (row?.id) {
+          scoreAndPersist(row.id, {
+            eventType: 'open',
+            userAgent,
+            ipAddress,
+            campaignId: payload.campaignId,
+            contactId: payload.contactId,
+            occurredAt: new Date(),
+          }).catch(() => {});
+        }
       }
 
       return reply.send(TRANSPARENT_GIF);
@@ -113,8 +126,39 @@ export default async function trackingRoutes(app: FastifyInstance) {
         return reply.redirect(process.env.APP_URL ?? 'https://forgemsg.com', 302);
       }
 
+      const now = new Date();
+
+      // Fetch recent open (time + IP) for cluster + same-IP detection
+      const [recentOpen] = await db
+        .select({ id: emailEvents.id, createdAt: emailEvents.createdAt, ipAddress: emailEvents.ipAddress })
+        .from(emailEvents)
+        .where(
+          and(
+            eq(emailEvents.orgId, payload.orgId),
+            eq(emailEvents.contactId, payload.contactId ?? ''),
+            eq(emailEvents.campaignId, payload.campaignId ?? ''),
+            eq(emailEvents.eventType, 'open'),
+          ),
+        )
+        .limit(1)
+        .catch(() => []);
+
+      const recentClicks = await db
+        .select({ createdAt: emailEvents.createdAt, linkUrl: emailEvents.linkUrl })
+        .from(emailEvents)
+        .where(
+          and(
+            eq(emailEvents.orgId, payload.orgId),
+            eq(emailEvents.contactId, payload.contactId ?? ''),
+            eq(emailEvents.campaignId, payload.campaignId ?? ''),
+            eq(emailEvents.eventType, 'click'),
+          ),
+        )
+        .limit(20)
+        .catch(() => []);
+
       // Log the click event (best-effort)
-      await db
+      const [clickRow] = await db
         .insert(emailEvents)
         .values({
           orgId: payload.orgId,
@@ -126,9 +170,27 @@ export default async function trackingRoutes(app: FastifyInstance) {
           ipAddress: ipAddress?.slice(0, 45) ?? null,
           metadata: {},
         })
-        .catch(() => {
-          // Non-fatal: best-effort tracking
-        });
+        .returning({ id: emailEvents.id })
+        .catch(() => []);
+
+      // BotSense scoring — async, non-blocking (#484)
+      if (clickRow?.id) {
+        scoreAndPersist(clickRow.id, {
+          eventType: 'click',
+          userAgent,
+          ipAddress,
+          campaignId: payload.campaignId,
+          contactId: payload.contactId,
+          occurredAt: now,
+          openOccurredAt: recentOpen?.createdAt ?? undefined,
+          openIpAddress: recentOpen?.ipAddress ?? undefined,
+          linkUrl: payload.url,
+          recentClicksSameMessage: recentClicks.map((c) => ({
+            occurredAt: c.createdAt ?? now,
+            linkUrl: c.linkUrl,
+          })),
+        }).catch(() => {});
+      }
 
       return reply.redirect(payload.url, 302);
     },

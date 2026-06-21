@@ -18,6 +18,7 @@ import { callClaude, cacheKey, parseJsonSafe, CACHE_TTL } from '../../lib/ai-cli
 import { redis } from '../../lib/redis.js';
 import { db } from '../../db/client.js';
 import { campaigns, organizations } from '../../db/schema/index.js';
+import { enrichVariantsWithHistory } from '../../services/ai/subject-line-scorer.js';
 
 // ─── System prompts ───────────────────────────────────────────────────────────
 
@@ -301,7 +302,18 @@ export default async function aiRoutes(app: FastifyInstance) {
 
       if (!parsed.success)
         throw AppError.internal('AI returned unrecognisable subject line variants');
-      return { data: { variants: parsed.data.variants, _cached: cached } };
+
+      // Enrich with historical open-rate signals (#538 subject scorer)
+      const enriched = await enrichVariantsWithHistory(orgId, parsed.data.variants).catch(
+        () => null,
+      );
+
+      return {
+        data: {
+          variants: enriched ?? parsed.data.variants,
+          _cached: cached,
+        },
+      };
     },
   );
 

@@ -48,6 +48,28 @@ const internalContactsRoutes: FastifyPluginAsync = async (app) => {
       return reply.send({ data: rows });
     },
   );
+
+  // Called by mta-sender after hard bounce or complaint to mark contact status
+  app.patch(
+    '/api/v1/internal/contacts/:contactId/status',
+    { schema: { tags: ['Internal'] } },
+    async (req, reply) => {
+      const { contactId } = req.params as { contactId: string };
+      const { orgId, status } = z
+        .object({
+          orgId: z.string().uuid(),
+          status: z.enum(['bounced', 'complained', 'unsubscribed']),
+        })
+        .parse(req.body);
+
+      await db
+        .update(contacts)
+        .set({ status, updatedAt: new Date() })
+        .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
+
+      return reply.send({ data: { ok: true } });
+    },
+  );
 };
 
 export default internalContactsRoutes;

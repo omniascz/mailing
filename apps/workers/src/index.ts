@@ -32,10 +32,17 @@ import {
   startAnomalyDetectorWorker,
   scheduleAnomalyDetector,
 } from './jobs/anomaly-detector.js';
+import { startViberSenderWorker } from './jobs/viber-sender.js';
+import { startExternalFeedPollWorker, scheduleExternalFeedPoll } from './jobs/external-feed-poll.js';
+import { startWarmupAdvanceWorker, scheduleWarmupAdvance } from './jobs/warmup-advance.js';
+import { startDmarcImapPollWorker, scheduleDmarcImapPoll } from './jobs/dmarc-imap-poll.js';
 import { QUEUE_NAMES } from './queues/index.js';
 import { initTelemetry, flushTelemetry } from './lib/telemetry.js';
+import { registerCzSkMergeFilters } from './lib/merge-filters-cz-sk.js';
 
 initTelemetry();
+// Register CZ/SK declension pipe-filters before any batch-sender starts (#606–#608)
+registerCzSkMergeFilters();
 console.log('ForgeMsg Workers starting...');
 
 const campaignSplitter = startCampaignSplitterWorker();
@@ -57,6 +64,13 @@ const subscriptionBillingWorker = startSubscriptionBillingWorker();
 scheduleSubscriptionBillingJob().catch(console.error);
 const anomalyDetectorWorker = startAnomalyDetectorWorker();
 scheduleAnomalyDetector().catch(console.error);
+const viberSenderWorker = startViberSenderWorker();
+const externalFeedPollWorker = startExternalFeedPollWorker();
+scheduleExternalFeedPoll().catch(console.error);
+const warmupAdvanceWorker = startWarmupAdvanceWorker();
+scheduleWarmupAdvance().catch(console.error);
+const dmarcImapPollWorker = startDmarcImapPollWorker();
+scheduleDmarcImapPoll().catch(console.error);
 
 console.log('All workers started. Waiting for jobs...');
 
@@ -77,6 +91,10 @@ async function shutdown() {
     videoTranscodeWorker.close(),
     subscriptionBillingWorker.close(),
     anomalyDetectorWorker.close(),
+    viberSenderWorker.close(),
+    externalFeedPollWorker.close(),
+    warmupAdvanceWorker.close(),
+    dmarcImapPollWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');

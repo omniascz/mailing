@@ -13,12 +13,15 @@
  * focused on collecting facts.
  */
 
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, count, eq, gte, inArray, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   campaigns,
   sendingDomains,
   emailEvents,
+  suppressions,
+  contactLists,
+  contacts,
   type Campaign,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -35,6 +38,7 @@ import {
   classifySpamScore,
   classifySubject,
   classifyUnsubscribeLink,
+  classifySuppression,
   countBySeverity,
   prioritise,
   type CheckResult,
@@ -73,9 +77,20 @@ export async function runPreSendChecks(
 
   // ─── Audience ────────────────────────────────────────────────────────────
   checks.push(classifyAudienceSize({ recipientCount }));
-  // Suppression overlap is expensive on large segments; we skip it for
-  // the MVP gate. Frequency cap likewise — wire when those services
-  // expose batched-count helpers.
+
+  // Suppression overlap — how many of this campaign's contacts are suppressed.
+  // We sample up to 50 K contact IDs to keep the query fast on large lists.
+  if (recipientCount > 0) {
+    const suppressionOverlap = await fetchSuppressionOverlap(orgId, campaignId).catch(() => null);
+    if (suppressionOverlap !== null) {
+      checks.push(
+        classifySuppression({
+          recipientCount,
+          suppressedCount: suppressionOverlap,
+        }),
+      );
+    }
+  }
 
   // ─── Content ─────────────────────────────────────────────────────────────
   checks.push(classifySubject({ subject: campaign.subject ?? '' }));
@@ -218,4 +233,41 @@ function hasPlainTextPart(campaign: Campaign): boolean {
   const c = campaign.content as Record<string, unknown> | null | undefined;
   if (!c) return false;
   return typeof c.plainText === 'string' && c.plainText.trim().length > 0;
+}
+
+/**
+ * Counts how many contacts in this campaign's list are suppressed.
+ * Samples up to 50 K emails to stay fast on very large lists.
+ */
+async function fetchSuppressionOverlap(orgId: string, campaignId: string): Promise<number> {
+  const SAMPLE_LIMIT = 50_000;
+
+  // Get the list_id from the campaign
+  const [camp] = await db
+    .select({ listId: campaigns.listId })
+    .from(campaigns)
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
+    .limit(1);
+  if (!camp?.listId) return 0;
+
+  // Sample contact emails via junction table
+  const rows = await db
+    .select({ email: contacts.email })
+    .from(contactLists)
+    .innerJoin(contacts, and(eq(contacts.id, contactLists.contactId), eq(contacts.orgId, orgId)))
+    .where(eq(contactLists.listId, camp.listId))
+    .limit(SAMPLE_LIMIT);
+
+  if (rows.length === 0) return 0;
+
+  const emails = rows.map((r) => r.email).filter(Boolean) as string[];
+  if (emails.length === 0) return 0;
+
+  // Count how many of those emails appear in the suppression table
+  const [result] = await db
+    .select({ n: count() })
+    .from(suppressions)
+    .where(and(eq(suppressions.orgId, orgId), inArray(suppressions.email, emails)));
+
+  return result?.n ?? 0;
 }

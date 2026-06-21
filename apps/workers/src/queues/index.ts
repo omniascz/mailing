@@ -73,6 +73,10 @@ export const QUEUE_NAMES = {
   VIDEO_TRANSCODE: 'video-transcode',
   SUBSCRIPTION_BILLING: 'subscription-billing',
   ANOMALY_DETECTOR: 'anomaly-detector',
+  VIBER_SEND: 'viber-send',
+  EXTERNAL_FEED_POLL: 'external-feed-poll',
+  WARMUP_ADVANCE: 'warmup-advance',
+  DMARC_IMAP_POLL: 'dmarc-imap-poll',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

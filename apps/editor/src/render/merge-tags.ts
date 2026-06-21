@@ -104,18 +104,33 @@ function resolveSystem(ctx: MergeTagContext, field: string): string | undefined 
 /**
  * Replace every {{tag}} in `text` with its resolved value.
  * Never throws — unknown tags resolve to '' (or the fallback if provided).
+ *
+ * Supports dotted-path notation for the contact namespace:
+ *   {{contact.first_name|vocative}} — resolves ctx.contact.first_name then applies filter
+ *   {{first_name|vocative}}         — resolves ctx.contact.first_name (same, flat form)
+ *   {{system.unsubscribe_url}}      — equivalent to {{unsubscribe_url}}
  */
 export function parseMergeTags(text: string, ctx: MergeTagContext = {}): string {
   if (!text || typeof text !== 'string') return text ?? '';
   return text.replace(TAG_RE, (_, field: string, filterChain: string) => {
     const filters = parseFilters(filterChain ?? '');
 
+    // Strip dotted namespace prefixes: "contact.x" → "x", "system.x" → "x" (system)
+    let resolvedField = field;
+    let isSystem = false;
+    if (field.startsWith('contact.')) {
+      resolvedField = field.slice('contact.'.length);
+    } else if (field.startsWith('system.')) {
+      resolvedField = field.slice('system.'.length);
+      isSystem = true;
+    }
+
     let value: string;
-    if (SYSTEM_KEYS.has(field)) {
-      const sys = resolveSystem(ctx, field);
+    if (isSystem || SYSTEM_KEYS.has(resolvedField)) {
+      const sys = resolveSystem(ctx, resolvedField);
       value = sys != null ? String(sys) : '';
     } else {
-      const v = pickContactField(ctx.contact, field);
+      const v = pickContactField(ctx.contact, resolvedField);
       value = v == null ? '' : String(v);
     }
 

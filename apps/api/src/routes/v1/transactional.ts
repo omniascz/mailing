@@ -10,6 +10,9 @@ import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import { db } from '../../db/client.js';
 import { emailEvents, campaigns } from '../../db/schema/index.js';
+import { redis } from '../../lib/redis.js';
+import { sendTransactionalEmail } from '../../lib/queues.js';
+import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 
 const transactionalRoutes: FastifyPluginAsync = async (app) => {
   // ── Send transactional email ──────────────────────────────────────────────
@@ -42,11 +45,37 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           .send({ code: 'BODY_REQUIRED', message: 'Provide html, text, or templateId' });
       }
 
-      const messageId = `<${randomUUID()}@forgemsg>`;
+      const orgId = req.user!.orgId;
+      await checkSendCapacity(orgId, 1);
 
-      // Log a "send" event so delivery webhooks + analytics pick it up.
+      // Apply caller-supplied merge vars (simple token substitution; template
+      // rendering via templateId is resolved inside the MTA worker using the
+      // stored template rows — we don't fetch it here to keep this path fast).
+      let html = body.html ?? '';
+      let text = body.text ?? '';
+      if (body.mergeVars) {
+        for (const [key, val] of Object.entries(body.mergeVars)) {
+          const re = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
+          html = html.replace(re, val);
+          text = text.replace(re, val);
+        }
+      }
+
+      // Enqueue onto MTA-other (transactional priority) and get the canonical
+      // messageId back. The Go engine performs the actual SMTP delivery.
+      const messageId = await sendTransactionalEmail({
+        to: body.to,
+        from: body.from,
+        fromName: body.fromName,
+        subject: body.subject,
+        html: html || '<p></p>',
+        text: text || undefined,
+        orgId,
+      });
+
+      // Log send event for analytics + delivery webhooks.
       await db.insert(emailEvents).values({
-        orgId: req.user!.orgId,
+        orgId,
         eventType: 'send',
         messageId,
         metadata: {
@@ -54,12 +83,11 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           transactional: true,
           tags: body.tags ?? [],
           scheduleAt: body.scheduleAt ?? null,
+          templateId: body.templateId ?? null,
           ...body.metadata,
         },
       });
 
-      // Actual MTA dispatch is delegated to the Go engine through the
-      // existing BullMQ "email" queue. Workers pick messageId up on events.
       return reply
         .code(202)
         .send({ data: { messageId, status: body.scheduleAt ? 'scheduled' : 'queued' } });
@@ -206,6 +234,157 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
   );
 
   void campaigns;
+
+  // ── Batch transactional email (#541) — up to 1000 personalized emails ────
+  // POST /api/v1/transactional/batch
+  app.post(
+    '/api/v1/transactional/batch',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Transactional'], summary: 'Send up to 1000 personalized transactional emails (with batchId tracking)' },
+    },
+    async (req, reply) => {
+      const body = z
+        .object({
+          from: z.string().email(),
+          fromName: z.string().max(100).optional(),
+          subject: z.string().min(1).max(500),
+          html: z.string().optional(),
+          text: z.string().optional(),
+          templateId: z.string().uuid().optional(),
+          recipients: z
+            .array(
+              z.object({
+                to: z.string().email(),
+                mergeVars: z.record(z.string()).optional(),
+                metadata: z.record(z.unknown()).optional(),
+              }),
+            )
+            .min(1)
+            .max(1000),
+          tags: z.array(z.string()).max(20).optional(),
+        })
+        .parse(req.body);
+
+      if (!body.html && !body.text && !body.templateId) {
+        return reply
+          .code(400)
+          .send({ code: 'BODY_REQUIRED', message: 'Provide html, text, or templateId' });
+      }
+
+      const orgId = req.user!.orgId;
+      await checkSendCapacity(orgId, body.recipients.length);
+      const batchId = randomUUID();
+      const batchKey = `batch:txn:${orgId}:${batchId}`;
+
+      // Deduplicate by email
+      const seen = new Set<string>();
+      const unique = body.recipients.filter((r) => {
+        const key = r.to.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      // Store initial batch status in Redis (TTL 7 days)
+      await redis.set(
+        batchKey,
+        JSON.stringify({
+          batchId,
+          orgId,
+          total: unique.length,
+          queued: 0,
+          failed: 0,
+          status: 'processing',
+          createdAt: new Date().toISOString(),
+        }),
+        'EX',
+        604800,
+      );
+
+      // Enqueue all messages (fire-and-forget progress update)
+      let queued = 0;
+      const results: Array<{ to: string; messageId: string; status: string }> = [];
+
+      await Promise.all(
+        unique.map(async (recipient) => {
+          try {
+            // Apply merge vars to html/text via simple replacement
+            let html = body.html;
+            let text = body.text;
+            if (recipient.mergeVars) {
+              for (const [k, v] of Object.entries(recipient.mergeVars)) {
+                const re = new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'g');
+                if (html) html = html.replace(re, v);
+                if (text) text = text.replace(re, v);
+              }
+            }
+            const messageId = await sendTransactionalEmail({
+              from: body.from,
+              fromName: body.fromName,
+              to: recipient.to,
+              subject: body.subject,
+              html: html ?? text ?? '',
+              text: text,
+              orgId,
+            });
+            results.push({ to: recipient.to, messageId, status: 'queued' });
+            queued++;
+          } catch {
+            results.push({ to: recipient.to, messageId: '', status: 'failed' });
+          }
+        }),
+      );
+
+      // Update batch status
+      await redis.set(
+        batchKey,
+        JSON.stringify({
+          batchId,
+          orgId,
+          total: unique.length,
+          queued,
+          failed: unique.length - queued,
+          status: 'queued',
+          createdAt: new Date().toISOString(),
+        }),
+        'EX',
+        604800,
+      );
+
+      return reply.code(202).send({
+        data: {
+          batchId,
+          total: unique.length,
+          queued,
+          failed: unique.length - queued,
+          deduplicated: body.recipients.length - unique.length,
+          results,
+        },
+      });
+    },
+  );
+
+  // ── Batch status (#541) ────────────────────────────────────────────────────
+  // GET /api/v1/transactional/batch/:batchId
+  app.get(
+    '/api/v1/transactional/batch/:batchId',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Transactional'], summary: 'Get batch transactional send progress' },
+    },
+    async (req, reply) => {
+      const { batchId } = req.params as { batchId: string };
+      const orgId = req.user!.orgId;
+      const batchKey = `batch:txn:${orgId}:${batchId}`;
+
+      const raw = await redis.get(batchKey);
+      if (!raw) {
+        return reply.code(404).send({ code: 'BATCH_NOT_FOUND', message: 'Batch not found or expired' });
+      }
+      return reply.send({ data: JSON.parse(raw) });
+    },
+  );
 };
 
 export default transactionalRoutes;

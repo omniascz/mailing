@@ -89,7 +89,7 @@ Modely: 🧠 Opus · 🛠️ Sonnet · ⚡ Haiku (viz §21 pro kritéria)
 | #35 | 🛠️ Sonnet | SMS kampaně                 | ✅                                 | campaign type = `sms`, `routes/v1/sms.ts`                            |
 | #36 | 🛠️ Sonnet | SMS automatizace            | ✅                                 | workflow action `send_sms`                                           |
 | #37 | 🛠️ Sonnet | SMS opt-in                  | ✅                                 | signup forms + `sms_consents` table                                  |
-| #38 | 🛠️ Sonnet | Unikátní slevové kódy v SMS | ➕                                 | `services/sms/coupon-merge.ts` — merge tag `{{coupon_code:batchId}}` |
+| ✅ #38 | 🛠️ Sonnet | Unikátní slevové kódy v SMS | ✅                                 | `services/sms/coupon-merge.ts` — merge tag `{{coupon_code:batchId}}` |
 | #39 | 🛠️ Sonnet | SMS šablony                 | ✅ (merge tag + templates table)   | —                                                                    |
 | #40 | 🛠️ Sonnet | Transactional SMS API       | ✅                                 | `routes/v1/sms.ts::send`, nově `routes/v1/transactional.ts::sms`     |
 | #41 | 🛠️ Sonnet | A/B testování SMS           | ✅ (workflow A/B split + SMS send) | —                                                                    |
@@ -470,7 +470,7 @@ Nejsilnější diferenciátor AC je **integrovaný sales CRM** (Pipelines + Sale
 | ------- | --------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | ✅ #213 | 🛠️ Sonnet | **Nested automations** (spuštění workflow z workflow)                | action `start_workflow` předávající context                                                                         | nový action type v `services/workflows/actions.ts::executeStartWorkflow`             |
 | ✅ #214 | 🛠️ Sonnet | **Automation maps** (graf všech workflow a jejich napojení)          | build graph: který workflow spouští který přes start_workflow / goals                                               | `services/workflows/map.ts`, `routes/v1/workflows.ts::map`                           |
-| 🔴 #215 | ⚡ Haiku  | **900+ pre-built recipes**                                           | rozšíření `flow-templates.ts` z ~10 na širší knihovnu (B2B, e-com, SaaS onboarding, re-engagement, sales sequences) | `services/workflows/templates/` (split do kategorií)                                 |
+| ✅ #215 | ⚡ Haiku  | **900+ pre-built recipes**                                           | rozšíření `flow-templates.ts` z ~10 na širší knihovnu (B2B, e-com, SaaS onboarding, re-engagement, sales sequences) | `services/workflows/templates/` (split do kategorií)                                 |
 | ✅ #216 | 🛠️ Sonnet | **Click actions** (add tag / update field po kliknutí na link/image) | render-time: link wrapper s tracking ID → na click resolve action                                                   | rozšíření `apps/editor/src/render/render.ts` + `services/campaigns/click-actions.ts` |
 
 #### F) Contact data — custom objects a social
@@ -569,7 +569,7 @@ Brevo Conversations sjednocuje chat + email + WhatsApp + Instagram DM + FB Messe
 | ✅ #243 | 🛠️ Sonnet | **Facebook Messenger adapter** | FB Graph API, inbound → helpdesk thread                                 | `apps/api/src/channels/messenger/adapter.ts`, webhook `routes/v1/webhooks/messenger.ts`                      |
 | ✅ #244 | 🧠 Opus   | **Universal inbox routing**    | jedna thread entity napříč kanály, auto-link přes email/phone/social_id | rozšíření `db/schema/helpdesk.ts` o `channel` + `external_thread_id`, `services/helpdesk/universal-inbox.ts` |
 | ✅ #245 | 🛠️ Sonnet | **Chat routing & assignment**  | round-robin / skill-based / manual, agent availability status           | `db/schema/agent-availability.ts`, `services/helpdesk/routing.ts`                                            |
-| 🔴 #246 | ⚡ Haiku  | **Canned responses**           | shared library per org, merge tags, kategorie                           | `db/schema/canned-responses.ts`, `routes/v1/helpdesk/canned.ts`                                              |
+| ✅ #246 | ⚡ Haiku  | **Canned responses**           | shared library per org, merge tags, kategorie                           | `db/schema/canned-responses.ts`, `routes/v1/helpdesk/canned.ts`                                              |
 | ✅ #247 | 🛠️ Sonnet | **Chat analytics**             | response time, resolution time, CSAT, volume per channel                | `services/helpdesk/analytics.ts` — rozšíření §15-C                                                           |
 | ✅ #248 | 🛠️ Sonnet | **Aura Support Agent (AI)**    | sumarizace konverzace, tone adjust, notes→message                       | `services/ai-support/{summarize,tone-adjust,note-to-message}.ts`, `routes/v1/ai-support.ts`                  |
 
@@ -661,7 +661,7 @@ Brevo účtuje za e-maily, ne za kontakty. MailForge tohle má naplánované v b
 | ------- | --------- | --------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | ✅ #284 | 🛠️ Sonnet | **Batch send API** (až 1 000 personalizovaných v 1 callu) | array input, per-recipient merge vars, dedup                     | rozšíření `routes/v1/transactional.ts::batch`                                       |
 | ✅ #285 | 🛠️ Sonnet | **Unified messaging API**                                 | jedna struktura pro email/sms/whatsapp — channel field + payload | `routes/v1/messaging/send.ts` (nový unified endpoint)                               |
-| 🔴 #286 | 🛠️ Sonnet | **External feeds**                                        | automatické data pulls (RSS/CSV/JSON URL) → contacts/events      | `db/schema/external-feeds.ts`, `services/external-feeds/index.ts`, scheduled worker |
+| ✅ #286 | 🛠️ Sonnet | **External feeds**                                        | automatické data pulls (RSS/CSV/JSON URL) → contacts/events      | `db/schema/external-feeds.ts`, `services/external-feeds/index.ts`, scheduled worker |
 
 ### 16.3. Záměrně nepokryto
 
@@ -767,8 +767,8 @@ HubSpot Smart CRM má lifecycle_stage jako first-class pole + generic associatio
 | ✅ #319 | 🧠 Opus   | **Stage auto-advance rules**          | "MQL → SQL if score > 80 AND has_meeting_booked"                                                   | `db/schema/lifecycle-rules.ts`, `services/lifecycle/auto-advance.ts`                                                                                                                                                                                                             |
 | ✅ #320 | 🧠 Opus   | **Associations engine** (generic M:N) | contact ↔ company, contact ↔ deal, company ↔ deal, deal ↔ ticket, custom ↔ custom                  | `db/schema/associations.ts` (generic entity_type/entity_id pairs), `services/associations/index.ts`, `routes/v1/associations.ts`                                                                                                                                                 |
 | 🔴 #321 | 🛠️ Sonnet | **Association labels**                | custom relationship types: "primary contact", "decision maker", "referred by"                      | součást associations schema                                                                                                                                                                                                                                                      |
-| 🔴 #322 | 🛠️ Sonnet | **Company-based workflows**           | workflows triggered on company events (enriched, deal won, ARR threshold)                          | rozšíření `services/workflows/triggers.ts` o company\_\* triggers                                                                                                                                                                                                                |
-| 🔴 #323 | 🛠️ Sonnet | **Ticket-based workflows**            | workflows na helpdesk events (ticket_created, sla_breached, reopened)                              | rozšíření triggerů o ticket\_\*                                                                                                                                                                                                                                                  |
+| ✅ #322 | 🛠️ Sonnet | **Company-based workflows**           | workflows triggered on company events (enriched, deal won, ARR threshold)                          | rozšíření `services/workflows/triggers.ts` o company\_\* triggers                                                                                                                                                                                                                |
+| ✅ #323 | 🛠️ Sonnet | **Ticket-based workflows**            | workflows na helpdesk events (ticket_created, sla_breached, reopened)                              | rozšíření triggerů o ticket\_\*                                                                                                                                                                                                                                                  |
 
 #### F) Sales Hub extras
 
@@ -791,7 +791,7 @@ HubSpot Smart CRM má lifecycle_stage jako first-class pole + generic associatio
 | 🔴 #331 | 🛠️ Sonnet | **Content Agent**                       | generuje blog/landing/email/podcast-script z brand voice + product data                                | `services/ai-agents/content.ts` (generalizace stávajícího `generate-email`)                        |
 | ✅ #332 | 🧠 Opus   | **Deal Loss / Health Agent**            | analyzuje historii uzavřených dealů → identifikuje loss patterns, flaguje at-risk deals                | `services/ai-agents/deal-health.ts`, rozšíření §15-B deal-risk                                     |
 | 🔴 #333 | 🛠️ Sonnet | **Buyer intent signals**                | third-party intent data providers (Bombora/6sense adapter) + site activity intent score                | `db/schema/intent-signals.ts`, `services/intent/provider-adapter.ts`, `services/intent/scoring.ts` |
-| 🔴 #334 | 🛠️ Sonnet | **Form autofill (identified visitor)**  | cookie/IP → known contact → pre-fill form fields in API                                                | rozšíření `services/signup-forms` o `autofill.ts`                                                  |
+| ✅ #334 | 🛠️ Sonnet | **Form autofill (identified visitor)**  | cookie/IP → known contact → pre-fill form fields in API                                                | rozšíření `services/signup-forms` o `autofill.ts`                                                  |
 | ✅ #335 | 🧠 Opus   | **RAG vector store**                    | per-org knowledge base embeddings pro Customer/Content agents                                          | `db/schema/kb-embeddings.ts` (pgvector), `services/rag/index.ts`                                   |
 
 #### H) Content extras (Blog only — website builder stále 🚫)
@@ -801,7 +801,7 @@ Blog přidáváme (stát se content platformou pro SEO), ale plný website build
 | ID      | Model     | Funkce                                   | Popis                                                                                             | Soubory                                                                                              |
 | ------- | --------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | ✅ #336 | 🛠️ Sonnet | **Blog platform** (API-first / headless) | posts, kategorie, tagy, autoři, draft/published, scheduled — duplicitní s #412, shipped session 6 | `db/schema/blog.ts`, `services/blog/{index,pure,ctas}.ts`, `routes/v1/blog.ts`                       |
-| 🔴 #337 | 🛠️ Sonnet | **Blog → email automation**              | new post → trigger workflow + RSS email campaign                                                  | rozšíření RSS campaigns (§1.2)                                                                       |
+| ✅ #337 | 🛠️ Sonnet | **Blog → email automation**              | new post → trigger workflow + RSS email campaign                                                  | rozšíření RSS campaigns (§1.2)                                                                       |
 | ✅ #338 | 🧠 Opus   | **Multi-language content**               | content variants per locale, auto-detect reader locale, fallback chain                            | rozšíření editor schema + blog schema o `locale`, `translations` relační tabulka                     |
 | 🔴 #339 | 🛠️ Sonnet | **Content staging / versioning**         | draft → staged → published, revision history                                                      | rozšíření blog + landing schema o `version` + `published_version_id`                                 |
 | 🔴 #340 | 🛠️ Sonnet | **CTAs (Calls-to-Action) widgets**       | clickable buttons/popups/banners s A/B, analytics, smart content (segment-based)                  | `db/schema/ctas.ts`, `services/ctas/index.ts`, `routes/v1/ctas.ts`, served přes site-tracker (§15-C) |
@@ -828,7 +828,7 @@ Blog přidáváme (stát se content platformou pro SEO), ale plný website build
 | ✅ #351 | 🛠️ Sonnet | **Graymail suppression**                      | auto-pause sending to contacts with zero engagement > N dní        | `services/deliverability/{pure.ts,graymail.ts}` (classifyGraymail 4-tier + `sweepOrg` s tagováním), route `POST /api/v1/deliverability/graymail/sweep`            |
 | ✅ #352 | 🛠️ Sonnet | **Email health score per domain/IP**          | composite: bounce rate, spam rate, complaint rate, inbox placement | `services/deliverability/{pure.ts::computeEmailHealthScore,health-score.ts::computeOrgHealth}`, route `GET /api/v1/deliverability/health-score?days=&domain=&ip=` |
 | ✅ #353 | 🧠 Opus   | **Deliverability insights / recommendations** | rules engine: "hard-bounce rate > 2% → warn + suggestions"         | `services/deliverability/insights.ts`                                                                                                                             |
-| 🔴 #354 | 🛠️ Sonnet | **Sender reputation monitoring**              | integrace se SenderScore / Google Postmaster / Microsoft SNDS      | `services/deliverability/reputation.ts` (provider adapters)                                                                                                       |
+| ✅ #354 | 🛠️ Sonnet | **Sender reputation monitoring**              | integrace se SenderScore / Google Postmaster / Microsoft SNDS      | `services/deliverability/reputation.ts` (provider adapters)                                                                                                       |
 
 #### K) Data Hub — programmable data operations
 
@@ -925,7 +925,7 @@ Seznam.cz je druhý největší email provider v ČR (~20% tržní podíl). Má 
 | ID      | Model     | Funkce                                        | Popis                                                                                                            | Soubory                                                                                                                                                | Priorita |
 | ------- | --------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
 | ✅ #371 | ⚡ Haiku  | **Seznam Email headers**                      | Precedence/Feedback-ID/Auto-Submitted + volitelný `X-Seznam-Campaign-Category`; ISP resolver + throttle defaults | `apps/engine/internal/email/headers.go` (+`headers_test.go`), rozšíření `smtp/sender.go` Message {CampaignID, SendingDomain, CampaignCategory, Stream} | ✅       |
-| 🔴 #372 | 🛠️ Sonnet | **Seznam Postmaster sledování**               | parse Seznam deliverability feedback                                                                             | rozšíření §17-J `services/deliverability/reputation.ts` o Seznam adapter                                                                               | 🟡       |
+| ✅ #372 | 🛠️ Sonnet | **Seznam Postmaster sledování**               | parse Seznam deliverability feedback                                                                             | rozšíření §17-J `services/deliverability/reputation.ts` o Seznam adapter                                                                               | 🟡       |
 | ✅ #373 | ⚡ Haiku  | **Email.cz / Volny.cz / Centrum.cz pravidla** | ISP detekce + `RecommendedThrottle()` defaults pro CZ poskytovatele                                              | `apps/engine/internal/email/headers.go::ResolveIsp`/`RecommendedThrottle`                                                                              | ✅       |
 
 #### E) 🟡 Workflow export/import (OBOHACENÍ)
@@ -934,9 +934,9 @@ Sdílení workflow mezi účty / agenturami / template marketplace.
 
 | ID      | Model     | Funkce                            | Popis                                                                  | Soubory                                                                                                | Priorita                       |
 | ------- | --------- | --------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------ |
-| 🔴 #374 | 🛠️ Sonnet | **Workflow JSON export**          | serializace workflow (nodes, edges, config) do verzovaného JSON + hash | `services/workflows/export.ts`, `routes/v1/workflows/export.ts`                                        | 🟡                             |
-| 🔴 #375 | 🛠️ Sonnet | **Workflow JSON import**          | validace + migrace staré verze → import                                | `services/workflows/import.ts`, `routes/v1/workflows/import.ts`                                        | 🟡                             |
-| 🔴 #376 | 🛠️ Sonnet | **Workflow template marketplace** | public katalog sdílených workflow (per-org visibility)                 | rozšíření `services/workflows/templates/` o `marketplace.ts`, `db/schema/workflow-templates-public.ts` | ⚪ (částečně §17-I App Studio) |
+| ✅ #374 | 🛠️ Sonnet | **Workflow JSON export**          | serializace workflow (nodes, edges, config) do verzovaného JSON + hash | `services/workflows/export.ts`, `routes/v1/workflows/export.ts`                                        | 🟡                             |
+| ✅ #375 | 🛠️ Sonnet | **Workflow JSON import**          | validace + migrace staré verze → import                                | `services/workflows/import.ts`, `routes/v1/workflows/import.ts`                                        | 🟡                             |
+| ✅ #376 | 🛠️ Sonnet | **Workflow template marketplace** | public katalog sdílených workflow (per-org visibility)                 | rozšíření `services/workflows/templates/` o `marketplace.ts`, `db/schema/workflow-templates-public.ts` | ⚪ (částečně §17-I App Studio) |
 
 #### F) 🟡 Survey sentiment auto-tagging (OBOHACENÍ)
 
@@ -944,8 +944,8 @@ Ecomail má flow "hodnocení s automatickým štítkováním (spokojen/nespokoje
 
 | ID      | Model     | Funkce                                  | Popis                                                                                  | Soubory                                                                                                  | Priorita |
 | ------- | --------- | --------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------- |
-| 🔴 #377 | 🛠️ Sonnet | **Survey response → auto-action rules** | per-question mapping: rating/choice → action (add_tag, update_field, trigger_workflow) | rozšíření `services/surveys/index.ts` o `response-rules.ts`, schema rozšíření o `response_actions` JSONB | 🟡       |
-| 🔴 #378 | ⚡ Haiku  | **NPS / CSAT out-of-box**               | předdefinované survey šablony + auto-tag promoters/passives/detractors                 | `services/surveys/nps-csat.ts`                                                                           | 🟡       |
+| ✅ #377 | 🛠️ Sonnet | **Survey response → auto-action rules** | per-question mapping: rating/choice → action (add_tag, update_field, trigger_workflow) | rozšíření `services/surveys/index.ts` o `response-rules.ts`, schema rozšíření o `response_actions` JSONB | 🟡       |
+| ✅ #378 | ⚡ Haiku  | **NPS / CSAT out-of-box**               | předdefinované survey šablony + auto-tag promoters/passives/detractors                 | `services/surveys/nps-csat.ts`                                                                           | 🟡       |
 
 #### G) 🟡 Product XML feed auto-ingestion (OBOHACENÍ)
 
@@ -1128,13 +1128,13 @@ MailForge má `contact_status` jako single enum. Tohle je pokročilejší.
 
 | ID      | Model     | Funkce                               | Popis                                                                                             | Soubory                                                      | Priorita |
 | ------- | --------- | ------------------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------- |
-| 🔴 #429 | 🛠️ Sonnet | **Processing purposes schema**       | per-org definice purposes: marketing_email, newsletter, profiling, 3rd_party_share, transactional | `db/schema/processing-purposes.ts`                           | 🟡 L1    |
-| 🔴 #430 | 🛠️ Sonnet | **Contact-purpose consent tracking** | per-contact per-purpose: granted_at, legal_basis, source, expires_at, revoked_at                  | `db/schema/contact-consents.ts`, `services/gdpr/consents.ts` | 🟡 L1    |
-| 🔴 #431 | ⚡ Haiku  | **Consent expiration worker**        | scheduled job: expires_at < NOW → revoke + emit event `consent_expired`                           | worker `apps/workers/src/jobs/consent-expiration.ts`         | 🟡 L1    |
-| 🔴 #432 | 🧠 Opus   | **Purpose-aware sending**            | send guardrail: campaign má `required_purpose`, recipient bez consent → skip + log                | rozšíření `services/campaigns/send-guardrail.ts`             | 🟡 L1    |
-| 🔴 #433 | 🛠️ Sonnet | **Consent workflow triggers**        | triggery `consent_granted`, `consent_expired`, `consent_revoked`                                  | rozšíření `services/workflows/triggers.ts`                   | 🟡 L1    |
-| 🔴 #434 | 🛠️ Sonnet | **Preference centre rozšíření**      | preference page per-purpose toggle místo single unsubscribe                                       | rozšíření `routes/v1/subscriptions.ts::preferences`          | 🟡 L1    |
-| 🔴 #435 | 🛠️ Sonnet | **Double opt-in per purpose**        | separate confirmation per purpose                                                                 | rozšíření `services/signup-forms`                            | 🟡 L1    |
+| ✅ #429 | 🛠️ Sonnet | **Processing purposes schema**       | per-org definice purposes: marketing_email, newsletter, profiling, 3rd_party_share, transactional | `db/schema/processing-purposes.ts`                           | 🟡 L1    |
+| ✅ #430 | 🛠️ Sonnet | **Contact-purpose consent tracking** | per-contact per-purpose: granted_at, legal_basis, source, expires_at, revoked_at                  | `db/schema/contact-consents.ts`, `services/gdpr/consents.ts` | 🟡 L1    |
+| ✅ #431 | ⚡ Haiku  | **Consent expiration worker**        | scheduled job: expires_at < NOW → revoke + emit event `consent_expired`                           | worker `apps/workers/src/jobs/consent-expiration.ts`         | 🟡 L1    |
+| ✅ #432 | 🧠 Opus   | **Purpose-aware sending**            | send guardrail: campaign má `required_purpose`, recipient bez consent → skip + log                | rozšíření `services/campaigns/send-guardrail.ts`             | 🟡 L1    |
+| ✅ #433 | 🛠️ Sonnet | **Consent workflow triggers**        | triggery `consent_granted`, `consent_expired`, `consent_revoked`                                  | rozšíření `services/workflows/triggers.ts`                   | 🟡 L1    |
+| ✅ #434 | 🛠️ Sonnet | **Preference centre rozšíření**      | preference page per-purpose toggle místo single unsubscribe                                       | rozšíření `routes/v1/subscriptions.ts::preferences`          | 🟡 L1    |
+| ✅ #435 | 🛠️ Sonnet | **Double opt-in per purpose**        | separate confirmation per purpose                                                                 | rozšíření `services/signup-forms`                            | 🟡 L1    |
 
 #### E) 🟡 Digital product delivery automation (OBOHACENÍ)
 
@@ -1142,10 +1142,10 @@ MailForge má `contact_status` jako single enum. Tohle je pokročilejší.
 
 | ID      | Model     | Funkce                                           | Popis                                                                           | Soubory                                                                                   | Priorita |
 | ------- | --------- | ------------------------------------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------- |
-| 🔴 #436 | 🛠️ Sonnet | **Digital asset delivery**                       | upload digital assets per produkt, secure time-limited download URLs            | `db/schema/digital-assets.ts`, `services/commerce/digital-delivery.ts`, S3 presigned URLs | 🟡 L2    |
-| 🔴 #437 | 🛠️ Sonnet | **License key generator**                        | pool of pre-generated keys nebo algorithmic generation per SKU                  | `services/commerce/license-keys.ts`                                                       | 🟡 L2    |
-| 🔴 #438 | ⚡ Haiku  | **Workflow template "digital product delivery"** | trigger: order_paid + product.type=digital → send email s personalized link/key | `services/workflows/templates/digital-delivery.ts`                                        | 🟡 L2    |
-| 🔴 #439 | 🛠️ Sonnet | **Download tracking**                            | per-contact download attempts, limit N per link                                 | rozšíření digital-assets schema                                                           | 🟡 L2    |
+| ✅ #436 | 🛠️ Sonnet | **Digital asset delivery**                       | upload digital assets per produkt, secure time-limited download URLs            | `db/schema/digital-assets.ts`, `services/commerce/digital-delivery.ts`, S3 presigned URLs | 🟡 L2    |
+| ✅ #437 | 🛠️ Sonnet | **License key generator**                        | pool of pre-generated keys nebo algorithmic generation per SKU                  | `services/commerce/license-keys.ts`                                                       | 🟡 L2    |
+| ✅ #438 | ⚡ Haiku  | **Workflow template "digital product delivery"** | trigger: order_paid + product.type=digital → send email s personalized link/key | `services/workflows/templates/digital-delivery.ts`                                        | 🟡 L2    |
+| ✅ #439 | 🛠️ Sonnet | **Download tracking**                            | per-contact download attempts, limit N per link                                 | rozšíření digital-assets schema                                                           | 🟡 L2    |
 
 #### F) 🟡 VirusFree-equivalent deliverability signal (OBOHACENÍ)
 
@@ -1214,18 +1214,18 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 
 | ID      | Model     | Úkol                                                             |
 | ------- | --------- | ---------------------------------------------------------------- |
-| 🔴 #441 | 🧠 Opus   | RFM klasifikace (recency/frequency/monetary score → 11 segmentů) |
-| 🔴 #442 | 🧠 Opus   | Smart Sending frequency cap + cooldown logika                    |
-| 🔴 #443 | 🛠️ Sonnet | Quiet Hours (timezone-aware)                                     |
-| 🔴 #444 | 🛠️ Sonnet | Back-in-stock / price-drop alerts                                |
-| 🔴 #445 | 🛠️ Sonnet | Unique coupon batches (generator + pool)                         |
-| 🔴 #446 | 🛠️ Sonnet | Reviews + moderation queue                                       |
-| 🔴 #447 | 🛠️ Sonnet | Scheduled reports dispatch                                       |
-| 🔴 #448 | 🧠 Opus   | Holdout groups (deterministic hash-mod)                          |
-| 🔴 #449 | 🧠 Opus   | Cohort / Funnel / Timeline analytics                             |
-| 🔴 #450 | 🛠️ Sonnet | Catalog insights                                                 |
-| 🔴 #451 | 🛠️ Sonnet | Helpdesk + marketing pause on open ticket                        |
-| 🔴 #452 | 🧠 Opus   | Warehouse sync (S3/Snowflake/BigQuery/Redshift)                  |
+| ✅ #441 | 🧠 Opus   | RFM klasifikace (recency/frequency/monetary score → 11 segmentů) |
+| ✅ #442 | 🧠 Opus   | Smart Sending frequency cap + cooldown logika                    |
+| ✅ #443 | 🛠️ Sonnet | Quiet Hours (timezone-aware)                                     |
+| ✅ #444 | 🛠️ Sonnet | Back-in-stock / price-drop alerts                                |
+| ✅ #445 | 🛠️ Sonnet | Unique coupon batches (generator + pool)                         |
+| ✅ #446 | 🛠️ Sonnet | Reviews + moderation queue                                       |
+| ✅ #447 | 🛠️ Sonnet | Scheduled reports dispatch                                       |
+| ✅ #448 | 🧠 Opus   | Holdout groups (deterministic hash-mod)                          |
+| ✅ #449 | 🧠 Opus   | Cohort / Funnel / Timeline analytics                             |
+| ✅ #450 | 🛠️ Sonnet | Catalog insights                                                 |
+| ✅ #451 | 🛠️ Sonnet | Helpdesk + marketing pause on open ticket                        |
+| ✅ #452 | 🧠 Opus   | Warehouse sync (S3/Snowflake/BigQuery/Redshift)                  |
 | 🔴 #453 | 🛠️ Sonnet | SMS keyword routing                                              |
 | 🔴 #454 | 🛠️ Sonnet | Multi-email profily (až 5 emailů/kontakt)                        |
 | 🔴 #455 | 🧠 Opus   | Identity merge (visitor → contact backfill)                      |
@@ -1239,9 +1239,9 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | 🔴 #458 | 🛠️ Sonnet                                        | A) Task management + notes + activity feed                      |
 | 🔴 #459 | 🧠 Opus                                          | A) Sales reports, win/loss, revenue forecasting                 |
 | 🔴 #460 | 🛠️ Sonnet                                        | A) Deal stage change triggers ve workflows                      |
-| 🔴 #461 | 🧠 Opus                                          | **B) Win Probability AI model**                                 |
-| 🔴 #462 | 🧠 Opus                                          | B) Deal risk assessment                                         |
-| 🔴 #463 | 🧠 Opus                                          | B) Sentiment Analysis (Claude analýza)                          |
+| ✅ #461 | 🧠 Opus                                          | **B) Win Probability AI model**                                 |
+| ✅ #462 | 🧠 Opus                                          | B) Deal risk assessment                                         |
+| ✅ #463 | 🧠 Opus                                          | B) Sentiment Analysis (Claude analýza)                          |
 | 🔴 #464 | 🛠️ Sonnet                                        | B) Automated 1:1 sales emails                                   |
 | 🔴 #465 | 🛠️ Sonnet                                        | B) Sales engagement sequences                                   |
 | 🔴 #466 | 🧠 Opus                                          | B) Predictive Lead Scoring (ML rozšíření)                       |
@@ -1251,20 +1251,20 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | 🔴 #470 | 🛠️ Sonnet                                        | C) Connected sites (multi-domain sync)                          |
 | 🔴 #471 | 🛠️ Sonnet                                        | C) Progressive profiling                                        |
 | 🔴 #472 | 🛠️ Sonnet                                        | C) Live chat WebSocket endpoint                                 |
-| 🔴 #473 | 🧠 Opus                                          | **D) AI Campaign Builder (autonomous agent)**                   |
-| 🔴 #474 | 🧠 Opus                                          | D) Autonomous AI agent runner framework                         |
-| 🔴 #475 | 🛠️ Sonnet                                        | D) AI sidebar / recommendations API                             |
-| 🔴 #476 | 🧠 Opus                                          | D) **MCP Server** (Postmark-style)                              |
+| ✅ #473 | 🧠 Opus                                          | **D) AI Campaign Builder (autonomous agent)**                   |
+| ✅ #474 | 🧠 Opus                                          | D) Autonomous AI agent runner framework                         |
+| ✅ #475 | 🛠️ Sonnet                                        | D) AI sidebar / recommendations API                             |
+| ✅ #476 | 🧠 Opus                                          | D) **MCP Server** (Postmark-style)                              |
 | 🔴 #477 | 🛠️ Sonnet                                        | D) AI Calendly Block (smart scheduling)                         |
 | 🔴 #478 | 🧠 Opus                                          | D) Voice Agent streaming API                                    |
 | 🔴 #479 | 🛠️ Sonnet                                        | **E) Nested automations + automation maps**                     |
 | 🔴 #480 | ⚡ Haiku (šablony)                               | E) 900+ workflow recipes expansion                              |
-| 🔴 #481 | 🛠️ Sonnet                                        | E) Click actions (tag/update on click)                          |
+| ✅ #481 | 🛠️ Sonnet                                        | E) Click actions (tag/update on click)                          |
 | 🔴 #482 | 🧠 Opus                                          | **F) Custom objects engine**                                    |
 | 🔴 #483 | 🛠️ Sonnet                                        | F) Social enrichment adapter                                    |
-| 🔴 #484 | 🧠 Opus                                          | F) BotSense (bot click detection)                               |
-| 🔴 #485 | 🛠️ Sonnet                                        | F) List warming scheduler                                       |
-| 🔴 #486 | 🧠 Opus                                          | **G) Inbound email (MX receiver Go)**                           |
+| ✅ #484 | 🧠 Opus                                          | F) BotSense (bot click detection)                               |
+| ✅ #485 | 🛠️ Sonnet                                        | F) List warming scheduler                                       |
+| ✅ #486 | 🧠 Opus                                          | **G) Inbound email (MX receiver Go)**                           |
 | 🔴 #487 | 🛠️ Sonnet                                        | G) Message streams (broadcast vs transactional)                 |
 | 🔴 #488 | ⚡ Haiku                                         | G) Activity export                                              |
 | 🔴 #489 | 🛠️ Sonnet (každá)                                | **H) Integrace: Shopify/Woo/BigCommerce**                       |
@@ -1275,7 +1275,7 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | 🔴 #494 | 🧠 Opus                                          | **I) SSO (SAML 2.0)**                                           |
 | 🔴 #495 | 🧠 Opus                                          | I) HIPAA compliance mode                                        |
 | 🔴 #496 | 🛠️ Sonnet                                        | I) Audit logs                                                   |
-| 🔴 #497 | 🛠️ Sonnet                                        | I) DMARC Digests parser                                         |
+| ✅ #497 | 🛠️ Sonnet                                        | I) DMARC Digests parser                                         |
 
 #### §16 — Brevo parity
 
@@ -1286,11 +1286,11 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | 🔴 #500 | 🛠️ Sonnet              | A) Earning rules engine                           |
 | 🔴 #501 | 🛠️ Sonnet              | A) Loyalty webhooks + workflow triggers           |
 | 🔴 #502 | 🛠️ Sonnet              | A) Loyalty analytics                              |
-| 🔴 #503 | 🛠️ Sonnet              | **B) Instagram DM adapter**                       |
-| 🔴 #504 | 🛠️ Sonnet              | B) Facebook Messenger adapter                     |
+| ✅ #503 | 🛠️ Sonnet              | **B) Instagram DM adapter**                       |
+| ✅ #504 | 🛠️ Sonnet              | B) Facebook Messenger adapter                     |
 | 🔴 #505 | 🧠 Opus                | B) Universal inbox routing logic                  |
 | 🔴 #506 | 🛠️ Sonnet              | B) Chat routing + agent assignment                |
-| 🔴 #507 | ⚡ Haiku               | B) Canned responses                               |
+| ✅ #507 | ⚡ Haiku               | B) Canned responses                               |
 | 🔴 #508 | 🛠️ Sonnet              | B) Chat analytics                                 |
 | 🔴 #509 | 🛠️ Sonnet              | B) Aura Support AI (summarize/tone/note→msg)      |
 | 🔴 #510 | 🧠 Opus                | **C) SIP/WebRTC calling (Twilio/Telnyx adapter)** |
@@ -1309,10 +1309,10 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | 🔴 #523 | 🧠 Opus                | E) Data activation (reverse-ETL)                  |
 | 🔴 #524 | 🧠 Opus                | E) Event ingestion API (high-throughput)          |
 | 🔴 #525 | 🧠 Opus                | E) Real-time trait computation                    |
-| 🔴 #526 | 🧠 Opus                | **F) NL→SQL query engine**                        |
-| 🔴 #527 | 🧠 Opus                | F) Query sandboxing + row-level isolation         |
-| 🔴 #528 | 🛠️ Sonnet              | F) Chart suggestion                               |
-| 🔴 #529 | ⚡ Haiku               | F) Saved questions                                |
+| ✅ #526 | 🧠 Opus                | **F) NL→SQL query engine**                        |
+| ✅ #527 | 🧠 Opus                | F) Query sandboxing + row-level isolation         |
+| ✅ #528 | 🛠️ Sonnet              | F) Chart suggestion                               |
+| ✅ #529 | ⚡ Haiku               | F) Saved questions                                |
 | 🔴 #530 | 🧠 Opus                | **G) Parent-child orgs + permission inheritance** |
 | 🔴 #531 | 🛠️ Sonnet              | G) Cross-account user access                      |
 | 🔴 #532 | 🛠️ Sonnet              | G) Consolidated billing                           |
@@ -1321,10 +1321,10 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | 🔴 #535 | 🧠 Opus                | H) EU data residency (multi-region routing)       |
 | 🔴 #536 | 🛠️ Sonnet              | H) Long-term log archive (S3 parquet)             |
 | 🔴 #537 | 🛠️ Sonnet              | H) Webhook batching                               |
-| 🔴 #538 | 🛠️ Sonnet              | **I) Per-send pricing tier**                      |
+| ✅ #538 | 🛠️ Sonnet              | **I) Per-send pricing tier**                      |
 | 🔴 #539 | 🛠️ Sonnet              | I) Pay-as-you-go credit system                    |
 | 🔴 #540 | 🛠️ Sonnet              | I) Multi-product metering                         |
-| 🔴 #541 | 🛠️ Sonnet              | **J) Batch send API (1000 per call)**             |
+| ✅ #541 | 🛠️ Sonnet              | **J) Batch send API (1000 per call)**             |
 | 🔴 #542 | 🛠️ Sonnet              | J) Unified messaging API                          |
 | 🔴 #543 | 🛠️ Sonnet              | J) External feeds ingestion                       |
 
@@ -1366,10 +1366,10 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | 🔴 #575 | 🧠 Opus   | F) 1:1 video messaging (record + HLS transcode)   |
 | 🔴 #576 | 🛠️ Sonnet | F) Record rotation / round-robin (generic)        |
 | 🔴 #577 | 🛠️ Sonnet | F) LinkedIn InMail adapter                        |
-| 🔴 #578 | 🧠 Opus   | **G) Prospecting Agent**                          |
-| 🔴 #579 | 🧠 Opus   | G) Customer Agent (autonomous support)            |
-| 🔴 #580 | 🛠️ Sonnet | G) Content Agent                                  |
-| 🔴 #581 | 🧠 Opus   | G) Deal Health / Loss Agent                       |
+| ✅ #578 | 🧠 Opus   | **G) Prospecting Agent**                          |
+| ✅ #579 | 🧠 Opus   | G) Customer Agent (autonomous support)            |
+| ✅ #580 | 🛠️ Sonnet | G) Content Agent                                  |
+| ✅ #581 | 🧠 Opus   | G) Deal Health / Loss Agent                       |
 | 🔴 #582 | 🛠️ Sonnet | G) Buyer intent signals (Bombora/6sense)          |
 | 🔴 #583 | 🛠️ Sonnet | G) Form autofill (identified visitor)             |
 | 🔴 #584 | 🧠 Opus   | G) RAG vector store (pgvector)                    |
@@ -1387,10 +1387,10 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | 🔴 #596 | 🛠️ Sonnet | I) CRM extension cards SDK                        |
 | 🔴 #597 | ⚡ Haiku  | I) Data quality automation (normalizers)          |
 | 🔴 #598 | 🧠 Opus   | I) Calculated properties + evaluator              |
-| 🔴 #599 | 🛠️ Sonnet | **J) Graymail suppression**                       |
-| 🔴 #600 | 🛠️ Sonnet | J) Email health score per domain/IP               |
-| 🔴 #601 | 🧠 Opus   | J) Deliverability insights engine                 |
-| 🔴 #602 | 🛠️ Sonnet | J) Sender reputation monitoring (SNDS/Postmaster) |
+| ✅ #599 | 🛠️ Sonnet | **J) Graymail suppression**                       |
+| ✅ #600 | 🛠️ Sonnet | J) Email health score per domain/IP               |
+| ✅ #601 | 🧠 Opus   | J) Deliverability insights engine                 |
+| ✅ #602 | 🛠️ Sonnet | J) Sender reputation monitoring (SNDS/Postmaster) |
 | 🔴 #603 | 🧠 Opus   | **K) Bi-directional CRM sync engine**             |
 | 🔴 #604 | 🛠️ Sonnet | K) Data sets (named queries)                      |
 | 🔴 #605 | 🧠 Opus   | K) Programmable automation pipelines              |
@@ -1399,57 +1399,57 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 
 | ID      | Model                                           | Úkol                                         |
 | ------- | ----------------------------------------------- | -------------------------------------------- |
-| 🔴 #606 | 🧠 Opus (složitá lingvistická logika + výjimky) | **A) Czech vocative declension (5. pád)**    |
-| 🔴 #607 | 🧠 Opus                                         | A) Czech 7-pád full declension               |
-| 🔴 #608 | 🧠 Opus                                         | A) Slovak declension (7 pádů)                |
-| 🔴 #609 | ⚡ Haiku (seed data) + 🛠️ Sonnet (trigger)      | A) Czech name-days kalendář (data + trigger) |
-| 🔴 #610 | ⚡ Haiku                                        | A) Slovak name-days                          |
-| 🔴 #611 | ⚡ Haiku (seed) + 🛠️ Sonnet (trigger)           | A) CZ/SK public holidays                     |
-| 🔴 #612 | ⚡ Haiku                                        | A) CZ/SK system email translations           |
-| 🔴 #613 | 🛠️ Sonnet                                       | A) CZ fakturace (CZK, DPH 21%, ISDOC)        |
-| 🔴 #614 | ⚡ Haiku                                        | A) SPAYD QR code na fakturách                |
-| 🔴 #615 | 🛠️ Sonnet                                       | **B) Shoptet OAuth + webhooks + sync**       |
-| 🔴 #616 | 🛠️ Sonnet                                       | B) Upgates integrace                         |
-| 🔴 #617 | 🛠️ Sonnet                                       | B) FastCentrik integrace                     |
+| ✅ #606 | 🧠 Opus (složitá lingvistická logika + výjimky) | **A) Czech vocative declension (5. pád)**    |
+| ✅ #607 | 🧠 Opus                                         | A) Czech 7-pád full declension               |
+| ✅ #608 | 🧠 Opus                                         | A) Slovak declension (7 pádů)                |
+| ✅ #609 | ⚡ Haiku (seed data) + 🛠️ Sonnet (trigger)      | A) Czech name-days kalendář (data + trigger) |
+| ✅ #610 | ⚡ Haiku                                        | A) Slovak name-days                          |
+| ✅ #611 | ⚡ Haiku (seed) + 🛠️ Sonnet (trigger)           | A) CZ/SK public holidays                     |
+| ✅ #612 | ⚡ Haiku                                        | A) CZ/SK system email translations           |
+| ✅ #613 | 🛠️ Sonnet                                       | A) CZ fakturace (CZK, DPH 21%, ISDOC)        |
+| ✅ #614 | ⚡ Haiku                                        | A) SPAYD QR code na fakturách                |
+| ✅ #615 | 🛠️ Sonnet                                       | **B) Shoptet OAuth + webhooks + sync**       |
+| ✅ #616 | 🛠️ Sonnet                                       | B) Upgates integrace                         |
+| ✅ #617 | 🛠️ Sonnet                                       | B) FastCentrik integrace                     |
 | 🔴 #618 | ⚡ Haiku (spec)                                 | B) Shoptet App Store submission              |
-| 🔴 #619 | 🛠️ Sonnet                                       | **C) Raynet CRM bi-sync**                    |
-| 🔴 #620 | ⚡ Haiku                                        | **D) Seznam Email topping header**           |
-| 🔴 #621 | 🛠️ Sonnet                                       | D) Seznam Postmaster parser                  |
-| 🔴 #622 | ⚡ Haiku (config)                               | D) CZ ISP throttling rules                   |
-| 🔴 #623 | 🛠️ Sonnet                                       | **E) Workflow JSON export/import**           |
-| 🔴 #624 | 🛠️ Sonnet                                       | E) Workflow marketplace                      |
-| 🔴 #625 | 🛠️ Sonnet                                       | **F) Survey response → auto-action rules**   |
-| 🔴 #626 | ⚡ Haiku                                        | F) NPS/CSAT out-of-box templates             |
-| 🔴 #627 | 🛠️ Sonnet                                       | **G) Product feed ingestion engine**         |
-| 🔴 #628 | ⚡ Haiku (šablona) + 🛠️ Sonnet (parser)         | G) Heureka/Zbozi/Google Shopping adapters    |
+| ✅ #619 | 🛠️ Sonnet                                       | **C) Raynet CRM bi-sync**                    |
+| ✅ #620 | ⚡ Haiku                                        | **D) Seznam Email topping header**           |
+| ✅ #621 | 🛠️ Sonnet                                       | D) Seznam Postmaster parser                  |
+| ✅ #622 | ⚡ Haiku (config)                               | D) CZ ISP throttling rules                   |
+| ✅ #623 | 🛠️ Sonnet                                       | **E) Workflow JSON export/import**           |
+| ✅ #624 | 🛠️ Sonnet                                       | E) Workflow marketplace                      |
+| ✅ #625 | 🛠️ Sonnet                                       | **F) Survey response → auto-action rules**   |
+| ✅ #626 | ⚡ Haiku                                        | F) NPS/CSAT out-of-box templates             |
+| ✅ #627 | 🛠️ Sonnet                                       | **G) Product feed ingestion engine**         |
+| ✅ #628 | ⚡ Haiku (šablona) + 🛠️ Sonnet (parser)         | G) Heureka/Zbozi/Google Shopping adapters    |
 
 #### §20 — SmartEmailing
 
 | ID      | Model                        | Úkol                                           |
 | ------- | ---------------------------- | ---------------------------------------------- |
-| 🔴 #629 | 🛠️ Sonnet                    | **A) Viber Business adapter**                  |
-| 🔴 #630 | 🛠️ Sonnet (každý)            | A) Rakuten/Infobip/MessageBird Viber providers |
-| 🔴 #631 | 🛠️ Sonnet                    | A) Viber campaign type + workflow action       |
-| 🔴 #632 | 🛠️ Sonnet                    | A) Viber templates registry                    |
-| 🔴 #633 | 🛠️ Sonnet                    | A) Viber → SMS cascade fallback                |
-| 🔴 #634 | 🛠️ Sonnet                    | **B) Sklik OAuth + audiences sync**            |
-| 🔴 #635 | 🛠️ Sonnet                    | B) Sklik retargeting pixel                     |
-| 🔴 #636 | 🛠️ Sonnet                    | B) Sklik lookalike + conversions               |
-| 🔴 #637 | 🧠 Opus (pravidla + výjimky) | **C) Gender inference (CZ/SK)**                |
-| 🔴 #638 | 🛠️ Sonnet                    | C) Auto-fill gender při importu                |
-| 🔴 #639 | 🛠️ Sonnet                    | C) Salutation merge tag s deklinací            |
-| 🔴 #640 | ⚡ Haiku                     | C) International genderize.io fallback         |
-| 🔴 #641 | 🛠️ Sonnet                    | **D) Processing purposes schema**              |
-| 🔴 #642 | 🛠️ Sonnet                    | D) Contact-purpose consent tracking            |
-| 🔴 #643 | ⚡ Haiku                     | D) Consent expiration worker                   |
-| 🔴 #644 | 🧠 Opus (cross-cutting)      | D) Purpose-aware send guardrail                |
-| 🔴 #645 | 🛠️ Sonnet                    | D) Consent workflow triggery                   |
-| 🔴 #646 | 🛠️ Sonnet                    | D) Per-purpose preference centre               |
-| 🔴 #647 | 🛠️ Sonnet                    | D) Per-purpose double opt-in                   |
-| 🔴 #648 | 🛠️ Sonnet                    | **E) Digital asset delivery + secure URLs**    |
-| 🔴 #649 | 🛠️ Sonnet                    | E) License key generator                       |
-| 🔴 #650 | ⚡ Haiku                     | E) Digital delivery workflow template          |
-| 🔴 #651 | 🛠️ Sonnet                    | E) Download tracking + limits                  |
+| ✅ #629 | 🛠️ Sonnet                    | **A) Viber Business adapter**                  |
+| ✅ #630 | 🛠️ Sonnet (každý)            | A) Rakuten/Infobip/MessageBird Viber providers |
+| ✅ #631 | 🛠️ Sonnet                    | A) Viber campaign type + workflow action       |
+| ✅ #632 | 🛠️ Sonnet                    | A) Viber templates registry                    |
+| ✅ #633 | 🛠️ Sonnet                    | A) Viber → SMS cascade fallback                |
+| ✅ #634 | 🛠️ Sonnet                    | **B) Sklik OAuth + audiences sync**            |
+| ✅ #635 | 🛠️ Sonnet                    | B) Sklik retargeting pixel                     |
+| ✅ #636 | 🛠️ Sonnet                    | B) Sklik lookalike + conversions               |
+| ✅ #637 | 🧠 Opus (pravidla + výjimky) | **C) Gender inference (CZ/SK)**                |
+| ✅ #638 | 🛠️ Sonnet                    | C) Auto-fill gender při importu                |
+| ✅ #639 | 🛠️ Sonnet                    | C) Salutation merge tag s deklinací            |
+| ✅ #640 | ⚡ Haiku                     | C) International genderize.io fallback         |
+| ✅ #641 | 🛠️ Sonnet                    | **D) Processing purposes schema**              |
+| ✅ #642 | 🛠️ Sonnet                    | D) Contact-purpose consent tracking            |
+| ✅ #643 | ⚡ Haiku                     | D) Consent expiration worker                   |
+| ✅ #644 | 🧠 Opus (cross-cutting)      | D) Purpose-aware send guardrail                |
+| ✅ #645 | 🛠️ Sonnet                    | D) Consent workflow triggery                   |
+| ✅ #646 | 🛠️ Sonnet                    | D) Per-purpose preference centre               |
+| ✅ #647 | 🛠️ Sonnet                    | D) Per-purpose double opt-in                   |
+| ✅ #648 | 🛠️ Sonnet                    | **E) Digital asset delivery + secure URLs**    |
+| ✅ #649 | 🛠️ Sonnet                    | E) License key generator                       |
+| ✅ #650 | ⚡ Haiku                     | E) Digital delivery workflow template          |
+| ✅ #651 | 🛠️ Sonnet                    | E) Download tracking + limits                  |
 
 ### 21.3. Souhrn podle modelu
 

@@ -59,10 +59,14 @@ export const contacts = pgTable(
     lastOpenedAt: timestamp('last_opened_at', { withTimezone: true }),
     lastClickedAt: timestamp('last_clicked_at', { withTimezone: true }),
     leadScore: integer('lead_score').default(0),
+    complaintCount: integer('complaint_count').notNull().default(0),
 
     // Source tracking
     source: varchar('source', { length: 100 }),
     sourceDetails: jsonb('source_details').$type<Record<string, unknown>>(),
+
+    // Gender (inferred from first name or set explicitly)
+    gender: varchar('gender', { length: 10 }).$type<'male' | 'female' | 'unknown'>(),
 
     // Preferred locale (ISO, e.g. 'en', 'cs', 'sk') — used to auto-select translations
     preferredLocale: varchar('preferred_locale', { length: 8 }),

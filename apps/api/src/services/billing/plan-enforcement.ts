@@ -10,6 +10,7 @@
 import { eq, sql, and, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { organizations, contacts, emailEvents, aiUsage } from '../../db/schema/index.js';
+import { SEND_PLANS, type SendPlanTier } from './plans.js';
 import { CONTACT_PLANS, getAiQuotaPerDay, type ContactPlanTier } from './plans.js';
 import { AppError } from '../../lib/app-error.js';
 
@@ -27,13 +28,26 @@ export interface PlanCapacity {
  */
 export async function getPlanCapacity(orgId: string): Promise<PlanCapacity> {
   const [org] = await db
-    .select({ plan: organizations.plan, settings: organizations.settings })
+    .select({
+      plan: organizations.plan,
+      billingType: organizations.billingType,
+      monthlySendQuota: organizations.monthlySendQuota,
+      settings: organizations.settings,
+    })
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);
 
   const plan = (org?.plan ?? 'free') as ContactPlanTier;
+  const billingType = org?.billingType ?? 'contact_based';
   const planConfig = CONTACT_PLANS[plan] ?? CONTACT_PLANS.free;
+
+  // Send-based plans override the send limit from the plan config
+  let effectiveSendLimit: number = planConfig.sends;
+  if (billingType === 'send_based') {
+    effectiveSendLimit = org?.monthlySendQuota
+      ?? (SEND_PLANS[plan as SendPlanTier]?.sendsPerMonth ?? planConfig.sends);
+  }
   const suspended = (org?.settings as { suspended?: boolean })?.suspended === true;
 
   // Active contacts (not soft-deleted, not unsubscribed/bounced/complained).
@@ -58,7 +72,7 @@ export async function getPlanCapacity(orgId: string): Promise<PlanCapacity> {
   const sendCount = sendRow?.n ?? 0;
 
   const contactLimit = planConfig.contacts;
-  const sendLimit = planConfig.sends;
+  const sendLimit = effectiveSendLimit;
 
   return {
     plan,
@@ -112,12 +126,19 @@ export async function checkSendCapacity(orgId: string, adding = 1): Promise<Plan
   if (cap.suspended) {
     throw AppError.forbidden('Organization suspended — contact platform admin');
   }
+  // Hard-stop for free plan
   if (cap.plan === 'free' && cap.sends.limit > 0) {
     if (cap.sends.current + adding > cap.sends.limit) {
       throw AppError.forbidden(
         `Free plan send limit reached (${cap.sends.limit}/mo). Upgrade or wait until next month.`,
       );
     }
+  }
+  // Block at 120% of quota for send-based plans to prevent runaway overage
+  if (cap.plan !== 'free' && cap.sends.limit > 0 && cap.sends.current + adding > cap.sends.limit * 1.2) {
+    throw AppError.forbidden(
+      `Monthly send quota exceeded (${cap.sends.current}/${cap.sends.limit}). Upgrade your plan.`,
+    );
   }
   return cap;
 }

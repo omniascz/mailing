@@ -193,7 +193,14 @@ export async function publishPost(
     })
     .where(eq(blogPosts.id, postId))
     .returning();
-  return row!;
+
+  const published = row!;
+
+  // Fire workflow trigger + RSS campaign dispatch on publish (#337)
+  const { onNewBlogPost } = await import('../workflows/triggers.js');
+  await onNewBlogPost(orgId, published).catch(() => {});
+
+  return published;
 }
 
 export async function schedulePost(

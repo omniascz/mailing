@@ -263,6 +263,28 @@ export async function processFormSubmission(
       .set({ submitCount: sql`${signupForms.submitCount} + 1` })
       .where(eq(signupForms.id, formId));
 
+    // Confirm wheel-of-fortune spin if form has wheelConfig (fire-and-forget)
+    if (email && contactId && (form.config as FormConfig & { wheelConfig?: unknown }).wheelConfig) {
+      import('../gamification/wheel-of-fortune.js')
+        .then(({ confirmSpin }) => confirmSpin(formId, email, contactId!))
+        .catch(() => {});
+    }
+
+    // Auto-fill gender from first name if not already set
+    if (firstName && contactId) {
+      import('../gender/cz-sk-inference.js')
+        .then(async ({ inferGender }) => {
+          const result = inferGender(firstName);
+          if (result.gender !== 'unknown') {
+            await db
+              .update(contacts)
+              .set({ gender: result.gender })
+              .where(and(eq(contacts.id, contactId!), eq(contacts.orgId, form.orgId)));
+          }
+        })
+        .catch(() => {});
+    }
+
     // Dispatch webhook event
     import('../../services/webhooks/index.js')
       .then(({ dispatchEvent }) =>

@@ -19,8 +19,8 @@
  */
 
 import { db } from '../../db/client.js';
-import { contacts, emailEvents, suppressions } from '../../db/schema/index.js';
-import { and, eq } from 'drizzle-orm';
+import { contacts, emailEvents, suppressions, organizations } from '../../db/schema/index.js';
+import { and, eq, sql } from 'drizzle-orm';
 import { redis } from '../../lib/redis.js';
 
 // ─── ARF parsing ──────────────────────────────────────────────────────────────
@@ -153,23 +153,25 @@ export async function processFblComplaint(
     .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, email)))
     .limit(1);
 
-  if (existingSuppression) {
-    return { email, action: 'already_suppressed', complaintCount: 0, alertFired: false };
+  if (!existingSuppression) {
+    // First complaint: update status + add to suppression
+    await db
+      .update(contacts)
+      .set({ status: 'complained', updatedAt: new Date() })
+      .where(eq(contacts.id, contact.id));
+    await addToSuppression(orgId, email, 'complaint');
   }
 
-  // Increment complaint count on contact
+  // Always increment complaint_count and log the event — even repeat complaints
+  // from the same ISP are audit-relevant (signals whether our unsubscribe flow works).
   await db
     .update(contacts)
     .set({
-      status: 'complained',
+      complaintCount: sql`complaint_count + 1`,
       updatedAt: new Date(),
     })
     .where(eq(contacts.id, contact.id));
 
-  // Add to suppression list
-  await addToSuppression(orgId, email, 'complaint');
-
-  // Log email event
   await db.insert(emailEvents).values({
     orgId,
     campaignId: campaignId ?? null,
@@ -179,13 +181,14 @@ export async function processFblComplaint(
       feedbackType: report.feedbackType,
       source: report.source,
       messageId: report.originalMessageId,
+      alreadySuppressed: Boolean(existingSuppression),
     },
   });
 
-  // Check complaint rate alert
   const alertFired = await checkComplaintRateAlert(orgId);
+  const action = existingSuppression ? 'already_suppressed' : 'suppressed';
 
-  return { email, action: 'suppressed', complaintCount: 1, alertFired };
+  return { email, action, complaintCount: 1, alertFired };
 }
 
 async function addToSuppression(
@@ -198,7 +201,8 @@ async function addToSuppression(
 
 // ─── Complaint rate alerting ──────────────────────────────────────────────────
 
-const COMPLAINT_RATE_THRESHOLD = 0.001; // 0.1%
+const COMPLAINT_RATE_THRESHOLD = 0.001; // 0.1% — industry warning level
+const COMPLAINT_RATE_QUARANTINE = 0.003; // 0.3% — Gmail hard cap → auto-pause
 const ALERT_COOLDOWN_SECONDS = 3600; // 1 h between alerts
 
 /**
@@ -228,14 +232,28 @@ async function checkComplaintRateAlert(orgId: string): Promise<boolean> {
 
   const rate = complaintsRaw / sent;
   if (rate > COMPLAINT_RATE_THRESHOLD) {
-    // Set cooldown
     await redis.set(cooldownKey, '1', 'EX', ALERT_COOLDOWN_SECONDS);
 
-    // In production: publish to an alerts Kafka topic or send admin notification
-    // For now: log (the caller/route layer is responsible for forwarding)
     console.warn(
       `[FBL ALERT] org=${orgId} complaint_rate=${(rate * 100).toFixed(3)}% (${complaintsRaw}/${sent})`,
     );
+
+    // Auto-quarantine: if rate exceeds Gmail's published 0.3% hard cap,
+    // pause all sends by writing a flag into org settings. Platform admin
+    // must manually clear it after reviewing and fixing the issue.
+    if (rate >= COMPLAINT_RATE_QUARANTINE) {
+      await db
+        .update(organizations)
+        .set({
+          settings: sql`settings || jsonb_build_object('suspended', true, 'suspendedReason', 'complaint_rate_exceeded', 'suspendedAt', now()::text)`,
+          updatedAt: new Date(),
+        })
+        .where(eq(organizations.id, orgId));
+      console.error(
+        `[FBL QUARANTINE] org=${orgId} auto-suspended — complaint rate ${(rate * 100).toFixed(3)}% ≥ 0.3%`,
+      );
+    }
+
     return true;
   }
 

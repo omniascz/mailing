@@ -23,39 +23,107 @@ import {
 
 const BATCH_SIZE = 1000;
 
+// ─── A/B variant types ────────────────────────────────────────────────────────
+
+interface AbVariant {
+  id: string;
+  subject: string;
+  content: Record<string, unknown>;
+  preheader?: string;
+  /** Percentage of audience (0-100). Variants must sum to ≤ 100. */
+  percentage: number;
+}
+
+interface AbConfig {
+  variants: AbVariant[];
+  winnerCriteria?: 'open_rate' | 'click_rate';
+  testDurationHours?: number;
+}
+
+function parseAbConfig(raw: Record<string, unknown> | undefined): AbConfig | null {
+  if (!raw) return null;
+  const variants = raw.variants;
+  if (!Array.isArray(variants) || variants.length < 2) return null;
+  return raw as unknown as AbConfig;
+}
+
+// ─── Core splitter ────────────────────────────────────────────────────────────
+
 async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
   const data = job.data;
 
   job.log(`Splitting campaign ${data.campaignId} for org ${data.orgId}`);
 
-  // Fetch contact IDs from the API. Resolution is delegated to the API
-  // because it handles all audience strategies in one place — list +
-  // segment + exclude + parent-campaign non-opener resends.
-  const contactIds = await fetchAudienceContactIds(data.orgId, data.campaignId);
+  // Throws on API error — lets BullMQ retry rather than silently sending to 0 contacts.
+  const rawIds = await fetchAudienceContactIds(data.orgId, data.campaignId);
 
-  job.log(`Total contacts: ${contactIds.length}`);
+  // Deduplicate (defensive against segment returning the same contact twice)
+  const contactIds = [...new Set(rawIds)];
+
+  job.log(`Total contacts: ${contactIds.length} (${rawIds.length - contactIds.length} dupes removed)`);
 
   if (contactIds.length === 0) {
     job.log('No contacts in audience — skipping');
     return { batches: 0, totalContacts: 0 };
   }
 
-  // Split into batches
-  const batches: string[][] = [];
-  for (let i = 0; i < contactIds.length; i += BATCH_SIZE) {
-    batches.push(contactIds.slice(i, i + BATCH_SIZE));
-  }
+  const stream = data.stream ?? 'broadcast';
+  const abConfig = parseAbConfig(data.abConfig);
 
-  // Enqueue batch jobs
-  const batchJobs = batches.map(
-    (
-      batch,
-      index,
-    ): {
-      name: string;
-      data: BatchSenderJobData;
-      opts: { priority: number };
-    } => ({
+  let totalBatches = 0;
+
+  if (abConfig && abConfig.variants.length >= 2) {
+    // ── A/B split: distribute contacts across variants by percentage ───────
+    job.log(`A/B test: ${abConfig.variants.length} variants`);
+
+    let cursor = 0;
+    for (const variant of abConfig.variants) {
+      const variantSize = Math.floor((variant.percentage / 100) * contactIds.length);
+      const variantIds = contactIds.slice(cursor, cursor + variantSize);
+      cursor += variantSize;
+
+      if (variantIds.length === 0) continue;
+
+      const variantBatches: string[][] = [];
+      for (let i = 0; i < variantIds.length; i += BATCH_SIZE) {
+        variantBatches.push(variantIds.slice(i, i + BATCH_SIZE));
+      }
+
+      const batchJobs = variantBatches.map((batch, index) => ({
+        name: `batch-${data.campaignId}-v${variant.id}-${index}`,
+        data: {
+          campaignId: data.campaignId,
+          orgId: data.orgId,
+          batchIndex: totalBatches + index,
+          contactIds: batch,
+          content: variant.content,
+          subject: variant.subject,
+          preheader: variant.preheader ?? data.preheader,
+          fromName: data.fromName,
+          fromEmail: data.fromEmail,
+          replyTo: data.replyTo,
+          dkimDomain: data.dkimDomain,
+          dkimSelector: data.dkimSelector,
+          dkimPrivateKey: data.dkimPrivateKey,
+          priority: data.priority,
+          stream,
+          timewarp: data.timewarp,
+        } satisfies BatchSenderJobData,
+        opts: { priority: data.priority },
+      }));
+
+      await batchSenderQueue.addBulk(batchJobs);
+      totalBatches += variantBatches.length;
+      job.log(`Variant ${variant.id}: ${variantIds.length} contacts, ${variantBatches.length} batches`);
+    }
+  } else {
+    // ── Standard split ─────────────────────────────────────────────────────
+    const batches: string[][] = [];
+    for (let i = 0; i < contactIds.length; i += BATCH_SIZE) {
+      batches.push(contactIds.slice(i, i + BATCH_SIZE));
+    }
+
+    const batchJobs = batches.map((batch, index) => ({
       name: `batch-${data.campaignId}-${index}`,
       data: {
         campaignId: data.campaignId,
@@ -72,23 +140,22 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
         dkimSelector: data.dkimSelector,
         dkimPrivateKey: data.dkimPrivateKey,
         priority: data.priority,
-        stream: data.stream ?? 'broadcast',
-      },
+        stream,
+        timewarp: data.timewarp,
+      } satisfies BatchSenderJobData,
       opts: { priority: data.priority },
-    }),
-  );
+    }));
 
-  await batchSenderQueue.addBulk(batchJobs);
+    await batchSenderQueue.addBulk(batchJobs);
+    totalBatches = batches.length;
+  }
 
-  job.log(`Enqueued ${batches.length} batch jobs`);
+  job.log(`Enqueued ${totalBatches} batch jobs`);
 
-  // Update campaign status to 'sending'
+  // Mark campaign sending only AFTER successful enqueue
   await updateCampaignStatus(data.campaignId, 'sending');
 
-  return {
-    batches: batches.length,
-    totalContacts: contactIds.length,
-  };
+  return { batches: totalBatches, totalContacts: contactIds.length };
 }
 
 // ─── DB interaction stubs (injected at runtime via services) ─────────────────
@@ -103,18 +170,13 @@ async function fetchAudienceContactIds(orgId: string, campaignId: string): Promi
   const url = `${process.env.API_URL ?? 'http://localhost:3001'}/api/v1/internal/audience`;
   const params = new URLSearchParams({ orgId, campaignId });
 
-  try {
-    const res = await fetch(`${url}?${params}`);
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`API ${res.status} ${text.slice(0, 200)}`);
-    }
-    const body = (await res.json()) as { data: { contactIds: string[] } };
-    return body.data.contactIds;
-  } catch (err) {
-    console.error('fetchAudienceContactIds failed:', err);
-    return [];
+  const res = await fetch(`${url}?${params}`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`fetchAudienceContactIds: API ${res.status} — ${text.slice(0, 200)}`);
   }
+  const body = (await res.json()) as { data: { contactIds: string[] } };
+  return body.data.contactIds;
 }
 
 async function updateCampaignStatus(campaignId: string, status: string): Promise<void> {

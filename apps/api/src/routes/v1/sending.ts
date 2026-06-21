@@ -18,6 +18,15 @@ import {
   advanceWarmupDay,
 } from '../../services/sending/ip-warmup.js';
 import { AppError } from '../../lib/app-error.js';
+import { db } from '../../db/client.js';
+import { warmupIps } from '../../db/schema/index.js';
+import { ne } from 'drizzle-orm';
+import {
+  getContactSendHour,
+  getOrgPeakHour,
+  getBatchSendHours,
+  nextSendWindow,
+} from '../../services/sending/send-time-optimization.js';
 
 const ISP_NAMES = ['gmail', 'microsoft', 'yahoo', 'other'] as const;
 
@@ -158,6 +167,96 @@ export default async function sendingRoutes(app: FastifyInstance) {
         throw AppError.badRequest('IP not found in warmup schedule or already fully warm');
       }
       return { data: { ip, warmupDay: newDay } };
+    },
+  );
+
+  // ── Send Time Optimization (#STO) ────────────────────────────────────────
+
+  /**
+   * GET /api/v1/sending/sto/contact/:contactId
+   * Returns the optimal send hour for a single contact based on engagement history.
+   */
+  app.get(
+    '/api/v1/sending/sto/contact/:contactId',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Sending'], summary: 'Per-contact send time optimization' },
+    },
+    async (req) => {
+      const { contactId } = req.params as { contactId: string };
+      const orgId = req.user!.orgId;
+      const sto = await getContactSendHour(orgId, contactId);
+      const sendAt = nextSendWindow(sto.peakHour, sto.confidence);
+      return { data: { ...sto, sendAt: sendAt.toISOString() } };
+    },
+  );
+
+  /**
+   * GET /api/v1/sending/sto/org
+   * Returns the peak engagement hour for the whole org (cached, used as fallback).
+   */
+  app.get(
+    '/api/v1/sending/sto/org',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Sending'], summary: 'Org-level peak send hour' },
+    },
+    async (req) => {
+      const orgId = req.user!.orgId;
+      const sto = await getOrgPeakHour(orgId);
+      const sendAt = nextSendWindow(sto.peakHour, sto.confidence);
+      return { data: { ...sto, sendAt: sendAt.toISOString() } };
+    },
+  );
+
+  /**
+   * POST /api/v1/sending/sto/batch
+   * Returns optimal send times for a list of contact IDs (up to 1000).
+   * Used by campaign splitter to schedule per-contact STO sends.
+   */
+  app.post(
+    '/api/v1/sending/sto/batch',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Sending'], summary: 'Batch per-contact send time optimization' },
+    },
+    async (req) => {
+      const { contactIds } = z
+        .object({ contactIds: z.array(z.string().uuid()).min(1).max(1000) })
+        .parse(req.body);
+      const orgId = req.user!.orgId;
+      const map = await getBatchSendHours(orgId, contactIds);
+      const results = Array.from(map.values()).map((r) => ({
+        ...r,
+        sendAt: nextSendWindow(r.peakHour, r.confidence).toISOString(),
+      }));
+      return { data: results };
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/sending/warmup/advance-all
+   * Advance warmup day for every active warming IP. Called daily by BullMQ cron (#485).
+   */
+  app.post(
+    '/api/v1/internal/sending/warmup/advance-all',
+    { schema: { tags: ['Internal'], summary: 'Daily warmup day advancement for all IPs (#485)' } },
+    async (_req, reply) => {
+      const allWarming = await db
+        .select({ ipAddress: warmupIps.ipAddress })
+        .from(warmupIps)
+        .where(ne(warmupIps.status, 'warm'));
+
+      const results = await Promise.allSettled(
+        allWarming.map(async ({ ipAddress }) => {
+          const newDay = await advanceWarmupDay(ipAddress);
+          return { ipAddress, warmupDay: newDay };
+        }),
+      );
+
+      const advanced = results.filter((r) => r.status === 'fulfilled').length;
+      const failed = results.length - advanced;
+      return reply.send({ data: { total: allWarming.length, advanced, failed } });
     },
   );
 }

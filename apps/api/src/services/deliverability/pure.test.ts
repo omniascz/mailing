@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   classifyGraymail,
   computeEmailHealthScore,
+  aggregateReputation,
   type GraymailSignals,
   type EmailHealthMetrics,
+  type ReputationProviderInput,
 } from './pure.js';
 
 const base: GraymailSignals = {
@@ -190,5 +192,73 @@ describe('computeEmailHealthScore', () => {
     });
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('aggregateReputation', () => {
+  const high: ReputationProviderInput = { tier: 'high', score: 90, spamRate: 0.0001 };
+  const medium: ReputationProviderInput = { tier: 'medium', score: 60, spamRate: 0.002 };
+  const low: ReputationProviderInput = { tier: 'low', score: 25, spamRate: 0.012 };
+  const unknown: ReputationProviderInput = { tier: 'unknown' };
+
+  it('returns "high" when all providers report high', () => {
+    const res = aggregateReputation([high, high]);
+    expect(res.overallTier).toBe('high');
+    expect(res.hasAlert).toBe(false);
+    expect(res.overallScore).toBe(90);
+  });
+
+  it('downgrades to worst tier — medium wins over high', () => {
+    const res = aggregateReputation([high, medium]);
+    expect(res.overallTier).toBe('medium');
+  });
+
+  it('downgrades to low if any provider says low', () => {
+    const res = aggregateReputation([high, medium, low]);
+    expect(res.overallTier).toBe('low');
+    expect(res.hasAlert).toBe(true);
+  });
+
+  it('returns unknown when all providers are unknown', () => {
+    const res = aggregateReputation([unknown, unknown]);
+    expect(res.overallTier).toBe('unknown');
+    expect(res.overallScore).toBeNull();
+    expect(res.maxSpamRate).toBeNull();
+  });
+
+  it('ignores unknown providers when computing overall tier', () => {
+    const res = aggregateReputation([unknown, high]);
+    expect(res.overallTier).toBe('high');
+  });
+
+  it('averages numeric scores across providers with data', () => {
+    const res = aggregateReputation([
+      { tier: 'high', score: 80 },
+      { tier: 'medium', score: 60 },
+    ]);
+    expect(res.overallScore).toBe(70);
+  });
+
+  it('sets hasAlert for spam rate > 0.5%', () => {
+    const res = aggregateReputation([{ tier: 'medium', spamRate: 0.006 }]);
+    expect(res.hasAlert).toBe(true);
+  });
+
+  it('does not set hasAlert for low spam rate below threshold', () => {
+    const res = aggregateReputation([{ tier: 'high', spamRate: 0.001 }]);
+    expect(res.hasAlert).toBe(false);
+  });
+
+  it('handles empty providers array', () => {
+    const res = aggregateReputation([]);
+    expect(res.overallTier).toBe('unknown');
+    expect(res.overallScore).toBeNull();
+    expect(res.hasAlert).toBe(false);
+  });
+
+  it('ignores error providers in tier calculation', () => {
+    const errProvider: ReputationProviderInput = { tier: 'unknown', error: 'API timeout' };
+    const res = aggregateReputation([high, errProvider]);
+    expect(res.overallTier).toBe('high');
   });
 });

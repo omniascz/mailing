@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, boolean, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
-import { planEnum, dataRegionEnum } from './enums.js';
+// sql used only for defaultNow() below
+import { pgTable, uuid, varchar, boolean, timestamp, jsonb, index, integer } from 'drizzle-orm/pg-core';
+import { planEnum, dataRegionEnum, billingTypeEnum } from './enums.js';
 
 export const organizations = pgTable(
   'organizations',
@@ -11,6 +12,10 @@ export const organizations = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 100 }).notNull().unique(),
     plan: planEnum('plan').notNull().default('free'),
+    /** Billing model: contact-based (default), send-based, or pay-as-you-go (#538). */
+    billingType: billingTypeEnum('billing_type').notNull().default('contact_based'),
+    /** Monthly send quota for send-based plans (null = unlimited / contact-based). */
+    monthlySendQuota: integer('monthly_send_quota'),
     stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
     stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
     /** Parent org for sub-account hierarchies (#273). NULL for top-level orgs. */

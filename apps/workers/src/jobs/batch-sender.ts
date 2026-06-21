@@ -261,13 +261,16 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     byQueue.set(j.queue, existing);
   }
 
-  for (const [queue, jobs] of byQueue) {
-    await queue.addBulk(jobs.map((j) => ({ name: j.name, data: j.data, opts: j.opts })));
+  // Record frequency cap BEFORE enqueueing (conservative: if enqueue later fails,
+  // the cap slot is consumed rather than risking a double-send on the same contact).
+  // recordFrequencySend is a best-effort Redis incr — errors are suppressed by the
+  // helper so we don't block the send path.
+  if (stream === 'broadcast') {
+    await Promise.all(mtaJobs.map((j) => recordFrequencySend(data.orgId, j.data.contactId)));
   }
 
-  // Record frequency cap sends
-  for (const j of mtaJobs) {
-    await recordFrequencySend(data.orgId, j.data.contactId);
+  for (const [queue, jobs] of byQueue) {
+    await queue.addBulk(jobs.map((j) => ({ name: j.name, data: j.data, opts: j.opts })));
   }
 
   job.log(`Batch ${data.batchIndex}: sent=${sent}, skipped=${skipped}`);

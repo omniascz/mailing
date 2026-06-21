@@ -192,6 +192,7 @@ import seoKeywordsRoutes from './routes/v1/seo/keywords.js';
 import seoAuditRoutes from './routes/v1/seo/audit.js';
 import seoRankTrackerRoutes from './routes/v1/seo/rank-tracker.js';
 import internalSeoRankPollRoutes from './routes/v1/internal/seo-rank-poll.js';
+import internalExternalFeedPollRoutes from './routes/v1/internal/external-feeds-poll.js';
 import socialAccountRoutes from './routes/v1/social/accounts.js';
 import socialPostRoutes from './routes/v1/social/posts.js';
 import socialMentionRoutes from './routes/v1/social/mentions.js';
@@ -200,6 +201,7 @@ import adAccountRoutes from './routes/v1/ads/accounts.js';
 import adAudienceSyncRoutes from './routes/v1/ads/audience-sync.js';
 import internalSocialRoutes from './routes/v1/internal/social.js';
 import adLookalikeRoutes from './routes/v1/ads/lookalike.js';
+import sklikLookalikeRoutes from './routes/v1/ads/sklik-lookalike.js';
 import adReportingRoutes from './routes/v1/ads/reporting.js';
 import adsWebhookRoutes from './routes/v1/webhooks/ads.js';
 import sklikPixelRoutes from './routes/v1/sklik-pixel.js';
@@ -220,6 +222,18 @@ import calcPropRoutes from './routes/v1/calculated-properties.js';
 import deliverabilityInsightsRoutes from './routes/v1/deliverability-insights.js';
 import dataSyncRoutes from './routes/v1/data-sync.js';
 import dataPipelineRoutes from './routes/v1/data-pipelines.js';
+import viberRoutes from './routes/v1/viber.js';
+import gdprPurposesRoutes from './routes/v1/gdpr/processing-purposes.js';
+import gamificationRoutes from './routes/v1/gamification.js';
+import socialInboxRoutes from './routes/v1/inbox.js';
+import metaWebhookRoutes from './routes/v1/webhooks/meta.js';
+import genderRoutes from './routes/v1/gender.js';
+import digitalAssetRoutes from './routes/v1/digital-assets.js';
+import cannedResponseRoutes from './routes/v1/helpdesk/canned.js';
+import workflowExportRoutes from './routes/v1/workflow-export.js';
+import cohortAnalyticsRoutes from './routes/v1/cohort-analytics.js';
+import surveysNpsRoutes from './routes/v1/surveys-nps.js';
+import { externalFeedsRoutes } from './routes/v1/external-feeds.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -423,6 +437,7 @@ export async function buildApp() {
   await app.register(seoAuditRoutes);
   await app.register(seoRankTrackerRoutes);
   await app.register(internalSeoRankPollRoutes);
+  await app.register(internalExternalFeedPollRoutes);
   await app.register(socialAccountRoutes);
   await app.register(socialPostRoutes);
   await app.register(socialMentionRoutes);
@@ -431,6 +446,7 @@ export async function buildApp() {
   await app.register(adAudienceSyncRoutes);
   await app.register(internalSocialRoutes);
   await app.register(adLookalikeRoutes);
+  await app.register(sklikLookalikeRoutes);
   await app.register(adReportingRoutes);
   await app.register(adsWebhookRoutes);
   await app.register(sklikPixelRoutes);
@@ -451,6 +467,18 @@ export async function buildApp() {
   await app.register(deliverabilityInsightsRoutes);
   await app.register(dataSyncRoutes);
   await app.register(dataPipelineRoutes);
+  await app.register(viberRoutes);
+  await app.register(gdprPurposesRoutes);
+  await app.register(gamificationRoutes);
+  await app.register(socialInboxRoutes);
+  await app.register(metaWebhookRoutes);
+  await app.register(genderRoutes);
+  await app.register(digitalAssetRoutes);
+  await app.register(cannedResponseRoutes);
+  await app.register(workflowExportRoutes);
+  await app.register(cohortAnalyticsRoutes);
+  await app.register(surveysNpsRoutes);
+  await app.register(externalFeedsRoutes);
 
   return app;
 }

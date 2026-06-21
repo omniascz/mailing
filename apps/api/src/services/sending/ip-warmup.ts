@@ -178,11 +178,10 @@ export async function advanceWarmupDay(ipAddress: string): Promise<number | null
   // Sync Redis
   await redis.set(warmupDayKey(ipAddress), String(newDay), 'EX', 86_400 * 35);
   // Reset today_sent counter for new day
-  const secondsUntilMidnight =
-    86_400 -
-    (new Date().getUTCSeconds() +
-      new Date().getUTCMinutes() * 60 +
-      new Date().getUTCHours() * 3600);
+  const _now = new Date();
+  const secondsElapsedToday =
+    _now.getUTCHours() * 3600 + _now.getUTCMinutes() * 60 + _now.getUTCSeconds();
+  const secondsUntilMidnight = 86_400 - secondsElapsedToday;
   await redis.set(todaySentKey(ipAddress), '0', 'EX', secondsUntilMidnight + 60);
 
   return newDay;

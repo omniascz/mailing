@@ -62,6 +62,8 @@ export interface EventForScoring {
   occurredAt?: Date;
   /** Time of the matching open event for this message, if known (for click scoring). */
   openOccurredAt?: Date;
+  /** IP of the open event (to detect when same IP fires both open+click). */
+  openIpAddress?: string | null;
   linkUrl?: string | null;
   /** Other clicks from the same message in the last few seconds (for cluster detection). */
   recentClicksSameMessage?: Array<{ occurredAt: Date; linkUrl?: string | null }>;
@@ -103,6 +105,19 @@ export function scoreEvent(evt: EventForScoring): BotVerdict {
       score += 0.5;
       reasons.push('click-too-fast');
     }
+  }
+
+  // Same IP fired both open and click — strong signal (security scanners follow
+  // links from the same gateway IP that rendered the open pixel).
+  // Humans typically open on a mail gateway (different IP) and click in a browser.
+  if (
+    evt.eventType === 'click' &&
+    evt.ipAddress &&
+    evt.openIpAddress &&
+    evt.ipAddress === evt.openIpAddress
+  ) {
+    score += 0.4;
+    reasons.push('open-click-same-ip');
   }
 
   if (evt.eventType === 'click' && evt.recentClicksSameMessage) {

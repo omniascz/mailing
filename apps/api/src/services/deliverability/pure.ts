@@ -274,3 +274,61 @@ export function computeEmailHealthScore(metrics: EmailHealthMetrics): EmailHealt
 function round4(n: number): number {
   return Math.round(n * 10_000) / 10_000;
 }
+
+// ─── Reputation aggregation helpers (pure, no I/O) ────────────────────────────
+
+export type ReputationTierPure = 'high' | 'medium' | 'low' | 'unknown';
+
+export interface ReputationSummary {
+  /** Worst tier across all providers with data. */
+  overallTier: ReputationTierPure;
+  /** Average score 0–100 across providers that reported a numeric score. */
+  overallScore: number | null;
+  /** Highest spam rate seen across providers. */
+  maxSpamRate: number | null;
+  /** Whether any provider flagged an alert-level issue. */
+  hasAlert: boolean;
+}
+
+export interface ReputationProviderInput {
+  tier: ReputationTierPure;
+  score?: number;
+  spamRate?: number;
+  error?: string;
+}
+
+/**
+ * Aggregate per-provider reputation signals into a single summary.
+ * Pure function: no Redis, no HTTP — testable in isolation.
+ */
+export function aggregateReputation(
+  providers: ReputationProviderInput[],
+): ReputationSummary {
+  const known = providers.filter((p) => p.tier !== 'unknown' && !p.error);
+  const tiers = known.map((p) => p.tier);
+  const scores = known.filter((p) => p.score !== undefined).map((p) => p.score as number);
+  const spamRates = known.filter((p) => p.spamRate !== undefined).map((p) => p.spamRate as number);
+
+  const overallTier: ReputationTierPure =
+    tiers.length === 0
+      ? 'unknown'
+      : tiers.includes('low')
+        ? 'low'
+        : tiers.includes('medium')
+          ? 'medium'
+          : 'high';
+
+  const overallScore =
+    scores.length > 0
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+      : null;
+
+  const maxSpamRate =
+    spamRates.length > 0 ? Math.max(...spamRates) : null;
+
+  const hasAlert =
+    overallTier === 'low' ||
+    (maxSpamRate !== null && maxSpamRate > 0.005); // > 0.5% spam rate
+
+  return { overallTier, overallScore, maxSpamRate, hasAlert };
+}

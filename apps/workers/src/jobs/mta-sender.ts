@@ -135,6 +135,22 @@ async function addToSuppressionList(orgId: string, email: string, reason: string
   }
 }
 
+async function updateContactStatus(
+  orgId: string,
+  contactId: string,
+  status: 'bounced' | 'complained',
+): Promise<void> {
+  try {
+    await fetch(`${API_URL}/api/v1/internal/contacts/${contactId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId, status }),
+    });
+  } catch {
+    console.error(`Failed to update contact ${contactId} status to ${status}`);
+  }
+}
+
 // ─── Job processor ───────────────────────────────────────────────────────────
 
 async function processMtaSend(job: Job<MtaSendJobData>) {
@@ -172,8 +188,11 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
   }
 
   if (isHardBounce(smtpCode)) {
-    // Hard bounce — suppress contact
-    await addToSuppressionList(data.orgId, data.toEmail, 'hard_bounce');
+    // Hard bounce — suppress email + mark contact as bounced
+    await Promise.all([
+      addToSuppressionList(data.orgId, data.toEmail, 'hard_bounce'),
+      updateContactStatus(data.orgId, data.contactId, 'bounced'),
+    ]);
     await recordEvent({
       type: 'bounce',
       orgId: data.orgId,
