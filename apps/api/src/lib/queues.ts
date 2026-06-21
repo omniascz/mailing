@@ -36,6 +36,8 @@ const queueOpts = {
 export const emailQueue = new Queue('email', queueOpts);
 export const smsQueue = new Queue('sms', queueOpts);
 export const webhookQueue = new Queue('webhook', queueOpts);
+/** Viber Business Messages async send queue (consumed by apps/workers viber-sender). */
+export const viberQueue = new Queue('viber-send', queueOpts);
 
 /**
  * Campaign-splitter producer. Workers in apps/workers consume from this
