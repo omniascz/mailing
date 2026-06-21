@@ -541,3 +541,67 @@ export function classifyWarmupCapacity(input: {
     metrics: { remainingCapacity: input.totalDailyCapacity },
   };
 }
+
+// ─── Numeric score + grade ─────────────────────────────────────────────────
+
+/**
+ * Convert check results into a numeric deliverability score (0-100) and
+ * letter grade. Used by the pre-send panel to give operators a single
+ * at-a-glance number.
+ *
+ * Deductions (capped at 0):
+ *   fail  → −30 per check
+ *   warn  → −10 per check
+ *   info  → −2  per check
+ *   pass  → 0
+ *
+ * Grade thresholds:
+ *   A  ≥ 90   (green — send with confidence)
+ *   B  ≥ 75   (green-yellow — minor issues)
+ *   C  ≥ 60   (yellow — review recommended)
+ *   D  ≥ 40   (orange — significant issues)
+ *   F  < 40   (red — do not send)
+ */
+export type DeliverabilityGrade = 'A' | 'B' | 'C' | 'D' | 'F';
+
+const DEDUCTIONS: Record<CheckSeverity, number> = {
+  fail: 30,
+  warn: 10,
+  info: 2,
+  pass: 0,
+};
+
+export function computeScore(results: CheckResult[]): { score: number; grade: DeliverabilityGrade } {
+  const deduction = results.reduce((sum, r) => sum + DEDUCTIONS[r.severity], 0);
+  const score = Math.max(0, 100 - deduction);
+
+  let grade: DeliverabilityGrade;
+  if (score >= 90) grade = 'A';
+  else if (score >= 75) grade = 'B';
+  else if (score >= 60) grade = 'C';
+  else if (score >= 40) grade = 'D';
+  else grade = 'F';
+
+  return { score, grade };
+}
+
+// ─── Blacklist check classifier ────────────────────────────────────────────
+
+export function classifyBlacklist(input: { blacklistCount: number; totalIps: number }): CheckResult {
+  if (input.totalIps === 0) {
+    return { id: 'blacklist', category: 'reputation', severity: 'info', title: 'No dedicated IPs configured', detail: 'Shared IP pool — blacklist status managed by platform.' };
+  }
+  if (input.blacklistCount === 0) {
+    return { id: 'blacklist', category: 'reputation', severity: 'pass', title: 'No IPs on blacklists', metrics: { checkedIps: input.totalIps } };
+  }
+  const pct = Math.round((input.blacklistCount / input.totalIps) * 100);
+  return {
+    id: 'blacklist',
+    category: 'reputation',
+    severity: input.blacklistCount === input.totalIps ? 'fail' : 'warn',
+    title: `${input.blacklistCount} of ${input.totalIps} IPs blacklisted`,
+    detail: `${pct}% of your sending IPs are on at least one DNSBL. Investigate immediately.`,
+    fixHref: '/settings/dedicated-ips',
+    metrics: { blacklisted: input.blacklistCount, total: input.totalIps },
+  };
+}

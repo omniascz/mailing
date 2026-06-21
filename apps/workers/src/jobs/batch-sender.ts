@@ -96,6 +96,9 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     ? await fetchTimewarpSchedule(data.contactIds, data.timewarp)
     : null;
 
+  // Newsletter tier names — fetched once per batch for DynamicBlock gating
+  const newsletterTierMap = await fetchNewsletterTierNames(data.orgId, contactIds);
+
   // Resolve tracking URL prefix once per batch. Falls back to the global
   // TRACKING_BASE_URL if the org hasn't verified a branded subdomain yet.
   const trackingBaseUrl = await fetchTrackingBaseUrl(data.orgId);
@@ -154,17 +157,21 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     });
     const prefCenterUrl = `${trackingBaseUrl}/p/center/${prefToken}`;
     const todayIso = new Date().toISOString().slice(0, 10);
-    const mergeCtx = buildMergeContext(contact, {
-      preferenceCenterUrl: prefCenterUrl,
-      currentDate: todayIso,
-      currentYear: String(new Date().getFullYear()),
-    });
+    const mergeCtx = buildMergeContext(
+      contact,
+      {
+        preferenceCenterUrl: prefCenterUrl,
+        currentDate: todayIso,
+        currentYear: String(new Date().getFullYear()),
+      },
+      newsletterTierMap.get(contact.id),
+    );
     const subject = parseMergeTags(data.subject, mergeCtx);
 
     // 4. Render HTML + plain-text alternative (block JSON path via
     //    @forgemsg/editor renderEmail + renderPlainText; legacy { html }
     //    path uses parseMergeTags + HTML→text fallback).
-    const rendered = renderEmail(data.content, mergeCtx, data.preheader);
+    const rendered = renderEmail(data.content, mergeCtx, data.preheader, data.utmTracking);
     let htmlBody = rendered.html;
     const textBody = rendered.text;
 
@@ -294,6 +301,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
 function buildMergeContext(
   contact: ContactRow,
   systemContext?: MergeTagContext['system'],
+  newsletterTierName?: string | null,
 ): MergeTagContext {
   return {
     contact: {
@@ -301,6 +309,8 @@ function buildMergeContext(
       firstName: contact.firstName,
       lastName: contact.lastName,
       ...contact.customFields,
+      // Newsletter tier — allows DynamicBlock conditions like newsletter_tier_name == "Pro"
+      ...(newsletterTierName ? { newsletter_tier_name: newsletterTierName } : {}),
     },
     system: systemContext,
   };
@@ -326,7 +336,13 @@ function renderEmail(
   content: Record<string, unknown>,
   ctx: MergeTagContext,
   preheader?: string,
+  utmTracking?: { enabled?: boolean; source?: string; medium?: string; campaign?: string; content?: string; term?: string } | null,
 ): RenderedEmail {
+  // Build UTM config if enabled
+  const utm = utmTracking?.enabled
+    ? { source: utmTracking.source, medium: utmTracking.medium, campaign: utmTracking.campaign, content: utmTracking.content, term: utmTracking.term }
+    : undefined;
+
   // Path 1: block JSON (production)
   if ('blocks' in content && Array.isArray((content as { blocks?: unknown }).blocks)) {
     const parsed = emailSchema.safeParse({
@@ -335,7 +351,7 @@ function renderEmail(
     } satisfies Partial<EmailSchema> | Record<string, unknown>);
 
     if (parsed.success) {
-      const html = renderBlocks(parsed.data, { context: ctx }).html;
+      const html = renderBlocks(parsed.data, { context: ctx, utm }).html;
       const text = renderPlainText(parsed.data, { context: ctx });
       return { html, text };
     }
@@ -428,6 +444,31 @@ async function fetchSuppressedBatch(orgId: string, emails: string[]): Promise<st
     return body.data.suppressed;
   } catch {
     return [];
+  }
+}
+
+/**
+ * Bulk newsletter-tier lookup — returns a map of contactId → tier name.
+ * Used to populate newsletter_tier_name in MergeTagContext so DynamicBlocks
+ * can gate content on subscriber tier (e.g. show premium content only to "Pro" subscribers).
+ * Fail-open: missing contacts get undefined (no tier).
+ */
+async function fetchNewsletterTierNames(
+  orgId: string,
+  contactIds: string[],
+): Promise<Map<string, string>> {
+  if (contactIds.length === 0) return new Map();
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/newsletter-tiers/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_SECRET ?? '' },
+      body: JSON.stringify({ orgId, contactIds }),
+    });
+    if (!res.ok) return new Map();
+    const body = (await res.json()) as { data: Array<{ contactId: string; tierName: string }> };
+    return new Map(body.data.map((r) => [r.contactId, r.tierName]));
+  } catch {
+    return new Map();
   }
 }
 

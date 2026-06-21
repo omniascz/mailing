@@ -134,3 +134,4 @@ export * from './external-feeds.js';
 export * from './ab-tests.js';
 export * from './newsletter-tiers.js';
 export * from './newsletter-referrals.js';
+export * from './bimi.js';

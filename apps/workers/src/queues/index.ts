@@ -172,6 +172,8 @@ export interface CampaignSplitterJobData {
   timewarp?: TimewarpConfig;
   priority: Priority;
   stream?: MessageStream;
+  /** UTM auto-append (from campaign.utmTracking) */
+  utmTracking?: { enabled?: boolean; source?: string; medium?: string; campaign?: string; content?: string; term?: string };
 }
 
 export interface BatchSenderJobData {
@@ -195,6 +197,8 @@ export interface BatchSenderJobData {
   stream: MessageStream;
   /** A/B variant id to tag on email_events rows. Null for non-A/B sends. */
   abVariantId?: string;
+  /** UTM auto-append config from campaign. Applied at render time. */
+  utmTracking?: { enabled?: boolean; source?: string; medium?: string; campaign?: string; content?: string; term?: string };
 }
 
 export interface MtaSendJobData {

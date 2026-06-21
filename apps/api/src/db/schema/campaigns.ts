@@ -36,6 +36,16 @@ export const campaigns = pgTable(
     excludeSegmentId: uuid('exclude_segment_id'),
     estimatedRecipients: integer('estimated_recipients').default(0),
 
+    // UTM auto-append config (applied to all links at render time)
+    utmTracking: jsonb('utm_tracking').$type<{
+      enabled: boolean;
+      source?: string;
+      medium?: string;
+      campaign?: string;
+      content?: string;
+      term?: string;
+    }>(),
+
     // A/B testing
     abConfig: jsonb('ab_config').$type<Record<string, unknown>>(),
 

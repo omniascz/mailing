@@ -32,6 +32,19 @@ import { evaluateCondition } from './evaluate-condition.js';
  * output.
  */
 
+export interface UtmConfig {
+  /** utm_source — default 'email' */
+  source?: string;
+  /** utm_medium — default 'newsletter' or the campaign stream */
+  medium?: string;
+  /** utm_campaign — default campaign slug / id */
+  campaign?: string;
+  /** utm_content — injected per-block when possible */
+  content?: string;
+  /** utm_term — optional keyword context */
+  term?: string;
+}
+
 export interface RenderOptions {
   context?: MergeTagContext;
   /**
@@ -40,6 +53,12 @@ export interface RenderOptions {
    * authors can proofread both variants at once.
    */
   previewAllDynamicBranches?: boolean;
+  /**
+   * When set, all href attributes in the rendered HTML that start with
+   * http/https get UTM query params appended automatically. Params already
+   * present in the URL are NOT overwritten.
+   */
+  utm?: UtmConfig;
 }
 
 export interface RenderResult {
@@ -114,6 +133,9 @@ export function renderEmail(schema: EmailSchema, opts: RenderOptions = {}): Rend
 </body>
 </html>`;
 
+  // UTM auto-append: rewrite href attrs for all http/https links
+  const finalHtml = opts.utm ? appendUtmParams(html, opts.utm) : html;
+
   // Dedup links, preserve order
   const seen = new Set<string>();
   const deduped: string[] = [];
@@ -124,7 +146,38 @@ export function renderEmail(schema: EmailSchema, opts: RenderOptions = {}): Rend
     }
   }
 
-  return { html, links: deduped };
+  return { html: finalHtml, links: deduped };
+}
+
+/**
+ * Post-process rendered HTML to append UTM query parameters to every
+ * http/https href. Params already present in the URL are NOT overwritten
+ * (first-writer wins). Unsubscribe / preference-center links are skipped.
+ */
+function appendUtmParams(html: string, utm: UtmConfig): string {
+  const skipPatterns = ['unsubscribe', 'preference', 'optout', 'opt-out'];
+
+  return html.replace(/href="(https?:\/\/[^"]+)"/gi, (match, url: string) => {
+    // Skip functional links
+    if (skipPatterns.some((p) => url.toLowerCase().includes(p))) return match;
+
+    try {
+      const parsed = new URL(url);
+      const set = (key: string, value: string | undefined) => {
+        if (value && !parsed.searchParams.has(key)) {
+          parsed.searchParams.set(key, value);
+        }
+      };
+      set('utm_source', utm.source ?? 'email');
+      set('utm_medium', utm.medium ?? 'newsletter');
+      if (utm.campaign) set('utm_campaign', utm.campaign);
+      if (utm.content) set('utm_content', utm.content);
+      if (utm.term) set('utm_term', utm.term);
+      return `href="${parsed.toString()}"`;
+    } catch {
+      return match; // malformed URL — leave unchanged
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------

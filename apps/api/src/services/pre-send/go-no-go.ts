@@ -22,6 +22,7 @@ import {
   suppressions,
   contactLists,
   contacts,
+  dedicatedIps,
   type Campaign,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -43,9 +44,12 @@ import {
   classifyWarmupCapacity,
   countBySeverity,
   prioritise,
+  computeScore,
+  classifyBlacklist,
   type CheckResult,
   type SeverityCounts,
   type Verdict,
+  type DeliverabilityGrade,
 } from './go-no-go-pure.js';
 import { checkFrequencyCap } from '../frequency-capping/index.js';
 import { listWarmupStatuses } from '../sending/ip-warmup.js';
@@ -53,6 +57,10 @@ import { listWarmupStatuses } from '../sending/ip-warmup.js';
 export interface GoNoGoReport {
   campaignId: string;
   verdict: Verdict;
+  /** Numeric deliverability score 0-100 (100 = perfect). */
+  score: number;
+  /** Letter grade derived from score: A ≥90, B ≥75, C ≥60, D ≥40, F <40. */
+  grade: DeliverabilityGrade;
   counts: SeverityCounts;
   checks: CheckResult[];
   computedAt: string;
@@ -150,10 +158,22 @@ export async function runPreSendChecks(
   // ─── Timing ──────────────────────────────────────────────────────────────
   checks.push(classifyScheduledTime({ scheduledAt: campaign.scheduledAt ?? null }));
 
+  // ─── Blacklist ───────────────────────────────────────────────────────────
+  const blRows = await db
+    .select({ blacklistCount: dedicatedIps.blacklistCount })
+    .from(dedicatedIps)
+    .where(and(eq(dedicatedIps.orgId, orgId), sql`${dedicatedIps.status} IN ('active', 'warming')`));
+  const totalIps = blRows.length;
+  const listedIps = blRows.filter((r) => (r.blacklistCount ?? 0) > 0).length;
+  checks.push(classifyBlacklist({ blacklistCount: listedIps, totalIps }));
+
   const sorted = prioritise(checks);
+  const { score, grade } = computeScore(sorted);
   return {
     campaignId,
     verdict: aggregateVerdict(sorted),
+    score,
+    grade,
     counts: countBySeverity(sorted),
     checks: sorted,
     computedAt: new Date().toISOString(),

@@ -19,6 +19,9 @@ import {
   getCampaignHeatmapData,
   compareCampaigns,
 } from '../../services/analytics/index.js';
+import { eq, and, sql } from 'drizzle-orm';
+import { db } from '../../db/client.js';
+import { revenueEvents } from '../../db/schema/index.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -282,6 +285,77 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       const screenshotUrl = `http://${process.env.MINIO_ENDPOINT ?? 'localhost'}:${process.env.MINIO_PORT ?? 9000}/${bucket}/${key}`;
 
       return { data: { screenshotUrl } };
+    },
+  );
+
+  /**
+   * GET /api/v1/campaigns/:id/revenue
+   * Revenue attributed to this campaign (last-touch, 30-day window by default).
+   * Returns: totalOrders, totalRevenue, currency, revenuePerSend, topItems.
+   */
+  app.get(
+    '/api/v1/campaigns/:id/revenue',
+    { schema: { tags: ['Analytics'], summary: 'Campaign revenue attribution' } },
+    async (req) => {
+      const orgId = req.user!.orgId;
+      const { id } = idParam.parse(req.params);
+
+      const rows = await db
+        .select({
+          orderId: revenueEvents.orderId,
+          amount: revenueEvents.amount,
+          currency: revenueEvents.currency,
+          items: revenueEvents.items,
+          occurredAt: revenueEvents.occurredAt,
+        })
+        .from(revenueEvents)
+        .where(
+          and(
+            eq(revenueEvents.orgId, orgId),
+            eq(revenueEvents.attributedCampaignId, id),
+          ),
+        );
+
+      const totalOrders = rows.length;
+      const totalRevenue = rows.reduce((s, r) => s + parseFloat(r.amount), 0);
+      const currency = rows[0]?.currency ?? 'CZK';
+
+      // Aggregate top SKUs across all orders
+      const skuMap = new Map<string, { name: string; qty: number; revenue: number }>();
+      for (const row of rows) {
+        const items = (row.items ?? []) as Array<{ sku: string; name: string; qty: number; price: number }>;
+        for (const item of items) {
+          const existing = skuMap.get(item.sku) ?? { name: item.name, qty: 0, revenue: 0 };
+          skuMap.set(item.sku, {
+            name: item.name,
+            qty: existing.qty + item.qty,
+            revenue: existing.revenue + item.qty * item.price,
+          });
+        }
+      }
+      const topItems = [...skuMap.entries()]
+        .map(([sku, v]) => ({ sku, ...v }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+
+      // Revenue per send = revenue / total sends (fetched from campaign stats)
+      const sendCountRow = await db.execute<{ cnt: string }>(sql`
+        SELECT COUNT(*)::text AS cnt FROM email_events
+        WHERE org_id = ${orgId}::uuid AND campaign_id = ${id}::uuid AND event_type = 'send'
+      `);
+      const totalSends = Number((sendCountRow as unknown as Array<{ cnt: string }>)[0]?.cnt ?? 0);
+      const revenuePerSend = totalSends > 0 ? totalRevenue / totalSends : 0;
+
+      return {
+        data: {
+          campaignId: id,
+          totalOrders,
+          totalRevenue: Number(totalRevenue.toFixed(2)),
+          currency,
+          revenuePerSend: Number(revenuePerSend.toFixed(4)),
+          topItems,
+        },
+      };
     },
   );
 }
