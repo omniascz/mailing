@@ -207,14 +207,38 @@ describe('classifyBounceRate', () => {
 });
 
 describe('classifyComplaintRate', () => {
-  it('fails at Gmail 0.3% cap', () => {
+  it('fails at Gmail 0.3% cap (7d fallback)', () => {
     expect(classifyComplaintRate({ recent7dComplaintRatePct: 0.4 }).severity).toBe('fail');
   });
-  it('warns 0.1-0.3%', () => {
+  it('warns 0.1-0.3% on 7d', () => {
     expect(classifyComplaintRate({ recent7dComplaintRatePct: 0.2 }).severity).toBe('warn');
   });
   it('passes under 0.1%', () => {
     expect(classifyComplaintRate({ recent7dComplaintRatePct: 0.05 }).severity).toBe('pass');
+  });
+  it('fails when 24h rate ≥ 0.3% even if 7d is lower', () => {
+    expect(
+      classifyComplaintRate({
+        recent7dComplaintRatePct: 0.05,
+        recent24hComplaintRatePct: 0.35,
+      }).severity,
+    ).toBe('fail');
+  });
+  it('passes when 24h rate is fine and 7d is also fine', () => {
+    expect(
+      classifyComplaintRate({
+        recent7dComplaintRatePct: 0.05,
+        recent24hComplaintRatePct: 0.05,
+      }).severity,
+    ).toBe('pass');
+  });
+  it('warns on 7d trend even if 24h is null (low volume)', () => {
+    expect(
+      classifyComplaintRate({
+        recent7dComplaintRatePct: 0.15,
+        recent24hComplaintRatePct: null,
+      }).severity,
+    ).toBe('warn');
   });
 });
 

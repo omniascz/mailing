@@ -32,6 +32,7 @@ import {
   classifyBounceRate,
   classifyComplaintRate,
   classifyDomainAuth,
+  classifyFrequencyCap,
   classifyPlainText,
   classifyPreferenceCenter,
   classifyScheduledTime,
@@ -45,6 +46,7 @@ import {
   type SeverityCounts,
   type Verdict,
 } from './go-no-go-pure.js';
+import { checkFrequencyCap } from '../frequency-capping/index.js';
 
 export interface GoNoGoReport {
   campaignId: string;
@@ -92,6 +94,17 @@ export async function runPreSendChecks(
     }
   }
 
+  // Frequency cap — sample up to 200 contacts and extrapolate how many would
+  // be silently skipped due to frequency rules.
+  if (recipientCount > 0) {
+    const cappedCount = await fetchFrequencyCappedCount(orgId, campaignId, recipientCount).catch(
+      () => null,
+    );
+    if (cappedCount !== null) {
+      checks.push(classifyFrequencyCap({ recipientCount, cappedCount }));
+    }
+  }
+
   // ─── Content ─────────────────────────────────────────────────────────────
   checks.push(classifySubject({ subject: campaign.subject ?? '' }));
 
@@ -114,7 +127,12 @@ export async function runPreSendChecks(
   // ─── Reputation ──────────────────────────────────────────────────────────
   const recent = await fetchRecentRates(orgId);
   checks.push(classifyBounceRate({ recent7dBounceRatePct: recent.bounceRatePct }));
-  checks.push(classifyComplaintRate({ recent7dComplaintRatePct: recent.complaintRatePct }));
+  checks.push(
+    classifyComplaintRate({
+      recent7dComplaintRatePct: recent.complaintRatePct,
+      recent24hComplaintRatePct: recent.complaint24hRatePct,
+    }),
+  );
 
   // ─── Timing ──────────────────────────────────────────────────────────────
   checks.push(classifyScheduledTime({ scheduledAt: campaign.scheduledAt ?? null }));
@@ -171,27 +189,36 @@ async function fetchDomainAuth(
 async function fetchRecentRates(orgId: string): Promise<{
   bounceRatePct: number | null;
   complaintRatePct: number | null;
+  complaint24hRatePct: number | null;
 }> {
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
-  // Single roll-up query — cheaper than two passes.
+  const oneDayAgo = new Date(Date.now() - 86_400_000);
+
+  // Two windows in one query using conditional counts — cheaper than two passes.
   const [row] = (await db
     .select({
-      sends: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'send')::text`,
-      bounces: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'bounce')::text`,
-      complaints: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'complaint')::text`,
+      sends7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'send')::text`,
+      bounces7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'bounce')::text`,
+      complaints7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'complaint')::text`,
+      sends24h: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'send' AND ${emailEvents.createdAt} >= ${oneDayAgo})::text`,
+      complaints24h: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'complaint' AND ${emailEvents.createdAt} >= ${oneDayAgo})::text`,
     })
     .from(emailEvents)
     .where(and(eq(emailEvents.orgId, orgId), gte(emailEvents.createdAt, sevenDaysAgo)))) as Array<{
-    sends: string;
-    bounces: string;
-    complaints: string;
+    sends7d: string;
+    bounces7d: string;
+    complaints7d: string;
+    sends24h: string;
+    complaints24h: string;
   }>;
 
-  const sends = Number(row?.sends ?? 0);
-  if (sends === 0) return { bounceRatePct: null, complaintRatePct: null };
+  const sends7d = Number(row?.sends7d ?? 0);
+  const sends24h = Number(row?.sends24h ?? 0);
+
   return {
-    bounceRatePct: (Number(row?.bounces ?? 0) / sends) * 100,
-    complaintRatePct: (Number(row?.complaints ?? 0) / sends) * 100,
+    bounceRatePct: sends7d > 0 ? (Number(row?.bounces7d ?? 0) / sends7d) * 100 : null,
+    complaintRatePct: sends7d > 0 ? (Number(row?.complaints7d ?? 0) / sends7d) * 100 : null,
+    complaint24hRatePct: sends24h >= 100 ? (Number(row?.complaints24h ?? 0) / sends24h) * 100 : null,
   };
 }
 
@@ -270,4 +297,47 @@ async function fetchSuppressionOverlap(orgId: string, campaignId: string): Promi
     .where(and(eq(suppressions.orgId, orgId), inArray(suppressions.email, emails)));
 
   return result?.n ?? 0;
+}
+
+/**
+ * Estimates how many contacts in this campaign's list would be skipped due to
+ * frequency cap rules. Samples up to 200 contacts to keep pre-send checks fast.
+ *
+ * Uses logSuppression: false — we're only checking, not recording.
+ */
+async function fetchFrequencyCappedCount(
+  orgId: string,
+  campaignId: string,
+  recipientCount: number,
+): Promise<number | null> {
+  const SAMPLE = 200;
+
+  const [camp] = await db
+    .select({ listId: campaigns.listId })
+    .from(campaigns)
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
+    .limit(1);
+  if (!camp?.listId) return null;
+
+  const sampleRows = await db
+    .select({ contactId: contactLists.contactId })
+    .from(contactLists)
+    .where(eq(contactLists.listId, camp.listId))
+    .limit(SAMPLE);
+
+  if (sampleRows.length === 0) return null;
+
+  const results = await Promise.all(
+    sampleRows.map((r) =>
+      checkFrequencyCap({ orgId, contactId: r.contactId, channel: 'email', logSuppression: false }),
+    ),
+  );
+
+  const cappedInSample = results.filter((r) => !r.allowed).length;
+
+  // If we sampled fewer rows than SAMPLE, we got the full list — exact count.
+  if (sampleRows.length < SAMPLE) return cappedInSample;
+
+  // Otherwise extrapolate to full recipient count.
+  return Math.round((cappedInSample / sampleRows.length) * recipientCount);
 }

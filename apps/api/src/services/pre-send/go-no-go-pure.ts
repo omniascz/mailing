@@ -375,8 +375,13 @@ export function classifyBounceRate(input: { recent7dBounceRatePct: number | null
 
 export function classifyComplaintRate(input: {
   recent7dComplaintRatePct: number | null;
+  /** 24-hour complaint rate, used for Gmail's rolling 24h cap check. Null if < 100 sends in window. */
+  recent24hComplaintRatePct?: number | null;
 }): CheckResult {
-  if (input.recent7dComplaintRatePct === null) {
+  const pct7d = input.recent7dComplaintRatePct;
+  const pct24h = input.recent24hComplaintRatePct ?? null;
+
+  if (pct7d === null && pct24h === null) {
     return {
       id: 'complaint-rate',
       category: 'reputation',
@@ -384,32 +389,43 @@ export function classifyComplaintRate(input: {
       title: 'No recent send history to compare',
     };
   }
-  const pct = input.recent7dComplaintRatePct;
-  // Gmail says ≥ 0.3% on rolling 24h is a hard cap.
-  if (pct >= 0.3) {
+
+  // Gmail's hard cap is 0.3% on a rolling 24h window. Use the 24h rate when
+  // we have sufficient volume (≥ 100 sends); fall back to 7d for the check.
+  const gmailCheckPct = pct24h ?? pct7d ?? 0;
+  if (gmailCheckPct >= 0.3) {
     return {
       id: 'complaint-rate',
       category: 'reputation',
       severity: 'fail',
-      title: `Complaint rate ${pct.toFixed(2)}% — above Gmail 0.3% cap`,
-      detail: 'Gmail blocks senders above this threshold. Pause and audit before sending.',
-      metrics: { complaintRatePct: pct },
+      title: `Complaint rate ${gmailCheckPct.toFixed(2)}% (24h) — above Gmail 0.3% cap`,
+      detail:
+        'Gmail blocks senders above 0.3% on a rolling 24h basis. Pause sending and audit list quality.',
+      metrics: { complaintRatePct: gmailCheckPct, window: pct24h !== null ? '24h' : '7d' },
     };
   }
-  if (pct >= 0.1) {
+
+  // 7-day trend warning at 0.1%
+  const trendPct = pct7d ?? 0;
+  if (trendPct >= 0.1) {
     return {
       id: 'complaint-rate',
       category: 'reputation',
       severity: 'warn',
-      title: `Complaint rate ${pct.toFixed(2)}%`,
-      metrics: { complaintRatePct: pct },
+      title: `Complaint rate ${trendPct.toFixed(2)}% (7d)`,
+      detail: 'Approaching Gmail warning threshold. Consider cleaning list or tightening targeting.',
+      metrics:
+        pct24h !== null
+          ? { complaintRatePct: trendPct, complaintRate24hPct: pct24h }
+          : { complaintRatePct: trendPct },
     };
   }
+
   return {
     id: 'complaint-rate',
     category: 'reputation',
     severity: 'pass',
-    title: `Complaint rate ${pct.toFixed(2)}%`,
+    title: `Complaint rate ${trendPct.toFixed(2)}% (7d)${pct24h !== null ? `, ${pct24h.toFixed(2)}% (24h)` : ''}`,
   };
 }
 

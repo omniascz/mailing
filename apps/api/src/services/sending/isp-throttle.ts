@@ -124,22 +124,23 @@ export async function checkThrottle(
   const key = tokenKey(orgId, isp, sendingIp);
   const limit = await effectiveLimit(orgId, isp, sendingIp, overrides);
 
-  // Seed bucket if it doesn't exist (first send in this window)
-  const exists = await redis.exists(key);
-  if (!exists) {
-    await redis.set(key, limit - 1, 'EX', WINDOW_SECONDS);
+  // Atomic seed-or-decrement.
+  // SET NX eliminates the TOCTOU race where two concurrent callers both see
+  // EXISTS=false and both seed the bucket, doubling its effective capacity.
+  const seeded = await redis.set(key, String(limit - 1), 'EX', WINDOW_SECONDS, 'NX');
+  if (seeded !== null) {
     return { allowed: true, remaining: limit - 1, isp };
   }
 
-  const current = await redis.get(key);
-  const tokens = parseInt(current ?? '0', 10);
-
-  if (tokens <= 0) {
+  // Key exists — decrement and inspect.
+  // DECR returns the value AFTER decrement; if it goes negative the window is
+  // exhausted (concurrent sends may have raced past 0). Leave the negative
+  // value in Redis — it decays with the window TTL and has no lasting effect.
+  const tokens = await redis.decr(key);
+  if (tokens < 0) {
     return { allowed: false, remaining: 0, isp };
   }
-
-  await redis.decr(key);
-  return { allowed: true, remaining: tokens - 1, isp };
+  return { allowed: true, remaining: tokens, isp };
 }
 
 /**
