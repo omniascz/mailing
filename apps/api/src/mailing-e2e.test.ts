@@ -407,6 +407,20 @@ describe('security hardening', () => {
     expect(api('db/schema/index.ts')).toContain("export * from './ticketing.js'");
   });
 
+  it('partner provisioning is secret-gated (not a normal API key)', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/partner/provision',
+      payload: { externalId: 'p1', name: 'Test' },
+    });
+    expect(res.statusCode).toBe(401); // no x-partner-secret
+    expect(api('routes/v1/partner.ts')).toContain('PARTNER_PROVISION_SECRET');
+    const svc = api('services/partner/provision.ts');
+    expect(svc).toContain('provisionPartnerOrg');
+    expect(svc).toContain('partnerExternalId'); // idempotent by external id
+    expect(svc).toContain('seedTicketingWorkflows'); // seeds on first create
+  });
+
   it('ticketing crons + seed workflows are wired (engine → trigger → workflow)', () => {
     const cron = api('services/ticketing/cron.ts');
     expect(cron).toContain('runDayOfTick');
