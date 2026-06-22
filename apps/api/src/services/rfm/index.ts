@@ -8,6 +8,7 @@
 import { and, eq, sql, gt } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contactEngagement } from '../../db/schema/index.js';
+import { quintileCuts, scoreQuintile } from './pure.js';
 
 export type RfmSegment =
   | 'champions'
@@ -45,24 +46,6 @@ export function classifySegment(r: number, f: number, m: number): RfmSegment {
   return 'lost';
 }
 
-/** Buckets a value into 1–5 quintile based on the org-wide thresholds. */
-function bucket(
-  value: number,
-  q1: number,
-  q2: number,
-  q3: number,
-  q4: number,
-  invert = false,
-): number {
-  let score: number;
-  if (value <= q1) score = 1;
-  else if (value <= q2) score = 2;
-  else if (value <= q3) score = 3;
-  else if (value <= q4) score = 4;
-  else score = 5;
-  return invert ? 6 - score : score;
-}
-
 /**
  * Recompute RFM scores for an entire org.
  * Recency is days-since-last-order (lower is better → invert).
@@ -89,28 +72,16 @@ export async function refreshOrgRfm(orgId: string): Promise<{ scored: number }> 
   const frequencies = buyers.map((r) => r.totalOrders).sort((a, b) => a - b);
   const monetaries = buyers.map((r) => Number(r.totalRevenue ?? 0)).sort((a, b) => a - b);
 
-  const q = (arr: number[], p: number) =>
-    arr[Math.min(arr.length - 1, Math.floor(arr.length * p))]!;
-  const rQ = [q(recencies, 0.2), q(recencies, 0.4), q(recencies, 0.6), q(recencies, 0.8)] as const;
-  const fQ = [
-    q(frequencies, 0.2),
-    q(frequencies, 0.4),
-    q(frequencies, 0.6),
-    q(frequencies, 0.8),
-  ] as const;
-  const mQ = [
-    q(monetaries, 0.2),
-    q(monetaries, 0.4),
-    q(monetaries, 0.6),
-    q(monetaries, 0.8),
-  ] as const;
+  const rCuts = quintileCuts(recencies);
+  const fCuts = quintileCuts(frequencies);
+  const mCuts = quintileCuts(monetaries);
 
   let scored = 0;
   for (const row of buyers) {
     const recencyDays = Math.floor((now - row.lastOrderAt!.getTime()) / 86_400_000);
-    const r = bucket(recencyDays, rQ[0], rQ[1], rQ[2], rQ[3], true);
-    const f = bucket(row.totalOrders, fQ[0], fQ[1], fQ[2], fQ[3]);
-    const m = bucket(Number(row.totalRevenue ?? 0), mQ[0], mQ[1], mQ[2], mQ[3]);
+    const r = scoreQuintile(recencyDays, rCuts, true); // fewer days = better
+    const f = scoreQuintile(row.totalOrders, fCuts);
+    const m = scoreQuintile(Number(row.totalRevenue ?? 0), mCuts);
 
     const intervalDays =
       row.firstOrderAt && row.totalOrders > 1

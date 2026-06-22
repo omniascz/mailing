@@ -381,6 +381,13 @@ describe('security hardening', () => {
     expect(src).toContain('scoreDealRisk'); // pure, tested
   });
 
+  it('RFM uses org-relative type-7 quantiles (pure + tested)', () => {
+    expect(api('services/rfm/pure.ts')).toContain('linear interpolation');
+    const idx = api('services/rfm/index.ts');
+    expect(idx).toContain('quintileCuts'); // org-data quintiles, not fixed thresholds
+    expect(idx).toContain('scoreQuintile');
+  });
+
   it('AI SQL sandbox enforces org isolation at the SQL level (no cross-org leak)', () => {
     const sandbox = api('services/ai-analytics/sandbox.ts');
     expect(sandbox).toContain('scopeTablesToOrg'); // SQL-level scoping, not in-memory only
