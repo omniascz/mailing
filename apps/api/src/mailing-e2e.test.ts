@@ -354,6 +354,13 @@ describe('security hardening', () => {
     expect(svc).not.toContain('Laplace smoothing'); // old approach removed
   });
 
+  it('multi-touch attribution: clean time-decay + batched (no N+1, no unit-mix)', () => {
+    const src = api('services/analytics/multi-touch-attribution.ts');
+    expect(src).toContain('inArray'); // batched touch-point load (was query-per-order)
+    expect(src).toContain('halfLifeDays'); // clean configurable decay
+    expect(src).not.toContain('halfLife / Math.LN2 / 1000'); // the unit-mixed garbage term
+  });
+
   it('ClickHouse pipeline exists: client + schema + replicator + cron', () => {
     expect(api('services/analytics/clickhouse/client.ts')).toContain('FORMAT JSONEachRow');
     expect(api('services/analytics/clickhouse/schema.ts')).toContain('MATERIALIZED VIEW');
