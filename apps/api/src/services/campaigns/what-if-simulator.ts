@@ -44,7 +44,7 @@ async function getHistoricalRates(orgId: string): Promise<{
   const since = new Date(Date.now() - 180 * 86400_000); // last 6 months
 
   const [rates] = await db.select({
-    totalSent: sql<number>`count(*) filter (where event_type = 'delivered')::int`,
+    totalSent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
     totalOpened: sql<number>`count(*) filter (where event_type = 'open')::int`,
     totalClicked: sql<number>`count(*) filter (where event_type = 'click')::int`,
     totalUnsub: sql<number>`count(*) filter (where event_type = 'unsubscribe')::int`,

@@ -94,8 +94,8 @@ const emailEngagementRateTrait: TraitDefinition<number> = {
   async compute(orgId, contactId) {
     const [row] = await db
       .select({
-        opens: sql<string>`COUNT(*) FILTER (WHERE ${emailEvents.eventType} = 'opened')::text`,
-        sends: sql<string>`COUNT(*) FILTER (WHERE ${emailEvents.eventType} = 'sent')::text`,
+        opens: sql<string>`COUNT(*) FILTER (WHERE ${emailEvents.eventType} = 'open')::text`,
+        sends: sql<string>`COUNT(*) FILTER (WHERE ${emailEvents.eventType} = 'send')::text`,
       })
       .from(emailEvents)
       .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId)));

@@ -29,9 +29,9 @@ async function collectSignals(orgId: string, contactId: string): Promise<RawSign
       opens: sql<number>`count(*) filter (where event_type = 'open')::int`,
       clicks: sql<number>`count(*) filter (where event_type = 'click')::int`,
       complaints: sql<number>`count(*) filter (where event_type = 'complaint')::int`,
-      daysSinceLastOpen: sql<number | null>`extract(day from now() - max(occurred_at) filter (where event_type = 'open'))::int`,
-      daysSinceLastClick: sql<number | null>`extract(day from now() - max(occurred_at) filter (where event_type = 'click'))::int`,
-      daysSinceFirstEvent: sql<number>`extract(day from now() - min(occurred_at))::int`,
+      daysSinceLastOpen: sql<number | null>`extract(day from now() - max(created_at) filter (where event_type = 'open'))::int`,
+      daysSinceLastClick: sql<number | null>`extract(day from now() - max(created_at) filter (where event_type = 'click'))::int`,
+      daysSinceFirstEvent: sql<number>`extract(day from now() - min(created_at))::int`,
     })
     .from(emailEvents)
     .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId), gte(emailEvents.createdAt, since)));

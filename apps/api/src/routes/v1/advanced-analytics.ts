@@ -27,8 +27,12 @@ const advancedAnalyticsRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  // NOTE: path is /event-funnel (not /funnel) to avoid colliding with the
+  // richer steps-based funnel in cohort-analytics.ts (#449). This variant takes
+  // a flat list of event-type names; the canonical /analytics/funnel takes
+  // named steps with optional entity scoping.
   app.post(
-    '/api/v1/analytics/funnel',
+    '/api/v1/analytics/event-funnel',
     {
       preHandler: [app.authenticate],
       schema: { tags: ['Analytics'] },

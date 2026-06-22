@@ -32,11 +32,11 @@ export async function computeUnsubscribeRisk(
   const d60 = new Date(now - 60 * 86400_000);
 
   const [last30] = await db.select({
-    sent: sql<number>`count(*) filter (where event_type = 'delivered')::int`,
+    sent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
     opens: sql<number>`count(*) filter (where event_type = 'open')::int`,
     clicks: sql<number>`count(*) filter (where event_type = 'click')::int`,
     unsubs: sql<number>`count(*) filter (where event_type = 'unsubscribe')::int`,
-    lastOpen: sql<string | null>`max(occurred_at) filter (where event_type = 'open')`,
+    lastOpen: sql<string | null>`max(created_at) filter (where event_type = 'open')`,
   }).from(emailEvents).where(and(
     eq(emailEvents.orgId, orgId),
     eq(emailEvents.contactId, contactId),
@@ -44,7 +44,7 @@ export async function computeUnsubscribeRisk(
   ));
 
   const [prev30] = await db.select({
-    sent: sql<number>`count(*) filter (where event_type = 'delivered')::int`,
+    sent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
     opens: sql<number>`count(*) filter (where event_type = 'open')::int`,
   }).from(emailEvents).where(and(
     eq(emailEvents.orgId, orgId),
@@ -117,9 +117,9 @@ export async function getAtRiskContacts(
   const rows = await db
     .select({
       contactId: emailEvents.contactId,
-      sent: sql<number>`count(*) filter (where event_type = 'delivered')::int`,
+      sent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
       opens: sql<number>`count(*) filter (where event_type = 'open')::int`,
-      lastOpen: sql<string | null>`max(occurred_at) filter (where event_type = 'open')`,
+      lastOpen: sql<string | null>`max(created_at) filter (where event_type = 'open')`,
     })
     .from(emailEvents)
     .where(and(eq(emailEvents.orgId, orgId), gte(emailEvents.createdAt, d30)))

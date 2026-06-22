@@ -41,7 +41,7 @@ function detectSignals(subject: string, html: string, _fromEmail: string): Parti
 async function getSenderStats(orgId: string) {
   const d30 = new Date(Date.now() - 30 * 86400_000);
   const [row] = await db.select({
-    sent:       sql<number>`count(*) filter (where event_type = 'delivered')::int`,
+    sent:       sql<number>`count(*) filter (where event_type = 'deliver')::int`,
     opens:      sql<number>`count(*) filter (where event_type = 'open')::int`,
     complaints: sql<number>`count(*) filter (where event_type = 'complaint')::int`,
     bounces:    sql<number>`count(*) filter (where event_type = 'bounce')::int`,

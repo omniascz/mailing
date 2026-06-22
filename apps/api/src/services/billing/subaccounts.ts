@@ -141,8 +141,8 @@ export async function getConsolidatedReport(
     // Email stats
     const emailStats = await db.execute<{ sent: string; delivered: string }>(sql`
       SELECT
-        COUNT(*) FILTER (WHERE event_type = 'sent') AS sent,
-        COUNT(*) FILTER (WHERE event_type = 'delivered') AS delivered
+        COUNT(*) FILTER (WHERE event_type = 'send') AS sent,
+        COUNT(*) FILTER (WHERE event_type = 'deliver') AS delivered
       FROM email_events
       WHERE org_id = ${orgId}
         AND created_at >= ${periodStart.toISOString()}

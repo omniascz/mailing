@@ -29,7 +29,7 @@ export async function getContactEmailThread(
   const conds = [
     eq(emailEvents.orgId, orgId),
     eq(emailEvents.contactId, contactId),
-    sql`event_type = 'delivered'`,
+    sql`event_type = 'deliver'`,
   ];
   if (cursor) {
     conds.push(sql`created_at < ${cursor}`);
@@ -105,14 +105,14 @@ export async function getContactEmailThread(
 export async function getContactEngagementSummary(orgId: string, contactId: string) {
   const [row] = await db
     .select({
-      totalSent:       sql<number>`count(*) filter (where event_type = 'delivered')::int`,
+      totalSent:       sql<number>`count(*) filter (where event_type = 'deliver')::int`,
       totalOpens:      sql<number>`count(*) filter (where event_type = 'open')::int`,
       totalClicks:     sql<number>`count(*) filter (where event_type = 'click')::int`,
       totalBounces:    sql<number>`count(*) filter (where event_type = 'bounce')::int`,
       totalComplaints: sql<number>`count(*) filter (where event_type = 'complaint')::int`,
-      firstEmail:      sql<string | null>`min(occurred_at) filter (where event_type = 'delivered')`,
-      lastEmail:       sql<string | null>`max(occurred_at) filter (where event_type = 'delivered')`,
-      lastOpen:        sql<string | null>`max(occurred_at) filter (where event_type = 'open')`,
+      firstEmail:      sql<string | null>`min(created_at) filter (where event_type = 'deliver')`,
+      lastEmail:       sql<string | null>`max(created_at) filter (where event_type = 'deliver')`,
+      lastOpen:        sql<string | null>`max(created_at) filter (where event_type = 'open')`,
     })
     .from(emailEvents)
     .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId)));

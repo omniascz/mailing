@@ -38,12 +38,12 @@ export async function computeFatigueScore(
   const d60 = new Date(now - 60 * 86400_000);
 
   const [all] = await db.select({
-    sent7:    sql<number>`count(*) filter (where event_type = 'delivered' and occurred_at >= ${d7.toISOString()})::int`,
-    sent14:   sql<number>`count(*) filter (where event_type = 'delivered' and occurred_at >= ${d14.toISOString()})::int`,
-    sent30:   sql<number>`count(*) filter (where event_type = 'delivered' and occurred_at >= ${d30.toISOString()})::int`,
-    opens30:  sql<number>`count(*) filter (where event_type = 'open'      and occurred_at >= ${d30.toISOString()})::int`,
-    sentPrev: sql<number>`count(*) filter (where event_type = 'delivered' and occurred_at >= ${d60.toISOString()} and occurred_at < ${d30.toISOString()})::int`,
-    opensPrev:sql<number>`count(*) filter (where event_type = 'open'      and occurred_at >= ${d60.toISOString()} and occurred_at < ${d30.toISOString()})::int`,
+    sent7:    sql<number>`count(*) filter (where event_type = 'deliver' and created_at >= ${d7.toISOString()})::int`,
+    sent14:   sql<number>`count(*) filter (where event_type = 'deliver' and created_at >= ${d14.toISOString()})::int`,
+    sent30:   sql<number>`count(*) filter (where event_type = 'deliver' and created_at >= ${d30.toISOString()})::int`,
+    opens30:  sql<number>`count(*) filter (where event_type = 'open'      and created_at >= ${d30.toISOString()})::int`,
+    sentPrev: sql<number>`count(*) filter (where event_type = 'deliver' and created_at >= ${d60.toISOString()} and created_at < ${d30.toISOString()})::int`,
+    opensPrev:sql<number>`count(*) filter (where event_type = 'open'      and created_at >= ${d60.toISOString()} and created_at < ${d30.toISOString()})::int`,
   }).from(emailEvents).where(and(
     eq(emailEvents.orgId, orgId),
     eq(emailEvents.contactId, contactId),
@@ -108,8 +108,8 @@ export async function getMostFatiguedContacts(
 
   const rows = await db.select({
     contactId: emailEvents.contactId,
-    sent30: sql<number>`count(*) filter (where event_type = 'delivered')::int`,
-    sent7:  sql<number>`count(*) filter (where event_type = 'delivered' and occurred_at >= ${d7.toISOString()})::int`,
+    sent30: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
+    sent7:  sql<number>`count(*) filter (where event_type = 'deliver' and created_at >= ${d7.toISOString()})::int`,
     opens30:sql<number>`count(*) filter (where event_type = 'open')::int`,
   }).from(emailEvents).where(and(
     eq(emailEvents.orgId, orgId),

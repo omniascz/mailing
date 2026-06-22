@@ -34,7 +34,7 @@ export interface DeliverabilityReport {
 async function getSenderReputation(orgId: string) {
   const d30 = new Date(Date.now() - 30 * 86400_000);
   const [rep] = await db.select({
-    sent:      sql<number>`count(*) filter (where event_type = 'delivered')::int`,
+    sent:      sql<number>`count(*) filter (where event_type = 'deliver')::int`,
     opens:     sql<number>`count(*) filter (where event_type = 'open')::int`,
     bounces:   sql<number>`count(*) filter (where event_type = 'bounce')::int`,
     complaints:sql<number>`count(*) filter (where event_type = 'complaint')::int`,

@@ -49,7 +49,7 @@ export async function computeCrossChannelAttribution(
     .where(and(
       eq(revenueEvents.orgId, orgId),
       gte(revenueEvents.occurredAt, dateFrom),
-      sql`created_at <= ${dateTo.toISOString()}`,
+      sql`occurred_at <= ${dateTo.toISOString()}`,
     ));
 
   const totalRevenue = revenues.reduce((s, r) => s + Number(r.amount), 0);
@@ -69,7 +69,7 @@ export async function computeCrossChannelAttribution(
         .where(and(
           eq(emailEvents.orgId, orgId),
           sql`contact_id = any(${contactIds})`,
-          sql`event_type = 'delivered'`,
+          sql`event_type = 'deliver'`,
           gte(emailEvents.createdAt, dateFrom),
         ))
         .groupBy(emailEvents.contactId)

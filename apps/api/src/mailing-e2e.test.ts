@@ -1,0 +1,206 @@
+/**
+ * Mailing E2E — exercises the complete mailing surface through Fastify inject
+ * (no live Postgres/Redis needed) PLUS a static regression guard for the
+ * email_events query-hygiene bug class that was found & fixed during the
+ * 2026-06 deep audit.
+ *
+ * Two layers:
+ *
+ *  1. JOURNEY WIRING (app.inject):
+ *     - Public tracking pixel + click redirect work WITHOUT auth/DB
+ *       (best-effort tracking must never 5xx).
+ *     - The entire mailing + Layer 3/4 feature surface is auth-gated (401).
+ *     - Public auth endpoints run Zod validation (4xx, never 5xx).
+ *     - OpenAPI advertises the new routes (proves they are registered).
+ *
+ *  2. QUERY-HYGIENE GUARD (source scan, fs only):
+ *     - email_events event_type literals must match the pgEnum
+ *       (`send|deliver|open|click|bounce|unsubscribe|complaint`) — NOT the
+ *       invalid `'delivered'`/`'opened'`/`'sent'` that silently return 0.
+ *     - email_events raw SQL must use `created_at` (its real column), never
+ *       `occurred_at`.
+ *     - revenue_events raw SQL must use `occurred_at`, never `created_at`.
+ *
+ * A true happy-path send (campaign → queue → MTA → tracking → analytics) needs
+ * Postgres + Redis and belongs in the CI integration job (services: block in
+ * .github/workflows/ci.yml). This file is the cheapest signal that the mailing
+ * request pipeline is wired and the analytics layer queries the right columns.
+ */
+import { describe, it, expect, afterAll, beforeAll } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import type { FastifyInstance } from 'fastify';
+import { buildApp } from './index.js';
+
+let app: FastifyInstance;
+
+beforeAll(async () => {
+  app = await buildApp();
+});
+
+afterAll(async () => {
+  if (app) await app.close();
+});
+
+// ─── 1. Public tracking: works without auth, never 5xx ────────────────────────
+
+describe('tracking pixel + click (public, best-effort)', () => {
+  it('GET /track/o/:token → 200 image/gif even for an invalid token', async () => {
+    const res = await app.inject({ method: 'GET', url: '/track/o/not-a-real-token' });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toContain('image/gif');
+  });
+
+  it('GET /track/c/:token → redirect (3xx) for an invalid token (safe fallback)', async () => {
+    const res = await app.inject({ method: 'GET', url: '/track/c/not-a-real-token' });
+    expect(res.statusCode).toBeGreaterThanOrEqual(300);
+    expect(res.statusCode).toBeLessThan(400);
+  });
+});
+
+// ─── 2. The whole mailing surface is auth-gated ───────────────────────────────
+
+describe('mailing surface auth gating (401 without session/API key)', () => {
+  const DUMMY_UUID = '00000000-0000-0000-0000-000000000000';
+  const gated = [
+    // core mailing
+    { method: 'GET', url: '/api/v1/campaigns' },
+    { method: 'GET', url: '/api/v1/contacts' },
+    { method: 'GET', url: '/api/v1/templates' },
+    { method: 'GET', url: '/api/v1/segments' },
+    { method: 'GET', url: '/api/v1/workflows' },
+    { method: 'GET', url: '/api/v1/webhooks' },
+    // analytics
+    { method: 'GET', url: '/api/v1/analytics/currency-revenue' },
+    { method: 'GET', url: '/api/v1/analytics/cross-channel' },
+    // Layer 3 — CZ integrations
+    { method: 'GET', url: '/api/v1/integrations/packeta/shipments' },
+    { method: 'GET', url: '/api/v1/integrations/erp' },
+    { method: 'GET', url: '/api/v1/integrations/payments-cz/transactions' },
+    // Layer 4 — leapfrog features
+    { method: 'GET', url: '/api/v1/channel-fallback/rules' },
+    { method: 'GET', url: '/api/v1/unsubscribe-experiments' },
+    { method: 'GET', url: '/api/v1/brand-guidelines' },
+    { method: 'GET', url: '/api/v1/inbox-placement' },
+    { method: 'GET', url: `/api/v1/contacts/${DUMMY_UUID}/best-send-time` },
+    { method: 'GET', url: `/api/v1/contacts/${DUMMY_UUID}/email-thread` },
+  ] as const;
+
+  for (const { method, url } of gated) {
+    it(`${method} ${url} → 401`, async () => {
+      const res = await app.inject({ method, url });
+      expect(res.statusCode).toBe(401);
+    });
+  }
+});
+
+// ─── 3. Public endpoints run validation (4xx, never 5xx) ──────────────────────
+
+describe('public endpoint validation', () => {
+  it('POST /api/v1/auth/register with empty body → 4xx', async () => {
+    const res = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: {} });
+    expect(res.statusCode).toBeGreaterThanOrEqual(400);
+    expect(res.statusCode).toBeLessThan(500);
+  });
+
+  it('POST /api/v1/auth/login with non-email → 4xx', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: { email: 'x', password: 'p' },
+    });
+    expect(res.statusCode).toBeGreaterThanOrEqual(400);
+    expect(res.statusCode).toBeLessThan(500);
+  });
+});
+
+// ─── 4. OpenAPI advertises the new routes (proves registration) ───────────────
+
+describe('OpenAPI lists the new mailing routes', () => {
+  it('spec includes Layer 3/4 paths', async () => {
+    const res = await app.inject({ method: 'GET', url: '/docs/json' });
+    if (res.statusCode !== 200) return; // swagger optional in some envs
+    const body = res.json() as { paths?: Record<string, unknown> };
+    const paths = Object.keys(body.paths ?? {});
+    // a representative sample from each layer
+    expect(paths.some((p) => p.includes('/channel-fallback/'))).toBe(true);
+    expect(paths.some((p) => p.includes('/unsubscribe-experiments'))).toBe(true);
+    expect(paths.some((p) => p.includes('/integrations/packeta/'))).toBe(true);
+    expect(paths.some((p) => p.includes('/brand-guidelines'))).toBe(true);
+  });
+});
+
+// ─── 5. Query-hygiene regression guard (static source scan) ───────────────────
+
+describe('email_events / revenue_events query hygiene', () => {
+  const SERVICES = join(__dirname, 'services');
+  const read = (rel: string) => readFileSync(join(SERVICES, rel), 'utf8');
+
+  // Files whose queries target email_events. Their event_type literals must be
+  // enum-valid and their raw timestamp column must be created_at.
+  const EMAIL_EVENT_FILES = [
+    'ai/deliverability-coach.ts',
+    'analytics/cross-channel-attribution.ts',
+    'billing/subaccounts.ts',
+    'campaigns/fatigue-score.ts',
+    'campaigns/what-if-simulator.ts',
+    'contacts/email-thread.ts',
+    'contacts/unsubscribe-prediction.ts',
+    'deliverability/health-score.ts',
+    'deliverability/inbox-placement-sim.ts',
+    'ai/persona-inference.ts',
+    'cdp/traits.ts',
+  ];
+
+  // The email_event_type pgEnum is the single source of truth. These near-miss
+  // literals compile fine but never match a row → silent zeros. We only flag
+  // them when compared against the event_type column (raw SQL `event_type = ...`
+  // or Drizzle `eventType} = ...`), NOT internal JS DSLs like
+  // `step.conditionType === 'opened'`.
+  const COLUMN = `(?:event_type|eventType\\s*}?)\\s*=\\s*`;
+  const FORBIDDEN_EVENT_LITERALS = [
+    new RegExp(`${COLUMN}'delivered'`),
+    new RegExp(`${COLUMN}'opened'`),
+    new RegExp(`${COLUMN}'sent'`),
+    new RegExp(`${COLUMN}'clicked'`),
+    new RegExp(`${COLUMN}'bounced'`),
+    new RegExp(`${COLUMN}'unsubscribed'`),
+    new RegExp(`${COLUMN}'complained'`),
+    new RegExp(`${COLUMN}'blocked'`),
+  ];
+
+  for (const rel of EMAIL_EVENT_FILES) {
+    it(`${rel}: uses enum-valid email event_type literals`, () => {
+      const src = read(rel);
+      for (const bad of FORBIDDEN_EVENT_LITERALS) {
+        expect(src, `${rel} contains an invalid email event_type literal`).not.toMatch(bad);
+      }
+    });
+
+    it(`${rel}: email_events raw SQL uses created_at, not occurred_at`, () => {
+      const src = read(rel);
+      // Files that also touch revenue_events legitimately use occurred_at there,
+      // so only assert on the pure-email_events files.
+      if (!src.includes('revenueEvents')) {
+        expect(src, `${rel} references occurred_at on email_events`).not.toContain('occurred_at');
+      }
+    });
+  }
+
+  // revenue_events only has occurred_at — its raw SQL must never use created_at.
+  const REVENUE_FILES = ['analytics/cross-channel-attribution.ts', 'analytics/currency-revenue.ts'];
+  for (const rel of REVENUE_FILES) {
+    it(`${rel}: revenue_events raw SQL uses occurred_at, not created_at`, () => {
+      const src = read(rel);
+      expect(src).not.toMatch(/created_at\s*<=/);
+      expect(src).not.toMatch(/to_char\(created_at/);
+    });
+  }
+
+  it('email_event_type enum still lists the canonical values', () => {
+    const enums = readFileSync(join(__dirname, 'db/schema/enums.ts'), 'utf8');
+    for (const v of ['send', 'deliver', 'open', 'click', 'bounce', 'unsubscribe', 'complaint']) {
+      expect(enums).toContain(`'${v}'`);
+    }
+  });
+});

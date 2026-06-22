@@ -51,7 +51,7 @@ export async function getCurrencyRevenue(
     .where(and(
       eq(revenueEvents.orgId, orgId),
       gte(revenueEvents.occurredAt, dateFrom),
-      sql`created_at <= ${dateTo.toISOString()}`,
+      sql`occurred_at <= ${dateTo.toISOString()}`,
     ))
     .groupBy(revenueEvents.currency);
 
@@ -95,15 +95,15 @@ export async function getCurrencyRevenueByMonth(
 
   const rows = await db
     .select({
-      month: sql<string>`to_char(created_at, 'YYYY-MM')`,
+      month: sql<string>`to_char(occurred_at, 'YYYY-MM')`,
       currency: revenueEvents.currency,
       revenue: sql<string>`coalesce(sum(amount::numeric), 0)`,
       orders: sql<number>`count(*)::int`,
     })
     .from(revenueEvents)
     .where(and(eq(revenueEvents.orgId, orgId), gte(revenueEvents.occurredAt, since)))
-    .groupBy(sql`to_char(created_at, 'YYYY-MM')`, revenueEvents.currency)
-    .orderBy(sql`to_char(created_at, 'YYYY-MM')`);
+    .groupBy(sql`to_char(occurred_at, 'YYYY-MM')`, revenueEvents.currency)
+    .orderBy(sql`to_char(occurred_at, 'YYYY-MM')`);
 
   return rows.map((r) => ({
     month: r.month,

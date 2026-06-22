@@ -48,16 +48,16 @@ export async function computeOrgHealth(
     blocks: number;
   }>(sql`
     SELECT
-      COUNT(*) FILTER (WHERE event_type = 'sent')::int AS sends,
-      COUNT(*) FILTER (WHERE event_type = 'delivered')::int AS delivered,
-      COUNT(*) FILTER (WHERE event_type = 'bounced')::int AS bounces,
-      COUNT(*) FILTER (WHERE event_type = 'bounced' AND bounce_type = 'hard')::int AS hard_bounces,
-      COUNT(*) FILTER (WHERE event_type = 'bounced' AND bounce_type = 'soft')::int AS soft_bounces,
-      COUNT(*) FILTER (WHERE event_type = 'complained')::int AS complaints,
-      COUNT(*) FILTER (WHERE event_type = 'opened')::int AS opens,
-      COUNT(*) FILTER (WHERE event_type = 'clicked')::int AS clicks,
-      COUNT(*) FILTER (WHERE event_type = 'unsubscribed')::int AS unsubscribes,
-      COUNT(*) FILTER (WHERE event_type = 'blocked')::int AS blocks
+      COUNT(*) FILTER (WHERE event_type = 'send')::int AS sends,
+      COUNT(*) FILTER (WHERE event_type = 'deliver')::int AS delivered,
+      COUNT(*) FILTER (WHERE event_type = 'bounce')::int AS bounces,
+      COUNT(*) FILTER (WHERE event_type = 'bounce' AND bounce_type = 'hard')::int AS hard_bounces,
+      COUNT(*) FILTER (WHERE event_type = 'bounce' AND bounce_type = 'soft')::int AS soft_bounces,
+      COUNT(*) FILTER (WHERE event_type = 'complaint')::int AS complaints,
+      COUNT(*) FILTER (WHERE event_type = 'open')::int AS opens,
+      COUNT(*) FILTER (WHERE event_type = 'click')::int AS clicks,
+      COUNT(*) FILTER (WHERE event_type = 'unsubscribe')::int AS unsubscribes,
+      COUNT(*) FILTER (WHERE event_type = 'bounce' AND bounce_type = 'block')::int AS blocks
     FROM email_events
     WHERE ${whereSql}
       AND created_at >= ${since}
