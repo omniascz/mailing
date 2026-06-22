@@ -9,6 +9,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { checkFrequencyCap } from '../../../services/frequency-capping/index.js';
+import { canSend as smartCanSend } from '../../../services/smart-sending/index.js';
 
 // FrequencyChannel in service excludes 'all' (that's a rule-level value, not a
 // channel a contact actually receives on). 'in_app' isn't part of the frequency
@@ -34,14 +35,15 @@ const internalFrequencyRoutes: FastifyPluginAsync = async (app) => {
         return reply.send({ data: { capped: [] } });
       }
 
+      // A contact is gated if EITHER the frequency-cap rule OR the
+      // smart-sending fatigue rule (per-day / per-week / cooldown) blocks them.
       const results = await Promise.all(
         body.contactIds.map(async (contactId) => {
-          const res = await checkFrequencyCap({
-            orgId: body.orgId,
-            contactId,
-            channel: body.channel,
-          });
-          return res.allowed ? null : contactId;
+          const [freq, smart] = await Promise.all([
+            checkFrequencyCap({ orgId: body.orgId, contactId, channel: body.channel }),
+            smartCanSend(body.orgId, contactId, body.channel),
+          ]);
+          return freq.allowed && smart.allowed ? null : contactId;
         }),
       );
 

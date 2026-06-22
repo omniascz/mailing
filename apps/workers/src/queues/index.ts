@@ -147,6 +147,10 @@ export interface TimewarpConfig {
   baseDate?: string;
   /** IANA tz for contacts whose timezone is unknown (defaults to Europe/Prague). */
   fallbackTimezone?: string;
+  /** Skip CZ/SK public holidays — shift the send to the next working day. */
+  skipHolidays?: boolean;
+  /** Holiday calendar to use when skipHolidays is set. Defaults to 'cz'. */
+  holidayCountry?: 'cz' | 'sk';
 }
 
 export interface CampaignSplitterJobData {

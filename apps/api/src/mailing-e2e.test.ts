@@ -204,3 +204,43 @@ describe('email_events / revenue_events query hygiene', () => {
     }
   });
 });
+
+// ─── 6. Send-path integration wiring (no orphans) ─────────────────────────────
+// Locks the previously-island features into the live send/bounce/render/unsub
+// path so they cannot silently regress to "endpoint-only" again.
+
+describe('send-path integration wiring', () => {
+  const api = (rel: string) => readFileSync(join(__dirname, rel), 'utf8');
+  const worker = (rel: string) =>
+    readFileSync(join(__dirname, '../../workers/src', rel), 'utf8');
+
+  it("MTA worker emits a 'deliver' event on SMTP 250", () => {
+    expect(worker('jobs/mta-sender.ts')).toMatch(/type:\s*'deliver'/);
+  });
+
+  it("internal/events accepts 'deliver' and wires channel-fallback on bounce", () => {
+    const src = api('routes/v1/internal/events.ts');
+    expect(src).toContain("'deliver'");
+    expect(src).toContain('handleBounce');
+  });
+
+  it('frequency batch check enforces smart-sending canSend', () => {
+    expect(api('routes/v1/internal/frequency.ts')).toMatch(/smartCanSend|canSend as/);
+  });
+
+  it('timewarp scheduler uses per-contact STO + CZ-holiday shifting', () => {
+    const src = api('services/send-optimization/index.ts');
+    expect(src).toContain('contactSendTimePredictions');
+    expect(src).toContain('isCzHoliday');
+  });
+
+  it('campaign create/update runs AI alt-text enrichment', () => {
+    expect(api('services/campaigns/index.ts')).toContain('fillMissingAltTexts');
+  });
+
+  it('preference-center wires unsubscribe A/B assignment + outcome', () => {
+    const src = api('routes/v1/preference-center.ts');
+    expect(src).toContain('assignVariant');
+    expect(src).toContain('recordOutcome');
+  });
+});

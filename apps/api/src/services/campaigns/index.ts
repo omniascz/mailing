@@ -14,6 +14,30 @@ import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { campaigns, type Campaign } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { fillMissingAltTexts } from '../editor/ai-alt-text.js';
+
+/** Matches an <img …> tag that has no (non-empty) alt attribute. */
+const IMG_WITHOUT_ALT = /<img(?![^>]*\balt\s*=\s*"[^"]+")[^>]*>/i;
+
+/**
+ * Auto-generate AI alt text for images in legacy raw-HTML campaign content.
+ * Cheap pre-check first: only invokes Claude when the HTML actually contains an
+ * <img> with a missing/empty alt. Best-effort — never blocks campaign save.
+ */
+async function applyAltText(
+  orgId: string,
+  content: Record<string, unknown> | undefined,
+): Promise<Record<string, unknown> | undefined> {
+  if (!content) return content;
+  const html = content['html'];
+  if (typeof html !== 'string' || !IMG_WITHOUT_ALT.test(html)) return content;
+  try {
+    const { html: fixed } = await fillMissingAltTexts(orgId, html);
+    return { ...content, html: fixed };
+  } catch {
+    return content; // alt-text enrichment is non-critical
+  }
+}
 
 // ─── State machine ───────────────────────────────────────────────────────────
 
@@ -66,6 +90,7 @@ export interface CreateCampaignInput {
 }
 
 export async function createCampaign(input: CreateCampaignInput): Promise<Campaign> {
+  const content = await applyAltText(input.orgId, input.content);
   const [row] = await db
     .insert(campaigns)
     .values({
@@ -79,7 +104,7 @@ export async function createCampaign(input: CreateCampaignInput): Promise<Campai
       fromEmail: input.fromEmail,
       replyTo: input.replyTo,
       templateId: input.templateId,
-      content: input.content ?? {},
+      content: content ?? {},
       listId: input.listId,
       segmentId: input.segmentId,
       excludeSegmentId: input.excludeSegmentId,
@@ -154,10 +179,13 @@ export async function updateCampaign(
     );
   }
 
+  const content = updates.content ? await applyAltText(orgId, updates.content) : updates.content;
+
   const [row] = await db
     .update(campaigns)
     .set({
       ...updates,
+      ...(content ? { content } : {}),
       updatedAt: new Date(),
     })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))

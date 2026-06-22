@@ -105,7 +105,7 @@ function isBlockBounce(smtpCode: number, message: string): boolean {
 // ─── Event recording ─────────────────────────────────────────────────────────
 
 async function recordEvent(event: {
-  type: 'send' | 'bounce' | 'fail';
+  type: 'send' | 'deliver' | 'bounce' | 'fail';
   orgId: string;
   campaignId: string;
   contactId: string;
@@ -159,17 +159,29 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
   const result = await sendViaMta(data);
 
   if (result.success) {
+    const successMeta = {
+      smtpCode: result.smtpCode,
+      durationMs: result.durationMs,
+      ...(data.abVariantId ? { abVariantId: data.abVariantId } : {}),
+    };
+    // 'send' = handed off to MX; 'deliver' = MX returned SMTP 250 (this engine
+    // does direct-to-MX, so the 250 IS delivery confirmation). Both are recorded
+    // so deliverability/fatigue/attribution analytics that count 'deliver' work.
     await recordEvent({
       type: 'send',
       orgId: data.orgId,
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
-      metadata: {
-        smtpCode: result.smtpCode,
-        durationMs: result.durationMs,
-        ...(data.abVariantId ? { abVariantId: data.abVariantId } : {}),
-      },
+      metadata: successMeta,
+    });
+    await recordEvent({
+      type: 'deliver',
+      orgId: data.orgId,
+      campaignId: data.campaignId,
+      contactId: data.contactId,
+      messageId: data.messageId,
+      metadata: successMeta,
     });
     return { status: 'sent', messageId: data.messageId, durationMs: result.durationMs };
   }

@@ -9,9 +9,20 @@
  *    time for each contact based on their IANA timezone.
  */
 
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contactEngagement, contacts, emailEvents } from '../../db/schema/index.js';
+import { contactSendTimePredictions } from '../../db/schema/contact-send-time.js';
+import { isCzHoliday } from '../smart-sending/cz-holidays.js';
+
+/** Advance a date past any CZ/SK public holiday (max 5 hops). Preserves time-of-day. */
+function shiftOffHoliday(d: Date, country: 'cz' | 'sk' = 'cz'): Date {
+  const out = new Date(d);
+  for (let i = 0; i < 5 && isCzHoliday(out, country); i++) {
+    out.setUTCDate(out.getUTCDate() + 1);
+  }
+  return out;
+}
 
 // ─── Histogram maintenance ───────────────────────────────────────────────────
 
@@ -160,6 +171,7 @@ export async function computeTimewarpSchedule(
   baseDate: Date,
   localHour: number,
   fallbackTimezone = 'UTC',
+  opts: { orgId?: string; skipHolidays?: boolean; holidayCountry?: 'cz' | 'sk' } = {},
 ): Promise<Map<string, Date>> {
   const result = new Map<string, Date>();
   if (contactIds.length === 0) return result;
@@ -175,9 +187,45 @@ export async function computeTimewarpSchedule(
     if (r.tz) tzMap.set(r.id, r.tz);
   }
 
+  // Per-contact send-time optimization (#STO). When the org has confident
+  // per-contact predictions, schedule each such contact at THEIR best UTC hour
+  // instead of the cohort-wide localHour. Contacts without a prediction keep
+  // the timezone-based local-hour behaviour.
+  const stoMap = new Map<string, number>();
+  if (opts.orgId) {
+    const preds = await db
+      .select({
+        contactId: contactSendTimePredictions.contactId,
+        bestHourUtc: contactSendTimePredictions.bestHourUtc,
+        confidence: contactSendTimePredictions.confidence,
+      })
+      .from(contactSendTimePredictions)
+      .where(
+        and(
+          eq(contactSendTimePredictions.orgId, opts.orgId),
+          inArray(contactSendTimePredictions.contactId, contactIds),
+        ),
+      );
+    for (const p of preds) {
+      if (p.confidence >= 0.3) stoMap.set(p.contactId, p.bestHourUtc);
+    }
+  }
+
+  const country = opts.holidayCountry ?? 'cz';
   for (const id of contactIds) {
-    const tz = tzMap.get(id) ?? fallbackTimezone;
-    result.set(id, localHourToUtc(baseDate, localHour, 0, tz));
+    const stoHour = stoMap.get(id);
+    let sendAt: Date;
+    if (stoHour !== undefined) {
+      // Prediction is already in UTC (derived from the contact's own opens).
+      sendAt = new Date(baseDate);
+      sendAt.setUTCHours(stoHour, 0, 0, 0);
+      if (sendAt < baseDate) sendAt.setUTCDate(sendAt.getUTCDate() + 1);
+    } else {
+      const tz = tzMap.get(id) ?? fallbackTimezone;
+      sendAt = localHourToUtc(baseDate, localHour, 0, tz);
+    }
+    if (opts.skipHolidays) sendAt = shiftOffHoliday(sendAt, country);
+    result.set(id, sendAt);
   }
   return result;
 }

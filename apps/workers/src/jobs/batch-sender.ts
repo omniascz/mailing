@@ -93,7 +93,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   }
 
   const timewarpSchedule = data.timewarp?.enabled
-    ? await fetchTimewarpSchedule(data.contactIds, data.timewarp)
+    ? await fetchTimewarpSchedule(data.orgId, data.contactIds, data.timewarp)
     : null;
 
   // Newsletter tier names — fetched once per batch for DynamicBlock gating
@@ -612,6 +612,7 @@ async function fetchTrackingBaseUrl(orgId: string): Promise<string> {
  * blocking the batch.
  */
 async function fetchTimewarpSchedule(
+  orgId: string,
   contactIds: string[],
   cfg: TimewarpConfig,
 ): Promise<Map<string, string> | null> {
@@ -620,10 +621,13 @@ async function fetchTimewarpSchedule(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        orgId,
         contactIds,
         baseDate: cfg.baseDate ?? new Date().toISOString(),
         localHour: cfg.localHour,
         fallbackTimezone: cfg.fallbackTimezone ?? 'Europe/Prague',
+        skipHolidays: cfg.skipHolidays ?? false,
+        holidayCountry: cfg.holidayCountry ?? 'cz',
       }),
     });
     if (!res.ok) return null;

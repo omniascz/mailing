@@ -10,9 +10,10 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { db } from '../../../db/client.js';
 import { emailEvents } from '../../../db/schema/index.js';
+import { handleBounce } from '../../../services/campaigns/channel-fallback.js';
 
 const bodySchema = z.object({
-  type: z.enum(['send', 'bounce', 'fail']),
+  type: z.enum(['send', 'deliver', 'bounce', 'fail']),
   orgId: z.string().uuid(),
   campaignId: z.string().uuid(),
   contactId: z.string().uuid(),
@@ -31,11 +32,17 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
       const body = bodySchema.parse(req.body);
       const meta = body.metadata ?? {};
 
-      const eventType =
-        body.type === 'send' ? 'send' : body.type === 'bounce' ? 'bounce' : 'fail';
+      // Map the worker's wire type to a valid email_event_type enum value.
+      // 'fail' has no enum member — record it as a soft bounce so it is not lost.
+      const eventType: 'send' | 'deliver' | 'bounce' =
+        body.type === 'send'
+          ? 'send'
+          : body.type === 'deliver'
+            ? 'deliver'
+            : 'bounce';
 
       const bounceType =
-        body.type === 'bounce'
+        body.type === 'bounce' || body.type === 'fail'
           ? (meta.bounceType as 'hard' | 'soft' | 'block' | undefined) ?? 'soft'
           : undefined;
 
@@ -44,12 +51,18 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
         campaignId: body.campaignId,
         contactId: body.contactId,
         messageId: body.messageId,
-        eventType: eventType as 'send' | 'bounce',
+        eventType,
         bounceType,
         stream: (meta.stream as 'broadcast' | 'transactional' | 'triggered' | undefined) ?? 'broadcast',
         abVariantId: meta.abVariantId as string | undefined,
         metadata: meta,
       });
+
+      // Auto channel fallback: a hard/soft bounce on email can trigger a
+      // configured fallback send (SMS/WhatsApp/push). Best-effort, non-blocking.
+      if (eventType === 'bounce' && (bounceType === 'hard' || bounceType === 'soft')) {
+        handleBounce(body.orgId, body.contactId, bounceType).catch(() => {});
+      }
 
       return reply.code(201).send({ ok: true });
     },

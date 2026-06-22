@@ -21,10 +21,13 @@ const internalTimewarpRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const body = z
         .object({
+          orgId: z.string().uuid().optional(),
           contactIds: z.array(z.string().uuid()).max(1000),
           baseDate: z.string().datetime(),
           localHour: z.number().int().min(0).max(23),
           fallbackTimezone: z.string().default('Europe/Prague'),
+          skipHolidays: z.boolean().default(false),
+          holidayCountry: z.enum(['cz', 'sk']).default('cz'),
         })
         .parse(req.body);
 
@@ -33,6 +36,11 @@ const internalTimewarpRoutes: FastifyPluginAsync = async (app) => {
         new Date(body.baseDate),
         body.localHour,
         body.fallbackTimezone,
+        {
+          orgId: body.orgId,
+          skipHolidays: body.skipHolidays,
+          holidayCountry: body.holidayCountry,
+        },
       );
 
       const data: Record<string, string> = {};
