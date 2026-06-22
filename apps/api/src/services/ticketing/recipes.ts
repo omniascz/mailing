@@ -84,7 +84,7 @@ export const TICKETING_RECIPES: TicketingRecipe[] = [
   {
     key: 'day_of_journey',
     group: 4,
-    title: 'Day-of journey: -24h email → -2h SMS QR → post-event push',
+    title: 'Day-of journey: -24h email reminder + -2h SMS with ticket QR',
     triggers: ['(cron) over event start times'],
     modules: ['ticketing/day-of', 'channels', 'channel-fallback'],
     status: 'engine',

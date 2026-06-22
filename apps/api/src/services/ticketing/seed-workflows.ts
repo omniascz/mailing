@@ -20,8 +20,11 @@ export interface SeedDef {
   eventName: string;
   /** Optional delay before the send. */
   waitHours?: number;
-  subject: string;
-  html: string;
+  /** Send channel — 'email' (default) uses subject/html, 'sms' uses message. */
+  channel?: 'email' | 'sms';
+  subject?: string;
+  html?: string;
+  message?: string;
 }
 
 const wrap = (inner: string) =>
@@ -89,6 +92,15 @@ export const SEED_DEFS: SeedDef[] = [
     html: wrap('<p>Ahoj {{first_name}},</p><p>nezapomeňte — vaše akce se blíží. Vstupenku a QR kód máte v aplikaci nebo na odkazu níže.</p><p><a href="{{ticket_url}}">Zobrazit vstupenku →</a></p>'),
   },
   {
+    key: 'day_of_sms',
+    name: 'Ticketing — Day-of SMS (ticket QR)',
+    eventName: 'ticketing.day_of_sms',
+    channel: 'sms',
+    subject: '',
+    html: '',
+    message: 'Vstupenka na {{event_title}}: {{ticket_url}}',
+  },
+  {
     key: 'fill_the_house_offer',
     name: 'Ticketing — Fill-the-house offer',
     eventName: 'ticketing.fill_the_house_offer',
@@ -115,11 +127,11 @@ export function buildWorkflowGraph(def: SeedDef): { nodes: WorkflowNode[]; edges
     edges.push({ id: 'e_trigger_wait', source: 'trigger', target: 'wait' });
     prev = 'wait';
   }
-  nodes.push({
-    id: 'send',
-    type: 'send_email',
-    config: { subject: def.subject, html: def.html },
-  });
+  if (def.channel === 'sms') {
+    nodes.push({ id: 'send', type: 'send_sms', config: { message: def.message, priority: 'transactional' } });
+  } else {
+    nodes.push({ id: 'send', type: 'send_email', config: { subject: def.subject, html: def.html } });
+  }
   edges.push({ id: `e_${prev}_send`, source: prev, target: 'send' });
 
   return { nodes, edges };

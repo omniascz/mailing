@@ -1,0 +1,1 @@
+ALTER TABLE "external_events" ADD COLUMN "url" varchar(1000);

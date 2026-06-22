@@ -175,7 +175,7 @@ async function executeSendSms(
     return { type: 'next', nextNodeId: null };
   }
 
-  const message = substituteMergeTags(config.message, ctx.contact);
+  const message = substituteMergeTags(config.message, ctx.contact, buildRunMergeData(run));
   // Queue SMS job
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   if (queues) {

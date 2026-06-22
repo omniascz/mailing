@@ -24,6 +24,8 @@ export const externalEvents = pgTable(
     venueName: varchar('venue_name', { length: 255 }),
     venueCity: varchar('venue_city', { length: 120 }),
     currency: varchar('currency', { length: 3 }).default('CZK'),
+    /** Public event page URL (for day-of / yield links). */
+    url: varchar('url', { length: 1000 }),
     startsAt: timestamp('starts_at', { withTimezone: true }),
     status: varchar('status', { length: 32 }).notNull().default('on_sale'), // on_sale | sold_out | cancelled | past
     /** Total unsold seats (for yield / fill-the-house). */

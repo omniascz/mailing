@@ -23,7 +23,13 @@ export async function runDayOfTick(nowMs = Date.now()): Promise<{ events: number
   const now = new Date(nowMs);
   // Events starting within the next 48h or ended ≤24h ago (covers all steps).
   const events = await db
-    .select({ id: externalEvents.id, orgId: externalEvents.orgId, title: externalEvents.title, startsAt: externalEvents.startsAt })
+    .select({
+      id: externalEvents.id,
+      orgId: externalEvents.orgId,
+      title: externalEvents.title,
+      url: externalEvents.url,
+      startsAt: externalEvents.startsAt,
+    })
     .from(externalEvents)
     .where(
       and(
@@ -32,12 +38,17 @@ export async function runDayOfTick(nowMs = Date.now()): Promise<{ events: number
       ),
     );
 
+  // email step → ticketing.day_of_reminder, sms step → ticketing.day_of_sms.
+  const TRIGGER: Record<string, string> = {
+    email: 'ticketing.day_of_reminder',
+    sms: 'ticketing.day_of_sms',
+  };
+
   let fired = 0;
   for (const e of events) {
     if (!e.startsAt) continue;
     const due = stepsDueNow(e.startsAt, now, 1); // 1-min window matches the per-minute cron
-    // Seed handles the email reminder; SMS/push steps are available but unseeded.
-    if (!due.some((s) => s.channel === 'email')) continue;
+    if (due.length === 0) continue;
 
     const attendees = await db
       .select({ contactId: eventAttendance.contactId })
@@ -45,12 +56,18 @@ export async function runDayOfTick(nowMs = Date.now()): Promise<{ events: number
       .where(and(eq(eventAttendance.orgId, e.orgId), eq(eventAttendance.externalEventId, e.id), eq(eventAttendance.status, 'purchased')))
       .limit(PER_EVENT_CAP);
 
-    for (const a of attendees) {
-      await onApiEvent(e.orgId, a.contactId, 'ticketing.day_of_reminder', {
-        externalEventId: e.id,
-        eventTitle: e.title,
-      }).catch(() => {});
-      fired++;
+    for (const step of due) {
+      const trigger = TRIGGER[step.channel];
+      if (!trigger) continue;
+      for (const a of attendees) {
+        await onApiEvent(e.orgId, a.contactId, trigger, {
+          externalEventId: e.id,
+          eventTitle: e.title,
+          event_url: e.url ?? undefined,
+          ticket_url: e.url ?? undefined,
+        }).catch(() => {});
+        fired++;
+      }
     }
   }
   return { events: events.length, fired };
@@ -64,6 +81,7 @@ export async function runFillTheHouseTick(nowMs = Date.now()): Promise<{ events:
       orgId: externalEvents.orgId,
       category: externalEvents.category,
       venueCity: externalEvents.venueCity,
+      url: externalEvents.url,
       unsoldSeats: externalEvents.unsoldSeats,
       startsAt: externalEvents.startsAt,
     })
@@ -95,6 +113,8 @@ export async function runFillTheHouseTick(nowMs = Date.now()): Promise<{ events:
         externalEventId: e.id,
         wave: wave.wave,
         discountPct: wave.discountPct,
+        event_url: e.url ?? undefined,
+        buy_url: e.url ?? undefined,
       }).catch(() => {});
       fired++;
     }

@@ -74,16 +74,16 @@ describe('computeDayOfSchedule', () => {
     const start = new Date('2026-09-01T19:00:00Z');
     const now = new Date('2026-08-20T00:00:00Z'); // well before
     const sched = computeDayOfSchedule(start, now);
-    expect(sched.map((s) => s.channel)).toEqual(['email', 'sms', 'push']);
+    expect(sched.map((s) => s.channel)).toEqual(['email', 'sms']);
     expect(sched[0]!.sendAt.getTime()).toBe(start.getTime() - 24 * 3_600_000);
     expect(sched[1]!.sendAt.getTime()).toBe(start.getTime() - 2 * 3_600_000);
   });
 
   it('drops steps already in the past', () => {
     const start = new Date('2026-09-01T19:00:00Z');
-    const now = new Date('2026-09-01T18:00:00Z'); // 1h before → -24h email + -2h sms passed
+    const now = new Date('2026-09-01T18:00:00Z'); // 1h before → -24h email + -2h sms both passed
     const sched = computeDayOfSchedule(start, now);
-    expect(sched.map((s) => s.channel)).toEqual(['push']); // only post-event remains
+    expect(sched).toEqual([]); // nothing left before the show
   });
 });
 
@@ -182,18 +182,31 @@ describe('seed workflows', () => {
     expect(edges).toEqual([{ id: 'e_trigger_send', source: 'trigger', target: 'send' }]);
   });
 
-  it('every seed carries inline html + subject + a ticketing.* trigger', () => {
+  it('every seed has a ticketing.* trigger + a content-carrying send node', () => {
     for (const d of SEED_DEFS) {
       expect(d.eventName.startsWith('ticketing.')).toBe(true);
-      const send = buildWorkflowGraph(d).nodes.find((n) => n.type === 'send_email')!;
-      const cfg = send.config as { subject?: string; html?: string };
-      expect(cfg.subject && cfg.html).toBeTruthy();
+      const send = buildWorkflowGraph(d).nodes.find((n) => n.type === 'send_email' || n.type === 'send_sms')!;
+      expect(send).toBeTruthy();
+      if (send.type === 'send_sms') {
+        expect((send.config as { message?: string }).message).toBeTruthy();
+      } else {
+        const cfg = send.config as { subject?: string; html?: string };
+        expect(cfg.subject && cfg.html).toBeTruthy();
+      }
     }
+  });
+
+  it('builds an SMS seed as a send_sms node', () => {
+    const def = SEED_DEFS.find((d) => d.key === 'day_of_sms')!;
+    const { nodes } = buildWorkflowGraph(def);
+    const send = nodes.find((n) => n.id === 'send')!;
+    expect(send.type).toBe('send_sms');
+    expect((send.config as { message?: string }).message).toContain('{{ticket_url}}');
   });
 
   it('covers the key reuse + cron-driven recipes', () => {
     const keys = SEED_DEFS.map((d) => d.key);
-    for (const k of ['abandoned_cart', 'post_event_review', 'referral', 'day_of_reminder', 'fill_the_house_offer', 'discover_digest']) {
+    for (const k of ['abandoned_cart', 'post_event_review', 'referral', 'day_of_reminder', 'day_of_sms', 'fill_the_house_offer', 'discover_digest']) {
       expect(keys).toContain(k);
     }
   });

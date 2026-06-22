@@ -45,6 +45,7 @@ export interface TicketingEventInput {
   venueName?: string;
   venueCity?: string;
   currency?: string;
+  url?: string;
   startsAt?: string;
   status?: string;
   unsoldSeats?: number;
@@ -144,6 +145,7 @@ export async function upsertExternalEvent(
     venueName: e.venueName,
     venueCity: e.venueCity,
     currency: e.currency,
+    url: e.url,
     startsAt: e.startsAt ? new Date(e.startsAt) : undefined,
     status: e.status,
     unsoldSeats: e.unsoldSeats,

@@ -15,6 +15,13 @@
       "when": 1782158437560,
       "tag": "0001_ticketing",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782162995949,
+      "tag": "0002_ticketing_event_url",
+      "breakpoints": true
     }
   ]
 }

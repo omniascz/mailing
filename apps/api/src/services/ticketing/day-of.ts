@@ -1,11 +1,12 @@
 /**
  * Day-of journey — schedules channel-appropriate touches relative to an event's
- * start: a reminder the day before (email), the ticket QR a couple hours before
- * (SMS), and a review prompt afterwards (push). Computed by ForgeMsg from the
- * synced event start time — the ticketing app doesn't have to push these.
+ * start: an email reminder the day before, and an SMS with the ticket QR a
+ * couple hours before. Computed by ForgeMsg from the synced event start time —
+ * the ticketing app doesn't have to push these. Post-event follow-up is handled
+ * by the post_event_review automation (event_attended trigger).
  */
 
-export type DayOfChannel = 'email' | 'sms' | 'push';
+export type DayOfChannel = 'email' | 'sms';
 
 export interface DayOfStep {
   channel: DayOfChannel;
@@ -18,7 +19,6 @@ export interface DayOfStep {
 const DEFAULT_STEPS: Array<{ channel: DayOfChannel; offsetHours: number; label: string }> = [
   { channel: 'email', offsetHours: -24, label: 'Reminder + how to get there' },
   { channel: 'sms', offsetHours: -2, label: 'Your ticket QR + doors info' },
-  { channel: 'push', offsetHours: 18, label: 'How was it? Leave a review' },
 ];
 
 /** Full schedule for an event; only steps still in the future are returned. */

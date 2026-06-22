@@ -28,6 +28,7 @@ const eventSchema = z.object({
   venueName: z.string().max(255).optional(),
   venueCity: z.string().max(120).optional(),
   currency: z.string().length(3).optional(),
+  url: z.string().url().max(1000).optional(),
   startsAt: z.string().datetime().optional(),
   status: z.string().max(32).optional(),
   unsoldSeats: z.number().int().min(0).optional(),
