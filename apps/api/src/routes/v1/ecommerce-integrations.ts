@@ -466,7 +466,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       }
 
       // Find the connection by shop domain
-      const rawBody = JSON.stringify(req.body);
+      const rawBody =
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
       const [conn] = await db
         .select()
         .from(ecommerceConnections)
@@ -505,7 +506,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       const { connectionId } = z.object({ connectionId: z.string().uuid() }).parse(req.params);
       const signature = (req.headers['x-upgates-signature'] as string) ?? '';
       const topic = (req.headers['x-upgates-event'] as string) ?? '';
-      const rawBody = JSON.stringify(req.body);
+      const rawBody =
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
 
       const [conn] = await db
         .select()
@@ -553,7 +555,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       const { connectionId } = z.object({ connectionId: z.string().uuid() }).parse(req.params);
       const signature = (req.headers['x-shoptet-signature'] as string) ?? '';
       const topic = (req.headers['x-shoptet-event'] as string) ?? '';
-      const rawBody = JSON.stringify(req.body);
+      const rawBody =
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
 
       const [conn] = await db
         .select()
@@ -593,7 +596,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       const { connectionId } = z.object({ connectionId: z.string().uuid() }).parse(req.params);
       const signature = req.headers['x-wc-webhook-signature'] as string;
       const topic = req.headers['x-wc-webhook-topic'] as string;
-      const rawBody = JSON.stringify(req.body);
+      const rawBody =
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
 
       const [conn] = await db
         .select()
@@ -629,7 +633,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { connectionId } = z.object({ connectionId: z.string().uuid() }).parse(req.params);
       const signature = (req.headers['x-bc-signature'] as string) ?? '';
-      const rawBody = JSON.stringify(req.body);
+      const rawBody =
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
 
       const [conn] = await db
         .select()

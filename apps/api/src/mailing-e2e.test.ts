@@ -314,4 +314,26 @@ describe('security hardening', () => {
     expect(src).toContain('information_schema.columns');
     expect(src).toContain('eraseRelatedRows');
   });
+
+  it('a global raw-body JSON parser exposes req.rawBody for signature checks', () => {
+    const src = api('index.ts');
+    expect(src).toContain('addContentTypeParser');
+    expect(src).toContain("parseAs: 'buffer'");
+    expect(src).toContain('rawBody');
+  });
+
+  it('webhook routes verify against req.rawBody (not re-serialized req.body)', () => {
+    for (const rel of [
+      'routes/v1/billing.ts',
+      'routes/v1/custom-channels.ts',
+      'routes/v1/phone.ts',
+      'routes/v1/ecommerce-integrations.ts',
+    ]) {
+      const src = api(rel);
+      expect(src, `${rel} should read req.rawBody`).toContain('rawBody');
+      // bare JSON.stringify(req.body) is only allowed as the documented fallback,
+      // i.e. it must be preceded by a rawBody read on the same statement.
+      expect(src).not.toMatch(/=\s*JSON\.stringify\(req\.body[^)]*\);\s*$/m);
+    }
+  });
 });

@@ -102,7 +102,9 @@ const phoneRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { provider } = z.object({ provider: z.enum(['twilio', 'telnyx']) }).parse(req.params);
       const p = getVoipProvider(provider);
-      const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {});
+      const rawBody =
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
+        (typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {}));
       try {
         p.verifyWebhookSignature(rawBody, req.headers as Record<string, string>);
       } catch {

@@ -103,8 +103,11 @@ const billingRoutes: FastifyPluginAsync = async (app) => {
       const sig = req.headers['stripe-signature'];
       if (typeof sig !== 'string') throw AppError.badRequest('Missing Stripe-Signature header');
 
-      // Fastify parses body by default; use the raw string if available.
-      const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      // Verify against the exact bytes Stripe signed (preserved by the global
+      // raw-body parser); fall back to a re-serialized body only in its absence.
+      const rawBody =
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
+        (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
 
       const result = await handleStripeWebhook(rawBody, sig);
       return reply.send(result);

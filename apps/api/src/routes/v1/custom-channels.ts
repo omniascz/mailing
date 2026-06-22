@@ -149,7 +149,9 @@ const customChannelRoutes: FastifyPluginAsync = async (app) => {
       if (typeof sigHeader !== 'string') {
         throw AppError.badRequest('Missing x-forgemsg-signature header');
       }
-      const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {});
+      const rawBody =
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
+        (typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {}));
 
       const verified = await verifyInbound<Record<string, unknown>>(
         orgId,
