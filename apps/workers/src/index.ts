@@ -38,6 +38,9 @@ import { startWarmupAdvanceWorker, scheduleWarmupAdvance } from './jobs/warmup-a
 import { startDmarcImapPollWorker, scheduleDmarcImapPoll } from './jobs/dmarc-imap-poll.js';
 import { startAbWinnerWorker } from './jobs/ab-winner.js';
 import { startBlacklistMonitorWorker, scheduleBlacklistMonitor } from './jobs/blacklist-monitor.js';
+import { startWorkflowEmailWorker } from './jobs/workflow-email-sender.js';
+import { startWorkflowSmsWorker } from './jobs/workflow-sms-sender.js';
+import { startWorkflowSchedulerWorkers, scheduleWorkflowJobs } from './jobs/workflow-scheduler.js';
 import { QUEUE_NAMES } from './queues/index.js';
 import { initTelemetry, flushTelemetry } from './lib/telemetry.js';
 import { registerCzSkMergeFilters } from './lib/merge-filters-cz-sk.js';
@@ -77,6 +80,15 @@ const abWinnerWorker = startAbWinnerWorker();
 const blacklistMonitorWorker = startBlacklistMonitorWorker();
 scheduleBlacklistMonitor().catch(console.error);
 
+// Engine bus — consumers for the workflow-triggered 'email'/'sms' queues + the
+// repeatable run-resumer and daily-trigger cron. Without these, automation
+// (multi-step workflows, RFM/predictions, date/holiday triggers) does not run.
+const workflowEmailWorker = startWorkflowEmailWorker();
+const workflowSmsWorker = startWorkflowSmsWorker();
+const { resumeWorker: workflowResumeWorker, dailyWorker: dailyTriggersWorker } =
+  startWorkflowSchedulerWorkers();
+scheduleWorkflowJobs().catch(console.error);
+
 console.log('All workers started. Waiting for jobs...');
 
 async function shutdown() {
@@ -102,6 +114,10 @@ async function shutdown() {
     dmarcImapPollWorker.close(),
     abWinnerWorker.close(),
     blacklistMonitorWorker.close(),
+    workflowEmailWorker.close(),
+    workflowSmsWorker.close(),
+    workflowResumeWorker.close(),
+    dailyTriggersWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');

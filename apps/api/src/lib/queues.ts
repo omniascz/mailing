@@ -47,6 +47,14 @@ export const viberQueue = new Queue('viber-send', queueOpts);
  */
 export const campaignSplitterQueue = new Queue('campaign-splitter', queueOpts);
 
+/**
+ * Triggered batch-sender producer. Single-recipient triggered sends (workflow
+ * "send email" actions, sequences) enqueue here; the workers' triggered
+ * batch-sender consumes 'batch-sender-triggered' and runs the full
+ * render → track → suppress → MTA pipeline for the one contact.
+ */
+export const batchSenderTriggeredQueue = new Queue('batch-sender-triggered', queueOpts);
+
 export const PRIORITY = {
   TRANSACTIONAL: 1,
   TRIGGERED: 2,

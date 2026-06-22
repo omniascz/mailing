@@ -59,7 +59,10 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         summary: 'Run all daily workflow triggers (date/name-day/holiday)',
       },
     },
-    async (_req, reply) => {
+    async (req, reply) => {
+      if (process.env.INTERNAL_SECRET && req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET) {
+        return reply.status(401).send();
+      }
       // Run all three in parallel — they touch disjoint workflows
       // (filtered by triggerType) so there's no DB contention to fear.
       const [

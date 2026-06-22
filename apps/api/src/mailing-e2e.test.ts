@@ -244,3 +244,48 @@ describe('send-path integration wiring', () => {
     expect(src).toContain('recordOutcome');
   });
 });
+
+// ─── 7. Engine bus (orphan queues + schedulers now consumed) ──────────────────
+// Before this, the workflow-triggered 'email'/'sms' queues had no consumer and
+// no scheduler resumed waiting runs or ran daily triggers. These guards lock the
+// wiring so automation can actually execute in production.
+
+describe('engine bus wiring', () => {
+  const api = (rel: string) => readFileSync(join(__dirname, rel), 'utf8');
+  const worker = (rel: string) =>
+    readFileSync(join(__dirname, '../../workers/src', rel), 'utf8');
+
+  it("'email' queue has a consumer", () => {
+    expect(worker('jobs/workflow-email-sender.ts')).toMatch(/new Worker<[^>]*>\(\s*'email'/);
+  });
+
+  it("'sms' queue has a consumer", () => {
+    expect(worker('jobs/workflow-sms-sender.ts')).toMatch(/new Worker<[^>]*>\(\s*'sms'/);
+  });
+
+  it('workflow run-resumer + daily-triggers cron are scheduled', () => {
+    const src = worker('jobs/workflow-scheduler.ts');
+    expect(src).toContain('process-runs');
+    expect(src).toContain('daily-run');
+    expect(src).toMatch(/repeat:\s*\{\s*pattern:\s*'\* \* \* \* \*'/); // every minute
+  });
+
+  it('workers entrypoint starts all engine-bus workers', () => {
+    const src = worker('index.ts');
+    expect(src).toContain('startWorkflowEmailWorker');
+    expect(src).toContain('startWorkflowSmsWorker');
+    expect(src).toContain('scheduleWorkflowJobs');
+  });
+
+  it('internal dispatch endpoints exist + are registered', () => {
+    const dispatch = api('routes/v1/internal/workflow-dispatch.ts');
+    expect(dispatch).toContain('/api/v1/internal/workflow/process-runs');
+    expect(dispatch).toContain('/api/v1/internal/workflow/send-email');
+    expect(dispatch).toContain('/api/v1/internal/workflow/send-sms');
+    expect(api('index.ts')).toContain('internalWorkflowDispatchRoutes');
+  });
+
+  it('triggered batch queue exists for single-contact workflow emails', () => {
+    expect(api('lib/queues.ts')).toContain("new Queue('batch-sender-triggered'");
+  });
+});
