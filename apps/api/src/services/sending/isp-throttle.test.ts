@@ -68,34 +68,34 @@ describe('checkThrottle', () => {
     expect(redis.set).toHaveBeenCalled();
   });
 
-  it('allows send when tokens remain', async () => {
-    (redis.exists as ReturnType<typeof vi.fn>).mockResolvedValueOnce(1);
-    // effectiveLimit calls redis.get(reducedKey) first, then checkThrottle calls redis.get(tokenKey)
-    (redis.get as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce(null) // reducedKey → not reduced
-      .mockResolvedValueOnce('100'); // tokenKey → 100 remaining
+  it('allows send when tokens remain (atomic decr of existing bucket)', async () => {
+    // effectiveLimit reads reducedKey (null = not reduced); the SET NX returns
+    // null because the bucket already exists, so checkThrottle DECRs it.
+    (redis.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null); // reducedKey
+    (redis.set as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null); // NX: key exists
+    (redis.decr as ReturnType<typeof vi.fn>).mockResolvedValueOnce(99);
     const result = await checkThrottle('org1', 'gmail.com', '1.2.3.4');
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(99);
   });
 
-  it('blocks send when no tokens remain', async () => {
-    (redis.exists as ReturnType<typeof vi.fn>).mockResolvedValueOnce(1);
-    (redis.get as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce(null) // reduced check
-      .mockResolvedValueOnce('0'); // tokens
+  it('blocks send when the bucket is exhausted (decr goes negative)', async () => {
+    (redis.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null); // reducedKey
+    (redis.set as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null); // NX: key exists
+    (redis.decr as ReturnType<typeof vi.fn>).mockResolvedValueOnce(-1);
     const result = await checkThrottle('org1', 'gmail.com', '1.2.3.4');
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
   });
 
-  it('applies org-level override', async () => {
-    (redis.exists as ReturnType<typeof vi.fn>).mockResolvedValueOnce(0);
+  it('applies org-level override (seeds bucket with override − 1)', async () => {
+    (redis.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null); // not reduced
+    (redis.set as ReturnType<typeof vi.fn>).mockResolvedValueOnce('OK'); // NX seed succeeds
     const result = await checkThrottle('org1', 'gmail.com', '1.2.3.4', { gmail: 2000 });
     expect(result.allowed).toBe(true);
-    // The bucket should be seeded with 1999 (2000 - 1)
+    // Seeded with String(2000 - 1); redis stores strings.
     const setCall = (redis.set as ReturnType<typeof vi.fn>).mock.calls[0] as unknown[];
-    expect(setCall[1]).toBe(1999);
+    expect(setCall[1]).toBe('1999');
   });
 });
 
