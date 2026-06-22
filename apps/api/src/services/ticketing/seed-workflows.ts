@@ -75,6 +75,13 @@ export const SEED_DEFS: SeedDef[] = [
     html: wrap('<p>Gratulujeme {{first_name}}!</p><p>V losování jste získal/a možnost koupit vstupenky. Vyzvedněte si je do uvedeného termínu.</p><p><a href="{{buy_url}}">Vyzvednout →</a></p>'),
   },
   {
+    key: 'event_changed',
+    name: 'Ticketing — Event change notice',
+    eventName: 'ticketing.event_changed',
+    subject: 'Důležité: změna u vaší akce {{event_title}}',
+    html: wrap('<p>Ahoj {{first_name}},</p><p>u akce <strong>{{event_title}}</strong> došlo ke změně (důvod: {{reason}}). Zkontrolujte prosím detaily a potvrďte účast, nebo požádejte o vrácení peněz do {{response_deadline}}.</p>'),
+  },
+  {
     key: 'day_of_reminder',
     name: 'Ticketing — Day-of reminder',
     eventName: 'ticketing.day_of_reminder',
