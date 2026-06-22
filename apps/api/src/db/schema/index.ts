@@ -158,3 +158,4 @@ export * from './erp-sync.js';
 export * from './contact-send-time.js';
 export * from './channel-fallback.js';
 export * from './unsubscribe-experiments.js';
+export * from './ticketing.js';

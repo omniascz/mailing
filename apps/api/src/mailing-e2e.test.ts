@@ -84,6 +84,8 @@ describe('mailing surface auth gating (401 without session/API key)', () => {
     { method: 'GET', url: '/api/v1/inbox-placement' },
     { method: 'GET', url: `/api/v1/contacts/${DUMMY_UUID}/best-send-time` },
     { method: 'GET', url: `/api/v1/contacts/${DUMMY_UUID}/email-thread` },
+    // ticketing ingestion must be authenticated too
+    { method: 'POST', url: '/api/v1/ticketing/events' },
   ] as const;
 
   for (const { method, url } of gated) {
@@ -386,6 +388,23 @@ describe('security hardening', () => {
     const idx = api('services/rfm/index.ts');
     expect(idx).toContain('quintileCuts'); // org-data quintiles, not fixed thresholds
     expect(idx).toContain('scoreQuintile');
+  });
+
+  it('ticketing vertical: ingestion seam + 7-feature engines + recipe catalog', () => {
+    // the seam: ingestion endpoint + sync service
+    expect(api('routes/v1/ticketing.ts')).toContain('/api/v1/ticketing/events');
+    const ingest = api('services/ticketing/ingest.ts');
+    expect(ingest).toContain('ingestTicketingEvent');
+    expect(ingest).toContain('onApiEvent'); // fires workflow triggers
+    expect(ingest).toContain('upsertContactByEmail'); // contact sync
+    // new ticketing-specific engines
+    expect(api('services/ticketing/fill-the-house.ts')).toContain('buildCascadeSteps');
+    expect(api('services/ticketing/day-of.ts')).toContain('computeDayOfSchedule');
+    expect(api('services/ticketing/recommendations.ts')).toContain('coOccurrence');
+    // recipe catalog covers all 7 groups
+    expect(api('services/ticketing/recipes.ts')).toContain('TICKETING_RECIPES');
+    // domain schema registered
+    expect(api('db/schema/index.ts')).toContain("export * from './ticketing.js'");
   });
 
   it('transactional email supports attachments end-to-end (e-ticket PDF path)', () => {

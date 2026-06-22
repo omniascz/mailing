@@ -273,6 +273,7 @@ import inboxPlacementRoutes from './routes/v1/inbox-placement.js';
 import currencyAnalyticsRoutes from './routes/v1/currency-analytics.js';
 import emailThreadRoutes from './routes/v1/email-thread.js';
 import crossChannelAttributionRoutes from './routes/v1/cross-channel-attribution.js';
+import ticketingRoutes from './routes/v1/ticketing.js';
 import packetaRoutes from './routes/v1/integrations/packeta.js';
 import czPaymentRoutes from './routes/v1/integrations/payments-cz.js';
 import erpCzRoutes from './routes/v1/integrations/erp-cz.js';
@@ -586,6 +587,7 @@ export async function buildApp() {
   await app.register(currencyAnalyticsRoutes);
   await app.register(emailThreadRoutes);
   await app.register(crossChannelAttributionRoutes);
+  await app.register(ticketingRoutes);
   await app.register(packetaRoutes);
   await app.register(czPaymentRoutes);
   await app.register(erpCzRoutes);
