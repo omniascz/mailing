@@ -388,6 +388,26 @@ describe('security hardening', () => {
     expect(idx).toContain('scoreQuintile');
   });
 
+  it('transactional email supports attachments end-to-end (e-ticket PDF path)', () => {
+    // API: endpoint accepts attachments + passes them to the queue
+    const tx = api('routes/v1/transactional.ts');
+    expect(tx).toContain('attachments');
+    expect(api('lib/queues.ts')).toContain('TransactionalAttachment');
+    // worker: decodes base64 → Buffer for the gRPC call
+    const worker = readFileSync(
+      join(__dirname, '../../workers/src/jobs/mta-sender.ts'),
+      'utf8',
+    );
+    expect(worker).toContain("Buffer.from(a.contentBase64, 'base64')");
+    // engine: builds a multipart/mixed message with the attachment
+    const engine = readFileSync(
+      join(__dirname, '../../engine/internal/smtp/sender.go'),
+      'utf8',
+    );
+    expect(engine).toContain('multipart/mixed');
+    expect(engine).toContain('buildAttachmentPart');
+  });
+
   it('AI SQL sandbox enforces org isolation at the SQL level (no cross-org leak)', () => {
     const sandbox = api('services/ai-analytics/sandbox.ts');
     expect(sandbox).toContain('scopeTablesToOrg'); // SQL-level scoping, not in-memory only

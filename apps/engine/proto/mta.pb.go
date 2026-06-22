@@ -41,7 +41,9 @@ type SendRequest struct {
 	CampaignId string `protobuf:"bytes,13,opt,name=campaign_id,json=campaignId,proto3" json:"campaign_id,omitempty"`
 	ContactId  string `protobuf:"bytes,14,opt,name=contact_id,json=contactId,proto3" json:"contact_id,omitempty"`
 	// Sending IP override (empty = use default pool)
-	SendingIp     string `protobuf:"bytes,15,opt,name=sending_ip,json=sendingIp,proto3" json:"sending_ip,omitempty"`
+	SendingIp string `protobuf:"bytes,15,opt,name=sending_ip,json=sendingIp,proto3" json:"sending_ip,omitempty"`
+	// File attachments (e.g. e-ticket PDFs). Empty for link-only emails.
+	Attachments   []*Attachment `protobuf:"bytes,16,rep,name=attachments,proto3" json:"attachments,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -181,6 +183,89 @@ func (x *SendRequest) GetSendingIp() string {
 	return ""
 }
 
+func (x *SendRequest) GetAttachments() []*Attachment {
+	if x != nil {
+		return x.Attachments
+	}
+	return nil
+}
+
+type Attachment struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"` // MIME type, e.g. "application/pdf"
+	Content       []byte                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`                            // raw bytes (base64 on the wire via proto)
+	ContentId     string                 `protobuf:"bytes,4,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`       // for inline images referenced as cid:<id>
+	Inline        bool                   `protobuf:"varint,5,opt,name=inline,proto3" json:"inline,omitempty"`                             // true = inline (Content-Disposition: inline)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Attachment) Reset() {
+	*x = Attachment{}
+	mi := &file_proto_mta_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Attachment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Attachment) ProtoMessage() {}
+
+func (x *Attachment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_mta_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Attachment.ProtoReflect.Descriptor instead.
+func (*Attachment) Descriptor() ([]byte, []int) {
+	return file_proto_mta_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Attachment) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *Attachment) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+func (x *Attachment) GetContent() []byte {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
+func (x *Attachment) GetContentId() string {
+	if x != nil {
+		return x.ContentId
+	}
+	return ""
+}
+
+func (x *Attachment) GetInline() bool {
+	if x != nil {
+		return x.Inline
+	}
+	return false
+}
+
 type DkimConfig struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Domain        string                 `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
@@ -192,7 +277,7 @@ type DkimConfig struct {
 
 func (x *DkimConfig) Reset() {
 	*x = DkimConfig{}
-	mi := &file_proto_mta_proto_msgTypes[1]
+	mi := &file_proto_mta_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -204,7 +289,7 @@ func (x *DkimConfig) String() string {
 func (*DkimConfig) ProtoMessage() {}
 
 func (x *DkimConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_mta_proto_msgTypes[1]
+	mi := &file_proto_mta_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -217,7 +302,7 @@ func (x *DkimConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DkimConfig.ProtoReflect.Descriptor instead.
 func (*DkimConfig) Descriptor() ([]byte, []int) {
-	return file_proto_mta_proto_rawDescGZIP(), []int{1}
+	return file_proto_mta_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *DkimConfig) GetDomain() string {
@@ -256,7 +341,7 @@ type SendResponse struct {
 
 func (x *SendResponse) Reset() {
 	*x = SendResponse{}
-	mi := &file_proto_mta_proto_msgTypes[2]
+	mi := &file_proto_mta_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -268,7 +353,7 @@ func (x *SendResponse) String() string {
 func (*SendResponse) ProtoMessage() {}
 
 func (x *SendResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_mta_proto_msgTypes[2]
+	mi := &file_proto_mta_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -281,7 +366,7 @@ func (x *SendResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendResponse.ProtoReflect.Descriptor instead.
 func (*SendResponse) Descriptor() ([]byte, []int) {
-	return file_proto_mta_proto_rawDescGZIP(), []int{2}
+	return file_proto_mta_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SendResponse) GetSuccess() bool {
@@ -335,7 +420,7 @@ type SendBatchRequest struct {
 
 func (x *SendBatchRequest) Reset() {
 	*x = SendBatchRequest{}
-	mi := &file_proto_mta_proto_msgTypes[3]
+	mi := &file_proto_mta_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -347,7 +432,7 @@ func (x *SendBatchRequest) String() string {
 func (*SendBatchRequest) ProtoMessage() {}
 
 func (x *SendBatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_mta_proto_msgTypes[3]
+	mi := &file_proto_mta_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -360,7 +445,7 @@ func (x *SendBatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendBatchRequest.ProtoReflect.Descriptor instead.
 func (*SendBatchRequest) Descriptor() ([]byte, []int) {
-	return file_proto_mta_proto_rawDescGZIP(), []int{3}
+	return file_proto_mta_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SendBatchRequest) GetMessages() []*SendRequest {
@@ -381,7 +466,7 @@ type SendBatchResponse struct {
 
 func (x *SendBatchResponse) Reset() {
 	*x = SendBatchResponse{}
-	mi := &file_proto_mta_proto_msgTypes[4]
+	mi := &file_proto_mta_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -393,7 +478,7 @@ func (x *SendBatchResponse) String() string {
 func (*SendBatchResponse) ProtoMessage() {}
 
 func (x *SendBatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_mta_proto_msgTypes[4]
+	mi := &file_proto_mta_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -406,7 +491,7 @@ func (x *SendBatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendBatchResponse.ProtoReflect.Descriptor instead.
 func (*SendBatchResponse) Descriptor() ([]byte, []int) {
-	return file_proto_mta_proto_rawDescGZIP(), []int{4}
+	return file_proto_mta_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SendBatchResponse) GetResults() []*SendResponse {
@@ -438,7 +523,7 @@ type HealthCheckRequest struct {
 
 func (x *HealthCheckRequest) Reset() {
 	*x = HealthCheckRequest{}
-	mi := &file_proto_mta_proto_msgTypes[5]
+	mi := &file_proto_mta_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -450,7 +535,7 @@ func (x *HealthCheckRequest) String() string {
 func (*HealthCheckRequest) ProtoMessage() {}
 
 func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_mta_proto_msgTypes[5]
+	mi := &file_proto_mta_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -463,7 +548,7 @@ func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_proto_mta_proto_rawDescGZIP(), []int{5}
+	return file_proto_mta_proto_rawDescGZIP(), []int{6}
 }
 
 type HealthCheckResponse struct {
@@ -478,7 +563,7 @@ type HealthCheckResponse struct {
 
 func (x *HealthCheckResponse) Reset() {
 	*x = HealthCheckResponse{}
-	mi := &file_proto_mta_proto_msgTypes[6]
+	mi := &file_proto_mta_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -490,7 +575,7 @@ func (x *HealthCheckResponse) String() string {
 func (*HealthCheckResponse) ProtoMessage() {}
 
 func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_mta_proto_msgTypes[6]
+	mi := &file_proto_mta_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +588,7 @@ func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_proto_mta_proto_rawDescGZIP(), []int{6}
+	return file_proto_mta_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *HealthCheckResponse) GetHealthy() bool {
@@ -538,7 +623,7 @@ var File_proto_mta_proto protoreflect.FileDescriptor
 
 const file_proto_mta_proto_rawDesc = "" +
 	"\n" +
-	"\x0fproto/mta.proto\x12\x03mta\"\xb4\x04\n" +
+	"\x0fproto/mta.proto\x12\x03mta\"\xe7\x04\n" +
 	"\vSendRequest\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x01 \x01(\tR\tmessageId\x12\x1d\n" +
@@ -560,10 +645,19 @@ const file_proto_mta_proto_rawDesc = "" +
 	"\n" +
 	"contact_id\x18\x0e \x01(\tR\tcontactId\x12\x1d\n" +
 	"\n" +
-	"sending_ip\x18\x0f \x01(\tR\tsendingIp\x1a@\n" +
+	"sending_ip\x18\x0f \x01(\tR\tsendingIp\x121\n" +
+	"\vattachments\x18\x10 \x03(\v2\x0f.mta.AttachmentR\vattachments\x1a@\n" +
 	"\x12CustomHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"h\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9c\x01\n" +
+	"\n" +
+	"Attachment\x12\x1a\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12!\n" +
+	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\x12\x18\n" +
+	"\acontent\x18\x03 \x01(\fR\acontent\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x04 \x01(\tR\tcontentId\x12\x16\n" +
+	"\x06inline\x18\x05 \x01(\bR\x06inline\"h\n" +
 	"\n" +
 	"DkimConfig\x12\x16\n" +
 	"\x06domain\x18\x01 \x01(\tR\x06domain\x12\x1a\n" +
@@ -609,33 +703,35 @@ func file_proto_mta_proto_rawDescGZIP() []byte {
 	return file_proto_mta_proto_rawDescData
 }
 
-var file_proto_mta_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_proto_mta_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_proto_mta_proto_goTypes = []any{
 	(*SendRequest)(nil),         // 0: mta.SendRequest
-	(*DkimConfig)(nil),          // 1: mta.DkimConfig
-	(*SendResponse)(nil),        // 2: mta.SendResponse
-	(*SendBatchRequest)(nil),    // 3: mta.SendBatchRequest
-	(*SendBatchResponse)(nil),   // 4: mta.SendBatchResponse
-	(*HealthCheckRequest)(nil),  // 5: mta.HealthCheckRequest
-	(*HealthCheckResponse)(nil), // 6: mta.HealthCheckResponse
-	nil,                         // 7: mta.SendRequest.CustomHeadersEntry
+	(*Attachment)(nil),          // 1: mta.Attachment
+	(*DkimConfig)(nil),          // 2: mta.DkimConfig
+	(*SendResponse)(nil),        // 3: mta.SendResponse
+	(*SendBatchRequest)(nil),    // 4: mta.SendBatchRequest
+	(*SendBatchResponse)(nil),   // 5: mta.SendBatchResponse
+	(*HealthCheckRequest)(nil),  // 6: mta.HealthCheckRequest
+	(*HealthCheckResponse)(nil), // 7: mta.HealthCheckResponse
+	nil,                         // 8: mta.SendRequest.CustomHeadersEntry
 }
 var file_proto_mta_proto_depIdxs = []int32{
-	1, // 0: mta.SendRequest.dkim:type_name -> mta.DkimConfig
-	7, // 1: mta.SendRequest.custom_headers:type_name -> mta.SendRequest.CustomHeadersEntry
-	0, // 2: mta.SendBatchRequest.messages:type_name -> mta.SendRequest
-	2, // 3: mta.SendBatchResponse.results:type_name -> mta.SendResponse
-	0, // 4: mta.MTAService.Send:input_type -> mta.SendRequest
-	3, // 5: mta.MTAService.SendBatch:input_type -> mta.SendBatchRequest
-	5, // 6: mta.MTAService.HealthCheck:input_type -> mta.HealthCheckRequest
-	2, // 7: mta.MTAService.Send:output_type -> mta.SendResponse
-	4, // 8: mta.MTAService.SendBatch:output_type -> mta.SendBatchResponse
-	6, // 9: mta.MTAService.HealthCheck:output_type -> mta.HealthCheckResponse
-	7, // [7:10] is the sub-list for method output_type
-	4, // [4:7] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	2, // 0: mta.SendRequest.dkim:type_name -> mta.DkimConfig
+	8, // 1: mta.SendRequest.custom_headers:type_name -> mta.SendRequest.CustomHeadersEntry
+	1, // 2: mta.SendRequest.attachments:type_name -> mta.Attachment
+	0, // 3: mta.SendBatchRequest.messages:type_name -> mta.SendRequest
+	3, // 4: mta.SendBatchResponse.results:type_name -> mta.SendResponse
+	0, // 5: mta.MTAService.Send:input_type -> mta.SendRequest
+	4, // 6: mta.MTAService.SendBatch:input_type -> mta.SendBatchRequest
+	6, // 7: mta.MTAService.HealthCheck:input_type -> mta.HealthCheckRequest
+	3, // 8: mta.MTAService.Send:output_type -> mta.SendResponse
+	5, // 9: mta.MTAService.SendBatch:output_type -> mta.SendBatchResponse
+	7, // 10: mta.MTAService.HealthCheck:output_type -> mta.HealthCheckResponse
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_proto_mta_proto_init() }
@@ -649,7 +745,7 @@ func file_proto_mta_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_mta_proto_rawDesc), len(file_proto_mta_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

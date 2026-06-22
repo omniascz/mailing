@@ -38,6 +38,17 @@ message SendRequest {
 
   // Sending IP override (empty = use default pool)
   string sending_ip = 15;
+
+  // File attachments (e.g. e-ticket PDFs). Empty for link-only emails.
+  repeated Attachment attachments = 16;
+}
+
+message Attachment {
+  string filename = 1;
+  string content_type = 2; // MIME type, e.g. "application/pdf"
+  bytes content = 3;       // raw bytes (base64 on the wire via proto)
+  string content_id = 4;   // for inline images referenced as cid:<id>
+  bool inline = 5;         // true = inline (Content-Disposition: inline)
 }
 
 message DkimConfig {

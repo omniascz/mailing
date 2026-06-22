@@ -150,5 +150,15 @@ func requestToMessage(req *pb.SendRequest) *smtpsend.Message {
 		}
 	}
 
+	for _, a := range req.Attachments {
+		msg.Attachments = append(msg.Attachments, smtpsend.Attachment{
+			Filename:    a.Filename,
+			ContentType: a.ContentType,
+			Content:     a.Content,
+			ContentID:   a.ContentId,
+			Inline:      a.Inline,
+		})
+	}
+
 	return msg
 }

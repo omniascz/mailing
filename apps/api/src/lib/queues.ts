@@ -75,6 +75,15 @@ export const mtaOtherQueue = new Queue('mta-other', queueOpts);
 
 import { randomUUID } from 'node:crypto';
 
+export interface TransactionalAttachment {
+  filename: string;
+  contentType: string;
+  /** Base64-encoded file content (kept JSON-serialisable through the queue). */
+  contentBase64: string;
+  contentId?: string;
+  inline?: boolean;
+}
+
 export interface TransactionalEmailInput {
   to: string;
   toName?: string;
@@ -88,6 +97,8 @@ export interface TransactionalEmailInput {
   orgId?: string;
   /** Optional contact ID if this is to a known recipient. */
   contactId?: string;
+  /** File attachments (e-ticket PDFs etc.). Omit for link-only delivery. */
+  attachments?: TransactionalAttachment[];
 }
 
 /**
@@ -122,6 +133,9 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       customHeaders: {},
       priority: PRIORITY.TRANSACTIONAL,
       stream: 'transactional',
+      ...(input.attachments && input.attachments.length > 0
+        ? { attachments: input.attachments }
+        : {}),
     },
     { priority: PRIORITY.TRANSACTIONAL },
   );

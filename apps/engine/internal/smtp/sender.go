@@ -6,6 +6,7 @@ package smtp
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"strings"
@@ -37,6 +38,18 @@ type Message struct {
 	SendingDomain    string // used in Feedback-ID (e.g. "mail.forgemsg.cz")
 	CampaignCategory string // Seznam X-Seznam-Campaign-Category value
 	Stream           string // "broadcast" | "triggered" | "transactional"
+
+	// File attachments (e.g. e-ticket PDFs). Empty = link-only email.
+	Attachments []Attachment
+}
+
+// Attachment is a file part for multipart/mixed emails.
+type Attachment struct {
+	Filename    string
+	ContentType string // MIME type; defaults to application/octet-stream
+	Content     []byte // raw bytes
+	ContentID   string // for inline images referenced as cid:<id>
+	Inline      bool   // true → Content-Disposition: inline
 }
 
 // Result is the outcome of a single send attempt.
@@ -240,22 +253,47 @@ func buildRawMessage(msg *Message) (string, map[string]string, string) {
 	headers["message-id"] = fmt.Sprintf("<%s>", msg.MessageID)
 	headers["mime-version"] = "1.0"
 
-	// Build MIME body
-	var body string
-	boundary := fmt.Sprintf("forgemsg_%s", msg.MessageID[:8])
+	// Build the content part (the text/html body), capturing its own
+	// Content-Type so it can be embedded inside multipart/mixed when there are
+	// attachments.
+	idSeed := msg.MessageID
+	if len(idSeed) < 8 {
+		idSeed = idSeed + "00000000"
+	}
+	boundary := fmt.Sprintf("forgemsg_%s", idSeed[:8])
 
+	var contentType, contentBody string
 	if msg.TextBody != "" && msg.HTMLBody != "" {
-		headers["content-type"] = fmt.Sprintf("multipart/alternative; boundary=%q", boundary)
-		body = fmt.Sprintf(
+		contentType = fmt.Sprintf("multipart/alternative; boundary=%q", boundary)
+		contentBody = fmt.Sprintf(
 			"--%s\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n%s\r\n--%s\r\nContent-Type: text/html; charset=utf-8\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n%s\r\n--%s--\r\n",
 			boundary, msg.TextBody, boundary, msg.HTMLBody, boundary,
 		)
 	} else if msg.HTMLBody != "" {
-		headers["content-type"] = "text/html; charset=utf-8"
-		body = msg.HTMLBody
+		contentType = "text/html; charset=utf-8"
+		contentBody = msg.HTMLBody
 	} else {
-		headers["content-type"] = "text/plain; charset=utf-8"
-		body = msg.TextBody
+		contentType = "text/plain; charset=utf-8"
+		contentBody = msg.TextBody
+	}
+
+	var body string
+	if len(msg.Attachments) > 0 {
+		// Wrap the content + attachments in multipart/mixed.
+		mixed := fmt.Sprintf("forgemsg_mixed_%s", idSeed[:8])
+		headers["content-type"] = fmt.Sprintf("multipart/mixed; boundary=%q", mixed)
+		var b strings.Builder
+		// Part 1: the message body, carrying its own content-type.
+		b.WriteString(fmt.Sprintf("--%s\r\nContent-Type: %s\r\n\r\n%s\r\n", mixed, contentType, contentBody))
+		// Parts 2..n: attachments, base64-encoded.
+		for _, att := range msg.Attachments {
+			b.WriteString(buildAttachmentPart(mixed, att))
+		}
+		b.WriteString(fmt.Sprintf("--%s--\r\n", mixed))
+		body = b.String()
+	} else {
+		headers["content-type"] = contentType
+		body = contentBody
 	}
 
 	// Add reply-to
@@ -309,6 +347,50 @@ func buildRawMessage(msg *Message) (string, map[string]string, string) {
 	raw.WriteString(body)
 
 	return raw.String(), headers, body
+}
+
+// buildAttachmentPart renders one multipart/mixed attachment part with
+// base64 content wrapped at 76 columns (RFC 2045).
+func buildAttachmentPart(boundary string, att Attachment) string {
+	ct := att.ContentType
+	if ct == "" {
+		ct = "application/octet-stream"
+	}
+	disposition := "attachment"
+	if att.Inline {
+		disposition = "inline"
+	}
+
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("--%s\r\n", boundary))
+	b.WriteString(fmt.Sprintf("Content-Type: %s; name=%q\r\n", ct, att.Filename))
+	b.WriteString("Content-Transfer-Encoding: base64\r\n")
+	b.WriteString(fmt.Sprintf("Content-Disposition: %s; filename=%q\r\n", disposition, att.Filename))
+	if att.ContentID != "" {
+		b.WriteString(fmt.Sprintf("Content-ID: <%s>\r\n", att.ContentID))
+	}
+	b.WriteString("\r\n")
+	b.WriteString(wrapBase64(base64.StdEncoding.EncodeToString(att.Content)))
+	b.WriteString("\r\n")
+	return b.String()
+}
+
+// wrapBase64 splits an encoded string into 76-char lines per RFC 2045.
+func wrapBase64(s string) string {
+	const width = 76
+	if len(s) <= width {
+		return s
+	}
+	var b strings.Builder
+	for i := 0; i < len(s); i += width {
+		end := i + width
+		if end > len(s) {
+			end = len(s)
+		}
+		b.WriteString(s[i:end])
+		b.WriteString("\r\n")
+	}
+	return strings.TrimSuffix(b.String(), "\r\n")
 }
 
 // headerName converts a lowercase header name to its canonical form.

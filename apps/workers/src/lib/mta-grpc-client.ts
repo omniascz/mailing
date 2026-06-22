@@ -45,6 +45,15 @@ export interface DkimConfig {
   privateKeyPem: string;
 }
 
+export interface Attachment {
+  filename: string;
+  contentType: string;
+  /** Raw bytes — proto-loader serializes a Buffer into the `bytes` field. */
+  content: Buffer;
+  contentId?: string;
+  inline?: boolean;
+}
+
 export interface SendRequest {
   messageId: string;
   fromEmail: string;
@@ -61,6 +70,8 @@ export interface SendRequest {
   campaignId: string;
   contactId: string;
   sendingIp: string;
+  /** File attachments (e-ticket PDFs etc.). Empty/omitted for link-only mail. */
+  attachments?: Attachment[];
 }
 
 export interface SendResponse {

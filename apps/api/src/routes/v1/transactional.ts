@@ -37,6 +37,21 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           scheduleAt: z.string().datetime().optional(),
           metadata: z.record(z.unknown()).optional(),
           tags: z.array(z.string()).max(20).optional(),
+          // File attachments (e-ticket PDFs etc.). Omit for link-only delivery.
+          // contentBase64 capped at ~14 MB chars (~10 MB raw) to stay under the
+          // engine's 16 MB gRPC message limit.
+          attachments: z
+            .array(
+              z.object({
+                filename: z.string().min(1).max(255),
+                contentType: z.string().min(1).max(128),
+                contentBase64: z.string().min(1).max(14_000_000),
+                contentId: z.string().max(128).optional(),
+                inline: z.boolean().optional(),
+              }),
+            )
+            .max(10)
+            .optional(),
         })
         .parse(req.body);
 
@@ -72,6 +87,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         html: html || '<p></p>',
         text: text || undefined,
         orgId,
+        attachments: body.attachments,
       });
 
       // Log send event for analytics + delivery webhooks.
@@ -85,13 +101,20 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           tags: body.tags ?? [],
           scheduleAt: body.scheduleAt ?? null,
           templateId: body.templateId ?? null,
+          attachmentCount: body.attachments?.length ?? 0,
           ...body.metadata,
         },
       });
 
       return reply
         .code(202)
-        .send({ data: { messageId, status: body.scheduleAt ? 'scheduled' : 'queued' } });
+        .send({
+          data: {
+            messageId,
+            status: body.scheduleAt ? 'scheduled' : 'queued',
+            attachments: body.attachments?.length ?? 0,
+          },
+        });
     },
   );
 

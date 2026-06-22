@@ -61,6 +61,13 @@ async function sendViaMta(data: MtaSendJobData): Promise<MtaSendResult> {
             privateKeyPem: data.dkimPrivateKey ?? '',
           }
         : undefined,
+      attachments: data.attachments?.map((a) => ({
+        filename: a.filename,
+        contentType: a.contentType,
+        content: Buffer.from(a.contentBase64, 'base64'),
+        contentId: a.contentId,
+        inline: a.inline,
+      })),
     });
 
     return {
