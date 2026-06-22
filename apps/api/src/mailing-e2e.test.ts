@@ -330,6 +330,15 @@ describe('security hardening', () => {
     expect(src).toContain('computeCampaignStats'); // shared pure fold
   });
 
+  it('predictive scoring uses a probabilistic model (not linear heuristics)', () => {
+    const pure = api('services/predictive-segmentation/pure.ts');
+    expect(pure).toContain('Gamma'); // Gamma–Poisson shrinkage
+    expect(pure).toContain('P(alive)'); // exponential survival
+    // the old linear extrapolation (× 730) must be gone from the service
+    expect(api('services/predictive-segmentation/index.ts')).not.toContain('* 730');
+    expect(api('services/predictive-segmentation/index.ts')).toContain('estimatePopulationRate');
+  });
+
   it('ClickHouse pipeline exists: client + schema + replicator + cron', () => {
     expect(api('services/analytics/clickhouse/client.ts')).toContain('FORMAT JSONEachRow');
     expect(api('services/analytics/clickhouse/schema.ts')).toContain('MATERIALIZED VIEW');

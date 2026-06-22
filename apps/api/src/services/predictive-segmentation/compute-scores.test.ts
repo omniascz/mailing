@@ -45,7 +45,27 @@ describe('computeScores', () => {
     expect(s.clv).toBeGreaterThan(0);
   });
 
-  it('long-dormant past buyer: high churn risk', () => {
+  it('frequent buyer gone dormant (many cadences silent): high churn risk', () => {
+    // ~22-day cadence (12 orders / 240d) but silent for 200d ≈ 9 cadences →
+    // exponential survival drives P(alive)→0, so churn→1. (Under the old
+    // days/180 heuristic an infrequent buyer looked equally churned; the
+    // survival model correctly keys churn to each customer's OWN cadence.)
+    const s = computeScores({
+      totalOrders: 12,
+      totalRevenue: 1200,
+      totalOpens: 10,
+      totalClicks: 2,
+      totalSends: 50,
+      firstOrderAt: daysAgo(240),
+      lastOrderAt: daysAgo(200),
+    });
+    expect(s.churnRisk).toBeGreaterThanOrEqual(0.9);
+    expect(s.purchaseLikelihood).toBeLessThan(0.3);
+  });
+
+  it('infrequent buyer silent LESS than their cadence: NOT high churn', () => {
+    // ~yearly buyer (3 orders / 800d → ~400d cadence) silent 200d (< cadence)
+    // should be moderate, not alarmed — the key correctness win over days/180.
     const s = computeScores({
       totalOrders: 3,
       totalRevenue: 300,
@@ -55,8 +75,7 @@ describe('computeScores', () => {
       firstOrderAt: daysAgo(800),
       lastOrderAt: daysAgo(200),
     });
-    expect(s.churnRisk).toBeGreaterThanOrEqual(0.9);
-    expect(s.purchaseLikelihood).toBeLessThan(0.3);
+    expect(s.churnRisk).toBeLessThan(0.7);
   });
 
   it('purchase likelihood + churn risk always in [0..1]', () => {
@@ -116,7 +135,7 @@ describe('computeScores', () => {
     expect(Number.isFinite(s.churnRisk)).toBe(true);
   });
 
-  it('engagement-only contact (opens but no orders) → low churn, low clv', () => {
+  it('engagement-only contact (opens but no orders) → no purchase model, moderate churn', () => {
     const s = computeScores({
       totalOrders: 0,
       totalRevenue: 0,
@@ -127,8 +146,9 @@ describe('computeScores', () => {
       lastOrderAt: null,
     });
     expect(s.clv).toBe(0);
-    // wasActive=true via opens>=3, but no lastOrderAt so daysSinceLastOrder=Infinity
-    // → churn clamps to 1. This is the "we engaged once and went silent" branch.
-    expect(s.churnRisk).toBe(1);
+    // No purchase history → engagement-only cold start. eng=(10*0.4+2)/20=0.3,
+    // churn = min(0.5, 1-eng) = 0.5 (engaged but never bought ≠ certain churn).
+    expect(s.churnRisk).toBe(0.5);
+    expect(s.purchaseLikelihood).toBeCloseTo(0.09, 2); // 0.3 * eng
   });
 });

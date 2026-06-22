@@ -10,74 +10,50 @@
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contactEngagement, contacts } from '../../db/schema/index.js';
+import {
+  computePredictiveScores,
+  estimatePopulationRate,
+  type PredictiveInput,
+  type PredictiveOptions,
+  type PredictiveScores,
+} from './pure.js';
 
-export interface PredictiveScores {
-  clv: number; // predicted USD lifetime value
-  purchaseLikelihood: number; // 0..1
-  churnRisk: number; // 0..1
-}
+export type { PredictiveScores };
 
-/** Compute scores for a single contact from its engagement aggregates. */
-export function computeScores(row: {
-  totalOrders: number;
-  totalRevenue: number;
-  totalOpens: number;
-  totalClicks: number;
-  totalSends: number;
-  firstOrderAt: Date | null;
-  lastOrderAt: Date | null;
-}): PredictiveScores {
-  const now = Date.now();
-  const tenureDays = row.firstOrderAt
-    ? Math.max(1, (now - row.firstOrderAt.getTime()) / 86_400_000)
-    : 0;
-  const daysSinceLastOrder = row.lastOrderAt
-    ? (now - row.lastOrderAt.getTime()) / 86_400_000
-    : Infinity;
-
-  // CLV — extrapolate current purchase velocity across a 2-year horizon.
-  const avgOrder = row.totalOrders > 0 ? row.totalRevenue / row.totalOrders : 0;
-  const ordersPerDay = tenureDays > 0 ? row.totalOrders / tenureDays : 0;
-  const clv = Math.round(avgOrder * ordersPerDay * 730 * 100) / 100;
-
-  // Purchase likelihood — combines recency, frequency and recent engagement.
-  const recencyScore = row.totalOrders === 0 ? 0 : Math.exp(-daysSinceLastOrder / 30); // half-life ~21d
-  const engagementScore =
-    row.totalSends > 0
-      ? Math.min(1, (row.totalOpens * 0.4 + row.totalClicks * 1.0) / row.totalSends)
-      : 0;
-  const frequencyScore = Math.min(1, row.totalOrders / 5);
-  const purchaseLikelihood = Math.min(
-    1,
-    0.5 * recencyScore + 0.3 * engagementScore + 0.2 * frequencyScore,
-  );
-
-  // Churn risk — high if recent inactivity + previously active.
-  const wasActive = row.totalOrders >= 1 || row.totalOpens >= 3;
-  const churnRisk = !wasActive ? 0.1 : Math.min(1, daysSinceLastOrder / 180);
-
-  return {
-    clv: Number.isFinite(clv) ? clv : 0,
-    purchaseLikelihood: Math.round(purchaseLikelihood * 1000) / 1000,
-    churnRisk: Math.round(churnRisk * 1000) / 1000,
-  };
+/**
+ * Compute scores for a single contact. Thin wrapper over the probabilistic
+ * model in ./pure.ts (Gamma–Poisson rate + exponential survival). `opts` lets
+ * the batch refresh inject the org's population rate for Bayesian shrinkage.
+ */
+export function computeScores(row: PredictiveInput, opts: PredictiveOptions = {}): PredictiveScores {
+  return computePredictiveScores(row, opts);
 }
 
 /** Recompute scores for every contact in the org. */
 export async function refreshOrgPredictions(orgId: string): Promise<{ updated: number }> {
   const rows = await db.select().from(contactEngagement).where(eq(contactEngagement.orgId, orgId));
 
+  // Population purchase rate → Bayesian shrinkage prior for sparse customers.
+  const now = Date.now();
+  const populationRatePerDay = estimatePopulationRate(
+    rows.map((r) => ({ totalOrders: r.totalOrders, firstOrderAt: r.firstOrderAt })),
+    now,
+  );
+
   let updated = 0;
   for (const row of rows) {
-    const scores = computeScores({
-      totalOrders: row.totalOrders,
-      totalRevenue: Number(row.totalRevenue),
-      totalOpens: row.totalOpens,
-      totalClicks: row.totalClicks,
-      totalSends: row.totalSends,
-      firstOrderAt: row.firstOrderAt,
-      lastOrderAt: row.lastOrderAt,
-    });
+    const scores = computeScores(
+      {
+        totalOrders: row.totalOrders,
+        totalRevenue: Number(row.totalRevenue),
+        totalOpens: row.totalOpens,
+        totalClicks: row.totalClicks,
+        totalSends: row.totalSends,
+        firstOrderAt: row.firstOrderAt,
+        lastOrderAt: row.lastOrderAt,
+      },
+      { populationRatePerDay, nowMs: now },
+    );
     await db
       .update(contactEngagement)
       .set({
