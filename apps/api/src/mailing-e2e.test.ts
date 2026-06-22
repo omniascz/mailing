@@ -346,6 +346,14 @@ describe('security hardening', () => {
     expect(pred).toContain("modelSource: model ? 'fitted' : 'heuristic'"); // graceful fallback
   });
 
+  it('per-contact STO uses empirical-Bayes shrinkage (not raw Laplace)', () => {
+    expect(api('services/send-optimization/sto-pure.ts')).toContain('posterior[h]');
+    const svc = api('services/send-optimization/per-contact-sto.ts');
+    expect(svc).toContain('getOrgHourPrior'); // population prior
+    expect(svc).toContain('computeStoFromCounts');
+    expect(svc).not.toContain('Laplace smoothing'); // old approach removed
+  });
+
   it('ClickHouse pipeline exists: client + schema + replicator + cron', () => {
     expect(api('services/analytics/clickhouse/client.ts')).toContain('FORMAT JSONEachRow');
     expect(api('services/analytics/clickhouse/schema.ts')).toContain('MATERIALIZED VIEW');

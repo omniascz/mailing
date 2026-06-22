@@ -1,25 +1,51 @@
 /**
  * Per-contact send-time optimization (STO).
- * Unlike cohort-level STO, this predicts the best delivery hour
- * for each individual contact based on their own open history.
- *
- * Algorithm:
- *   1. Load all email opens for the contact (last 6 months)
- *   2. Build a 24-slot UTC open-rate histogram
- *   3. Apply Laplace smoothing (α=0.1) to handle sparse data
- *   4. Return the best hour + confidence (based on sample size)
+ * Predicts the best delivery hour for each contact from their own open history,
+ * shrunk toward the org's population hour distribution (empirical Bayes) so
+ * sparse contacts don't get a confident "best hour" from one open. See sto-pure.ts.
  */
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/email-events.js';
 import { contactSendTimePredictions, type ContactSendTimePrediction } from '../../db/schema/contact-send-time.js';
+import { redis } from '../../lib/redis.js';
+import { computeStoFromCounts, normalizeHistogram, uniformPrior, HOURS } from './sto-pure.js';
 
-const ALPHA = 0.1; // Laplace smoothing
-const MIN_SAMPLE_HIGH_CONFIDENCE = 20;
+const PRIOR_KEY = (orgId: string) => `sto:hour-prior:${orgId}`;
+const PRIOR_TTL = 86_400; // 24h
 
-function smoothed(counts: number[], total: number): number[] {
-  const slots = counts.length;
-  return counts.map((c) => (c + ALPHA) / (total + ALPHA * slots));
+/**
+ * Org-wide open-hour distribution used as the Bayesian prior. Cached 24h so the
+ * per-contact batch doesn't re-aggregate the whole org each time.
+ */
+export async function getOrgHourPrior(orgId: string): Promise<number[]> {
+  const cached = await redis.get(PRIOR_KEY(orgId)).catch(() => null);
+  if (cached) {
+    try {
+      const arr = JSON.parse(cached) as number[];
+      if (Array.isArray(arr) && arr.length === HOURS) return arr;
+    } catch {
+      /* refit */
+    }
+  }
+
+  const since = new Date(Date.now() - 180 * 86400_000);
+  const rows = await db
+    .select({
+      hour: sql<number>`extract(hour from created_at at time zone 'UTC')::int`,
+      cnt: sql<number>`count(*)::int`,
+    })
+    .from(emailEvents)
+    .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.eventType, 'open'), gte(emailEvents.createdAt, since)))
+    .groupBy(sql`extract(hour from created_at at time zone 'UTC')::int`);
+
+  const counts = new Array(HOURS).fill(0) as number[];
+  for (const r of rows) {
+    if (r.hour >= 0 && r.hour < HOURS) counts[r.hour] = Number(r.cnt);
+  }
+  const prior = counts.reduce((a, b) => a + b, 0) > 0 ? normalizeHistogram(counts) : uniformPrior();
+  await redis.set(PRIOR_KEY(orgId), JSON.stringify(prior), 'EX', PRIOR_TTL).catch(() => {});
+  return prior;
 }
 
 export async function computeContactSendTime(
@@ -38,21 +64,20 @@ export async function computeContactSendTime(
       gte(emailEvents.createdAt, since),
     ));
 
-  const counts = new Array(24).fill(0) as number[];
+  const counts = new Array(HOURS).fill(0) as number[];
   for (const r of rows) {
     const h = r.hour;
-    if (h >= 0 && h < 24) counts[h] = (counts[h] ?? 0) + 1;
+    if (h >= 0 && h < HOURS) counts[h] = (counts[h] ?? 0) + 1;
   }
-  const total = rows.length;
-  const rates = smoothed(counts, total);
 
-  // Find best and second best hour
-  const indexed = rates.map((r, i) => ({ r, i })).sort((a, b) => b.r - a.r);
-  const bestHour = indexed[0]?.i ?? 10;
-  const secondBest = indexed[1]?.i ?? null;
-
-  // Confidence: 0 when < 5 samples, 1 at ≥ MIN_SAMPLE_HIGH_CONFIDENCE
-  const confidence = Math.min(1, total / MIN_SAMPLE_HIGH_CONFIDENCE);
+  // Empirical-Bayes shrinkage toward the org's hour distribution.
+  const prior = await getOrgHourPrior(orgId);
+  const sto = computeStoFromCounts(counts, prior);
+  const bestHour = sto.bestHourUtc;
+  const secondBest = sto.secondBestHourUtc;
+  const confidence = sto.confidence;
+  const rates = sto.rates;
+  const total = sto.sampleSize;
 
   const [existing] = await db.select({ id: contactSendTimePredictions.id })
     .from(contactSendTimePredictions)
