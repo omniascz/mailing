@@ -178,4 +178,41 @@ export default async function voiceRoutes(app: FastifyInstance) {
       return { data: { status: 'recorded' } };
     },
   );
+
+  // ─── Answer webhook → TwiML that bridges the call to the AI voice bot ─────────
+  // Set this as the Twilio Voice "A call comes in" / outbound answer URL. It
+  // returns <Connect><Stream> pointing at the voice-bot Twilio Media Streams
+  // bridge, which runs the live Deepgram→Claude→ElevenLabs loop. (The previous
+  // /voice/callback is only the status+recording webhook — it stays JSON.)
+  const answerHandler = async (
+    req: { query: unknown },
+    reply: { type: (t: string) => { send: (b: string) => unknown } },
+  ) => {
+    const { call_id, org_id } = z
+      .object({ call_id: z.string().optional(), org_id: z.string().optional() })
+      .parse(req.query);
+
+    const wssUrl = process.env.VOICE_BOT_WSS_URL ?? 'wss://localhost:8788';
+    const params = [
+      org_id ? `      <Parameter name="orgId" value="${org_id}" />` : '',
+      call_id ? `      <Parameter name="callId" value="${call_id}" />` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const twiml =
+      `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<Response>\n` +
+      `  <Connect>\n` +
+      `    <Stream url="${wssUrl}">\n` +
+      (params ? `${params}\n` : '') +
+      `    </Stream>\n` +
+      `  </Connect>\n` +
+      `</Response>`;
+
+    return reply.type('text/xml').send(twiml);
+  };
+
+  app.post('/api/v1/voice/answer', { schema: { tags: ['Voice'], summary: 'TwiML — bridge call to AI bot' } }, answerHandler);
+  app.get('/api/v1/voice/answer', { schema: { tags: ['Voice'], summary: 'TwiML — bridge call to AI bot' } }, answerHandler);
 }

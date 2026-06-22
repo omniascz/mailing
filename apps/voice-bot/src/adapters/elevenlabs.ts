@@ -12,14 +12,24 @@ function pcmFormat(sampleRate?: number): { fmt: string; sr: number } {
   return { fmt: `pcm_${sr}`, sr };
 }
 
+export interface ElevenLabsOpts {
+  modelId?: string;
+  /** 'ulaw_8000' for Twilio Media Streams (μ-law passthrough); else PCM. */
+  outputFormat?: 'pcm' | 'ulaw_8000';
+}
+
 export function createElevenLabsTts(
   apiKey: string,
-  modelId = 'eleven_multilingual_v2',
+  opts: ElevenLabsOpts | string = {},
 ): TtsAdapter {
+  // Back-compat: a bare string is treated as the model id.
+  const o: ElevenLabsOpts = typeof opts === 'string' ? { modelId: opts } : opts;
+  const modelId = o.modelId ?? 'eleven_multilingual_v2';
   return {
     async *stream({ text, voiceId, sampleRate, signal }) {
       if (!text.trim()) return;
-      const { fmt, sr } = pcmFormat(sampleRate);
+      const { fmt, sr } =
+        o.outputFormat === 'ulaw_8000' ? { fmt: 'ulaw_8000', sr: 8000 } : pcmFormat(sampleRate);
       const url = `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(
         voiceId,
       )}/stream?output_format=${fmt}`;

@@ -48,12 +48,22 @@ function makeEventQueue<T>() {
   };
 }
 
-export function createDeepgramStt(apiKey: string, model = 'nova-2'): SttAdapter {
+export interface DeepgramOpts {
+  model?: string;
+  /** Wire encoding of the PCM pushed in. 'mulaw' for Twilio Media Streams. */
+  encoding?: 'linear16' | 'mulaw';
+}
+
+export function createDeepgramStt(apiKey: string, opts: DeepgramOpts | string = {}): SttAdapter {
+  // Back-compat: a bare string is treated as the model name.
+  const o: DeepgramOpts = typeof opts === 'string' ? { model: opts } : opts;
+  const model = o.model ?? 'nova-2';
+  const encoding = o.encoding ?? 'linear16';
   return {
     open({ sampleRate, language }): SttStream {
       const q = makeEventQueue<SttEvent>();
       const params = new URLSearchParams({
-        encoding: 'linear16',
+        encoding,
         sample_rate: String(sampleRate),
         language,
         model,

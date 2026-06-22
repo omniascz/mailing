@@ -375,4 +375,19 @@ describe('vapor shells made real', () => {
     expect(worker('jobs/workflow-scheduler.ts')).toContain('warehouse-sync/run-due');
     expect(api('index.ts')).toContain('internalWarehouseSyncRoutes');
   });
+
+  it('voice-bot has a Twilio Media Streams bridge (μ-law passthrough + barge-in)', () => {
+    const src = voice('api/twilio-bridge.ts');
+    expect(src).toContain('chunkUlaw');
+    expect(src).toContain("event: 'clear'"); // barge-in flush
+    expect(voice('index.ts')).toContain('createTwilioBridge');
+  });
+
+  it('voice answer webhook returns TwiML that bridges the call to the bot', async () => {
+    const res = await app.inject({ method: 'POST', url: '/api/v1/voice/answer', payload: {} });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toContain('xml');
+    expect(res.body).toContain('<Connect>');
+    expect(res.body).toContain('<Stream');
+  });
 });
