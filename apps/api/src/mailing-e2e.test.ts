@@ -337,3 +337,42 @@ describe('security hardening', () => {
     }
   });
 });
+
+// ─── 9. Vapor shells made real ────────────────────────────────────────────────
+// RCS, voice-bot and warehouse-sync had no real provider/export at all. Lock the
+// real implementations so they can't regress to shells.
+
+describe('vapor shells made real', () => {
+  const api = (rel: string) => readFileSync(join(__dirname, rel), 'utf8');
+  const worker = (rel: string) =>
+    readFileSync(join(__dirname, '../../workers/src', rel), 'utf8');
+  const voice = (rel: string) =>
+    readFileSync(join(__dirname, '../../voice-bot/src', rel), 'utf8');
+
+  it('RCS dispatches via a real provider + worker', () => {
+    expect(api('services/rcs/index.ts')).toContain('rcsQueue');
+    expect(api('services/rcs/providers/sinch.ts')).toContain('rcs.api.sinch.com');
+    expect(worker('jobs/rcs-sender.ts')).toMatch(/new Worker<[^>]*>\(\s*'rcs-send'/);
+  });
+
+  it('voice-bot uses real Deepgram/ElevenLabs/Claude adapters (not just stubs)', () => {
+    expect(voice('index.ts')).toContain('resolveAdapters');
+    expect(voice('adapters/deepgram.ts')).toContain('api.deepgram.com');
+    expect(voice('adapters/elevenlabs.ts')).toContain('api.elevenlabs.io');
+    expect(voice('adapters/claude.ts')).toContain('api.anthropic.com');
+  });
+
+  it('warehouse-sync actually exports (S3 SigV4 / BigQuery), no silent ok', () => {
+    const src = api('services/warehouse-sync/index.ts');
+    expect(src).toContain('putObjectS3');
+    expect(src).toContain('insertAllBigQuery');
+    // the old fake "delegate to integration layer ... lastStatus ok" path is gone
+    expect(src).not.toContain('adapters delegate to integration layer');
+    expect(src).toContain('runDueSyncs');
+  });
+
+  it('warehouse-sync runner is scheduled hourly', () => {
+    expect(worker('jobs/workflow-scheduler.ts')).toContain('warehouse-sync/run-due');
+    expect(api('index.ts')).toContain('internalWarehouseSyncRoutes');
+  });
+});

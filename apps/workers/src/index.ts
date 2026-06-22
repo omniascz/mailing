@@ -87,8 +87,11 @@ scheduleBlacklistMonitor().catch(console.error);
 const rcsSenderWorker = startRcsSenderWorker();
 const workflowEmailWorker = startWorkflowEmailWorker();
 const workflowSmsWorker = startWorkflowSmsWorker();
-const { resumeWorker: workflowResumeWorker, dailyWorker: dailyTriggersWorker } =
-  startWorkflowSchedulerWorkers();
+const {
+  resumeWorker: workflowResumeWorker,
+  dailyWorker: dailyTriggersWorker,
+  warehouseWorker: warehouseSyncWorker,
+} = startWorkflowSchedulerWorkers();
 scheduleWorkflowJobs().catch(console.error);
 
 console.log('All workers started. Waiting for jobs...');
@@ -121,6 +124,7 @@ async function shutdown() {
     workflowSmsWorker.close(),
     workflowResumeWorker.close(),
     dailyTriggersWorker.close(),
+    warehouseSyncWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');

@@ -188,6 +188,7 @@ import internalRfmRoutes from './routes/v1/internal/rfm.js';
 import internalPredictiveRoutes from './routes/v1/internal/predictive.js';
 import internalEventsRoutes from './routes/v1/internal/events.js';
 import internalWorkflowDispatchRoutes from './routes/v1/internal/workflow-dispatch.js';
+import internalWarehouseSyncRoutes from './routes/v1/internal/warehouse-sync.js';
 import internalBlacklistCheckRoutes from './routes/v1/internal/blacklist-check.js';
 import internalNewsletterTiersBatchRoutes from './routes/v1/internal/newsletter-tiers-batch.js';
 import newsletterTierRoutes from './routes/v1/newsletter-tiers.js';
@@ -499,6 +500,7 @@ export async function buildApp() {
   await app.register(internalPredictiveRoutes);
   await app.register(internalEventsRoutes);
   await app.register(internalWorkflowDispatchRoutes);
+  await app.register(internalWarehouseSyncRoutes);
   await app.register(messagingSendRoutes);
   await app.register(seoClustersRoutes);
   await app.register(seoKeywordsRoutes);

@@ -16,6 +16,7 @@ const SECRET = process.env.INTERNAL_SECRET ?? '';
 
 const resumeQueue = new Queue(QUEUE_NAMES.WORKFLOW_RUN_RESUME, { connection });
 const dailyQueue = new Queue(QUEUE_NAMES.DAILY_TRIGGERS, { connection });
+const warehouseQueue = new Queue(QUEUE_NAMES.WAREHOUSE_SYNC, { connection });
 
 async function post(path: string): Promise<unknown> {
   const res = await fetch(`${API_URL}${path}`, {
@@ -55,7 +56,22 @@ export function startWorkflowSchedulerWorkers() {
     captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.DAILY_TRIGGERS });
   });
 
-  return { resumeWorker, dailyWorker };
+  const warehouseWorker = new Worker(
+    QUEUE_NAMES.WAREHOUSE_SYNC,
+    async (job) => {
+      const r = (await post('/api/v1/internal/warehouse-sync/run-due')) as {
+        data?: { ran: number; ok: number; failed: number };
+      };
+      job.log(`Warehouse syncs: ran ${r.data?.ran ?? 0}, ok ${r.data?.ok ?? 0}, failed ${r.data?.failed ?? 0}`);
+    },
+    { connection, concurrency: 1 },
+  );
+  warehouseWorker.on('failed', (job, err) => {
+    console.error('[warehouse-sync] failed', job?.id, err.message);
+    captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.WAREHOUSE_SYNC });
+  });
+
+  return { resumeWorker, dailyWorker, warehouseWorker };
 }
 
 export async function scheduleWorkflowJobs() {
@@ -84,5 +100,18 @@ export async function scheduleWorkflowJobs() {
       },
     );
     console.log('[workflow-scheduler] daily-triggers scheduled (06:00 UTC)');
+  }
+  if (!(await warehouseQueue.getJob('warehouse-sync-run'))) {
+    await warehouseQueue.add(
+      'run-due',
+      {},
+      {
+        jobId: 'warehouse-sync-run',
+        repeat: { pattern: '15 * * * *' }, // hourly at :15
+        removeOnComplete: true,
+        removeOnFail: { count: 5 },
+      },
+    );
+    console.log('[workflow-scheduler] warehouse-sync scheduled (hourly)');
   }
 }

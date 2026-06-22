@@ -81,6 +81,7 @@ export const QUEUE_NAMES = {
   BLACKLIST_MONITOR: 'blacklist-monitor',
   WORKFLOW_RUN_RESUME: 'workflow-run-resume',
   DAILY_TRIGGERS: 'daily-triggers',
+  WAREHOUSE_SYNC: 'warehouse-sync-run',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
