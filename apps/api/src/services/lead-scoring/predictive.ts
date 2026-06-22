@@ -19,12 +19,17 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contactEngagement, contacts } from '../../db/schema/index.js';
+import { redis } from '../../lib/redis.js';
+import { type LogisticModel, predictLogistic } from '../../lib/logistic-regression.js';
+import { trainLeadModel, leadFeatures, type LeadSample } from './model.js';
 
 export interface PredictiveScore {
   contactId: string;
   leadScore: number; // existing rule-based score
   predictedConversionProbability: number; // 0..1
   grade: 'A' | 'B' | 'C' | 'D';
+  /** 'fitted' = per-org logistic model from data; 'heuristic' = cold-start fallback. */
+  modelSource: 'fitted' | 'heuristic';
   factors: {
     purchaseLikelihood: number;
     churnRisk: number;
@@ -32,6 +37,54 @@ export interface PredictiveScore {
     rfmScore: number;
     leadScoreComponent: number;
   };
+}
+
+const MODEL_CACHE_KEY = (orgId: string) => `lead-model:${orgId}`;
+const MODEL_TTL = 86_400; // 24h
+const TRAIN_SAMPLE = 5000;
+
+/**
+ * Per-org fitted lead model, cached 24h in Redis. Trains a logistic regression
+ * on the org's behavioural signals → conversion (≥1 order). Returns null when
+ * there isn't enough labelled data; callers then use the heuristic fallback.
+ */
+export async function getOrgLeadModel(orgId: string): Promise<LogisticModel | null> {
+  const cached = await redis.get(MODEL_CACHE_KEY(orgId)).catch(() => null);
+  if (cached) {
+    try {
+      return JSON.parse(cached) as LogisticModel;
+    } catch {
+      /* refit below */
+    }
+  }
+
+  const rows = await db
+    .select({
+      leadScore: contacts.leadScore,
+      totalOpens: contactEngagement.totalOpens,
+      totalClicks: contactEngagement.totalClicks,
+      totalSends: contactEngagement.totalSends,
+      totalOrders: contactEngagement.totalOrders,
+    })
+    .from(contacts)
+    .innerJoin(contactEngagement, eq(contactEngagement.contactId, contacts.id))
+    .where(and(eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
+    .limit(TRAIN_SAMPLE);
+
+  const samples: LeadSample[] = rows.map((r) => ({
+    leadScore: r.leadScore ?? 0,
+    totalOpens: r.totalOpens ?? 0,
+    totalClicks: r.totalClicks ?? 0,
+    totalSends: r.totalSends ?? 0,
+    converted: (r.totalOrders ?? 0) > 0,
+  }));
+
+  const model = trainLeadModel(samples);
+  // Cache both hits and (briefly) misses are skipped — only cache a real model.
+  if (model) {
+    await redis.set(MODEL_CACHE_KEY(orgId), JSON.stringify(model), 'EX', MODEL_TTL).catch(() => {});
+  }
+  return model;
 }
 
 function gradeOf(p: number): PredictiveScore['grade'] {
@@ -107,7 +160,7 @@ export async function predictConversion(
     .where(and(eq(contactEngagement.contactId, contactId), eq(contactEngagement.orgId, orgId)));
 
   const leadScore = contact.leadScore ?? 0;
-  const { probability, factors } = scoreContact({
+  const { probability: heuristicProb, factors } = scoreContact({
     leadScore,
     purchaseLikelihood: eng?.purchaseLikelihood ? Number(eng.purchaseLikelihood) : null,
     churnRisk: eng?.churnRisk ? Number(eng.churnRisk) : null,
@@ -115,11 +168,25 @@ export async function predictConversion(
     rfmScore: eng?.rfmScore ?? null,
   });
 
+  const model = await getOrgLeadModel(orgId);
+  const probability = model
+    ? predictLogistic(
+        model,
+        leadFeatures({
+          leadScore,
+          totalOpens: eng?.totalOpens ?? 0,
+          totalClicks: eng?.totalClicks ?? 0,
+          totalSends: eng?.totalSends ?? 0,
+        }),
+      )
+    : heuristicProb;
+
   return {
     contactId,
     leadScore,
     predictedConversionProbability: Math.round(probability * 10000) / 10000,
     grade: gradeOf(probability),
+    modelSource: model ? 'fitted' : 'heuristic',
     factors,
   };
 }
@@ -146,21 +213,35 @@ export async function topPredictedContacts(orgId: string, limit = 100): Promise<
     .where(and(eq(contactEngagement.orgId, orgId), inArray(contactEngagement.contactId, ids)));
   const engByContact = new Map(engs.map((e) => [e.contactId, e]));
 
+  const model = await getOrgLeadModel(orgId);
+
   const results = rows.map((r) => {
     const eng = engByContact.get(r.id);
     const leadScore = r.leadScore ?? 0;
-    const { probability, factors } = scoreContact({
+    const { probability: heuristicProb, factors } = scoreContact({
       leadScore,
       purchaseLikelihood: eng?.purchaseLikelihood ? Number(eng.purchaseLikelihood) : null,
       churnRisk: eng?.churnRisk ? Number(eng.churnRisk) : null,
       predictedClv: eng?.predictedClv ? Number(eng.predictedClv) : null,
       rfmScore: eng?.rfmScore ?? null,
     });
+    const probability = model
+      ? predictLogistic(
+          model,
+          leadFeatures({
+            leadScore,
+            totalOpens: eng?.totalOpens ?? 0,
+            totalClicks: eng?.totalClicks ?? 0,
+            totalSends: eng?.totalSends ?? 0,
+          }),
+        )
+      : heuristicProb;
     return {
       contactId: r.id,
       leadScore,
       predictedConversionProbability: Math.round(probability * 10000) / 10000,
       grade: gradeOf(probability),
+      modelSource: model ? 'fitted' : 'heuristic',
       factors,
     } satisfies PredictiveScore;
   });

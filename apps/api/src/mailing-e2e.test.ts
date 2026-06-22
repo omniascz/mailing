@@ -339,6 +339,13 @@ describe('security hardening', () => {
     expect(api('services/predictive-segmentation/index.ts')).toContain('estimatePopulationRate');
   });
 
+  it('lead scoring fits a per-org logistic model (not hand-tuned constants)', () => {
+    expect(api('lib/logistic-regression.ts')).toContain('trainLogistic');
+    const pred = api('services/lead-scoring/predictive.ts');
+    expect(pred).toContain('getOrgLeadModel'); // per-org fitted model
+    expect(pred).toContain("modelSource: model ? 'fitted' : 'heuristic'"); // graceful fallback
+  });
+
   it('ClickHouse pipeline exists: client + schema + replicator + cron', () => {
     expect(api('services/analytics/clickhouse/client.ts')).toContain('FORMAT JSONEachRow');
     expect(api('services/analytics/clickhouse/schema.ts')).toContain('MATERIALIZED VIEW');
