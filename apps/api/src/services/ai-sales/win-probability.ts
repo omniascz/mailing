@@ -10,7 +10,7 @@
  * the feature vector exposed here is the stable contract.
  */
 
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { deals, dealStageHistory, contacts, emailEvents } from '../../db/schema/index.js';
 import { getPipeline, stageFromPipeline } from '../crm/pipelines.js';
@@ -85,21 +85,25 @@ async function loadFeatures(
       .where(eq(contacts.id, deal.contactId));
     contactEngagementScore = clamp(contact?.leadScore ?? 0, 0, 100);
 
+    // Actually scope to the last 30 days (the previous code took the last 500
+    // events of ANY age and discarded the 30-day cutoff — so the "30d" features
+    // silently counted ancient activity). Aggregated in SQL.
     const thirtyDaysAgo = new Date(now - 30 * 86_400_000);
-    const recentEvents = await db
+    const [agg] = await db
       .select({
-        eventType: emailEvents.eventType,
+        opens: sql<number>`count(*) filter (where ${emailEvents.eventType} = 'open')`,
+        clicks: sql<number>`count(*) filter (where ${emailEvents.eventType} = 'click')`,
       })
       .from(emailEvents)
-      .where(and(eq(emailEvents.contactId, deal.contactId), eq(emailEvents.orgId, orgId)))
-      .orderBy(desc(emailEvents.createdAt))
-      .limit(500);
-
-    for (const e of recentEvents) {
-      if (e.eventType === 'open') recentEmailOpens30d++;
-      else if (e.eventType === 'click') recentEmailClicks30d++;
-    }
-    void thirtyDaysAgo; // limit by recent N; filtering in-memory to avoid type clash on enum values
+      .where(
+        and(
+          eq(emailEvents.contactId, deal.contactId),
+          eq(emailEvents.orgId, orgId),
+          gte(emailEvents.createdAt, thirtyDaysAgo),
+        ),
+      );
+    recentEmailOpens30d = Number(agg?.opens ?? 0);
+    recentEmailClicks30d = Number(agg?.clicks ?? 0);
   }
 
   return {
@@ -122,7 +126,7 @@ async function loadFeatures(
  * Rule-based scoring. Each factor nudges the stage-baseline probability
  * up or down within [-0.25, +0.25]. Final is clamped to [0.02, 0.98].
  */
-function scoreFromFeatures(f: WinProbabilityFeatures): {
+export function scoreFromFeatures(f: WinProbabilityFeatures): {
   probability: number;
   factors: WinProbabilityResult['factors'];
 } {

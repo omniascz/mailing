@@ -368,6 +368,19 @@ describe('security hardening', () => {
     expect(src).not.toContain('bestScore = sc'); // the weight-application bug is gone
   });
 
+  it('win-probability actually scopes 30d email activity (not last-500-of-any-age)', () => {
+    const src = api('services/ai-sales/win-probability.ts');
+    expect(src).toContain('gte(emailEvents.createdAt, thirtyDaysAgo)'); // real 30d filter
+    expect(src).not.toContain('void thirtyDaysAgo'); // the discarded-window bug is gone
+    expect(src).not.toContain('.limit(500)');
+  });
+
+  it('deal-risk has no dead code and uses a pure scoring fn', () => {
+    const src = api('services/ai-sales/deal-risk.ts');
+    expect(src).not.toContain('void gte'); // dead code removed
+    expect(src).toContain('scoreDealRisk'); // pure, tested
+  });
+
   it('AI SQL sandbox enforces org isolation at the SQL level (no cross-org leak)', () => {
     const sandbox = api('services/ai-analytics/sandbox.ts');
     expect(sandbox).toContain('scopeTablesToOrg'); // SQL-level scoping, not in-memory only

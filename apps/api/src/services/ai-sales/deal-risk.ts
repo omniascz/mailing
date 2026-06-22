@@ -9,7 +9,7 @@
  *   - high_value:   amplifies severity when deal value is large
  */
 
-import { and, desc, eq, gte, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { deals, dealStageHistory, emailEvents } from '../../db/schema/index.js';
 
@@ -42,6 +42,55 @@ export interface DealRiskOptions {
   silentDays?: number; // default 21
   highValueThreshold?: number; // default 10_000
   limit?: number; // default 200
+}
+
+/** Pure risk scoring from the deal's day-counts + value. Unit-tested. */
+export function scoreDealRisk(
+  input: {
+    daysInCurrentStage: number;
+    daysPastExpectedClose: number;
+    daysSinceLastActivity: number;
+    value: number;
+    currency: string;
+  },
+  opts: { stalledDays?: number; silentDays?: number; highValueThreshold?: number } = {},
+): { flags: DealRiskFlags; riskScore: number; severity: DealRiskResult['severity']; reasons: string[] } {
+  const stalledDays = opts.stalledDays ?? 30;
+  const silentDays = opts.silentDays ?? 21;
+  const highValueThreshold = opts.highValueThreshold ?? 10_000;
+
+  const flags: DealRiskFlags = {
+    stalled: input.daysInCurrentStage >= stalledDays,
+    overdue: input.daysPastExpectedClose > 0,
+    silent: input.daysSinceLastActivity >= silentDays,
+    highValue: input.value >= highValueThreshold,
+  };
+
+  const reasons: string[] = [];
+  let score = 0;
+  if (flags.stalled) {
+    score += 30;
+    reasons.push(`Stalled ${input.daysInCurrentStage}d in current stage`);
+  }
+  if (flags.overdue) {
+    score += 35;
+    reasons.push(`${input.daysPastExpectedClose}d past expected close`);
+  }
+  if (flags.silent) {
+    score += 20;
+    reasons.push(`No activity for ${input.daysSinceLastActivity}d`);
+  }
+  if (flags.highValue && (flags.stalled || flags.overdue || flags.silent)) {
+    score += 15;
+    reasons.push(`High-value deal (${input.value} ${input.currency})`);
+  }
+  score = Math.min(100, score);
+
+  let severity: DealRiskResult['severity'] = 'low';
+  if (score >= 60) severity = 'high';
+  else if (score >= 30) severity = 'medium';
+
+  return { flags, riskScore: score, severity, reasons };
 }
 
 async function lastActivity(
@@ -104,36 +153,10 @@ export async function assessDealRisk(
     : daysInCurrentStage;
 
   const value = Number(deal.value);
-  const flags: DealRiskFlags = {
-    stalled: daysInCurrentStage >= stalledDays,
-    overdue: daysPastExpectedClose > 0,
-    silent: daysSinceLastActivity >= silentDays,
-    highValue: value >= highValueThreshold,
-  };
-
-  const reasons: string[] = [];
-  let score = 0;
-  if (flags.stalled) {
-    score += 30;
-    reasons.push(`Stalled ${daysInCurrentStage}d in current stage`);
-  }
-  if (flags.overdue) {
-    score += 35;
-    reasons.push(`${daysPastExpectedClose}d past expected close`);
-  }
-  if (flags.silent) {
-    score += 20;
-    reasons.push(`No activity for ${daysSinceLastActivity}d`);
-  }
-  if (flags.highValue && (flags.stalled || flags.overdue || flags.silent)) {
-    score += 15;
-    reasons.push(`High-value deal (${value} ${deal.currency})`);
-  }
-  score = Math.min(100, score);
-
-  let severity: DealRiskResult['severity'] = 'low';
-  if (score >= 60) severity = 'high';
-  else if (score >= 30) severity = 'medium';
+  const { flags, riskScore, severity, reasons } = scoreDealRisk(
+    { daysInCurrentStage, daysPastExpectedClose, daysSinceLastActivity, value, currency: deal.currency },
+    { stalledDays, silentDays, highValueThreshold },
+  );
 
   return {
     dealId: deal.id,
@@ -144,7 +167,7 @@ export async function assessDealRisk(
     pipelineId: deal.pipelineId,
     stageId: deal.stageId,
     severity,
-    riskScore: score,
+    riskScore,
     flags,
     reasons,
     daysInCurrentStage,
@@ -194,6 +217,4 @@ export async function atRiskDeals(
     .map((r) => r.value)
     .filter((r): r is DealRiskResult => r !== null && r.riskScore >= minScore)
     .sort((a, b) => b.riskScore - a.riskScore);
-
-  void gte; // kept for future range filter
 }
