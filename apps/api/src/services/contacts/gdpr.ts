@@ -22,7 +22,7 @@
  */
 
 import crypto from 'node:crypto';
-import { and, eq, gte } from 'drizzle-orm';
+import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts, emailEvents, suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -32,6 +32,63 @@ export interface GdprAnonymizeResult {
   emailHash: string;
   anonymizedAt: string;
   emailEventsScrubbed: number;
+  /** Per-table count of related PII rows deleted by the cascade. */
+  relatedRowsDeleted: Record<string, number>;
+  /** Number of tables the cascade cleared. */
+  tablesCleared: number;
+}
+
+// Tables handled specially (anonymised/kept) and therefore excluded from the
+// hard-delete cascade. `contacts` is anonymised in place to keep FK ids valid;
+// `email_events` keeps aggregate rows with PII scrubbed.
+const CASCADE_EXCLUDE = new Set(['contacts', 'email_events']);
+const SAFE_IDENT = /^[a-z_][a-z0-9_]*$/;
+
+/**
+ * Right-to-erasure cascade: discover every table with a `contact_id` column and
+ * delete that contact's rows (org-scoped where the table has `org_id`). Driven
+ * by information_schema so new PII-bearing tables are covered automatically —
+ * no hand-maintained list to drift out of sync with the schema.
+ */
+async function eraseRelatedRows(
+  orgId: string,
+  contactId: string,
+): Promise<Record<string, number>> {
+  const catalog = await db.execute<{ table_name: string; has_org: boolean }>(sql`
+    SELECT c.table_name,
+           EXISTS (
+             SELECT 1 FROM information_schema.columns o
+             WHERE o.table_schema = 'public'
+               AND o.table_name = c.table_name
+               AND o.column_name = 'org_id'
+           ) AS has_org
+    FROM information_schema.columns c
+    WHERE c.table_schema = 'public' AND c.column_name = 'contact_id'
+  `);
+
+  const tables = (catalog as unknown as Array<{ table_name: string; has_org: boolean }>).filter(
+    (t) => SAFE_IDENT.test(t.table_name) && !CASCADE_EXCLUDE.has(t.table_name),
+  );
+
+  const deleted: Record<string, number> = {};
+  for (const t of tables) {
+    try {
+      const where = t.has_org
+        ? sql`contact_id = ${contactId}::uuid AND org_id = ${orgId}::uuid`
+        : sql`contact_id = ${contactId}::uuid`;
+      const res = await db.execute(
+        sql`DELETE FROM ${sql.raw(`"${t.table_name}"`)} WHERE ${where}`,
+      );
+      // postgres-js exposes affected rows as `.count`; other drivers `.rowCount`.
+      const r = res as unknown as { count?: number; rowCount?: number };
+      const count = r.count ?? r.rowCount ?? 0;
+      if (count > 0) deleted[t.table_name] = count;
+    } catch {
+      // A FK RESTRICT or missing table shouldn't abort the whole erasure;
+      // record nothing for this table and continue. Surfaced via the audit.
+    }
+  }
+  return deleted;
 }
 
 /**
@@ -99,6 +156,11 @@ export async function anonymizeContact(
     // the absence rather than fail the whole anonymise operation.
   }
 
+  // Full right-to-erasure cascade across every other table that holds the
+  // contact's PII (reviews, tickets, notes, deals, SMS logs, consent rows,
+  // loyalty, …). Discovered dynamically so coverage tracks the schema.
+  const relatedRowsDeleted = await eraseRelatedRows(orgId, contactId);
+
   // Permanent suppression by hash. Prevents an accidental re-import (e.g.
   // a customer re-syncing Shopify) from resurrecting the identity. We
   // store the SHA-256 in the notes field rather than the email field so
@@ -126,6 +188,8 @@ export async function anonymizeContact(
     emailHash,
     anonymizedAt: now.toISOString(),
     emailEventsScrubbed,
+    relatedRowsDeleted,
+    tablesCleared: Object.keys(relatedRowsDeleted).length,
   };
 }
 

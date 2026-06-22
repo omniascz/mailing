@@ -215,6 +215,7 @@ import sklikPixelRoutes from './routes/v1/sklik-pixel.js';
 import commerceProductRoutes from './routes/v1/commerce/products.js';
 import commerceQuoteRoutes from './routes/v1/commerce/quotes.js';
 import commerceInvoiceRoutes from './routes/v1/commerce/invoices.js';
+import stripeWebhookRoutes from './routes/v1/webhooks/stripe.js';
 import commerceSubscriptionRoutes from './routes/v1/commerce/subscriptions.js';
 import internalCommerceRoutes from './routes/v1/internal/commerce.js';
 import associationRoutes from './routes/v1/associations.js';
@@ -498,6 +499,7 @@ export async function buildApp() {
   await app.register(commerceProductRoutes);
   await app.register(commerceQuoteRoutes);
   await app.register(commerceInvoiceRoutes);
+  await app.register(stripeWebhookRoutes);
   await app.register(commerceSubscriptionRoutes);
   await app.register(internalCommerceRoutes);
   await app.register(associationRoutes);

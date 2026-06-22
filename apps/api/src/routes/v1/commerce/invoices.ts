@@ -12,7 +12,6 @@ import {
 import {
   createInvoicePaymentIntent,
   refundInvoicePayment,
-  handleStripeWebhook,
 } from '../../../services/commerce/payments.js';
 
 const lineItemSchema = z.object({
@@ -123,18 +122,9 @@ const commerceInvoiceRoutes: FastifyPluginAsync = async (app) => {
     return reply.send({ data });
   });
 
-  // ── Stripe webhook ────────────────────────────────────────────────────────
-  app.post(
-    '/api/v1/webhooks/stripe',
-    {
-      config: { rawBody: true },
-    },
-    async (req, reply) => {
-      const sig = (req.headers['stripe-signature'] as string) ?? '';
-      await handleStripeWebhook(Buffer.from(JSON.stringify(req.body)), sig);
-      return reply.code(200).send({ received: true });
-    },
-  );
+  // NOTE: the Stripe webhook moved to routes/v1/webhooks/stripe.ts — it needs a
+  // raw-body parser for signature verification, isolated in its own plugin so it
+  // doesn't change JSON parsing for these (Zod-validated) invoice routes.
 };
 
 export default commerceInvoiceRoutes;

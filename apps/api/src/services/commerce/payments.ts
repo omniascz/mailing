@@ -3,10 +3,49 @@
  * Creates payment intents for invoices and quotes, handles webhooks.
  */
 
+import crypto from 'node:crypto';
 import { eq, and } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { invoices, quotes } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+
+/**
+ * Verify a Stripe webhook signature against the RAW request body.
+ * Implements the same scheme as stripe.webhooks.constructEvent:
+ *   header: `t=<unix>,v1=<hmac>,...`
+ *   signed payload = `${t}.${rawBody}`
+ *   expected = HMAC-SHA256(webhookSecret, signedPayload) hex
+ * Constant-time compare + 5-minute replay tolerance.
+ */
+export function verifyStripeSignature(
+  rawBody: Buffer,
+  signatureHeader: string,
+  secret: string,
+  toleranceSec = 300,
+  nowSec: number = Math.floor(Date.now() / 1000),
+): boolean {
+  if (!signatureHeader) return false;
+  const parts = signatureHeader.split(',').reduce<Record<string, string>>((acc, kv) => {
+    const [k, v] = kv.split('=');
+    if (k && v) (acc[k.trim()] ??= v.trim());
+    return acc;
+  }, {});
+  const t = parts['t'];
+  const v1 = parts['v1'];
+  if (!t || !v1) return false;
+
+  // Replay protection
+  const ts = Number(t);
+  if (!Number.isFinite(ts) || Math.abs(nowSec - ts) > toleranceSec) return false;
+
+  const signedPayload = `${t}.${rawBody.toString('utf8')}`;
+  const expected = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
+  try {
+    return crypto.timingSafeEqual(Buffer.from(v1, 'hex'), Buffer.from(expected, 'hex'));
+  } catch {
+    return false;
+  }
+}
 
 function stripeKey(): string {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -128,8 +167,14 @@ export async function createOrGetStripeCustomer(email: string, name?: string) {
 
 export async function handleStripeWebhook(payload: Buffer, signature: string): Promise<void> {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
-  // Verify signature (simplified — in production use stripe.webhooks.constructEvent)
-  if (webhookSecret && !signature) throw AppError.badRequest('Missing Stripe signature');
+  // Enforce real HMAC signature verification when a secret is configured.
+  // Without this, a forged event with any signature header could mark invoices
+  // paid / activate subscriptions. Open only in dev where no secret is set.
+  if (webhookSecret) {
+    if (!verifyStripeSignature(payload, signature, webhookSecret)) {
+      throw AppError.unauthorized('Invalid Stripe webhook signature');
+    }
+  }
 
   let event: { type: string; data: { object: Record<string, unknown> } };
   try {

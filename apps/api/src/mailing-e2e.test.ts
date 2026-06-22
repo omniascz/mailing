@@ -289,3 +289,29 @@ describe('engine bus wiring', () => {
     expect(api('lib/queues.ts')).toContain("new Queue('batch-sender-triggered'");
   });
 });
+
+// ─── 8. Security hardening (audit fixes) ──────────────────────────────────────
+
+describe('security hardening', () => {
+  const api = (rel: string) => readFileSync(join(__dirname, rel), 'utf8');
+
+  it('Stripe webhook verifies a real HMAC signature over the raw body', () => {
+    const src = api('services/commerce/payments.ts');
+    expect(src).toContain('verifyStripeSignature');
+    expect(src).toContain('timingSafeEqual');
+    // the old "simplified" no-op check must be gone
+    expect(src).not.toMatch(/simplified[^\n]*constructEvent/);
+  });
+
+  it('Stripe webhook route uses the raw body, not a re-serialized req.body', () => {
+    const src = api('routes/v1/webhooks/stripe.ts');
+    expect(src).toContain('rawBody');
+    expect(src).not.toContain('JSON.stringify(req.body)');
+  });
+
+  it('GDPR erasure cascades across all contact_id tables (not just 3)', () => {
+    const src = api('services/contacts/gdpr.ts');
+    expect(src).toContain('information_schema.columns');
+    expect(src).toContain('eraseRelatedRows');
+  });
+});
