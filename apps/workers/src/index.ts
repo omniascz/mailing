@@ -38,6 +38,7 @@ import { startWarmupAdvanceWorker, scheduleWarmupAdvance } from './jobs/warmup-a
 import { startDmarcImapPollWorker, scheduleDmarcImapPoll } from './jobs/dmarc-imap-poll.js';
 import { startAbWinnerWorker } from './jobs/ab-winner.js';
 import { startBlacklistMonitorWorker, scheduleBlacklistMonitor } from './jobs/blacklist-monitor.js';
+import { startRcsSenderWorker } from './jobs/rcs-sender.js';
 import { startWorkflowEmailWorker } from './jobs/workflow-email-sender.js';
 import { startWorkflowSmsWorker } from './jobs/workflow-sms-sender.js';
 import { startWorkflowSchedulerWorkers, scheduleWorkflowJobs } from './jobs/workflow-scheduler.js';
@@ -83,6 +84,7 @@ scheduleBlacklistMonitor().catch(console.error);
 // Engine bus — consumers for the workflow-triggered 'email'/'sms' queues + the
 // repeatable run-resumer and daily-trigger cron. Without these, automation
 // (multi-step workflows, RFM/predictions, date/holiday triggers) does not run.
+const rcsSenderWorker = startRcsSenderWorker();
 const workflowEmailWorker = startWorkflowEmailWorker();
 const workflowSmsWorker = startWorkflowSmsWorker();
 const { resumeWorker: workflowResumeWorker, dailyWorker: dailyTriggersWorker } =
@@ -114,6 +116,7 @@ async function shutdown() {
     dmarcImapPollWorker.close(),
     abWinnerWorker.close(),
     blacklistMonitorWorker.close(),
+    rcsSenderWorker.close(),
     workflowEmailWorker.close(),
     workflowSmsWorker.close(),
     workflowResumeWorker.close(),

@@ -46,6 +46,24 @@ export async function queueRcs(
       provider: input.provider ?? null,
     })
     .returning();
+
+  // Enqueue for async provider dispatch (consumed by apps/workers rcs-sender).
+  // Best-effort: a Redis outage shouldn't lose the persisted message — the row
+  // stays 'queued' and can be re-driven.
+  try {
+    const { rcsQueue } = await import('../../lib/queues.js');
+    await rcsQueue.add('rcs-send', {
+      messageId: row!.id,
+      orgId,
+      phone: input.phone,
+      messageType: input.messageType,
+      payload: input.payload,
+      provider: input.provider ?? null,
+    });
+  } catch {
+    /* leave as queued; re-drive later */
+  }
+
   return row!;
 }
 

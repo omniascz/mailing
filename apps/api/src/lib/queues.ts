@@ -38,6 +38,8 @@ export const smsQueue = new Queue('sms', queueOpts);
 export const webhookQueue = new Queue('webhook', queueOpts);
 /** Viber Business Messages async send queue (consumed by apps/workers viber-sender). */
 export const viberQueue = new Queue('viber-send', queueOpts);
+/** RCS async send queue (consumed by apps/workers rcs-sender). */
+export const rcsQueue = new Queue('rcs-send', queueOpts);
 
 /**
  * Campaign-splitter producer. Workers in apps/workers consume from this
@@ -131,6 +133,8 @@ export const queues = {
   email: emailQueue,
   sms: smsQueue,
   webhook: webhookQueue,
+  viber: viberQueue,
+  rcs: rcsQueue,
   campaignSplitter: campaignSplitterQueue,
   mtaOther: mtaOtherQueue,
 };
