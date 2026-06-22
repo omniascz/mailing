@@ -141,6 +141,44 @@ describe('substituteMergeTags', () => {
     const result = substituteMergeTags('Hi {{first_name}}', null);
     expect(result).toBe('Hi ');
   });
+
+  it('resolves event/order tags from run data (buildRunMergeData)', async () => {
+    const { substituteMergeTags, buildRunMergeData } = await import('./actions.js');
+    const run = {
+      data: {
+        triggerEvent: 'ticketing.order_paid',
+        cart_url: 'https://tixly.cz/cart/abc', // payload scalar passes through
+        externalEventId: 'evt-1',
+        event: { title: 'Jazz Night', venueCity: 'Brno', startsAt: '2026-09-01' },
+        order: { amount: 50000, currency: 'CZK', orderId: 'o-9' },
+        recommendations: ['evt-2', 'evt-3'],
+      },
+    };
+    const extra = buildRunMergeData(run);
+    expect(extra.event_title).toBe('Jazz Night');
+    expect(extra.event_city).toBe('Brno');
+    expect(extra.order_amount).toBe(50000);
+    expect(extra.cart_url).toBe('https://tixly.cz/cart/abc');
+    expect(extra.recommendations).toBe('evt-2, evt-3');
+
+    const html = substituteMergeTags(
+      '<a href="{{cart_url}}">{{event_title}}</a> v {{event_city}}',
+      { firstName: 'Jan' } as never,
+      extra,
+    );
+    expect(html).toBe('<a href="https://tixly.cz/cart/abc">Jazz Night</a> v Brno');
+  });
+
+  it('cron-supplied eventTitle resolves to {{event_title}}', async () => {
+    const { buildRunMergeData } = await import('./actions.js');
+    const extra = buildRunMergeData({ data: { eventTitle: 'Hamlet', externalEventId: 'e1' } });
+    expect(extra.event_title).toBe('Hamlet');
+  });
+
+  it('empty run data yields empty extra', async () => {
+    const { buildRunMergeData } = await import('./actions.js');
+    expect(buildRunMergeData({ data: null })).toEqual({});
+  });
 });
 
 // ─── Actions: condition evaluator ────────────────────────────────────────────

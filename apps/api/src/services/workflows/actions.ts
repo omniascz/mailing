@@ -66,6 +66,37 @@ export function substituteMergeTags(
   return template.replace(/\{\{([^}]+)\}\}/g, (_, key) => vars[key.trim()] ?? `{{${key}}}`);
 }
 
+/**
+ * Build the merge-tag data carried by a workflow run — the properties the
+ * trigger event passed in (onApiEvent). Top-level scalars (URLs/ids from the
+ * payload) pass through; nested `event`/`order` objects are flattened into
+ * namespaced tags ({{event_title}}, {{order_amount}}, …) and arrays joined.
+ */
+export function buildRunMergeData(run: { data?: Record<string, unknown> | null }): Record<string, unknown> {
+  const data = (run.data ?? {}) as Record<string, unknown>;
+  const ev = (data.event ?? {}) as Record<string, unknown>;
+  const ord = (data.order ?? {}) as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+
+  // Top-level scalars: payload urls/ids (cart_url, review_url, externalEventId…).
+  for (const [k, v] of Object.entries(data)) {
+    if (v === null || typeof v !== 'object') out[k] = v;
+  }
+
+  // Flattened, namespaced event/order fields.
+  if (ev.title != null) out.event_title = ev.title;
+  if (data.eventTitle != null) out.event_title = data.eventTitle; // cron-supplied
+  if (ev.venueCity != null) out.event_city = ev.venueCity;
+  if (ev.venueName != null) out.event_venue = ev.venueName;
+  if (ev.startsAt != null) out.event_starts_at = ev.startsAt;
+  if (ord.amount != null) out.order_amount = ord.amount;
+  if (ord.currency != null) out.order_currency = ord.currency;
+  if (ord.orderId != null) out.order_id = ord.orderId;
+  if (Array.isArray(data.recommendations)) out.recommendations = (data.recommendations as unknown[]).join(', ');
+
+  return out;
+}
+
 // ─── Individual action handlers ───────────────────────────────────────────────
 
 async function executeSendEmail(
@@ -90,6 +121,11 @@ async function executeSendEmail(
     return { type: 'next', nextNodeId: null };
   }
 
+  // Merge tags also resolve from the run's data — i.e. the properties carried by
+  // the trigger event (onApiEvent), so ticketing tags like {{cart_url}},
+  // {{review_url}}, {{event_title}} render. Common nested fields are flattened.
+  const extra = buildRunMergeData(run);
+
   // Queue email via BullMQ — workers/src handles the actual send
   const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
   if (queues) {
@@ -102,9 +138,9 @@ async function executeSendEmail(
         workflowRunId: run.id,
         campaignId: config.campaignId,
         templateId: config.templateId,
-        subject: config.subject ? substituteMergeTags(config.subject, ctx.contact) : undefined,
-        html: config.html ? substituteMergeTags(config.html, ctx.contact) : undefined,
-        text: config.text ? substituteMergeTags(config.text, ctx.contact) : undefined,
+        subject: config.subject ? substituteMergeTags(config.subject, ctx.contact, extra) : undefined,
+        html: config.html ? substituteMergeTags(config.html, ctx.contact, extra) : undefined,
+        text: config.text ? substituteMergeTags(config.text, ctx.contact, extra) : undefined,
       })
       .catch(() => {});
   }
