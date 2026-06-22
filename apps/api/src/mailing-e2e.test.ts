@@ -315,6 +315,14 @@ describe('security hardening', () => {
     expect(src).toContain('eraseRelatedRows');
   });
 
+  it('all Stripe + Meta ingesting webhooks verify signatures', () => {
+    // newsletter-tiers Stripe webhook (was: "verify in production" TODO)
+    expect(api('routes/v1/newsletter-tiers.ts')).toContain('verifyStripeSignature');
+    // Meta inbound webhooks that ingest data must verify x-hub-signature
+    expect(api('routes/v1/whatsapp.ts')).toContain('verifyMetaRequest');
+    expect(api('routes/v1/webhooks/ads.ts')).toContain('verifyMetaRequest');
+  });
+
   it('a global raw-body JSON parser exposes req.rawBody for signature checks', () => {
     const src = api('index.ts');
     expect(src).toContain('addContentTypeParser');

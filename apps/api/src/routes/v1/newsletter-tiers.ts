@@ -20,6 +20,7 @@ import {
   newsletterSubscriptions,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { verifyStripeSignature } from '../../services/commerce/payments.js';
 
 const tierCreateSchema = z.object({
   name: z.string().min(1).max(100),
@@ -214,13 +215,25 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
 
   /**
    * POST /api/v1/newsletter-tiers/stripe-webhook
-   * Handle Stripe subscription lifecycle events.
-   * Protected by Stripe-Signature header (verify in production).
+   * Handle Stripe subscription lifecycle events. The Stripe-Signature header is
+   * verified against the raw body (preserved by the global raw-body parser) when
+   * STRIPE_WEBHOOK_SECRET is set — a forged event must not be able to flip a
+   * subscription to active/canceled/past_due.
    */
   app.post(
     '/api/v1/newsletter-tiers/stripe-webhook',
-    { schema: { tags: ['Newsletter Tiers'], summary: 'Stripe subscription webhook' }, config: { rawBody: true } },
+    { schema: { tags: ['Newsletter Tiers'], summary: 'Stripe subscription webhook' } },
     async (req, reply) => {
+      const secret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (secret) {
+        const sig = (req.headers['stripe-signature'] as string) ?? '';
+        const raw =
+          (req as unknown as { rawBody?: Buffer }).rawBody ?? Buffer.from(JSON.stringify(req.body));
+        if (!verifyStripeSignature(raw, sig, secret)) {
+          return reply.code(401).send({ error: 'Invalid Stripe signature' });
+        }
+      }
+
       const event = stripeEventSchema.safeParse(req.body);
       if (!event.success) return reply.code(400).send({ error: 'Invalid event' });
 

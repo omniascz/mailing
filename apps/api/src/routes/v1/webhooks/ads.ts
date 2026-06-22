@@ -9,6 +9,7 @@ import { handleFacebookLead, handleLinkedInLead } from '../../../services/ads/le
 import { eq, and } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { adAccounts } from '../../../db/schema/index.js';
+import { verifyMetaRequest } from '../../../lib/meta-signature.js';
 
 const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
   // Facebook Lead Ads webhook verification + delivery
@@ -30,6 +31,11 @@ const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.post('/api/v1/webhooks/ads/facebook/leads', async (req, reply) => {
+    // Verify Meta's signature before ingesting leads (forged payloads would
+    // create fake contacts + fire lead workflows).
+    if (!verifyMetaRequest(req, process.env.META_APP_SECRET ?? process.env.FACEBOOK_APP_SECRET)) {
+      return reply.code(401).send('Invalid signature');
+    }
     const body = req.body as Record<string, unknown>;
     const entries =
       (body.entry as Array<{ id: string; changes: Array<{ value: Record<string, unknown> }> }>) ??

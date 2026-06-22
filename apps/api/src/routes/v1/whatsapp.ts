@@ -49,6 +49,7 @@ import {
 import { db } from '../../db/client.js';
 import { whatsappConsents, whatsappPhoneNumbers } from '../../db/schema/whatsapp.js';
 import { eq } from 'drizzle-orm';
+import { verifyMetaRequest } from '../../lib/meta-signature.js';
 
 export default async function whatsappRoutes(app: FastifyInstance) {
   // ── Template management ───────────────────────────────────────────────────
@@ -269,6 +270,11 @@ export default async function whatsappRoutes(app: FastifyInstance) {
 
   /** Meta webhook handler — receives quality_update, account_update, template_status_update */
   app.post('/api/v1/whatsapp/webhooks/meta', async (req, reply) => {
+    // Verify Meta's X-Hub-Signature-256 over the raw body before trusting any
+    // inbound message / template-status event.
+    if (!verifyMetaRequest(req, process.env.META_APP_SECRET ?? process.env.WHATSAPP_APP_SECRET)) {
+      return reply.code(401).send({ error: 'Invalid signature' });
+    }
     const payload = req.body as Record<string, unknown>;
     const orgId = process.env.DEFAULT_ORG_ID ?? '';
 
