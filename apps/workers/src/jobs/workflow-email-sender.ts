@@ -21,6 +21,9 @@ interface WorkflowEmailJob {
   campaignId?: string;
   templateId?: string;
   subject?: string;
+  /** Inline content for self-contained (seeded) workflows. */
+  html?: string;
+  text?: string;
 }
 
 function internalHeaders(): Record<string, string> {

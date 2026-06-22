@@ -190,6 +190,7 @@ import internalEventsRoutes from './routes/v1/internal/events.js';
 import internalWorkflowDispatchRoutes from './routes/v1/internal/workflow-dispatch.js';
 import internalWarehouseSyncRoutes from './routes/v1/internal/warehouse-sync.js';
 import internalClickHouseRoutes from './routes/v1/internal/clickhouse.js';
+import internalTicketingCronRoutes from './routes/v1/internal/ticketing-cron.js';
 import internalBlacklistCheckRoutes from './routes/v1/internal/blacklist-check.js';
 import internalNewsletterTiersBatchRoutes from './routes/v1/internal/newsletter-tiers-batch.js';
 import newsletterTierRoutes from './routes/v1/newsletter-tiers.js';
@@ -504,6 +505,7 @@ export async function buildApp() {
   await app.register(internalWorkflowDispatchRoutes);
   await app.register(internalWarehouseSyncRoutes);
   await app.register(internalClickHouseRoutes);
+  await app.register(internalTicketingCronRoutes);
   await app.register(messagingSendRoutes);
   await app.register(seoClustersRoutes);
   await app.register(seoKeywordsRoutes);

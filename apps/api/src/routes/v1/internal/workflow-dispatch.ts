@@ -14,8 +14,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
-import { campaigns, templates, sendingDomains } from '../../../db/schema/index.js';
-import { batchSenderTriggeredQueue, PRIORITY } from '../../../lib/queues.js';
+import { campaigns, templates, sendingDomains, contacts } from '../../../db/schema/index.js';
+import { batchSenderTriggeredQueue, PRIORITY, sendTransactionalEmail } from '../../../lib/queues.js';
 import { processWorkflowRuns } from '../../../services/workflows/executor.js';
 import { routedSmsSend } from '../../../services/sms/routing.js';
 
@@ -55,8 +55,34 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         campaignId: z.string().uuid().optional(),
         templateId: z.string().uuid().optional(),
         subject: z.string().optional(),
+        html: z.string().optional(),
+        text: z.string().optional(),
       })
       .parse(req.body);
+
+    // Inline-content path (seeded / self-contained workflows): send directly via
+    // the transactional pipeline, no campaign/template lookup.
+    if (body.html) {
+      const [contact] = await db
+        .select({ email: contacts.email })
+        .from(contacts)
+        .where(and(eq(contacts.id, body.contactId), eq(contacts.orgId, body.orgId)))
+        .limit(1);
+      if (!contact?.email) return reply.send({ data: { skipped: true, reason: 'no contact email' } });
+      const from = await resolveOrgFrom(body.orgId);
+      if (!from) return reply.send({ data: { skipped: true, reason: 'no from address' } });
+      const messageId = await sendTransactionalEmail({
+        to: contact.email,
+        from: from.fromEmail,
+        fromName: from.fromName,
+        subject: body.subject ?? '',
+        html: body.html,
+        text: body.text,
+        orgId: body.orgId,
+        contactId: body.contactId,
+      });
+      return reply.send({ data: { queued: true, messageId } });
+    }
 
     let content: Record<string, unknown>;
     let subject: string;

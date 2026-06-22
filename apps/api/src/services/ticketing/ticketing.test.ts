@@ -4,8 +4,7 @@ import { computeDayOfSchedule, stepsDueNow } from './day-of.js';
 import { coOccurrence, recommendForContact } from './recommendations.js';
 import { recipesForTrigger, recipesByGroup, TICKETING_RECIPES } from './recipes.js';
 import { ATTENDANCE_FOR_TYPE } from './ingest.js';
-
-const DAY = 86_400_000;
+import { buildWorkflowGraph, SEED_DEFS } from './seed-workflows.js';
 
 // ─── Fill-the-house (yield) ───────────────────────────────────────────────────
 
@@ -161,5 +160,41 @@ describe('ATTENDANCE_FOR_TYPE', () => {
     expect(ATTENDANCE_FOR_TYPE.event_attended).toBe('attended');
     expect(ATTENDANCE_FOR_TYPE.lottery_won).toBe('lottery_won');
     expect(ATTENDANCE_FOR_TYPE.contact_sync).toBeUndefined();
+  });
+});
+
+describe('seed workflows', () => {
+  it('builds a valid trigger → wait → send graph when waitHours set', () => {
+    const def = SEED_DEFS.find((d) => d.key === 'abandoned_cart')!;
+    const { nodes, edges } = buildWorkflowGraph(def);
+    expect(nodes[0]!.type).toBe('trigger');
+    expect(nodes.map((n) => n.type)).toContain('wait');
+    expect(nodes.map((n) => n.type)).toContain('send_email');
+    // edges form a connected path trigger → wait → send
+    expect(edges.some((e) => e.source === 'trigger' && e.target === 'wait')).toBe(true);
+    expect(edges.some((e) => e.source === 'wait' && e.target === 'send')).toBe(true);
+  });
+
+  it('builds trigger → send directly when no wait', () => {
+    const def = SEED_DEFS.find((d) => d.key === 'waitlist_freed')!;
+    const { nodes, edges } = buildWorkflowGraph(def);
+    expect(nodes.map((n) => n.type)).toEqual(['trigger', 'send_email']);
+    expect(edges).toEqual([{ id: 'e_trigger_send', source: 'trigger', target: 'send' }]);
+  });
+
+  it('every seed carries inline html + subject + a ticketing.* trigger', () => {
+    for (const d of SEED_DEFS) {
+      expect(d.eventName.startsWith('ticketing.')).toBe(true);
+      const send = buildWorkflowGraph(d).nodes.find((n) => n.type === 'send_email')!;
+      const cfg = send.config as { subject?: string; html?: string };
+      expect(cfg.subject && cfg.html).toBeTruthy();
+    }
+  });
+
+  it('covers the key reuse + cron-driven recipes', () => {
+    const keys = SEED_DEFS.map((d) => d.key);
+    for (const k of ['abandoned_cart', 'post_event_review', 'referral', 'day_of_reminder', 'fill_the_house_offer', 'discover_digest']) {
+      expect(keys).toContain(k);
+    }
   });
 });

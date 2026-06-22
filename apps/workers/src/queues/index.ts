@@ -83,6 +83,9 @@ export const QUEUE_NAMES = {
   DAILY_TRIGGERS: 'daily-triggers',
   WAREHOUSE_SYNC: 'warehouse-sync-run',
   CLICKHOUSE_REPLICATE: 'clickhouse-replicate',
+  TICKETING_DAY_OF: 'ticketing-day-of',
+  TICKETING_FILL_HOUSE: 'ticketing-fill-house',
+  TICKETING_DISCOVER: 'ticketing-discover',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

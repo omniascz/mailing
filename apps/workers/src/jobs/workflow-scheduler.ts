@@ -18,6 +18,9 @@ const resumeQueue = new Queue(QUEUE_NAMES.WORKFLOW_RUN_RESUME, { connection });
 const dailyQueue = new Queue(QUEUE_NAMES.DAILY_TRIGGERS, { connection });
 const warehouseQueue = new Queue(QUEUE_NAMES.WAREHOUSE_SYNC, { connection });
 const clickhouseQueue = new Queue(QUEUE_NAMES.CLICKHOUSE_REPLICATE, { connection });
+const ticketingDayOfQueue = new Queue(QUEUE_NAMES.TICKETING_DAY_OF, { connection });
+const ticketingFillHouseQueue = new Queue(QUEUE_NAMES.TICKETING_FILL_HOUSE, { connection });
+const ticketingDiscoverQueue = new Queue(QUEUE_NAMES.TICKETING_DISCOVER, { connection });
 
 async function post(path: string): Promise<unknown> {
   const res = await fetch(`${API_URL}${path}`, {
@@ -87,7 +90,47 @@ export function startWorkflowSchedulerWorkers() {
     captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.CLICKHOUSE_REPLICATE });
   });
 
-  return { resumeWorker, dailyWorker, warehouseWorker, clickhouseWorker };
+  const mkTicketingWorker = (queue: string, path: string, label: string) => {
+    const w = new Worker(
+      queue,
+      async (job) => {
+        const r = (await post(path)) as { data?: Record<string, number> };
+        job.log(`${label}: ${JSON.stringify(r.data ?? {})}`);
+      },
+      { connection, concurrency: 1 },
+    );
+    w.on('failed', (job, err) => {
+      console.error(`[${label}] failed`, job?.id, err.message);
+      captureJobException(err, { jobId: job?.id, queue });
+    });
+    return w;
+  };
+
+  const ticketingDayOfWorker = mkTicketingWorker(
+    QUEUE_NAMES.TICKETING_DAY_OF,
+    '/api/v1/internal/ticketing/day-of/tick',
+    'ticketing-day-of',
+  );
+  const ticketingFillHouseWorker = mkTicketingWorker(
+    QUEUE_NAMES.TICKETING_FILL_HOUSE,
+    '/api/v1/internal/ticketing/fill-the-house/tick',
+    'ticketing-fill-house',
+  );
+  const ticketingDiscoverWorker = mkTicketingWorker(
+    QUEUE_NAMES.TICKETING_DISCOVER,
+    '/api/v1/internal/ticketing/discover/tick',
+    'ticketing-discover',
+  );
+
+  return {
+    resumeWorker,
+    dailyWorker,
+    warehouseWorker,
+    clickhouseWorker,
+    ticketingDayOfWorker,
+    ticketingFillHouseWorker,
+    ticketingDiscoverWorker,
+  };
 }
 
 export async function scheduleWorkflowJobs() {
@@ -142,5 +185,29 @@ export async function scheduleWorkflowJobs() {
       },
     );
     console.log('[workflow-scheduler] clickhouse-replicate scheduled (every minute)');
+  }
+  if (!(await ticketingDayOfQueue.getJob('ticketing-day-of'))) {
+    await ticketingDayOfQueue.add(
+      'tick',
+      {},
+      { jobId: 'ticketing-day-of', repeat: { pattern: '* * * * *' }, removeOnComplete: true, removeOnFail: { count: 10 } },
+    );
+    console.log('[workflow-scheduler] ticketing-day-of scheduled (every minute)');
+  }
+  if (!(await ticketingFillHouseQueue.getJob('ticketing-fill-house'))) {
+    await ticketingFillHouseQueue.add(
+      'tick',
+      {},
+      { jobId: 'ticketing-fill-house', repeat: { pattern: '0 10 * * *' }, removeOnComplete: true, removeOnFail: { count: 5 } },
+    );
+    console.log('[workflow-scheduler] ticketing-fill-house scheduled (10:00 daily)');
+  }
+  if (!(await ticketingDiscoverQueue.getJob('ticketing-discover'))) {
+    await ticketingDiscoverQueue.add(
+      'tick',
+      {},
+      { jobId: 'ticketing-discover', repeat: { pattern: '0 9 * * 1' }, removeOnComplete: true, removeOnFail: { count: 5 } },
+    );
+    console.log('[workflow-scheduler] ticketing-discover scheduled (Mon 09:00)');
   }
 }

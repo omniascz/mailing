@@ -8,6 +8,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { ingestTicketingEvent, type TicketingEvent } from '../../services/ticketing/ingest.js';
+import { seedTicketingWorkflows } from '../../services/ticketing/seed-workflows.js';
+import { TICKETING_RECIPES } from '../../services/ticketing/recipes.js';
 
 const contactSchema = z.object({
   email: z.string().email(),
@@ -91,6 +93,25 @@ export default async function ticketingRoutes(app: FastifyInstance) {
         }
       }
       return reply.code(202).send({ data: { total: body.events.length, ok, results } });
+    },
+  );
+
+  /** Seed ready-to-run ticketing automations into the org (idempotent). */
+  app.post(
+    '/api/v1/ticketing/seed-workflows',
+    { schema: { tags: ['Ticketing'], summary: 'Seed ticketing automations into the org' } },
+    async (req, reply) => {
+      const result = await seedTicketingWorkflows(req.user!.orgId);
+      return reply.send({ data: result });
+    },
+  );
+
+  /** The recipe catalog (7 feature groups → ForgeMsg modules). */
+  app.get(
+    '/api/v1/ticketing/recipes',
+    { schema: { tags: ['Ticketing'], summary: 'Ticketing recipe catalog' } },
+    async (_req, reply) => {
+      return reply.send({ data: TICKETING_RECIPES });
     },
   );
 }

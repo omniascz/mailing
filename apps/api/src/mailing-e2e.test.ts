@@ -407,6 +407,25 @@ describe('security hardening', () => {
     expect(api('db/schema/index.ts')).toContain("export * from './ticketing.js'");
   });
 
+  it('ticketing crons + seed workflows are wired (engine → trigger → workflow)', () => {
+    const cron = api('services/ticketing/cron.ts');
+    expect(cron).toContain('runDayOfTick');
+    expect(cron).toContain('runFillTheHouseTick');
+    expect(cron).toContain('runDiscoverTick');
+    expect(cron).toContain("'ticketing.day_of_reminder'");
+    expect(api('routes/v1/internal/ticketing-cron.ts')).toContain('/api/v1/internal/ticketing/day-of/tick');
+    const seed = api('services/ticketing/seed-workflows.ts');
+    expect(seed).toContain('seedTicketingWorkflows');
+    expect(seed).toContain("eventName: 'ticketing.cart_abandoned'");
+    const sched = readFileSync(
+      join(__dirname, '../../workers/src/jobs/workflow-scheduler.ts'),
+      'utf8',
+    );
+    expect(sched).toContain('ticketing-day-of');
+    expect(sched).toContain('ticketing-fill-house');
+    expect(sched).toContain('ticketing-discover');
+  });
+
   it('transactional email supports attachments end-to-end (e-ticket PDF path)', () => {
     // API: endpoint accepts attachments + passes them to the queue
     const tx = api('routes/v1/transactional.ts');

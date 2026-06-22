@@ -92,6 +92,9 @@ const {
   dailyWorker: dailyTriggersWorker,
   warehouseWorker: warehouseSyncWorker,
   clickhouseWorker: clickhouseReplicateWorker,
+  ticketingDayOfWorker,
+  ticketingFillHouseWorker,
+  ticketingDiscoverWorker,
 } = startWorkflowSchedulerWorkers();
 scheduleWorkflowJobs().catch(console.error);
 
@@ -127,6 +130,9 @@ async function shutdown() {
     dailyTriggersWorker.close(),
     warehouseSyncWorker.close(),
     clickhouseReplicateWorker.close(),
+    ticketingDayOfWorker.close(),
+    ticketingFillHouseWorker.close(),
+    ticketingDiscoverWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');

@@ -77,6 +77,10 @@ async function executeSendEmail(
     campaignId?: string;
     subject?: string;
     templateId?: string;
+    /** Inline content — used by seeded/self-contained workflows that don't
+     *  reference a campaign or stored template. Merge tags are substituted. */
+    html?: string;
+    text?: string;
   };
 
   // §9 P1 — send-after-conversion suppression. If the run already hit a
@@ -99,6 +103,8 @@ async function executeSendEmail(
         campaignId: config.campaignId,
         templateId: config.templateId,
         subject: config.subject ? substituteMergeTags(config.subject, ctx.contact) : undefined,
+        html: config.html ? substituteMergeTags(config.html, ctx.contact) : undefined,
+        text: config.text ? substituteMergeTags(config.text, ctx.contact) : undefined,
       })
       .catch(() => {});
   }
