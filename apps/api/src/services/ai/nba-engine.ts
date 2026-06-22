@@ -8,14 +8,10 @@ import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/email-events.js';
 import { nbaScores, type NbaBreakdown } from '../../db/schema/nba-scores.js';
 import { contacts } from '../../db/schema/index.js';
+import { pickBestChannel } from './nba-pure.js';
+import { getPrediction } from '../send-optimization/per-contact-sto.js';
 
-const CHANNEL_WEIGHTS: Record<string, number> = {
-  email: 1.0,
-  sms: 0.7,
-  push: 0.5,
-  whatsapp: 0.6,
-  call: 0.3,
-};
+const STO_MIN_CONFIDENCE = 0.3; // below this, fall back to the engagement heuristic
 
 export async function computeNbaScore(
   orgId: string,
@@ -57,16 +53,18 @@ export async function computeNbaScore(
     whatsapp: cf['wa_opted_in'] ? emailScore * 0.6 : 0,
   };
 
-  // Find best channel
-  let bestChannel = 'email';
-  let bestScore = channelScores.email;
-  for (const [ch, sc] of Object.entries(channelScores) as Array<[keyof typeof channelScores, number]>) {
-    const weighted = sc * (CHANNEL_WEIGHTS[ch] ?? 1);
-    if (weighted > bestScore) { bestChannel = ch; bestScore = sc; }
-  }
+  // Find best channel by weighted score (consistent comparison + reported score).
+  const { channel: bestChannel, score: bestScore } = pickBestChannel(channelScores);
 
-  // Best hour: simple heuristic — if contact in EU, default to 10:00 or 14:00
-  const bestSendHour = clicks > opens / 2 ? 14 : 10;
+  // Best hour: prefer the contact's own empirical-Bayes STO prediction; fall
+  // back to a coarse engagement heuristic when there isn't enough open history.
+  const stoPrediction = await getPrediction(orgId, contactId).catch(() => null);
+  const bestSendHour =
+    stoPrediction && stoPrediction.confidence >= STO_MIN_CONFIDENCE
+      ? stoPrediction.bestHourUtc
+      : clicks > opens / 2
+        ? 14
+        : 10;
 
   const breakdown: NbaBreakdown = {
     recencyScore,

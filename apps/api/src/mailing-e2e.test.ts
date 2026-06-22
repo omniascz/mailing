@@ -361,6 +361,13 @@ describe('security hardening', () => {
     expect(src).not.toContain('halfLife / Math.LN2 / 1000'); // the unit-mixed garbage term
   });
 
+  it('NBA engine: weighted channel pick + real STO hour (not hardcoded)', () => {
+    const src = api('services/ai/nba-engine.ts');
+    expect(src).toContain('pickBestChannel'); // consistent weighted selection
+    expect(src).toContain('getPrediction'); // real per-contact STO hour
+    expect(src).not.toContain('bestScore = sc'); // the weight-application bug is gone
+  });
+
   it('ClickHouse pipeline exists: client + schema + replicator + cron', () => {
     expect(api('services/analytics/clickhouse/client.ts')).toContain('FORMAT JSONEachRow');
     expect(api('services/analytics/clickhouse/schema.ts')).toContain('MATERIALIZED VIEW');
