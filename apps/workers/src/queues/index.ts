@@ -82,6 +82,7 @@ export const QUEUE_NAMES = {
   WORKFLOW_RUN_RESUME: 'workflow-run-resume',
   DAILY_TRIGGERS: 'daily-triggers',
   WAREHOUSE_SYNC: 'warehouse-sync-run',
+  CLICKHOUSE_REPLICATE: 'clickhouse-replicate',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

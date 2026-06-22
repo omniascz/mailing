@@ -17,6 +17,7 @@ const SECRET = process.env.INTERNAL_SECRET ?? '';
 const resumeQueue = new Queue(QUEUE_NAMES.WORKFLOW_RUN_RESUME, { connection });
 const dailyQueue = new Queue(QUEUE_NAMES.DAILY_TRIGGERS, { connection });
 const warehouseQueue = new Queue(QUEUE_NAMES.WAREHOUSE_SYNC, { connection });
+const clickhouseQueue = new Queue(QUEUE_NAMES.CLICKHOUSE_REPLICATE, { connection });
 
 async function post(path: string): Promise<unknown> {
   const res = await fetch(`${API_URL}${path}`, {
@@ -71,7 +72,22 @@ export function startWorkflowSchedulerWorkers() {
     captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.WAREHOUSE_SYNC });
   });
 
-  return { resumeWorker, dailyWorker, warehouseWorker };
+  const clickhouseWorker = new Worker(
+    QUEUE_NAMES.CLICKHOUSE_REPLICATE,
+    async (job) => {
+      const r = (await post('/api/v1/internal/clickhouse/replicate')) as {
+        data?: { replicated: number; enabled: boolean };
+      };
+      if (r.data?.enabled) job.log(`ClickHouse replicated ${r.data.replicated} rows`);
+    },
+    { connection, concurrency: 1 },
+  );
+  clickhouseWorker.on('failed', (job, err) => {
+    console.error('[clickhouse-replicate] failed', job?.id, err.message);
+    captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.CLICKHOUSE_REPLICATE });
+  });
+
+  return { resumeWorker, dailyWorker, warehouseWorker, clickhouseWorker };
 }
 
 export async function scheduleWorkflowJobs() {
@@ -113,5 +129,18 @@ export async function scheduleWorkflowJobs() {
       },
     );
     console.log('[workflow-scheduler] warehouse-sync scheduled (hourly)');
+  }
+  if (!(await clickhouseQueue.getJob('clickhouse-replicate'))) {
+    await clickhouseQueue.add(
+      'replicate',
+      {},
+      {
+        jobId: 'clickhouse-replicate',
+        repeat: { pattern: '* * * * *' }, // every minute (no-op when CH disabled)
+        removeOnComplete: true,
+        removeOnFail: { count: 10 },
+      },
+    );
+    console.log('[workflow-scheduler] clickhouse-replicate scheduled (every minute)');
   }
 }

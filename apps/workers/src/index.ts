@@ -91,6 +91,7 @@ const {
   resumeWorker: workflowResumeWorker,
   dailyWorker: dailyTriggersWorker,
   warehouseWorker: warehouseSyncWorker,
+  clickhouseWorker: clickhouseReplicateWorker,
 } = startWorkflowSchedulerWorkers();
 scheduleWorkflowJobs().catch(console.error);
 
@@ -125,6 +126,7 @@ async function shutdown() {
     workflowResumeWorker.close(),
     dailyTriggersWorker.close(),
     warehouseSyncWorker.close(),
+    clickhouseReplicateWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');

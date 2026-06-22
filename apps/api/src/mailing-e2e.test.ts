@@ -323,6 +323,25 @@ describe('security hardening', () => {
     expect(api('routes/v1/webhooks/ads.ts')).toContain('verifyMetaRequest');
   });
 
+  it('analytics is ClickHouse-aware with a Postgres fallback', () => {
+    const src = api('services/analytics/index.ts');
+    expect(src).toContain('isClickHouseEnabled');
+    expect(src).toContain('pgCampaignEventRows'); // fallback path
+    expect(src).toContain('computeCampaignStats'); // shared pure fold
+  });
+
+  it('ClickHouse pipeline exists: client + schema + replicator + cron', () => {
+    expect(api('services/analytics/clickhouse/client.ts')).toContain('FORMAT JSONEachRow');
+    expect(api('services/analytics/clickhouse/schema.ts')).toContain('MATERIALIZED VIEW');
+    expect(api('services/analytics/clickhouse/replicator.ts')).toContain('replicateUntilCaughtUp');
+    expect(api('index.ts')).toContain('internalClickHouseRoutes');
+    const scheduler = readFileSync(
+      join(__dirname, '../../workers/src/jobs/workflow-scheduler.ts'),
+      'utf8',
+    );
+    expect(scheduler).toContain('clickhouse/replicate');
+  });
+
   it('a global raw-body JSON parser exposes req.rawBody for signature checks', () => {
     const src = api('index.ts');
     expect(src).toContain('addContentTypeParser');

@@ -1,13 +1,87 @@
 /**
- * Campaign analytics service — queries email_events (PostgreSQL) and computes
- * aggregate statistics. In a future phase these aggregations will move to
- * ClickHouse; the interface here stays the same.
+ * Campaign analytics service. Reads from ClickHouse (email_events_daily rollup)
+ * when CLICKHOUSE_ENABLED=true, falling back to PostgreSQL aggregation otherwise
+ * — same interface, same result shapes either way.
  */
 
 import { and, count, countDistinct, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents, campaigns } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { isClickHouseEnabled } from './clickhouse/client.js';
+import { chCampaignEventRows, chOrgDailyRows } from './clickhouse/queries.js';
+
+interface CampaignEventRow {
+  eventType: string;
+  bounceType: string | null;
+  total: number;
+  uniqueContacts: number;
+}
+
+/** Pure: fold grouped event rows into the CampaignStats shape. */
+export function computeCampaignStats(rows: CampaignEventRow[]): CampaignStats {
+  const get = (type: string) => rows.find((r) => r.eventType === type);
+  const getUnique = (type: string) => rows.find((r) => r.eventType === type)?.uniqueContacts ?? 0;
+
+  const sent = get('send')?.total ?? 0;
+  const delivered = get('deliver')?.total ?? 0;
+  const opens = get('open')?.total ?? 0;
+  const uniqueOpens = getUnique('open');
+  const clicks = get('click')?.total ?? 0;
+  const uniqueClicks = getUnique('click');
+  const bounceRows = rows.filter((r) => r.eventType === 'bounce');
+  const bounces = bounceRows.reduce((a, r) => a + r.total, 0);
+  const hardBounces = bounceRows.find((r) => r.bounceType === 'hard')?.total ?? 0;
+  const softBounces = bounceRows.find((r) => r.bounceType === 'soft')?.total ?? 0;
+  const unsubs = get('unsubscribe')?.total ?? 0;
+  const complaints = get('complaint')?.total ?? 0;
+
+  const safeRate = (num: number, denom: number) =>
+    denom > 0 ? Math.round((num / denom) * 10000) / 100 : 0;
+
+  return {
+    sent,
+    delivered,
+    deliveryRate: safeRate(delivered, sent),
+    opens,
+    uniqueOpens,
+    openRate: safeRate(uniqueOpens, delivered || sent),
+    clicks,
+    uniqueClicks,
+    clickRate: safeRate(uniqueClicks, delivered || sent),
+    ctor: safeRate(uniqueClicks, uniqueOpens),
+    bounces,
+    bounceRate: safeRate(bounces, sent),
+    hardBounces,
+    softBounces,
+    unsubs,
+    unsubRate: safeRate(unsubs, delivered || sent),
+    complaints,
+    complaintRate: safeRate(complaints, delivered || sent),
+  };
+}
+
+/** Pure: fold per-(day,event_type) counts into the OrgDailyStats series. */
+export function aggregateOrgDaily(rows: Array<{ date: string; eventType: string; cnt: number }>): OrgDailyStats[] {
+  const map = new Map<string, OrgDailyStats>();
+  for (const row of rows) {
+    const date = row.date.slice(0, 10);
+    if (!map.has(date)) {
+      map.set(date, { date, sent: 0, delivered: 0, opens: 0, clicks: 0, bounces: 0, unsubs: 0, complaints: 0 });
+    }
+    const s = map.get(date)!;
+    switch (row.eventType) {
+      case 'send': s.sent += row.cnt; break;
+      case 'deliver': s.delivered += row.cnt; break;
+      case 'open': s.opens += row.cnt; break;
+      case 'click': s.clicks += row.cnt; break;
+      case 'bounce': s.bounces += row.cnt; break;
+      case 'unsubscribe': s.unsubs += row.cnt; break;
+      case 'complaint': s.complaints += row.cnt; break;
+    }
+  }
+  return [...map.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,10 +144,7 @@ async function assertCampaignExists(campaignId: string, orgId: string) {
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
-export async function getCampaignStats(campaignId: string, orgId: string): Promise<CampaignStats> {
-  await assertCampaignExists(campaignId, orgId);
-
-  // Count each event type
+async function pgCampaignEventRows(campaignId: string, orgId: string): Promise<CampaignEventRow[]> {
   const rows = await db
     .select({
       eventType: emailEvents.eventType,
@@ -84,46 +155,29 @@ export async function getCampaignStats(campaignId: string, orgId: string): Promi
     .from(emailEvents)
     .where(and(eq(emailEvents.campaignId, campaignId), eq(emailEvents.orgId, orgId)))
     .groupBy(emailEvents.eventType, emailEvents.bounceType);
+  return rows.map((r) => ({
+    eventType: String(r.eventType),
+    bounceType: r.bounceType ? String(r.bounceType) : null,
+    total: Number(r.total),
+    uniqueContacts: Number(r.uniqueContacts),
+  }));
+}
 
-  const get = (type: string) => rows.find((r) => r.eventType === type);
-  const getUnique = (type: string) => rows.find((r) => r.eventType === type)?.uniqueContacts ?? 0;
+export async function getCampaignStats(campaignId: string, orgId: string): Promise<CampaignStats> {
+  await assertCampaignExists(campaignId, orgId);
 
-  const sent = get('send')?.total ?? 0;
-  const delivered = get('deliver')?.total ?? 0;
-  const opens = get('open')?.total ?? 0;
-  const uniqueOpens = getUnique('open');
-  const clicks = get('click')?.total ?? 0;
-  const uniqueClicks = getUnique('click');
-  const bounceRows = rows.filter((r) => r.eventType === 'bounce');
-  const bounces = bounceRows.reduce((a, r) => a + r.total, 0);
-  const hardBounces = bounceRows.find((r) => r.bounceType === 'hard')?.total ?? 0;
-  const softBounces = bounceRows.find((r) => r.bounceType === 'soft')?.total ?? 0;
-  const unsubs = get('unsubscribe')?.total ?? 0;
-  const complaints = get('complaint')?.total ?? 0;
+  let rows: CampaignEventRow[];
+  if (isClickHouseEnabled()) {
+    try {
+      rows = await chCampaignEventRows(campaignId, orgId);
+    } catch {
+      rows = await pgCampaignEventRows(campaignId, orgId); // ClickHouse down → Postgres
+    }
+  } else {
+    rows = await pgCampaignEventRows(campaignId, orgId);
+  }
 
-  const safeRate = (num: number, denom: number) =>
-    denom > 0 ? Math.round((num / denom) * 10000) / 100 : 0;
-
-  return {
-    sent,
-    delivered,
-    deliveryRate: safeRate(delivered, sent),
-    opens,
-    uniqueOpens,
-    openRate: safeRate(uniqueOpens, delivered || sent),
-    clicks,
-    uniqueClicks,
-    clickRate: safeRate(uniqueClicks, delivered || sent),
-    ctor: safeRate(uniqueClicks, uniqueOpens),
-    bounces,
-    bounceRate: safeRate(bounces, sent),
-    hardBounces,
-    softBounces,
-    unsubs,
-    unsubRate: safeRate(unsubs, delivered || sent),
-    complaints,
-    complaintRate: safeRate(complaints, delivered || sent),
-  };
+  return computeCampaignStats(rows);
 }
 
 // ─── Timeline ─────────────────────────────────────────────────────────────────
@@ -373,10 +427,12 @@ export interface OrgDailyStats {
   complaints: number;
 }
 
-export async function getOrgDailyStats(orgId: string, days: number): Promise<OrgDailyStats[]> {
+async function pgOrgDailyRows(
+  orgId: string,
+  days: number,
+): Promise<Array<{ date: string; eventType: string; cnt: number }>> {
   const since = new Date();
   since.setDate(since.getDate() - days);
-
   const rows = await db.execute(sql`
     SELECT
       date_trunc('day', created_at) AS date,
@@ -388,49 +444,23 @@ export async function getOrgDailyStats(orgId: string, days: number): Promise<Org
     GROUP BY date, event_type
     ORDER BY date
   `);
+  return (rows as unknown as Array<Record<string, unknown>>).map((row) => ({
+    date: new Date(row.date as string).toISOString().slice(0, 10),
+    eventType: String(row.event_type),
+    cnt: Number(row.cnt),
+  }));
+}
 
-  const map = new Map<string, OrgDailyStats>();
-
-  for (const row of rows as unknown as Array<Record<string, unknown>>) {
-    const date = new Date(row.date as string).toISOString().slice(0, 10);
-    if (!map.has(date)) {
-      map.set(date, {
-        date,
-        sent: 0,
-        delivered: 0,
-        opens: 0,
-        clicks: 0,
-        bounces: 0,
-        unsubs: 0,
-        complaints: 0,
-      });
+export async function getOrgDailyStats(orgId: string, days: number): Promise<OrgDailyStats[]> {
+  let rows: Array<{ date: string; eventType: string; cnt: number }>;
+  if (isClickHouseEnabled()) {
+    try {
+      rows = await chOrgDailyRows(orgId, days);
+    } catch {
+      rows = await pgOrgDailyRows(orgId, days); // ClickHouse down → Postgres
     }
-    const s = map.get(date)!;
-    const cnt = Number(row.cnt);
-    switch (row.event_type) {
-      case 'send':
-        s.sent += cnt;
-        break;
-      case 'deliver':
-        s.delivered += cnt;
-        break;
-      case 'open':
-        s.opens += cnt;
-        break;
-      case 'click':
-        s.clicks += cnt;
-        break;
-      case 'bounce':
-        s.bounces += cnt;
-        break;
-      case 'unsubscribe':
-        s.unsubs += cnt;
-        break;
-      case 'complaint':
-        s.complaints += cnt;
-        break;
-    }
+  } else {
+    rows = await pgOrgDailyRows(orgId, days);
   }
-
-  return [...map.values()].sort((a, b) => a.date.localeCompare(b.date));
+  return aggregateOrgDaily(rows);
 }
