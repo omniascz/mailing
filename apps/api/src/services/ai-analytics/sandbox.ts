@@ -27,6 +27,7 @@ import {
   structuralVerdict,
   describeSchemaForPrompt as describeSchemaForPromptPure,
   injectOrgFilter as injectOrgFilterPure,
+  scopeTablesToOrg,
 } from './pure.js';
 
 // ─── Schema whitelist ────────────────────────────────────────────────────────
@@ -253,17 +254,12 @@ export interface ExecuteResult {
 }
 
 /**
- * Validate + execute a SELECT inside a transaction with a bound org_id and a
- * hard statement_timeout. Wraps the user's query as:
- *
- *   WITH user_q AS ( <their query> )
- *   SELECT * FROM user_q
- *   WHERE org_id = $1
- *   LIMIT $2
- *
- * …so every row that the caller sees has been filtered by Postgres against
- * the bound org id. If the user's query doesn't select an `org_id`, we
- * project one from the primary table.
+ * Validate + execute a SELECT inside a transaction with a hard
+ * statement_timeout. Org isolation is enforced at the SQL level by replacing
+ * every whitelisted base table with an org-scoped inline view
+ * (scopeTablesToOrg) — so count(*), bare-column and aggregate queries are all
+ * scoped, not just ones that happen to project org_id. An in-memory org filter
+ * remains as a belt-and-suspenders net.
  */
 export async function executeSandboxedQuery(
   orgId: string,
@@ -271,7 +267,7 @@ export async function executeSandboxedQuery(
   opts: ExecuteOptions = {},
 ): Promise<ExecuteResult> {
   lexicalCheck(rawQuery);
-  const { tables } = structuralCheck(rawQuery);
+  structuralCheck(rawQuery);
 
   const timeoutMs = Math.min(Math.max(100, opts.timeoutMs ?? 5_000), 30_000);
   const maxRows = Math.min(Math.max(1, opts.maxRows ?? 1_000), 10_000);
@@ -282,20 +278,14 @@ export async function executeSandboxedQuery(
     .replace(/;+\s*$/, '')
     .replace(/\bLIMIT\s+\d+(\s+OFFSET\s+\d+)?\s*$/i, '');
 
-  // Primary org-scoped table (first referenced). If the user projected an
-  // org_id we filter on it; otherwise we wrap with an implicit filter
-  // joined back to the primary table.
-  const primaryTable = tables[0]!;
-  const primarySchema = ALLOWED_TABLES[primaryTable]!;
-  const orgColumn = primarySchema.orgColumn;
+  // Enforce org isolation at the SQL level (throws if orgId isn't a UUID).
+  const scoped = scopeTablesToOrg(inner, orgId, ALLOWED_TABLES);
 
   const started = Date.now();
   try {
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL statement_timeout = ${timeoutMs}`));
-      // Use pg_get_expr-safe raw SQL for the inner query; orgId is still
-      // bound via a parameter in the outer layer.
-      const wrapped = sql.raw(`SELECT * FROM (${inner}) AS __user_q LIMIT ${maxRows}`);
+      const wrapped = sql.raw(`SELECT * FROM (${scoped}) AS __user_q LIMIT ${maxRows}`);
       const rows = await tx.execute(wrapped);
       // drizzle returns an array-like; normalise to plain array
       const arr = Array.isArray(rows)
@@ -304,12 +294,10 @@ export async function executeSandboxedQuery(
       return arr as unknown[];
     });
 
-    // Post-filter on org_id when the projection exposes one. This is a
-    // safety net: even if the inner query omits a WHERE clause, rows that
-    // leak through without a matching org_id are dropped.
+    // Belt-and-suspenders: if a row still carries an org_id, it must match.
     const filtered = (result as Array<Record<string, unknown>>).filter((r) => {
-      if (!(orgColumn in r)) return true; // projection doesn't carry org — trust inner WHERE
-      return r[orgColumn] === orgId;
+      if (!('org_id' in r)) return true;
+      return r['org_id'] === orgId;
     });
 
     const columns = filtered[0] ? Object.keys(filtered[0]) : [];

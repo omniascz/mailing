@@ -368,6 +368,16 @@ describe('security hardening', () => {
     expect(src).not.toContain('bestScore = sc'); // the weight-application bug is gone
   });
 
+  it('AI SQL sandbox enforces org isolation at the SQL level (no cross-org leak)', () => {
+    const sandbox = api('services/ai-analytics/sandbox.ts');
+    expect(sandbox).toContain('scopeTablesToOrg'); // SQL-level scoping, not in-memory only
+    // the old leaky bare wrap must be gone
+    expect(sandbox).not.toContain('SELECT * FROM (${inner})');
+    const pure = api('services/ai-analytics/pure.ts');
+    expect(pure).toContain('scopeTablesToOrg');
+    expect(pure).toContain('hasCommaJoin'); // comma-joins rejected
+  });
+
   it('ClickHouse pipeline exists: client + schema + replicator + cron', () => {
     expect(api('services/analytics/clickhouse/client.ts')).toContain('FORMAT JSONEachRow');
     expect(api('services/analytics/clickhouse/schema.ts')).toContain('MATERIALIZED VIEW');

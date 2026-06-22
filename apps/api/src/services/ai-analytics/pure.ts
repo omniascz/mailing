@@ -100,7 +100,73 @@ export function lexicalVerdict(sqlText: string): SafetyVerdict {
   if (/\bFOR\s+(UPDATE|SHARE|NO\s+KEY\s+UPDATE|KEY\s+SHARE)\b/i.test(withoutTrailing)) {
     return { safe: false, reason: 'Locking clauses are not allowed' };
   }
+  // Comma-joins (FROM a, b) escape both the FROM/JOIN whitelist check and the
+  // per-table org scoping — force explicit JOINs so every table is scoped.
+  if (hasCommaJoin(withoutTrailing)) {
+    return { safe: false, reason: 'Comma joins are not allowed — use explicit JOIN' };
+  }
   return { safe: true };
+}
+
+/** True if any FROM clause uses a depth-0 comma join (FROM a, b). */
+export function hasCommaJoin(query: string): boolean {
+  const s = stripCommentsAndTrim(query);
+  const re = /\bfrom\b/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(s)) !== null) {
+    let depth = 0;
+    for (let i = m.index + 4; i < s.length; i++) {
+      const ch = s[i]!;
+      if (ch === '(') depth++;
+      else if (ch === ')') {
+        if (depth === 0) break;
+        depth--;
+      } else if (depth === 0) {
+        if (ch === ',') return true;
+        const rest = s.slice(i);
+        if (
+          /^\s+(where|group|order|having|limit|offset|union|except|intersect|window|join|left|right|inner|outer|full|cross|on)\b/i.test(
+            rest,
+          )
+        ) {
+          break;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SCOPE_ALIAS_KEYWORDS =
+  'where|join|left|right|inner|outer|full|cross|on|group|order|by|limit|offset|having|union|except|intersect|window|fetch|for|using|natural|lateral|as';
+
+/**
+ * Rewrite a query so every whitelisted base table is replaced by an org-scoped
+ * inline view: `FROM contacts` → `FROM (SELECT * FROM contacts WHERE org_id =
+ * '<org>') AS contacts`. This enforces org isolation at the SQL level for ANY
+ * projection or aggregate (count(*), bare columns, etc.) — unlike an outer
+ * WHERE wrapper, which silently leaks when the query doesn't project org_id.
+ * The orgId must be a UUID (validated) and is single-quote-escaped.
+ */
+export function scopeTablesToOrg(
+  query: string,
+  orgId: string,
+  schemas: Record<string, SandboxTableSchema>,
+): string {
+  if (!UUID_RE.test(orgId)) throw new Error('Invalid orgId for sandbox scoping');
+  const safeOrg = orgId.replace(/'/g, "''");
+  const re = new RegExp(
+    `\\b(from|join)\\s+([a-z_][a-z0-9_]*)(?:\\s+(?:as\\s+)?(?!(?:${SCOPE_ALIAS_KEYWORDS})\\b)([a-z_][a-z0-9_]*))?`,
+    'gi',
+  );
+  return query.replace(re, (full: string, kw: string, table: string, alias?: string) => {
+    const t = table.toLowerCase();
+    const schema = schemas[t];
+    if (!schema) return full; // CTE name / unknown — leave (structural check gates whitelist)
+    const useAlias = alias ? alias : t;
+    return `${kw} (SELECT * FROM ${t} WHERE ${schema.orgColumn} = '${safeOrg}') AS ${useAlias}`;
+  });
 }
 
 /** Strip comments then collect FROM/JOIN targets and qualified table.column references. */
