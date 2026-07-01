@@ -332,3 +332,116 @@ export function aggregateReputation(
 
   return { overallTier, overallScore, maxSpamRate, hasAlert };
 }
+
+// ─── Public reputation badge (#440) ──────────────────────────────────────────
+//
+// A privacy-safe, coarse view of a domain's deliverability health that a sender
+// can opt-in to expose publicly for transparency. Deliberately omits raw send
+// volumes and per-provider internals — only grade, warm-up status, and rounded
+// bounce/complaint rates.
+
+export type BadgeStatus = 'excellent' | 'good' | 'fair' | 'poor';
+
+export interface PublicBadgeInput {
+  domain: string;
+  score: number;
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  /** Fractional rates (0..1) from computeEmailHealthScore components. */
+  bounceRate: number;
+  complaintRate: number;
+  warmupStatus: string;
+  verified: boolean;
+  windowDays: number;
+  /** ISO timestamp — passed in (pure fn does not read the clock). */
+  updatedAt: string;
+}
+
+export interface PublicReputationBadge {
+  domain: string;
+  score: number;
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  status: BadgeStatus;
+  warmupStatus: string;
+  verified: boolean;
+  bounceRatePct: number; // rounded to 2 decimals
+  complaintRatePct: number; // rounded to 3 decimals
+  windowDays: number;
+  updatedAt: string;
+}
+
+export function gradeToStatus(grade: PublicBadgeInput['grade']): BadgeStatus {
+  switch (grade) {
+    case 'A':
+      return 'excellent';
+    case 'B':
+      return 'good';
+    case 'C':
+      return 'fair';
+    default:
+      return 'poor';
+  }
+}
+
+export function gradeToColor(grade: PublicBadgeInput['grade']): string {
+  switch (grade) {
+    case 'A':
+      return '#4c1'; // bright green
+    case 'B':
+      return '#97ca00'; // green
+    case 'C':
+      return '#dfb317'; // yellow
+    case 'D':
+      return '#fe7d37'; // orange
+    default:
+      return '#e05d44'; // red
+  }
+}
+
+/** Build the privacy-safe public badge payload from a computed health score. */
+export function buildPublicBadge(input: PublicBadgeInput): PublicReputationBadge {
+  return {
+    domain: input.domain,
+    score: input.score,
+    grade: input.grade,
+    status: gradeToStatus(input.grade),
+    warmupStatus: input.warmupStatus,
+    verified: input.verified,
+    bounceRatePct: Math.round(input.bounceRate * 100 * 100) / 100,
+    complaintRatePct: Math.round(input.complaintRate * 100 * 1000) / 1000,
+    windowDays: input.windowDays,
+    updatedAt: input.updatedAt,
+  };
+}
+
+/** Rough text width for the shields-style SVG (Verdana ~6.5px/char at 11px). */
+function badgeTextWidth(text: string): number {
+  return text.length * 6.5 + 10;
+}
+
+/**
+ * Render a shields.io-style two-part SVG badge: `label | value` with the value
+ * segment coloured by grade. Self-contained, no external assets.
+ */
+export function renderReputationBadgeSvg(label: string, value: string, color: string): string {
+  const lw = Math.round(badgeTextWidth(label));
+  const vw = Math.round(badgeTextWidth(value));
+  const total = lw + vw;
+  const lx = Math.round((lw / 2) * 10);
+  const vx = Math.round((lw + vw / 2) * 10);
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${total}" height="20" role="img" aria-label="${esc(label)}: ${esc(value)}">
+  <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+  <clipPath id="r"><rect width="${total}" height="20" rx="3" fill="#fff"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="${lw}" height="20" fill="#555"/>
+    <rect x="${lw}" width="${vw}" height="20" fill="${color}"/>
+    <rect width="${total}" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="110" text-rendering="geometricPrecision">
+    <text x="${lx}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${(lw - 10) * 10}">${esc(label)}</text>
+    <text x="${lx}" y="140" transform="scale(.1)" textLength="${(lw - 10) * 10}">${esc(label)}</text>
+    <text x="${vx}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${(vw - 10) * 10}">${esc(value)}</text>
+    <text x="${vx}" y="140" transform="scale(.1)" textLength="${(vw - 10) * 10}">${esc(value)}</text>
+  </g>
+</svg>`;
+}

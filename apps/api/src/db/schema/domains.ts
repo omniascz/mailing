@@ -62,6 +62,13 @@ export const sendingDomains = pgTable(
     warmupStartedAt: timestamp('warmup_started_at', { withTimezone: true }),
     warmupCompletedAt: timestamp('warmup_completed_at', { withTimezone: true }),
 
+    /**
+     * Opt-in: expose a public sender-reputation badge for this domain (#440).
+     * When true, GET /api/v1/public/reputation/:domain serves a coarse,
+     * privacy-safe health summary + SVG badge for transparency.
+     */
+    publicBadgeEnabled: boolean('public_badge_enabled').notNull().default(false),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

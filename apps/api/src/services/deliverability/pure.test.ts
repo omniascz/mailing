@@ -3,9 +3,14 @@ import {
   classifyGraymail,
   computeEmailHealthScore,
   aggregateReputation,
+  buildPublicBadge,
+  gradeToStatus,
+  gradeToColor,
+  renderReputationBadgeSvg,
   type GraymailSignals,
   type EmailHealthMetrics,
   type ReputationProviderInput,
+  type PublicBadgeInput,
 } from './pure.js';
 
 const base: GraymailSignals = {
@@ -260,5 +265,64 @@ describe('aggregateReputation', () => {
     const errProvider: ReputationProviderInput = { tier: 'unknown', error: 'API timeout' };
     const res = aggregateReputation([high, errProvider]);
     expect(res.overallTier).toBe('high');
+  });
+});
+
+describe('public reputation badge (#440)', () => {
+  const base: PublicBadgeInput = {
+    domain: 'mail.acme.cz',
+    score: 92,
+    grade: 'A',
+    bounceRate: 0.0123,
+    complaintRate: 0.00042,
+    warmupStatus: 'warm',
+    verified: true,
+    windowDays: 30,
+    updatedAt: '2026-07-01T00:00:00.000Z',
+  };
+
+  it('maps grade to status', () => {
+    expect(gradeToStatus('A')).toBe('excellent');
+    expect(gradeToStatus('B')).toBe('good');
+    expect(gradeToStatus('C')).toBe('fair');
+    expect(gradeToStatus('D')).toBe('poor');
+    expect(gradeToStatus('F')).toBe('poor');
+  });
+
+  it('assigns distinct colours per grade', () => {
+    const colors = ['A', 'B', 'C', 'D', 'F'].map((g) => gradeToColor(g as PublicBadgeInput['grade']));
+    expect(new Set(colors).size).toBe(5);
+  });
+
+  it('rounds rates to percentages and preserves coarse fields', () => {
+    const badge = buildPublicBadge(base);
+    expect(badge.bounceRatePct).toBe(1.23); // 0.0123 → 1.23%
+    expect(badge.complaintRatePct).toBe(0.042); // 0.00042 → 0.042%
+    expect(badge.status).toBe('excellent');
+    expect(badge.warmupStatus).toBe('warm');
+    expect(badge.verified).toBe(true);
+    expect(badge.windowDays).toBe(30);
+    expect(badge.updatedAt).toBe('2026-07-01T00:00:00.000Z');
+  });
+
+  it('does not leak raw send volumes', () => {
+    const badge = buildPublicBadge(base) as unknown as Record<string, unknown>;
+    expect(badge.sends).toBeUndefined();
+    expect(badge.delivered).toBeUndefined();
+  });
+
+  it('renders a valid self-contained SVG badge', () => {
+    const svg = renderReputationBadgeSvg('sender reputation', 'A (92)', gradeToColor('A'));
+    expect(svg.startsWith('<svg')).toBe(true);
+    expect(svg).toContain('</svg>');
+    expect(svg).toContain('sender reputation');
+    expect(svg).toContain('A (92)');
+    expect(svg).toContain('#4c1');
+  });
+
+  it('escapes XML-special characters in badge text', () => {
+    const svg = renderReputationBadgeSvg('a<b>&c', 'x', '#4c1');
+    expect(svg).toContain('a&lt;b&gt;&amp;c');
+    expect(svg).not.toContain('a<b>&c');
   });
 });

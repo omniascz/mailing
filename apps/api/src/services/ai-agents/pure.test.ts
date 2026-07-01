@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { scoreDealHealth, scoreProspect, aggregateIntent, type DealHealthSignals } from './pure.js';
+import {
+  scoreDealHealth,
+  scoreProspect,
+  aggregateIntent,
+  countWords,
+  finaliseContent,
+  type DealHealthSignals,
+  type RawContent,
+} from './pure.js';
 
 const healthy: DealHealthSignals = {
   stageAgeDays: 3,
@@ -138,5 +146,83 @@ describe('aggregateIntent', () => {
     const short = aggregateIntent([{ weight: 1.0, ageInDays: 7 }], 7);
     const long = aggregateIntent([{ weight: 1.0, ageInDays: 7 }], 30);
     expect(long.score).toBeGreaterThan(short.score);
+  });
+});
+
+describe('countWords', () => {
+  it('counts plain words', () => {
+    expect(countWords('one two three')).toBe(3);
+  });
+
+  it('ignores markdown formatting tokens and html', () => {
+    expect(countWords('## Heading\n**bold** _text_ `code` <b>x</b>')).toBe(5);
+  });
+
+  it('returns 0 for empty / whitespace', () => {
+    expect(countWords('   \n  ')).toBe(0);
+  });
+});
+
+describe('finaliseContent', () => {
+  const rawBlog: RawContent = {
+    title: 'Jak začít s email marketingem',
+    metaDescription: 'Praktický průvodce.',
+    sections: [
+      { heading: 'Úvod', body: 'První odstavec s několika slovy navíc pro počítání.' },
+      { heading: 'Závěr', body: 'Shrnutí a další kroky.' },
+    ],
+    callToAction: 'Vyzkoušejte ForgeMsg zdarma',
+    keywords: ['email marketing', '  automatizace  '],
+  };
+
+  it('slugifies the title with diacritics stripped when slug missing', () => {
+    const res = finaliseContent('blog', rawBlog);
+    expect(res.slug).toBe('jak-zacit-s-email-marketingem');
+  });
+
+  it('prefers an explicit slug when provided', () => {
+    const res = finaliseContent('blog', { ...rawBlog, slug: 'Custom Slug!!' });
+    expect(res.slug).toBe('custom-slug');
+  });
+
+  it('computes word count and reading time from the body', () => {
+    const res = finaliseContent('blog', rawBlog);
+    expect(res.wordCount).toBeGreaterThan(0);
+    expect(res.readingTimeMinutes).toBeGreaterThanOrEqual(1);
+  });
+
+  it('trims keywords and drops empties', () => {
+    const res = finaliseContent('blog', rawBlog);
+    expect(res.keywords).toEqual(['email marketing', 'automatizace']);
+  });
+
+  it('derives a meta description from the body when missing', () => {
+    const res = finaliseContent('blog', { ...rawBlog, metaDescription: undefined });
+    expect(res.metaDescription.length).toBeGreaterThan(0);
+    expect(res.metaDescription).toContain('Úvod');
+  });
+
+  it('keeps podcast segments and counts their words', () => {
+    const res = finaliseContent('podcast_script', {
+      title: 'Epizoda 1',
+      podcastSegments: [
+        { speaker: 'Host', text: 'Vítejte u prvního dílu podcastu.' },
+        { speaker: 'Guest', text: 'Děkuji za pozvání.' },
+      ],
+    });
+    expect(res.podcastSegments).toHaveLength(2);
+    expect(res.wordCount).toBeGreaterThan(0);
+    expect(res.sections).toEqual([]);
+  });
+
+  it('filters out empty sections/segments defensively', () => {
+    const res = finaliseContent('blog', {
+      title: 'X',
+      sections: [
+        { heading: '', body: '' },
+        { heading: 'Real', body: 'content here' },
+      ],
+    });
+    expect(res.sections).toHaveLength(1);
   });
 });

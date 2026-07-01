@@ -394,6 +394,31 @@ export default async function domainRoutes(app: FastifyInstance) {
     },
   );
 
+  // ── Public reputation badge opt-in (#440) ───────────────────────────────────
+
+  app.patch(
+    '/api/v1/domains/:id/public-badge',
+    { schema: { tags: ['Domains'], summary: 'Toggle the public reputation badge for this domain' } },
+    async (req, reply) => {
+      const { id } = domainParam.parse(req.params);
+      const { enabled } = z.object({ enabled: z.boolean() }).parse(req.body);
+      const orgId = req.user!.orgId;
+
+      const [updated] = await db
+        .update(sendingDomains)
+        .set({ publicBadgeEnabled: enabled, updatedAt: new Date() })
+        .where(and(eq(sendingDomains.id, id), eq(sendingDomains.orgId, orgId)))
+        .returning({
+          id: sendingDomains.id,
+          domain: sendingDomains.domain,
+          publicBadgeEnabled: sendingDomains.publicBadgeEnabled,
+        });
+      if (!updated) throw AppError.notFound('Sending domain');
+
+      return reply.send({ data: updated });
+    },
+  );
+
   // ── Warmup status (#220) ────────────────────────────────────────────────────
 
   app.get(

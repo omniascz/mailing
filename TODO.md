@@ -389,7 +389,7 @@ Většina core modulů se už překrývá s Mailchimp-parity: segmentace, workfl
 
 ## 15. ActiveCampaign gap analýza — 2026-04-15
 
-> **Hotovo:** 16/51 (31%)
+> **Hotovo:** 51/51 (100%) ✅
 
 Zdroj: `C:\Users\omnia\Downloads\ActiveCampaign_Kompletni_Analyza_2026.md`. Cíl: dorovnat AC silné stránky (nejpokročilejší automation builder, integrovaný sales CRM, 1000+ integrací, Active Intelligence AI vrstva). Frontend/UI stále odloženo — backend only.
 
@@ -410,7 +410,7 @@ Zdroj: `C:\Users\omnia\Downloads\ActiveCampaign_Kompletni_Analyza_2026.md`. Cíl
 
 ### 15.2. ActiveCampaign-specific mezery → k implementaci (❌ → 📋)
 
-> **Hotovo:** 16/51 (31%)
+> **Hotovo:** 51/51 (100%) ✅
 
 Nejsilnější diferenciátor AC je **integrovaný sales CRM** (Pipelines + Sales Engagement add-ony) a **Active Intelligence AI** (Win Probability, Sentiment, autonomous agents, AI Campaign Builder). MailForge má pouze `lead-scoring` bez plné CRM vrstvy.
 
@@ -532,7 +532,7 @@ Nejsilnější diferenciátor AC je **integrovaný sales CRM** (Pipelines + Sale
 
 ## 16. Brevo gap analýza — 2026-04-15
 
-> **Hotovo:** 2/53 (4%)
+> **Hotovo:** 53/53 (100%) ✅
 
 Zdroj: `C:\Users\omnia\Downloads\Brevo_Kompletni_Analyza_2026.md`. Brevo je all-in-one platforma s unikátními moduly, které AC/Mailchimp/Klaviyo nemají: **Loyalty Program**, **Universal Inbox** (Instagram/FB Messenger/chat v jedné schránce), **Cloud Phone** (Yodel.io), **Meetings scheduler** a plnohodnotná **CDP vrstva**. Tato sekce pokrývá jen to, co ještě není v §1–§15.
 
@@ -542,7 +542,7 @@ Email/SMS/WhatsApp, transactional API (marketing+transactional v jednom — §10
 
 ### 16.2. Brevo-specific mezery → k implementaci (❌ → 📋)
 
-> **Hotovo:** 2/53 (4%)
+> **Hotovo:** 53/53 (100%) ✅
 
 #### A) Loyalty Program (Brevo killer feature, od 2024)
 
@@ -686,7 +686,7 @@ Brevo účtuje za e-maily, ne za kontakty. MailForge tohle má naplánované v b
 
 ## 17. HubSpot gap analýza — 2026-04-15
 
-> **Hotovo:** 0/71 (0%)
+> **Hotovo:** 71/71 (100%) ✅
 
 Zdroj: `C:\Users\omnia\Downloads\HubSpot_Kompletni_Analyza_2026.md`. HubSpot je nejkompletnější all-in-one business platforma (7 Hubů + Breeze AI). Mnoho core funkcí už pokryto v §1–§16 (Sales CRM, Deals, Accounts, Meetings, Universal Inbox, AI agenti, attribution, custom reports, 2FA, SSO, audit logs, custom objects, progressive profiling). Tato sekce pokrývá HubSpot-unikátní moduly, které ještě chybí.
 
@@ -696,7 +696,7 @@ Sales CRM (§15-A), Predictive lead scoring + Win Probability (§15-B), Meetings
 
 ### 17.2. HubSpot-specific mezery → k implementaci (❌ → 📋)
 
-> **Hotovo:** 0/71 (0%)
+> **Hotovo:** 71/71 (100%) ✅
 
 #### A) SEO Tooling (Content Hub)
 
@@ -788,7 +788,7 @@ HubSpot Smart CRM má lifecycle_stage jako first-class pole + generic associatio
 | ------- | --------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
 | ✅ #329 | 🧠 Opus   | **Prospecting Agent**                   | input = ICP → research target accounts (firmographic + intent + news) → personalized outreach draft    | `services/ai-agents/prospecting.ts`, napojeno na social enrichment + intent data                   |
 | ✅ #330 | 🧠 Opus   | **Customer Agent** (autonomous support) | trained na KB + helpdesk history + blog → autonomně odpovídá na tickety, eskaluje při nízké confidence | `services/ai-agents/customer-support.ts`, napojeno na helpdesk + RAG vector store                  |
-| 🔴 #331 | 🛠️ Sonnet | **Content Agent**                       | generuje blog/landing/email/podcast-script z brand voice + product data                                | `services/ai-agents/content.ts` (generalizace stávajícího `generate-email`)                        |
+| ✅ #331 | 🛠️ Sonnet | **Content Agent**                       | generuje blog/landing/email/podcast-script z brand voice + product data                                | `services/ai-agents/content.ts` (multi-format generalizace `generate-email`) + pure `finaliseContent`/`countWords`, route `POST /api/v1/ai-agents/content/generate`, +9 testů |
 | ✅ #332 | 🧠 Opus   | **Deal Loss / Health Agent**            | analyzuje historii uzavřených dealů → identifikuje loss patterns, flaguje at-risk deals                | `services/ai-agents/deal-health.ts`, rozšíření §15-B deal-risk                                     |
 | ✅ #333 | 🛠️ Sonnet | **Buyer intent signals**                | third-party intent data providers (Bombora/6sense adapter) + site activity intent score                | `db/schema/intent-signals.ts`, `services/intent/provider-adapter.ts`, `services/intent/scoring.ts` |
 | ✅ #334 | 🛠️ Sonnet | **Form autofill (identified visitor)**  | cookie/IP → known contact → pre-fill form fields in API                                                | rozšíření `services/signup-forms` o `autofill.ts`                                                  |
@@ -804,7 +804,7 @@ Blog přidáváme (stát se content platformou pro SEO), ale plný website build
 | ✅ #337 | 🛠️ Sonnet | **Blog → email automation**              | new post → trigger workflow + RSS email campaign                                                  | rozšíření RSS campaigns (§1.2)                                                                       |
 | ✅ #338 | 🧠 Opus   | **Multi-language content**               | content variants per locale, auto-detect reader locale, fallback chain                            | rozšíření editor schema + blog schema o `locale`, `translations` relační tabulka                     |
 | ✅ #339 | 🛠️ Sonnet | **Content staging / versioning**         | draft → staged → published, revision history                                                      | rozšíření blog + landing schema o `version` + `published_version_id`                                 |
-| 🔴 #340 | 🛠️ Sonnet | **CTAs (Calls-to-Action) widgets**       | clickable buttons/popups/banners s A/B, analytics, smart content (segment-based)                  | `db/schema/ctas.ts`, `services/ctas/index.ts`, `routes/v1/ctas.ts`, served přes site-tracker (§15-C) |
+| ✅ #340 | 🛠️ Sonnet | **CTAs (Calls-to-Action) widgets**       | clickable buttons/popups/banners s A/B, analytics, smart content (segment-based)                  | hotovo přes #412: `db/schema/ctas.ts`, `services/blog/ctas.ts`, `routes/v1/ctas.ts` (cta_variants + cta_impressions, weighted A/B) |
 | ✅ #341 | 🛠️ Sonnet | **Smart/Dependent forms**                | field visibility podmíněná předchozí odpovědí                                                     | rozšíření signup-forms schema o `visibility_rules` per field                                         |
 
 #### I) Platform extras
@@ -865,7 +865,7 @@ Blog přidáváme (stát se content platformou pro SEO), ale plný website build
 
 ## 18. Ecomail gap analýza — 2026-04-15
 
-> **Hotovo:** 0/25 (0%)
+> **Hotovo:** 24/25 (96%) — zbývá #369 Shoptet App Store listing (business ops)
 
 Zdroj: `C:\Users\omnia\Downloads\Ecomail_Kompletni_Analyza_2026.md`. Ecomail je česká SMB platforma (6 000+ zákazníků, 200M Kč obrat). Většina jeho funkcí je už v MailForge pokryta ze silnější konkurence (Mailchimp/Klaviyo/AC/Brevo/HubSpot). Unikátní Ecomail value-add je **český lokalizační modul** + **CZ/SK e-commerce integrace** — nutné pokud MailForge cílí CZ/SK trh.
 
@@ -884,7 +884,7 @@ Drag-drop editor, 170+ šablon (rozšiřitelné z 10), AI subject/content, merge
 
 ### 18.3. Ecomail-unikátní mezery pro CZ/SK trh
 
-> **Hotovo:** 0/25 (0%)
+> **Hotovo:** 24/25 (96%) — zbývá #369 Shoptet App Store listing (business ops)
 
 #### A) 🔴 Český/slovenský lokalizační modul (NUTNÉ)
 
@@ -896,7 +896,7 @@ Bez tohoto na CZ/SK trhu neprodáme — Ecomail tohle má jako killer feature a 
 | ✅ #359 | 🧠 Opus              | **Slovenské skloňování**                        | obdobně pro SK (7 pádů)                                                                                     | `packages/i18n-sk/src/cases.ts`, stejné merge filtry                                                                                                                                                                                                | ✅       |
 | ✅ #360 | ⚡ Haiku + 🛠️ Sonnet | **Český kalendář svátků (jmeniny)**             | databáze jmenin → trigger `name_day_today` → auto-email na kontakty se shodným jménem                       | `packages/i18n-cs/src/name-days.ts` (366 days, normalized match), enum + `processDailyNameDayTriggers` v `services/workflows/triggers.ts`, migrace `0051_name_day_trigger.sql`                                                                      | ✅       |
 | ✅ #361 | ⚡ Haiku             | **Slovenský kalendář svátků**                   | obdobně pro SK                                                                                              | `packages/i18n-sk/src/name-days.ts` (366 dní SK meniny), rozšíření `processDailyNameDayTriggers` o locale switch cs/sk v `triggerConfig` + 10 testů                                                                                                 | ✅       |
-| 🔴 #362 | ⚡ Haiku + 🛠️ Sonnet | **České/slovenské státní svátky**               | calendar data pro marketing workflow triggery ("2 dny před Vánocemi")                                       | `packages/i18n-cs/src/public-holidays.ts`, `packages/i18n-sk/src/public-holidays.ts`, trigger `n_days_before_holiday`                                                                                                                               | 🟡       |
+| ✅ #362 | ⚡ Haiku + 🛠️ Sonnet | **České/slovenské státní svátky**               | calendar data pro marketing workflow triggery ("2 dny před Vánocemi")                                       | `packages/i18n-cs/src/public-holidays.ts`, `packages/i18n-sk/src/public-holidays.ts`, trigger `n_days_before_holiday`                                                                                                                               | 🟡       |
 | ✅ #363 | ⚡ Haiku             | **Lokalizace UI/emails**                        | CZ/SK překlady system emailů (preference centre, opt-in, unsubscribe, password reset)                       | `packages/shared/src/i18n/{emails.cs.ts,emails.sk.ts,emails.en.ts,types.ts,index.ts}` (resolver + `t()`), `apps/api/src/services/system-emails/index.ts` (renderDoi/PasswordReset/EmailVerification/TeamInvite), `subscriptions.ts` přepsán na i18n | ✅       |
 | ✅ #364 | 🛠️ Sonnet            | **CZ/SK fakturace**                             | CZK měna, DPH 21%, číslování faktur per rok, ISDOC export pro české účetnictví                              | `services/commerce/invoicing-cz.ts` (CZ_VAT_RATES, computeVatBreakdown, formatCzInvoiceNumber, isValidIco/Dic/Psc, formatCzk), `services/commerce/isdoc-export.ts` (ISDOC 6.0.2 XML)                                                                | ✅       |
 | ✅ #365 | ⚡ Haiku             | **Bank account QR code (SPAYD)**                | czech payment QR code na fakturách                                                                          | `services/commerce/spayd.ts` (buildSpaydString + validace VS/KS/SS)                                                                                                                                                                                 | ✅       |
@@ -986,13 +986,13 @@ Ecomail přidává k naší stack analýze **pouze CZ/SK lokalizační vrstvu** 
 
 ## 19. Globální priorita implementace — CZ-first launch
 
-> **Hotovo:** 2/30 (7%)
+> **Hotovo:** 29/30 (97%)
 
 **Strategické rozhodnutí (2026-04-15):** MailForge se spouští nejprve na **českém trhu (ČR)**. Další země (SK → EU → global) přibývají v dalších fázích.
 
 ### 19.1. Dopad na priority
 
-> **Hotovo:** 2/30 (7%)
+> **Hotovo:** 29/30 (97%)
 
 Toto rozhodnutí **přeskupuje priority** předchozích sekcí. Následující pořadí nahrazuje dílčí priority uvnitř §14–§18.
 
@@ -1071,7 +1071,7 @@ Záměrně odložené z L0/L1, aby alfa launch byl rychlý:
 
 ## 20. SmartEmailing gap analýza — 2026-04-15
 
-> **Hotovo:** 7/28 (25%)
+> **Hotovo:** 28/28 (100%) ✅
 
 Zdroj: `C:\Users\omnia\Downloads\SmartEmailing_Kompletni_Analyza_2026.md`. SmartEmailing je česká platforma (Shoptet-focused, 99,9% deliverability, landing pages). 85% funkcí je už pokryto po §18 Ecomail analýze (skloňování, jmeniny, Shoptet, Upgates, CZ fakturace, produktové feedy, workflow export/import, multi-eshop přes subaccounts). Tato sekce pokrývá jen to, co SmartEmailing má navíc — hlavně **Viber** a **Sklik** (unikátní pro CZ trh, kritické pro §19 L0/L1).
 
@@ -1081,7 +1081,7 @@ Drag-drop editor, šablony, HTML editor, personalizace, skloňování (§18-A), 
 
 ### 20.2. SmartEmailing-unikátní mezery → k implementaci
 
-> **Hotovo:** 7/28 (25%)
+> **Hotovo:** 28/28 (100%) ✅
 
 #### A) 🔴 Viber Business Messages (NUTNÉ pro L0/L1 CZ launch)
 
@@ -1106,8 +1106,8 @@ Sklik je český ekvivalent Google Ads — dominantní na CZ SERP (Seznam.cz dr�
 | ✅ #420 | 🛠️ Sonnet | **Sklik OAuth connection**    | OAuth s Sklik.cz Business API                              | `integrations/sklik/{pure,oauth}.ts` (buildAuthorizeUrl, normaliseTokenResponse, shouldRefresh s 60s skew, encodeForm, isValidRedirectUri https/localhost) + exchangeCode/ensureFreshAccessToken/disconnect, `'sklik'` přidán do `AD_PLATFORMS`. 15 pure testů.                                                                                                                                                                   |
 | ✅ #421 | 🛠️ Sonnet | **Sklik audiences sync**      | push segment jako Sklik Custom Audience (hash email/phone) | `services/ads/providers/sklik/{pure,audience-sync}.ts` (hashEmailForSklik/hashPhoneForSklik SHA-256, buildAudiencePayload, chunk 50k batch, computeStats), wired do main `services/ads/audience-sync.ts` switch case `sklik` (fetches phone+email). 17 pure testů.                                                                                                                                                                |
 | ✅ #422 | 🛠️ Sonnet | **Sklik retargeting pixel**   | pixel snippet pro web → hash tracking + audience building  | `services/ads/providers/sklik/pixel.ts` (generateSklikSnippet IE11+ s `forgemsg.identify`, hashEmail SHA-256, isValidSiteToken, parseTrackingEvent, resolveTrackedSite, recordPixelEvent → site_page_views + contact resolution, buildAudienceFromPixel s sinceDays okno) + 2 public endpointy `/sklik-pixel/:siteToken.js` + `/sklik-pixel/:siteToken/event.gif` (no-cache 1×1 GIF) v `routes/v1/sklik-pixel.ts`. 16 pure testů. |
-| 🔴 #423 | 🛠️ Sonnet | **Sklik lookalike**           | seed segment → Sklik lookalike request                     | `services/ads/providers/sklik/lookalike.ts`                                                                                                                                                                                                                                                                                                                                                                                       | 🟡 L1    |
-| 🔴 #424 | 🛠️ Sonnet | **Sklik conversion tracking** | conversion events → Sklik API pro attribution              | `services/ads/providers/sklik/conversions.ts`                                                                                                                                                                                                                                                                                                                                                                                     | 🟡 L1    |
+| ✅ #423 | 🛠️ Sonnet | **Sklik lookalike**           | seed segment → Sklik lookalike request                     | `services/ads/providers/sklik/lookalike.ts`                                                                                                                                                                                                                                                                                                                                                                                       | 🟡 L1    |
+| ✅ #424 | 🛠️ Sonnet | **Sklik conversion tracking** | conversion events → Sklik API pro attribution              | `services/ads/providers/sklik/conversions.ts`                                                                                                                                                                                                                                                                                                                                                                                     | 🟡 L1    |
 
 #### C) 🟡 Gender inference z jména (OBOHACENÍ L0/L1)
 
@@ -1115,10 +1115,10 @@ Sklik je český ekvivalent Google Ads — dominantní na CZ SERP (Seznam.cz dr�
 
 | ID      | Model     | Funkce                           | Popis                                                                                                                       | Soubory                                                                      | Priorita                                                                                |
 | ------- | --------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----- |
-| 🔴 #425 | 🧠 Opus   | **CZ/SK gender inference**       | lookup table + regex pravidla (příjmení -ová → ženské, jména Petr/Pavel/… → mužské, Anna/Jana/… → ženské); confidence score | `packages/i18n-cs/src/gender.ts`, `packages/i18n-sk/src/gender.ts`           | 🟡 L1                                                                                   |
-| 🔴 #426 | 🛠️ Sonnet | **Auto-fill gender při importu** | při importu kontaktu bez gender pole → infer z first_name, pokud confidence > 0.9                                           | rozšíření `services/import/*` o `gender-enrichment.ts`                       | 🟡 L1                                                                                   |
-| 🔴 #427 | 🛠️ Sonnet | **Salutation merge tag**         | `{{contact                                                                                                                  | salutation_cs}}` → "Vážený pane Nováku" / "Vážená paní Nováková" s deklinací | rozšíření `apps/editor/src/render/merge-tags.ts` + `packages/i18n-cs/src/salutation.ts` | 🟡 L1 |
-| 🔴 #428 | ⚡ Haiku  | **International fallback**       | pokud locale není cs/sk, zkusit genderize.io API nebo vynechat                                                              | provider adapter                                                             | ⚪ L3                                                                                   |
+| ✅ #425 | 🧠 Opus   | **CZ/SK gender inference**       | lookup table + regex pravidla (příjmení -ová → ženské, jména Petr/Pavel/… → mužské, Anna/Jana/… → ženské); confidence score | `packages/i18n-cs/src/gender.ts`, `packages/i18n-sk/src/gender.ts`           | 🟡 L1                                                                                   |
+| ✅ #426 | 🛠️ Sonnet | **Auto-fill gender při importu** | při importu kontaktu bez gender pole → infer z first_name, pokud confidence > 0.9                                           | rozšíření `services/import/*` o `gender-enrichment.ts`                       | 🟡 L1                                                                                   |
+| ✅ #427 | 🛠️ Sonnet | **Salutation merge tag**         | `{{contact                                                                                                                  | salutation_cs}}` → "Vážený pane Nováku" / "Vážená paní Nováková" s deklinací | rozšíření `apps/editor/src/render/merge-tags.ts` + `packages/i18n-cs/src/salutation.ts` | 🟡 L1 |
+| ✅ #428 | ⚡ Haiku  | **International fallback**       | pokud locale není cs/sk, zkusit genderize.io API nebo vynechat                                                              | provider adapter                                                             | ⚪ L3                                                                                   |
 
 #### D) 🟡 GDPR Processing Purposes (Účely zpracování) s expirací (OBOHACENÍ)
 
@@ -1153,7 +1153,7 @@ SmartEmailing má VirusFree certifikaci (česká antispam org). To samo nemá te
 
 | ID      | Model     | Funkce                             | Popis                                                                                                | Soubory                                                                              | Priorita              |
 | ------- | --------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------- |
-| 🔴 #440 | 🛠️ Sonnet | **Sender reputation public badge** | veřejný score per odesílací doménu (warm-up status, bounce rate, complaint rate) pro transparentnost | rozšíření §17-J health-score o public endpoint `routes/public/reputation/:domain.ts` | ⚪ L2 (pokryto §17-J) |
+| ✅ #440 | 🛠️ Sonnet | **Sender reputation public badge** | veřejný score per odesílací doménu (warm-up status, bounce rate, complaint rate) pro transparentnost | `routes/v1/public/reputation.ts` (JSON + `/badge.svg`, no-auth), `services/deliverability/reputation-badge.ts`, pure `buildPublicBadge`/`renderReputationBadgeSvg`, opt-in `public_badge_enabled` (migrace 0003) + toggle `PATCH /domains/:id/public-badge`, +6 testů | ⚪ L2 |
 
 ### 20.3. Záměrně nepokryto
 
@@ -1194,7 +1194,7 @@ SmartEmailing přidává oproti Ecomailu **Viber + Sklik + gender inference + GD
 
 ## 21. Claude model assignment — který model řeší který bod
 
-> **Hotovo:** 0/214 (0%)
+> **Hotovo:** 213/214 (99%) — zbývá #618 Shoptet App Store submission (spec/business ops)
 
 Každý úkol z §14–§20 má přiřazený Claude model podle složitosti. Cíl: využít nejschopnější model tam, kde je to potřeba, a šetřit náklady na boilerplate.
 
@@ -1208,7 +1208,7 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 
 ### 21.2. Mapování podle sekcí
 
-> **Hotovo:** 0/211 (0%)
+> **Hotovo:** 210/211 (99%) — zbývá #618 Shoptet App Store submission (spec/business ops)
 
 #### §14 — Klaviyo parity (většina hotovo)
 
@@ -1226,174 +1226,174 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | ✅ #450 | 🛠️ Sonnet | Catalog insights                                                 |
 | ✅ #451 | 🛠️ Sonnet | Helpdesk + marketing pause on open ticket                        |
 | ✅ #452 | 🧠 Opus   | Warehouse sync (S3/Snowflake/BigQuery/Redshift)                  |
-| 🔴 #453 | 🛠️ Sonnet | SMS keyword routing                                              |
-| 🔴 #454 | 🛠️ Sonnet | Multi-email profily (až 5 emailů/kontakt)                        |
-| 🔴 #455 | 🧠 Opus   | Identity merge (visitor → contact backfill)                      |
-| 🔴 #456 | 🛠️ Sonnet | RCS messaging adapter                                            |
+| ✅ #453 | 🛠️ Sonnet | SMS keyword routing                                              |
+| ✅ #454 | 🛠️ Sonnet | Multi-email profily (až 5 emailů/kontakt)                        |
+| ✅ #455 | 🧠 Opus   | Identity merge (visitor → contact backfill)                      |
+| ✅ #456 | 🛠️ Sonnet | RCS messaging adapter                                            |
 
 #### §15 — ActiveCampaign parity
 
 | ID      | Model                                            | Úkol                                                            |
 | ------- | ------------------------------------------------ | --------------------------------------------------------------- |
-| 🔴 #457 | 🧠 Opus (architektura) + 🛠️ Sonnet (CRUD vrstvy) | **A) Sales CRM** — pipelines, deals, accounts schema + services |
-| 🔴 #458 | 🛠️ Sonnet                                        | A) Task management + notes + activity feed                      |
-| 🔴 #459 | 🧠 Opus                                          | A) Sales reports, win/loss, revenue forecasting                 |
-| 🔴 #460 | 🛠️ Sonnet                                        | A) Deal stage change triggers ve workflows                      |
+| ✅ #457 | 🧠 Opus (architektura) + 🛠️ Sonnet (CRUD vrstvy) | **A) Sales CRM** — pipelines, deals, accounts schema + services |
+| ✅ #458 | 🛠️ Sonnet                                        | A) Task management + notes + activity feed                      |
+| ✅ #459 | 🧠 Opus                                          | A) Sales reports, win/loss, revenue forecasting                 |
+| ✅ #460 | 🛠️ Sonnet                                        | A) Deal stage change triggers ve workflows                      |
 | ✅ #461 | 🧠 Opus                                          | **B) Win Probability AI model**                                 |
 | ✅ #462 | 🧠 Opus                                          | B) Deal risk assessment                                         |
 | ✅ #463 | 🧠 Opus                                          | B) Sentiment Analysis (Claude analýza)                          |
-| 🔴 #464 | 🛠️ Sonnet                                        | B) Automated 1:1 sales emails                                   |
-| 🔴 #465 | 🛠️ Sonnet                                        | B) Sales engagement sequences                                   |
-| 🔴 #466 | 🧠 Opus                                          | B) Predictive Lead Scoring (ML rozšíření)                       |
-| 🔴 #467 | 🛠️ Sonnet                                        | **C) Site tracking JS snippet**                                 |
-| 🔴 #468 | 🛠️ Sonnet                                        | C) Site messages (behavior-triggered)                           |
-| 🔴 #469 | 🛠️ Sonnet                                        | C) Web personalization (hide/show DOM)                          |
-| 🔴 #470 | 🛠️ Sonnet                                        | C) Connected sites (multi-domain sync)                          |
-| 🔴 #471 | 🛠️ Sonnet                                        | C) Progressive profiling                                        |
-| 🔴 #472 | 🛠️ Sonnet                                        | C) Live chat WebSocket endpoint                                 |
+| ✅ #464 | 🛠️ Sonnet                                        | B) Automated 1:1 sales emails                                   |
+| ✅ #465 | 🛠️ Sonnet                                        | B) Sales engagement sequences                                   |
+| ✅ #466 | 🧠 Opus                                          | B) Predictive Lead Scoring (ML rozšíření)                       |
+| ✅ #467 | 🛠️ Sonnet                                        | **C) Site tracking JS snippet**                                 |
+| ✅ #468 | 🛠️ Sonnet                                        | C) Site messages (behavior-triggered)                           |
+| ✅ #469 | 🛠️ Sonnet                                        | C) Web personalization (hide/show DOM)                          |
+| ✅ #470 | 🛠️ Sonnet                                        | C) Connected sites (multi-domain sync)                          |
+| ✅ #471 | 🛠️ Sonnet                                        | C) Progressive profiling                                        |
+| ✅ #472 | 🛠️ Sonnet                                        | C) Live chat WebSocket endpoint                                 |
 | ✅ #473 | 🧠 Opus                                          | **D) AI Campaign Builder (autonomous agent)**                   |
 | ✅ #474 | 🧠 Opus                                          | D) Autonomous AI agent runner framework                         |
 | ✅ #475 | 🛠️ Sonnet                                        | D) AI sidebar / recommendations API                             |
 | ✅ #476 | 🧠 Opus                                          | D) **MCP Server** (Postmark-style)                              |
-| 🔴 #477 | 🛠️ Sonnet                                        | D) AI Calendly Block (smart scheduling)                         |
-| 🔴 #478 | 🧠 Opus                                          | D) Voice Agent streaming API                                    |
-| 🔴 #479 | 🛠️ Sonnet                                        | **E) Nested automations + automation maps**                     |
-| 🔴 #480 | ⚡ Haiku (šablony)                               | E) 900+ workflow recipes expansion                              |
+| ✅ #477 | 🛠️ Sonnet                                        | D) AI Calendly Block (smart scheduling)                         |
+| ✅ #478 | 🧠 Opus                                          | D) Voice Agent streaming API                                    |
+| ✅ #479 | 🛠️ Sonnet                                        | **E) Nested automations + automation maps**                     |
+| ✅ #480 | ⚡ Haiku (šablony)                               | E) Workflow recipes library (registry-driven, ~88 šablon; volume 900+ neaspirováno) |
 | ✅ #481 | 🛠️ Sonnet                                        | E) Click actions (tag/update on click)                          |
-| 🔴 #482 | 🧠 Opus                                          | **F) Custom objects engine**                                    |
-| 🔴 #483 | 🛠️ Sonnet                                        | F) Social enrichment adapter                                    |
+| ✅ #482 | 🧠 Opus                                          | **F) Custom objects engine**                                    |
+| ✅ #483 | 🛠️ Sonnet                                        | F) Social enrichment adapter                                    |
 | ✅ #484 | 🧠 Opus                                          | F) BotSense (bot click detection)                               |
 | ✅ #485 | 🛠️ Sonnet                                        | F) List warming scheduler                                       |
 | ✅ #486 | 🧠 Opus                                          | **G) Inbound email (MX receiver Go)**                           |
-| 🔴 #487 | 🛠️ Sonnet                                        | G) Message streams (broadcast vs transactional)                 |
-| 🔴 #488 | ⚡ Haiku                                         | G) Activity export                                              |
-| 🔴 #489 | 🛠️ Sonnet (každá)                                | **H) Integrace: Shopify/Woo/BigCommerce**                       |
-| 🔴 #490 | 🧠 Opus                                          | H) Salesforce bi-sync                                           |
-| 🔴 #491 | 🛠️ Sonnet                                        | H) HubSpot integrace                                            |
-| 🔴 #492 | 🛠️ Sonnet                                        | H) Calendly, Stripe (extended)                                  |
-| 🔴 #493 | 🧠 Opus                                          | H) App Studio (low-code builder)                                |
-| 🔴 #494 | 🧠 Opus                                          | **I) SSO (SAML 2.0)**                                           |
-| 🔴 #495 | 🧠 Opus                                          | I) HIPAA compliance mode                                        |
-| 🔴 #496 | 🛠️ Sonnet                                        | I) Audit logs                                                   |
+| ✅ #487 | 🛠️ Sonnet                                        | G) Message streams (broadcast vs transactional)                 |
+| ✅ #488 | ⚡ Haiku                                         | G) Activity export                                              |
+| ✅ #489 | 🛠️ Sonnet (každá)                                | **H) Integrace: Shopify/Woo/BigCommerce**                       |
+| ✅ #490 | 🧠 Opus                                          | H) Salesforce bi-sync                                           |
+| ✅ #491 | 🛠️ Sonnet                                        | H) HubSpot integrace                                            |
+| ✅ #492 | 🛠️ Sonnet                                        | H) Calendly, Stripe (extended)                                  |
+| ✅ #493 | 🧠 Opus                                          | H) App Studio (low-code builder)                                |
+| ✅ #494 | 🧠 Opus                                          | **I) SSO (SAML 2.0)**                                           |
+| ✅ #495 | 🧠 Opus                                          | I) HIPAA compliance mode                                        |
+| ✅ #496 | 🛠️ Sonnet                                        | I) Audit logs                                                   |
 | ✅ #497 | 🛠️ Sonnet                                        | I) DMARC Digests parser                                         |
 
 #### §16 — Brevo parity
 
 | ID      | Model                  | Úkol                                              |
 | ------- | ---------------------- | ------------------------------------------------- |
-| 🔴 #498 | 🧠 Opus (architektura) | **A) Loyalty program schema + points ledger**     |
-| 🔴 #499 | 🛠️ Sonnet              | A) Rewards catalog + redemption flow              |
-| 🔴 #500 | 🛠️ Sonnet              | A) Earning rules engine                           |
-| 🔴 #501 | 🛠️ Sonnet              | A) Loyalty webhooks + workflow triggers           |
-| 🔴 #502 | 🛠️ Sonnet              | A) Loyalty analytics                              |
+| ✅ #498 | 🧠 Opus (architektura) | **A) Loyalty program schema + points ledger**     |
+| ✅ #499 | 🛠️ Sonnet              | A) Rewards catalog + redemption flow              |
+| ✅ #500 | 🛠️ Sonnet              | A) Earning rules engine                           |
+| ✅ #501 | 🛠️ Sonnet              | A) Loyalty workflow triggers + actions (enroll/award; některé standalone trigger fce zatím nevolané) |
+| ✅ #502 | 🛠️ Sonnet              | A) Loyalty analytics                              |
 | ✅ #503 | 🛠️ Sonnet              | **B) Instagram DM adapter**                       |
 | ✅ #504 | 🛠️ Sonnet              | B) Facebook Messenger adapter                     |
-| 🔴 #505 | 🧠 Opus                | B) Universal inbox routing logic                  |
-| 🔴 #506 | 🛠️ Sonnet              | B) Chat routing + agent assignment                |
+| ✅ #505 | 🧠 Opus                | B) Universal inbox routing logic                  |
+| ✅ #506 | 🛠️ Sonnet              | B) Chat routing + agent assignment                |
 | ✅ #507 | ⚡ Haiku               | B) Canned responses                               |
-| 🔴 #508 | 🛠️ Sonnet              | B) Chat analytics                                 |
-| 🔴 #509 | 🛠️ Sonnet              | B) Aura Support AI (summarize/tone/note→msg)      |
-| 🔴 #510 | 🧠 Opus                | **C) SIP/WebRTC calling (Twilio/Telnyx adapter)** |
-| 🔴 #511 | 🛠️ Sonnet              | C) Phone numbers management                       |
-| 🔴 #512 | 🧠 Opus                | C) Call routing (IVR, hunt groups)                |
-| 🔴 #513 | 🛠️ Sonnet              | C) Call recording + transcription                 |
-| 🔴 #514 | 🛠️ Sonnet              | C) CRM call integration                           |
-| 🔴 #515 | 🛠️ Sonnet              | C) Voicemail + softphone WS API                   |
-| 🔴 #516 | 🛠️ Sonnet              | **D) Meetings booking pages + event types**       |
-| 🔴 #517 | 🧠 Opus                | D) Calendar sync (Google/Outlook OAuth+CalDAV)    |
-| 🔴 #518 | 🛠️ Sonnet              | D) Zoom/Meet/Teams link generation                |
-| 🔴 #519 | 🛠️ Sonnet              | D) Round-robin scheduling                         |
-| 🔴 #520 | 🛠️ Sonnet              | **E) CDP source connectors**                      |
-| 🔴 #521 | 🧠 Opus                | E) Identity graph (multi-signal resolution)       |
-| 🔴 #522 | 🧠 Opus                | E) Unified profile view + cache                   |
-| 🔴 #523 | 🧠 Opus                | E) Data activation (reverse-ETL)                  |
-| 🔴 #524 | 🧠 Opus                | E) Event ingestion API (high-throughput)          |
-| 🔴 #525 | 🧠 Opus                | E) Real-time trait computation                    |
+| ✅ #508 | 🛠️ Sonnet              | B) Chat analytics                                 |
+| ✅ #509 | 🛠️ Sonnet              | B) Aura Support AI (summarize/tone/note→msg)      |
+| ✅ #510 | 🧠 Opus                | **C) SIP/WebRTC calling (Twilio/Telnyx adapter)** |
+| ✅ #511 | 🛠️ Sonnet              | C) Phone numbers management                       |
+| ✅ #512 | 🧠 Opus                | C) Call routing (IVR, hunt groups)                |
+| ✅ #513 | 🛠️ Sonnet              | C) Call recording + transcription                 |
+| ✅ #514 | 🛠️ Sonnet              | C) CRM call integration                           |
+| ✅ #515 | 🛠️ Sonnet              | C) Voicemail + softphone WS API                   |
+| ✅ #516 | 🛠️ Sonnet              | **D) Meetings booking pages + event types**       |
+| ✅ #517 | 🧠 Opus                | D) Calendar sync (Google/Outlook OAuth+CalDAV)    |
+| ✅ #518 | 🛠️ Sonnet              | D) Zoom/Meet/Teams link generation                |
+| ✅ #519 | 🛠️ Sonnet              | D) Round-robin scheduling                         |
+| ✅ #520 | 🛠️ Sonnet              | **E) CDP source connectors**                      |
+| ✅ #521 | 🧠 Opus                | E) Identity graph (multi-signal resolution)       |
+| ✅ #522 | 🧠 Opus                | E) Unified profile view + cache                   |
+| ✅ #523 | 🧠 Opus                | E) Data activation (reverse-ETL)                  |
+| ✅ #524 | 🧠 Opus                | E) Event ingestion API (high-throughput)          |
+| ✅ #525 | 🧠 Opus                | E) Real-time trait computation                    |
 | ✅ #526 | 🧠 Opus                | **F) NL→SQL query engine**                        |
 | ✅ #527 | 🧠 Opus                | F) Query sandboxing + row-level isolation         |
 | ✅ #528 | 🛠️ Sonnet              | F) Chart suggestion                               |
 | ✅ #529 | ⚡ Haiku               | F) Saved questions                                |
-| 🔴 #530 | 🧠 Opus                | **G) Parent-child orgs + permission inheritance** |
-| 🔴 #531 | 🛠️ Sonnet              | G) Cross-account user access                      |
-| 🔴 #532 | 🛠️ Sonnet              | G) Consolidated billing                           |
-| 🔴 #533 | 🛠️ Sonnet              | G) Shared assets                                  |
-| 🔴 #534 | 🛠️ Sonnet              | **H) IP restrictions middleware**                 |
-| 🔴 #535 | 🧠 Opus                | H) EU data residency (multi-region routing)       |
-| 🔴 #536 | 🛠️ Sonnet              | H) Long-term log archive (S3 parquet)             |
-| 🔴 #537 | 🛠️ Sonnet              | H) Webhook batching                               |
+| ✅ #530 | 🧠 Opus                | **G) Parent-child orgs + permission inheritance** |
+| ✅ #531 | 🛠️ Sonnet              | G) Cross-account user access                      |
+| ✅ #532 | 🛠️ Sonnet              | G) Consolidated billing                           |
+| ✅ #533 | 🛠️ Sonnet              | G) Shared assets                                  |
+| ✅ #534 | 🛠️ Sonnet              | **H) IP restrictions middleware**                 |
+| ✅ #535 | 🧠 Opus                | H) EU data residency (multi-region routing)       |
+| ✅ #536 | 🛠️ Sonnet              | H) Long-term log archive → S3 (NDJSON, ne parquet) |
+| ✅ #537 | 🛠️ Sonnet              | H) Webhook batching                               |
 | ✅ #538 | 🛠️ Sonnet              | **I) Per-send pricing tier**                      |
-| 🔴 #539 | 🛠️ Sonnet              | I) Pay-as-you-go credit system                    |
-| 🔴 #540 | 🛠️ Sonnet              | I) Multi-product metering                         |
+| ✅ #539 | 🛠️ Sonnet              | I) Pay-as-you-go credit system                    |
+| ✅ #540 | 🛠️ Sonnet              | I) Multi-product metering                         |
 | ✅ #541 | 🛠️ Sonnet              | **J) Batch send API (1000 per call)**             |
-| 🔴 #542 | 🛠️ Sonnet              | J) Unified messaging API                          |
-| 🔴 #543 | 🛠️ Sonnet              | J) External feeds ingestion                       |
+| ✅ #542 | 🛠️ Sonnet              | J) Unified messaging API                          |
+| ✅ #543 | 🛠️ Sonnet              | J) External feeds ingestion                       |
 
 #### §17 — HubSpot parity
 
 | ID      | Model     | Úkol                                              |
 | ------- | --------- | ------------------------------------------------- |
-| 🔴 #544 | 🛠️ Sonnet | **A) Topic clusters + pillar pages**              |
-| 🔴 #545 | 🛠️ Sonnet | A) Keyword research (DataForSEO/Semrush adapter)  |
-| 🔴 #546 | 🛠️ Sonnet | A) On-page SEO audit                              |
-| 🔴 #547 | 🧠 Opus   | A) Content strategy AI agent                      |
-| 🔴 #548 | ⚡ Haiku  | A) Sitemap + robots.txt + canonical               |
-| 🔴 #549 | 🛠️ Sonnet | A) Search rank tracker                            |
-| 🔴 #550 | 🛠️ Sonnet | **B) Social accounts OAuth (FB/IG/LI/X/TikTok)**  |
-| 🔴 #551 | 🛠️ Sonnet | B) Social publishing + scheduler                  |
-| 🔴 #552 | 🛠️ Sonnet | B) Social monitoring                              |
-| 🔴 #553 | 🛠️ Sonnet | B) Social inbox (extends §16-B)                   |
-| 🔴 #554 | 🛠️ Sonnet | B) Social analytics                               |
-| 🔴 #555 | 🧠 Opus   | B) Breeze Social Agent (AI)                       |
-| 🔴 #556 | 🛠️ Sonnet | **C) Ad platform OAuth**                          |
-| 🔴 #557 | 🛠️ Sonnet | C) Audience sync (CRM→Ads)                        |
-| 🔴 #558 | 🛠️ Sonnet | C) Lookalike audience API                         |
-| 🔴 #559 | 🛠️ Sonnet | C) Lead sync (Ads→CRM)                            |
-| 🔴 #560 | 🛠️ Sonnet | C) Ad performance reporting + attribution         |
-| 🔴 #561 | 🛠️ Sonnet | C) Retargeting workflows                          |
-| 🔴 #562 | 🛠️ Sonnet | **D) Quotes generation + e-sign**                 |
-| 🔴 #563 | 🛠️ Sonnet | D) Products/line items catalog                    |
-| 🔴 #564 | 🛠️ Sonnet | D) Invoicing + PDF + reminders                    |
-| 🔴 #565 | 🛠️ Sonnet | D) Stripe payments integration                    |
-| 🔴 #566 | 🧠 Opus   | D) Subscriptions + dunning                        |
-| 🔴 #567 | 🧠 Opus   | D) Revenue schedule / MRR tracking                |
-| 🔴 #568 | 🛠️ Sonnet | **E) Lifecycle stages + history**                 |
-| 🔴 #569 | 🛠️ Sonnet | E) Stage transition triggers ve workflows         |
-| 🔴 #570 | 🧠 Opus   | E) Stage auto-advance rules engine                |
-| 🔴 #571 | 🧠 Opus   | **E) Associations engine (generic M:N)**          |
-| 🔴 #572 | 🛠️ Sonnet | E) Association labels                             |
-| 🔴 #573 | 🛠️ Sonnet | E) Company-based + ticket-based workflows         |
-| 🔴 #574 | 🛠️ Sonnet | **F) Playbooks (scripts + checklist + logging)**  |
-| 🔴 #575 | 🧠 Opus   | F) 1:1 video messaging (record + HLS transcode)   |
-| 🔴 #576 | 🛠️ Sonnet | F) Record rotation / round-robin (generic)        |
-| 🔴 #577 | 🛠️ Sonnet | F) LinkedIn InMail adapter                        |
+| ✅ #544 | 🛠️ Sonnet | **A) Topic clusters + pillar pages**              |
+| ✅ #545 | 🛠️ Sonnet | A) Keyword research (DataForSEO/Semrush adapter)  |
+| ✅ #546 | 🛠️ Sonnet | A) On-page SEO audit                              |
+| ✅ #547 | 🧠 Opus   | A) Content strategy AI agent                      |
+| ✅ #548 | ⚡ Haiku  | A) Sitemap + robots.txt + canonical               |
+| ✅ #549 | 🛠️ Sonnet | A) Search rank tracker                            |
+| ✅ #550 | 🛠️ Sonnet | **B) Social accounts OAuth (FB/IG/LI/X/TikTok)**  |
+| ✅ #551 | 🛠️ Sonnet | B) Social publishing + scheduler                  |
+| ✅ #552 | 🛠️ Sonnet | B) Social monitoring                              |
+| ✅ #553 | 🛠️ Sonnet | B) Social inbox (extends §16-B)                   |
+| ✅ #554 | 🛠️ Sonnet | B) Social analytics                               |
+| ✅ #555 | 🧠 Opus   | B) Breeze Social Agent (AI)                       |
+| ✅ #556 | 🛠️ Sonnet | **C) Ad platform OAuth**                          |
+| ✅ #557 | 🛠️ Sonnet | C) Audience sync (CRM→Ads)                        |
+| ✅ #558 | 🛠️ Sonnet | C) Lookalike audience API                         |
+| ✅ #559 | 🛠️ Sonnet | C) Lead sync (Ads→CRM)                            |
+| ✅ #560 | 🛠️ Sonnet | C) Ad performance reporting + attribution         |
+| ✅ #561 | 🛠️ Sonnet | C) Retargeting workflows                          |
+| ✅ #562 | 🛠️ Sonnet | **D) Quotes generation + e-sign**                 |
+| ✅ #563 | 🛠️ Sonnet | D) Products/line items catalog                    |
+| ✅ #564 | 🛠️ Sonnet | D) Invoicing + reminders + PDF (pdf_url + ISDOC export; bez on-the-fly HTML→PDF) |
+| ✅ #565 | 🛠️ Sonnet | D) Stripe payments integration                    |
+| ✅ #566 | 🧠 Opus   | D) Subscriptions + dunning                        |
+| ✅ #567 | 🧠 Opus   | D) Revenue schedule / MRR tracking                |
+| ✅ #568 | 🛠️ Sonnet | **E) Lifecycle stages + history**                 |
+| ✅ #569 | 🛠️ Sonnet | E) Stage transition triggers ve workflows         |
+| ✅ #570 | 🧠 Opus   | E) Stage auto-advance rules engine                |
+| ✅ #571 | 🧠 Opus   | **E) Associations engine (generic M:N)**          |
+| ✅ #572 | 🛠️ Sonnet | E) Association labels                             |
+| ✅ #573 | 🛠️ Sonnet | E) Company-based + ticket-based workflows         |
+| ✅ #574 | 🛠️ Sonnet | **F) Playbooks (scripts + checklist + logging)**  |
+| ✅ #575 | 🧠 Opus   | F) 1:1 video messaging (record+upload+HLS infra; ffmpeg transcode krok stubovaný) |
+| ✅ #576 | 🛠️ Sonnet | F) Record rotation / round-robin (generic)        |
+| ✅ #577 | 🛠️ Sonnet | F) LinkedIn InMail adapter                        |
 | ✅ #578 | 🧠 Opus   | **G) Prospecting Agent**                          |
 | ✅ #579 | 🧠 Opus   | G) Customer Agent (autonomous support)            |
 | ✅ #580 | 🛠️ Sonnet | G) Content Agent                                  |
 | ✅ #581 | 🧠 Opus   | G) Deal Health / Loss Agent                       |
-| 🔴 #582 | 🛠️ Sonnet | G) Buyer intent signals (Bombora/6sense)          |
-| 🔴 #583 | 🛠️ Sonnet | G) Form autofill (identified visitor)             |
-| 🔴 #584 | 🧠 Opus   | G) RAG vector store (pgvector)                    |
-| 🔴 #585 | 🛠️ Sonnet | **H) Blog platform (API-first)**                  |
-| 🔴 #586 | 🧠 Opus   | H) Multi-language content framework               |
-| 🔴 #587 | 🛠️ Sonnet | H) Content staging/versioning                     |
-| 🔴 #588 | 🛠️ Sonnet | H) CTAs widgets + A/B                             |
-| 🔴 #589 | 🛠️ Sonnet | H) Smart/dependent forms                          |
-| 🔴 #590 | 🧠 Opus   | **I) Sandboxes (isolated schema copies)**         |
-| 🔴 #591 | 🧠 Opus   | I) Teams/partitioning (row-level filter)          |
-| 🔴 #592 | 🧠 Opus   | I) Field-level permissions                        |
-| 🔴 #593 | 🛠️ Sonnet | I) Custom permission sets                         |
-| 🔴 #594 | 🧠 Opus   | I) **Serverless functions runner (isolated-vm)**  |
-| 🔴 #595 | 🧠 Opus   | I) Custom Channels SDK                            |
-| 🔴 #596 | 🛠️ Sonnet | I) CRM extension cards SDK                        |
-| 🔴 #597 | ⚡ Haiku  | I) Data quality automation (normalizers)          |
-| 🔴 #598 | 🧠 Opus   | I) Calculated properties + evaluator              |
+| ✅ #582 | 🛠️ Sonnet | G) Buyer intent signals (Bombora/6sense)          |
+| ✅ #583 | 🛠️ Sonnet | G) Form autofill (identified visitor)             |
+| ✅ #584 | 🧠 Opus   | G) RAG vector store (pgvector)                    |
+| ✅ #585 | 🛠️ Sonnet | **H) Blog platform (API-first)**                  |
+| ✅ #586 | 🧠 Opus   | H) Multi-language content framework               |
+| ✅ #587 | 🛠️ Sonnet | H) Content staging/versioning                     |
+| ✅ #588 | 🛠️ Sonnet | H) CTAs widgets + A/B                             |
+| ✅ #589 | 🛠️ Sonnet | H) Smart/dependent forms                          |
+| ✅ #590 | 🧠 Opus   | **I) Sandboxes (isolated schema copies)**         |
+| ✅ #591 | 🧠 Opus   | I) Teams/partitioning (row-level filter)          |
+| ✅ #592 | 🧠 Opus   | I) Field-level permissions                        |
+| ✅ #593 | 🛠️ Sonnet | I) Custom permission sets                         |
+| ✅ #594 | 🧠 Opus   | I) **Serverless functions runner** (run_code action; vm.Context, ne isolated-vm) |
+| ✅ #595 | 🧠 Opus   | I) Custom Channels SDK                            |
+| ✅ #596 | 🛠️ Sonnet | I) CRM extension cards SDK                        |
+| ✅ #597 | ⚡ Haiku  | I) Data quality automation (normalizers)          |
+| ✅ #598 | 🧠 Opus   | I) Calculated properties + evaluator              |
 | ✅ #599 | 🛠️ Sonnet | **J) Graymail suppression**                       |
 | ✅ #600 | 🛠️ Sonnet | J) Email health score per domain/IP               |
 | ✅ #601 | 🧠 Opus   | J) Deliverability insights engine                 |
 | ✅ #602 | 🛠️ Sonnet | J) Sender reputation monitoring (SNDS/Postmaster) |
-| 🔴 #603 | 🧠 Opus   | **K) Bi-directional CRM sync engine**             |
-| 🔴 #604 | 🛠️ Sonnet | K) Data sets (named queries)                      |
-| 🔴 #605 | 🧠 Opus   | K) Programmable automation pipelines              |
+| ✅ #603 | 🧠 Opus   | **K) Bi-directional CRM sync engine**             |
+| ✅ #604 | 🛠️ Sonnet | K) Data sets (named queries)                      |
+| ✅ #605 | 🧠 Opus   | K) Programmable automation pipelines              |
 
 #### §18 — Ecomail (CZ lokalizace)
 
@@ -1453,13 +1453,13 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 
 ### 21.3. Souhrn podle modelu
 
-> **Hotovo:** 0/3 (0%)
+> **Hotovo:** 3/3 (100%) ✅
 
 | ID      | Model             | Tasks (přibližně) | Typické použití                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ------- | ----------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 🔴 #652 | 🧠 **Opus 4.6**   | ~50               | Architektura (associations engine, identity graph, CDP, serverless runner), AI agenti (Prospecting, Customer, Campaign Builder, MCP server), ML modely (Win Probability, Sentiment, Predictive Lead Scoring, BotSense), security-critical (SSO/SAML, HIPAA, field-level perms, EU residency multi-region, sandboxes), NL→SQL sandboxing, lingvistická logika (CZ/SK declension, gender), Go MX receiver, bi-directional CRM sync, RAG vector store, calculated properties evaluator, dunning/MRR logic |
-| 🔴 #653 | 🛠️ **Sonnet 4.6** | ~150              | Většina feature work: CRUD services/routes/schema, channel adaptéry (Viber, IG DM, FB Messenger, RCS, Sklik), integration adaptéry (Shoptet, Upgates, Raynet, Salesforce, HubSpot, Shopify, WooCommerce), workflow templates, booking/meetings, commerce (quotes/invoices/subscriptions), analytics dashboards, ad platforms, social publishing                                                                                                                                                        |
-| 🔴 #654 | ⚡ **Haiku 4.5**  | ~25               | Boilerplate a static data: i18n JSON překlady, jmeniny seed, svátky seed, ISP header configs, canned responses CRUD, workflow šablony (text), Sitemap/robots, activity export, scheduled refresh jobs, NPS templates, data quality normalizers                                                                                                                                                                                                                                                         |
+| ✅ #652 | 🧠 **Opus 4.6**   | ~50               | Architektura (associations engine, identity graph, CDP, serverless runner), AI agenti (Prospecting, Customer, Campaign Builder, MCP server), ML modely (Win Probability, Sentiment, Predictive Lead Scoring, BotSense), security-critical (SSO/SAML, HIPAA, field-level perms, EU residency multi-region, sandboxes), NL→SQL sandboxing, lingvistická logika (CZ/SK declension, gender), Go MX receiver, bi-directional CRM sync, RAG vector store, calculated properties evaluator, dunning/MRR logic |
+| ✅ #653 | 🛠️ **Sonnet 4.6** | ~150              | Většina feature work: CRUD services/routes/schema, channel adaptéry (Viber, IG DM, FB Messenger, RCS, Sklik), integration adaptéry (Shoptet, Upgates, Raynet, Salesforce, HubSpot, Shopify, WooCommerce), workflow templates, booking/meetings, commerce (quotes/invoices/subscriptions), analytics dashboards, ad platforms, social publishing                                                                                                                                                        |
+| ✅ #654 | ⚡ **Haiku 4.5**  | ~25               | Boilerplate a static data: i18n JSON překlady, jmeniny seed, svátky seed, ISP header configs, canned responses CRUD, workflow šablony (text), Sitemap/robots, activity export, scheduled refresh jobs, NPS templates, data quality normalizers                                                                                                                                                                                                                                                         |
 
 ### 21.4. Pracovní pravidla
 

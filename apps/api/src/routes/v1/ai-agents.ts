@@ -31,6 +31,7 @@ import {
   type OutreachDraftInput,
 } from '../../services/ai-agents/prospecting.js';
 import { runSupportAgent, persistAgentDraft } from '../../services/ai-agents/customer-support.js';
+import { generateContent, type ContentAgentInput } from '../../services/ai-agents/content.js';
 import { AppError } from '../../lib/app-error.js';
 
 const buildCampaignBodySchema = z.object({
@@ -226,6 +227,42 @@ export default async function aiAgentRoutes(app: FastifyInstance) {
         })
         .parse(request.body);
       return reply.send({ data: await draftOutreach(orgId, id, body as OutreachDraftInput) });
+    },
+  );
+
+  // ─── Content Agent (#331) ─────────────────────────────────────────────────
+  app.post(
+    '/api/v1/ai-agents/content/generate',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['AI Agents'] },
+    },
+    async (request, reply) => {
+      const { orgId } = request.user!;
+      const body = z
+        .object({
+          format: z.enum(['blog', 'landing', 'email', 'podcast_script']),
+          topic: z.string().min(3).max(500),
+          goal: z.string().max(500).optional(),
+          brandVoice: z.string().max(500).optional(),
+          audience: z.string().max(300).optional(),
+          product: z
+            .object({
+              name: z.string().max(200).optional(),
+              description: z.string().max(1000).optional(),
+              features: z.array(z.string().max(200)).max(30).optional(),
+              price: z.string().max(50).optional(),
+              url: z.string().url().max(500).optional(),
+            })
+            .optional(),
+          keywords: z.array(z.string().max(80)).max(30).optional(),
+          language: z.string().min(2).max(8).optional(),
+          tone: z.string().max(80).optional(),
+          length: z.enum(['short', 'medium', 'long']).optional(),
+          callToAction: z.string().max(200).optional(),
+        })
+        .parse(request.body);
+      return reply.send({ data: await generateContent(orgId, body as ContentAgentInput) });
     },
   );
 

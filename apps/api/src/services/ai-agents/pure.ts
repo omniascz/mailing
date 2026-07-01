@@ -6,6 +6,8 @@
  * after fetching deal/contact rows.
  */
 
+import { slugify, estimateReadTimeMinutes, extractExcerpt } from '../blog/pure.js';
+
 export type DealRiskLevel = 'healthy' | 'watch' | 'at_risk' | 'critical';
 
 export interface DealHealthSignals {
@@ -185,4 +187,90 @@ export function aggregateIntent(
   const bucket: 'none' | 'low' | 'medium' | 'high' =
     score === 0 ? 'none' : score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low';
   return { score, bucket };
+}
+
+// ─── Content Agent (#331) ──────────────────────────────────────────────────
+//
+// Post-processing for the multi-format Content Agent. The service calls Claude,
+// then delegates normalisation (slug/meta/word-count/read-time) here so it can
+// be unit-tested without the API. Shape is format-agnostic: prose formats use
+// `sections`, podcast scripts use `podcastSegments`.
+
+export type ContentFormat = 'blog' | 'landing' | 'email' | 'podcast_script';
+
+export interface ContentSection {
+  heading: string;
+  body: string;
+}
+
+export interface PodcastSegment {
+  speaker: string;
+  text: string;
+}
+
+/** Raw JSON as returned by Claude — fields may be missing/loose. */
+export interface RawContent {
+  title?: string;
+  slug?: string;
+  metaDescription?: string;
+  sections?: ContentSection[];
+  podcastSegments?: PodcastSegment[];
+  callToAction?: string;
+  keywords?: string[];
+}
+
+export interface ContentResult {
+  format: ContentFormat;
+  title: string;
+  slug: string;
+  metaDescription: string;
+  sections: ContentSection[];
+  podcastSegments: PodcastSegment[];
+  callToAction: string;
+  keywords: string[];
+  wordCount: number;
+  readingTimeMinutes: number;
+}
+
+/** Count words across markdown/plain fragments, ignoring formatting tokens. */
+export function countWords(text: string): number {
+  return text
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[#_*`>[\]()]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
+/**
+ * Normalise raw Claude output into a stable `ContentResult`: fill a slug from
+ * the title when missing, derive a meta description from the body, and compute
+ * word count + reading time from the actual content.
+ */
+export function finaliseContent(format: ContentFormat, raw: RawContent): ContentResult {
+  const title = (raw.title ?? '').trim();
+  const sections = (raw.sections ?? []).filter((s) => s && (s.heading || s.body));
+  const podcastSegments = (raw.podcastSegments ?? []).filter((s) => s && s.text);
+
+  const bodyJoined = [
+    ...sections.map((s) => `${s.heading}\n${s.body}`),
+    ...podcastSegments.map((s) => `${s.speaker}: ${s.text}`),
+  ]
+    .join('\n\n')
+    .trim();
+
+  const slugSource = raw.slug?.trim() || title;
+  const metaDescription = raw.metaDescription?.trim() || extractExcerpt(bodyJoined, 155);
+
+  return {
+    format,
+    title,
+    slug: slugify(slugSource, 80),
+    metaDescription,
+    sections,
+    podcastSegments,
+    callToAction: (raw.callToAction ?? '').trim(),
+    keywords: (raw.keywords ?? []).map((k) => k.trim()).filter(Boolean),
+    wordCount: countWords(bodyJoined),
+    readingTimeMinutes: estimateReadTimeMinutes(bodyJoined),
+  };
 }
