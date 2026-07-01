@@ -68,11 +68,25 @@ export interface UnsubscribePayload {
   ts: number;
 }
 
+/**
+ * View-in-browser token. Embedded as {{view_in_browser_url}} so a recipient can
+ * open a hosted copy of the exact email they received. Signed + stateless so no
+ * per-recipient HTML is stored; the endpoint re-renders from campaign + contact.
+ */
+export interface ViewInBrowserPayload {
+  type: 'view';
+  orgId: string;
+  campaignId: string;
+  contactId: string;
+  ts: number;
+}
+
 export type TrackingPayload =
   | OpenTrackingPayload
   | ClickTrackingPayload
   | PreferenceCenterPayload
-  | UnsubscribePayload;
+  | UnsubscribePayload
+  | ViewInBrowserPayload;
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
 

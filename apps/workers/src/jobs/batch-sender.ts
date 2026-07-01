@@ -166,12 +166,22 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
       ts: Math.floor(Date.now() / 1000),
     });
     const unsubscribeUrl = `${trackingBaseUrl}/api/v1/unsubscribe/${unsubToken}`;
+    // Signed view-in-browser token → hosted re-render of this exact email.
+    const viewToken = createTrackingToken({
+      type: 'view',
+      orgId: data.orgId,
+      campaignId: data.campaignId,
+      contactId: contact.id,
+      ts: Math.floor(Date.now() / 1000),
+    });
+    const viewInBrowserUrl = `${trackingBaseUrl}/api/v1/browser/${viewToken}`;
     const todayIso = new Date().toISOString().slice(0, 10);
     const mergeCtx = buildMergeContext(
       contact,
       {
         preferenceCenterUrl: prefCenterUrl,
         unsubscribeUrl,
+        viewInBrowserUrl,
         currentDate: todayIso,
         currentYear: String(new Date().getFullYear()),
         companyName: data.companyName,

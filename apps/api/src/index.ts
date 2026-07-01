@@ -108,6 +108,7 @@ import productFeedRoutes from './routes/v1/product-feeds.js';
 import lifecycleRoutes from './routes/v1/lifecycle.js';
 import deliverabilityRoutes from './routes/v1/deliverability.js';
 import publicReputationRoutes from './routes/v1/public/reputation.js';
+import browserRoutes from './routes/v1/browser.js';
 import seoSitemapRoutes from './routes/v1/seo/sitemap.js';
 import blogRoutes from './routes/v1/blog.js';
 import ctaRoutes from './routes/v1/ctas.js';
@@ -425,6 +426,7 @@ export async function buildApp() {
   await app.register(lifecycleRoutes);
   await app.register(deliverabilityRoutes);
   await app.register(publicReputationRoutes);
+  await app.register(browserRoutes);
   await app.register(seoSitemapRoutes);
   await app.register(blogRoutes);
   await app.register(ctaRoutes);
