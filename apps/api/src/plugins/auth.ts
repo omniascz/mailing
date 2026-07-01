@@ -12,6 +12,13 @@ declare module 'fastify' {
   interface FastifyInstance {
     requireAuth: (request: FastifyRequest) => Promise<void>;
     authenticate: (request: FastifyRequest) => Promise<void>;
+    /**
+     * Auth for SDK ingest endpoints — accepts public (publishable) keys as well
+     * as secret keys and JWT sessions. Use ONLY on write-only/limited routes the
+     * browser web-sdk needs (in-app message match, event ingest). Never on a
+     * route that reads or mutates org data broadly.
+     */
+    authenticatePublic: (request: FastifyRequest) => Promise<void>;
     requireRole: (...roles: UserRole[]) => (request: FastifyRequest) => Promise<void>;
     /**
      * Gate a route by API-key scope. JWT/session users pass (governed by RBAC);
@@ -34,8 +41,20 @@ function extractToken(request: FastifyRequest): string | null {
 }
 
 async function authPlugin(app: FastifyInstance) {
+  // Secret-route gate: authenticated AND not a public (publishable) key. A
+  // public key leaked in browser JS must not be able to reach any secret route.
+  const requireSecretAuth = async (request: FastifyRequest) => {
+    if (!request.user) throw AppError.unauthorized('Authentication required');
+    if (request.user.isPublicKey) {
+      throw AppError.forbidden('Public API keys cannot access this endpoint');
+    }
+  };
+
   // Also expose an authenticate decorator (alias for requireAuth) for consistent naming.
-  app.decorate('authenticate', async (request: FastifyRequest) => {
+  app.decorate('authenticate', requireSecretAuth);
+
+  // SDK ingest gate — accepts public keys too (see interface doc above).
+  app.decorate('authenticatePublic', async (request: FastifyRequest) => {
     if (!request.user) throw AppError.unauthorized('Authentication required');
   });
 
@@ -56,6 +75,7 @@ async function authPlugin(app: FastifyInstance) {
           email: '',
           apiKeyMode: ((key as { mode?: 'live' | 'test' }).mode ?? 'live') as 'live' | 'test',
           apiKeyScopes: (key as { scopes?: string[] }).scopes ?? [],
+          isPublicKey: (key as { isPublic?: boolean }).isPublic ?? false,
         };
         return;
       }
@@ -68,9 +88,7 @@ async function authPlugin(app: FastifyInstance) {
     if (session) request.user = session;
   });
 
-  app.decorate('requireAuth', async (request: FastifyRequest) => {
-    if (!request.user) throw AppError.unauthorized('Authentication required');
-  });
+  app.decorate('requireAuth', requireSecretAuth);
 
   const ROLE_RANK: Record<UserRole, number> = {
     viewer: 1,

@@ -213,6 +213,18 @@ describe('createApiKey', () => {
     const expectedHash = createHash('sha256').update(result.rawKey).digest('hex');
     expect(mockDb.values).toHaveBeenCalledWith(expect.objectContaining({ keyHash: expectedHash }));
   });
+
+  it('mints a browser-safe public key with fm_pub_ prefix', async () => {
+    (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
+      { id: 'k2', orgId: 'o1', name: 'pub', keyHash: 'h', keyPrefix: 'fm_pub_xxxx', scopes: [] },
+    ]);
+
+    const { createApiKey } = await import('./index.js');
+    const result = await createApiKey('o1', 'u1', 'pub key', ['in_app:read'], undefined, 'live', true);
+
+    expect(result.rawKey).toMatch(/^fm_pub_/);
+    expect(mockDb.values).toHaveBeenCalledWith(expect.objectContaining({ isPublic: true }));
+  });
 });
 
 describe('lookupApiKey', () => {

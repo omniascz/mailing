@@ -163,6 +163,8 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
     name: z.string().min(1).max(255),
     scopes: z.array(z.string()).optional(),
     expiresAt: z.string().datetime().optional(),
+    /** Mint a public (publishable) key for the browser web-sdk (`fm_pub_`). */
+    isPublic: z.boolean().optional(),
   });
 
   app.post(
@@ -182,8 +184,11 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
         orgId,
         userId,
         body.name,
-        body.scopes,
+        // Public keys default to the ingest-only scope set (browser-safe).
+        body.scopes ?? (body.isPublic ? ['in_app:read', 'events:write'] : []),
         body.expiresAt ? new Date(body.expiresAt) : undefined,
+        'live',
+        body.isPublic ?? false,
       );
       return reply.status(201).send({ data: result });
     },

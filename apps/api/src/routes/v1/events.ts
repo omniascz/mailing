@@ -14,19 +14,23 @@ import { AppError } from '../../lib/app-error.js';
 import { onApiEvent } from '../../services/workflows/triggers.js';
 
 export default async function eventRoutes(app: FastifyInstance) {
-  app.addHook('preHandler', app.requireAuth);
-
   /**
    * POST /api/v1/events
    *
    * Track a custom event for a contact. Immediately evaluates api_event
    * workflow triggers and stores the event for audit.
    *
+   * Ingest-only → authenticatePublic so the browser web-sdk can call it with a
+   * public (fm_pub_) key. Still org-scoped and contact-ownership checked below.
+   *
    * Body: { contact_id, event_name, properties? }
    */
   app.post(
     '/api/v1/events',
-    { schema: { tags: ['Events'], summary: 'Track a custom event for workflow triggers' } },
+    {
+      preHandler: [app.authenticatePublic],
+      schema: { tags: ['Events'], summary: 'Track a custom event for workflow triggers' },
+    },
     async (req) => {
       const body = z
         .object({
@@ -80,7 +84,10 @@ export default async function eventRoutes(app: FastifyInstance) {
    */
   app.get(
     '/api/v1/events',
-    { schema: { tags: ['Events'], summary: 'List recent custom events' } },
+    {
+      preHandler: [app.authenticate], // secret-only: listing org events is not public
+      schema: { tags: ['Events'], summary: 'List recent custom events' },
+    },
     async (req) => {
       const query = z
         .object({

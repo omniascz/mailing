@@ -24,6 +24,12 @@ export interface SessionData {
    * `requireScope`.
    */
   apiKeyScopes?: string[];
+  /**
+   * True when authenticated via a public (publishable) API key — safe to embed
+   * in browser JS. Such keys are rejected on every secret route (`authenticate`
+   * / `requireAuth`) and accepted only on SDK ingest routes (`authenticatePublic`).
+   */
+  isPublicKey?: boolean;
 }
 
 export interface JwtPayload extends SessionData {

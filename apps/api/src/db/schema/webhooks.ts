@@ -147,6 +147,10 @@ export const apiKeys = pgTable(
     active: boolean('active').notNull().default(true),
     /** 'live' (default) hits the MTA; 'test' (Resend parity) is a no-op. */
     mode: varchar('mode', { length: 8 }).notNull().default('live'),
+    /** Public (publishable) key — safe to embed in browser JS (web-sdk). These
+     *  are rejected on every secret route and accepted only on SDK ingest
+     *  endpoints (authenticatePublic). Prefixed `fm_pub_`. */
+    isPublic: boolean('is_public').notNull().default(false),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

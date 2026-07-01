@@ -105,11 +105,12 @@ export default async function inAppRoutes(app: FastifyInstance) {
   );
 
   // ── SDK-facing: fetch matching messages ───────────────────────────────────
-  // This endpoint is called by @forgemsg/web-sdk on every page load.
-  // Uses API key auth (X-API-Key header) — no JWT required.
+  // This endpoint is called by @forgemsg/web-sdk on every page load. Uses
+  // authenticatePublic so a browser-safe public (fm_pub_) key resolves the org
+  // — read-only message matching, no org data exposure.
 
-  app.get('/api/v1/in-app/messages/sdk', async (req) => {
-    const orgId = (req as { orgId?: string }).orgId ?? '';
+  app.get('/api/v1/in-app/messages/sdk', { preHandler: [app.authenticatePublic] }, async (req) => {
+    const orgId = req.user!.orgId;
     if (!orgId) return { data: [] };
 
     const { contact_id, session_id, page_url } = req.query as {

@@ -6,18 +6,28 @@
  * Usage:
  *   <script src="https://cdn.forgemsg.com/sdk/v1.js"></script>
  *   <script>
- *     ForgeMsg.init({ apiKey: 'fm_live_xxx', contactId: 'user-uuid' });
+ *     ForgeMsg.init({ publicKey: 'fm_pub_xxx', contactId: 'user-uuid' });
  *   </script>
  *
  * Or as ES module:
  *   import { ForgeMsg } from '@forgemsg/web-sdk';
- *   ForgeMsg.init({ apiKey: 'fm_live_xxx', contactId: 'user-uuid' });
+ *   ForgeMsg.init({ publicKey: 'fm_pub_xxx', contactId: 'user-uuid' });
+ *
+ * SECURITY: use a PUBLIC (publishable) key — `fm_pub_...`. Never embed a secret
+ * `fm_live_`/`fm_test_` key in browser JS; the server rejects public keys on
+ * every secret route, so a public key is safe to ship to the client.
  */
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ForgeMsgConfig {
-  apiKey: string;
+  /** Public (publishable) key — `fm_pub_...`. Safe to embed in browser JS. */
+  publicKey?: string;
+  /**
+   * @deprecated Use `publicKey` with an `fm_pub_` key. Embedding a secret
+   * `fm_live_`/`fm_test_` key in the browser leaks full API access.
+   */
+  apiKey?: string;
   contactId?: string;
   /** API base URL (defaults to production) */
   apiBase?: string;
@@ -75,10 +85,11 @@ async function apiFetch(path: string, opts?: RequestInit): Promise<unknown> {
   if (!_config) throw new Error('ForgeMsg not initialized');
 
   const base = _config.apiBase ?? 'https://api.forgemsg.com';
+  const key = _config.publicKey ?? _config.apiKey ?? '';
   const resp = await fetch(`${base}${path}`, {
     ...opts,
     headers: {
-      'X-API-Key': _config.apiKey,
+      'X-API-Key': key,
       'Content-Type': 'application/json',
       ...(opts?.headers ?? {}),
     },
@@ -95,7 +106,7 @@ async function fetchMessages(): Promise<InAppMessagePayload[]> {
   });
   if (_config?.contactId) params.set('contact_id', _config.contactId);
 
-  const data = await apiFetch(`/api/v1/in-app/messages?${params}`);
+  const data = await apiFetch(`/api/v1/in-app/messages/sdk?${params}`);
   const result = data as { data?: InAppMessagePayload[] };
   return result?.data ?? [];
 }

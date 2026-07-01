@@ -71,6 +71,13 @@
       "when": 1782163700000,
       "tag": "0009_predictive_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782163800000,
+      "tag": "0010_api_key_is_public",
+      "breakpoints": true
     }
   ]
 }
