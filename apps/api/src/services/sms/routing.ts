@@ -21,6 +21,7 @@ import {
   type BulkgateAdapterConfig,
 } from '../../channels/sms/bulkgate-adapter.js';
 import { TwilioSmsAdapter, type TwilioConfig } from '../../channels/sms/twilio-adapter.js';
+import { checkSmsCompliance } from './compliance.js';
 import { AppError } from '../../lib/app-error.js';
 import type { UnifiedMessage, Recipient, DeliveryResult } from '@forgemsg/shared';
 
@@ -209,6 +210,18 @@ export async function routedSmsSend(
 ): Promise<DeliveryResult> {
   const phone = recipient.phone ?? '';
   const country = phoneToCountry(phone);
+
+  // Compliance gate for MARKETING SMS: consent, TCPA quiet hours (US), and
+  // opt-out text appended. Transactional SMS (OTP/receipts — no campaign/workflow)
+  // is exempt from consent + quiet hours. Throws AppError on block.
+  // (Previously this lived in a helper that the send path never called.)
+  const isMarketing = !!(message.campaignId || message.workflowId);
+  if (message.content.kind === 'sms' && isMarketing) {
+    const compliance = await checkSmsCompliance(orgId, phone, message.content.body, country, {
+      requireConsent: true,
+    });
+    message = { ...message, content: { ...message.content, body: compliance.body } };
+  }
 
   // Fetch routes: exact country match + catch-all '*', ordered by priority
   const routes = await db
