@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_runs" ADD COLUMN "conversion_value" numeric(12, 2);

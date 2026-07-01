@@ -764,6 +764,14 @@ async function executeGoal(
     // Mark the run as converted — executor will persist this
     run.converted = true;
     run.convertedAt = new Date();
+    // Capture conversion revenue from the trigger/run data (order amount) for
+    // flow revenue analytics + revenue-per-recipient.
+    const data = (run.data ?? {}) as Record<string, unknown>;
+    const amount = data.order_amount ?? data.amount ?? (data.order as { amount?: unknown })?.amount;
+    const value = typeof amount === 'number' ? amount : Number(amount);
+    if (Number.isFinite(value) && value > 0) {
+      run.conversionValue = value.toFixed(2);
+    }
   }
 
   // Goal nodes are pass-through — always continue to next node

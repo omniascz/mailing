@@ -57,6 +57,13 @@
       "when": 1782163500000,
       "tag": "0007_segment_members",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1782163600000,
+      "tag": "0008_workflow_conversion_value",
+      "breakpoints": true
     }
   ]
 }

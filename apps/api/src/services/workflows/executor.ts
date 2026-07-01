@@ -124,6 +124,7 @@ async function executeNode(
       splitBranch: run.splitBranch ?? null,
       converted: run.converted ?? false,
       convertedAt: run.convertedAt ?? null,
+      conversionValue: run.conversionValue ?? null,
     })
     .where(eq(workflowRuns.id, run.id));
 

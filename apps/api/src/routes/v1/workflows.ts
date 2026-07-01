@@ -26,6 +26,7 @@ import {
   listWorkflowRuns,
   getWorkflowRun,
   cancelWorkflowRun,
+  getWorkflowAnalytics,
 } from '../../services/workflows/index.js';
 import { triggerManual } from '../../services/workflows/triggers.js';
 import { FLOW_TEMPLATES, getFlowTemplate } from '../../services/workflows/flow-templates.js';
@@ -230,6 +231,22 @@ export default async function workflowRoutes(app: FastifyInstance) {
         cursor: query.cursor,
         limit: query.limit ? parseInt(query.limit, 10) : undefined,
       });
+    },
+  );
+
+  // Flow analytics — run outcomes + conversion revenue + revenue-per-recipient.
+  app.get(
+    '/api/v1/workflows/:id/analytics',
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'Flow analytics (conversion rate, revenue, revenue-per-recipient)',
+        params: { type: 'object', properties: { id: { type: 'string' } } },
+      },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      return { data: await getWorkflowAnalytics(id, req.user!.orgId) };
     },
   );
 

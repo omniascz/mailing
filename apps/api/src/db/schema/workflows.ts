@@ -7,6 +7,7 @@ import {
   jsonb,
   boolean,
   integer,
+  numeric,
   index,
   pgEnum,
 } from 'drizzle-orm/pg-core';
@@ -130,6 +131,8 @@ export const workflowRuns = pgTable(
     /** Whether contact achieved the Goal node target (5.7) */
     converted: boolean('converted').notNull().default(false),
     convertedAt: timestamp('converted_at', { withTimezone: true }),
+    /** Revenue attributed to this run's conversion (for flow revenue analytics). */
+    conversionValue: numeric('conversion_value', { precision: 12, scale: 2 }),
 
     startedAt: timestamp('started_at', { withTimezone: true }),
     completedAt: timestamp('completed_at', { withTimezone: true }),

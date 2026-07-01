@@ -145,6 +145,53 @@ export async function listWorkflowRuns(
   return { data, hasMore, cursor: hasMore ? data[data.length - 1]!.id : undefined };
 }
 
+export interface WorkflowAnalytics {
+  totalRuns: number;
+  active: number;
+  completed: number;
+  failed: number;
+  converted: number;
+  conversionRate: number;
+  totalRevenue: number;
+  revenuePerRecipient: number;
+}
+
+/**
+ * Flow analytics: run outcomes + conversion revenue + revenue-per-recipient.
+ * Closes the Klaviyo gap where flows exposed only raw run counters.
+ */
+export async function getWorkflowAnalytics(
+  workflowId: string,
+  orgId: string,
+): Promise<WorkflowAnalytics> {
+  await getWorkflow(workflowId, orgId); // authz / existence
+  const [row] = await db
+    .select({
+      total: sql<number>`COUNT(*)::int`,
+      active: sql<number>`COUNT(*) FILTER (WHERE ${workflowRuns.status} IN ('pending','running','waiting'))::int`,
+      completed: sql<number>`COUNT(*) FILTER (WHERE ${workflowRuns.status} = 'completed')::int`,
+      failed: sql<number>`COUNT(*) FILTER (WHERE ${workflowRuns.status} = 'failed')::int`,
+      converted: sql<number>`COUNT(*) FILTER (WHERE ${workflowRuns.converted})::int`,
+      revenue: sql<string>`COALESCE(SUM(${workflowRuns.conversionValue}), 0)`,
+    })
+    .from(workflowRuns)
+    .where(and(eq(workflowRuns.workflowId, workflowId), eq(workflowRuns.orgId, orgId)));
+
+  const total = row?.total ?? 0;
+  const converted = row?.converted ?? 0;
+  const totalRevenue = Number(row?.revenue ?? 0);
+  return {
+    totalRuns: total,
+    active: row?.active ?? 0,
+    completed: row?.completed ?? 0,
+    failed: row?.failed ?? 0,
+    converted,
+    conversionRate: total > 0 ? converted / total : 0,
+    totalRevenue,
+    revenuePerRecipient: total > 0 ? totalRevenue / total : 0,
+  };
+}
+
 export async function getWorkflowRun(runId: string, orgId: string): Promise<WorkflowRun> {
   const [row] = await db
     .select()
