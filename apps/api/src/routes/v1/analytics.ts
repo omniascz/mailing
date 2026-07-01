@@ -19,6 +19,7 @@ import {
   getCampaignHeatmapData,
   compareCampaigns,
 } from '../../services/analytics/index.js';
+import { getCampaignGeoStats } from '../../services/analytics/geo.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { revenueEvents } from '../../db/schema/index.js';
@@ -118,6 +119,25 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       const orgId = req.user!.orgId;
       const points = await getCampaignTimeline(id, orgId, interval);
       return { data: points };
+    },
+  );
+
+  /**
+   * GET /api/v1/campaigns/:id/stats/geo
+   * Opens/clicks grouped by country (requires GEOIP_API_URL configured).
+   */
+  app.get(
+    '/api/v1/campaigns/:id/stats/geo',
+    {
+      schema: {
+        tags: ['Analytics'],
+        summary: 'Get campaign opens/clicks by country',
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      return { data: await getCampaignGeoStats(id, req.user!.orgId) };
     },
   );
 

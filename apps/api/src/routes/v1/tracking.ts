@@ -13,6 +13,7 @@ import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/index.js';
 import { verifyTrackingToken, isAppleMpp } from '../../services/sending/tracking.js';
 import { scoreAndPersist } from '../../services/deliverability/bot-detection.js';
+import { enrichEventGeo } from '../../services/analytics/geo.js';
 import { eq, and } from 'drizzle-orm';
 
 /**
@@ -79,7 +80,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
           .returning({ id: emailEvents.id })
           .catch(() => []);
 
-        // BotSense scoring — async, non-blocking (#484)
+        // BotSense scoring + geo enrichment — async, non-blocking (#484)
         if (row?.id) {
           scoreAndPersist(row.id, {
             eventType: 'open',
@@ -89,6 +90,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
             contactId: payload.contactId,
             occurredAt: new Date(),
           }).catch(() => {});
+          enrichEventGeo(row.id, ipAddress).catch(() => {});
         }
       }
 
@@ -190,6 +192,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
             linkUrl: c.linkUrl,
           })),
         }).catch(() => {});
+        enrichEventGeo(clickRow.id, ipAddress).catch(() => {});
       }
 
       return reply.redirect(payload.url, 302);

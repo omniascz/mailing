@@ -41,6 +41,10 @@ export const emailEvents = pgTable(
     ipAddress: varchar('ip_address', { length: 45 }),
     deviceType: varchar('device_type', { length: 50 }),
     emailClient: varchar('email_client', { length: 100 }),
+    // Geo enrichment (opens/clicks) — populated async from IP when a GeoIP
+    // provider is configured (GEOIP_API_URL). ISO-3166 alpha-2 + city name.
+    geoCountry: varchar('geo_country', { length: 2 }),
+    geoCity: varchar('geo_city', { length: 120 }),
 
     metadata: jsonb('metadata').$type<Record<string, unknown>>(),
 
