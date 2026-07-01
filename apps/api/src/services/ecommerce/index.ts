@@ -413,6 +413,19 @@ export async function ingestOrder(
           updatedAt: new Date(),
         },
       });
+
+    // Fire the order_placed / purchase_event workflow triggers (fire-and-forget).
+    // Previously order ingestion never started any workflow.
+    import('../workflows/triggers.js')
+      .then(({ onOrderPlaced }) =>
+        onOrderPlaced(connection.orgId, contactId!, {
+          orderId: order.externalOrderId,
+          amount: parseFloat(order.totalAmount),
+          currency: order.currency,
+          itemCount: order.items.length,
+        }),
+      )
+      .catch(() => {});
   }
 
   // Mark webhook event as processed

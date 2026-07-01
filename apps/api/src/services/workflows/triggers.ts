@@ -189,6 +189,65 @@ export async function onApiEvent(
   );
 }
 
+/**
+ * Start all active workflows of a given trigger type for a contact. Used for
+ * first-class e-commerce triggers (purchase_event) that aren't eventName-matched.
+ */
+async function startTypedWorkflows(
+  orgId: string,
+  contactId: string,
+  triggerType: 'purchase_event',
+  data: Record<string, unknown>,
+): Promise<void> {
+  const wfs = await db
+    .select({ id: workflows.id })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, triggerType),
+        isNull(workflows.deletedAt),
+      ),
+    );
+  await Promise.allSettled(wfs.map((w) => safeStartRun(w.id, orgId, contactId, data)));
+}
+
+/**
+ * E-commerce first-class triggers. Each fires the matching `api_event`
+ * workflow (by eventName) so a metric-triggered flow works, and `order_placed`
+ * additionally starts dedicated `purchase_event` workflows (previously a dead
+ * enum value nothing fired). These unlock Klaviyo-style Placed-Order,
+ * Checkout-Started (abandoned checkout) and Added-to-Cart flows.
+ */
+export async function onOrderPlaced(
+  orgId: string,
+  contactId: string,
+  order: Record<string, unknown> = {},
+): Promise<void> {
+  await onApiEvent(orgId, contactId, 'order_placed', order);
+  await startTypedWorkflows(orgId, contactId, 'purchase_event', {
+    triggerEvent: 'order_placed',
+    ...order,
+  });
+}
+
+export async function onCheckoutStarted(
+  orgId: string,
+  contactId: string,
+  checkout: Record<string, unknown> = {},
+): Promise<void> {
+  await onApiEvent(orgId, contactId, 'checkout_started', checkout);
+}
+
+export async function onAddedToCart(
+  orgId: string,
+  contactId: string,
+  cart: Record<string, unknown> = {},
+): Promise<void> {
+  await onApiEvent(orgId, contactId, 'added_to_cart', cart);
+}
+
 // ─── Trigger: date_field (cron-based) ────────────────────────────────────────
 
 /**
