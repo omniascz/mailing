@@ -52,6 +52,19 @@ export interface FormConfig {
   tags?: string[]; // auto-apply these tags on submit
   workflowId?: string; // trigger this workflow on submit
   styles?: Record<string, string>;
+  /**
+   * Bot protection (Mailchimp-style reCAPTCHA). When set, submissions must
+   * pass a captcha challenge verified server-side.
+   */
+  captcha?: {
+    provider: 'turnstile' | 'recaptcha' | 'hcaptcha';
+    /** Provider secret key for server-side verification. */
+    secret: string;
+    /** reCAPTCHA v3 minimum score to accept (0..1). */
+    minScore?: number;
+  };
+  /** Honeypot field name — a hidden field; if it arrives filled, it's a bot. */
+  honeypotField?: string;
 }
 
 export const signupForms = pgTable(

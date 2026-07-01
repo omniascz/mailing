@@ -17,6 +17,10 @@ import {
   generateFilename,
 } from '../../services/contacts/activity-export.js';
 import { anonymizeContact, exportContactData } from '../../services/contacts/gdpr.js';
+import { and, eq, isNull } from 'drizzle-orm';
+import { db } from '../../db/client.js';
+import { contacts as contactsTable } from '../../db/schema/index.js';
+import { toCsv } from '../../lib/csv.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -84,6 +88,48 @@ export default async function contactRoutes(app: FastifyInstance) {
         phone_district: query.phone_district,
       };
       return listContacts(req.user!.orgId, opts);
+    },
+  );
+
+  /**
+   * GET /api/v1/contacts/export.csv
+   * Export contacts (org-scoped, not soft-deleted) as CSV. Capped at 50k rows.
+   */
+  app.get(
+    '/api/v1/contacts/export.csv',
+    { schema: { tags: ['Contacts'], summary: 'Export contacts as CSV' } },
+    async (req, reply) => {
+      const rows = await db
+        .select({
+          email: contactsTable.email,
+          phone: contactsTable.phone,
+          firstName: contactsTable.firstName,
+          lastName: contactsTable.lastName,
+          status: contactsTable.status,
+          isVip: contactsTable.isVip,
+          lifecycleStage: contactsTable.lifecycleStage,
+          source: contactsTable.source,
+          createdAt: contactsTable.createdAt,
+        })
+        .from(contactsTable)
+        .where(and(eq(contactsTable.orgId, req.user!.orgId), isNull(contactsTable.deletedAt)))
+        .limit(50_000);
+
+      const csv = toCsv(rows as unknown as Array<Record<string, unknown>>, [
+        { header: 'Email', value: 'email' },
+        { header: 'Phone', value: 'phone' },
+        { header: 'First Name', value: 'firstName' },
+        { header: 'Last Name', value: 'lastName' },
+        { header: 'Status', value: 'status' },
+        { header: 'VIP', value: 'isVip' },
+        { header: 'Lifecycle Stage', value: 'lifecycleStage' },
+        { header: 'Source', value: 'source' },
+        { header: 'Created At', value: 'createdAt' },
+      ]);
+      return reply
+        .header('Content-Type', 'text/csv; charset=utf-8')
+        .header('Content-Disposition', 'attachment; filename="contacts.csv"')
+        .send(csv);
     },
   );
 

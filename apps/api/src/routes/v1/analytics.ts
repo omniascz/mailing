@@ -22,6 +22,7 @@ import {
 import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { revenueEvents } from '../../db/schema/index.js';
+import { toCsv } from '../../lib/csv.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -48,6 +49,47 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       const orgId = req.user!.orgId;
       const stats = await getCampaignStats(id, orgId);
       return { data: stats };
+    },
+  );
+
+  /**
+   * GET /api/v1/campaigns/:id/report.csv
+   * Download the campaign report (summary + per-link clicks) as CSV.
+   */
+  app.get(
+    '/api/v1/campaigns/:id/report.csv',
+    {
+      schema: {
+        tags: ['Analytics'],
+        summary: 'Export campaign report as CSV',
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (req, reply) => {
+      const { id } = idParam.parse(req.params);
+      const orgId = req.user!.orgId;
+      const [stats, links] = await Promise.all([
+        getCampaignStats(id, orgId),
+        getCampaignLinkStats(id, orgId),
+      ]);
+
+      // Section 1: flat metric/value summary.
+      const summaryRows = Object.entries(stats as unknown as Record<string, unknown>)
+        .filter(([, v]) => typeof v !== 'object')
+        .map(([metric, value]) => ({ metric, value }));
+      const summaryCsv = toCsv(summaryRows, [
+        { header: 'Metric', value: 'metric' },
+        { header: 'Value', value: 'value' },
+      ]);
+
+      // Section 2: per-link clicks.
+      const linkCsv = toCsv(links as unknown as Array<Record<string, unknown>>);
+
+      const csv = `# Summary\r\n${summaryCsv}\r\n\r\n# Links\r\n${linkCsv}\r\n`;
+      return reply
+        .header('Content-Type', 'text/csv; charset=utf-8')
+        .header('Content-Disposition', `attachment; filename="campaign_${id}_report.csv"`)
+        .send(csv);
     },
   );
 

@@ -18,6 +18,7 @@ import {
   type FormConfig,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { isHoneypotTripped, verifyCaptcha } from '../../lib/captcha.js';
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
@@ -158,6 +159,28 @@ export async function processFormSubmission(
 
   const fields = form.fields as FormField[];
   const config = form.config as FormConfig;
+
+  // Bot protection (honeypot + captcha) — before any DB writes.
+  if (isHoneypotTripped(data, config.honeypotField)) {
+    return { contactId: null, success: false, message: 'Submission rejected' };
+  }
+  if (config.captcha) {
+    const token =
+      data['captcha_token'] ??
+      data['cf-turnstile-response'] ??
+      data['g-recaptcha-response'] ??
+      data['h-captcha-response'];
+    const verdict = await verifyCaptcha({
+      provider: config.captcha.provider,
+      secret: config.captcha.secret,
+      token,
+      remoteIp: meta.ipAddress,
+      minScore: config.captcha.minScore,
+    });
+    if (!verdict.success) {
+      return { contactId: null, success: false, message: 'Captcha verification failed' };
+    }
+  }
 
   // Validate required fields
   for (const field of fields) {
