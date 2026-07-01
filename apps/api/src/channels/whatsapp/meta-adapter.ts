@@ -364,3 +364,20 @@ export class MetaWhatsAppAdapter extends BaseChannelAdapter {
     return phone.replace(/^\+/, '').replace(/\D/g, '');
   }
 }
+
+/**
+ * Env-configured adapter for background workers (which have no request body to
+ * carry per-call credentials). Mirrors createViberAdapter(): reads the platform
+ * WhatsApp Business credentials from env. Returns null when unconfigured so the
+ * worker can skip cleanly instead of failing.
+ */
+export function createWhatsAppAdapter(): MetaWhatsAppAdapter | null {
+  const phoneNumberId = process.env['WHATSAPP_PHONE_NUMBER_ID'];
+  const accessToken = process.env['WHATSAPP_ACCESS_TOKEN'];
+  if (!phoneNumberId || !accessToken) return null;
+  return new MetaWhatsAppAdapter({
+    phoneNumberId,
+    accessToken,
+    defaultLanguage: process.env['WHATSAPP_DEFAULT_LANGUAGE'] ?? 'en_US',
+  });
+}

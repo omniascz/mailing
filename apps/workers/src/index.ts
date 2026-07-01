@@ -33,6 +33,7 @@ import {
   scheduleAnomalyDetector,
 } from './jobs/anomaly-detector.js';
 import { startViberSenderWorker } from './jobs/viber-sender.js';
+import { startWhatsappSenderWorker } from './jobs/whatsapp-sender.js';
 import { startExternalFeedPollWorker, scheduleExternalFeedPoll } from './jobs/external-feed-poll.js';
 import { startWarmupAdvanceWorker, scheduleWarmupAdvance } from './jobs/warmup-advance.js';
 import { startDmarcImapPollWorker, scheduleDmarcImapPoll } from './jobs/dmarc-imap-poll.js';
@@ -71,6 +72,7 @@ scheduleSubscriptionBillingJob().catch(console.error);
 const anomalyDetectorWorker = startAnomalyDetectorWorker();
 scheduleAnomalyDetector().catch(console.error);
 const viberSenderWorker = startViberSenderWorker();
+const whatsappSenderWorker = startWhatsappSenderWorker();
 const externalFeedPollWorker = startExternalFeedPollWorker();
 scheduleExternalFeedPoll().catch(console.error);
 const warmupAdvanceWorker = startWarmupAdvanceWorker();
@@ -95,6 +97,7 @@ const {
   ticketingDayOfWorker,
   ticketingFillHouseWorker,
   ticketingDiscoverWorker,
+  campaignDispatchWorker,
 } = startWorkflowSchedulerWorkers();
 scheduleWorkflowJobs().catch(console.error);
 
@@ -118,6 +121,7 @@ async function shutdown() {
     subscriptionBillingWorker.close(),
     anomalyDetectorWorker.close(),
     viberSenderWorker.close(),
+    whatsappSenderWorker.close(),
     externalFeedPollWorker.close(),
     warmupAdvanceWorker.close(),
     dmarcImapPollWorker.close(),
@@ -133,6 +137,7 @@ async function shutdown() {
     ticketingDayOfWorker.close(),
     ticketingFillHouseWorker.close(),
     ticketingDiscoverWorker.close(),
+    campaignDispatchWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');
