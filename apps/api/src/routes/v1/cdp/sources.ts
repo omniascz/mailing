@@ -17,10 +17,30 @@ import { and, eq, desc } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { cdpSources, cdpSyncRuns } from '../../../db/schema/cdp-sources.js';
 import { AppError } from '../../../lib/app-error.js';
-import { runSync } from '../../../services/cdp/connectors/index.js';
+import {
+  runSync,
+  listConnectors,
+  isConnectorAvailable,
+  CONNECTOR_CATALOG,
+} from '../../../services/cdp/connectors/index.js';
 import { upsertContactFromCdp } from '../../../services/cdp/source-sync.js';
 
 const cdpSourceRoutes: FastifyPluginAsync = async (app) => {
+  // ── Connector catalog ─────────────────────────────────────────────────────────
+  // Lets the UI offer only usable connectors instead of surfacing kinds that
+  // would fail on first sync.
+
+  app.get(
+    '/api/v1/cdp/connectors',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['CDP Sources'], summary: 'List connectors + availability status' },
+    },
+    async (_req, reply) => {
+      return reply.send({ data: listConnectors() });
+    },
+  );
+
   // ── List sources ────────────────────────────────────────────────────────────
 
   app.get(
@@ -59,6 +79,17 @@ const cdpSourceRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const body = sourceSchema.parse(req.body);
+      // Reject connectors that aren't built yet up front — otherwise the source
+      // is created but silently fails on first sync.
+      if (!isConnectorAvailable(body.kind)) {
+        throw AppError.badRequest(
+          `Connector '${CONNECTOR_CATALOG[body.kind]?.label ?? body.kind}' is not yet available. ` +
+            `Available: ${listConnectors()
+              .filter((c) => c.status !== 'planned')
+              .map((c) => c.kind)
+              .join(', ')}.`,
+        );
+      }
       const [row] = await db
         .insert(cdpSources)
         .values({
@@ -81,6 +112,11 @@ const cdpSourceRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const body = sourceSchema.partial().parse(req.body);
+      if (body.kind !== undefined && !isConnectorAvailable(body.kind)) {
+        throw AppError.badRequest(
+          `Connector '${CONNECTOR_CATALOG[body.kind]?.label ?? body.kind}' is not yet available.`,
+        );
+      }
       const [row] = await db
         .update(cdpSources)
         .set({ ...body, updatedAt: new Date() })

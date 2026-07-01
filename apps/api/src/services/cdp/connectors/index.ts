@@ -32,6 +32,60 @@ export type ConnectorKind =
   | 'webhook'
   | 'http_pull';
 
+/**
+ * Connector availability:
+ *   'implemented' — has a working pull connector (dispatch handles it).
+ *   'push'        — receives data via webhook/HTTP push (no pull needed).
+ *   'planned'     — declared but not yet built; source creation is rejected
+ *                   up front so users don't create a source that silently
+ *                   fails on first sync.
+ */
+export type ConnectorStatus = 'implemented' | 'push' | 'planned';
+
+export interface ConnectorInfo {
+  kind: ConnectorKind;
+  label: string;
+  mode: 'pull' | 'push';
+  status: ConnectorStatus;
+}
+
+export const CONNECTOR_CATALOG: Record<ConnectorKind, ConnectorInfo> = {
+  hubspot: { kind: 'hubspot', label: 'HubSpot', mode: 'pull', status: 'implemented' },
+  shopify: { kind: 'shopify', label: 'Shopify', mode: 'pull', status: 'implemented' },
+  stripe: { kind: 'stripe', label: 'Stripe', mode: 'pull', status: 'implemented' },
+  webhook: { kind: 'webhook', label: 'Webhook (push)', mode: 'push', status: 'push' },
+  http_pull: { kind: 'http_pull', label: 'Generic HTTP (push)', mode: 'push', status: 'push' },
+  salesforce: { kind: 'salesforce', label: 'Salesforce', mode: 'pull', status: 'planned' },
+  pipedrive: { kind: 'pipedrive', label: 'Pipedrive', mode: 'pull', status: 'planned' },
+  woocommerce: { kind: 'woocommerce', label: 'WooCommerce', mode: 'pull', status: 'planned' },
+  bigcommerce: { kind: 'bigcommerce', label: 'BigCommerce', mode: 'pull', status: 'planned' },
+  zendesk: { kind: 'zendesk', label: 'Zendesk', mode: 'pull', status: 'planned' },
+  intercom: { kind: 'intercom', label: 'Intercom', mode: 'pull', status: 'planned' },
+  freshdesk: { kind: 'freshdesk', label: 'Freshdesk', mode: 'pull', status: 'planned' },
+  meta_ads: { kind: 'meta_ads', label: 'Meta Ads', mode: 'pull', status: 'planned' },
+  google_ads: { kind: 'google_ads', label: 'Google Ads', mode: 'pull', status: 'planned' },
+  tiktok_ads: { kind: 'tiktok_ads', label: 'TikTok Ads', mode: 'pull', status: 'planned' },
+  google_analytics: {
+    kind: 'google_analytics',
+    label: 'Google Analytics',
+    mode: 'pull',
+    status: 'planned',
+  },
+  segment: { kind: 'segment', label: 'Segment', mode: 'pull', status: 'planned' },
+  mixpanel: { kind: 'mixpanel', label: 'Mixpanel', mode: 'pull', status: 'planned' },
+};
+
+/** All connectors + their availability — used by the API/UI to offer choices. */
+export function listConnectors(): ConnectorInfo[] {
+  return Object.values(CONNECTOR_CATALOG);
+}
+
+/** True when a source of this kind can actually be created + synced today. */
+export function isConnectorAvailable(kind: string): boolean {
+  const info = CONNECTOR_CATALOG[kind as ConnectorKind];
+  return !!info && info.status !== 'planned';
+}
+
 export interface SyncResult {
   rowsPulled: number;
   rowsUpserted: number;
@@ -142,7 +196,14 @@ async function dispatch(
     case 'http_pull':
       // Push sources don't need explicit pull — data arrives via webhook
       return { ...base, cursor: new Date().toISOString() };
-    default:
-      throw new Error(`Connector kind '${kind}' not yet implemented`);
+    default: {
+      const info = CONNECTOR_CATALOG[kind];
+      const label = info?.label ?? kind;
+      throw new Error(
+        info?.status === 'planned'
+          ? `Connector '${label}' is not yet available (planned) — pull sync is not implemented`
+          : `Connector kind '${kind}' is not supported`,
+      );
+    }
   }
 }
