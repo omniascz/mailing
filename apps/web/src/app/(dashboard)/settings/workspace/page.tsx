@@ -14,6 +14,8 @@ interface Organization {
   ipRestrictionsEnabled: boolean;
   hipaaMode: boolean;
   trackingEuStrict: boolean;
+  companyName: string | null;
+  postalAddress: string | null;
   onboardingCompletedAt: string | null;
   createdAt: string;
 }
@@ -52,6 +54,8 @@ export default async function WorkspaceSettingsPage() {
           slug={org.slug}
           plan={org.plan}
           dataRegion={org.dataRegion}
+          initialCompanyName={org.companyName ?? ''}
+          initialPostalAddress={org.postalAddress ?? ''}
         />
       ) : (
         <Card>

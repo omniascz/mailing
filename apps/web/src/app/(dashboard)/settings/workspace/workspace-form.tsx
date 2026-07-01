@@ -50,6 +50,8 @@ interface Props {
   slug: string;
   plan: string;
   dataRegion: 'us' | 'eu' | 'ap';
+  initialCompanyName: string;
+  initialPostalAddress: string;
 }
 
 export function WorkspaceForm({
@@ -61,6 +63,8 @@ export function WorkspaceForm({
   slug,
   plan,
   dataRegion,
+  initialCompanyName,
+  initialPostalAddress,
 }: Props) {
   const router = useRouter();
   const { toast } = useToast();
@@ -80,6 +84,8 @@ export function WorkspaceForm({
   const [ipRestrict, setIpRestrict] = useState(ipRestrictionsEnabled);
   const [trackingStrict, setTrackingStrict] = useState(trackingEuStrict);
   const [hipaa, setHipaa] = useState(hipaaMode);
+  const [companyName, setCompanyName] = useState(initialCompanyName);
+  const [postalAddress, setPostalAddress] = useState(initialPostalAddress);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -95,6 +101,8 @@ export function WorkspaceForm({
           ipRestrictionsEnabled: ipRestrict,
           trackingEuStrict: trackingStrict,
           hipaaMode: hipaa,
+          companyName: companyName.trim(),
+          postalAddress: postalAddress.trim(),
         }),
       });
       if (!res.ok) {
@@ -155,6 +163,40 @@ export function WorkspaceForm({
                 className="h-9 w-32 rounded-md border border-secondary-300 px-3 font-mono text-xs focus:border-primary-500 focus:outline-none"
               />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-4 w-4 text-secondary-400" />
+            Sender identity (CAN-SPAM)
+          </CardTitle>
+          <CardDescription>
+            Legal name + physical postal address auto-appended to every marketing email
+            footer. Required by CAN-SPAM and mailbox providers (Gmail/Yahoo).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            label="Company / legal name"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            placeholder="Acme s.r.o."
+          />
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-secondary-700">Postal address</label>
+            <textarea
+              value={postalAddress}
+              onChange={(e) => setPostalAddress(e.target.value)}
+              rows={3}
+              placeholder={'Ulice 1\n110 00 Praha\nCzech Republic'}
+              className="w-full rounded-md border border-secondary-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            <p className="text-xs text-secondary-500">
+              A P.O. Box is acceptable. Leave blank to disable auto-append (not recommended).
+            </p>
           </div>
         </CardContent>
       </Card>

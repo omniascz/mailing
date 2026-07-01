@@ -5,6 +5,8 @@ import { apiFetch } from '@/lib/api';
 import { NewContactButton } from './new-contact-button';
 import { ContactsTable, type ContactRow } from './contacts-table';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
 interface ContactListResponse {
   data: ContactRow[];
   cursor: string | null;
@@ -68,6 +70,12 @@ export default async function ContactsPage({
           >
             Import CSV
           </Link>
+          <a
+            href={`${API_BASE}/api/v1/contacts/export.csv`}
+            className="inline-flex items-center gap-2 rounded-md border border-secondary-300 bg-white px-4 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
+          >
+            Export CSV
+          </a>
           <NewContactButton />
         </div>
       </header>
