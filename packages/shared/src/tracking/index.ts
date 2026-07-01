@@ -53,7 +53,26 @@ export interface PreferenceCenterPayload {
   ts: number;
 }
 
-export type TrackingPayload = OpenTrackingPayload | ClickTrackingPayload | PreferenceCenterPayload;
+/**
+ * One-click unsubscribe token. Embedded in the `List-Unsubscribe` header and
+ * the `{{unsubscribe_url}}` merge tag. Stateless + HMAC-signed so bulk sends
+ * don't need a per-recipient Redis write and the token can't be forged to
+ * unsubscribe an arbitrary contact.
+ */
+export interface UnsubscribePayload {
+  type: 'unsub';
+  orgId: string;
+  contactId: string;
+  /** Optional originating campaign — used for unsubscribe attribution. */
+  campaignId?: string;
+  ts: number;
+}
+
+export type TrackingPayload =
+  | OpenTrackingPayload
+  | ClickTrackingPayload
+  | PreferenceCenterPayload
+  | UnsubscribePayload;
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
 

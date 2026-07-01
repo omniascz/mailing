@@ -99,6 +99,24 @@ export interface TransactionalEmailInput {
   contactId?: string;
   /** File attachments (e-ticket PDFs etc.). Omit for link-only delivery. */
   attachments?: TransactionalAttachment[];
+  /**
+   * Pre-generated message id for event correlation. When the caller has
+   * already written the `send` email_events row it must pass the same id here
+   * so delivery/bounce/open webhooks line up. Generated if omitted.
+   */
+  messageId?: string;
+  /** Extra RFC 5322 headers (Cc, X-Entity-Ref-ID, …). */
+  customHeaders?: Record<string, string>;
+  /**
+   * Future send time. When in the future the job is enqueued with a BullMQ
+   * delay so the MTA picks it up at the right moment; past/now sends now.
+   */
+  scheduleAt?: Date;
+  /**
+   * Sandbox: record intent but do NOT dispatch to the MTA. Used by `fm_test_`
+   * API keys so developers can exercise the API without delivering mail.
+   */
+  testMode?: boolean;
 }
 
 /**
@@ -112,7 +130,16 @@ export interface TransactionalEmailInput {
  * For marketing emails go through the campaign-splitter flow instead.
  */
 export async function sendTransactionalEmail(input: TransactionalEmailInput): Promise<string> {
-  const messageId = `<txn-${randomUUID()}@forgemsg>`;
+  const messageId = input.messageId ?? `<txn-${randomUUID()}@forgemsg>`;
+
+  // Sandbox: `fm_test_` keys record the intent (the caller still writes the
+  // email_events row) but nothing is dispatched to the MTA.
+  if (input.testMode) return messageId;
+
+  // Future scheduled sends ride a BullMQ delay so the worker only picks them
+  // up when due. Past/now → delay 0 (immediate).
+  const delayMs = input.scheduleAt ? Math.max(0, input.scheduleAt.getTime() - Date.now()) : 0;
+
   await mtaOtherQueue.add(
     `txn-${randomUUID()}`,
     {
@@ -130,14 +157,14 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       htmlBody: input.html,
       textBody: input.text ?? '',
       replyTo: input.replyTo ?? '',
-      customHeaders: {},
+      customHeaders: input.customHeaders ?? {},
       priority: PRIORITY.TRANSACTIONAL,
       stream: 'transactional',
       ...(input.attachments && input.attachments.length > 0
         ? { attachments: input.attachments }
         : {}),
     },
-    { priority: PRIORITY.TRANSACTIONAL },
+    { priority: PRIORITY.TRANSACTIONAL, ...(delayMs > 0 ? { delay: delayMs } : {}) },
   );
   return messageId;
 }

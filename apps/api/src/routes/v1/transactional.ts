@@ -62,7 +62,8 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       }
 
       const orgId = req.user!.orgId;
-      await checkSendCapacity(orgId, 1);
+      const testMode = req.user?.apiKeyMode === 'test';
+      if (!testMode) await checkSendCapacity(orgId, 1);
 
       // Apply caller-supplied merge vars (simple token substitution; template
       // rendering via templateId is resolved inside the MTA worker using the
@@ -88,6 +89,8 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         text: text || undefined,
         orgId,
         attachments: body.attachments,
+        scheduleAt: body.scheduleAt ? new Date(body.scheduleAt) : undefined,
+        testMode,
       });
 
       // Log send event for analytics + delivery webhooks.
@@ -192,11 +195,27 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         return true;
       });
 
+      const orgId = req.user!.orgId;
+      const testMode = req.user?.apiKeyMode === 'test';
+      if (!testMode) await checkSendCapacity(orgId, unique.length);
+      const scheduleAt = body.scheduleAt ? new Date(body.scheduleAt) : undefined;
+
       const results = await Promise.all(
         unique.map(async (recipient) => {
+          // Per-recipient merge-var substitution.
+          let html = body.html ?? '';
+          let text = body.text ?? '';
+          if (recipient.mergeVars) {
+            for (const [key, val] of Object.entries(recipient.mergeVars)) {
+              const re = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
+              html = html.replace(re, val);
+              text = text.replace(re, val);
+            }
+          }
+
           const messageId = `<${randomUUID()}@forgemsg>`;
           await db.insert(emailEvents).values({
-            orgId: req.user!.orgId,
+            orgId,
             eventType: 'send',
             messageId,
             metadata: {
@@ -206,13 +225,30 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
               mergeVars: recipient.mergeVars ?? {},
               tags: body.tags ?? [],
               scheduleAt: body.scheduleAt ?? null,
+              templateId: body.templateId ?? null,
+              testMode,
               ...recipient.metadata,
             },
           });
+
+          // Actually enqueue the send (sandbox no-ops inside).
+          await sendTransactionalEmail({
+            to: recipient.email,
+            from: body.from,
+            fromName: body.fromName,
+            subject: body.subject,
+            html: html || '<p></p>',
+            text: text || undefined,
+            orgId,
+            messageId,
+            scheduleAt,
+            testMode,
+          });
+
           return {
             email: recipient.email,
             messageId,
-            status: body.scheduleAt ? 'scheduled' : 'queued',
+            status: testMode ? 'test' : scheduleAt ? 'scheduled' : 'queued',
           };
         }),
       );

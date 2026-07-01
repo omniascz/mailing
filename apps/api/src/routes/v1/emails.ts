@@ -24,6 +24,8 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/index.js';
 import { redis } from '../../lib/redis.js';
+import { sendTransactionalEmail } from '../../lib/queues.js';
+import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 
 // ─── Resend payload schemas ───────────────────────────────────────────────
 
@@ -112,6 +114,57 @@ function stripMessageIdBrackets(id: string): string {
 }
 
 /**
+ * Actually deliver a Resend-shaped email: enqueue one MTA job per recipient
+ * (to + cc + bcc), all sharing the already-recorded `messageId` so delivery /
+ * bounce / open webhooks correlate to the single returned id.
+ *
+ * - `fm_test_` keys → sandbox (recorded, never dispatched).
+ * - `scheduled_at` in the future → BullMQ delay.
+ * Returns the number of physical deliveries enqueued.
+ */
+async function dispatchResendEmail(
+  orgId: string,
+  messageId: string,
+  item: z.infer<typeof sendEmailBody>,
+  testMode: boolean,
+): Promise<number> {
+  const recipients = [...toArray(item.to), ...toArray(item.cc), ...toArray(item.bcc)];
+  if (recipients.length === 0) return 0;
+
+  const scheduleAt = item.scheduled_at ? new Date(item.scheduled_at) : undefined;
+  const replyTo = toArray(item.reply_to)[0];
+  const customHeaders: Record<string, string> = { ...(item.headers ?? {}) };
+  const cc = toArray(item.cc);
+  if (cc.length > 0) customHeaders.Cc = cc.join(', ');
+
+  const attachments = (item.attachments ?? []).map((a) => ({
+    filename: a.filename,
+    contentType: a.content_type ?? 'application/octet-stream',
+    contentBase64: a.content,
+    contentId: a.content_id,
+    inline: a.content_id != null,
+  }));
+
+  for (const to of recipients) {
+    await sendTransactionalEmail({
+      to,
+      from: item.from,
+      subject: item.subject,
+      html: item.html || '<p></p>',
+      text: item.text || undefined,
+      replyTo,
+      customHeaders,
+      orgId,
+      messageId,
+      scheduleAt,
+      testMode,
+      ...(attachments.length > 0 ? { attachments } : {}),
+    });
+  }
+  return recipients.length;
+}
+
+/**
  * Idempotency-Key handling — Resend caches the first response for a
  * given key for 24 hours. We mirror that with Redis SET NX.
  */
@@ -197,6 +250,12 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       const messageId = `<${randomUUID()}@forgemsg>`;
       const createdAt = new Date();
       const to = toArray(body.to);
+      const testMode = req.user?.apiKeyMode === 'test';
+
+      // Enforce plan send-capacity for real (non-sandbox) sends before we
+      // record or dispatch anything.
+      const recipientCount = to.length + toArray(body.cc).length + toArray(body.bcc).length;
+      if (!testMode) await checkSendCapacity(req.user!.orgId, recipientCount);
 
       await db.insert(emailEvents).values({
         orgId: req.user!.orgId,
@@ -224,9 +283,12 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
           source: 'resend-compatible',
           // Test-mode events are persisted so the developer can audit what
           // would have been sent; workers + analytics skip them.
-          testMode: req.user?.apiKeyMode === 'test',
+          testMode,
         },
       });
+
+      // Actually deliver (sandbox no-ops inside dispatchResendEmail).
+      await dispatchResendEmail(req.user!.orgId, messageId, body, testMode);
 
       const response = resendShape({
         messageId,
@@ -268,9 +330,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       const { cached, setCacheTag } = await idempotencyCheck(req.user!.orgId, idemKey);
       if (cached) return reply.send(cached);
 
-      const createdAt = new Date();
-      const data: ReturnType<typeof resendShape>[] = [];
-
+      // Validate every item up-front so we never partially send a bad batch.
       for (const item of parsed.data) {
         if (!item.html && !item.text) {
           return reply.code(422).send({
@@ -279,6 +339,20 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
             message: 'Each item must provide `html` or `text`.',
           });
         }
+      }
+
+      const testMode = req.user?.apiKeyMode === 'test';
+      const totalRecipients = parsed.data.reduce(
+        (n, item) =>
+          n + toArray(item.to).length + toArray(item.cc).length + toArray(item.bcc).length,
+        0,
+      );
+      if (!testMode) await checkSendCapacity(req.user!.orgId, totalRecipients);
+
+      const createdAt = new Date();
+      const data: ReturnType<typeof resendShape>[] = [];
+
+      for (const item of parsed.data) {
         const messageId = `<${randomUUID()}@forgemsg>`;
         const to = toArray(item.to);
         await db.insert(emailEvents).values({
@@ -298,9 +372,11 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
             scheduledAt: item.scheduled_at ?? null,
             tracking: item.tracking ?? null,
             source: 'resend-compatible',
-            testMode: req.user?.apiKeyMode === 'test',
+            testMode,
           },
         });
+        // Actually deliver each message (sandbox no-ops inside).
+        await dispatchResendEmail(req.user!.orgId, messageId, item, testMode);
         data.push(
           resendShape({
             messageId,

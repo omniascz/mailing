@@ -31,7 +31,7 @@ import {
 import { redis } from '../../lib/redis.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
-import { t, resolveLocale, type SupportedLocale } from '@forgemsg/shared';
+import { t, resolveLocale, verifyTrackingToken, type SupportedLocale } from '@forgemsg/shared';
 
 const DOI_TTL = 60 * 60 * 48; // 48 hours
 const UNSUB_TTL = 60 * 60 * 24 * 7; // 7 days
@@ -263,16 +263,40 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
 
   // ── Unsubscribe ───────────────────────────────────────────────────────────
 
+  const unsubTokenSchema = z.string().min(1).max(1024);
+
   /**
    * POST /api/v1/unsubscribe
-   * RFC 8058 List-Unsubscribe-Post handler. Body: { token: string }
+   * List-Unsubscribe-Post handler with the token in the JSON body.
+   * Accepts both signed stateless tokens and legacy UUID tokens.
    */
   app.post(
     '/api/v1/unsubscribe',
     { schema: { tags: ['Subscriptions'], summary: 'One-click unsubscribe (RFC 8058)' } },
     async (req, reply) => {
-      const { token } = z.object({ token: z.string().uuid() }).parse(req.body);
+      const { token } = z.object({ token: unsubTokenSchema }).parse(req.body);
       await processUnsubscribe(token);
+      return reply.code(204).send();
+    },
+  );
+
+  /**
+   * POST /api/v1/unsubscribe/:token
+   * RFC 8058 one-click: mailbox providers (Gmail/Yahoo) POST directly to the
+   * URL in the List-Unsubscribe header with body `List-Unsubscribe=One-Click`.
+   * The token lives in the path, so we ignore the body entirely. Always 204
+   * (idempotent) so a provider retry never surfaces an error to the user.
+   */
+  app.post(
+    '/api/v1/unsubscribe/:token',
+    { schema: { tags: ['Subscriptions'], summary: 'One-click unsubscribe (RFC 8058, token in path)' } },
+    async (req, reply) => {
+      const { token } = z.object({ token: unsubTokenSchema }).parse(req.params);
+      try {
+        await processUnsubscribe(token);
+      } catch {
+        // Swallow — never 4xx a provider one-click POST.
+      }
       return reply.code(204).send();
     },
   );
@@ -285,7 +309,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     '/api/v1/unsubscribe/:token',
     { schema: { tags: ['Subscriptions'], summary: 'Unsubscribe confirmation page' } },
     async (req, reply) => {
-      const { token } = z.object({ token: z.string().uuid() }).parse(req.params);
+      const { token } = z.object({ token: unsubTokenSchema }).parse(req.params);
       try {
         const { contactId, orgId } = await processUnsubscribe(token);
         const locale = await resolvePageLocale(req, orgId, contactId);
@@ -393,17 +417,39 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function resolveUnsubToken(token: string): Promise<{ contactId: string; orgId: string }> {
+/**
+ * Resolve an unsubscribe token to a contact. Accepts two formats:
+ *   1. Signed, stateless tracking token (`type:'unsub'`) — emitted by bulk
+ *      sends (batch-sender) with no per-recipient Redis write.
+ *   2. Legacy random-UUID token stored in Redis (`generateUnsubscribeToken`).
+ * Returns null when neither resolves.
+ */
+async function decodeUnsubToken(
+  token: string,
+): Promise<{ contactId: string; orgId: string; redisBacked: boolean } | null> {
+  const payload = verifyTrackingToken(token);
+  if (payload && payload.type === 'unsub') {
+    return { contactId: payload.contactId, orgId: payload.orgId, redisBacked: false };
+  }
   const raw = await redis.get(unsubKey(token));
-  if (!raw) throw AppError.badRequest('Invalid or expired unsubscribe token');
-  return JSON.parse(raw) as { contactId: string; orgId: string };
+  if (raw) {
+    const parsed = JSON.parse(raw) as { contactId: string; orgId: string };
+    return { ...parsed, redisBacked: true };
+  }
+  return null;
+}
+
+async function resolveUnsubToken(token: string): Promise<{ contactId: string; orgId: string }> {
+  const decoded = await decodeUnsubToken(token);
+  if (!decoded) throw AppError.badRequest('Invalid or expired unsubscribe token');
+  return { contactId: decoded.contactId, orgId: decoded.orgId };
 }
 
 async function processUnsubscribe(token: string): Promise<{ contactId: string; orgId: string }> {
-  const raw = await redis.get(unsubKey(token));
-  if (!raw) throw AppError.badRequest('Invalid or expired unsubscribe token');
+  const decoded = await decodeUnsubToken(token);
+  if (!decoded) throw AppError.badRequest('Invalid or expired unsubscribe token');
 
-  const { contactId, orgId } = JSON.parse(raw) as { contactId: string; orgId: string };
+  const { contactId, orgId } = decoded;
 
   const [contact] = await db
     .update(contacts)
@@ -418,7 +464,9 @@ async function processUnsubscribe(token: string): Promise<{ contactId: string; o
       .onConflictDoNothing();
   }
 
-  await redis.del(unsubKey(token));
+  // Single-use only for the stateful (Redis) tokens; signed tokens are
+  // idempotent and safe to leave (unsubscribe is a no-op once applied).
+  if (decoded.redisBacked) await redis.del(unsubKey(token));
   return { contactId, orgId };
 }
 

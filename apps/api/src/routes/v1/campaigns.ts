@@ -15,8 +15,9 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { emailEvents } from '../../db/schema/index.js';
+import { emailEvents, sendingDomains } from '../../db/schema/index.js';
 import {
   createCampaign,
   getCampaign,
@@ -42,6 +43,31 @@ import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 
 const idParam = z.object({ id: z.string().uuid() });
+
+/**
+ * Resolve the DKIM signing material for a campaign's From address. Without this
+ * the splitter forwards no key and the MTA sends unsigned mail (→ spam). Looks
+ * up the verified sending domain matching the From address's domain.
+ */
+async function resolveDkimForSender(
+  orgId: string,
+  fromEmail: string,
+): Promise<{ dkimDomain: string; dkimSelector: string; dkimPrivateKey: string } | null> {
+  const domain = fromEmail.split('@')[1]?.toLowerCase();
+  if (!domain) return null;
+  const [row] = await db
+    .select({
+      domain: sendingDomains.domain,
+      selector: sendingDomains.dkimSelector,
+      privateKey: sendingDomains.dkimPrivateKey,
+      verified: sendingDomains.isVerified,
+    })
+    .from(sendingDomains)
+    .where(and(eq(sendingDomains.orgId, orgId), eq(sendingDomains.domain, domain)))
+    .limit(1);
+  if (!row || !row.verified || !row.privateKey) return null;
+  return { dkimDomain: row.domain, dkimSelector: row.selector, dkimPrivateKey: row.privateKey };
+}
 
 const campaignStatuses = ['draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled'] as const;
 const campaignTypes = ['email', 'sms', 'whatsapp', 'push', 'voice'] as const;
@@ -208,9 +234,18 @@ export default async function campaignRoutes(app: FastifyInstance) {
 
       const campaign = await sendCampaign(req.user!.orgId, id);
 
+      // Resolve DKIM keys for the From domain so the MTA signs the mail.
+      // Missing/unverified domain → unsigned (logged by the splitter).
+      const dkim = campaign.fromEmail
+        ? await resolveDkimForSender(req.user!.orgId, campaign.fromEmail)
+        : null;
+
       // Enqueue the campaign splitter job. Worker (apps/workers) consumes
       // the same Redis queue by name. If enqueue fails, the status flip
       // already happened — surface the error so the caller can retry.
+      //
+      // A/B config, UTM tracking and DKIM are forwarded so the flagship
+      // features actually activate on the send path (previously dropped).
       await campaignSplitterQueue.add(`campaign-${id}`, {
         campaignId: id,
         orgId: req.user!.orgId,
@@ -223,6 +258,9 @@ export default async function campaignRoutes(app: FastifyInstance) {
         fromName: campaign.fromName,
         fromEmail: campaign.fromEmail,
         replyTo: campaign.replyTo,
+        abConfig: campaign.abConfig ?? undefined,
+        utmTracking: campaign.utmTracking ?? undefined,
+        ...(dkim ?? {}),
         priority: PRIORITY.CAMPAIGN,
       });
 

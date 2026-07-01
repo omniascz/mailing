@@ -156,11 +156,22 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
       ts: Math.floor(Date.now() / 1000),
     });
     const prefCenterUrl = `${trackingBaseUrl}/p/center/${prefToken}`;
+    // Signed, stateless one-click unsubscribe token (RFC 8058). Same HMAC
+    // scheme as the tracking/pref tokens — no per-recipient Redis write.
+    const unsubToken = createTrackingToken({
+      type: 'unsub',
+      orgId: data.orgId,
+      contactId: contact.id,
+      campaignId: data.campaignId,
+      ts: Math.floor(Date.now() / 1000),
+    });
+    const unsubscribeUrl = `${trackingBaseUrl}/api/v1/unsubscribe/${unsubToken}`;
     const todayIso = new Date().toISOString().slice(0, 10);
     const mergeCtx = buildMergeContext(
       contact,
       {
         preferenceCenterUrl: prefCenterUrl,
+        unsubscribeUrl,
         currentDate: todayIso,
         currentYear: String(new Date().getFullYear()),
       },
@@ -198,21 +209,16 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
       );
     }
 
-    // 5. Build custom headers
+    // 5. Build custom headers. The List-Unsubscribe https URL is the API
+    //    endpoint that also accepts the RFC 8058 one-click POST — same token
+    //    backs the {{unsubscribe_url}} merge tag above.
     const messageId = `${crypto.randomUUID()}@forgemsg.com`;
-    const unsubToken = Buffer.from(
-      JSON.stringify({
-        orgId: data.orgId,
-        contactId: contact.id,
-        campaignId: data.campaignId,
-      }),
-    ).toString('base64url');
 
     const customHeaders: Record<string, string> = {
       'X-Mailer': 'ForgeMsg/1.0',
       'X-ForgeMsg-Campaign': data.campaignId,
       'X-ForgeMsg-Org': data.orgId,
-      'List-Unsubscribe': `<mailto:unsubscribe@forgemsg.com?subject=${unsubToken}>, <https://app.forgemsg.com/unsubscribe/${unsubToken}>`,
+      'List-Unsubscribe': `<mailto:unsubscribe@forgemsg.com?subject=${unsubToken}>, <${unsubscribeUrl}>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     };
 
