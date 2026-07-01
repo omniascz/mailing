@@ -54,12 +54,21 @@ export async function refreshOrgPredictions(orgId: string): Promise<{ updated: n
       },
       { populationRatePerDay, nowMs: now },
     );
+    // Next-order date = last order + typical interval (when both known).
+    const nextOrderAt =
+      row.lastOrderAt && scores.avgOrderIntervalDays
+        ? new Date(row.lastOrderAt.getTime() + scores.avgOrderIntervalDays * 86_400_000)
+        : null;
     await db
       .update(contactEngagement)
       .set({
         predictedClv: scores.clv.toFixed(2),
         purchaseLikelihood: scores.purchaseLikelihood.toFixed(3),
         churnRisk: scores.churnRisk.toFixed(3),
+        predictedOrderCount: scores.expectedPurchases.toFixed(2),
+        avgOrderValue: scores.avgOrderValue.toFixed(2),
+        avgOrderIntervalDays: scores.avgOrderIntervalDays,
+        predictedNextOrderAt: nextOrderAt,
         predictedAt: new Date(),
       })
       .where(eq(contactEngagement.contactId, row.contactId));
@@ -140,8 +149,16 @@ export async function getContactPredictions(
   contactId: string,
 ): Promise<{
   clv: number;
+  /** Klaviyo-style CLV split. */
+  historicClv: number;
+  predictedClv: number;
+  totalClv: number;
   purchaseLikelihood: number;
   churnRisk: number;
+  expectedOrders: number;
+  avgOrderValue: number;
+  avgOrderIntervalDays: number | null;
+  predictedNextOrderAt: Date | null;
   predictedAt: Date | null;
 } | null> {
   const [row] = await db
@@ -151,6 +168,11 @@ export async function getContactPredictions(
       ch: contactEngagement.churnRisk,
       at: contactEngagement.predictedAt,
       orgId: contactEngagement.orgId,
+      historic: contactEngagement.totalRevenue,
+      orderCount: contactEngagement.predictedOrderCount,
+      aov: contactEngagement.avgOrderValue,
+      interval: contactEngagement.avgOrderIntervalDays,
+      nextOrder: contactEngagement.predictedNextOrderAt,
     })
     .from(contactEngagement)
     .where(eq(contactEngagement.contactId, contactId))
@@ -158,10 +180,19 @@ export async function getContactPredictions(
 
   if (!row || row.orgId !== orgId) return null;
   if (!row.at) return null;
+  const historicClv = Number(row.historic ?? 0);
+  const predictedClv = Number(row.clv ?? 0);
   return {
-    clv: Number(row.clv ?? 0),
+    clv: predictedClv,
+    historicClv,
+    predictedClv,
+    totalClv: historicClv + predictedClv,
     purchaseLikelihood: Number(row.pl ?? 0),
     churnRisk: Number(row.ch ?? 0),
+    expectedOrders: Number(row.orderCount ?? 0),
+    avgOrderValue: Number(row.aov ?? 0),
+    avgOrderIntervalDays: row.interval ?? null,
+    predictedNextOrderAt: row.nextOrder ?? null,
     predictedAt: row.at,
   };
 }

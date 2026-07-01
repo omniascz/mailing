@@ -47,6 +47,12 @@ export interface PredictiveScores {
   clv: number;
   purchaseLikelihood: number;
   churnRisk: number;
+  /** Expected number of future orders over the horizon. */
+  expectedPurchases: number;
+  /** Typical days between orders (1/λ). null for non-buyers. */
+  avgOrderIntervalDays: number | null;
+  /** Average order value. */
+  avgOrderValue: number;
 }
 
 const DAY = 86_400_000;
@@ -80,6 +86,9 @@ export function computePredictiveScores(
       purchaseLikelihood: round3(0.3 * eng),
       // Churn only meaningful once they've engaged at all.
       churnRisk: round3(eng > 0.1 ? Math.min(0.5, 1 - eng) : 0.1),
+      expectedPurchases: 0,
+      avgOrderIntervalDays: null,
+      avgOrderValue: round2(aov),
     };
   }
 
@@ -102,6 +111,9 @@ export function computePredictiveScores(
     clv: round2(Number.isFinite(clv) ? Math.max(0, clv) : 0),
     purchaseLikelihood: round3(clamp(purchaseLikelihood, 0, 1)),
     churnRisk: round3(clamp(churnRisk, 0, 1)),
+    expectedPurchases: round2(Number.isFinite(expectedPurchases) ? Math.max(0, expectedPurchases) : 0),
+    avgOrderIntervalDays: Number.isFinite(interpurchase) ? Math.round(interpurchase) : null,
+    avgOrderValue: round2(aov),
   };
 }
 

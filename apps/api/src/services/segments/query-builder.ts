@@ -59,6 +59,9 @@ const ENGAGEMENT_FIELDS: Record<string, { column: string; type: 'number' | 'date
   total_clicks: { column: 'total_clicks', type: 'number' },
   total_sends: { column: 'total_sends', type: 'number' },
   avg_order_interval_days: { column: 'avg_order_interval_days', type: 'number' },
+  predicted_order_count: { column: 'predicted_order_count', type: 'number' },
+  avg_order_value: { column: 'avg_order_value', type: 'number' },
+  predicted_next_order_at: { column: 'predicted_next_order_at', type: 'date' },
 };
 
 const ENGAGEMENT_PREFIX = 'engagement.';

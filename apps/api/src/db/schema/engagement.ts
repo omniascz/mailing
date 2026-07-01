@@ -65,6 +65,9 @@ export const contactEngagement = pgTable(
     // Next-order prediction.
     predictedNextOrderAt: timestamp('predicted_next_order_at', { withTimezone: true }),
     avgOrderIntervalDays: integer('avg_order_interval_days'),
+    /** Predicted # future orders over the horizon + average order value. */
+    predictedOrderCount: decimal('predicted_order_count', { precision: 10, scale: 2 }),
+    avgOrderValue: decimal('avg_order_value', { precision: 12, scale: 2 }),
 
     // Channel scoring per recipient (§9 P1). 0–100 per channel; null when
     // no signal at all. preferred_channel is argmax cached on write.
