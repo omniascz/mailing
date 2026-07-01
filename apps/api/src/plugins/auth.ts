@@ -13,6 +13,11 @@ declare module 'fastify' {
     requireAuth: (request: FastifyRequest) => Promise<void>;
     authenticate: (request: FastifyRequest) => Promise<void>;
     requireRole: (...roles: UserRole[]) => (request: FastifyRequest) => Promise<void>;
+    /**
+     * Gate a route by API-key scope. JWT/session users pass (governed by RBAC);
+     * API-key requests pass only when the key holds '*' or the required scope.
+     */
+    requireScope: (scope: string) => (request: FastifyRequest) => Promise<void>;
     /** Gate /superadmin/* routes — only role=system_admin passes. */
     requireSystemAdmin: (request: FastifyRequest) => Promise<void>;
   }
@@ -50,6 +55,7 @@ async function authPlugin(app: FastifyInstance) {
           role: 'admin' as UserRole,
           email: '',
           apiKeyMode: ((key as { mode?: 'live' | 'test' }).mode ?? 'live') as 'live' | 'test',
+          apiKeyScopes: (key as { scopes?: string[] }).scopes ?? [],
         };
         return;
       }
@@ -86,6 +92,20 @@ async function authPlugin(app: FastifyInstance) {
       if (userRank < requiredRank) {
         throw AppError.forbidden(`Requires one of: ${roles.join(', ')}`);
       }
+    };
+  });
+
+  app.decorate('requireScope', (scope: string) => {
+    return async (request: FastifyRequest) => {
+      if (!request.user) throw AppError.unauthorized('Authentication required');
+      // JWT / session users are governed by RBAC roles, not key scopes.
+      const scopes = request.user.apiKeyScopes;
+      if (scopes === undefined) return;
+      // Empty scope list = legacy/unscoped key → treated as full access for
+      // backward compatibility. Only keys with an explicit, non-wildcard scope
+      // list are restricted (least-privilege enforcement).
+      if (scopes.length === 0 || scopes.includes('*') || scopes.includes(scope)) return;
+      throw AppError.forbidden(`API key missing required scope: ${scope}`);
     };
   });
 

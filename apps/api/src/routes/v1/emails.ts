@@ -205,7 +205,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/emails',
     {
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, app.requireScope('emails:send')],
       schema: {
         tags: ['Resend-compatible'],
         summary: 'Send a single transactional email (Resend-compatible)',
@@ -310,7 +310,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/emails/batch',
     {
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, app.requireScope('emails:send')],
       schema: {
         tags: ['Resend-compatible'],
         summary: 'Send up to 100 transactional emails in one request',

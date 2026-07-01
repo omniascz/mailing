@@ -20,7 +20,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/transactional/email',
     {
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, app.requireScope('emails:send')],
       schema: { tags: ['Transactional'] },
     },
     async (req, reply) => {
@@ -153,7 +153,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/transactional/email/batch',
     {
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, app.requireScope('emails:send')],
       schema: { tags: ['Transactional'] },
     },
     async (req, reply) => {
@@ -300,7 +300,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/transactional/batch',
     {
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, app.requireScope('emails:send')],
       schema: { tags: ['Transactional'], summary: 'Send up to 1000 personalized transactional emails (with batchId tracking)' },
     },
     async (req, reply) => {

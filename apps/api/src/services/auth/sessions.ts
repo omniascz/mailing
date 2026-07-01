@@ -17,6 +17,13 @@ export interface SessionData {
    * (Resend parity). Undefined for JWT-based sessions.
    */
   apiKeyMode?: 'live' | 'test';
+  /**
+   * When authenticated via an API key, the key's granted scopes (e.g.
+   * ['*'] for full access, ['emails:send'] for sending-only). Undefined for
+   * JWT sessions, which are governed by RBAC roles instead. Enforced by
+   * `requireScope`.
+   */
+  apiKeyScopes?: string[];
 }
 
 export interface JwtPayload extends SessionData {
