@@ -34,6 +34,7 @@ import {
 } from './jobs/anomaly-detector.js';
 import { startViberSenderWorker } from './jobs/viber-sender.js';
 import { startWhatsappSenderWorker } from './jobs/whatsapp-sender.js';
+import { startPushSenderWorker } from './jobs/push-sender.js';
 import { startExternalFeedPollWorker, scheduleExternalFeedPoll } from './jobs/external-feed-poll.js';
 import { startWarmupAdvanceWorker, scheduleWarmupAdvance } from './jobs/warmup-advance.js';
 import { startDmarcImapPollWorker, scheduleDmarcImapPoll } from './jobs/dmarc-imap-poll.js';
@@ -73,6 +74,7 @@ const anomalyDetectorWorker = startAnomalyDetectorWorker();
 scheduleAnomalyDetector().catch(console.error);
 const viberSenderWorker = startViberSenderWorker();
 const whatsappSenderWorker = startWhatsappSenderWorker();
+const pushSenderWorker = startPushSenderWorker();
 const externalFeedPollWorker = startExternalFeedPollWorker();
 scheduleExternalFeedPoll().catch(console.error);
 const warmupAdvanceWorker = startWarmupAdvanceWorker();
@@ -122,6 +124,7 @@ async function shutdown() {
     anomalyDetectorWorker.close(),
     viberSenderWorker.close(),
     whatsappSenderWorker.close(),
+    pushSenderWorker.close(),
     externalFeedPollWorker.close(),
     warmupAdvanceWorker.close(),
     dmarcImapPollWorker.close(),

@@ -75,6 +75,7 @@ export const QUEUE_NAMES = {
   ANOMALY_DETECTOR: 'anomaly-detector',
   VIBER_SEND: 'viber-send',
   WHATSAPP_SEND: 'whatsapp-send',
+  PUSH_SEND: 'push-send',
   EXTERNAL_FEED_POLL: 'external-feed-poll',
   WARMUP_ADVANCE: 'warmup-advance',
   DMARC_IMAP_POLL: 'dmarc-imap-poll',
