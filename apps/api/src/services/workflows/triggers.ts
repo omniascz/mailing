@@ -248,6 +248,47 @@ export async function onAddedToCart(
   await onApiEvent(orgId, contactId, 'added_to_cart', cart);
 }
 
+/**
+ * Segment membership triggers — fired by the segment-membership cron when a
+ * contact newly matches (entered) or stops matching (exited) a segment.
+ * Matches workflows of the type whose triggerConfig.segmentId equals the
+ * segment (or is unset = any segment). Klaviyo's most-used automation entry.
+ */
+async function fireSegmentTrigger(
+  orgId: string,
+  contactId: string,
+  segmentId: string,
+  triggerType: 'segment_entered' | 'segment_exited',
+): Promise<void> {
+  const wfs = await db
+    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, triggerType),
+        isNull(workflows.deletedAt),
+      ),
+    );
+  await Promise.allSettled(
+    wfs.map(async (w) => {
+      const cfg = w.triggerConfig as { segmentId?: string };
+      if (!cfg.segmentId || cfg.segmentId === segmentId) {
+        await safeStartRun(w.id, orgId, contactId, { triggerEvent: triggerType, segmentId });
+      }
+    }),
+  );
+}
+
+export function onSegmentEntered(orgId: string, contactId: string, segmentId: string): Promise<void> {
+  return fireSegmentTrigger(orgId, contactId, segmentId, 'segment_entered');
+}
+
+export function onSegmentExited(orgId: string, contactId: string, segmentId: string): Promise<void> {
+  return fireSegmentTrigger(orgId, contactId, segmentId, 'segment_exited');
+}
+
 // ─── Trigger: date_field (cron-based) ────────────────────────────────────────
 
 /**

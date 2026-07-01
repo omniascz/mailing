@@ -91,6 +91,7 @@ export const QUEUE_NAMES = {
   CAMPAIGN_DISPATCH: 'campaign-dispatch',
   BROWSE_ABANDONMENT: 'browse-abandonment-tick',
   SCHEDULED_REPORTS: 'scheduled-reports-run',
+  SEGMENT_MEMBERSHIP: 'segment-membership-refresh',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

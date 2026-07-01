@@ -198,6 +198,20 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  // Segment membership reconcile — every ~5 min. Materializes membership +
+  // fires entered/exited workflow triggers.
+  app.post(
+    '/api/v1/internal/segments/refresh-membership',
+    { schema: { tags: ['Internal'], summary: 'Reconcile materialized segment membership' } },
+    async (req, reply) => {
+      if (process.env.INTERNAL_SECRET && req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET) {
+        return reply.status(401).send();
+      }
+      const { refreshAllSegments } = await import('../../../services/segments/membership.js');
+      return reply.send({ data: await refreshAllSegments() });
+    },
+  );
+
   // Scheduled-reports dispatch — hourly. Renders + emails every due report.
   app.post(
     '/api/v1/internal/scheduled-reports/run-due',

@@ -24,6 +24,7 @@ const ticketingDiscoverQueue = new Queue(QUEUE_NAMES.TICKETING_DISCOVER, { conne
 const campaignDispatchQueue = new Queue(QUEUE_NAMES.CAMPAIGN_DISPATCH, { connection });
 const browseAbandonmentQueue = new Queue(QUEUE_NAMES.BROWSE_ABANDONMENT, { connection });
 const scheduledReportsQueue = new Queue(QUEUE_NAMES.SCHEDULED_REPORTS, { connection });
+const segmentMembershipQueue = new Queue(QUEUE_NAMES.SEGMENT_MEMBERSHIP, { connection });
 
 async function post(path: string): Promise<unknown> {
   const res = await fetch(`${API_URL}${path}`, {
@@ -172,6 +173,23 @@ export function startWorkflowSchedulerWorkers() {
     captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.SCHEDULED_REPORTS });
   });
 
+  const segmentMembershipWorker = new Worker(
+    QUEUE_NAMES.SEGMENT_MEMBERSHIP,
+    async (job) => {
+      const r = (await post('/api/v1/internal/segments/refresh-membership')) as {
+        data?: { segments: number; entered: number; exited: number };
+      };
+      if (r.data && (r.data.entered || r.data.exited)) {
+        job.log(`Segments: ${r.data.entered} entered, ${r.data.exited} exited (${r.data.segments})`);
+      }
+    },
+    { connection, concurrency: 1 },
+  );
+  segmentMembershipWorker.on('failed', (job, err) => {
+    console.error('[segment-membership] failed', job?.id, err.message);
+    captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.SEGMENT_MEMBERSHIP });
+  });
+
   return {
     resumeWorker,
     dailyWorker,
@@ -183,6 +201,7 @@ export function startWorkflowSchedulerWorkers() {
     campaignDispatchWorker,
     browseAbandonmentWorker,
     scheduledReportsWorker,
+    segmentMembershipWorker,
   };
 }
 
@@ -286,5 +305,13 @@ export async function scheduleWorkflowJobs() {
       { jobId: 'scheduled-reports', repeat: { pattern: '5 * * * *' }, removeOnComplete: true, removeOnFail: { count: 5 } },
     );
     console.log('[workflow-scheduler] scheduled-reports scheduled (hourly at :05)');
+  }
+  if (!(await segmentMembershipQueue.getJob('segment-membership'))) {
+    await segmentMembershipQueue.add(
+      'refresh',
+      {},
+      { jobId: 'segment-membership', repeat: { pattern: '*/5 * * * *' }, removeOnComplete: true, removeOnFail: { count: 10 } },
+    );
+    console.log('[workflow-scheduler] segment-membership scheduled (every 5 min)');
   }
 }

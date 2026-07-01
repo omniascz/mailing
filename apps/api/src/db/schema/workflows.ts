@@ -45,6 +45,8 @@ export const workflowTriggerTypeEnum = pgEnum('workflow_trigger_type', [
   'name_day_today', // #360/#384 — contact first_name matches today's jmeniny
   'lifecycle_stage_changed', // #317/#394 — contact lifecycle stage transitioned
   'n_days_before_holiday', // #389 — N days before a CZ/SK public holiday
+  'segment_entered', // contact newly matched a segment (Klaviyo "added to segment")
+  'segment_exited', // contact stopped matching a segment
 ]);
 
 // ─── Workflows ────────────────────────────────────────────────────────────────

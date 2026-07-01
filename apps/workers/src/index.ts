@@ -102,6 +102,7 @@ const {
   campaignDispatchWorker,
   browseAbandonmentWorker,
   scheduledReportsWorker,
+  segmentMembershipWorker,
 } = startWorkflowSchedulerWorkers();
 scheduleWorkflowJobs().catch(console.error);
 
@@ -145,6 +146,7 @@ async function shutdown() {
     campaignDispatchWorker.close(),
     browseAbandonmentWorker.close(),
     scheduledReportsWorker.close(),
+    segmentMembershipWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');
