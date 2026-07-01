@@ -113,6 +113,20 @@ async function executeNode(
 
   const result = await executeAction(node, run, ctx);
 
+  // Persist any in-place mutations the action made to the run (data from
+  // run_code / smart-channel / cascade, split branch, goal conversion) so they
+  // survive a `wait` + resume and are available for reporting + conversion
+  // suppression. Actions mutate the passed `run` object by reference.
+  await db
+    .update(workflowRuns)
+    .set({
+      data: run.data ?? {},
+      splitBranch: run.splitBranch ?? null,
+      converted: run.converted ?? false,
+      convertedAt: run.convertedAt ?? null,
+    })
+    .where(eq(workflowRuns.id, run.id));
+
   switch (result.type) {
     case 'next': {
       const nextNodeId =

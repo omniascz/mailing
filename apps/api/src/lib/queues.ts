@@ -40,6 +40,12 @@ export const webhookQueue = new Queue('webhook', queueOpts);
 export const viberQueue = new Queue('viber-send', queueOpts);
 /** RCS async send queue (consumed by apps/workers rcs-sender). */
 export const rcsQueue = new Queue('rcs-send', queueOpts);
+/** WhatsApp async send queue (Meta Cloud API worker consumer). */
+export const whatsappQueue = new Queue('whatsapp-send', queueOpts);
+/** Web Push / FCM async send queue. */
+export const pushQueue = new Queue('push-send', queueOpts);
+/** Voice-call async queue (voice-bot outbound). */
+export const voiceQueue = new Queue('voice-call', queueOpts);
 
 /**
  * Campaign-splitter producer. Workers in apps/workers consume from this
@@ -176,6 +182,9 @@ export const queues = {
   webhook: webhookQueue,
   viber: viberQueue,
   rcs: rcsQueue,
+  whatsapp: whatsappQueue,
+  push: pushQueue,
+  voice: voiceQueue,
   campaignSplitter: campaignSplitterQueue,
   mtaOther: mtaOtherQueue,
 };

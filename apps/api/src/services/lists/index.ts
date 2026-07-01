@@ -139,6 +139,12 @@ export async function addContactToList(
     .update(lists)
     .set({ contactCount: sql`${lists.contactCount} + 1`, updatedAt: new Date() })
     .where(eq(lists.id, listId));
+
+  // Fire the `list_subscribe` workflow trigger (fire-and-forget; dynamic import
+  // avoids a circular dependency between lists ↔ workflow triggers).
+  import('../workflows/triggers.js')
+    .then((m) => m.onListSubscribe(orgId, contactId, listId))
+    .catch(() => {});
 }
 
 export async function removeContactFromList(

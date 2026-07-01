@@ -201,6 +201,24 @@ export default async function tagRoutes(app: FastifyInstance) {
           }
         }
         await db.insert(contactTags).values(rows).onConflictDoNothing();
+
+        // Fire `tag_added` workflow triggers (fire-and-forget). Resolve tag
+        // names once; the trigger matches workflows by tag name.
+        const nameRows = await db
+          .select({ name: tags.name })
+          .from(tags)
+          .where(and(eq(tags.orgId, orgId), sql`${tags.id} = ANY(${body.tag_ids}::uuid[])`));
+        const tagNames = nameRows.map((t) => t.name);
+        void import('../../services/workflows/triggers.js')
+          .then((m) => {
+            for (const contactId of validContactIds) {
+              for (const name of tagNames) {
+                m.onTagAdded(orgId, contactId, name).catch(() => {});
+              }
+            }
+          })
+          .catch(() => {});
+
         return { data: { affected: rows.length } };
       }
 

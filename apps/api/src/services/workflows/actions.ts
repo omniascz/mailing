@@ -449,20 +449,127 @@ async function executeUpdateField(
   const config = node.config as { field: string; value: unknown };
   if (!config.field || !run.contactId) return { type: 'next', nextNodeId: null };
 
-  const allowedFields: Record<string, unknown> = {};
-  if (config.field === 'first_name') allowedFields.firstName = config.value;
-  else if (config.field === 'last_name') allowedFields.lastName = config.value;
-  else if (config.field === 'phone') allowedFields.phone = config.value;
+  const standard: Record<string, unknown> = {};
+  if (config.field === 'first_name') standard.firstName = config.value;
+  else if (config.field === 'last_name') standard.lastName = config.value;
+  else if (config.field === 'phone') standard.phone = config.value;
+  else if (config.field === 'email') standard.email = config.value;
 
-  if (Object.keys(allowedFields).length > 0) {
+  if (Object.keys(standard).length > 0) {
     await db
       .update(contacts)
-      .set({ ...allowedFields, updatedAt: new Date() })
+      .set({ ...standard, updatedAt: new Date() })
+      .where(and(eq(contacts.id, run.contactId), eq(contacts.orgId, ctx.orgId)))
+      .catch(() => {});
+  } else {
+    // Any other field is a custom field — merge into the customFields JSONB
+    // (previously silently ignored, so update_field on a custom field was a no-op).
+    const key = config.field.replace(/^custom\./, '');
+    const existing = (ctx.contact?.customFields ?? {}) as Record<string, unknown>;
+    await db
+      .update(contacts)
+      .set({ customFields: { ...existing, [key]: config.value }, updatedAt: new Date() })
       .where(and(eq(contacts.id, run.contactId), eq(contacts.orgId, ctx.orgId)))
       .catch(() => {});
   }
 
   return { type: 'next', nextNodeId: null };
+}
+
+/**
+ * Opt the contact out entirely: mark unsubscribed + add an email suppression
+ * so no future marketing reaches them. (Previously there was no unsubscribe
+ * node — `remove_from_list` only detaches one list.)
+ */
+async function executeUnsubscribe(
+  _node: WorkflowNode,
+  run: WorkflowRun,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  if (!run.contactId) return { type: 'next', nextNodeId: null };
+  const { suppressions } = await import('../../db/schema/index.js');
+  const [c] = await db
+    .update(contacts)
+    .set({ status: 'unsubscribed', updatedAt: new Date() })
+    .where(and(eq(contacts.id, run.contactId), eq(contacts.orgId, ctx.orgId)))
+    .returning({ email: contacts.email });
+  if (c?.email) {
+    await db
+      .insert(suppressions)
+      .values({ orgId: ctx.orgId, email: c.email, reason: 'unsubscribe' })
+      .onConflictDoNothing()
+      .catch(() => {});
+  }
+  return { type: 'next', nextNodeId: null };
+}
+
+/**
+ * Queue-based sends for WhatsApp / Web-Push / Voice. Mirrors the SMS/Viber
+ * pattern: honor conversion suppression, then enqueue onto the channel queue
+ * for the respective worker consumer. (Previously these were silent no-ops.)
+ */
+async function executeQueuedChannel(
+  channel: 'whatsapp' | 'push' | 'voice',
+  jobName: string,
+  run: WorkflowRun,
+  ctx: ActionContext,
+  payload: Record<string, unknown>,
+): Promise<ActionResult> {
+  if (!run.contactId) return { type: 'next', nextNodeId: null };
+  if (shouldSuppressDueToConversion(run)) return { type: 'next', nextNodeId: null };
+  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
+  if (queues) {
+    await (queues as unknown as Record<string, { add: (n: string, d: unknown) => Promise<void> }>)[
+      channel
+    ]
+      ?.add(jobName, {
+        orgId: ctx.orgId,
+        contactId: run.contactId,
+        workflowRunId: run.id,
+        ...payload,
+      })
+      .catch(() => {});
+  }
+  return { type: 'next', nextNodeId: null };
+}
+
+async function executeSendWhatsapp(
+  node: WorkflowNode,
+  run: WorkflowRun,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  const config = node.config as { templateId?: string; body?: string };
+  return executeQueuedChannel('whatsapp', 'workflow-whatsapp', run, ctx, {
+    templateId: config.templateId,
+    body: config.body ? substituteMergeTags(config.body, ctx.contact, buildRunMergeData(run)) : undefined,
+    phone: ctx.contact?.phone,
+  });
+}
+
+async function executeSendPush(
+  node: WorkflowNode,
+  run: WorkflowRun,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  const config = node.config as { title?: string; body?: string; url?: string };
+  return executeQueuedChannel('push', 'workflow-push', run, ctx, {
+    title: config.title ? substituteMergeTags(config.title, ctx.contact, buildRunMergeData(run)) : undefined,
+    body: config.body ? substituteMergeTags(config.body, ctx.contact, buildRunMergeData(run)) : undefined,
+    url: config.url,
+  });
+}
+
+async function executeMakeVoiceCall(
+  node: WorkflowNode,
+  run: WorkflowRun,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  const config = node.config as { script?: string; scenarioId?: string };
+  return executeQueuedChannel('voice', 'workflow-voice', run, ctx, {
+    script: config.script ? substituteMergeTags(config.script, ctx.contact, buildRunMergeData(run)) : undefined,
+    scenarioId: config.scenarioId,
+    phone: ctx.contact?.phone,
+  });
 }
 
 async function executeMoveToList(
@@ -1213,14 +1320,16 @@ export async function executeAction(
     case 'send_sms':
       return executeSendSms(node, run, ctx);
     case 'send_whatsapp':
-      // Same pattern as SMS; queue WhatsApp job
-      return { type: 'next', nextNodeId: null };
+      return executeSendWhatsapp(node, run, ctx);
     case 'send_push':
-      return { type: 'next', nextNodeId: null }; // queued by workers
+      return executeSendPush(node, run, ctx);
     case 'show_in_app':
-      return { type: 'next', nextNodeId: null }; // in-app notification via WS push
+      // In-app notifications are delivered via the push queue (web-push worker).
+      return executeSendPush(node, run, ctx);
     case 'make_voice_call':
-      return { type: 'next', nextNodeId: null }; // voice bot job
+      return executeMakeVoiceCall(node, run, ctx);
+    case 'unsubscribe':
+      return executeUnsubscribe(node, run, ctx);
     case 'wait':
       return executeWait(node, run, ctx);
     case 'condition':

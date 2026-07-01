@@ -204,7 +204,8 @@ export type NodeType =
   | 'sync_to_ad_audience' // #307 — add/refresh contact in ad platform custom audience
   | 'stripe_retry_charge' // #314 — retry a failed Stripe invoice charge
   | 'notify_owner' // #314 — ping workspace owner via in-app / email
-  | 'run_code'; // #346 — user code in a sandboxed isolate
+  | 'run_code' // #346 — user code in a sandboxed isolate
+  | 'unsubscribe'; // opt the contact out (status + suppression)
 
 export interface WorkflowNode {
   id: string;
