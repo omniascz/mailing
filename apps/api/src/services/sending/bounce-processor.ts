@@ -203,6 +203,34 @@ export function classifyBounce(
  * Determine whether accumulated soft bounces warrant suppression.
  * Policy: suppress after 3 soft bounces within 30 days.
  */
+/**
+ * Heuristic: is this inbound email an async bounce / DSN (delivery status
+ * notification) rather than a real reply? Detected by sender (mailer-daemon /
+ * postmaster) or subject wording.
+ */
+export function isBounceMessage(from: string, subject?: string): boolean {
+  const f = (from ?? '').toLowerCase();
+  if (/mailer-daemon|postmaster/.test(f)) return true;
+  const s = (subject ?? '').toLowerCase();
+  return /(delivery status notification|undeliverable|returned mail|mail delivery (failed|subsystem)|delivery has failed|failure notice|delivery incomplete)/.test(
+    s,
+  );
+}
+
+/**
+ * Extract the failed recipient address from a DSN body. Prefers the RFC 3464
+ * Final-Recipient / Original-Recipient field; falls back to a "failed: addr"
+ * pattern. Returns null when no address is found.
+ */
+export function extractFailedRecipient(body: string): string | null {
+  const m = body.match(
+    /(?:Final-Recipient|Original-Recipient):\s*(?:rfc822;)?\s*<?([^\s<>]+@[^\s<>]+)>?/i,
+  );
+  if (m && m[1]) return m[1].toLowerCase();
+  const m2 = body.match(/failed[^\n]*?<?([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})>?/i);
+  return m2 && m2[1] ? m2[1].toLowerCase() : null;
+}
+
 export function shouldSuppressAfterSoftBounces(softBounceCount: number, threshold = 3): boolean {
   return softBounceCount >= threshold;
 }

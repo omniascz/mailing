@@ -3,6 +3,8 @@ import {
   classifyBounce,
   extractNdrReason,
   extractSmtpCode,
+  isBounceMessage,
+  extractFailedRecipient,
   shouldSuppressAfterSoftBounces,
 } from './bounce-processor.js';
 
@@ -172,5 +174,41 @@ describe('shouldSuppressAfterSoftBounces', () => {
   it('respects custom threshold', () => {
     expect(shouldSuppressAfterSoftBounces(5, 5)).toBe(true);
     expect(shouldSuppressAfterSoftBounces(4, 5)).toBe(false);
+  });
+});
+
+describe('isBounceMessage', () => {
+  it('detects mailer-daemon / postmaster senders', () => {
+    expect(isBounceMessage('MAILER-DAEMON@gmail.com')).toBe(true);
+    expect(isBounceMessage('postmaster@seznam.cz')).toBe(true);
+  });
+
+  it('detects DSN subjects', () => {
+    expect(isBounceMessage('x@y.com', 'Delivery Status Notification (Failure)')).toBe(true);
+    expect(isBounceMessage('x@y.com', 'Undeliverable: Your invoice')).toBe(true);
+    expect(isBounceMessage('x@y.com', 'Mail delivery failed: returning message to sender')).toBe(
+      true,
+    );
+  });
+
+  it('does not flag a normal reply', () => {
+    expect(isBounceMessage('jana@firma.cz', 'Re: your quote')).toBe(false);
+  });
+});
+
+describe('extractFailedRecipient', () => {
+  it('parses RFC 3464 Final-Recipient', () => {
+    const body = 'Diagnostic-Code: smtp; 550 5.1.1 user unknown\nFinal-Recipient: rfc822; bob@example.com\n';
+    expect(extractFailedRecipient(body)).toBe('bob@example.com');
+  });
+
+  it('falls back to a "failed" pattern', () => {
+    expect(extractFailedRecipient('The following address failed: alice@example.org')).toBe(
+      'alice@example.org',
+    );
+  });
+
+  it('returns null when no address present', () => {
+    expect(extractFailedRecipient('no addresses here')).toBeNull();
   });
 });

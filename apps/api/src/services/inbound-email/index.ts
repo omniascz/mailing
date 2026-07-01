@@ -7,9 +7,10 @@
 
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { inboundEmails, contacts, type InboundEmail } from '../../db/schema/index.js';
+import { inboundEmails, contacts, suppressions, type InboundEmail } from '../../db/schema/index.js';
 import { onApiEvent } from '../workflows/triggers.js';
 import { openTicket, appendMessage } from '../helpdesk/index.js';
+import { classifyBounce, isBounceMessage, extractFailedRecipient } from '../sending/bounce-processor.js';
 import { AppError } from '../../lib/app-error.js';
 
 export interface InboundPayload {
@@ -85,6 +86,32 @@ export async function receiveInbound(
       processed: false,
     })
     .returning();
+
+  // Async bounce / DSN — classify + suppress hard failures. This captures
+  // out-of-band bounces (the engine only sees in-session SMTP rejects).
+  if (isBounceMessage(fromEmail, payload.subject ?? undefined)) {
+    const body = payload.textBody || payload.htmlBody || '';
+    const failed = extractFailedRecipient(body);
+    const cls = classifyBounce(body, body);
+    if (failed && (cls.autoSuppress || cls.type === 'hard')) {
+      await db
+        .insert(suppressions)
+        .values({ orgId, email: failed, reason: 'hard_bounce' })
+        .onConflictDoNothing()
+        .catch(() => {});
+      await db
+        .update(contacts)
+        .set({ status: 'bounced', updatedAt: new Date() })
+        .where(and(eq(contacts.orgId, orgId), eq(contacts.email, failed)))
+        .catch(() => {});
+    }
+    await db
+      .update(inboundEmails)
+      .set({ processed: true })
+      .where(eq(inboundEmails.id, row!.id))
+      .catch(() => {});
+    return row!;
+  }
 
   const rule = matchRule(normalizeEmail(payload.to));
 
