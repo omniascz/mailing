@@ -415,16 +415,19 @@ export async function deleteVariant(orgId: string, variantId: string): Promise<v
  */
 export async function selectVariantForVisitor(
   formId: string,
-  orgId: string,
+  orgId: string | undefined,
   visitorToken: string,
 ): Promise<SignupFormVariant | null> {
+  // formId is a globally-unique UUID, so it alone scopes the lookup. orgId is
+  // an optional extra guard for authenticated callers; the public embed route
+  // has no session and passes it undefined.
   const variants = await db
     .select()
     .from(signupFormVariants)
     .where(
       and(
         eq(signupFormVariants.formId, formId),
-        eq(signupFormVariants.orgId, orgId),
+        orgId ? eq(signupFormVariants.orgId, orgId) : undefined,
         eq(signupFormVariants.active, true),
       ),
     );

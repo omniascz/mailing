@@ -23,6 +23,26 @@ describe('buildSegmentWhere', () => {
     expect(params).toContain('active');
   });
 
+  it('casts numeric custom-field ordering comparisons to numeric (not text)', () => {
+    const cond: SegmentConditions = {
+      operator: 'AND',
+      rules: [{ field: 'custom.age', op: 'gt', value: 18 }],
+    };
+    const { sql: text, params } = render(buildSegmentWhere(cond));
+    expect(text).toContain('::numeric');
+    expect(text).toContain("custom_fields ->>");
+    expect(params).toContain(18);
+  });
+
+  it('keeps custom-field equality as a plain text compare', () => {
+    const cond: SegmentConditions = {
+      operator: 'AND',
+      rules: [{ field: 'custom.tier', op: 'eq', value: 'gold' }],
+    };
+    const text = render(buildSegmentWhere(cond)).sql;
+    expect(text).not.toContain('::numeric');
+  });
+
   it('combines multiple rules with AND', () => {
     const cond: SegmentConditions = {
       operator: 'AND',

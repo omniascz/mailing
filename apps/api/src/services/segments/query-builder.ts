@@ -180,6 +180,16 @@ function buildRule(rule: SegmentRule): SQL {
         lt: sql.raw('<'),
         lte: sql.raw('<='),
       }[rule.op as 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte'];
+
+      // Custom fields are stored as JSONB text (`custom_fields ->> key`), so an
+      // ordering comparison against a NUMBER would compare lexicographically
+      // ('9' > '10' = true). Cast to numeric for ordering ops when the value is
+      // numeric; the regex guard makes non-numeric rows NULL (→ excluded).
+      const isOrdering = rule.op === 'gt' || rule.op === 'gte' || rule.op === 'lt' || rule.op === 'lte';
+      if (rule.field.startsWith(CUSTOM_FIELD_PREFIX) && isOrdering && typeof rule.value === 'number') {
+        const ref = fieldRef(rule.field);
+        return sql`(CASE WHEN (${ref}) ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN (${ref})::numeric END) ${opSql} ${rule.value}`;
+      }
       return sql`${fieldRef(rule.field)} ${opSql} ${rule.value}`;
     }
   }

@@ -348,7 +348,7 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
       const { visitorToken } = z.object({ visitorToken: z.string().min(1) }).parse(req.query);
-      const variant = await selectVariantForVisitor(formId, '', visitorToken);
+      const variant = await selectVariantForVisitor(formId, undefined, visitorToken);
       if (!variant) return reply.send({ data: null });
       await trackVariantView(variant.id);
       return reply.send({ data: variant });

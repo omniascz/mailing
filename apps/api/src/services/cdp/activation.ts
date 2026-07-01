@@ -15,7 +15,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   activationDestinations,
@@ -26,6 +26,9 @@ import {
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { getUnifiedProfile } from './unified-profile.js';
+import { getSegment } from '../segments/index.js';
+import { buildSegmentWhere } from '../segments/query-builder.js';
+import type { SegmentConditions } from '../../db/schema/segments.js';
 import { getTraits } from './traits.js';
 
 export type DestinationKind =
@@ -106,12 +109,17 @@ async function resolveAudience(
   limit: number,
 ): Promise<string[]> {
   if (segmentId) {
-    const rows = await db.execute<{ contact_id: string }>(sql`
-      SELECT contact_id::text FROM segment_members
-      WHERE org_id = ${orgId}::uuid AND segment_id = ${segmentId}::uuid
-      LIMIT ${limit}
-    `);
-    return (rows as unknown as Array<{ contact_id: string }>).map((r) => r.contact_id);
+    // Segments are evaluated on-read (no materialized segment_members table).
+    // Resolve the segment's condition tree to matching contact ids.
+    const segment = await getSegment(orgId, segmentId).catch(() => null);
+    if (!segment) return [];
+    const where = buildSegmentWhere(segment.conditions as SegmentConditions);
+    const rows = await db
+      .select({ id: contacts.id })
+      .from(contacts)
+      .where(and(eq(contacts.orgId, orgId), isNull(contacts.deletedAt), where))
+      .limit(limit);
+    return rows.map((r) => r.id);
   }
   const rows = await db
     .select({ id: contacts.id })
