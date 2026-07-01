@@ -8,6 +8,7 @@ import {
   batchStats,
   importCodes,
 } from '../../services/coupons/index.js';
+import { syncBatchToStore } from '../../services/coupons/store-sync.js';
 
 const couponRoutes: FastifyPluginAsync = async (app) => {
   app.get(
@@ -83,6 +84,28 @@ const couponRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { batchId } = z.object({ batchId: z.string().uuid() }).parse(req.params);
       return reply.send({ data: await batchStats(req.user!.orgId, batchId) });
+    },
+  );
+
+  /**
+   * POST /api/v1/coupons/batches/:batchId/sync-to-store
+   * Register the batch's codes as real discount codes in a connected store
+   * (Shopify price rule + codes, or WooCommerce coupons) so recipients can
+   * redeem them at checkout.
+   * Body: { connectionId }
+   */
+  app.post(
+    '/api/v1/coupons/batches/:batchId/sync-to-store',
+    {
+      preHandler: [app.authenticate, app.requireRole('editor', 'admin', 'owner')],
+      schema: { tags: ['Coupons'], summary: 'Push coupon codes to a connected store' },
+    },
+    async (req, reply) => {
+      const { batchId } = z.object({ batchId: z.string().uuid() }).parse(req.params);
+      const body = z.object({ connectionId: z.string().uuid() }).parse(req.body);
+      return reply.send({
+        data: await syncBatchToStore(req.user!.orgId, batchId, body.connectionId),
+      });
     },
   );
 

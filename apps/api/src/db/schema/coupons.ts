@@ -25,6 +25,13 @@ export const couponBatches = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     totalCodes: integer('total_codes').notNull().default(0),
     redeemedCount: integer('redeemed_count').notNull().default(0),
+    // Store discount sync: once synced, the batch's codes are registered as real
+    // discount codes in the connected store (Shopify price rule / Woo coupons)
+    // so recipients can actually redeem them at checkout.
+    storePlatform: varchar('store_platform', { length: 24 }),
+    storeConnectionId: uuid('store_connection_id'),
+    storeDiscountId: varchar('store_discount_id', { length: 128 }), // e.g. Shopify price_rule id
+    storeSyncedAt: timestamp('store_synced_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('coupon_batches_org_idx').on(t.orgId)],

@@ -78,6 +78,13 @@
       "when": 1782163800000,
       "tag": "0010_api_key_is_public",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1782163900000,
+      "tag": "0011_coupon_store_sync",
+      "breakpoints": true
     }
   ]
 }
