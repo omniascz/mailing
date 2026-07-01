@@ -242,6 +242,8 @@ export interface MtaSendJobData {
   stream: MessageStream;
   /** A/B variant id propagated from BatchSenderJobData for event tagging. */
   abVariantId?: string;
+  /** How many times this message has been deferred by the adaptive ISP throttle. */
+  throttleAttempts?: number;
   /**
    * File attachments (e-ticket PDFs etc.). Content is base64 so the job stays
    * JSON-serialisable through Redis/BullMQ; decoded to a Buffer at send time.

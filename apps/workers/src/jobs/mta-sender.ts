@@ -13,12 +13,32 @@
  * Produces: send/bounce/fail events to the event pipeline (Kafka / internal API)
  */
 
-import { Worker, type Job } from 'bullmq';
+import { Worker, Queue, type Job } from 'bullmq';
 import { captureJobException } from '../lib/telemetry.js';
 import { connection, QUEUE_NAMES, type MtaSendJobData } from '../queues/index.js';
 import * as mtaClient from '../lib/mta-grpc-client.js';
+import {
+  checkThrottle,
+  recordThrottleSignal,
+  detectIsp,
+} from '../../../api/src/services/sending/isp-throttle.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
+
+// Adaptive-throttle backpressure: when an ISP bucket is exhausted a message is
+// re-enqueued (with a delay) onto its own queue rather than dropped. Capped so
+// a persistently-throttled message isn't deferred forever.
+const THROTTLE_REQUEUE_DELAY_MS = 60_000;
+const THROTTLE_MAX_DEFERRALS = 20; // ~20 min, then send anyway
+const requeueQueues = new Map<string, Queue>();
+function requeueQueue(name: string): Queue {
+  let q = requeueQueues.get(name);
+  if (!q) {
+    q = new Queue(name, { connection });
+    requeueQueues.set(name, q);
+  }
+  return q;
+}
 
 // ─── MTA Client (gRPC to Go engine) ──────────────────────────────────────────
 
@@ -163,6 +183,26 @@ async function updateContactStatus(
 async function processMtaSend(job: Job<MtaSendJobData>) {
   const data = job.data;
 
+  const recipientDomain = data.toEmail.split('@')[1] ?? 'other';
+  // sendingIp '' matches the engine's default-pool key (see sendViaMta).
+  const sendingIp = '';
+
+  // Adaptive per-ISP throttle gate. When the bucket is exhausted, defer the
+  // message by re-enqueuing with a delay (backpressure) instead of blasting
+  // past the ISP's limit. Capped so it can't loop forever.
+  const deferrals = data.throttleAttempts ?? 0;
+  if (deferrals < THROTTLE_MAX_DEFERRALS) {
+    const throttle = await checkThrottle(data.orgId, recipientDomain, sendingIp).catch(() => null);
+    if (throttle && !throttle.allowed) {
+      await requeueQueue(job.queueName).add(
+        job.name,
+        { ...data, throttleAttempts: deferrals + 1 },
+        { delay: THROTTLE_REQUEUE_DELAY_MS, priority: data.priority },
+      );
+      return { status: 'throttled', requeued: true, isp: throttle.isp };
+    }
+  }
+
   const result = await sendViaMta(data);
 
   if (result.success) {
@@ -228,6 +268,11 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
   }
 
   if (isSoftBounce(smtpCode)) {
+    // 421/451 are ISP throttle signals — reduce this org+ISP's adaptive rate
+    // (halved for 30 min) so subsequent sends back off.
+    if (smtpCode === 421 || smtpCode === 451) {
+      await recordThrottleSignal(data.orgId, detectIsp(recipientDomain), sendingIp).catch(() => {});
+    }
     // Soft bounce — throw to trigger BullMQ retry
     await recordEvent({
       type: 'bounce',
