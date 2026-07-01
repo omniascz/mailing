@@ -13,6 +13,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
+import { VipToggle } from './vip-toggle';
 import { EditContactButton } from './edit-contact-button';
 import { ManageTags } from './manage-tags';
 import { ManageLists } from './manage-lists';
@@ -27,6 +28,7 @@ interface Contact {
   firstName: string | null;
   lastName: string | null;
   status: string;
+  isVip?: boolean;
   lifecycleStage: string | null;
   totalSends: number | null;
   totalOpens: number | null;
@@ -153,6 +155,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
             {contact.lifecycleStage ? (
               <Badge variant="primary">{contact.lifecycleStage}</Badge>
             ) : null}
+            <VipToggle contactId={contact.id} initialIsVip={contact.isVip ?? false} />
           </div>
           <p className="mt-1 text-xs text-secondary-500">
             Added {new Date(contact.createdAt).toLocaleDateString('cs-CZ')} · Updated{' '}

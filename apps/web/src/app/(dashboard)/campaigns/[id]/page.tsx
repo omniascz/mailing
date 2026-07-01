@@ -7,6 +7,8 @@ import { apiFetch } from '@/lib/api';
 import { CampaignActions } from './campaign-actions';
 import { CloneCampaignButton } from './clone-campaign-button';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
 interface Campaign {
   id: string;
   name: string;
@@ -89,6 +91,14 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
             >
               Edit content
             </Link>
+            {isSent ? (
+              <a
+                href={`${API_BASE}/api/v1/campaigns/${campaign.id}/report.csv`}
+                className="inline-flex items-center gap-2 rounded-md border border-secondary-300 bg-white px-3 py-1.5 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
+              >
+                Report CSV
+              </a>
+            ) : null}
             <CloneCampaignButton campaign={campaign} />
           </div>
           <CampaignActions campaign={campaign} />
