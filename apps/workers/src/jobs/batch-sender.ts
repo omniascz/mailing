@@ -25,6 +25,9 @@ import {
 } from '@forgemsg/editor/render';
 import { emailSchema, type EmailSchema } from '@forgemsg/editor/schema';
 import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/shared';
+// Cross-package import (same pattern as mta-sender → isp-throttle): the coupon
+// resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
+import { resolveEmailCouponTags } from '../../../api/src/services/campaigns/email-coupon-merge.js';
 import {
   connection,
   QUEUE_NAMES,
@@ -189,14 +192,24 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
       },
       newsletterTierMap.get(contact.id),
     );
-    const subject = parseMergeTags(data.subject, mergeCtx);
+    let subject = parseMergeTags(data.subject, mergeCtx);
 
     // 4. Render HTML + plain-text alternative (block JSON path via
     //    @forgemsg/editor renderEmail + renderPlainText; legacy { html }
     //    path uses parseMergeTags + HTML→text fallback).
     const rendered = renderEmail(data.content, mergeCtx, data.preheader, data.utmTracking);
     let htmlBody = rendered.html;
-    const textBody = rendered.text;
+    let textBody = rendered.text;
+
+    // 4a. Resolve unique-coupon merge tags ({{coupon_code:batchId}}) into this
+    //     contact's assigned code. parseMergeTags leaves the tag untouched (the
+    //     ':' is outside its field grammar), so we resolve on the rendered
+    //     output — works for both block-JSON and legacy paths. Runs BEFORE link
+    //     wrapping so a code embedded in a URL is wrapped with the real value.
+    //     No-op (same string, no DB hit) when the content has no coupon tags.
+    subject = await resolveEmailCouponTags(subject, data.orgId, contact.id);
+    htmlBody = await resolveEmailCouponTags(htmlBody, data.orgId, contact.id);
+    textBody = await resolveEmailCouponTags(textBody, data.orgId, contact.id);
 
     // 4b. Apply click + open tracking. Both are skipped for transactional
     //     sends — receipts / password-reset emails should not be wrapped

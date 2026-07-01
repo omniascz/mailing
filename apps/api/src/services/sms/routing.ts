@@ -22,6 +22,7 @@ import {
 } from '../../channels/sms/bulkgate-adapter.js';
 import { TwilioSmsAdapter, type TwilioConfig } from '../../channels/sms/twilio-adapter.js';
 import { checkSmsCompliance } from './compliance.js';
+import { resolveCouponMergeTags } from './coupon-merge.js';
 import { AppError } from '../../lib/app-error.js';
 import type { UnifiedMessage, Recipient, DeliveryResult } from '@forgemsg/shared';
 
@@ -210,6 +211,21 @@ export async function routedSmsSend(
 ): Promise<DeliveryResult> {
   const phone = recipient.phone ?? '';
   const country = phoneToCountry(phone);
+
+  // Resolve unique-coupon merge tags ({{coupon_code:batchId}}) for this
+  // recipient. Runs BEFORE the compliance gate so opt-out text is appended
+  // to the final coupon-substituted body (and length checks see real codes).
+  // No-op (returns the same string, no DB hit) when the body has no tags.
+  if (message.content.kind === 'sms' && recipient.contactId) {
+    const withCoupons = await resolveCouponMergeTags(
+      message.content.body,
+      orgId,
+      recipient.contactId,
+    );
+    if (withCoupons !== message.content.body) {
+      message = { ...message, content: { ...message.content, body: withCoupons } };
+    }
+  }
 
   // Compliance gate for MARKETING SMS: consent, TCPA quiet hours (US), and
   // opt-out text appended. Transactional SMS (OTP/receipts — no campaign/workflow)
