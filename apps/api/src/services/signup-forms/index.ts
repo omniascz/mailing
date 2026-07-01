@@ -19,6 +19,8 @@ import {
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { isHoneypotTripped, verifyCaptcha } from '../../lib/captcha.js';
+import { validateRequiredFields } from '../forms/conditional-logic.js';
+import { sendListDoiConfirmation } from '../subscriptions/doi.js';
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
@@ -182,11 +184,13 @@ export async function processFormSubmission(
     }
   }
 
-  // Validate required fields
-  for (const field of fields) {
-    if (field.required && !data[field.name]) {
-      return { contactId: null, success: false, message: `Field '${field.label}' is required` };
-    }
+  // Validate required fields — only those currently VISIBLE per the form's
+  // conditional-logic rules (hidden fields aren't required). Previously all
+  // required fields were validated regardless of visibility.
+  const missing = validateRequiredFields(fields, data);
+  if (missing.length > 0) {
+    const f = fields.find((x) => x.name === missing[0]);
+    return { contactId: null, success: false, message: `Field '${f?.label ?? missing[0]}' is required` };
   }
 
   // Extract contact fields
@@ -194,6 +198,11 @@ export async function processFormSubmission(
   const firstName = data['first_name'] ?? data['firstName'];
   const lastName = data['last_name'] ?? data['lastName'];
   const phone = data['phone'];
+
+  // Double opt-in: when enabled + we have an email + a list, the contact must
+  // confirm via email before we treat them as subscribed (status stays pending,
+  // welcome workflow deferred to confirm). Previously this flag was ignored.
+  const doubleOptIn = config.doubleOptIn === true && !!email && !!form.listId;
 
   let contactId: string | null = null;
 
@@ -226,6 +235,7 @@ export async function processFormSubmission(
             firstName: firstName ?? null,
             lastName: lastName ?? null,
             phone: phone ?? null,
+            status: doubleOptIn ? 'pending' : 'active',
             source: 'signup_form',
             sourceDetails: { formId },
           })
@@ -234,14 +244,55 @@ export async function processFormSubmission(
       }
     }
 
-    // Add to list
+    // Add to list (unconfirmed; confirmedAt is set by the DOI confirm handler
+    // when double opt-in is on, or immediately below when it's off).
     if (form.listId && contactId) {
       const { contactLists } = await import('../../db/schema/index.js');
       await db
         .insert(contactLists)
-        .values({ contactId, listId: form.listId })
+        .values({
+          contactId,
+          listId: form.listId,
+          ...(doubleOptIn ? {} : { confirmedAt: new Date() }),
+        })
         .onConflictDoNothing()
         .catch(() => {});
+    }
+
+    // Double opt-in — send the confirmation email and stop here (no auto-tags/
+    // welcome workflow until the contact confirms).
+    if (doubleOptIn && email && form.listId && contactId) {
+      const { lists } = await import('../../db/schema/index.js');
+      const [list] = await db
+        .select({ name: lists.name })
+        .from(lists)
+        .where(eq(lists.id, form.listId))
+        .limit(1);
+      await sendListDoiConfirmation({
+        orgId: form.orgId,
+        contactId,
+        listId: form.listId,
+        email,
+        listName: list?.name ?? 'our newsletter',
+        firstName,
+      }).catch(() => {});
+      await db.insert(signupFormSubmissions).values({
+        formId,
+        orgId: form.orgId,
+        contactId,
+        data,
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
+      await db
+        .update(signupForms)
+        .set({ submitCount: sql`${signupForms.submitCount} + 1` })
+        .where(eq(signupForms.id, formId));
+      return {
+        contactId,
+        success: true,
+        message: 'Almost there — check your inbox to confirm your subscription.',
+      };
     }
 
     // Apply auto-tags
