@@ -273,3 +273,26 @@ export async function topViewedProducts(
     uniqueContacts: Number(r.unique_contacts),
   }));
 }
+
+/**
+ * Cron entrypoint — run browse-abandonment detection for every org with recent
+ * identified page views. Called by the browse-abandonment cron every ~15 min.
+ */
+export async function checkAllOrgsAbandonments(): Promise<{ orgs: number; fired: number; errors: number }> {
+  const orgs = (await db.execute<{ org_id: string }>(sql`
+    SELECT DISTINCT org_id FROM product_page_views
+    WHERE contact_id IS NOT NULL AND last_viewed_at > NOW() - INTERVAL '3 days'
+  `)) as unknown as Array<{ org_id: string }>;
+
+  let fired = 0;
+  let errors = 0;
+  for (const { org_id } of orgs) {
+    try {
+      const r = await checkAndFireAbandonments(org_id);
+      fired += r.fired;
+    } catch {
+      errors++;
+    }
+  }
+  return { orgs: orgs.length, fired, errors };
+}

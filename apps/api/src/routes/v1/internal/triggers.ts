@@ -183,6 +183,34 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
       return reply.code(anyFailed ? 207 : 200).send({ data: summary });
     },
   );
+
+  // Browse-abandonment tick — every ~15 min. Fires browse_abandoned events for
+  // all orgs with recent identified product views.
+  app.post(
+    '/api/v1/internal/browse-abandonment/tick',
+    { schema: { tags: ['Internal'], summary: 'Run browse-abandonment detection for all orgs' } },
+    async (req, reply) => {
+      if (process.env.INTERNAL_SECRET && req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET) {
+        return reply.status(401).send();
+      }
+      const { checkAllOrgsAbandonments } = await import('../../../services/browse-abandonment/index.js');
+      return reply.send({ data: await checkAllOrgsAbandonments() });
+    },
+  );
+
+  // Scheduled-reports dispatch — hourly. Renders + emails every due report.
+  app.post(
+    '/api/v1/internal/scheduled-reports/run-due',
+    { schema: { tags: ['Internal'], summary: 'Dispatch due scheduled reports' } },
+    async (req, reply) => {
+      if (process.env.INTERNAL_SECRET && req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET) {
+        return reply.status(401).send();
+      }
+      const { runDueReports } = await import('../../../services/scheduled-reports/index.js');
+      const results = await runDueReports();
+      return reply.send({ data: { dispatched: results.length } });
+    },
+  );
 };
 
 export default internalTriggersRoutes;

@@ -22,6 +22,8 @@ const ticketingDayOfQueue = new Queue(QUEUE_NAMES.TICKETING_DAY_OF, { connection
 const ticketingFillHouseQueue = new Queue(QUEUE_NAMES.TICKETING_FILL_HOUSE, { connection });
 const ticketingDiscoverQueue = new Queue(QUEUE_NAMES.TICKETING_DISCOVER, { connection });
 const campaignDispatchQueue = new Queue(QUEUE_NAMES.CAMPAIGN_DISPATCH, { connection });
+const browseAbandonmentQueue = new Queue(QUEUE_NAMES.BROWSE_ABANDONMENT, { connection });
+const scheduledReportsQueue = new Queue(QUEUE_NAMES.SCHEDULED_REPORTS, { connection });
 
 async function post(path: string): Promise<unknown> {
   const res = await fetch(`${API_URL}${path}`, {
@@ -140,6 +142,36 @@ export function startWorkflowSchedulerWorkers() {
     captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.CAMPAIGN_DISPATCH });
   });
 
+  const browseAbandonmentWorker = new Worker(
+    QUEUE_NAMES.BROWSE_ABANDONMENT,
+    async (job) => {
+      const r = (await post('/api/v1/internal/browse-abandonment/tick')) as {
+        data?: { orgs: number; fired: number };
+      };
+      if (r.data?.fired) job.log(`Browse-abandonment fired ${r.data.fired} (${r.data.orgs} orgs)`);
+    },
+    { connection, concurrency: 1 },
+  );
+  browseAbandonmentWorker.on('failed', (job, err) => {
+    console.error('[browse-abandonment] failed', job?.id, err.message);
+    captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.BROWSE_ABANDONMENT });
+  });
+
+  const scheduledReportsWorker = new Worker(
+    QUEUE_NAMES.SCHEDULED_REPORTS,
+    async (job) => {
+      const r = (await post('/api/v1/internal/scheduled-reports/run-due')) as {
+        data?: { dispatched: number };
+      };
+      if (r.data?.dispatched) job.log(`Dispatched ${r.data.dispatched} scheduled reports`);
+    },
+    { connection, concurrency: 1 },
+  );
+  scheduledReportsWorker.on('failed', (job, err) => {
+    console.error('[scheduled-reports] failed', job?.id, err.message);
+    captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.SCHEDULED_REPORTS });
+  });
+
   return {
     resumeWorker,
     dailyWorker,
@@ -149,6 +181,8 @@ export function startWorkflowSchedulerWorkers() {
     ticketingFillHouseWorker,
     ticketingDiscoverWorker,
     campaignDispatchWorker,
+    browseAbandonmentWorker,
+    scheduledReportsWorker,
   };
 }
 
@@ -236,5 +270,21 @@ export async function scheduleWorkflowJobs() {
       { jobId: 'campaign-dispatch', repeat: { pattern: '* * * * *' }, removeOnComplete: true, removeOnFail: { count: 10 } },
     );
     console.log('[workflow-scheduler] campaign-dispatch scheduled (every minute)');
+  }
+  if (!(await browseAbandonmentQueue.getJob('browse-abandonment'))) {
+    await browseAbandonmentQueue.add(
+      'tick',
+      {},
+      { jobId: 'browse-abandonment', repeat: { pattern: '*/15 * * * *' }, removeOnComplete: true, removeOnFail: { count: 10 } },
+    );
+    console.log('[workflow-scheduler] browse-abandonment scheduled (every 15 min)');
+  }
+  if (!(await scheduledReportsQueue.getJob('scheduled-reports'))) {
+    await scheduledReportsQueue.add(
+      'run',
+      {},
+      { jobId: 'scheduled-reports', repeat: { pattern: '5 * * * *' }, removeOnComplete: true, removeOnFail: { count: 5 } },
+    );
+    console.log('[workflow-scheduler] scheduled-reports scheduled (hourly at :05)');
   }
 }

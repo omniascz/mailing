@@ -7,7 +7,10 @@ import { and, eq, lte } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { scheduledReports, type ScheduledReport } from '../../db/schema/index.js';
 import { getOrgDailyStats } from '../analytics/index.js';
+import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
+
+const REPORTS_FROM = process.env.REPORTS_FROM_EMAIL ?? process.env.DOI_FROM_EMAIL ?? 'reports@forgemsg.com';
 
 export type ReportFrequency = 'daily' | 'weekly' | 'monthly';
 export type ReportType = 'org_overview' | 'campaign_summary' | 'list_growth' | 'rfm_distribution';
@@ -83,7 +86,17 @@ export async function runDueReports(now: Date = new Date()): Promise<DispatchRes
   const results: DispatchResult[] = [];
   for (const report of due) {
     const html = await renderReport(report);
-    // Defer actual email delivery to the workers queue. Here we just record dispatch.
+    // Actually email the rendered report to each configured recipient.
+    for (const to of report.recipients) {
+      await sendTransactionalEmail({
+        to,
+        from: REPORTS_FROM,
+        fromName: 'ForgeMsg Reports',
+        subject: report.name,
+        html,
+        orgId: report.orgId,
+      }).catch(() => {});
+    }
     results.push({
       reportId: report.id,
       reportType: report.reportType,

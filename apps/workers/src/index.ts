@@ -100,6 +100,8 @@ const {
   ticketingFillHouseWorker,
   ticketingDiscoverWorker,
   campaignDispatchWorker,
+  browseAbandonmentWorker,
+  scheduledReportsWorker,
 } = startWorkflowSchedulerWorkers();
 scheduleWorkflowJobs().catch(console.error);
 
@@ -141,6 +143,8 @@ async function shutdown() {
     ticketingFillHouseWorker.close(),
     ticketingDiscoverWorker.close(),
     campaignDispatchWorker.close(),
+    browseAbandonmentWorker.close(),
+    scheduledReportsWorker.close(),
   ]);
   await flushTelemetry();
   console.log('All workers stopped.');
