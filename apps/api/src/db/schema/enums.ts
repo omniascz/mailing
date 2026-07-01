@@ -21,6 +21,12 @@ export const contactStatusEnum = pgEnum('contact_status', [
   'bounced',
   'complained',
   'pending',
+  // Has an address but no marketing opt-in — may still receive transactional
+  // mail / ads, excluded from marketing broadcasts (Mailchimp "non-subscribed").
+  'non_subscribed',
+  // Removed from marketing + not billed, data retained, reversible
+  // (Mailchimp "archived"). Distinct from soft-delete (`deleted_at`).
+  'archived',
 ]);
 
 /** HubSpot-style lifecycle stages (#317/#394). Customisable later via per-org override. */

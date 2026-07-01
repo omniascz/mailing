@@ -20,7 +20,15 @@ import { anonymizeContact, exportContactData } from '../../services/contacts/gdp
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
-const STATUS = ['active', 'unsubscribed', 'bounced', 'complained', 'pending'] as const;
+const STATUS = [
+  'active',
+  'unsubscribed',
+  'bounced',
+  'complained',
+  'pending',
+  'non_subscribed',
+  'archived',
+] as const;
 
 const contactWriteSchema = z.object({
   email: z.string().email().max(255).optional(),
@@ -28,6 +36,7 @@ const contactWriteSchema = z.object({
   firstName: z.string().max(100).optional(),
   lastName: z.string().max(100).optional(),
   status: z.enum(STATUS).optional(),
+  isVip: z.boolean().optional(),
   customFields: z.record(z.unknown()).optional(),
   source: z.string().max(100).optional(),
   sourceDetails: z.record(z.unknown()).optional(),
@@ -163,6 +172,50 @@ export default async function contactRoutes(app: FastifyInstance) {
         ...patch,
         ...(emailValidationScore !== undefined ? { emailValidationScore, emailValidatedAt } : {}),
       });
+      return { data: contact };
+    },
+  );
+
+  /**
+   * PATCH /api/v1/contacts/:id/vip
+   * Toggle the manual VIP designation.
+   */
+  app.patch(
+    '/api/v1/contacts/:id/vip',
+    { schema: { tags: ['Contacts'], summary: 'Set/unset VIP flag' } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const { isVip } = z.object({ isVip: z.boolean() }).parse(req.body);
+      const contact = await updateContact(req.user!.orgId, id, { isVip });
+      return { data: contact };
+    },
+  );
+
+  /**
+   * POST /api/v1/contacts/:id/archive
+   * Archive a contact — removed from marketing + billing, data retained,
+   * reversible. Distinct from soft-delete.
+   */
+  app.post(
+    '/api/v1/contacts/:id/archive',
+    { schema: { tags: ['Contacts'], summary: 'Archive contact (exclude from marketing + billing)' } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const contact = await updateContact(req.user!.orgId, id, { status: 'archived' });
+      return { data: contact };
+    },
+  );
+
+  /**
+   * POST /api/v1/contacts/:id/unarchive
+   * Restore an archived contact back to active.
+   */
+  app.post(
+    '/api/v1/contacts/:id/unarchive',
+    { schema: { tags: ['Contacts'], summary: 'Unarchive contact' } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const contact = await updateContact(req.user!.orgId, id, { status: 'active' });
       return { data: contact };
     },
   );

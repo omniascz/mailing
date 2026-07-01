@@ -210,6 +210,9 @@ export async function resolveAudience(orgId: string, campaignId: string): Promis
       AND cl."list_id" = ${campaign.listId}
       AND c."deleted_at" IS NULL
       AND cl."unsubscribed_at" IS NULL
+      -- Exclude marketing-ineligible statuses (archived / non-subscribed);
+      -- bounced/complained/unsubscribed are additionally gated by suppressions.
+      AND c."status" NOT IN ('archived', 'non_subscribed')
   `);
 
   type ExecResult = { rows?: Array<{ contact_id: string }> };

@@ -31,6 +31,9 @@ export const contacts = pgTable(
     // Status
     status: contactStatusEnum('status').notNull().default('active'),
 
+    // Manual VIP designation (Mailchimp-style) — segmentable, receiver-invisible.
+    isVip: boolean('is_vip').notNull().default(false),
+
     // Lifecycle stage (#317/#394)
     lifecycleStage: lifecycleStageEnum('lifecycle_stage').notNull().default('subscriber'),
     lifecycleStageEnteredAt: timestamp('lifecycle_stage_entered_at', { withTimezone: true })
@@ -84,6 +87,7 @@ export const contacts = pgTable(
     index('contacts_org_email_idx').on(t.orgId, t.email),
     index('contacts_org_phone_idx').on(t.orgId, t.phone),
     index('contacts_org_status_idx').on(t.orgId, t.status),
+    index('contacts_org_vip_idx').on(t.orgId, t.isVip),
 
     // Phone intelligence segmentation
     index('contacts_phone_status_idx').on(t.phoneStatus),

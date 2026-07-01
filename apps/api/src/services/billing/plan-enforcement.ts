@@ -7,7 +7,7 @@
  * (refuse to enqueue). Free plan is the only hard-stop tier; paid plans
  * accept overage and bill afterwards via Stripe metered usage.
  */
-import { eq, sql, and, isNull } from 'drizzle-orm';
+import { eq, sql, and, isNull, ne } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   organizations,
@@ -56,11 +56,14 @@ export async function getPlanCapacity(orgId: string): Promise<PlanCapacity> {
   }
   const suspended = (org?.settings as { suspended?: boolean })?.suspended === true;
 
-  // Active contacts (not soft-deleted, not unsubscribed/bounced/complained).
+  // Billable contacts: not soft-deleted and not archived. Archived contacts
+  // retain data but are excluded from billing (Mailchimp-style).
   const [contactRow] = await db
     .select({ n: sql<number>`COUNT(*)::int` })
     .from(contacts)
-    .where(and(eq(contacts.orgId, orgId), isNull(contacts.deletedAt)));
+    .where(
+      and(eq(contacts.orgId, orgId), isNull(contacts.deletedAt), ne(contacts.status, 'archived')),
+    );
   const contactCount = contactRow?.n ?? 0;
 
   // Sends in the current billing period.

@@ -23,6 +23,7 @@ export interface CreateContactInput {
   firstName?: string;
   lastName?: string;
   status?: Contact['status'];
+  isVip?: boolean;
   customFields?: Record<string, unknown>;
   source?: string;
   sourceDetails?: Record<string, unknown>;

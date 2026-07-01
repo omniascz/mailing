@@ -22,6 +22,7 @@ const DIRECT_FIELDS: Record<
   first_name: { column: 'first_name', type: 'text' },
   last_name: { column: 'last_name', type: 'text' },
   status: { column: 'status', type: 'enum' },
+  is_vip: { column: 'is_vip', type: 'bool' },
   source: { column: 'source', type: 'text' },
   phone_type: { column: 'phone_type', type: 'enum' },
   phone_status: { column: 'phone_status', type: 'enum' },

@@ -29,6 +29,13 @@
       "when": 1782163100000,
       "tag": "0003_domain_public_badge",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782163200000,
+      "tag": "0004_contact_vip_statuses",
+      "breakpoints": true
     }
   ]
 }
