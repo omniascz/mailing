@@ -1317,6 +1317,111 @@ async function executeRunCode(
 
 // ─── Dispatcher ───────────────────────────────────────────────────────────────
 
+/**
+ * §9 P1 — send a post-purchase review request. Issues a single-use, expiring
+ * `review_requests` token (createReviewRequest — previously had no caller) and
+ * sends the review link to the contact. The link is exposed to the message body
+ * as the {{review_url}} merge tag. Order/product context is pulled from the
+ * trigger payload (onOrderPlaced etc.) so the resulting review is attributed.
+ */
+async function executeSendReviewRequest(
+  node: WorkflowNode,
+  run: WorkflowRun,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  const config = node.config as {
+    channel?: 'email' | 'sms';
+    subject?: string;
+    html?: string;
+    text?: string;
+    message?: string; // SMS body
+    productSku?: string;
+  };
+
+  if (!run.contactId) return { type: 'next', nextNodeId: null };
+
+  // Don't pester someone who already converted the run's goal.
+  if (shouldSuppressDueToConversion(run)) {
+    return { type: 'next', nextNodeId: null };
+  }
+
+  // Order / product context from the trigger payload.
+  const data = (run.data ?? {}) as Record<string, unknown>;
+  const ord = (data.order ?? {}) as Record<string, unknown>;
+  const orderId =
+    (typeof data.order_id === 'string' ? data.order_id : undefined) ??
+    (typeof ord.orderId === 'string' ? ord.orderId : undefined);
+  const productSku =
+    config.productSku ??
+    (typeof data.product_sku === 'string' ? data.product_sku : undefined) ??
+    (typeof ord.sku === 'string' ? ord.sku : undefined);
+
+  // Issue the request token → public submit link.
+  const { createReviewRequest } = await import('../reviews-v2/index.js');
+  let token: string;
+  try {
+    const reqRow = await createReviewRequest({
+      orgId: ctx.orgId,
+      contactId: run.contactId,
+      orderId,
+      productSku,
+    });
+    token = reqRow.token;
+  } catch {
+    return { type: 'error', message: 'Failed to issue review request' };
+  }
+
+  const base = (process.env.APP_URL ?? process.env.API_PUBLIC_URL ?? 'http://localhost:3000').replace(
+    /\/$/,
+    '',
+  );
+  const reviewUrl = `${base}/review/${token}`;
+  const extra = { ...buildRunMergeData(run), review_url: reviewUrl };
+
+  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
+  if (!queues) return { type: 'next', nextNodeId: null };
+  const q = queues as unknown as Record<
+    string,
+    { add: (name: string, data: unknown) => Promise<void> } | undefined
+  >;
+
+  if ((config.channel ?? 'email') === 'sms') {
+    if (!ctx.contact?.phone || !config.message) return { type: 'next', nextNodeId: null };
+    await q.sms
+      ?.add('workflow-sms', {
+        orgId: ctx.orgId,
+        contactId: run.contactId,
+        workflowRunId: run.id,
+        phone: ctx.contact.phone,
+        message: substituteMergeTags(config.message, ctx.contact, extra),
+      })
+      .catch(() => {});
+    return { type: 'next', nextNodeId: null };
+  }
+
+  if (!ctx.contact?.email) return { type: 'next', nextNodeId: null };
+  await q.email
+    ?.add('workflow-email', {
+      orgId: ctx.orgId,
+      contactId: run.contactId,
+      workflowRunId: run.id,
+      subject: substituteMergeTags(
+        config.subject ?? 'How was your order? Leave a review',
+        ctx.contact,
+        extra,
+      ),
+      html: config.html
+        ? substituteMergeTags(config.html, ctx.contact, extra)
+        : `<p>Hi ${ctx.contact.firstName ?? 'there'},</p><p>We'd love your feedback. <a href="${reviewUrl}">Leave a review</a>.</p>`,
+      text: config.text
+        ? substituteMergeTags(config.text, ctx.contact, extra)
+        : `Leave a review: ${reviewUrl}`,
+    })
+    .catch(() => {});
+
+  return { type: 'next', nextNodeId: null };
+}
+
 export async function executeAction(
   node: WorkflowNode,
   run: WorkflowRun,
@@ -1384,6 +1489,8 @@ export async function executeAction(
       return executeNotifyOwner(node, run, ctx);
     case 'run_code':
       return executeRunCode(node, run, ctx);
+    case 'send_review_request':
+      return executeSendReviewRequest(node, run, ctx);
     case 'trigger':
       // Trigger nodes don't execute — they're the entry point
       return { type: 'next', nextNodeId: null };

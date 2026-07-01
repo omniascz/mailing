@@ -95,6 +95,44 @@ const reviewsV2Routes: FastifyPluginAsync = async (app) => {
   );
 
   app.get(
+    '/reviews-v2/widget/:sku',
+    {
+      schema: {
+        tags: ['Reviews', 'Public'],
+        summary: 'Public product review widget — approved reviews + rating summary (no auth)',
+      },
+    },
+    async (req, reply) => {
+      const { sku } = z.object({ sku: z.string().min(1).max(128) }).parse(req.params);
+      const { orgId, limit } = z
+        .object({
+          orgId: z.string().uuid(),
+          limit: z.coerce.number().int().min(1).max(100).optional(),
+        })
+        .parse(req.query);
+      const summary = await getProductRatingSummary(orgId, sku);
+      const rows = await listReviewsV2(orgId, {
+        status: 'approved',
+        productSku: sku,
+        limit: limit ?? 20,
+      });
+      return reply.send({
+        data: {
+          summary,
+          // Only fields safe to render on a storefront — no contactId / PII.
+          reviews: rows.map((r) => ({
+            rating: r.rating,
+            title: r.title,
+            body: r.body,
+            sentiment: r.sentiment,
+            createdAt: r.createdAt,
+          })),
+        },
+      });
+    },
+  );
+
+  app.get(
     '/api/v1/reviews-v2',
     {
       preHandler: [app.authenticate],

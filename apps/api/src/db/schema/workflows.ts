@@ -210,6 +210,7 @@ export type NodeType =
   | 'stripe_retry_charge' // #314 — retry a failed Stripe invoice charge
   | 'notify_owner' // #314 — ping workspace owner via in-app / email
   | 'run_code' // #346 — user code in a sandboxed isolate
+  | 'send_review_request' // §9 P1 — issue a review-request token + send the review link
   | 'unsubscribe'; // opt the contact out (status + suppression)
 
 export interface WorkflowNode {
