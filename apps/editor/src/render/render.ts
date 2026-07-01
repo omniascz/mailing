@@ -8,6 +8,7 @@ import type {
   FooterBlock,
   HeroBlock,
   ImageBlock,
+  ProductBlock,
   SocialBlock,
   SpacerBlock,
   TextBlock,
@@ -208,6 +209,8 @@ function renderBlock(
       return renderHero(block, schema, ctx, previewAll, links);
     case 'social':
       return renderSocial(block, ctx, links);
+    case 'product':
+      return renderProduct(block, ctx, links);
     case 'footer':
       return renderFooter(block, ctx, links);
     case 'dynamic':
@@ -298,6 +301,57 @@ function iconFor(type: SocialBlock['networks'][number]['type'], size: number): s
   return `<span style="display:inline-block;width:${size}px;height:${size}px;line-height:${size}px;text-align:center;border-radius:${Math.floor(
     size / 2,
   )}px;background:#111827;color:#ffffff;font-size:${Math.max(10, Math.floor(size / 3))}px;font-weight:600;">${label.charAt(0)}</span>`;
+}
+
+function renderProduct(block: ProductBlock, ctx: MergeTagContext, links: string[]): string {
+  const title = escapeHtml(parseMergeTags(block.title, ctx));
+  const imgSrc = escapeAttr(parseMergeTags(block.imageSrc, ctx));
+  const price = escapeHtml(parseMergeTags(block.price, ctx));
+  const compareRaw = parseMergeTags(block.compareAtPrice ?? '', ctx).trim();
+  const compare = compareRaw ? escapeHtml(compareRaw) : '';
+  const desc = escapeHtml(parseMergeTags(block.description ?? '', ctx));
+  const href = escapeAttr(parseMergeTags(block.productUrl, ctx));
+  const ctaText = escapeHtml(parseMergeTags(block.ctaText, ctx));
+  links.push(href);
+
+  const imgMargin =
+    block.align === 'center' ? '0 auto' : block.align === 'right' ? '0 0 0 auto' : '0';
+  const img =
+    `<a href="${href}" target="_blank" rel="noopener">` +
+    `<img src="${imgSrc}" alt="${escapeAttr(title)}" style="max-width:100%;height:auto;display:block;border:0;border-radius:6px;margin:${imgMargin};" /></a>`;
+
+  const titleHtml =
+    `<a href="${href}" target="_blank" rel="noopener" ` +
+    `style="font-size:16px;font-weight:700;color:${block.titleColor};text-decoration:none;">${title}</a>`;
+  const priceHtml =
+    `<div style="font-size:18px;font-weight:700;color:${block.priceColor};margin:4px 0;">` +
+    (compare
+      ? `<span style="text-decoration:line-through;color:#9ca3af;font-weight:400;margin-right:6px;">${compare}</span>`
+      : '') +
+    `${price}</div>`;
+  const descHtml = desc
+    ? `<div style="font-size:14px;color:#4b5563;line-height:1.5;margin:4px 0;">${desc}</div>`
+    : '';
+  const cta =
+    `<a href="${href}" target="_blank" rel="noopener" ` +
+    `style="background-color:${block.ctaBackgroundColor};color:${block.ctaTextColor};border-radius:6px;` +
+    `padding:10px 20px;font-size:14px;font-weight:600;text-decoration:none;display:inline-block;margin-top:8px;">${ctaText}</a>`;
+
+  const textCol =
+    `<div style="font-family:${block.fontFamily};text-align:${block.align};">` +
+    `${titleHtml}${priceHtml}${descHtml}${cta}</div>`;
+
+  let inner: string;
+  if (block.imagePosition === 'top') {
+    inner = `<div style="text-align:${block.align};">${img}</div>${textCol}`;
+  } else {
+    const imgCell = `<td valign="top" width="50%" style="width:50%;padding:0 12px 0 0;">${img}</td>`;
+    const txtCell = `<td valign="top" width="50%" style="width:50%;">${textCol}</td>`;
+    const cells = block.imagePosition === 'left' ? imgCell + txtCell : txtCell + imgCell;
+    inner = `<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0"><tr>${cells}</tr></table>`;
+  }
+
+  return `<tr><td${bgAttr(block)} align="${block.align}" style="padding:${cellPadding(block)};">${inner}</td></tr>`;
 }
 
 function renderFooter(block: FooterBlock, ctx: MergeTagContext, links: string[]): string {

@@ -7,6 +7,7 @@ import type {
   DividerBlock,
   SpacerBlock,
   SocialBlock,
+  ProductBlock,
   FooterBlock,
   ColumnsBlock,
   HeroBlock,
@@ -119,6 +120,25 @@ export function createBlock(type: BlockType): Block {
         iconSize: 32,
         align: 'center',
       } satisfies SocialBlock;
+    case 'product':
+      return {
+        id: newId('prod'),
+        type: 'product',
+        title: 'Product name',
+        imageSrc: 'https://via.placeholder.com/280x280?text=Product',
+        price: '$0.00',
+        compareAtPrice: '',
+        description: 'Short product description goes here.',
+        productUrl: 'https://example.com/product',
+        ctaText: 'Shop now',
+        ctaBackgroundColor: '#2563eb',
+        ctaTextColor: '#ffffff',
+        titleColor: '#111827',
+        priceColor: '#111827',
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        imagePosition: 'top',
+        align: 'center',
+      } satisfies ProductBlock;
     case 'footer':
       return {
         id: newId('foot'),

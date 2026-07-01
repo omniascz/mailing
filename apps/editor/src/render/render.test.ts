@@ -147,4 +147,42 @@ describe('renderEmail', () => {
     const { html } = renderEmail(emailWith([footer]), { context: { system: {} } });
     expect(html).not.toContain('110 00 Praha');
   });
+
+  it('renders a product block with image, price, CTA and collects its link', () => {
+    const prod = createBlock('product');
+    if (prod.type !== 'product') throw new Error('bad factory');
+    prod.title = 'Blue Hoodie';
+    prod.price = '$49';
+    prod.productUrl = 'https://shop.com/hoodie';
+    const { html, links } = renderEmail(emailWith([prod]));
+    expect(html).toContain('Blue Hoodie');
+    expect(html).toContain('$49');
+    expect(html).toContain('Shop now');
+    expect(html).toContain('https://shop.com/hoodie');
+    expect(links).toContain('https://shop.com/hoodie');
+  });
+
+  it('shows a strike-through compare-at price when set', () => {
+    const prod = createBlock('product');
+    if (prod.type !== 'product') throw new Error('bad factory');
+    prod.price = '$49';
+    prod.compareAtPrice = '$79';
+    const { html } = renderEmail(emailWith([prod]));
+    expect(html).toContain('line-through');
+    expect(html).toContain('$79');
+  });
+
+  it('resolves merge tags in product fields (per-recipient recommendation)', () => {
+    const prod = createBlock('product');
+    if (prod.type !== 'product') throw new Error('bad factory');
+    prod.title = '{{rec_title}}';
+    prod.productUrl = '{{rec_url}}';
+    const { html } = renderEmail(emailWith([prod]), {
+      context: {
+        contact: { customFields: { rec_title: 'Recommended Sneakers', rec_url: 'https://s.co/x' } },
+      },
+    });
+    expect(html).toContain('Recommended Sneakers');
+    expect(html).toContain('https://s.co/x');
+  });
 });

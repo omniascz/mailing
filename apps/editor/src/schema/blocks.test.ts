@@ -45,7 +45,7 @@ describe('block schema', () => {
     expect(parsed.type).toBe('dynamic');
   });
 
-  it('all 10 block types round-trip through the factory', () => {
+  it('all 11 block types round-trip through the factory', () => {
     const types = [
       'text',
       'image',
@@ -55,6 +55,7 @@ describe('block schema', () => {
       'columns',
       'hero',
       'social',
+      'product',
       'footer',
       'dynamic',
     ] as const;
@@ -62,5 +63,19 @@ describe('block schema', () => {
       const b = createBlock(t);
       expect(() => blockSchema.parse(b)).not.toThrow();
     }
+  });
+
+  it('product block accepts merge-tag values in url/image/price fields', () => {
+    const b = {
+      id: 'p1',
+      type: 'product' as const,
+      title: '{{product.title}}',
+      imageSrc: '{{product.image}}',
+      price: '{{product.price}}',
+      productUrl: '{{product.url}}',
+    };
+    // No .url() validation on these fields → raw merge tags must parse fine.
+    const parsed = blockSchema.parse(b);
+    expect(parsed.type).toBe('product');
   });
 });

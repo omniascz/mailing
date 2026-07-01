@@ -26,6 +26,7 @@ import type {
   FooterBlock,
   HeroBlock,
   ImageBlock,
+  ProductBlock,
   SocialBlock,
   SpacerBlock,
   TextBlock,
@@ -74,6 +75,8 @@ function renderBlock(block: Block, schema: EmailSchema, ctx: MergeTagContext): s
       return renderHero(block, schema, ctx);
     case 'social':
       return renderSocial(block, ctx);
+    case 'product':
+      return renderProduct(block, ctx);
     case 'footer':
       return renderFooter(block, ctx);
     case 'dynamic':
@@ -141,6 +144,17 @@ function renderSocial(block: SocialBlock, ctx: MergeTagContext): string {
     return `${labels[n.type] ?? n.type}: ${url}`;
   });
   return lines.join('\n');
+}
+
+function renderProduct(block: ProductBlock, ctx: MergeTagContext): string {
+  const title = parseMergeTags(block.title, ctx).trim();
+  const price = parseMergeTags(block.price, ctx).trim();
+  const compare = parseMergeTags(block.compareAtPrice ?? '', ctx).trim();
+  const desc = stripTags(parseMergeTags(block.description ?? '', ctx));
+  const url = parseMergeTags(block.productUrl, ctx).trim();
+  const cta = parseMergeTags(block.ctaText, ctx).trim();
+  const priceLine = compare ? `${price} (was ${compare})` : price;
+  return [title, priceLine, desc, `${cta} → ${url}`].filter(Boolean).join('\n');
 }
 
 function renderFooter(block: FooterBlock, ctx: MergeTagContext): string {

@@ -151,6 +151,34 @@ export const socialBlockSchema = z.object({
 });
 export type SocialBlock = z.infer<typeof socialBlockSchema>;
 
+/**
+ * Product block (#Klaviyo parity) — a single merchandised product card:
+ * image, title, price (with optional strike-through compare-at), short
+ * description, and a CTA button. String fields intentionally allow merge tags
+ * ({{product.title}}, {{product.price}}, …) so the same block can render a
+ * fixed product OR a per-recipient recommendation — hence NO .url() validation
+ * on src/link fields (a raw merge tag is not a valid URL until resolved).
+ */
+export const productBlockSchema = z.object({
+  ...baseBlockShape,
+  type: z.literal('product'),
+  title: z.string(),
+  imageSrc: z.string(),
+  price: z.string(),
+  compareAtPrice: z.string().default(''),
+  description: z.string().default(''),
+  productUrl: z.string(),
+  ctaText: z.string().default('Shop now'),
+  ctaBackgroundColor: z.string().default('#2563eb'),
+  ctaTextColor: z.string().default('#ffffff'),
+  titleColor: z.string().default('#111827'),
+  priceColor: z.string().default('#111827'),
+  fontFamily: z.string().default('Arial, Helvetica, sans-serif'),
+  imagePosition: z.enum(['top', 'left', 'right']).default('top'),
+  align: z.enum(['left', 'center', 'right']).default('center'),
+});
+export type ProductBlock = z.infer<typeof productBlockSchema>;
+
 export const footerBlockSchema = z.object({
   ...baseBlockShape,
   type: z.literal('footer'),
@@ -204,6 +232,7 @@ export type LeafBlock =
   | DividerBlock
   | SpacerBlock
   | SocialBlock
+  | ProductBlock
   | FooterBlock;
 
 export type Block = LeafBlock | ColumnsBlock | HeroBlock | DynamicBlock;
@@ -222,6 +251,7 @@ export const blockSchema: z.ZodType<Block, z.ZodTypeDef, any> = z.lazy(() =>
     dividerBlockSchema,
     spacerBlockSchema,
     socialBlockSchema,
+    productBlockSchema,
     footerBlockSchema,
     columnsBlockSchema,
     heroBlockSchema,
@@ -305,6 +335,7 @@ export const BLOCK_TYPES = [
   'columns',
   'hero',
   'social',
+  'product',
   'footer',
   'dynamic',
 ] as const;
