@@ -15,9 +15,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { emailEvents, sendingDomains } from '../../db/schema/index.js';
+import { emailEvents } from '../../db/schema/index.js';
 import {
   createCampaign,
   getCampaign,
@@ -25,12 +24,16 @@ import {
   updateCampaign,
   deleteCampaign,
   scheduleCampaign,
-  sendCampaign,
   pauseCampaign,
   resumeCampaign,
   cancelCampaign,
 } from '../../services/campaigns/index.js';
 import { scheduleResend } from '../../services/campaigns/auto-resend.js';
+import {
+  enqueueCampaignSend,
+  dispatchScheduledCampaigns,
+  setCampaignStatusInternal,
+} from '../../services/campaigns/dispatch.js';
 import {
   computeAbWinner,
   getAbTestResult,
@@ -38,36 +41,11 @@ import {
   markWinnerDispatched,
   storeHoldback,
 } from '../../services/campaigns/ab-winner.js';
-import { campaignSplitterQueue, PRIORITY, sendTransactionalEmail } from '../../lib/queues.js';
+import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 
 const idParam = z.object({ id: z.string().uuid() });
-
-/**
- * Resolve the DKIM signing material for a campaign's From address. Without this
- * the splitter forwards no key and the MTA sends unsigned mail (→ spam). Looks
- * up the verified sending domain matching the From address's domain.
- */
-async function resolveDkimForSender(
-  orgId: string,
-  fromEmail: string,
-): Promise<{ dkimDomain: string; dkimSelector: string; dkimPrivateKey: string } | null> {
-  const domain = fromEmail.split('@')[1]?.toLowerCase();
-  if (!domain) return null;
-  const [row] = await db
-    .select({
-      domain: sendingDomains.domain,
-      selector: sendingDomains.dkimSelector,
-      privateKey: sendingDomains.dkimPrivateKey,
-      verified: sendingDomains.isVerified,
-    })
-    .from(sendingDomains)
-    .where(and(eq(sendingDomains.orgId, orgId), eq(sendingDomains.domain, domain)))
-    .limit(1);
-  if (!row || !row.verified || !row.privateKey) return null;
-  return { dkimDomain: row.domain, dkimSelector: row.selector, dkimPrivateKey: row.privateKey };
-}
 
 const campaignStatuses = ['draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled'] as const;
 const campaignTypes = ['email', 'sms', 'whatsapp', 'push', 'voice'] as const;
@@ -232,37 +210,9 @@ export default async function campaignRoutes(app: FastifyInstance) {
       // splitter later.
       await checkSendCapacity(req.user!.orgId, 1);
 
-      const campaign = await sendCampaign(req.user!.orgId, id);
-
-      // Resolve DKIM keys for the From domain so the MTA signs the mail.
-      // Missing/unverified domain → unsigned (logged by the splitter).
-      const dkim = campaign.fromEmail
-        ? await resolveDkimForSender(req.user!.orgId, campaign.fromEmail)
-        : null;
-
-      // Enqueue the campaign splitter job. Worker (apps/workers) consumes
-      // the same Redis queue by name. If enqueue fails, the status flip
-      // already happened — surface the error so the caller can retry.
-      //
-      // A/B config, UTM tracking and DKIM are forwarded so the flagship
-      // features actually activate on the send path (previously dropped).
-      await campaignSplitterQueue.add(`campaign-${id}`, {
-        campaignId: id,
-        orgId: req.user!.orgId,
-        listId: campaign.listId,
-        segmentId: campaign.segmentId,
-        excludeSegmentId: campaign.excludeSegmentId,
-        content: campaign.content,
-        subject: campaign.subject,
-        preheader: campaign.preheader,
-        fromName: campaign.fromName,
-        fromEmail: campaign.fromEmail,
-        replyTo: campaign.replyTo,
-        abConfig: campaign.abConfig ?? undefined,
-        utmTracking: campaign.utmTracking ?? undefined,
-        ...(dkim ?? {}),
-        priority: PRIORITY.CAMPAIGN,
-      });
+      // Transition → sending + enqueue splitter (A/B, UTM, DKIM forwarded).
+      // Same code path the scheduled-campaign cron uses.
+      const campaign = await enqueueCampaignSend(req.user!.orgId, id);
 
       return { data: campaign };
     },
@@ -491,6 +441,43 @@ export default async function campaignRoutes(app: FastifyInstance) {
       const { id } = idParam.parse(req.params);
       await markWinnerDispatched(id);
       return { data: { ok: true } };
+    },
+  );
+
+  /**
+   * PATCH /api/v1/internal/campaigns/:id/status
+   * Called by the splitter/winner worker to drive the sending→sent lifecycle.
+   * (Previously the splitter called this endpoint but it did not exist, so
+   * campaigns were never marked `sent`.)
+   */
+  app.patch(
+    '/api/v1/internal/campaigns/:id/status',
+    { schema: { tags: ['Internal'] } },
+    async (req, reply) => {
+      const secret = req.headers['x-internal-secret'];
+      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+      const { id } = idParam.parse(req.params);
+      const { status } = z
+        .object({ status: z.enum(['sending', 'sent', 'paused', 'cancelled']) })
+        .parse(req.body);
+      await setCampaignStatusInternal(id, status);
+      return { data: { ok: true } };
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/campaigns/dispatch-scheduled
+   * Called every minute by the campaign-dispatch cron — finds scheduled
+   * campaigns whose time has come and enqueues them.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/dispatch-scheduled',
+    { schema: { tags: ['Internal'] } },
+    async (req, reply) => {
+      const secret = req.headers['x-internal-secret'];
+      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+      const result = await dispatchScheduledCampaigns();
+      return { data: result };
     },
   );
 }

@@ -21,6 +21,7 @@ const clickhouseQueue = new Queue(QUEUE_NAMES.CLICKHOUSE_REPLICATE, { connection
 const ticketingDayOfQueue = new Queue(QUEUE_NAMES.TICKETING_DAY_OF, { connection });
 const ticketingFillHouseQueue = new Queue(QUEUE_NAMES.TICKETING_FILL_HOUSE, { connection });
 const ticketingDiscoverQueue = new Queue(QUEUE_NAMES.TICKETING_DISCOVER, { connection });
+const campaignDispatchQueue = new Queue(QUEUE_NAMES.CAMPAIGN_DISPATCH, { connection });
 
 async function post(path: string): Promise<unknown> {
   const res = await fetch(`${API_URL}${path}`, {
@@ -122,6 +123,23 @@ export function startWorkflowSchedulerWorkers() {
     'ticketing-discover',
   );
 
+  const campaignDispatchWorker = new Worker(
+    QUEUE_NAMES.CAMPAIGN_DISPATCH,
+    async (job) => {
+      const r = (await post('/api/v1/internal/campaigns/dispatch-scheduled')) as {
+        data?: { dispatched: number; errors: number };
+      };
+      if (r.data?.dispatched) {
+        job.log(`Dispatched ${r.data.dispatched} scheduled campaigns (${r.data.errors ?? 0} errors)`);
+      }
+    },
+    { connection, concurrency: 1 },
+  );
+  campaignDispatchWorker.on('failed', (job, err) => {
+    console.error('[campaign-dispatch] failed', job?.id, err.message);
+    captureJobException(err, { jobId: job?.id, queue: QUEUE_NAMES.CAMPAIGN_DISPATCH });
+  });
+
   return {
     resumeWorker,
     dailyWorker,
@@ -130,6 +148,7 @@ export function startWorkflowSchedulerWorkers() {
     ticketingDayOfWorker,
     ticketingFillHouseWorker,
     ticketingDiscoverWorker,
+    campaignDispatchWorker,
   };
 }
 
@@ -209,5 +228,13 @@ export async function scheduleWorkflowJobs() {
       { jobId: 'ticketing-discover', repeat: { pattern: '0 9 * * 1' }, removeOnComplete: true, removeOnFail: { count: 5 } },
     );
     console.log('[workflow-scheduler] ticketing-discover scheduled (Mon 09:00)');
+  }
+  if (!(await campaignDispatchQueue.getJob('campaign-dispatch'))) {
+    await campaignDispatchQueue.add(
+      'tick',
+      {},
+      { jobId: 'campaign-dispatch', repeat: { pattern: '* * * * *' }, removeOnComplete: true, removeOnFail: { count: 10 } },
+    );
+    console.log('[workflow-scheduler] campaign-dispatch scheduled (every minute)');
   }
 }

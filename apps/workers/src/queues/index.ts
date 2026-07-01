@@ -86,6 +86,7 @@ export const QUEUE_NAMES = {
   TICKETING_DAY_OF: 'ticketing-day-of',
   TICKETING_FILL_HOUSE: 'ticketing-fill-house',
   TICKETING_DISCOVER: 'ticketing-discover',
+  CAMPAIGN_DISPATCH: 'campaign-dispatch',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

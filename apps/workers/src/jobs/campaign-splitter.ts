@@ -75,6 +75,9 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
   const abConfig = parseAbConfig(data.abConfig);
 
   let totalBatches = 0;
+  // A/B tests with a holdback keep the campaign in `sending` until the winner
+  // job dispatches; everything else is marked `sent` once batches are enqueued.
+  let winnerScheduled = false;
 
   if (abConfig && abConfig.variants.length >= 2) {
     // ── A/B split: distribute contacts across variants by percentage ───────
@@ -155,6 +158,7 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
         winnerJobData,
         { delay: delayMs, jobId: `ab-winner-${data.campaignId}`, removeOnComplete: true },
       );
+      winnerScheduled = true;
       job.log(`Scheduled winner dispatch in ${abConfig.testDurationHours}h`);
     }
   } else {
@@ -194,8 +198,9 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
 
   job.log(`Enqueued ${totalBatches} batch jobs`);
 
-  // Mark campaign sending only AFTER successful enqueue
-  await updateCampaignStatus(data.campaignId, 'sending');
+  // Mark campaign fully sent once all batches are enqueued. A/B tests with a
+  // pending winner stay `sending` until the winner job dispatches + marks sent.
+  await updateCampaignStatus(data.campaignId, winnerScheduled ? 'sending' : 'sent');
 
   return { batches: totalBatches, totalContacts: contactIds.length };
 }
@@ -242,7 +247,10 @@ async function updateCampaignStatus(campaignId: string, status: string): Promise
   try {
     await fetch(url, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
+      },
       body: JSON.stringify({ status }),
     });
   } catch (err) {
