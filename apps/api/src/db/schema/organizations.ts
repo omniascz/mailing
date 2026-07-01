@@ -21,6 +21,10 @@ export const organizations = pgTable(
     /** Parent org for sub-account hierarchies (#273). NULL for top-level orgs. */
     parentOrgId: uuid('parent_org_id'),
     settings: jsonb('settings').$type<Record<string, unknown>>().notNull().default({}),
+    /** CAN-SPAM: sender's legal name shown in email footers. */
+    companyName: varchar('company_name', { length: 255 }),
+    /** CAN-SPAM: required physical postal address, auto-appended to footers. */
+    postalAddress: varchar('postal_address', { length: 500 }),
     onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
     dataRegion: dataRegionEnum('data_region').notNull().default('us'),
     ipRestrictionsEnabled: boolean('ip_restrictions_enabled').notNull().default(false),

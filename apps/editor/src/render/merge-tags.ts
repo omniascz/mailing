@@ -33,6 +33,9 @@ export interface MergeTagContext {
     preferenceCenterUrl?: string;
     currentDate?: string;
     currentYear?: string;
+    /** CAN-SPAM sender legal name + physical postal address. */
+    companyName?: string;
+    companyAddress?: string;
   };
 }
 
@@ -42,6 +45,8 @@ const SYSTEM_KEYS = new Set([
   'preference_center_url',
   'current_date',
   'current_year',
+  'company_name',
+  'company_address',
 ]);
 
 // Matches {{ field_name }} or {{ field_name | default: "fallback" }} or
@@ -96,6 +101,10 @@ function resolveSystem(ctx: MergeTagContext, field: string): string | undefined 
       return sys.currentDate ?? new Date().toISOString().slice(0, 10);
     case 'current_year':
       return sys.currentYear ?? new Date().getFullYear().toString();
+    case 'company_name':
+      return sys.companyName;
+    case 'company_address':
+      return sys.companyAddress;
     default:
       return undefined;
   }

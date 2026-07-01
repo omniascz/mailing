@@ -25,6 +25,9 @@ const updateSchema = z.object({
   ipRestrictionsEnabled: z.boolean().optional(),
   trackingEuStrict: z.boolean().optional(),
   hipaaMode: z.boolean().optional(),
+  /** CAN-SPAM sender legal name + physical postal address (email footers). */
+  companyName: z.string().max(255).optional(),
+  postalAddress: z.string().max(500).optional(),
 });
 
 export default async function organizationRoutes(app: FastifyInstance) {

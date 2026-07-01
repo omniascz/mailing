@@ -43,6 +43,13 @@
       "when": 1782163300000,
       "tag": "0005_email_events_geo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782163400000,
+      "tag": "0006_org_postal_address",
+      "breakpoints": true
     }
   ]
 }

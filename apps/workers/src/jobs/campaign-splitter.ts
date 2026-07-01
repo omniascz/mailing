@@ -122,6 +122,8 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
           timewarp: data.timewarp,
           abVariantId: variant.id,
           utmTracking: data.utmTracking,
+          companyName: data.companyName,
+          companyAddress: data.companyAddress,
         } satisfies BatchSenderJobData,
         opts: { priority: data.priority },
       }));
@@ -188,6 +190,8 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
         stream,
         timewarp: data.timewarp,
         utmTracking: data.utmTracking,
+        companyName: data.companyName,
+        companyAddress: data.companyAddress,
       } satisfies BatchSenderJobData,
       opts: { priority: data.priority },
     }));

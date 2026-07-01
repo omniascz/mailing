@@ -130,4 +130,21 @@ describe('renderEmail', () => {
     expect(html).toContain('Unsubscribe');
     expect(links).toContain('https://unsub.com/x');
   });
+
+  it('auto-appends the CAN-SPAM postal address to the footer when set', () => {
+    const footer = createBlock('footer');
+    const { html } = renderEmail(emailWith([footer]), {
+      context: {
+        system: { companyName: 'Acme s.r.o.', companyAddress: 'Ulice 1, 110 00 Praha, CZ' },
+      },
+    });
+    expect(html).toContain('Acme s.r.o.');
+    expect(html).toContain('Ulice 1, 110 00 Praha, CZ');
+  });
+
+  it('omits the address block when no company address is configured', () => {
+    const footer = createBlock('footer');
+    const { html } = renderEmail(emailWith([footer]), { context: { system: {} } });
+    expect(html).not.toContain('110 00 Praha');
+  });
 });

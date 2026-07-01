@@ -174,6 +174,8 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         unsubscribeUrl,
         currentDate: todayIso,
         currentYear: String(new Date().getFullYear()),
+        companyName: data.companyName,
+        companyAddress: data.companyAddress,
       },
       newsletterTierMap.get(contact.id),
     );

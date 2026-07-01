@@ -302,6 +302,17 @@ function iconFor(type: SocialBlock['networks'][number]['type'], size: number): s
 
 function renderFooter(block: FooterBlock, ctx: MergeTagContext, links: string[]): string {
   const body = escapeHtml(parseMergeTags(block.content, ctx));
+
+  // CAN-SPAM: always append the sender's physical postal address when the org
+  // has one configured (and the footer body doesn't already contain it).
+  let addr = '';
+  const address = ctx.system?.companyAddress?.trim();
+  if (address && !block.content.includes(address)) {
+    const name = ctx.system?.companyName?.trim();
+    const lines = [name, address].filter(Boolean).map((l) => escapeHtml(l!)).join('<br/>');
+    addr = `<div style="margin-top:8px;">${lines}</div>`;
+  }
+
   let unsub = '';
   if (block.showUnsubscribe) {
     const url = ctx.system?.unsubscribeUrl ?? '{{unsubscribe_url}}';
@@ -309,7 +320,7 @@ function renderFooter(block: FooterBlock, ctx: MergeTagContext, links: string[])
     unsub = `<div style="margin-top:8px;"><a href="${escapeAttr(url)}" style="color:${block.color};text-decoration:underline;">Unsubscribe</a></div>`;
   }
   const style = `font-size:${block.fontSize};color:${block.color};text-align:${block.textAlign};`;
-  return `<tr><td${bgAttr(block)} style="padding:${cellPadding(block)};${style}">${body}${unsub}</td></tr>`;
+  return `<tr><td${bgAttr(block)} style="padding:${cellPadding(block)};${style}">${body}${addr}${unsub}</td></tr>`;
 }
 
 // ---------- container blocks ----------

@@ -7,7 +7,7 @@
 
 import { and, eq, lte } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { campaigns, sendingDomains } from '../../db/schema/index.js';
+import { campaigns, sendingDomains, organizations } from '../../db/schema/index.js';
 import { campaignSplitterQueue, PRIORITY } from '../../lib/queues.js';
 import { sendCampaign } from './index.js';
 
@@ -45,7 +45,16 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
   const campaign = await sendCampaign(orgId, campaignId);
   const dkim = campaign.fromEmail ? await resolveDkimForSender(orgId, campaign.fromEmail) : null;
 
+  // CAN-SPAM footer identity — auto-appended by the renderer when present.
+  const [org] = await db
+    .select({ companyName: organizations.companyName, postalAddress: organizations.postalAddress })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1);
+
   await campaignSplitterQueue.add(`campaign-${campaignId}`, {
+    companyName: org?.companyName ?? undefined,
+    companyAddress: org?.postalAddress ?? undefined,
     campaignId,
     orgId,
     listId: campaign.listId,
