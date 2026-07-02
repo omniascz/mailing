@@ -7,13 +7,20 @@ import { and, eq, lte } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { scheduledReports, type ScheduledReport } from '../../db/schema/index.js';
 import { getOrgDailyStats } from '../analytics/index.js';
+import { runSavedReport } from '../report-builder/index.js';
+import type { ReportResult } from '../report-builder/pure.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 
 const REPORTS_FROM = process.env.REPORTS_FROM_EMAIL ?? process.env.DOI_FROM_EMAIL ?? 'reports@forgemsg.com';
 
 export type ReportFrequency = 'daily' | 'weekly' | 'monthly';
-export type ReportType = 'org_overview' | 'campaign_summary' | 'list_growth' | 'rfm_distribution';
+export type ReportType =
+  | 'org_overview'
+  | 'campaign_summary'
+  | 'list_growth'
+  | 'rfm_distribution'
+  | 'custom';
 
 export function computeNextRun(frequency: ReportFrequency, from: Date = new Date()): Date {
   const next = new Date(from);
@@ -73,7 +80,43 @@ async function renderReport(report: ScheduledReport): Promise<string> {
     const stats = await getOrgDailyStats(report.orgId, days);
     return `<h1>${report.name}</h1><pre>${JSON.stringify(stats, null, 2)}</pre>`;
   }
+  // Custom report builder: params.reportId points at a saved custom_reports row.
+  if (report.reportType === 'custom') {
+    const reportId = String((report.params as { reportId?: string }).reportId ?? '');
+    if (!reportId) {
+      return `<h1>${report.name}</h1><p>Custom report is missing params.reportId.</p>`;
+    }
+    const result = await runSavedReport(report.orgId, reportId).catch(() => null);
+    if (!result) {
+      return `<h1>${report.name}</h1><p>Custom report ${reportId} could not be run.</p>`;
+    }
+    return renderCustomReportHtml(report.name, result);
+  }
   return `<h1>${report.name}</h1><p>Report type ${report.reportType} not yet implemented.</p>`;
+}
+
+/** Render a ReportResult as a simple HTML table (group rows + a totals row). */
+function renderCustomReportHtml(name: string, result: ReportResult): string {
+  const metrics = Object.keys(result.totals);
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const head = ['group', ...metrics].map((h) => `<th>${esc(h)}</th>`).join('');
+  const bodyRows = result.rows
+    .map((r) => {
+      const cells = [esc(r.group), ...metrics.map((m) => String(r.values[m] ?? 0))]
+        .map((c) => `<td>${c}</td>`)
+        .join('');
+      return `<tr>${cells}</tr>`;
+    })
+    .join('');
+  const totalCells = ['<strong>Total</strong>', ...metrics.map((m) => String(result.totals[m] ?? 0))]
+    .map((c) => `<td>${c}</td>`)
+    .join('');
+  return (
+    `<h1>${esc(name)}</h1>` +
+    `<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">` +
+    `<thead><tr>${head}</tr></thead>` +
+    `<tbody>${bodyRows}<tr>${totalCells}</tr></tbody></table>`
+  );
 }
 
 /** Cron entrypoint: dispatch every report whose nextRunAt is in the past. */

@@ -50,6 +50,7 @@ export * from './alerts-subscriptions.js';
 export * from './coupons.js';
 export * from './reviews.js';
 export * from './scheduled-reports.js';
+export * from './custom-reports.js';
 export * from './holdout.js';
 export * from './helpdesk.js';
 export * from './warehouse-sync.js';
