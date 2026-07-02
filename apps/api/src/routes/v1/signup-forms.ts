@@ -31,6 +31,8 @@ import {
   selectVariantForVisitor,
   trackVariantView,
 } from '../../services/signup-forms/index.js';
+import { evaluateFormTargeting } from '../../services/signup-forms/targeting.js';
+import type { FormConfig } from '../../db/schema/signup-forms.js';
 
 const signupFormRoutes: FastifyPluginAsync = async (app) => {
   const API_BASE = process.env.API_BASE_URL ?? 'https://api.forgemsg.io';
@@ -176,6 +178,38 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       await trackFormView(id);
       return reply.status(204).send();
+    },
+  );
+
+  // Targeting decision — the embed script calls this with the visitor's context
+  // (page url, device, prior impressions) to learn whether + how to show the form.
+  app.get(
+    '/public/forms/:id/should-show',
+    {
+      schema: { tags: ['Public Forms'], summary: 'Evaluate targeting + behaviour rules' },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const q = z
+        .object({
+          url: z.string().max(2048).optional(),
+          device: z.enum(['desktop', 'mobile', 'tablet']).optional(),
+          impressionCount: z.coerce.number().int().min(0).optional(),
+          lastSeenMs: z.coerce.number().int().min(0).optional(),
+          hasSubmitted: z.coerce.boolean().optional(),
+        })
+        .parse(req.query);
+      const form = await getFormDefinition(id);
+      if (!form) return reply.status(404).send({ code: 'NOT_FOUND', message: 'Form not found' });
+      const decision = evaluateFormTargeting((form.config as FormConfig | undefined)?.targeting, {
+        url: q.url,
+        device: q.device,
+        impressionCount: q.impressionCount,
+        lastSeenMs: q.lastSeenMs ?? null,
+        hasSubmitted: q.hasSubmitted,
+        nowMs: Date.now(),
+      });
+      return reply.send({ data: decision });
     },
   );
 

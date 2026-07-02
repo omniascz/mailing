@@ -44,6 +44,43 @@ export interface FormField {
   visibilityLogic?: 'and' | 'or';
 }
 
+/**
+ * Form targeting + behaviour rules (Klaviyo-style). Decides WHERE a form shows
+ * (URL + device rules), WHEN it triggers (immediate / delay / scroll / exit
+ * intent) and HOW OFTEN (per-visitor frequency capping). Evaluated by the pure
+ * engine in services/signup-forms/targeting.ts (and the embed script client-side).
+ */
+export interface FormUrlRule {
+  match: 'contains' | 'not_contains' | 'exact' | 'starts_with' | 'regex';
+  value: string;
+}
+
+export interface FormTargeting {
+  /** Page-URL rules; empty = show on all pages. */
+  urlRules?: FormUrlRule[];
+  /** How urlRules combine (default 'or'). */
+  urlLogic?: 'and' | 'or';
+  /** Device allow-list; empty = all devices. */
+  devices?: Array<'desktop' | 'mobile' | 'tablet'>;
+  /** When to display. */
+  trigger?: {
+    type: 'immediate' | 'delay' | 'scroll' | 'exit_intent';
+    /** seconds — for type 'delay' */
+    delaySeconds?: number;
+    /** 0..100 — for type 'scroll' */
+    scrollPercent?: number;
+  };
+  /** Per-visitor frequency capping. */
+  frequency?: {
+    /** Don't re-show for N days after the last impression. */
+    cooldownDays?: number;
+    /** Max lifetime impressions per visitor. */
+    maxImpressions?: number;
+    /** Stop showing once the visitor has submitted. */
+    hideAfterSubmit?: boolean;
+  };
+}
+
 export interface FormConfig {
   submitButtonText?: string;
   successMessage?: string;
@@ -65,6 +102,8 @@ export interface FormConfig {
   };
   /** Honeypot field name — a hidden field; if it arrives filled, it's a bot. */
   honeypotField?: string;
+  /** Targeting + behaviour rules (where/when/how-often to show). */
+  targeting?: FormTargeting;
 }
 
 export const signupForms = pgTable(
