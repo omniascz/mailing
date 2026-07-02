@@ -9,6 +9,8 @@ import type {
   HeroBlock,
   ImageBlock,
   ProductBlock,
+  VideoBlock,
+  CouponBlock,
   SocialBlock,
   SpacerBlock,
   TextBlock,
@@ -211,6 +213,10 @@ function renderBlock(
       return renderSocial(block, ctx, links);
     case 'product':
       return renderProduct(block, ctx, links);
+    case 'video':
+      return renderVideo(block, ctx, links);
+    case 'coupon':
+      return renderCoupon(block, ctx, links);
     case 'footer':
       return renderFooter(block, ctx, links);
     case 'dynamic':
@@ -351,6 +357,68 @@ function renderProduct(block: ProductBlock, ctx: MergeTagContext, links: string[
     inner = `<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0"><tr>${cells}</tr></table>`;
   }
 
+  return `<tr><td${bgAttr(block)} align="${block.align}" style="padding:${cellPadding(block)};">${inner}</td></tr>`;
+}
+
+function renderVideo(block: VideoBlock, ctx: MergeTagContext, links: string[]): string {
+  const src = escapeAttr(parseMergeTags(block.thumbnailSrc, ctx));
+  const href = escapeAttr(parseMergeTags(block.videoUrl, ctx));
+  const alt = escapeAttr(parseMergeTags(block.alt ?? '', ctx));
+  links.push(href);
+  const w = block.width ? ` width="${block.width}"` : '';
+  const playSize = 64;
+  const triangle =
+    `<span style="display:inline-block;vertical-align:middle;width:0;height:0;` +
+    `border-style:solid;border-width:13px 0 13px 22px;` +
+    `border-color:transparent transparent transparent ${block.playButtonColor};margin-left:6px;"></span>`;
+  const playBtn =
+    `<span style="display:inline-block;width:${playSize}px;height:${playSize}px;line-height:${playSize}px;` +
+    `border-radius:50%;background:${block.overlayColor};text-align:center;">${triangle}</span>`;
+  // position:relative/absolute overlay degrades gracefully (stacks) where stripped.
+  const inner =
+    `<a href="${href}" target="_blank" rel="noopener" style="position:relative;display:inline-block;text-decoration:none;">` +
+    `<img src="${src}" alt="${alt}"${w} style="max-width:100%;height:auto;display:block;border:0;" />` +
+    `<span style="position:absolute;top:50%;left:50%;margin-top:-${playSize / 2}px;margin-left:-${playSize / 2}px;">${playBtn}</span>` +
+    `</a>`;
+  return `<tr><td${bgAttr(block)} align="${block.align}" style="padding:${cellPadding(block)};">${inner}</td></tr>`;
+}
+
+function renderCoupon(block: CouponBlock, ctx: MergeTagContext, links: string[]): string {
+  // Note: {{coupon_code:batchId}} is intentionally left untouched by
+  // parseMergeTags (colon grammar) and resolved per-recipient at send time.
+  const code = escapeHtml(parseMergeTags(block.code, ctx));
+  const headline = escapeHtml(parseMergeTags(block.headline ?? '', ctx));
+  const description = escapeHtml(parseMergeTags(block.description ?? '', ctx));
+  const expiry = escapeHtml(parseMergeTags(block.expiryText ?? '', ctx));
+  const ctaTextRaw = parseMergeTags(block.ctaText ?? '', ctx).trim();
+  const ctaUrlRaw = parseMergeTags(block.ctaUrl ?? '', ctx).trim();
+
+  const headlineHtml = headline
+    ? `<div style="font-size:14px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">${headline}</div>`
+    : '';
+  const codeHtml =
+    `<div style="display:inline-block;font-size:24px;font-weight:800;letter-spacing:0.08em;` +
+    `padding:12px 24px;background:${block.codeBackgroundColor};color:${block.codeTextColor};` +
+    `border:2px ${block.borderStyle} ${block.borderColor};border-radius:8px;">${code}</div>`;
+  const descHtml = description
+    ? `<div style="font-size:14px;color:#4b5563;line-height:1.5;margin-top:10px;">${description}</div>`
+    : '';
+  const expiryHtml = expiry
+    ? `<div style="font-size:12px;color:#9ca3af;margin-top:6px;">${expiry}</div>`
+    : '';
+  let ctaHtml = '';
+  if (ctaTextRaw && ctaUrlRaw) {
+    const href = escapeAttr(ctaUrlRaw);
+    links.push(href);
+    ctaHtml =
+      `<div style="margin-top:12px;"><a href="${href}" target="_blank" rel="noopener" ` +
+      `style="background-color:${block.ctaBackgroundColor};color:${block.ctaTextColor};border-radius:6px;` +
+      `padding:10px 20px;font-size:14px;font-weight:600;text-decoration:none;display:inline-block;">${escapeHtml(ctaTextRaw)}</a></div>`;
+  }
+
+  const inner =
+    `<div style="font-family:${block.fontFamily};text-align:${block.align};">` +
+    `${headlineHtml}${codeHtml}${descHtml}${expiryHtml}${ctaHtml}</div>`;
   return `<tr><td${bgAttr(block)} align="${block.align}" style="padding:${cellPadding(block)};">${inner}</td></tr>`;
 }
 

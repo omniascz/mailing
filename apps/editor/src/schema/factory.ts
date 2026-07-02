@@ -8,6 +8,8 @@ import type {
   SpacerBlock,
   SocialBlock,
   ProductBlock,
+  VideoBlock,
+  CouponBlock,
   FooterBlock,
   ColumnsBlock,
   HeroBlock,
@@ -139,6 +141,36 @@ export function createBlock(type: BlockType): Block {
         imagePosition: 'top',
         align: 'center',
       } satisfies ProductBlock;
+    case 'video':
+      return {
+        id: newId('vid'),
+        type: 'video',
+        videoUrl: 'https://www.youtube.com/watch?v=',
+        thumbnailSrc: 'https://via.placeholder.com/600x338?text=Play+video',
+        alt: '',
+        playButtonColor: '#ffffff',
+        overlayColor: 'rgba(0,0,0,0.35)',
+        align: 'center',
+      } satisfies VideoBlock;
+    case 'coupon':
+      return {
+        id: newId('coup'),
+        type: 'coupon',
+        code: 'SAVE10',
+        headline: 'Your discount',
+        description: 'Use this code at checkout.',
+        expiryText: '',
+        codeBackgroundColor: '#f3f4f6',
+        codeTextColor: '#111827',
+        borderColor: '#2563eb',
+        borderStyle: 'dashed',
+        ctaText: '',
+        ctaUrl: '',
+        ctaBackgroundColor: '#2563eb',
+        ctaTextColor: '#ffffff',
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        align: 'center',
+      } satisfies CouponBlock;
     case 'footer':
       return {
         id: newId('foot'),

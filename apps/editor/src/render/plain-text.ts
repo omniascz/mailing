@@ -27,6 +27,8 @@ import type {
   HeroBlock,
   ImageBlock,
   ProductBlock,
+  VideoBlock,
+  CouponBlock,
   SocialBlock,
   SpacerBlock,
   TextBlock,
@@ -77,6 +79,10 @@ function renderBlock(block: Block, schema: EmailSchema, ctx: MergeTagContext): s
       return renderSocial(block, ctx);
     case 'product':
       return renderProduct(block, ctx);
+    case 'video':
+      return renderVideo(block, ctx);
+    case 'coupon':
+      return renderCoupon(block, ctx);
     case 'footer':
       return renderFooter(block, ctx);
     case 'dynamic':
@@ -155,6 +161,24 @@ function renderProduct(block: ProductBlock, ctx: MergeTagContext): string {
   const cta = parseMergeTags(block.ctaText, ctx).trim();
   const priceLine = compare ? `${price} (was ${compare})` : price;
   return [title, priceLine, desc, `${cta} → ${url}`].filter(Boolean).join('\n');
+}
+
+function renderVideo(block: VideoBlock, ctx: MergeTagContext): string {
+  const label = parseMergeTags(block.alt ?? '', ctx).trim() || 'Watch video';
+  const url = parseMergeTags(block.videoUrl, ctx).trim();
+  return `▶ ${label} → ${url}`;
+}
+
+function renderCoupon(block: CouponBlock, ctx: MergeTagContext): string {
+  const code = parseMergeTags(block.code, ctx).trim();
+  const headline = parseMergeTags(block.headline ?? '', ctx).trim();
+  const description = stripTags(parseMergeTags(block.description ?? '', ctx));
+  const expiry = parseMergeTags(block.expiryText ?? '', ctx).trim();
+  const ctaText = parseMergeTags(block.ctaText ?? '', ctx).trim();
+  const ctaUrl = parseMergeTags(block.ctaUrl ?? '', ctx).trim();
+  const lines = [headline, `Code: ${code}`, description, expiry];
+  if (ctaText && ctaUrl) lines.push(`${ctaText} → ${ctaUrl}`);
+  return lines.filter(Boolean).join('\n');
 }
 
 function renderFooter(block: FooterBlock, ctx: MergeTagContext): string {

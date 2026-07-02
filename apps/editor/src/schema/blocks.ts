@@ -179,6 +179,50 @@ export const productBlockSchema = z.object({
 });
 export type ProductBlock = z.infer<typeof productBlockSchema>;
 
+/**
+ * Video block — email clients can't play inline video, so this renders a
+ * clickable thumbnail with a play-button overlay that links to the video
+ * (YouTube/Vimeo/hosted). src fields skip .url() validation so a merge tag or
+ * relative path is allowed (resolved at render time), mirroring ProductBlock.
+ */
+export const videoBlockSchema = z.object({
+  ...baseBlockShape,
+  type: z.literal('video'),
+  videoUrl: z.string(),
+  thumbnailSrc: z.string(),
+  alt: z.string().default(''),
+  width: z.number().int().positive().optional(),
+  playButtonColor: z.string().default('#ffffff'),
+  overlayColor: z.string().default('rgba(0,0,0,0.35)'),
+  align: z.enum(['left', 'center', 'right']).default('center'),
+});
+export type VideoBlock = z.infer<typeof videoBlockSchema>;
+
+/**
+ * Coupon block — a merchandised discount-code card. `code` accepts a literal
+ * value OR a merge tag ({{coupon_code:batchId}}) so per-recipient unique codes
+ * resolve at send time. Optional CTA button links to the store.
+ */
+export const couponBlockSchema = z.object({
+  ...baseBlockShape,
+  type: z.literal('coupon'),
+  code: z.string(),
+  headline: z.string().default('Your discount'),
+  description: z.string().default(''),
+  expiryText: z.string().default(''),
+  codeBackgroundColor: z.string().default('#f3f4f6'),
+  codeTextColor: z.string().default('#111827'),
+  borderColor: z.string().default('#2563eb'),
+  borderStyle: z.enum(['solid', 'dashed', 'dotted']).default('dashed'),
+  ctaText: z.string().default(''),
+  ctaUrl: z.string().default(''),
+  ctaBackgroundColor: z.string().default('#2563eb'),
+  ctaTextColor: z.string().default('#ffffff'),
+  fontFamily: z.string().default('Arial, Helvetica, sans-serif'),
+  align: z.enum(['left', 'center', 'right']).default('center'),
+});
+export type CouponBlock = z.infer<typeof couponBlockSchema>;
+
 export const footerBlockSchema = z.object({
   ...baseBlockShape,
   type: z.literal('footer'),
@@ -233,6 +277,8 @@ export type LeafBlock =
   | SpacerBlock
   | SocialBlock
   | ProductBlock
+  | VideoBlock
+  | CouponBlock
   | FooterBlock;
 
 export type Block = LeafBlock | ColumnsBlock | HeroBlock | DynamicBlock;
@@ -252,6 +298,8 @@ export const blockSchema: z.ZodType<Block, z.ZodTypeDef, any> = z.lazy(() =>
     spacerBlockSchema,
     socialBlockSchema,
     productBlockSchema,
+    videoBlockSchema,
+    couponBlockSchema,
     footerBlockSchema,
     columnsBlockSchema,
     heroBlockSchema,
@@ -336,6 +384,8 @@ export const BLOCK_TYPES = [
   'hero',
   'social',
   'product',
+  'video',
+  'coupon',
   'footer',
   'dynamic',
 ] as const;

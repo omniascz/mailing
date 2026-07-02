@@ -12,6 +12,8 @@ const PALETTE: Array<{ type: BlockType; label: string; icon: string }> = [
   { type: 'columns', label: 'Columns', icon: '◫' },
   { type: 'hero', label: 'Hero', icon: '★' },
   { type: 'social', label: 'Social', icon: '@' },
+  { type: 'video', label: 'Video', icon: '▶' },
+  { type: 'coupon', label: 'Coupon', icon: '🏷' },
   { type: 'footer', label: 'Footer', icon: '_' },
   { type: 'dynamic', label: 'Dynamic', icon: '⟨⟩' },
 ];

@@ -185,4 +185,37 @@ describe('renderEmail', () => {
     expect(html).toContain('Recommended Sneakers');
     expect(html).toContain('https://s.co/x');
   });
+
+  it('renders a video block as a clickable thumbnail linking to the video', () => {
+    const vid = createBlock('video');
+    if (vid.type !== 'video') throw new Error('bad factory');
+    vid.videoUrl = 'https://youtu.be/abc123';
+    vid.thumbnailSrc = 'https://cdn.com/thumb.jpg';
+    const { html, links } = renderEmail(emailWith([vid]));
+    expect(html).toContain('https://cdn.com/thumb.jpg');
+    expect(html).toContain('href="https://youtu.be/abc123"');
+    expect(links).toContain('https://youtu.be/abc123');
+  });
+
+  it('renders a coupon block showing the code and optional CTA', () => {
+    const coupon = createBlock('coupon');
+    if (coupon.type !== 'coupon') throw new Error('bad factory');
+    coupon.code = 'SUMMER20';
+    coupon.headline = 'Summer sale';
+    coupon.ctaText = 'Shop';
+    coupon.ctaUrl = 'https://shop.com';
+    const { html, links } = renderEmail(emailWith([coupon]));
+    expect(html).toContain('SUMMER20');
+    expect(html).toContain('Summer sale');
+    expect(html).toContain('href="https://shop.com"');
+    expect(links).toContain('https://shop.com');
+  });
+
+  it('leaves a coupon merge tag untouched for per-recipient resolution at send time', () => {
+    const coupon = createBlock('coupon');
+    if (coupon.type !== 'coupon') throw new Error('bad factory');
+    coupon.code = '{{coupon_code:batch-1}}';
+    const { html } = renderEmail(emailWith([coupon]));
+    expect(html).toContain('{{coupon_code:batch-1}}');
+  });
 });
