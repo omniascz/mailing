@@ -25,6 +25,8 @@ export interface BrandGuidelinesData {
   voiceDescription: string;
   /** Example approved emails (plain text snippets) */
   approvedExamples: string[];
+  /** Brand logo URL (populated by the scrape-from-URL importer). */
+  logoUrl?: string | null;
 }
 
 export const brandGuidelines = pgTable(

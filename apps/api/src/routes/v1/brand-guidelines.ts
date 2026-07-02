@@ -4,6 +4,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { brandGuidelines } from '../../db/schema/brand-guidelines.js';
 import { checkBrandConsistency } from '../../services/ai/brand-consistency.js';
+import { scrapeBrandFromUrl } from '../../services/brand/brand-scraper.js';
 import { AppError } from '../../lib/app-error.js';
 
 export default async function brandGuidelinesRoutes(app: FastifyInstance) {
@@ -75,6 +76,53 @@ export default async function brandGuidelinesRoutes(app: FastifyInstance) {
     await db.delete(brandGuidelines)
       .where(and(eq(brandGuidelines.id, id), eq(brandGuidelines.orgId, req.user!.orgId)));
     return reply.status(204).send();
+  });
+
+  /**
+   * POST /api/v1/brand-guidelines/scrape-url — scan a website and extract a
+   * brand kit (logo, colours, fonts). Optionally persist it as a new guideline.
+   */
+  app.post('/api/v1/brand-guidelines/scrape-url', async (req, reply) => {
+    const body = z
+      .object({
+        url: z.string().url(),
+        save: z.boolean().default(false),
+        name: z.string().min(1).max(100).optional(),
+      })
+      .parse(req.body);
+
+    const kit = await scrapeBrandFromUrl(body.url);
+
+    if (!body.save) {
+      return { data: { kit } };
+    }
+
+    const existing = await db
+      .select({ id: brandGuidelines.id })
+      .from(brandGuidelines)
+      .where(eq(brandGuidelines.orgId, req.user!.orgId));
+    const [row] = await db
+      .insert(brandGuidelines)
+      .values({
+        orgId: req.user!.orgId,
+        name: body.name ?? kit.siteName ?? 'Imported brand',
+        guidelines: {
+          toneDescriptors: [],
+          forbiddenPhrases: [],
+          requiredPhrases: [],
+          primaryColors: kit.colors,
+          approvedFonts: kit.fonts,
+          maxExclamationMarks: 3,
+          emojisAllowed: true,
+          readingLevel: 'intermediate',
+          voiceDescription: '',
+          approvedExamples: [],
+          logoUrl: kit.logoUrl,
+        },
+        active: existing.length === 0,
+      })
+      .returning();
+    return reply.status(201).send({ data: { kit, guideline: row } });
   });
 
   /** POST /api/v1/brand-guidelines/check — check email against active guidelines */
