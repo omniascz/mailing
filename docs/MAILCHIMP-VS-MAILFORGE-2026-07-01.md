@@ -124,7 +124,7 @@ Landing page builder · website builder + nákup domény · postcards/fyzická p
 
 1. **Naplánované kampaně se neodešlou** (chybí scheduler cron) — send/deliverability
 2. **Automation list-subscribe & tag-added triggery se nikdy nevolají** — nejzákladnější automatizace nefungují
-3. **56-recipe workflow galerie nepoužitelná** (config mismatch)
+3. **Workflow galerie config mismatch** — ✅ ČÁSTEČNĚ OPRAVENO 2026-07-02: `wait` (114 nodů, `{duration:{days,hours}}`→NaN) a `send_sms` (`{body}`→`{message}`) sladěny s executor kontraktem + regression test. ZBÝVÁ (sémantické, vyžadují nové executor featury): 22 `condition {rule:{type:...}}` business podmínek (executor čte `field/op/value` → dnes vždy else-větev) + 9 event-relativních `wait {until:{field,offsetHours}}` (executor chce ISO string).
 4. **Workflow converted/splitBranch/run.data se nepersistují přes wait** — konverze/A-B/cascade tiše rozbité
 5. **Workflow akce WhatsApp/Push/In-app/Voice/unsubscribe jsou no-op**
 6. **Adaptivní ISP throttle = dead code**

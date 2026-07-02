@@ -135,4 +135,41 @@ describe('findTemplate / listTemplates', () => {
     expect(ecom.every((t) => t.recommendedFor.includes('ecommerce'))).toBe(true);
     expect(ecom.length).toBeGreaterThan(0);
   });
+
+  // Executor-contract compatibility (services/workflows/actions.ts). These
+  // previously drifted: wait emitted { duration: {days,hours} } → NaN, and
+  // send_sms emitted { body } while the executor reads { message } → no SMS.
+  it('every wait node uses the executor contract (numeric duration+unit, or ISO until)', () => {
+    const bad: string[] = [];
+    for (const t of WORKFLOW_TEMPLATES) {
+      for (const node of t.nodes) {
+        if (node.type !== 'wait') continue;
+        const c = node.config as { duration?: unknown; unit?: unknown; until?: unknown };
+        const okDuration =
+          typeof c.duration === 'number' &&
+          (c.unit === 'days' || c.unit === 'hours' || c.unit === 'minutes');
+        // Event-relative { until: {field,...} } waits are a documented, separate
+        // gap (need run-data resolution); only string `until` is executor-valid.
+        const okUntil = typeof c.until === 'string';
+        const okEventRelative = c.until != null && typeof c.until === 'object';
+        if (!okDuration && !okUntil && !okEventRelative) {
+          bad.push(`${t.slug}/${node.id}`);
+        }
+        // The specific bug: duration must never be an object.
+        expect(typeof c.duration === 'object' && c.duration !== null).toBe(false);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('every send_sms node carries a `message` string (not `body`)', () => {
+    for (const t of WORKFLOW_TEMPLATES) {
+      for (const node of t.nodes) {
+        if (node.type !== 'send_sms') continue;
+        const c = node.config as Record<string, unknown>;
+        expect(typeof c.message).toBe('string');
+        expect(c.body).toBeUndefined();
+      }
+    }
+  });
 });

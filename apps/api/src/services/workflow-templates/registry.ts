@@ -68,11 +68,17 @@ const e = (id: string, source: string, target: string, label?: string): Workflow
   target,
   label,
 });
+// Executor contract (services/workflows/actions.ts): wait wants
+// { duration: number, unit } — NOT a nested { days, hours } object (which made
+// duration*ms = NaN). Collapse to a single exact unit.
 const wait = (id: string, days: number, hours = 0): WorkflowNode =>
-  n(id, 'wait', { duration: { days, hours } });
+  hours === 0
+    ? n(id, 'wait', { duration: days, unit: 'days' })
+    : n(id, 'wait', { duration: days * 24 + hours, unit: 'hours' });
 const email = (id: string, subject: string, templateRef?: string): WorkflowNode =>
   n(id, 'send_email', { subject, templateRef });
-const sms = (id: string, body: string): WorkflowNode => n(id, 'send_sms', { body });
+// executeSendSms reads config.message (a { body } field never sent).
+const sms = (id: string, body: string): WorkflowNode => n(id, 'send_sms', { message: body });
 
 export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
   // ─── Welcome series ─────────────────────────────────────────────────────────
@@ -170,7 +176,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       email('e1', 'You left something in your cart'),
       wait('w1', 1),
       n('c1', 'condition', { rule: { type: 'cart_still_abandoned' } }),
-      n('s1', 'send_sms', { body: 'Your cart is waiting — finish checkout: {{cart.url}}' }),
+      n('s1', 'send_sms', { message: 'Your cart is waiting — finish checkout: {{cart.url}}' }),
     ],
     edges: [
       e('e0', 't', 'w0'),
