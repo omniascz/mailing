@@ -1,4 +1,5 @@
-import { Store, Plug } from 'lucide-react';
+import Link from 'next/link';
+import { Store, Plug, LayoutGrid } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
@@ -39,12 +40,20 @@ export default async function IntegrationsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <header className="mb-8">
-        <h1 className="text-2xl font-semibold text-secondary-900">Integrations</h1>
-        <p className="mt-1 text-sm text-secondary-500">
-          Connected e-commerce stores. Orders, customers and products sync in; coupon codes sync
-          out for checkout redemption.
-        </p>
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-secondary-900">Integrations</h1>
+          <p className="mt-1 text-sm text-secondary-500">
+            Connected e-commerce stores. Orders, customers and products sync in; coupon codes sync
+            out for checkout redemption.
+          </p>
+        </div>
+        <Link
+          href="/integrations/marketplace"
+          className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+        >
+          <LayoutGrid className="h-4 w-4" /> Browse marketplace
+        </Link>
       </header>
 
       {connections.length === 0 ? (
