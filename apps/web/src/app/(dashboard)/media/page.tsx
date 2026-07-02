@@ -53,7 +53,6 @@ export default async function MediaPage() {
               <Card className="overflow-hidden">
                 <div className="aspect-square bg-secondary-100">
                   {a.mimeType.startsWith('image/') ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={a.thumbnailUrl ?? a.storageUrl}
                       alt={a.altText ?? a.filename}
