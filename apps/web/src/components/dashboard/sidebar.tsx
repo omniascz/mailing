@@ -25,6 +25,8 @@ import {
   Gift,
   FlaskConical,
   Image as ImageIcon,
+  ClipboardList,
+  CalendarClock,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -61,6 +63,7 @@ const NAV: NavSection[] = [
       { href: '/custom-fields', label: 'Custom fields', icon: Database },
       { href: '/lead-scoring', label: 'Lead scoring', icon: TrendingUp },
       { href: '/signup-forms', label: 'Signup forms', icon: FileText },
+      { href: '/surveys', label: 'Surveys & NPS', icon: ClipboardList },
     ],
   },
   {
@@ -69,6 +72,7 @@ const NAV: NavSection[] = [
       { href: '/coupons', label: 'Coupons', icon: Ticket },
       { href: '/loyalty', label: 'Loyalty', icon: Gift },
       { href: '/reviews', label: 'Reviews', icon: Star },
+      { href: '/meetings', label: 'Meetings', icon: CalendarClock },
       { href: '/integrations', label: 'Integrations', icon: Plug },
     ],
   },
