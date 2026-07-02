@@ -18,6 +18,7 @@ import {
   getCampaignDeviceStats,
   getCampaignClientStats,
   getCampaignHeatmapData,
+  getCampaignPositionalHeatmap,
   compareCampaigns,
 } from '../../services/analytics/index.js';
 import {
@@ -349,6 +350,27 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       const orgId = req.user!.orgId;
       const heatmap = await getCampaignHeatmapData(id, orgId);
       return { data: heatmap };
+    },
+  );
+
+  /**
+   * GET /api/v1/campaigns/:id/heatmap
+   * Positional click heat-map — clicks mapped to each link's vertical position
+   * in the email body (relativeY 0..1) with intensity, for an overlay render.
+   */
+  app.get(
+    '/api/v1/campaigns/:id/heatmap',
+    {
+      schema: {
+        tags: ['Analytics'],
+        summary: 'Get positional click heat-map',
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const orgId = req.user!.orgId;
+      return { data: await getCampaignPositionalHeatmap(id, orgId) };
     },
   );
 

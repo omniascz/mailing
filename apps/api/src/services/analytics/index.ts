@@ -399,6 +399,91 @@ export async function getCampaignHeatmapData(
   };
 }
 
+// ─── Positional heatmap ─────────────────────────────────────────────────────────
+
+export interface PositionalHeatmapLink {
+  url: string;
+  clicks: number;
+  uniqueClicks: number;
+  /** 1-based order the link appears in the email body (by HTML offset). */
+  ordinal: number;
+  /** Vertical position 0..1 (0 = top of email, 1 = bottom), or null if unlocatable. */
+  relativeY: number | null;
+  /** Click intensity 0..1 relative to the most-clicked link. */
+  intensity: number;
+}
+
+export interface PositionalHeatmap {
+  links: PositionalHeatmapLink[];
+  totalClicks: number;
+  /** True when at least one link could be located in the HTML body. */
+  hasPositions: boolean;
+}
+
+/**
+ * Pure computation: map link click stats to positions within an HTML body.
+ * Extracted from the DB function so it can be unit-tested directly.
+ */
+export function computePositionalHeatmap(
+  links: Array<{ url: string; clicks: number; uniqueClicks: number }>,
+  html: string,
+): PositionalHeatmap {
+  const htmlLen = html.length;
+  const maxClicks = links.reduce((m, l) => Math.max(m, l.clicks), 0);
+
+  const withPos = links.map((l) => {
+    const offset = htmlLen > 0 ? html.indexOf(l.url) : -1;
+    const relativeY =
+      offset >= 0 && htmlLen > 0 ? Math.round((offset / htmlLen) * 1000) / 1000 : null;
+    return {
+      ...l,
+      offset,
+      relativeY,
+      intensity: maxClicks > 0 ? Math.round((l.clicks / maxClicks) * 1000) / 1000 : 0,
+    };
+  });
+
+  // Sort by document position (located links first, in order; unlocatable last).
+  withPos.sort((a, b) => {
+    if (a.offset < 0 && b.offset < 0) return b.clicks - a.clicks;
+    if (a.offset < 0) return 1;
+    if (b.offset < 0) return -1;
+    return a.offset - b.offset;
+  });
+
+  return {
+    links: withPos.map(({ offset: _offset, ...rest }, i) => ({ ...rest, ordinal: i + 1 })),
+    totalClicks: links.reduce((a, l) => a + l.clicks, 0),
+    hasPositions: withPos.some((l) => l.relativeY !== null),
+  };
+}
+
+/**
+ * Positional click heat-map: maps each clicked link to its vertical position in
+ * the email body (derived from the link's byte offset in the stored HTML), so an
+ * overlay can shade WHERE in the email people click — not just which URL.
+ *
+ * Works entirely from data already captured (click events + campaign HTML); no
+ * send-path re-instrumentation required. Links not found in the HTML (e.g. from
+ * a since-edited draft) get relativeY=null and sort to the end.
+ */
+export async function getCampaignPositionalHeatmap(
+  campaignId: string,
+  orgId: string,
+): Promise<PositionalHeatmap> {
+  await assertCampaignExists(campaignId, orgId);
+
+  const [campaign] = await db
+    .select({ content: campaigns.content })
+    .from(campaigns)
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
+    .limit(1);
+
+  const html = ((campaign?.content ?? {}) as { html?: string }).html ?? '';
+  const base = await getCampaignHeatmapData(campaignId, orgId);
+  return computePositionalHeatmap(base.links, html);
+}
+
 // ─── Comparative reports ──────────────────────────────────────────────────────
 
 export interface CampaignComparison {
