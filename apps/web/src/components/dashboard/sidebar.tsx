@@ -18,6 +18,7 @@ import {
   Database,
   TrendingUp,
   Bot,
+  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -53,6 +54,10 @@ const NAV: NavSection[] = [
       { href: '/lead-scoring', label: 'Lead scoring', icon: TrendingUp },
       { href: '/signup-forms', label: 'Signup forms', icon: FileText },
     ],
+  },
+  {
+    label: 'Reporting',
+    items: [{ href: '/reports', label: 'Reports', icon: BarChart3 }],
   },
   {
     label: 'Deliverability',
