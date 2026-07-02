@@ -27,6 +27,10 @@ import {
   Image as ImageIcon,
   ClipboardList,
   CalendarClock,
+  MonitorSmartphone,
+  FileDown,
+  Rss,
+  Hash,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -49,6 +53,8 @@ const NAV: NavSection[] = [
       { href: '/workflows/gallery', label: 'Workflow gallery', icon: Sparkles },
       { href: '/ab-tests', label: 'A/B tests', icon: FlaskConical },
       { href: '/media', label: 'Media library', icon: ImageIcon },
+      { href: '/site-messages', label: 'Site messages', icon: MonitorSmartphone },
+      { href: '/sms-keywords', label: 'SMS keywords', icon: Hash },
       { href: '/inbox-preview', label: 'Inbox preview', icon: Eye },
       { href: '/ai-agents', label: 'AI agents', icon: Bot },
     ],
@@ -73,6 +79,8 @@ const NAV: NavSection[] = [
       { href: '/loyalty', label: 'Loyalty', icon: Gift },
       { href: '/reviews', label: 'Reviews', icon: Star },
       { href: '/meetings', label: 'Meetings', icon: CalendarClock },
+      { href: '/product-feeds', label: 'Product feeds', icon: Rss },
+      { href: '/digital-assets', label: 'Digital assets', icon: FileDown },
       { href: '/integrations', label: 'Integrations', icon: Plug },
     ],
   },
