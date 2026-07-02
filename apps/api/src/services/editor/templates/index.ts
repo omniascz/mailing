@@ -9,6 +9,7 @@
  */
 
 import { EXTENDED_TEMPLATES } from './extended.js';
+import { EXTENDED_TEMPLATES_2 } from './extended2.js';
 
 export type TemplateCategory =
   | 'newsletter'
@@ -967,8 +968,52 @@ export const TEMPLATES: TemplateMeta[] = [
   },
 ];
 
-// Merge core + extended (40 additional templates → 50+ total)
+// Merge core + extended batches
 TEMPLATES.push(...EXTENDED_TEMPLATES);
+TEMPLATES.push(...EXTENDED_TEMPLATES_2);
+
+// ─── Thumbnails ─────────────────────────────────────────────────────────────────
+
+/** Category → accent colour for generated placeholder thumbnails. */
+const CATEGORY_COLOR: Record<TemplateCategory, string> = {
+  newsletter: '#1e293b',
+  promo: '#dc2626',
+  transactional: '#059669',
+  event: '#4f46e5',
+  onboarding: '#2563eb',
+  seasonal: '#b45309',
+  ecommerce: '#0369a1',
+  b2b: '#0f172a',
+  saas: '#4338ca',
+};
+
+/**
+ * Generate a lightweight inline SVG data-URI thumbnail (no network, no files)
+ * so the template gallery shows a coloured preview card instead of a blank box.
+ */
+function svgThumbnail(name: string, category: TemplateCategory): string {
+  const color = CATEGORY_COLOR[category] ?? '#334155';
+  const label = category.toUpperCase();
+  const initial = (name.trim()[0] ?? 'F').toUpperCase();
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="180" viewBox="0 0 240 180">` +
+    `<rect width="240" height="180" fill="#f1f5f9"/>` +
+    `<rect width="240" height="56" fill="${color}"/>` +
+    `<circle cx="30" cy="28" r="14" fill="#ffffff" opacity="0.9"/>` +
+    `<text x="30" y="34" font-family="Arial" font-size="16" font-weight="700" fill="${color}" text-anchor="middle">${initial}</text>` +
+    `<text x="56" y="33" font-family="Arial" font-size="11" font-weight="700" fill="#ffffff" letter-spacing="1">${label}</text>` +
+    `<rect x="20" y="78" width="200" height="12" rx="3" fill="#cbd5e1"/>` +
+    `<rect x="20" y="100" width="160" height="10" rx="3" fill="#e2e8f0"/>` +
+    `<rect x="20" y="118" width="180" height="10" rx="3" fill="#e2e8f0"/>` +
+    `<rect x="20" y="144" width="90" height="20" rx="5" fill="${color}"/>` +
+    `</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+// Fill any missing thumbnails with a generated SVG placeholder.
+for (const tpl of TEMPLATES) {
+  if (!tpl.thumbnailUrl) tpl.thumbnailUrl = svgThumbnail(tpl.name, tpl.category);
+}
 
 // ─── Lookup helpers ───────────────────────────────────────────────────────────
 
