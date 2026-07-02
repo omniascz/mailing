@@ -37,6 +37,8 @@ import {
   UsersRound,
   LifeBuoy,
   Database as DatabaseIcon,
+  Boxes,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -59,6 +61,7 @@ const NAV: NavSection[] = [
       { href: '/workflows/gallery', label: 'Workflow gallery', icon: Sparkles },
       { href: '/ab-tests', label: 'A/B tests', icon: FlaskConical },
       { href: '/media', label: 'Media library', icon: ImageIcon },
+      { href: '/rss-campaigns', label: 'RSS campaigns', icon: Rss },
       { href: '/site-messages', label: 'Site messages', icon: MonitorSmartphone },
       { href: '/sms-keywords', label: 'SMS keywords', icon: Hash },
       { href: '/inbox-preview', label: 'Inbox preview', icon: Eye },
@@ -73,6 +76,7 @@ const NAV: NavSection[] = [
       { href: '/segments', label: 'Segments', icon: Filter },
       { href: '/tags', label: 'Tags', icon: TagIcon },
       { href: '/custom-fields', label: 'Custom fields', icon: Database },
+      { href: '/custom-objects', label: 'Custom objects', icon: Boxes },
       { href: '/lead-scoring', label: 'Lead scoring', icon: TrendingUp },
       { href: '/signup-forms', label: 'Signup forms', icon: FileText },
       { href: '/surveys', label: 'Surveys & NPS', icon: ClipboardList },
@@ -87,6 +91,7 @@ const NAV: NavSection[] = [
       { href: '/meetings', label: 'Meetings', icon: CalendarClock },
       { href: '/product-feeds', label: 'Product feeds', icon: Rss },
       { href: '/digital-assets', label: 'Digital assets', icon: FileDown },
+      { href: '/newsletter-tiers', label: 'Paid tiers', icon: CreditCard },
       { href: '/integrations', label: 'Integrations', icon: Plug },
     ],
   },
