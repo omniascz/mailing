@@ -139,7 +139,106 @@ export default async function SignupFormDetailPage({
           </CardContent>
         </Card>
       </section>
+
+      <section className="mt-6">
+        <TargetingCard targeting={readTargeting(form.config)} />
+      </section>
     </div>
+  );
+}
+
+interface FormTargeting {
+  urlRules?: Array<{ match: string; value: string }>;
+  urlLogic?: 'and' | 'or';
+  devices?: string[];
+  trigger?: { type: string; delaySeconds?: number; scrollPercent?: number };
+  frequency?: { cooldownDays?: number; maxImpressions?: number; hideAfterSubmit?: boolean };
+}
+
+function readTargeting(config: Record<string, unknown>): FormTargeting | null {
+  const t = config?.targeting;
+  return t && typeof t === 'object' ? (t as FormTargeting) : null;
+}
+
+function triggerLabel(t: FormTargeting['trigger']): string {
+  if (!t || t.type === 'immediate') return 'Immediately on page load';
+  if (t.type === 'delay') return `After a ${t.delaySeconds ?? 5}s delay`;
+  if (t.type === 'scroll') return `After scrolling ${t.scrollPercent ?? 50}%`;
+  if (t.type === 'exit_intent') return 'On exit intent';
+  return t.type;
+}
+
+function TargetingCard({ targeting }: { targeting: FormTargeting | null }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Targeting &amp; behaviour</CardTitle>
+        <CardDescription>Where, when and how often this form shows.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!targeting ? (
+          <p className="text-sm text-secondary-500">
+            No rules — shows on all pages, immediately, every visit.
+          </p>
+        ) : (
+          <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-secondary-500">Trigger</dt>
+              <dd className="mt-1 text-secondary-900">{triggerLabel(targeting.trigger)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-secondary-500">Devices</dt>
+              <dd className="mt-1 text-secondary-900">
+                {targeting.devices && targeting.devices.length > 0
+                  ? targeting.devices.join(', ')
+                  : 'All devices'}
+              </dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="text-xs uppercase tracking-wider text-secondary-500">Pages</dt>
+              <dd className="mt-1 text-secondary-900">
+                {targeting.urlRules && targeting.urlRules.length > 0 ? (
+                  <ul className="space-y-1">
+                    {targeting.urlRules.map((r, i) => (
+                      <li key={i} className="font-mono text-xs">
+                        URL {r.match.replace(/_/g, ' ')} &quot;{r.value}&quot;
+                        {i < targeting.urlRules!.length - 1
+                          ? ` ${(targeting.urlLogic ?? 'or').toUpperCase()}`
+                          : ''}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  'All pages'
+                )}
+              </dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="text-xs uppercase tracking-wider text-secondary-500">Frequency</dt>
+              <dd className="mt-1 flex flex-wrap gap-1">
+                {targeting.frequency?.cooldownDays ? (
+                  <Badge variant="default">
+                    Re-show after {targeting.frequency.cooldownDays}d
+                  </Badge>
+                ) : null}
+                {targeting.frequency?.maxImpressions ? (
+                  <Badge variant="default">Max {targeting.frequency.maxImpressions} views</Badge>
+                ) : null}
+                {targeting.frequency?.hideAfterSubmit ? (
+                  <Badge variant="default">Hide after submit</Badge>
+                ) : null}
+                {!targeting.frequency ||
+                (!targeting.frequency.cooldownDays &&
+                  !targeting.frequency.maxImpressions &&
+                  !targeting.frequency.hideAfterSubmit) ? (
+                  <span className="text-secondary-900">No cap — every visit</span>
+                ) : null}
+              </dd>
+            </div>
+          </dl>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
