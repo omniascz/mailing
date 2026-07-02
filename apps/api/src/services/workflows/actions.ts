@@ -14,11 +14,13 @@ import { db } from '../../db/client.js';
 import {
   contacts,
   emailEvents,
+  workflowEvents,
   type WorkflowNode,
   type WorkflowRun,
 } from '../../db/schema/index.js';
 import { redis } from '../../lib/redis.js';
 import { shouldSuppressDueToConversion } from './conversion-suppression.js';
+import { normalizeConditionConfig } from './condition-rules.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -277,12 +279,11 @@ async function executeCondition(
   _run: WorkflowRun,
   ctx: ActionContext,
 ): Promise<ActionResult> {
-  const config = node.config as {
-    field: string;
-    op: string;
-    value?: unknown;
-    withinDays?: number;
-  };
+  // Templates author conditions as { rule: { type } } business predicates;
+  // normalize them into the field/op/value contract this evaluator understands.
+  const config = normalizeConditionConfig(
+    node.config as { field?: string; op?: string; value?: unknown; withinDays?: number },
+  );
 
   let result = false;
   const contact = ctx.contact;
@@ -333,10 +334,36 @@ async function executeCondition(
       result = !!row;
       break;
     }
+    case 'api_event': {
+      // api_event_occurred rule — did the contact fire this custom event
+      // (optionally within N days)?
+      const eventName = String(config.value ?? '');
+      if (!eventName) {
+        result = false;
+        break;
+      }
+      const conds = [
+        eq(workflowEvents.contactId, contact.id),
+        eq(workflowEvents.orgId, ctx.orgId),
+        eq(workflowEvents.eventName, eventName),
+      ];
+      if (config.withinDays) {
+        const since = new Date(Date.now() - config.withinDays * 86_400_000);
+        conds.push(sql`${workflowEvents.createdAt} >= ${since.toISOString()}`);
+      }
+      const [row] = await db
+        .select({ id: workflowEvents.id })
+        .from(workflowEvents)
+        .where(and(...conds))
+        .limit(1);
+      result = !!row;
+      break;
+    }
     default: {
-      // Generic field comparison
+      // Generic field comparison. An `unsupported:<type>` field (rule types we
+      // can't yet evaluate) resolves to undefined → false (traceable, not silent).
       const fieldValue = getContactField(contact, config.field);
-      result = compareValues(fieldValue, config.op, config.value);
+      result = compareValues(fieldValue, config.op ?? 'eq', config.value);
     }
   }
 
