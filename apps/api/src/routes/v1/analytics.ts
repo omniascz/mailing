@@ -23,8 +23,9 @@ import {
 import { getCampaignGeoStats } from '../../services/analytics/geo.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { revenueEvents } from '../../db/schema/index.js';
+import { revenueEvents, campaigns } from '../../db/schema/index.js';
 import { toCsv } from '../../lib/csv.js';
+import { renderPdf } from '../../lib/pdf.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -92,6 +93,81 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         .header('Content-Type', 'text/csv; charset=utf-8')
         .header('Content-Disposition', `attachment; filename="campaign_${id}_report.csv"`)
         .send(csv);
+    },
+  );
+
+  /**
+   * GET /api/v1/campaigns/:id/report.pdf
+   * Download the campaign report (summary + devices + clients + links) as PDF.
+   */
+  app.get(
+    '/api/v1/campaigns/:id/report.pdf',
+    {
+      schema: {
+        tags: ['Analytics'],
+        summary: 'Export campaign report as PDF',
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (req, reply) => {
+      const { id } = idParam.parse(req.params);
+      const orgId = req.user!.orgId;
+
+      const [campaign] = await db
+        .select({ name: campaigns.name, subject: campaigns.subject, sentAt: campaigns.sentAt })
+        .from(campaigns)
+        .where(and(eq(campaigns.id, id), eq(campaigns.orgId, orgId)))
+        .limit(1);
+      if (!campaign) {
+        return reply.code(404).send({ code: 'NOT_FOUND', message: 'Campaign not found', statusCode: 404 });
+      }
+
+      const [stats, links, devices, clients] = await Promise.all([
+        getCampaignStats(id, orgId),
+        getCampaignLinkStats(id, orgId),
+        getCampaignDeviceStats(id, orgId),
+        getCampaignClientStats(id, orgId),
+      ]);
+
+      const summaryRows = Object.entries(stats as unknown as Record<string, unknown>)
+        .filter(([, v]) => typeof v !== 'object')
+        .map(([metric, value]) => [metric, String(value)] as [string, string]);
+
+      const sentLabel = campaign.sentAt
+        ? new Date(campaign.sentAt).toISOString().slice(0, 16).replace('T', ' ')
+        : 'not sent';
+
+      const pdf = renderPdf({
+        title: campaign.name ?? 'Campaign report',
+        subtitle: `Subject: ${campaign.subject ?? '—'}  ·  Sent: ${sentLabel}`,
+        sections: [
+          { heading: 'Summary', rows: summaryRows },
+          {
+            heading: 'Devices (opens)',
+            rows: [
+              ['Desktop', String(devices.desktop)],
+              ['Mobile', String(devices.mobile)],
+              ['Tablet', String(devices.tablet)],
+              ['Unknown', String(devices.unknown)],
+            ],
+          },
+          {
+            heading: 'Email clients (opens)',
+            columns: ['Client', 'Opens', '%'],
+            rows: clients.map((c) => [c.label, String(c.opens), `${c.percentage}%`]),
+          },
+          {
+            heading: 'Links',
+            columns: ['URL', 'Clicks', 'Unique', '%'],
+            rows: links.map((l) => [l.url, String(l.clicks), String(l.uniqueClicks), `${l.percentage}%`]),
+          },
+        ],
+      });
+
+      return reply
+        .header('Content-Type', 'application/pdf')
+        .header('Content-Disposition', `attachment; filename="campaign_${id}_report.pdf"`)
+        .send(pdf);
     },
   );
 
