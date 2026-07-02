@@ -17,9 +17,50 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { pushSubscriptions, vapidKeys, pushSendLog } from '../../db/schema/push.js';
 import { generateVapidKeyPair, WebPushAdapter } from '../../channels/push/web-push-adapter.js';
+import {
+  registerDevice,
+  deactivateDevice,
+  listContactDevices,
+} from '../../services/push/mobile.js';
 import { AppError } from '../../lib/app-error.js';
 
 export default async function pushRoutes(app: FastifyInstance) {
+  // ── Native mobile device registry (APNs / FCM) ────────────────────────────
+  // The mobile SDK registers with a public (fm_pub_) key → authenticatePublic.
+
+  app.post('/api/v1/push/devices', { preHandler: [app.authenticatePublic] }, async (req, reply) => {
+    const { orgId } = req.user as { orgId: string };
+    const body = z
+      .object({
+        contactId: z.string().uuid().optional(),
+        platform: z.enum(['ios', 'android']),
+        token: z.string().min(8).max(4096),
+        appId: z.string().max(255).optional(),
+        deviceModel: z.string().max(128).optional(),
+        osVersion: z.string().max(64).optional(),
+      })
+      .parse(req.body);
+    const device = await registerDevice(orgId, body);
+    return reply.status(201).send({ data: { id: device.id, platform: device.platform } });
+  });
+
+  app.delete(
+    '/api/v1/push/devices/:token',
+    { preHandler: [app.authenticatePublic] },
+    async (req, reply) => {
+      const { orgId } = req.user as { orgId: string };
+      const { token } = z.object({ token: z.string().min(8).max(4096) }).parse(req.params);
+      await deactivateDevice(orgId, token);
+      return reply.status(204).send();
+    },
+  );
+
+  app.get('/api/v1/push/devices', { preHandler: [app.authenticate] }, async (req) => {
+    const { orgId } = req.user as { orgId: string };
+    const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.query);
+    return { data: await listContactDevices(orgId, contactId) };
+  });
+
   // ── VAPID key management ──────────────────────────────────────────────────
 
   /** Generate a new VAPID key pair for an org */

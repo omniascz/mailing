@@ -92,6 +92,13 @@
       "when": 1782164000000,
       "tag": "0012_custom_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1782164100000,
+      "tag": "0013_mobile_devices",
+      "breakpoints": true
     }
   ]
 }

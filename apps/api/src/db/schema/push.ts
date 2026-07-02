@@ -2,7 +2,17 @@
  * Push notification schema: subscriptions, VAPID keys, send log (task 7.10).
  */
 
-import { pgTable, text, boolean, timestamp, uuid, index, uniqueIndex, jsonb } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  boolean,
+  timestamp,
+  uuid,
+  varchar,
+  index,
+  uniqueIndex,
+  jsonb,
+} from 'drizzle-orm/pg-core';
 
 // ─── VAPID key pairs (org-level) ──────────────────────────────────────────────
 
@@ -53,6 +63,40 @@ export const pushSubscriptions = pgTable(
   }),
 );
 
+// ─── Native mobile devices (APNs / FCM) ───────────────────────────────────────
+//
+// Distinct from web push_subscriptions (browser VAPID). A native iOS/Android app
+// registers its device token via the SDK; sends go through APNs (iOS) or FCM
+// (Android) using the platform-specific payloads built in mobile-pure.ts.
+
+export const mobileDevices = pgTable(
+  'mobile_devices',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orgId: uuid('org_id').notNull(),
+    contactId: uuid('contact_id'),
+    /** 'ios' → APNs device token; 'android' → FCM registration token. */
+    platform: varchar('platform', { length: 16 }).notNull(),
+    /** The APNs/FCM token string. */
+    token: text('token').notNull(),
+    /** App bundle id / package name (routing to the right APNs topic). */
+    appId: varchar('app_id', { length: 255 }),
+    deviceModel: varchar('device_model', { length: 128 }),
+    osVersion: varchar('os_version', { length: 64 }),
+    active: boolean('active').notNull().default(true),
+    /** Set when APNs/FCM reports the token is invalid/unregistered. */
+    invalidatedAt: timestamp('invalidated_at', { withTimezone: true }),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    orgIdx: index('mobile_devices_org_idx').on(t.orgId),
+    contactIdx: index('mobile_devices_contact_idx').on(t.contactId),
+    tokenIdx: uniqueIndex('mobile_devices_org_token_idx').on(t.orgId, t.token),
+  }),
+);
+
 // ─── Push send log ────────────────────────────────────────────────────────────
 
 export const pushSendLog = pgTable(
@@ -94,3 +138,5 @@ export const pushSendLog = pgTable(
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
 export type VapidKey = typeof vapidKeys.$inferSelect;
+export type MobileDevice = typeof mobileDevices.$inferSelect;
+export type NewMobileDevice = typeof mobileDevices.$inferInsert;
