@@ -8,6 +8,7 @@ import { and, count, countDistinct, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents, campaigns } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { EMAIL_CLIENT_LABELS } from '../../lib/user-agent.js';
 import { isClickHouseEnabled } from './clickhouse/client.js';
 import { chCampaignEventRows, chOrgDailyRows } from './clickhouse/queries.js';
 
@@ -127,6 +128,14 @@ export interface DeviceStats {
   mobile: number;
   tablet: number;
   unknown: number;
+}
+
+export interface ClientStat {
+  /** Normalized client id (e.g. "gmail"), or "unknown" for unattributed opens. */
+  client: string;
+  label: string;
+  opens: number;
+  percentage: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -303,6 +312,47 @@ export async function getCampaignDeviceStats(
     tablet: get('tablet'),
     unknown: get('unknown') + rows.filter((r) => !r.deviceType).reduce((a, r) => a + r.cnt, 0),
   };
+}
+
+// ─── Email-client stats ─────────────────────────────────────────────────────────
+
+export async function getCampaignClientStats(
+  campaignId: string,
+  orgId: string,
+): Promise<ClientStat[]> {
+  await assertCampaignExists(campaignId, orgId);
+
+  const rows = await db
+    .select({
+      client: emailEvents.emailClient,
+      cnt: count(),
+    })
+    .from(emailEvents)
+    .where(
+      and(
+        eq(emailEvents.campaignId, campaignId),
+        eq(emailEvents.orgId, orgId),
+        eq(emailEvents.eventType, 'open'),
+      ),
+    )
+    .groupBy(emailEvents.emailClient);
+
+  const total = rows.reduce((a, r) => a + r.cnt, 0);
+  // Fold nulls into a single "unknown" bucket.
+  const byClient = new Map<string, number>();
+  for (const r of rows) {
+    const key = r.client ?? 'unknown';
+    byClient.set(key, (byClient.get(key) ?? 0) + r.cnt);
+  }
+
+  return [...byClient.entries()]
+    .map(([client, opens]) => ({
+      client,
+      label: client === 'unknown' ? 'Unknown' : (EMAIL_CLIENT_LABELS[client] ?? client),
+      opens,
+      percentage: total > 0 ? Math.round((opens / total) * 10000) / 100 : 0,
+    }))
+    .sort((a, b) => b.opens - a.opens);
 }
 
 // ─── Heatmap data ─────────────────────────────────────────────────────────────

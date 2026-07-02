@@ -16,6 +16,7 @@ import {
   getCampaignTimeline,
   getCampaignLinkStats,
   getCampaignDeviceStats,
+  getCampaignClientStats,
   getCampaignHeatmapData,
   compareCampaigns,
 } from '../../services/analytics/index.js';
@@ -180,6 +181,27 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       const orgId = req.user!.orgId;
       const devices = await getCampaignDeviceStats(id, orgId);
       return { data: devices };
+    },
+  );
+
+  /**
+   * GET /api/v1/campaigns/:id/stats/clients
+   * Email-client breakdown for opens (Gmail / Apple Mail / Outlook / …).
+   */
+  app.get(
+    '/api/v1/campaigns/:id/stats/clients',
+    {
+      schema: {
+        tags: ['Analytics'],
+        summary: 'Get email-client breakdown',
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const orgId = req.user!.orgId;
+      const clients = await getCampaignClientStats(id, orgId);
+      return { data: clients };
     },
   );
 

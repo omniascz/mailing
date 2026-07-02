@@ -14,6 +14,7 @@ import { emailEvents } from '../../db/schema/index.js';
 import { verifyTrackingToken, isAppleMpp } from '../../services/sending/tracking.js';
 import { scoreAndPersist } from '../../services/deliverability/bot-detection.js';
 import { enrichEventGeo } from '../../services/analytics/geo.js';
+import { parseUserAgent } from '../../lib/user-agent.js';
 import { eq, and } from 'drizzle-orm';
 
 /**
@@ -62,6 +63,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
       const payload = verifyTrackingToken(token);
       if (payload && payload.type === 'open') {
         const mpp = isAppleMpp(userAgent);
+        const { deviceType, emailClient } = parseUserAgent(userAgent);
 
         const [row] = await db
           .insert(emailEvents)
@@ -72,6 +74,8 @@ export default async function trackingRoutes(app: FastifyInstance) {
             eventType: 'open',
             userAgent: userAgent.slice(0, 1024),
             ipAddress: ipAddress?.slice(0, 45) ?? null,
+            deviceType,
+            emailClient,
             metadata: {
               suspectedBot: mpp,
               botReason: mpp ? 'apple_mpp' : null,
@@ -160,6 +164,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
         .catch(() => []);
 
       // Log the click event (best-effort)
+      const click = parseUserAgent(userAgent);
       const [clickRow] = await db
         .insert(emailEvents)
         .values({
@@ -170,6 +175,8 @@ export default async function trackingRoutes(app: FastifyInstance) {
           linkUrl: payload.url.slice(0, 2048),
           userAgent: userAgent.slice(0, 1024),
           ipAddress: ipAddress?.slice(0, 45) ?? null,
+          deviceType: click.deviceType,
+          emailClient: click.emailClient,
           metadata: {},
         })
         .returning({ id: emailEvents.id })
@@ -244,6 +251,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
 
       // Log click event if we have enough context
       if (cid && oid) {
+        const ca = parseUserAgent(req.headers['user-agent'] ?? '');
         await db
           .insert(emailEvents)
           .values({
@@ -257,6 +265,8 @@ export default async function trackingRoutes(app: FastifyInstance) {
               req.socket.remoteAddress ??
               ''
             ).slice(0, 45),
+            deviceType: ca.deviceType,
+            emailClient: ca.emailClient,
             metadata: { linkId },
           })
           .catch(() => undefined);
