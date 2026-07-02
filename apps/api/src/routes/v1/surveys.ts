@@ -4,10 +4,14 @@ import {
   createSurvey,
   listSurveys,
   getSurvey,
+  getPublicSurvey,
   updateSurvey,
   submitResponse,
   getSurveyResults,
 } from '../../services/surveys/index.js';
+import { renderHostedSurveyPage } from '../../services/surveys/render.js';
+
+const API_BASE = process.env.API_BASE_URL ?? 'https://api.forgemsg.io';
 
 const questionSchema = z.object({
   id: z.string().min(1),
@@ -90,6 +94,20 @@ const surveyRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
       return reply.send({ data: await getSurveyResults(id, req.user!.orgId) });
+    },
+  );
+
+  // Public hosted fill page (no auth) — a shareable standalone survey URL.
+  app.get(
+    '/public/surveys/:id/hosted',
+    { schema: { tags: ['Surveys'], summary: 'Hosted standalone survey page' } },
+    async (req, reply) => {
+      const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+      const survey = await getPublicSurvey(id);
+      if (!survey) {
+        return reply.status(404).type('text/html').send('<h1>Survey not found</h1>');
+      }
+      return reply.type('text/html; charset=utf-8').send(renderHostedSurveyPage(survey, API_BASE));
     },
   );
 

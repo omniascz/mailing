@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
 interface Survey {
   id: string;
   name: string;
@@ -64,6 +66,16 @@ export default async function SurveysPage() {
                         responses
                       </span>
                     </div>
+                    {s.active ? (
+                      <a
+                        href={`${API_BASE}/public/surveys/${s.id}/hosted`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-block text-xs text-primary-600 hover:underline"
+                      >
+                        Open hosted page →
+                      </a>
+                    ) : null}
                   </CardContent>
                 </Card>
               </li>

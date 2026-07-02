@@ -37,6 +37,16 @@ export async function getSurvey(id: string, orgId: string): Promise<Survey> {
   return row;
 }
 
+/** Fetch an active survey by id without org scoping (for public hosted page). */
+export async function getPublicSurvey(id: string): Promise<Survey | null> {
+  const [row] = await db
+    .select()
+    .from(surveys)
+    .where(and(eq(surveys.id, id), eq(surveys.active, true)))
+    .limit(1);
+  return row ?? null;
+}
+
 export async function updateSurvey(
   id: string,
   orgId: string,
