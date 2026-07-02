@@ -31,6 +31,12 @@ import {
   FileDown,
   Rss,
   Hash,
+  ShieldBan,
+  MoonStar,
+  Gauge,
+  UsersRound,
+  LifeBuoy,
+  Database as DatabaseIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -86,15 +92,30 @@ const NAV: NavSection[] = [
   },
   {
     label: 'Reporting',
-    items: [{ href: '/reports', label: 'Reports', icon: BarChart3 }],
+    items: [
+      { href: '/reports', label: 'Reports', icon: BarChart3 },
+      { href: '/data-sets', label: 'Data sets', icon: DatabaseIcon },
+    ],
+  },
+  {
+    label: 'Support',
+    items: [{ href: '/helpdesk', label: 'Helpdesk', icon: LifeBuoy }],
   },
   {
     label: 'Deliverability',
-    items: [{ href: '/domains', label: 'Domains', icon: Globe }],
+    items: [
+      { href: '/domains', label: 'Domains', icon: Globe },
+      { href: '/suppressions', label: 'Suppressions', icon: ShieldBan },
+      { href: '/quiet-hours', label: 'Quiet hours', icon: MoonStar },
+      { href: '/frequency-rules', label: 'Frequency caps', icon: Gauge },
+    ],
   },
   {
     label: 'Workspace',
-    items: [{ href: '/settings', label: 'Settings', icon: Settings }],
+    items: [
+      { href: '/teams', label: 'Teams', icon: UsersRound },
+      { href: '/settings', label: 'Settings', icon: Settings },
+    ],
   },
 ];
 
