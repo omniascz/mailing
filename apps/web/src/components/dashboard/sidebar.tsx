@@ -19,6 +19,9 @@ import {
   TrendingUp,
   Bot,
   BarChart3,
+  Ticket,
+  Star,
+  Plug,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -53,6 +56,14 @@ const NAV: NavSection[] = [
       { href: '/custom-fields', label: 'Custom fields', icon: Database },
       { href: '/lead-scoring', label: 'Lead scoring', icon: TrendingUp },
       { href: '/signup-forms', label: 'Signup forms', icon: FileText },
+    ],
+  },
+  {
+    label: 'Commerce',
+    items: [
+      { href: '/coupons', label: 'Coupons', icon: Ticket },
+      { href: '/reviews', label: 'Reviews', icon: Star },
+      { href: '/integrations', label: 'Integrations', icon: Plug },
     ],
   },
   {
