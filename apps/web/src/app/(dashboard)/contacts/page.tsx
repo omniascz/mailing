@@ -30,11 +30,12 @@ export const dynamic = 'force-dynamic';
 export default async function ContactsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; cursor?: string }>;
+  searchParams: Promise<{ search?: string; cursor?: string; status?: string }>;
 }) {
   const params = await searchParams;
   const qs = new URLSearchParams();
   if (params.search) qs.set('search', params.search);
+  if (params.status) qs.set('status', params.status);
   if (params.cursor) qs.set('cursor', params.cursor);
   qs.set('limit', '50');
 
@@ -80,7 +81,7 @@ export default async function ContactsPage({
         </div>
       </header>
 
-      <form className="mb-4" action="/contacts" method="GET">
+      <form className="mb-4 flex flex-wrap gap-2" action="/contacts" method="GET">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary-400" />
           <input
@@ -91,6 +92,26 @@ export default async function ContactsPage({
             className="h-10 w-full max-w-md rounded-md border border-secondary-300 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
         </div>
+        <select
+          name="status"
+          defaultValue={params.status ?? ''}
+          className="h-10 rounded-md border border-secondary-300 bg-white px-3 text-sm text-secondary-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+        >
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="non_subscribed">Non-subscribed</option>
+          <option value="unsubscribed">Unsubscribed</option>
+          <option value="bounced">Bounced</option>
+          <option value="complained">Complained</option>
+          <option value="pending">Pending</option>
+          <option value="archived">Archived</option>
+        </select>
+        <button
+          type="submit"
+          className="h-10 rounded-md border border-secondary-300 bg-white px-4 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
+        >
+          Filter
+        </button>
       </form>
 
       {contacts.length === 0 ? (
@@ -119,6 +140,7 @@ export default async function ContactsPage({
               <Link
                 href={`/contacts?${new URLSearchParams({
                   ...(params.search ? { search: params.search } : {}),
+                  ...(params.status ? { status: params.status } : {}),
                   cursor: nextCursor,
                 }).toString()}`}
                 className="rounded-md border border-secondary-300 bg-white px-4 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
