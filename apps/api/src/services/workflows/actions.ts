@@ -21,6 +21,7 @@ import {
 import { redis } from '../../lib/redis.js';
 import { shouldSuppressDueToConversion } from './conversion-suppression.js';
 import { normalizeConditionConfig } from './condition-rules.js';
+import { resolveEventRelativeUntil, type EventRelativeUntil } from './wait-resolve.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -243,18 +244,25 @@ async function executeSendWebhook(
 
 async function executeWait(
   node: WorkflowNode,
-  _run: WorkflowRun,
+  run: WorkflowRun,
   _ctx: ActionContext,
 ): Promise<ActionResult> {
   const config = node.config as {
     duration?: number;
     unit?: 'minutes' | 'hours' | 'days';
-    until?: string; // ISO datetime
+    until?: string | EventRelativeUntil; // ISO datetime OR event-relative spec
   };
 
   let until: Date;
 
-  if (config.until) {
+  if (config.until && typeof config.until === 'object') {
+    // Event-relative wait (e.g. 24h before event.starts_at) — resolve against
+    // the run's trigger payload. If the field is missing/unparseable, skip the
+    // wait rather than block the run indefinitely.
+    const resolved = resolveEventRelativeUntil(config.until, run.data);
+    if (!resolved) return { type: 'next', nextNodeId: null };
+    until = resolved;
+  } else if (typeof config.until === 'string') {
     until = new Date(config.until);
     if (isNaN(until.getTime())) {
       return { type: 'error', message: `Invalid until date: ${config.until}` };
