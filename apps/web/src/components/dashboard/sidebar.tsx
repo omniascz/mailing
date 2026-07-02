@@ -22,6 +22,9 @@ import {
   Ticket,
   Star,
   Plug,
+  Gift,
+  FlaskConical,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -42,6 +45,8 @@ const NAV: NavSection[] = [
       { href: '/templates', label: 'Templates', icon: FileText },
       { href: '/workflows', label: 'Workflows', icon: Workflow },
       { href: '/workflows/gallery', label: 'Workflow gallery', icon: Sparkles },
+      { href: '/ab-tests', label: 'A/B tests', icon: FlaskConical },
+      { href: '/media', label: 'Media library', icon: ImageIcon },
       { href: '/inbox-preview', label: 'Inbox preview', icon: Eye },
       { href: '/ai-agents', label: 'AI agents', icon: Bot },
     ],
@@ -62,6 +67,7 @@ const NAV: NavSection[] = [
     label: 'Commerce',
     items: [
       { href: '/coupons', label: 'Coupons', icon: Ticket },
+      { href: '/loyalty', label: 'Loyalty', icon: Gift },
       { href: '/reviews', label: 'Reviews', icon: Star },
       { href: '/integrations', label: 'Integrations', icon: Plug },
     ],
