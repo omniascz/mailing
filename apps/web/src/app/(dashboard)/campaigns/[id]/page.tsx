@@ -36,6 +36,24 @@ interface Campaign {
   createdAt: string;
 }
 
+interface DeviceStats {
+  desktop: number;
+  mobile: number;
+  tablet: number;
+  unknown: number;
+}
+interface ClientStat {
+  client: string;
+  label: string;
+  opens: number;
+  percentage: number;
+}
+interface GeoStatRow {
+  country: string;
+  opens: number;
+  clicks: number;
+}
+
 const STATUS_TONE: Record<
   Campaign['status'],
   'default' | 'primary' | 'success' | 'warning' | 'danger'
@@ -58,6 +76,15 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
   const delivered = campaign.totalDelivered;
   const rate = (n: number) => (delivered > 0 ? `${((n / delivered) * 100).toFixed(1)}%` : '—');
   const isSent = campaign.status === 'sent' || campaign.totalSent > 0;
+
+  const emptyDevices: DeviceStats = { desktop: 0, mobile: 0, tablet: 0, unknown: 0 };
+  const [devices, clients, geo]: [DeviceStats, ClientStat[], GeoStatRow[]] = isSent
+    ? await Promise.all([
+        apiFetch<DeviceStats>(`/api/v1/campaigns/${id}/stats/devices`, { fallback: emptyDevices }),
+        apiFetch<ClientStat[]>(`/api/v1/campaigns/${id}/stats/clients`, { fallback: [] }),
+        apiFetch<GeoStatRow[]>(`/api/v1/campaigns/${id}/stats/geo`, { fallback: [] }),
+      ])
+    : [emptyDevices, [], []];
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -190,6 +217,93 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
           </CardContent>
         </Card>
       </section>
+
+      {isSent ? (
+        <section className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Devices</CardTitle>
+              <CardDescription>Opens by form-factor</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-2 text-sm">
+                <BreakdownRow label="Desktop" value={devices.desktop} />
+                <BreakdownRow label="Mobile" value={devices.mobile} />
+                <BreakdownRow label="Tablet" value={devices.tablet} />
+                <BreakdownRow label="Unknown" value={devices.unknown} muted />
+              </dl>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Email clients</CardTitle>
+              <CardDescription>Opens by client</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {clients.length === 0 ? (
+                <p className="text-sm text-secondary-500">No client data yet.</p>
+              ) : (
+                <dl className="space-y-2 text-sm">
+                  {clients.slice(0, 8).map((c) => (
+                    <BreakdownRow
+                      key={c.client}
+                      label={c.label}
+                      value={c.opens}
+                      suffix={`${c.percentage}%`}
+                      muted={c.client === 'unknown'}
+                    />
+                  ))}
+                </dl>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Top countries</CardTitle>
+              <CardDescription>Opens / clicks by country</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {geo.length === 0 ? (
+                <p className="text-sm text-secondary-500">
+                  No geo data (configure GEOIP_API_URL to enable).
+                </p>
+              ) : (
+                <dl className="space-y-2 text-sm">
+                  {geo.slice(0, 8).map((g) => (
+                    <BreakdownRow key={g.country} label={g.country} value={g.opens} suffix={`${g.clicks} clicks`} />
+                  ))}
+                </dl>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function BreakdownRow({
+  label,
+  value,
+  suffix,
+  muted,
+}: {
+  label: string;
+  value: number;
+  suffix?: string;
+  muted?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline justify-between">
+      <dt className={muted ? 'text-secondary-400' : 'text-secondary-600'}>{label}</dt>
+      <dd className="text-right">
+        <span className="font-medium tabular-nums text-secondary-900">
+          {value.toLocaleString('cs-CZ')}
+        </span>
+        {suffix ? <span className="ml-2 text-xs tabular-nums text-secondary-500">{suffix}</span> : null}
+      </dd>
     </div>
   );
 }

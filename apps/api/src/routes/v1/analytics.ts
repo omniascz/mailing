@@ -20,7 +20,11 @@ import {
   getCampaignHeatmapData,
   compareCampaigns,
 } from '../../services/analytics/index.js';
-import { getCampaignGeoStats } from '../../services/analytics/geo.js';
+import {
+  getCampaignGeoStats,
+  getCampaignGeoCityStats,
+  getCampaignGeoMap,
+} from '../../services/analytics/geo.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { revenueEvents, campaigns } from '../../db/schema/index.js';
@@ -122,11 +126,12 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         return reply.code(404).send({ code: 'NOT_FOUND', message: 'Campaign not found', statusCode: 404 });
       }
 
-      const [stats, links, devices, clients] = await Promise.all([
+      const [stats, links, devices, clients, geo] = await Promise.all([
         getCampaignStats(id, orgId),
         getCampaignLinkStats(id, orgId),
         getCampaignDeviceStats(id, orgId),
         getCampaignClientStats(id, orgId),
+        getCampaignGeoStats(id, orgId),
       ]);
 
       const summaryRows = Object.entries(stats as unknown as Record<string, unknown>)
@@ -155,6 +160,11 @@ export default async function analyticsRoutes(app: FastifyInstance) {
             heading: 'Email clients (opens)',
             columns: ['Client', 'Opens', '%'],
             rows: clients.map((c) => [c.label, String(c.opens), `${c.percentage}%`]),
+          },
+          {
+            heading: 'Top countries',
+            columns: ['Country', 'Opens', 'Clicks'],
+            rows: geo.slice(0, 15).map((g) => [g.country, String(g.opens), String(g.clicks)]),
           },
           {
             heading: 'Links',
@@ -215,6 +225,44 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     async (req) => {
       const { id } = idParam.parse(req.params);
       return { data: await getCampaignGeoStats(id, req.user!.orgId) };
+    },
+  );
+
+  /**
+   * GET /api/v1/campaigns/:id/stats/geo/cities
+   * Opens/clicks grouped by city (top 100).
+   */
+  app.get(
+    '/api/v1/campaigns/:id/stats/geo/cities',
+    {
+      schema: {
+        tags: ['Analytics'],
+        summary: 'Get campaign opens/clicks by city',
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      return { data: await getCampaignGeoCityStats(id, req.user!.orgId) };
+    },
+  );
+
+  /**
+   * GET /api/v1/campaigns/:id/stats/geo/map
+   * Map-ready country aggregation with normalized intensity for a choropleth.
+   */
+  app.get(
+    '/api/v1/campaigns/:id/stats/geo/map',
+    {
+      schema: {
+        tags: ['Analytics'],
+        summary: 'Get map-ready country data (choropleth intensity)',
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      return { data: await getCampaignGeoMap(id, req.user!.orgId) };
     },
   );
 
