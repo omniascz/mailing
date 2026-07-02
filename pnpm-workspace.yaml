@@ -1,3 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+  # The React Native / Expo mobile app manages its own native dependencies and
+  # is installed separately (cd apps/mobile && npm install). Excluded from the
+  # pnpm workspace + turbo pipeline so it doesn't affect the server/web build.
+  - "!apps/mobile"
