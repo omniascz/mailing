@@ -98,6 +98,10 @@ export async function deleteSignupForm(id: string, orgId: string): Promise<void>
   if (!row) throw AppError.notFound('SignupForm');
 }
 
+// Re-export the loader.js + hosted-page renderers so route handlers can import
+// everything from the service index.
+export { buildLoaderScript, renderHostedFormPage } from './render.js';
+
 // ─── Embed script generator ───────────────────────────────────────────────────
 
 /**

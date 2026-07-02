@@ -22,6 +22,8 @@ import {
   deleteSignupForm,
   generateEmbedScript,
   getFormDefinition,
+  buildLoaderScript,
+  renderHostedFormPage,
   processFormSubmission,
   trackFormView,
   listVariants,
@@ -153,6 +155,33 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
   );
 
   // ── Public endpoints (unauthenticated) ───────────────────────────────────────
+
+  // Served embed loader script (referenced by generateEmbedScript). Must be
+  // declared before '/public/forms/:id' so 'loader.js' isn't matched as an :id.
+  app.get(
+    '/public/forms/loader.js',
+    { schema: { tags: ['Public Forms'], summary: 'Signup-form embed loader script' } },
+    async (_req, reply) => {
+      return reply
+        .type('application/javascript; charset=utf-8')
+        .header('Cache-Control', 'public, max-age=300')
+        .send(buildLoaderScript(API_BASE));
+    },
+  );
+
+  // Hosted standalone form page (a shareable public URL).
+  app.get(
+    '/public/forms/:id/hosted',
+    { schema: { tags: ['Public Forms'], summary: 'Hosted standalone form page' } },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const form = await getFormDefinition(id);
+      if (!form) {
+        return reply.status(404).type('text/html').send('<h1>Form not found</h1>');
+      }
+      return reply.type('text/html; charset=utf-8').send(renderHostedFormPage(form, API_BASE));
+    },
+  );
 
   // Get form definition (for the JS loader)
   app.get(

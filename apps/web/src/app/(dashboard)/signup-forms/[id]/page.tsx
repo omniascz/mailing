@@ -8,6 +8,8 @@ import { ToggleActiveButton } from './toggle-active-button';
 import { DeleteFormButton } from './delete-form-button';
 import { EmbedSnippet } from './embed-snippet';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
 interface FormField {
   name: string;
   label: string;
@@ -136,6 +138,20 @@ export default async function SignupFormDetailPage({
           </CardHeader>
           <CardContent>
             <EmbedSnippet formId={form.id} embedType={form.embedType} />
+            <div className="mt-4 border-t border-secondary-100 pt-4">
+              <p className="text-sm font-medium text-secondary-700">Hosted page</p>
+              <p className="mb-2 text-xs text-secondary-500">
+                A shareable standalone URL — no embedding required.
+              </p>
+              <a
+                href={`${API_BASE}/public/forms/${form.id}/hosted`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 break-all text-sm text-primary-600 hover:underline"
+              >
+                {API_BASE}/public/forms/{form.id}/hosted
+              </a>
+            </div>
           </CardContent>
         </Card>
       </section>
