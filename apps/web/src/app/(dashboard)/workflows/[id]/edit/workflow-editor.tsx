@@ -14,6 +14,8 @@ import {
   Bell,
   Phone,
   UserPlus,
+  UserMinus,
+  Star,
   Plus,
   Trash2,
   Save,
@@ -37,7 +39,9 @@ type NodeType =
   | 'move_to_list'
   | 'remove_from_list'
   | 'send_webhook'
-  | 'assign_task';
+  | 'assign_task'
+  | 'unsubscribe'
+  | 'send_review_request';
 
 interface WorkflowNode {
   id: string;
@@ -58,15 +62,25 @@ interface AddableNodeType {
   defaults: Record<string, unknown>;
 }
 
+// Defaults MUST match the executor contract (apps/api services/workflows/actions.ts):
+// wait wants { duration:number, unit }, send_sms wants { message }, condition wants
+// { field, op, value }. Earlier { duration:{days,hours} } / { body } / { rule } shapes
+// broke silently (NaN wait, unsent SMS, always-false condition).
 const ADDABLE: AddableNodeType[] = [
   { type: 'send_email', label: 'Send email', defaults: { subject: '' } },
-  { type: 'send_sms', label: 'Send SMS', defaults: { body: '' } },
-  { type: 'wait', label: 'Wait', defaults: { duration: { days: 1, hours: 0 } } },
-  { type: 'condition', label: 'Condition', defaults: { rule: { description: '' } } },
+  { type: 'send_sms', label: 'Send SMS', defaults: { message: '' } },
+  { type: 'wait', label: 'Wait', defaults: { duration: 1, unit: 'days' } },
+  { type: 'condition', label: 'Condition', defaults: { field: '', op: 'eq', value: '' } },
   { type: 'add_tag', label: 'Add tag', defaults: { tagSlug: '' } },
   { type: 'remove_tag', label: 'Remove tag', defaults: { tagSlug: '' } },
   { type: 'move_to_list', label: 'Move to list', defaults: { listSlug: '' } },
   { type: 'send_webhook', label: 'Send webhook', defaults: { url: '' } },
+  { type: 'unsubscribe', label: 'Unsubscribe', defaults: {} },
+  {
+    type: 'send_review_request',
+    label: 'Request review',
+    defaults: { channel: 'email', subject: 'How was your order?' },
+  },
 ];
 
 const NODE_ICONS: Record<NodeType, typeof Mail> = {
@@ -84,6 +98,8 @@ const NODE_ICONS: Record<NodeType, typeof Mail> = {
   remove_from_list: ListMinus,
   send_webhook: Webhook,
   assign_task: UserPlus,
+  unsubscribe: UserMinus,
+  send_review_request: Star,
 };
 
 const NODE_LABELS: Record<NodeType, string> = {
@@ -101,6 +117,8 @@ const NODE_LABELS: Record<NodeType, string> = {
   remove_from_list: 'Remove from list',
   send_webhook: 'Send webhook',
   assign_task: 'Assign task',
+  unsubscribe: 'Unsubscribe',
+  send_review_request: 'Request review',
 };
 
 /**
