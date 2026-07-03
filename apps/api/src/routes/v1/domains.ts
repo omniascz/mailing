@@ -17,6 +17,7 @@ import { sendingDomains } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import {
   generateDkimKeyPair,
+  importDkimPrivateKey,
   verifyDkimDns,
   buildDkimDnsRecord,
 } from '../../services/domains/dkim.js';
@@ -158,6 +159,13 @@ export default async function domainRoutes(app: FastifyInstance) {
         .limit(1);
       if (!existing) throw AppError.notFound('Sending domain');
 
+      const { force } = z.object({ force: z.coerce.boolean().optional() }).parse(req.query);
+      if (existing.dkimByo && !force) {
+        throw AppError.badRequest(
+          'This domain uses an imported (BYODKIM) key. Pass ?force=true to overwrite with a generated key.',
+        );
+      }
+
       // Rotate selector: fm1 → fm2 … fm9 → fm1
       const currentNum = parseInt(existing.dkimSelector.replace('fm', '') || '1', 10);
       const nextNum = (currentNum % 9) + 1;
@@ -183,6 +191,65 @@ export default async function domainRoutes(app: FastifyInstance) {
         data: {
           selector: newSelector,
           dnsRecord,
+          message: `Publish the DNS TXT record, then call POST /api/v1/domains/${id}/verify`,
+        },
+      };
+    },
+  );
+
+  /**
+   * POST /api/v1/domains/:id/dkim/import — BYODKIM.
+   * Import a customer-supplied DKIM private key + selector. The public key is
+   * derived and returned as the DNS record the customer must publish.
+   */
+  app.post(
+    '/api/v1/domains/:id/dkim/import',
+    {
+      preHandler: [app.requireRole('editor', 'admin', 'owner')],
+      schema: { tags: ['Domains'], summary: 'Import your own DKIM key (BYODKIM)' },
+    },
+    async (req) => {
+      const { id } = domainParam.parse(req.params);
+      const body = z
+        .object({
+          selector: z.string().regex(/^[a-z0-9._-]+$/i).max(63),
+          privateKey: z.string().min(64),
+        })
+        .parse(req.body);
+
+      const [existing] = await db
+        .select({ id: sendingDomains.id, domain: sendingDomains.domain })
+        .from(sendingDomains)
+        .where(and(eq(sendingDomains.id, id), eq(sendingDomains.orgId, req.user!.orgId)))
+        .limit(1);
+      if (!existing) throw AppError.notFound('Sending domain');
+
+      let imported;
+      try {
+        imported = importDkimPrivateKey(body.privateKey);
+      } catch (err) {
+        throw AppError.badRequest((err as Error).message);
+      }
+
+      await db
+        .update(sendingDomains)
+        .set({
+          dkimSelector: body.selector,
+          dkimPrivateKey: imported.privateKeyPem,
+          dkimPublicKey: imported.publicKeyBase64,
+          dkimByo: true,
+          dkimVerified: false,
+          dkimVerifiedAt: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(sendingDomains.id, id));
+
+      const dnsRecord = buildDkimDnsRecord(body.selector, existing.domain, imported.publicKeyBase64);
+      return {
+        data: {
+          selector: body.selector,
+          dnsRecord,
+          byo: true,
           message: `Publish the DNS TXT record, then call POST /api/v1/domains/${id}/verify`,
         },
       };

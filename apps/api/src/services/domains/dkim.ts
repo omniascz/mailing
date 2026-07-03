@@ -70,6 +70,44 @@ export async function generateDkimKeyPair(): Promise<DkimKeyPair> {
   return { privateKeyPem, publicKeyPem, publicKeyBase64, dnsValue };
 }
 
+// ─── BYODKIM (bring your own key) ──────────────────────────────────────────────
+
+export interface ImportedDkimKey {
+  privateKeyPem: string;
+  publicKeyBase64: string;
+  dnsValue: string;
+}
+
+/**
+ * Validate a customer-supplied DKIM private key (PEM) and derive its public key
+ * for the DNS record the customer must publish. Throws if the PEM is not a
+ * valid RSA private key. Pure + testable.
+ */
+export function importDkimPrivateKey(privateKeyPem: string): ImportedDkimKey {
+  let priv: crypto.KeyObject;
+  try {
+    priv = crypto.createPrivateKey(privateKeyPem);
+  } catch {
+    throw new Error('Invalid private key PEM');
+  }
+  if (priv.asymmetricKeyType !== 'rsa') {
+    throw new Error('DKIM key must be RSA');
+  }
+  const pub = crypto.createPublicKey(priv);
+  const publicKeyPem = pub.export({ type: 'spki', format: 'pem' }) as string;
+  const publicKeyBase64 = publicKeyPem.replace(
+    /-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\n/g,
+    '',
+  );
+  // Normalize to PKCS8 PEM for consistent storage + signing.
+  const normalizedPem = priv.export({ type: 'pkcs8', format: 'pem' }) as string;
+  return {
+    privateKeyPem: normalizedPem,
+    publicKeyBase64,
+    dnsValue: `v=DKIM1; k=rsa; p=${publicKeyBase64}`,
+  };
+}
+
 // ─── DNS verification ─────────────────────────────────────────────────────────
 
 /**

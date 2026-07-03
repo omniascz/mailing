@@ -42,6 +42,9 @@ export const sendingDomains = pgTable(
     dkimPublicKey: text('dkim_public_key'),
     dkimVerified: boolean('dkim_verified').notNull().default(false),
     dkimVerifiedAt: timestamp('dkim_verified_at', { withTimezone: true }),
+    /** BYODKIM: the private key was imported by the customer (not platform-
+     *  generated), so key-rotation must not clobber it without --force. */
+    dkimByo: boolean('dkim_byo').notNull().default(false),
 
     // ─── SPF ───────────────────────────────────────────────────────────────────
     spfVerified: boolean('spf_verified').notNull().default(false),
