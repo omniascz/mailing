@@ -33,6 +33,8 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  /** TOTP or backup code — required when the account has 2FA enabled. */
+  code: z.string().min(1).max(32).optional(),
 });
 
 function slugify(input: string): string {
@@ -366,6 +368,22 @@ export default async function authRoutes(app: FastifyInstance) {
 
       const valid = await verifyPassword(body.password, user.passwordHash);
       if (!valid) throw AppError.unauthorized('Invalid email or password');
+
+      // Enforce 2FA when the account has it enabled: no session is issued until
+      // a valid TOTP / backup code is supplied. The client re-submits login with
+      // `code` after seeing TWO_FACTOR_REQUIRED.
+      const { isTwoFactorEnabled, verifyForLogin } = await import(
+        '../../services/two-factor/index.js'
+      );
+      if (await isTwoFactorEnabled(user.id)) {
+        if (!body.code) {
+          return reply
+            .code(401)
+            .send({ code: 'TWO_FACTOR_REQUIRED', message: 'Two-factor authentication code required' });
+        }
+        const ok = await verifyForLogin(user.id, body.code);
+        if (!ok) throw AppError.unauthorized('Invalid two-factor code');
+      }
 
       await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
 

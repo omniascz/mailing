@@ -110,6 +110,16 @@ export async function confirmEnrollment(userId: string, code: string): Promise<v
     .where(eq(twoFactorSecrets.userId, userId));
 }
 
+/** True when the user has confirmed (enabled) 2FA — gates login enforcement. */
+export async function isTwoFactorEnabled(userId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ enabled: twoFactorSecrets.enabled })
+    .from(twoFactorSecrets)
+    .where(eq(twoFactorSecrets.userId, userId))
+    .limit(1);
+  return row?.enabled === true;
+}
+
 export async function verifyForLogin(userId: string, code: string): Promise<boolean> {
   const [row] = await db
     .select()

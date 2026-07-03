@@ -81,6 +81,11 @@ const sendEmailBody = z.object({
   scheduled_at: z.string().datetime().optional(),
   /** Per-email tracking toggle. Defaults to org-level setting when omitted. */
   tracking: trackingFlags.optional(),
+  /**
+   * SendGrid mail_settings.sandbox_mode parity — validate + record the send
+   * but never actually dispatch it. ORs with a test-mode API key.
+   */
+  sandbox_mode: z.boolean().optional(),
 });
 
 const batchBody = z.array(sendEmailBody).min(1).max(100);
@@ -250,7 +255,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       const messageId = `<${randomUUID()}@forgemsg>`;
       const createdAt = new Date();
       const to = toArray(body.to);
-      const testMode = req.user?.apiKeyMode === 'test';
+      const testMode = req.user?.apiKeyMode === 'test' || body.sandbox_mode === true;
 
       // Enforce plan send-capacity for real (non-sandbox) sends before we
       // record or dispatch anything.
@@ -341,13 +346,13 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
         }
       }
 
-      const testMode = req.user?.apiKeyMode === 'test';
-      const totalRecipients = parsed.data.reduce(
-        (n, item) =>
-          n + toArray(item.to).length + toArray(item.cc).length + toArray(item.bcc).length,
-        0,
-      );
-      if (!testMode) await checkSendCapacity(req.user!.orgId, totalRecipients);
+      const keyTestMode = req.user?.apiKeyMode === 'test';
+      // Only real (non-sandboxed) recipients count toward plan capacity.
+      const totalRecipients = parsed.data.reduce((n, item) => {
+        if (keyTestMode || item.sandbox_mode === true) return n;
+        return n + toArray(item.to).length + toArray(item.cc).length + toArray(item.bcc).length;
+      }, 0);
+      if (totalRecipients > 0) await checkSendCapacity(req.user!.orgId, totalRecipients);
 
       const createdAt = new Date();
       const data: ReturnType<typeof resendShape>[] = [];
@@ -355,6 +360,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       for (const item of parsed.data) {
         const messageId = `<${randomUUID()}@forgemsg>`;
         const to = toArray(item.to);
+        const testMode = keyTestMode || item.sandbox_mode === true;
         await db.insert(emailEvents).values({
           orgId: req.user!.orgId,
           eventType: 'send',
