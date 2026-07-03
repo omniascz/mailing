@@ -176,6 +176,13 @@
       "when": 1782165200000,
       "tag": "0024_dkim_key_type",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1782165300000,
+      "tag": "0025_ip_subaccount_delegation",
+      "breakpoints": true
     }
   ]
 }

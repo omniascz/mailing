@@ -30,6 +30,8 @@ import {
   assignIpToPool,
   updateIpStatus,
   verifyIpPtr,
+  assignIpToSubaccount,
+  listSubaccountIpReputation,
 } from '../../services/dedicated-ips/index.js';
 
 const idParam = z.object({ id: z.string().uuid() });
@@ -165,6 +167,32 @@ const routes: FastifyPluginAsync = async (app) => {
       const { poolId } = z.object({ poolId: z.string().uuid().nullable() }).parse(req.body);
       return { data: await assignIpToPool(req.user!.orgId, id, poolId) };
     },
+  );
+
+  // Delegate an IP to a subaccount (child org) for reputation isolation.
+  app.put(
+    '/api/v1/dedicated-ips/:id/subaccount',
+    {
+      preHandler: [app.authenticate, app.requireRole('owner', 'admin')],
+      schema: { tags: ['Dedicated IPs'], summary: 'Delegate an IP to a subaccount' },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const { subaccountId } = z
+        .object({ subaccountId: z.string().uuid().nullable() })
+        .parse(req.body);
+      return { data: await assignIpToSubaccount(req.user!.orgId, id, subaccountId) };
+    },
+  );
+
+  // Parent roll-up: per-subaccount IP + reputation across delegated IPs.
+  app.get(
+    '/api/v1/dedicated-ips/subaccount-reputation',
+    {
+      preHandler: [app.authenticate, app.requireRole('owner', 'admin')],
+      schema: { tags: ['Dedicated IPs'], summary: 'Per-subaccount IP reputation roll-up' },
+    },
+    async (req) => ({ data: await listSubaccountIpReputation(req.user!.orgId) }),
   );
 
   app.post(

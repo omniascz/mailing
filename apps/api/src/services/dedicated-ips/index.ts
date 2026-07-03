@@ -9,12 +9,13 @@
  *  - Reputation signal ingestion (bounce/complaint rates, blacklist checks)
  */
 
-import { and, eq, desc, sql, isNull, inArray } from 'drizzle-orm';
+import { and, eq, desc, sql, isNull, inArray, or } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   ipPools,
   dedicatedIps,
   ipWarmupSchedules,
+  organizations,
   type IpPool,
   type DedicatedIp,
 } from '../../db/schema/index.js';
@@ -368,6 +369,81 @@ export async function assignIpToPool(
   return updated!;
 }
 
+/**
+ * Delegate (or un-delegate, subaccountId=null) a dedicated IP to a subaccount.
+ * The IP must be owned by `parentOrgId` and the subaccount must be a child of
+ * it. Isolates the child's sending reputation onto its own IP.
+ */
+export async function assignIpToSubaccount(
+  parentOrgId: string,
+  ipId: string,
+  subaccountId: string | null,
+): Promise<DedicatedIp> {
+  await getDedicatedIp(parentOrgId, ipId); // ownership check (throws 404 otherwise)
+  if (subaccountId) {
+    const [child] = await db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(and(eq(organizations.id, subaccountId), eq(organizations.parentOrgId, parentOrgId)))
+      .limit(1);
+    if (!child) throw AppError.badRequest('subaccountId is not a child of this organisation');
+  }
+  const [updated] = await db
+    .update(dedicatedIps)
+    .set({ subaccountId, updatedAt: new Date() })
+    .where(eq(dedicatedIps.id, ipId))
+    .returning();
+  return updated!;
+}
+
+export interface SubaccountIpReputation {
+  subaccountId: string;
+  ipCount: number;
+  avgReputation: number;
+  totalSentToday: number;
+}
+
+/**
+ * Pure: roll dedicated-IP rows up to per-subaccount reputation summaries.
+ * IPs with a null subaccountId (used by the parent itself) are excluded.
+ */
+export function summarizeSubaccountReputation(
+  rows: Array<{ subaccountId: string | null; reputationScore: string | null; todaySent: number }>,
+): SubaccountIpReputation[] {
+  const by = new Map<string, { sum: number; n: number; sent: number }>();
+  for (const r of rows) {
+    if (!r.subaccountId) continue;
+    const s = by.get(r.subaccountId) ?? { sum: 0, n: 0, sent: 0 };
+    s.sum += Number(r.reputationScore ?? 0);
+    s.n += 1;
+    s.sent += r.todaySent ?? 0;
+    by.set(r.subaccountId, s);
+  }
+  return [...by.entries()]
+    .map(([subaccountId, s]) => ({
+      subaccountId,
+      ipCount: s.n,
+      avgReputation: s.n ? Math.round((s.sum / s.n) * 100) / 100 : 0,
+      totalSentToday: s.sent,
+    }))
+    .sort((a, b) => b.ipCount - a.ipCount || a.subaccountId.localeCompare(b.subaccountId));
+}
+
+/** Parent-facing roll-up: per-subaccount IP + reputation across delegated IPs. */
+export async function listSubaccountIpReputation(
+  parentOrgId: string,
+): Promise<SubaccountIpReputation[]> {
+  const rows = await db
+    .select({
+      subaccountId: dedicatedIps.subaccountId,
+      reputationScore: dedicatedIps.reputationScore,
+      todaySent: dedicatedIps.todaySent,
+    })
+    .from(dedicatedIps)
+    .where(eq(dedicatedIps.orgId, parentOrgId));
+  return summarizeSubaccountReputation(rows);
+}
+
 export async function updateIpStatus(
   orgId: string,
   ipId: string,
@@ -397,8 +473,10 @@ export async function updateIpStatus(
  */
 export async function pickIpForSend(orgId: string, poolId?: string): Promise<DedicatedIp | null> {
   // Active sanctions check would live in the abuse service; here we just pick IP.
+  // An org sends from IPs it owns OR IPs a parent delegated to it (subaccount),
+  // so a subaccount's traffic rides its own delegated IP (reputation isolation).
   const conditions = [
-    eq(dedicatedIps.orgId, orgId),
+    or(eq(dedicatedIps.orgId, orgId), eq(dedicatedIps.subaccountId, orgId))!,
     inArray(dedicatedIps.status, ['warm', 'active', 'warming']),
   ];
   if (poolId) conditions.push(eq(dedicatedIps.poolId, poolId));

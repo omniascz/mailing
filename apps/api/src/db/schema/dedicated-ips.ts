@@ -105,6 +105,15 @@ export const dedicatedIps = pgTable(
     /** Org this IP is assigned to. NULL = unallocated / system pool. */
     orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'set null' }),
 
+    /**
+     * Subaccount (child org) this IP is delegated to. When set, the child's
+     * sends use this IP (isolating its reputation) while the parent org still
+     * owns/bills it. NULL = used by the owning org itself.
+     */
+    subaccountId: uuid('subaccount_id').references(() => organizations.id, {
+      onDelete: 'set null',
+    }),
+
     /** Pool this IP belongs to (optional — IP may sit idle before assignment) */
     poolId: uuid('pool_id').references(() => ipPools.id, { onDelete: 'set null' }),
 
@@ -149,6 +158,7 @@ export const dedicatedIps = pgTable(
   (t) => [
     uniqueIndex('dedicated_ips_address_idx').on(t.ipAddress),
     index('dedicated_ips_org_idx').on(t.orgId),
+    index('dedicated_ips_subaccount_idx').on(t.subaccountId),
     index('dedicated_ips_pool_idx').on(t.poolId),
     index('dedicated_ips_status_idx').on(t.status),
   ],
