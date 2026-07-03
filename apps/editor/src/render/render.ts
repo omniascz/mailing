@@ -75,7 +75,14 @@ export function renderEmail(schema: EmailSchema, opts: RenderOptions = {}): Rend
   const preview = opts.previewAllDynamicBranches === true;
   const links: string[] = [];
 
-  const body = schema.blocks.map((b) => renderBlock(b, schema, ctx, preview, links)).join('\n');
+  let body = schema.blocks.map((b) => renderBlock(b, schema, ctx, preview, links)).join('\n');
+
+  // Org-wide custom footer (SendGrid Mail Settings) — appended to every email
+  // as a trailing row when configured on the org.
+  const footerHtml = ctx.system?.footerHtml?.trim();
+  if (footerHtml) {
+    body += `\n<tr><td class="fm-footer-text" style="padding:16px 24px;font-size:12px;color:#64748b;">${footerHtml}</td></tr>`;
+  }
 
   const gs = schema.globalStyles;
   const width = gs.contentWidth;

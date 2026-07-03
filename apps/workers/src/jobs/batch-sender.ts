@@ -206,6 +206,8 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         currentYear: String(new Date().getFullYear()),
         companyName: data.companyName,
         companyAddress: data.companyAddress,
+        footerHtml: data.footerHtml,
+        footerText: data.footerText,
       },
       newsletterTierMap.get(contact.id),
     );
@@ -407,7 +409,11 @@ function renderEmail(
 
     if (parsed.success) {
       const html = renderBlocks(parsed.data, { context: ctx, utm }).html;
-      const text = renderPlainText(parsed.data, { context: ctx });
+      let text = renderPlainText(parsed.data, { context: ctx });
+      // Org-wide custom footer (SendGrid Mail Settings) — HTML side is appended
+      // by the renderer; mirror the plain-text side here.
+      const footerText = ctx.system?.footerText?.trim();
+      if (footerText) text += `\n\n${footerText}`;
       return { html, text };
     }
     console.warn(

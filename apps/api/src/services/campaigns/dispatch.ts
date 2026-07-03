@@ -74,9 +74,16 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
     .where(eq(organizations.id, orgId))
     .limit(1);
 
+  // Org-wide custom footer (SendGrid Mail Settings) — appended to every email.
+  const { getMailSettings } = await import('../settings/mail-settings.js');
+  const mailSettings = await getMailSettings(orgId);
+  const footer = mailSettings.footer.enabled ? mailSettings.footer : null;
+
   await campaignSplitterQueue.add(`campaign-${campaignId}`, {
     companyName: org?.companyName ?? undefined,
     companyAddress: org?.postalAddress ?? undefined,
+    footerHtml: footer?.html || undefined,
+    footerText: footer?.text || undefined,
     campaignId,
     orgId,
     listId: campaign.listId,

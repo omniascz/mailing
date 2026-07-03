@@ -39,6 +39,9 @@ export interface MergeTagContext {
     /** CAN-SPAM sender legal name + physical postal address. */
     companyName?: string;
     companyAddress?: string;
+    /** Org-wide custom footer (SendGrid Mail Settings) appended to the body. */
+    footerHtml?: string;
+    footerText?: string;
   };
   /**
    * Arbitrary collections exposed to Liquid `{% for %}` loops (e.g. product

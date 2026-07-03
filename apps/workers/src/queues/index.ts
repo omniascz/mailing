@@ -195,6 +195,9 @@ export interface CampaignSplitterJobData {
   /** CAN-SPAM sender legal name + physical postal address (footer). */
   companyName?: string;
   companyAddress?: string;
+  /** Org-wide custom footer (SendGrid Mail Settings) appended to every email. */
+  footerHtml?: string;
+  footerText?: string;
   /** Configuration-set IP pool + TLS policy (threaded to the MTA). */
   ipPoolId?: string;
   tlsPolicy?: string;
@@ -226,6 +229,9 @@ export interface BatchSenderJobData {
   /** CAN-SPAM sender legal name + physical postal address (footer). */
   companyName?: string;
   companyAddress?: string;
+  /** Org-wide custom footer (SendGrid Mail Settings) appended to every email. */
+  footerHtml?: string;
+  footerText?: string;
   /** Configuration-set IP pool + TLS policy (threaded to the MTA). */
   ipPoolId?: string;
   tlsPolicy?: string;
