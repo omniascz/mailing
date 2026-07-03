@@ -17,14 +17,19 @@
  * Auth: API key (X-API-Key header) via the existing authenticate decorator.
  */
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/index.js';
 import { redis } from '../../lib/redis.js';
-import { sendTransactionalEmail } from '../../lib/queues.js';
+import {
+  sendTransactionalEmail,
+  scheduledEmailJobIds,
+  rescheduleQueuedEmails,
+  cancelQueuedEmails,
+} from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 
 // ─── Resend payload schemas ───────────────────────────────────────────────
@@ -150,9 +155,16 @@ async function dispatchResendEmail(
     inline: a.content_id != null,
   }));
 
-  for (const to of recipients) {
+  // For scheduled sends, give each per-recipient job a deterministic jobId so
+  // PATCH /emails/:id (reschedule) and cancel can find + mutate them later.
+  const jobIds =
+    scheduleAt && scheduleAt.getTime() > Date.now()
+      ? scheduledEmailJobIds(stripMessageIdBrackets(messageId), recipients.length)
+      : [];
+
+  for (let i = 0; i < recipients.length; i++) {
     await sendTransactionalEmail({
-      to,
+      to: recipients[i]!,
       from: item.from,
       subject: item.subject,
       html: item.html || '<p></p>',
@@ -163,10 +175,22 @@ async function dispatchResendEmail(
       messageId,
       scheduleAt,
       testMode,
+      ...(jobIds[i] ? { scheduleJobId: jobIds[i] } : {}),
       ...(attachments.length > 0 ? { attachments } : {}),
     });
   }
   return recipients.length;
+}
+
+/**
+ * Reconstruct the deterministic scheduled-job ids for a stored send row from
+ * its recipient counts (to + cc + bcc), matching dispatchResendEmail's order.
+ */
+function scheduledEmailJobIdsForRow(row: { messageId: string | null; metadata: unknown }): string[] {
+  const m = (row.metadata ?? {}) as { to?: string[]; cc?: string[]; bcc?: string[] };
+  const count = (m.to?.length ?? 0) + (m.cc?.length ?? 0) + (m.bcc?.length ?? 0);
+  if (!row.messageId || count === 0) return [];
+  return scheduledEmailJobIds(stripMessageIdBrackets(row.messageId), count);
 }
 
 /**
@@ -572,6 +596,18 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
+      // Actually move the queued jobs. If nothing moved, the email already sent
+      // (or was never scheduled) — report that rather than silently "succeeding".
+      const jobIds = scheduledEmailJobIdsForRow(row);
+      const moved = await rescheduleQueuedEmails(jobIds, new Date(body.data.scheduled_at));
+      if (moved === 0) {
+        return reply.code(422).send({
+          statusCode: 422,
+          name: 'not_scheduled',
+          message: 'Email is not scheduled or has already been sent; cannot reschedule.',
+        });
+      }
+
       const meta = (row.metadata ?? {}) as Record<string, unknown>;
       meta.scheduledAt = body.data.scheduled_at;
       await db
@@ -587,58 +623,64 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
   );
 
   /**
-   * DELETE /api/v1/emails/:id — cancel a scheduled email.
-   * Mirrors Resend's cancel endpoint. Only effective while the message
-   * hasn't actually been queued to the engine yet.
+   * Cancel a scheduled email — actually removes the queued job(s). Effective
+   * only while the send hasn't left for the engine. Registered on Resend's
+   * `POST /:id/cancel` and the legacy `DELETE /:id`.
    */
+  const cancelScheduledEmail = async (req: FastifyRequest, reply: FastifyReply) => {
+    const { id } = z.object({ id: z.string().min(1).max(255) }).parse(req.params);
+    const candidates = [id, `<${id}@forgemsg>`];
+    const [row] = await db
+      .select()
+      .from(emailEvents)
+      .where(
+        and(
+          eq(emailEvents.orgId, req.user!.orgId),
+          eq(emailEvents.eventType, 'send'),
+          sql`${emailEvents.messageId} IN (${sql.join(
+            candidates.map((c) => sql`${c}`),
+            sql`, `,
+          )})`,
+        ),
+      )
+      .orderBy(desc(emailEvents.createdAt))
+      .limit(1);
+    if (!row) {
+      return reply.code(404).send({
+        statusCode: 404,
+        name: 'not_found',
+        message: `Email with id ${id} not found.`,
+      });
+    }
+
+    // Actually remove the queued job(s). If none were removed, the send already
+    // left / was never scheduled — say so instead of a false "cancelled".
+    const removed = await cancelQueuedEmails(scheduledEmailJobIdsForRow(row));
+    if (removed === 0) {
+      return reply.code(422).send({
+        statusCode: 422,
+        name: 'not_scheduled',
+        message: 'Email is not scheduled or has already been sent; cannot cancel.',
+      });
+    }
+
+    const meta = (row.metadata ?? {}) as Record<string, unknown>;
+    meta.cancelled = true;
+    meta.cancelledAt = new Date().toISOString();
+    await db.update(emailEvents).set({ metadata: meta }).where(eq(emailEvents.id, row.id));
+
+    return reply.send({ object: 'email', id: stripMessageIdBrackets(row.messageId!) });
+  };
+
+  app.post(
+    '/api/v1/emails/:id/cancel',
+    { preHandler: [app.authenticate], schema: { tags: ['Resend-compatible'], summary: 'Cancel a scheduled email' } },
+    cancelScheduledEmail,
+  );
   app.delete(
     '/api/v1/emails/:id',
-    {
-      preHandler: [app.authenticate],
-      schema: {
-        tags: ['Resend-compatible'],
-        summary: 'Cancel a scheduled email',
-      },
-    },
-    async (req, reply) => {
-      const { id } = z.object({ id: z.string().min(1).max(255) }).parse(req.params);
-      const candidates = [id, `<${id}@forgemsg>`];
-      const [row] = await db
-        .select()
-        .from(emailEvents)
-        .where(
-          and(
-            eq(emailEvents.orgId, req.user!.orgId),
-            eq(emailEvents.eventType, 'send'),
-            sql`${emailEvents.messageId} IN (${sql.join(
-              candidates.map((c) => sql`${c}`),
-              sql`, `,
-            )})`,
-          ),
-        )
-        .orderBy(desc(emailEvents.createdAt))
-        .limit(1);
-      if (!row) {
-        return reply.code(404).send({
-          statusCode: 404,
-          name: 'not_found',
-          message: `Email with id ${id} not found.`,
-        });
-      }
-
-      const meta = (row.metadata ?? {}) as Record<string, unknown>;
-      meta.cancelled = true;
-      meta.cancelledAt = new Date().toISOString();
-      await db
-        .update(emailEvents)
-        .set({ metadata: meta })
-        .where(eq(emailEvents.id, row.id));
-
-      return reply.send({
-        object: 'email',
-        id: stripMessageIdBrackets(row.messageId!),
-      });
-    },
+    { preHandler: [app.authenticate], schema: { tags: ['Resend-compatible'], summary: 'Cancel a scheduled email (alias)' } },
+    cancelScheduledEmail,
   );
 };
 

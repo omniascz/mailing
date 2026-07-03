@@ -134,6 +134,58 @@ export interface TransactionalEmailInput {
    * instead of recomposing from html/text — preserves S/MIME + pre-signed DKIM.
    */
   rawMime?: string;
+  /**
+   * Stable BullMQ jobId for a *scheduled* send, so it can later be rescheduled
+   * (changeDelay) or cancelled (remove). Only applied when scheduleAt is future.
+   */
+  scheduleJobId?: string;
+}
+
+/** Deterministic jobIds for a scheduled email's per-recipient jobs. */
+export function scheduledEmailJobIds(bareMessageId: string, recipientCount: number): string[] {
+  const safe = bareMessageId.replace(/[^A-Za-z0-9_-]/g, '');
+  return Array.from({ length: recipientCount }, (_, i) => `sched-email:${safe}:${i}`);
+}
+
+/**
+ * Reschedule already-queued (delayed) emails to a new time. Returns how many
+ * jobs were actually moved (0 = nothing found / already sent).
+ */
+export async function rescheduleQueuedEmails(jobIds: string[], sendAt: Date): Promise<number> {
+  const delay = Math.max(0, sendAt.getTime() - Date.now());
+  let moved = 0;
+  for (const jobId of jobIds) {
+    try {
+      const job = await mtaOtherQueue.getJob(jobId);
+      if (job) {
+        await job.changeDelay(delay);
+        moved++;
+      }
+    } catch {
+      // job already active/removed — skip
+    }
+  }
+  return moved;
+}
+
+/**
+ * Cancel already-queued (delayed) emails. Returns how many jobs were removed
+ * (0 = nothing found / already sent).
+ */
+export async function cancelQueuedEmails(jobIds: string[]): Promise<number> {
+  let removed = 0;
+  for (const jobId of jobIds) {
+    try {
+      const job = await mtaOtherQueue.getJob(jobId);
+      if (job) {
+        await job.remove();
+        removed++;
+      }
+    } catch {
+      // job already active/removed — skip
+    }
+  }
+  return removed;
 }
 
 /**
@@ -184,7 +236,12 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
         ? { attachments: input.attachments }
         : {}),
     },
-    { priority: PRIORITY.TRANSACTIONAL, ...(delayMs > 0 ? { delay: delayMs } : {}) },
+    {
+      priority: PRIORITY.TRANSACTIONAL,
+      ...(delayMs > 0 ? { delay: delayMs } : {}),
+      // Stable jobId only for future sends, so PATCH/cancel can find the job.
+      ...(delayMs > 0 && input.scheduleJobId ? { jobId: input.scheduleJobId } : {}),
+    },
   );
   return messageId;
 }
