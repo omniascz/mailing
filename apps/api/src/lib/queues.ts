@@ -205,6 +205,15 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
   // email_events row) but nothing is dispatched to the MTA.
   if (input.testMode) return messageId;
 
+  // Sink addresses (delivered@ / bounced@ / …) simulate the outcome + fire the
+  // matching webhooks instead of delivering. Skips the MTA entirely.
+  const sinks = await import('../services/sending/sink-addresses.js');
+  const sink = sinks.parseSinkAddress(input.to);
+  if (sink) {
+    await sinks.simulateSink(input.orgId ?? '', messageId, input.to, sink).catch(() => {});
+    return messageId;
+  }
+
   // Future scheduled sends ride a BullMQ delay so the worker only picks them
   // up when due. Past/now → delay 0 (immediate).
   const delayMs = input.scheduleAt ? Math.max(0, input.scheduleAt.getTime() - Date.now()) : 0;
