@@ -48,6 +48,8 @@ export const WEBHOOK_EVENTS = [
   'sms.delivered',
   'sms.failed',
   'workflow.completed',
+  // Plan usage crossed a threshold (80/95/100% of sends or contacts).
+  'usage.alert',
 ] as const;
 
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];

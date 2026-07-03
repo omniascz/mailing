@@ -157,6 +157,11 @@ export async function checkSendCapacity(orgId: string, adding = 1): Promise<Plan
       `Monthly send quota exceeded (${cap.sends.current}/${cap.sends.limit}). Upgrade your plan.`,
     );
   }
+  // Fire usage alerts (80/95/100%) when a threshold is newly crossed. Deduped
+  // per period, fire-and-forget — never blocks the send.
+  void import('./usage-alerts.js')
+    .then(({ checkAndFireUsageAlerts }) => checkAndFireUsageAlerts(orgId, cap))
+    .catch(() => {});
   return cap;
 }
 
