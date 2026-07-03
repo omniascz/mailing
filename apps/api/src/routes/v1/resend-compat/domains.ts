@@ -67,6 +67,8 @@ function domainShape(d: typeof sendingDomains.$inferSelect, records: ResendDnsRe
     name: d.domain,
     status: d.isVerified ? 'verified' : 'pending',
     region: 'eu-fra-1',
+    open_tracking: d.openTracking,
+    click_tracking: d.clickTracking,
     created_at: d.createdAt.toISOString(),
     records,
   };
@@ -205,16 +207,23 @@ const domainsResendRoutes: FastifyPluginAsync = async (app) => {
           click_tracking: z.boolean().optional(),
         })
         .parse(req.body);
-      // We don't persist per-domain tracking toggles separately yet — Resend
-      // documents these but the MailForge default is org-level. Acknowledge
-      // the call so the SDK contract holds, and stash the preference on
-      // settings so the worker can read it before send.
-      void body;
-      const [row] = await db
-        .select()
-        .from(sendingDomains)
-        .where(and(eq(sendingDomains.id, id), eq(sendingDomains.orgId, req.user!.orgId)))
-        .limit(1);
+      // Persist the per-domain tracking toggles; honored on the campaign send
+      // path (pixel/link injection is gated on these).
+      const patch: Record<string, unknown> = {};
+      if (body.open_tracking !== undefined) patch.openTracking = body.open_tracking;
+      if (body.click_tracking !== undefined) patch.clickTracking = body.click_tracking;
+
+      const [row] = Object.keys(patch).length
+        ? await db
+            .update(sendingDomains)
+            .set(patch)
+            .where(and(eq(sendingDomains.id, id), eq(sendingDomains.orgId, req.user!.orgId)))
+            .returning()
+        : await db
+            .select()
+            .from(sendingDomains)
+            .where(and(eq(sendingDomains.id, id), eq(sendingDomains.orgId, req.user!.orgId)))
+            .limit(1);
       if (!row)
         return reply
           .code(404)

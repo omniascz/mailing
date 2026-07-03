@@ -49,6 +49,12 @@ export const sendingDomains = pgTable(
      *  generated), so key-rotation must not clobber it without --force. */
     dkimByo: boolean('dkim_byo').notNull().default(false),
 
+    // ─── Per-domain tracking defaults (Resend parity) ──────────────────────────
+    /** Default open-tracking pixel for sends from this domain. */
+    openTracking: boolean('open_tracking').notNull().default(true),
+    /** Default click-tracking link wrapping for sends from this domain. */
+    clickTracking: boolean('click_tracking').notNull().default(true),
+
     // ─── SPF ───────────────────────────────────────────────────────────────────
     spfVerified: boolean('spf_verified').notNull().default(false),
     spfVerifiedAt: timestamp('spf_verified_at', { withTimezone: true }),

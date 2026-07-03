@@ -37,6 +37,24 @@ export async function resolveDkimForSender(
 }
 
 /**
+ * Resolve the From domain's open/click tracking defaults. Returns enabled for
+ * both when no verified sending domain matches (safe default).
+ */
+export async function resolveTrackingForSender(
+  orgId: string,
+  fromEmail: string,
+): Promise<{ openTracking: boolean; clickTracking: boolean }> {
+  const domain = fromEmail.split('@')[1]?.toLowerCase();
+  if (!domain) return { openTracking: true, clickTracking: true };
+  const [row] = await db
+    .select({ open: sendingDomains.openTracking, click: sendingDomains.clickTracking })
+    .from(sendingDomains)
+    .where(and(eq(sendingDomains.orgId, orgId), eq(sendingDomains.domain, domain)))
+    .limit(1);
+  return { openTracking: row?.open ?? true, clickTracking: row?.click ?? true };
+}
+
+/**
  * Transition a campaign to `sending` and enqueue the splitter job (audience →
  * batches). Forwards A/B config, UTM tracking, and DKIM so those features
  * activate. Throws on invalid state transition / readiness failure.
@@ -67,6 +85,12 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
 
   const dkim = campaign.fromEmail ? await resolveDkimForSender(orgId, campaign.fromEmail) : null;
 
+  // Per-domain open/click tracking defaults — honored by batch-sender (gates
+  // pixel/link injection). Defaults to enabled when no domain row matches.
+  const tracking = campaign.fromEmail
+    ? await resolveTrackingForSender(orgId, campaign.fromEmail)
+    : { openTracking: true, clickTracking: true };
+
   // Apply the configuration set (throws 403 if its sending is paused) → thread
   // its IP pool + TLS policy to the batch/MTA path so per-config-set enforcement
   // works for campaigns too (not just transactional).
@@ -90,6 +114,8 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
     companyAddress: org?.postalAddress ?? undefined,
     footerHtml: footer?.html || undefined,
     footerText: footer?.text || undefined,
+    openTracking: tracking.openTracking,
+    clickTracking: tracking.clickTracking,
     campaignId,
     orgId,
     listId: campaign.listId,

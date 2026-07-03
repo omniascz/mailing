@@ -198,6 +198,9 @@ export interface CampaignSplitterJobData {
   /** Org-wide custom footer (SendGrid Mail Settings) appended to every email. */
   footerHtml?: string;
   footerText?: string;
+  /** Per-domain tracking defaults — gate open-pixel / link-wrap injection. */
+  openTracking?: boolean;
+  clickTracking?: boolean;
   /** Configuration-set IP pool + TLS policy (threaded to the MTA). */
   ipPoolId?: string;
   tlsPolicy?: string;
@@ -232,6 +235,9 @@ export interface BatchSenderJobData {
   /** Org-wide custom footer (SendGrid Mail Settings) appended to every email. */
   footerHtml?: string;
   footerText?: string;
+  /** Per-domain tracking defaults — gate open-pixel / link-wrap injection. */
+  openTracking?: boolean;
+  clickTracking?: boolean;
   /** Configuration-set IP pool + TLS policy (threaded to the MTA). */
   ipPoolId?: string;
   tlsPolicy?: string;

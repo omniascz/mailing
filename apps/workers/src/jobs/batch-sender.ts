@@ -244,14 +244,19 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
       stream !== 'transactional' && (!trackingOptedIn || trackingOptedIn.has(contact.id));
 
     if (trackingAllowed) {
-      htmlBody = wrapLinks(htmlBody, trackingBaseUrl, data.orgId, data.campaignId, contact.id);
-      htmlBody = injectOpenPixel(
-        htmlBody,
-        trackingBaseUrl,
-        data.orgId,
-        data.campaignId,
-        contact.id,
-      );
+      // Per-domain toggles gate each tracking kind independently (default on).
+      if (data.clickTracking !== false) {
+        htmlBody = wrapLinks(htmlBody, trackingBaseUrl, data.orgId, data.campaignId, contact.id);
+      }
+      if (data.openTracking !== false) {
+        htmlBody = injectOpenPixel(
+          htmlBody,
+          trackingBaseUrl,
+          data.orgId,
+          data.campaignId,
+          contact.id,
+        );
+      }
     }
 
     // 5. Build custom headers. The List-Unsubscribe https URL is the API
