@@ -60,6 +60,7 @@ import surveyRoutes from './routes/v1/surveys.js';
 import zapierRoutes from './routes/v1/zapier.js';
 import integrationsCatalogRoutes from './routes/v1/integrations-catalog.js';
 import smtpCredentialRoutes from './routes/v1/smtp-credentials.js';
+import configurationSetRoutes from './routes/v1/configuration-sets.js';
 import groupRoutes from './routes/v1/groups.js';
 import qrCodeRoutes from './routes/v1/qr-codes.js';
 import revenueRoutes from './routes/v1/revenue.js';
@@ -351,6 +352,7 @@ export async function buildApp() {
   await app.register(zapierRoutes);
   await app.register(integrationsCatalogRoutes);
   await app.register(smtpCredentialRoutes);
+  await app.register(configurationSetRoutes);
   await app.register(suppressionRoutes);
   await app.register(subscriptionRoutes);
   await app.register(listRoutes);

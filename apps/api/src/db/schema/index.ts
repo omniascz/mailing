@@ -24,6 +24,7 @@ export * from './workflows.js';
 export * from './lead-scoring.js';
 export * from './webhooks.js';
 export * from './smtp-credentials.js';
+export * from './configuration-sets.js';
 export * from './signup-forms.js';
 export * from './sms.js';
 export * from './whatsapp.js';

@@ -37,6 +37,8 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           scheduleAt: z.string().datetime().optional(),
           metadata: z.record(z.unknown()).optional(),
           tags: z.array(z.string()).max(20).optional(),
+          /** Configuration set name — applies its options + sending gate. */
+          configurationSet: z.string().max(128).optional(),
           // File attachments (e-ticket PDFs etc.). Omit for link-only delivery.
           // contentBase64 capped at ~14 MB chars (~10 MB raw) to stay under the
           // engine's 16 MB gRPC message limit.
@@ -64,6 +66,10 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       const orgId = req.user!.orgId;
       const testMode = req.user?.apiKeyMode === 'test';
       if (!testMode) await checkSendCapacity(orgId, 1);
+
+      // Apply the configuration set (throws 403 if the set's sending is paused).
+      const { applyConfigurationSet } = await import('../../services/configuration-sets/index.js');
+      await applyConfigurationSet(orgId, body.configurationSet);
 
       // Apply caller-supplied merge vars (simple token substitution; template
       // rendering via templateId is resolved inside the MTA worker using the
@@ -104,6 +110,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           tags: body.tags ?? [],
           scheduleAt: body.scheduleAt ?? null,
           templateId: body.templateId ?? null,
+          configurationSet: body.configurationSet ?? null,
           attachmentCount: body.attachments?.length ?? 0,
           ...body.metadata,
         },
