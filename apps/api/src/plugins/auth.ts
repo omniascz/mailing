@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import { verifySession, type SessionData } from '../services/auth/sessions.js';
 import { lookupApiKey } from '../services/webhooks/index.js';
+import { scopeAllows, requiredScopeFor } from '../services/auth/scope-map.js';
 import { AppError } from '../lib/app-error.js';
 import type { UserRole } from '@forgemsg/shared';
 
@@ -86,6 +87,20 @@ async function authPlugin(app: FastifyInstance) {
     if (!token) return;
     const session = await verifySession(token);
     if (session) request.user = session;
+  });
+
+  // Global least-privilege guard for API keys. Runs after the onRequest hook
+  // above populates request.user. Enforces scopes ACROSS the whole surface for
+  // keys that carry an explicit, non-wildcard scope list — legacy/unscoped keys
+  // and JWT sessions are unaffected (scopeAllows returns true for them), and
+  // unmapped routes are never gated. This is the single choke point that makes
+  // per-key least privilege real without annotating every route.
+  app.addHook('preHandler', async (request) => {
+    const scopes = request.user?.apiKeyScopes;
+    if (scopeAllows(scopes, request.method, request.url)) return;
+    throw AppError.forbidden(
+      `API key missing required scope: ${requiredScopeFor(request.method, request.url)}`,
+    );
   });
 
   app.decorate('requireAuth', requireSecretAuth);

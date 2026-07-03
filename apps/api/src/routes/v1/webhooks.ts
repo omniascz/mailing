@@ -158,6 +158,28 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  // Catalog of assignable scopes for building least-privilege keys. The global
+  // scope guard (plugins/auth) enforces these across the API surface.
+  app.get(
+    '/api/v1/api-keys/scopes',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['API Keys'], summary: 'List assignable API-key scopes' },
+    },
+    async (_req, reply) => {
+      const { GATED_RESOURCES, READ_ONLY_RESOURCES } = await import(
+        '../../services/auth/scope-map.js'
+      );
+      const scopes = new Set<string>(['*', 'emails:send', 'emails:read']);
+      for (const r of GATED_RESOURCES) {
+        scopes.add(`${r}:read`);
+        scopes.add(`${r}:write`);
+      }
+      for (const r of READ_ONLY_RESOURCES) scopes.add(`${r}:read`);
+      return reply.send({ data: [...scopes].sort() });
+    },
+  );
+
   // Create API key
   const apiKeySchema = z.object({
     name: z.string().min(1).max(255),
