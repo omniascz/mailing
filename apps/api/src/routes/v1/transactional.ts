@@ -29,15 +29,22 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           to: z.string().email(),
           from: z.string().email(),
           fromName: z.string().max(100).optional(),
+          replyTo: z.string().email().optional(),
           // Optional when templateId supplies the subject.
           subject: z.string().max(500).optional(),
           html: z.string().optional(),
           text: z.string().optional(),
           templateId: z.string().uuid().optional(),
           mergeVars: z.record(z.string()).optional(),
+          /** Extra RFC5322 headers (SendGrid `headers`). */
+          headers: z.record(z.string()).optional(),
+          /** SendGrid `custom_args` — opaque key/values echoed in events. */
+          customArgs: z.record(z.string()).optional(),
           scheduleAt: z.string().datetime().optional(),
           metadata: z.record(z.unknown()).optional(),
           tags: z.array(z.string()).max(20).optional(),
+          /** Per-request sandbox: validate + record but never dispatch (SendGrid mail_settings.sandbox_mode). */
+          sandboxMode: z.boolean().optional(),
           /** Configuration set name — applies its options + sending gate. */
           configurationSet: z.string().max(128).optional(),
           // File attachments (e-ticket PDFs etc.). Omit for link-only delivery.
@@ -65,7 +72,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       }
 
       const orgId = req.user!.orgId;
-      const testMode = req.user?.apiKeyMode === 'test';
+      const testMode = req.user?.apiKeyMode === 'test' || body.sandboxMode === true;
       if (!testMode) {
         await checkSendCapacity(orgId, 1);
         const { enforceSendRate } = await import('../../services/sending/send-rate.js');
@@ -146,11 +153,13 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         to: body.to,
         from: body.from,
         fromName: body.fromName,
+        replyTo: body.replyTo,
         subject: subject || '(no subject)',
         html: html || '<p></p>',
         text: text || undefined,
         orgId,
         attachments: body.attachments,
+        customHeaders: body.headers,
         scheduleAt: body.scheduleAt ? new Date(body.scheduleAt) : undefined,
         sendingIp,
         tlsPolicy: cfgSet.tlsPolicy,
@@ -169,6 +178,8 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           scheduleAt: body.scheduleAt ?? null,
           templateId: body.templateId ?? null,
           configurationSet: body.configurationSet ?? null,
+          sandbox: testMode,
+          customArgs: body.customArgs ?? {},
           attachmentCount: body.attachments?.length ?? 0,
           ...body.metadata,
         },
