@@ -9,6 +9,7 @@
  */
 
 import dns from 'node:dns/promises';
+import { suggestEmailCorrection } from './suggest.js';
 
 // Representative sample of disposable / throwaway email domains.
 const DISPOSABLE_DOMAINS = new Set([
@@ -414,6 +415,8 @@ export interface EmailValidationResult {
   isDisposable: boolean;
   isRoleBased: boolean;
   hasMx: boolean | null;
+  /** "Did you mean?" corrected address for a likely typo, else null. */
+  suggestion: string | null;
 }
 
 export interface ValidateEmailOpts {
@@ -440,6 +443,7 @@ export async function validateEmail(
       isDisposable: false,
       isRoleBased: false,
       hasMx: null,
+      suggestion: typeof email === 'string' ? suggestEmailCorrection(email) : null,
     };
   }
 
@@ -491,6 +495,7 @@ export async function validateEmail(
     isDisposable,
     isRoleBased,
     hasMx,
+    suggestion: suggestEmailCorrection(email),
   };
 }
 
@@ -514,6 +519,7 @@ export function validateEmailSync(
       isDisposable: false,
       isRoleBased: false,
       hasMx: null,
+      suggestion: typeof email === 'string' ? suggestEmailCorrection(email) : null,
     };
   }
 
@@ -542,5 +548,6 @@ export function validateEmailSync(
     isDisposable,
     isRoleBased,
     hasMx: null,
+    suggestion: suggestEmailCorrection(email),
   };
 }

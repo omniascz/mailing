@@ -23,6 +23,7 @@ import {
   validateEmailSync,
   type EmailValidationResult,
 } from './index.js';
+import { suggestEmailCorrection } from './suggest.js';
 
 const DOMAIN_CACHE_TTL_SEC = 24 * 3600;
 
@@ -54,8 +55,7 @@ export interface BulkValidationOpts {
 
 export interface BulkAddressResult extends EmailValidationResult {
   email: string;
-  /** Suggested correction when we have one (typo / TLD fix). */
-  suggestion?: string;
+  // `suggestion` (typo / TLD fix) is inherited from EmailValidationResult.
 }
 
 export interface BulkValidationReport {
@@ -78,10 +78,13 @@ function extractDomain(email: string): string | null {
 function suggestionFor(email: string): string | undefined {
   const domain = extractDomain(email);
   if (!domain) return undefined;
+  // Curated table first (fast, exact), then the fuzzy Levenshtein suggester.
   const replacement = COMMON_TYPOS[domain];
-  if (!replacement || replacement === domain) return undefined;
-  const local = email.slice(0, email.lastIndexOf('@'));
-  return `${local}@${replacement}`;
+  if (replacement && replacement !== domain) {
+    const local = email.slice(0, email.lastIndexOf('@'));
+    return `${local}@${replacement}`;
+  }
+  return suggestEmailCorrection(email) ?? undefined;
 }
 
 async function resolveMxOnce(domain: string, timeoutMs: number): Promise<boolean> {
@@ -162,7 +165,7 @@ export async function bulkValidate(
       isDisposable: base.isDisposable,
       isRoleBased: base.isRoleBased,
       hasMx,
-      suggestion: row.suggestion,
+      suggestion: row.suggestion ?? null,
     };
   });
 
