@@ -65,7 +65,11 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
 
       const orgId = req.user!.orgId;
       const testMode = req.user?.apiKeyMode === 'test';
-      if (!testMode) await checkSendCapacity(orgId, 1);
+      if (!testMode) {
+        await checkSendCapacity(orgId, 1);
+        const { enforceSendRate } = await import('../../services/sending/send-rate.js');
+        await enforceSendRate(orgId, 1);
+      }
 
       // Apply the configuration set (throws 403 if the set's sending is paused).
       const { applyConfigurationSet } = await import('../../services/configuration-sets/index.js');
