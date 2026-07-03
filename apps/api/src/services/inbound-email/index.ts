@@ -42,16 +42,6 @@ export interface DispatchRule {
   ticketSubjectPrefix?: string;
 }
 
-const DEFAULT_RULES: DispatchRule[] = [
-  { matchRecipient: /^(support|help|hello|contact)\b/i, target: 'helpdesk' },
-];
-
-function matchRule(to: string, rules: DispatchRule[] = DEFAULT_RULES): DispatchRule | null {
-  const local = to.split('@')[0] ?? '';
-  for (const rule of rules) if (rule.matchRecipient.test(local)) return rule;
-  return null;
-}
-
 function normalizeEmail(addr: string): string {
   const m = addr.match(/<([^>]+)>/);
   return (m ? m[1]! : addr).trim().toLowerCase();
@@ -113,36 +103,59 @@ export async function receiveInbound(
     return row!;
   }
 
-  const rule = matchRule(normalizeEmail(payload.to));
+  // Resolve actions via the org's configurable inbound rules (Mail Manager),
+  // falling back to defaults when none are configured.
+  const { resolveInboundActions } = await import('../inbound-rules/index.js');
+  const toEmail = normalizeEmail(payload.to);
+  const actions = await resolveInboundActions(orgId, {
+    to: toEmail,
+    from: fromEmail,
+    subject: payload.subject ?? null,
+  });
 
-  if (rule?.target === 'helpdesk') {
-    const subject = payload.subject?.trim() || '(no subject)';
-    const ticket = await openTicket(orgId, {
-      subject: rule.ticketSubjectPrefix ? `${rule.ticketSubjectPrefix} ${subject}` : subject,
-      contactId: contact?.id,
-      channel: 'email',
-      body: payload.textBody || payload.htmlBody || '',
-    });
-    if (contact) {
-      await onApiEvent(orgId, contact.id, 'helpdesk_ticket_opened', {
-        ticketId: ticket.id,
-        subject: ticket.subject,
-      });
+  for (const action of actions) {
+    if (action.type === 'drop') {
+      break;
     }
-    await db.update(inboundEmails).set({ processed: true }).where(eq(inboundEmails.id, row!.id));
-    return row!;
+    if (action.type === 'helpdesk') {
+      const subject = payload.subject?.trim() || '(no subject)';
+      const ticket = await openTicket(orgId, {
+        subject: action.ticketSubjectPrefix ? `${action.ticketSubjectPrefix} ${subject}` : subject,
+        contactId: contact?.id,
+        channel: 'email',
+        body: payload.textBody || payload.htmlBody || '',
+      });
+      if (contact) {
+        await onApiEvent(orgId, contact.id, 'helpdesk_ticket_opened', {
+          ticketId: ticket.id,
+          subject: ticket.subject,
+        }).catch(() => {});
+      }
+    } else if (action.type === 'workflow_event' && contact) {
+      await onApiEvent(orgId, contact.id, action.eventName ?? 'email_reply_received', {
+        subject: payload.subject,
+        messageId: payload.messageId,
+        inReplyTo: payload.inReplyTo,
+        fromAddress: fromEmail,
+      }).catch(() => {});
+    } else if ((action.type === 'webhook' || action.type === 'store') && action.url) {
+      await fetch(action.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: toEmail,
+          subject: payload.subject,
+          messageId: payload.messageId,
+          textBody: payload.textBody,
+          htmlBody: payload.htmlBody,
+        }),
+        signal: AbortSignal.timeout(10_000),
+      }).catch(() => {});
+    }
   }
 
-  if (contact) {
-    await onApiEvent(orgId, contact.id, 'email_reply_received', {
-      subject: payload.subject,
-      messageId: payload.messageId,
-      inReplyTo: payload.inReplyTo,
-      fromAddress: fromEmail,
-    });
-    await db.update(inboundEmails).set({ processed: true }).where(eq(inboundEmails.id, row!.id));
-  }
-
+  await db.update(inboundEmails).set({ processed: true }).where(eq(inboundEmails.id, row!.id));
   return row!;
 }
 

@@ -127,6 +127,13 @@
       "when": 1782164500000,
       "tag": "0017_dkim_byo",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1782164600000,
+      "tag": "0018_inbound_rules",
+      "breakpoints": true
     }
   ]
 }
