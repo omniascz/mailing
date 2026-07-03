@@ -15,10 +15,18 @@ import { mobileDevices, pushSendLog, type MobileDevice } from '../../db/schema/p
 import { AppError } from '../../lib/app-error.js';
 import {
   buildApnsPayload,
+  buildApnsHeaders,
   buildFcmMessage,
   type MobileNotification,
   type MobilePlatform,
 } from './mobile-pure.js';
+import {
+  getApnsConfig,
+  getFcmConfig,
+  sendApns,
+  sendFcm,
+  type PushDeliveryResult,
+} from './mobile-transport.js';
 
 export interface RegisterDeviceInput {
   contactId?: string;
@@ -140,4 +148,90 @@ export async function prepareContactSend(
   }
 
   return prepared;
+}
+
+export interface MobileSendSummary {
+  sent: number;
+  failed: number;
+  skipped: number;
+  deactivated: number;
+}
+
+/**
+ * Deliver a notification to all of a contact's active devices via APNs/FCM.
+ * Logs one push_send_log row per device with the final status, and deactivates
+ * tokens Apple/Google report as permanently invalid. When the relevant
+ * provider isn't configured, the device is recorded as skipped (not failed).
+ */
+export async function sendContactMobilePush(
+  orgId: string,
+  contactId: string,
+  notification: MobileNotification,
+  campaignId?: string,
+): Promise<MobileSendSummary> {
+  const devices = await listContactDevices(orgId, contactId);
+  const apns = getApnsConfig();
+  const fcm = getFcmConfig();
+  const summary: MobileSendSummary = { sent: 0, failed: 0, skipped: 0, deactivated: 0 };
+
+  for (const d of devices) {
+    const platform = d.platform as MobilePlatform;
+    let result: PushDeliveryResult;
+    let status: string;
+
+    if (platform === 'ios') {
+      if (!apns) {
+        status = 'skipped_unconfigured';
+        summary.skipped++;
+      } else {
+        result = await sendApns(
+          apns,
+          d.token,
+          buildApnsPayload(notification),
+          buildApnsHeaders(d.appId ?? apns.bundleId),
+        );
+        status = result.status;
+        if (result.status === 'sent') summary.sent++;
+        else summary.failed++;
+        if (result.tokenInvalid) {
+          await db
+            .update(mobileDevices)
+            .set({ active: false, invalidatedAt: new Date(), updatedAt: new Date() })
+            .where(eq(mobileDevices.id, d.id));
+          summary.deactivated++;
+        }
+      }
+    } else {
+      if (!fcm) {
+        status = 'skipped_unconfigured';
+        summary.skipped++;
+      } else {
+        result = await sendFcm(fcm, buildFcmMessage(d.token, notification));
+        status = result.status;
+        if (result.status === 'sent') summary.sent++;
+        else summary.failed++;
+        if (result.tokenInvalid) {
+          await db
+            .update(mobileDevices)
+            .set({ active: false, invalidatedAt: new Date(), updatedAt: new Date() })
+            .where(eq(mobileDevices.id, d.id));
+          summary.deactivated++;
+        }
+      }
+    }
+
+    await db.insert(pushSendLog).values({
+      orgId,
+      subscriptionId: d.id,
+      contactId,
+      title: notification.title,
+      body: notification.body,
+      url: notification.url,
+      imageUrl: notification.imageUrl,
+      campaignId,
+      status,
+    });
+  }
+
+  return summary;
 }

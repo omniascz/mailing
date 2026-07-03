@@ -21,6 +21,7 @@ import {
   registerDevice,
   deactivateDevice,
   listContactDevices,
+  sendContactMobilePush,
 } from '../../services/push/mobile.js';
 import { AppError } from '../../lib/app-error.js';
 
@@ -59,6 +60,27 @@ export default async function pushRoutes(app: FastifyInstance) {
     const { orgId } = req.user as { orgId: string };
     const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.query);
     return { data: await listContactDevices(orgId, contactId) };
+  });
+
+  // Deliver a native mobile push to a contact's registered devices (APNs/FCM).
+  app.post('/api/v1/push/mobile/send', { preHandler: [app.authenticate] }, async (req) => {
+    const { orgId } = req.user as { orgId: string };
+    const body = z
+      .object({
+        contactId: z.string().uuid(),
+        title: z.string().min(1).max(200),
+        body: z.string().min(1).max(500),
+        url: z.string().url().optional(),
+        badge: z.number().int().min(0).optional(),
+      })
+      .parse(req.body);
+    const summary = await sendContactMobilePush(orgId, body.contactId, {
+      title: body.title,
+      body: body.body,
+      url: body.url,
+      badge: body.badge,
+    });
+    return { data: summary };
   });
 
   // ── VAPID key management ──────────────────────────────────────────────────

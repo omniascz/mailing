@@ -76,6 +76,7 @@ export const QUEUE_NAMES = {
   VIBER_SEND: 'viber-send',
   WHATSAPP_SEND: 'whatsapp-send',
   PUSH_SEND: 'push-send',
+  MOBILE_PUSH_SEND: 'mobile-push-send',
   EXTERNAL_FEED_POLL: 'external-feed-poll',
   WARMUP_ADVANCE: 'warmup-advance',
   DMARC_IMAP_POLL: 'dmarc-imap-poll',
