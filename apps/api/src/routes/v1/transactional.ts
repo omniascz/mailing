@@ -29,7 +29,8 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           to: z.string().email(),
           from: z.string().email(),
           fromName: z.string().max(100).optional(),
-          subject: z.string().min(1).max(500),
+          // Optional when templateId supplies the subject.
+          subject: z.string().max(500).optional(),
           html: z.string().optional(),
           text: z.string().optional(),
           templateId: z.string().uuid().optional(),
@@ -81,12 +82,21 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         await assertSandboxSendAllowed(orgId, [body.to]);
       }
 
-      // Apply caller-supplied merge vars (simple token substitution; template
-      // rendering via templateId is resolved inside the MTA worker using the
-      // stored template rows — we don't fetch it here to keep this path fast).
+      // Resolve a stored template (SES SendTemplatedEmail) when templateId is
+      // given — subject/html/text come from the rendered template + merge vars.
+      let subject = body.subject ?? '';
       let html = body.html ?? '';
       let text = body.text ?? '';
-      if (body.mergeVars) {
+      if (body.templateId) {
+        const { renderStoredTemplate } = await import(
+          '../../services/transactional/render-template.js'
+        );
+        const rendered = await renderStoredTemplate(orgId, body.templateId, body.mergeVars ?? {});
+        html = rendered.html;
+        text = rendered.text;
+        if (!subject) subject = rendered.subject; // template supplies the subject
+      } else if (body.mergeVars) {
+        // Inline body: simple {{var}} token substitution.
         for (const [key, val] of Object.entries(body.mergeVars)) {
           const re = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
           html = html.replace(re, val);
@@ -100,7 +110,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         to: body.to,
         from: body.from,
         fromName: body.fromName,
-        subject: body.subject,
+        subject: subject || '(no subject)',
         html: html || '<p></p>',
         text: text || undefined,
         orgId,
