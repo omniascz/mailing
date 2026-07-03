@@ -44,6 +44,17 @@ const engine = new Liquid({
 });
 
 /**
+ * Register a custom filter into the shared Liquid engine, so it is available
+ * inside {% %}-containing templates (e.g. the Czech/Slovak locale filters
+ * `vocative`, `genitive`, …). Mirrors `registerMergeFilter` for the regex
+ * merge-tag path so `{{ name | vocative }}` behaves identically whether it is
+ * rendered by the regex parser or by Liquid.
+ */
+export function registerLiquidFilter(name: string, fn: (value: unknown, ...args: unknown[]) => unknown): void {
+  engine.registerFilter(name, fn);
+}
+
+/**
  * Context available inside Liquid templates.
  *
  * - `contact` — all contact fields (first_name, email, custom_fields…)

@@ -7,13 +7,24 @@
  * ship declension tables to every recipient.
  */
 
-import { registerMergeFilter } from './merge-tags.js';
+import { registerMergeFilter, type MergeFilter } from './merge-tags.js';
+import { registerLiquidFilter } from './liquid.js';
 import {
   declineName as declineCs,
   vocative as vocativeCs,
   type CzechCase,
 } from '@forgemsg/i18n-cs';
 import { declineName as declineSk, type SlovakCase } from '@forgemsg/i18n-sk';
+
+/**
+ * Register a filter into BOTH the regex merge-tag path and the Liquid engine,
+ * so `{{ name | vocative }}` renders identically whether the template uses
+ * Liquid control-flow or not.
+ */
+function registerFilter(name: string, fn: MergeFilter): void {
+  registerMergeFilter(name, fn);
+  registerLiquidFilter(name, (value, arg) => fn(value == null ? '' : String(value), arg as string | undefined));
+}
 
 const CS_CASES: Record<string, CzechCase> = {
   vocative: 'vocative',
@@ -36,12 +47,12 @@ const SK_CASES: Record<string, SlovakCase> = {
 
 export function registerLocaleFilters(): void {
   // Czech — the `vocative` filter is the common one, aliased for convenience.
-  registerMergeFilter('vocative', (v) => (v ? vocativeCs(v) : v));
+  registerFilter('vocative', (v) => (v ? vocativeCs(v) : v));
   for (const [filter, cs] of Object.entries(CS_CASES)) {
-    registerMergeFilter(filter, (v) => (v ? declineCs(v, cs) : v));
+    registerFilter(filter, (v) => (v ? declineCs(v, cs) : v));
   }
   // Slovak — prefixed to avoid clashing with Czech filter names.
   for (const [filter, sk] of Object.entries(SK_CASES)) {
-    registerMergeFilter(filter, (v) => (v ? declineSk(v, sk) : v));
+    registerFilter(filter, (v) => (v ? declineSk(v, sk) : v));
   }
 }

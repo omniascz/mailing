@@ -12,9 +12,12 @@
  *
  * Anything else → empty string (or the fallback).
  *
- * The parser is intentionally regex-based — Liquid support (Fáze 2 later
- * task 2.11) will layer on top via a dedicated renderer.
+ * The parser is regex-based for the common {{merge}} case; templates that use
+ * Liquid control-flow ({% for %} / {% if %}) are routed through the sandboxed
+ * Liquid engine so loops and conditionals evaluate at send time.
  */
+
+import { renderLiquidSync } from './liquid.js';
 
 export interface MergeTagContact {
   email?: string | null;
@@ -37,6 +40,11 @@ export interface MergeTagContext {
     companyName?: string;
     companyAddress?: string;
   };
+  /**
+   * Arbitrary collections exposed to Liquid `{% for %}` loops (e.g. product
+   * recommendations, order line items). Ignored by the regex merge-tag path.
+   */
+  data?: Record<string, unknown>;
 }
 
 const SYSTEM_KEYS = new Set([
@@ -118,9 +126,25 @@ function resolveSystem(ctx: MergeTagContext, field: string): string | undefined 
  *   {{contact.first_name|vocative}} — resolves ctx.contact.first_name then applies filter
  *   {{first_name|vocative}}         — resolves ctx.contact.first_name (same, flat form)
  *   {{system.unsubscribe_url}}      — equivalent to {{unsubscribe_url}}
+ *
+ * When the text contains Liquid control-flow tags ({% for %}, {% if %}, …) it
+ * is rendered through the sandboxed Liquid engine instead, so loops and
+ * conditionals over arrays (product recommendations, order line items, array
+ * custom-fields) are evaluated at send time. Pure {{merge}} templates keep the
+ * fast regex path unchanged.
  */
 export function parseMergeTags(text: string, ctx: MergeTagContext = {}): string {
   if (!text || typeof text !== 'string') return text ?? '';
+  if (LIQUID_CONTROL_RE.test(text)) {
+    const rendered = renderWithLiquid(text, ctx);
+    if (rendered !== null) return rendered;
+    // Malformed Liquid → degrade gracefully to the regex pass rather than
+    // dropping the recipient's email.
+  }
+  return regexMergeTags(text, ctx);
+}
+
+function regexMergeTags(text: string, ctx: MergeTagContext = {}): string {
   return text.replace(TAG_RE, (_, field: string, filterChain: string) => {
     const filters = parseFilters(filterChain ?? '');
 
@@ -150,6 +174,66 @@ export function parseMergeTags(text: string, ctx: MergeTagContext = {}): string 
     }
     return value;
   });
+}
+
+// Presence of a Liquid control tag ({% ... %}) routes rendering through Liquid.
+const LIQUID_CONTROL_RE = /\{%/;
+// Unique-coupon tags ({{coupon_code:batchId}}) are resolved per-recipient AFTER
+// the template render (batch-sender step 4a). Liquid would choke on the colon,
+// so we shield them behind a sentinel across the Liquid pass and restore after.
+const COUPON_TAG_RE = /\{\{\s*[\w.]+\s*:\s*[\w-]+\s*\}\}/g;
+const COUPON_SENTINEL_RE = /%%CPN(\d+)%%/g;
+
+/**
+ * Flatten a MergeTagContext into a Liquid variable scope. Contact fields and
+ * system values are exposed both at top level (so {{first_name}} /
+ * {{unsubscribe_url}} work the same as in the regex path) and under their
+ * `contact` / `system` namespaces (so {{contact.first_name}} works too). Array
+ * custom-fields and any explicit `data` collections become loopable.
+ */
+function buildLiquidContext(ctx: MergeTagContext): Record<string, unknown> {
+  const c = (ctx.contact ?? {}) as Record<string, unknown>;
+  const custom = (c['custom_fields'] ?? c['customFields'] ?? {}) as Record<string, unknown>;
+  const sys = ctx.system ?? {};
+  const contactScope = { ...custom, ...c };
+  return {
+    ...contactScope,
+    // snake_case aliases for the common camelCase contact props
+    first_name: c['firstName'] ?? c['first_name'],
+    last_name: c['lastName'] ?? c['last_name'],
+    // system values flattened to top level
+    unsubscribe_url: sys.unsubscribeUrl ?? '',
+    view_in_browser_url: sys.viewInBrowserUrl ?? '',
+    preference_center_url: sys.preferenceCenterUrl ?? '',
+    current_date: sys.currentDate ?? new Date().toISOString().slice(0, 10),
+    current_year: sys.currentYear ?? new Date().getFullYear().toString(),
+    company_name: sys.companyName ?? '',
+    company_address: sys.companyAddress ?? '',
+    // namespaced access
+    contact: contactScope,
+    system: sys,
+    // explicit loop collections passed by the caller (products, items, …)
+    ...(ctx.data ?? {}),
+  };
+}
+
+/**
+ * Render a Liquid-containing template. Returns null (so the caller can fall
+ * back to the regex pass) if the template is malformed — parseMergeTags must
+ * never throw.
+ */
+function renderWithLiquid(text: string, ctx: MergeTagContext): string | null {
+  const coupons: string[] = [];
+  const shielded = text.replace(COUPON_TAG_RE, (m) => {
+    const i = coupons.push(m) - 1;
+    return `%%CPN${i}%%`;
+  });
+  try {
+    const out = renderLiquidSync(shielded, buildLiquidContext(ctx));
+    return out.replace(COUPON_SENTINEL_RE, (_, i: string) => coupons[Number(i)] ?? '');
+  } catch {
+    return null;
+  }
 }
 
 function parseFilters(chain: string): Array<{ name: string; arg?: string }> {
