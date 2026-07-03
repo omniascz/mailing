@@ -1,9 +1,11 @@
 package dkim
 
 import (
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"strings"
 	"testing"
@@ -163,5 +165,63 @@ func TestParsePrivateKey_Invalid(t *testing.T) {
 	_, err := parsePrivateKey("not a pem")
 	if err == nil {
 		t.Fatal("expected error for invalid PEM")
+	}
+}
+
+// TestSignEd25519 verifies RFC 8463 Ed25519 signing: the a= tag is
+// ed25519-sha256 and the signature verifies against the public key.
+func TestSignEd25519(t *testing.T) {
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("generate ed25519: %v", err)
+	}
+	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	privPEM := string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}))
+
+	headers := map[string]string{
+		"from":       "a@x.com",
+		"to":         "b@y.com",
+		"subject":    "Hi",
+		"date":       "Mon, 01 Jan 2026 00:00:00 +0000",
+		"message-id": "<1@x>",
+	}
+	sig, err := Sign(SignConfig{Domain: "x.com", Selector: "fm1", PrivateKeyPEM: privPEM}, headers, "hello world")
+	if err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+	if !strings.Contains(sig, "a=ed25519-sha256") {
+		t.Fatalf("expected ed25519-sha256 alg tag, got: %s", sig)
+	}
+
+	// Reconstruct the signed data and verify b= against the public key.
+	idx := strings.LastIndex(sig, " b=")
+	if idx < 0 {
+		t.Fatal("no b= tag")
+	}
+	partial := sig[:idx]
+	b64 := sig[idx+3:]
+	sigBytes, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		t.Fatalf("decode b: %v", err)
+	}
+
+	var present []string
+	for _, h := range SignedHeaders {
+		if _, ok := headers[h]; ok {
+			present = append(present, h)
+		}
+	}
+	var canon []string
+	for _, name := range present {
+		canon = append(canon, canonicalizeHeader(name, headers[name]))
+	}
+	canon = append(canon, canonicalizeHeader("dkim-signature", partial+" b="))
+	data := strings.Join(canon, "\r\n")
+
+	if !ed25519.Verify(pub, []byte(data), sigBytes) {
+		t.Fatal("ed25519 signature did not verify")
 	}
 }

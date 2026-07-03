@@ -15,6 +15,8 @@ const resolveTxtAsync = promisify(dns.resolveTxt);
 
 // ─── Key generation ───────────────────────────────────────────────────────────
 
+export type DkimKeyType = 'rsa' | 'ed25519';
+
 export interface DkimKeyPair {
   privateKeyPem: string;
   publicKeyPem: string;
@@ -22,52 +24,73 @@ export interface DkimKeyPair {
   publicKeyBase64: string;
   /** Full TXT record value to set in DNS */
   dnsValue: string;
+  /** Which algorithm the key uses (rsa or ed25519). */
+  keyType: DkimKeyType;
 }
 
 /**
- * Generate a fresh 2048-bit RSA DKIM key pair.
+ * Extract the DNS `p=` value for a public key. RSA uses the base64 SPKI DER;
+ * Ed25519 (RFC 8463) uses the base64 of the raw 32-byte public key, NOT the
+ * SPKI wrapper.
+ */
+function publicKeyDnsBase64(publicKey: crypto.KeyObject, keyType: DkimKeyType): string {
+  if (keyType === 'ed25519') {
+    const jwk = publicKey.export({ format: 'jwk' }) as { x?: string };
+    // jwk.x is base64url of the raw 32-byte key → re-encode as standard base64.
+    return Buffer.from(jwk.x ?? '', 'base64url').toString('base64');
+  }
+  const pem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+  return pem.replace(/-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\n/g, '');
+}
+
+/**
+ * Generate a fresh DKIM key pair. Defaults to 2048-bit RSA; pass 'ed25519' for
+ * an RFC 8463 Ed25519 key (shorter DNS record, modern — always publish
+ * alongside an RSA key for receiver compatibility).
  *
  * The caller is responsible for persisting privateKeyPem securely (e.g. hashed
  * column with access-logging; never expose via API).
  */
-export async function generateDkimKeyPair(): Promise<DkimKeyPair> {
+export async function generateDkimKeyPair(keyType: DkimKeyType = 'rsa'): Promise<DkimKeyPair> {
   const { privateKey, publicKey } = await new Promise<{
     privateKey: crypto.KeyObject;
     publicKey: crypto.KeyObject;
   }>((resolve, reject) => {
-    crypto.generateKeyPair(
-      'rsa',
-      {
-        modulusLength: 2048,
-        publicKeyEncoding: { type: 'spki', format: 'pem' },
-        privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
-      },
-      (err, pub, priv) => {
-        if (err) return reject(err);
-        resolve({
-          publicKey: crypto.createPublicKey(pub),
-          privateKey: crypto.createPrivateKey(priv),
-        });
-      },
-    );
+    const cb = (err: Error | null, pub: string, priv: string) => {
+      if (err) return reject(err);
+      resolve({
+        publicKey: crypto.createPublicKey(pub),
+        privateKey: crypto.createPrivateKey(priv),
+      });
+    };
+    if (keyType === 'ed25519') {
+      crypto.generateKeyPair(
+        'ed25519',
+        {
+          publicKeyEncoding: { type: 'spki', format: 'pem' },
+          privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+        },
+        cb,
+      );
+    } else {
+      crypto.generateKeyPair(
+        'rsa',
+        {
+          modulusLength: 2048,
+          publicKeyEncoding: { type: 'spki', format: 'pem' },
+          privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+        },
+        cb,
+      );
+    }
   });
 
   const privateKeyPem = privateKey.export({ type: 'pkcs8', format: 'pem' }) as string;
   const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+  const publicKeyBase64 = publicKeyDnsBase64(publicKey, keyType);
+  const dnsValue = `v=DKIM1; k=${keyType}; p=${publicKeyBase64}`;
 
-  // Strip PEM header/footer and newlines — DNS needs raw base64
-  const publicKeyBase64 = publicKeyPem.replace(
-    /-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\n/g,
-    '',
-  );
-
-  // Standard DKIM TXT record value
-  // v=DKIM1 — version
-  // k=rsa   — key type
-  // p=…     — base64-encoded public key
-  const dnsValue = `v=DKIM1; k=rsa; p=${publicKeyBase64}`;
-
-  return { privateKeyPem, publicKeyPem, publicKeyBase64, dnsValue };
+  return { privateKeyPem, publicKeyPem, publicKeyBase64, dnsValue, keyType };
 }
 
 // ─── BYODKIM (bring your own key) ──────────────────────────────────────────────
@@ -188,9 +211,15 @@ export function signEmailDkim(opts: {
   const signingHeaders = ['from', 'to', 'subject', 'date', 'message-id'];
   const timestamp = Math.floor(Date.now() / 1000);
 
+  // Detect the key algorithm so the a= tag + signing match (RFC 8463 for
+  // ed25519). RSA → a=rsa-sha256; Ed25519 → a=ed25519-sha256.
+  const keyObj = crypto.createPrivateKey(privateKeyPem);
+  const isEd25519 = keyObj.asymmetricKeyType === 'ed25519';
+  const algTag = isEd25519 ? 'ed25519-sha256' : 'rsa-sha256';
+
   // Build partial DKIM-Signature header (no b= value yet)
   const partialSig =
-    `v=1; a=rsa-sha256; c=relaxed/relaxed; d=${domain}; s=${selector}; ` +
+    `v=1; a=${algTag}; c=relaxed/relaxed; d=${domain}; s=${selector}; ` +
     `t=${timestamp}; bh=${bodyHash}; ` +
     `h=${signingHeaders.join(':')};`;
 
@@ -204,10 +233,15 @@ export function signEmailDkim(opts: {
     `dkim-signature:${partialSig} b=`,
   ].join('\r\n');
 
-  // Sign
-  const signer = crypto.createSign('RSA-SHA256');
-  signer.update(canonHeaders);
-  const signature = signer.sign(privateKeyPem, 'base64');
+  // Sign. Ed25519 (PureEdDSA) signs the message directly — pass algorithm
+  // `null` to crypto.sign; RSA uses RSA-SHA256.
+  const signature = isEd25519
+    ? crypto.sign(null, Buffer.from(canonHeaders), keyObj).toString('base64')
+    : (() => {
+        const signer = crypto.createSign('RSA-SHA256');
+        signer.update(canonHeaders);
+        return signer.sign(privateKeyPem, 'base64');
+      })();
 
   return `${partialSig} b=${signature}`;
 }
@@ -230,10 +264,11 @@ export function buildDkimDnsRecord(
   selector: string,
   domain: string,
   publicKeyBase64: string,
+  keyType: DkimKeyType = 'rsa',
 ): DkimDnsRecord {
   return {
     hostname: `${selector}._domainkey.${domain}`,
     type: 'TXT',
-    value: `v=DKIM1; k=rsa; p=${publicKeyBase64}`,
+    value: `v=DKIM1; k=${keyType}; p=${publicKeyBase64}`,
   };
 }

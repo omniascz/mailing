@@ -5,6 +5,7 @@ package dkim
 
 import (
 	"crypto"
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -41,6 +42,12 @@ func Sign(cfg SignConfig, headers map[string]string, body string) (string, error
 		return "", fmt.Errorf("dkim: parse private key: %w", err)
 	}
 
+	// Algorithm tag depends on the key type. RFC 8463 defines ed25519-sha256.
+	algTag := "rsa-sha256"
+	if _, ok := privKey.(ed25519.PrivateKey); ok {
+		algTag = "ed25519-sha256"
+	}
+
 	// Relaxed body canonicalization
 	canonBody := canonicalizeBody(body)
 	bodyHash := sha256Hash(canonBody)
@@ -58,8 +65,8 @@ func Sign(cfg SignConfig, headers map[string]string, body string) (string, error
 
 	// Build partial DKIM-Signature (no b= value yet)
 	partialSig := fmt.Sprintf(
-		"v=1; a=rsa-sha256; c=relaxed/relaxed; d=%s; s=%s; t=%d; bh=%s; h=%s;",
-		cfg.Domain, cfg.Selector, timestamp, bodyHashB64,
+		"v=1; a=%s; c=relaxed/relaxed; d=%s; s=%s; t=%d; bh=%s; h=%s;",
+		algTag, cfg.Domain, cfg.Selector, timestamp, bodyHashB64,
 		strings.Join(presentHeaders, ":"),
 	)
 
@@ -74,8 +81,7 @@ func Sign(cfg SignConfig, headers map[string]string, body string) (string, error
 
 	dataToSign := strings.Join(canonHeaders, "\r\n")
 
-	hash := sha256.Sum256([]byte(dataToSign))
-	signature, err := rsa.SignPKCS1v15(rand.Reader, privKey, crypto.SHA256, hash[:])
+	signature, err := signData(privKey, []byte(dataToSign))
 	if err != nil {
 		return "", fmt.Errorf("dkim: sign: %w", err)
 	}
@@ -83,6 +89,21 @@ func Sign(cfg SignConfig, headers map[string]string, body string) (string, error
 	sigB64 := base64.StdEncoding.EncodeToString(signature)
 
 	return fmt.Sprintf("%s b=%s", partialSig, sigB64), nil
+}
+
+// signData signs the canonicalized header block with the appropriate algorithm.
+// RSA pre-hashes with SHA-256 (RSASSA-PKCS1-v1_5); Ed25519 (PureEdDSA, RFC 8463)
+// signs the message directly.
+func signData(privKey crypto.PrivateKey, data []byte) ([]byte, error) {
+	switch k := privKey.(type) {
+	case *rsa.PrivateKey:
+		hash := sha256.Sum256(data)
+		return rsa.SignPKCS1v15(rand.Reader, k, crypto.SHA256, hash[:])
+	case ed25519.PrivateKey:
+		return ed25519.Sign(k, data), nil
+	default:
+		return nil, fmt.Errorf("unsupported key type %T", privKey)
+	}
 }
 
 // canonicalizeBody implements relaxed body canonicalization per RFC 6376 §3.4.4.
@@ -153,7 +174,10 @@ func sha256Hash(data string) []byte {
 	return h[:]
 }
 
-func parsePrivateKey(pemData string) (*rsa.PrivateKey, error) {
+// parsePrivateKey parses a PEM private key, supporting PKCS#8 (RSA or Ed25519)
+// and PKCS#1 (RSA). Returns the key as a crypto.PrivateKey for the signer to
+// type-switch on.
+func parsePrivateKey(pemData string) (crypto.PrivateKey, error) {
 	block, _ := pem.Decode([]byte(pemData))
 	if block == nil {
 		return nil, fmt.Errorf("no PEM block found")
@@ -161,7 +185,7 @@ func parsePrivateKey(pemData string) (*rsa.PrivateKey, error) {
 
 	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
-		// Fall back to PKCS1
+		// Fall back to PKCS1 (RSA-only legacy encoding).
 		k, err2 := x509.ParsePKCS1PrivateKey(block.Bytes)
 		if err2 != nil {
 			return nil, fmt.Errorf("parse key: pkcs8=%w, pkcs1=%w", err, err2)
@@ -169,9 +193,10 @@ func parsePrivateKey(pemData string) (*rsa.PrivateKey, error) {
 		return k, nil
 	}
 
-	rsaKey, ok := key.(*rsa.PrivateKey)
-	if !ok {
-		return nil, fmt.Errorf("key is not RSA")
+	switch key.(type) {
+	case *rsa.PrivateKey, ed25519.PrivateKey:
+		return key, nil
+	default:
+		return nil, fmt.Errorf("unsupported key type %T (want RSA or Ed25519)", key)
 	}
-	return rsaKey, nil
 }

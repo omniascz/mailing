@@ -86,3 +86,63 @@ describe('signEmailDkim', () => {
     expect(sig).toMatch(/h=from:to:subject:date:message-id/);
   });
 });
+
+describe('Ed25519 DKIM (RFC 8463)', () => {
+  it('generates an ed25519 key with a k=ed25519 DNS record', async () => {
+    const kp = await generateDkimKeyPair('ed25519');
+    expect(kp.keyType).toBe('ed25519');
+    expect(kp.privateKeyPem).toMatch(/BEGIN PRIVATE KEY/);
+    expect(kp.dnsValue).toMatch(/k=ed25519/);
+    // Raw Ed25519 public key is 32 bytes → 44 base64 chars.
+    expect(kp.publicKeyBase64).toHaveLength(44);
+  });
+
+  it('signs with a=ed25519-sha256 and the signature verifies against the key', async () => {
+    const crypto = await import('node:crypto');
+    const kp = await generateDkimKeyPair('ed25519');
+    const sig = signEmailDkim({
+      headers: {
+        from: 'a@x.com',
+        to: 'b@y.com',
+        subject: 'Hi',
+        date: 'Mon, 01 Jan 2026 00:00:00 +0000',
+        messageId: '<1@x>',
+      },
+      body: 'hello world',
+      privateKeyPem: kp.privateKeyPem,
+      domain: 'x.com',
+      selector: 'fm1',
+    });
+    expect(sig).toMatch(/a=ed25519-sha256/);
+
+    // Reconstruct the signed header block and verify b= against the public key.
+    const b = sig.match(/b=([A-Za-z0-9+/=]+)$/)![1]!;
+    const partial = sig.replace(/ b=[A-Za-z0-9+/=]+$/, '');
+    const canon = [
+      'from:a@x.com',
+      'to:b@y.com',
+      'subject:Hi',
+      'date:Mon, 01 Jan 2026 00:00:00 +0000',
+      'message-id:<1@x>',
+      `dkim-signature:${partial} b=`,
+    ].join('\r\n');
+    const ok = crypto.verify(
+      null,
+      Buffer.from(canon),
+      crypto.createPublicKey(kp.publicKeyPem),
+      Buffer.from(b, 'base64'),
+    );
+    expect(ok).toBe(true);
+  });
+
+  it('keeps RSA as the default algorithm', async () => {
+    const kp = await generateDkimKeyPair();
+    expect(kp.keyType).toBe('rsa');
+    expect(kp.dnsValue).toMatch(/k=rsa/);
+  });
+
+  it('buildDkimDnsRecord reflects the key type', () => {
+    expect(buildDkimDnsRecord('fm1', 'x.com', 'PPP', 'ed25519').value).toMatch(/k=ed25519/);
+    expect(buildDkimDnsRecord('fm1', 'x.com', 'PPP').value).toMatch(/k=rsa/);
+  });
+});

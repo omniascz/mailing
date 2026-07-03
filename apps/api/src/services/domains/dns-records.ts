@@ -50,8 +50,11 @@ export function buildDnsRecords(opts: {
   dkimSelector: string;
   dkimPublicKey: string;
   dmarcEmail: string;
+  /** DKIM key algorithm — drives the k= tag. Defaults to 'rsa'. */
+  dkimKeyType?: 'rsa' | 'ed25519';
 }): DnsRecord[] {
   const { domain, mailSubdomain, dkimSelector, dkimPublicKey, dmarcEmail } = opts;
+  const dkimKeyType = opts.dkimKeyType ?? 'rsa';
 
   return [
     // ─── SPF ─────────────────────────────────────────────────────────────────
@@ -68,7 +71,7 @@ export function buildDnsRecords(opts: {
     {
       type: 'TXT',
       hostname: `${dkimSelector}._domainkey.${domain}`,
-      value: `v=DKIM1; k=rsa; p=${dkimPublicKey}`,
+      value: `v=DKIM1; k=${dkimKeyType}; p=${dkimPublicKey}`,
       purpose: 'DKIM — cryptographic signature key for outgoing emails',
       verified: false,
       lastCheckedAt: null,

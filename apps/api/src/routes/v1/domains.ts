@@ -62,7 +62,7 @@ export default async function domainRoutes(app: FastifyInstance) {
     '/api/v1/domains',
     { schema: { tags: ['Domains'], summary: 'Add sending domain' } },
     async (req, reply) => {
-      const { domain, mailSubdomain } = z
+      const { domain, mailSubdomain, dkimKeyType } = z
         .object({
           domain: z
             .string()
@@ -70,14 +70,16 @@ export default async function domainRoutes(app: FastifyInstance) {
             .max(253)
             .regex(/^[a-z0-9.-]+$/i, 'Invalid domain'),
           mailSubdomain: z.string().min(4).max(253).optional(),
+          // rsa (default, universally supported) or ed25519 (RFC 8463).
+          dkimKeyType: z.enum(['rsa', 'ed25519']).optional(),
         })
         .parse(req.body);
 
       const sub = mailSubdomain ?? `mail.${domain}`;
       const selector = 'fm1';
 
-      // Generate DKIM key pair
-      const keyPair = await generateDkimKeyPair();
+      // Generate DKIM key pair (algorithm per request; defaults to RSA).
+      const keyPair = await generateDkimKeyPair(dkimKeyType ?? 'rsa');
 
       const [row] = await db
         .insert(sendingDomains)
@@ -88,6 +90,7 @@ export default async function domainRoutes(app: FastifyInstance) {
           dkimSelector: selector,
           dkimPrivateKey: keyPair.privateKeyPem,
           dkimPublicKey: keyPair.publicKeyBase64,
+          dkimKeyType: keyPair.keyType,
         })
         .returning()
         .catch((err: Error) => {
@@ -185,7 +188,12 @@ export default async function domainRoutes(app: FastifyInstance) {
         })
         .where(eq(sendingDomains.id, id));
 
-      const dnsRecord = buildDkimDnsRecord(newSelector, existing.domain, keyPair.publicKeyBase64);
+      const dnsRecord = buildDkimDnsRecord(
+        newSelector,
+        existing.domain,
+        keyPair.publicKeyBase64,
+        keyPair.keyType,
+      );
 
       return {
         data: {
@@ -277,6 +285,7 @@ export default async function domainRoutes(app: FastifyInstance) {
         mailSubdomain: domain.mailSubdomain ?? `mail.${domain.domain}`,
         dkimSelector: domain.dkimSelector,
         dkimPublicKey: domain.dkimPublicKey ?? '',
+        dkimKeyType: (domain.dkimKeyType as 'rsa' | 'ed25519' | undefined) ?? 'rsa',
         dmarcEmail: DMARC_REPORT_EMAIL,
       });
 

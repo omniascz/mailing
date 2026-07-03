@@ -40,6 +40,9 @@ export const sendingDomains = pgTable(
     dkimPrivateKey: text('dkim_private_key'),
     /** Base64-encoded public key — put into DNS TXT record */
     dkimPublicKey: text('dkim_public_key'),
+    /** DKIM key algorithm — 'rsa' (default) or 'ed25519' (RFC 8463). Drives the
+     *  k= tag of the DNS record. */
+    dkimKeyType: varchar('dkim_key_type', { length: 16 }).notNull().default('rsa'),
     dkimVerified: boolean('dkim_verified').notNull().default(false),
     dkimVerifiedAt: timestamp('dkim_verified_at', { withTimezone: true }),
     /** BYODKIM: the private key was imported by the customer (not platform-
