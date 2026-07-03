@@ -103,31 +103,34 @@ export interface ImportedDkimKey {
 
 /**
  * Validate a customer-supplied DKIM private key (PEM) and derive its public key
- * for the DNS record the customer must publish. Throws if the PEM is not a
- * valid RSA private key. Pure + testable.
+ * for the DNS record the customer must publish. Accepts RSA and Ed25519
+ * (RFC 8463) keys; throws otherwise. Pure + testable.
  */
-export function importDkimPrivateKey(privateKeyPem: string): ImportedDkimKey {
+export function importDkimPrivateKey(privateKeyPem: string): ImportedDkimKey & { keyType: DkimKeyType } {
   let priv: crypto.KeyObject;
   try {
     priv = crypto.createPrivateKey(privateKeyPem);
   } catch {
     throw new Error('Invalid private key PEM');
   }
-  if (priv.asymmetricKeyType !== 'rsa') {
-    throw new Error('DKIM key must be RSA');
+  const keyType: DkimKeyType | null =
+    priv.asymmetricKeyType === 'rsa'
+      ? 'rsa'
+      : priv.asymmetricKeyType === 'ed25519'
+        ? 'ed25519'
+        : null;
+  if (!keyType) {
+    throw new Error('DKIM key must be RSA or Ed25519');
   }
   const pub = crypto.createPublicKey(priv);
-  const publicKeyPem = pub.export({ type: 'spki', format: 'pem' }) as string;
-  const publicKeyBase64 = publicKeyPem.replace(
-    /-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\n/g,
-    '',
-  );
+  const publicKeyBase64 = publicKeyDnsBase64(pub, keyType);
   // Normalize to PKCS8 PEM for consistent storage + signing.
   const normalizedPem = priv.export({ type: 'pkcs8', format: 'pem' }) as string;
   return {
     privateKeyPem: normalizedPem,
     publicKeyBase64,
-    dnsValue: `v=DKIM1; k=rsa; p=${publicKeyBase64}`,
+    dnsValue: `v=DKIM1; k=${keyType}; p=${publicKeyBase64}`,
+    keyType,
   };
 }
 

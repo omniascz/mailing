@@ -245,6 +245,7 @@ export default async function domainRoutes(app: FastifyInstance) {
           dkimSelector: body.selector,
           dkimPrivateKey: imported.privateKeyPem,
           dkimPublicKey: imported.publicKeyBase64,
+          dkimKeyType: imported.keyType,
           dkimByo: true,
           dkimVerified: false,
           dkimVerifiedAt: null,
@@ -252,7 +253,12 @@ export default async function domainRoutes(app: FastifyInstance) {
         })
         .where(eq(sendingDomains.id, id));
 
-      const dnsRecord = buildDkimDnsRecord(body.selector, existing.domain, imported.publicKeyBase64);
+      const dnsRecord = buildDkimDnsRecord(
+        body.selector,
+        existing.domain,
+        imported.publicKeyBase64,
+        imported.keyType,
+      );
       return {
         data: {
           selector: body.selector,
