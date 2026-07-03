@@ -21,7 +21,9 @@ export type EmailEventKind =
   | 'unsubscribed'
   | 'rejected'
   | 'rendering_failed'
-  | 'delivery_delayed';
+  | 'delivery_delayed'
+  | 'group_unsubscribe'
+  | 'group_resubscribe';
 
 const KIND_TO_EVENT: Record<EmailEventKind, WebhookEvent> = {
   sent: 'email.sent',
@@ -34,6 +36,8 @@ const KIND_TO_EVENT: Record<EmailEventKind, WebhookEvent> = {
   rejected: 'email.rejected',
   rendering_failed: 'email.rendering_failed',
   delivery_delayed: 'email.delivery_delayed',
+  group_unsubscribe: 'email.group_unsubscribe',
+  group_resubscribe: 'email.group_resubscribe',
 };
 
 export interface EmailEventPayload {

@@ -131,4 +131,12 @@ export async function setContactTopicStatus(
       target: [contactTopicSubscriptions.contactId, contactTopicSubscriptions.topicId],
       set: { status, updatedAt: new Date() },
     });
+
+  // Fan out the subscription-group preference change to the org's webhooks
+  // (SendGrid group_unsubscribe / group_resubscribe). Fire-and-forget.
+  const { emitEmailEvent } = await import('../webhooks/email-events.js');
+  emitEmailEvent(orgId, status === 'unsubscribed' ? 'group_unsubscribe' : 'group_resubscribe', {
+    contactId,
+    topicId,
+  });
 }

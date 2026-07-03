@@ -30,4 +30,17 @@ describe('emitEmailEvent', () => {
       'email.sent',
     ]);
   });
+
+  it('maps the SendGrid-parity kinds (deferred + subscription groups)', async () => {
+    dispatched.length = 0;
+    emitEmailEvent('o1', 'delivery_delayed', { messageId: 'm2' });
+    emitEmailEvent('o1', 'group_unsubscribe', { contactId: 'c1', topicId: 't1' });
+    emitEmailEvent('o1', 'group_resubscribe', { contactId: 'c1', topicId: 't1' });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(dispatched.map((d) => d.event)).toEqual([
+      'email.delivery_delayed',
+      'email.group_unsubscribe',
+      'email.group_resubscribe',
+    ]);
+  });
 });

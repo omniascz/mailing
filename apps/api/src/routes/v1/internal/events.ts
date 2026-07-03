@@ -67,9 +67,13 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
         campaignId: body.campaignId,
       };
       if (eventType === 'deliver') emitEmailEvent(body.orgId, 'delivered', wePayload);
-      else if (eventType === 'bounce')
-        emitEmailEvent(body.orgId, 'bounced', { ...wePayload, bounceType });
-      else if (eventType === 'send') emitEmailEvent(body.orgId, 'sent', wePayload);
+      else if (eventType === 'bounce') {
+        // SendGrid semantics: a soft (transient) failure is a *deferral* that
+        // will be retried — emit delivery_delayed, not bounced. Permanent
+        // hard/block failures emit bounced.
+        if (bounceType === 'soft') emitEmailEvent(body.orgId, 'delivery_delayed', wePayload);
+        else emitEmailEvent(body.orgId, 'bounced', { ...wePayload, bounceType });
+      } else if (eventType === 'send') emitEmailEvent(body.orgId, 'sent', wePayload);
 
       // Auto channel fallback: a hard/soft bounce on email can trigger a
       // configured fallback send (SMS/WhatsApp/push). Best-effort, non-blocking.

@@ -42,6 +42,9 @@ export const WEBHOOK_EVENTS = [
   'email.rejected',
   'email.rendering_failed',
   'email.delivery_delayed',
+  // Subscription-group (topic) preference changes — SendGrid parity.
+  'email.group_unsubscribe',
+  'email.group_resubscribe',
   'sms.delivered',
   'sms.failed',
   'workflow.completed',
