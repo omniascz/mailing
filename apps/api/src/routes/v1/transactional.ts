@@ -82,6 +82,22 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         await assertSandboxSendAllowed(orgId, [body.to]);
       }
 
+      // Suppression check → emit a 'rejected' event (SES suppression behaviour)
+      // instead of sending to a bounced/complained/unsubscribed address.
+      const { suppressions } = await import('../../db/schema/index.js');
+      const [suppressed] = await db
+        .select({ reason: suppressions.reason })
+        .from(suppressions)
+        .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, body.to.toLowerCase())))
+        .limit(1);
+      if (suppressed) {
+        const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
+        emitEmailEvent(orgId, 'rejected', { email: body.to, reason: suppressed.reason });
+        return reply
+          .code(202)
+          .send({ data: { status: 'rejected', reason: `suppressed:${suppressed.reason}` } });
+      }
+
       // Resolve a stored template (SES SendTemplatedEmail) when templateId is
       // given — subject/html/text come from the rendered template + merge vars.
       let subject = body.subject ?? '';
@@ -91,10 +107,23 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         const { renderStoredTemplate } = await import(
           '../../services/transactional/render-template.js'
         );
-        const rendered = await renderStoredTemplate(orgId, body.templateId, body.mergeVars ?? {});
-        html = rendered.html;
-        text = rendered.text;
-        if (!subject) subject = rendered.subject; // template supplies the subject
+        try {
+          const rendered = await renderStoredTemplate(orgId, body.templateId, body.mergeVars ?? {});
+          html = rendered.html;
+          text = rendered.text;
+          if (!subject) subject = rendered.subject; // template supplies the subject
+        } catch (err) {
+          // Emit a rendering-failure event (SES RenderingFailure) then surface 400.
+          const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
+          emitEmailEvent(orgId, 'rendering_failed', {
+            email: body.to,
+            templateId: body.templateId,
+            error: (err as Error).message,
+          });
+          return reply
+            .code(400)
+            .send({ code: 'RENDERING_FAILED', message: (err as Error).message });
+        }
       } else if (body.mergeVars) {
         // Inline body: simple {{var}} token substitution.
         for (const [key, val] of Object.entries(body.mergeVars)) {

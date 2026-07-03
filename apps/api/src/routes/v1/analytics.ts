@@ -183,6 +183,23 @@ export default async function analyticsRoutes(app: FastifyInstance) {
   );
 
   /**
+   * GET /api/v1/account/send-statistics?days=N
+   * Account-wide send/delivery/bounce/complaint stats + rates (SES
+   * GetSendStatistics equivalent).
+   */
+  app.get(
+    '/api/v1/account/send-statistics',
+    { schema: { tags: ['Analytics'], summary: 'Account-level send statistics' } },
+    async (req) => {
+      const { days } = z
+        .object({ days: z.coerce.number().int().min(1).max(365).optional().default(30) })
+        .parse(req.query);
+      const { getAccountSendStats } = await import('../../services/analytics/account-stats.js');
+      return { data: await getAccountSendStats(req.user!.orgId, days) };
+    },
+  );
+
+  /**
    * GET /api/v1/campaigns/:id/stats/timeline?interval=hour|day
    * Time-series breakdown of events.
    */
