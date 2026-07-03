@@ -124,6 +124,8 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
           utmTracking: data.utmTracking,
           companyName: data.companyName,
           companyAddress: data.companyAddress,
+          ipPoolId: data.ipPoolId,
+          tlsPolicy: data.tlsPolicy,
         } satisfies BatchSenderJobData,
         opts: { priority: data.priority },
       }));
@@ -192,6 +194,8 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
         utmTracking: data.utmTracking,
         companyName: data.companyName,
         companyAddress: data.companyAddress,
+        ipPoolId: data.ipPoolId,
+        tlsPolicy: data.tlsPolicy,
       } satisfies BatchSenderJobData,
       opts: { priority: data.priority },
     }));

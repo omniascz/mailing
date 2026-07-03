@@ -112,7 +112,8 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   let sendingIp = '';
   try {
     const { pickIpForSend } = await import('../../../api/src/services/dedicated-ips/index.js');
-    const ip = await pickIpForSend(data.orgId);
+    // Use the configuration set's IP pool when the campaign specifies one.
+    const ip = await pickIpForSend(data.orgId, data.ipPoolId);
     sendingIp = ip?.ipAddress ?? '';
   } catch {
     sendingIp = '';
@@ -299,6 +300,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         dkimSelector: data.dkimSelector,
         dkimPrivateKey: data.dkimPrivateKey,
         sendingIp,
+        tlsPolicy: data.tlsPolicy,
         // VERP Return-Path: encode the messageId so out-of-band bounces are
         // attributable. Only when a bounce domain is configured.
         returnPath: verpBounceDomain

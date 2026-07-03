@@ -61,6 +61,12 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
 
   const dkim = campaign.fromEmail ? await resolveDkimForSender(orgId, campaign.fromEmail) : null;
 
+  // Apply the configuration set (throws 403 if its sending is paused) → thread
+  // its IP pool + TLS policy to the batch/MTA path so per-config-set enforcement
+  // works for campaigns too (not just transactional).
+  const { applyConfigurationSet } = await import('../configuration-sets/index.js');
+  const cfg = await applyConfigurationSet(orgId, campaign.configurationSet ?? undefined);
+
   // CAN-SPAM footer identity — auto-appended by the renderer when present.
   const [org] = await db
     .select({ companyName: organizations.companyName, postalAddress: organizations.postalAddress })
@@ -84,6 +90,8 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
     replyTo: campaign.replyTo,
     abConfig: campaign.abConfig ?? undefined,
     utmTracking: campaign.utmTracking ?? undefined,
+    ipPoolId: cfg.ipPoolId ?? undefined,
+    tlsPolicy: cfg.tlsPolicy,
     ...(dkim ?? {}),
     priority: PRIORITY.CAMPAIGN,
   });

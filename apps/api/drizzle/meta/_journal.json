@@ -141,6 +141,13 @@
       "when": 1782164700000,
       "tag": "0019_subscription_topics",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1782164800000,
+      "tag": "0020_campaign_config_set",
+      "breakpoints": true
     }
   ]
 }
