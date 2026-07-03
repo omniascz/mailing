@@ -31,6 +31,7 @@ import {
   cancelQueuedEmails,
 } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
+import { parseScheduledAt } from '../../services/transactional/parse-scheduled-at.js';
 
 // ─── Resend payload schemas ───────────────────────────────────────────────
 
@@ -82,8 +83,14 @@ const sendEmailBody = z.object({
   headers: z.record(z.string().max(2048)).optional(),
   tags: z.array(tagPair).max(20).optional(),
   attachments: z.array(attachment).max(40).optional(),
-  /** ISO timestamp. */
-  scheduled_at: z.string().datetime().optional(),
+  /** ISO timestamp OR natural language ("in 1 hour", "tomorrow at 9am"). */
+  scheduled_at: z
+    .string()
+    .max(100)
+    .optional()
+    .refine((v) => v == null || parseScheduledAt(v) !== null, {
+      message: 'scheduled_at must be an ISO timestamp or a supported phrase (e.g. "in 1 hour").',
+    }),
   /** Per-email tracking toggle. Defaults to org-level setting when omitted. */
   tracking: trackingFlags.optional(),
   /**
@@ -141,7 +148,9 @@ async function dispatchResendEmail(
   const recipients = [...toArray(item.to), ...toArray(item.cc), ...toArray(item.bcc)];
   if (recipients.length === 0) return 0;
 
-  const scheduleAt = item.scheduled_at ? new Date(item.scheduled_at) : undefined;
+  // Resolves both ISO and natural-language ("in 1 hour"); validated at the
+  // schema boundary, so a present value always parses here.
+  const scheduleAt = item.scheduled_at ? parseScheduledAt(item.scheduled_at) ?? undefined : undefined;
   const replyTo = toArray(item.reply_to)[0];
   const customHeaders: Record<string, string> = { ...(item.headers ?? {}) };
   const cc = toArray(item.cc);
@@ -562,13 +571,21 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { id } = z.object({ id: z.string().min(1).max(255) }).parse(req.params);
       const body = z
-        .object({ scheduled_at: z.string().datetime() })
+        .object({ scheduled_at: z.string().max(100) })
         .safeParse(req.body);
       if (!body.success) {
         return reply.code(422).send({
           statusCode: 422,
           name: 'validation_error',
-          message: 'scheduled_at must be a valid ISO timestamp',
+          message: 'scheduled_at is required',
+        });
+      }
+      const newSendAt = parseScheduledAt(body.data.scheduled_at);
+      if (!newSendAt) {
+        return reply.code(422).send({
+          statusCode: 422,
+          name: 'validation_error',
+          message: 'scheduled_at must be an ISO timestamp or a supported phrase (e.g. "in 1 hour").',
         });
       }
 
@@ -599,7 +616,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       // Actually move the queued jobs. If nothing moved, the email already sent
       // (or was never scheduled) — report that rather than silently "succeeding".
       const jobIds = scheduledEmailJobIdsForRow(row);
-      const moved = await rescheduleQueuedEmails(jobIds, new Date(body.data.scheduled_at));
+      const moved = await rescheduleQueuedEmails(jobIds, newSendAt);
       if (moved === 0) {
         return reply.code(422).send({
           statusCode: 422,
@@ -609,7 +626,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       }
 
       const meta = (row.metadata ?? {}) as Record<string, unknown>;
-      meta.scheduledAt = body.data.scheduled_at;
+      meta.scheduledAt = newSendAt.toISOString();
       await db
         .update(emailEvents)
         .set({ metadata: meta })
