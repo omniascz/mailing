@@ -140,6 +140,12 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
       emitEmailEvent(orgId, 'sent', { messageId, email: body.to });
 
+      // Per-email usage metering (PAYG) — previously recordUsage was never called.
+      if (!testMode) {
+        const { recordUsage } = await import('../../services/billing/meters.js');
+        recordUsage(orgId, 'email', 1).catch(() => {});
+      }
+
       return reply
         .code(202)
         .send({

@@ -7,7 +7,6 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { randomUUID } from 'node:crypto';
 import { db } from '../../../db/client.js';
 import { emailEvents } from '../../../db/schema/index.js';
 
@@ -89,7 +88,31 @@ const messagingSendRoutes: FastifyPluginAsync = async (app) => {
               .code(400)
               .send({ code: 'BODY_REQUIRED', message: 'Provide html, text, or templateId' });
           }
-          const messageId = `<${randomUUID()}@forgemsg>`;
+          // Resolve a template if given, else use inline body (was a stub that
+          // logged an event but never dispatched to the MTA).
+          let html = p.html ?? '';
+          let text = p.text ?? '';
+          let subject = p.subject;
+          if (p.templateId) {
+            const { renderStoredTemplate } = await import(
+              '../../../services/transactional/render-template.js'
+            );
+            const r = await renderStoredTemplate(orgId, p.templateId, p.mergeVars ?? {});
+            html = r.html;
+            text = r.text;
+            if (!subject) subject = r.subject;
+          }
+          const { sendTransactionalEmail } = await import('../../../lib/queues.js');
+          const messageId = await sendTransactionalEmail({
+            to: p.to,
+            from: p.from,
+            fromName: p.fromName,
+            subject: subject || '(no subject)',
+            html: html || '<p></p>',
+            text: text || undefined,
+            orgId,
+            scheduleAt: p.scheduleAt ? new Date(p.scheduleAt) : undefined,
+          });
           await db.insert(emailEvents).values({
             orgId,
             eventType: 'send',
@@ -103,6 +126,10 @@ const messagingSendRoutes: FastifyPluginAsync = async (app) => {
               ...p.metadata,
             },
           });
+          const { emitEmailEvent } = await import('../../../services/webhooks/email-events.js');
+          emitEmailEvent(orgId, 'sent', { messageId, email: p.to });
+          const { recordUsage } = await import('../../../services/billing/meters.js');
+          recordUsage(orgId, 'email', 1).catch(() => {});
           return reply.code(202).send({
             data: { channel: 'email', messageId, status: p.scheduleAt ? 'scheduled' : 'queued' },
           });

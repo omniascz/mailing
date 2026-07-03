@@ -69,5 +69,11 @@ export async function sendRawMessage(
     messages.push({ to, messageId });
   }
 
+  // Per-email usage metering (PAYG).
+  if (!opts.testMode && messages.length > 0) {
+    const { recordUsage } = await import('../billing/meters.js');
+    recordUsage(orgId, 'email', messages.length).catch(() => {});
+  }
+
   return { status: 'queued', messages };
 }
