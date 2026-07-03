@@ -442,6 +442,9 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
             .min(1)
             .max(1000),
           tags: z.array(z.string()).max(20).optional(),
+          // SendGrid parity: schedule the batch for a future time. It can be
+          // paused/resumed or cancelled before it fires.
+          sendAt: z.string().datetime().optional(),
         })
         .parse(req.body);
 
@@ -452,78 +455,41 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       }
 
       const orgId = req.user!.orgId;
-      await checkSendCapacity(orgId, body.recipients.length);
       const batchId = randomUUID();
-      const batchKey = `batch:txn:${orgId}:${batchId}`;
+      const {
+        scheduleBatch,
+        runTransactionalBatch,
+        batchKey: mkBatchKey,
+      } = await import('../../services/transactional/scheduled-batch.js');
 
-      // Deduplicate by email
-      const seen = new Set<string>();
-      const unique = body.recipients.filter((r) => {
-        const key = r.to.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+      // ── Scheduled path — persist for the cron, don't send now ──────────────
+      const sendAt = body.sendAt ? new Date(body.sendAt) : null;
+      if (sendAt && sendAt.getTime() > Date.now()) {
+        const rec = await scheduleBatch(orgId, batchId, body, sendAt);
+        return reply.code(202).send({
+          data: {
+            batchId,
+            status: rec.status,
+            total: rec.total,
+            deduplicated: rec.deduplicated,
+            sendAt: rec.sendAt,
+          },
+        });
+      }
 
-      // Store initial batch status in Redis (TTL 7 days)
+      // ── Immediate path ─────────────────────────────────────────────────────
+      await checkSendCapacity(orgId, body.recipients.length);
+      const out = await runTransactionalBatch(orgId, body);
+
       await redis.set(
-        batchKey,
+        mkBatchKey(orgId, batchId),
         JSON.stringify({
           batchId,
           orgId,
-          total: unique.length,
-          queued: 0,
-          failed: 0,
-          status: 'processing',
-          createdAt: new Date().toISOString(),
-        }),
-        'EX',
-        604800,
-      );
-
-      // Enqueue all messages (fire-and-forget progress update)
-      let queued = 0;
-      const results: Array<{ to: string; messageId: string; status: string }> = [];
-
-      await Promise.all(
-        unique.map(async (recipient) => {
-          try {
-            // Apply merge vars to html/text via simple replacement
-            let html = body.html;
-            let text = body.text;
-            if (recipient.mergeVars) {
-              for (const [k, v] of Object.entries(recipient.mergeVars)) {
-                const re = new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'g');
-                if (html) html = html.replace(re, v);
-                if (text) text = text.replace(re, v);
-              }
-            }
-            const messageId = await sendTransactionalEmail({
-              from: body.from,
-              fromName: body.fromName,
-              to: recipient.to,
-              subject: body.subject,
-              html: html ?? text ?? '',
-              text: text,
-              orgId,
-            });
-            results.push({ to: recipient.to, messageId, status: 'queued' });
-            queued++;
-          } catch {
-            results.push({ to: recipient.to, messageId: '', status: 'failed' });
-          }
-        }),
-      );
-
-      // Update batch status
-      await redis.set(
-        batchKey,
-        JSON.stringify({
-          batchId,
-          orgId,
-          total: unique.length,
-          queued,
-          failed: unique.length - queued,
+          total: out.total,
+          queued: out.queued,
+          failed: out.failed,
+          deduplicated: out.deduplicated,
           status: 'queued',
           createdAt: new Date().toISOString(),
         }),
@@ -534,15 +500,47 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       return reply.code(202).send({
         data: {
           batchId,
-          total: unique.length,
-          queued,
-          failed: unique.length - queued,
-          deduplicated: body.recipients.length - unique.length,
-          results,
+          total: out.total,
+          queued: out.queued,
+          failed: out.failed,
+          deduplicated: out.deduplicated,
+          results: out.results,
         },
       });
     },
   );
+
+  // ── Cancel / pause / resume a scheduled batch (#541 / SendGrid parity) ─────
+  const lifecycle: Array<{ verb: 'cancel' | 'pause' | 'resume'; summary: string }> = [
+    { verb: 'cancel', summary: 'Cancel a scheduled transactional batch' },
+    { verb: 'pause', summary: 'Pause a scheduled transactional batch' },
+    { verb: 'resume', summary: 'Resume a paused transactional batch' },
+  ];
+  for (const { verb, summary } of lifecycle) {
+    app.post(
+      `/api/v1/transactional/batch/:batchId/${verb}`,
+      {
+        preHandler: [app.authenticate, app.requireScope('emails:send')],
+        schema: { tags: ['Transactional'], summary },
+      },
+      async (req, reply) => {
+        const { batchId } = req.params as { batchId: string };
+        const orgId = req.user!.orgId;
+        const svc = await import('../../services/transactional/scheduled-batch.js');
+        const fn = { cancel: svc.cancelBatch, pause: svc.pauseBatch, resume: svc.resumeBatch }[verb];
+        try {
+          const rec = await fn(orgId, batchId);
+          return reply.send({ data: { batchId, status: rec.status } });
+        } catch (err) {
+          const code = err instanceof Error ? err.message : 'BATCH_ERROR';
+          if (code === 'BATCH_NOT_FOUND') {
+            return reply.code(404).send({ code, message: 'Batch not found or expired' });
+          }
+          return reply.code(409).send({ code, message: `Batch cannot be ${verb}ed in its current state` });
+        }
+      },
+    );
+  }
 
   // ── Activity export (#223) ────────────────────────────────────────────────
   // GET /api/v1/transactional/export?format=csv|json&dateFrom&dateTo&eventType
@@ -626,13 +624,14 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { batchId } = req.params as { batchId: string };
       const orgId = req.user!.orgId;
-      const batchKey = `batch:txn:${orgId}:${batchId}`;
-
-      const raw = await redis.get(batchKey);
-      if (!raw) {
+      const { getBatch } = await import('../../services/transactional/scheduled-batch.js');
+      const rec = await getBatch(orgId, batchId);
+      if (!rec) {
         return reply.code(404).send({ code: 'BATCH_NOT_FOUND', message: 'Batch not found or expired' });
       }
-      return reply.send({ data: JSON.parse(raw) });
+      // Never leak the stored recipient payload in the status response.
+      const { payload: _omit, ...view } = rec;
+      return reply.send({ data: view });
     },
   );
 };

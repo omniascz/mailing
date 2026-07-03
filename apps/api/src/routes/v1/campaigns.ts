@@ -479,7 +479,12 @@ export default async function campaignRoutes(app: FastifyInstance) {
       const secret = req.headers['x-internal-secret'];
       if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
       const result = await dispatchScheduledCampaigns();
-      return { data: result };
+      // Same tick also fires any due scheduled transactional batches.
+      const { dispatchDueBatches } = await import(
+        '../../services/transactional/scheduled-batch.js'
+      );
+      const batches = await dispatchDueBatches().catch(() => ({ dispatched: 0, errors: 0 }));
+      return { data: { ...result, batches } };
     },
   );
 }
