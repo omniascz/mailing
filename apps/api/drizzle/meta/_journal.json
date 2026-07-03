@@ -183,6 +183,13 @@
       "when": 1782165300000,
       "tag": "0025_ip_subaccount_delegation",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1782165400000,
+      "tag": "0026_seed_tests",
+      "breakpoints": true
     }
   ]
 }

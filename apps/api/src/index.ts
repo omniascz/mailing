@@ -43,6 +43,7 @@ import campaignRoutes from './routes/v1/campaigns.js';
 import analyticsRoutes from './routes/v1/analytics.js';
 import statsCategoryRoutes from './routes/v1/stats-categories.js';
 import mailSettingsRoutes from './routes/v1/mail-settings.js';
+import seedTestRoutes from './routes/v1/seed-tests.js';
 import alertRoutes from './routes/v1/alerts.js';
 import workflowRoutes from './routes/v1/workflows.js';
 import eventRoutes from './routes/v1/events.js';
@@ -381,6 +382,7 @@ export async function buildApp() {
   await app.register(analyticsRoutes);
   await app.register(statsCategoryRoutes);
   await app.register(mailSettingsRoutes);
+  await app.register(seedTestRoutes);
   await app.register(alertRoutes);
   await app.register(workflowRoutes);
   await app.register(eventRoutes);
