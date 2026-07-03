@@ -121,6 +121,74 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  // ── Send raw MIME message (SES SendRawEmail equivalent) ───────────────────
+  app.post(
+    '/api/v1/transactional/email/raw',
+    {
+      preHandler: [app.authenticate, app.requireScope('emails:send')],
+      schema: { tags: ['Transactional'], summary: 'Send a raw RFC5322/MIME message' },
+    },
+    async (req, reply) => {
+      const body = z
+        .object({
+          // The raw message: either base64-encoded (recommended) or plain text.
+          raw: z.string().min(10).max(20_000_000),
+          encoding: z.enum(['base64', 'utf8']).default('base64'),
+          // Optional envelope overrides — else taken from the parsed headers.
+          from: z.string().email().optional(),
+          to: z.array(z.string().email()).max(50).optional(),
+          metadata: z.record(z.unknown()).optional(),
+        })
+        .parse(req.body);
+
+      const rawStr =
+        body.encoding === 'base64' ? Buffer.from(body.raw, 'base64').toString('utf8') : body.raw;
+      const { parseRawMime } = await import('../../services/transactional/mime-parse.js');
+      const parsed = parseRawMime(rawStr);
+
+      const from = body.from ?? parsed.from;
+      const recipients = body.to ?? [...parsed.to, ...parsed.cc];
+      if (!from) {
+        return reply.code(400).send({ code: 'FROM_REQUIRED', message: 'No From address in message' });
+      }
+      if (recipients.length === 0) {
+        return reply.code(400).send({ code: 'TO_REQUIRED', message: 'No recipients in message' });
+      }
+      if (!parsed.html && !parsed.text) {
+        return reply.code(400).send({ code: 'BODY_REQUIRED', message: 'Message has no text/html body' });
+      }
+
+      const orgId = req.user!.orgId;
+      const testMode = req.user?.apiKeyMode === 'test';
+      if (!testMode) await checkSendCapacity(orgId, recipients.length);
+
+      const results: Array<{ to: string; messageId: string }> = [];
+      for (const to of recipients) {
+        const messageId = await sendTransactionalEmail({
+          to,
+          from,
+          fromName: parsed.fromName ?? undefined,
+          subject: parsed.subject ?? '(no subject)',
+          html: parsed.html ?? `<pre>${(parsed.text ?? '').replace(/[<>&]/g, '')}</pre>`,
+          text: parsed.text ?? undefined,
+          replyTo: parsed.replyTo ?? undefined,
+          orgId,
+          customHeaders: parsed.headers,
+          testMode,
+        });
+        await db.insert(emailEvents).values({
+          orgId,
+          eventType: 'send',
+          messageId,
+          metadata: { to, transactional: true, raw: true, ...body.metadata },
+        });
+        results.push({ to, messageId });
+      }
+
+      return reply.code(202).send({ data: { status: 'queued', messages: results } });
+    },
+  );
+
   // ── Send transactional SMS ────────────────────────────────────────────────
   app.post(
     '/api/v1/transactional/sms',
