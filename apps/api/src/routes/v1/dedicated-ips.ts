@@ -29,6 +29,7 @@ import {
   getDedicatedIp,
   assignIpToPool,
   updateIpStatus,
+  verifyIpPtr,
 } from '../../services/dedicated-ips/index.js';
 
 const idParam = z.object({ id: z.string().uuid() });
@@ -163,6 +164,18 @@ const routes: FastifyPluginAsync = async (app) => {
       const { id } = idParam.parse(req.params);
       const { poolId } = z.object({ poolId: z.string().uuid().nullable() }).parse(req.body);
       return { data: await assignIpToPool(req.user!.orgId, id, poolId) };
+    },
+  );
+
+  app.post(
+    '/api/v1/dedicated-ips/:id/verify-ptr',
+    {
+      preHandler: [app.authenticate, app.requireRole('owner', 'admin')],
+      schema: { tags: ['Dedicated IPs'], summary: 'Verify reverse DNS (PTR / FCrDNS) for an IP' },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      return { data: await verifyIpPtr(req.user!.orgId, id) };
     },
   );
 

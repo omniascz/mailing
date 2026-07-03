@@ -289,6 +289,70 @@ export async function getDedicatedIp(orgId: string, id: string): Promise<Dedicat
   return ip;
 }
 
+export interface PtrVerifyResult {
+  ipAddress: string;
+  /** The PTR record configured on the IP row (expected hostname). */
+  configuredPtr: string | null;
+  /** Hostnames returned by the live reverse-DNS (PTR) lookup. */
+  resolvedPtr: string[];
+  /** The configured PTR appears in the live reverse-DNS answer. */
+  matchesConfigured: boolean;
+  /**
+   * Forward-Confirmed reverse DNS: at least one PTR hostname forward-resolves
+   * back to this IP. This is what receiving MTAs actually check.
+   */
+  forwardConfirmed: boolean;
+  checkedAt: string;
+}
+
+/**
+ * Pure: decide PTR match + FCrDNS from raw DNS answers. Hostnames are compared
+ * case-insensitively with any trailing dot stripped.
+ */
+export function evaluatePtr(
+  ipAddress: string,
+  configuredPtr: string | null,
+  resolvedPtr: string[],
+  forwardMap: Record<string, string[]>,
+  checkedAt: string,
+): PtrVerifyResult {
+  const norm = (h: string) => h.toLowerCase().replace(/\.$/, '');
+  const resolved = resolvedPtr.map(norm);
+  const cfg = configuredPtr ? norm(configuredPtr) : null;
+  const matchesConfigured = cfg != null && resolved.includes(cfg);
+  const forwardConfirmed = resolved.some((h) => (forwardMap[h] ?? []).includes(ipAddress));
+  return {
+    ipAddress,
+    configuredPtr,
+    resolvedPtr: resolved,
+    matchesConfigured,
+    forwardConfirmed,
+    checkedAt,
+  };
+}
+
+/**
+ * Verify an IP's reverse DNS (PTR) live: reverse-lookup the address, then
+ * forward-resolve each returned hostname to confirm FCrDNS. Best-effort — DNS
+ * failures resolve to empty answers rather than throwing.
+ */
+export async function verifyIpPtr(orgId: string, id: string): Promise<PtrVerifyResult> {
+  const ip = await getDedicatedIp(orgId, id);
+  const dns = await import('node:dns/promises');
+
+  const resolvedPtr = await dns.reverse(ip.ipAddress).catch(() => [] as string[]);
+  const forwardMap: Record<string, string[]> = {};
+  await Promise.all(
+    resolvedPtr.map(async (host) => {
+      const v4 = await dns.resolve4(host).catch(() => [] as string[]);
+      const v6 = await dns.resolve6(host).catch(() => [] as string[]);
+      forwardMap[host.toLowerCase().replace(/\.$/, '')] = [...v4, ...v6];
+    }),
+  );
+
+  return evaluatePtr(ip.ipAddress, ip.ptrRecord, resolvedPtr, forwardMap, new Date().toISOString());
+}
+
 export async function assignIpToPool(
   orgId: string,
   ipId: string,
