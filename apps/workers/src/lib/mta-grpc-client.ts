@@ -74,6 +74,8 @@ export interface SendRequest {
   returnPath?: string;
   /** TLS policy: 'require' aborts if STARTTLS unavailable; else opportunistic. */
   tlsPolicy?: string;
+  /** Raw RFC 5322 MIME — relayed verbatim (SendRawEmail). Empty = build from fields. */
+  rawMime?: string;
   /** File attachments (e-ticket PDFs etc.). Empty/omitted for link-only mail. */
   attachments?: Attachment[];
 }

@@ -49,7 +49,12 @@ type SendRequest struct {
 	ReturnPath string `protobuf:"bytes,17,opt,name=return_path,json=returnPath,proto3" json:"return_path,omitempty"`
 	// TLS policy: "require" aborts the send if STARTTLS is unavailable/fails
 	// (no plaintext fallback). Empty/"optional" = opportunistic STARTTLS.
-	TlsPolicy     string `protobuf:"bytes,18,opt,name=tls_policy,json=tlsPolicy,proto3" json:"tls_policy,omitempty"`
+	TlsPolicy string `protobuf:"bytes,18,opt,name=tls_policy,json=tlsPolicy,proto3" json:"tls_policy,omitempty"`
+	// Raw RFC 5322 MIME. When set, the engine relays these bytes verbatim
+	// (SendRawEmail semantics) instead of recomposing from the structured fields,
+	// preserving S/MIME and any pre-applied DKIM signature. The engine does not
+	// auto-sign a raw message. Empty = build from html/text/attachments.
+	RawMime       string `protobuf:"bytes,19,opt,name=raw_mime,json=rawMime,proto3" json:"raw_mime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -206,6 +211,13 @@ func (x *SendRequest) GetReturnPath() string {
 func (x *SendRequest) GetTlsPolicy() string {
 	if x != nil {
 		return x.TlsPolicy
+	}
+	return ""
+}
+
+func (x *SendRequest) GetRawMime() string {
+	if x != nil {
+		return x.RawMime
 	}
 	return ""
 }
@@ -643,7 +655,7 @@ var File_proto_mta_proto protoreflect.FileDescriptor
 
 const file_proto_mta_proto_rawDesc = "" +
 	"\n" +
-	"\x0fproto/mta.proto\x12\x03mta\"\xa7\x05\n" +
+	"\x0fproto/mta.proto\x12\x03mta\"\xc2\x05\n" +
 	"\vSendRequest\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x01 \x01(\tR\tmessageId\x12\x1d\n" +
@@ -670,7 +682,8 @@ const file_proto_mta_proto_rawDesc = "" +
 	"\vreturn_path\x18\x11 \x01(\tR\n" +
 	"returnPath\x12\x1d\n" +
 	"\n" +
-	"tls_policy\x18\x12 \x01(\tR\ttlsPolicy\x1a@\n" +
+	"tls_policy\x18\x12 \x01(\tR\ttlsPolicy\x12\x19\n" +
+	"\braw_mime\x18\x13 \x01(\tR\arawMime\x1a@\n" +
 	"\x12CustomHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9c\x01\n" +

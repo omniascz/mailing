@@ -49,6 +49,12 @@ message SendRequest {
   // TLS policy: "require" aborts the send if STARTTLS is unavailable/fails
   // (no plaintext fallback). Empty/"optional" = opportunistic STARTTLS.
   string tls_policy = 18;
+
+  // Raw RFC 5322 MIME. When set, the engine relays these bytes verbatim
+  // (SendRawEmail semantics) instead of recomposing from the structured fields,
+  // preserving S/MIME and any pre-applied DKIM signature. The engine does not
+  // auto-sign a raw message. Empty = build from html/text/attachments.
+  string raw_mime = 19;
 }
 
 message Attachment {

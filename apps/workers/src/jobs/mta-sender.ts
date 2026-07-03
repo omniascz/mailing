@@ -76,6 +76,7 @@ async function sendViaMta(data: MtaSendJobData): Promise<MtaSendResult> {
       sendingIp: data.sendingIp ?? '', // resolved from the org's pool; '' = engine default
       returnPath: data.returnPath ?? '', // VERP envelope sender; '' = use From
       tlsPolicy: data.tlsPolicy ?? '', // 'require' = abort if no STARTTLS
+      rawMime: data.rawMime ?? '', // relayed verbatim when set (SendRawEmail)
       dkim: data.dkimDomain
         ? {
             domain: data.dkimDomain,

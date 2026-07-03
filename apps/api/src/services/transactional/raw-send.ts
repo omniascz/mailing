@@ -59,6 +59,9 @@ export async function sendRawMessage(
       orgId,
       customHeaders: parsed.headers,
       testMode: opts.testMode,
+      // Relay the ORIGINAL bytes verbatim (SendRawEmail) — the parsed fields
+      // above are only used for routing/recipient/event metadata.
+      rawMime: rawStr,
     });
     await db.insert(emailEvents).values({
       orgId,

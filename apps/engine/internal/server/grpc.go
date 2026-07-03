@@ -142,6 +142,7 @@ func requestToMessage(req *pb.SendRequest) *smtpsend.Message {
 		SendingIP:  req.SendingIp,
 		ReturnPath: req.ReturnPath,
 		TLSPolicy:  req.TlsPolicy,
+		RawMIME:    req.RawMime,
 	}
 
 	if req.Dkim != nil {

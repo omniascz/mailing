@@ -260,6 +260,8 @@ export interface MtaSendJobData {
   returnPath?: string;
   /** TLS policy: 'require' aborts if no STARTTLS; else opportunistic. */
   tlsPolicy?: string;
+  /** Raw RFC 5322 MIME — relayed verbatim by the engine when set. */
+  rawMime?: string;
   priority: Priority;
   stream: MessageStream;
   /** A/B variant id propagated from BatchSenderJobData for event tagging. */

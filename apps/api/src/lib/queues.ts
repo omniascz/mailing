@@ -129,6 +129,11 @@ export interface TransactionalEmailInput {
   sendingIp?: string;
   /** TLS policy ('require' | 'optional') from a configuration set. */
   tlsPolicy?: string;
+  /**
+   * Raw RFC 5322 MIME. When set the engine relays it verbatim (SendRawEmail)
+   * instead of recomposing from html/text — preserves S/MIME + pre-signed DKIM.
+   */
+  rawMime?: string;
 }
 
 /**
@@ -172,6 +177,7 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       customHeaders: input.customHeaders ?? {},
       sendingIp: input.sendingIp ?? '',
       tlsPolicy: input.tlsPolicy ?? '',
+      rawMime: input.rawMime ?? '',
       priority: PRIORITY.TRANSACTIONAL,
       stream: 'transactional',
       ...(input.attachments && input.attachments.length > 0

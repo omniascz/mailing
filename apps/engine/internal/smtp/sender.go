@@ -34,6 +34,7 @@ type Message struct {
 	SendingIP    string // optional override
 	ReturnPath   string // VERP envelope sender (MAIL FROM); empty = FromEmail
 	TLSPolicy    string // "require" = abort if no STARTTLS; else opportunistic
+	RawMIME      string // when set, relayed verbatim (SendRawEmail); skips build+DKIM
 
 	// ISP-deliverability hints (#387). Leave zero-valued to skip enrichment.
 	CampaignID       string // tenant-facing identifier for Feedback-ID
@@ -117,19 +118,28 @@ func (s *Sender) Send(msg *Message) *Result {
 		useWarmupDial = true
 	}
 
-	// Build the raw RFC 5322 message
-	rawMsg, headers, body := buildRawMessage(msg)
+	// Build the message. When the caller supplied raw MIME, relay it verbatim
+	// (SendRawEmail semantics) — do NOT recompose or auto-sign, since that would
+	// break S/MIME and any pre-applied DKIM signature the caller already added.
+	var rawMsg string
+	if msg.RawMIME != "" {
+		rawMsg = msg.RawMIME
+	} else {
+		var headers map[string]string
+		var body string
+		rawMsg, headers, body = buildRawMessage(msg)
 
-	// Sign with DKIM if configured
-	if msg.DkimConfig != nil && msg.DkimConfig.PrivateKeyPEM != "" {
-		sig, err := dkim.Sign(*msg.DkimConfig, headers, body)
-		if err != nil {
-			return &Result{
-				MessageID: msg.MessageID,
-				Error:     fmt.Sprintf("dkim sign: %v", err),
+		// Sign with DKIM if configured
+		if msg.DkimConfig != nil && msg.DkimConfig.PrivateKeyPEM != "" {
+			sig, err := dkim.Sign(*msg.DkimConfig, headers, body)
+			if err != nil {
+				return &Result{
+					MessageID: msg.MessageID,
+					Error:     fmt.Sprintf("dkim sign: %v", err),
+				}
 			}
+			rawMsg = "DKIM-Signature: " + sig + "\r\n" + rawMsg
 		}
-		rawMsg = "DKIM-Signature: " + sig + "\r\n" + rawMsg
 	}
 
 	// Get a connection.
