@@ -10,6 +10,7 @@ import (
 	"github.com/forgemsg/engine/internal/inbound"
 	"github.com/forgemsg/engine/internal/pool"
 	"github.com/forgemsg/engine/internal/server"
+	"github.com/forgemsg/engine/internal/submission"
 	"github.com/forgemsg/engine/internal/warmup"
 )
 
@@ -65,6 +66,28 @@ func main() {
 				log.Printf("inbound receiver stopped: %v", err)
 			}
 		}()
+	}
+
+	// Optional customer SMTP submission server (port 587). Disabled when
+	// SUBMISSION_LISTEN is unset. Relays authenticated mail to the API.
+	if addr := os.Getenv("SUBMISSION_LISTEN"); addr != "" {
+		sub, err := submission.New(submission.Config{
+			ListenAddr: addr,
+			Hostname:   os.Getenv("SUBMISSION_HOSTNAME"),
+			APIURL:     os.Getenv("SUBMISSION_API_URL"),
+			APISecret:  os.Getenv("SUBMISSION_API_SECRET"),
+			TLSCert:    os.Getenv("SUBMISSION_TLS_CERT"),
+			TLSKey:     os.Getenv("SUBMISSION_TLS_KEY"),
+		})
+		if err != nil {
+			log.Printf("submission server disabled: %v", err)
+		} else {
+			go func() {
+				if err := sub.ListenAndServe(); err != nil {
+					log.Printf("submission server stopped: %v", err)
+				}
+			}()
+		}
 	}
 
 	// Graceful shutdown

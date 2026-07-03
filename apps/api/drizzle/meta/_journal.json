@@ -99,6 +99,13 @@
       "when": 1782164100000,
       "tag": "0013_mobile_devices",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1782164200000,
+      "tag": "0014_smtp_credentials",
+      "breakpoints": true
     }
   ]
 }
