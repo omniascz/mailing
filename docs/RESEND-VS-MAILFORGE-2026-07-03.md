@@ -165,3 +165,24 @@ Resend nedělá.
 **Závěr:** Resend-compat vrstva je široká a skutečně zapojená. Reálné mezery jsou
 úzké a soustředěné do **lifecyclu naplánovaného odeslání** (bod 1–2) + několika DX
 detailů (3–7). Zbytek Resend náskoku je non-code (SDK, docs, svix, reputace).
+
+---
+
+## UPDATE 2026-07-03 — dořešené mezery, které zlepšují náš systém
+
+Postaveno + ověřeno (commity po tomto auditu):
+- **#1 reschedule + cancel reálně funkční** — scheduled send má stabilní jobId
+  (`sched-email:<id>:<n>`); PATCH `changeDelay()`, cancel `remove()`; 422 když
+  už odešel. Přidán Resend-standard `POST /emails/:id/cancel` (DELETE alias).
+- **#3 NL `scheduled_at`** — „in 1 hour", „tomorrow at 9am", „next week" (pure
+  parser, validováno na schématu, single+batch).
+- **#4 sink adresy** — `delivered@/bounced@/complained@/opened@/clicked@` na
+  SINK_DOMAIN (default `sink.forgemsg.test`, i `resend.dev`) simulují výsledek +
+  fírují webhooky místo doručení (dev test harness).
+- **#5 remote (`path`) attachmenty** — https-only fetch se SSRF ochranou
+  (blok private/loopback/link-local/metadata IP, 10 MB + 10 s cap).
+- **#7 per-domain tracking toggle** — persistováno (migrace 0027) a ctěno na
+  campaign cestě (gate pixel/link injekce).
+
+Neděláno záměrně (čistá kompat/infra kosmetika bez přínosu našemu systému):
+**#2 tvar** (vyřešeno aliasem v #1), **#6 svix podpis**, **#7-region**.
