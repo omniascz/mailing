@@ -87,7 +87,19 @@ export default async function authRoutes(app: FastifyInstance) {
       const orgName = body.orgName || `${body.name}'s workspace`;
       const slug = `${slugify(orgName)}-${crypto.randomBytes(3).toString('hex')}`;
 
-      const [org] = await db.insert(organizations).values({ name: orgName, slug, sendingMode: 'sandbox' }).returning();
+      // Data residency: derive the region from the signup country (GDPR
+      // countries → EU, APAC → AP, else US). Never moved automatically later.
+      const countrySignal =
+        ((request.body as { country?: string }).country ??
+          (request.headers['x-country'] as string) ??
+          '') || '';
+      const { suggestRegionForCountry } = await import('../../services/data-residency/index.js');
+      const dataRegion = countrySignal ? suggestRegionForCountry(countrySignal) : 'us';
+
+      const [org] = await db
+        .insert(organizations)
+        .values({ name: orgName, slug, sendingMode: 'sandbox', dataRegion })
+        .returning();
       if (!org) throw AppError.internal('Failed to create organization');
 
       // Create owner user
