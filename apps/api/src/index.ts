@@ -15,6 +15,7 @@ import corsPlugin from './plugins/cors.js';
 import rateLimitPlugin from './plugins/rate-limit.js';
 import cookiePlugin from './plugins/cookie.js';
 import authPlugin from './plugins/auth.js';
+import auditPlugin from './plugins/audit.js';
 import ipRestrictionsPlugin from './plugins/ip-restrictions.js';
 import multipartPlugin from './plugins/multipart.js';
 import healthRoutes from './routes/v1/health.js';
@@ -343,6 +344,7 @@ export async function buildApp() {
   await app.register(authPlugin);
   await app.register(ipRestrictionsPlugin);
   await app.register(multipartPlugin);
+  await app.register(auditPlugin);
 
   // Routes
   await app.register(healthRoutes);
