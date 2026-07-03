@@ -134,6 +134,13 @@
       "when": 1782164600000,
       "tag": "0018_inbound_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1782164700000,
+      "tag": "0019_subscription_topics",
+      "breakpoints": true
     }
   ]
 }
