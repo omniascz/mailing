@@ -109,7 +109,7 @@ export class ViberAdapter extends BaseChannelAdapter {
           messageId,
           status: 'sent',
           provider: providerName,
-          recipientId: recipient.contactId,
+          recipientId: recipient.contactId ?? '',
         };
       } catch (err) {
         lastError = err as Error;

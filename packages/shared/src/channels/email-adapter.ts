@@ -53,7 +53,7 @@ export class EmailAdapter extends BaseChannelAdapter {
       messageId: `mock-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       status: 'queued',
       provider: this.provider,
-      recipientId: recipient.contactId,
+      recipientId: recipient.contactId ?? '',
       cost: 0.0001,
     };
   }

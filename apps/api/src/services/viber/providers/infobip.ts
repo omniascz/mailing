@@ -100,7 +100,7 @@ export async function sendViaInfobip(
     messageId,
     status,
     provider: 'infobip',
-    recipientId: recipient.contactId,
+    recipientId: recipient.contactId ?? '',
     cost: 0.015, // ~typical Viber Business cost — caller replaces with actual billing
   };
 }

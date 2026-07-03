@@ -247,7 +247,7 @@ export class WebPushAdapter extends BaseChannelAdapter {
         messageId: logId,
         status: 'sent',
         provider: this.provider,
-        recipientId: recipient.contactId,
+        recipientId: recipient.contactId ?? '',
         cost: 0,
       };
     } catch (err) {

@@ -111,20 +111,72 @@ const messagingSendRoutes: FastifyPluginAsync = async (app) => {
         case 'sms': {
           const p = parsed.payload;
           const { routedSmsSend } = await import('../../../services/sms/routing.js');
+          // Proper UnifiedMessage envelope — routedSmsSend dereferences
+          // message.content.kind/body (the old {text,from} shape crashed).
           const result = await routedSmsSend(
             orgId,
-            { text: p.text, from: p.from } as never,
-            { phone: p.to } as never,
+            { channel: 'sms', orgId, content: { kind: 'sms', body: p.text } },
+            { phone: p.to },
           );
           return reply.code(202).send({ data: { channel: 'sms', ...result } });
         }
 
-        case 'whatsapp':
-        case 'push':
+        case 'whatsapp': {
+          const p = parsed.payload;
+          const { createWhatsAppAdapter } = await import(
+            '../../../channels/whatsapp/meta-adapter.js'
+          );
+          const adapter = createWhatsAppAdapter();
+          if (!adapter) {
+            return reply
+              .code(503)
+              .send({ code: 'WHATSAPP_UNCONFIGURED', message: 'WhatsApp is not configured' });
+          }
+          const result = await adapter.send(
+            {
+              channel: 'whatsapp',
+              orgId,
+              content: {
+                kind: 'whatsapp',
+                templateId: p.templateName,
+                language: p.language,
+                parameters: {},
+              },
+            },
+            { phone: p.to },
+          );
+          return reply.code(202).send({ data: { channel: 'whatsapp', ...result } });
+        }
+
+        case 'push': {
+          const p = parsed.payload;
+          if (!p.contactId) {
+            return reply
+              .code(400)
+              .send({ code: 'CONTACT_REQUIRED', message: 'push requires contactId' });
+          }
+          const { getPushAdapterForOrg } = await import('../../../services/push/get-adapter.js');
+          const adapter = await getPushAdapterForOrg(orgId);
+          if (!adapter) {
+            return reply
+              .code(503)
+              .send({ code: 'PUSH_UNCONFIGURED', message: 'No VAPID keys for this org' });
+          }
+          const result = await adapter.send(
+            {
+              channel: 'push',
+              orgId,
+              content: { kind: 'push', title: p.title, body: p.body, url: p.actionUrl },
+            },
+            { contactId: p.contactId },
+          );
+          return reply.code(202).send({ data: { channel: 'push', ...result } });
+        }
+
         case 'in_app': {
           return reply.code(501).send({
             code: 'NOT_IMPLEMENTED',
-            message: `Channel '${parsed.channel}' is not yet wired into the unified messaging endpoint. Use the channel-specific route.`,
+            message: `Channel 'in_app' is not yet wired into the unified messaging endpoint. Use the channel-specific route.`,
           });
         }
       }

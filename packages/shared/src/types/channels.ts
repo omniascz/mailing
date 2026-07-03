@@ -126,7 +126,9 @@ export interface UnifiedMessage {
 }
 
 export interface Recipient {
-  contactId: string;
+  /** Known contact id. Optional: raw transactional sends (e.g. the unified
+   *  messaging endpoint) may target a bare phone/email with no contact row. */
+  contactId?: string;
   email?: string;
   phone?: string;
   pushToken?: string;

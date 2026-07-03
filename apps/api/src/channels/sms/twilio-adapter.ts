@@ -183,7 +183,7 @@ export class TwilioSmsAdapter extends BaseChannelAdapter {
       messageId: resp.sid,
       status,
       provider: this.provider,
-      recipientId: recipient.contactId,
+      recipientId: recipient.contactId ?? '',
       cost,
     };
   }

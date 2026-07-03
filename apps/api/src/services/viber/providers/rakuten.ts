@@ -70,7 +70,7 @@ export async function sendViaRakuten(
     messageId: String(json.message_token ?? Date.now()),
     status: mapRakutenStatus(json.status),
     provider: 'rakuten',
-    recipientId: recipient.contactId,
+    recipientId: recipient.contactId ?? '',
     cost: 0.015,
   };
 }

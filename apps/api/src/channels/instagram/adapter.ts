@@ -87,7 +87,7 @@ export class InstagramAdapter extends BaseChannelAdapter {
       messageId: data.message_id,
       status: 'sent',
       provider: 'meta-instagram',
-      recipientId: recipient.contactId,
+      recipientId: recipient.contactId ?? '',
     };
   }
 

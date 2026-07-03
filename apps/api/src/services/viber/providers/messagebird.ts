@@ -102,7 +102,7 @@ export async function sendViaMessageBird(
     messageId: msgJson.id,
     status: mapMBStatus(msgJson.status),
     provider: 'messagebird',
-    recipientId: recipient.contactId,
+    recipientId: recipient.contactId ?? '',
     cost: 0.015,
   };
 }

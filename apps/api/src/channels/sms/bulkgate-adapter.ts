@@ -88,7 +88,7 @@ export class BulkgateSmsAdapter extends BaseChannelAdapter {
         messageId: result.smsId,
         status: 'sent',
         provider: this.provider,
-        recipientId: recipient.contactId,
+        recipientId: recipient.contactId ?? '',
         cost: result.price ?? undefined,
       };
     } catch (err) {

@@ -165,7 +165,7 @@ export class MetaWhatsAppAdapter extends BaseChannelAdapter {
       },
     };
 
-    return this.postMessage(body, recipient.contactId);
+    return this.postMessage(body, recipient.contactId ?? '');
   }
 
   /**

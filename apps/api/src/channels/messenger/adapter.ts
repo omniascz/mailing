@@ -88,7 +88,7 @@ export class MessengerAdapter extends BaseChannelAdapter {
       messageId: data.message_id,
       status: 'sent',
       provider: 'meta-messenger',
-      recipientId: recipient.contactId,
+      recipientId: recipient.contactId ?? '',
     };
   }
 
@@ -147,7 +147,7 @@ export class MessengerAdapter extends BaseChannelAdapter {
       messageId: data.message_id,
       status: 'sent',
       provider: 'meta-messenger',
-      recipientId: recipient.contactId,
+      recipientId: recipient.contactId ?? '',
     };
   }
 

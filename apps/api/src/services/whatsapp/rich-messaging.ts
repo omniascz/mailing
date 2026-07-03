@@ -186,25 +186,25 @@ export class RichWhatsAppSender {
   async sendMedia(recipient: Recipient, msg: MediaMessage): Promise<DeliveryResult> {
     const to = (recipient.phone ?? '').replace(/^\+/, '');
     const payload = buildMediaPayload(to, msg);
-    return this.post(payload, recipient.contactId);
+    return this.post(payload, recipient.contactId ?? '');
   }
 
   async sendButton(recipient: Recipient, msg: ButtonMessage): Promise<DeliveryResult> {
     const to = (recipient.phone ?? '').replace(/^\+/, '');
     const payload = buildButtonPayload(to, msg);
-    return this.post(payload, recipient.contactId);
+    return this.post(payload, recipient.contactId ?? '');
   }
 
   async sendList(recipient: Recipient, msg: ListMessage): Promise<DeliveryResult> {
     const to = (recipient.phone ?? '').replace(/^\+/, '');
     const payload = buildListPayload(to, msg);
-    return this.post(payload, recipient.contactId);
+    return this.post(payload, recipient.contactId ?? '');
   }
 
   async sendLocation(recipient: Recipient, msg: LocationMessage): Promise<DeliveryResult> {
     const to = (recipient.phone ?? '').replace(/^\+/, '');
     const payload = buildLocationPayload(to, msg);
-    return this.post(payload, recipient.contactId);
+    return this.post(payload, recipient.contactId ?? '');
   }
 
   // ── Upload media to Meta ──────────────────────────────────────────────────

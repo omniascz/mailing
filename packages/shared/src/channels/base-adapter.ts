@@ -50,7 +50,7 @@ export abstract class BaseChannelAdapter implements IChannelAdapter {
           messageId: '',
           status: 'failed',
           provider: this.provider,
-          recipientId: recipient.contactId,
+          recipientId: recipient.contactId ?? '',
           errorCode: adapterErr?.code ?? 'UNKNOWN',
           errorMessage: err instanceof Error ? err.message : String(err),
         });
