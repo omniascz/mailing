@@ -99,6 +99,8 @@ func (s *Sender) Send(msg *Message) *Result {
 	//
 	// If msg.SendingIP is already set (explicit caller override), skip selection.
 	selectedIP := msg.SendingIP
+	// useWarmupDial: warmup manager picked this IP → record it against the warmup
+	// counter after sending. Explicit caller overrides do NOT touch warmup state.
 	useWarmupDial := false
 
 	if selectedIP == "" && s.warmupMgr != nil && len(s.sendingIPs) > 0 {
@@ -131,13 +133,15 @@ func (s *Sender) Send(msg *Message) *Result {
 	}
 
 	// Get a connection.
-	// When a specific local IP is required (warmup or explicit override), dial
-	// directly — pool.DialFrom binds the socket to that IP and skips the cache.
-	// For the default path (no IP configured) use the pool for connection reuse.
+	// When a specific local IP is required (warmup OR an explicit dedicated-IP
+	// override), dial directly — pool.DialFrom binds the socket to that IP and
+	// skips the cache. For the default path (no IP configured) use the pool for
+	// connection reuse.
+	boundDial := selectedIP != ""
 	var conn *pool.Conn
 	var connErr error
 	requireTLS := msg.TLSPolicy == "require"
-	if useWarmupDial && selectedIP != "" {
+	if boundDial {
 		conn, connErr = s.pool.DialFrom(domain, selectedIP, requireTLS)
 	} else {
 		conn, connErr = s.pool.Get(domain, requireTLS)
@@ -216,13 +220,16 @@ func (s *Sender) Send(msg *Message) *Result {
 		}
 	}
 
-	// Return the connection for reuse (warmup connections are always discarded
-	// since they are not tracked in the pool cache).
-	if useWarmupDial {
+	// Return the connection for reuse. Source-bound dials (warmup or explicit
+	// dedicated IP) are always discarded since they are not tracked in the pool
+	// cache; only warmup dials additionally record the warmup counter.
+	if boundDial {
 		s.pool.Discard(conn)
-		// Record the send against the warmup counter for this IP.
-		if err := s.warmupMgr.RecordSend(ctx, selectedIP); err != nil {
-			log.Printf("[warmup] RecordSend %s: %v", selectedIP, err)
+		// Record the send against the warmup counter only for warmup-selected IPs.
+		if useWarmupDial {
+			if err := s.warmupMgr.RecordSend(ctx, selectedIP); err != nil {
+				log.Printf("[warmup] RecordSend %s: %v", selectedIP, err)
+			}
 		}
 	} else {
 		s.pool.Put(conn)
