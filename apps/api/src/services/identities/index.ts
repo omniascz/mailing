@@ -137,6 +137,24 @@ export async function assertSandboxSendAllowed(
   }
 }
 
+/**
+ * Gate bulk sends (campaigns) in sandbox mode. Unlike transactional sends we
+ * cannot verify a whole list/segment at dispatch time, so a non-production org
+ * is blocked from firing campaigns entirely until it has production access.
+ */
+export async function assertBulkSendAllowed(orgId: string): Promise<void> {
+  const [org] = await db
+    .select({ sendingMode: organizations.sendingMode })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1);
+  if (org && org.sendingMode !== 'production') {
+    throw AppError.forbidden(
+      'Account is in sandbox mode — bulk campaigns are disabled. Request production access to send to a list.',
+    );
+  }
+}
+
 // ── Production access ───────────────────────────────────────────────────────
 
 export async function requestProductionAccess(

@@ -42,6 +42,12 @@ export async function resolveDkimForSender(
  * activate. Throws on invalid state transition / readiness failure.
  */
 export async function enqueueCampaignSend(orgId: string, campaignId: string) {
+  // Sandbox gate: a non-production org cannot fire bulk campaigns (the audience
+  // can't be verified per-recipient at dispatch). Mirrors the transactional
+  // verified-recipient gate. Checked before any state transition.
+  const { assertBulkSendAllowed } = await import('../identities/index.js');
+  await assertBulkSendAllowed(orgId);
+
   const campaign = await sendCampaign(orgId, campaignId);
 
   // Non-email campaigns (sms/whatsapp/push) fan out over their own channel
