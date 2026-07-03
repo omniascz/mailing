@@ -185,6 +185,17 @@ export async function processFblComplaint(
     },
   });
 
+  // Fire the complaint webhook + trigger real-time reputation auto-pause.
+  const { emitEmailEvent } = await import('../webhooks/email-events.js');
+  emitEmailEvent(orgId, 'complained', {
+    contactId: contact.id,
+    campaignId: campaignId ?? null,
+    email,
+    feedbackType: report.feedbackType,
+  });
+  const { onBounceComplaintSignal } = await import('../abuse-detection/auto-pause.js');
+  onBounceComplaintSignal(orgId, 'complaint').catch(() => {});
+
   const alertFired = await checkComplaintRateAlert(orgId);
   const action = existingSuppression ? 'already_suppressed' : 'suppressed';
 

@@ -462,6 +462,8 @@ async function processUnsubscribe(token: string): Promise<{ contactId: string; o
       .insert(suppressions)
       .values({ orgId, email: contact.email, reason: 'unsubscribe' })
       .onConflictDoNothing();
+    const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
+    emitEmailEvent(orgId, 'unsubscribed', { contactId, email: contact.email });
   }
 
   // Single-use only for the stateful (Redis) tokens; signed tokens are

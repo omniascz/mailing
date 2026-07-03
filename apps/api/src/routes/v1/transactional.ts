@@ -126,6 +126,10 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         },
       });
 
+      // Fire the 'sent' webhook for API senders (previously never emitted).
+      const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
+      emitEmailEvent(orgId, 'sent', { messageId, email: body.to });
+
       return reply
         .code(202)
         .send({

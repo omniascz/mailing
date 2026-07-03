@@ -58,10 +58,28 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
         metadata: meta,
       });
 
+      // Fire the matching webhook (delivered / bounced / sent) — the previously
+      // dark email→webhook path.
+      const { emitEmailEvent } = await import('../../../services/webhooks/email-events.js');
+      const wePayload = {
+        messageId: body.messageId,
+        contactId: body.contactId,
+        campaignId: body.campaignId,
+      };
+      if (eventType === 'deliver') emitEmailEvent(body.orgId, 'delivered', wePayload);
+      else if (eventType === 'bounce')
+        emitEmailEvent(body.orgId, 'bounced', { ...wePayload, bounceType });
+      else if (eventType === 'send') emitEmailEvent(body.orgId, 'sent', wePayload);
+
       // Auto channel fallback: a hard/soft bounce on email can trigger a
       // configured fallback send (SMS/WhatsApp/push). Best-effort, non-blocking.
       if (eventType === 'bounce' && (bounceType === 'hard' || bounceType === 'soft')) {
         handleBounce(body.orgId, body.contactId, bounceType).catch(() => {});
+        // Real-time reputation auto-pause (previously route-only, never triggered).
+        const { onBounceComplaintSignal } = await import(
+          '../../../services/abuse-detection/auto-pause.js'
+        );
+        onBounceComplaintSignal(body.orgId, 'bounce').catch(() => {});
       }
 
       return reply.code(201).send({ ok: true });

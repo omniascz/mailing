@@ -15,6 +15,7 @@ import { verifyTrackingToken, isAppleMpp } from '../../services/sending/tracking
 import { scoreAndPersist } from '../../services/deliverability/bot-detection.js';
 import { enrichEventGeo } from '../../services/analytics/geo.js';
 import { parseUserAgent } from '../../lib/user-agent.js';
+import { emitEmailEvent } from '../../services/webhooks/email-events.js';
 import { eq, and } from 'drizzle-orm';
 
 /**
@@ -95,6 +96,10 @@ export default async function trackingRoutes(app: FastifyInstance) {
             occurredAt: new Date(),
           }).catch(() => {});
           enrichEventGeo(row.id, ipAddress).catch(() => {});
+          emitEmailEvent(payload.orgId, 'opened', {
+            contactId: payload.contactId,
+            campaignId: payload.campaignId,
+          });
         }
       }
 
@@ -200,6 +205,11 @@ export default async function trackingRoutes(app: FastifyInstance) {
           })),
         }).catch(() => {});
         enrichEventGeo(clickRow.id, ipAddress).catch(() => {});
+        emitEmailEvent(payload.orgId, 'clicked', {
+          contactId: payload.contactId,
+          campaignId: payload.campaignId,
+          url: payload.url,
+        });
       }
 
       return reply.redirect(payload.url, 302);
