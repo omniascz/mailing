@@ -8,6 +8,7 @@ export * from './contacts.js';
 export * from './lists.js';
 export * from './tags.js';
 export * from './templates.js';
+export * from './template-versions.js';
 export * from './campaigns.js';
 export * from './email-events.js';
 export * from './suppressions.js';

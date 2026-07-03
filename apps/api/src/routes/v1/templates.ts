@@ -209,6 +209,27 @@ export default async function templateRoutes(app: FastifyInstance) {
     async (req) => {
       const { id } = savedIdParam.parse(req.params);
       const patch = updateSavedSchema.parse(req.body);
+
+      // Snapshot the CURRENT content before overwriting, so this edit is
+      // reversible from the version history.
+      const [before] = await db
+        .select()
+        .from(campaignTemplates)
+        .where(
+          and(
+            eq(campaignTemplates.id, id),
+            eq(campaignTemplates.orgId, req.user!.orgId),
+            isNull(campaignTemplates.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (!before) throw AppError.notFound('Template');
+
+      const { snapshotTemplateVersion } = await import(
+        '../../services/editor/template-versions.js'
+      );
+      await snapshotTemplateVersion(req.user!.orgId, id, before, req.user!.userId).catch(() => {});
+
       const [row] = await db
         .update(campaignTemplates)
         .set({ ...patch, updatedAt: new Date() })
@@ -222,6 +243,36 @@ export default async function templateRoutes(app: FastifyInstance) {
         .returning();
       if (!row) throw AppError.notFound('Template');
       return { data: row };
+    },
+  );
+
+  /** List a template's version history (newest first) */
+  app.get(
+    '/api/v1/saved-templates/:id/versions',
+    { schema: { tags: ['Templates'], summary: 'List template version history' } },
+    async (req) => {
+      const { id } = savedIdParam.parse(req.params);
+      const { listTemplateVersions } = await import(
+        '../../services/editor/template-versions.js'
+      );
+      const data = await listTemplateVersions(req.user!.orgId, id);
+      return { data };
+    },
+  );
+
+  /** Restore a template to a prior version (snapshots current first) */
+  app.post(
+    '/api/v1/saved-templates/:id/versions/:versionId/restore',
+    { schema: { tags: ['Templates'], summary: 'Restore a template to a prior version' } },
+    async (req) => {
+      const { id, versionId } = z
+        .object({ id: z.string().uuid(), versionId: z.string().uuid() })
+        .parse(req.params);
+      const { restoreTemplateVersion } = await import(
+        '../../services/editor/template-versions.js'
+      );
+      const data = await restoreTemplateVersion(req.user!.orgId, id, versionId, req.user!.userId);
+      return { data };
     },
   );
 
