@@ -32,6 +32,7 @@ import {
 } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { parseScheduledAt } from '../../services/transactional/parse-scheduled-at.js';
+import { fetchRemoteAttachment } from '../../services/sending/fetch-attachment.js';
 
 // ─── Resend payload schemas ───────────────────────────────────────────────
 
@@ -47,15 +48,24 @@ const tagPair = z.object({
   value: z.string().min(0).max(256),
 });
 
-const attachment = z.object({
-  filename: z.string().min(1).max(255),
-  /** Base64-encoded content. Resend matches MIME inferred from filename. */
-  content: z.string().min(1).max(20 * 1024 * 1024), // 20 MB hard cap
-  /** Override the inferred content-type. */
-  content_type: z.string().max(127).optional(),
-  /** Inline image cid. */
-  content_id: z.string().max(255).optional(),
-});
+const attachment = z
+  .object({
+    filename: z.string().min(1).max(255).optional(),
+    /** Base64-encoded content. Resend matches MIME inferred from filename. */
+    content: z.string().min(1).max(20 * 1024 * 1024).optional(), // 20 MB hard cap
+    /** Remote URL (https) — fetched server-side with SSRF safeguards (Resend `path`). */
+    path: z.string().url().max(2048).optional(),
+    /** Override the inferred content-type. */
+    content_type: z.string().max(127).optional(),
+    /** Inline image cid. */
+    content_id: z.string().max(255).optional(),
+  })
+  .refine((a) => (a.content ? !a.path : !!a.path), {
+    message: 'attachment requires exactly one of content or path',
+  })
+  .refine((a) => a.content ? !!a.filename : true, {
+    message: 'inline base64 attachment requires a filename',
+  });
 
 const trackingFlags = z
   .object({
@@ -156,13 +166,29 @@ async function dispatchResendEmail(
   const cc = toArray(item.cc);
   if (cc.length > 0) customHeaders.Cc = cc.join(', ');
 
-  const attachments = (item.attachments ?? []).map((a) => ({
-    filename: a.filename,
-    contentType: a.content_type ?? 'application/octet-stream',
-    contentBase64: a.content,
-    contentId: a.content_id,
-    inline: a.content_id != null,
-  }));
+  // Resolve attachments: inline base64 as-is; remote `path` fetched server-side
+  // with SSRF safeguards (https-only, private-IP block, size/time caps).
+  const attachments = await Promise.all(
+    (item.attachments ?? []).map(async (a) => {
+      if (a.path) {
+        const fetched = await fetchRemoteAttachment(a.path, a.filename);
+        return {
+          filename: fetched.filename,
+          contentType: a.content_type ?? fetched.contentType,
+          contentBase64: fetched.contentBase64,
+          contentId: a.content_id,
+          inline: a.content_id != null,
+        };
+      }
+      return {
+        filename: a.filename ?? 'attachment',
+        contentType: a.content_type ?? 'application/octet-stream',
+        contentBase64: a.content!,
+        contentId: a.content_id,
+        inline: a.content_id != null,
+      };
+    }),
+  );
 
   // For scheduled sends, give each per-recipient job a deterministic jobId so
   // PATCH /emails/:id (reschedule) and cancel can find + mutate them later.
@@ -309,9 +335,11 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
           headers: body.headers ?? {},
           tags: body.tags ?? [],
           attachments: (body.attachments ?? []).map((a) => ({
-            filename: a.filename,
+            filename: a.filename ?? null,
             contentType: a.content_type ?? null,
-            sizeBytes: Math.ceil((a.content.length * 3) / 4),
+            // Remote (path) attachments are sized after fetch; base64 estimated here.
+            sizeBytes: a.content ? Math.ceil((a.content.length * 3) / 4) : null,
+            path: a.path ?? null,
           })),
           transactional: true,
           scheduledAt: body.scheduled_at ?? null,
