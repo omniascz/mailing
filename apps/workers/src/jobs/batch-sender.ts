@@ -118,6 +118,10 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     sendingIp = '';
   }
 
+  // VERP bounce domain — when set, each message gets a Return-Path encoding its
+  // messageId so out-of-band bounces to that address are attributable.
+  const verpBounceDomain = process.env.VERP_BOUNCE_DOMAIN ?? '';
+
   // Sprint D.8 — ePrivacy strict mode. When the org has opted into the
   // stricter EU regime, we ONLY apply click/open tracking to recipients
   // who recorded explicit consent on the 'tracking' channel. Outside
@@ -295,6 +299,11 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         dkimSelector: data.dkimSelector,
         dkimPrivateKey: data.dkimPrivateKey,
         sendingIp,
+        // VERP Return-Path: encode the messageId so out-of-band bounces are
+        // attributable. Only when a bounce domain is configured.
+        returnPath: verpBounceDomain
+          ? `bounce+${messageId.replace(/[<>]/g, '').replace(/@/g, '=')}@${verpBounceDomain}`
+          : '',
         priority: data.priority,
         stream,
         abVariantId: data.abVariantId,

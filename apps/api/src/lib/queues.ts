@@ -125,6 +125,8 @@ export interface TransactionalEmailInput {
    * API keys so developers can exercise the API without delivering mail.
    */
   testMode?: boolean;
+  /** Source IP (from a configuration set's IP pool). '' = engine default pool. */
+  sendingIp?: string;
 }
 
 /**
@@ -166,6 +168,7 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       textBody: input.text ?? '',
       replyTo: input.replyTo ?? '',
       customHeaders: input.customHeaders ?? {},
+      sendingIp: input.sendingIp ?? '',
       priority: PRIORITY.TRANSACTIONAL,
       stream: 'transactional',
       ...(input.attachments && input.attachments.length > 0

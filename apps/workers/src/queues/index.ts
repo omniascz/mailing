@@ -244,6 +244,8 @@ export interface MtaSendJobData {
   dkimPrivateKey?: string;
   /** Source IP resolved from the org's dedicated pool ('' = engine default). */
   sendingIp?: string;
+  /** VERP envelope sender (Return-Path). '' = use From. */
+  returnPath?: string;
   priority: Priority;
   stream: MessageStream;
   /** A/B variant id propagated from BatchSenderJobData for event tagging. */

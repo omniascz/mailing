@@ -137,9 +137,10 @@ func requestToMessage(req *pb.SendRequest) *smtpsend.Message {
 		Subject:   req.Subject,
 		HTMLBody:  req.HtmlBody,
 		TextBody:  req.TextBody,
-		ReplyTo:   req.ReplyTo,
-		Headers:   req.CustomHeaders,
-		SendingIP: req.SendingIp,
+		ReplyTo:    req.ReplyTo,
+		Headers:    req.CustomHeaders,
+		SendingIP:  req.SendingIp,
+		ReturnPath: req.ReturnPath,
 	}
 
 	if req.Dkim != nil {

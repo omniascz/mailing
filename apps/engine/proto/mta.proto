@@ -41,6 +41,10 @@ message SendRequest {
 
   // File attachments (e.g. e-ticket PDFs). Empty for link-only emails.
   repeated Attachment attachments = 16;
+
+  // VERP envelope sender (Return-Path / SMTP MAIL FROM). Empty = use from_email.
+  // Encodes the message so out-of-band bounces can be attributed.
+  string return_path = 17;
 }
 
 message Attachment {

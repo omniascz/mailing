@@ -43,7 +43,10 @@ type SendRequest struct {
 	// Sending IP override (empty = use default pool)
 	SendingIp string `protobuf:"bytes,15,opt,name=sending_ip,json=sendingIp,proto3" json:"sending_ip,omitempty"`
 	// File attachments (e.g. e-ticket PDFs). Empty for link-only emails.
-	Attachments   []*Attachment `protobuf:"bytes,16,rep,name=attachments,proto3" json:"attachments,omitempty"`
+	Attachments []*Attachment `protobuf:"bytes,16,rep,name=attachments,proto3" json:"attachments,omitempty"`
+	// VERP envelope sender (Return-Path / SMTP MAIL FROM). Empty = use from_email.
+	// Encodes the message so out-of-band bounces can be attributed.
+	ReturnPath    string `protobuf:"bytes,17,opt,name=return_path,json=returnPath,proto3" json:"return_path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -188,6 +191,13 @@ func (x *SendRequest) GetAttachments() []*Attachment {
 		return x.Attachments
 	}
 	return nil
+}
+
+func (x *SendRequest) GetReturnPath() string {
+	if x != nil {
+		return x.ReturnPath
+	}
+	return ""
 }
 
 type Attachment struct {
@@ -623,7 +633,7 @@ var File_proto_mta_proto protoreflect.FileDescriptor
 
 const file_proto_mta_proto_rawDesc = "" +
 	"\n" +
-	"\x0fproto/mta.proto\x12\x03mta\"\xe7\x04\n" +
+	"\x0fproto/mta.proto\x12\x03mta\"\x88\x05\n" +
 	"\vSendRequest\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x01 \x01(\tR\tmessageId\x12\x1d\n" +
@@ -646,7 +656,9 @@ const file_proto_mta_proto_rawDesc = "" +
 	"contact_id\x18\x0e \x01(\tR\tcontactId\x12\x1d\n" +
 	"\n" +
 	"sending_ip\x18\x0f \x01(\tR\tsendingIp\x121\n" +
-	"\vattachments\x18\x10 \x03(\v2\x0f.mta.AttachmentR\vattachments\x1a@\n" +
+	"\vattachments\x18\x10 \x03(\v2\x0f.mta.AttachmentR\vattachments\x12\x1f\n" +
+	"\vreturn_path\x18\x11 \x01(\tR\n" +
+	"returnPath\x1a@\n" +
 	"\x12CustomHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9c\x01\n" +

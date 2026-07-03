@@ -70,6 +70,8 @@ export interface SendRequest {
   campaignId: string;
   contactId: string;
   sendingIp: string;
+  /** VERP envelope sender (Return-Path). Empty = use fromEmail. */
+  returnPath?: string;
   /** File attachments (e-ticket PDFs etc.). Empty/omitted for link-only mail. */
   attachments?: Attachment[];
 }

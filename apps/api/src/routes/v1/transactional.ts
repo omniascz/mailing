@@ -74,7 +74,14 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
 
       // Apply the configuration set (throws 403 if the set's sending is paused).
       const { applyConfigurationSet } = await import('../../services/configuration-sets/index.js');
-      await applyConfigurationSet(orgId, body.configurationSet);
+      const cfgSet = await applyConfigurationSet(orgId, body.configurationSet);
+      // Resolve the config set's IP pool → sending IP for this send.
+      let sendingIp = '';
+      if (cfgSet.ipPoolId) {
+        const { pickIpForSend } = await import('../../services/dedicated-ips/index.js');
+        const ip = await pickIpForSend(orgId, cfgSet.ipPoolId).catch(() => null);
+        sendingIp = ip?.ipAddress ?? '';
+      }
 
       // Sandbox gate: unverified accounts may only send to verified recipients.
       if (!testMode) {
@@ -145,6 +152,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         orgId,
         attachments: body.attachments,
         scheduleAt: body.scheduleAt ? new Date(body.scheduleAt) : undefined,
+        sendingIp,
         testMode,
       });
 

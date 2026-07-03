@@ -32,6 +32,7 @@ type Message struct {
 	Headers      map[string]string // custom headers
 	DkimConfig   *dkim.SignConfig
 	SendingIP    string // optional override
+	ReturnPath   string // VERP envelope sender (MAIL FROM); empty = FromEmail
 
 	// ISP-deliverability hints (#387). Leave zero-valued to skip enrichment.
 	CampaignID       string // tenant-facing identifier for Feedback-ID
@@ -147,8 +148,13 @@ func (s *Sender) Send(msg *Message) *Result {
 		}
 	}
 
-	// SMTP envelope
-	if err := conn.Client.Mail(msg.FromEmail); err != nil {
+	// SMTP envelope — use the VERP Return-Path as MAIL FROM when set so
+	// out-of-band bounces come back attributable; else the header From.
+	mailFrom := msg.FromEmail
+	if msg.ReturnPath != "" {
+		mailFrom = msg.ReturnPath
+	}
+	if err := conn.Client.Mail(mailFrom); err != nil {
 		s.pool.Discard(conn)
 		code, smtpMsg := parseSmtpError(err)
 		return &Result{
