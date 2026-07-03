@@ -5,7 +5,14 @@ import { db } from '../../db/client.js';
 import { suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
-const REASON = ['hard_bounce', 'complaint', 'manual', 'unsubscribe'] as const;
+const REASON = [
+  'hard_bounce',
+  'complaint',
+  'manual',
+  'unsubscribe',
+  'block',
+  'invalid_email',
+] as const;
 
 const createSchema = z
   .object({
@@ -58,6 +65,32 @@ export default async function suppressionRoutes(app: FastifyInstance) {
         .offset(q.offset);
 
       return { data: rows };
+    },
+  );
+
+  /**
+   * GET /api/v1/suppressions/summary
+   * Per-list counts (SendGrid-style: bounces / blocks / spam_reports /
+   * invalid_emails / unsubscribes) for the suppression dashboard. Every reason
+   * is present in the response even when its count is zero.
+   */
+  app.get(
+    '/api/v1/suppressions/summary',
+    { schema: { tags: ['Suppressions'], summary: 'Suppression counts per list' } },
+    async (req) => {
+      const rows = await db
+        .select({ reason: suppressions.reason, count: sql<number>`count(*)::int` })
+        .from(suppressions)
+        .where(eq(suppressions.orgId, req.user!.orgId))
+        .groupBy(suppressions.reason);
+
+      const counts = Object.fromEntries(REASON.map((r) => [r, 0])) as Record<
+        (typeof REASON)[number],
+        number
+      >;
+      for (const row of rows) counts[row.reason as (typeof REASON)[number]] = row.count;
+      const total = Object.values(counts).reduce((a, b) => a + b, 0);
+      return { data: { counts, total } };
     },
   );
 
@@ -146,7 +179,7 @@ export default async function suppressionRoutes(app: FastifyInstance) {
 export async function autoSuppress(
   orgId: string,
   target: { email?: string; phone?: string },
-  reason: 'hard_bounce' | 'complaint' | 'unsubscribe',
+  reason: 'hard_bounce' | 'complaint' | 'unsubscribe' | 'block' | 'invalid_email',
 ): Promise<void> {
   if (!target.email && !target.phone) return;
   await db

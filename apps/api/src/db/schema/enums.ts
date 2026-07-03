@@ -93,6 +93,10 @@ export const suppressionReasonEnum = pgEnum('suppression_reason', [
   'complaint',
   'manual',
   'unsubscribe',
+  // SendGrid-parity suppression lists: policy/RBL rejections and
+  // nonexistent-address bounces get their own buckets.
+  'block',
+  'invalid_email',
 ]);
 
 export const customFieldTypeEnum = pgEnum('custom_field_type', [

@@ -84,9 +84,12 @@ export async function receiveInbound(
     const failed = extractFailedRecipient(body);
     const cls = classifyBounce(body, body);
     if (failed && (cls.autoSuppress || cls.type === 'hard')) {
+      // Bucket into the correct SendGrid-parity list: invalid_email for
+      // nonexistent addresses, hard_bounce for other permanent failures.
+      const reason = cls.suppressionReason === 'invalid_email' ? 'invalid_email' : 'hard_bounce';
       await db
         .insert(suppressions)
-        .values({ orgId, email: failed, reason: 'hard_bounce' })
+        .values({ orgId, email: failed, reason })
         .onConflictDoNothing()
         .catch(() => {});
       await db

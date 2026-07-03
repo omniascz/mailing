@@ -152,6 +152,33 @@ describe('classifyBounce — block bounces', () => {
   });
 });
 
+describe('classifyBounce — suppression list bucketing', () => {
+  it('buckets nonexistent-address bounces as invalid_email', () => {
+    expect(classifyBounce('550 User unknown').suppressionReason).toBe('invalid_email');
+    expect(classifyBounce('550 no such user here').suppressionReason).toBe('invalid_email');
+    expect(classifyBounce('mailbox does not exist').suppressionReason).toBe('invalid_email');
+    expect(classifyBounce('5.1.1 bad destination mailbox address').suppressionReason).toBe(
+      'invalid_email',
+    );
+  });
+
+  it('buckets other permanent failures as hard_bounce', () => {
+    expect(classifyBounce('account disabled').suppressionReason).toBe('hard_bounce');
+    expect(classifyBounce(556).suppressionReason).toBe('hard_bounce');
+  });
+
+  it('buckets policy rejections as block (but does not auto-suppress)', () => {
+    const r = classifyBounce('554 blocked by policy violation');
+    expect(r.suppressionReason).toBe('block');
+    expect(r.autoSuppress).toBe(false);
+  });
+
+  it('does not assign a suppression list to soft/unknown bounces', () => {
+    expect(classifyBounce(452).suppressionReason).toBeNull();
+    expect(classifyBounce('something completely unexpected').suppressionReason).toBeNull();
+  });
+});
+
 describe('classifyBounce — unknown', () => {
   it('returns unknown for unrecognised message with no code', () => {
     const r = classifyBounce('something completely unexpected happened');

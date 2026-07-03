@@ -14,6 +14,9 @@
 
 export type BounceType = 'hard' | 'soft' | 'block' | 'unknown';
 
+/** SendGrid-parity suppression buckets a bounce maps to (null = do not suppress). */
+export type SuppressionReason = 'hard_bounce' | 'invalid_email' | 'block' | null;
+
 export interface BounceClassification {
   type: BounceType;
   smtpCode: number | null;
@@ -23,6 +26,13 @@ export interface BounceClassification {
   autoSuppress: boolean;
   /** True if an admin alert should be sent (block bounces) */
   alert: boolean;
+  /**
+   * Which suppression list the address belongs on. Splits hard bounces into
+   * `invalid_email` (address/mailbox does not exist — SendGrid "invalid emails")
+   * vs `hard_bounce` (other permanent failures — SendGrid "bounces"), and
+   * surfaces `block` for policy/RBL rejections. null for soft/unknown.
+   */
+  suppressionReason: SuppressionReason;
 }
 
 // ─── SMTP code ranges ─────────────────────────────────────────────────────────
@@ -62,6 +72,26 @@ const BLOCK_PATTERNS: RegExp[] = [
   /spf\s+(fail|softfail)/i,
   /dmarc\s+(fail|violation)/i,
 ];
+
+// Subset of hard failures where the *address itself* is bad (nonexistent
+// mailbox / domain / syntactically invalid) — these belong on the SendGrid
+// "invalid emails" list rather than "bounces". Other hard failures (disabled
+// account, generic permanent error) stay on the "bounces" list.
+const INVALID_ADDRESS_PATTERNS: RegExp[] = [
+  /user\s+(unknown|not\s+found|does\s+not\s+exist|invalid)/i,
+  /no\s+such\s+(user|address|mailbox)/i,
+  /address\s+(not\s+found|unknown|invalid)/i,
+  /mailbox\s+(not\s+found|doesn['']t\s+exist|does\s+not\s+exist|unavailable)/i,
+  /domain\s+(not\s+found|does\s+not\s+exist|invalid)/i,
+  /recipient\s+(unknown|invalid)/i,
+  /5\.1\.1/i, // bad destination mailbox address
+  /5\.1\.2/i, // bad destination system/mailbox address
+  /5\.1\.3/i, // bad destination mailbox address syntax
+];
+
+function isInvalidAddress(text: string): boolean {
+  return INVALID_ADDRESS_PATTERNS.some((p) => p.test(text));
+}
 
 const SOFT_PATTERNS: RegExp[] = [
   /mailbox\s+(full|over\s+quota|storage|quota\s+exceeded)/i,
@@ -141,6 +171,9 @@ export function classifyBounce(
       reason: ndrText,
       autoSuppress: false,
       alert: true,
+      // Blocks map to the "blocks" list but are NOT auto-suppressed here
+      // (transient IP/policy issue, not a bad address); callers may record it.
+      suppressionReason: 'block',
     };
   }
 
@@ -152,6 +185,7 @@ export function classifyBounce(
       reason: ndrText,
       autoSuppress: true,
       alert: false,
+      suppressionReason: isInvalidAddress(combined) ? 'invalid_email' : 'hard_bounce',
     };
   }
 
@@ -163,6 +197,7 @@ export function classifyBounce(
       reason: ndrText,
       autoSuppress: false,
       alert: false,
+      suppressionReason: null,
     };
   }
 
@@ -175,6 +210,7 @@ export function classifyBounce(
         reason: ndrText,
         autoSuppress: true,
         alert: false,
+        suppressionReason: isInvalidAddress(combined) ? 'invalid_email' : 'hard_bounce',
       };
     }
     if (code >= 400 && code < 500) {
@@ -184,6 +220,7 @@ export function classifyBounce(
         reason: ndrText,
         autoSuppress: false,
         alert: false,
+        suppressionReason: null,
       };
     }
   }
@@ -194,6 +231,7 @@ export function classifyBounce(
     reason: ndrText,
     autoSuppress: false,
     alert: false,
+    suppressionReason: null,
   };
 }
 
