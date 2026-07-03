@@ -52,6 +52,10 @@ export const campaigns = pgTable(
     /** Configuration set name — applies its event dests + IP pool + TLS policy. */
     configurationSet: varchar('configuration_set', { length: 128 }),
 
+    /** Category tag (SendGrid parity) — denormalised onto each email_event for
+     *  category-level stats aggregation. */
+    category: varchar('category', { length: 128 }),
+
     // Sprint E.1 — resend to non-openers. When parentCampaignId is set,
     // the audience is computed at send time as "contacts who received
     // the parent campaign but didn't open it" — not from list + segment.

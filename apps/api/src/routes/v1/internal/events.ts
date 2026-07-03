@@ -46,6 +46,12 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
           ? (meta.bounceType as 'hard' | 'soft' | 'block' | undefined) ?? 'soft'
           : undefined;
 
+      // Denormalise the SendGrid-parity stats dimensions onto the event:
+      // category from the campaign (cached) and isp from the worker metadata.
+      const { resolveCampaignCategory } = await import('../../../services/stats/category-isp.js');
+      const category = await resolveCampaignCategory(body.orgId, body.campaignId).catch(() => null);
+      const isp = typeof meta.isp === 'string' ? (meta.isp as string) : null;
+
       await db.insert(emailEvents).values({
         orgId: body.orgId,
         campaignId: body.campaignId,
@@ -55,6 +61,8 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
         bounceType,
         stream: (meta.stream as 'broadcast' | 'transactional' | 'triggered' | undefined) ?? 'broadcast',
         abVariantId: meta.abVariantId as string | undefined,
+        category,
+        isp,
         metadata: meta,
       });
 

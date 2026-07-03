@@ -16,6 +16,7 @@ import { scoreAndPersist } from '../../services/deliverability/bot-detection.js'
 import { enrichEventGeo } from '../../services/analytics/geo.js';
 import { parseUserAgent } from '../../lib/user-agent.js';
 import { emitEmailEvent } from '../../services/webhooks/email-events.js';
+import { resolveCampaignCategory } from '../../services/stats/category-isp.js';
 import { eq, and } from 'drizzle-orm';
 
 /**
@@ -77,6 +78,9 @@ export default async function trackingRoutes(app: FastifyInstance) {
             ipAddress: ipAddress?.slice(0, 45) ?? null,
             deviceType,
             emailClient,
+            category: await resolveCampaignCategory(payload.orgId, payload.campaignId).catch(
+              () => null,
+            ),
             metadata: {
               suspectedBot: mpp,
               botReason: mpp ? 'apple_mpp' : null,
@@ -182,6 +186,9 @@ export default async function trackingRoutes(app: FastifyInstance) {
           ipAddress: ipAddress?.slice(0, 45) ?? null,
           deviceType: click.deviceType,
           emailClient: click.emailClient,
+          category: await resolveCampaignCategory(payload.orgId, payload.campaignId).catch(
+            () => null,
+          ),
           metadata: {},
         })
         .returning({ id: emailEvents.id })

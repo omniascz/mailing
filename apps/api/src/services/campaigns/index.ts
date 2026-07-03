@@ -86,6 +86,7 @@ export interface CreateCampaignInput {
   excludeSegmentId?: string;
   abConfig?: Record<string, unknown>;
   configurationSet?: string;
+  category?: string;
   scheduledAt?: Date;
   timezone?: string;
 }
@@ -111,6 +112,7 @@ export async function createCampaign(input: CreateCampaignInput): Promise<Campai
       excludeSegmentId: input.excludeSegmentId,
       abConfig: input.abConfig,
       configurationSet: input.configurationSet,
+      category: input.category,
       scheduledAt: input.scheduledAt,
       timezone: input.timezone ?? 'UTC',
     })

@@ -40,6 +40,7 @@ import preferenceCenterRoutes from './routes/v1/preference-center.js';
 import consentRoutes from './routes/v1/consent.js';
 import campaignRoutes from './routes/v1/campaigns.js';
 import analyticsRoutes from './routes/v1/analytics.js';
+import statsCategoryRoutes from './routes/v1/stats-categories.js';
 import alertRoutes from './routes/v1/alerts.js';
 import workflowRoutes from './routes/v1/workflows.js';
 import eventRoutes from './routes/v1/events.js';
@@ -375,6 +376,7 @@ export async function buildApp() {
   await app.register(consentRoutes);
   await app.register(campaignRoutes);
   await app.register(analyticsRoutes);
+  await app.register(statsCategoryRoutes);
   await app.register(alertRoutes);
   await app.register(workflowRoutes);
   await app.register(eventRoutes);

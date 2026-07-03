@@ -63,6 +63,13 @@ export const emailEvents = pgTable(
     /** Estimated real open probability 0-1 when mppDetected=true (inferred from subsequent clicks) */
     mppRealOpenProb: real('mpp_real_open_prob'),
 
+    /** Send category (SendGrid parity) — denormalised from the campaign for
+     *  category-level stats. */
+    category: varchar('category', { length: 128 }),
+    /** Receiving mailbox provider (gmail/outlook/yahoo/…) for ISP deliverability
+     *  stats. Populated on the delivery path (send/deliver/bounce). */
+    isp: varchar('isp', { length: 32 }),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -72,6 +79,8 @@ export const emailEvents = pgTable(
     index('email_events_type_idx').on(t.eventType),
     index('email_events_created_at_idx').on(t.createdAt),
     index('email_events_ab_variant_idx').on(t.campaignId, t.abVariantId),
+    index('email_events_org_category_idx').on(t.orgId, t.category),
+    index('email_events_org_isp_idx').on(t.orgId, t.isp),
   ],
 );
 

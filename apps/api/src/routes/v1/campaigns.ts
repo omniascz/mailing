@@ -65,6 +65,7 @@ const createSchema = z.object({
   excludeSegmentId: z.string().uuid().optional(),
   abConfig: z.record(z.unknown()).optional(),
   configurationSet: z.string().max(128).optional(),
+  category: z.string().max(128).optional(),
   scheduledAt: z.string().datetime().optional(),
   timezone: z.string().max(100).optional(),
 });

@@ -186,6 +186,8 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
   const data = job.data;
 
   const recipientDomain = data.toEmail.split('@')[1] ?? 'other';
+  // Receiving mailbox provider — denormalised onto each event for ISP stats.
+  const isp = detectIsp(recipientDomain);
   // sendingIp '' matches the engine's default-pool key (see sendViaMta).
   const sendingIp = '';
 
@@ -211,6 +213,7 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
     const successMeta = {
       smtpCode: result.smtpCode,
       durationMs: result.durationMs,
+      isp,
       ...(data.abVariantId ? { abVariantId: data.abVariantId } : {}),
     };
     // 'send' = handed off to MX; 'deliver' = MX returned SMTP 250 (this engine
@@ -246,7 +249,7 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
-      metadata: { bounceType: 'block', smtpCode, smtpMessage: result.smtpMessage },
+      metadata: { bounceType: 'block', smtpCode, smtpMessage: result.smtpMessage, isp },
     });
     // Don't retry block bounces
     return { status: 'blocked', messageId: data.messageId, smtpCode };
@@ -264,7 +267,7 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
-      metadata: { bounceType: 'hard', smtpCode, smtpMessage: result.smtpMessage },
+      metadata: { bounceType: 'hard', smtpCode, smtpMessage: result.smtpMessage, isp },
     });
     return { status: 'hard_bounce', messageId: data.messageId, smtpCode };
   }
@@ -287,6 +290,7 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
         smtpCode,
         smtpMessage: result.smtpMessage,
         attempt: job.attemptsMade,
+        isp,
       },
     });
     throw new Error(`Soft bounce (${smtpCode}): ${result.smtpMessage}`);
