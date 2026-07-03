@@ -209,6 +209,27 @@ export default async function superadminRoutes(app: FastifyInstance) {
     },
   );
 
+  // ── Grant production sending access (leave sandbox) ────────────────────────
+  app.post(
+    '/api/v1/superadmin/orgs/:id/grant-production',
+    { schema: { tags: ['SuperAdmin'], summary: 'Grant production sending access (leave sandbox)' } },
+    async (req, reply) => {
+      const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+      const { grantProductionAccess } = await import('../../services/identities/index.js');
+      await grantProductionAccess(id);
+      await logAuditEvent({
+        orgId: id,
+        userId: req.user?.userId,
+        action: 'superadmin.production_granted',
+        resource: 'organization',
+        resourceId: id,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] ?? null,
+      });
+      return reply.send({ data: { id, sendingMode: 'production' } });
+    },
+  );
+
   // ── Suspend / resume an org ────────────────────────────────────────────────
 
   app.post(

@@ -42,6 +42,12 @@ export const organizations = pgTable(
     sandboxOfOrgId: uuid('sandbox_of_org_id'),
     /** 'none' | 'sandbox' — drives send guardrails (no real external sends). */
     sandboxMode: varchar('sandbox_mode', { length: 16 }).notNull().default('none'),
+    /**
+     * SES-style sending mode. 'sandbox' → sends only to verified email/domain
+     * identities (anti-abuse for new accounts); 'production' → unrestricted.
+     * New orgs start in 'sandbox'; granted via a production-access request.
+     */
+    sendingMode: varchar('sending_mode', { length: 16 }).notNull().default('production'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),

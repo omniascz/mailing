@@ -113,6 +113,13 @@
       "when": 1782164300000,
       "tag": "0015_configuration_sets",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1782164400000,
+      "tag": "0016_sandbox_email_identities",
+      "breakpoints": true
     }
   ]
 }

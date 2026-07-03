@@ -71,6 +71,12 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       const { applyConfigurationSet } = await import('../../services/configuration-sets/index.js');
       await applyConfigurationSet(orgId, body.configurationSet);
 
+      // Sandbox gate: unverified accounts may only send to verified recipients.
+      if (!testMode) {
+        const { assertSandboxSendAllowed } = await import('../../services/identities/index.js');
+        await assertSandboxSendAllowed(orgId, [body.to]);
+      }
+
       // Apply caller-supplied merge vars (simple token substitution; template
       // rendering via templateId is resolved inside the MTA worker using the
       // stored template rows — we don't fetch it here to keep this path fast).

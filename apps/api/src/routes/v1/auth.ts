@@ -87,7 +87,7 @@ export default async function authRoutes(app: FastifyInstance) {
       const orgName = body.orgName || `${body.name}'s workspace`;
       const slug = `${slugify(orgName)}-${crypto.randomBytes(3).toString('hex')}`;
 
-      const [org] = await db.insert(organizations).values({ name: orgName, slug }).returning();
+      const [org] = await db.insert(organizations).values({ name: orgName, slug, sendingMode: 'sandbox' }).returning();
       if (!org) throw AppError.internal('Failed to create organization');
 
       // Create owner user
@@ -480,7 +480,7 @@ export default async function authRoutes(app: FastifyInstance) {
         const orgName = `${profile.name}'s workspace`;
         const slug = `${slugify(orgName)}-${crypto.randomBytes(3).toString('hex')}`;
 
-        const [org] = await db.insert(organizations).values({ name: orgName, slug }).returning();
+        const [org] = await db.insert(organizations).values({ name: orgName, slug, sendingMode: 'sandbox' }).returning();
         if (!org) throw AppError.internal('Failed to create organization');
 
         const [created] = await db
