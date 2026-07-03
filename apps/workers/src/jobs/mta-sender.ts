@@ -73,7 +73,7 @@ async function sendViaMta(data: MtaSendJobData): Promise<MtaSendResult> {
       orgId: data.orgId,
       campaignId: data.campaignId,
       contactId: data.contactId,
-      sendingIp: '', // empty = engine picks from default pool
+      sendingIp: data.sendingIp ?? '', // resolved from the org's pool; '' = engine default
       dkim: data.dkimDomain
         ? {
             domain: data.dkimDomain,

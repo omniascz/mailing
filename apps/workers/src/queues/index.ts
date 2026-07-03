@@ -242,6 +242,8 @@ export interface MtaSendJobData {
   dkimDomain?: string;
   dkimSelector?: string;
   dkimPrivateKey?: string;
+  /** Source IP resolved from the org's dedicated pool ('' = engine default). */
+  sendingIp?: string;
   priority: Priority;
   stream: MessageStream;
   /** A/B variant id propagated from BatchSenderJobData for event tagging. */

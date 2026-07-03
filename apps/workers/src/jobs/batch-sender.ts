@@ -106,6 +106,18 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   // TRACKING_BASE_URL if the org hasn't verified a branded subdomain yet.
   const trackingBaseUrl = await fetchTrackingBaseUrl(data.orgId);
 
+  // Resolve the org's dedicated sending IP once per batch (least-loaded from
+  // its pool). Empty → the engine picks from the default/shared pool. This
+  // wires org→pool→IP through to the MTA (previously sendingIp was hardcoded '').
+  let sendingIp = '';
+  try {
+    const { pickIpForSend } = await import('../../../api/src/services/dedicated-ips/index.js');
+    const ip = await pickIpForSend(data.orgId);
+    sendingIp = ip?.ipAddress ?? '';
+  } catch {
+    sendingIp = '';
+  }
+
   // Sprint D.8 — ePrivacy strict mode. When the org has opted into the
   // stricter EU regime, we ONLY apply click/open tracking to recipients
   // who recorded explicit consent on the 'tracking' channel. Outside
@@ -282,6 +294,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         dkimDomain: data.dkimDomain,
         dkimSelector: data.dkimSelector,
         dkimPrivateKey: data.dkimPrivateKey,
+        sendingIp,
         priority: data.priority,
         stream,
         abVariantId: data.abVariantId,
