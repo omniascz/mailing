@@ -236,6 +236,15 @@ export async function dispatchEvent(
   event: WebhookEvent,
   payload: Record<string, unknown>,
 ): Promise<void> {
+  const timestamp = new Date().toISOString();
+
+  // Managed pull stream: append EVERY event to the org's durable Redis stream,
+  // independent of whether any HTTP webhook is configured. Consumers can pull
+  // via GET /events/stream without hosting a receiver. Fire-and-forget.
+  void import('./event-stream.js')
+    .then(({ publishToStream }) => publishToStream(orgId, event, payload, timestamp))
+    .catch(() => {});
+
   // Find active webhooks subscribed to this event
   const subs = await db
     .select()
@@ -252,7 +261,7 @@ export async function dispatchEvent(
   const fullPayload: Record<string, unknown> = {
     event,
     orgId,
-    timestamp: new Date().toISOString(),
+    timestamp,
     data: payload,
   };
 

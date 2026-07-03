@@ -29,6 +29,33 @@ import {
 } from '../../services/webhooks/index.js';
 
 const webhookRoutes: FastifyPluginAsync = async (app) => {
+  // ── Managed pull-based event stream (SNS/SQS-style) ──────────────────────────
+  // GET /api/v1/events/stream?cursor=<lastId>&limit=<n>
+  // Pull org events without hosting a webhook receiver; pass the returned cursor
+  // on the next call to continue where you left off.
+  app.get(
+    '/api/v1/events/stream',
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Webhooks'], summary: 'Pull the managed org event stream' },
+    },
+    async (req, reply) => {
+      const q = z
+        .object({
+          cursor: z.string().max(64).optional(),
+          limit: z.coerce.number().int().min(1).max(1000).default(100),
+        })
+        .parse(req.query);
+      const { readStream } = await import('../../services/webhooks/event-stream.js');
+      const result = await readStream(req.user!.orgId, q.cursor, q.limit);
+      return reply.send({
+        data: result.events,
+        cursor: result.cursor,
+        hasMore: result.hasMore,
+      });
+    },
+  );
+
   // ── List webhooks ────────────────────────────────────────────────────────────
   app.get(
     '/api/v1/webhooks',
