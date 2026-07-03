@@ -162,16 +162,18 @@ CDP + identity graph · Viber · AI voice bot · vlastní Go MTA + BIMI + dedica
 
 ## ⚠️ Kritické „postaveno, ale nezapojeno / rozbité" (nejnebezpečnější — vypadá hotově)
 
-1. **Bulk SMS/WhatsApp kampaně chybí** — `campaign type` enum obsahuje `sms`, ale `campaigns/:id/send` dispatchuje jen email; WhatsApp unified send vrací 501.
+1. ~~**Bulk SMS/WhatsApp kampaně chybí**~~ — ✅ **OPRAVENO 2026-07-03**: `channel-dispatch.ts` resolvuje audience a fan-outuje per-contact na sms/whatsapp/push fronty; `enqueueCampaignSend` větví podle typu; bulk SMS nese campaignId (consent + atribuce).
 2. **`make_voice_call` workflow akce = mrtvá** — enqueue do `voice-call` fronty bez konzumenta.
-3. **Mobile push: jen registry** — `prepareContactSend` nemá caller ani APNs/FCM transport; `send_push` míří na web push.
+3. ~~**Mobile push: jen registry**~~ — ✅ **OPRAVENO 2026-07-03**: `mobile-transport.ts` (APNs HTTP/2 + ES256 JWT, FCM v1 + service-account OAuth), `sendContactMobilePush` + route + `mobile-push-send` worker; invalid tokeny se deaktivují.
 4. **STO nezapojené do dispatch** — splitter/dispatch ho nevolají.
 5. **Go SMPP gateway = stub** (SMS teče přes Bulkgate/Twilio).
-6. **Bug `messaging/send.ts` (SMS)** — předává malformovaný envelope `{text, from}` místo `{content:{kind:'sms',body}}`, `routedSmsSend` dereferencuje `message.content.kind` → runtime throw na unified SMS cestě.
+6. ~~**Bug `messaging/send.ts` (SMS)**~~ — ✅ **OPRAVENO 2026-07-03**: proper UnifiedMessage envelope; whatsapp/push (dřív 501) zapojeny na adaptéry.
 7. **`cascade` push/whatsapp kroky = placeholder** (samostatné nody fungují).
 8. **Lead scoring není v automatizacích** (žádný score trigger/action).
 9. **SMS inbound přes `DEFAULT_ORG_ID`** (single-tenant zkratka).
 10. **Telnyx Ed25519 webhook sig = placeholder**; softphone-token helper superseded.
+
+> **Aktualizace 2026-07-03:** Body 1, 3, 6 vyřešeny (bulk SMS/WhatsApp/push kampaně + mobile push transport + SMS envelope). Zbývají 2, 4, 5, 7–10. Odesílací kód mobile pushe (APNs/FCM naživo) nebyl v tomto prostředí spuštěn — ověřeno jen JWT podepisování (unit testy proti vygenerovaným EC/RSA klíčům); Go SMPP + worker běh mimo tsc.
 
 ---
 
