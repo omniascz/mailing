@@ -153,6 +153,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         attachments: body.attachments,
         scheduleAt: body.scheduleAt ? new Date(body.scheduleAt) : undefined,
         sendingIp,
+        tlsPolicy: cfgSet.tlsPolicy,
         testMode,
       });
 

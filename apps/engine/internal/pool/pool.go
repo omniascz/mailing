@@ -66,36 +66,47 @@ func New(cfg Config) *Pool {
 	return p
 }
 
-// Get retrieves or creates an SMTP connection for the given domain.
-func (p *Pool) Get(domain string) (*Conn, error) {
-	p.mu.Lock()
-	if p.closed {
-		p.mu.Unlock()
-		return nil, fmt.Errorf("pool: closed")
-	}
+// Get retrieves or creates an SMTP connection for the given domain. When
+// requireTLS is set, only TLS-secured connections are reused/created — a
+// plaintext connection is never handed out (config-set "require" TLS policy).
+func (p *Pool) Get(domain string, requireTLS bool) (*Conn, error) {
+	for {
+		p.mu.Lock()
+		if p.closed {
+			p.mu.Unlock()
+			return nil, fmt.Errorf("pool: closed")
+		}
 
-	// Try to find an idle connection
-	conns := p.pools[domain]
-	for len(conns) > 0 {
-		c := conns[len(conns)-1]
-		conns = conns[:len(conns)-1]
-		p.pools[domain] = conns
+		// Find an eligible idle connection (scanning from the tail). Under
+		// requireTLS, non-TLS connections are left in the pool for other sends.
+		conns := p.pools[domain]
+		idx := -1
+		for i := len(conns) - 1; i >= 0; i-- {
+			if requireTLS && !conns[i].UseTLS {
+				continue
+			}
+			idx = i
+			break
+		}
+		if idx == -1 {
+			p.mu.Unlock()
+			return p.dial(domain, requireTLS)
+		}
+
+		c := conns[idx]
+		p.pools[domain] = append(conns[:idx], conns[idx+1:]...)
 		p.mu.Unlock()
 
-		// Verify the connection is still alive
+		// Verify the connection is still alive; if dead, drop it and retry.
 		if err := c.Client.Noop(); err == nil {
 			c.LastUsed = time.Now()
 			return c, nil
 		}
-		// Dead connection — close and try next
 		c.Client.Close()
 		p.mu.Lock()
 		p.activeConns--
+		p.mu.Unlock()
 	}
-	p.mu.Unlock()
-
-	// Create a new connection
-	return p.dial(domain)
 }
 
 // Put returns a connection to the pool for reuse.
@@ -151,7 +162,7 @@ func (p *Pool) Discard(c *Conn) {
 //
 // Used by the warmup subsystem: during warm-up phases only a small number of
 // emails are sent per IP per day, so connection reuse is not critical.
-func (p *Pool) DialFrom(domain, localIP string) (*Conn, error) {
+func (p *Pool) DialFrom(domain, localIP string, requireTLS bool) (*Conn, error) {
 	host, err := resolveMX(domain)
 	if err != nil {
 		return nil, fmt.Errorf("pool: resolve MX for %s: %w", domain, err)
@@ -189,14 +200,10 @@ func (p *Pool) DialFrom(domain, localIP string) (*Conn, error) {
 		return nil, fmt.Errorf("pool: EHLO %s: %w", addr, err)
 	}
 
-	useTLS := false
-	if p.preferStartTLS {
-		if ok, _ := client.Extension("STARTTLS"); ok {
-			tlsCfg := &tls.Config{ServerName: host}
-			if err := client.StartTLS(tlsCfg); err == nil {
-				useTLS = true
-			}
-		}
+	useTLS, tlsErr := startTLS(client, host, p.preferStartTLS, requireTLS)
+	if tlsErr != nil {
+		client.Close()
+		return nil, tlsErr
 	}
 
 	now := time.Now()
@@ -207,6 +214,30 @@ func (p *Pool) DialFrom(domain, localIP string) (*Conn, error) {
 		LastUsed:  now,
 		UseTLS:    useTLS,
 	}, nil
+}
+
+// startTLS negotiates STARTTLS. Returns an error only when requireTLS is set
+// and TLS could not be established (no plaintext fallback); otherwise it is
+// opportunistic (best-effort, no error).
+func startTLS(client *smtp.Client, host string, prefer, require bool) (bool, error) {
+	if !prefer && !require {
+		return false, nil
+	}
+	ok, _ := client.Extension("STARTTLS")
+	if !ok {
+		if require {
+			return false, fmt.Errorf("pool: STARTTLS required but not offered by %s", host)
+		}
+		return false, nil
+	}
+	tlsCfg := &tls.Config{ServerName: host, InsecureSkipVerify: false}
+	if err := client.StartTLS(tlsCfg); err != nil {
+		if require {
+			return false, fmt.Errorf("pool: STARTTLS required but failed for %s: %w", host, err)
+		}
+		return false, nil // opportunistic — continue plaintext
+	}
+	return true, nil
 }
 
 // Stats returns pool statistics.
@@ -235,7 +266,7 @@ func (p *Pool) Close() {
 }
 
 // dial creates a new SMTP connection to the domain's MX host.
-func (p *Pool) dial(domain string) (*Conn, error) {
+func (p *Pool) dial(domain string, requireTLS bool) (*Conn, error) {
 	host, err := resolveMX(domain)
 	if err != nil {
 		return nil, fmt.Errorf("pool: resolve MX for %s: %w", domain, err)
@@ -260,18 +291,10 @@ func (p *Pool) dial(domain string) (*Conn, error) {
 		return nil, fmt.Errorf("pool: EHLO %s: %w", addr, err)
 	}
 
-	useTLS := false
-	if p.preferStartTLS {
-		if ok, _ := client.Extension("STARTTLS"); ok {
-			tlsCfg := &tls.Config{
-				ServerName:         host,
-				InsecureSkipVerify: false,
-			}
-			if err := client.StartTLS(tlsCfg); err == nil {
-				useTLS = true
-			}
-			// If STARTTLS fails, continue without TLS (opportunistic)
-		}
+	useTLS, tlsErr := startTLS(client, host, p.preferStartTLS, requireTLS)
+	if tlsErr != nil {
+		client.Close()
+		return nil, tlsErr
 	}
 
 	now := time.Now()

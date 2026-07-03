@@ -72,6 +72,8 @@ export interface SendRequest {
   sendingIp: string;
   /** VERP envelope sender (Return-Path). Empty = use fromEmail. */
   returnPath?: string;
+  /** TLS policy: 'require' aborts if STARTTLS unavailable; else opportunistic. */
+  tlsPolicy?: string;
   /** File attachments (e-ticket PDFs etc.). Empty/omitted for link-only mail. */
   attachments?: Attachment[];
 }

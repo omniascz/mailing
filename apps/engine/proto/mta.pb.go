@@ -46,7 +46,10 @@ type SendRequest struct {
 	Attachments []*Attachment `protobuf:"bytes,16,rep,name=attachments,proto3" json:"attachments,omitempty"`
 	// VERP envelope sender (Return-Path / SMTP MAIL FROM). Empty = use from_email.
 	// Encodes the message so out-of-band bounces can be attributed.
-	ReturnPath    string `protobuf:"bytes,17,opt,name=return_path,json=returnPath,proto3" json:"return_path,omitempty"`
+	ReturnPath string `protobuf:"bytes,17,opt,name=return_path,json=returnPath,proto3" json:"return_path,omitempty"`
+	// TLS policy: "require" aborts the send if STARTTLS is unavailable/fails
+	// (no plaintext fallback). Empty/"optional" = opportunistic STARTTLS.
+	TlsPolicy     string `protobuf:"bytes,18,opt,name=tls_policy,json=tlsPolicy,proto3" json:"tls_policy,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -196,6 +199,13 @@ func (x *SendRequest) GetAttachments() []*Attachment {
 func (x *SendRequest) GetReturnPath() string {
 	if x != nil {
 		return x.ReturnPath
+	}
+	return ""
+}
+
+func (x *SendRequest) GetTlsPolicy() string {
+	if x != nil {
+		return x.TlsPolicy
 	}
 	return ""
 }
@@ -633,7 +643,7 @@ var File_proto_mta_proto protoreflect.FileDescriptor
 
 const file_proto_mta_proto_rawDesc = "" +
 	"\n" +
-	"\x0fproto/mta.proto\x12\x03mta\"\x88\x05\n" +
+	"\x0fproto/mta.proto\x12\x03mta\"\xa7\x05\n" +
 	"\vSendRequest\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x01 \x01(\tR\tmessageId\x12\x1d\n" +
@@ -658,7 +668,9 @@ const file_proto_mta_proto_rawDesc = "" +
 	"sending_ip\x18\x0f \x01(\tR\tsendingIp\x121\n" +
 	"\vattachments\x18\x10 \x03(\v2\x0f.mta.AttachmentR\vattachments\x12\x1f\n" +
 	"\vreturn_path\x18\x11 \x01(\tR\n" +
-	"returnPath\x1a@\n" +
+	"returnPath\x12\x1d\n" +
+	"\n" +
+	"tls_policy\x18\x12 \x01(\tR\ttlsPolicy\x1a@\n" +
 	"\x12CustomHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9c\x01\n" +

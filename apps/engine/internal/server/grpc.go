@@ -141,6 +141,7 @@ func requestToMessage(req *pb.SendRequest) *smtpsend.Message {
 		Headers:    req.CustomHeaders,
 		SendingIP:  req.SendingIp,
 		ReturnPath: req.ReturnPath,
+		TLSPolicy:  req.TlsPolicy,
 	}
 
 	if req.Dkim != nil {

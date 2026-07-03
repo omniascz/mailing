@@ -33,6 +33,7 @@ type Message struct {
 	DkimConfig   *dkim.SignConfig
 	SendingIP    string // optional override
 	ReturnPath   string // VERP envelope sender (MAIL FROM); empty = FromEmail
+	TLSPolicy    string // "require" = abort if no STARTTLS; else opportunistic
 
 	// ISP-deliverability hints (#387). Leave zero-valued to skip enrichment.
 	CampaignID       string // tenant-facing identifier for Feedback-ID
@@ -135,10 +136,11 @@ func (s *Sender) Send(msg *Message) *Result {
 	// For the default path (no IP configured) use the pool for connection reuse.
 	var conn *pool.Conn
 	var connErr error
+	requireTLS := msg.TLSPolicy == "require"
 	if useWarmupDial && selectedIP != "" {
-		conn, connErr = s.pool.DialFrom(domain, selectedIP)
+		conn, connErr = s.pool.DialFrom(domain, selectedIP, requireTLS)
 	} else {
-		conn, connErr = s.pool.Get(domain)
+		conn, connErr = s.pool.Get(domain, requireTLS)
 	}
 	if connErr != nil {
 		return &Result{

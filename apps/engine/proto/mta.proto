@@ -45,6 +45,10 @@ message SendRequest {
   // VERP envelope sender (Return-Path / SMTP MAIL FROM). Empty = use from_email.
   // Encodes the message so out-of-band bounces can be attributed.
   string return_path = 17;
+
+  // TLS policy: "require" aborts the send if STARTTLS is unavailable/fails
+  // (no plaintext fallback). Empty/"optional" = opportunistic STARTTLS.
+  string tls_policy = 18;
 }
 
 message Attachment {

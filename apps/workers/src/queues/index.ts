@@ -246,6 +246,8 @@ export interface MtaSendJobData {
   sendingIp?: string;
   /** VERP envelope sender (Return-Path). '' = use From. */
   returnPath?: string;
+  /** TLS policy: 'require' aborts if no STARTTLS; else opportunistic. */
+  tlsPolicy?: string;
   priority: Priority;
   stream: MessageStream;
   /** A/B variant id propagated from BatchSenderJobData for event tagging. */

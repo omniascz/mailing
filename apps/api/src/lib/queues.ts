@@ -127,6 +127,8 @@ export interface TransactionalEmailInput {
   testMode?: boolean;
   /** Source IP (from a configuration set's IP pool). '' = engine default pool. */
   sendingIp?: string;
+  /** TLS policy ('require' | 'optional') from a configuration set. */
+  tlsPolicy?: string;
 }
 
 /**
@@ -169,6 +171,7 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       replyTo: input.replyTo ?? '',
       customHeaders: input.customHeaders ?? {},
       sendingIp: input.sendingIp ?? '',
+      tlsPolicy: input.tlsPolicy ?? '',
       priority: PRIORITY.TRANSACTIONAL,
       stream: 'transactional',
       ...(input.attachments && input.attachments.length > 0
