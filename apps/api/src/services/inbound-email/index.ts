@@ -7,10 +7,17 @@
 
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { inboundEmails, contacts, suppressions, type InboundEmail } from '../../db/schema/index.js';
+import {
+  inboundEmails,
+  contacts,
+  suppressions,
+  emailEvents,
+  type InboundEmail,
+} from '../../db/schema/index.js';
 import { onApiEvent } from '../workflows/triggers.js';
 import { openTicket, appendMessage } from '../helpdesk/index.js';
 import { classifyBounce, isBounceMessage, extractFailedRecipient } from '../sending/bounce-processor.js';
+import { decodeVerp } from '../sending/verp.js';
 import { AppError } from '../../lib/app-error.js';
 
 export interface InboundPayload {
@@ -81,8 +88,50 @@ export async function receiveInbound(
   // out-of-band bounces (the engine only sees in-session SMTP rejects).
   if (isBounceMessage(fromEmail, payload.subject ?? undefined)) {
     const body = payload.textBody || payload.htmlBody || '';
-    const failed = extractFailedRecipient(body);
     const cls = classifyBounce(body, body);
+
+    // VERP: the DSN's recipient is our per-message return-path. Decode it to the
+    // original Message-ID and attribute the bounce to that exact send — this
+    // recovers the recipient/campaign even when the DSN body has no clear
+    // Final-Recipient. Check the To address plus common relay headers.
+    const hdrs = (payload.headers ?? {}) as Record<string, string>;
+    const verpMsgId =
+      decodeVerp(payload.to) ??
+      decodeVerp(hdrs['Delivered-To'] ?? hdrs['delivered-to']) ??
+      decodeVerp(hdrs['X-Original-To'] ?? hdrs['x-original-to']);
+
+    let failed = extractFailedRecipient(body);
+    if (verpMsgId) {
+      const [ev] = await db
+        .select({ contactId: emailEvents.contactId, campaignId: emailEvents.campaignId })
+        .from(emailEvents)
+        .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.messageId, verpMsgId)))
+        .limit(1);
+      // Record a bounce event against the original message for analytics.
+      await db
+        .insert(emailEvents)
+        .values({
+          orgId,
+          campaignId: ev?.campaignId ?? null,
+          contactId: ev?.contactId ?? null,
+          messageId: verpMsgId,
+          eventType: 'bounce',
+          bounceType: cls.type === 'soft' ? 'soft' : cls.type === 'block' ? 'block' : 'hard',
+          metadata: { source: 'verp', reason: cls.reason },
+        })
+        .catch(() => {});
+      // If the DSN body didn't yield a recipient, resolve it from the matched
+      // contact so suppression still targets the right address.
+      if (!failed && ev?.contactId) {
+        const [c] = await db
+          .select({ email: contacts.email })
+          .from(contacts)
+          .where(and(eq(contacts.orgId, orgId), eq(contacts.id, ev.contactId)))
+          .limit(1);
+        failed = c?.email ?? null;
+      }
+    }
+
     if (failed && (cls.autoSuppress || cls.type === 'hard')) {
       // Bucket into the correct SendGrid-parity list: invalid_email for
       // nonexistent addresses, hard_bounce for other permanent failures.

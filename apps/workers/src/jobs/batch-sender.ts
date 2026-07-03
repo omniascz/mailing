@@ -28,6 +28,7 @@ import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/share
 // Cross-package import (same pattern as mta-sender → isp-throttle): the coupon
 // resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
 import { resolveEmailCouponTags } from '../../../api/src/services/campaigns/email-coupon-merge.js';
+import { encodeVerp } from '../../../api/src/services/sending/verp.js';
 import {
   connection,
   QUEUE_NAMES,
@@ -304,10 +305,9 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
         sendingIp,
         tlsPolicy: data.tlsPolicy,
         // VERP Return-Path: encode the messageId so out-of-band bounces are
-        // attributable. Only when a bounce domain is configured.
-        returnPath: verpBounceDomain
-          ? `bounce+${messageId.replace(/[<>]/g, '').replace(/@/g, '=')}@${verpBounceDomain}`
-          : '',
+        // attributable (decoded on inbound by decodeVerp). Only when a bounce
+        // domain is configured.
+        returnPath: verpBounceDomain ? encodeVerp(messageId, verpBounceDomain) : '',
         priority: data.priority,
         stream,
         abVariantId: data.abVariantId,
