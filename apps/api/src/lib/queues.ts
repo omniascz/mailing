@@ -44,6 +44,8 @@ export const rcsQueue = new Queue('rcs-send', queueOpts);
 export const whatsappQueue = new Queue('whatsapp-send', queueOpts);
 /** Web Push / FCM async send queue. */
 export const pushQueue = new Queue('push-send', queueOpts);
+/** Native mobile push (APNs/FCM) async send queue — consumed by mobile-push-sender. */
+export const mobilePushQueue = new Queue('mobile-push-send', queueOpts);
 /** Voice-call async queue (voice-bot outbound). */
 export const voiceQueue = new Queue('voice-call', queueOpts);
 
@@ -184,6 +186,7 @@ export const queues = {
   rcs: rcsQueue,
   whatsapp: whatsappQueue,
   push: pushQueue,
+  mobilePush: mobilePushQueue,
   voice: voiceQueue,
   campaignSplitter: campaignSplitterQueue,
   mtaOther: mtaOtherQueue,

@@ -43,6 +43,22 @@ export async function resolveDkimForSender(
  */
 export async function enqueueCampaignSend(orgId: string, campaignId: string) {
   const campaign = await sendCampaign(orgId, campaignId);
+
+  // Non-email campaigns (sms/whatsapp/push) fan out over their own channel
+  // queues instead of the email splitter → MTA pipeline.
+  if (campaign.type && campaign.type !== 'email') {
+    const { dispatchChannelCampaign } = await import('./channel-dispatch.js');
+    try {
+      await dispatchChannelCampaign(orgId, campaign);
+    } catch (err) {
+      // Roll the campaign back to draft so the operator can fix (e.g. missing
+      // content) and re-send, instead of leaving it stuck in 'sending'.
+      await setCampaignStatusInternal(campaignId, 'paused').catch(() => {});
+      throw err;
+    }
+    return campaign;
+  }
+
   const dkim = campaign.fromEmail ? await resolveDkimForSender(orgId, campaign.fromEmail) : null;
 
   // CAN-SPAM footer identity — auto-appended by the renderer when present.

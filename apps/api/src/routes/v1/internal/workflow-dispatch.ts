@@ -158,13 +158,23 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         contactId: z.string().uuid(),
         phone: z.string().min(3),
         message: z.string().min(1),
+        // Set for bulk SMS campaigns — flags the send as marketing (consent +
+        // quiet-hours gate) and attributes the delivery to the campaign.
+        campaignId: z.string().uuid().optional(),
+        workflowId: z.string().uuid().optional(),
       })
       .parse(req.body);
 
     try {
       const result = await routedSmsSend(
         body.orgId,
-        { channel: 'sms', orgId: body.orgId, content: { kind: 'sms', body: body.message } },
+        {
+          channel: 'sms',
+          orgId: body.orgId,
+          content: { kind: 'sms', body: body.message },
+          ...(body.campaignId ? { campaignId: body.campaignId } : {}),
+          ...(body.workflowId ? { workflowId: body.workflowId } : {}),
+        },
         { contactId: body.contactId, phone: body.phone },
       );
       return reply.send({ data: { messageId: result.messageId, status: result.status } });
