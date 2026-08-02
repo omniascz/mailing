@@ -27,8 +27,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Both checks run even if the earlier one fails, so a single CI run
+      # reports the full set of violations instead of stopping at the first.
       - run: pnpm format:check
+        if: always()
       - run: pnpm lint
+        if: always()
 
   typecheck:
     name: Type Check
