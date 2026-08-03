@@ -141,6 +141,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # @forgemsg/shared "exports" point at ./dist, and the integration suite
+      # imports it (services/auth/sessions.ts -> @forgemsg/shared/redis), so the
+      # package has to be built first. Without this the run dies with
+      # `Cannot find package '@forgemsg/shared/redis'`.
+      - run: pnpm turbo build --filter=@forgemsg/shared
       - run: pnpm --filter @forgemsg/api db:migrate
       - run: pnpm seed
       - run: pnpm --filter @forgemsg/api test:integration
