@@ -28,7 +28,7 @@ import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/share
 // Cross-package import (same pattern as mta-sender → isp-throttle): the coupon
 // resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
 import { resolveEmailCouponTags } from '../../../api/src/services/campaigns/email-coupon-merge.js';
-import { encodeVerp } from '../../../api/src/services/sending/verp.js';
+import { encodeVerp } from '@forgemsg/shared/sending/verp';
 import {
   connection,
   QUEUE_NAMES,

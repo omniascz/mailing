@@ -6,7 +6,7 @@
  */
 
 import crypto from 'node:crypto';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 
 const DOI_TTL = 60 * 60 * 48; // 48h — must match subscriptions route

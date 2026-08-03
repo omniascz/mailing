@@ -26,7 +26,7 @@ const mockDb: Record<string, unknown> = {
 };
 
 vi.mock('../../db/client.js', () => ({ db: mockDb }));
-vi.mock('../../lib/redis.js', () => ({
+vi.mock('@forgemsg/shared/redis', () => ({
   redis: {
     get: vi.fn().mockResolvedValue(null),
     setex: vi.fn().mockResolvedValue('OK'),

@@ -19,7 +19,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts, signupForms } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import crypto from 'node:crypto';
 
 export interface AutofillPayload {

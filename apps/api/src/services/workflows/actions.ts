@@ -18,7 +18,7 @@ import {
   type WorkflowNode,
   type WorkflowRun,
 } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { shouldSuppressDueToConversion } from './conversion-suppression.js';
 import { normalizeConditionConfig } from './condition-rules.js';
 import { resolveEventRelativeUntil, type EventRelativeUntil } from './wait-resolve.js';

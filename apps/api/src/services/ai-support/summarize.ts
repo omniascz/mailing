@@ -12,7 +12,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { helpdeskTickets, ticketMessages } from '../../db/schema/helpdesk.js';
 import { callClaude, cacheKey, CACHE_TTL } from '../../lib/ai-client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 
 export interface ConversationSummary {

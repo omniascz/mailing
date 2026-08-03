@@ -29,7 +29,7 @@ import {
   billingSubscriptions,
   abuseEvents,
 } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 import { planEnum } from '../../db/schema/enums.js';
 import { logAuditEvent } from '../../services/audit-log/index.js';

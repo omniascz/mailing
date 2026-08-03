@@ -14,7 +14,7 @@
  * limits and avoid excessive external calls.
  */
 
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const CACHE_TTL = 4 * 3600; // 4 hours
 

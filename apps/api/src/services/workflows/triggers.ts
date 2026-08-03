@@ -27,7 +27,7 @@ import {
   contacts,
   type WorkflowRun,
 } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { startWorkflowRun } from './executor.js';
 import { nameDaysFor as nameDaysCs } from '@forgemsg/i18n-cs/name-days';
 import { nameDaysFor as nameDaysSk } from '@forgemsg/i18n-sk/name-days';

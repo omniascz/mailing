@@ -12,7 +12,7 @@
  */
 
 import { callClaude, cacheKey, parseJsonSafe } from '../../lib/ai-client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 import {
   describeSchemaForPrompt,

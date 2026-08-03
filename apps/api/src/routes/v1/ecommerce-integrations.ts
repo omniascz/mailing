@@ -21,7 +21,7 @@ import crypto from 'node:crypto';
 import { db } from '../../db/client.js';
 import { ecommerceConnections } from '../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import {
   listConnections,
   getConnection,

@@ -25,7 +25,7 @@ import {
 import { db } from '../../db/client.js';
 import { viberTemplates } from '../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
-import { createViberAdapter } from '../../services/viber/adapter.js';
+import { createViberAdapter } from '@forgemsg/shared/viber/adapter';
 
 // ─── Zod schemas ────────────────────────────────────────────────────────────
 

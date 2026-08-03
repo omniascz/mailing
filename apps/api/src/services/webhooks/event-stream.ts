@@ -7,7 +7,7 @@
  * lack a pull equivalent for.
  */
 
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 // Cap the retained backlog per org (~ approximate trim, cheap).
 const STREAM_MAXLEN = 10_000;

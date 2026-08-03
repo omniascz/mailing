@@ -21,7 +21,7 @@
 import { db } from '../../db/client.js';
 import { contacts, emailEvents, suppressions, organizations } from '../../db/schema/index.js';
 import { and, eq, sql } from 'drizzle-orm';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 // ─── ARF parsing ──────────────────────────────────────────────────────────────
 

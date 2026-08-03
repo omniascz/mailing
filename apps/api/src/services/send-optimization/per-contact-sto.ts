@@ -11,7 +11,7 @@ import {
   contactSendTimePredictions,
   type ContactSendTimePrediction,
 } from '../../db/schema/contact-send-time.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { computeStoFromCounts, normalizeHistogram, uniformPrior, HOURS } from './sto-pure.js';
 
 const PRIOR_KEY = (orgId: string) => `sto:hour-prior:${orgId}`;

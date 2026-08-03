@@ -14,7 +14,7 @@
  */
 
 import { callClaude, cacheKey } from '../../lib/ai-client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const CACHE_TTL = 3600;
 

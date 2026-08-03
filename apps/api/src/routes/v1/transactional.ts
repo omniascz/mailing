@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import { db } from '../../db/client.js';
 import { emailEvents, campaigns } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { and, eq, gte, lte } from 'drizzle-orm';

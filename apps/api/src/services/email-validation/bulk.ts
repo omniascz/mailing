@@ -18,7 +18,7 @@
  */
 
 import dns from 'node:dns/promises';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { validateEmailSync, type EmailValidationResult } from './index.js';
 import { suggestEmailCorrection } from './suggest.js';
 

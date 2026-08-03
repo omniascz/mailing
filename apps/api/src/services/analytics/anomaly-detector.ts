@@ -15,7 +15,7 @@
 import { isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { organizations, campaignAlerts } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

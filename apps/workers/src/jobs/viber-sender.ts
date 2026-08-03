@@ -40,7 +40,7 @@ async function processViberSend(
   job.log(`Viber send to ${data.phone} (contact ${data.contactId}) org=${data.orgId}`);
 
   // Dynamically import to avoid loading the adapter in the worker bootstrap
-  const { createViberAdapter } = await import('../../../api/src/services/viber/adapter.js');
+  const { createViberAdapter } = await import('@forgemsg/shared/viber/adapter');
 
   const adapter = createViberAdapter();
   const result = await adapter.send(

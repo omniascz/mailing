@@ -14,7 +14,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { socialAccounts } from '../../../db/schema/index.js';
 import { AppError } from '../../../lib/app-error.js';
-import { redis } from '../../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const ALLEGRO_AUTH_URL = 'https://allegro.pl/auth/oauth/authorize';
 const ALLEGRO_TOKEN_URL = 'https://allegro.pl/auth/oauth/token';

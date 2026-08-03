@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MetaWhatsAppAdapter } from './meta-adapter.js';
+import { MetaWhatsAppAdapter } from '@forgemsg/shared/whatsapp/meta-adapter';
 import type { UnifiedMessage, Recipient } from '@forgemsg/shared';
 
 const adapter = new MetaWhatsAppAdapter({

@@ -8,7 +8,7 @@
  * Base: https://conversations.messagebird.com/v1
  */
 
-import type { Recipient, DeliveryResult, DeliveryStatus, ViberContent } from '@forgemsg/shared';
+import type { Recipient, DeliveryResult, DeliveryStatus, ViberContent } from '../../index.js';
 
 export const MESSAGEBIRD_API_BASE = 'https://conversations.messagebird.com/v1';
 

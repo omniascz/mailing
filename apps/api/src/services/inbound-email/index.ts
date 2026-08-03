@@ -21,7 +21,7 @@ import {
   isBounceMessage,
   extractFailedRecipient,
 } from '../sending/bounce-processor.js';
-import { decodeVerp } from '../sending/verp.js';
+import { decodeVerp } from '@forgemsg/shared/sending/verp';
 import { AppError } from '../../lib/app-error.js';
 
 export interface InboundPayload {

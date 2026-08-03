@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { eq, sql } from 'drizzle-orm';
 import { AppError } from '../../lib/app-error.js';
 import { callClaude, cacheKey, parseJsonSafe, CACHE_TTL } from '../../lib/ai-client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { db } from '../../db/client.js';
 import { campaigns, organizations } from '../../db/schema/index.js';
 import { enrichVariantsWithHistory } from '../../services/ai/subject-line-scorer.js';

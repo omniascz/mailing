@@ -16,7 +16,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const CACHE_TTL = 60 * 60 * 24 * 30; // 30 days
 const CACHE_PREFIX = 'enrich:social:';

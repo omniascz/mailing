@@ -11,7 +11,7 @@
  * (passed as `providerConfig` to the constructor).
  */
 
-import { BaseChannelAdapter } from '@forgemsg/shared';
+import { BaseChannelAdapter } from '../index.js';
 import type {
   Channel,
   UnifiedMessage,
@@ -23,7 +23,7 @@ import type {
   ChannelTemplate,
   ValidationResult,
   RateLimits,
-} from '@forgemsg/shared';
+} from '../index.js';
 import { sendViaInfobip, getStatusFromInfobip } from './providers/infobip.js';
 import type { InfobobipConfig } from './providers/infobip.js';
 import { sendViaRakuten, getStatusFromRakuten } from './providers/rakuten.js';

@@ -7,7 +7,7 @@ import { db } from '../../db/client.js';
 import { contacts } from '../../db/schema/index.js';
 import { eq } from 'drizzle-orm';
 import { callClaude } from '../../lib/ai-client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 import { buildBrandVoiceContext, getActiveBrandVoice } from './brand-voice.js';
 

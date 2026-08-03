@@ -19,7 +19,7 @@ import crypto from 'node:crypto';
 import { and, eq, gt } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { helpdeskTickets, ticketMessages, contacts } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { openTicket, appendMessage } from './index.js';
 import { AppError } from '../../lib/app-error.js';
 

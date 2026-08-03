@@ -23,7 +23,7 @@ import {
 import { and, eq, asc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { blogPostRevisions, blogPosts } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const blogRoutes: FastifyPluginAsync = async (app) => {
   // Posts

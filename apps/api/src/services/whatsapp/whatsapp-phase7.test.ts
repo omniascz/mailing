@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MetaWhatsAppAdapter } from '../../channels/whatsapp/meta-adapter.js';
+import { MetaWhatsAppAdapter } from '@forgemsg/shared/whatsapp/meta-adapter';
 import {
   buildButtonPayloadForTest,
   buildListPayloadForTest,

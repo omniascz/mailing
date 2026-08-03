@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../lib/redis.js', () => ({
+vi.mock('@forgemsg/shared/redis', () => ({
   redis: {
     get: vi.fn().mockResolvedValue(null),
     setex: vi.fn().mockResolvedValue('OK'),
@@ -79,7 +79,7 @@ describe('checkAccessibility — rule-based checks', () => {
   });
 
   it('returns cached result on second call', async () => {
-    const { redis } = await import('../../lib/redis.js');
+    const { redis } = await import('@forgemsg/shared/redis');
     const cached = JSON.stringify({ issues: [], score: 100 });
     (redis.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(cached);
 

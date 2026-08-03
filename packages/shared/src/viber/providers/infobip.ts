@@ -8,7 +8,7 @@
  * Base: https://api.infobip.com
  */
 
-import type { Recipient, DeliveryResult, DeliveryStatus, ViberContent } from '@forgemsg/shared';
+import type { Recipient, DeliveryResult, DeliveryStatus, ViberContent } from '../../index.js';
 
 export const INFOBIP_API_BASE = 'https://api.infobip.com';
 

@@ -12,7 +12,7 @@
 
 import { sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const LOOKBACK_DAYS = 180;
 const MIN_SENDS_FOR_SIGNAL = 100;

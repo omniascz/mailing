@@ -15,7 +15,7 @@
 import { and, eq, count, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { getContactChannelScores } from '../channel-scoring/index.js';
 import { confidenceBand, type ChannelKind } from '../channel-scoring/pure.js';
 

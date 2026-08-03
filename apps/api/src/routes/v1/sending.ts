@@ -11,7 +11,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { parseArfReport, processFblComplaint } from '../../services/sending/fbl-processor.js';
-import { getThrottleState, resetThrottle } from '../../services/sending/isp-throttle.js';
+import { getThrottleState, resetThrottle } from '@forgemsg/shared/sending/isp-throttle';
 import {
   startWarmup,
   listWarmupStatuses,

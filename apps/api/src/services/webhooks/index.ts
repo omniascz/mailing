@@ -23,7 +23,7 @@ import {
   type Webhook,
   type WebhookEvent,
 } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import {
   signPayload,
   signPayloadWithTimestamp,

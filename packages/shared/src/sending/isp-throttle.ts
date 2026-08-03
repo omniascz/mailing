@@ -12,7 +12,7 @@
  *   throttle:{orgId}:{isp}:{ip}:refill_ts     — timestamp of last refill window start
  */
 
-import { redis } from '../../lib/redis.js';
+import { redis } from '../redis/index.js';
 
 // ─── ISP definitions ──────────────────────────────────────────────────────────
 //

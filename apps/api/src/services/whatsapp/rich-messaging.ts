@@ -8,7 +8,7 @@
  *   - Reply tracking (button_click, list_selection → event pipeline)
  */
 
-import { type MetaWhatsAppConfig } from '../../channels/whatsapp/meta-adapter.js';
+import { type MetaWhatsAppConfig } from '@forgemsg/shared/whatsapp/meta-adapter';
 import { onApiEvent } from '../workflows/triggers.js';
 import type { DeliveryResult, Recipient } from '@forgemsg/shared';
 

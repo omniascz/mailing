@@ -19,7 +19,7 @@ import {
   publishTyping,
   getChatSession,
 } from '../../../services/helpdesk/live-chat.js';
-import { redis } from '../../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const liveChatRoutes: FastifyPluginAsync = async (app) => {
   // ── Start session ─────────────────────────────────────────────────────────────

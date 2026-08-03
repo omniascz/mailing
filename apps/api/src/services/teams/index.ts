@@ -18,7 +18,7 @@ import { and, eq, inArray, or, isNull, sql, type SQL } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { db } from '../../db/client.js';
 import { teams, teamMembers, type Team } from '../../db/schema/teams.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 import type { UserRole } from '@forgemsg/shared';
 

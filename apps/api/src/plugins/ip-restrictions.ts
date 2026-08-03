@@ -3,7 +3,7 @@ import type { FastifyPluginCallback, FastifyRequest } from 'fastify';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { ipRestrictions, organizations } from '../db/schema/index.js';
-import { redis } from '../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const CACHE_TTL = 300; // 5 min
 

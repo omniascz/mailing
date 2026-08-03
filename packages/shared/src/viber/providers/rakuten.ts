@@ -12,7 +12,7 @@
  * campaign sends to opted-in contacts without a prior conversation.
  */
 
-import type { Recipient, DeliveryResult, DeliveryStatus, ViberContent } from '@forgemsg/shared';
+import type { Recipient, DeliveryResult, DeliveryStatus, ViberContent } from '../../index.js';
 
 export const RAKUTEN_API_BASE = 'https://chatapi.viber.com/pa';
 

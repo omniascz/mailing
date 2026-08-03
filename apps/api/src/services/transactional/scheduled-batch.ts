@@ -7,7 +7,7 @@
  * SendGrid's `POST /v3/user/scheduled_sends` (status: pause | cancel).
  */
 
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../billing/plan-enforcement.js';
 

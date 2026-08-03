@@ -12,7 +12,7 @@ const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 const mockRedis = { get: vi.fn(), setex: vi.fn() };
-vi.mock('../../lib/redis.js', () => ({ redis: mockRedis }));
+vi.mock('@forgemsg/shared/redis', () => ({ redis: mockRedis }));
 
 const mockDb: Record<string, unknown> = {
   select: vi.fn().mockReturnThis(),

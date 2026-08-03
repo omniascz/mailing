@@ -30,7 +30,7 @@ const { mockDb } = vi.hoisted(() => {
 });
 
 vi.mock('../../db/client.js', () => ({ db: mockDb }));
-vi.mock('../../lib/redis.js', () => ({
+vi.mock('@forgemsg/shared/redis', () => ({
   redis: {
     llen: vi.fn().mockResolvedValue(0),
     rpush: vi.fn().mockResolvedValue(1),
@@ -376,7 +376,7 @@ describe('queueOutboundCall', () => {
   });
 
   it('returns null when at max concurrent calls', async () => {
-    const { redis } = await import('../../lib/redis.js');
+    const { redis } = await import('@forgemsg/shared/redis');
     vi.mocked(redis).llen.mockResolvedValueOnce(5);
 
     const callId = await queueOutboundCall({

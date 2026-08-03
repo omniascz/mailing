@@ -6,7 +6,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { dynamicContentBlocks, type DcVariant } from '../../db/schema/dynamic-content.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 interface ResolutionContext {
   openedAt?: Date;
