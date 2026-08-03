@@ -208,8 +208,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/shared
       liquidjs:
-        specifier: ^10.25.7
-        version: 10.27.0
+        specifier: ^10.28.0
+        version: 10.28.0
       react:
         specifier: ^19.1.0
         version: 19.2.5
@@ -6453,8 +6453,8 @@ packages:
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
-  liquidjs@10.27.0:
-    resolution: {integrity: sha512-tw/OA59K7aIBlMKIrKlumr37fiZUheShVHXY8cVctWisgY1p9mc5hreOvlreoS0wTiwlWk14Ya7305c2a/Cg5w==}
+  liquidjs@10.28.0:
+    resolution: {integrity: sha512-b6tmBXYMQTuGPnM5vB0CuZMo5kvmKMtSB/gvUWP6RFn2pIB5s+bJkBfIyJnattkc5bgeAiflrZVptx3iaLLioQ==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -15536,7 +15536,7 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  liquidjs@10.27.0:
+  liquidjs@10.28.0:
     dependencies:
       commander: 10.0.1
 

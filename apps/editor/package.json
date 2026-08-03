@@ -38,7 +38,7 @@
     "@forgemsg/shared": "workspace:*",
     "@forgemsg/i18n-cs": "workspace:*",
     "@forgemsg/i18n-sk": "workspace:*",
-    "liquidjs": "^10.25.7",
+    "liquidjs": "^10.28.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zod": "^3.24.0"
