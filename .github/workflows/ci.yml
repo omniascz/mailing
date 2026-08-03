@@ -97,6 +97,54 @@ jobs:
         run: pnpm --filter @forgemsg/api db:migrate
       - run: pnpm test
 
+  integration:
+    name: Integration (real DB)
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    # Deliberately NOT in the CI Pass needs list yet — this is one test, and a
+    # single new check should not be able to gate the whole pipeline until it
+    # has a track record.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: forgemsg_itest
+          POSTGRES_USER: forgemsg
+          POSTGRES_PASSWORD: forgemsg
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U forgemsg"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # 127.0.0.1, not localhost: postgres-js in the app's connection pool
+      # resolves `localhost` to ::1 on some hosts and then times out against a
+      # service published on IPv4. Reproduced locally as
+      # `write CONNECT_TIMEOUT localhost:55433`.
+      DATABASE_URL: postgresql://forgemsg:forgemsg@127.0.0.1:5432/forgemsg_itest
+      REDIS_URL: redis://127.0.0.1:6379
+      JWT_SECRET: integration-only-secret-not-for-production-1234567890
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @forgemsg/api db:migrate
+      - run: pnpm seed
+      - run: pnpm --filter @forgemsg/api test:integration
+
   build:
     name: Build
     runs-on: ubuntu-latest

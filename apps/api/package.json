@@ -43,7 +43,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx scripts/seed.ts",
-    "seed:marketing-blog": "tsx scripts/seed-marketing-blog.ts"
+    "seed:marketing-blog": "tsx scripts/seed-marketing-blog.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
