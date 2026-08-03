@@ -373,6 +373,9 @@ importers:
 
   apps/workers:
     dependencies:
+      '@forgemsg/api':
+        specifier: workspace:*
+        version: link:../api
       '@forgemsg/editor':
         specifier: workspace:*
         version: link:../editor

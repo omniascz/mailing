@@ -27,7 +27,7 @@ import { emailSchema, type EmailSchema } from '@forgemsg/editor/schema';
 import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/shared';
 // Cross-package import (same pattern as mta-sender → isp-throttle): the coupon
 // resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
-import { resolveEmailCouponTags } from '../../../api/src/services/campaigns/email-coupon-merge.js';
+import { resolveEmailCouponTags } from '@forgemsg/api/services/campaigns/email-coupon-merge';
 import { encodeVerp } from '@forgemsg/shared/sending/verp';
 import {
   connection,
@@ -112,7 +112,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   // wires org→pool→IP through to the MTA (previously sendingIp was hardcoded '').
   let sendingIp = '';
   try {
-    const { pickIpForSend } = await import('../../../api/src/services/dedicated-ips/index.js');
+    const { pickIpForSend } = await import('@forgemsg/api/services/dedicated-ips');
     // Use the configuration set's IP pool when the campaign specifies one.
     const ip = await pickIpForSend(data.orgId, data.ipPoolId);
     sendingIp = ip?.ipAddress ?? '';
