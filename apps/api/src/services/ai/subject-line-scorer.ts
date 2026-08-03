@@ -44,7 +44,7 @@ function extractFeatures(subject: string): SubjectFeatures {
     hasNumber: /\d/.test(subject),
     hasPersonalisation: /\{\{/.test(subject),
     hasUrgency: URGENCY_WORDS.test(subject),
-    hasBrackets: /[\[\(]/.test(subject),
+    hasBrackets: /[[(]/.test(subject),
     lengthBucket: len < 30 ? 'short' : len <= 60 ? 'medium' : 'long',
     wordCount: subject.trim().split(/\s+/).length,
     startsWithVerb: VERB_STARTS.test(subject.trim()),

@@ -51,7 +51,7 @@ function parseContactsXml(xml: string): PohodaContact[] {
   const matches = xml.matchAll(/<adb:addressbookItem[^>]*>([\s\S]*?)<\/adb:addressbookItem>/g);
   for (const m of matches) {
     const block = m[1] ?? '';
-    const get = (tag: string) => block.match(new RegExp(`<[^:]+:${tag}[^>]*>([^<]*)<\/`))?.[1]?.trim();
+    const get = (tag: string) => block.match(new RegExp(`<[^:]+:${tag}[^>]*>([^<]*)</`))?.[1]?.trim();
     const id = get('id') ?? crypto.randomUUID();
     const name = get('company') ?? get('name') ?? '';
     if (!name) continue;

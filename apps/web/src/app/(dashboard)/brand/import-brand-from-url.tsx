@@ -25,7 +25,8 @@ export function ImportBrandFromUrl() {
 
   async function scan(save: boolean) {
     if (!url.trim()) return;
-    save ? setSaving(true) : setLoading(true);
+    if (save) setSaving(true);
+    else setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/brand-guidelines/scrape-url`, {
         method: 'POST',
@@ -43,7 +44,8 @@ export function ImportBrandFromUrl() {
     } catch {
       toast('error', 'Could not scan that URL. Check it is public and reachable.');
     } finally {
-      save ? setSaving(false) : setLoading(false);
+      if (save) setSaving(false);
+      else setLoading(false);
     }
   }
 
