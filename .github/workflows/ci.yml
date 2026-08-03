@@ -181,8 +181,12 @@ jobs:
       DATABASE_URL: postgresql://forgemsg:forgemsg@localhost:5432/forgemsg_e2e
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: e2e-only-secret-not-for-production-use-1234567890
-      NEXT_PUBLIC_API_URL: http://127.0.0.1:3001
-      API_URL: http://127.0.0.1:3001
+      # localhost, not 127.0.0.1: the session cookie the API sets is host-only,
+      # so a cookie issued by 127.0.0.1:3001 is never sent to localhost:3000 and
+      # apps/web's middleware bounces every logged-in user back to /login.
+      # Both origins must agree on the hostname.
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      API_URL: http://localhost:3001
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -203,7 +207,7 @@ jobs:
           pnpm turbo build --filter=@forgemsg/api
           nohup pnpm --filter @forgemsg/api start > /tmp/api.log 2>&1 &
           sleep 5
-          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3001/health || {
+          curl --fail --retry 10 --retry-delay 2 http://localhost:3001/health || {
             echo "::group::/tmp/api.log"; cat /tmp/api.log; echo "::endgroup::"; exit 1;
           }
       - name: Build + start web in background
@@ -211,7 +215,7 @@ jobs:
           pnpm turbo build --filter=@forgemsg/web
           nohup pnpm --filter @forgemsg/web start > /tmp/web.log 2>&1 &
           sleep 5
-          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3000/landing || {
+          curl --fail --retry 10 --retry-delay 2 http://localhost:3000/landing || {
             echo "::group::/tmp/web.log"; cat /tmp/web.log; echo "::endgroup::"; exit 1;
           }
       - name: Install Playwright browsers

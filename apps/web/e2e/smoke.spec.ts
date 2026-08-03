@@ -14,7 +14,10 @@ test.describe('Golden path', () => {
     // Middleware redirects unauth users on / → /landing.
     await expect(page).toHaveURL(/\/landing/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByRole('link', { name: /vyzkoušet zdarma/i })).toBeVisible();
+    // The landing page carries the same CTA in the nav and twice in <main>.
+    // The assertion is "a signup CTA is reachable", not "there is exactly one",
+    // so take the first match rather than tripping Playwright's strict mode.
+    await expect(page.getByRole('link', { name: /vyzkoušet zdarma/i }).first()).toBeVisible();
   });
 
   test('pricing page lists all five plans', async ({ page }) => {
