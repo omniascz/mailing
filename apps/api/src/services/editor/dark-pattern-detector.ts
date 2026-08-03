@@ -128,8 +128,15 @@ function ruleBasedCheck(subject: string, html: string): DarkPatternIssue[] {
     });
   }
 
-  // Check for deceptive preheader stuffing (nbsp / zero-width space spam)
-  const spacerPattern = /(&nbsp;|​|⁠|﻿){5,}/;
+  // Check for deceptive preheader stuffing (nbsp / zero-width space spam).
+  // The zero-width characters are written as escapes rather than literals:
+  // literal U+200B / U+FEFF trip eslint's no-irregular-whitespace and are
+  // invisible in review, which is a poor property for the one regex whose
+  // entire job is spotting them.
+  //   \u200B ZERO WIDTH SPACE
+  //   \u2060 WORD JOINER
+  //   \uFEFF ZERO WIDTH NO-BREAK SPACE (BOM)
+  const spacerPattern = /(&nbsp;|\u200B|\u2060|\uFEFF){5,}/;
   if (spacerPattern.test(html)) {
     issues.push({
       type: 'preheader_stuffing',
