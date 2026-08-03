@@ -149,8 +149,7 @@ const messagingSendRoutes: FastifyPluginAsync = async (app) => {
 
         case 'whatsapp': {
           const p = parsed.payload;
-          const { createWhatsAppAdapter } =
-            await import('@forgemsg/shared/whatsapp/meta-adapter');
+          const { createWhatsAppAdapter } = await import('@forgemsg/shared/whatsapp/meta-adapter');
           const adapter = createWhatsAppAdapter();
           if (!adapter) {
             return reply

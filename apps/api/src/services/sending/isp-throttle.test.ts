@@ -12,7 +12,12 @@ vi.mock('@forgemsg/shared/redis', () => ({
   },
 }));
 
-import { detectIsp, checkThrottle, recordThrottleSignal, resetThrottle } from '@forgemsg/shared/sending/isp-throttle';
+import {
+  detectIsp,
+  checkThrottle,
+  recordThrottleSignal,
+  resetThrottle,
+} from '@forgemsg/shared/sending/isp-throttle';
 import { redis } from '@forgemsg/shared/redis';
 
 describe('detectIsp', () => {

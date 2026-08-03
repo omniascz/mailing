@@ -28,8 +28,7 @@ async function processWhatsappSend(
   const data = job.data;
   if (!data.phone) return { messageId: '', status: 'skipped_no_phone' };
 
-  const { createWhatsAppAdapter } =
-    await import('@forgemsg/shared/whatsapp/meta-adapter');
+  const { createWhatsAppAdapter } = await import('@forgemsg/shared/whatsapp/meta-adapter');
   const adapter = createWhatsAppAdapter();
   if (!adapter) {
     job.log(
