@@ -53,7 +53,11 @@ jobs:
     needs: [typecheck]
     services:
       postgres:
-        image: postgres:16-alpine
+        # pgvector, not plain postgres:16-alpine — the baseline migration opens
+        # with `CREATE EXTENSION IF NOT EXISTS vector;` and alpine answers
+        # `ERROR: extension "vector" is not available` (the control file is not
+        # on the image at all, so IF NOT EXISTS does not save it).
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: forgemsg_test
           POSTGRES_USER: forgemsg
@@ -85,6 +89,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The suite currently passes with no database at all (postgres-js connects
+      # lazily and nothing queries), so this does not change any result today.
+      # It exists so the Postgres service is actually schema-backed and the
+      # first test that does hit the DB gets a real one instead of an empty one.
+      - name: Apply migrations
+        run: pnpm --filter @forgemsg/api db:migrate
       - run: pnpm test
 
   build:
