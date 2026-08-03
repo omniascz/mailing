@@ -195,16 +195,25 @@ jobs:
       - run: pnpm seed
       - name: Build + start API in background
         run: |
-          pnpm --filter @forgemsg/api build
+          # `pnpm --filter <pkg> build` runs the package script directly and
+          # bypasses turbo, so turbo.json `build.dependsOn: ["^build"]` never
+          # applies and packages/shared/dist is never produced. That is why
+          # this step failed with 144 TS2307 "Cannot find module
+          # '@forgemsg/shared'" the first time the job ever ran.
+          pnpm turbo build --filter=@forgemsg/api
           nohup pnpm --filter @forgemsg/api start > /tmp/api.log 2>&1 &
           sleep 5
-          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3001/health
+          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3001/health || {
+            echo "::group::/tmp/api.log"; cat /tmp/api.log; echo "::endgroup::"; exit 1;
+          }
       - name: Build + start web in background
         run: |
-          pnpm --filter @forgemsg/web build
+          pnpm turbo build --filter=@forgemsg/web
           nohup pnpm --filter @forgemsg/web start > /tmp/web.log 2>&1 &
           sleep 5
-          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3000/landing
+          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3000/landing || {
+            echo "::group::/tmp/web.log"; cat /tmp/web.log; echo "::endgroup::"; exit 1;
+          }
       - name: Install Playwright browsers
         run: pnpm --filter @forgemsg/web exec playwright install --with-deps chromium
       - name: Run smoke

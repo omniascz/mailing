@@ -33,7 +33,8 @@ COPY . .
 # @forgemsg/shared and @forgemsg/api both need a dist — their package.json
 # "exports" maps point at ./dist. editor + i18n-* are loaded as TS source at
 # runtime via tsx, so they stay unbuilt.
-RUN pnpm --filter @forgemsg/shared build && pnpm --filter @forgemsg/api build
+# turbo, not `pnpm --filter` — see apps/api/Dockerfile for why.
+RUN pnpm turbo build --filter=@forgemsg/api
 
 FROM node:22-alpine AS runner
 RUN apk add --no-cache tini \

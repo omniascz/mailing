@@ -16,7 +16,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/voice-bot/node_modules ./apps/voice-bot/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY . .
-RUN pnpm --filter @forgemsg/shared build && pnpm --filter @forgemsg/voice-bot build
+# turbo, not `pnpm --filter` — see apps/api/Dockerfile for why.
+RUN pnpm turbo build --filter=@forgemsg/voice-bot
 
 FROM node:22-alpine AS runner
 RUN apk add --no-cache tini netcat-openbsd \
