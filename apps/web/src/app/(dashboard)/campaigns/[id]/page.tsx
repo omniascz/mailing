@@ -272,7 +272,12 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
               ) : (
                 <dl className="space-y-2 text-sm">
                   {geo.slice(0, 8).map((g) => (
-                    <BreakdownRow key={g.country} label={g.country} value={g.opens} suffix={`${g.clicks} clicks`} />
+                    <BreakdownRow
+                      key={g.country}
+                      label={g.country}
+                      value={g.opens}
+                      suffix={`${g.clicks} clicks`}
+                    />
                   ))}
                 </dl>
               )}
@@ -302,7 +307,9 @@ function BreakdownRow({
         <span className="font-medium tabular-nums text-secondary-900">
           {value.toLocaleString('cs-CZ')}
         </span>
-        {suffix ? <span className="ml-2 text-xs tabular-nums text-secondary-500">{suffix}</span> : null}
+        {suffix ? (
+          <span className="ml-2 text-xs tabular-nums text-secondary-500">{suffix}</span>
+        ) : null}
       </dd>
     </div>
   );

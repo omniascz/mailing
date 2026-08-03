@@ -45,10 +45,7 @@ export async function createReport(
   name: string,
   definition: CustomReportDefinition,
 ): Promise<CustomReport> {
-  const [row] = await db
-    .insert(customReports)
-    .values({ orgId, name, definition })
-    .returning();
+  const [row] = await db.insert(customReports).values({ orgId, name, definition }).returning();
   return row!;
 }
 
@@ -96,9 +93,7 @@ export async function runReport(
   const to = opts.to ?? new Date();
   const from =
     opts.from ??
-    (definition.rangeDays
-      ? new Date(to.getTime() - definition.rangeDays * 86_400_000)
-      : undefined);
+    (definition.rangeDays ? new Date(to.getTime() - definition.rangeDays * 86_400_000) : undefined);
   const campaignId = opts.campaignId ?? definition.campaignId;
 
   const conds = [eq(emailEvents.orgId, orgId)];

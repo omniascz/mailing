@@ -36,7 +36,10 @@ export interface ApnsConfig {
  * Sign an APNs provider JWT (ES256). Header {alg:ES256, kid}, payload
  * {iss:teamId, iat}. `nowSec` is injectable for deterministic tests.
  */
-export function signApnsToken(cfg: Pick<ApnsConfig, 'keyP8' | 'keyId' | 'teamId'>, nowSec: number): string {
+export function signApnsToken(
+  cfg: Pick<ApnsConfig, 'keyP8' | 'keyId' | 'teamId'>,
+  nowSec: number,
+): string {
   const header = b64url(JSON.stringify({ alg: 'ES256', kid: cfg.keyId }));
   const payload = b64url(JSON.stringify({ iss: cfg.teamId, iat: nowSec }));
   const signingInput = `${header}.${payload}`;
@@ -223,17 +226,14 @@ export async function sendFcm(
   } catch (err) {
     return { status: 'failed', errorCode: 'AUTH', errorMessage: (err as Error).message };
   }
-  const res = await fetch(
-    `https://fcm.googleapis.com/v1/projects/${cfg.projectId}/messages:send`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message),
+  const res = await fetch(`https://fcm.googleapis.com/v1/projects/${cfg.projectId}/messages:send`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
     },
-  );
+    body: JSON.stringify(message),
+  });
   if (res.ok) {
     const json = (await res.json().catch(() => ({}))) as { name?: string };
     return { status: 'sent', providerMessageId: json.name };

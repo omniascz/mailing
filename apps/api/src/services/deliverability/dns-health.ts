@@ -19,11 +19,7 @@
 import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { sendingDomains } from '../../db/schema/index.js';
-import {
-  buildDnsRecords,
-  verifyDnsRecords,
-  type DnsRecord,
-} from '../domains/dns-records.js';
+import { buildDnsRecords, verifyDnsRecords, type DnsRecord } from '../domains/dns-records.js';
 import { verifyDkimDns } from '../domains/dkim.js';
 import { reportIncident } from '../status-page/index.js';
 
@@ -81,11 +77,7 @@ export async function checkDomain(
   });
 
   const { records: checked } = await verifyDnsRecords(records);
-  const dkimOk = await verifyDkimDns(
-    domain.dkimSelector,
-    domain.domain,
-    domain.dkimPublicKey,
-  );
+  const dkimOk = await verifyDkimDns(domain.dkimSelector, domain.domain, domain.dkimPublicKey);
 
   const spfOk = pickPurposeStatus(checked, 'SPF') ?? false;
   const dmarcOk = pickPurposeStatus(checked, 'DMARC') ?? false;
@@ -169,12 +161,7 @@ export async function runDnsHealthForOrg(orgId: string): Promise<DnsHealthSummar
   const rows = await db
     .select()
     .from(sendingDomains)
-    .where(
-      and(
-        eq(sendingDomains.orgId, orgId),
-        isNotNull(sendingDomains.dkimPublicKey),
-      ),
-    );
+    .where(and(eq(sendingDomains.orgId, orgId), isNotNull(sendingDomains.dkimPublicKey)));
 
   let drifted = 0;
   let errors = 0;

@@ -8,7 +8,11 @@
 
 import { and, eq, isNull, lte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { externalFeeds, contacts as contactsTable, type ExternalFeed } from '../../db/schema/index.js';
+import {
+  externalFeeds,
+  contacts as contactsTable,
+  type ExternalFeed,
+} from '../../db/schema/index.js';
 import { onApiEvent } from '../workflows/triggers.js';
 import { AppError } from '../../lib/app-error.js';
 
@@ -156,7 +160,7 @@ function parseCsv(text: string): ParsedItem[] {
 
 function parseJson(text: string): ParsedItem[] {
   const data = JSON.parse(text) as unknown;
-  const arr = Array.isArray(data) ? data : (data as { items?: unknown[] }).items ?? [data];
+  const arr = Array.isArray(data) ? data : ((data as { items?: unknown[] }).items ?? [data]);
   return arr.map((item) => {
     const flat: ParsedItem = {};
     for (const [k, v] of Object.entries(item as Record<string, unknown>)) {
@@ -311,12 +315,7 @@ export async function pollDueFeeds(): Promise<FeedPollResult[]> {
   const due = await db
     .select()
     .from(externalFeeds)
-    .where(
-      and(
-        eq(externalFeeds.active, true),
-        lte(externalFeeds.nextRunAt, sql`now()`),
-      ),
-    )
+    .where(and(eq(externalFeeds.active, true), lte(externalFeeds.nextRunAt, sql`now()`)))
     .limit(50);
 
   return Promise.all(due.map(pollFeed));

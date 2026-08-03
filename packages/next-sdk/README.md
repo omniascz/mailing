@@ -78,10 +78,7 @@ attachments, and the `scheduled_at` field all match Resend's surface.
 ## Idempotency
 
 ```ts
-await mailforge.emails.send(
-  { from, to, subject, html },
-  { idempotencyKey: orderId },
-);
+await mailforge.emails.send({ from, to, subject, html }, { idempotencyKey: orderId });
 ```
 
 Two requests with the same `idempotencyKey` from the same API key
@@ -100,13 +97,13 @@ await client.emails.send(/* … */);
 
 ## Why MailForge instead of Resend?
 
-| Feature | Resend | MailForge |
-| --- | --- | --- |
-| Transactional API | ✅ | ✅ same shape |
-| React Email | ✅ | ✅ via `@forgemsg/react-email` |
-| Workflows / automation | ❌ | ✅ |
-| Multi-channel (SMS, voice) | ❌ | ✅ |
-| EU data residency default | ⚠️ via region | ✅ |
-| AI included (Claude) | ❌ | ✅ |
-| CZ/SK localisation | ❌ | ✅ |
-| Price at 50K emails / month | $20 | $19 |
+| Feature                     | Resend        | MailForge                      |
+| --------------------------- | ------------- | ------------------------------ |
+| Transactional API           | ✅            | ✅ same shape                  |
+| React Email                 | ✅            | ✅ via `@forgemsg/react-email` |
+| Workflows / automation      | ❌            | ✅                             |
+| Multi-channel (SMS, voice)  | ❌            | ✅                             |
+| EU data residency default   | ⚠️ via region | ✅                             |
+| AI included (Claude)        | ❌            | ✅                             |
+| CZ/SK localisation          | ❌            | ✅                             |
+| Price at 50K emails / month | $20           | $19                            |

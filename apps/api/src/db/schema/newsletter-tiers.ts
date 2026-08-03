@@ -31,7 +31,9 @@ export const newsletterSubscriptionStatusEnum = pgEnum('newsletter_subscription_
 export const newsletterTiers = pgTable(
   'newsletter_tiers',
   {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: varchar('id', { length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     orgId: varchar('org_id', { length: 36 }).notNull(),
 
     name: varchar('name', { length: 100 }).notNull(),
@@ -67,7 +69,9 @@ export const newsletterTiers = pgTable(
 export const newsletterSubscriptions = pgTable(
   'newsletter_subscriptions',
   {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: varchar('id', { length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     orgId: varchar('org_id', { length: 36 }).notNull(),
 
     contactId: varchar('contact_id', { length: 36 }).notNull(),

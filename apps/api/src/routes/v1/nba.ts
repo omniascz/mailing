@@ -1,6 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { getNbaScore, upsertNbaScore, batchComputeNbaScores } from '../../services/ai/nba-engine.js';
+import {
+  getNbaScore,
+  upsertNbaScore,
+  batchComputeNbaScores,
+} from '../../services/ai/nba-engine.js';
 
 export default async function nbaRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
@@ -26,7 +30,9 @@ export default async function nbaRoutes(app: FastifyInstance) {
 
   // POST /api/v1/nba/batch-compute — compute for up to 200 contacts
   app.post('/api/v1/nba/batch-compute', async (req, reply) => {
-    const { contactIds } = z.object({ contactIds: z.array(z.string().uuid()).min(1).max(200) }).parse(req.body);
+    const { contactIds } = z
+      .object({ contactIds: z.array(z.string().uuid()).min(1).max(200) })
+      .parse(req.body);
     const computed = await batchComputeNbaScores(req.user!.orgId, contactIds);
     return reply.send({ data: { computed } });
   });

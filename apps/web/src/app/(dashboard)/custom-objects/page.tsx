@@ -48,7 +48,9 @@ export default async function CustomObjectsPage() {
                     </div>
                     <p className="font-mono text-xs text-secondary-500">{d.key}</p>
                     {d.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm text-secondary-600">{d.description}</p>
+                      <p className="mt-2 line-clamp-2 text-sm text-secondary-600">
+                        {d.description}
+                      </p>
                     ) : null}
                   </CardContent>
                 </Card>

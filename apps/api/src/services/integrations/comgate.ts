@@ -18,14 +18,14 @@ export interface ComgateSettings {
 export interface ComgateCreateInput {
   orgId: string;
   contactId?: string;
-  price: number;      // in CZK haléře
+  price: number; // in CZK haléře
   currency?: string;
   label: string;
   refId: string;
   email: string;
   returnUrl: string;
   notifyUrl: string;
-  method?: string;    // ALL | CARD_CZ_CSOB_2 | etc.
+  method?: string; // ALL | CARD_CZ_CSOB_2 | etc.
   country?: string;
 }
 
@@ -107,9 +107,17 @@ export async function verifyComgatePayment(
   const status = result['status'] ?? 'UNKNOWN'; // PAID | PENDING | CANCELLED
   const paid = status === 'PAID';
 
-  await db.update(czPaymentTransactions)
-    .set({ status: paid ? 'paid' : status.toLowerCase(), paidAt: paid ? new Date() : undefined, rawData: result as Record<string, unknown>, updatedAt: new Date() })
-    .where(and(eq(czPaymentTransactions.gatewayId, transId), eq(czPaymentTransactions.orgId, orgId)));
+  await db
+    .update(czPaymentTransactions)
+    .set({
+      status: paid ? 'paid' : status.toLowerCase(),
+      paidAt: paid ? new Date() : undefined,
+      rawData: result as Record<string, unknown>,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(eq(czPaymentTransactions.gatewayId, transId), eq(czPaymentTransactions.orgId, orgId)),
+    );
 
   return { status, paid };
 }

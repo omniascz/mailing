@@ -63,7 +63,9 @@ export default async function digitalAssetRoutes(app: FastifyInstance) {
   app.post('/api/v1/digital-assets', adminAuth, async (req, reply) => {
     const body = createAssetBody.parse(req.body);
     if (!body.storageKey && !body.externalUrl) {
-      return reply.code(422).send({ code: 'MISSING_SOURCE', message: 'Provide storageKey or externalUrl' });
+      return reply
+        .code(422)
+        .send({ code: 'MISSING_SOURCE', message: 'Provide storageKey or externalUrl' });
     }
     const [row] = await db
       .insert(digitalAssets)
@@ -107,7 +109,9 @@ export default async function digitalAssetRoutes(app: FastifyInstance) {
   // ── Delivery ──────────────────────────────────────────────────────────────
 
   app.post('/api/v1/digital-assets/:id/deliver/:contactId', adminAuth, async (req, reply) => {
-    const { id, contactId } = z.object({ id: z.string().uuid(), contactId: z.string().uuid() }).parse(req.params);
+    const { id, contactId } = z
+      .object({ id: z.string().uuid(), contactId: z.string().uuid() })
+      .parse(req.params);
     const result = await generateDeliveryUrl(req.user!.orgId, id, contactId);
     return reply.code(201).send({ data: result });
   });
@@ -117,7 +121,12 @@ export default async function digitalAssetRoutes(app: FastifyInstance) {
     const rows = await db
       .select()
       .from(digitalAssetDeliveries)
-      .where(and(eq(digitalAssetDeliveries.orgId, req.user!.orgId), eq(digitalAssetDeliveries.assetId, id)))
+      .where(
+        and(
+          eq(digitalAssetDeliveries.orgId, req.user!.orgId),
+          eq(digitalAssetDeliveries.assetId, id),
+        ),
+      )
       .orderBy(desc(digitalAssetDeliveries.createdAt));
     return reply.send({ data: rows });
   });
@@ -165,16 +174,24 @@ export default async function digitalAssetRoutes(app: FastifyInstance) {
     return reply.send({ data: rows });
   });
 
-  app.delete('/api/v1/digital-assets/:assetId/license-keys/:keyId', adminAuth, async (req, reply) => {
-    const { assetId, keyId } = z.object({ assetId: z.string().uuid(), keyId: z.string().uuid() }).parse(req.params);
-    await db
-      .update(licenseKeys)
-      .set({ status: 'revoked', revokedAt: new Date() })
-      .where(and(
-        eq(licenseKeys.orgId, req.user!.orgId),
-        eq(licenseKeys.assetId, assetId),
-        eq(licenseKeys.id, keyId),
-      ));
-    return reply.code(204).send();
-  });
+  app.delete(
+    '/api/v1/digital-assets/:assetId/license-keys/:keyId',
+    adminAuth,
+    async (req, reply) => {
+      const { assetId, keyId } = z
+        .object({ assetId: z.string().uuid(), keyId: z.string().uuid() })
+        .parse(req.params);
+      await db
+        .update(licenseKeys)
+        .set({ status: 'revoked', revokedAt: new Date() })
+        .where(
+          and(
+            eq(licenseKeys.orgId, req.user!.orgId),
+            eq(licenseKeys.assetId, assetId),
+            eq(licenseKeys.id, keyId),
+          ),
+        );
+      return reply.code(204).send();
+    },
+  );
 }

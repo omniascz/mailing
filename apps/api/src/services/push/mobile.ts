@@ -90,7 +90,10 @@ export async function deactivateDevice(orgId: string, token: string): Promise<vo
   if (!row) throw AppError.notFound('MobileDevice');
 }
 
-export async function listContactDevices(orgId: string, contactId: string): Promise<MobileDevice[]> {
+export async function listContactDevices(
+  orgId: string,
+  contactId: string,
+): Promise<MobileDevice[]> {
   return db
     .select()
     .from(mobileDevices)
@@ -129,9 +132,7 @@ export async function prepareContactSend(
   for (const d of devices) {
     const platform = d.platform as MobilePlatform;
     const payload =
-      platform === 'ios'
-        ? buildApnsPayload(notification)
-        : buildFcmMessage(d.token, notification);
+      platform === 'ios' ? buildApnsPayload(notification) : buildFcmMessage(d.token, notification);
     prepared.push({ deviceId: d.id, platform, token: d.token, appId: d.appId, payload });
 
     await db.insert(pushSendLog).values({

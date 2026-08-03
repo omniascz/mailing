@@ -62,7 +62,9 @@ export async function generateForRecipient(
     `  - Tags: ${(contact as Record<string, unknown>).tags ? JSON.stringify((contact as Record<string, unknown>).tags) : 'none'}`,
     `  - Custom fields: ${contact.customFields ? JSON.stringify(contact.customFields).slice(0, 500) : 'none'}`,
     bvCtx,
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const { text } = await callClaude({
     model: 'claude-haiku-4-5-20251001',
@@ -75,14 +77,19 @@ export async function generateForRecipient(
 
   let parsed: PerRecipientResult;
   try {
-    const raw = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim()) as Record<string, unknown>;
+    const raw = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim()) as Record<
+      string,
+      unknown
+    >;
     parsed = {
       subject: String(raw['subject'] ?? ''),
       preheader: String(raw['preheader'] ?? ''),
       greeting: String(raw['greeting'] ?? ''),
       bodyHtml: String(raw['body_html'] ?? ''),
       ctaText: String(raw['cta_text'] ?? 'Learn more'),
-      personalizationSignalsUsed: Array.isArray(raw['personalization_signals_used']) ? raw['personalization_signals_used'] as string[] : [],
+      personalizationSignalsUsed: Array.isArray(raw['personalization_signals_used'])
+        ? (raw['personalization_signals_used'] as string[])
+        : [],
     };
   } catch {
     throw AppError.internal('AI returned invalid structure for per-recipient email');

@@ -232,8 +232,20 @@ describe('fingerprintSimilarity', () => {
   it('0 when no overlapping fields are populated', () => {
     expect(
       fingerprintSimilarity(
-        { ipPrefix: '1.1.1', userAgentHash: null, acceptLanguageHash: null, locale: null, screenSig: null },
-        { ipPrefix: null, userAgentHash: 'abc', acceptLanguageHash: null, locale: null, screenSig: null },
+        {
+          ipPrefix: '1.1.1',
+          userAgentHash: null,
+          acceptLanguageHash: null,
+          locale: null,
+          screenSig: null,
+        },
+        {
+          ipPrefix: null,
+          userAgentHash: 'abc',
+          acceptLanguageHash: null,
+          locale: null,
+          screenSig: null,
+        },
       ),
     ).toBe(0);
   });

@@ -129,7 +129,13 @@ export async function runTransactionalBatch(
     }),
   );
 
-  return { total: unique.length, queued, failed: unique.length - queued, deduplicated: removed, results };
+  return {
+    total: unique.length,
+    queued,
+    failed: unique.length - queued,
+    deduplicated: removed,
+    results,
+  };
 }
 
 /**

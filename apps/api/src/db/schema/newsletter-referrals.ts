@@ -37,7 +37,9 @@ export const referralRewardTypeEnum = pgEnum('referral_reward_type', [
 export const newsletterReferralPrograms = pgTable(
   'newsletter_referral_programs',
   {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: varchar('id', { length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     orgId: varchar('org_id', { length: 36 }).notNull(),
 
     name: varchar('name', { length: 100 }).notNull(),
@@ -66,7 +68,9 @@ export const newsletterReferralPrograms = pgTable(
 export const newsletterReferrals = pgTable(
   'newsletter_referrals',
   {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: varchar('id', { length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     orgId: varchar('org_id', { length: 36 }).notNull(),
     programId: varchar('program_id', { length: 36 }).notNull(),
 
@@ -101,7 +105,9 @@ export const newsletterReferrals = pgTable(
 export const newsletterReferralEvents = pgTable(
   'newsletter_referral_events',
   {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: varchar('id', { length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     referralId: varchar('referral_id', { length: 36 }).notNull(),
     orgId: varchar('org_id', { length: 36 }).notNull(),
 

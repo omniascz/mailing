@@ -54,7 +54,12 @@ export function scoreDealRisk(
     currency: string;
   },
   opts: { stalledDays?: number; silentDays?: number; highValueThreshold?: number } = {},
-): { flags: DealRiskFlags; riskScore: number; severity: DealRiskResult['severity']; reasons: string[] } {
+): {
+  flags: DealRiskFlags;
+  riskScore: number;
+  severity: DealRiskResult['severity'];
+  reasons: string[];
+} {
   const stalledDays = opts.stalledDays ?? 30;
   const silentDays = opts.silentDays ?? 21;
   const highValueThreshold = opts.highValueThreshold ?? 10_000;
@@ -154,7 +159,13 @@ export async function assessDealRisk(
 
   const value = Number(deal.value);
   const { flags, riskScore, severity, reasons } = scoreDealRisk(
-    { daysInCurrentStage, daysPastExpectedClose, daysSinceLastActivity, value, currency: deal.currency },
+    {
+      daysInCurrentStage,
+      daysPastExpectedClose,
+      daysSinceLastActivity,
+      value,
+      currency: deal.currency,
+    },
     { stalledDays, silentDays, highValueThreshold },
   );
 

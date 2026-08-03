@@ -38,7 +38,10 @@ export function hashPhoneForMeta(phone: string): string {
 
 /** Names: lowercase, strip non-letters, hash. */
 export function hashNameForMeta(name: string): string {
-  const v = name.trim().toLowerCase().replace(/[^a-záčďéěíňóřšťúůýž]/giu, '');
+  const v = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-záčďéěíňóřšťúůýž]/giu, '');
   if (!v) return '';
   return createHash('sha256').update(v).digest('hex');
 }

@@ -71,10 +71,7 @@ export interface GoNoGoReport {
  * individual check failures — a failed check becomes a `fail`-severity
  * row, not an exception, so the UI always renders the panel.
  */
-export async function runPreSendChecks(
-  orgId: string,
-  campaignId: string,
-): Promise<GoNoGoReport> {
+export async function runPreSendChecks(orgId: string, campaignId: string): Promise<GoNoGoReport> {
   // Fetch campaign — only real precondition. If it's missing, 404.
   const campaign = await fetchCampaign(orgId, campaignId);
 
@@ -121,7 +118,9 @@ export async function runPreSendChecks(
   // ─── Compliance ──────────────────────────────────────────────────────────
   checks.push(classifyUnsubscribeLink({ hasUnsubscribe: detectUnsubscribe(html) }));
   checks.push(
-    classifyPreferenceCenter({ hasPreferenceCenterTag: html.includes('{{preference_center_url}}') }),
+    classifyPreferenceCenter({
+      hasPreferenceCenterTag: html.includes('{{preference_center_url}}'),
+    }),
   );
 
   // ─── Deliverability ──────────────────────────────────────────────────────
@@ -162,7 +161,9 @@ export async function runPreSendChecks(
   const blRows = await db
     .select({ blacklistCount: dedicatedIps.blacklistCount })
     .from(dedicatedIps)
-    .where(and(eq(dedicatedIps.orgId, orgId), sql`${dedicatedIps.status} IN ('active', 'warming')`));
+    .where(
+      and(eq(dedicatedIps.orgId, orgId), sql`${dedicatedIps.status} IN ('active', 'warming')`),
+    );
   const totalIps = blRows.length;
   const listedIps = blRows.filter((r) => (r.blacklistCount ?? 0) > 0).length;
   checks.push(classifyBlacklist({ blacklistCount: listedIps, totalIps }));
@@ -198,10 +199,7 @@ interface DomainAuthFacts {
   dmarcPresent: boolean;
 }
 
-async function fetchDomainAuth(
-  orgId: string,
-  fromEmail: string | null,
-): Promise<DomainAuthFacts> {
+async function fetchDomainAuth(orgId: string, fromEmail: string | null): Promise<DomainAuthFacts> {
   if (!fromEmail || !fromEmail.includes('@')) {
     return { spfValid: false, dkimValid: false, dmarcPresent: false };
   }
@@ -251,7 +249,8 @@ async function fetchRecentRates(orgId: string): Promise<{
   return {
     bounceRatePct: sends7d > 0 ? (Number(row?.bounces7d ?? 0) / sends7d) * 100 : null,
     complaintRatePct: sends7d > 0 ? (Number(row?.complaints7d ?? 0) / sends7d) * 100 : null,
-    complaint24hRatePct: sends24h >= 100 ? (Number(row?.complaints24h ?? 0) / sends24h) * 100 : null,
+    complaint24hRatePct:
+      sends24h >= 100 ? (Number(row?.complaints24h ?? 0) / sends24h) * 100 : null,
   };
 }
 

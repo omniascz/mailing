@@ -51,8 +51,8 @@ export async function getPlanCapacity(orgId: string): Promise<PlanCapacity> {
   // Send-based plans override the send limit from the plan config
   let effectiveSendLimit: number = planConfig.sends;
   if (billingType === 'send_based') {
-    effectiveSendLimit = org?.monthlySendQuota
-      ?? (SEND_PLANS[plan as SendPlanTier]?.sendsPerMonth ?? planConfig.sends);
+    effectiveSendLimit =
+      org?.monthlySendQuota ?? SEND_PLANS[plan as SendPlanTier]?.sendsPerMonth ?? planConfig.sends;
   }
   const suspended = (org?.settings as { suspended?: boolean })?.suspended === true;
 
@@ -74,7 +74,8 @@ export async function getPlanCapacity(orgId: string): Promise<PlanCapacity> {
     .from(billingSubscriptions)
     .where(eq(billingSubscriptions.orgId, orgId))
     .limit(1);
-  const periodStart: Date = sub?.periodStart ?? new Date(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1);
+  const periodStart: Date =
+    sub?.periodStart ?? new Date(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1);
 
   const [sendRow] = await db
     .select({ n: sql<number>`COUNT(*)::int` })
@@ -152,7 +153,11 @@ export async function checkSendCapacity(orgId: string, adding = 1): Promise<Plan
     }
   }
   // Block at 120% of quota for send-based plans to prevent runaway overage
-  if (cap.plan !== 'free' && cap.sends.limit > 0 && cap.sends.current + adding > cap.sends.limit * 1.2) {
+  if (
+    cap.plan !== 'free' &&
+    cap.sends.limit > 0 &&
+    cap.sends.current + adding > cap.sends.limit * 1.2
+  ) {
     throw AppError.forbidden(
       `Monthly send quota exceeded (${cap.sends.current}/${cap.sends.limit}). Upgrade your plan.`,
     );
@@ -193,20 +198,14 @@ export async function getAiQuotaStatus(orgId: string): Promise<AiQuotaStatus> {
   const [row] = await db
     .select({ n: sql<number>`COUNT(*)::int` })
     .from(aiUsage)
-    .where(
-      and(
-        eq(aiUsage.orgId, orgId),
-        sql`${aiUsage.createdAt} >= NOW() - INTERVAL '24 hours'`,
-      ),
-    );
+    .where(and(eq(aiUsage.orgId, orgId), sql`${aiUsage.createdAt} >= NOW() - INTERVAL '24 hours'`));
   const used24h = row?.n ?? 0;
 
   const remaining = Number.isFinite(limitPerDay)
     ? Math.max(0, limitPerDay - used24h)
     : Number.POSITIVE_INFINITY;
-  const pctUsed = Number.isFinite(limitPerDay) && limitPerDay > 0
-    ? (used24h / limitPerDay) * 100
-    : 0;
+  const pctUsed =
+    Number.isFinite(limitPerDay) && limitPerDay > 0 ? (used24h / limitPerDay) * 100 : 0;
 
   return { plan, limitPerDay, used24h, remaining, pctUsed };
 }

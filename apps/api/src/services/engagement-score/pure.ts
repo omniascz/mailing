@@ -18,12 +18,7 @@
  *   • Smart channel selector — tie-breaker when channel scores are close
  */
 
-export type EngagementBand =
-  | 'highly_engaged'
-  | 'engaged'
-  | 'at_risk'
-  | 'dormant'
-  | 'cold';
+export type EngagementBand = 'highly_engaged' | 'engaged' | 'at_risk' | 'dormant' | 'cold';
 
 export interface EngagementFacts {
   // Email
@@ -108,11 +103,7 @@ function volumeConfidence(events: number): number {
  * just wants signal strength regardless of whether future sends would
  * succeed.
  */
-function scoreSubchannel(
-  sends: number,
-  engagements: number,
-  daysSinceLast: number | null,
-): number {
+function scoreSubchannel(sends: number, engagements: number, daysSinceLast: number | null): number {
   if (sends === 0 && engagements === 0 && daysSinceLast === null) return 0;
   const rate = sends > 0 ? Math.min(1, engagements / sends) : 0;
   const volume = volumeConfidence(sends + engagements);

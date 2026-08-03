@@ -7,7 +7,7 @@ import { db } from '../../db/client.js';
 import { erpSyncLog } from '../../db/schema/erp-sync.js';
 
 export interface FlexibeeSettings {
-  url: string;        // e.g. https://app.flexibee.eu/c/MyCompany
+  url: string; // e.g. https://app.flexibee.eu/c/MyCompany
   username: string;
   password: string;
   company: string;
@@ -15,21 +15,18 @@ export interface FlexibeeSettings {
 
 export interface FlexibeeContact {
   id: string;
-  nazev: string;        // name
+  nazev: string; // name
   email?: string;
   tel?: string;
   ulice?: string;
   mesto?: string;
   psc?: string;
   stat?: string;
-  ic?: string;          // IČO
-  dic?: string;         // DIČ
+  ic?: string; // IČO
+  dic?: string; // DIČ
 }
 
-async function flexibeeGet<T>(
-  settings: FlexibeeSettings,
-  path: string,
-): Promise<T> {
+async function flexibeeGet<T>(settings: FlexibeeSettings, path: string): Promise<T> {
   const creds = Buffer.from(`${settings.username}:${settings.password}`).toString('base64');
   const base = settings.url.replace(/\/$/, '');
   const res = await fetch(`${base}/${path}`, {
@@ -62,7 +59,9 @@ async function flexibeePut(
   return res.json();
 }
 
-interface WinstromResponse<T> { winstrom: { adresar?: T[]; 'faktura-vydana'?: T[] } }
+interface WinstromResponse<T> {
+  winstrom: { adresar?: T[]; 'faktura-vydana'?: T[] };
+}
 
 export async function syncFlexibeeContacts(
   orgId: string,

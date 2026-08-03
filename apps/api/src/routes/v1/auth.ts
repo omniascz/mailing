@@ -94,7 +94,8 @@ export default async function authRoutes(app: FastifyInstance) {
       const countrySignal =
         ((request.body as { country?: string }).country ??
           (request.headers['x-country'] as string) ??
-          '') || '';
+          '') ||
+        '';
       const { suggestRegionForCountry } = await import('../../services/data-residency/index.js');
       const dataRegion = countrySignal ? suggestRegionForCountry(countrySignal) : 'us';
 
@@ -372,14 +373,14 @@ export default async function authRoutes(app: FastifyInstance) {
       // Enforce 2FA when the account has it enabled: no session is issued until
       // a valid TOTP / backup code is supplied. The client re-submits login with
       // `code` after seeing TWO_FACTOR_REQUIRED.
-      const { isTwoFactorEnabled, verifyForLogin } = await import(
-        '../../services/two-factor/index.js'
-      );
+      const { isTwoFactorEnabled, verifyForLogin } =
+        await import('../../services/two-factor/index.js');
       if (await isTwoFactorEnabled(user.id)) {
         if (!body.code) {
-          return reply
-            .code(401)
-            .send({ code: 'TWO_FACTOR_REQUIRED', message: 'Two-factor authentication code required' });
+          return reply.code(401).send({
+            code: 'TWO_FACTOR_REQUIRED',
+            message: 'Two-factor authentication code required',
+          });
         }
         const ok = await verifyForLogin(user.id, body.code);
         if (!ok) throw AppError.unauthorized('Invalid two-factor code');
@@ -510,7 +511,10 @@ export default async function authRoutes(app: FastifyInstance) {
         const orgName = `${profile.name}'s workspace`;
         const slug = `${slugify(orgName)}-${crypto.randomBytes(3).toString('hex')}`;
 
-        const [org] = await db.insert(organizations).values({ name: orgName, slug, sendingMode: 'sandbox' }).returning();
+        const [org] = await db
+          .insert(organizations)
+          .values({ name: orgName, slug, sendingMode: 'sandbox' })
+          .returning();
         if (!org) throw AppError.internal('Failed to create organization');
 
         const [created] = await db

@@ -21,7 +21,11 @@ const entityTypeEnum = z.enum(['contact', 'deal', 'account', 'ticket']);
 const positionEnum = z.enum(['sidebar', 'top', 'bottom']);
 
 const cardSchema = z.object({
-  key: z.string().min(1).max(64).regex(/^[a-z0-9-]+$/),
+  key: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9-]+$/),
   name: z.string().min(1).max(255),
   description: z.string().optional(),
   iconUrl: z.string().url().optional(),
@@ -144,17 +148,10 @@ export default async function extensionCardRoutes(app: FastifyInstance) {
     const cards = await db
       .select()
       .from(crmExtensionCards)
-      .where(
-        and(
-          eq(crmExtensionCards.orgId, orgId),
-          eq(crmExtensionCards.enabled, true),
-        ),
-      );
+      .where(and(eq(crmExtensionCards.orgId, orgId), eq(crmExtensionCards.enabled, true)));
 
     // Filter by entityType
-    const applicable = cards.filter((c) =>
-      (c.entityTypes as string[]).includes(entityType),
-    );
+    const applicable = cards.filter((c) => (c.entityTypes as string[]).includes(entityType));
 
     // Fetch data from each card's dataUrl in parallel (with timeout)
     const results = await Promise.allSettled(
@@ -171,7 +168,13 @@ export default async function extensionCardRoutes(app: FastifyInstance) {
           const data = resp.ok ? await resp.json() : { error: `HTTP ${resp.status}` };
           return { cardId: card.id, key: card.key, name: card.name, position: card.position, data };
         } catch {
-          return { cardId: card.id, key: card.key, name: card.name, position: card.position, data: { error: 'Timeout or network error' } };
+          return {
+            cardId: card.id,
+            key: card.key,
+            name: card.name,
+            position: card.position,
+            data: { error: 'Timeout or network error' },
+          };
         } finally {
           clearTimeout(timer);
         }
@@ -208,7 +211,12 @@ export default async function extensionCardRoutes(app: FastifyInstance) {
     const resp = await fetch(card.actionUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action_key: actionKey, entity_type: entityType, entity_id: entityId, org_id: orgId }),
+      body: JSON.stringify({
+        action_key: actionKey,
+        entity_type: entityType,
+        entity_id: entityId,
+        org_id: orgId,
+      }),
     });
 
     const result = resp.ok ? await resp.json() : { error: `HTTP ${resp.status}` };

@@ -114,47 +114,44 @@ export default async function quoteTemplateRoutes(app: FastifyInstance) {
    * POST /api/v1/commerce/quotes/:quoteId/from-template/:templateId
    * Applies a template's line items, notes, terms, and currency to an existing quote.
    */
-  app.post(
-    '/api/v1/commerce/quotes/:quoteId/from-template/:templateId',
-    async (req) => {
-      const { quoteId, templateId } = z
-        .object({ quoteId: z.string().uuid(), templateId: z.string().uuid() })
-        .parse(req.params);
-      const orgId = req.user!.orgId;
+  app.post('/api/v1/commerce/quotes/:quoteId/from-template/:templateId', async (req) => {
+    const { quoteId, templateId } = z
+      .object({ quoteId: z.string().uuid(), templateId: z.string().uuid() })
+      .parse(req.params);
+    const orgId = req.user!.orgId;
 
-      const [tmpl] = await db
-        .select()
-        .from(quoteTemplates)
-        .where(and(eq(quoteTemplates.id, templateId), eq(quoteTemplates.orgId, orgId)))
-        .limit(1);
-      if (!tmpl) throw AppError.notFound('QuoteTemplate');
+    const [tmpl] = await db
+      .select()
+      .from(quoteTemplates)
+      .where(and(eq(quoteTemplates.id, templateId), eq(quoteTemplates.orgId, orgId)))
+      .limit(1);
+    if (!tmpl) throw AppError.notFound('QuoteTemplate');
 
-      // Compute totals from template line items
-      const items = (tmpl.defaultLineItems as QuoteLineItemTemplate[]) ?? [];
-      const subtotal = items.reduce((s, i) => s + i.qty * i.unitPrice, 0);
-      const discountTotal = items.reduce((s, i) => {
-        const disc = ((i.discount ?? 0) / 100) * i.qty * i.unitPrice;
-        return s + disc;
-      }, 0);
-      const total = subtotal - discountTotal;
+    // Compute totals from template line items
+    const items = (tmpl.defaultLineItems as QuoteLineItemTemplate[]) ?? [];
+    const subtotal = items.reduce((s, i) => s + i.qty * i.unitPrice, 0);
+    const discountTotal = items.reduce((s, i) => {
+      const disc = ((i.discount ?? 0) / 100) * i.qty * i.unitPrice;
+      return s + disc;
+    }, 0);
+    const total = subtotal - discountTotal;
 
-      const [updated] = await db
-        .update(quotes)
-        .set({
-          lineItems: tmpl.defaultLineItems,
-          currency: tmpl.defaultCurrency,
-          notes: tmpl.defaultNotes,
-          terms: tmpl.defaultTerms,
-          subtotal: subtotal.toFixed(2),
-          discountTotal: discountTotal.toFixed(2),
-          taxTotal: '0.00',
-          total: total.toFixed(2),
-          updatedAt: new Date(),
-        })
-        .where(and(eq(quotes.id, quoteId), eq(quotes.orgId, orgId)))
-        .returning();
-      if (!updated) throw AppError.notFound('Quote');
-      return { data: updated };
-    },
-  );
+    const [updated] = await db
+      .update(quotes)
+      .set({
+        lineItems: tmpl.defaultLineItems,
+        currency: tmpl.defaultCurrency,
+        notes: tmpl.defaultNotes,
+        terms: tmpl.defaultTerms,
+        subtotal: subtotal.toFixed(2),
+        discountTotal: discountTotal.toFixed(2),
+        taxTotal: '0.00',
+        total: total.toFixed(2),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(quotes.id, quoteId), eq(quotes.orgId, orgId)))
+      .returning();
+    if (!updated) throw AppError.notFound('Quote');
+    return { data: updated };
+  });
 }

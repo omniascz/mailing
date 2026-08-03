@@ -33,9 +33,10 @@ export async function getOrgBillingCurrency(orgId: string): Promise<Currency> {
 
   if (!org) return 'eur';
   const settings = (org.settings ?? {}) as { billingCurrency?: unknown };
-  const override = typeof settings.billingCurrency === 'string'
-    ? (settings.billingCurrency.toLowerCase() as Currency)
-    : null;
+  const override =
+    typeof settings.billingCurrency === 'string'
+      ? (settings.billingCurrency.toLowerCase() as Currency)
+      : null;
   if (override && isCurrency(override)) return override;
 
   const region = (org.dataRegion ?? 'us').toLowerCase();

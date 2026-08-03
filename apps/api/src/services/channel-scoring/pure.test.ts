@@ -42,29 +42,19 @@ describe('scoreChannel', () => {
   });
 
   it('volume penalty: 1/1 perfect rate scores less than 50/50', () => {
-    const small = scoreChannel(
-      fact({ sends: 1, engagements: 1, daysSinceLastEngagement: 0 }),
-    )!;
-    const large = scoreChannel(
-      fact({ sends: 50, engagements: 50, daysSinceLastEngagement: 0 }),
-    )!;
+    const small = scoreChannel(fact({ sends: 1, engagements: 1, daysSinceLastEngagement: 0 }))!;
+    const large = scoreChannel(fact({ sends: 50, engagements: 50, daysSinceLastEngagement: 0 }))!;
     expect(large).toBeGreaterThan(small);
   });
 
   it('recency decay: old engagement scores below recent', () => {
-    const recent = scoreChannel(
-      fact({ sends: 20, engagements: 10, daysSinceLastEngagement: 1 }),
-    )!;
-    const old = scoreChannel(
-      fact({ sends: 20, engagements: 10, daysSinceLastEngagement: 180 }),
-    )!;
+    const recent = scoreChannel(fact({ sends: 20, engagements: 10, daysSinceLastEngagement: 1 }))!;
+    const old = scoreChannel(fact({ sends: 20, engagements: 10, daysSinceLastEngagement: 180 }))!;
     expect(recent).toBeGreaterThan(old);
   });
 
   it('half-life: 30-day-old engagement scores ~half of fresh', () => {
-    const fresh = scoreChannel(
-      fact({ sends: 20, engagements: 20, daysSinceLastEngagement: 0 }),
-    )!;
+    const fresh = scoreChannel(fact({ sends: 20, engagements: 20, daysSinceLastEngagement: 0 }))!;
     const halfLife = scoreChannel(
       fact({ sends: 20, engagements: 20, daysSinceLastEngagement: 30 }),
     )!;
@@ -167,27 +157,27 @@ describe('confidenceBand', () => {
   });
 
   it('low when top score is below 10', () => {
-    expect(
-      confidenceBand({ email: 5, sms: 3, whatsapp: null, voice: null, push: null }),
-    ).toBe('low');
+    expect(confidenceBand({ email: 5, sms: 3, whatsapp: null, voice: null, push: null })).toBe(
+      'low',
+    );
   });
 
   it('high when gap to second is ≥ 20', () => {
-    expect(
-      confidenceBand({ email: 80, sms: 50, whatsapp: null, voice: null, push: null }),
-    ).toBe('high');
+    expect(confidenceBand({ email: 80, sms: 50, whatsapp: null, voice: null, push: null })).toBe(
+      'high',
+    );
   });
 
   it('medium when gap is 8-19', () => {
-    expect(
-      confidenceBand({ email: 60, sms: 50, whatsapp: null, voice: null, push: null }),
-    ).toBe('medium');
+    expect(confidenceBand({ email: 60, sms: 50, whatsapp: null, voice: null, push: null })).toBe(
+      'medium',
+    );
   });
 
   it('low when gap is under 8 (close race)', () => {
-    expect(
-      confidenceBand({ email: 55, sms: 52, whatsapp: null, voice: null, push: null }),
-    ).toBe('low');
+    expect(confidenceBand({ email: 55, sms: 52, whatsapp: null, voice: null, push: null })).toBe(
+      'low',
+    );
   });
 });
 

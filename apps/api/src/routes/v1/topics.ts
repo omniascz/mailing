@@ -18,13 +18,20 @@ import { AppError } from '../../lib/app-error.js';
 
 const topicRoutes: FastifyPluginAsync = async (app) => {
   // ── Authed topic CRUD ─────────────────────────────────────────────────────
-  app.get('/api/v1/topics', { preHandler: [app.requireAuth], schema: { tags: ['Topics'] } }, async (req) => ({
-    data: await listTopics(req.user!.orgId),
-  }));
+  app.get(
+    '/api/v1/topics',
+    { preHandler: [app.requireAuth], schema: { tags: ['Topics'] } },
+    async (req) => ({
+      data: await listTopics(req.user!.orgId),
+    }),
+  );
 
   app.post(
     '/api/v1/topics',
-    { preHandler: [app.requireAuth, app.requireRole('editor', 'admin', 'owner')], schema: { tags: ['Topics'] } },
+    {
+      preHandler: [app.requireAuth, app.requireRole('editor', 'admin', 'owner')],
+      schema: { tags: ['Topics'] },
+    },
     async (req, reply) => {
       const body = z
         .object({
@@ -40,7 +47,10 @@ const topicRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     '/api/v1/topics/:id',
-    { preHandler: [app.requireAuth, app.requireRole('editor', 'admin', 'owner')], schema: { tags: ['Topics'] } },
+    {
+      preHandler: [app.requireAuth, app.requireRole('editor', 'admin', 'owner')],
+      schema: { tags: ['Topics'] },
+    },
     async (req) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
       const body = z
@@ -57,7 +67,10 @@ const topicRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     '/api/v1/topics/:id',
-    { preHandler: [app.requireAuth, app.requireRole('editor', 'admin', 'owner')], schema: { tags: ['Topics'] } },
+    {
+      preHandler: [app.requireAuth, app.requireRole('editor', 'admin', 'owner')],
+      schema: { tags: ['Topics'] },
+    },
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
       await deleteTopic(req.user!.orgId, id);
@@ -77,9 +90,11 @@ const topicRoutes: FastifyPluginAsync = async (app) => {
 
   // ── Public: view/update topic prefs via preference-center token ────────────
   function resolvePrefToken(token: string): { orgId: string; contactId: string } {
-    const payload = verifyTrackingToken(token) as
-      | { type?: string; orgId?: string; contactId?: string }
-      | null;
+    const payload = verifyTrackingToken(token) as {
+      type?: string;
+      orgId?: string;
+      contactId?: string;
+    } | null;
     if (!payload || payload.type !== 'pref' || !payload.orgId || !payload.contactId) {
       throw AppError.unauthorized('Invalid or expired token');
     }

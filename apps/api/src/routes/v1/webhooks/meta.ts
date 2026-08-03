@@ -57,31 +57,27 @@ export default async function metaWebhookRoutes(app: FastifyInstance) {
   });
 
   // ── Event delivery (POST) ─────────────────────────────────────────────────
-  app.post(
-    '/webhook/meta',
-    { config: { rawBody: true } },
-    async (req, reply) => {
-      // Verify HMAC signature
-      const signature = (req.headers['x-hub-signature-256'] as string | undefined) ?? '';
-      if (!verifySignature(req, signature)) {
-        return reply.code(403).send({ error: 'Invalid signature' });
-      }
+  app.post('/webhook/meta', { config: { rawBody: true } }, async (req, reply) => {
+    // Verify HMAC signature
+    const signature = (req.headers['x-hub-signature-256'] as string | undefined) ?? '';
+    if (!verifySignature(req, signature)) {
+      return reply.code(403).send({ error: 'Invalid signature' });
+    }
 
-      const payload = req.body as MetaWebhookPayload | MessengerWebhookPayload;
+    const payload = req.body as MetaWebhookPayload | MessengerWebhookPayload;
 
-      // Resolve orgId from page mapping table
-      const orgId = await resolveOrgId(payload);
-      if (!orgId) {
-        // Unknown page — acknowledge but don't process
-        return reply.send({ status: 'ok', warning: 'Page not registered' });
-      }
+    // Resolve orgId from page mapping table
+    const orgId = await resolveOrgId(payload);
+    if (!orgId) {
+      // Unknown page — acknowledge but don't process
+      return reply.send({ status: 'ok', warning: 'Page not registered' });
+    }
 
-      // Process asynchronously — Meta expects a fast 200 OK
-      void handlePayload(orgId, payload);
+    // Process asynchronously — Meta expects a fast 200 OK
+    void handlePayload(orgId, payload);
 
-      return reply.send({ status: 'ok' });
-    },
-  );
+    return reply.send({ status: 'ok' });
+  });
 
   // ── Page mapping CRUD ─────────────────────────────────────────────────────
 
@@ -107,7 +103,12 @@ export default async function metaWebhookRoutes(app: FastifyInstance) {
       .values({ ...body, orgId: req.user!.orgId })
       .onConflictDoUpdate({
         target: [metaPageMappings.pageId, metaPageMappings.channel],
-        set: { pageName: body.pageName, accessToken: body.accessToken, active: true, updatedAt: new Date() },
+        set: {
+          pageName: body.pageName,
+          accessToken: body.accessToken,
+          active: true,
+          updatedAt: new Date(),
+        },
       })
       .returning();
     return reply.code(201).send({ data: row });

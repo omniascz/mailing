@@ -53,7 +53,9 @@ export default async function LoyaltyPage() {
                       </Badge>
                     </div>
                     {p.description ? (
-                      <p className="mt-1 line-clamp-2 text-xs text-secondary-500">{p.description}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-secondary-500">
+                        {p.description}
+                      </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap gap-1">
                       {p.earningEnabled ? <Badge variant="primary">Earning</Badge> : null}

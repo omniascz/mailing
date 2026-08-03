@@ -194,7 +194,11 @@ export async function processFormSubmission(
   const missing = validateRequiredFields(fields, data);
   if (missing.length > 0) {
     const f = fields.find((x) => x.name === missing[0]);
-    return { contactId: null, success: false, message: `Field '${f?.label ?? missing[0]}' is required` };
+    return {
+      contactId: null,
+      success: false,
+      message: `Field '${f?.label ?? missing[0]}' is required`,
+    };
   }
 
   // Extract contact fields

@@ -381,21 +381,28 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     '/api/v1/whatsapp/send/catalog',
     { preHandler: [app.authenticate] },
     async (req, reply) => {
-      const body = z.object({
-        phoneNumberId: z.string().min(1),
-        to: z.string().min(5),
-        bodyText: z.string().min(1).max(1024),
-        footerText: z.string().max(60).optional(),
-        /** WhatsApp Business catalog ID */
-        catalogId: z.string().min(1),
-        /** Optional single product ID to highlight */
-        productRetailerId: z.string().optional(),
-        /** For multi-product messages: sections with products */
-        sections: z.array(z.object({
-          title: z.string().max(24),
-          productItems: z.array(z.object({ productRetailerId: z.string() })).max(30),
-        })).max(10).optional(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          phoneNumberId: z.string().min(1),
+          to: z.string().min(5),
+          bodyText: z.string().min(1).max(1024),
+          footerText: z.string().max(60).optional(),
+          /** WhatsApp Business catalog ID */
+          catalogId: z.string().min(1),
+          /** Optional single product ID to highlight */
+          productRetailerId: z.string().optional(),
+          /** For multi-product messages: sections with products */
+          sections: z
+            .array(
+              z.object({
+                title: z.string().max(24),
+                productItems: z.array(z.object({ productRetailerId: z.string() })).max(30),
+              }),
+            )
+            .max(10)
+            .optional(),
+        })
+        .parse(req.body);
 
       const token = process.env.WHATSAPP_ACCESS_TOKEN ?? '';
       const metaApiVersion = process.env.META_API_VERSION ?? 'v18.0';
@@ -420,7 +427,9 @@ export default async function whatsappRoutes(app: FastifyInstance) {
             catalog_id: body.catalogId,
             sections: (body.sections ?? []).map((s) => ({
               title: s.title,
-              product_items: s.productItems.map((p) => ({ product_retailer_id: p.productRetailerId })),
+              product_items: s.productItems.map((p) => ({
+                product_retailer_id: p.productRetailerId,
+              })),
             })),
           },
         };
@@ -431,17 +440,24 @@ export default async function whatsappRoutes(app: FastifyInstance) {
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messaging_product: 'whatsapp', to: body.to, type: 'interactive', interactive: interactivePayload }),
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: body.to,
+            type: 'interactive',
+            interactive: interactivePayload,
+          }),
         },
       );
 
       if (!resp.ok) {
-        const err = await resp.json().catch(() => ({})) as Record<string, unknown>;
+        const err = (await resp.json().catch(() => ({}))) as Record<string, unknown>;
         return reply.status(resp.status).send({ code: 'META_API_ERROR', detail: err });
       }
 
-      const result = await resp.json() as Record<string, unknown>;
-      return reply.send({ data: { messageId: (result['messages'] as Array<Record<string, string>>)?.[0]?.id } });
+      const result = (await resp.json()) as Record<string, unknown>;
+      return reply.send({
+        data: { messageId: (result['messages'] as Array<Record<string, string>>)?.[0]?.id },
+      });
     },
   );
 
@@ -452,11 +468,26 @@ export default async function whatsappRoutes(app: FastifyInstance) {
    * Create a new WhatsApp Flow via Meta Flows API.
    */
   app.post('/api/v1/whatsapp/flows', { preHandler: [app.authenticate] }, async (req, reply) => {
-    const body = z.object({
-      wabaId: z.string().min(1),
-      name: z.string().min(1).max(100),
-      categories: z.array(z.enum(['SIGN_UP', 'SIGN_IN', 'APPOINTMENT_BOOKING', 'LEAD_GENERATION', 'CONTACT_US', 'CUSTOMER_SUPPORT', 'SURVEY', 'OTHER'])).min(1),
-    }).parse(req.body);
+    const body = z
+      .object({
+        wabaId: z.string().min(1),
+        name: z.string().min(1).max(100),
+        categories: z
+          .array(
+            z.enum([
+              'SIGN_UP',
+              'SIGN_IN',
+              'APPOINTMENT_BOOKING',
+              'LEAD_GENERATION',
+              'CONTACT_US',
+              'CUSTOMER_SUPPORT',
+              'SURVEY',
+              'OTHER',
+            ]),
+          )
+          .min(1),
+      })
+      .parse(req.body);
 
     const token = process.env.WHATSAPP_ACCESS_TOKEN ?? '';
     const metaApiVersion = process.env.META_API_VERSION ?? 'v18.0';
@@ -468,7 +499,7 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     });
 
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({})) as Record<string, unknown>;
+      const err = (await resp.json().catch(() => ({}))) as Record<string, unknown>;
       return reply.status(resp.status).send({ code: 'META_API_ERROR', detail: err });
     }
 
@@ -484,16 +515,18 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     { preHandler: [app.authenticate] },
     async (req, reply) => {
       const { flowId } = req.params as { flowId: string };
-      const body = z.object({
-        phoneNumberId: z.string().min(1),
-        to: z.string().min(5),
-        headerText: z.string().max(60),
-        bodyText: z.string().max(1024),
-        footerText: z.string().max(60).optional(),
-        ctaButtonText: z.string().max(20).default('Open'),
-        flowToken: z.string().optional().default('unused'),
-        mode: z.enum(['draft', 'published']).optional().default('published'),
-      }).parse(req.body);
+      const body = z
+        .object({
+          phoneNumberId: z.string().min(1),
+          to: z.string().min(5),
+          headerText: z.string().max(60),
+          bodyText: z.string().max(1024),
+          footerText: z.string().max(60).optional(),
+          ctaButtonText: z.string().max(20).default('Open'),
+          flowToken: z.string().optional().default('unused'),
+          mode: z.enum(['draft', 'published']).optional().default('published'),
+        })
+        .parse(req.body);
 
       const token = process.env.WHATSAPP_ACCESS_TOKEN ?? '';
       const metaApiVersion = process.env.META_API_VERSION ?? 'v18.0';
@@ -521,17 +554,24 @@ export default async function whatsappRoutes(app: FastifyInstance) {
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messaging_product: 'whatsapp', to: body.to, type: 'interactive', interactive }),
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: body.to,
+            type: 'interactive',
+            interactive,
+          }),
         },
       );
 
       if (!resp.ok) {
-        const err = await resp.json().catch(() => ({})) as Record<string, unknown>;
+        const err = (await resp.json().catch(() => ({}))) as Record<string, unknown>;
         return reply.status(resp.status).send({ code: 'META_API_ERROR', detail: err });
       }
 
-      const result = await resp.json() as Record<string, unknown>;
-      return reply.send({ data: { messageId: (result['messages'] as Array<Record<string, string>>)?.[0]?.id } });
+      const result = (await resp.json()) as Record<string, unknown>;
+      return reply.send({
+        data: { messageId: (result['messages'] as Array<Record<string, string>>)?.[0]?.id },
+      });
     },
   );
 }

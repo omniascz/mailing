@@ -578,16 +578,19 @@ export default async function aiRoutes(app: FastifyInstance) {
     '/api/v1/ai/generate-per-recipient',
     { schema: { tags: ['AI'], summary: 'Generate unique email content per recipient' } },
     async (req) => {
-      const body = z.object({
-        contactId: z.string().uuid().optional(),
-        contactIds: z.array(z.string().uuid()).max(50).optional(),
-        campaignGoal: z.string().min(5).max(500),
-        ctaUrl: z.string().url(),
-        tone: z.enum(['formal', 'casual', 'friendly', 'urgent']).optional().default('friendly'),
-        useBrandVoice: z.boolean().optional().default(true),
-      }).parse(req.body);
+      const body = z
+        .object({
+          contactId: z.string().uuid().optional(),
+          contactIds: z.array(z.string().uuid()).max(50).optional(),
+          campaignGoal: z.string().min(5).max(500),
+          ctaUrl: z.string().url(),
+          tone: z.enum(['formal', 'casual', 'friendly', 'urgent']).optional().default('friendly'),
+          useBrandVoice: z.boolean().optional().default(true),
+        })
+        .parse(req.body);
 
-      const { generateForRecipient, generateBatchPerRecipient } = await import('../../services/ai/per-recipient-generation.js');
+      const { generateForRecipient, generateBatchPerRecipient } =
+        await import('../../services/ai/per-recipient-generation.js');
       const orgId = req.user!.orgId;
 
       if (body.contactIds && body.contactIds.length > 0) {
@@ -606,13 +609,18 @@ export default async function aiRoutes(app: FastifyInstance) {
     '/api/v1/ai/generate-sequence',
     { schema: { tags: ['AI'], summary: 'Generate full campaign sequence from goal' } },
     async (req) => {
-      const body = z.object({
-        goal: z.string().min(10).max(500),
-        numSteps: z.number().int().min(2).max(10).optional().default(5),
-        audienceDescription: z.string().max(500).optional(),
-        channels: z.array(z.enum(['email', 'sms'])).optional().default(['email']),
-        useBrandVoice: z.boolean().optional().default(true),
-      }).parse(req.body);
+      const body = z
+        .object({
+          goal: z.string().min(10).max(500),
+          numSteps: z.number().int().min(2).max(10).optional().default(5),
+          audienceDescription: z.string().max(500).optional(),
+          channels: z
+            .array(z.enum(['email', 'sms']))
+            .optional()
+            .default(['email']),
+          useBrandVoice: z.boolean().optional().default(true),
+        })
+        .parse(req.body);
 
       const { generateSequenceFromGoal } = await import('../../services/ai/sequence-generator.js');
       const result = await generateSequenceFromGoal(req.user!.orgId, body);
@@ -653,7 +661,8 @@ export default async function aiRoutes(app: FastifyInstance) {
     { schema: { tags: ['AI'], summary: 'Auto-fix email HTML accessibility issues' } },
     async (req) => {
       const { html } = z.object({ html: z.string().min(1).max(500_000) }).parse(req.body);
-      const { fixEmailAccessibility } = await import('../../services/editor/accessibility-fixer.js');
+      const { fixEmailAccessibility } =
+        await import('../../services/editor/accessibility-fixer.js');
       const result = fixEmailAccessibility(html);
       return { data: result };
     },

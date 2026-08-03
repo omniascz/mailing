@@ -289,7 +289,12 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/unsubscribe/:token',
-    { schema: { tags: ['Subscriptions'], summary: 'One-click unsubscribe (RFC 8058, token in path)' } },
+    {
+      schema: {
+        tags: ['Subscriptions'],
+        summary: 'One-click unsubscribe (RFC 8058, token in path)',
+      },
+    },
     async (req, reply) => {
       const { token } = z.object({ token: unsubTokenSchema }).parse(req.params);
       try {

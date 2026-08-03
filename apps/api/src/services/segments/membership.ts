@@ -86,7 +86,12 @@ export async function refreshSegmentMembership(
 }
 
 /** Cron entrypoint — reconcile membership for every active segment. */
-export async function refreshAllSegments(): Promise<{ segments: number; entered: number; exited: number; errors: number }> {
+export async function refreshAllSegments(): Promise<{
+  segments: number;
+  entered: number;
+  exited: number;
+  errors: number;
+}> {
   const rows = await db
     .select({ id: segments.id, orgId: segments.orgId })
     .from(segments)

@@ -74,7 +74,9 @@ export async function generateSequenceFromGoal(
     `Target audience: ${opts.audienceDescription ?? 'general subscribers'}`,
     `Available channels: ${(opts.channels ?? ['email']).join(', ')}`,
     bvCtx,
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const { text } = await callClaude({
     model: 'claude-sonnet-4-6',

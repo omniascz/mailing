@@ -398,11 +398,24 @@ function renderEmail(
   content: Record<string, unknown>,
   ctx: MergeTagContext,
   preheader?: string,
-  utmTracking?: { enabled?: boolean; source?: string; medium?: string; campaign?: string; content?: string; term?: string } | null,
+  utmTracking?: {
+    enabled?: boolean;
+    source?: string;
+    medium?: string;
+    campaign?: string;
+    content?: string;
+    term?: string;
+  } | null,
 ): RenderedEmail {
   // Build UTM config if enabled
   const utm = utmTracking?.enabled
-    ? { source: utmTracking.source, medium: utmTracking.medium, campaign: utmTracking.campaign, content: utmTracking.content, term: utmTracking.term }
+    ? {
+        source: utmTracking.source,
+        medium: utmTracking.medium,
+        campaign: utmTracking.campaign,
+        content: utmTracking.content,
+        term: utmTracking.term,
+      }
     : undefined;
 
   // Path 1: block JSON (production)
@@ -527,7 +540,10 @@ async function fetchNewsletterTierNames(
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/newsletter-tiers/batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_SECRET ?? '' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
+      },
       body: JSON.stringify({ orgId, contactIds }),
     });
     if (!res.ok) return new Map();

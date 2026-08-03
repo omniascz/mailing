@@ -69,7 +69,9 @@ export async function computeCohortRetention(
 
   // Group by cohort_period
   const cohortMap = new Map<string, string[]>();
-  for (const row of (rawCohorts as unknown as { rows: Array<{ cohort_period: string; contact_id: string }> }).rows) {
+  for (const row of (
+    rawCohorts as unknown as { rows: Array<{ cohort_period: string; contact_id: string }> }
+  ).rows) {
     const key = new Date(row.cohort_period).toISOString().slice(0, 10);
     if (!cohortMap.has(key)) cohortMap.set(key, []);
     cohortMap.get(key)!.push(row.contact_id);
@@ -105,9 +107,7 @@ export async function computeCohortRetention(
         );
 
       const engaged = Number(result?.n ?? 0);
-      retention.push(
-        contactIds.length > 0 ? Math.round((engaged / contactIds.length) * 100) : 0,
-      );
+      retention.push(contactIds.length > 0 ? Math.round((engaged / contactIds.length) * 100) : 0);
     }
 
     cohorts.push({
@@ -184,7 +184,9 @@ export async function computeFunnel(
       ),
     );
 
-  const firstStepIds = [...new Set(firstStepRows.map((r) => r.contactId).filter(Boolean) as string[])];
+  const firstStepIds = [
+    ...new Set(firstStepRows.map((r) => r.contactId).filter(Boolean) as string[]),
+  ];
   let currentIds = firstStepIds;
 
   const results: FunnelStepResult[] = [

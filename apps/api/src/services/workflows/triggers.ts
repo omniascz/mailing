@@ -281,11 +281,19 @@ async function fireSegmentTrigger(
   );
 }
 
-export function onSegmentEntered(orgId: string, contactId: string, segmentId: string): Promise<void> {
+export function onSegmentEntered(
+  orgId: string,
+  contactId: string,
+  segmentId: string,
+): Promise<void> {
   return fireSegmentTrigger(orgId, contactId, segmentId, 'segment_entered');
 }
 
-export function onSegmentExited(orgId: string, contactId: string, segmentId: string): Promise<void> {
+export function onSegmentExited(
+  orgId: string,
+  contactId: string,
+  segmentId: string,
+): Promise<void> {
   return fireSegmentTrigger(orgId, contactId, segmentId, 'segment_exited');
 }
 
@@ -929,7 +937,11 @@ export async function onCompanyEvent(
         const arr = data['annualRevenueUsd'] as number | undefined;
         if (!arr || arr < config.threshold) return;
       }
-      await safeStartRun(w.id, orgId, contactId, { triggerType: 'company_event', eventType, ...data });
+      await safeStartRun(w.id, orgId, contactId, {
+        triggerType: 'company_event',
+        eventType,
+        ...data,
+      });
     }),
   );
 }
@@ -963,7 +975,12 @@ export async function onTicketEvent(
       const config = w.triggerConfig as { eventType?: string; priority?: string };
       if (config.eventType && config.eventType !== eventType) return;
       if (config.priority && data['priority'] !== config.priority) return;
-      await safeStartRun(w.id, orgId, contactId, { triggerType: 'ticket_event', ticketId, eventType, ...data });
+      await safeStartRun(w.id, orgId, contactId, {
+        triggerType: 'ticket_event',
+        ticketId,
+        eventType,
+        ...data,
+      });
     }),
   );
 }

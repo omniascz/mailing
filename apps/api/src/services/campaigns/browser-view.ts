@@ -54,7 +54,13 @@ export async function renderCampaignForToken(token: string): Promise<string | nu
 
   // Rebuild the same merge context the send used so the copy matches.
   const prefToken = createTrackingToken({ type: 'pref', orgId, contactId, ts: UNSUB_TTL_TS() });
-  const unsubToken = createTrackingToken({ type: 'unsub', orgId, contactId, campaignId, ts: UNSUB_TTL_TS() });
+  const unsubToken = createTrackingToken({
+    type: 'unsub',
+    orgId,
+    contactId,
+    campaignId,
+    ts: UNSUB_TTL_TS(),
+  });
   const ctx: MergeTagContext = {
     contact: contact
       ? {

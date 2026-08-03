@@ -2,7 +2,11 @@ import { pgTable, text, uuid, timestamp, jsonb, boolean, index } from 'drizzle-o
 
 export interface BrandVoiceProfile {
   tone: string;
-  vocabulary: { keyPhrases: string[]; readingLevel: 'basic' | 'intermediate' | 'advanced'; avgWordsPerSentence: number };
+  vocabulary: {
+    keyPhrases: string[];
+    readingLevel: 'basic' | 'intermediate' | 'advanced';
+    avgWordsPerSentence: number;
+  };
   ctaPatterns: { actionWords: string[]; urgencyLevel: 'low' | 'medium' | 'high' };
   emojiUsage: 'none' | 'rare' | 'moderate' | 'frequent';
   personalizationLevel: 'none' | 'basic' | 'advanced';

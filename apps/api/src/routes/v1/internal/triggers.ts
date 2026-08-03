@@ -60,7 +60,10 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (req, reply) => {
-      if (process.env.INTERNAL_SECRET && req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET) {
+      if (
+        process.env.INTERNAL_SECRET &&
+        req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET
+      ) {
         return reply.status(401).send();
       }
       // Run all three in parallel — they touch disjoint workflows
@@ -132,9 +135,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
                 orgs: 0,
                 scored: 0,
                 errors: 0,
-                error: String(
-                  (channelResult.reason as Error)?.message ?? channelResult.reason,
-                ),
+                error: String((channelResult.reason as Error)?.message ?? channelResult.reason),
               },
         engagement:
           engagementResult.status === 'fulfilled'
@@ -158,9 +159,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
                 domainsChecked: 0,
                 domainsDrifted: 0,
                 errors: 0,
-                error: String(
-                  (dnsHealthResult.reason as Error)?.message ?? dnsHealthResult.reason,
-                ),
+                error: String((dnsHealthResult.reason as Error)?.message ?? dnsHealthResult.reason),
               },
         totalTriggered: 0,
       };
@@ -190,10 +189,14 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
     '/api/v1/internal/browse-abandonment/tick',
     { schema: { tags: ['Internal'], summary: 'Run browse-abandonment detection for all orgs' } },
     async (req, reply) => {
-      if (process.env.INTERNAL_SECRET && req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET) {
+      if (
+        process.env.INTERNAL_SECRET &&
+        req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET
+      ) {
         return reply.status(401).send();
       }
-      const { checkAllOrgsAbandonments } = await import('../../../services/browse-abandonment/index.js');
+      const { checkAllOrgsAbandonments } =
+        await import('../../../services/browse-abandonment/index.js');
       return reply.send({ data: await checkAllOrgsAbandonments() });
     },
   );
@@ -204,7 +207,10 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
     '/api/v1/internal/segments/refresh-membership',
     { schema: { tags: ['Internal'], summary: 'Reconcile materialized segment membership' } },
     async (req, reply) => {
-      if (process.env.INTERNAL_SECRET && req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET) {
+      if (
+        process.env.INTERNAL_SECRET &&
+        req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET
+      ) {
         return reply.status(401).send();
       }
       const { refreshAllSegments } = await import('../../../services/segments/membership.js');
@@ -217,7 +223,10 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
     '/api/v1/internal/scheduled-reports/run-due',
     { schema: { tags: ['Internal'], summary: 'Dispatch due scheduled reports' } },
     async (req, reply) => {
-      if (process.env.INTERNAL_SECRET && req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET) {
+      if (
+        process.env.INTERNAL_SECRET &&
+        req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET
+      ) {
         return reply.status(401).send();
       }
       const { runDueReports } = await import('../../../services/scheduled-reports/index.js');

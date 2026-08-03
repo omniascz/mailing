@@ -194,9 +194,8 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
       schema: { tags: ['API Keys'], summary: 'List assignable API-key scopes' },
     },
     async (_req, reply) => {
-      const { GATED_RESOURCES, READ_ONLY_RESOURCES } = await import(
-        '../../services/auth/scope-map.js'
-      );
+      const { GATED_RESOURCES, READ_ONLY_RESOURCES } =
+        await import('../../services/auth/scope-map.js');
       const scopes = new Set<string>(['*', 'emails:send', 'emails:read']);
       for (const r of GATED_RESOURCES) {
         scopes.add(`${r}:read`);

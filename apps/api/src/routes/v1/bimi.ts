@@ -196,7 +196,9 @@ export default async function bimiRoutes(app: FastifyInstance) {
           checkResult,
           checkedAt: new Date().toISOString(),
           ...(found
-            ? { message: 'BIMI record verified. Your logo will appear in supporting email clients.' }
+            ? {
+                message: 'BIMI record verified. Your logo will appear in supporting email clients.',
+              }
             : {
                 message: `Record not found or incorrect. Publish: ${buildDnsRecordName(domain)} TXT "${row.dnsRecordValue}"`,
               }),

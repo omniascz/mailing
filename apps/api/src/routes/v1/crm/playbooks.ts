@@ -44,7 +44,10 @@ const stepSchema = z.object({
 const createSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().optional(),
-  entityTypes: z.array(z.enum(['contact', 'deal', 'account'])).min(1).default(['deal']),
+  entityTypes: z
+    .array(z.enum(['contact', 'deal', 'account']))
+    .min(1)
+    .default(['deal']),
   steps: z.array(stepSchema).default([]),
   active: z.boolean().default(true),
 });
@@ -241,4 +244,3 @@ export default async function playbookRoutes(app: FastifyInstance) {
     return { data: run };
   });
 }
-

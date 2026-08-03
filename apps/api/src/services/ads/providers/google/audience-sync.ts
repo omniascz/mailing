@@ -129,9 +129,7 @@ export async function uploadToGoogle(opts: GoogleUploadOptions): Promise<GoogleU
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      throw new Error(
-        `Google Ads addOperations failed (batch ${i}): HTTP ${res.status} ${text}`,
-      );
+      throw new Error(`Google Ads addOperations failed (batch ${i}): HTTP ${res.status} ${text}`);
     }
   }
 

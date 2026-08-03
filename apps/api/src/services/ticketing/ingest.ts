@@ -109,7 +109,9 @@ export async function upsertContactByEmail(
         ...(c.locale ? { preferredLocale: c.locale } : {}),
         // Merge city into custom_fields (no dedicated column on contacts).
         ...(c.city
-          ? { customFields: sql`coalesce(${contacts.customFields}, '{}'::jsonb) || ${JSON.stringify({ city: c.city })}::jsonb` }
+          ? {
+              customFields: sql`coalesce(${contacts.customFields}, '{}'::jsonb) || ${JSON.stringify({ city: c.city })}::jsonb`,
+            }
           : {}),
         updatedAt: new Date(),
       } as never)
@@ -134,10 +136,7 @@ export async function upsertContactByEmail(
 }
 
 /** Find-or-create+update an external (ticketed) event by externalId. */
-export async function upsertExternalEvent(
-  orgId: string,
-  e: TicketingEventInput,
-): Promise<string> {
+export async function upsertExternalEvent(orgId: string, e: TicketingEventInput): Promise<string> {
   const patch = {
     title: e.title ?? '(untitled)',
     category: e.category,
@@ -164,7 +163,10 @@ export async function upsertExternalEvent(
     // Only overwrite provided fields.
     const set: Record<string, unknown> = { updatedAt: new Date() };
     for (const [k, v] of Object.entries(patch)) if (v !== undefined) set[k] = v;
-    await db.update(externalEvents).set(set as never).where(eq(externalEvents.id, existing.id));
+    await db
+      .update(externalEvents)
+      .set(set as never)
+      .where(eq(externalEvents.id, existing.id));
     return existing.id;
   }
 

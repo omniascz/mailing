@@ -2,27 +2,25 @@
  * Consent graph — full timeline of every consent event per contact.
  * Enables GDPR Art. 7 proof-of-consent, consent version tracking, and DPA reporting.
  */
-import {
-  pgTable, uuid, text, timestamp, jsonb, index, pgEnum,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, jsonb, index, pgEnum } from 'drizzle-orm/pg-core';
 
 export const consentEventTypeEnum = pgEnum('consent_event_type', [
-  'opt_in',             // initial subscribe
-  'double_opt_in',      // confirmed via email link
-  'opt_out',            // unsubscribe
-  'preference_update',  // changed channels/topics
-  'purpose_added',      // new GDPR purpose granted
-  'purpose_removed',    // GDPR purpose revoked
-  'consent_withdrawn',  // full GDPR Art. 17 erasure
-  'data_export',        // Art. 15 SAR request
-  're_consent',         // re-engagement consent renewal
+  'opt_in', // initial subscribe
+  'double_opt_in', // confirmed via email link
+  'opt_out', // unsubscribe
+  'preference_update', // changed channels/topics
+  'purpose_added', // new GDPR purpose granted
+  'purpose_removed', // GDPR purpose revoked
+  'consent_withdrawn', // full GDPR Art. 17 erasure
+  'data_export', // Art. 15 SAR request
+  're_consent', // re-engagement consent renewal
 ]);
 
 export const consentLegalBasisEnum = pgEnum('consent_legal_basis', [
-  'consent',            // GDPR Art. 6(1)(a)
-  'legitimate_interest',// GDPR Art. 6(1)(f)
-  'contract',           // GDPR Art. 6(1)(b)
-  'legal_obligation',   // GDPR Art. 6(1)(c)
+  'consent', // GDPR Art. 6(1)(a)
+  'legitimate_interest', // GDPR Art. 6(1)(f)
+  'contract', // GDPR Art. 6(1)(b)
+  'legal_obligation', // GDPR Art. 6(1)(c)
 ]);
 
 export const consentEvents = pgTable(

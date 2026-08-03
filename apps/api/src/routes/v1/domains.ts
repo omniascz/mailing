@@ -220,7 +220,10 @@ export default async function domainRoutes(app: FastifyInstance) {
       const { id } = domainParam.parse(req.params);
       const body = z
         .object({
-          selector: z.string().regex(/^[a-z0-9._-]+$/i).max(63),
+          selector: z
+            .string()
+            .regex(/^[a-z0-9._-]+$/i)
+            .max(63),
           privateKey: z.string().min(64),
         })
         .parse(req.body);
@@ -480,7 +483,9 @@ export default async function domainRoutes(app: FastifyInstance) {
 
   app.patch(
     '/api/v1/domains/:id/public-badge',
-    { schema: { tags: ['Domains'], summary: 'Toggle the public reputation badge for this domain' } },
+    {
+      schema: { tags: ['Domains'], summary: 'Toggle the public reputation badge for this domain' },
+    },
     async (req, reply) => {
       const { id } = domainParam.parse(req.params);
       const { enabled } = z.object({ enabled: z.boolean() }).parse(req.body);

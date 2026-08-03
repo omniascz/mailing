@@ -126,9 +126,7 @@ export default async function inboxRoutes(app: FastifyInstance) {
     const data = await db
       .select()
       .from(inboxMessages)
-      .where(
-        and(eq(inboxMessages.orgId, req.user!.orgId), eq(inboxMessages.threadId, threadId)),
-      )
+      .where(and(eq(inboxMessages.orgId, req.user!.orgId), eq(inboxMessages.threadId, threadId)))
       .orderBy(desc(inboxMessages.sentAt));
     return reply.send({ data });
   });

@@ -8,8 +8,20 @@ const survey = {
   name: 'Feedback <b>survey</b>',
   description: 'Tell us how we did',
   questions: [
-    { id: 'q1', type: 'single', label: 'Favourite colour?', required: true, options: ['Red', 'Blue'] },
-    { id: 'q2', type: 'multi', label: 'Which did you use?', required: false, options: ['App', 'Web'] },
+    {
+      id: 'q1',
+      type: 'single',
+      label: 'Favourite colour?',
+      required: true,
+      options: ['Red', 'Blue'],
+    },
+    {
+      id: 'q2',
+      type: 'multi',
+      label: 'Which did you use?',
+      required: false,
+      options: ['App', 'Web'],
+    },
     { id: 'q3', type: 'text', label: 'Comments', required: false },
     { id: 'nps_main', type: 'nps', label: 'Would you recommend us?', required: true },
     { id: 'q5', type: 'rating', label: 'Rate us', required: false, max: 5 },
@@ -53,7 +65,7 @@ describe('renderHostedSurveyPage', () => {
 
   it('coerces numeric question types to numbers in the collector', () => {
     // NPS answer must be numeric so submitResponse extracts npsScore.
-    expect(html).toContain("numeric(t)?Number(n.value)");
+    expect(html).toContain('numeric(t)?Number(n.value)');
     expect(html).toContain('"nps_main":"nps"'); // type map
   });
 });

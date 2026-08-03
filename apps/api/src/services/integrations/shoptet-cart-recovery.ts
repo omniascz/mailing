@@ -14,11 +14,13 @@ export async function getShoptetToken(orgId: string): Promise<string> {
   const [row] = await db
     .select({ accessToken: socialAccounts.accessToken })
     .from(socialAccounts)
-    .where(and(
-      eq(socialAccounts.orgId, orgId),
-      eq(socialAccounts.platform, 'shoptet'),
-      eq(socialAccounts.active, true),
-    ))
+    .where(
+      and(
+        eq(socialAccounts.orgId, orgId),
+        eq(socialAccounts.platform, 'shoptet'),
+        eq(socialAccounts.active, true),
+      ),
+    )
     .limit(1);
   if (!row?.accessToken) throw AppError.badRequest('Shoptet not connected');
   return row.accessToken;
@@ -42,16 +44,27 @@ async function shoptetFetch(orgId: string, path: string, opts: RequestInit = {})
 }
 
 /** Get abandoned carts from Shoptet (carts older than 1h, not converted). */
-export async function getAbandonedCarts(orgId: string, limit = 50): Promise<Array<{
-  cartId: string;
-  contactEmail: string;
-  contactName: string;
-  totalValue: number;
-  currency: string;
-  items: Array<{ productId: string; productName: string; quantity: number; price: number; imageUrl?: string }>;
-  abandonedAt: string;
-}>> {
-  const data = await shoptetFetch(orgId, `/api/v1/carts?status=abandoned&limit=${limit}`) as {
+export async function getAbandonedCarts(
+  orgId: string,
+  limit = 50,
+): Promise<
+  Array<{
+    cartId: string;
+    contactEmail: string;
+    contactName: string;
+    totalValue: number;
+    currency: string;
+    items: Array<{
+      productId: string;
+      productName: string;
+      quantity: number;
+      price: number;
+      imageUrl?: string;
+    }>;
+    abandonedAt: string;
+  }>
+> {
+  const data = (await shoptetFetch(orgId, `/api/v1/carts?status=abandoned&limit=${limit}`)) as {
     data?: { carts?: Array<Record<string, unknown>> };
   };
   const carts = data?.data?.carts ?? [];
@@ -78,18 +91,26 @@ export async function getAbandonedCarts(orgId: string, limit = 50): Promise<Arra
 }
 
 /** Get recent orders for post-purchase automation. */
-export async function getRecentOrders(orgId: string, sinceHours = 24): Promise<Array<{
-  orderId: string;
-  contactEmail: string;
-  contactName: string;
-  status: string;
-  totalValue: number;
-  currency: string;
-  items: Array<{ productId: string; productName: string; quantity: number }>;
-  createdAt: string;
-}>> {
+export async function getRecentOrders(
+  orgId: string,
+  sinceHours = 24,
+): Promise<
+  Array<{
+    orderId: string;
+    contactEmail: string;
+    contactName: string;
+    status: string;
+    totalValue: number;
+    currency: string;
+    items: Array<{ productId: string; productName: string; quantity: number }>;
+    createdAt: string;
+  }>
+> {
   const since = new Date(Date.now() - sinceHours * 3600_000).toISOString();
-  const data = await shoptetFetch(orgId, `/api/v1/orders?createdAfter=${encodeURIComponent(since)}&limit=100`) as {
+  const data = (await shoptetFetch(
+    orgId,
+    `/api/v1/orders?createdAfter=${encodeURIComponent(since)}&limit=100`,
+  )) as {
     data?: { orders?: Array<Record<string, unknown>> };
   };
   const orders = data?.data?.orders ?? [];
@@ -115,7 +136,10 @@ export async function getRecentOrders(orgId: string, sinceHours = 24): Promise<A
 }
 
 /** Fetch live product data for dynamic email content. */
-export async function getProductData(orgId: string, productId: string): Promise<{
+export async function getProductData(
+  orgId: string,
+  productId: string,
+): Promise<{
   name: string;
   price: number;
   originalPrice?: number;
@@ -125,7 +149,7 @@ export async function getProductData(orgId: string, productId: string): Promise<
   imageUrl?: string;
   url?: string;
 }> {
-  const data = await shoptetFetch(orgId, `/api/v1/products/${productId}`) as {
+  const data = (await shoptetFetch(orgId, `/api/v1/products/${productId}`)) as {
     data?: { product?: Record<string, unknown> };
   };
   const p = data?.data?.product ?? {};
@@ -146,7 +170,10 @@ export async function getProductData(orgId: string, productId: string): Promise<
 }
 
 /** Send a review request to a customer for their completed order. */
-export async function triggerReviewRequest(orgId: string, orderId: string): Promise<{ queued: boolean }> {
+export async function triggerReviewRequest(
+  orgId: string,
+  orderId: string,
+): Promise<{ queued: boolean }> {
   await shoptetFetch(orgId, `/api/v1/orders/${orderId}/review-request`, { method: 'POST' });
   return { queued: true };
 }

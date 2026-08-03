@@ -57,7 +57,12 @@ export async function createTopic(
 export async function updateTopic(
   orgId: string,
   id: string,
-  patch: Partial<{ displayName: string; description: string; defaultStatus: TopicDefault; active: boolean }>,
+  patch: Partial<{
+    displayName: string;
+    description: string;
+    defaultStatus: TopicDefault;
+    active: boolean;
+  }>,
 ): Promise<SubscriptionTopic> {
   const [row] = await db
     .update(subscriptionTopics)
@@ -98,7 +103,10 @@ export async function listContactTopics(
     .orderBy(asc(subscriptionTopics.displayName));
 
   const subs = await db
-    .select({ topicId: contactTopicSubscriptions.topicId, status: contactTopicSubscriptions.status })
+    .select({
+      topicId: contactTopicSubscriptions.topicId,
+      status: contactTopicSubscriptions.status,
+    })
     .from(contactTopicSubscriptions)
     .where(
       and(

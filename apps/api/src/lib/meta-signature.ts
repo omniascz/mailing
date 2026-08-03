@@ -34,7 +34,6 @@ export function verifyMetaRequest(
   const sig =
     (req.headers['x-hub-signature-256'] as string | undefined) ??
     (req.headers['x-hub-signature'] as string | undefined);
-  const raw =
-    (req as { rawBody?: Buffer }).rawBody ?? Buffer.from(JSON.stringify(req.body ?? {}));
+  const raw = (req as { rawBody?: Buffer }).rawBody ?? Buffer.from(JSON.stringify(req.body ?? {}));
   return verifyMetaSignature(raw, sig, appSecret);
 }

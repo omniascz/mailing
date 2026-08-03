@@ -1,6 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { computeAttribution, type AttributionModel } from '../../services/analytics/multi-touch-attribution.js';
+import {
+  computeAttribution,
+  type AttributionModel,
+} from '../../services/analytics/multi-touch-attribution.js';
 import { predictRevenueImpact } from '../../services/analytics/revenue-impact.js';
 
 export default async function attributionRoutes(app: FastifyInstance) {
@@ -13,7 +16,9 @@ export default async function attributionRoutes(app: FastifyInstance) {
   app.get('/api/v1/attribution/campaigns', async (req) => {
     const q = z
       .object({
-        model: z.enum(['first_touch', 'last_touch', 'linear', 'time_decay', 'u_shaped']).default('u_shaped'),
+        model: z
+          .enum(['first_touch', 'last_touch', 'linear', 'time_decay', 'u_shaped'])
+          .default('u_shaped'),
         dateFrom: z.string().datetime().optional(),
         dateTo: z.string().datetime().optional(),
       })

@@ -12,7 +12,8 @@ import type { ReportResult } from '../report-builder/pure.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 
-const REPORTS_FROM = process.env.REPORTS_FROM_EMAIL ?? process.env.DOI_FROM_EMAIL ?? 'reports@forgemsg.com';
+const REPORTS_FROM =
+  process.env.REPORTS_FROM_EMAIL ?? process.env.DOI_FROM_EMAIL ?? 'reports@forgemsg.com';
 
 export type ReportFrequency = 'daily' | 'weekly' | 'monthly';
 export type ReportType =
@@ -108,7 +109,10 @@ function renderCustomReportHtml(name: string, result: ReportResult): string {
       return `<tr>${cells}</tr>`;
     })
     .join('');
-  const totalCells = ['<strong>Total</strong>', ...metrics.map((m) => String(result.totals[m] ?? 0))]
+  const totalCells = [
+    '<strong>Total</strong>',
+    ...metrics.map((m) => String(result.totals[m] ?? 0)),
+  ]
     .map((c) => `<td>${c}</td>`)
     .join('');
   return (

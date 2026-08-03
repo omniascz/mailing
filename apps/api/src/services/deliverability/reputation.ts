@@ -90,9 +90,10 @@ export async function fetchSenderScore(
       domain,
       score,
       tier,
-      spamRate: typeof data['complaint_rate'] === 'number'
-        ? (data['complaint_rate'] as number) / 100
-        : undefined,
+      spamRate:
+        typeof data['complaint_rate'] === 'number'
+          ? (data['complaint_rate'] as number) / 100
+          : undefined,
       details: data,
       fetchedAt,
     };
@@ -145,7 +146,8 @@ export async function fetchGooglePostmaster(
     const endDate = formatGoogleDate(today);
     const startDate = formatGoogleDate(new Date(today.getTime() - 6 * 86400_000));
 
-    const url = `https://gmailpostmastertools.googleapis.com/v1/domains/${encodeURIComponent(domain)}/trafficStats` +
+    const url =
+      `https://gmailpostmastertools.googleapis.com/v1/domains/${encodeURIComponent(domain)}/trafficStats` +
       `?startDate.year=${startDate.year}&startDate.month=${startDate.month}&startDate.day=${startDate.day}` +
       `&endDate.year=${endDate.year}&endDate.month=${endDate.month}&endDate.day=${endDate.day}`;
 
@@ -175,9 +177,8 @@ export async function fetchGooglePostmaster(
     const domainReputation = (latest['domainReputation'] as string | undefined) ?? 'UNKNOWN';
     const tier = googleReputationToTier(domainReputation);
 
-    const spamRate = typeof latest['spamRateRatio'] === 'number'
-      ? (latest['spamRateRatio'] as number)
-      : undefined;
+    const spamRate =
+      typeof latest['spamRateRatio'] === 'number' ? (latest['spamRateRatio'] as number) : undefined;
 
     const result: ProviderReputation = {
       provider: 'google_postmaster',
@@ -329,15 +330,15 @@ export async function fetchSeznamPostmaster(
     const data = (await res.json()) as Record<string, unknown>;
 
     // Seznam returns: reputation_score (0-100), spam_rate, rejection_rate, reputation_label
-    const score = typeof data['reputation_score'] === 'number'
-      ? (data['reputation_score'] as number)
-      : undefined;
+    const score =
+      typeof data['reputation_score'] === 'number'
+        ? (data['reputation_score'] as number)
+        : undefined;
     const reputationLabel = (data['reputation_label'] as string | undefined) ?? '';
     const tier: ReputationTier = seznamLabelToTier(reputationLabel, score);
 
-    const spamRate = typeof data['spam_rate'] === 'number'
-      ? (data['spam_rate'] as number)
-      : undefined;
+    const spamRate =
+      typeof data['spam_rate'] === 'number' ? (data['spam_rate'] as number) : undefined;
 
     const result: ProviderReputation = {
       provider: 'seznam_postmaster',
@@ -386,9 +387,7 @@ export async function fetchAllReputation(
   ]);
 
   const providers = [senderscore, google, snds, seznam];
-  const knownTiers = providers
-    .filter((p) => p.tier !== 'unknown')
-    .map((p) => p.tier);
+  const knownTiers = providers.filter((p) => p.tier !== 'unknown').map((p) => p.tier);
 
   const overallTier: ReputationTier =
     knownTiers.length === 0
@@ -423,11 +422,15 @@ function scoreToTier(score: number | undefined): ReputationTier {
 
 function googleReputationToTier(label: string): ReputationTier {
   switch (label.toUpperCase()) {
-    case 'HIGH': return 'high';
-    case 'MEDIUM': return 'medium';
+    case 'HIGH':
+      return 'high';
+    case 'MEDIUM':
+      return 'medium';
     case 'LOW':
-    case 'BAD': return 'low';
-    default: return 'unknown';
+    case 'BAD':
+      return 'low';
+    default:
+      return 'unknown';
   }
 }
 

@@ -18,14 +18,22 @@ describe('leadFeatures', () => {
 describe('trainLeadModel', () => {
   it('returns null when there is too little data (cold start → heuristic)', () => {
     const few: LeadSample[] = Array.from({ length: 10 }, () => ({
-      leadScore: 100, totalOpens: 5, totalClicks: 1, totalSends: 10, converted: false,
+      leadScore: 100,
+      totalOpens: 5,
+      totalClicks: 1,
+      totalSends: 10,
+      converted: false,
     }));
     expect(trainLeadModel(few)).toBeNull();
   });
 
   it('returns null when one class is missing', () => {
     const allConverted: LeadSample[] = Array.from({ length: 80 }, () => ({
-      leadScore: 150, totalOpens: 8, totalClicks: 3, totalSends: 10, converted: true,
+      leadScore: 150,
+      totalOpens: 8,
+      totalClicks: 3,
+      totalSends: 10,
+      converted: true,
     }));
     expect(trainLeadModel(allConverted)).toBeNull();
   });
@@ -42,8 +50,18 @@ describe('trainLeadModel', () => {
     }
     const model = trainLeadModel(samples);
     expect(model).not.toBeNull();
-    const hot = scoreLeadProbability(model!, { leadScore: 180, totalOpens: 9, totalClicks: 4, totalSends: 10 });
-    const cold = scoreLeadProbability(model!, { leadScore: 20, totalOpens: 1, totalClicks: 0, totalSends: 10 });
+    const hot = scoreLeadProbability(model!, {
+      leadScore: 180,
+      totalOpens: 9,
+      totalClicks: 4,
+      totalSends: 10,
+    });
+    const cold = scoreLeadProbability(model!, {
+      leadScore: 20,
+      totalOpens: 1,
+      totalClicks: 0,
+      totalSends: 10,
+    });
     expect(hot).toBeGreaterThan(cold);
     expect(hot).toBeGreaterThan(0.6);
     expect(cold).toBeLessThan(0.4);

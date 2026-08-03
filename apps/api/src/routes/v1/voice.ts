@@ -213,6 +213,14 @@ export default async function voiceRoutes(app: FastifyInstance) {
     return reply.type('text/xml').send(twiml);
   };
 
-  app.post('/api/v1/voice/answer', { schema: { tags: ['Voice'], summary: 'TwiML — bridge call to AI bot' } }, answerHandler);
-  app.get('/api/v1/voice/answer', { schema: { tags: ['Voice'], summary: 'TwiML — bridge call to AI bot' } }, answerHandler);
+  app.post(
+    '/api/v1/voice/answer',
+    { schema: { tags: ['Voice'], summary: 'TwiML — bridge call to AI bot' } },
+    answerHandler,
+  );
+  app.get(
+    '/api/v1/voice/answer',
+    { schema: { tags: ['Voice'], summary: 'TwiML — bridge call to AI bot' } },
+    answerHandler,
+  );
 }

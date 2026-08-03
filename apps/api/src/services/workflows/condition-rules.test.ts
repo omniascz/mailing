@@ -13,7 +13,9 @@ describe('normalizeConditionConfig', () => {
 
   it('maps email_opened / email_clicked rules', () => {
     expect(normalizeConditionConfig({ rule: { type: 'email_opened' } }).field).toBe('email_opened');
-    expect(normalizeConditionConfig({ rule: { type: 'email_clicked' } }).field).toBe('email_clicked');
+    expect(normalizeConditionConfig({ rule: { type: 'email_clicked' } }).field).toBe(
+      'email_clicked',
+    );
   });
 
   it('maps *_within rules to email_opened + withinDays', () => {
@@ -29,8 +31,15 @@ describe('normalizeConditionConfig', () => {
 
   it('maps api_event_occurred to an api_event lookup', () => {
     expect(
-      normalizeConditionConfig({ rule: { type: 'api_event_occurred', eventName: 'feature_activated' } }),
-    ).toEqual({ field: 'api_event', op: 'occurred', value: 'feature_activated', withinDays: undefined });
+      normalizeConditionConfig({
+        rule: { type: 'api_event_occurred', eventName: 'feature_activated' },
+      }),
+    ).toEqual({
+      field: 'api_event',
+      op: 'occurred',
+      value: 'feature_activated',
+      withinDays: undefined,
+    });
   });
 
   it('marks unknown business rules as unsupported (traceable, not silent)', () => {

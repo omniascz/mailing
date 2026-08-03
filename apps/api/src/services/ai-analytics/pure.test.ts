@@ -302,7 +302,11 @@ describe('hasCommaJoin', () => {
     expect(hasCommaJoin('SELECT * FROM contacts, email_events')).toBe(true);
   });
   it('does not flag explicit JOINs', () => {
-    expect(hasCommaJoin('SELECT * FROM contacts JOIN email_events ON contacts.id = email_events.contact_id')).toBe(false);
+    expect(
+      hasCommaJoin(
+        'SELECT * FROM contacts JOIN email_events ON contacts.id = email_events.contact_id',
+      ),
+    ).toBe(false);
   });
   it('does not flag commas in the SELECT list or function args', () => {
     expect(hasCommaJoin('SELECT id, email FROM contacts')).toBe(false);
@@ -318,7 +322,9 @@ const UUID = '11111111-1111-1111-1111-111111111111';
 describe('scopeTablesToOrg (SQL-level org isolation)', () => {
   it('scopes a bare-column query that does not project org_id (the leak case)', () => {
     const out = scopeTablesToOrg('SELECT email FROM contacts', UUID, SCHEMAS);
-    expect(out).toBe(`SELECT email FROM (SELECT * FROM contacts WHERE org_id = '${UUID}') AS contacts`);
+    expect(out).toBe(
+      `SELECT email FROM (SELECT * FROM contacts WHERE org_id = '${UUID}') AS contacts`,
+    );
   });
 
   it('scopes an aggregate (count(*)) — previously leaked all orgs', () => {
@@ -337,7 +343,11 @@ describe('scopeTablesToOrg (SQL-level org isolation)', () => {
   });
 
   it('leaves non-whitelisted identifiers (CTE refs) alone', () => {
-    const out = scopeTablesToOrg('WITH q AS (SELECT * FROM contacts) SELECT * FROM q', UUID, SCHEMAS);
+    const out = scopeTablesToOrg(
+      'WITH q AS (SELECT * FROM contacts) SELECT * FROM q',
+      UUID,
+      SCHEMAS,
+    );
     // the base table inside the CTE is scoped …
     expect(out).toContain(`(SELECT * FROM contacts WHERE org_id = '${UUID}') AS contacts`);
     // … but the CTE reference `FROM q` is not rewritten.

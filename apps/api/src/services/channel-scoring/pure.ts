@@ -128,9 +128,7 @@ export function pickPreferredChannel(scores: ChannelScores): ChannelKind | null 
 export type ConfidenceBand = 'high' | 'medium' | 'low' | 'none';
 
 export function confidenceBand(scores: ChannelScores): ConfidenceBand {
-  const values = CHANNEL_KINDS.map((k) => scores[k]).filter(
-    (v): v is number => v !== null,
-  );
+  const values = CHANNEL_KINDS.map((k) => scores[k]).filter((v): v is number => v !== null);
   if (values.length === 0) return 'none';
   values.sort((a, b) => b - a);
   const top = values[0]!;

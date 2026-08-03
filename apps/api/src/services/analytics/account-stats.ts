@@ -30,7 +30,9 @@ const pct = (num: number, den: number): number =>
   den > 0 ? Math.round((num / den) * 10000) / 100 : 0;
 
 /** Pure: derive rates from raw counts (newsletter conventions: rates over sent). */
-export function computeSendRates(c: SendCounts): Omit<AccountSendStats, keyof SendCounts | 'windowDays'> {
+export function computeSendRates(
+  c: SendCounts,
+): Omit<AccountSendStats, keyof SendCounts | 'windowDays'> {
   return {
     deliveryRate: pct(c.delivered, c.sent),
     bounceRate: pct(c.bounced, c.sent),

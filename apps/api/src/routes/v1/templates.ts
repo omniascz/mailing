@@ -225,9 +225,8 @@ export default async function templateRoutes(app: FastifyInstance) {
         .limit(1);
       if (!before) throw AppError.notFound('Template');
 
-      const { snapshotTemplateVersion } = await import(
-        '../../services/editor/template-versions.js'
-      );
+      const { snapshotTemplateVersion } =
+        await import('../../services/editor/template-versions.js');
       await snapshotTemplateVersion(req.user!.orgId, id, before, req.user!.userId).catch(() => {});
 
       const [row] = await db
@@ -252,9 +251,7 @@ export default async function templateRoutes(app: FastifyInstance) {
     { schema: { tags: ['Templates'], summary: 'List template version history' } },
     async (req) => {
       const { id } = savedIdParam.parse(req.params);
-      const { listTemplateVersions } = await import(
-        '../../services/editor/template-versions.js'
-      );
+      const { listTemplateVersions } = await import('../../services/editor/template-versions.js');
       const data = await listTemplateVersions(req.user!.orgId, id);
       return { data };
     },
@@ -268,9 +265,7 @@ export default async function templateRoutes(app: FastifyInstance) {
       const { id, versionId } = z
         .object({ id: z.string().uuid(), versionId: z.string().uuid() })
         .parse(req.params);
-      const { restoreTemplateVersion } = await import(
-        '../../services/editor/template-versions.js'
-      );
+      const { restoreTemplateVersion } = await import('../../services/editor/template-versions.js');
       const data = await restoreTemplateVersion(req.user!.orgId, id, versionId, req.user!.userId);
       return { data };
     },

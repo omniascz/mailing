@@ -82,7 +82,9 @@ export default async function ticketingRoutes(app: FastifyInstance) {
     '/api/v1/ticketing/events/batch',
     { schema: { tags: ['Ticketing'], summary: 'Ingest a batch of ticketing events' } },
     async (req, reply) => {
-      const body = z.object({ events: z.array(ticketingEventSchema).min(1).max(500) }).parse(req.body);
+      const body = z
+        .object({ events: z.array(ticketingEventSchema).min(1).max(500) })
+        .parse(req.body);
       const results = [];
       let ok = 0;
       for (const e of body.events) {

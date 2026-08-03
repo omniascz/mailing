@@ -290,7 +290,9 @@ describe('public reputation badge (#440)', () => {
   });
 
   it('assigns distinct colours per grade', () => {
-    const colors = ['A', 'B', 'C', 'D', 'F'].map((g) => gradeToColor(g as PublicBadgeInput['grade']));
+    const colors = ['A', 'B', 'C', 'D', 'F'].map((g) =>
+      gradeToColor(g as PublicBadgeInput['grade']),
+    );
     expect(new Set(colors).size).toBe(5);
   });
 

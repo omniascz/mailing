@@ -7,7 +7,10 @@
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/email-events.js';
-import { contactSendTimePredictions, type ContactSendTimePrediction } from '../../db/schema/contact-send-time.js';
+import {
+  contactSendTimePredictions,
+  type ContactSendTimePrediction,
+} from '../../db/schema/contact-send-time.js';
 import { redis } from '../../lib/redis.js';
 import { computeStoFromCounts, normalizeHistogram, uniformPrior, HOURS } from './sto-pure.js';
 
@@ -36,7 +39,13 @@ export async function getOrgHourPrior(orgId: string): Promise<number[]> {
       cnt: sql<number>`count(*)::int`,
     })
     .from(emailEvents)
-    .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.eventType, 'open'), gte(emailEvents.createdAt, since)))
+    .where(
+      and(
+        eq(emailEvents.orgId, orgId),
+        eq(emailEvents.eventType, 'open'),
+        gte(emailEvents.createdAt, since),
+      ),
+    )
     .groupBy(sql`extract(hour from created_at at time zone 'UTC')::int`);
 
   const counts = new Array(HOURS).fill(0) as number[];
@@ -57,12 +66,14 @@ export async function computeContactSendTime(
   const rows = await db
     .select({ hour: sql<number>`extract(hour from created_at at time zone 'UTC')::int` })
     .from(emailEvents)
-    .where(and(
-      eq(emailEvents.orgId, orgId),
-      eq(emailEvents.contactId, contactId),
-      eq(emailEvents.eventType, 'open'),
-      gte(emailEvents.createdAt, since),
-    ));
+    .where(
+      and(
+        eq(emailEvents.orgId, orgId),
+        eq(emailEvents.contactId, contactId),
+        eq(emailEvents.eventType, 'open'),
+        gte(emailEvents.createdAt, since),
+      ),
+    );
 
   const counts = new Array(HOURS).fill(0) as number[];
   for (const r of rows) {
@@ -79,16 +90,20 @@ export async function computeContactSendTime(
   const rates = sto.rates;
   const total = sto.sampleSize;
 
-  const [existing] = await db.select({ id: contactSendTimePredictions.id })
+  const [existing] = await db
+    .select({ id: contactSendTimePredictions.id })
     .from(contactSendTimePredictions)
-    .where(and(
-      eq(contactSendTimePredictions.orgId, orgId),
-      eq(contactSendTimePredictions.contactId, contactId),
-    ))
+    .where(
+      and(
+        eq(contactSendTimePredictions.orgId, orgId),
+        eq(contactSendTimePredictions.contactId, contactId),
+      ),
+    )
     .limit(1);
 
   if (existing) {
-    const [updated] = await db.update(contactSendTimePredictions)
+    const [updated] = await db
+      .update(contactSendTimePredictions)
       .set({
         bestHourUtc: bestHour,
         secondBestHourUtc: secondBest,
@@ -102,15 +117,18 @@ export async function computeContactSendTime(
     return updated!;
   }
 
-  const [inserted] = await db.insert(contactSendTimePredictions).values({
-    orgId,
-    contactId,
-    bestHourUtc: bestHour,
-    secondBestHourUtc: secondBest,
-    confidence,
-    hourlyOpenRates: JSON.stringify(rates),
-    sampleSize: total,
-  }).returning();
+  const [inserted] = await db
+    .insert(contactSendTimePredictions)
+    .values({
+      orgId,
+      contactId,
+      bestHourUtc: bestHour,
+      secondBestHourUtc: secondBest,
+      confidence,
+      hourlyOpenRates: JSON.stringify(rates),
+      sampleSize: total,
+    })
+    .returning();
   return inserted!;
 }
 
@@ -118,12 +136,15 @@ export async function getPrediction(
   orgId: string,
   contactId: string,
 ): Promise<ContactSendTimePrediction | null> {
-  const [row] = await db.select()
+  const [row] = await db
+    .select()
     .from(contactSendTimePredictions)
-    .where(and(
-      eq(contactSendTimePredictions.orgId, orgId),
-      eq(contactSendTimePredictions.contactId, contactId),
-    ))
+    .where(
+      and(
+        eq(contactSendTimePredictions.orgId, orgId),
+        eq(contactSendTimePredictions.contactId, contactId),
+      ),
+    )
     .limit(1);
   return row ?? null;
 }

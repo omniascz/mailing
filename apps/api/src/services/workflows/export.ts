@@ -70,20 +70,14 @@ export async function exportWorkflow(
 
   // Compute checksum over the deterministic JSON (exclude the checksum field)
   const { checksum: _skip, ...forHash } = payload;
-  const hash = crypto
-    .createHash('sha256')
-    .update(JSON.stringify(forHash))
-    .digest('hex');
+  const hash = crypto.createHash('sha256').update(JSON.stringify(forHash)).digest('hex');
 
   return { ...payload, checksum: hash };
 }
 
 // ─── Import ───────────────────────────────────────────────────────────────────
 
-export async function importWorkflow(
-  orgId: string,
-  blob: unknown,
-): Promise<Workflow> {
+export async function importWorkflow(orgId: string, blob: unknown): Promise<Workflow> {
   const parsed = validateBlob(blob);
 
   // Remap all node IDs to fresh UUIDs to avoid collisions
@@ -181,7 +175,11 @@ export async function publishToMarketplace(
 ): Promise<MarketplaceEntry> {
   const blob = await exportWorkflow(orgId, workflowId);
   const [wf] = await db
-    .select({ name: workflows.name, description: workflows.description, triggerType: workflows.triggerType })
+    .select({
+      name: workflows.name,
+      description: workflows.description,
+      triggerType: workflows.triggerType,
+    })
     .from(workflows)
     .where(and(eq(workflows.id, workflowId), eq(workflows.orgId, orgId)))
     .limit(1);
@@ -204,7 +202,10 @@ export async function publishToMarketplace(
   return entry;
 }
 
-export function listMarketplace(filter?: { category?: string; triggerType?: string }): MarketplaceEntry[] {
+export function listMarketplace(filter?: {
+  category?: string;
+  triggerType?: string;
+}): MarketplaceEntry[] {
   let entries = [...marketplaceCache.values()];
   if (filter?.category) entries = entries.filter((e) => e.category === filter.category);
   if (filter?.triggerType) entries = entries.filter((e) => e.triggerType === filter.triggerType);

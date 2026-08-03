@@ -40,10 +40,7 @@ describe('validateAmp', () => {
 
   it('rejects missing AMP runtime script', () => {
     const r = validateAmp(
-      VALID_AMP.replace(
-        '<script async src="https://cdn.ampproject.org/v0.js"></script>',
-        '',
-      ),
+      VALID_AMP.replace('<script async src="https://cdn.ampproject.org/v0.js"></script>', ''),
     );
     expect(r.valid).toBe(false);
     expect(r.errors).toContain('missing_amp_runtime');
@@ -51,10 +48,7 @@ describe('validateAmp', () => {
 
   it('rejects raw <script> tags', () => {
     const r = validateAmp(
-      VALID_AMP.replace(
-        '<p>Hello AMP world.</p>',
-        '<p>Hi</p><script>alert(1)</script>',
-      ),
+      VALID_AMP.replace('<p>Hello AMP world.</p>', '<p>Hi</p><script>alert(1)</script>'),
     );
     expect(r.valid).toBe(false);
     expect(r.errors).toContain('forbidden_tag_script');

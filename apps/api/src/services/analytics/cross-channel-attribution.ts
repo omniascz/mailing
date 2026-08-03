@@ -26,8 +26,8 @@ export interface CrossChannelReport {
 
 // Channel weights for "email_boost" model (email gets 50%, rest split linearly)
 const EMAIL_BOOST_WEIGHTS: Record<string, number> = {
-  email: 0.50,
-  sms: 0.20,
+  email: 0.5,
+  sms: 0.2,
   push: 0.15,
   whatsapp: 0.15,
 };
@@ -46,11 +46,13 @@ export async function computeCrossChannelAttribution(
       createdAt: revenueEvents.occurredAt,
     })
     .from(revenueEvents)
-    .where(and(
-      eq(revenueEvents.orgId, orgId),
-      gte(revenueEvents.occurredAt, dateFrom),
-      sql`occurred_at <= ${dateTo.toISOString()}`,
-    ));
+    .where(
+      and(
+        eq(revenueEvents.orgId, orgId),
+        gte(revenueEvents.occurredAt, dateFrom),
+        sql`occurred_at <= ${dateTo.toISOString()}`,
+      ),
+    );
 
   const totalRevenue = revenues.reduce((s, r) => s + Number(r.amount), 0);
 
@@ -59,21 +61,24 @@ export async function computeCrossChannelAttribution(
 
   // Channel touch counts per contact (simplified: email events are our main data source)
   // For a real cross-channel system, you'd join SMS/push send logs here
-  const emailTouches = contactIds.length > 0
-    ? await db
-        .select({
-          contactId: emailEvents.contactId,
-          touchCount: sql<number>`count(*)::int`,
-        })
-        .from(emailEvents)
-        .where(and(
-          eq(emailEvents.orgId, orgId),
-          sql`contact_id = any(${contactIds})`,
-          sql`event_type = 'deliver'`,
-          gte(emailEvents.createdAt, dateFrom),
-        ))
-        .groupBy(emailEvents.contactId)
-    : [];
+  const emailTouches =
+    contactIds.length > 0
+      ? await db
+          .select({
+            contactId: emailEvents.contactId,
+            touchCount: sql<number>`count(*)::int`,
+          })
+          .from(emailEvents)
+          .where(
+            and(
+              eq(emailEvents.orgId, orgId),
+              sql`contact_id = any(${contactIds})`,
+              sql`event_type = 'deliver'`,
+              gte(emailEvents.createdAt, dateFrom),
+            ),
+          )
+          .groupBy(emailEvents.contactId)
+      : [];
 
   const emailTouchMap = new Map(emailTouches.map((r) => [r.contactId, Number(r.touchCount)]));
 

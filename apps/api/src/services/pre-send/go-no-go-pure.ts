@@ -145,7 +145,7 @@ export function classifyDomainAuth(input: {
     category: 'authentication',
     severity: 'warn',
     title: 'DMARC record missing',
-    detail: 'Without DMARC the recipient can\'t verify alignment. Add a p=none record to start.',
+    detail: "Without DMARC the recipient can't verify alignment. Add a p=none record to start.",
     fixHref: '/settings/domains',
   };
 }
@@ -218,8 +218,7 @@ export function classifyUnsubscribeLink(input: { hasUnsubscribe: boolean }): Che
       category: 'compliance',
       severity: 'fail',
       title: 'Email body has no unsubscribe link',
-      detail:
-        'GDPR + CAN-SPAM + ePrivacy require a working unsubscribe in every marketing email.',
+      detail: 'GDPR + CAN-SPAM + ePrivacy require a working unsubscribe in every marketing email.',
       fixHref: '/editor/preferences',
     };
   }
@@ -231,9 +230,7 @@ export function classifyUnsubscribeLink(input: { hasUnsubscribe: boolean }): Che
   };
 }
 
-export function classifyPreferenceCenter(input: {
-  hasPreferenceCenterTag: boolean;
-}): CheckResult {
+export function classifyPreferenceCenter(input: { hasPreferenceCenterTag: boolean }): CheckResult {
   if (input.hasPreferenceCenterTag) {
     return {
       id: 'preference-center-tag',
@@ -413,7 +410,8 @@ export function classifyComplaintRate(input: {
       category: 'reputation',
       severity: 'warn',
       title: `Complaint rate ${trendPct.toFixed(2)}% (7d)`,
-      detail: 'Approaching Gmail warning threshold. Consider cleaning list or tightening targeting.',
+      detail:
+        'Approaching Gmail warning threshold. Consider cleaning list or tightening targeting.',
       metrics:
         pct24h !== null
           ? { complaintRatePct: trendPct, complaintRate24hPct: pct24h }
@@ -518,7 +516,8 @@ export function classifyWarmupCapacity(input: {
       category: 'deliverability',
       severity: 'fail',
       title: 'IP warmup daily limit reached',
-      detail: 'All sending IPs have hit their daily cap. Remaining emails will queue until tomorrow.',
+      detail:
+        'All sending IPs have hit their daily cap. Remaining emails will queue until tomorrow.',
       metrics: { remainingCapacity: 0 },
     };
   }
@@ -571,7 +570,10 @@ const DEDUCTIONS: Record<CheckSeverity, number> = {
   pass: 0,
 };
 
-export function computeScore(results: CheckResult[]): { score: number; grade: DeliverabilityGrade } {
+export function computeScore(results: CheckResult[]): {
+  score: number;
+  grade: DeliverabilityGrade;
+} {
   const deduction = results.reduce((sum, r) => sum + DEDUCTIONS[r.severity], 0);
   const score = Math.max(0, 100 - deduction);
 
@@ -587,12 +589,27 @@ export function computeScore(results: CheckResult[]): { score: number; grade: De
 
 // ─── Blacklist check classifier ────────────────────────────────────────────
 
-export function classifyBlacklist(input: { blacklistCount: number; totalIps: number }): CheckResult {
+export function classifyBlacklist(input: {
+  blacklistCount: number;
+  totalIps: number;
+}): CheckResult {
   if (input.totalIps === 0) {
-    return { id: 'blacklist', category: 'reputation', severity: 'info', title: 'No dedicated IPs configured', detail: 'Shared IP pool — blacklist status managed by platform.' };
+    return {
+      id: 'blacklist',
+      category: 'reputation',
+      severity: 'info',
+      title: 'No dedicated IPs configured',
+      detail: 'Shared IP pool — blacklist status managed by platform.',
+    };
   }
   if (input.blacklistCount === 0) {
-    return { id: 'blacklist', category: 'reputation', severity: 'pass', title: 'No IPs on blacklists', metrics: { checkedIps: input.totalIps } };
+    return {
+      id: 'blacklist',
+      category: 'reputation',
+      severity: 'pass',
+      title: 'No IPs on blacklists',
+      metrics: { checkedIps: input.totalIps },
+    };
   }
   const pct = Math.round((input.blacklistCount / input.totalIps) * 100);
   return {

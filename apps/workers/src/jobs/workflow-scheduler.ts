@@ -70,7 +70,9 @@ export function startWorkflowSchedulerWorkers() {
       const r = (await post('/api/v1/internal/warehouse-sync/run-due')) as {
         data?: { ran: number; ok: number; failed: number };
       };
-      job.log(`Warehouse syncs: ran ${r.data?.ran ?? 0}, ok ${r.data?.ok ?? 0}, failed ${r.data?.failed ?? 0}`);
+      job.log(
+        `Warehouse syncs: ran ${r.data?.ran ?? 0}, ok ${r.data?.ok ?? 0}, failed ${r.data?.failed ?? 0}`,
+      );
     },
     { connection, concurrency: 1 },
   );
@@ -133,7 +135,9 @@ export function startWorkflowSchedulerWorkers() {
         data?: { dispatched: number; errors: number };
       };
       if (r.data?.dispatched) {
-        job.log(`Dispatched ${r.data.dispatched} scheduled campaigns (${r.data.errors ?? 0} errors)`);
+        job.log(
+          `Dispatched ${r.data.dispatched} scheduled campaigns (${r.data.errors ?? 0} errors)`,
+        );
       }
     },
     { connection, concurrency: 1 },
@@ -180,7 +184,9 @@ export function startWorkflowSchedulerWorkers() {
         data?: { segments: number; entered: number; exited: number };
       };
       if (r.data && (r.data.entered || r.data.exited)) {
-        job.log(`Segments: ${r.data.entered} entered, ${r.data.exited} exited (${r.data.segments})`);
+        job.log(
+          `Segments: ${r.data.entered} entered, ${r.data.exited} exited (${r.data.segments})`,
+        );
       }
     },
     { connection, concurrency: 1 },
@@ -262,7 +268,12 @@ export async function scheduleWorkflowJobs() {
     await ticketingDayOfQueue.add(
       'tick',
       {},
-      { jobId: 'ticketing-day-of', repeat: { pattern: '* * * * *' }, removeOnComplete: true, removeOnFail: { count: 10 } },
+      {
+        jobId: 'ticketing-day-of',
+        repeat: { pattern: '* * * * *' },
+        removeOnComplete: true,
+        removeOnFail: { count: 10 },
+      },
     );
     console.log('[workflow-scheduler] ticketing-day-of scheduled (every minute)');
   }
@@ -270,7 +281,12 @@ export async function scheduleWorkflowJobs() {
     await ticketingFillHouseQueue.add(
       'tick',
       {},
-      { jobId: 'ticketing-fill-house', repeat: { pattern: '0 10 * * *' }, removeOnComplete: true, removeOnFail: { count: 5 } },
+      {
+        jobId: 'ticketing-fill-house',
+        repeat: { pattern: '0 10 * * *' },
+        removeOnComplete: true,
+        removeOnFail: { count: 5 },
+      },
     );
     console.log('[workflow-scheduler] ticketing-fill-house scheduled (10:00 daily)');
   }
@@ -278,7 +294,12 @@ export async function scheduleWorkflowJobs() {
     await ticketingDiscoverQueue.add(
       'tick',
       {},
-      { jobId: 'ticketing-discover', repeat: { pattern: '0 9 * * 1' }, removeOnComplete: true, removeOnFail: { count: 5 } },
+      {
+        jobId: 'ticketing-discover',
+        repeat: { pattern: '0 9 * * 1' },
+        removeOnComplete: true,
+        removeOnFail: { count: 5 },
+      },
     );
     console.log('[workflow-scheduler] ticketing-discover scheduled (Mon 09:00)');
   }
@@ -286,7 +307,12 @@ export async function scheduleWorkflowJobs() {
     await campaignDispatchQueue.add(
       'tick',
       {},
-      { jobId: 'campaign-dispatch', repeat: { pattern: '* * * * *' }, removeOnComplete: true, removeOnFail: { count: 10 } },
+      {
+        jobId: 'campaign-dispatch',
+        repeat: { pattern: '* * * * *' },
+        removeOnComplete: true,
+        removeOnFail: { count: 10 },
+      },
     );
     console.log('[workflow-scheduler] campaign-dispatch scheduled (every minute)');
   }
@@ -294,7 +320,12 @@ export async function scheduleWorkflowJobs() {
     await browseAbandonmentQueue.add(
       'tick',
       {},
-      { jobId: 'browse-abandonment', repeat: { pattern: '*/15 * * * *' }, removeOnComplete: true, removeOnFail: { count: 10 } },
+      {
+        jobId: 'browse-abandonment',
+        repeat: { pattern: '*/15 * * * *' },
+        removeOnComplete: true,
+        removeOnFail: { count: 10 },
+      },
     );
     console.log('[workflow-scheduler] browse-abandonment scheduled (every 15 min)');
   }
@@ -302,7 +333,12 @@ export async function scheduleWorkflowJobs() {
     await scheduledReportsQueue.add(
       'run',
       {},
-      { jobId: 'scheduled-reports', repeat: { pattern: '5 * * * *' }, removeOnComplete: true, removeOnFail: { count: 5 } },
+      {
+        jobId: 'scheduled-reports',
+        repeat: { pattern: '5 * * * *' },
+        removeOnComplete: true,
+        removeOnFail: { count: 5 },
+      },
     );
     console.log('[workflow-scheduler] scheduled-reports scheduled (hourly at :05)');
   }
@@ -310,7 +346,12 @@ export async function scheduleWorkflowJobs() {
     await segmentMembershipQueue.add(
       'refresh',
       {},
-      { jobId: 'segment-membership', repeat: { pattern: '*/5 * * * *' }, removeOnComplete: true, removeOnFail: { count: 10 } },
+      {
+        jobId: 'segment-membership',
+        repeat: { pattern: '*/5 * * * *' },
+        removeOnComplete: true,
+        removeOnFail: { count: 10 },
+      },
     );
     console.log('[workflow-scheduler] segment-membership scheduled (every 5 min)');
   }

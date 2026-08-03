@@ -41,11 +41,7 @@ const GUILT_PATTERNS = [
   /miss\s+out/i,
 ];
 
-const MISLEADING_UNSUB = [
-  /unsubscribe/i,
-  /opt.out/i,
-  /stop\s+emails/i,
-];
+const MISLEADING_UNSUB = [/unsubscribe/i, /opt.out/i, /stop\s+emails/i];
 
 const CLICKBAIT_SUBJECTS = [
   /you\s+(won'?t|will\s+not)\s+believe/i,
@@ -57,7 +53,10 @@ const CLICKBAIT_SUBJECTS = [
 ];
 
 function extractText(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function ruleBasedCheck(subject: string, html: string): DarkPatternIssue[] {
@@ -163,7 +162,11 @@ export async function detectDarkPatterns(
   if (!ruleTypes.has('clickbait_subject')) passedChecks.push('honest_subject');
 
   if (!useAi) {
-    const score = Math.min(10, ruleIssues.filter((i) => i.severity === 'error').length * 3 + ruleIssues.filter((i) => i.severity === 'warning').length * 1.5);
+    const score = Math.min(
+      10,
+      ruleIssues.filter((i) => i.severity === 'error').length * 3 +
+        ruleIssues.filter((i) => i.severity === 'warning').length * 1.5,
+    );
     return { score, issues: ruleIssues, passedChecks };
   }
 
@@ -184,7 +187,11 @@ Score: 0=clean, 10=highly manipulative. Check for: misleading claims, false soci
   });
 
   try {
-    const ai = JSON.parse(result.text) as { score: number; additionalIssues: DarkPatternIssue[]; summary: string };
+    const ai = JSON.parse(result.text) as {
+      score: number;
+      additionalIssues: DarkPatternIssue[];
+      summary: string;
+    };
     const allIssues = [...ruleIssues, ...(ai.additionalIssues ?? [])];
     return {
       score: Math.max(ai.score ?? 0, Math.min(10, ruleIssues.length * 2)),

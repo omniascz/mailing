@@ -37,10 +37,7 @@ export interface StoResult {
 
 // ─── Per-contact STO ─────────────────────────────────────────────────────────
 
-export async function getContactSendHour(
-  orgId: string,
-  contactId: string,
-): Promise<StoResult> {
+export async function getContactSendHour(orgId: string, contactId: string): Promise<StoResult> {
   const since = new Date(Date.now() - LOOKBACK_DAYS * 86400_000);
 
   const rows = (await db.execute(sql`

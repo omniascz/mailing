@@ -9,7 +9,7 @@ import { emailEvents } from '../../db/schema/email-events.js';
 
 export interface UnsubscribeRisk {
   contactId: string;
-  riskScore: number;   // 0-1; ≥0.7 = high risk
+  riskScore: number; // 0-1; ≥0.7 = high risk
   riskTier: 'low' | 'medium' | 'high' | 'critical';
   signals: {
     daysSinceLastOpen: number | null;
@@ -31,27 +31,37 @@ export async function computeUnsubscribeRisk(
   const d30 = new Date(now - 30 * 86400_000);
   const d60 = new Date(now - 60 * 86400_000);
 
-  const [last30] = await db.select({
-    sent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
-    opens: sql<number>`count(*) filter (where event_type = 'open')::int`,
-    clicks: sql<number>`count(*) filter (where event_type = 'click')::int`,
-    unsubs: sql<number>`count(*) filter (where event_type = 'unsubscribe')::int`,
-    lastOpen: sql<string | null>`max(created_at) filter (where event_type = 'open')`,
-  }).from(emailEvents).where(and(
-    eq(emailEvents.orgId, orgId),
-    eq(emailEvents.contactId, contactId),
-    gte(emailEvents.createdAt, d30),
-  ));
+  const [last30] = await db
+    .select({
+      sent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
+      opens: sql<number>`count(*) filter (where event_type = 'open')::int`,
+      clicks: sql<number>`count(*) filter (where event_type = 'click')::int`,
+      unsubs: sql<number>`count(*) filter (where event_type = 'unsubscribe')::int`,
+      lastOpen: sql<string | null>`max(created_at) filter (where event_type = 'open')`,
+    })
+    .from(emailEvents)
+    .where(
+      and(
+        eq(emailEvents.orgId, orgId),
+        eq(emailEvents.contactId, contactId),
+        gte(emailEvents.createdAt, d30),
+      ),
+    );
 
-  const [prev30] = await db.select({
-    sent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
-    opens: sql<number>`count(*) filter (where event_type = 'open')::int`,
-  }).from(emailEvents).where(and(
-    eq(emailEvents.orgId, orgId),
-    eq(emailEvents.contactId, contactId),
-    gte(emailEvents.createdAt, d60),
-    lt(emailEvents.createdAt, d30),
-  ));
+  const [prev30] = await db
+    .select({
+      sent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
+      opens: sql<number>`count(*) filter (where event_type = 'open')::int`,
+    })
+    .from(emailEvents)
+    .where(
+      and(
+        eq(emailEvents.orgId, orgId),
+        eq(emailEvents.contactId, contactId),
+        gte(emailEvents.createdAt, d60),
+        lt(emailEvents.createdAt, d30),
+      ),
+    );
 
   const sent30 = Number(last30?.sent ?? 0);
   const opens30 = Number(last30?.opens ?? 0);
@@ -66,7 +76,9 @@ export async function computeUnsubscribeRisk(
   const clickRate30 = opens30 > 0 ? clicks30 / opens30 : 0;
 
   const lastOpenDate = last30?.lastOpen ? new Date(last30.lastOpen) : null;
-  const daysSinceLastOpen = lastOpenDate ? Math.floor((now - lastOpenDate.getTime()) / 86400_000) : null;
+  const daysSinceLastOpen = lastOpenDate
+    ? Math.floor((now - lastOpenDate.getTime()) / 86400_000)
+    : null;
 
   // Score: weighted combination of signals
   let score = 0;
@@ -86,9 +98,7 @@ export async function computeUnsubscribeRisk(
   score = Math.min(1, score);
 
   const riskTier: UnsubscribeRisk['riskTier'] =
-    score >= 0.8 ? 'critical' :
-    score >= 0.6 ? 'high' :
-    score >= 0.35 ? 'medium' : 'low';
+    score >= 0.8 ? 'critical' : score >= 0.6 ? 'high' : score >= 0.35 ? 'medium' : 'low';
 
   return {
     contactId,
@@ -135,7 +145,10 @@ export async function getAtRiskContacts(
     const daysSinceOpen = row.lastOpen
       ? Math.floor((Date.now() - new Date(row.lastOpen).getTime()) / 86400_000)
       : null;
-    const roughScore = (openRate < 0.1 ? 0.3 : 0) + (daysSinceOpen !== null && daysSinceOpen > 21 ? 0.3 : 0) + (sent > 5 ? 0.1 : 0);
+    const roughScore =
+      (openRate < 0.1 ? 0.3 : 0) +
+      (daysSinceOpen !== null && daysSinceOpen > 21 ? 0.3 : 0) +
+      (sent > 5 ? 0.1 : 0);
     if (roughScore >= minRiskScore * 0.7 && row.contactId) {
       results.push({ contactId: row.contactId, daysSinceOpen });
     }

@@ -4,12 +4,20 @@
  * Like Beehiiv/Substack but built into ForgeMsg for any email campaign.
  */
 import {
-  pgTable, uuid, text, timestamp, integer, boolean, numeric, jsonb, index, uniqueIndex, pgEnum,
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  integer,
+  boolean,
+  numeric,
+  jsonb,
+  index,
+  uniqueIndex,
+  pgEnum,
 } from 'drizzle-orm/pg-core';
 
-export const paywallTierEnum = pgEnum('paywall_tier', [
-  'free', 'basic', 'premium', 'vip',
-]);
+export const paywallTierEnum = pgEnum('paywall_tier', ['free', 'basic', 'premium', 'vip']);
 
 /** Subscription plan for gated newsletter content */
 export const newsletterPlans = pgTable(

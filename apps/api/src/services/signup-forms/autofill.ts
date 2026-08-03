@@ -93,7 +93,9 @@ export async function buildAutofillPayload(
   const [form] = await db
     .select({ fields: signupForms.fields })
     .from(signupForms)
-    .where(and(eq(signupForms.id, formId), eq(signupForms.orgId, orgId), eq(signupForms.active, true)))
+    .where(
+      and(eq(signupForms.id, formId), eq(signupForms.orgId, orgId), eq(signupForms.active, true)),
+    )
     .limit(1);
 
   if (!form) return null;

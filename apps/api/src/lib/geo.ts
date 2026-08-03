@@ -19,7 +19,14 @@ export interface GeoLocation {
 export function isPublicIp(ip: string | null | undefined): boolean {
   if (!ip) return false;
   const s = ip.trim();
-  if (!s || s === '::1' || s === '::' || s.startsWith('fe80:') || s.startsWith('fc') || s.startsWith('fd')) {
+  if (
+    !s ||
+    s === '::1' ||
+    s === '::' ||
+    s.startsWith('fe80:') ||
+    s.startsWith('fc') ||
+    s.startsWith('fd')
+  ) {
     return false;
   }
   // IPv4 private ranges

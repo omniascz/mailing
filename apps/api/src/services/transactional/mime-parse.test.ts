@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  parseRawMime,
-  parseAddress,
-  parseAddressList,
-  decodeRfc2047,
-} from './mime-parse.js';
+import { parseRawMime, parseAddress, parseAddressList, decodeRfc2047 } from './mime-parse.js';
 
 describe('parseAddress', () => {
   it('parses Name <email> and bare email', () => {

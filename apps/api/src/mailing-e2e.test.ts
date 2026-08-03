@@ -213,8 +213,7 @@ describe('email_events / revenue_events query hygiene', () => {
 
 describe('send-path integration wiring', () => {
   const api = (rel: string) => readFileSync(join(__dirname, rel), 'utf8');
-  const worker = (rel: string) =>
-    readFileSync(join(__dirname, '../../workers/src', rel), 'utf8');
+  const worker = (rel: string) => readFileSync(join(__dirname, '../../workers/src', rel), 'utf8');
 
   it("MTA worker emits a 'deliver' event on SMTP 250", () => {
     expect(worker('jobs/mta-sender.ts')).toMatch(/type:\s*'deliver'/);
@@ -254,8 +253,7 @@ describe('send-path integration wiring', () => {
 
 describe('engine bus wiring', () => {
   const api = (rel: string) => readFileSync(join(__dirname, rel), 'utf8');
-  const worker = (rel: string) =>
-    readFileSync(join(__dirname, '../../workers/src', rel), 'utf8');
+  const worker = (rel: string) => readFileSync(join(__dirname, '../../workers/src', rel), 'utf8');
 
   it("'email' queue has a consumer", () => {
     expect(worker('jobs/workflow-email-sender.ts')).toMatch(/new Worker<[^>]*>\(\s*'email'/);
@@ -427,7 +425,9 @@ describe('security hardening', () => {
     expect(cron).toContain('runFillTheHouseTick');
     expect(cron).toContain('runDiscoverTick');
     expect(cron).toContain("'ticketing.day_of_reminder'");
-    expect(api('routes/v1/internal/ticketing-cron.ts')).toContain('/api/v1/internal/ticketing/day-of/tick');
+    expect(api('routes/v1/internal/ticketing-cron.ts')).toContain(
+      '/api/v1/internal/ticketing/day-of/tick',
+    );
     const seed = api('services/ticketing/seed-workflows.ts');
     expect(seed).toContain('seedTicketingWorkflows');
     expect(seed).toContain("eventName: 'ticketing.cart_abandoned'");
@@ -446,16 +446,10 @@ describe('security hardening', () => {
     expect(tx).toContain('attachments');
     expect(api('lib/queues.ts')).toContain('TransactionalAttachment');
     // worker: decodes base64 → Buffer for the gRPC call
-    const worker = readFileSync(
-      join(__dirname, '../../workers/src/jobs/mta-sender.ts'),
-      'utf8',
-    );
+    const worker = readFileSync(join(__dirname, '../../workers/src/jobs/mta-sender.ts'), 'utf8');
     expect(worker).toContain("Buffer.from(a.contentBase64, 'base64')");
     // engine: builds a multipart/mixed message with the attachment
-    const engine = readFileSync(
-      join(__dirname, '../../engine/internal/smtp/sender.go'),
-      'utf8',
-    );
+    const engine = readFileSync(join(__dirname, '../../engine/internal/smtp/sender.go'), 'utf8');
     expect(engine).toContain('multipart/mixed');
     expect(engine).toContain('buildAttachmentPart');
   });
@@ -511,10 +505,8 @@ describe('security hardening', () => {
 
 describe('vapor shells made real', () => {
   const api = (rel: string) => readFileSync(join(__dirname, rel), 'utf8');
-  const worker = (rel: string) =>
-    readFileSync(join(__dirname, '../../workers/src', rel), 'utf8');
-  const voice = (rel: string) =>
-    readFileSync(join(__dirname, '../../voice-bot/src', rel), 'utf8');
+  const worker = (rel: string) => readFileSync(join(__dirname, '../../workers/src', rel), 'utf8');
+  const voice = (rel: string) => readFileSync(join(__dirname, '../../voice-bot/src', rel), 'utf8');
 
   it('RCS dispatches via a real provider + worker', () => {
     expect(api('services/rcs/index.ts')).toContain('rcsQueue');

@@ -23,14 +23,8 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { sendingDomains } from '../../../db/schema/index.js';
 import { AppError } from '../../../lib/app-error.js';
-import {
-  buildDnsRecords,
-  verifyDnsRecords,
-} from '../../../services/domains/dns-records.js';
-import {
-  generateDkimKeyPair,
-  verifyDkimDns,
-} from '../../../services/domains/dkim.js';
+import { buildDnsRecords, verifyDnsRecords } from '../../../services/domains/dns-records.js';
+import { generateDkimKeyPair, verifyDkimDns } from '../../../services/domains/dkim.js';
 
 const DMARC_REPORT_EMAIL = process.env.DMARC_REPORT_EMAIL ?? 'dmarc@forgemsg.com';
 
@@ -89,8 +83,7 @@ function rowToRecords(d: typeof sendingDomains.$inferSelect): ResendDnsRecord[] 
     if (r.purpose.startsWith('SPF')) status = statusFromVerified(d.spfVerified);
     else if (r.purpose.startsWith('DKIM')) status = statusFromVerified(d.dkimVerified);
     else if (r.purpose.startsWith('DMARC')) status = statusFromVerified(d.dmarcVerified);
-    else if (r.purpose.startsWith('Return-Path'))
-      status = statusFromVerified(d.returnPathVerified);
+    else if (r.purpose.startsWith('Return-Path')) status = statusFromVerified(d.returnPathVerified);
 
     return {
       record: recordLabel(r.purpose),
@@ -161,9 +154,7 @@ const domainsResendRoutes: FastifyPluginAsync = async (app) => {
         .returning()
         .catch((err: Error) => {
           if (err.message.includes('sending_domains_org_domain_idx')) {
-            throw AppError.conflict(
-              `Domain "${body.data.name}" already registered for this org`,
-            );
+            throw AppError.conflict(`Domain "${body.data.name}" already registered for this org`);
           }
           throw err;
         });
@@ -282,11 +273,7 @@ const domainsResendRoutes: FastifyPluginAsync = async (app) => {
       });
 
       const { records: checked, allVerified } = await verifyDnsRecords(records);
-      const dkimOk = await verifyDkimDns(
-        domain.dkimSelector,
-        domain.domain,
-        domain.dkimPublicKey,
-      );
+      const dkimOk = await verifyDkimDns(domain.dkimSelector, domain.domain, domain.dkimPublicKey);
 
       const spfRec = checked.find((r) => r.purpose.startsWith('SPF'));
       const dmarcRec = checked.find((r) => r.purpose.startsWith('DMARC'));

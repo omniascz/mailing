@@ -27,24 +27,36 @@ export async function computeNbaScore(
       complaints: sql<number>`count(*) filter (where ${emailEvents.eventType} = 'complaint')`,
     })
     .from(emailEvents)
-    .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId), gte(emailEvents.createdAt, since30d)));
+    .where(
+      and(
+        eq(emailEvents.orgId, orgId),
+        eq(emailEvents.contactId, contactId),
+        gte(emailEvents.createdAt, since30d),
+      ),
+    );
 
   const opens = Number(emailStats?.opens ?? 0);
   const clicks = Number(emailStats?.clicks ?? 0);
   const bounces = Number(emailStats?.bounces ?? 0);
   const complaints = Number(emailStats?.complaints ?? 0);
 
-  const [contact] = await db.select({ customFields: contacts.customFields }).from(contacts)
-    .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId))).limit(1);
+  const [contact] = await db
+    .select({ customFields: contacts.customFields })
+    .from(contacts)
+    .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)))
+    .limit(1);
 
   const cf = (contact?.customFields ?? {}) as Record<string, unknown>;
 
-  const recencyScore = Math.min(100, (opens * 15 + clicks * 25));
+  const recencyScore = Math.min(100, opens * 15 + clicks * 25);
   const engagementScore = Math.min(100, (opens + clicks * 2) * 10);
   const intentScore = cf['intent_score'] ? Math.min(100, Number(cf['intent_score'])) : 30;
-  const fatiguePenalty = Math.min(50, (bounces * 20 + complaints * 30));
+  const fatiguePenalty = Math.min(50, bounces * 20 + complaints * 30);
 
-  const emailScore = Math.max(0, Math.min(100, (recencyScore * 0.3 + engagementScore * 0.4 + intentScore * 0.3) - fatiguePenalty));
+  const emailScore = Math.max(
+    0,
+    Math.min(100, recencyScore * 0.3 + engagementScore * 0.4 + intentScore * 0.3 - fatiguePenalty),
+  );
 
   const channelScores: NbaBreakdown['channelScores'] = {
     email: emailScore,
@@ -80,7 +92,9 @@ export async function computeNbaScore(
 export async function upsertNbaScore(orgId: string, contactId: string): Promise<void> {
   const { channel, score, breakdown, bestSendHour } = await computeNbaScore(orgId, contactId);
 
-  await db.delete(nbaScores).where(and(eq(nbaScores.orgId, orgId), eq(nbaScores.contactId, contactId)));
+  await db
+    .delete(nbaScores)
+    .where(and(eq(nbaScores.orgId, orgId), eq(nbaScores.contactId, contactId)));
 
   await db.insert(nbaScores).values({
     orgId,
@@ -94,16 +108,24 @@ export async function upsertNbaScore(orgId: string, contactId: string): Promise<
 }
 
 export async function getNbaScore(orgId: string, contactId: string) {
-  const [row] = await db.select().from(nbaScores)
+  const [row] = await db
+    .select()
+    .from(nbaScores)
     .where(and(eq(nbaScores.orgId, orgId), eq(nbaScores.contactId, contactId)))
-    .orderBy(desc(nbaScores.computedAt)).limit(1);
+    .orderBy(desc(nbaScores.computedAt))
+    .limit(1);
   return row ?? null;
 }
 
 export async function batchComputeNbaScores(orgId: string, contactIds: string[]): Promise<number> {
   let done = 0;
   for (const cid of contactIds.slice(0, 200)) {
-    try { await upsertNbaScore(orgId, cid); done++; } catch { /* skip */ }
+    try {
+      await upsertNbaScore(orgId, cid);
+      done++;
+    } catch {
+      /* skip */
+    }
   }
   return done;
 }

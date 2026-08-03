@@ -7,7 +7,13 @@ describe('renderPdf', () => {
       title: 'Campaign report',
       subtitle: 'Subject: Hello  ·  Sent: 2026-07-02 10:00',
       sections: [
-        { heading: 'Summary', rows: [['openRate', '42.5'], ['clickRate', '3.1']] },
+        {
+          heading: 'Summary',
+          rows: [
+            ['openRate', '42.5'],
+            ['clickRate', '3.1'],
+          ],
+        },
         {
           heading: 'Links',
           columns: ['URL', 'Clicks', '%'],

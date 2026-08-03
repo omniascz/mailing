@@ -4,7 +4,16 @@
  * unsold seats, day-of timing). Populated by the ingestion/sync layer from a
  * ticketing app (e.g. Tixly); ForgeMsg owns the marketing on top.
  */
-import { pgTable, uuid, varchar, integer, jsonb, timestamp, index, unique } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  jsonb,
+  timestamp,
+  index,
+  unique,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 

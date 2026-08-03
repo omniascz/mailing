@@ -75,7 +75,8 @@ export async function computeVariantStats(
  */
 export function computeBanditAllocation(stats: VariantStats[]): BanditAllocation[] {
   if (stats.length === 0) return [];
-  if (stats.length === 1) return [{ variantId: stats[0]!.variantId, trafficPercent: 100, isLeader: true }];
+  if (stats.length === 1)
+    return [{ variantId: stats[0]!.variantId, trafficPercent: 100, isLeader: true }];
 
   // Find current leader (highest click-weighted open rate)
   const scored = stats.map((s) => ({
@@ -86,9 +87,7 @@ export function computeBanditAllocation(stats: VariantStats[]): BanditAllocation
   const leaderId = scored[0]!.variantId;
 
   // epsilon-greedy: (1-epsilon)% to leader, epsilon% split equally among rest
-  const explorationPerVariant = stats.length > 1
-    ? (EPSILON * 100) / (stats.length - 1)
-    : 0;
+  const explorationPerVariant = stats.length > 1 ? (EPSILON * 100) / (stats.length - 1) : 0;
 
   return stats.map((s) => {
     const isLeader = s.variantId === leaderId;

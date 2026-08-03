@@ -52,7 +52,11 @@ const attachment = z
   .object({
     filename: z.string().min(1).max(255).optional(),
     /** Base64-encoded content. Resend matches MIME inferred from filename. */
-    content: z.string().min(1).max(20 * 1024 * 1024).optional(), // 20 MB hard cap
+    content: z
+      .string()
+      .min(1)
+      .max(20 * 1024 * 1024)
+      .optional(), // 20 MB hard cap
     /** Remote URL (https) — fetched server-side with SSRF safeguards (Resend `path`). */
     path: z.string().url().max(2048).optional(),
     /** Override the inferred content-type. */
@@ -63,7 +67,7 @@ const attachment = z
   .refine((a) => (a.content ? !a.path : !!a.path), {
     message: 'attachment requires exactly one of content or path',
   })
-  .refine((a) => a.content ? !!a.filename : true, {
+  .refine((a) => (a.content ? !!a.filename : true), {
     message: 'inline base64 attachment requires a filename',
   });
 
@@ -85,7 +89,10 @@ const sendEmailBody = z.object({
   html: z.string().optional(),
   text: z.string().optional(),
   /** Optional AMP4EMAIL body — placed as text/x-amp-html before text/html. */
-  amp_html: z.string().max(75 * 1024).optional(),
+  amp_html: z
+    .string()
+    .max(75 * 1024)
+    .optional(),
   cc: recipientList.optional(),
   bcc: recipientList.optional(),
   reply_to: recipientList.optional(),
@@ -160,7 +167,9 @@ async function dispatchResendEmail(
 
   // Resolves both ISO and natural-language ("in 1 hour"); validated at the
   // schema boundary, so a present value always parses here.
-  const scheduleAt = item.scheduled_at ? parseScheduledAt(item.scheduled_at) ?? undefined : undefined;
+  const scheduleAt = item.scheduled_at
+    ? (parseScheduledAt(item.scheduled_at) ?? undefined)
+    : undefined;
   const replyTo = toArray(item.reply_to)[0];
   const customHeaders: Record<string, string> = { ...(item.headers ?? {}) };
   const cc = toArray(item.cc);
@@ -221,7 +230,10 @@ async function dispatchResendEmail(
  * Reconstruct the deterministic scheduled-job ids for a stored send row from
  * its recipient counts (to + cc + bcc), matching dispatchResendEmail's order.
  */
-function scheduledEmailJobIdsForRow(row: { messageId: string | null; metadata: unknown }): string[] {
+function scheduledEmailJobIdsForRow(row: {
+  messageId: string | null;
+  metadata: unknown;
+}): string[] {
   const m = (row.metadata ?? {}) as { to?: string[]; cc?: string[]; bcc?: string[] };
   const count = (m.to?.length ?? 0) + (m.cc?.length ?? 0) + (m.bcc?.length ?? 0);
   if (!row.messageId || count === 0) return [];
@@ -476,9 +488,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (req, reply) => {
-      const { id } = z
-        .object({ id: z.string().min(1).max(255) })
-        .parse(req.params);
+      const { id } = z.object({ id: z.string().min(1).max(255) }).parse(req.params);
 
       // Accept either the bare uuid or the bracketed message-id.
       const candidates = [id, `<${id}@forgemsg>`];
@@ -505,8 +515,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
-      const sendRow =
-        rows.find((r) => r.eventType === 'send') ?? rows[rows.length - 1]!;
+      const sendRow = rows.find((r) => r.eventType === 'send') ?? rows[rows.length - 1]!;
       const meta = (sendRow.metadata ?? {}) as {
         to?: string[];
         from?: string;
@@ -558,12 +567,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       const rows = await db
         .select()
         .from(emailEvents)
-        .where(
-          and(
-            eq(emailEvents.orgId, req.user!.orgId),
-            eq(emailEvents.eventType, 'send'),
-          ),
-        )
+        .where(and(eq(emailEvents.orgId, req.user!.orgId), eq(emailEvents.eventType, 'send')))
         .orderBy(desc(emailEvents.createdAt))
         .limit(q.limit);
 
@@ -598,9 +602,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { id } = z.object({ id: z.string().min(1).max(255) }).parse(req.params);
-      const body = z
-        .object({ scheduled_at: z.string().max(100) })
-        .safeParse(req.body);
+      const body = z.object({ scheduled_at: z.string().max(100) }).safeParse(req.body);
       if (!body.success) {
         return reply.code(422).send({
           statusCode: 422,
@@ -613,7 +615,8 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
         return reply.code(422).send({
           statusCode: 422,
           name: 'validation_error',
-          message: 'scheduled_at must be an ISO timestamp or a supported phrase (e.g. "in 1 hour").',
+          message:
+            'scheduled_at must be an ISO timestamp or a supported phrase (e.g. "in 1 hour").',
         });
       }
 
@@ -655,10 +658,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
 
       const meta = (row.metadata ?? {}) as Record<string, unknown>;
       meta.scheduledAt = newSendAt.toISOString();
-      await db
-        .update(emailEvents)
-        .set({ metadata: meta })
-        .where(eq(emailEvents.id, row.id));
+      await db.update(emailEvents).set({ metadata: meta }).where(eq(emailEvents.id, row.id));
 
       return reply.send({
         object: 'email',
@@ -719,12 +719,18 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     '/api/v1/emails/:id/cancel',
-    { preHandler: [app.authenticate], schema: { tags: ['Resend-compatible'], summary: 'Cancel a scheduled email' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Resend-compatible'], summary: 'Cancel a scheduled email' },
+    },
     cancelScheduledEmail,
   );
   app.delete(
     '/api/v1/emails/:id',
-    { preHandler: [app.authenticate], schema: { tags: ['Resend-compatible'], summary: 'Cancel a scheduled email (alias)' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Resend-compatible'], summary: 'Cancel a scheduled email (alias)' },
+    },
     cancelScheduledEmail,
   );
 };

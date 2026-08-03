@@ -61,7 +61,15 @@ describe('addBulkChunked', () => {
 
   it('no-ops on empty job list', async () => {
     let called = false;
-    await addBulkChunked({ addBulk: async () => { called = true; } }, [], 1000);
+    await addBulkChunked(
+      {
+        addBulk: async () => {
+          called = true;
+        },
+      },
+      [],
+      1000,
+    );
     expect(called).toBe(false);
   });
 });

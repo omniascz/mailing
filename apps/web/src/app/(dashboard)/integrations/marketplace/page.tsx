@@ -51,8 +51,15 @@ export default async function MarketplacePage() {
     byCategory.set(i.category, arr);
   }
   const order = [
-    'ecommerce', 'crm', 'social', 'ads', 'automation',
-    'developer', 'productivity', 'payments', 'shipping',
+    'ecommerce',
+    'crm',
+    'social',
+    'ads',
+    'automation',
+    'developer',
+    'productivity',
+    'payments',
+    'shipping',
   ].filter((c) => byCategory.has(c));
 
   return (

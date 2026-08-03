@@ -33,8 +33,12 @@
     "react": ">=18 <20"
   },
   "peerDependenciesMeta": {
-    "@forgemsg/sdk": { "optional": false },
-    "react": { "optional": true }
+    "@forgemsg/sdk": {
+      "optional": false
+    },
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

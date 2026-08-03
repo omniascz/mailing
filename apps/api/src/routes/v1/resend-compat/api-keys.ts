@@ -14,18 +14,9 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import {
-  createApiKey,
-  listApiKeys,
-  revokeApiKey,
-} from '../../../services/webhooks/index.js';
+import { createApiKey, listApiKeys, revokeApiKey } from '../../../services/webhooks/index.js';
 
-function apiKeyShape(k: {
-  id: string;
-  name: string;
-  keyPrefix?: string;
-  createdAt: Date;
-}) {
+function apiKeyShape(k: { id: string; name: string; keyPrefix?: string; createdAt: Date }) {
   return {
     object: 'api_key' as const,
     id: k.id,
@@ -79,8 +70,7 @@ const apiKeysResendRoutes: FastifyPluginAsync = async (app) => {
           .code(422)
           .send({ statusCode: 422, name: 'validation_error', message: 'name is required' });
       }
-      const scopes =
-        body.data.permission === 'sending_access' ? ['emails:send'] : ['*'];
+      const scopes = body.data.permission === 'sending_access' ? ['emails:send'] : ['*'];
       const { apiKey, rawKey } = await createApiKey(
         req.user!.orgId,
         req.user!.userId,

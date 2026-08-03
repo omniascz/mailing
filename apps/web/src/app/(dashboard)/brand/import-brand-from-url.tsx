@@ -94,7 +94,10 @@ export function ImportBrandFromUrl() {
                     key={c}
                     className="inline-flex items-center gap-1 rounded border border-secondary-200 px-1.5 py-0.5 text-xs text-secondary-600"
                   >
-                    <span className="inline-block h-3 w-3 rounded-sm" style={{ backgroundColor: c }} />
+                    <span
+                      className="inline-block h-3 w-3 rounded-sm"
+                      style={{ backgroundColor: c }}
+                    />
                     {c}
                   </span>
                 ))}

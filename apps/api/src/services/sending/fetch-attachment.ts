@@ -71,7 +71,8 @@ export async function fetchRemoteAttachment(
 
   // SSRF: resolve every A/AAAA and block if any is private/reserved.
   const resolved = await dnsPromises.lookup(url.hostname, { all: true }).catch(() => []);
-  if (resolved.length === 0) throw AppError.badRequest(`Cannot resolve attachment host: ${url.hostname}`);
+  if (resolved.length === 0)
+    throw AppError.badRequest(`Cannot resolve attachment host: ${url.hostname}`);
   if (resolved.some((r) => isPrivateIp(r.address))) {
     throw AppError.badRequest('Attachment url resolves to a disallowed (private) address');
   }

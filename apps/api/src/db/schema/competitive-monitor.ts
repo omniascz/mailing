@@ -4,7 +4,14 @@
  * we store + analyze their emails: frequency, subject lines, send times, offers.
  */
 import {
-  pgTable, uuid, text, timestamp, integer, boolean, jsonb, index,
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  integer,
+  boolean,
+  jsonb,
+  index,
 } from 'drizzle-orm/pg-core';
 
 export const competitorWatchlist = pgTable(

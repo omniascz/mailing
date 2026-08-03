@@ -173,10 +173,7 @@ const FP_WEIGHTS = {
  * returns 0. Each feature is binary equal/not-equal; we don't do
  * edit-distance because the values are hashes or short fixed strings.
  */
-export function fingerprintSimilarity(
-  a: VisitorFingerprint,
-  b: VisitorFingerprint,
-): number {
+export function fingerprintSimilarity(a: VisitorFingerprint, b: VisitorFingerprint): number {
   let totalWeight = 0;
   let matchedWeight = 0;
   for (const [key, weight] of Object.entries(FP_WEIGHTS) as Array<

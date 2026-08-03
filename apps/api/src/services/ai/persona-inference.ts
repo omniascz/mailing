@@ -5,7 +5,7 @@ import { emailEvents } from '../../db/schema/email-events.js';
 import { revenueEvents } from '../../db/schema/revenue.js';
 import { callClaude } from '../../lib/ai-client.js';
 
-type PersonaType = typeof contactPersonas.$inferInsert['persona'];
+type PersonaType = (typeof contactPersonas.$inferInsert)['persona'];
 
 interface RawSignals {
   totalSent: number;
@@ -29,12 +29,22 @@ async function collectSignals(orgId: string, contactId: string): Promise<RawSign
       opens: sql<number>`count(*) filter (where event_type = 'open')::int`,
       clicks: sql<number>`count(*) filter (where event_type = 'click')::int`,
       complaints: sql<number>`count(*) filter (where event_type = 'complaint')::int`,
-      daysSinceLastOpen: sql<number | null>`extract(day from now() - max(created_at) filter (where event_type = 'open'))::int`,
-      daysSinceLastClick: sql<number | null>`extract(day from now() - max(created_at) filter (where event_type = 'click'))::int`,
+      daysSinceLastOpen: sql<
+        number | null
+      >`extract(day from now() - max(created_at) filter (where event_type = 'open'))::int`,
+      daysSinceLastClick: sql<
+        number | null
+      >`extract(day from now() - max(created_at) filter (where event_type = 'click'))::int`,
       daysSinceFirstEvent: sql<number>`extract(day from now() - min(created_at))::int`,
     })
     .from(emailEvents)
-    .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId), gte(emailEvents.createdAt, since)));
+    .where(
+      and(
+        eq(emailEvents.orgId, orgId),
+        eq(emailEvents.contactId, contactId),
+        gte(emailEvents.createdAt, since),
+      ),
+    );
 
   const [revRow] = await db
     .select({
@@ -86,10 +96,17 @@ function heuristicPersona(raw: RawSignals, signals: PersonaSignals): PersonaType
   if (raw.daysSinceFirstEvent < 30) return 'new_subscriber';
   if (raw.daysSinceLastOpen !== null && raw.daysSinceLastOpen > 90) return 'dormant';
   if (raw.complaints > 0) return 'complainer';
-  if (signals.avgOpenRate > 0.5 && raw.purchaseCount > 5 && signals.avgOrderValue > 100) return 'vip';
-  if (signals.engagementTrend === 'declining' && raw.daysSinceLastOpen !== null && raw.daysSinceLastOpen > 30) return 'at_risk';
+  if (signals.avgOpenRate > 0.5 && raw.purchaseCount > 5 && signals.avgOrderValue > 100)
+    return 'vip';
+  if (
+    signals.engagementTrend === 'declining' &&
+    raw.daysSinceLastOpen !== null &&
+    raw.daysSinceLastOpen > 30
+  )
+    return 'at_risk';
   if (signals.discountSensitivity > 0.7) return 'deal_hunter';
-  if (signals.avgOpenRate > 0.45 && signals.avgClickRate > 0.3 && raw.purchaseCount > 3) return 'champion';
+  if (signals.avgOpenRate > 0.45 && signals.avgClickRate > 0.3 && raw.purchaseCount > 3)
+    return 'champion';
   if (raw.purchaseCount > 3 && signals.avgOpenRate > 0.3) return 'loyal';
   if (signals.avgOpenRate > 0.3 && raw.purchaseCount === 0) return 'window_shopper';
   return 'seasonal';
@@ -99,7 +116,12 @@ export async function inferPersona(
   orgId: string,
   contactId: string,
   useAi = true,
-): Promise<{ persona: PersonaType; confidence: number; signals: PersonaSignals; reasoning?: string }> {
+): Promise<{
+  persona: PersonaType;
+  confidence: number;
+  signals: PersonaSignals;
+  reasoning?: string;
+}> {
   const raw = await collectSignals(orgId, contactId);
   const signals = buildSignals(raw);
   const heuristic = heuristicPersona(raw, signals);
@@ -142,8 +164,17 @@ Respond as JSON: { "persona": "<type>", "confidence": 0.0-1.0, "reasoning": "<1 
   });
 
   try {
-    const parsed = JSON.parse(result.text) as { persona: PersonaType; confidence: number; reasoning: string };
-    return { persona: parsed.persona, confidence: parsed.confidence, signals, reasoning: parsed.reasoning };
+    const parsed = JSON.parse(result.text) as {
+      persona: PersonaType;
+      confidence: number;
+      reasoning: string;
+    };
+    return {
+      persona: parsed.persona,
+      confidence: parsed.confidence,
+      signals,
+      reasoning: parsed.reasoning,
+    };
   } catch {
     return { persona: heuristic, confidence: 0.65, signals };
   }
@@ -153,7 +184,8 @@ export async function upsertPersona(orgId: string, contactId: string): Promise<v
   const { persona, confidence, signals, reasoning } = await inferPersona(orgId, contactId);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-  await db.delete(contactPersonas)
+  await db
+    .delete(contactPersonas)
     .where(and(eq(contactPersonas.orgId, orgId), eq(contactPersonas.contactId, contactId)));
 
   await db.insert(contactPersonas).values({
@@ -181,10 +213,9 @@ export async function listPersonaSegment(orgId: string, persona: string, limit =
   return db
     .select()
     .from(contactPersonas)
-    .where(and(
-      eq(contactPersonas.orgId, orgId),
-      eq(contactPersonas.persona, persona as PersonaType),
-    ))
+    .where(
+      and(eq(contactPersonas.orgId, orgId), eq(contactPersonas.persona, persona as PersonaType)),
+    )
     .orderBy(desc(contactPersonas.computedAt))
     .limit(limit);
 }

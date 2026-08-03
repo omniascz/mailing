@@ -60,20 +60,31 @@ export async function getActiveBrandVoice(orgId: string): Promise<BrandVoiceProf
 
 export async function listBrandVoiceProfiles(orgId: string) {
   return db
-    .select({ id: brandVoiceProfiles.id, name: brandVoiceProfiles.name, active: brandVoiceProfiles.active, createdAt: brandVoiceProfiles.createdAt })
+    .select({
+      id: brandVoiceProfiles.id,
+      name: brandVoiceProfiles.name,
+      active: brandVoiceProfiles.active,
+      createdAt: brandVoiceProfiles.createdAt,
+    })
     .from(brandVoiceProfiles)
     .where(eq(brandVoiceProfiles.orgId, orgId))
     .orderBy(desc(brandVoiceProfiles.createdAt));
 }
 
 export async function setActiveBrandVoice(orgId: string, profileId: string): Promise<void> {
-  await db.update(brandVoiceProfiles).set({ active: false }).where(eq(brandVoiceProfiles.orgId, orgId));
-  await db.update(brandVoiceProfiles).set({ active: true, updatedAt: new Date() })
+  await db
+    .update(brandVoiceProfiles)
+    .set({ active: false })
+    .where(eq(brandVoiceProfiles.orgId, orgId));
+  await db
+    .update(brandVoiceProfiles)
+    .set({ active: true, updatedAt: new Date() })
     .where(and(eq(brandVoiceProfiles.id, profileId), eq(brandVoiceProfiles.orgId, orgId)));
 }
 
 export async function deleteBrandVoiceProfile(orgId: string, profileId: string): Promise<void> {
-  await db.delete(brandVoiceProfiles)
+  await db
+    .delete(brandVoiceProfiles)
     .where(and(eq(brandVoiceProfiles.id, profileId), eq(brandVoiceProfiles.orgId, orgId)));
 }
 

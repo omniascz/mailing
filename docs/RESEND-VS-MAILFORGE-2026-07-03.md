@@ -25,8 +25,9 @@ Resend-compat pluginy registrované v `apps/api/src/index.ts:522-527`
 ## ✅ DONE-WIRED (zapojeno naživo)
 
 ### Core Email API
+
 - **POST /emails** — Resend snake_case schéma: `from, to (string|array), subject,
-  html, text, cc, bcc, reply_to, headers, tags, attachments, scheduled_at`
+html, text, cc, bcc, reply_to, headers, tags, attachments, scheduled_at`
   (`emails.ts:61-89`). Navíc supersety `amp_html`, per-email `tracking`,
   `sandbox_mode`. Dispatch `emails.ts:296`. (`react` není body-field — řeší SDK
   adapter client-side, stejně jako Resend.)
@@ -39,7 +40,7 @@ Resend-compat pluginy registrované v `apps/api/src/index.ts:522-527`
 - **scheduled_at (ISO)** — `z.string().datetime()` `emails.ts:81`; dispatch jako
   BullMQ delayed job `queues.ts:158,187` (`delay: max(0, scheduleAt-now)`).
 - **Attachments (base64)** — `filename + content(base64) + content_type +
-  content_id/inline` `emails.ts:44-52`, mapováno do MTA jobu `145-151`,
+content_id/inline` `emails.ts:44-52`, mapováno do MTA jobu `145-151`,
   přeneseno `queues.ts:86-93,183`.
 - **Tags** — `name/value` `emails.ts:39-42`, uloženo do event metadata `278`,
   vráceno na GET/:id `469`.
@@ -48,17 +49,20 @@ Resend-compat pluginy registrované v `apps/api/src/index.ts:522-527`
   `sandbox_mode` body flag ORuje. Reálný no-op (event se zapíše, nic se neodešle).
 
 ### Domény (`resend-compat/domains.ts`)
+
 - **CRUD + verify s DKIM/SPF/DMARC** — `domains.ts:104-313`; verify dělá
   **reálné DNS** (`resolveTxt`/`resolveCname` v `services/domains/dns-records.ts:11-12,148-166`,
   `verifyDkimDns` `services/domains/dkim.ts:154`). Return-path record +
   `returnPathVerified` reálné sloupce `domains.ts:90-91,298`.
 
 ### API klíče (`resend-compat/api-keys.ts`)
+
 - **Create (full_access/sending_access → scopes) + list + revoke** —
   `api-keys.ts:82-91` mapuje permission na `['emails:send']` vs `['*']`, předává
   `mode` pro test-klíče; raw token vrácen jednou `100`.
 
 ### Webhooky / eventy
+
 - **Email lifecycle eventy fire** — `KIND_TO_EVENT` `services/webhooks/email-events.ts:28-41`
   (sent/delivered/opened/clicked/bounced/complained/delivery_delayed/unsubscribed/
   rejected/rendering_failed). Fire-sites: `internal/events.ts:77-84`,
@@ -71,15 +75,18 @@ Resend-compat pluginy registrované v `apps/api/src/index.ts:522-527`
   (Redis Streams), consumer nemusí hostovat webhook.
 
 ### Audiences + Contacts (`resend-compat/audiences.ts`)
+
 - **Audiences CRUD** — `audiences.ts:79-136` (nad `lists`).
 - **Kontakty v audience (create/get/update/delete + unsubscribed)** —
   `audiences.ts:140-310`; `unsubscribed` ↔ contact status `71-73,291-293`.
 
 ### Broadcasts (`resend-compat/broadcasts.ts`)
+
 - **Create/get/update/delete + send/schedule na audience** — `broadcasts.ts:64-235`
   (nad `campaigns`, `sendCampaign`/`scheduleCampaign` `228-230`).
 
 ### SMTP / infra / DX
+
 - **SMTP relay** — Go submission server :587/:465, `AUTH LOGIN/PLAIN`, kredence
   přes API: `apps/engine/internal/submission/server.go:60-65,155-257` +
   `routes/v1/smtp-credentials.ts`.
@@ -146,7 +153,7 @@ Resend-compat pluginy registrované v `apps/api/src/index.ts:522-527`
    stabilní jobId) → ani nepřeplánují, ani nezastaví. **Nejmateriálnější funkční
    mezera.**
 2. **Tvar cancel endpointu** — DELETE `/emails/:id` vs Resend `POST
-   /emails/:id/cancel`; Resend SDK cancel netrefí.
+/emails/:id/cancel`; Resend SDK cancel netrefí.
 3. **Bez NL `scheduled_at`** — jen ISO.
 4. **Bez sink-adres** (`*@resend.dev`) — nelze nacvičit bounce/complaint webhook.
 5. **Bez remote (`path`) attachmentů** — jen base64.
@@ -171,6 +178,7 @@ detailů (3–7). Zbytek Resend náskoku je non-code (SDK, docs, svix, reputace)
 ## UPDATE 2026-07-03 — dořešené mezery, které zlepšují náš systém
 
 Postaveno + ověřeno (commity po tomto auditu):
+
 - **#1 reschedule + cancel reálně funkční** — scheduled send má stabilní jobId
   (`sched-email:<id>:<n>`); PATCH `changeDelay()`, cancel `remove()`; 422 když
   už odešel. Přidán Resend-standard `POST /emails/:id/cancel` (DELETE alias).

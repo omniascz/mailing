@@ -18,7 +18,9 @@ import {
 import { emailEvents } from '../../db/schema/email-events.js';
 
 export async function listRules(orgId: string): Promise<ChannelFallbackRule[]> {
-  return db.select().from(channelFallbackRules)
+  return db
+    .select()
+    .from(channelFallbackRules)
     .where(and(eq(channelFallbackRules.orgId, orgId), eq(channelFallbackRules.enabled, true)));
 }
 
@@ -27,13 +29,15 @@ export async function upsertRule(
   input: Partial<ChannelFallbackRule> & { name: string; trigger: string; fallbackChannel: string },
 ): Promise<ChannelFallbackRule> {
   if (input.id) {
-    const [row] = await db.update(channelFallbackRules)
+    const [row] = await db
+      .update(channelFallbackRules)
       .set({ ...input, updatedAt: new Date() })
       .where(and(eq(channelFallbackRules.id, input.id), eq(channelFallbackRules.orgId, orgId)))
       .returning();
     return row!;
   }
-  const [row] = await db.insert(channelFallbackRules)
+  const [row] = await db
+    .insert(channelFallbackRules)
     .values({ orgId, ...input } as typeof channelFallbackRules.$inferInsert)
     .returning();
   return row!;
@@ -58,14 +62,17 @@ export async function checkTrigger(
   if (rule.trigger === 'no_open_days') {
     const days = rule.triggerParam ?? 7;
     const since = new Date(Date.now() - days * 86400_000);
-    const [row] = await db.select({ cnt: emailEvents.id })
+    const [row] = await db
+      .select({ cnt: emailEvents.id })
       .from(emailEvents)
-      .where(and(
-        eq(emailEvents.orgId, orgId),
-        eq(emailEvents.contactId, contactId),
-        eq(emailEvents.eventType, 'open'),
-        gte(emailEvents.createdAt, since),
-      ))
+      .where(
+        and(
+          eq(emailEvents.orgId, orgId),
+          eq(emailEvents.contactId, contactId),
+          eq(emailEvents.eventType, 'open'),
+          gte(emailEvents.createdAt, since),
+        ),
+      )
       .limit(1);
     return row ? null : `no_open_${days}d`;
   }
@@ -81,14 +88,17 @@ export async function triggerFallback(
   // Avoid duplicate fallback for same rule+contact in same day
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
-  const [existing] = await db.select({ id: channelFallbackLog.id })
+  const [existing] = await db
+    .select({ id: channelFallbackLog.id })
     .from(channelFallbackLog)
-    .where(and(
-      eq(channelFallbackLog.orgId, orgId),
-      eq(channelFallbackLog.contactId, contactId),
-      eq(channelFallbackLog.ruleId, rule.id),
-      gte(channelFallbackLog.createdAt, today),
-    ))
+    .where(
+      and(
+        eq(channelFallbackLog.orgId, orgId),
+        eq(channelFallbackLog.contactId, contactId),
+        eq(channelFallbackLog.ruleId, rule.id),
+        gte(channelFallbackLog.createdAt, today),
+      ),
+    )
     .limit(1);
 
   if (existing) return; // already triggered today
@@ -123,7 +133,9 @@ export async function handleBounce(
 export async function getFallbackLog(orgId: string, contactId?: string, limit = 50) {
   const conditions = [eq(channelFallbackLog.orgId, orgId)];
   if (contactId) conditions.push(eq(channelFallbackLog.contactId, contactId));
-  return db.select().from(channelFallbackLog)
+  return db
+    .select()
+    .from(channelFallbackLog)
     .where(and(...conditions))
     .orderBy(desc(channelFallbackLog.createdAt))
     .limit(limit);

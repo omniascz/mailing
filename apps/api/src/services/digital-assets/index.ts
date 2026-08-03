@@ -8,11 +8,7 @@
 
 import crypto from 'node:crypto';
 import { db } from '../../db/client.js';
-import {
-  digitalAssets,
-  digitalAssetDeliveries,
-  licenseKeys,
-} from '../../db/schema/index.js';
+import { digitalAssets, digitalAssetDeliveries, licenseKeys } from '../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
 
 // ─── Signed URL generation ────────────────────────────────────────────────────
@@ -128,7 +124,8 @@ export async function processDownload(
   _ipAddress?: string,
 ): Promise<{ assetUrl: string; contentType: string | null; filename: string }> {
   const payload = verifyToken(token);
-  if (!payload) throw Object.assign(new Error('Invalid or expired download token'), { statusCode: 410 });
+  if (!payload)
+    throw Object.assign(new Error('Invalid or expired download token'), { statusCode: 410 });
 
   const [delivery] = await db
     .select()
@@ -137,7 +134,8 @@ export async function processDownload(
     .limit(1);
 
   if (!delivery) throw Object.assign(new Error('Delivery record not found'), { statusCode: 404 });
-  if (delivery.expiresAt < new Date()) throw Object.assign(new Error('Download link expired'), { statusCode: 410 });
+  if (delivery.expiresAt < new Date())
+    throw Object.assign(new Error('Download link expired'), { statusCode: 410 });
 
   const [asset] = await db
     .select()
@@ -193,10 +191,7 @@ export async function generateLicenseKey(
   // Generate key with collision retry
   for (let attempt = 0; attempt < 10; attempt++) {
     const segments = Array.from({ length: 4 }, () =>
-      Array.from(
-        { length: 4 },
-        () => KEY_CHARSET[crypto.randomInt(KEY_CHARSET.length)]!,
-      ).join(''),
+      Array.from({ length: 4 }, () => KEY_CHARSET[crypto.randomInt(KEY_CHARSET.length)]!).join(''),
     );
     const key = segments.join('-');
 

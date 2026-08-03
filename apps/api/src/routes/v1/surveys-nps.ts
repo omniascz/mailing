@@ -97,7 +97,10 @@ export default async function surveysNpsRoutes(app: FastifyInstance) {
     if (!survey) return reply.code(404).send({ code: 'NOT_FOUND', message: 'Survey not found' });
 
     // Merge rules into the existing questions JSONB as a side-car key
-    const merged = { ...(survey.questions as unknown as Record<string, unknown>), responseRules: rules };
+    const merged = {
+      ...(survey.questions as unknown as Record<string, unknown>),
+      responseRules: rules,
+    };
     await db
       .update(surveys)
       .set({ questions: merged as never, updatedAt: new Date() })

@@ -25,9 +25,24 @@ export interface BrandKit {
 }
 
 const GENERIC_FONTS = new Set([
-  'inherit', 'initial', 'unset', 'sans-serif', 'serif', 'monospace', 'cursive',
-  'fantasy', 'system-ui', '-apple-system', 'blinkmacsystemfont', 'ui-sans-serif',
-  'ui-serif', 'ui-monospace', 'ui-rounded', 'emoji', 'math', 'fangsong',
+  'inherit',
+  'initial',
+  'unset',
+  'sans-serif',
+  'serif',
+  'monospace',
+  'cursive',
+  'fantasy',
+  'system-ui',
+  '-apple-system',
+  'blinkmacsystemfont',
+  'ui-sans-serif',
+  'ui-serif',
+  'ui-monospace',
+  'ui-rounded',
+  'emoji',
+  'math',
+  'fangsong',
 ]);
 
 /** Resolve a possibly-relative href against a base URL; null if unusable. */
@@ -45,7 +60,11 @@ function absoluteUrl(href: string | undefined | null, baseUrl: string): string |
 function normalizeHex(raw: string): string | null {
   let h = raw.trim().toLowerCase();
   if (h.startsWith('#')) h = h.slice(1);
-  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  if (h.length === 3)
+    h = h
+      .split('')
+      .map((c) => c + c)
+      .join('');
   if (!/^[0-9a-f]{6}$/.test(h)) return null;
   return `#${h}`;
 }
@@ -105,9 +124,8 @@ export function extractBrandFromHtml(html: string, baseUrl: string): BrandKit {
   }
 
   const iconHref =
-    firstMatch(
-      /<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
-    ) ?? firstMatch(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i);
+    firstMatch(/<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i) ??
+    firstMatch(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i);
 
   const logoUrl =
     absoluteUrl(imgLogo, baseUrl) ??
@@ -118,8 +136,7 @@ export function extractBrandFromHtml(html: string, baseUrl: string): BrandKit {
   const faviconHref =
     firstMatch(/<link[^>]+rel=["'](?:shortcut )?icon["'][^>]+href=["']([^"']+)["']/i) ??
     firstMatch(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["'](?:shortcut )?icon["']/i);
-  const faviconUrl =
-    absoluteUrl(faviconHref, baseUrl) ?? absoluteUrl('/favicon.ico', baseUrl);
+  const faviconUrl = absoluteUrl(faviconHref, baseUrl) ?? absoluteUrl('/favicon.ico', baseUrl);
 
   // ── colours (frequency-ranked) ───────────────────────────────────────────
   const counts = new Map<string, number>();
@@ -176,7 +193,10 @@ export function extractBrandFromHtml(html: string, baseUrl: string): BrandKit {
       }
     }
   }
-  const fonts = [...fontCounts.entries()].sort((a, b) => b[1] - a[1]).map(([f]) => f).slice(0, 5);
+  const fonts = [...fontCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([f]) => f)
+    .slice(0, 5);
 
   return { siteName, logoUrl, faviconUrl, themeColor, colors, fonts, sourceUrl: baseUrl };
 }

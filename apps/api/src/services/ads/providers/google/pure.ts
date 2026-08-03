@@ -61,7 +61,10 @@ export function hashPhoneForGoogle(phone: string): string {
 
 /** Names: lowercase, strip whitespace + punctuation, then hash. */
 export function hashNameForGoogle(name: string): string {
-  const v = name.trim().toLowerCase().replace(/[^a-záčďéěíňóřšťúůýž]/giu, '');
+  const v = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-záčďéěíňóřšťúůýž]/giu, '');
   if (!v) return '';
   return createHash('sha256').update(v).digest('hex');
 }
@@ -92,12 +95,7 @@ export function buildGoogleUserIdentifiers(member: GoogleAudienceMember): Google
     const h = hashPhoneForGoogle(member.phone);
     if (h) out.push({ hashedPhoneNumber: h });
   }
-  if (
-    member.firstName &&
-    member.lastName &&
-    member.countryCode &&
-    member.zip
-  ) {
+  if (member.firstName && member.lastName && member.countryCode && member.zip) {
     const country = member.countryCode.trim().toUpperCase();
     if (/^[A-Z]{2}$/.test(country)) {
       out.push({

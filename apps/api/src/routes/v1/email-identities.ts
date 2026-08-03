@@ -78,7 +78,9 @@ const emailIdentityRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.body);
       await requestProductionAccess(req.user!.orgId, body);
-      return { data: { status: 'pending', message: 'Production access requested — under review.' } };
+      return {
+        data: { status: 'pending', message: 'Production access requested — under review.' },
+      };
     },
   );
 };

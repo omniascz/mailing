@@ -33,14 +33,14 @@ export interface ViberSendJobData {
   provider?: 'infobip' | 'rakuten' | 'messagebird';
 }
 
-async function processViberSend(job: Job<ViberSendJobData>): Promise<{ messageId: string; status: string }> {
+async function processViberSend(
+  job: Job<ViberSendJobData>,
+): Promise<{ messageId: string; status: string }> {
   const data = job.data;
   job.log(`Viber send to ${data.phone} (contact ${data.contactId}) org=${data.orgId}`);
 
   // Dynamically import to avoid loading the adapter in the worker bootstrap
-  const { createViberAdapter } = await import(
-    '../../../api/src/services/viber/adapter.js'
-  );
+  const { createViberAdapter } = await import('../../../api/src/services/viber/adapter.js');
 
   const adapter = createViberAdapter();
   const result = await adapter.send(

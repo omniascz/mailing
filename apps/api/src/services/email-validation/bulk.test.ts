@@ -81,11 +81,7 @@ describe('bulkValidate', () => {
 
   it('dedupes MX lookups per distinct domain', async () => {
     const dnsModule = await import('node:dns/promises');
-    await bulkValidate([
-      'a@example.com',
-      'b@example.com',
-      'c@example.com',
-    ]);
+    await bulkValidate(['a@example.com', 'b@example.com', 'c@example.com']);
     expect(dnsModule.default.resolveMx).toHaveBeenCalledTimes(1);
   });
 

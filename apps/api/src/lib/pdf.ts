@@ -40,9 +40,30 @@ function isTable(s: PdfKeyValue | PdfTable): s is PdfTable {
 
 /** Map Czech/Slovak diacritics (and a few others) to WinAnsi-safe base letters. */
 const TRANSLIT: Record<string, string> = {
-  č: 'c', Č: 'C', ř: 'r', Ř: 'R', š: 's', Š: 'S', ž: 'z', Ž: 'Z',
-  ě: 'e', Ě: 'E', ů: 'u', Ů: 'U', ď: 'd', Ď: 'D', ť: 't', Ť: 'T',
-  ň: 'n', Ň: 'N', ľ: 'l', Ľ: 'L', ĺ: 'l', Ĺ: 'L', ŕ: 'r', Ŕ: 'R',
+  č: 'c',
+  Č: 'C',
+  ř: 'r',
+  Ř: 'R',
+  š: 's',
+  Š: 'S',
+  ž: 'z',
+  Ž: 'Z',
+  ě: 'e',
+  Ě: 'E',
+  ů: 'u',
+  Ů: 'U',
+  ď: 'd',
+  Ď: 'D',
+  ť: 't',
+  Ť: 'T',
+  ň: 'n',
+  Ň: 'N',
+  ľ: 'l',
+  Ľ: 'L',
+  ĺ: 'l',
+  Ĺ: 'L',
+  ŕ: 'r',
+  Ŕ: 'R',
 };
 
 /** Encode a JS string to a WinAnsi byte string usable inside a PDF literal. */
@@ -174,8 +195,7 @@ export function renderPdf(doc: PdfDoc): Buffer {
   const kids = pageObjIds.map((id) => `${id} 0 R`).join(' ');
   objects[1] = `1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`;
   objects[2] = `2 0 obj\n<< /Type /Pages /Kids [${kids}] /Count ${pageObjIds.length} >>\nendobj\n`;
-  objects[3] =
-    `3 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n`;
+  objects[3] = `3 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n`;
 
   // Assemble body + xref.
   const header = '%PDF-1.4\n';
@@ -199,8 +219,7 @@ export function renderPdf(doc: PdfDoc): Buffer {
     const off = offsets[i] ?? 0;
     xref += `${off.toString().padStart(10, '0')} 00000 n \n`;
   }
-  const trailer =
-    `trailer\n<< /Size ${objCount} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`;
+  const trailer = `trailer\n<< /Size ${objCount} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`;
 
   return Buffer.from(header + body + xref + trailer, 'latin1');
 }

@@ -27,7 +27,15 @@ const events: ReportEvent[] = [
 describe('computeReport totals', () => {
   it('counts base metrics and unique opens/clicks', () => {
     const def: ReportDefinition = {
-      metrics: ['sends', 'delivered', 'opens', 'unique_opens', 'clicks', 'unique_clicks', 'bounces'],
+      metrics: [
+        'sends',
+        'delivered',
+        'opens',
+        'unique_opens',
+        'clicks',
+        'unique_clicks',
+        'bounces',
+      ],
       dimension: 'none',
     };
     const { rows, totals } = computeReport(events, def);

@@ -122,9 +122,7 @@ async function pauseAndAlert(anomaly: CampaignAnomaly): Promise<void> {
       status: 'paused',
       updatedAt: new Date(),
     })
-    .where(
-      and(eq(campaigns.id, anomaly.campaignId), eq(campaigns.orgId, anomaly.orgId)),
-    );
+    .where(and(eq(campaigns.id, anomaly.campaignId), eq(campaigns.orgId, anomaly.orgId)));
 
   void reportIncident(anomaly.reason, {
     summary: `Campaign ${anomaly.campaignId.slice(0, 8)} auto-paused`,

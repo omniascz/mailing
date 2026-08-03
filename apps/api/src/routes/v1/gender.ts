@@ -18,11 +18,13 @@ export default async function genderRoutes(app: FastifyInstance) {
 
   // Bulk inference (no DB writes — just returns predictions)
   app.post('/api/v1/contacts/infer-gender', auth, async (req, reply) => {
-    const body = z.object({
-      names: z.array(z.string().max(100)).max(500),
-      countryCode: z.string().length(2).optional(),
-      useFallback: z.boolean().default(false), // use genderize.io for unknowns
-    }).parse(req.body);
+    const body = z
+      .object({
+        names: z.array(z.string().max(100)).max(500),
+        countryCode: z.string().length(2).optional(),
+        useFallback: z.boolean().default(false), // use genderize.io for unknowns
+      })
+      .parse(req.body);
 
     const results = await Promise.all(
       body.names.map(async (name) => {
@@ -31,9 +33,7 @@ export default async function genderRoutes(app: FastifyInstance) {
           return { name, ...local };
         }
         // International fallback via genderize.io
-        const { inferGenderInternational } = await import(
-          '../../services/gender/genderize-api.js'
-        );
+        const { inferGenderInternational } = await import('../../services/gender/genderize-api.js');
         const intl = await inferGenderInternational(name, body.countryCode);
         return { name, ...intl };
       }),
@@ -45,7 +45,9 @@ export default async function genderRoutes(app: FastifyInstance) {
   // Infer + auto-fill for a specific contact
   app.post('/api/v1/contacts/:id/infer-gender', auth, async (req, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    const { useFallback } = z.object({ useFallback: z.boolean().default(false) }).parse(req.body ?? {});
+    const { useFallback } = z
+      .object({ useFallback: z.boolean().default(false) })
+      .parse(req.body ?? {});
 
     const [contact] = await db
       .select({ id: contacts.id, firstName: contacts.firstName, gender: contacts.gender })
@@ -55,7 +57,9 @@ export default async function genderRoutes(app: FastifyInstance) {
 
     if (!contact) return reply.code(404).send({ code: 'NOT_FOUND', message: 'Contact not found' });
     if (!contact.firstName) {
-      return reply.send({ data: { gender: 'unknown', confidence: 0, source: 'unknown', updated: false } });
+      return reply.send({
+        data: { gender: 'unknown', confidence: 0, source: 'unknown', updated: false },
+      });
     }
 
     let result = inferGender(contact.firstName);
@@ -65,10 +69,7 @@ export default async function genderRoutes(app: FastifyInstance) {
     }
 
     if (result.gender !== 'unknown') {
-      await db
-        .update(contacts)
-        .set({ gender: result.gender })
-        .where(eq(contacts.id, id));
+      await db.update(contacts).set({ gender: result.gender }).where(eq(contacts.id, id));
     }
 
     return reply.send({ data: { ...result, updated: result.gender !== 'unknown' } });
@@ -80,7 +81,11 @@ export default async function genderRoutes(app: FastifyInstance) {
     const { style } = req.query as { style?: 'formal' | 'informal' };
 
     const [contact] = await db
-      .select({ firstName: contacts.firstName, lastName: contacts.lastName, gender: contacts.gender })
+      .select({
+        firstName: contacts.firstName,
+        lastName: contacts.lastName,
+        gender: contacts.gender,
+      })
       .from(contacts)
       .where(and(eq(contacts.orgId, req.user!.orgId), eq(contacts.id, id)))
       .limit(1);
@@ -88,7 +93,12 @@ export default async function genderRoutes(app: FastifyInstance) {
     if (!contact) return reply.code(404).send({ code: 'NOT_FOUND', message: 'Contact not found' });
 
     const gender = (contact.gender ?? 'unknown') as 'male' | 'female' | 'unknown';
-    const salutation = buildSalutation(gender, contact.firstName, contact.lastName, style ?? 'formal');
+    const salutation = buildSalutation(
+      gender,
+      contact.firstName,
+      contact.lastName,
+      style ?? 'formal',
+    );
 
     return reply.send({ data: { salutation, gender, style: style ?? 'formal' } });
   });

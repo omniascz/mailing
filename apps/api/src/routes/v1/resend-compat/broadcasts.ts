@@ -188,7 +188,11 @@ const broadcastsRoutes: FastifyPluginAsync = async (app) => {
       }
       if (body.preview_text !== undefined) patch.preheader = body.preview_text;
       if (body.html !== undefined || body.text !== undefined) {
-        patch.content = { html: body.html ?? '', text: body.text ?? '', source: 'resend-broadcast' };
+        patch.content = {
+          html: body.html ?? '',
+          text: body.text ?? '',
+          source: 'resend-broadcast',
+        };
       }
       if (body.scheduled_at !== undefined) {
         patch.scheduledAt = body.scheduled_at ? new Date(body.scheduled_at) : undefined;

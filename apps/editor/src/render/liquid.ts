@@ -50,7 +50,10 @@ const engine = new Liquid({
  * merge-tag path so `{{ name | vocative }}` behaves identically whether it is
  * rendered by the regex parser or by Liquid.
  */
-export function registerLiquidFilter(name: string, fn: (value: unknown, ...args: unknown[]) => unknown): void {
+export function registerLiquidFilter(
+  name: string,
+  fn: (value: unknown, ...args: unknown[]) => unknown,
+): void {
   engine.registerFilter(name, fn);
 }
 

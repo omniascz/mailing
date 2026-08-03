@@ -54,7 +54,9 @@ export default async function SurveysPage() {
                       </Badge>
                     </div>
                     {s.description ? (
-                      <p className="mt-1 line-clamp-2 text-xs text-secondary-500">{s.description}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-secondary-500">
+                        {s.description}
+                      </p>
                     ) : null}
                     <div className="mt-3 flex items-center gap-3 text-xs text-secondary-500">
                       <span>{qCount} questions</span>

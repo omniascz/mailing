@@ -174,8 +174,8 @@ export function WorkspaceForm({
             Sender identity (CAN-SPAM)
           </CardTitle>
           <CardDescription>
-            Legal name + physical postal address auto-appended to every marketing email
-            footer. Required by CAN-SPAM and mailbox providers (Gmail/Yahoo).
+            Legal name + physical postal address auto-appended to every marketing email footer.
+            Required by CAN-SPAM and mailbox providers (Gmail/Yahoo).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

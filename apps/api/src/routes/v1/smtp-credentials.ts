@@ -69,29 +69,33 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
     return reply.send({ data: { ok: true, orgId } });
   });
 
-  app.post('/api/v1/internal/smtp/relay', { schema: { tags: ['Internal'] } }, async (req, reply) => {
-    if (!checkSecret(req.headers['x-internal-secret'])) return reply.status(401).send();
-    const body = z
-      .object({
-        orgId: z.string().uuid(),
-        raw: z.string().min(10), // base64
-        mailFrom: z.string().optional(),
-        rcptTo: z.array(z.string()).max(100).optional(),
-      })
-      .parse(req.body);
-    const rawStr = Buffer.from(body.raw, 'base64').toString('utf8');
-    const { sendRawMessage } = await import('../../services/transactional/raw-send.js');
-    try {
-      const result = await sendRawMessage(body.orgId, rawStr, {
-        envelopeFrom: body.mailFrom,
-        envelopeTo: body.rcptTo,
-        metadata: { via: 'smtp' },
-      });
-      return reply.send({ data: result });
-    } catch (err) {
-      return reply.status(502).send({ error: (err as Error).message });
-    }
-  });
+  app.post(
+    '/api/v1/internal/smtp/relay',
+    { schema: { tags: ['Internal'] } },
+    async (req, reply) => {
+      if (!checkSecret(req.headers['x-internal-secret'])) return reply.status(401).send();
+      const body = z
+        .object({
+          orgId: z.string().uuid(),
+          raw: z.string().min(10), // base64
+          mailFrom: z.string().optional(),
+          rcptTo: z.array(z.string()).max(100).optional(),
+        })
+        .parse(req.body);
+      const rawStr = Buffer.from(body.raw, 'base64').toString('utf8');
+      const { sendRawMessage } = await import('../../services/transactional/raw-send.js');
+      try {
+        const result = await sendRawMessage(body.orgId, rawStr, {
+          envelopeFrom: body.mailFrom,
+          envelopeTo: body.rcptTo,
+          metadata: { via: 'smtp' },
+        });
+        return reply.send({ data: result });
+      } catch (err) {
+        return reply.status(502).send({ error: (err as Error).message });
+      }
+    },
+  );
 };
 
 export default smtpCredentialRoutes;

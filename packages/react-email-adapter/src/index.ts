@@ -51,14 +51,9 @@ async function resolveDefaultRenderer(): Promise<EmailRenderer> {
     // Dynamic import keeps @react-email/render an optional peer.
     // String-built spec keeps tsc from trying to resolve it at compile time.
     const spec = '@react-email/' + 'render';
-    const mod = (await import(/* @vite-ignore */ spec).catch(() => null)) as
-      | {
-          render: (
-            el: unknown,
-            opts?: { plainText?: boolean },
-          ) => string | Promise<string>;
-        }
-      | null;
+    const mod = (await import(/* @vite-ignore */ spec).catch(() => null)) as {
+      render: (el: unknown, opts?: { plainText?: boolean }) => string | Promise<string>;
+    } | null;
     if (mod?.render) {
       return ((el, opts) => mod.render(el, opts)) as EmailRenderer;
     }

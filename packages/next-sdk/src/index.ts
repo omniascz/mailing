@@ -29,8 +29,7 @@ import { ForgemsgClient } from '@forgemsg/sdk';
 let _singleton: ForgemsgClient | null = null;
 
 function resolveApiKey(): string {
-  const fromEnv =
-    process.env.FORGEMSG_API_KEY ?? process.env.MAILFORGE_API_KEY ?? null;
+  const fromEnv = process.env.FORGEMSG_API_KEY ?? process.env.MAILFORGE_API_KEY ?? null;
   if (!fromEnv) {
     throw new Error(
       '[@forgemsg/next] FORGEMSG_API_KEY (or MAILFORGE_API_KEY) is not set. ' +
@@ -41,11 +40,7 @@ function resolveApiKey(): string {
 }
 
 function resolveBaseUrl(): string | undefined {
-  return (
-    process.env.FORGEMSG_API_URL ??
-    process.env.MAILFORGE_API_URL ??
-    undefined
-  );
+  return process.env.FORGEMSG_API_URL ?? process.env.MAILFORGE_API_URL ?? undefined;
 }
 
 /**

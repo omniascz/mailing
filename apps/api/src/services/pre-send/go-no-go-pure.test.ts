@@ -30,14 +30,10 @@ describe('aggregateVerdict', () => {
     expect(aggregateVerdict([passing('a'), passing('b')])).toBe('go');
   });
   it('go when only info', () => {
-    expect(
-      aggregateVerdict([{ ...passing('a'), severity: 'info' }, passing('b')]),
-    ).toBe('go');
+    expect(aggregateVerdict([{ ...passing('a'), severity: 'info' }, passing('b')])).toBe('go');
   });
   it('caution when any warn but no fail', () => {
-    expect(
-      aggregateVerdict([{ ...passing('a'), severity: 'warn' }, passing('b')]),
-    ).toBe('caution');
+    expect(aggregateVerdict([{ ...passing('a'), severity: 'warn' }, passing('b')])).toBe('caution');
   });
   it('no-go when any fail', () => {
     expect(
@@ -120,19 +116,17 @@ describe('classifyAudienceSize', () => {
 
 describe('classifySuppression', () => {
   it('info on empty audience', () => {
-    expect(
-      classifySuppression({ recipientCount: 0, suppressedCount: 0 }).severity,
-    ).toBe('info');
+    expect(classifySuppression({ recipientCount: 0, suppressedCount: 0 }).severity).toBe('info');
   });
   it('warns over 10% suppression overlap', () => {
-    expect(
-      classifySuppression({ recipientCount: 1000, suppressedCount: 200 }).severity,
-    ).toBe('warn');
+    expect(classifySuppression({ recipientCount: 1000, suppressedCount: 200 }).severity).toBe(
+      'warn',
+    );
   });
   it('passes under 10%', () => {
-    expect(
-      classifySuppression({ recipientCount: 1000, suppressedCount: 30 }).severity,
-    ).toBe('pass');
+    expect(classifySuppression({ recipientCount: 1000, suppressedCount: 30 }).severity).toBe(
+      'pass',
+    );
   });
 });
 
@@ -244,14 +238,10 @@ describe('classifyComplaintRate', () => {
 
 describe('classifyFrequencyCap', () => {
   it('warns when over 25% of audience is capped', () => {
-    expect(
-      classifyFrequencyCap({ recipientCount: 1000, cappedCount: 300 }).severity,
-    ).toBe('warn');
+    expect(classifyFrequencyCap({ recipientCount: 1000, cappedCount: 300 }).severity).toBe('warn');
   });
   it('passes for low cap impact', () => {
-    expect(
-      classifyFrequencyCap({ recipientCount: 1000, cappedCount: 50 }).severity,
-    ).toBe('pass');
+    expect(classifyFrequencyCap({ recipientCount: 1000, cappedCount: 50 }).severity).toBe('pass');
   });
 });
 

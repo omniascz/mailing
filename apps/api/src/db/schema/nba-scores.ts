@@ -18,7 +18,10 @@ export const nbaScores = pgTable(
     recommendedChannel: text('recommended_channel').notNull(),
     /** Score 0–100 */
     score: numeric('score', { precision: 5, scale: 2 }).notNull(),
-    breakdown: jsonb('breakdown').$type<NbaBreakdown>().notNull().default({} as NbaBreakdown),
+    breakdown: jsonb('breakdown')
+      .$type<NbaBreakdown>()
+      .notNull()
+      .default({} as NbaBreakdown),
     /** Best time window for the recommended action (hour 0-23, UTC) */
     bestSendHour: numeric('best_send_hour', { precision: 3, scale: 0 }),
     computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),

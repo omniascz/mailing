@@ -167,7 +167,10 @@ export async function fetchMessengerProfile(
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 /** Resolve a ForgeMsg contactId from a Facebook Messenger PSID. */
-async function resolveContactByExternalId(orgId: string, externalId: string): Promise<string | null> {
+async function resolveContactByExternalId(
+  orgId: string,
+  externalId: string,
+): Promise<string | null> {
   const { socialContactIdentifiers } = await import('../../db/schema/index.js');
   const { eq, and } = await import('drizzle-orm');
   const [row] = await db

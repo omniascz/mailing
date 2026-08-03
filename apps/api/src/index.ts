@@ -321,20 +321,16 @@ export async function buildApp() {
   // key order and never matches. Without this, every signature check was either
   // fail-open or permanently failing. parseAs:'buffer' keeps req.body as parsed
   // JSON for ergonomics while exposing the original Buffer for verification.
-  app.addContentTypeParser(
-    'application/json',
-    { parseAs: 'buffer' },
-    (req, body, done) => {
-      (req as unknown as { rawBody?: Buffer }).rawBody = body as Buffer;
-      try {
-        const buf = body as Buffer;
-        done(null, buf.length ? JSON.parse(buf.toString('utf8')) : {});
-      } catch (err) {
-        (err as Error & { statusCode?: number }).statusCode = 400;
-        done(err as Error, undefined);
-      }
-    },
-  );
+  app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
+    (req as unknown as { rawBody?: Buffer }).rawBody = body as Buffer;
+    try {
+      const buf = body as Buffer;
+      done(null, buf.length ? JSON.parse(buf.toString('utf8')) : {});
+    } catch (err) {
+      (err as Error & { statusCode?: number }).statusCode = 400;
+      done(err as Error, undefined);
+    }
+  });
 
   // Plugins (order matters: cookie → auth → routes)
   await app.register(errorHandler);

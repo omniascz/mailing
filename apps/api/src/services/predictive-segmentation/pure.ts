@@ -67,9 +67,10 @@ export function computePredictiveScores(
   const alpha = Math.max(0.01, opts.priorWeight ?? 1);
   // Sensible default population rate if the caller doesn't supply one
   // (~one purchase every 180 days).
-  const lambda0 = opts.populationRatePerDay && opts.populationRatePerDay > 0
-    ? opts.populationRatePerDay
-    : 1 / 180;
+  const lambda0 =
+    opts.populationRatePerDay && opts.populationRatePerDay > 0
+      ? opts.populationRatePerDay
+      : 1 / 180;
 
   const aov = row.totalOrders > 0 ? row.totalRevenue / row.totalOrders : 0;
 
@@ -111,7 +112,9 @@ export function computePredictiveScores(
     clv: round2(Number.isFinite(clv) ? Math.max(0, clv) : 0),
     purchaseLikelihood: round3(clamp(purchaseLikelihood, 0, 1)),
     churnRisk: round3(clamp(churnRisk, 0, 1)),
-    expectedPurchases: round2(Number.isFinite(expectedPurchases) ? Math.max(0, expectedPurchases) : 0),
+    expectedPurchases: round2(
+      Number.isFinite(expectedPurchases) ? Math.max(0, expectedPurchases) : 0,
+    ),
     avgOrderIntervalDays: Number.isFinite(interpurchase) ? Math.round(interpurchase) : null,
     avgOrderValue: round2(aov),
   };

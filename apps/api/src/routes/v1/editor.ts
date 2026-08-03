@@ -408,7 +408,13 @@ interface DarkModeRisk {
 function hexToRgb(hex: string): [number, number, number] | null {
   const h = hex.replace('#', '');
   if (h.length !== 6 && h.length !== 3) return null;
-  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const full =
+    h.length === 3
+      ? h
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : h;
   const n = parseInt(full, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
@@ -446,8 +452,7 @@ function analyzeDarkModeRisks(schema: Record<string, unknown>): DarkModeRisk[] {
       findings.push({
         severity: 'medium',
         type: 'white_background',
-        description:
-          `Content background ${contentBg} is near-white. Dark mode clients may force it to near-black, causing light-coloured text to disappear.`,
+        description: `Content background ${contentBg} is near-white. Dark mode clients may force it to near-black, causing light-coloured text to disappear.`,
       });
     }
   }
@@ -473,13 +478,20 @@ function analyzeDarkModeRisks(schema: Record<string, unknown>): DarkModeRisk[] {
     if (block.type === 'hero' && bg) {
       const bgRgb = hexToRgb(bg);
       if (bgRgb && relativeLuminance(...bgRgb) < 0.05) {
-        const content = Array.isArray(block.content) ? (block.content as Record<string, unknown>[]) : [];
+        const content = Array.isArray(block.content)
+          ? (block.content as Record<string, unknown>[])
+          : [];
         for (const child of content) {
           const childColor = typeof child.color === 'string' ? child.color : null;
           if (childColor) {
             const childRgb = hexToRgb(childColor);
             if (childRgb && relativeLuminance(...childRgb) < 0.05) {
-              findings.push({ severity: 'high', type: 'invisible_on_dark_hero', blockId: id, description: `Hero block ${id} has dark background ${bg} with dark text ${childColor}. Invisible in both light and dark mode.` });
+              findings.push({
+                severity: 'high',
+                type: 'invisible_on_dark_hero',
+                blockId: id,
+                description: `Hero block ${id} has dark background ${bg} with dark text ${childColor}. Invisible in both light and dark mode.`,
+              });
             }
           }
         }
@@ -492,13 +504,23 @@ function analyzeDarkModeRisks(schema: Record<string, unknown>): DarkModeRisk[] {
       const btnText = typeof block.textColor === 'string' ? block.textColor : '#ffffff';
       const btnRatio = contrastRatio(btnText, btnBg);
       if (btnRatio < 3.0) {
-        findings.push({ severity: 'medium', type: 'button_low_contrast', blockId: id, description: `Button ${id} has low contrast ${btnRatio.toFixed(1)}:1 (${btnText} on ${btnBg}). Consider darker bg or lighter text.` });
+        findings.push({
+          severity: 'medium',
+          type: 'button_low_contrast',
+          blockId: id,
+          description: `Button ${id} has low contrast ${btnRatio.toFixed(1)}:1 (${btnText} on ${btnBg}). Consider darker bg or lighter text.`,
+        });
       }
     }
 
     // Images without alt text — dark mode may invert them and alt is needed for context
     if (block.type === 'image' && !block.alt) {
-      findings.push({ severity: 'low', type: 'missing_alt', blockId: id, description: `Image block ${id} has no alt text. Dark mode forced-inversion may render the image unrecognisable.` });
+      findings.push({
+        severity: 'low',
+        type: 'missing_alt',
+        blockId: id,
+        description: `Image block ${id} has no alt text. Dark mode forced-inversion may render the image unrecognisable.`,
+      });
     }
   }
 

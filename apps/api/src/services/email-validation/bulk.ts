@@ -19,10 +19,7 @@
 
 import dns from 'node:dns/promises';
 import { redis } from '../../lib/redis.js';
-import {
-  validateEmailSync,
-  type EmailValidationResult,
-} from './index.js';
+import { validateEmailSync, type EmailValidationResult } from './index.js';
 import { suggestEmailCorrection } from './suggest.js';
 
 const DOMAIN_CACHE_TTL_SEC = 24 * 3600;
@@ -72,7 +69,10 @@ export interface BulkValidationReport {
 function extractDomain(email: string): string | null {
   const at = email.lastIndexOf('@');
   if (at < 1) return null;
-  return email.slice(at + 1).toLowerCase().trim();
+  return email
+    .slice(at + 1)
+    .toLowerCase()
+    .trim();
 }
 
 function suggestionFor(email: string): string | undefined {
@@ -96,9 +96,7 @@ async function resolveMxOnce(domain: string, timeoutMs: number): Promise<boolean
   try {
     const records = await Promise.race([
       dns.resolveMx(domain),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), timeoutMs),
-      ),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
     ]);
     const hasMx = Array.isArray(records) && records.length > 0;
     await redis.setex(cacheKey, DOMAIN_CACHE_TTL_SEC, hasMx ? 'true' : 'false').catch(() => {});
@@ -121,12 +119,7 @@ export async function bulkValidate(
     const email = (raw ?? '').toLowerCase().trim();
     const synth = validateEmailSync(email);
     const domain = extractDomain(email);
-    if (
-      !opts.syntaxOnly &&
-      synth.isValid &&
-      !synth.isDisposable &&
-      domain
-    ) {
+    if (!opts.syntaxOnly && synth.isValid && !synth.isDisposable && domain) {
       distinctDomains.add(domain);
     }
     return { email, syntax: synth, domain, suggestion: suggestionFor(email) };

@@ -96,7 +96,11 @@ export async function sendViaSinch(
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    return { providerId: '', status: 'failed', error: `sinch ${res.status}: ${text.slice(0, 300)}` };
+    return {
+      providerId: '',
+      status: 'failed',
+      error: `sinch ${res.status}: ${text.slice(0, 300)}`,
+    };
   }
 
   const data = (await res.json().catch(() => ({}))) as { message_id?: string; id?: string };

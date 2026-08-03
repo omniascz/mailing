@@ -46,7 +46,11 @@ wss.on('listening', () => {
     `ForgeMsg Voice Bot streaming API listening on :${port} ` +
       `[stt:${adapters.mode.stt} llm:${adapters.mode.llm} tts:${adapters.mode.tts}]`,
   );
-  if (adapters.mode.stt === 'stub' || adapters.mode.llm === 'stub' || adapters.mode.tts === 'stub') {
+  if (
+    adapters.mode.stt === 'stub' ||
+    adapters.mode.llm === 'stub' ||
+    adapters.mode.tts === 'stub'
+  ) {
     console.warn(
       '[voice-bot] Some adapters are running in STUB mode — set DEEPGRAM_API_KEY / ' +
         'ANTHROPIC_API_KEY / ELEVENLABS_API_KEY for real STT/LLM/TTS.',

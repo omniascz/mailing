@@ -116,9 +116,7 @@ export async function resolveByDedup(
   const key = dedupKey(kind, ctx);
   try {
     const open = await c.listOpenIncidents();
-    const match = open.find(
-      (i) => (i.metadata?.dedupKey ?? '') === key && i.status !== 'RESOLVED',
-    );
+    const match = open.find((i) => (i.metadata?.dedupKey ?? '') === key && i.status !== 'RESOLVED');
     if (!match) return { resolved: false, incidentId: null };
 
     const durationSeconds = (Date.now() - new Date(match.createdAt).getTime()) / 1000;

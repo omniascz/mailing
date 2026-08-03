@@ -124,7 +124,9 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         .where(and(eq(campaigns.id, id), eq(campaigns.orgId, orgId)))
         .limit(1);
       if (!campaign) {
-        return reply.code(404).send({ code: 'NOT_FOUND', message: 'Campaign not found', statusCode: 404 });
+        return reply
+          .code(404)
+          .send({ code: 'NOT_FOUND', message: 'Campaign not found', statusCode: 404 });
       }
 
       const [stats, links, devices, clients, geo] = await Promise.all([
@@ -170,7 +172,12 @@ export default async function analyticsRoutes(app: FastifyInstance) {
           {
             heading: 'Links',
             columns: ['URL', 'Clicks', 'Unique', '%'],
-            rows: links.map((l) => [l.url, String(l.clicks), String(l.uniqueClicks), `${l.percentage}%`]),
+            rows: links.map((l) => [
+              l.url,
+              String(l.clicks),
+              String(l.uniqueClicks),
+              `${l.percentage}%`,
+            ]),
           },
         ],
       });
@@ -556,12 +563,7 @@ export default async function analyticsRoutes(app: FastifyInstance) {
           occurredAt: revenueEvents.occurredAt,
         })
         .from(revenueEvents)
-        .where(
-          and(
-            eq(revenueEvents.orgId, orgId),
-            eq(revenueEvents.attributedCampaignId, id),
-          ),
-        );
+        .where(and(eq(revenueEvents.orgId, orgId), eq(revenueEvents.attributedCampaignId, id)));
 
       const totalOrders = rows.length;
       const totalRevenue = rows.reduce((s, r) => s + parseFloat(r.amount), 0);
@@ -570,7 +572,12 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       // Aggregate top SKUs across all orders
       const skuMap = new Map<string, { name: string; qty: number; revenue: number }>();
       for (const row of rows) {
-        const items = (row.items ?? []) as Array<{ sku: string; name: string; qty: number; price: number }>;
+        const items = (row.items ?? []) as Array<{
+          sku: string;
+          name: string;
+          qty: number;
+          price: number;
+        }>;
         for (const item of items) {
           const existing = skuMap.get(item.sku) ?? { name: item.name, qty: 0, revenue: 0 };
           skuMap.set(item.sku, {

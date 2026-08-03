@@ -35,7 +35,9 @@ export function parseSinkAddress(email: string): SinkOutcome | null {
 }
 
 /** The lifecycle events (in order) a sink outcome expands into. */
-export function sinkEventChain(outcome: SinkOutcome): Array<'delivered' | 'bounced' | 'complained' | 'opened' | 'clicked'> {
+export function sinkEventChain(
+  outcome: SinkOutcome,
+): Array<'delivered' | 'bounced' | 'complained' | 'opened' | 'clicked'> {
   switch (outcome) {
     case 'delivered':
       return ['delivered'];

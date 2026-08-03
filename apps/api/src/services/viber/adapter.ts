@@ -195,7 +195,10 @@ export class ViberAdapter extends BaseChannelAdapter {
 
     const validTypes = ['text', 'picture', 'video', 'file', 'action'];
     if (content['type'] && !validTypes.includes(content['type'] as string)) {
-      errors.push({ field: 'type', message: `Invalid Viber type. Must be: ${validTypes.join(', ')}` });
+      errors.push({
+        field: 'type',
+        message: `Invalid Viber type. Must be: ${validTypes.join(', ')}`,
+      });
     }
 
     if (content['type'] === 'action' && !content['actionUrl']) {
@@ -203,10 +206,15 @@ export class ViberAdapter extends BaseChannelAdapter {
     }
 
     if (
-      (content['type'] === 'picture' || content['type'] === 'video' || content['type'] === 'file') &&
+      (content['type'] === 'picture' ||
+        content['type'] === 'video' ||
+        content['type'] === 'file') &&
       !content['mediaUrl']
     ) {
-      errors.push({ field: 'mediaUrl', message: `mediaUrl is required for type=${content['type']}` });
+      errors.push({
+        field: 'mediaUrl',
+        message: `mediaUrl is required for type=${content['type']}`,
+      });
     }
 
     return { valid: errors.length === 0, errors };

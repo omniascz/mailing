@@ -8,7 +8,15 @@
  */
 
 import {
-  pgTable, uuid, varchar, integer, boolean, timestamp, jsonb, index, unique,
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+  index,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 // ─── Digital assets ───────────────────────────────────────────────────────────
@@ -39,9 +47,7 @@ export const digitalAssets = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('digital_assets_org_id_idx').on(t.orgId),
-  ],
+  (t) => [index('digital_assets_org_id_idx').on(t.orgId)],
 );
 
 // ─── Delivery records ─────────────────────────────────────────────────────────
@@ -82,10 +88,7 @@ export const licenseKeys = pgTable(
     assetId: uuid('asset_id').notNull(),
     contactId: uuid('contact_id'),
     key: varchar('key', { length: 255 }).notNull(),
-    status: varchar('status', { length: 20 })
-      .notNull()
-      .$type<LicenseKeyStatus>()
-      .default('active'),
+    status: varchar('status', { length: 20 }).notNull().$type<LicenseKeyStatus>().default('active'),
     /** Max activations allowed (null = unlimited) */
     maxActivations: integer('max_activations'),
     activationCount: integer('activation_count').notNull().default(0),

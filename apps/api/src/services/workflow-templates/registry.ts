@@ -1031,12 +1031,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       wait('w2', 5),
       email('e2', 'Want to try again? Upcoming sessions'),
     ],
-    edges: [
-      e('e0', 't', 'w1'),
-      e('e1', 'w1', 'e1'),
-      e('e2', 'e1', 'w2'),
-      e('e3', 'w2', 'e2'),
-    ],
+    edges: [e('e0', 't', 'w1'), e('e1', 'w1', 'e1'), e('e2', 'e1', 'w2'), e('e3', 'w2', 'e2')],
   },
 
   // ─── Feedback / NPS / CSAT ────────────────────────────────────────────────
@@ -1056,7 +1051,12 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('c1', 'condition', { rule: { type: 'csat_score_lte', value: 3 } }),
       n('a1', 'assign_task', { taskType: 'low-csat-followup' }),
     ],
-    edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'c1'), e('e3', 'c1', 'a1', 'true')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'a1', 'true'),
+    ],
   },
 
   // ─── Review request ──────────────────────────────────────────────────────
@@ -1376,19 +1376,25 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'trial_will_expire' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'trial_will_expire' }),
-      email('e1', 'Your trial ends in 3 days — here\'s how to keep your progress'),
+      email('e1', "Your trial ends in 3 days — here's how to keep your progress"),
       wait('w1', 2),
       email('e2', 'Last 24 hours — upgrade now and lock in your data'),
       wait('w2', 0, 20),
       email('e3', 'Your trial just ended — pick a plan to continue'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2'),e('e3','e2','w2'),e('e4','w2','e3')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'e2'),
+      e('e3', 'e2', 'w2'),
+      e('e4', 'w2', 'e3'),
+    ],
   },
   {
     slug: 'saas-feature-adoption',
     name: 'Feature adoption — 3-nudge sequence',
     category: 'saas_lifecycle',
-    description: 'Guide users to a key feature they haven\'t activated yet.',
+    description: "Guide users to a key feature they haven't activated yet.",
     recommendedFor: ['saas'],
     locale: 'en',
     steps: 3,
@@ -1397,12 +1403,21 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'feature_not_used' }),
       email('e1', 'Did you know you have {{feature.name}} available?'),
       wait('w1', 3),
-      n('c1', 'condition', { rule: { type: 'api_event_occurred', eventName: 'feature_activated' } }),
+      n('c1', 'condition', {
+        rule: { type: 'api_event_occurred', eventName: 'feature_activated' },
+      }),
       email('e2', 'Quick tip: how top teams use {{feature.name}}'),
       wait('w2', 4),
       email('e3', 'One-click setup for {{feature.name}} — takes 2 minutes'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','c1'),e('e3','c1','e2','false'),e('e4','e2','w2'),e('e5','w2','e3')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'e2', 'false'),
+      e('e4', 'e2', 'w2'),
+      e('e5', 'w2', 'e3'),
+    ],
   },
   {
     slug: 'saas-csm-check-in-30d',
@@ -1416,12 +1431,18 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'account_created' }),
       wait('w1', 30),
-      email('e1', 'How\'s it going, {{contact.first_name}}? Quick check-in from your CSM'),
+      email('e1', "How's it going, {{contact.first_name}}? Quick check-in from your CSM"),
       wait('w2', 5),
       n('c1', 'condition', { rule: { type: 'email_replied' } }),
       email('e2', 'Friendly follow-up — can I help with anything?'),
     ],
-    edges: [e('e0','t','w1'),e('e1','w1','e1'),e('e2','e1','w2'),e('e3','w2','c1'),e('e4','c1','e2','false')],
+    edges: [
+      e('e0', 't', 'w1'),
+      e('e1', 'w1', 'e1'),
+      e('e2', 'e1', 'w2'),
+      e('e3', 'w2', 'c1'),
+      e('e4', 'c1', 'e2', 'false'),
+    ],
   },
   {
     slug: 'saas-pql-upsell',
@@ -1434,13 +1455,19 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'usage_limit_reached' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'usage_limit_reached' }),
-      email('e1', 'You\'ve hit your limit — here\'s how to unlock more'),
+      email('e1', "You've hit your limit — here's how to unlock more"),
       wait('w1', 2),
-      email('e2', 'Teams on {{plan.name}} get 10× the capacity — see what\'s included'),
+      email('e2', "Teams on {{plan.name}} get 10× the capacity — see what's included"),
       wait('w2', 5),
       email('e3', 'Last chance — upgrade this week and get 20% off your first year'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2'),e('e3','e2','w2'),e('e4','w2','e3')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'e2'),
+      e('e3', 'e2', 'w2'),
+      e('e4', 'w2', 'e3'),
+    ],
   },
   {
     slug: 'saas-mql-to-sql-handoff',
@@ -1458,7 +1485,12 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('c1', 'condition', { rule: { type: 'email_clicked' } }),
       email('e2', 'Let me know a time that works — 15-minute call, no pressure'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','c1'),e('e3','c1','e2','false')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'e2', 'false'),
+    ],
   },
   {
     slug: 'saas-churned-reactivation',
@@ -1472,13 +1504,20 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'subscription_cancelled' }),
       wait('w1', 7),
-      email('e1', 'We\'ve added new features since you left — take a look'),
+      email('e1', "We've added new features since you left — take a look"),
       wait('w2', 14),
       email('e2', 'Come back — first month free, no credit card required'),
       wait('w3', 30),
       email('e3', 'One last thought before we say goodbye'),
     ],
-    edges: [e('e0','t','w1'),e('e1','w1','e1'),e('e2','e1','w2'),e('e3','w2','e2'),e('e4','e2','w3'),e('e5','w3','e3')],
+    edges: [
+      e('e0', 't', 'w1'),
+      e('e1', 'w1', 'e1'),
+      e('e2', 'e1', 'w2'),
+      e('e3', 'w2', 'e2'),
+      e('e4', 'e2', 'w3'),
+      e('e5', 'w3', 'e3'),
+    ],
   },
   {
     slug: 'saas-annual-renewal',
@@ -1491,7 +1530,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'renewal_approaching_60d' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'renewal_approaching_60d' }),
-      email('e1', 'Your plan renews in 60 days — here\'s what\'s new this year'),
+      email('e1', "Your plan renews in 60 days — here's what's new this year"),
       wait('w1', 30),
       email('e2', '30 days to renewal — lock in your rate now'),
       wait('w2', 16),
@@ -1501,7 +1540,17 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       wait('w4', 6),
       email('e5', 'Renewing tomorrow — everything you need to know'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2'),e('e3','e2','w2'),e('e4','w2','e3'),e('e5','e3','w3'),e('e6','w3','e4'),e('e7','e4','w4'),e('e8','w4','e5')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'e2'),
+      e('e3', 'e2', 'w2'),
+      e('e4', 'w2', 'e3'),
+      e('e5', 'e3', 'w3'),
+      e('e6', 'w3', 'e4'),
+      e('e7', 'e4', 'w4'),
+      e('e8', 'w4', 'e5'),
+    ],
   },
   {
     slug: 'saas-downgrade-saver',
@@ -1516,9 +1565,9 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'downgrade_initiated' }),
       email('e1', 'Before you downgrade — can I help?'),
       wait('w1', 1),
-      email('e2', 'Stay on {{plan.name}} — we\'ll extend your trial by 30 days'),
+      email('e2', "Stay on {{plan.name}} — we'll extend your trial by 30 days"),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2')],
+    edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],
   },
 
   // ─── Sales engagement (#215 expansion) ───────────────────────────────────────
@@ -1540,7 +1589,14 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       wait('w2', 5),
       email('e3', 'Last note from me — happy to connect when the time is right'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','c1'),e('e3','c1','e2','false'),e('e4','e2','w2'),e('e5','w2','e3')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'e2', 'false'),
+      e('e4', 'e2', 'w2'),
+      e('e5', 'w2', 'e3'),
+    ],
   },
   {
     slug: 'sales-demo-reminder',
@@ -1553,13 +1609,19 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'demo_scheduled' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'demo_scheduled' }),
-      email('e1', 'Your demo is confirmed — here\'s the agenda'),
+      email('e1', "Your demo is confirmed — here's the agenda"),
       wait('w1', 0, 20),
       email('e2', 'Reminder: your demo starts in 1 hour'),
       wait('w2', 1),
-      email('e3', 'Great talking — here\'s a recap + next steps'),
+      email('e3', "Great talking — here's a recap + next steps"),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2'),e('e3','e2','w2'),e('e4','w2','e3')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'e2'),
+      e('e3', 'e2', 'w2'),
+      e('e4', 'w2', 'e3'),
+    ],
   },
   {
     slug: 'sales-proposal-followup',
@@ -1579,9 +1641,18 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       wait('w2', 4),
       email('e3', 'A few things worth knowing before you decide'),
       wait('w3', 5),
-      email('e4', 'Closing the loop — what\'s holding things up?'),
+      email('e4', "Closing the loop — what's holding things up?"),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','c1'),e('e3','c1','e2','false'),e('e4','e2','w2'),e('e5','w2','e3'),e('e6','e3','w3'),e('e7','w3','e4')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'e2', 'false'),
+      e('e4', 'e2', 'w2'),
+      e('e5', 'w2', 'e3'),
+      e('e6', 'e3', 'w3'),
+      e('e7', 'w3', 'e4'),
+    ],
   },
   {
     slug: 'sales-deal-won-onboarding',
@@ -1594,13 +1665,19 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'deal_won' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'deal_won' }),
-      email('e1', 'Welcome to {{org.name}} — here\'s how we get started'),
+      email('e1', "Welcome to {{org.name}} — here's how we get started"),
       wait('w1', 1),
-      email('e2', 'Your onboarding call is booked — here\'s what to prepare'),
+      email('e2', "Your onboarding call is booked — here's what to prepare"),
       wait('w2', 5),
       email('e3', 'Setup checklist — 5 things to do in your first week'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2'),e('e3','e2','w2'),e('e4','w2','e3')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'e2'),
+      e('e3', 'e2', 'w2'),
+      e('e4', 'w2', 'e3'),
+    ],
   },
   {
     slug: 'sales-deal-lost-reactivation',
@@ -1616,9 +1693,9 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       wait('w1', 90),
       email('e1', 'A lot has changed in the last 90 days — worth a quick look?'),
       wait('w2', 14),
-      email('e2', 'Still thinking about {{org.name}}? Here\'s a fresh perspective'),
+      email('e2', "Still thinking about {{org.name}}? Here's a fresh perspective"),
     ],
-    edges: [e('e0','t','w1'),e('e1','w1','e1'),e('e2','e1','w2'),e('e3','w2','e2')],
+    edges: [e('e0', 't', 'w1'), e('e1', 'w1', 'e1'), e('e2', 'e1', 'w2'), e('e3', 'w2', 'e2')],
   },
 
   // ─── E-commerce expansion (#215) ─────────────────────────────────────────────
@@ -1635,7 +1712,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'price_dropped' }),
       email('e1', 'Price drop! {{product.name}} is now {{product.price}}'),
     ],
-    edges: [e('e0','t','e1')],
+    edges: [e('e0', 't', 'e1')],
   },
   {
     slug: 'ecom-vip-early-access',
@@ -1652,7 +1729,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       wait('w1', 0, 20),
       email('e2', 'Early access closes in 4 hours — {{product.name}} launches soon'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2')],
+    edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],
   },
   {
     slug: 'ecom-subscription-pause',
@@ -1667,9 +1744,9 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'subscription_pause_requested' }),
       email('e1', 'Before you pause — would a skip month help?'),
       wait('w1', 2),
-      email('e2', 'We\'ll miss you — your subscription is paused until {{subscription.resumeDate}}'),
+      email('e2', "We'll miss you — your subscription is paused until {{subscription.resumeDate}}"),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2')],
+    edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],
   },
   {
     slug: 'ecom-bfcm-presale',
@@ -1688,7 +1765,13 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       wait('w2', 3),
       email('e3', 'Last chance — sale ends at midnight'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2'),e('e3','e2','w2'),e('e4','w2','e3')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'e2'),
+      e('e3', 'e2', 'w2'),
+      e('e4', 'w2', 'e3'),
+    ],
   },
   {
     slug: 'ecom-post-refund-recovery',
@@ -1701,11 +1784,11 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'refund_processed' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'refund_processed' }),
-      email('e1', 'Refund confirmed — we\'re sorry it didn\'t work out'),
+      email('e1', "Refund confirmed — we're sorry it didn't work out"),
       wait('w1', 3),
       email('e2', 'What went wrong? Your feedback shapes our next products'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2')],
+    edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],
   },
   {
     slug: 'ecom-product-launch-waitlist',
@@ -1718,12 +1801,17 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'waitlist_product_available' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'waitlist_product_available' }),
-      email('e1', 'It\'s here! {{product.name}} is now available — you\'re first in line'),
+      email('e1', "It's here! {{product.name}} is now available — you're first in line"),
       wait('w1', 1),
       n('c1', 'condition', { rule: { type: 'email_clicked' } }),
       email('e2', 'Still interested in {{product.name}}? Stock is limited'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','c1'),e('e3','c1','e2','false')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'e2', 'false'),
+    ],
   },
 
   // ─── Re-engagement (#215 expansion) ──────────────────────────────────────────
@@ -1738,7 +1826,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'contact_lapsed_180d' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'contact_lapsed_180d' }),
-      email('e1', 'We miss you — here\'s what\'s new'),
+      email('e1', "We miss you — here's what's new"),
       wait('w1', 7),
       n('c1', 'condition', { rule: { type: 'email_opened' } }),
       email('e2', 'One more thing before we part ways'),
@@ -1746,7 +1834,15 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('c2', 'condition', { rule: { type: 'email_opened' } }),
       n('a1', 'add_tag', { tagName: 'sunset_candidate' }),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','c1'),e('e3','c1','e2','false'),e('e4','e2','w2'),e('e5','w2','c2'),e('e6','c2','a1','false')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'e2', 'false'),
+      e('e4', 'e2', 'w2'),
+      e('e5', 'w2', 'c2'),
+      e('e6', 'c2', 'a1', 'false'),
+    ],
   },
   {
     slug: 'reengagement-sunset-policy',
@@ -1764,7 +1860,12 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('c1', 'condition', { rule: { type: 'email_clicked' } }),
       n('a1', 'add_tag', { tagName: 'unsubscribed_sunset' }),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','c1'),e('e3','c1','a1','false')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'a1', 'false'),
+    ],
   },
   {
     slug: 'reengagement-preference-update',
@@ -1779,7 +1880,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'contact_lapsed_90d' }),
       email('e1', 'What would you like to hear from us? Update your preferences'),
     ],
-    edges: [e('e0','t','e1')],
+    edges: [e('e0', 't', 'e1')],
   },
   {
     slug: 'reengagement-list-hygiene',
@@ -1797,7 +1898,12 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('c1', 'condition', { rule: { type: 'email_opened' } }),
       n('a1', 'add_tag', { tagName: 'hygiene_suppressed' }),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','c1'),e('e3','c1','a1','false')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'a1', 'false'),
+    ],
   },
 
   // ─── Compliance / GDPR (#215 expansion) ──────────────────────────────────────
@@ -1817,7 +1923,12 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('c1', 'condition', { rule: { type: 'email_clicked' } }),
       email('e2', 'Last chance to renew your subscription preferences'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','c1'),e('e3','c1','e2','false')],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'c1'),
+      e('e3', 'c1', 'e2', 'false'),
+    ],
   },
   {
     slug: 'gdpr-data-export-ready',
@@ -1832,7 +1943,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'data_export_ready' }),
       email('e1', 'Your data export is ready — download within 72 hours'),
     ],
-    edges: [e('e0','t','e1')],
+    edges: [e('e0', 't', 'e1')],
   },
   {
     slug: 'gdpr-account-deletion-confirm',
@@ -1845,11 +1956,11 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'account_deletion_requested' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'account_deletion_requested' }),
-      email('e1', 'We\'ve received your deletion request — your account closes in 30 days'),
+      email('e1', "We've received your deletion request — your account closes in 30 days"),
       wait('w1', 25),
       email('e2', 'Final reminder: your account closes in 5 days'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2')],
+    edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],
   },
   {
     slug: 'gdpr-cs-consent-renewal',
@@ -1866,7 +1977,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       wait('w1', 14),
       email('e2', 'Poslední možnost: potvrďte svůj souhlas se zasíláním'),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2')],
+    edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],
   },
 
   // ─── Blog & content (#337 + #215) ────────────────────────────────────────────
@@ -1883,7 +1994,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'new_blog_post_published' }),
       email('e1', 'New post: {{blog.title}}'),
     ],
-    edges: [e('e0','t','e1')],
+    edges: [e('e0', 't', 'e1')],
   },
   {
     slug: 'blog-new-post-cs',
@@ -1898,7 +2009,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'new_blog_post_published' }),
       email('e1', 'Nový článek: {{blog.title}}'),
     ],
-    edges: [e('e0','t','e1')],
+    edges: [e('e0', 't', 'e1')],
   },
   {
     slug: 'blog-content-upgrade-lead-magnet',
@@ -1911,11 +2022,11 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'content_upgrade_requested' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'content_upgrade_requested' }),
-      email('e1', 'Here\'s your {{lead_magnet.name}} — enjoy!'),
+      email('e1', "Here's your {{lead_magnet.name}} — enjoy!"),
       wait('w1', 3),
-      email('e2', 'Did {{lead_magnet.name}} help? Here\'s what to read next'),
+      email('e2', "Did {{lead_magnet.name}} help? Here's what to read next"),
     ],
-    edges: [e('e0','t','e1'),e('e1','e1','w1'),e('e2','w1','e2')],
+    edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],
   },
   {
     slug: 'blog-weekly-digest',
@@ -1930,7 +2041,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'weekly_digest_ready' }),
       email('e1', 'This week in {{org.name}}: top {{digest.count}} articles'),
     ],
-    edges: [e('e0','t','e1')],
+    edges: [e('e0', 't', 'e1')],
   },
 ];
 

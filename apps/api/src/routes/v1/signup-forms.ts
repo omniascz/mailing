@@ -433,9 +433,7 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-      const { data: submittedData } = z
-        .object({ data: z.record(z.string()) })
-        .parse(req.body);
+      const { data: submittedData } = z.object({ data: z.record(z.string()) }).parse(req.body);
 
       const form = await getSignupForm(req.user!.orgId, id);
       const { computeFieldVisibility } = await import('../../services/forms/conditional-logic.js');
@@ -474,7 +472,8 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
       schema: {
         tags: ['Public Forms'],
         summary: 'Pre-fill form fields for an identified visitor',
-        description: 'Provide fmid (tracking cookie) or fmcid (encrypted contact ID in URL) to get safe pre-fill data.',
+        description:
+          'Provide fmid (tracking cookie) or fmcid (encrypted contact ID in URL) to get safe pre-fill data.',
       },
     },
     async (req, reply) => {
@@ -487,9 +486,8 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.query);
 
-      const { resolveContactFromTracking, buildAutofillPayload } = await import(
-        '../../services/signup-forms/autofill.js'
-      );
+      const { resolveContactFromTracking, buildAutofillPayload } =
+        await import('../../services/signup-forms/autofill.js');
 
       const contactId = await resolveContactFromTracking(fmid, fmcid);
       if (!contactId) {

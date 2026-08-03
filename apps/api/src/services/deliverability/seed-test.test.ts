@@ -35,7 +35,11 @@ describe('aggregateSeedResults', () => {
   });
 
   it('sorts providers alphabetically', () => {
-    const agg = aggregateSeedResults([r('outlook', 'inbox'), r('gmail', 'inbox'), r('seznam', 'inbox')]);
+    const agg = aggregateSeedResults([
+      r('outlook', 'inbox'),
+      r('gmail', 'inbox'),
+      r('seznam', 'inbox'),
+    ]);
     expect(agg.byProvider.map((p) => p.provider)).toEqual(['gmail', 'outlook', 'seznam']);
   });
 });

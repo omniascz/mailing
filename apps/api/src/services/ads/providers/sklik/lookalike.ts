@@ -102,9 +102,12 @@ export async function listSklikConversionGoals(
   accountId: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<SklikConversionGoal[]> {
-  const res = await fetchImpl(`${SKLIK_API_BASE}/drak/json/conversions/list?accountId=${encodeURIComponent(accountId)}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const res = await fetchImpl(
+    `${SKLIK_API_BASE}/drak/json/conversions/list?accountId=${encodeURIComponent(accountId)}`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
 
   const text = await res.text();
   if (!res.ok) throw new Error(`Sklik list conversions failed: HTTP ${res.status} — ${text}`);

@@ -70,24 +70,32 @@ export async function createShipment(
     senderLabel: settings.senderId,
   };
 
-  const result = (await packetaRequest('/packet/create', settings.apiKey, 'POST', payload)) as PacketaApiStatus;
+  const result = (await packetaRequest(
+    '/packet/create',
+    settings.apiKey,
+    'POST',
+    payload,
+  )) as PacketaApiStatus;
 
-  const [row] = await db.insert(packetaShipments).values({
-    orgId,
-    contactId: input.contactId ?? null,
-    orderId: input.orderId ?? null,
-    barcode: result.barcode,
-    status: result.status ?? 'created',
-    trackingUrl: result.trackingUrl,
-    recipientName: input.recipientName,
-    recipientEmail: input.recipientEmail ?? null,
-    recipientPhone: input.recipientPhone ?? null,
-    pickupPointId: input.pickupPointId,
-    weight: input.weight ? String(input.weight) : null,
-    cod: input.cod ? String(input.cod) : null,
-    currency: input.currency ?? 'CZK',
-    rawStatus: result as Record<string, unknown>,
-  }).returning();
+  const [row] = await db
+    .insert(packetaShipments)
+    .values({
+      orgId,
+      contactId: input.contactId ?? null,
+      orderId: input.orderId ?? null,
+      barcode: result.barcode,
+      status: result.status ?? 'created',
+      trackingUrl: result.trackingUrl,
+      recipientName: input.recipientName,
+      recipientEmail: input.recipientEmail ?? null,
+      recipientPhone: input.recipientPhone ?? null,
+      pickupPointId: input.pickupPointId,
+      weight: input.weight ? String(input.weight) : null,
+      cod: input.cod ? String(input.cod) : null,
+      currency: input.currency ?? 'CZK',
+      rawStatus: result as Record<string, unknown>,
+    })
+    .returning();
 
   return row!;
 }
@@ -97,9 +105,13 @@ export async function syncShipmentStatus(
   settings: PacketaSettings,
   barcode: string,
 ): Promise<PacketaShipment> {
-  const result = (await packetaRequest(`/packet/${barcode}/status`, settings.apiKey)) as PacketaApiStatus;
+  const result = (await packetaRequest(
+    `/packet/${barcode}/status`,
+    settings.apiKey,
+  )) as PacketaApiStatus;
 
-  const [row] = await db.update(packetaShipments)
+  const [row] = await db
+    .update(packetaShipments)
     .set({
       status: result.status ?? 'unknown',
       rawStatus: result as Record<string, unknown>,
@@ -113,7 +125,9 @@ export async function syncShipmentStatus(
 }
 
 export async function listShipments(orgId: string, limit = 50): Promise<PacketaShipment[]> {
-  return db.select().from(packetaShipments)
+  return db
+    .select()
+    .from(packetaShipments)
     .where(eq(packetaShipments.orgId, orgId))
     .orderBy(desc(packetaShipments.createdAt))
     .limit(limit);

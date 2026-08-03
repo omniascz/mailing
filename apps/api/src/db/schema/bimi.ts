@@ -25,7 +25,9 @@ import {
 export const bimiConfigs = pgTable(
   'bimi_configs',
   {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: varchar('id', { length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     orgId: varchar('org_id', { length: 36 }).notNull(),
 
     /** Sending domain this BIMI record is for (e.g. "company.cz") */

@@ -40,7 +40,10 @@ export interface UpdateContactParams {
 }
 
 class AudienceContactsResource {
-  constructor(private readonly client: ForgemsgClient, private readonly audienceId: string) {}
+  constructor(
+    private readonly client: ForgemsgClient,
+    private readonly audienceId: string,
+  ) {}
 
   list(): Promise<{ data: AudienceContact[] }> {
     return this.client.get(`/api/v1/audiences/${this.audienceId}/contacts`);

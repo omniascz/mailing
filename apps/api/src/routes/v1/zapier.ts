@@ -32,7 +32,10 @@ const zapierRoutes: FastifyPluginAsync = async (app) => {
     { schema: { tags: ['Zapier'], summary: 'New contact trigger (polling)' } },
     async (req) => {
       const q = z
-        .object({ since: z.string().optional(), limit: z.coerce.number().int().min(1).max(100).optional() })
+        .object({
+          since: z.string().optional(),
+          limit: z.coerce.number().int().min(1).max(100).optional(),
+        })
         .parse(req.query);
       const data = await listRecentContacts(req.user!.orgId, { sinceIso: q.since, limit: q.limit });
       return { data };

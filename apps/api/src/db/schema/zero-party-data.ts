@@ -3,7 +3,15 @@
  * Unlike behavioral data (first-party), zero-party data is self-declared.
  */
 import {
-  pgTable, uuid, text, timestamp, jsonb, boolean, index, uniqueIndex, pgEnum,
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  jsonb,
+  boolean,
+  index,
+  uniqueIndex,
+  pgEnum,
 } from 'drizzle-orm/pg-core';
 
 export const zpDataTypeEnum = pgEnum('zp_data_type', [
@@ -27,13 +35,18 @@ export const zpCollectionForms = pgTable(
     orgId: uuid('org_id').notNull(),
     name: text('name').notNull(),
     /** Questions to ask — each maps to a zpDataType */
-    questions: jsonb('questions').$type<Array<{
-      key: string;
-      label: string;
-      dataType: string;
-      options?: string[];
-      required?: boolean;
-    }>>().notNull().default([]),
+    questions: jsonb('questions')
+      .$type<
+        Array<{
+          key: string;
+          label: string;
+          dataType: string;
+          options?: string[];
+          required?: boolean;
+        }>
+      >()
+      .notNull()
+      .default([]),
     active: boolean('active').notNull().default(true),
     /** URL to embed this form in email (AMP or fallback HTML) */
     embedToken: text('embed_token').notNull(),

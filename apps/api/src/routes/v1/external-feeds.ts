@@ -28,7 +28,10 @@ export async function externalFeedsRoutes(app: FastifyInstance): Promise<void> {
   // GET /api/v1/external-feeds
   app.get(
     '/api/v1/external-feeds',
-    { preHandler: [app.authenticate], schema: { tags: ['External Feeds'], summary: 'List external feeds' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['External Feeds'], summary: 'List external feeds' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       return { data: await listExternalFeeds(orgId) };
@@ -38,7 +41,10 @@ export async function externalFeedsRoutes(app: FastifyInstance): Promise<void> {
   // GET /api/v1/external-feeds/:id
   app.get(
     '/api/v1/external-feeds/:id',
-    { preHandler: [app.authenticate], schema: { tags: ['External Feeds'], summary: 'Get external feed' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['External Feeds'], summary: 'Get external feed' },
+    },
     async (req) => {
       const { id } = req.params as { id: string };
       return { data: await getExternalFeed(req.user!.orgId, id) };
@@ -48,7 +54,10 @@ export async function externalFeedsRoutes(app: FastifyInstance): Promise<void> {
   // POST /api/v1/external-feeds
   app.post(
     '/api/v1/external-feeds',
-    { preHandler: [app.authenticate], schema: { tags: ['External Feeds'], summary: 'Create external feed' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['External Feeds'], summary: 'Create external feed' },
+    },
     async (req, reply) => {
       const body = CreateSchema.parse(req.body);
       const feed = await createExternalFeed(req.user!.orgId, body);
@@ -59,18 +68,30 @@ export async function externalFeedsRoutes(app: FastifyInstance): Promise<void> {
   // PATCH /api/v1/external-feeds/:id
   app.patch(
     '/api/v1/external-feeds/:id',
-    { preHandler: [app.authenticate], schema: { tags: ['External Feeds'], summary: 'Update external feed' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['External Feeds'], summary: 'Update external feed' },
+    },
     async (req) => {
       const { id } = req.params as { id: string };
       const body = UpdateSchema.parse(req.body);
-      return { data: await updateExternalFeed(req.user!.orgId, id, body as Parameters<typeof updateExternalFeed>[2]) };
+      return {
+        data: await updateExternalFeed(
+          req.user!.orgId,
+          id,
+          body as Parameters<typeof updateExternalFeed>[2],
+        ),
+      };
     },
   );
 
   // DELETE /api/v1/external-feeds/:id
   app.delete(
     '/api/v1/external-feeds/:id',
-    { preHandler: [app.authenticate], schema: { tags: ['External Feeds'], summary: 'Delete external feed' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['External Feeds'], summary: 'Delete external feed' },
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       await deleteExternalFeed(req.user!.orgId, id);
@@ -81,7 +102,10 @@ export async function externalFeedsRoutes(app: FastifyInstance): Promise<void> {
   // POST /api/v1/external-feeds/:id/refresh — manual trigger
   app.post(
     '/api/v1/external-feeds/:id/refresh',
-    { preHandler: [app.authenticate], schema: { tags: ['External Feeds'], summary: 'Manually refresh external feed' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['External Feeds'], summary: 'Manually refresh external feed' },
+    },
     async (req) => {
       const { id } = req.params as { id: string };
       return { data: await refreshFeed(req.user!.orgId, id) };

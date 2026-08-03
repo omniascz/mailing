@@ -47,9 +47,8 @@ export default async function FrequencyRulesPage() {
                     ) : null}
                   </div>
                   <span className="text-sm text-secondary-700">
-                    max{' '}
-                    <span className="font-semibold tabular-nums">{r.maxCount}</span> / {r.periodHours}
-                    h
+                    max <span className="font-semibold tabular-nums">{r.maxCount}</span> /{' '}
+                    {r.periodHours}h
                   </span>
                 </CardContent>
               </Card>

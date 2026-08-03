@@ -103,10 +103,7 @@ export function evaluateFormTargeting(
   if (freq?.hideAfterSubmit && ctx.hasSubmitted) {
     return { eligible: false, reason: 'already_submitted', trigger };
   }
-  if (
-    freq?.maxImpressions != null &&
-    (ctx.impressionCount ?? 0) >= freq.maxImpressions
-  ) {
+  if (freq?.maxImpressions != null && (ctx.impressionCount ?? 0) >= freq.maxImpressions) {
     return { eligible: false, reason: 'max_impressions', trigger };
   }
   if (freq?.cooldownDays != null && ctx.lastSeenMs) {

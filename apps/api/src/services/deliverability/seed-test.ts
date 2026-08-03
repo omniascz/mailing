@@ -11,12 +11,7 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  seedAddresses,
-  seedTests,
-  seedResults,
-  type SeedResult,
-} from '../../db/schema/index.js';
+import { seedAddresses, seedTests, seedResults, type SeedResult } from '../../db/schema/index.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 
@@ -172,7 +167,16 @@ export function aggregateSeedResults(
   for (const r of results) {
     let p = map.get(r.provider);
     if (!p) {
-      p = { provider: r.provider, total: 0, reported: 0, inbox: 0, spam: 0, tabs: 0, missing: 0, inboxRate: 0 };
+      p = {
+        provider: r.provider,
+        total: 0,
+        reported: 0,
+        inbox: 0,
+        spam: 0,
+        tabs: 0,
+        missing: 0,
+        inboxRate: 0,
+      };
       map.set(r.provider, p);
     }
     p.total += 1;
@@ -194,7 +198,10 @@ export function aggregateSeedResults(
   }
 
   const byProvider = [...map.values()]
-    .map((p) => ({ ...p, inboxRate: p.reported ? Math.round((p.inbox / p.reported) * 100) / 100 : 0 }))
+    .map((p) => ({
+      ...p,
+      inboxRate: p.reported ? Math.round((p.inbox / p.reported) * 100) / 100 : 0,
+    }))
     .sort((a, b) => a.provider.localeCompare(b.provider));
 
   return {

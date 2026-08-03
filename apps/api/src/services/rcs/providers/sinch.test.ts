@@ -28,7 +28,7 @@ describe('buildSinchMessage', () => {
       .carousel_message.cards;
     expect(cards).toHaveLength(1);
     expect(cards[0]!['title']).toBe('Card A');
-    expect((cards[0]!['suggestions'] as unknown[])).toHaveLength(2);
+    expect(cards[0]!['suggestions'] as unknown[]).toHaveLength(2);
   });
 
   it('builds a media message with caption', () => {

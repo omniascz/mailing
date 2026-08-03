@@ -85,7 +85,14 @@ const deliverabilityRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { provider } = z
-        .object({ provider: z.enum(['senderscore', 'google_postmaster', 'microsoft_snds', 'seznam_postmaster']) })
+        .object({
+          provider: z.enum([
+            'senderscore',
+            'google_postmaster',
+            'microsoft_snds',
+            'seznam_postmaster',
+          ]),
+        })
         .parse(req.params);
       const { domain } = domainQuery.parse(req.query);
 

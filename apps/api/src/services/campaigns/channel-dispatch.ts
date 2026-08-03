@@ -17,13 +17,7 @@ import { and, eq, isNull, sql, type SQL } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { campaigns, contacts, segments, type Campaign } from '../../db/schema/index.js';
 import { buildSegmentWhere } from '../segments/query-builder.js';
-import {
-  smsQueue,
-  whatsappQueue,
-  pushQueue,
-  mobilePushQueue,
-  PRIORITY,
-} from '../../lib/queues.js';
+import { smsQueue, whatsappQueue, pushQueue, mobilePushQueue, PRIORITY } from '../../lib/queues.js';
 import { setCampaignStatusInternal } from './dispatch.js';
 import { AppError } from '../../lib/app-error.js';
 
@@ -86,7 +80,10 @@ export async function resolveChannelAudience(
     if (ew) conds.push(sql`NOT (${ew})`);
   }
 
-  return db.select({ id: contacts.id, phone: contacts.phone }).from(contacts).where(and(...conds));
+  return db
+    .select({ id: contacts.id, phone: contacts.phone })
+    .from(contacts)
+    .where(and(...conds));
 }
 
 // ── Content extraction (content is free-form jsonb per campaign type) ──────────

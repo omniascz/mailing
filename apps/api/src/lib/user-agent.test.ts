@@ -15,9 +15,9 @@ describe('parseUserAgent', () => {
   });
 
   it('detects Yahoo Mail proxy', () => {
-    expect(parseUserAgent('YahooMailProxy; https://help.yahoo.com/kb/yahoo-mail-proxy').emailClient).toBe(
-      'yahoo',
-    );
+    expect(
+      parseUserAgent('YahooMailProxy; https://help.yahoo.com/kb/yahoo-mail-proxy').emailClient,
+    ).toBe('yahoo');
   });
 
   it('detects Apple Mail on macOS (WebKit, no browser marker)', () => {
@@ -46,7 +46,8 @@ describe('parseUserAgent', () => {
 
   it('classifies device form-factors', () => {
     expect(
-      parseUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605').deviceType,
+      parseUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605')
+        .deviceType,
     ).toBe('mobile');
     expect(
       parseUserAgent('Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605').deviceType,

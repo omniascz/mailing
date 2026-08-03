@@ -13,12 +13,7 @@
 
 import { and, eq } from 'drizzle-orm';
 import { db } from '../src/db/client.js';
-import {
-  organizations,
-  blogAuthors,
-  blogCategories,
-  blogPosts,
-} from '../src/db/schema/index.js';
+import { organizations, blogAuthors, blogCategories, blogPosts } from '../src/db/schema/index.js';
 import { MARKETING_POSTS } from '../src/seeds/marketing-blog/posts.js';
 
 const PLATFORM_ORG_SLUG = 'mailforge-marketing';

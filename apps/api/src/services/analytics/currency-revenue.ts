@@ -48,11 +48,13 @@ export async function getCurrencyRevenue(
       topCampaignId: sql<string | null>`mode() within group (order by campaign_id)`,
     })
     .from(revenueEvents)
-    .where(and(
-      eq(revenueEvents.orgId, orgId),
-      gte(revenueEvents.occurredAt, dateFrom),
-      sql`occurred_at <= ${dateTo.toISOString()}`,
-    ))
+    .where(
+      and(
+        eq(revenueEvents.orgId, orgId),
+        gte(revenueEvents.occurredAt, dateFrom),
+        sql`occurred_at <= ${dateTo.toISOString()}`,
+      ),
+    )
     .groupBy(revenueEvents.currency);
 
   // Per-currency email sent count for RPE calculation
@@ -75,10 +77,7 @@ export async function getCurrencyRevenue(
     };
   });
 
-  const totalRevenueUsd = breakdown.reduce(
-    (sum, b) => sum + toUsd(b.totalRevenue, b.currency),
-    0,
-  );
+  const totalRevenueUsd = breakdown.reduce((sum, b) => sum + toUsd(b.totalRevenue, b.currency), 0);
 
   return {
     breakdown,

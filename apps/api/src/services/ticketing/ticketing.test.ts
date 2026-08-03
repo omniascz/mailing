@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { scoreCandidate, rankAudienceForEvent, buildCascadeSteps, type AudienceCandidate } from './fill-the-house.js';
+import {
+  scoreCandidate,
+  rankAudienceForEvent,
+  buildCascadeSteps,
+  type AudienceCandidate,
+} from './fill-the-house.js';
 import { computeDayOfSchedule, stepsDueNow } from './day-of.js';
 import { coOccurrence, recommendForContact } from './recommendations.js';
 import { recipesForTrigger, recipesByGroup, TICKETING_RECIPES } from './recipes.js';
@@ -12,18 +17,42 @@ describe('scoreCandidate', () => {
   const event = { venueCity: 'Brno', category: 'music' };
 
   it('rewards city match, category affinity, recency, frequency', () => {
-    const hot: AudienceCandidate = { contactId: 'a', city: 'Brno', attendedCategories: ['music'], lapsedDays: 10, orders: 5 };
-    const cold: AudienceCandidate = { contactId: 'b', city: 'Praha', attendedCategories: ['sport'], lapsedDays: 400, orders: 0 };
+    const hot: AudienceCandidate = {
+      contactId: 'a',
+      city: 'Brno',
+      attendedCategories: ['music'],
+      lapsedDays: 10,
+      orders: 5,
+    };
+    const cold: AudienceCandidate = {
+      contactId: 'b',
+      city: 'Praha',
+      attendedCategories: ['sport'],
+      lapsedDays: 400,
+      orders: 0,
+    };
     expect(scoreCandidate(hot, event)).toBeGreaterThan(scoreCandidate(cold, event));
   });
 
   it('city match is case-insensitive', () => {
-    const c: AudienceCandidate = { contactId: 'a', city: 'brno', attendedCategories: [], lapsedDays: 999, orders: 0 };
+    const c: AudienceCandidate = {
+      contactId: 'a',
+      city: 'brno',
+      attendedCategories: [],
+      lapsedDays: 999,
+      orders: 0,
+    };
     expect(scoreCandidate(c, event)).toBeGreaterThanOrEqual(40);
   });
 
   it('never-purchased (Infinity lapsed) does not crash + scores low', () => {
-    const c: AudienceCandidate = { contactId: 'a', city: 'Ostrava', attendedCategories: [], lapsedDays: Infinity, orders: 0 };
+    const c: AudienceCandidate = {
+      contactId: 'a',
+      city: 'Ostrava',
+      attendedCategories: [],
+      lapsedDays: Infinity,
+      orders: 0,
+    };
     expect(Number.isFinite(scoreCandidate(c, event))).toBe(true);
     expect(scoreCandidate(c, event)).toBe(0);
   });
@@ -34,7 +63,13 @@ describe('rankAudienceForEvent', () => {
     const ranked = rankAudienceForEvent(
       [
         { contactId: 'far', city: 'Praha', attendedCategories: [], lapsedDays: 500, orders: 0 },
-        { contactId: 'near', city: 'Brno', attendedCategories: ['music'], lapsedDays: 5, orders: 8 },
+        {
+          contactId: 'near',
+          city: 'Brno',
+          attendedCategories: ['music'],
+          lapsedDays: 5,
+          orders: 8,
+        },
       ],
       { venueCity: 'Brno', category: 'music' },
     );
@@ -144,7 +179,9 @@ describe('ticketing recipe catalog', () => {
 
   it('maps triggers to recipes', () => {
     expect(recipesForTrigger('cart_abandoned').some((r) => r.key === 'abandoned_cart')).toBe(true);
-    expect(recipesForTrigger('event_attended').some((r) => r.key === 'post_event_review')).toBe(true);
+    expect(recipesForTrigger('event_attended').some((r) => r.key === 'post_event_review')).toBe(
+      true,
+    );
   });
 
   it('every recipe names at least one ForgeMsg module', () => {
@@ -185,7 +222,9 @@ describe('seed workflows', () => {
   it('every seed has a ticketing.* trigger + a content-carrying send node', () => {
     for (const d of SEED_DEFS) {
       expect(d.eventName.startsWith('ticketing.')).toBe(true);
-      const send = buildWorkflowGraph(d).nodes.find((n) => n.type === 'send_email' || n.type === 'send_sms')!;
+      const send = buildWorkflowGraph(d).nodes.find(
+        (n) => n.type === 'send_email' || n.type === 'send_sms',
+      )!;
       expect(send).toBeTruthy();
       if (send.type === 'send_sms') {
         expect((send.config as { message?: string }).message).toBeTruthy();
@@ -206,7 +245,15 @@ describe('seed workflows', () => {
 
   it('covers the key reuse + cron-driven recipes', () => {
     const keys = SEED_DEFS.map((d) => d.key);
-    for (const k of ['abandoned_cart', 'post_event_review', 'referral', 'day_of_reminder', 'day_of_sms', 'fill_the_house_offer', 'discover_digest']) {
+    for (const k of [
+      'abandoned_cart',
+      'post_event_review',
+      'referral',
+      'day_of_reminder',
+      'day_of_sms',
+      'fill_the_house_offer',
+      'discover_digest',
+    ]) {
       expect(keys).toContain(k);
     }
   });

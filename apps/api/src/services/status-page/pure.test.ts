@@ -144,23 +144,17 @@ describe('pickIncidentToUpdate', () => {
   });
 
   it('finds an existing incident with matching dedup key', () => {
-    const match = pickIncidentToUpdate(
-      'queue_backlog',
-      { region: 'EU-1' },
-      [
-        { id: 'inc-1', dedupKey: 'redis_down', status: 'INVESTIGATING' },
-        { id: 'inc-2', dedupKey: 'queue_backlog:EU-1', status: 'INVESTIGATING' },
-      ],
-    );
+    const match = pickIncidentToUpdate('queue_backlog', { region: 'EU-1' }, [
+      { id: 'inc-1', dedupKey: 'redis_down', status: 'INVESTIGATING' },
+      { id: 'inc-2', dedupKey: 'queue_backlog:EU-1', status: 'INVESTIGATING' },
+    ]);
     expect(match).toBe('inc-2');
   });
 
   it('skips resolved incidents even with matching key', () => {
-    const match = pickIncidentToUpdate(
-      'db_down',
-      {},
-      [{ id: 'inc-1', dedupKey: 'db_down', status: 'RESOLVED' }],
-    );
+    const match = pickIncidentToUpdate('db_down', {}, [
+      { id: 'inc-1', dedupKey: 'db_down', status: 'RESOLVED' },
+    ]);
     expect(match).toBeNull();
   });
 });

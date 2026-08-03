@@ -218,7 +218,9 @@ export function startDmarcImapPollWorker(): Worker {
     QUEUE_NAMES.DMARC_IMAP_POLL,
     async (_job: Job) => {
       const result = await pollDmarcMailbox();
-      console.log(`[dmarc-imap] Poll complete: ${result.ingested} ingested, ${result.errors} errors`);
+      console.log(
+        `[dmarc-imap] Poll complete: ${result.ingested} ingested, ${result.errors} errors`,
+      );
       return result;
     },
     { connection: redisConnection },

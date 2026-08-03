@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  INTEGRATION_CATALOG,
-  listIntegrationCatalog,
-  integrationCategories,
-} from './catalog.js';
+import { INTEGRATION_CATALOG, listIntegrationCatalog, integrationCategories } from './catalog.js';
 
 describe('integration catalog', () => {
   it('has unique ids', () => {

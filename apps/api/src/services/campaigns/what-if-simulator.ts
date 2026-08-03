@@ -43,19 +43,20 @@ async function getHistoricalRates(orgId: string): Promise<{
 }> {
   const since = new Date(Date.now() - 180 * 86400_000); // last 6 months
 
-  const [rates] = await db.select({
-    totalSent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
-    totalOpened: sql<number>`count(*) filter (where event_type = 'open')::int`,
-    totalClicked: sql<number>`count(*) filter (where event_type = 'click')::int`,
-    totalUnsub: sql<number>`count(*) filter (where event_type = 'unsubscribe')::int`,
-  }).from(emailEvents).where(and(
-    eq(emailEvents.orgId, orgId),
-    gte(emailEvents.createdAt, since),
-  ));
+  const [rates] = await db
+    .select({
+      totalSent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
+      totalOpened: sql<number>`count(*) filter (where event_type = 'open')::int`,
+      totalClicked: sql<number>`count(*) filter (where event_type = 'click')::int`,
+      totalUnsub: sql<number>`count(*) filter (where event_type = 'unsubscribe')::int`,
+    })
+    .from(emailEvents)
+    .where(and(eq(emailEvents.orgId, orgId), gte(emailEvents.createdAt, since)));
 
-  const [camCount] = await db.select({ c: count() }).from(campaigns).where(
-    and(eq(campaigns.orgId, orgId), gte(campaigns.createdAt, since)),
-  );
+  const [camCount] = await db
+    .select({ c: count() })
+    .from(campaigns)
+    .where(and(eq(campaigns.orgId, orgId), gte(campaigns.createdAt, since)));
 
   const sent = Number(rates?.totalSent ?? 0);
   const opened = Number(rates?.totalOpened ?? 0);
@@ -123,8 +124,7 @@ export async function simulateWorkflow(
   }
 
   const confidenceLevel: WhatIfResult['confidenceLevel'] =
-    hist.campaignCount >= 10 ? 'high' :
-    hist.campaignCount >= 3 ? 'medium' : 'low';
+    hist.campaignCount >= 10 ? 'high' : hist.campaignCount >= 3 ? 'medium' : 'low';
 
   return {
     projectedAudience: audienceSize,
