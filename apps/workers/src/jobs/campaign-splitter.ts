@@ -132,6 +132,7 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
           clickTracking: data.clickTracking,
           ipPoolId: data.ipPoolId,
           tlsPolicy: data.tlsPolicy,
+          processingPurposeId: data.processingPurposeId,
         } satisfies BatchSenderJobData,
         opts: { priority: data.priority },
       }));
@@ -210,6 +211,7 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
         clickTracking: data.clickTracking,
         ipPoolId: data.ipPoolId,
         tlsPolicy: data.tlsPolicy,
+        processingPurposeId: data.processingPurposeId,
       } satisfies BatchSenderJobData,
       opts: { priority: data.priority },
     }));

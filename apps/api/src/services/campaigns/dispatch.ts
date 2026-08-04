@@ -131,6 +131,8 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
     utmTracking: campaign.utmTracking ?? undefined,
     ipPoolId: cfg.ipPoolId ?? undefined,
     tlsPolicy: cfg.tlsPolicy,
+    // GDPR purpose the batch-sender's consent pre-check enforces against.
+    processingPurposeId: campaign.processingPurposeId ?? null,
     ...(dkim ?? {}),
     priority: PRIORITY.CAMPAIGN,
   });

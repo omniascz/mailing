@@ -211,6 +211,9 @@ export interface CampaignSplitterJobData {
   /** Configuration-set IP pool + TLS policy (threaded to the MTA). */
   ipPoolId?: string;
   tlsPolicy?: string;
+  /** GDPR processing purpose the campaign sends under. Null when the org
+   *  does not use purposes; the consent pre-check is inert in that case. */
+  processingPurposeId?: string | null;
 }
 
 export interface BatchSenderJobData {
@@ -255,6 +258,9 @@ export interface BatchSenderJobData {
   /** Configuration-set IP pool + TLS policy (threaded to the MTA). */
   ipPoolId?: string;
   tlsPolicy?: string;
+  /** GDPR processing purpose the campaign sends under. Null when the org
+   *  does not use purposes; the consent pre-check is inert in that case. */
+  processingPurposeId?: string | null;
 }
 
 export interface MtaSendJobData {
