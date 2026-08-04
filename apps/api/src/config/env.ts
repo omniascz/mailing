@@ -54,9 +54,14 @@ const Env = z.object({
   // published on an internet-facing ingress with `path: /`, so an unset secret
   // means those routes are open to the world. Dev/test get a fixed default so
   // the worker↔API loop works out of the box.
-  INTERNAL_API_SECRET: prodRequired(z.string().min(32)).default(
-    'dev-internal-secret-change-in-production',
-  ),
+  // NOTE: deliberately NOT `prodRequired(...).default(...)`. `.default()` is
+  // applied to the result, so in production the schema becomes
+  // `z.string().min(32).default('dev-…')` — a missing secret would parse
+  // successfully and hand the API a publicly-known value instead of refusing
+  // to boot. The default must exist only outside production.
+  INTERNAL_API_SECRET: isProduction
+    ? z.string().min(32)
+    : z.string().min(32).default('dev-internal-secret-change-in-production'),
   DMARC_INBOUND_SECRET: prodRequired(z.string().min(16)),
 
   // ─── External providers ───────────────────────────────────────────────────
