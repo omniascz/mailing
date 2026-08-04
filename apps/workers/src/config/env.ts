@@ -6,6 +6,32 @@ import { z } from 'zod';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+/**
+ * Blocks `.default()` at the type level. See apps/api/src/config/env.ts for
+ * why this exists and why the helper is duplicated rather than shared.
+ */
+type NoChainedDefault<T> = T & { readonly default: never };
+
+/**
+ * Required in production, relaxed in dev/test. The dev default is the second
+ * argument — never `prodRequired(schema).default(...)`, which applies the
+ * default in production too.
+ */
+function prodRequired<T extends z.ZodString>(schema: T): NoChainedDefault<T | z.ZodOptional<T>>;
+function prodRequired<T extends z.ZodString>(
+  schema: T,
+  devDefault: string,
+): NoChainedDefault<T | z.ZodDefault<T>>;
+function prodRequired<T extends z.ZodString>(schema: T, devDefault?: string) {
+  if (isProduction) return schema as NoChainedDefault<T>;
+  // `as never` on the default: this package is on zod 4 (the API is still on
+  // zod 3), and zod 4 types `.default()` on a generic T as a getter returning
+  // NoUndefined<output<T>>. The runtime accepts a plain value either way.
+  return (
+    devDefault === undefined ? schema.optional() : schema.default(devDefault as never)
+  ) as NoChainedDefault<z.ZodOptional<T> | z.ZodDefault<T>>;
+}
+
 const Env = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
@@ -21,8 +47,11 @@ const Env = z.object({
   // Object storage
   MINIO_ENDPOINT: z.string().default('localhost'),
   MINIO_PORT: z.coerce.number().int().default(9000),
-  MINIO_ACCESS_KEY: z.string().default('minioadmin'),
-  MINIO_SECRET_KEY: z.string().default('minioadmin'),
+  // `minioadmin/minioadmin` is the MinIO default and is written in this file.
+  // The workers write attachments and exports to this bucket, so a production
+  // boot on it means anyone who reads this repo can read and overwrite them.
+  MINIO_ACCESS_KEY: prodRequired(z.string(), 'minioadmin'),
+  MINIO_SECRET_KEY: prodRequired(z.string(), 'minioadmin'),
   MINIO_BUCKET: z.string().default('forgemsg'),
 
   // External providers used in jobs
