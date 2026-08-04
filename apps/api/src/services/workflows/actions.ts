@@ -547,9 +547,59 @@ async function executeUnsubscribe(
 }
 
 /**
+ * Minimal shape of a BullMQ Queue as used here. Declared locally so this module
+ * does not take a value import on bullmq.
+ */
+interface ChannelQueue {
+  add: (name: string, data: unknown) => Promise<unknown>;
+  getWorkersCount?: () => Promise<number>;
+}
+
+/**
+ * Cache of "does this queue have a live consumer" answers.
+ *
+ * getWorkersCount() is a Redis round-trip, and executeQueuedChannel runs once
+ * per contact per workflow step — checking on every send would put a query in
+ * the hot path. A worker fleet does not appear or vanish between two contacts
+ * in the same run, so a short TTL is enough to keep the check honest while
+ * costing one round-trip per channel per window.
+ */
+const CONSUMER_CACHE_TTL_MS = 30_000;
+const consumerCache = new Map<string, { count: number; checkedAt: number }>();
+
+async function queueHasConsumer(channel: string, queue: ChannelQueue): Promise<boolean | null> {
+  if (typeof queue.getWorkersCount !== 'function') return null; // cannot tell
+  const hit = consumerCache.get(channel);
+  const now = Date.now();
+  if (hit && now - hit.checkedAt < CONSUMER_CACHE_TTL_MS) return hit.count > 0;
+  try {
+    const count = await queue.getWorkersCount();
+    consumerCache.set(channel, { count, checkedAt: now });
+    return count > 0;
+  } catch {
+    // Redis unreachable — that is the enqueue's problem to report, not ours.
+    return null;
+  }
+}
+
+/** Test seam: drop memoised consumer counts. */
+export function __resetQueueConsumerCache(): void {
+  consumerCache.clear();
+}
+
+/**
  * Queue-based sends for WhatsApp / Web-Push / Voice. Mirrors the SMS/Viber
  * pattern: honor conversion suppression, then enqueue onto the channel queue
- * for the respective worker consumer. (Previously these were silent no-ops.)
+ * for the respective worker consumer.
+ *
+ * Failures are reported, not swallowed. This used to end with an unconditional
+ * `return { type: 'next' }` wrapped around `.catch(() => {})`, so a broken
+ * queue, a missing queue binding and a successful send were indistinguishable
+ * to the run — the workflow advanced as if the message had gone out.
+ *
+ * The consumer check exists because `.add()` succeeding proves nothing: the
+ * `voice-call` queue has no worker anywhere in the repo, so voice jobs enqueued
+ * cleanly and then sat in Redis forever while the run reported success.
  */
 async function executeQueuedChannel(
   channel: 'whatsapp' | 'push' | 'voice',
@@ -558,21 +608,46 @@ async function executeQueuedChannel(
   ctx: ActionContext,
   payload: Record<string, unknown>,
 ): Promise<ActionResult> {
+  // Deliberate skips — not failures. Unchanged.
   if (!run.contactId) return { type: 'next', nextNodeId: null };
   if (shouldSuppressDueToConversion(run)) return { type: 'next', nextNodeId: null };
-  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-  if (queues) {
-    await (queues as unknown as Record<string, { add: (n: string, d: unknown) => Promise<void> }>)[
-      channel
-    ]
-      ?.add(jobName, {
-        orgId: ctx.orgId,
-        contactId: run.contactId,
-        workflowRunId: run.id,
-        ...payload,
-      })
-      .catch(() => {});
+
+  let queues: Record<string, ChannelQueue> | null = null;
+  try {
+    ({ queues } = (await import('../../lib/queues.js')) as unknown as {
+      queues: Record<string, ChannelQueue>;
+    });
+  } catch (err) {
+    return {
+      type: 'error',
+      message: `${channel}: queue module unavailable: ${(err as Error).message}`,
+    };
   }
+
+  const queue = queues?.[channel];
+  if (!queue) {
+    return { type: 'error', message: `${channel}: no queue is bound to this channel` };
+  }
+
+  const hasConsumer = await queueHasConsumer(channel, queue);
+  if (hasConsumer === false) {
+    return {
+      type: 'error',
+      message: `${channel}: queue has no running consumer — the job would never be processed`,
+    };
+  }
+
+  try {
+    await queue.add(jobName, {
+      orgId: ctx.orgId,
+      contactId: run.contactId,
+      workflowRunId: run.id,
+      ...payload,
+    });
+  } catch (err) {
+    return { type: 'error', message: `${channel}: enqueue failed: ${(err as Error).message}` };
+  }
+
   return { type: 'next', nextNodeId: null };
 }
 
