@@ -1,6 +1,8 @@
 // Env validation runs first so missing JWT_SECRET / DATABASE_URL fails
 // the boot with a clear message before any plugin tries to use them.
-import './lib/env.js';
+// Boot-time env validation. Side-effect import kept first: this must run
+// before anything else reads process.env or opens a connection.
+import './config/env.js';
 // Sentry next — has to wrap the runtime as early as possible to instrument
 // http/console. No-op when SENTRY_DSN is unset (dev + tests).
 import { initTelemetry } from './lib/telemetry.js';
