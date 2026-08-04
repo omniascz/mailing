@@ -77,6 +77,13 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       DOI_FROM_EMAIL: ${DOI_FROM_EMAIL:-no-reply@example.com}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET is required}
+      # Required in production by apps/api/src/config/env.ts. Previously not
+      # passed through at all, which meant the API booted on the dev defaults
+      # committed in that file: a known session secret (forgeable cookies) and
+      # minioadmin/minioadmin on the bucket.
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY is required}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
     ports:
       - '${API_PORT:-3001}:3001'
     healthcheck:

@@ -18,6 +18,11 @@ global:
   #   DATABASE_URL
   #   REDIS_URL
   #   JWT_SECRET
+  #   SESSION_SECRET       — signs session cookies. Required in production;
+  #     without it the API used to boot on the dev default committed in
+  #     apps/api/src/config/env.ts, which lets anyone forge a session.
+  #   MINIO_ACCESS_KEY / MINIO_SECRET_KEY — object storage. Same story: the
+  #     committed default was minioadmin/minioadmin.
   #   INTERNAL_API_SECRET  — shared secret for /api/v1/internal/*. The API
   #     refuses to boot in production without it, and rejects internal requests
   #     that do not carry it as x-internal-secret. It must be present because
