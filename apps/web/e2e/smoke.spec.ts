@@ -56,8 +56,12 @@ test.describe('Golden path', () => {
     // renders the dashboard for authed users.
     await expect(page).toHaveURL(/^https?:\/\/[^/]+\/?$/, { timeout: 10_000 });
 
-    // The dashboard sidebar has a "Kampaně" / "Campaigns" link visible.
-    await expect(page.getByRole('link', { name: /kampaňe|campaigns/i })).toBeVisible();
+    // The dashboard sidebar has a "Campaigns" link visible. Anchored on the
+    // href, not the label: the sidebar also carries "RSS campaigns"
+    // (/rss-campaigns), so any substring match on the word resolves to two
+    // elements and trips strict mode. The href is the identity of the link we
+    // actually mean, and it survives the label being translated.
+    await expect(page.locator('a[href="/campaigns"]')).toBeVisible();
   });
 
   test('forgot-password form posts without error (seeded user)', async ({ page }) => {
