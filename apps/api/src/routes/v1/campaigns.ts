@@ -44,6 +44,7 @@ import {
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
+import { assertCampaignPurpose } from '../../services/gdpr/campaign-purpose-check.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -211,6 +212,11 @@ export default async function campaignRoutes(app: FastifyInstance) {
       // cap is already reached. Real metered overage is enforced by the
       // splitter later.
       await checkSendCapacity(req.user!.orgId, 1);
+
+      // GDPR: if the org enforces processing purposes, the campaign must name
+      // one. Rejected here so an operator sees it, rather than surfacing as a
+      // blocked batch inside the worker where nobody is watching.
+      await assertCampaignPurpose(req.user!.orgId, id);
 
       // Transition → sending + enqueue splitter (A/B, UTM, DKIM forwarded).
       // Same code path the scheduled-campaign cron uses.

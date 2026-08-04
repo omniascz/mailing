@@ -77,6 +77,9 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   const suppressedSet = new Set<string>();
   const cappedSet = new Set<string>();
   const heldOutSet = new Set<string>();
+  const consentBlockedSet = new Set<string>();
+  let consentReasons: Record<string, string> = {};
+  let consentConfigError = false;
 
   const contactIds = contacts.map((c) => c.id);
   const emails = contacts.map((c) => c.email);
@@ -93,6 +96,18 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
     checks.push(
       fetchCappedBatch(data.orgId, contactIds).then((c) => c.forEach((id) => cappedSet.add(id))),
       fetchHeldOutBatch(data.orgId, contactIds).then((c) => c.forEach((id) => heldOutSet.add(id))),
+    );
+  }
+  // GDPR consent — fourth pre-check, alongside the other three. Runs for every
+  // stream except transactional: a transactional message (receipt, password
+  // reset) rests on contract/legitimate interest, not marketing consent.
+  if (stream !== 'transactional') {
+    checks.push(
+      fetchConsentBlockedBatch(data.orgId, contactIds, data.processingPurposeId).then((r) => {
+        r.blocked.forEach((id) => consentBlockedSet.add(id));
+        consentReasons = r.reasons;
+        consentConfigError = r.configError;
+      }),
     );
   }
 
@@ -154,6 +169,21 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
       continue;
     }
     if (cappedSet.has(contact.id) || heldOutSet.has(contact.id)) {
+      skipped++;
+      continue;
+    }
+    // 2. GDPR consent. Deliberately after the existing three so their
+    //    behaviour and ordering are untouched.
+    if (consentBlockedSet.has(contact.id)) {
+      const reason = consentConfigError
+        ? 'purpose_misconfigured'
+        : (consentReasons[contact.id] ?? 'no_consent');
+      job.log(
+        `[consent] skip contact=${contact.id} campaign=${data.campaignId} purpose=${data.processingPurposeId ?? 'none'} reason=${reason}`,
+      );
+      console.warn(
+        `[batch-sender][consent] blocked contact=${contact.id} org=${data.orgId} campaign=${data.campaignId} reason=${reason}`,
+      );
       skipped++;
       continue;
     }
@@ -593,6 +623,56 @@ async function fetchHeldOutBatch(orgId: string, contactIds: string[]): Promise<s
     return body.data.heldOut;
   } catch {
     return [];
+  }
+}
+
+/**
+ * Bulk GDPR consent check — returns the contacts that must not receive this
+ * campaign under its processing purpose, plus a per-contact reason.
+ *
+ * Fail-open/fail-closed split, and it matters:
+ *
+ *   - TRANSPORT FAULT (fetch throws, non-2xx) → fail OPEN, returning an empty
+ *     block list. Same posture as suppression / frequency / holdout: a flaky
+ *     internal API must not silently halt a send.
+ *
+ *   - CONFIG ERROR (2xx with configError: true) → fail CLOSED, blocking every
+ *     contact in the batch. The API reached a definite verdict: the campaign
+ *     points at a purpose that no longer exists. Sending anyway would be
+ *     sending without a lawful basis, which is worse than not sending.
+ *
+ * The two are distinguishable precisely because the config error arrives as a
+ * successful HTTP response rather than an error status.
+ */
+async function fetchConsentBlockedBatch(
+  orgId: string,
+  contactIds: string[],
+  processingPurposeId: string | null | undefined,
+): Promise<{ blocked: string[]; reasons: Record<string, string>; configError: boolean }> {
+  const empty = { blocked: [], reasons: {}, configError: false };
+  if (contactIds.length === 0) return empty;
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/consent/check-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId, contactIds, processingPurposeId: processingPurposeId ?? null }),
+    });
+    if (!res.ok) return empty; // transport/server fault → fail open
+    const body = (await res.json()) as {
+      data: {
+        blocked: string[];
+        reasons?: Record<string, string>;
+        configError?: boolean;
+        message?: string;
+      };
+    };
+    return {
+      blocked: body.data.blocked ?? [],
+      reasons: body.data.reasons ?? {},
+      configError: body.data.configError === true,
+    };
+  } catch {
+    return empty; // transport fault → fail open
   }
 }
 

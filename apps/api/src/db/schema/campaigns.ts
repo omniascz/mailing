@@ -3,6 +3,7 @@ import { pgTable, uuid, varchar, timestamp, jsonb, integer, index } from 'drizzl
 import { organizations } from './organizations.js';
 import { lists } from './lists.js';
 import { templates } from './templates.js';
+import { processingPurposes } from './processing-purposes.js';
 import { campaignTypeEnum, campaignStatusEnum } from './enums.js';
 
 export const campaigns = pgTable(
@@ -55,6 +56,19 @@ export const campaigns = pgTable(
     /** Category tag (SendGrid parity) — denormalised onto each email_event for
      *  category-level stats aggregation. */
     category: varchar('category', { length: 128 }),
+
+    /**
+     * GDPR processing purpose this campaign sends under. Nullable: orgs that
+     * never configure purposes keep sending without one, and the consent
+     * guardrail stays inert for them.
+     *
+     * ON DELETE SET NULL, deliberately not CASCADE — deleting a purpose must
+     * orphan the reference, never delete the campaigns (and their send history)
+     * that were sent under it.
+     */
+    processingPurposeId: uuid('processing_purpose_id').references(() => processingPurposes.id, {
+      onDelete: 'set null',
+    }),
 
     // Sprint E.1 — resend to non-openers. When parentCampaignId is set,
     // the audience is computed at send time as "contacts who received

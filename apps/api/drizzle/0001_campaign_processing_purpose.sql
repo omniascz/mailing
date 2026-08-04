@@ -1,0 +1,2 @@
+ALTER TABLE "campaigns" ADD COLUMN "processing_purpose_id" uuid;--> statement-breakpoint
+ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_processing_purpose_id_processing_purposes_id_fk" FOREIGN KEY ("processing_purpose_id") REFERENCES "public"."processing_purposes"("id") ON DELETE set null ON UPDATE no action;
