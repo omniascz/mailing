@@ -285,6 +285,54 @@ export function classifySubject(input: { subject: string }): CheckResult {
   };
 }
 
+/**
+ * Merge tags that cannot resolve (#15th check).
+ *
+ * `warn`, not `fail`, and the reasoning follows classifySubject's tiering: a
+ * `fail` is reserved for something that makes the send wrong for every
+ * recipient (empty subject, no unsubscribe link). A bad merge tag renders as
+ * an empty string — the mail is still deliverable and legal, it just reads
+ * badly — so it belongs at the tier that turns the verdict to 'caution' and
+ * makes the sender confirm, rather than one that blocks them.
+ *
+ * Only tags we can actually verify reach here; see validateMergeTags for why
+ * foreign namespaces are never reported.
+ */
+export function classifyMergeTags(input: {
+  warnings: Array<{ kind: string; token: string; suggestion?: string }>;
+}): CheckResult {
+  const { warnings } = input;
+  if (warnings.length === 0) {
+    return {
+      id: 'merge-tags',
+      category: 'content',
+      severity: 'pass',
+      title: 'All merge tags and filters resolve',
+    };
+  }
+
+  const tags = warnings.filter((w) => w.kind === 'unknown_tag');
+  const filters = warnings.filter((w) => w.kind === 'unknown_filter');
+  const parts: string[] = [];
+  if (tags.length) parts.push(`${tags.length}× neznámý merge tag`);
+  if (filters.length) parts.push(`${filters.length}× neznámý filtr`);
+
+  const detail = warnings
+    .slice(0, 3)
+    .map((w) => (w.suggestion ? `${w.token} → ${w.suggestion}` : w.token))
+    .join('; ');
+
+  return {
+    id: 'merge-tags',
+    category: 'content',
+    severity: 'warn',
+    title: `${parts.join(', ')} — vyrenderuje se prázdné`,
+    detail: detail.slice(0, 240),
+    fixHref: '/editor',
+    metrics: { unknownTags: tags.length, unknownFilters: filters.length },
+  };
+}
+
 export function classifySpamScore(input: { spamScore: number; topIssues: string[] }): CheckResult {
   if (input.spamScore >= 8) {
     return {

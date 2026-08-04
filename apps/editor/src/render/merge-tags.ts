@@ -82,6 +82,15 @@ export function registerMergeFilter(name: string, fn: MergeFilter): void {
   FILTERS[name] = fn;
 }
 
+/**
+ * Names of every filter the regex path can apply. The registry is the only
+ * source — template validation must not carry a second copy of this list, or
+ * registering a filter would silently make it "unknown".
+ */
+export function listMergeFilters(): string[] {
+  return Object.keys(FILTERS);
+}
+
 /** snake_case → camelCase, e.g. first_name → firstName. */
 function toCamel(field: string): string {
   return field.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());

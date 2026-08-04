@@ -6,6 +6,7 @@ import './config/env.js';
 // Sentry next — has to wrap the runtime as early as possible to instrument
 // http/console. No-op when SENTRY_DSN is unset (dev + tests).
 import { initTelemetry } from './lib/telemetry.js';
+import { registerLocaleFilters } from '@forgemsg/editor/render';
 initTelemetry();
 
 import crypto from 'node:crypto';
@@ -302,6 +303,12 @@ import perContactStoRoutes from './routes/v1/per-contact-sto.js';
 import channelFallbackRoutes from './routes/v1/channel-fallback.js';
 import aiAltTextRoutes from './routes/v1/ai-alt-text.js';
 import unsubscribeAbRoutes from './routes/v1/unsubscribe-ab.js';
+
+// CZ/SK merge-tag filters. The workers process registers these at start-up;
+// the API never did, so every place the API renders or inspects a template —
+// browser-view, and now merge-tag validation — treated `| vocative` as a
+// filter that does not exist. Registration is idempotent.
+registerLocaleFilters();
 
 export async function buildApp() {
   const app = Fastify({

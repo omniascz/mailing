@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import type { Redis } from 'ioredis';
 
 // Stub transitive imports so the service module can load without real Redis/DB.
@@ -107,6 +107,17 @@ const CONTACT = '00000000-0000-0000-0000-000000000002';
 
 describe('frequency capping', () => {
   let fake: FakeRedis;
+
+  // Warm Vite's transform cache before the timed tests run. loadModule has to
+  // stay a dynamic import — each test needs a fresh module instance, because
+  // the service caches rules per org at module scope — but the FIRST import
+  // also pays the transform, and on a loaded machine that measured 10 050 ms
+  // against a 10 s per-test timeout. Paying it here with a generous hook
+  // budget means a failure below is about frequency capping, not about how
+  // busy the machine was.
+  beforeAll(async () => {
+    await import('./index.js');
+  }, 60_000);
 
   beforeEach(() => {
     fake = createFakeRedis();

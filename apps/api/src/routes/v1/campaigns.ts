@@ -45,6 +45,10 @@ import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 import { assertCampaignPurpose } from '../../services/gdpr/campaign-purpose-check.js';
+import {
+  validateOrgContent,
+  extractTemplateText,
+} from '../../services/editor/merge-tag-validation.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -82,6 +86,22 @@ const listQuerySchema = z.object({
     .pipe(z.number().int().min(1).max(100))
     .optional(),
 });
+
+/**
+ * Merge tags in the parts of a campaign that get rendered. Subject, preheader
+ * and body are validated together so a tag used in two of them is reported
+ * once.
+ */
+async function mergeTagWarnings(
+  orgId: string,
+  body: { subject?: string; preheader?: string; content?: Record<string, unknown> },
+) {
+  return validateOrgContent(orgId, [
+    body.subject,
+    body.preheader,
+    body.content ? extractTemplateText(body.content) : undefined,
+  ]);
+}
 
 export default async function campaignRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
@@ -121,7 +141,11 @@ export default async function campaignRoutes(app: FastifyInstance) {
         orgId: req.user!.orgId,
         scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : undefined,
       });
-      return reply.code(201).send({ data: campaign });
+      // Warnings, never an error: a tag we cannot resolve today may be filled
+      // in at run time from ctx.data, and refusing the save would block work
+      // the customer is entitled to do. The pre-send panel gets the last word.
+      const warnings = await mergeTagWarnings(req.user!.orgId, body);
+      return reply.code(201).send({ data: campaign, ...(warnings.length ? { warnings } : {}) });
     },
   );
 
@@ -153,7 +177,8 @@ export default async function campaignRoutes(app: FastifyInstance) {
         ...body,
         scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : undefined,
       });
-      return { data: campaign };
+      const warnings = await mergeTagWarnings(req.user!.orgId, body);
+      return { data: campaign, ...(warnings.length ? { warnings } : {}) };
     },
   );
 
