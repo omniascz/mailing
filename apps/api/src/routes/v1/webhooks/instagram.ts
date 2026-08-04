@@ -11,6 +11,7 @@ import { db } from '../../../db/client.js';
 import { helpdeskTickets, ticketMessages } from '../../../db/schema/helpdesk.js';
 import { verifyInstagramWebhook } from '../../../channels/instagram/adapter.js';
 import { AppError } from '../../../lib/app-error.js';
+import { env } from '../../../config/env.js';
 
 interface MetaWebhookEntry {
   id: string;
@@ -41,7 +42,7 @@ const instagramWebhookRoutes: FastifyPluginAsync = async (app) => {
         'hub.verify_token': token,
         'hub.challenge': challenge,
       } = req.query as Record<string, string>;
-      const expected = process.env.META_WEBHOOK_VERIFY_TOKEN ?? '';
+      const expected = env.META_WEBHOOK_VERIFY_TOKEN;
       if (mode === 'subscribe' && token === expected) {
         return reply.send(challenge);
       }

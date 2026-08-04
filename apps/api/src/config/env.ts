@@ -105,6 +105,56 @@ const Env = z.object({
   INTERNAL_API_SECRET: prodRequired(z.string().min(32), 'dev-internal-secret-change-in-production'),
   DMARC_INBOUND_SECRET: prodRequired(z.string().min(16)),
 
+  // ─── Our own signing / encryption keys ────────────────────────────────────
+  // Each of these signs or encrypts something WE issue, and each previously
+  // fell back to a string committed in this repository. Verified by running
+  // them with the variable unset: a forged token signed with the fallback was
+  // accepted by the real verifier in every case.
+  //
+  // HMAC-SHA256 over the signed-download token (assetId, contactId, exp).
+  ASSET_SIGNING_SECRET: prodRequired(z.string().min(32), 'dev-asset-signing-secret-change-me-32'),
+  // Shared secret on the inbound-email webhook. The check used to be
+  // `if (secret && …)`, so an unset value skipped authentication entirely.
+  INBOUND_EMAIL_SECRET: prodRequired(z.string().min(32), 'dev-inbound-email-secret-change-me-32'),
+  // AES-256-GCM key material for the `fmcid` contact token in form autofill.
+  FORM_AUTOFILL_SECRET: prodRequired(z.string().min(32), 'dev-form-autofill-secret-change-me-32'),
+  // HMAC-SHA256 over the preference-centre token (orgId, contactId, exp).
+  // A forged one lets anybody edit any contact's GDPR consent.
+  PREFERENCE_CENTRE_SECRET: prodRequired(
+    z.string().min(32),
+    'dev-preference-centre-secret-change-32',
+  ),
+  // Deliberately optional: HIPAA mode is per-org opt-in (enableHipaaMode), so
+  // requiring this would stop every non-healthcare deployment from booting.
+  // The guarantee is enforced where it belongs instead — enableHipaaMode
+  // refuses without a key, and encryptPhiValue throws rather than silently
+  // storing PHI as plaintext. 64 hex chars = the 32 bytes AES-256 needs.
+  HIPAA_FIELD_KEY: z
+    .string()
+    .regex(/^[0-9a-fA-F]{64}$/, 'HIPAA_FIELD_KEY must be 64 hex chars (32 bytes)')
+    .optional(),
+  // Deliberately optional: absent means the partner provisioning endpoint is
+  // closed, which is already the correct default. checkPartnerSecret returns
+  // false for every input when unset — pinned by a test.
+  PARTNER_PROVISION_SECRET: z.string().min(32).optional(),
+
+  // Found while classifying the rest: these also guard requests coming IN to
+  // us, not calls going out, so they belong in this group rather than with the
+  // third-party credentials.
+  //
+  // verifyFblSecret read `if (!expected) return true; // not configured — allow`
+  // — an unset value accepted any feedback-loop POST, and those writes land in
+  // the suppression list.
+  FBL_WEBHOOK_SECRET: prodRequired(z.string().min(32), 'dev-fbl-webhook-secret-change-me-32ch'),
+  // Meta/WhatsApp subscription handshakes compared against `?? ''`, so an
+  // attacker sending an empty hub.verify_token matched when unset.
+  META_WEBHOOK_VERIFY_TOKEN: prodRequired(z.string().min(16), 'dev-meta-verify-token-change-me'),
+  WHATSAPP_VERIFY_TOKEN: prodRequired(z.string().min(16), 'dev-whatsapp-verify-token-change'),
+  FACEBOOK_WEBHOOK_VERIFY_TOKEN: prodRequired(
+    z.string().min(16),
+    'dev-facebook-verify-token-change',
+  ),
+
   // ─── External providers ───────────────────────────────────────────────────
   ANTHROPIC_API_KEY: z.string().optional(),
   TWILIO_ACCOUNT_SID: z.string().optional(),

@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { receiveInbound, listInbound, getInbound } from '../../services/inbound-email/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { env } from '../../config/env.js';
 
 const inboundPayloadSchema = z.object({
   from: z.string().min(3).max(512),
@@ -50,8 +51,9 @@ const inboundEmailRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { orgId } = z.object({ orgId: z.string().uuid() }).parse(req.params);
-      const secret = process.env.INBOUND_EMAIL_SECRET;
-      if (secret && req.headers['x-inbound-secret'] !== secret) {
+      // Unconditional. This used to read `if (secret && …)`, so an unset
+      // INBOUND_EMAIL_SECRET skipped the check and left the endpoint open.
+      if (req.headers['x-inbound-secret'] !== env.INBOUND_EMAIL_SECRET) {
         throw AppError.unauthorized('Invalid inbound secret');
       }
       const payload = inboundPayloadSchema.parse(req.body);
@@ -70,8 +72,9 @@ const inboundEmailRoutes: FastifyPluginAsync = async (app) => {
       schema: { tags: ['Inbound Email'], summary: 'Engine MX receiver — raw payload' },
     },
     async (req, reply) => {
-      const secret = process.env.INBOUND_EMAIL_SECRET;
-      if (secret && req.headers['x-inbound-secret'] !== secret) {
+      // Unconditional. This used to read `if (secret && …)`, so an unset
+      // INBOUND_EMAIL_SECRET skipped the check and left the endpoint open.
+      if (req.headers['x-inbound-secret'] !== env.INBOUND_EMAIL_SECRET) {
         throw AppError.unauthorized('Invalid inbound secret');
       }
       const payload = enginePayloadSchema.parse(req.body);
