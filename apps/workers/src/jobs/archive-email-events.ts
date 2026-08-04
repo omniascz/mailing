@@ -8,6 +8,7 @@
 import { Worker } from 'bullmq';
 import { connection } from '../queues/index.js';
 import { QUEUE_NAMES } from '../queues/index.js';
+import { internalHeaders } from '../lib/internal-api.js';
 
 export interface ArchiveJobData {
   cutoffDays?: number;
@@ -24,7 +25,7 @@ export function startArchiveWorker(): Worker {
 
       const res = await fetch(`${apiUrl}/api/v1/internal/archive/email-events`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: internalHeaders(),
         body: JSON.stringify({ cutoffDays }),
       });
 

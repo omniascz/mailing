@@ -24,7 +24,7 @@ import {
 } from '../queues/index.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
-const INTERNAL_SECRET = process.env.INTERNAL_SECRET ?? '';
+const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? process.env.INTERNAL_SECRET ?? '';
 const BATCH_SIZE = 1000;
 
 interface WinnerComputeResult {

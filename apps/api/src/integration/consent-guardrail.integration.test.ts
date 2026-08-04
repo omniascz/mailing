@@ -17,6 +17,7 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { createTestApp, login } from './setup/harness.js';
 import { db } from '../db/client.js';
+import { env } from '../config/env.js';
 import { processingPurposes, contactGdprConsents, contacts } from '../db/schema/index.js';
 
 interface CheckResponse {
@@ -39,6 +40,9 @@ describe('GDPR consent guardrail (authenticated, real DB)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/v1/internal/consent/check-batch',
+      // /internal/* is behind a shared-secret guard; env.ts supplies the dev
+      // default when INTERNAL_API_SECRET is unset, which is what the test env has.
+      headers: { 'x-internal-secret': env.INTERNAL_API_SECRET ?? '' },
       payload: { orgId, contactIds: [contactId], processingPurposeId: purpose },
     });
     expect(res.statusCode).toBe(200);

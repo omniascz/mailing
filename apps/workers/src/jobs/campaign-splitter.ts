@@ -22,6 +22,7 @@ import {
   type BatchSenderJobData,
   type AbWinnerJobData,
 } from '../queues/index.js';
+import { INTERNAL_SECRET, internalGetHeaders } from '../lib/internal-api.js';
 
 const BATCH_SIZE = 1000;
 
@@ -241,7 +242,7 @@ async function fetchAudienceContactIds(orgId: string, campaignId: string): Promi
   const url = `${process.env.API_URL ?? 'http://localhost:3001'}/api/v1/internal/audience`;
   const params = new URLSearchParams({ orgId, campaignId });
 
-  const res = await fetch(`${url}?${params}`);
+  const res = await fetch(`${url}?${params}`, { headers: internalGetHeaders() });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`fetchAudienceContactIds: API ${res.status} — ${text.slice(0, 200)}`);
@@ -261,7 +262,7 @@ async function storeHoldback(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
+        'x-internal-secret': INTERNAL_SECRET,
       },
       body: JSON.stringify({ orgId, contactIds }),
     });
@@ -277,7 +278,7 @@ async function updateCampaignStatus(campaignId: string, status: string): Promise
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
+        'x-internal-secret': INTERNAL_SECRET,
       },
       body: JSON.stringify({ status }),
     });
