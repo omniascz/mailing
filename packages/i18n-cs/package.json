@@ -17,5 +17,8 @@
   "devDependencies": {
     "typescript": "^5.4.0",
     "vitest": "^1.5.0"
+  },
+  "dependencies": {
+    "czech-vocative": "^2.1.0"
   }
 }

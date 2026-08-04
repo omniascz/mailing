@@ -7,6 +7,8 @@
  *  3. Unknown (caller should fall back to genderize.io for international names)
  */
 
+import { vocative } from '@forgemsg/i18n-cs/vocative';
+
 export type Gender = 'male' | 'female' | 'unknown';
 
 export interface GenderResult {
@@ -378,172 +380,51 @@ export function inferGender(firstName: string): GenderResult {
 
 // ─── Czech/Slovak vocative forms ──────────────────────────────────────────────
 
-// Common first-name → vocative map (5th case, used in salutations)
-const VOCATIVE_MAP: Record<string, string> = {
-  // Male
-  jan: 'Jane',
-  jiří: 'Jiří',
-  petr: 'Petře',
-  pavel: 'Pavle',
-  martin: 'Martine',
-  tomáš: 'Tomáši',
-  jakub: 'Jakube',
-  michal: 'Michale',
-  milan: 'Milane',
-  david: 'Davide',
-  josef: 'Josefe',
-  lukáš: 'Lukáši',
-  ondřej: 'Ondřeji',
-  marek: 'Marku',
-  filip: 'Filipe',
-  jaroslav: 'Jaroslav',
-  karel: 'Karle',
-  zdeněk: 'Zdeňku',
-  vladimír: 'Vladimíre',
-  radek: 'Radku',
-  stanislav: 'Stanislave',
-  roman: 'Romane',
-  miroslav: 'Miroslav',
-  František: 'Františku',
-  aleš: 'Aleši',
-  libor: 'Libore',
-  igor: 'Igore',
-  patrik: 'Patriku',
-  vojtěch: 'Vojtěchu',
-  adam: 'Adame',
-  dominik: 'Dominiku',
-  matěj: 'Matěji',
-  václav: 'Václave',
-  oldřich: 'Oldřichu',
-  ladislav: 'Ladislave',
-  rostislav: 'Rostislave',
-  jozef: 'Jozefe',
-  juraj: 'Juraj',
-  štefan: 'Štefane',
-  tibor: 'Tibore',
-  rastislav: 'Rastislave',
-  mirko: 'Mirko',
-  ivan: 'Ivane',
-  richard: 'Richarde',
-  daniel: 'Danieli',
-  robert: 'Roberte',
-  tomik: 'Tomíku',
-  viktor: 'Viktore',
-  // Female (vocative = nominative for most female names ending in -a → replace -a with -o)
-  jana: 'Jano',
-  petra: 'Petro',
-  martina: 'Martino',
-  tereza: 'Terezo',
-  kateřina: 'Kateřino',
-  michaela: 'Michaelo',
-  monika: 'Moniko',
-  eva: 'Evo',
-  hana: 'Hano',
-  lucie: 'Lucie',
-  markéta: 'Markéto',
-  alena: 'Aleno',
-  barbora: 'Barbaro',
-  dagmar: 'Dagmar',
-  eliška: 'Eliško',
-  lenka: 'Lenko',
-  marie: 'Marie',
-  simona: 'Simono',
-  veronika: 'Veroniko',
-  zuzana: 'Zuzano',
-  anežka: 'Anežko',
-  blanka: 'Blanko',
-  dana: 'Dano',
-  gabriela: 'Gabrielo',
-  helena: 'Heleno',
-  ilona: 'Ilono',
-  jitka: 'Jitko',
-  klára: 'Kláro',
-  kristýna: 'Kristýno',
-  magdaléna: 'Magdaléno',
-  marcela: 'Marcelo',
-  marta: 'Marto',
-  milada: 'Milado',
-  miroslava: 'Miroslavo',
-  natálie: 'Natálie',
-  nela: 'Nelo',
-  olga: 'Olgo',
-  pavla: 'Pavlo',
-  radka: 'Radko',
-  renata: 'Renato',
-  romana: 'Romano',
-  růžena: 'Růženo',
-  silvie: 'Silvie',
-  soňa: 'Soňo',
-  světlana: 'Světlano',
-  šárka: 'Šárko',
-  tatiana: 'Tatiano',
-  táňa: 'Táňo',
-  věra: 'Věro',
-  vlasta: 'Vlasto',
-  žaneta: 'Žaneto',
-  zdenka: 'Zdenko',
-  // Slovak female vocative (same pattern)
-  katarína: 'Katarína',
-  mária: 'Mária',
-  lucia: 'Lucia',
-  ivana: 'Ivana',
-  kristína: 'Kristína',
-  ľudmila: 'Ľudmila',
-  denisa: 'Denisa',
-  viera: 'Viera',
-};
-
 /**
- * Return vocative form of a first name.
- * Falls back to a simple heuristic (strip trailing 'a' → 'o') for unknown names.
+ * Vocative form of a name.
+ *
+ * Delegates to @forgemsg/i18n-cs, which is the single source of truth. This
+ * used to be a third independent implementation (a lookup map plus four suffix
+ * rules) sitting alongside the two in that package — so the same name could
+ * come out differently depending on which code path reached it.
  */
 export function getVocative(firstName: string): string {
-  const normalized = firstName.trim().toLowerCase();
-  if (VOCATIVE_MAP[normalized]) return VOCATIVE_MAP[normalized]!;
-
-  // Rule-based fallback
-  if (normalized.endsWith('a') && normalized.length > 2) {
-    return firstName.slice(0, -1) + 'o';
-  }
-  if (normalized.endsWith('ek')) return firstName.slice(0, -2) + 'ku';
-  if (normalized.endsWith('ík')) return firstName.slice(0, -2) + 'íku';
-  if (normalized.endsWith('áš')) return firstName + 'i';
-  if (normalized.endsWith('eš')) return firstName + 'i';
-
-  return firstName; // fallback: nominative = vocative
+  return vocative(firstName);
 }
 
 /**
- * Build a formal Czech salutation string.
+ * Build a formal Czech salutation.
+ *
+ * The formal form addresses by SURNAME, in the vocative: "Vážený pane Nováku".
+ * Czech formality attaches to the surname — "Vážený pane Petře" is not more
+ * polite than "Vážený pane Petr", it is simply wrong, and given-name address
+ * reads as familiar. The previous implementation documented the surname form
+ * in its examples and then dropped the argument on the floor, returning a bare
+ * "Vážený pane,". This makes the behaviour match the promise.
  *
  * Examples:
- *   buildSalutation('male',   'Jan',   'Novák') → 'Vážený pane Nováku,'
- *   buildSalutation('female', 'Jana',  'Nová')  → 'Vážená paní Nová,'
- *   buildSalutation('male',   'Jan',   null)    → 'Vážený pane,'
- *   buildSalutation('unknown', 'Jan',  null)    → 'Dobrý den,'
+ *   buildSalutation('male',   'Jan',  'Novák')    → 'Vážený pane Nováku,'
+ *   buildSalutation('female', 'Jana', 'Nováková') → 'Vážená paní Nováková,'
+ *   buildSalutation('male',   'Jan',  null)       → 'Vážený pane,'
+ *   buildSalutation('unknown','Jan',  null)       → 'Dobrý den, Jane,'
  */
 export function buildSalutation(
   gender: Gender,
   firstName?: string | null,
-  _lastName?: string | null,
+  lastName?: string | null,
   style: 'formal' | 'informal' = 'formal',
 ): string {
+  // Informal always uses the given name.
   if (style === 'informal') {
-    if (firstName) {
-      return `Dobrý den, ${getVocative(firstName)},`;
-    }
-    return 'Dobrý den,';
+    return firstName ? `Dobrý den, ${getVocative(firstName)},` : 'Dobrý den,';
   }
 
-  // Formal style
-  if (gender === 'male') {
-    return `Vážený pane,`;
+  if (gender === 'male' || gender === 'female') {
+    const title = gender === 'male' ? 'Vážený pane' : 'Vážená paní';
+    return lastName ? `${title} ${getVocative(lastName)},` : `${title},`;
   }
-  if (gender === 'female') {
-    return `Vážená paní,`;
-  }
-  if (firstName) {
-    return `Dobrý den, ${getVocative(firstName)},`;
-  }
-  return 'Dobrý den,';
+
+  // Unknown gender: no gendered title exists, so fall back to the neutral
+  // greeting with the given name rather than guessing.
+  return firstName ? `Dobrý den, ${getVocative(firstName)},` : 'Dobrý den,';
 }

@@ -16,6 +16,12 @@ beforeAll(() => {
 
 // ─── Czech vocative ────────────────────────────────────────────────────────────
 
+/**
+ * The |genitive and |dative blocks that used to live here were removed with
+ * the filters themselves. They asserted "Petr → Petra" and "Jana → Jany",
+ * which the rules did get right — but the same rules produced "Hrubýa",
+ * "Janůovi" and "Tomáša", and nothing in the repository called any of them.
+ */
 describe('|vocative (Czech 5th case)', () => {
   it('Petr → Petře', () => {
     const ctx = { contact: { first_name: 'Petr' } };
@@ -46,31 +52,6 @@ describe('|vocative (Czech 5th case)', () => {
 });
 
 // ─── Czech genitive ────────────────────────────────────────────────────────────
-
-describe('|genitive (Czech 2nd case)', () => {
-  it('Petr → Petra', () => {
-    const ctx = { contact: { first_name: 'Petr' } };
-    expect(parseMergeTags('dar od {{contact.first_name|genitive}}', ctx)).toBe('dar od Petra');
-  });
-
-  it('Jana → Jany', () => {
-    const ctx = { contact: { first_name: 'Jana' } };
-    expect(parseMergeTags('email {{contact.first_name|genitive}}', ctx)).toBe('email Jany');
-  });
-});
-
-// ─── Czech dative ─────────────────────────────────────────────────────────────
-
-describe('|dative (Czech 3rd case)', () => {
-  it('Petr → Petrovi', () => {
-    const ctx = { contact: { first_name: 'Petr' } };
-    expect(parseMergeTags('Připravili jsme pro {{contact.first_name|dative}}', ctx)).toBe(
-      'Připravili jsme pro Petrovi',
-    );
-  });
-});
-
-// ─── Slovak vocative ───────────────────────────────────────────────────────────
 
 describe('|sk_vocative (Slovak)', () => {
   it('Peter → Peter', () => {
