@@ -26,7 +26,7 @@ import { mtaQueues, type BatchSenderJobData } from '../queues/index.js';
 const sql = postgres(process.env.DATABASE_URL!, { max: 2, prepare: false });
 
 let orgId: string;
-let contactIds: string[] = [];
+const contactIds: string[] = [];
 
 function fakeJob(data: BatchSenderJobData): Job<BatchSenderJobData> {
   return {
