@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { encodeVerp, decodeVerp } from './verp.js';
+import { encodeVerp, decodeVerp } from '@forgemsg/shared/sending/verp';
 
 describe('VERP encode/decode', () => {
   it('round-trips a Message-ID through the return path', () => {

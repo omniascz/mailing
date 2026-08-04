@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../lib/redis.js', () => ({
+vi.mock('@forgemsg/shared/redis', () => ({
   redis: {
     exists: vi.fn().mockResolvedValue(0),
     get: vi.fn().mockResolvedValue(null),
@@ -12,8 +12,13 @@ vi.mock('../../lib/redis.js', () => ({
   },
 }));
 
-import { detectIsp, checkThrottle, recordThrottleSignal, resetThrottle } from './isp-throttle.js';
-import { redis } from '../../lib/redis.js';
+import {
+  detectIsp,
+  checkThrottle,
+  recordThrottleSignal,
+  resetThrottle,
+} from '@forgemsg/shared/sending/isp-throttle';
+import { redis } from '@forgemsg/shared/redis';
 
 describe('detectIsp', () => {
   it('detects gmail', () => {

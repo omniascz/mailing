@@ -233,9 +233,7 @@ function TargetingCard({ targeting }: { targeting: FormTargeting | null }) {
               <dt className="text-xs uppercase tracking-wider text-secondary-500">Frequency</dt>
               <dd className="mt-1 flex flex-wrap gap-1">
                 {targeting.frequency?.cooldownDays ? (
-                  <Badge variant="default">
-                    Re-show after {targeting.frequency.cooldownDays}d
-                  </Badge>
+                  <Badge variant="default">Re-show after {targeting.frequency.cooldownDays}d</Badge>
                 ) : null}
                 {targeting.frequency?.maxImpressions ? (
                   <Badge variant="default">Max {targeting.frequency.maxImpressions} views</Badge>

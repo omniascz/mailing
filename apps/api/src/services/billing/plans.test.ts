@@ -50,13 +50,9 @@ describe('CONTACT_PLANS schema', () => {
 
   it('CZK is PPP-adjusted, not raw FX (under EUR × 25)', () => {
     // Sanity: 14 EUR × 25 = 350 CZK; we publish 349 (rounded clean).
-    expect(CONTACT_PLANS.starter.prices.czk).toBeLessThan(
-      CONTACT_PLANS.starter.prices.eur * 25,
-    );
+    expect(CONTACT_PLANS.starter.prices.czk).toBeLessThan(CONTACT_PLANS.starter.prices.eur * 25);
     // Pro: 49 × 25 = 1225, we publish 1190.
-    expect(CONTACT_PLANS.pro.prices.czk).toBeLessThan(
-      CONTACT_PLANS.pro.prices.eur * 25,
-    );
+    expect(CONTACT_PLANS.pro.prices.czk).toBeLessThan(CONTACT_PLANS.pro.prices.eur * 25);
   });
 });
 
@@ -175,9 +171,7 @@ describe('isSendAllowed', () => {
 describe('listAllPlans', () => {
   it('returns every contact tier followed by every send tier', () => {
     const all = listAllPlans();
-    expect(all.length).toBe(
-      Object.keys(CONTACT_PLANS).length + Object.keys(SEND_PLANS).length,
-    );
+    expect(all.length).toBe(Object.keys(CONTACT_PLANS).length + Object.keys(SEND_PLANS).length);
     expect(all[0]!.billingType).toBe('contact_based');
     expect(all[all.length - 1]!.billingType).toBe('send_based');
   });

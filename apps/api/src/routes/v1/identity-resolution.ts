@@ -38,11 +38,7 @@ const identityResolutionRoutes: FastifyPluginAsync = async (app) => {
           maxHops: z.number().int().min(1).max(10).optional(),
         })
         .parse(req.body);
-      const result = await resolveTransitively(
-        req.user!.orgId,
-        body.contactId,
-        body.maxHops,
-      );
+      const result = await resolveTransitively(req.user!.orgId, body.contactId, body.maxHops);
       return reply.send({ data: result });
     },
   );

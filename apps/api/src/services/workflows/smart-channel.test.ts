@@ -25,7 +25,7 @@ const mockDb: Record<string, unknown> = {
 };
 
 vi.mock('../../db/client.js', () => ({ db: mockDb }));
-vi.mock('../../lib/redis.js', () => ({
+vi.mock('@forgemsg/shared/redis', () => ({
   redis: {
     get: vi.fn().mockResolvedValue(null),
     setex: vi.fn().mockResolvedValue('OK'),
@@ -126,7 +126,7 @@ describe('selectBestChannel', () => {
       { eventType: 'open', cnt: 5 },
     ]);
 
-    const { redis } = await import('../../lib/redis.js');
+    const { redis } = await import('@forgemsg/shared/redis');
     (redis.get as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce('token-xyz');

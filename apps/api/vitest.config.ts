@@ -12,6 +12,10 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    // src/integration/** needs a migrated + seeded Postgres and a live Redis.
+    // It runs from vitest.integration.config.ts via `pnpm test:integration`,
+    // never as part of the infrastructure-free unit suite.
+    exclude: ['**/node_modules/**', '**/dist/**', 'src/integration/**'],
     testTimeout: 10_000,
   },
 });

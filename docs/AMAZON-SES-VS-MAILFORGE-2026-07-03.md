@@ -8,32 +8,32 @@ Metodika: 5 doménových agentů ověřilo **reálnou implementaci ForgeMsg př�
 
 ## Scoreboard (kdo vede v doméně)
 
-| Doména | Vítěz | Poznámka |
-|---|---|---|
-| Send API (single / batch) | **remíza** | MF transakční + Resend-kompat + batch (1000); SES SendEmail/SendBulkEmail |
-| **Raw MIME send** (SendRawEmail) | **Amazon SES** | MF neumí přijmout hotový MIME k odeslání 🔴 |
-| **SMTP submission relay** (zákaznický) | **Amazon SES** | MF nemá autentizovaný odchozí SMTP server — jen HTTP API 🔴 |
-| Templated send (uložená šablona) | **Amazon SES** | MF: `templateId` se přijme, ale **nikdy neresolvuje** 🟡 |
-| Vlastní MTA + connection pooling | **remíza (MF plně)** | direct-to-MX, per-domain pool, batch |
-| Identity verifikace (doména) | **remíza** | MF živé DNS ověření SPF/DKIM/DMARC/Return-Path/MX; single-email identity 🔴 |
-| DKIM (Easy DKIM) | **remíza** | MF keygen + podpis v Go MTA; **BYODKIM 🔴** |
-| **Custom MAIL FROM / VERP** | **Amazon SES** | MF má DNS scaffolding, ale engine posílá envelope = header From (žádné VERP) 🟡 |
-| SPF / DMARC / BIMI + monitoring | **ForgeMsg** | +DMARC aggregate ingest, BIMI CRUD, DNS-health |
-| Dedicated IP + pooly + warmup | **remíza / 🟡** | engine umí bind IP + warmup enforce; ale **per-org výběr IP nezapojen** (`sendingIp:''`) |
-| **Configuration sets** | **Amazon SES** | MF má jen `message_stream` enum, žádný pojmenovaný profil 🔴 |
-| **Event destinations / notifikace** | **Amazon SES** | MF webhooky jsou hotové, ale **`dispatchEvent` se pro e-mail eventy nikdy nevolá — temné** 🟡 |
-| Bounce / complaint / ARF FBL | **ForgeMsg** | 2 klasifikátory + ARF processor + auto-quarantine |
-| Suppression list | **remíza** | org-scoped tabulka + API + auto-add + check-before-send |
-| Open / click tracking + custom tracking domain | **ForgeMsg** | pixel + link-wrap + signed tokeny + branded subdoména |
-| **Sandbox → production gate** | **Amazon SES** | MF nemá production-approval ani „jen ověření příjemci" sandbox 🔴 |
-| Send rate / quota | **smíšené** | MF měsíční quota ✅; **žádný per-second send-rate** 🔴 |
-| Templates (CRUD + knihovna) | **ForgeMsg** | 71 vestavěných + org CRUD |
-| Contact lists / subscription | **ForgeMsg** | lists + DOI + RFC 8058 + preference center + consent; **Topics 🔴** |
-| Reputation dashboard + VDM advisor | **ForgeMsg** | multi-ISP reputation + AI deliverability coach |
-| Inbound receiving | **Amazon SES** | MF má MX receiver, ale rules hardcoded, žádné S3/Lambda/SNS akce 🔴 |
-| Auth / API keys / scopes | **smíšené** | MF klíče silné, ale **scopes vynucené jen na 2 routách** (prázdný scope = full access) 🟡 |
-| Webhooky (podpis + retry) | **ForgeMsg** | dual-signed + backoff (SES posílá jen do SNS/SQS) |
-| Multichannel + marketing suite | **ForgeMsg** | SES tohle nemá vůbec (editor, kampaně, SMS/WhatsApp/push, CRM, CDP…) |
+| Doména                                         | Vítěz                | Poznámka                                                                                      |
+| ---------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------- |
+| Send API (single / batch)                      | **remíza**           | MF transakční + Resend-kompat + batch (1000); SES SendEmail/SendBulkEmail                     |
+| **Raw MIME send** (SendRawEmail)               | **Amazon SES**       | MF neumí přijmout hotový MIME k odeslání 🔴                                                   |
+| **SMTP submission relay** (zákaznický)         | **Amazon SES**       | MF nemá autentizovaný odchozí SMTP server — jen HTTP API 🔴                                   |
+| Templated send (uložená šablona)               | **Amazon SES**       | MF: `templateId` se přijme, ale **nikdy neresolvuje** 🟡                                      |
+| Vlastní MTA + connection pooling               | **remíza (MF plně)** | direct-to-MX, per-domain pool, batch                                                          |
+| Identity verifikace (doména)                   | **remíza**           | MF živé DNS ověření SPF/DKIM/DMARC/Return-Path/MX; single-email identity 🔴                   |
+| DKIM (Easy DKIM)                               | **remíza**           | MF keygen + podpis v Go MTA; **BYODKIM 🔴**                                                   |
+| **Custom MAIL FROM / VERP**                    | **Amazon SES**       | MF má DNS scaffolding, ale engine posílá envelope = header From (žádné VERP) 🟡               |
+| SPF / DMARC / BIMI + monitoring                | **ForgeMsg**         | +DMARC aggregate ingest, BIMI CRUD, DNS-health                                                |
+| Dedicated IP + pooly + warmup                  | **remíza / 🟡**      | engine umí bind IP + warmup enforce; ale **per-org výběr IP nezapojen** (`sendingIp:''`)      |
+| **Configuration sets**                         | **Amazon SES**       | MF má jen `message_stream` enum, žádný pojmenovaný profil 🔴                                  |
+| **Event destinations / notifikace**            | **Amazon SES**       | MF webhooky jsou hotové, ale **`dispatchEvent` se pro e-mail eventy nikdy nevolá — temné** 🟡 |
+| Bounce / complaint / ARF FBL                   | **ForgeMsg**         | 2 klasifikátory + ARF processor + auto-quarantine                                             |
+| Suppression list                               | **remíza**           | org-scoped tabulka + API + auto-add + check-before-send                                       |
+| Open / click tracking + custom tracking domain | **ForgeMsg**         | pixel + link-wrap + signed tokeny + branded subdoména                                         |
+| **Sandbox → production gate**                  | **Amazon SES**       | MF nemá production-approval ani „jen ověření příjemci" sandbox 🔴                             |
+| Send rate / quota                              | **smíšené**          | MF měsíční quota ✅; **žádný per-second send-rate** 🔴                                        |
+| Templates (CRUD + knihovna)                    | **ForgeMsg**         | 71 vestavěných + org CRUD                                                                     |
+| Contact lists / subscription                   | **ForgeMsg**         | lists + DOI + RFC 8058 + preference center + consent; **Topics 🔴**                           |
+| Reputation dashboard + VDM advisor             | **ForgeMsg**         | multi-ISP reputation + AI deliverability coach                                                |
+| Inbound receiving                              | **Amazon SES**       | MF má MX receiver, ale rules hardcoded, žádné S3/Lambda/SNS akce 🔴                           |
+| Auth / API keys / scopes                       | **smíšené**          | MF klíče silné, ale **scopes vynucené jen na 2 routách** (prázdný scope = full access) 🟡     |
+| Webhooky (podpis + retry)                      | **ForgeMsg**         | dual-signed + backoff (SES posílá jen do SNS/SQS)                                             |
+| Multichannel + marketing suite                 | **ForgeMsg**         | SES tohle nemá vůbec (editor, kampaně, SMS/WhatsApp/push, CRM, CDP…)                          |
 
 ---
 
@@ -53,7 +53,7 @@ Metodika: 5 doménových agentů ověřilo **reálnou implementaci ForgeMsg př�
 
 ## 4. SMTP submission relay (zákaznický) — Amazon SES vede 🔴 (klíčová mezera)
 
-**ForgeMsg:** **žádný autentizovaný zákaznický SMTP submission server.** Go engine (`main.go`) startuje jen (a) **gRPC** server (interní workers) a (b) volitelný **inbound MX receiver** (`INBOUND_LISTEN` — příjem, `LHLO/MAIL/RCPT/DATA`, **žádné `AUTH`, žádný port 587**). Odchozí jde engine → externí MX:25. **Zákazník nemůže namířit SMTP klienta s SMTP credentials na ForgeMsg a relayovat přes něj poštu.** SES SMTP interface (smtp.*.amazonaws.com:587, credentials z IAM) je jeho druhá hlavní brána — MF ji nemá. *(Tuto mezeru flagoval i Brevo audit.)*
+**ForgeMsg:** **žádný autentizovaný zákaznický SMTP submission server.** Go engine (`main.go`) startuje jen (a) **gRPC** server (interní workers) a (b) volitelný **inbound MX receiver** (`INBOUND_LISTEN` — příjem, `LHLO/MAIL/RCPT/DATA`, **žádné `AUTH`, žádný port 587**). Odchozí jde engine → externí MX:25. **Zákazník nemůže namířit SMTP klienta s SMTP credentials na ForgeMsg a relayovat přes něj poštu.** SES SMTP interface (smtp._.amazonaws.com:587, credentials z IAM) je jeho druhá hlavní brána — MF ji nemá. _(Tuto mezeru flagoval i Brevo audit.)\*
 
 ## 5. Vlastní MTA + pooling — remíza (MF plně ✅)
 
@@ -143,7 +143,7 @@ Plány `contact_based`/`send_based`/`payg` (prepaid kredity), `/billing/credits`
 
 ## Souhrn: kde ForgeMsg WINS (SES nemá / je slabší)
 
-Celý marketing suite + editor + kampaně + **multichannel (SMS/WhatsApp/push/voice/Viber)** + CRM + CDP · SPF/**DMARC monitoring**/**BIMI** · **DMARC aggregate ingest** · open/click tracking + **custom tracking domain built-in** · **preference center + RFC 8058 + per-channel consent** · 71 vestavěných šablon + CRUD · bohatá per-campaign analytika (geo mapa, poziční heatmap, PDF) · **multi-ISP reputation dashboard + AI deliverability coach (VDM)** · **dual-signed webhooky s retry** (SES posílá jen do SNS/SQS bez podpisu) · ARF FBL + auto-quarantine · sub-accounts · Resend-kompat API · OAuth2 provider · MCP server. *(SES je čistá infra — tohle celé mimo jeho scope.)*
+Celý marketing suite + editor + kampaně + **multichannel (SMS/WhatsApp/push/voice/Viber)** + CRM + CDP · SPF/**DMARC monitoring**/**BIMI** · **DMARC aggregate ingest** · open/click tracking + **custom tracking domain built-in** · **preference center + RFC 8058 + per-channel consent** · 71 vestavěných šablon + CRUD · bohatá per-campaign analytika (geo mapa, poziční heatmap, PDF) · **multi-ISP reputation dashboard + AI deliverability coach (VDM)** · **dual-signed webhooky s retry** (SES posílá jen do SNS/SQS bez podpisu) · ARF FBL + auto-quarantine · sub-accounts · Resend-kompat API · OAuth2 provider · MCP server. _(SES je čistá infra — tohle celé mimo jeho scope.)_
 
 > **Aktualizace 2026-07-03 — dodělané SES mezery (9 featur, každá typecheck+testy+commit):**
 > ✅ **Zákaznický SMTP submission relay** (Go `internal/submission` :587 AUTH LOGIN/PLAIN/STARTTLS → API relay; `go build` prošel) + SMTP credentials issuance · ✅ **Configuration sets** (tabulka + CRUD + send-time gate) · ✅ **Raw MIME send** (`/transactional/email/raw` + pure MIME parser) · ✅ **Sandbox→production gate** (`sending_mode`, verified email identities, production-access request + admin grant) · ✅ **Per-second send-rate** (Redis fixed-window per plan) · ✅ **BYODKIM** (import RSA klíč + odvození DNS) + **single-email identity** · ✅ **Mail Manager inbound rules** (per-tenant match+actions engine nahradil hardcoded routing) · ✅ **Subscription Topics** (SES v2, opt-in/out + preference token) · ✅ **Data residency** (wire pure lib: region endpoints + guard + signup-podle-země). Ještě NEzapojené na engine úrovni: per-set TLS-require + IP-pool binding, VERP (samostatná mezera). API suite 2065 testů zelených.
@@ -175,6 +175,7 @@ Celý marketing suite + editor + kampaně + **multichannel (SMS/WhatsApp/push/vo
 **ForgeMsg už drtivou většinu SES infrastruktury uvnitř má** — vlastní Go MTA, DKIM, SPF/DMARC/BIMI, dedicated IP + warmup, suppression, tracking, bounce/complaint/ARF, transakční + Resend-kompat API, reputation dashboard, AI deliverability coach — a nad rámec SES přidává celý marketing suite a multichannel. **Není to tedy „chybí infra", ale „infra je orientovaná jako ESP a několik nosných kusů je nezapojených."**
 
 **Aby ForgeMsg nabízel SES-ekvivalentní vývojářskou službu, priorita (od nejdůležitějšího):**
+
 1. **Zapojit e-mail event webhooky** (`dispatchEvent` na delivery/open/click/bounce/complaint) — nejrychlejší a nejviditelnější (infra existuje, jen se nevolá) + doplnit event destinations (SNS/SQS-like stream).
 2. **Zákaznický SMTP submission relay** (port 587 + AUTH + SMTP credentials issuance) — druhá hlavní SES brána.
 3. **Configuration sets** — pojmenovaný profil, na který se váže event routing + IP pool + suppression + TLS; přeznačit dnešní `message_stream` na plný config-set model.

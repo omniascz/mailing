@@ -69,7 +69,10 @@ export default async function ReviewsPage({
       {reviews.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <MessageSquareQuoteIcon className="mx-auto h-8 w-8 text-secondary-300" aria-hidden="true" />
+            <MessageSquareQuoteIcon
+              className="mx-auto h-8 w-8 text-secondary-300"
+              aria-hidden="true"
+            />
             <p className="mt-3 text-sm font-medium text-secondary-900">No {active} reviews</p>
           </CardContent>
         </Card>

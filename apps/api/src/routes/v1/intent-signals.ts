@@ -68,13 +68,20 @@ const SIGNAL_WEIGHTS: Record<string, number> = {
   email_click_buying_signal: 18,
 };
 
-async function recomputeScore(orgId: string, contactId: string | null, accountDomain: string | null) {
+async function recomputeScore(
+  orgId: string,
+  contactId: string | null,
+  accountDomain: string | null,
+) {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000);
   const conditions = [eq(intentSignals.orgId, orgId), gte(intentSignals.detectedAt, thirtyDaysAgo)];
   if (contactId) conditions.push(eq(intentSignals.contactId, contactId));
   if (accountDomain) conditions.push(eq(intentSignals.accountDomain, accountDomain));
 
-  const rows = await db.select().from(intentSignals).where(and(...conditions));
+  const rows = await db
+    .select()
+    .from(intentSignals)
+    .where(and(...conditions));
 
   const breakdown: Record<string, number> = {};
   let total = 0;
@@ -87,7 +94,13 @@ async function recomputeScore(orgId: string, contactId: string | null, accountDo
 
   await db
     .insert(intentScores)
-    .values({ orgId, contactId: contactId ?? undefined, accountDomain: accountDomain ?? undefined, score, breakdown })
+    .values({
+      orgId,
+      contactId: contactId ?? undefined,
+      accountDomain: accountDomain ?? undefined,
+      score,
+      breakdown,
+    })
     .onConflictDoUpdate({
       target: contactId ? intentScores.contactId : intentScores.accountDomain,
       set: { score, breakdown, updatedAt: new Date(), computedAt: new Date() },
@@ -158,7 +171,9 @@ export default async function intentSignalRoutes(app: FastifyInstance) {
 
   app.post('/api/v1/intent-signals/batch', async (req, reply) => {
     const orgId = req.user!.orgId;
-    const { signals } = z.object({ signals: z.array(signalSchema).min(1).max(500) }).parse(req.body);
+    const { signals } = z
+      .object({ signals: z.array(signalSchema).min(1).max(500) })
+      .parse(req.body);
 
     const rows = signals.map((s) => ({
       orgId,
@@ -172,14 +187,20 @@ export default async function intentSignalRoutes(app: FastifyInstance) {
       detectedAt: s.detectedAt ? new Date(s.detectedAt) : new Date(),
     }));
 
-    const inserted = await db.insert(intentSignals).values(rows).returning({ id: intentSignals.id });
+    const inserted = await db
+      .insert(intentSignals)
+      .values(rows)
+      .returning({ id: intentSignals.id });
     return reply.code(201).send({ data: { inserted: inserted.length } });
   });
 
   app.get('/api/v1/intent-signals/scores', async (req) => {
     const orgId = req.user!.orgId;
     const q = z
-      .object({ minScore: z.coerce.number().int().min(0).max(100).default(0), limit: z.coerce.number().int().min(1).max(200).default(50) })
+      .object({
+        minScore: z.coerce.number().int().min(0).max(100).default(0),
+        limit: z.coerce.number().int().min(1).max(200).default(50),
+      })
       .parse(req.query);
 
     const rows = await db
@@ -231,4 +252,3 @@ export default async function intentSignalRoutes(app: FastifyInstance) {
     return { data: { computed } };
   });
 }
-

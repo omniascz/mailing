@@ -22,8 +22,8 @@
  * this service provides the scheduling logic and state tracking.
  */
 
-import { redis } from '../../lib/redis.js';
-import type { IspName } from './isp-throttle.js';
+import { redis } from '@forgemsg/shared/redis';
+import type { IspName } from '@forgemsg/shared/sending/isp-throttle';
 
 // ─── Schedule ─────────────────────────────────────────────────────────────────
 

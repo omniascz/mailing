@@ -8,35 +8,35 @@ Metodika: 5 doménových agentů ověřilo **reálnou implementaci ForgeMsg př�
 
 ## Scoreboard (kdo vede v doméně)
 
-| Doména | Vítěz | Poznámka |
-|---|---|---|
-| Email kampaně + editor + šablony | **ForgeMsg** | 13 bloků (vč. video+coupon), ~71 šablon, A/B **+ multivariate** (Brevo jen A/B), scheduler cron ✅ |
-| **Transakční email / SMTP relay** | **Brevo** | MF má transakční API + streams + inbound MX, ale **chybí zákaznický outbound SMTP submission relay** 🔴 |
-| Deliverability | **ForgeMsg** | vlastní Go MTA, DKIM/SPF/DMARC/BIMI, dedicated IP + binding zdrojové IP, warmup, blacklist |
-| Send-time optimization | **Brevo** | MF STO postavené, ale **nezapojené do dispatch** 🟡 |
-| Kontakty / segmentace | **ForgeMsg** | 8úrovňové AND/OR + behavioral; ale jen 5 typů custom fields |
+| Doména                                | Vítěz        | Poznámka                                                                                                                            |
+| ------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Email kampaně + editor + šablony      | **ForgeMsg** | 13 bloků (vč. video+coupon), ~71 šablon, A/B **+ multivariate** (Brevo jen A/B), scheduler cron ✅                                  |
+| **Transakční email / SMTP relay**     | **Brevo**    | MF má transakční API + streams + inbound MX, ale **chybí zákaznický outbound SMTP submission relay** 🔴                             |
+| Deliverability                        | **ForgeMsg** | vlastní Go MTA, DKIM/SPF/DMARC/BIMI, dedicated IP + binding zdrojové IP, warmup, blacklist                                          |
+| Send-time optimization                | **Brevo**    | MF STO postavené, ale **nezapojené do dispatch** 🟡                                                                                 |
+| Kontakty / segmentace                 | **ForgeMsg** | 8úrovňové AND/OR + behavioral; ale jen 5 typů custom fields                                                                         |
 | **Sales CRM** (deals/pipelines/tasks) | **ForgeMsg** | pipelines s probability + stage-history, accounts s hierarchií, sequences, forecast/win-loss — hlubší než Brevo; ale **bez CRM UI** |
-| **CDP + identity graph** | **ForgeMsg** | Brevo CDP/identity graph nemá vůbec |
-| Lead scoring | **remíza** | MF má scoring engine, ale **nezapojený do automatizací** 🔴 |
-| Automation / workflows | **ForgeMsg** | víc triggerů/akcí, run-state persistuje přes wait; voice akce mrtvá |
-| **SMS kampaně** | **Brevo** | MF: silný per-contact/triggered send + compliance, ale **žádné bulk SMS kampaně** 🔴 |
-| **WhatsApp kampaně** | **Brevo** | MF: send path reálný (Meta) + receipts, ale **žádné bulk WhatsApp kampaně** (501) 🔴 |
-| Web push | **remíza** | oba ✅ (VAPID/FCM) |
-| Mobile push (APNs/FCM) | **Brevo** | MF: jen registry + payload buildery, **žádný send transport** 🔴 |
-| Viber | **ForgeMsg** | Brevo nemá |
-| Voice / call bot | **ForgeMsg** | Twilio VoIP + AI voice bot; Brevo nemá voice bota |
-| **Conversations / live chat** | **remíza** | MF: SSE widget nad helpdesk tickety, 12kanálový universal inbox |
-| Shared inbox / helpdesk | **ForgeMsg** | routing/assignment/canned/analytics; chybí jen SLA engine 🟡 |
-| **Phone / cloud calling** | **ForgeMsg** | dual-provider (Twilio+Telnyx), softphone, IVR/hunt groups |
-| **Meetings / booking** | **ForgeMsg** | booking pages, round-robin, Google+Outlook write-back + Calendly |
-| **Landing pages** | **Brevo** | MF landing page builder nemá vůbec 🔴 |
-| Signup forms | **ForgeMsg** | hostovaná stránka + loader.js + DOI + captcha + A/B |
-| Facebook Ads | **Brevo** | MF: jen audience sync + reporting (Sklik konkrétní), **žádná tvorba kreativ** 🟡 |
-| Coupons | **ForgeMsg** | unikátní kódy + store-sync |
-| Ecommerce | **ForgeMsg** | 8 platforem + CZ storefronty + revenue + product sync |
-| Reporting & analytics | **ForgeMsg** | geo country/city/**mapa**, poziční heatmap, device/client, CSV **+ PDF** |
-| Developer platforma | **ForgeMsg** | REST+OpenAPI, signed webhooks (dual), OAuth2 provider, Zapier, marketplace, **MCP** |
-| Plány / billing | **remíza** | Stripe + free tier + multi-currency + subaccounts |
+| **CDP + identity graph**              | **ForgeMsg** | Brevo CDP/identity graph nemá vůbec                                                                                                 |
+| Lead scoring                          | **remíza**   | MF má scoring engine, ale **nezapojený do automatizací** 🔴                                                                         |
+| Automation / workflows                | **ForgeMsg** | víc triggerů/akcí, run-state persistuje přes wait; voice akce mrtvá                                                                 |
+| **SMS kampaně**                       | **Brevo**    | MF: silný per-contact/triggered send + compliance, ale **žádné bulk SMS kampaně** 🔴                                                |
+| **WhatsApp kampaně**                  | **Brevo**    | MF: send path reálný (Meta) + receipts, ale **žádné bulk WhatsApp kampaně** (501) 🔴                                                |
+| Web push                              | **remíza**   | oba ✅ (VAPID/FCM)                                                                                                                  |
+| Mobile push (APNs/FCM)                | **Brevo**    | MF: jen registry + payload buildery, **žádný send transport** 🔴                                                                    |
+| Viber                                 | **ForgeMsg** | Brevo nemá                                                                                                                          |
+| Voice / call bot                      | **ForgeMsg** | Twilio VoIP + AI voice bot; Brevo nemá voice bota                                                                                   |
+| **Conversations / live chat**         | **remíza**   | MF: SSE widget nad helpdesk tickety, 12kanálový universal inbox                                                                     |
+| Shared inbox / helpdesk               | **ForgeMsg** | routing/assignment/canned/analytics; chybí jen SLA engine 🟡                                                                        |
+| **Phone / cloud calling**             | **ForgeMsg** | dual-provider (Twilio+Telnyx), softphone, IVR/hunt groups                                                                           |
+| **Meetings / booking**                | **ForgeMsg** | booking pages, round-robin, Google+Outlook write-back + Calendly                                                                    |
+| **Landing pages**                     | **Brevo**    | MF landing page builder nemá vůbec 🔴                                                                                               |
+| Signup forms                          | **ForgeMsg** | hostovaná stránka + loader.js + DOI + captcha + A/B                                                                                 |
+| Facebook Ads                          | **Brevo**    | MF: jen audience sync + reporting (Sklik konkrétní), **žádná tvorba kreativ** 🟡                                                    |
+| Coupons                               | **ForgeMsg** | unikátní kódy + store-sync                                                                                                          |
+| Ecommerce                             | **ForgeMsg** | 8 platforem + CZ storefronty + revenue + product sync                                                                               |
+| Reporting & analytics                 | **ForgeMsg** | geo country/city/**mapa**, poziční heatmap, device/client, CSV **+ PDF**                                                            |
+| Developer platforma                   | **ForgeMsg** | REST+OpenAPI, signed webhooks (dual), OAuth2 provider, Zapier, marketplace, **MCP**                                                 |
+| Plány / billing                       | **remíza**   | Stripe + free tier + multi-currency + subaccounts                                                                                   |
 
 ---
 

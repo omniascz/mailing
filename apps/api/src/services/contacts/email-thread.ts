@@ -68,11 +68,13 @@ export async function getContactEmailThread(
     const events = await db
       .select({ messageId: emailEvents.messageId, eventType: emailEvents.eventType })
       .from(emailEvents)
-      .where(and(
-        eq(emailEvents.orgId, orgId),
-        sql`message_id = any(${messageIds})`,
-        sql`event_type in ('open','click','bounce','unsubscribe','complaint')`,
-      ));
+      .where(
+        and(
+          eq(emailEvents.orgId, orgId),
+          sql`message_id = any(${messageIds})`,
+          sql`event_type in ('open','click','bounce','unsubscribe','complaint')`,
+        ),
+      );
     for (const e of events) {
       if (!e.messageId) continue;
       if (!eventMap[e.messageId]) eventMap[e.messageId] = new Set();
@@ -105,19 +107,19 @@ export async function getContactEmailThread(
 export async function getContactEngagementSummary(orgId: string, contactId: string) {
   const [row] = await db
     .select({
-      totalSent:       sql<number>`count(*) filter (where event_type = 'deliver')::int`,
-      totalOpens:      sql<number>`count(*) filter (where event_type = 'open')::int`,
-      totalClicks:     sql<number>`count(*) filter (where event_type = 'click')::int`,
-      totalBounces:    sql<number>`count(*) filter (where event_type = 'bounce')::int`,
+      totalSent: sql<number>`count(*) filter (where event_type = 'deliver')::int`,
+      totalOpens: sql<number>`count(*) filter (where event_type = 'open')::int`,
+      totalClicks: sql<number>`count(*) filter (where event_type = 'click')::int`,
+      totalBounces: sql<number>`count(*) filter (where event_type = 'bounce')::int`,
       totalComplaints: sql<number>`count(*) filter (where event_type = 'complaint')::int`,
-      firstEmail:      sql<string | null>`min(created_at) filter (where event_type = 'deliver')`,
-      lastEmail:       sql<string | null>`max(created_at) filter (where event_type = 'deliver')`,
-      lastOpen:        sql<string | null>`max(created_at) filter (where event_type = 'open')`,
+      firstEmail: sql<string | null>`min(created_at) filter (where event_type = 'deliver')`,
+      lastEmail: sql<string | null>`max(created_at) filter (where event_type = 'deliver')`,
+      lastOpen: sql<string | null>`max(created_at) filter (where event_type = 'open')`,
     })
     .from(emailEvents)
     .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.contactId, contactId)));
 
-  const sent  = Number(row?.totalSent ?? 0);
+  const sent = Number(row?.totalSent ?? 0);
   const opens = Number(row?.totalOpens ?? 0);
   const clicks = Number(row?.totalClicks ?? 0);
 

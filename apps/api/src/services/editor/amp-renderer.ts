@@ -69,20 +69,19 @@ const AMP_MAX_BYTES = 75 * 1024;
  * otherwise trip the bare <script> rule.
  */
 function stripAllowedAmpScripts(input: string): string {
-  return input
-    // AMP runtime + extension scripts (both self-closing and with body)
-    .replace(
-      /<script\s+[^>]*src=["']https:\/\/cdn\.ampproject\.org\/[^"']+["'][^>]*>\s*<\/script>/gi,
-      '',
-    )
-    .replace(
-      /<script\s+[^>]*src=["']https:\/\/cdn\.ampproject\.org\/[^"']+["'][^>]*\/>/gi,
-      '',
-    )
-    // amp-* custom tags rendered with internal scripts (amp-script body):
-    // remove only the matching pair so we don't leak content to the body
-    // scan further down.
-    .replace(/<amp-script[^>]*>[\s\S]*?<\/amp-script>/gi, '');
+  return (
+    input
+      // AMP runtime + extension scripts (both self-closing and with body)
+      .replace(
+        /<script\s+[^>]*src=["']https:\/\/cdn\.ampproject\.org\/[^"']+["'][^>]*>\s*<\/script>/gi,
+        '',
+      )
+      .replace(/<script\s+[^>]*src=["']https:\/\/cdn\.ampproject\.org\/[^"']+["'][^>]*\/>/gi, '')
+      // amp-* custom tags rendered with internal scripts (amp-script body):
+      // remove only the matching pair so we don't leak content to the body
+      // scan further down.
+      .replace(/<amp-script[^>]*>[\s\S]*?<\/amp-script>/gi, '')
+  );
 }
 
 /** Extract just the body section (or the whole input if no <body> present). */
@@ -106,18 +105,12 @@ export function validateAmp(amp: string): AmpValidationReport {
     errors.push(`amp_body_over_${AMP_MAX_BYTES}_bytes`);
   }
   // Required doctype
-  if (
-    !trimmed.startsWith('<!doctype html') &&
-    !trimmed.startsWith('<!DOCTYPE html')
-  ) {
+  if (!trimmed.startsWith('<!doctype html') && !trimmed.startsWith('<!DOCTYPE html')) {
     errors.push('missing_doctype');
   }
   // Required AMP4EMAIL signal — Gmail accepts both `⚡4email` and
   // the long-form `amp4email` attribute.
-  if (
-    !trimmed.includes(REQUIRED_AMP_HTML) &&
-    !trimmed.includes('<html amp4email')
-  ) {
+  if (!trimmed.includes(REQUIRED_AMP_HTML) && !trimmed.includes('<html amp4email')) {
     errors.push('missing_amp4email_attribute');
   }
   // Runtime script is mandatory

@@ -79,7 +79,7 @@ function zTestTwoProportions(p1: number, n1: number, p2: number, n2: number): nu
 /** Convert z-score to approximate one-tailed confidence % (0–100). */
 function zToConfidencePct(z: number): number {
   if (z >= 2.326) return 99;
-  if (z >= 1.960) return 97.5;
+  if (z >= 1.96) return 97.5;
   if (z >= 1.645) return 95;
   if (z >= 1.282) return 90;
   if (z >= 0.842) return 80;
@@ -158,10 +158,7 @@ export async function getHoldbackCount(campaignId: string): Promise<number> {
  * Idempotent: if ab_test_results already has a row for this campaign,
  * returns the stored result without recomputing (prevents double-dispatch).
  */
-export async function computeAbWinner(
-  orgId: string,
-  campaignId: string,
-): Promise<AbWinnerResult> {
+export async function computeAbWinner(orgId: string, campaignId: string): Promise<AbWinnerResult> {
   // Idempotency check
   const [existing] = await db
     .select()
@@ -226,14 +223,10 @@ export async function computeAbWinner(
   `);
 
   type ExecResult = { rows?: typeof rows };
-  const eventRows =
-    (rows as unknown as ExecResult).rows ?? (rows as unknown as typeof rows);
+  const eventRows = (rows as unknown as ExecResult).rows ?? (rows as unknown as typeof rows);
 
   // Build stats map keyed by variant_id
-  const statsMap = new Map<
-    string,
-    { sent: number; uniqueOpens: number; uniqueClicks: number }
-  >();
+  const statsMap = new Map<string, { sent: number; uniqueOpens: number; uniqueClicks: number }>();
   for (const r of eventRows) {
     if (!r.variant_id) continue;
     statsMap.set(r.variant_id, {
@@ -271,12 +264,7 @@ export async function computeAbWinner(
   // Z-test: winner vs runner-up
   let confidencePct = 0;
   if (runnerUp && winner.sent > 0 && runnerUp.sent > 0) {
-    const z = zTestTwoProportions(
-      winner.score,
-      winner.sent,
-      runnerUp.score,
-      runnerUp.sent,
-    );
+    const z = zTestTwoProportions(winner.score, winner.sent, runnerUp.score, runnerUp.sent);
     confidencePct = z > 0 ? zToConfidencePct(z) : 50;
   } else if (winner.score > 0) {
     confidencePct = 95; // only one variant has data — treat as confident

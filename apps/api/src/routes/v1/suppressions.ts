@@ -49,10 +49,7 @@ export default async function suppressionRoutes(app: FastifyInstance) {
       if (q.search) {
         const like = `%${q.search}%`;
         conds.push(
-          or(
-            sql`${suppressions.email} ILIKE ${like}`,
-            sql`${suppressions.phone} ILIKE ${like}`,
-          )!,
+          or(sql`${suppressions.email} ILIKE ${like}`, sql`${suppressions.phone} ILIKE ${like}`)!,
         );
       }
 

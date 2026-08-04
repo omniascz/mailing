@@ -29,7 +29,10 @@ describe('evaluateUsageAlerts', () => {
 
   it('never fires for unlimited metrics (limit <= 0)', () => {
     const out = evaluateUsageAlerts(
-      { sends: { current: 5, limit: 0, remaining: 0, pctUsed: 999 }, contacts: { current: 0, limit: 0, remaining: 0, pctUsed: 999 } },
+      {
+        sends: { current: 5, limit: 0, remaining: 0, pctUsed: 999 },
+        contacts: { current: 0, limit: 0, remaining: 0, pctUsed: 999 },
+      },
       [80],
       new Set(),
     );

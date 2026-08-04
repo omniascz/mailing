@@ -43,7 +43,9 @@ export async function createPurpose(
 export async function updatePurpose(
   orgId: string,
   id: string,
-  data: Partial<Pick<ProcessingPurpose, 'name' | 'description' | 'legalBasis' | 'retentionDays' | 'archived'>>,
+  data: Partial<
+    Pick<ProcessingPurpose, 'name' | 'description' | 'legalBasis' | 'retentionDays' | 'archived'>
+  >,
 ): Promise<ProcessingPurpose | null> {
   const [row] = await db
     .update(processingPurposes)
@@ -140,12 +142,7 @@ export async function getContactConsentStates(
   const rows = await db
     .select()
     .from(contactGdprConsents)
-    .where(
-      and(
-        eq(contactGdprConsents.orgId, orgId),
-        eq(contactGdprConsents.contactId, contactId),
-      ),
-    )
+    .where(and(eq(contactGdprConsents.orgId, orgId), eq(contactGdprConsents.contactId, contactId)))
     .orderBy(desc(contactGdprConsents.createdAt));
 
   const latest = new Map<string, ContactGdprConsent>();
@@ -237,8 +234,6 @@ export async function getConsentHistory(
   return db
     .select()
     .from(contactGdprConsents)
-    .where(
-      and(eq(contactGdprConsents.orgId, orgId), eq(contactGdprConsents.contactId, contactId)),
-    )
+    .where(and(eq(contactGdprConsents.orgId, orgId), eq(contactGdprConsents.contactId, contactId)))
     .orderBy(desc(contactGdprConsents.createdAt));
 }

@@ -152,9 +152,7 @@ export async function recordVisitorFingerprint(
       screenSig: fp.screenSig,
       lastSeenAt: new Date(),
     })
-    .where(
-      and(eq(anonymousProfiles.orgId, orgId), eq(anonymousProfiles.visitorId, visitorId)),
-    );
+    .where(and(eq(anonymousProfiles.orgId, orgId), eq(anonymousProfiles.visitorId, visitorId)));
 }
 
 // ─── L3 probabilistic matching ────────────────────────────────────────────
@@ -237,9 +235,7 @@ export async function getVisitorFingerprint(
   const [row] = await db
     .select()
     .from(anonymousProfiles)
-    .where(
-      and(eq(anonymousProfiles.orgId, orgId), eq(anonymousProfiles.visitorId, visitorId)),
-    )
+    .where(and(eq(anonymousProfiles.orgId, orgId), eq(anonymousProfiles.visitorId, visitorId)))
     .limit(1);
   if (!row) return null;
   return {

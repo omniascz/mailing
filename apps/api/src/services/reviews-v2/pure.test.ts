@@ -11,7 +11,11 @@ import {
 describe('summariseRatings', () => {
   it('returns zeros for an empty list', () => {
     const r = summariseRatings([]);
-    expect(r).toEqual({ count: 0, average: 0, distribution: { one: 0, two: 0, three: 0, four: 0, five: 0 } });
+    expect(r).toEqual({
+      count: 0,
+      average: 0,
+      distribution: { one: 0, two: 0, three: 0, four: 0, five: 0 },
+    });
   });
 
   it('counts each bucket and averages correctly', () => {

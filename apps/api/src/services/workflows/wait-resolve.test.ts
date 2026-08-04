@@ -44,17 +44,17 @@ describe('resolveEventRelativeUntil', () => {
   });
 
   it('accepts an epoch-ms number as the base date', () => {
-    const d = resolveEventRelativeUntil(
-      { field: 'ts', offsetHours: 0 },
-      { ts: Date.parse(start) },
-    );
+    const d = resolveEventRelativeUntil({ field: 'ts', offsetHours: 0 }, { ts: Date.parse(start) });
     expect(d?.toISOString()).toBe(start);
   });
 
   it('returns null when the field is missing or unparseable', () => {
     expect(resolveEventRelativeUntil({ field: 'event.starts_at' }, { event: {} })).toBeNull();
     expect(
-      resolveEventRelativeUntil({ field: 'event.starts_at' }, { event: { starts_at: 'not-a-date' } }),
+      resolveEventRelativeUntil(
+        { field: 'event.starts_at' },
+        { event: { starts_at: 'not-a-date' } },
+      ),
     ).toBeNull();
   });
 });

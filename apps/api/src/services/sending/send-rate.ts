@@ -7,7 +7,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { organizations } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 
 /** Default max send rate (messages/second) by plan tier. 0 = unlimited. */

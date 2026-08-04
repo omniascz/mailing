@@ -37,7 +37,9 @@ export async function createSmtpCredential(
 /** List an org's SMTP credentials (never returns the hash/password). */
 export async function listSmtpCredentials(
   orgId: string,
-): Promise<Array<Pick<SmtpCredential, 'id' | 'username' | 'label' | 'active' | 'lastUsedAt' | 'createdAt'>>> {
+): Promise<
+  Array<Pick<SmtpCredential, 'id' | 'username' | 'label' | 'active' | 'lastUsedAt' | 'createdAt'>>
+> {
   return db
     .select({
       id: smtpCredentials.id,

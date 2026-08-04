@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { Suspense, useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { safeNextPath } from '@/lib/safe-next-path';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 import { Input } from '@/components/ui/input';
@@ -15,7 +17,8 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,7 +49,7 @@ export default function LoginPage() {
         setErrors({ form: body.message || 'Login failed' });
         return;
       }
-      window.location.href = '/dashboard';
+      window.location.href = safeNextPath(searchParams.get('next'));
     } catch {
       setErrors({ form: 'Network error. Please try again.' });
     } finally {
@@ -109,5 +112,15 @@ export default function LoginPage() {
         </p>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function LoginPage() {
+  // useSearchParams() opts the subtree into client-side rendering, so Next
+  // requires a Suspense boundary around it during prerender.
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

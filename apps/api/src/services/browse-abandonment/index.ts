@@ -278,7 +278,11 @@ export async function topViewedProducts(
  * Cron entrypoint — run browse-abandonment detection for every org with recent
  * identified page views. Called by the browse-abandonment cron every ~15 min.
  */
-export async function checkAllOrgsAbandonments(): Promise<{ orgs: number; fired: number; errors: number }> {
+export async function checkAllOrgsAbandonments(): Promise<{
+  orgs: number;
+  fired: number;
+  errors: number;
+}> {
   const orgs = (await db.execute<{ org_id: string }>(sql`
     SELECT DISTINCT org_id FROM product_page_views
     WHERE contact_id IS NOT NULL AND last_viewed_at > NOW() - INTERVAL '3 days'

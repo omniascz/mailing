@@ -59,10 +59,14 @@ export function createTwilioBridge(opts: TwilioBridgeOptions): {
   const language = opts.language ?? 'cs';
   const voiceId = opts.voiceId ?? '21m00Tcm4TlvDq8ikWAM';
   const systemPrompt =
-    opts.systemPrompt ?? 'You are a helpful phone assistant. Reply in short, natural spoken sentences.';
+    opts.systemPrompt ??
+    'You are a helpful phone assistant. Reply in short, natural spoken sentences.';
 
   const stt = createDeepgramStt(opts.deepgramKey, { encoding: 'mulaw' });
-  const tts = createElevenLabsTts(opts.elevenLabsKey, { outputFormat: 'ulaw_8000', modelId: opts.elevenLabsModelId });
+  const tts = createElevenLabsTts(opts.elevenLabsKey, {
+    outputFormat: 'ulaw_8000',
+    modelId: opts.elevenLabsModelId,
+  });
   const llm = createClaudeLlm(opts.anthropicKey, opts.llmModel ?? 'claude-haiku-4-5-20251001');
 
   const wss = new WebSocketServer({ port });

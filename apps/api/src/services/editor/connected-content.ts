@@ -43,7 +43,15 @@ export interface ConnectedContentOptions {
 export interface ConnectedContentResult {
   data: unknown;
   ok: boolean;
-  reason: 'fetched' | 'host_blocked' | 'private_ip' | 'timeout' | 'too_large' | 'invalid_content' | 'http_error' | 'invalid_url';
+  reason:
+    | 'fetched'
+    | 'host_blocked'
+    | 'private_ip'
+    | 'timeout'
+    | 'too_large'
+    | 'invalid_content'
+    | 'http_error'
+    | 'invalid_url';
 }
 
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -109,10 +117,7 @@ async function resolveAndCheck(hostname: string): Promise<boolean> {
     return !isPrivateIp(hostname);
   }
   try {
-    const records = await Promise.allSettled([
-      dns.resolve4(hostname),
-      dns.resolve6(hostname),
-    ]);
+    const records = await Promise.allSettled([dns.resolve4(hostname), dns.resolve6(hostname)]);
     const ips: string[] = [];
     for (const r of records) {
       if (r.status === 'fulfilled') ips.push(...r.value);

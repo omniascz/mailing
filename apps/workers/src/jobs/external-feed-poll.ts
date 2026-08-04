@@ -26,7 +26,9 @@ export function startExternalFeedPollWorker() {
         const text = await res.text();
         throw new Error(`External feed poll failed: ${res.status} ${text}`);
       }
-      const data = (await res.json()) as { results?: Array<{ feedId: string; itemsProcessed: number }> };
+      const data = (await res.json()) as {
+        results?: Array<{ feedId: string; itemsProcessed: number }>;
+      };
       const total = data.results?.reduce((acc, r) => acc + r.itemsProcessed, 0) ?? 0;
       job.log(`External feed poll complete: ${data.results?.length ?? 0} feeds, ${total} items`);
     },

@@ -22,7 +22,7 @@ import {
   processFblComplaint,
   recordSendForFblTracking,
 } from '../../services/sending/fbl-processor.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 // ─── Shared secret for unauthenticated FBL webhook endpoints ─────────────────
 // ISPs send ARF mails; our mailbox forwarder POSTs them with X-FBL-Secret.

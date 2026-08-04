@@ -26,9 +26,7 @@ async function processPushSend(
   const data = job.data;
   if (!data.title && !data.body) return { messageId: '', status: 'skipped_empty' };
 
-  const { getPushAdapterForOrg } = await import(
-    '../../../api/src/services/push/get-adapter.js'
-  );
+  const { getPushAdapterForOrg } = await import('@forgemsg/api/services/push/get-adapter');
   const adapter = await getPushAdapterForOrg(data.orgId);
   if (!adapter) {
     job.log('No active VAPID keys for org — skipping push');

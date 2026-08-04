@@ -4,7 +4,16 @@
  * actions (route to helpdesk, POST to a webhook, fire a workflow event, store,
  * drop, or stop). Replaces the previously hardcoded routing.
  */
-import { pgTable, uuid, varchar, integer, boolean, jsonb, timestamp, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  boolean,
+  jsonb,
+  timestamp,
+  index,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 export interface InboundRuleMatch {

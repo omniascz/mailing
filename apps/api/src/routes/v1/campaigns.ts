@@ -404,7 +404,10 @@ export default async function campaignRoutes(app: FastifyInstance) {
       if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
       const { id } = idParam.parse(req.params);
       const q = z
-        .object({ limit: z.coerce.number().int().min(1).max(5000).default(1000), cursor: z.string().uuid().optional() })
+        .object({
+          limit: z.coerce.number().int().min(1).max(5000).default(1000),
+          cursor: z.string().uuid().optional(),
+        })
         .parse(req.query);
       const page = await getHoldbackPage(id, q.limit, q.cursor);
       return { data: page };
@@ -480,9 +483,8 @@ export default async function campaignRoutes(app: FastifyInstance) {
       if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
       const result = await dispatchScheduledCampaigns();
       // Same tick also fires any due scheduled transactional batches.
-      const { dispatchDueBatches } = await import(
-        '../../services/transactional/scheduled-batch.js'
-      );
+      const { dispatchDueBatches } =
+        await import('../../services/transactional/scheduled-batch.js');
       const batches = await dispatchDueBatches().catch(() => ({ dispatched: 0, errors: 0 }));
       return { data: { ...result, batches } };
     },

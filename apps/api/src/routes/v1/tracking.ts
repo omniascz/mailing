@@ -145,7 +145,11 @@ export default async function trackingRoutes(app: FastifyInstance) {
 
       // Fetch recent open (time + IP) for cluster + same-IP detection
       const [recentOpen] = await db
-        .select({ id: emailEvents.id, createdAt: emailEvents.createdAt, ipAddress: emailEvents.ipAddress })
+        .select({
+          id: emailEvents.id,
+          createdAt: emailEvents.createdAt,
+          ipAddress: emailEvents.ipAddress,
+        })
         .from(emailEvents)
         .where(
           and(

@@ -23,7 +23,9 @@ import { declineName as declineSk, type SlovakCase } from '@forgemsg/i18n-sk';
  */
 function registerFilter(name: string, fn: MergeFilter): void {
   registerMergeFilter(name, fn);
-  registerLiquidFilter(name, (value, arg) => fn(value == null ? '' : String(value), arg as string | undefined));
+  registerLiquidFilter(name, (value, arg) =>
+    fn(value == null ? '' : String(value), arg as string | undefined),
+  );
 }
 
 const CS_CASES: Record<string, CzechCase> = {

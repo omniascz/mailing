@@ -74,7 +74,8 @@ export default async function cannedResponseRoutes(app: FastifyInstance) {
       .from(cannedResponses)
       .where(and(eq(cannedResponses.orgId, req.user!.orgId), eq(cannedResponses.id, id)))
       .limit(1);
-    if (!row) return reply.code(404).send({ code: 'NOT_FOUND', message: 'Canned response not found' });
+    if (!row)
+      return reply.code(404).send({ code: 'NOT_FOUND', message: 'Canned response not found' });
     return reply.send({ data: row });
   });
 
@@ -86,7 +87,8 @@ export default async function cannedResponseRoutes(app: FastifyInstance) {
       .set({ ...body, updatedAt: new Date() })
       .where(and(eq(cannedResponses.orgId, req.user!.orgId), eq(cannedResponses.id, id)))
       .returning();
-    if (!row) return reply.code(404).send({ code: 'NOT_FOUND', message: 'Canned response not found' });
+    if (!row)
+      return reply.code(404).send({ code: 'NOT_FOUND', message: 'Canned response not found' });
     return reply.send({ data: row });
   });
 

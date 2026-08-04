@@ -38,7 +38,9 @@ export const SEED_DEFS: SeedDef[] = [
     eventName: 'ticketing.cart_abandoned',
     waitHours: 1,
     subject: 'Dokončete objednávku vstupenek 🎟️',
-    html: wrap('<p>Ahoj {{first_name}},</p><p>nechal/a jste vstupenky v košíku. Místa se rychle plní — dokončete nákup, než zmizí.</p><p><a href="{{cart_url}}">Dokončit objednávku →</a></p>'),
+    html: wrap(
+      '<p>Ahoj {{first_name}},</p><p>nechal/a jste vstupenky v košíku. Místa se rychle plní — dokončete nákup, než zmizí.</p><p><a href="{{cart_url}}">Dokončit objednávku →</a></p>',
+    ),
   },
   {
     key: 'post_event_review',
@@ -46,7 +48,9 @@ export const SEED_DEFS: SeedDef[] = [
     eventName: 'ticketing.event_attended',
     waitHours: 18,
     subject: 'Jak se vám akce líbila?',
-    html: wrap('<p>Ahoj {{first_name}},</p><p>děkujeme, že jste dorazil/a. Jak se vám líbilo? Ohodnoťte akci jedním klikem.</p><p><a href="{{review_url}}">Ohodnotit →</a></p>'),
+    html: wrap(
+      '<p>Ahoj {{first_name}},</p><p>děkujeme, že jste dorazil/a. Jak se vám líbilo? Ohodnoťte akci jedním klikem.</p><p><a href="{{review_url}}">Ohodnotit →</a></p>',
+    ),
   },
   {
     key: 'referral',
@@ -54,42 +58,54 @@ export const SEED_DEFS: SeedDef[] = [
     eventName: 'ticketing.order_paid',
     waitHours: 72,
     subject: 'Přiveďte kamaráda a oba získáte slevu 🎁',
-    html: wrap('<p>Ahoj {{first_name}},</p><p>líbil se vám zážitek? Sdílejte ho — váš kamarád dostane slevu na první vstupenku a vy taky.</p><p><a href="{{referral_url}}">Získat odkaz →</a></p>'),
+    html: wrap(
+      '<p>Ahoj {{first_name}},</p><p>líbil se vám zážitek? Sdílejte ho — váš kamarád dostane slevu na první vstupenku a vy taky.</p><p><a href="{{referral_url}}">Získat odkaz →</a></p>',
+    ),
   },
   {
     key: 'renewal_dunning',
     name: 'Ticketing — Season-pass renewal',
     eventName: 'ticketing.subscription_past_due',
     subject: 'Obnovte své předplatné',
-    html: wrap('<p>Ahoj {{first_name}},</p><p>vaše předplatné/permanentka čeká na obnovu. Neztraťte své místo na nadcházející sezónu.</p><p><a href="{{renew_url}}">Obnovit →</a></p>'),
+    html: wrap(
+      '<p>Ahoj {{first_name}},</p><p>vaše předplatné/permanentka čeká na obnovu. Neztraťte své místo na nadcházející sezónu.</p><p><a href="{{renew_url}}">Obnovit →</a></p>',
+    ),
   },
   {
     key: 'waitlist_freed',
     name: 'Ticketing — Waitlist freed',
     eventName: 'ticketing.waitlist_freed',
     subject: 'Uvolnilo se místo! 🎟️',
-    html: wrap('<p>Ahoj {{first_name}},</p><p>na akci, kterou sledujete, se uvolnilo místo. Máte přednost — ale jen krátce.</p><p><a href="{{buy_url}}">Koupit teď →</a></p>'),
+    html: wrap(
+      '<p>Ahoj {{first_name}},</p><p>na akci, kterou sledujete, se uvolnilo místo. Máte přednost — ale jen krátce.</p><p><a href="{{buy_url}}">Koupit teď →</a></p>',
+    ),
   },
   {
     key: 'lottery_won',
     name: 'Ticketing — Lottery winner',
     eventName: 'ticketing.lottery_won',
     subject: 'Vyhráli jste možnost koupit vstupenky 🎉',
-    html: wrap('<p>Gratulujeme {{first_name}}!</p><p>V losování jste získal/a možnost koupit vstupenky. Vyzvedněte si je do uvedeného termínu.</p><p><a href="{{buy_url}}">Vyzvednout →</a></p>'),
+    html: wrap(
+      '<p>Gratulujeme {{first_name}}!</p><p>V losování jste získal/a možnost koupit vstupenky. Vyzvedněte si je do uvedeného termínu.</p><p><a href="{{buy_url}}">Vyzvednout →</a></p>',
+    ),
   },
   {
     key: 'event_changed',
     name: 'Ticketing — Event change notice',
     eventName: 'ticketing.event_changed',
     subject: 'Důležité: změna u vaší akce {{event_title}}',
-    html: wrap('<p>Ahoj {{first_name}},</p><p>u akce <strong>{{event_title}}</strong> došlo ke změně (důvod: {{reason}}). Zkontrolujte prosím detaily a potvrďte účast, nebo požádejte o vrácení peněz do {{response_deadline}}.</p>'),
+    html: wrap(
+      '<p>Ahoj {{first_name}},</p><p>u akce <strong>{{event_title}}</strong> došlo ke změně (důvod: {{reason}}). Zkontrolujte prosím detaily a potvrďte účast, nebo požádejte o vrácení peněz do {{response_deadline}}.</p>',
+    ),
   },
   {
     key: 'day_of_reminder',
     name: 'Ticketing — Day-of reminder',
     eventName: 'ticketing.day_of_reminder',
     subject: 'Vaše akce se blíží 🎭',
-    html: wrap('<p>Ahoj {{first_name}},</p><p>nezapomeňte — vaše akce se blíží. Vstupenku a QR kód máte v aplikaci nebo na odkazu níže.</p><p><a href="{{ticket_url}}">Zobrazit vstupenku →</a></p>'),
+    html: wrap(
+      '<p>Ahoj {{first_name}},</p><p>nezapomeňte — vaše akce se blíží. Vstupenku a QR kód máte v aplikaci nebo na odkazu níže.</p><p><a href="{{ticket_url}}">Zobrazit vstupenku →</a></p>',
+    ),
   },
   {
     key: 'day_of_sms',
@@ -105,14 +121,18 @@ export const SEED_DEFS: SeedDef[] = [
     name: 'Ticketing — Fill-the-house offer',
     eventName: 'ticketing.fill_the_house_offer',
     subject: 'Poslední místa — speciální nabídka',
-    html: wrap('<p>Ahoj {{first_name}},</p><p>na akci, která by vás mohla zajímat, zbývá pár posledních míst. Máme pro vás speciální nabídku.</p><p><a href="{{buy_url}}">Zarezervovat →</a></p>'),
+    html: wrap(
+      '<p>Ahoj {{first_name}},</p><p>na akci, která by vás mohla zajímat, zbývá pár posledních míst. Máme pro vás speciální nabídku.</p><p><a href="{{buy_url}}">Zarezervovat →</a></p>',
+    ),
   },
   {
     key: 'discover_digest',
     name: 'Ticketing — Discover digest',
     eventName: 'ticketing.discover_digest',
     subject: 'Tipy na akce vybrané pro vás ✨',
-    html: wrap('<p>Ahoj {{first_name}},</p><p>na základě toho, co jste navštívil/a, jsme pro vás vybrali nadcházející akce:</p><p>{{recommendations}}</p>'),
+    html: wrap(
+      '<p>Ahoj {{first_name}},</p><p>na základě toho, co jste navštívil/a, jsme pro vás vybrali nadcházející akce:</p><p>{{recommendations}}</p>',
+    ),
   },
 ];
 
@@ -128,9 +148,17 @@ export function buildWorkflowGraph(def: SeedDef): { nodes: WorkflowNode[]; edges
     prev = 'wait';
   }
   if (def.channel === 'sms') {
-    nodes.push({ id: 'send', type: 'send_sms', config: { message: def.message, priority: 'transactional' } });
+    nodes.push({
+      id: 'send',
+      type: 'send_sms',
+      config: { message: def.message, priority: 'transactional' },
+    });
   } else {
-    nodes.push({ id: 'send', type: 'send_email', config: { subject: def.subject, html: def.html } });
+    nodes.push({
+      id: 'send',
+      type: 'send_email',
+      config: { subject: def.subject, html: def.html },
+    });
   }
   edges.push({ id: `e_${prev}_send`, source: prev, target: 'send' });
 

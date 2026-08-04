@@ -7,7 +7,13 @@ import { useToast } from '@/components/ui/toast';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-export function VipToggle({ contactId, initialIsVip }: { contactId: string; initialIsVip: boolean }) {
+export function VipToggle({
+  contactId,
+  initialIsVip,
+}: {
+  contactId: string;
+  initialIsVip: boolean;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [isVip, setIsVip] = useState(initialIsVip);

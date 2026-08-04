@@ -72,7 +72,10 @@ export interface PurposeState {
 export async function getPreferenceCentreState(
   orgId: string,
   contactId: string,
-): Promise<{ contact: { email: string | null; firstName: string | null }; purposes: PurposeState[] }> {
+): Promise<{
+  contact: { email: string | null; firstName: string | null };
+  purposes: PurposeState[];
+}> {
   const [contact] = await db
     .select({ email: contacts.email, firstName: contacts.firstName })
     .from(contacts)
@@ -137,9 +140,10 @@ export async function updatePreferenceCentreConsent(
 
   if (!purpose) throw Object.assign(new Error('Purpose not found'), { statusCode: 404 });
 
-  const expiresAt = grant && purpose.retentionDays
-    ? new Date(Date.now() + purpose.retentionDays * 86_400_000)
-    : null;
+  const expiresAt =
+    grant && purpose.retentionDays
+      ? new Date(Date.now() + purpose.retentionDays * 86_400_000)
+      : null;
 
   await db.insert(contactGdprConsents).values({
     orgId,

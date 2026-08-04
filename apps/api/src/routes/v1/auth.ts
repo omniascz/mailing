@@ -22,6 +22,27 @@ const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days
 // `secure: true` is required in production but breaks local dev where
 // the API serves http://localhost. NODE_ENV gate keeps both working.
 const COOKIE_SECURE = process.env.NODE_ENV === 'production';
+// Without an explicit domain the session cookie is host-only, so a cookie set
+// by api.example.com is never sent to app.example.com — and apps/web's
+// middleware, which reads `fm_session` off the web host, redirects every
+// logged-in user straight back to /login. Production runs exactly that split
+// (API_PUBLIC_URL=https://api.mailforge.io, APP_URL=https://app.mailforge.io;
+// the Helm chart does the same with api.forgemsg.com).
+//
+// Set COOKIE_DOMAIN to the shared parent — e.g. `.mailforge.io` — so both
+// hosts see it. Left unset the cookie stays host-only, which is correct for
+// single-origin setups and for local dev.
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
+
+/** Shared attributes for the session cookie. */
+const sessionCookieOptions = {
+  httpOnly: true,
+  secure: COOKIE_SECURE,
+  sameSite: 'lax',
+  path: '/',
+  maxAge: COOKIE_MAX_AGE,
+  ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+} as const;
 
 const registerSchema = z.object({
   name: z.string().min(1).max(255),
@@ -94,7 +115,8 @@ export default async function authRoutes(app: FastifyInstance) {
       const countrySignal =
         ((request.body as { country?: string }).country ??
           (request.headers['x-country'] as string) ??
-          '') || '';
+          '') ||
+        '';
       const { suggestRegionForCountry } = await import('../../services/data-residency/index.js');
       const dataRegion = countrySignal ? suggestRegionForCountry(countrySignal) : 'us';
 
@@ -130,13 +152,7 @@ export default async function authRoutes(app: FastifyInstance) {
         role: user.role,
       });
 
-      reply.setCookie(SESSION_COOKIE, token, {
-        httpOnly: true,
-        secure: COOKIE_SECURE,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: COOKIE_MAX_AGE,
-      });
+      reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions);
 
       // Fire-and-forget verification email. We don't await it because we
       // don't want a transient queue glitch to fail the register response
@@ -372,14 +388,14 @@ export default async function authRoutes(app: FastifyInstance) {
       // Enforce 2FA when the account has it enabled: no session is issued until
       // a valid TOTP / backup code is supplied. The client re-submits login with
       // `code` after seeing TWO_FACTOR_REQUIRED.
-      const { isTwoFactorEnabled, verifyForLogin } = await import(
-        '../../services/two-factor/index.js'
-      );
+      const { isTwoFactorEnabled, verifyForLogin } =
+        await import('../../services/two-factor/index.js');
       if (await isTwoFactorEnabled(user.id)) {
         if (!body.code) {
-          return reply
-            .code(401)
-            .send({ code: 'TWO_FACTOR_REQUIRED', message: 'Two-factor authentication code required' });
+          return reply.code(401).send({
+            code: 'TWO_FACTOR_REQUIRED',
+            message: 'Two-factor authentication code required',
+          });
         }
         const ok = await verifyForLogin(user.id, body.code);
         if (!ok) throw AppError.unauthorized('Invalid two-factor code');
@@ -394,13 +410,7 @@ export default async function authRoutes(app: FastifyInstance) {
         role: user.role,
       });
 
-      reply.setCookie(SESSION_COOKIE, token, {
-        httpOnly: true,
-        secure: COOKIE_SECURE,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: COOKIE_MAX_AGE,
-      });
+      reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions);
 
       return {
         user: {
@@ -510,7 +520,10 @@ export default async function authRoutes(app: FastifyInstance) {
         const orgName = `${profile.name}'s workspace`;
         const slug = `${slugify(orgName)}-${crypto.randomBytes(3).toString('hex')}`;
 
-        const [org] = await db.insert(organizations).values({ name: orgName, slug, sendingMode: 'sandbox' }).returning();
+        const [org] = await db
+          .insert(organizations)
+          .values({ name: orgName, slug, sendingMode: 'sandbox' })
+          .returning();
         if (!org) throw AppError.internal('Failed to create organization');
 
         const [created] = await db
@@ -543,17 +556,20 @@ export default async function authRoutes(app: FastifyInstance) {
         role: user.role,
       });
 
-      reply.setCookie(SESSION_COOKIE, token, {
-        httpOnly: true,
-        secure: COOKIE_SECURE,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: COOKIE_MAX_AGE,
-      });
+      reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions);
       reply.clearCookie('oauth_state', { path: '/' });
 
-      const redirectUrl = process.env.WEB_URL || 'http://localhost:3000';
-      return reply.redirect(`${redirectUrl}/dashboard`);
+      // `/dashboard` is a 404: apps/web puts the dashboard in the `(dashboard)`
+      // route group, and parentheses do not contribute a URL segment — the
+      // authed dashboard is served at `/`. Send OAuth users to the same place
+      // the password login sends them.
+      //
+      // Trailing slashes are stripped before appending: WEB_URL is free-form
+      // (`z.string().url()` accepts `https://app.mailforge.io/`), and
+      // `${WEB_URL}/` on such a value yields `https://app.mailforge.io//`,
+      // which is a different path to Next's router.
+      const redirectUrl = (process.env.WEB_URL || 'http://localhost:3000').replace(/\/+$/, '');
+      return reply.redirect(`${redirectUrl}/`);
     },
   );
 }

@@ -19,13 +19,16 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
 
   // ── Subscriber growth ─────────────────────────────────────────────────────
   app.get('/api/v1/newsletter-analytics/growth', async (req) => {
-    const q = z.object({
-      granularity: z.enum(['day', 'week', 'month']).default('day'),
-      days: z.coerce.number().int().min(7).max(365).default(30),
-    }).parse(req.query);
+    const q = z
+      .object({
+        granularity: z.enum(['day', 'week', 'month']).default('day'),
+        days: z.coerce.number().int().min(7).max(365).default(30),
+      })
+      .parse(req.query);
 
     const since = new Date(Date.now() - q.days * 86_400_000);
-    const dateTrunc = q.granularity === 'month' ? 'month' : q.granularity === 'week' ? 'week' : 'day';
+    const dateTrunc =
+      q.granularity === 'month' ? 'month' : q.granularity === 'week' ? 'week' : 'day';
 
     const rows = await db.execute(
       sql`SELECT date_trunc(${dateTrunc}, created_at)::date AS period,
@@ -33,7 +36,7 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
              count(*) FILTER (WHERE status = 'unsubscribed') AS unsubscribes
           FROM contacts
           WHERE org_id = ${req.user!.orgId} AND created_at >= ${since}
-          GROUP BY period ORDER BY period ASC`
+          GROUP BY period ORDER BY period ASC`,
     );
 
     return { data: (rows as unknown as { rows: unknown[] }).rows };
@@ -41,7 +44,9 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
 
   // ── Churn metrics ──────────────────────────────────────────────────────────
   app.get('/api/v1/newsletter-analytics/churn', async (req) => {
-    const q = z.object({ days: z.coerce.number().int().min(7).max(365).default(30) }).parse(req.query);
+    const q = z
+      .object({ days: z.coerce.number().int().min(7).max(365).default(30) })
+      .parse(req.query);
     const since = new Date(Date.now() - q.days * 86_400_000);
 
     const [totals] = await db
@@ -58,7 +63,13 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
     const [recentUnsubs] = await db
       .select({ count: sql<number>`count(*)` })
       .from(contacts)
-      .where(and(eq(contacts.orgId, req.user!.orgId), eq(contacts.status, 'unsubscribed'), gte(contacts.updatedAt, since)));
+      .where(
+        and(
+          eq(contacts.orgId, req.user!.orgId),
+          eq(contacts.status, 'unsubscribed'),
+          gte(contacts.updatedAt, since),
+        ),
+      );
 
     const total = Number(totals?.total ?? 0);
     const active = Number(totals?.active ?? 0);
@@ -80,7 +91,9 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
 
   // ── Engagement trend ───────────────────────────────────────────────────────
   app.get('/api/v1/newsletter-analytics/engagement', async (req) => {
-    const q = z.object({ days: z.coerce.number().int().min(7).max(365).default(30) }).parse(req.query);
+    const q = z
+      .object({ days: z.coerce.number().int().min(7).max(365).default(30) })
+      .parse(req.query);
     const since = new Date(Date.now() - q.days * 86_400_000);
 
     const rows = await db.execute(
@@ -91,7 +104,7 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
              count(*) filter (where event_type='unsubscribe') AS unsubscribes
           FROM email_events
           WHERE org_id = ${req.user!.orgId} AND created_at >= ${since}
-          GROUP BY week ORDER BY week ASC`
+          GROUP BY week ORDER BY week ASC`,
     );
 
     return { data: (rows as unknown as { rows: unknown[] }).rows };
@@ -99,7 +112,9 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
 
   // ── Revenue per email / per subscriber ────────────────────────────────────
   app.get('/api/v1/newsletter-analytics/revenue', async (req) => {
-    const q = z.object({ days: z.coerce.number().int().min(7).max(365).default(90) }).parse(req.query);
+    const q = z
+      .object({ days: z.coerce.number().int().min(7).max(365).default(90) })
+      .parse(req.query);
     const since = new Date(Date.now() - q.days * 86_400_000);
 
     const [evtStats] = await db
@@ -130,8 +145,10 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
         sends,
         activeSubscribers: subscribers,
         emailAttributedRevenue: Math.round(emailAttributedRevenue * 100) / 100,
-        revenuePerEmail: sends > 0 ? Math.round((emailAttributedRevenue / sends) * 10000) / 10000 : 0,
-        revenuePerSubscriber: subscribers > 0 ? Math.round((emailAttributedRevenue / subscribers) * 100) / 100 : 0,
+        revenuePerEmail:
+          sends > 0 ? Math.round((emailAttributedRevenue / sends) * 10000) / 10000 : 0,
+        revenuePerSubscriber:
+          subscribers > 0 ? Math.round((emailAttributedRevenue / subscribers) * 100) / 100 : 0,
       },
     };
   });
@@ -142,16 +159,22 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
     const since30d = new Date(Date.now() - 30 * 86_400_000);
 
     const [[subStats], [evtStats]] = await Promise.all([
-      db.select({
-        total: sql<number>`count(*)`,
-        active: sql<number>`count(*) filter (where ${contacts.status} = 'active')`,
-        newLast30d: sql<number>`count(*) filter (where ${contacts.createdAt} >= ${since30d})`,
-      }).from(contacts).where(eq(contacts.orgId, orgId)),
-      db.select({
-        sends: sql<number>`count(*) filter (where ${emailEvents.eventType}='send')`,
-        opens: sql<number>`count(*) filter (where ${emailEvents.eventType}='open')`,
-        clicks: sql<number>`count(*) filter (where ${emailEvents.eventType}='click')`,
-      }).from(emailEvents).where(and(eq(emailEvents.orgId, orgId), gte(emailEvents.createdAt, since30d))),
+      db
+        .select({
+          total: sql<number>`count(*)`,
+          active: sql<number>`count(*) filter (where ${contacts.status} = 'active')`,
+          newLast30d: sql<number>`count(*) filter (where ${contacts.createdAt} >= ${since30d})`,
+        })
+        .from(contacts)
+        .where(eq(contacts.orgId, orgId)),
+      db
+        .select({
+          sends: sql<number>`count(*) filter (where ${emailEvents.eventType}='send')`,
+          opens: sql<number>`count(*) filter (where ${emailEvents.eventType}='open')`,
+          clicks: sql<number>`count(*) filter (where ${emailEvents.eventType}='click')`,
+        })
+        .from(emailEvents)
+        .where(and(eq(emailEvents.orgId, orgId), gte(emailEvents.createdAt, since30d))),
     ]);
 
     const sends = Number(evtStats?.sends ?? 0);

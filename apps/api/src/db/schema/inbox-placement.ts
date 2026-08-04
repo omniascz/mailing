@@ -5,9 +5,9 @@
 import { pgTable, uuid, text, timestamp, jsonb, integer, index } from 'drizzle-orm/pg-core';
 
 export interface ProviderResult {
-  provider: string;    // 'gmail' | 'outlook' | 'yahoo' | 'seznam' | 'apple_mail'
+  provider: string; // 'gmail' | 'outlook' | 'yahoo' | 'seznam' | 'apple_mail'
   prediction: 'inbox' | 'promotions' | 'spam' | 'updates';
-  confidence: number;  // 0-1
+  confidence: number; // 0-1
   reasons: string[];
 }
 

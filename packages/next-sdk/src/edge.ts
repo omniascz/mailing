@@ -5,12 +5,7 @@
  * route handlers.
  */
 
-export {
-  mailforge,
-  createMailforge,
-  ForgemsgClient,
-  ForgemsgError,
-} from './index.js';
+export { mailforge, createMailforge, ForgemsgClient, ForgemsgError } from './index.js';
 
 export type {
   SendEmailParams,

@@ -195,7 +195,10 @@ export async function evaluateResponseRules(
 
   // Rules are stored in a parallel JSONB `responseRules` column if the survey has it.
   // We use the survey config object — the key 'responseRules' lives alongside 'questions'.
-  const rules: SurveyResponseRule[] = ((survey.config as unknown as Record<string, unknown>)['responseRules'] as SurveyResponseRule[] | undefined) ?? [];
+  const rules: SurveyResponseRule[] =
+    ((survey.config as unknown as Record<string, unknown>)['responseRules'] as
+      | SurveyResponseRule[]
+      | undefined) ?? [];
 
   for (const rule of rules) {
     if (!evaluateCondition(rule.condition, answers)) continue;
@@ -257,7 +260,9 @@ export async function evaluateResponseRules(
     const allNpsTags = await db
       .select({ id: tags.id, name: tags.name })
       .from(tags)
-      .where(and(eq(tags.orgId, orgId), sql`name IN ('nps_promoter','nps_passive','nps_detractor')`));
+      .where(
+        and(eq(tags.orgId, orgId), sql`name IN ('nps_promoter','nps_passive','nps_detractor')`),
+      );
 
     for (const t of allNpsTags) {
       if (t.name !== tierTag) {

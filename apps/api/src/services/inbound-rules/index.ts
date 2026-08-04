@@ -102,7 +102,13 @@ export async function listInboundRules(orgId: string): Promise<InboundRule[]> {
 
 export async function createInboundRule(
   orgId: string,
-  input: { name: string; priority?: number; active?: boolean; match?: InboundRuleMatch; actions: InboundAction[] },
+  input: {
+    name: string;
+    priority?: number;
+    active?: boolean;
+    match?: InboundRuleMatch;
+    actions: InboundAction[];
+  },
 ): Promise<InboundRule> {
   const [row] = await db
     .insert(inboundRules)
@@ -121,7 +127,13 @@ export async function createInboundRule(
 export async function updateInboundRule(
   orgId: string,
   id: string,
-  patch: Partial<{ name: string; priority: number; active: boolean; match: InboundRuleMatch; actions: InboundAction[] }>,
+  patch: Partial<{
+    name: string;
+    priority: number;
+    active: boolean;
+    match: InboundRuleMatch;
+    actions: InboundAction[];
+  }>,
 ): Promise<InboundRule> {
   const [row] = await db
     .update(inboundRules)

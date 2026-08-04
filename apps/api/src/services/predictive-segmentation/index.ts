@@ -25,7 +25,10 @@ export type { PredictiveScores };
  * model in ./pure.ts (Gamma–Poisson rate + exponential survival). `opts` lets
  * the batch refresh inject the org's population rate for Bayesian shrinkage.
  */
-export function computeScores(row: PredictiveInput, opts: PredictiveOptions = {}): PredictiveScores {
+export function computeScores(
+  row: PredictiveInput,
+  opts: PredictiveOptions = {},
+): PredictiveScores {
   return computePredictiveScores(row, opts);
 }
 

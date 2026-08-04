@@ -27,7 +27,9 @@ export function startWarmupAdvanceWorker() {
         const text = await res.text();
         throw new Error(`Warmup advance failed: ${res.status} ${text}`);
       }
-      const data = (await res.json()) as { data: { total: number; advanced: number; failed: number } };
+      const data = (await res.json()) as {
+        data: { total: number; advanced: number; failed: number };
+      };
       job.log(
         `Warmup advance: ${data.data.advanced}/${data.data.total} IPs advanced, ${data.data.failed} failed`,
       );

@@ -19,7 +19,7 @@ import { accounts } from '../../db/schema/accounts.js';
 import { contacts } from '../../db/schema/contacts.js';
 import { deals } from '../../db/schema/deals.js';
 import { callClaude, cacheKey, parseJsonSafe } from '../../lib/ai-client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 
 const RESEARCH_TTL = 60 * 60 * 24; // 24h

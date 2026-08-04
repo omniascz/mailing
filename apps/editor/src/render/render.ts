@@ -438,7 +438,10 @@ function renderFooter(block: FooterBlock, ctx: MergeTagContext, links: string[])
   const address = ctx.system?.companyAddress?.trim();
   if (address && !block.content.includes(address)) {
     const name = ctx.system?.companyName?.trim();
-    const lines = [name, address].filter(Boolean).map((l) => escapeHtml(l!)).join('<br/>');
+    const lines = [name, address]
+      .filter(Boolean)
+      .map((l) => escapeHtml(l!))
+      .join('<br/>');
     addr = `<div style="margin-top:8px;">${lines}</div>`;
   }
 

@@ -8,7 +8,7 @@
  */
 
 import { callClaude, cacheKey, CACHE_TTL } from '../../lib/ai-client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 export type Tone = 'formal' | 'friendly' | 'empathetic' | 'concise' | 'professional';
 

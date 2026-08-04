@@ -19,7 +19,7 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contactEngagement, contacts } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { type LogisticModel, predictLogistic } from '../../lib/logistic-regression.js';
 import { trainLeadModel, leadFeatures, type LeadSample } from './model.js';
 

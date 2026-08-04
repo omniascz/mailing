@@ -9,7 +9,14 @@ import { brandGuidelines, type BrandGuidelinesData } from '../../db/schema/brand
 import { callClaude } from '../../lib/ai-client.js';
 
 export interface ConsistencyIssue {
-  type: 'forbidden_phrase' | 'missing_required' | 'tone_mismatch' | 'reading_level' | 'emoji_policy' | 'exclamation_overuse' | 'off_brand';
+  type:
+    | 'forbidden_phrase'
+    | 'missing_required'
+    | 'tone_mismatch'
+    | 'reading_level'
+    | 'emoji_policy'
+    | 'exclamation_overuse'
+    | 'off_brand';
   severity: 'error' | 'warning' | 'suggestion';
   description: string;
   evidence: string;
@@ -120,16 +127,22 @@ export async function checkBrandConsistency(
 
   if (!guidelineRow) {
     return {
-      score: 100, grade: 'A',
+      score: 100,
+      grade: 'A',
       issues: [],
       strengths: ['No brand guidelines configured — all content passes by default'],
-      aiVerdict: 'No brand guidelines found. Set up brand guidelines to enable consistency checking.',
+      aiVerdict:
+        'No brand guidelines found. Set up brand guidelines to enable consistency checking.',
       guidelineName: 'None',
     };
   }
 
   const { guidelines: g, name: guidelineName } = guidelineRow;
-  const bodyText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 3000);
+  const bodyText = html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 3000);
   const ruleIssues = ruleCheck(subject, bodyText, g);
 
   const aiResult = await callClaude({
@@ -156,14 +169,18 @@ Body: ${bodyText.slice(0, 1500)}`,
     maxTokens: 512,
   });
 
-  let aiData: { additionalIssues?: ConsistencyIssue[]; strengths?: string[]; verdict?: string } = {};
+  let aiData: { additionalIssues?: ConsistencyIssue[]; strengths?: string[]; verdict?: string } =
+    {};
   try {
     aiData = JSON.parse(aiResult.text) as typeof aiData;
-  } catch { /* use defaults */ }
+  } catch {
+    /* use defaults */
+  }
 
   const allIssues = [...ruleIssues, ...(aiData.additionalIssues ?? [])];
   const strengths = aiData.strengths ?? [];
-  if (!ruleIssues.some((i) => i.type === 'exclamation_overuse')) strengths.push('Appropriate punctuation usage');
+  if (!ruleIssues.some((i) => i.type === 'exclamation_overuse'))
+    strengths.push('Appropriate punctuation usage');
 
   const errorCount = allIssues.filter((i) => i.severity === 'error').length;
   const warnCount = allIssues.filter((i) => i.severity === 'warning').length;
@@ -174,7 +191,10 @@ Body: ${bodyText.slice(0, 1500)}`,
     score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : score >= 40 ? 'D' : 'F';
 
   return {
-    score, grade, issues: allIssues, strengths,
+    score,
+    grade,
+    issues: allIssues,
+    strengths,
     aiVerdict: aiData.verdict ?? `Brand consistency score: ${score}/100 (${grade}).`,
     guidelineName,
   };

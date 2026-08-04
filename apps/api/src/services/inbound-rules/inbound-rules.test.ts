@@ -7,8 +7,18 @@ describe('evaluateInboundRules', () => {
   it('matches by recipient/from/subject regex and returns actions in priority order', () => {
     const actions = evaluateInboundRules(
       [
-        { priority: 20, active: true, match: { subjectPattern: 'invoice' }, actions: [{ type: 'store', url: 'https://x' }] },
-        { priority: 10, active: true, match: { recipientPattern: '^support@' }, actions: [{ type: 'helpdesk' }] },
+        {
+          priority: 20,
+          active: true,
+          match: { subjectPattern: 'invoice' },
+          actions: [{ type: 'store', url: 'https://x' }],
+        },
+        {
+          priority: 10,
+          active: true,
+          match: { recipientPattern: '^support@' },
+          actions: [{ type: 'helpdesk' }],
+        },
       ],
       msg,
     );
@@ -18,7 +28,12 @@ describe('evaluateInboundRules', () => {
   it('stops evaluation at a stop action (keeping prior actions)', () => {
     const actions = evaluateInboundRules(
       [
-        { priority: 10, active: true, match: {}, actions: [{ type: 'webhook', url: 'https://a' }, { type: 'stop' }] },
+        {
+          priority: 10,
+          active: true,
+          match: {},
+          actions: [{ type: 'webhook', url: 'https://a' }, { type: 'stop' }],
+        },
         { priority: 20, active: true, match: {}, actions: [{ type: 'helpdesk' }] },
       ],
       msg,
@@ -30,7 +45,12 @@ describe('evaluateInboundRules', () => {
     const actions = evaluateInboundRules(
       [
         { priority: 5, active: false, match: {}, actions: [{ type: 'drop' }] },
-        { priority: 10, active: true, match: {}, actions: [{ type: 'workflow_event', eventName: 'x' }] },
+        {
+          priority: 10,
+          active: true,
+          match: {},
+          actions: [{ type: 'workflow_event', eventName: 'x' }],
+        },
       ],
       msg,
     );
@@ -39,7 +59,14 @@ describe('evaluateInboundRules', () => {
 
   it('invalid regex never matches (no throw)', () => {
     const actions = evaluateInboundRules(
-      [{ priority: 1, active: true, match: { recipientPattern: '(' }, actions: [{ type: 'helpdesk' }] }],
+      [
+        {
+          priority: 1,
+          active: true,
+          match: { recipientPattern: '(' },
+          actions: [{ type: 'helpdesk' }],
+        },
+      ],
       msg,
     );
     expect(actions).toEqual([]);

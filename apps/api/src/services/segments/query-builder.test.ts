@@ -30,7 +30,7 @@ describe('buildSegmentWhere', () => {
     };
     const { sql: text, params } = render(buildSegmentWhere(cond));
     expect(text).toContain('::numeric');
-    expect(text).toContain("custom_fields ->>");
+    expect(text).toContain('custom_fields ->>');
     expect(params).toContain(18);
   });
 

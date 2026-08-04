@@ -59,7 +59,9 @@ export const reviewStatusEnum = pgEnum('review_status', [
 export const reviews = pgTable(
   'reviews',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -96,7 +98,9 @@ export const reviews = pgTable(
 export const reviewRequests = pgTable(
   'review_requests',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

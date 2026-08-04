@@ -37,9 +37,7 @@ export default function Contacts() {
         keyExtractor={(c) => c.id}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
         contentContainerStyle={{ padding: 16 }}
-        ListEmptyComponent={
-          !loading ? <Text style={styles.empty}>No contacts yet.</Text> : null
-        }
+        ListEmptyComponent={!loading ? <Text style={styles.empty}>No contacts yet.</Text> : null}
         renderItem={({ item }) => (
           <View style={styles.row}>
             <View style={styles.avatar}>

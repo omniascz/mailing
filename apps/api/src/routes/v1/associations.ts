@@ -114,7 +114,9 @@ export default async function associationRoutes(app: FastifyInstance) {
       .set({ label: newLabel, updatedAt: new Date() })
       .where(and(eq(associations.orgId, orgId), eq(associations.label, oldLabel)));
 
-    return reply.send({ data: { updated: (result as unknown as { rowCount: number }).rowCount ?? 0 } });
+    return reply.send({
+      data: { updated: (result as unknown as { rowCount: number }).rowCount ?? 0 },
+    });
   });
 
   /**

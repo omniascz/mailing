@@ -57,7 +57,9 @@ export async function chExec(sql: string, cfg = clickHouseConfig()): Promise<voi
     signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
-    throw new Error(`ClickHouse exec ${res.status}: ${(await res.text().catch(() => '')).slice(0, 300)}`);
+    throw new Error(
+      `ClickHouse exec ${res.status}: ${(await res.text().catch(() => '')).slice(0, 300)}`,
+    );
   }
 }
 
@@ -71,7 +73,9 @@ export async function chQuery<T>(sql: string, cfg = clickHouseConfig()): Promise
     signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
-    throw new Error(`ClickHouse query ${res.status}: ${(await res.text().catch(() => '')).slice(0, 300)}`);
+    throw new Error(
+      `ClickHouse query ${res.status}: ${(await res.text().catch(() => '')).slice(0, 300)}`,
+    );
   }
   return parseJSONEachRow<T>(await res.text());
 }
@@ -92,7 +96,9 @@ export async function chInsert(
     signal: AbortSignal.timeout(60_000),
   });
   if (!res.ok) {
-    throw new Error(`ClickHouse insert ${res.status}: ${(await res.text().catch(() => '')).slice(0, 300)}`);
+    throw new Error(
+      `ClickHouse insert ${res.status}: ${(await res.text().catch(() => '')).slice(0, 300)}`,
+    );
   }
   return rows.length;
 }

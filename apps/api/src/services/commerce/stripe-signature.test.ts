@@ -10,7 +10,10 @@ function sign(rawBody: string, secret: string, t: number): string {
 }
 
 describe('verifyStripeSignature', () => {
-  const body = JSON.stringify({ type: 'payment_intent.succeeded', data: { object: { id: 'pi_1' } } });
+  const body = JSON.stringify({
+    type: 'payment_intent.succeeded',
+    data: { object: { id: 'pi_1' } },
+  });
   const now = 1_700_000_000;
 
   it('accepts a correctly signed payload', () => {
@@ -19,12 +22,17 @@ describe('verifyStripeSignature', () => {
   });
 
   it('rejects a forged signature (the original vulnerability)', () => {
-    expect(verifyStripeSignature(Buffer.from(body), `t=${now},v1=deadbeef`, SECRET, 300, now)).toBe(false);
+    expect(verifyStripeSignature(Buffer.from(body), `t=${now},v1=deadbeef`, SECRET, 300, now)).toBe(
+      false,
+    );
   });
 
   it('rejects when the body was tampered with after signing', () => {
     const header = sign(body, SECRET, now);
-    const tampered = JSON.stringify({ type: 'payment_intent.succeeded', data: { object: { id: 'pi_HACKED' } } });
+    const tampered = JSON.stringify({
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_HACKED' } },
+    });
     expect(verifyStripeSignature(Buffer.from(tampered), header, SECRET, 300, now)).toBe(false);
   });
 

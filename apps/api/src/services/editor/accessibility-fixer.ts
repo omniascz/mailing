@@ -14,7 +14,9 @@ function fixMissingAlt(html: string, fixes: string[]): string {
   html = html.replace(/<img(?![^>]*\balt\s*=)([^>]*)\/?>/gi, (_match, attrs: string) => {
     // Try to guess alt from data-alt, title, or filename in src
     const srcMatch = /src\s*=\s*["']([^"']+)["']/i.exec(attrs);
-    const filename = srcMatch ? srcMatch[1]!.split('/').pop()!.split('.')[0]!.replace(/[-_]/g, ' ') : '';
+    const filename = srcMatch
+      ? srcMatch[1]!.split('/').pop()!.split('.')[0]!.replace(/[-_]/g, ' ')
+      : '';
     const altText = filename || '';
     return `<img${attrs} alt="${altText}">`;
   });
@@ -71,10 +73,13 @@ function fixLineHeight(html: string, fixes: string[]): string {
 function fixButtonAccessibility(html: string, fixes: string[]): string {
   const before = html;
   // <a> used as button (has no href or href="#") — add role="button"
-  html = html.replace(/<a([^>]*)\bhref\s*=\s*["']#["']([^>]*)>/gi, (_, pre: string, post: string) => {
-    if (/role\s*=/i.test(pre + post)) return `<a${pre}href="#"${post}>`;
-    return `<a${pre}href="#" role="button" tabindex="0"${post}>`;
-  });
+  html = html.replace(
+    /<a([^>]*)\bhref\s*=\s*["']#["']([^>]*)>/gi,
+    (_, pre: string, post: string) => {
+      if (/role\s*=/i.test(pre + post)) return `<a${pre}href="#"${post}>`;
+      return `<a${pre}href="#" role="button" tabindex="0"${post}>`;
+    },
+  );
   if (html !== before) fixes.push('Added role="button" and tabindex to anchor-as-button elements');
   return html;
 }

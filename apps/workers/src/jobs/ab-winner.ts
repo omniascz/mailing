@@ -95,15 +95,8 @@ async function processAbWinner(job: Job<AbWinnerJobData>) {
     return { dispatched: 0 };
   }
 
-  const {
-    fromName,
-    fromEmail,
-    replyTo,
-    dkimDomain,
-    dkimSelector,
-    dkimPrivateKey,
-    priority,
-  } = job.data;
+  const { fromName, fromEmail, replyTo, dkimDomain, dkimSelector, dkimPrivateKey, priority } =
+    job.data;
 
   // 2. Paginate holdback contacts and enqueue batch-sender jobs
   let cursor: string | undefined;

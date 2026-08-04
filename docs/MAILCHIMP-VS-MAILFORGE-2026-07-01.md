@@ -8,19 +8,19 @@ Metodika: 10 doménových agentů, každý ověřil **skutečné funkce Mailchim
 
 ## Scoreboard (kdo vede v doméně)
 
-| Doména | Vítěz | Poznámka |
-|---|---|---|
-| Audience & contacts | **MailForge** | + lifecycle, phone intel, identity merge, per-purpose GDPR |
-| Signup forms | MailForge (data) / Mailchimp (UI) | MF: A/B, smart fields, progressive, prefill; MC: hostované stránky, reCAPTCHA, překlady |
-| Landing pages | **Mailchimp** | MF nemá landing pages vůbec |
-| Campaign types & editor engine | **MailForge (parita+)** | + AMP, countdown GIF, 14-op dynamic, CZ/SK skloňování, spam-check; MC: drag-drop UI, photo editor |
-| Automations/journeys | **Mailchimp** | MF širší typy akcí, ale detaily rozbité (viz níže) |
-| Sending & deliverability | **Mailchimp** | MF má vlastní MTA, ale 3 velké wiring gapy |
-| Reporting & analytics | Smíšené | MF: atribuce/prediktiva/cohorty; MC: geo, export, custom builder |
-| E-commerce | **MailForge** | + back-in-stock, price-drop, ISDOC, CZ feeds, SMS kupóny |
-| Multichannel/extras | **MailForge** | + WhatsApp/Viber/Push/Voice; MC: postcards, website builder |
-| Recipient-side flows | **Mailchimp** | MF silná compliance páteř, ale chybí recipient-facing stránky |
-| Platform/API/admin | **MailForge** | + SSO/SAML, audit log, MCP, Resend API, vlastní MTA |
+| Doména                         | Vítěz                             | Poznámka                                                                                          |
+| ------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Audience & contacts            | **MailForge**                     | + lifecycle, phone intel, identity merge, per-purpose GDPR                                        |
+| Signup forms                   | MailForge (data) / Mailchimp (UI) | MF: A/B, smart fields, progressive, prefill; MC: hostované stránky, reCAPTCHA, překlady           |
+| Landing pages                  | **Mailchimp**                     | MF nemá landing pages vůbec                                                                       |
+| Campaign types & editor engine | **MailForge (parita+)**           | + AMP, countdown GIF, 14-op dynamic, CZ/SK skloňování, spam-check; MC: drag-drop UI, photo editor |
+| Automations/journeys           | **Mailchimp**                     | MF širší typy akcí, ale detaily rozbité (viz níže)                                                |
+| Sending & deliverability       | **Mailchimp**                     | MF má vlastní MTA, ale 3 velké wiring gapy                                                        |
+| Reporting & analytics          | Smíšené                           | MF: atribuce/prediktiva/cohorty; MC: geo, export, custom builder                                  |
+| E-commerce                     | **MailForge**                     | + back-in-stock, price-drop, ISDOC, CZ feeds, SMS kupóny                                          |
+| Multichannel/extras            | **MailForge**                     | + WhatsApp/Viber/Push/Voice; MC: postcards, website builder                                       |
+| Recipient-side flows           | **Mailchimp**                     | MF silná compliance páteř, ale chybí recipient-facing stránky                                     |
+| Platform/API/admin             | **MailForge**                     | + SSO/SAML, audit log, MCP, Resend API, vlastní MTA                                               |
 
 ---
 
@@ -51,6 +51,7 @@ Metodika: 10 doménových agentů, každý ověřil **skutečné funkce Mailchim
 **MailForge navíc:** víc typů akcí než MC (Viber, cascade, **nested/sub-flows**, loyalty, run_code, CZ/SK name-day/holiday triggery), automation map, N-way split. 5 core recipes běží end-to-end (welcome, abandoned-cart, onboarding, re-engagement, dunning).
 
 **Vážné mezery MF (ověřeno v kódu):**
+
 - **`onListSubscribe` a `onTagAdded` triggery jsou definované, ale nikdy volané** v produkci (jen v testech) — dva nejzákladnější triggery reálně nefungují. 🟡
 - **56-recipe „gallery" je nepoužitelná** — configy neodpovídají executor kontraktu (`wait:{duration:{days}}`→NaN, `send_sms:{body}`→executor chce `message`, `condition:{rule}`→čte `field`→vždy false). Fork zkopíruje vadné configy. 🟡
 - **Akce no-op:** `send_whatsapp`/`send_push`/`show_in_app`/`make_voice_call` vrací `next` bez odeslání; **žádný unsubscribe node**; update-field jen whitelist first_name/last_name/phone (custom fields ignorovány). 🔴
@@ -64,7 +65,8 @@ Metodika: 10 doménových agentů, každý ověřil **skutečné funkce Mailchim
 **MailForge silná manuální send path** (ověřeno end-to-end na `POST /campaigns/:id/send`): **vlastní Go MTA** (direct-to-MX, real DKIM podpis, connection pooling), per-ISP routing + rate caps, plain-text multipart, RFC 8058 one-click unsub, synchronní bounce handling (hard→suppress, soft→retry), FBL + auto-quarantine, Timewarp, plan-limit enforcement, SPF/DKIM/DMARC generování + **živé DNS ověření**.
 
 **3 velké wiring gapy (🔴):**
-1. **Naplánované kampaně se nikdy neodešlou** — `scheduleCampaign()` zapíše `status='scheduled'`, ale **žádný cron nepolluje** due kampaně do splitteru. *(pozn.: transactional scheduling jsem už opravil v předchozí session, ale campaign scheduler chybí)*
+
+1. **Naplánované kampaně se nikdy neodešlou** — `scheduleCampaign()` zapíše `status='scheduled'`, ale **žádný cron nepolluje** due kampaně do splitteru. _(pozn.: transactional scheduling jsem už opravil v předchozí session, ale campaign scheduler chybí)_
 2. **Adaptivní ISP throttle = dead code** — logika halvení na 421/451 (`isp-throttle.ts`) se **nikdy nevolá**; živě limituje jen statický BullMQ limiter; engine nehlásí 421/451 zpět.
 3. **Out-of-band bounce ztracené** — engine nemá **VERP/Return-Path** (`MAIL FROM = FromEmail`), `bounce-processor.ts` (ARF/DSN) není nikde importován → zachyceny jen in-session SMTP rejecty.
 
@@ -95,6 +97,7 @@ Metodika: 10 doménových agentů, každý ověřil **skutečné funkce Mailchim
 **MailForge silná compliance páteř (✅):** single/double opt-in, opt-in confirmation email, **signed RFC 8058 one-click unsubscribe** (nedávno opraveno), unsubscribe stránka, **preference center** (per-list + global opt-out, signed token, bez loginu), **resubscribe** (global + per-list), GDPR per-purpose consent s IP/timestamp snapshoty, bounced/complained ≈ MC „cleaned".
 
 **Mezery MF (recipient-facing stránky):**
+
 - **View-in-browser (🔴)** — `{{view_in_browser_url}}` merge tag definován, ale **nikdy naplněn** → renderuje prázdný; žádná hostovaná kopie e-mailu.
 - **Campaign archive page (🔴)** — žádná veřejná archivní stránka.
 - **Forward-to-a-friend (🔴)** — chybí úplně.

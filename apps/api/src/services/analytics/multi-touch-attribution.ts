@@ -107,9 +107,12 @@ export async function computeAttribution(
   if (opts.dateFrom) orderConds.push(gte(revenueEvents.occurredAt, opts.dateFrom));
   if (opts.dateTo) orderConds.push(lte(revenueEvents.occurredAt, opts.dateTo));
 
-  const orders = (await db.select().from(revenueEvents).where(and(...orderConds))).filter(
-    (o) => o.contactId && Number(o.amount ?? 0) > 0,
-  );
+  const orders = (
+    await db
+      .select()
+      .from(revenueEvents)
+      .where(and(...orderConds))
+  ).filter((o) => o.contactId && Number(o.amount ?? 0) > 0);
   if (orders.length === 0) return [];
 
   // Single batched touch-point load for every contact + the full window.

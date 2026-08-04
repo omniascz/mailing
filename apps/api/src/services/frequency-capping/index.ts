@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import type { Redis } from 'ioredis';
-import { redis as defaultRedis } from '../../lib/redis.js';
+import { redis as defaultRedis } from '@forgemsg/shared/redis';
 import { db } from '../../db/client.js';
 import {
   frequencySuppressions,

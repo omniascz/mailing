@@ -20,8 +20,8 @@ interface RcsSendJob {
 async function processRcsSend(job: Job<RcsSendJob>) {
   const d = job.data;
   const [{ resolveRcsProvider, sendRcs }, { updateStatus }] = await Promise.all([
-    import('../../../api/src/services/rcs/providers/index.js'),
-    import('../../../api/src/services/rcs/index.js'),
+    import('@forgemsg/api/services/rcs/providers'),
+    import('@forgemsg/api/services/rcs'),
   ]);
 
   const provider = resolveRcsProvider(d.provider);

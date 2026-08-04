@@ -30,7 +30,10 @@ export function resolveAdapters(): ResolvedAdapters {
   return {
     stt: dgKey ? createDeepgramStt(dgKey, process.env.DEEPGRAM_MODEL ?? 'nova-2') : stub.stt,
     llm: anthropicKey
-      ? createClaudeLlm(anthropicKey, process.env.VOICE_BOT_LLM_MODEL ?? 'claude-haiku-4-5-20251001')
+      ? createClaudeLlm(
+          anthropicKey,
+          process.env.VOICE_BOT_LLM_MODEL ?? 'claude-haiku-4-5-20251001',
+        )
       : stub.llm,
     tts: elKey
       ? createElevenLabsTts(elKey, process.env.ELEVENLABS_MODEL_ID ?? 'eleven_multilingual_v2')

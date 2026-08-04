@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../lib/redis.js', () => {
+vi.mock('@forgemsg/shared/redis', () => {
   const store: Record<string, string> = {};
   const mockPipeline = {
     set: vi.fn().mockReturnThis(),
@@ -32,7 +32,7 @@ import {
   permanentlyFail,
   isReadyForRetry,
 } from './retry-manager.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 describe('calculateRetryDelay', () => {
   it('returns 60s for attempt 1', () => {

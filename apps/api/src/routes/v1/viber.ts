@@ -25,7 +25,7 @@ import {
 import { db } from '../../db/client.js';
 import { viberTemplates } from '../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
-import { createViberAdapter } from '../../services/viber/adapter.js';
+import { createViberAdapter } from '@forgemsg/shared/viber/adapter';
 
 // ─── Zod schemas ────────────────────────────────────────────────────────────
 
@@ -114,7 +114,12 @@ export default async function viberRoutes(app: FastifyInstance) {
     // Resolve contact phone
     const { contacts } = await import('../../db/schema/index.js');
     const [contact] = await db
-      .select({ id: contacts.id, phone: contacts.phone, firstName: contacts.firstName, lastName: contacts.lastName })
+      .select({
+        id: contacts.id,
+        phone: contacts.phone,
+        firstName: contacts.firstName,
+        lastName: contacts.lastName,
+      })
       .from(contacts)
       .where(and(eq(contacts.orgId, req.user!.orgId), eq(contacts.id, body.contactId)));
 
@@ -134,7 +139,9 @@ export default async function viberRoutes(app: FastifyInstance) {
       const [tpl] = await db
         .select()
         .from(viberTemplates)
-        .where(and(eq(viberTemplates.orgId, req.user!.orgId), eq(viberTemplates.id, body.templateId)));
+        .where(
+          and(eq(viberTemplates.orgId, req.user!.orgId), eq(viberTemplates.id, body.templateId)),
+        );
       if (!tpl) return reply.code(404).send({ code: 'NOT_FOUND', message: 'Template not found' });
       messageBody = tpl.body;
       messageType = tpl.type as typeof messageType;

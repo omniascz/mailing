@@ -68,12 +68,7 @@ export async function spin(
   const spinCountRows = await db
     .select({ total: count() })
     .from(wheelSpins)
-    .where(
-      and(
-        eq(wheelSpins.formId, formId),
-        eq(wheelSpins.email, normalizedEmail),
-      ),
-    );
+    .where(and(eq(wheelSpins.formId, formId), eq(wheelSpins.email, normalizedEmail)));
   const spinCount = Number(spinCountRows[0]?.total ?? 0);
 
   if (spinCount >= maxSpins) {

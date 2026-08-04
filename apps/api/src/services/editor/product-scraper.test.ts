@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock redis before importing the module under test
-vi.mock('../../lib/redis.js', () => ({
+vi.mock('@forgemsg/shared/redis', () => ({
   redis: {
     get: vi.fn().mockResolvedValue(null),
     setex: vi.fn().mockResolvedValue('OK'),
@@ -13,7 +13,7 @@ const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
 import { scrapeProduct } from './product-scraper.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const FAKE_API_KEY = 'test-api-key';
 

@@ -64,7 +64,9 @@ export function decodeRfc2047(value: string): string {
       // Q-encoding: _ = space, =XX = hex byte
       const bytes = data
         .replace(/_/g, ' ')
-        .replace(/=([0-9A-Fa-f]{2})/g, (_x: string, h: string) => String.fromCharCode(parseInt(h, 16)));
+        .replace(/=([0-9A-Fa-f]{2})/g, (_x: string, h: string) =>
+          String.fromCharCode(parseInt(h, 16)),
+        );
       return Buffer.from(bytes, 'latin1').toString('utf8');
     } catch {
       return data;

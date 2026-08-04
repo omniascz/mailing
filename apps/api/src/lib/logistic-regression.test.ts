@@ -49,7 +49,12 @@ describe('trainLogistic (deterministic gradient descent)', () => {
   });
 
   it('handles a zero-variance feature without NaN', () => {
-    const X = [[1, 0.2], [1, 0.8], [1, 0.3], [1, 0.9]];
+    const X = [
+      [1, 0.2],
+      [1, 0.8],
+      [1, 0.3],
+      [1, 0.9],
+    ];
     const y = [0, 1, 0, 1];
     const model = trainLogistic(X, y);
     expect(Number.isFinite(model.weights[0]!)).toBe(true);

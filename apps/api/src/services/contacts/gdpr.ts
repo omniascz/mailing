@@ -50,10 +50,7 @@ const SAFE_IDENT = /^[a-z_][a-z0-9_]*$/;
  * by information_schema so new PII-bearing tables are covered automatically —
  * no hand-maintained list to drift out of sync with the schema.
  */
-async function eraseRelatedRows(
-  orgId: string,
-  contactId: string,
-): Promise<Record<string, number>> {
+async function eraseRelatedRows(orgId: string, contactId: string): Promise<Record<string, number>> {
   const catalog = await db.execute<{ table_name: string; has_org: boolean }>(sql`
     SELECT c.table_name,
            EXISTS (
@@ -76,9 +73,7 @@ async function eraseRelatedRows(
       const where = t.has_org
         ? sql`contact_id = ${contactId}::uuid AND org_id = ${orgId}::uuid`
         : sql`contact_id = ${contactId}::uuid`;
-      const res = await db.execute(
-        sql`DELETE FROM ${sql.raw(`"${t.table_name}"`)} WHERE ${where}`,
-      );
+      const res = await db.execute(sql`DELETE FROM ${sql.raw(`"${t.table_name}"`)} WHERE ${where}`);
       // postgres-js exposes affected rows as `.count`; other drivers `.rowCount`.
       const r = res as unknown as { count?: number; rowCount?: number };
       const count = r.count ?? r.rowCount ?? 0;

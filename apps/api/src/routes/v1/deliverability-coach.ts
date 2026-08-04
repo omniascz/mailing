@@ -10,12 +10,14 @@ export default async function deliverabilityCoachRoutes(app: FastifyInstance) {
    * Full pre-send deliverability analysis with AI coaching.
    */
   app.post('/api/v1/deliverability/analyze', async (req) => {
-    const body = z.object({
-      subject: z.string().min(1).max(300),
-      html: z.string().min(1),
-      fromName: z.string().min(1).max(100),
-      fromEmail: z.string().email(),
-    }).parse(req.body);
+    const body = z
+      .object({
+        subject: z.string().min(1).max(300),
+        html: z.string().min(1),
+        fromName: z.string().min(1).max(100),
+        fromEmail: z.string().email(),
+      })
+      .parse(req.body);
 
     const report = await analyzeDeliverability(
       req.user!.orgId,

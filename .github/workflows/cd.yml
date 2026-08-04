@@ -2,7 +2,9 @@ name: CD
 
 on:
   push:
-    branches: [main]
+    # master, not main — this repo's default branch is master. Same dead
+    # trigger the CI workflow carried.
+    branches: [master]
     tags: ['v*']
   workflow_dispatch:
     inputs:
@@ -21,10 +23,15 @@ env:
 
 jobs:
   # Wait for CI to pass on the same SHA before publishing.
+  #
+  # This job used to carry `if: github.event_name == 'push'`, which meant a
+  # workflow_dispatch run skipped it entirely — and because build-push accepted
+  # `needs.await-ci.result == 'skipped'`, anyone able to press "Run workflow"
+  # could publish images from a SHA whose CI was red or had never run. The gate
+  # now applies to every trigger.
   await-ci:
     name: Await CI
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
       - name: Wait for CI workflow on this SHA
@@ -40,7 +47,9 @@ jobs:
     name: Build & Push (${{ matrix.service }})
     runs-on: ubuntu-latest
     needs: [await-ci]
-    if: ${{ always() && (needs.await-ci.result == 'success' || needs.await-ci.result == 'skipped') }}
+    # Only a genuinely green CI on this SHA publishes. 'skipped' is no longer
+    # accepted — that was the bypass.
+    if: ${{ needs.await-ci.result == 'success' }}
     permissions:
       contents: read
       packages: write

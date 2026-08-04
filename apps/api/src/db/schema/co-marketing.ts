@@ -2,12 +2,16 @@
  * Co-marketing campaigns — two orgs collaborate on a shared campaign.
  * Each org contributes their list segment; campaign runs in both orgs; shared analytics.
  */
-import {
-  pgTable, uuid, text, timestamp, numeric, jsonb, index, pgEnum,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, numeric, jsonb, index, pgEnum } from 'drizzle-orm/pg-core';
 
 export const coMarketingStatusEnum = pgEnum('co_marketing_status', [
-  'draft', 'invited', 'accepted', 'rejected', 'active', 'completed', 'cancelled',
+  'draft',
+  'invited',
+  'accepted',
+  'rejected',
+  'active',
+  'completed',
+  'cancelled',
 ]);
 
 export const coMarketingCampaigns = pgTable(
@@ -28,8 +32,12 @@ export const coMarketingCampaigns = pgTable(
     /** Partner's list / segment ID */
     partnerListId: uuid('partner_list_id'),
     /** Cost split: initiator_share + partner_share = 100 */
-    initiatorCostShare: numeric('initiator_cost_share', { precision: 5, scale: 2 }).notNull().default('50'),
-    partnerCostShare: numeric('partner_cost_share', { precision: 5, scale: 2 }).notNull().default('50'),
+    initiatorCostShare: numeric('initiator_cost_share', { precision: 5, scale: 2 })
+      .notNull()
+      .default('50'),
+    partnerCostShare: numeric('partner_cost_share', { precision: 5, scale: 2 })
+      .notNull()
+      .default('50'),
     scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
     sentAt: timestamp('sent_at', { withTimezone: true }),
     /** Combined metrics */

@@ -19,7 +19,11 @@ import { sendTransactionalEmail } from '../../lib/queues.js';
 
 const DOI_TOKEN_TTL = 24 * 3600; // 24 hours in seconds
 
-let _redis: { get(k: string): Promise<string | null>; set(k: string, v: string, ex: number): Promise<unknown>; del(k: string): Promise<unknown> } | null = null;
+let _redis: {
+  get(k: string): Promise<string | null>;
+  set(k: string, v: string, ex: number): Promise<unknown>;
+  del(k: string): Promise<unknown>;
+} | null = null;
 
 async function getRedis() {
   if (_redis) return _redis;
@@ -59,10 +63,9 @@ export async function initiatePurposeDoi(
 
   if (!purpose) throw Object.assign(new Error('Purpose not found'), { statusCode: 404 });
   if (purpose.legalBasis !== 'consent') {
-    throw Object.assign(
-      new Error('DOI is only available for consent-based purposes'),
-      { statusCode: 400 },
-    );
+    throw Object.assign(new Error('DOI is only available for consent-based purposes'), {
+      statusCode: 400,
+    });
   }
 
   // Resolve contact email

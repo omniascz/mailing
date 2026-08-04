@@ -4,7 +4,7 @@
  * threshold) fires at most once per billing period, deduped via Redis.
  */
 
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { dispatchEvent } from '../webhooks/index.js';
 import type { PlanCapacity } from './plan-enforcement.js';
 

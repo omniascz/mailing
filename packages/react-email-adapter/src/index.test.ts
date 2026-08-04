@@ -15,16 +15,13 @@ describe('sendReactEmail', () => {
     const renderer: EmailRenderer = (el, opts) =>
       opts?.plainText ? 'hello' : `<p>${(el as ReactElementLike).type as string}</p>`;
 
-    const res = await sendReactEmail(
-      client,
-      {
-        from: 'a@x.com',
-        to: 'b@x.com',
-        subject: 'Hi',
-        react: fakeElement,
-        renderer,
-      },
-    );
+    const res = await sendReactEmail(client, {
+      from: 'a@x.com',
+      to: 'b@x.com',
+      subject: 'Hi',
+      react: fakeElement,
+      renderer,
+    });
     expect(res).toEqual({ id: 'em_1' });
     expect(send).toHaveBeenCalledOnce();
     const [payload] = send.mock.calls[0]!;

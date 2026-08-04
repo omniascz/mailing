@@ -56,32 +56,34 @@ describe('parseMergeTags', () => {
 
 describe('parseMergeTags — Liquid control-flow', () => {
   it('evaluates a {% for %} loop over an array custom-field', () => {
-    const out = parseMergeTags(
-      '{% for p in products %}{{ p.name }}:{{ p.price }} {% endfor %}',
-      { contact: { custom_fields: { products: [
-        { name: 'Shirt', price: '20' },
-        { name: 'Hat', price: '10' },
-      ] } } },
-    );
+    const out = parseMergeTags('{% for p in products %}{{ p.name }}:{{ p.price }} {% endfor %}', {
+      contact: {
+        custom_fields: {
+          products: [
+            { name: 'Shirt', price: '20' },
+            { name: 'Hat', price: '10' },
+          ],
+        },
+      },
+    });
     expect(out.trim()).toBe('Shirt:20 Hat:10');
   });
 
   it('evaluates a {% for %} loop over explicit ctx.data collections', () => {
-    const out = parseMergeTags(
-      '{% for item in items %}[{{ item }}]{% endfor %}',
-      { data: { items: ['a', 'b'] } },
-    );
+    const out = parseMergeTags('{% for item in items %}[{{ item }}]{% endfor %}', {
+      data: { items: ['a', 'b'] },
+    });
     expect(out).toBe('[a][b]');
   });
 
   it('evaluates {% if %} against contact fields', () => {
     const tpl = 'Hi {{ first_name }}{% if vip %} (VIP){% endif %}';
-    expect(parseMergeTags(tpl, { contact: { firstName: 'Ada', custom_fields: { vip: true } } })).toBe(
-      'Hi Ada (VIP)',
-    );
-    expect(parseMergeTags(tpl, { contact: { firstName: 'Bob', custom_fields: { vip: false } } })).toBe(
-      'Hi Bob',
-    );
+    expect(
+      parseMergeTags(tpl, { contact: { firstName: 'Ada', custom_fields: { vip: true } } }),
+    ).toBe('Hi Ada (VIP)');
+    expect(
+      parseMergeTags(tpl, { contact: { firstName: 'Bob', custom_fields: { vip: false } } }),
+    ).toBe('Hi Bob');
   });
 
   it('resolves system tags inside a Liquid template', () => {
@@ -93,10 +95,9 @@ describe('parseMergeTags — Liquid control-flow', () => {
   });
 
   it('shields per-recipient coupon tags across the Liquid pass', () => {
-    const out = parseMergeTags(
-      '{% if promo %}Code: {{coupon_code:batch7}}{% endif %}',
-      { data: { promo: true } },
-    );
+    const out = parseMergeTags('{% if promo %}Code: {{coupon_code:batch7}}{% endif %}', {
+      data: { promo: true },
+    });
     // Coupon tag survives untouched for later per-recipient resolution.
     expect(out).toBe('Code: {{coupon_code:batch7}}');
   });

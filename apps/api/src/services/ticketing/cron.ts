@@ -53,7 +53,13 @@ export async function runDayOfTick(nowMs = Date.now()): Promise<{ events: number
     const attendees = await db
       .select({ contactId: eventAttendance.contactId })
       .from(eventAttendance)
-      .where(and(eq(eventAttendance.orgId, e.orgId), eq(eventAttendance.externalEventId, e.id), eq(eventAttendance.status, 'purchased')))
+      .where(
+        and(
+          eq(eventAttendance.orgId, e.orgId),
+          eq(eventAttendance.externalEventId, e.id),
+          eq(eventAttendance.status, 'purchased'),
+        ),
+      )
       .limit(PER_EVENT_CAP);
 
     for (const step of due) {
@@ -74,7 +80,9 @@ export async function runDayOfTick(nowMs = Date.now()): Promise<{ events: number
 }
 
 /** Fill-the-house: for unsold on-sale events, fire the cascade wave due today. */
-export async function runFillTheHouseTick(nowMs = Date.now()): Promise<{ events: number; fired: number }> {
+export async function runFillTheHouseTick(
+  nowMs = Date.now(),
+): Promise<{ events: number; fired: number }> {
   const events = await db
     .select({
       id: externalEvents.id,
@@ -106,7 +114,10 @@ export async function runFillTheHouseTick(nowMs = Date.now()): Promise<{ events:
     const wave = steps.find((s) => s.daysBeforeEvent === daysUntil);
     if (!wave) continue; // no wave due today
 
-    const ranked = rankAudienceForEvent(candidates, { venueCity: e.venueCity, category: e.category });
+    const ranked = rankAudienceForEvent(candidates, {
+      venueCity: e.venueCity,
+      category: e.category,
+    });
     const take = Math.max(1, Math.floor(ranked.length * wave.audienceFraction));
     for (const c of ranked.slice(0, take)) {
       await onApiEvent(e.orgId, c.contactId, 'ticketing.fill_the_house_offer', {
@@ -135,7 +146,12 @@ export async function runDiscoverTick(): Promise<{ orgs: number; fired: number }
     const contactsRows = await db
       .select({ contactId: eventAttendance.contactId, eventId: eventAttendance.externalEventId })
       .from(eventAttendance)
-      .where(and(eq(eventAttendance.orgId, orgId), gte(eventAttendance.occurredAt, new Date(Date.now() - 365 * DAY))))
+      .where(
+        and(
+          eq(eventAttendance.orgId, orgId),
+          gte(eventAttendance.occurredAt, new Date(Date.now() - 365 * DAY)),
+        ),
+      )
       .limit(50_000);
 
     const byContact = new Map<string, string[]>();

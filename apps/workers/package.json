@@ -13,6 +13,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@forgemsg/api": "workspace:*",
     "@forgemsg/editor": "workspace:*",
     "@forgemsg/i18n-cs": "workspace:*",
     "@forgemsg/i18n-sk": "workspace:*",

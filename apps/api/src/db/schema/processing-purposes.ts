@@ -26,11 +26,11 @@ import { contacts } from './contacts.js';
 
 // ─── Legal bases defined in GDPR Art. 6 ─────────────────────────────────────
 export const GDPR_LEGAL_BASES = [
-  'consent',           // Art. 6(1)(a) — explicit, withdrawable
-  'contract',          // Art. 6(1)(b)
-  'legal_obligation',  // Art. 6(1)(c)
-  'vital_interests',   // Art. 6(1)(d)
-  'public_task',       // Art. 6(1)(e)
+  'consent', // Art. 6(1)(a) — explicit, withdrawable
+  'contract', // Art. 6(1)(b)
+  'legal_obligation', // Art. 6(1)(c)
+  'vital_interests', // Art. 6(1)(d)
+  'public_task', // Art. 6(1)(e)
   'legitimate_interest', // Art. 6(1)(f) — soft opt-out
 ] as const;
 

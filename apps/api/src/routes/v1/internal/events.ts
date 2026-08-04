@@ -22,79 +22,71 @@ const bodySchema = z.object({
 });
 
 export default async function internalEventsRoutes(app: FastifyInstance) {
-  app.post(
-    '/api/v1/internal/events',
-    { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      const secret = req.headers['x-internal-secret'];
-      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+  app.post('/api/v1/internal/events', { schema: { tags: ['Internal'] } }, async (req, reply) => {
+    const secret = req.headers['x-internal-secret'];
+    if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
 
-      const body = bodySchema.parse(req.body);
-      const meta = body.metadata ?? {};
+    const body = bodySchema.parse(req.body);
+    const meta = body.metadata ?? {};
 
-      // Map the worker's wire type to a valid email_event_type enum value.
-      // 'fail' has no enum member — record it as a soft bounce so it is not lost.
-      const eventType: 'send' | 'deliver' | 'bounce' =
-        body.type === 'send'
-          ? 'send'
-          : body.type === 'deliver'
-            ? 'deliver'
-            : 'bounce';
+    // Map the worker's wire type to a valid email_event_type enum value.
+    // 'fail' has no enum member — record it as a soft bounce so it is not lost.
+    const eventType: 'send' | 'deliver' | 'bounce' =
+      body.type === 'send' ? 'send' : body.type === 'deliver' ? 'deliver' : 'bounce';
 
-      const bounceType =
-        body.type === 'bounce' || body.type === 'fail'
-          ? (meta.bounceType as 'hard' | 'soft' | 'block' | undefined) ?? 'soft'
-          : undefined;
+    const bounceType =
+      body.type === 'bounce' || body.type === 'fail'
+        ? ((meta.bounceType as 'hard' | 'soft' | 'block' | undefined) ?? 'soft')
+        : undefined;
 
-      // Denormalise the SendGrid-parity stats dimensions onto the event:
-      // category from the campaign (cached) and isp from the worker metadata.
-      const { resolveCampaignCategory } = await import('../../../services/stats/category-isp.js');
-      const category = await resolveCampaignCategory(body.orgId, body.campaignId).catch(() => null);
-      const isp = typeof meta.isp === 'string' ? (meta.isp as string) : null;
+    // Denormalise the SendGrid-parity stats dimensions onto the event:
+    // category from the campaign (cached) and isp from the worker metadata.
+    const { resolveCampaignCategory } = await import('../../../services/stats/category-isp.js');
+    const category = await resolveCampaignCategory(body.orgId, body.campaignId).catch(() => null);
+    const isp = typeof meta.isp === 'string' ? (meta.isp as string) : null;
 
-      await db.insert(emailEvents).values({
-        orgId: body.orgId,
-        campaignId: body.campaignId,
-        contactId: body.contactId,
-        messageId: body.messageId,
-        eventType,
-        bounceType,
-        stream: (meta.stream as 'broadcast' | 'transactional' | 'triggered' | undefined) ?? 'broadcast',
-        abVariantId: meta.abVariantId as string | undefined,
-        category,
-        isp,
-        metadata: meta,
-      });
+    await db.insert(emailEvents).values({
+      orgId: body.orgId,
+      campaignId: body.campaignId,
+      contactId: body.contactId,
+      messageId: body.messageId,
+      eventType,
+      bounceType,
+      stream:
+        (meta.stream as 'broadcast' | 'transactional' | 'triggered' | undefined) ?? 'broadcast',
+      abVariantId: meta.abVariantId as string | undefined,
+      category,
+      isp,
+      metadata: meta,
+    });
 
-      // Fire the matching webhook (delivered / bounced / sent) — the previously
-      // dark email→webhook path.
-      const { emitEmailEvent } = await import('../../../services/webhooks/email-events.js');
-      const wePayload = {
-        messageId: body.messageId,
-        contactId: body.contactId,
-        campaignId: body.campaignId,
-      };
-      if (eventType === 'deliver') emitEmailEvent(body.orgId, 'delivered', wePayload);
-      else if (eventType === 'bounce') {
-        // SendGrid semantics: a soft (transient) failure is a *deferral* that
-        // will be retried — emit delivery_delayed, not bounced. Permanent
-        // hard/block failures emit bounced.
-        if (bounceType === 'soft') emitEmailEvent(body.orgId, 'delivery_delayed', wePayload);
-        else emitEmailEvent(body.orgId, 'bounced', { ...wePayload, bounceType });
-      } else if (eventType === 'send') emitEmailEvent(body.orgId, 'sent', wePayload);
+    // Fire the matching webhook (delivered / bounced / sent) — the previously
+    // dark email→webhook path.
+    const { emitEmailEvent } = await import('../../../services/webhooks/email-events.js');
+    const wePayload = {
+      messageId: body.messageId,
+      contactId: body.contactId,
+      campaignId: body.campaignId,
+    };
+    if (eventType === 'deliver') emitEmailEvent(body.orgId, 'delivered', wePayload);
+    else if (eventType === 'bounce') {
+      // SendGrid semantics: a soft (transient) failure is a *deferral* that
+      // will be retried — emit delivery_delayed, not bounced. Permanent
+      // hard/block failures emit bounced.
+      if (bounceType === 'soft') emitEmailEvent(body.orgId, 'delivery_delayed', wePayload);
+      else emitEmailEvent(body.orgId, 'bounced', { ...wePayload, bounceType });
+    } else if (eventType === 'send') emitEmailEvent(body.orgId, 'sent', wePayload);
 
-      // Auto channel fallback: a hard/soft bounce on email can trigger a
-      // configured fallback send (SMS/WhatsApp/push). Best-effort, non-blocking.
-      if (eventType === 'bounce' && (bounceType === 'hard' || bounceType === 'soft')) {
-        handleBounce(body.orgId, body.contactId, bounceType).catch(() => {});
-        // Real-time reputation auto-pause (previously route-only, never triggered).
-        const { onBounceComplaintSignal } = await import(
-          '../../../services/abuse-detection/auto-pause.js'
-        );
-        onBounceComplaintSignal(body.orgId, 'bounce').catch(() => {});
-      }
+    // Auto channel fallback: a hard/soft bounce on email can trigger a
+    // configured fallback send (SMS/WhatsApp/push). Best-effort, non-blocking.
+    if (eventType === 'bounce' && (bounceType === 'hard' || bounceType === 'soft')) {
+      handleBounce(body.orgId, body.contactId, bounceType).catch(() => {});
+      // Real-time reputation auto-pause (previously route-only, never triggered).
+      const { onBounceComplaintSignal } =
+        await import('../../../services/abuse-detection/auto-pause.js');
+      onBounceComplaintSignal(body.orgId, 'bounce').catch(() => {});
+    }
 
-      return reply.code(201).send({ ok: true });
-    },
-  );
+    return reply.code(201).send({ ok: true });
+  });
 }

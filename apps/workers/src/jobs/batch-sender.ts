@@ -27,8 +27,8 @@ import { emailSchema, type EmailSchema } from '@forgemsg/editor/schema';
 import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/shared';
 // Cross-package import (same pattern as mta-sender → isp-throttle): the coupon
 // resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
-import { resolveEmailCouponTags } from '../../../api/src/services/campaigns/email-coupon-merge.js';
-import { encodeVerp } from '../../../api/src/services/sending/verp.js';
+import { resolveEmailCouponTags } from '@forgemsg/api/services/campaigns/email-coupon-merge';
+import { encodeVerp } from '@forgemsg/shared/sending/verp';
 import {
   connection,
   QUEUE_NAMES,
@@ -112,7 +112,7 @@ async function processBatchSender(job: Job<BatchSenderJobData>) {
   // wires org→pool→IP through to the MTA (previously sendingIp was hardcoded '').
   let sendingIp = '';
   try {
-    const { pickIpForSend } = await import('../../../api/src/services/dedicated-ips/index.js');
+    const { pickIpForSend } = await import('@forgemsg/api/services/dedicated-ips');
     // Use the configuration set's IP pool when the campaign specifies one.
     const ip = await pickIpForSend(data.orgId, data.ipPoolId);
     sendingIp = ip?.ipAddress ?? '';
@@ -398,11 +398,24 @@ function renderEmail(
   content: Record<string, unknown>,
   ctx: MergeTagContext,
   preheader?: string,
-  utmTracking?: { enabled?: boolean; source?: string; medium?: string; campaign?: string; content?: string; term?: string } | null,
+  utmTracking?: {
+    enabled?: boolean;
+    source?: string;
+    medium?: string;
+    campaign?: string;
+    content?: string;
+    term?: string;
+  } | null,
 ): RenderedEmail {
   // Build UTM config if enabled
   const utm = utmTracking?.enabled
-    ? { source: utmTracking.source, medium: utmTracking.medium, campaign: utmTracking.campaign, content: utmTracking.content, term: utmTracking.term }
+    ? {
+        source: utmTracking.source,
+        medium: utmTracking.medium,
+        campaign: utmTracking.campaign,
+        content: utmTracking.content,
+        term: utmTracking.term,
+      }
     : undefined;
 
   // Path 1: block JSON (production)
@@ -527,7 +540,10 @@ async function fetchNewsletterTierNames(
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/newsletter-tiers/batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_SECRET ?? '' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
+      },
       body: JSON.stringify({ orgId, contactIds }),
     });
     if (!res.ok) return new Map();

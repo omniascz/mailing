@@ -11,7 +11,10 @@ import { emailEvents } from '../../db/schema/index.js';
 import { resolveGeo } from '../../lib/geo.js';
 
 /** Resolve an event's IP to country/city and persist it. No-op if unresolved. */
-export async function enrichEventGeo(eventId: string, ip: string | null | undefined): Promise<void> {
+export async function enrichEventGeo(
+  eventId: string,
+  ip: string | null | undefined,
+): Promise<void> {
   const loc = await resolveGeo(ip);
   if (!loc || (!loc.country && !loc.city)) return;
   await db

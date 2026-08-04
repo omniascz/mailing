@@ -16,6 +16,7 @@ WORKDIR /app
 FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/workers/package.json ./apps/workers/
+COPY apps/api/package.json ./apps/api/
 COPY apps/editor/package.json ./apps/editor/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/i18n-cs/package.json ./packages/i18n-cs/
@@ -25,12 +26,15 @@ RUN pnpm install --frozen-lockfile --filter @forgemsg/workers...
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/workers/node_modules ./apps/workers/node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=deps /app/apps/editor/node_modules ./apps/editor/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY . .
-# Only @forgemsg/shared needs a dist (its package.json points there).
-# editor + i18n-* are loaded as TS source at runtime via tsx.
-RUN pnpm --filter @forgemsg/shared build
+# @forgemsg/shared and @forgemsg/api both need a dist — their package.json
+# "exports" maps point at ./dist. editor + i18n-* are loaded as TS source at
+# runtime via tsx, so they stay unbuilt.
+# turbo, not `pnpm --filter` — see apps/api/Dockerfile for why.
+RUN pnpm turbo build --filter=@forgemsg/api
 
 FROM node:22-alpine AS runner
 RUN apk add --no-cache tini \
@@ -46,6 +50,13 @@ COPY --from=builder --chown=forgemsg:forgemsg /app/apps/workers/node_modules ./a
 COPY --from=builder --chown=forgemsg:forgemsg /app/apps/editor/src ./apps/editor/src
 COPY --from=builder --chown=forgemsg:forgemsg /app/apps/editor/package.json ./apps/editor/package.json
 COPY --from=builder --chown=forgemsg:forgemsg /app/apps/editor/node_modules ./apps/editor/node_modules
+# apps/workers imports 6 subpaths of @forgemsg/api (see its "exports" map).
+# One of them — services/campaigns/email-coupon-merge — is a *static* import in
+# jobs/batch-sender.ts, which index.ts loads at boot. Before this, apps/api was
+# not copied into the image at all, so the container could not start.
+COPY --from=builder --chown=forgemsg:forgemsg /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder --chown=forgemsg:forgemsg /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=forgemsg:forgemsg /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder --chown=forgemsg:forgemsg /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=builder --chown=forgemsg:forgemsg /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=forgemsg:forgemsg /app/packages/shared/node_modules ./packages/shared/node_modules

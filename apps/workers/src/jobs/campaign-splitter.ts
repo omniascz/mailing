@@ -64,7 +64,9 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
   // Deduplicate (defensive against segment returning the same contact twice)
   const contactIds = [...new Set(rawIds)];
 
-  job.log(`Total contacts: ${contactIds.length} (${rawIds.length - contactIds.length} dupes removed)`);
+  job.log(
+    `Total contacts: ${contactIds.length} (${rawIds.length - contactIds.length} dupes removed)`,
+  );
 
   if (contactIds.length === 0) {
     job.log('No contacts in audience — skipping');
@@ -136,13 +138,17 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
 
       await batchSenderQueue.addBulk(batchJobs);
       totalBatches += variantBatches.length;
-      job.log(`Variant ${variant.id}: ${variantIds.length} contacts, ${variantBatches.length} batches`);
+      job.log(
+        `Variant ${variant.id}: ${variantIds.length} contacts, ${variantBatches.length} batches`,
+      );
     }
 
     // ── Holdback: store remaining contacts + schedule winner dispatch ──────
     if (holdbackPct > 0 && abConfig.testDurationHours && abConfig.autoSendWinner !== false) {
       const holdbackIds = contactIds.slice(cursor);
-      job.log(`Holdback: ${holdbackIds.length} contacts (${holdbackPct.toFixed(1)}%) for winner dispatch`);
+      job.log(
+        `Holdback: ${holdbackIds.length} contacts (${holdbackPct.toFixed(1)}%) for winner dispatch`,
+      );
 
       if (holdbackIds.length > 0) {
         await storeHoldback(data.orgId, data.campaignId, holdbackIds);
@@ -161,11 +167,11 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
         dkimPrivateKey: data.dkimPrivateKey,
         priority: data.priority,
       };
-      await abWinnerQueue.add(
-        `winner-${data.campaignId}`,
-        winnerJobData,
-        { delay: delayMs, jobId: `ab-winner-${data.campaignId}`, removeOnComplete: true },
-      );
+      await abWinnerQueue.add(`winner-${data.campaignId}`, winnerJobData, {
+        delay: delayMs,
+        jobId: `ab-winner-${data.campaignId}`,
+        removeOnComplete: true,
+      });
       winnerScheduled = true;
       job.log(`Scheduled winner dispatch in ${abConfig.testDurationHours}h`);
     }
@@ -242,7 +248,11 @@ async function fetchAudienceContactIds(orgId: string, campaignId: string): Promi
   return body.data.contactIds;
 }
 
-async function storeHoldback(orgId: string, campaignId: string, contactIds: string[]): Promise<void> {
+async function storeHoldback(
+  orgId: string,
+  campaignId: string,
+  contactIds: string[],
+): Promise<void> {
   const url = `${process.env.API_URL ?? 'http://localhost:3001'}/api/v1/internal/campaigns/${campaignId}/ab-holdback`;
   try {
     await fetch(url, {

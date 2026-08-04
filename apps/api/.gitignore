@@ -1,0 +1,13 @@
+# TypeScript emit that lands next to the sources.
+#
+# `apps/workers` currently imports straight out of `apps/api/src/**` while
+# declaring `"rootDir": "src"` of its own, so `tsc` resolves those files as
+# workers sources and writes the compiled output beside the original .ts
+# instead of into dist/. A single `pnpm build` leaves ~776 stray files here.
+#
+# Ignoring them stops the artifacts being committed by accident. It does not
+# fix the underlying rootDir problem — that lives in apps/workers/tsconfig.json.
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map

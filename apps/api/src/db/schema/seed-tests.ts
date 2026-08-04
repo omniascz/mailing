@@ -30,7 +30,9 @@ export const seedPlacementEnum = pgEnum('seed_placement', [
 export const seedAddresses = pgTable(
   'seed_addresses',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -47,7 +49,9 @@ export const seedAddresses = pgTable(
 export const seedTests = pgTable(
   'seed_tests',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -64,7 +68,9 @@ export const seedTests = pgTable(
 export const seedResults = pgTable(
   'seed_results',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -80,10 +86,7 @@ export const seedResults = pgTable(
     reportedAt: timestamp('reported_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index('seed_results_test_idx').on(t.testId),
-    index('seed_results_org_idx').on(t.orgId),
-  ],
+  (t) => [index('seed_results_test_idx').on(t.testId), index('seed_results_org_idx').on(t.orgId)],
 );
 
 export type SeedAddress = typeof seedAddresses.$inferSelect;

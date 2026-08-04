@@ -90,9 +90,7 @@ export function startBlacklistMonitorWorker() {
   );
 
   worker.on('completed', (job) => {
-    console.log(
-      `[blacklist-monitor] Job ${job.id} completed: ${JSON.stringify(job.returnvalue)}`,
-    );
+    console.log(`[blacklist-monitor] Job ${job.id} completed: ${JSON.stringify(job.returnvalue)}`);
   });
 
   worker.on('failed', (job, err) => {

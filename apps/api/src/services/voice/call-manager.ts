@@ -13,7 +13,7 @@
 import { eq, and } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { calls } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import type { NewCall, Call } from '../../db/schema/calls.js';
 
 // ─── Concurrent call management ────────────────────────────────────────────

@@ -17,7 +17,10 @@ export interface GopaySettings {
   testMode?: boolean;
 }
 
-interface GopayToken { access_token: string; expires_in: number }
+interface GopayToken {
+  access_token: string;
+  expires_in: number;
+}
 
 async function getToken(settings: GopaySettings): Promise<string> {
   const base = settings.testMode ? GOPAY_TEST_BASE : GOPAY_BASE;
@@ -31,14 +34,14 @@ async function getToken(settings: GopaySettings): Promise<string> {
     body: 'grant_type=client_credentials&scope=payment-create',
   });
   if (!res.ok) throw new Error(`GoPay auth error ${res.status}`);
-  const data = await res.json() as GopayToken;
+  const data = (await res.json()) as GopayToken;
   return data.access_token;
 }
 
 export interface GopayCreateInput {
   orgId: string;
   contactId?: string;
-  amount: number;          // in CZK haléře (100 CZK = 10000)
+  amount: number; // in CZK haléře (100 CZK = 10000)
   currency?: string;
   description: string;
   returnUrl: string;
@@ -86,7 +89,7 @@ export async function createGoPayPayment(
     const err = await res.text();
     throw new Error(`GoPay create error ${res.status}: ${err}`);
   }
-  const data = await res.json() as { id: number; gw_url: string };
+  const data = (await res.json()) as { id: number; gw_url: string };
 
   await db.insert(czPaymentTransactions).values({
     orgId: input.orgId,
@@ -116,12 +119,20 @@ export async function verifyGoPayPayment(
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   if (!res.ok) throw new Error(`GoPay status error ${res.status}`);
-  const data = await res.json() as { state: string };
+  const data = (await res.json()) as { state: string };
   const paid = data.state === 'PAID';
 
-  await db.update(czPaymentTransactions)
-    .set({ status: paid ? 'paid' : data.state.toLowerCase(), paidAt: paid ? new Date() : undefined, rawData: data as Record<string, unknown>, updatedAt: new Date() })
-    .where(and(eq(czPaymentTransactions.gatewayId, paymentId), eq(czPaymentTransactions.orgId, orgId)));
+  await db
+    .update(czPaymentTransactions)
+    .set({
+      status: paid ? 'paid' : data.state.toLowerCase(),
+      paidAt: paid ? new Date() : undefined,
+      rawData: data as Record<string, unknown>,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(eq(czPaymentTransactions.gatewayId, paymentId), eq(czPaymentTransactions.orgId, orgId)),
+    );
 
   return { status: data.state, paid };
 }

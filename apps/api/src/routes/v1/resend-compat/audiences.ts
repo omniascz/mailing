@@ -95,9 +95,7 @@ const audiencesRoutes: FastifyPluginAsync = async (app) => {
       schema: { tags: ['Resend-compatible'], summary: 'Create an audience' },
     },
     async (req, reply) => {
-      const body = z
-        .object({ name: z.string().min(1).max(255) })
-        .safeParse(req.body);
+      const body = z.object({ name: z.string().min(1).max(255) }).safeParse(req.body);
       if (!body.success) {
         return reply
           .code(422)
@@ -159,12 +157,7 @@ const audiencesRoutes: FastifyPluginAsync = async (app) => {
         })
         .from(contactLists)
         .innerJoin(contacts, eq(contactLists.contactId, contacts.id))
-        .where(
-          and(
-            eq(contactLists.listId, audienceId),
-            eq(contacts.orgId, req.user!.orgId),
-          ),
-        )
+        .where(and(eq(contactLists.listId, audienceId), eq(contacts.orgId, req.user!.orgId)))
         .limit(1000);
 
       return reply.send({
@@ -260,9 +253,7 @@ const audiencesRoutes: FastifyPluginAsync = async (app) => {
       const [membership] = await db
         .select({ contactId: contactLists.contactId })
         .from(contactLists)
-        .where(
-          and(eq(contactLists.listId, audienceId), eq(contactLists.contactId, contact.id)),
-        )
+        .where(and(eq(contactLists.listId, audienceId), eq(contactLists.contactId, contact.id)))
         .limit(1);
       if (!membership) return reply.code(404).send(notFound('Contact is not in this audience'));
 

@@ -12,7 +12,7 @@
 
 import { sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const LOOKBACK_DAYS = 180;
 const MIN_SENDS_FOR_SIGNAL = 100;
@@ -44,7 +44,7 @@ function extractFeatures(subject: string): SubjectFeatures {
     hasNumber: /\d/.test(subject),
     hasPersonalisation: /\{\{/.test(subject),
     hasUrgency: URGENCY_WORDS.test(subject),
-    hasBrackets: /[\[\(]/.test(subject),
+    hasBrackets: /[[(]/.test(subject),
     lengthBucket: len < 30 ? 'short' : len <= 60 ? 'medium' : 'long',
     wordCount: subject.trim().split(/\s+/).length,
     startsWithVerb: VERB_STARTS.test(subject.trim()),
@@ -96,7 +96,12 @@ export async function buildOrgSubjectModel(orgId: string): Promise<OrgSubjectMod
   const campaignRows = rows.rows ?? [];
   if (campaignRows.length < 3) {
     // Not enough history — return neutral model
-    return { baselineOpenRate: 0.22, featureSignals: [], sampleCampaigns: 0, windowDays: LOOKBACK_DAYS };
+    return {
+      baselineOpenRate: 0.22,
+      featureSignals: [],
+      sampleCampaigns: 0,
+      windowDays: LOOKBACK_DAYS,
+    };
   }
 
   const withRate = campaignRows.map((r) => ({
@@ -189,13 +194,9 @@ export async function scoreSubjectLines(
 
     const predictedOpenRate = Math.max(0, Math.min(1, model.baselineOpenRate + lift));
     const confidence =
-      model.sampleCampaigns >= 20 ? 'high'
-      : model.sampleCampaigns >= 5 ? 'medium'
-      : 'low';
+      model.sampleCampaigns >= 20 ? 'high' : model.sampleCampaigns >= 5 ? 'medium' : 'low';
 
-    const dataScore = Math.round(
-      Math.min(10, Math.max(1, 5 + (lift / 0.05) * 2)),
-    );
+    const dataScore = Math.round(Math.min(10, Math.max(1, 5 + (lift / 0.05) * 2)));
 
     return { subject, predictedOpenRate, confidence, lift, signals, dataScore };
   });

@@ -41,7 +41,11 @@ const contactPurposeParam = z.object({
 });
 
 const createPurposeBody = z.object({
-  slug: z.string().min(1).max(80).regex(/^[a-z0-9_-]+$/, 'Slug must be lowercase alphanumeric with _ or -'),
+  slug: z
+    .string()
+    .min(1)
+    .max(80)
+    .regex(/^[a-z0-9_-]+$/, 'Slug must be lowercase alphanumeric with _ or -'),
   name: z.string().min(1).max(255),
   description: z.string().max(2000).optional(),
   legalBasis: z.enum(GDPR_LEGAL_BASES).default('consent'),
@@ -163,24 +167,19 @@ export default async function gdprPurposesRoutes(app: FastifyInstance) {
   );
 
   // Quick consent check (used by workflow conditions)
-  app.get(
-    '/api/v1/contacts/:contactId/gdpr/check/:purposeId',
-    auth,
-    async (req, reply) => {
-      const { contactId, purposeId } = contactPurposeParam.parse(req.params);
-      const active = await hasActiveConsent(req.user!.orgId, contactId, purposeId);
-      return reply.send({ data: { active, contactId, purposeId } });
-    },
-  );
+  app.get('/api/v1/contacts/:contactId/gdpr/check/:purposeId', auth, async (req, reply) => {
+    const { contactId, purposeId } = contactPurposeParam.parse(req.params);
+    const active = await hasActiveConsent(req.user!.orgId, contactId, purposeId);
+    return reply.send({ data: { active, contactId, purposeId } });
+  });
 
   // ── Preference centre (#646) ───────────────────────────────────────────────
 
   // Generate a preference-centre link token for a contact (authenticated)
   app.post('/api/v1/contacts/:contactId/gdpr/preference-centre-token', auth, async (req, reply) => {
     const { contactId } = contactParam.parse(req.params);
-    const { generatePreferenceCentreToken } = await import(
-      '../../../services/gdpr/preference-centre.js'
-    );
+    const { generatePreferenceCentreToken } =
+      await import('../../../services/gdpr/preference-centre.js');
     const token = generatePreferenceCentreToken(req.user!.orgId, contactId);
     const baseUrl = process.env['APP_BASE_URL'] ?? 'https://app.forgemsg.com';
     const url = `${baseUrl}/preferences?token=${token}`;
@@ -191,11 +190,11 @@ export default async function gdprPurposesRoutes(app: FastifyInstance) {
   app.get('/public/preferences', async (req, reply) => {
     const { token } = req.query as { token?: string };
     if (!token) return reply.code(400).send({ code: 'MISSING_TOKEN', message: 'Token required' });
-    const { verifyPreferenceCentreToken, getPreferenceCentreState } = await import(
-      '../../../services/gdpr/preference-centre.js'
-    );
+    const { verifyPreferenceCentreToken, getPreferenceCentreState } =
+      await import('../../../services/gdpr/preference-centre.js');
     const payload = verifyPreferenceCentreToken(token);
-    if (!payload) return reply.code(410).send({ code: 'EXPIRED', message: 'Token expired or invalid' });
+    if (!payload)
+      return reply.code(410).send({ code: 'EXPIRED', message: 'Token expired or invalid' });
     const state = await getPreferenceCentreState(payload.orgId, payload.contactId);
     return reply.send({ data: state });
   });
@@ -203,17 +202,27 @@ export default async function gdprPurposesRoutes(app: FastifyInstance) {
   // Public — update a single consent via preference centre
   app.post('/public/preferences/update', async (req, reply) => {
     const { token, purposeId, grant } = req.body as {
-      token?: string; purposeId?: string; grant?: boolean
+      token?: string;
+      purposeId?: string;
+      grant?: boolean;
     };
     if (!token || !purposeId || grant === undefined) {
-      return reply.code(400).send({ code: 'INVALID_BODY', message: 'token, purposeId, grant required' });
+      return reply
+        .code(400)
+        .send({ code: 'INVALID_BODY', message: 'token, purposeId, grant required' });
     }
-    const { verifyPreferenceCentreToken, updatePreferenceCentreConsent } = await import(
-      '../../../services/gdpr/preference-centre.js'
-    );
+    const { verifyPreferenceCentreToken, updatePreferenceCentreConsent } =
+      await import('../../../services/gdpr/preference-centre.js');
     const payload = verifyPreferenceCentreToken(token);
-    if (!payload) return reply.code(410).send({ code: 'EXPIRED', message: 'Token expired or invalid' });
-    await updatePreferenceCentreConsent(payload.orgId, payload.contactId, purposeId, !!grant, req.ip);
+    if (!payload)
+      return reply.code(410).send({ code: 'EXPIRED', message: 'Token expired or invalid' });
+    await updatePreferenceCentreConsent(
+      payload.orgId,
+      payload.contactId,
+      purposeId,
+      !!grant,
+      req.ip,
+    );
     return reply.send({ data: { ok: true } });
   });
 
@@ -238,7 +247,9 @@ export default async function gdprPurposesRoutes(app: FastifyInstance) {
     const { confirmDoiConsent } = await import('../../../services/gdpr/per-purpose-doi.js');
     try {
       const result = await confirmDoiConsent(token, req.ip);
-      const redirectUrl = redirect ?? `${process.env['APP_BASE_URL'] ?? ''}/gdpr/confirmed?purpose=${result.purposeSlug}`;
+      const redirectUrl =
+        redirect ??
+        `${process.env['APP_BASE_URL'] ?? ''}/gdpr/confirmed?purpose=${result.purposeSlug}`;
       return reply.redirect(redirectUrl, 302);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error';

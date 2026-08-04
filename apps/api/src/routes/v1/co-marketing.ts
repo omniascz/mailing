@@ -11,11 +11,15 @@ export default async function coMarketingRoutes(app: FastifyInstance) {
 
   /** List co-marketing campaigns for this org (as initiator or partner). */
   app.get('/api/v1/co-marketing', async (req) => {
-    const rows = await db.select().from(coMarketingCampaigns)
-      .where(or(
-        eq(coMarketingCampaigns.initiatorOrgId, req.user!.orgId),
-        eq(coMarketingCampaigns.partnerOrgId, req.user!.orgId),
-      ))
+    const rows = await db
+      .select()
+      .from(coMarketingCampaigns)
+      .where(
+        or(
+          eq(coMarketingCampaigns.initiatorOrgId, req.user!.orgId),
+          eq(coMarketingCampaigns.partnerOrgId, req.user!.orgId),
+        ),
+      )
       .orderBy(desc(coMarketingCampaigns.createdAt));
     return { data: rows };
   });
@@ -39,20 +43,23 @@ export default async function coMarketingRoutes(app: FastifyInstance) {
     const inviteToken = randomUUID();
     const inviteExpiresAt = new Date(Date.now() + 7 * 86400_000);
 
-    const [row] = await db.insert(coMarketingCampaigns).values({
-      initiatorOrgId: req.user!.orgId,
-      partnerOrgId: body.partnerOrgId,
-      name: body.name,
-      description: body.description,
-      templateHtml: body.templateHtml,
-      initiatorListId: body.initiatorListId,
-      initiatorCostShare: String(body.initiatorCostShare),
-      partnerCostShare: String(100 - body.initiatorCostShare),
-      scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null,
-      inviteToken,
-      inviteExpiresAt,
-      status: 'invited',
-    }).returning();
+    const [row] = await db
+      .insert(coMarketingCampaigns)
+      .values({
+        initiatorOrgId: req.user!.orgId,
+        partnerOrgId: body.partnerOrgId,
+        name: body.name,
+        description: body.description,
+        templateHtml: body.templateHtml,
+        initiatorListId: body.initiatorListId,
+        initiatorCostShare: String(body.initiatorCostShare),
+        partnerCostShare: String(100 - body.initiatorCostShare),
+        scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null,
+        inviteToken,
+        inviteExpiresAt,
+        status: 'invited',
+      })
+      .returning();
 
     return reply.status(201).send({ data: row, inviteToken });
   });
@@ -60,21 +67,31 @@ export default async function coMarketingRoutes(app: FastifyInstance) {
   /** Partner accepts invitation. */
   app.post('/api/v1/co-marketing/accept/:token', async (req) => {
     const { token } = z.object({ token: z.string().uuid() }).parse(req.params);
-    const body = z.object({ partnerListId: z.string().uuid().optional() }).optional().parse(req.body);
+    const body = z
+      .object({ partnerListId: z.string().uuid().optional() })
+      .optional()
+      .parse(req.body);
 
-    const [campaign] = await db.select().from(coMarketingCampaigns)
-      .where(and(
-        eq(coMarketingCampaigns.inviteToken, token),
-        eq(coMarketingCampaigns.partnerOrgId, req.user!.orgId),
-      )).limit(1);
+    const [campaign] = await db
+      .select()
+      .from(coMarketingCampaigns)
+      .where(
+        and(
+          eq(coMarketingCampaigns.inviteToken, token),
+          eq(coMarketingCampaigns.partnerOrgId, req.user!.orgId),
+        ),
+      )
+      .limit(1);
 
     if (!campaign) throw AppError.notFound('Invitation not found or expired');
-    if (campaign.status !== 'invited') throw AppError.badRequest(`Campaign is already ${campaign.status}`);
+    if (campaign.status !== 'invited')
+      throw AppError.badRequest(`Campaign is already ${campaign.status}`);
     if (campaign.inviteExpiresAt && campaign.inviteExpiresAt < new Date()) {
       throw AppError.badRequest('Invitation has expired');
     }
 
-    const [updated] = await db.update(coMarketingCampaigns)
+    const [updated] = await db
+      .update(coMarketingCampaigns)
       .set({
         status: 'accepted',
         partnerListId: body?.partnerListId,
@@ -89,11 +106,19 @@ export default async function coMarketingRoutes(app: FastifyInstance) {
   /** Partner rejects invitation. */
   app.post('/api/v1/co-marketing/reject/:token', async (req) => {
     const { token } = z.object({ token: z.string().uuid() }).parse(req.params);
-    const [campaign] = await db.select().from(coMarketingCampaigns)
-      .where(and(eq(coMarketingCampaigns.inviteToken, token), eq(coMarketingCampaigns.partnerOrgId, req.user!.orgId)))
+    const [campaign] = await db
+      .select()
+      .from(coMarketingCampaigns)
+      .where(
+        and(
+          eq(coMarketingCampaigns.inviteToken, token),
+          eq(coMarketingCampaigns.partnerOrgId, req.user!.orgId),
+        ),
+      )
       .limit(1);
     if (!campaign) throw AppError.notFound('Invitation not found');
-    await db.update(coMarketingCampaigns)
+    await db
+      .update(coMarketingCampaigns)
       .set({ status: 'rejected', updatedAt: new Date() })
       .where(eq(coMarketingCampaigns.id, campaign.id));
     return { data: { status: 'rejected' } };
@@ -102,29 +127,37 @@ export default async function coMarketingRoutes(app: FastifyInstance) {
   /** Update metrics on a co-marketing campaign. */
   app.put('/api/v1/co-marketing/:id/metrics', async (req) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    const body = z.object({
-      totalSent: z.number().int().optional(),
-      initiatorSent: z.number().int().optional(),
-      partnerSent: z.number().int().optional(),
-      opens: z.number().int().optional(),
-      clicks: z.number().int().optional(),
-      conversions: z.number().int().optional(),
-    }).parse(req.body);
+    const body = z
+      .object({
+        totalSent: z.number().int().optional(),
+        initiatorSent: z.number().int().optional(),
+        partnerSent: z.number().int().optional(),
+        opens: z.number().int().optional(),
+        clicks: z.number().int().optional(),
+        conversions: z.number().int().optional(),
+      })
+      .parse(req.body);
 
-    const [existing] = await db.select().from(coMarketingCampaigns)
-      .where(and(
-        eq(coMarketingCampaigns.id, id),
-        or(
-          eq(coMarketingCampaigns.initiatorOrgId, req.user!.orgId),
-          eq(coMarketingCampaigns.partnerOrgId, req.user!.orgId),
+    const [existing] = await db
+      .select()
+      .from(coMarketingCampaigns)
+      .where(
+        and(
+          eq(coMarketingCampaigns.id, id),
+          or(
+            eq(coMarketingCampaigns.initiatorOrgId, req.user!.orgId),
+            eq(coMarketingCampaigns.partnerOrgId, req.user!.orgId),
+          ),
         ),
-      )).limit(1);
+      )
+      .limit(1);
     if (!existing) throw AppError.notFound('Campaign not found');
 
     const current = (existing.combinedMetrics ?? {}) as Record<string, number>;
     const merged = { ...current, ...body };
 
-    const [updated] = await db.update(coMarketingCampaigns)
+    const [updated] = await db
+      .update(coMarketingCampaigns)
       .set({ combinedMetrics: merged, updatedAt: new Date() })
       .where(eq(coMarketingCampaigns.id, id))
       .returning();
@@ -133,12 +166,15 @@ export default async function coMarketingRoutes(app: FastifyInstance) {
 
   app.delete('/api/v1/co-marketing/:id', async (req, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    await db.update(coMarketingCampaigns)
+    await db
+      .update(coMarketingCampaigns)
       .set({ status: 'cancelled', updatedAt: new Date() })
-      .where(and(
-        eq(coMarketingCampaigns.id, id),
-        eq(coMarketingCampaigns.initiatorOrgId, req.user!.orgId),
-      ));
+      .where(
+        and(
+          eq(coMarketingCampaigns.id, id),
+          eq(coMarketingCampaigns.initiatorOrgId, req.user!.orgId),
+        ),
+      );
     return reply.status(204).send();
   });
 }

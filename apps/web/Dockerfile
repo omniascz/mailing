@@ -25,10 +25,10 @@ COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/apps/editor/node_modules ./apps/editor/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY . .
-# Build order: shared (transpilePackages source) → editor → web.
-RUN pnpm --filter @forgemsg/shared build \
-    && pnpm --filter @forgemsg/editor build \
-    && pnpm --filter @forgemsg/web build
+# turbo derives the build order (shared → editor → web) from the dependency
+# graph. The hand-chained `pnpm --filter` version skipped turbo.json
+# `build.dependsOn: ["^build"]` and had to be kept in sync by hand.
+RUN pnpm turbo build --filter=@forgemsg/web
 
 FROM node:22-alpine AS runner
 RUN apk add --no-cache tini wget \

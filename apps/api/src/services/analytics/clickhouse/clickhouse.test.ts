@@ -4,7 +4,10 @@ import { mapRowToClickHouse, chDateTime } from './replicator.js';
 
 describe('ClickHouse client serialization', () => {
   it('round-trips JSONEachRow', () => {
-    const rows = [{ a: 1, b: 'x' }, { a: 2, b: 'y' }];
+    const rows = [
+      { a: 1, b: 'x' },
+      { a: 2, b: 'y' },
+    ];
     const body = toJSONEachRow(rows);
     expect(body.split('\n')).toHaveLength(2);
     expect(parseJSONEachRow(body)).toEqual(rows);

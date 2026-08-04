@@ -1,6 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { computeContactSendTime, getPrediction, nextOptimalSendTime } from '../../services/send-optimization/per-contact-sto.js';
+import {
+  computeContactSendTime,
+  getPrediction,
+  nextOptimalSendTime,
+} from '../../services/send-optimization/per-contact-sto.js';
 
 export default async function perContactStoRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
@@ -52,9 +56,11 @@ export default async function perContactStoRoutes(app: FastifyInstance) {
    * Recompute predictions for multiple contacts.
    */
   app.post('/api/v1/send-optimization/batch-compute', async (req) => {
-    const body = z.object({
-      contactIds: z.array(z.string().uuid()).max(200),
-    }).parse(req.body);
+    const body = z
+      .object({
+        contactIds: z.array(z.string().uuid()).max(200),
+      })
+      .parse(req.body);
 
     const results = await Promise.allSettled(
       body.contactIds.map((id) => computeContactSendTime(req.user!.orgId, id)),
@@ -69,10 +75,12 @@ export default async function perContactStoRoutes(app: FastifyInstance) {
    * List Czech public holidays for a given year (for UI display / blacklist preview).
    */
   app.get('/api/v1/smart-sending/cz-holidays', async (req) => {
-    const q = z.object({
-      year: z.coerce.number().int().min(2024).max(2035).default(new Date().getFullYear()),
-      country: z.enum(['cz', 'sk']).default('cz'),
-    }).parse(req.query);
+    const q = z
+      .object({
+        year: z.coerce.number().int().min(2024).max(2035).default(new Date().getFullYear()),
+        country: z.enum(['cz', 'sk']).default('cz'),
+      })
+      .parse(req.query);
 
     const { getCzHolidays } = await import('../../services/smart-sending/cz-holidays.js');
     const holidays = getCzHolidays(q.year, q.country);

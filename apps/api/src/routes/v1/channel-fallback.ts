@@ -48,21 +48,26 @@ export default async function channelFallbackRoutes(app: FastifyInstance) {
   /** DELETE /api/v1/channel-fallback/rules/:id */
   app.delete('/api/v1/channel-fallback/rules/:id', async (req, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    const [row] = await db.select({ id: channelFallbackRules.id }).from(channelFallbackRules)
+    const [row] = await db
+      .select({ id: channelFallbackRules.id })
+      .from(channelFallbackRules)
       .where(and(eq(channelFallbackRules.id, id), eq(channelFallbackRules.orgId, req.user!.orgId)))
       .limit(1);
     if (!row) throw AppError.notFound('Rule not found');
-    await db.delete(channelFallbackRules)
+    await db
+      .delete(channelFallbackRules)
       .where(and(eq(channelFallbackRules.id, id), eq(channelFallbackRules.orgId, req.user!.orgId)));
     return reply.status(204).send();
   });
 
   /** GET /api/v1/channel-fallback/log */
   app.get('/api/v1/channel-fallback/log', async (req) => {
-    const q = z.object({
-      contactId: z.string().uuid().optional(),
-      limit: z.coerce.number().int().min(1).max(100).default(50),
-    }).parse(req.query);
+    const q = z
+      .object({
+        contactId: z.string().uuid().optional(),
+        limit: z.coerce.number().int().min(1).max(100).default(50),
+      })
+      .parse(req.query);
     const log = await getFallbackLog(req.user!.orgId, q.contactId, q.limit);
     return { data: log };
   });

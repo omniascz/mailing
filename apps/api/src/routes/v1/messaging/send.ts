@@ -94,9 +94,8 @@ const messagingSendRoutes: FastifyPluginAsync = async (app) => {
           let text = p.text ?? '';
           let subject = p.subject;
           if (p.templateId) {
-            const { renderStoredTemplate } = await import(
-              '../../../services/transactional/render-template.js'
-            );
+            const { renderStoredTemplate } =
+              await import('../../../services/transactional/render-template.js');
             const r = await renderStoredTemplate(orgId, p.templateId, p.mergeVars ?? {});
             html = r.html;
             text = r.text;
@@ -150,9 +149,7 @@ const messagingSendRoutes: FastifyPluginAsync = async (app) => {
 
         case 'whatsapp': {
           const p = parsed.payload;
-          const { createWhatsAppAdapter } = await import(
-            '../../../channels/whatsapp/meta-adapter.js'
-          );
+          const { createWhatsAppAdapter } = await import('@forgemsg/shared/whatsapp/meta-adapter');
           const adapter = createWhatsAppAdapter();
           if (!adapter) {
             return reply

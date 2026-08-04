@@ -244,7 +244,9 @@ export default async function contactRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/contacts/:id/archive',
-    { schema: { tags: ['Contacts'], summary: 'Archive contact (exclude from marketing + billing)' } },
+    {
+      schema: { tags: ['Contacts'], summary: 'Archive contact (exclude from marketing + billing)' },
+    },
     async (req) => {
       const { id } = idParam.parse(req.params);
       const contact = await updateContact(req.user!.orgId, id, { status: 'archived' });

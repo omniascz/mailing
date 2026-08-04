@@ -15,7 +15,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { fieldPermissions, type FieldPermission } from '../../db/schema/field-permissions.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 
 const TTL = 60;

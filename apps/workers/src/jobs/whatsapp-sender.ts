@@ -28,12 +28,12 @@ async function processWhatsappSend(
   const data = job.data;
   if (!data.phone) return { messageId: '', status: 'skipped_no_phone' };
 
-  const { createWhatsAppAdapter } = await import(
-    '../../../api/src/channels/whatsapp/meta-adapter.js'
-  );
+  const { createWhatsAppAdapter } = await import('@forgemsg/shared/whatsapp/meta-adapter');
   const adapter = createWhatsAppAdapter();
   if (!adapter) {
-    job.log('WhatsApp not configured (WHATSAPP_PHONE_NUMBER_ID / WHATSAPP_ACCESS_TOKEN) — skipping');
+    job.log(
+      'WhatsApp not configured (WHATSAPP_PHONE_NUMBER_ID / WHATSAPP_ACCESS_TOKEN) — skipping',
+    );
     return { messageId: '', status: 'skipped_unconfigured' };
   }
 
@@ -64,11 +64,11 @@ async function processWhatsappSend(
 }
 
 export function startWhatsappSenderWorker() {
-  const worker = new Worker<WhatsappSendJobData>(
-    QUEUE_NAMES.WHATSAPP_SEND,
-    processWhatsappSend,
-    { connection, concurrency: 10, limiter: { max: 80, duration: 1000 } },
-  );
+  const worker = new Worker<WhatsappSendJobData>(QUEUE_NAMES.WHATSAPP_SEND, processWhatsappSend, {
+    connection,
+    concurrency: 10,
+    limiter: { max: 80, duration: 1000 },
+  });
 
   worker.on('failed', (job, err) => {
     console.error(`[whatsapp-sender] ${job?.id} failed: ${err.message}`);

@@ -17,7 +17,7 @@ import {
 } from '@shared/ai-provider';
 import { db } from '../db/client.js';
 import { aiUsage, organizations } from '../db/schema/index.js';
-import { redis } from './redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from './app-error.js';
 import { CONTACT_PLANS, getAiQuotaPerDay } from '../services/billing/plans.js';
 

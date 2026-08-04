@@ -9,4 +9,9 @@ export {
   type MergeFilter,
 } from './merge-tags.js';
 export { evaluateCondition } from './evaluate-condition.js';
-export { renderLiquid, renderLiquidSync, registerLiquidFilter, type LiquidContext } from './liquid.js';
+export {
+  renderLiquid,
+  renderLiquidSync,
+  registerLiquidFilter,
+  type LiquidContext,
+} from './liquid.js';

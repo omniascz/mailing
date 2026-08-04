@@ -17,7 +17,7 @@
  *   Days 30+   → unlimited (warm)
  */
 
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { db } from '../../db/client.js';
 import { warmupIps } from '../../db/schema/index.js';
 import { eq } from 'drizzle-orm';

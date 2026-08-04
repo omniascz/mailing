@@ -71,13 +71,16 @@ export async function updateMailSettings(
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);
-  const current = mergeMailSettings((org?.settings as { mailSettings?: unknown } | undefined)?.mailSettings);
-  const next = mergeMailSettings({ ...current, ...patch, footer: { ...current.footer, ...patch.footer } });
+  const current = mergeMailSettings(
+    (org?.settings as { mailSettings?: unknown } | undefined)?.mailSettings,
+  );
+  const next = mergeMailSettings({
+    ...current,
+    ...patch,
+    footer: { ...current.footer, ...patch.footer },
+  });
 
   const settings = { ...((org?.settings as Record<string, unknown>) ?? {}), mailSettings: next };
-  await db
-    .update(organizations)
-    .set({ settings })
-    .where(eq(organizations.id, orgId));
+  await db.update(organizations).set({ settings }).where(eq(organizations.id, orgId));
   return next;
 }

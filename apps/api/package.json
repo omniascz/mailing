@@ -3,10 +3,37 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "//exports": "Explicit list, deliberately not a ./dist/* wildcard: this is the entire surface apps/workers is allowed to reach into, and keeping it enumerated keeps that surface measurable.",
+  "exports": {
+    "./services/campaigns/email-coupon-merge": {
+      "types": "./dist/services/campaigns/email-coupon-merge.d.ts",
+      "import": "./dist/services/campaigns/email-coupon-merge.js"
+    },
+    "./services/dedicated-ips": {
+      "types": "./dist/services/dedicated-ips/index.d.ts",
+      "import": "./dist/services/dedicated-ips/index.js"
+    },
+    "./services/push/mobile": {
+      "types": "./dist/services/push/mobile.d.ts",
+      "import": "./dist/services/push/mobile.js"
+    },
+    "./services/push/get-adapter": {
+      "types": "./dist/services/push/get-adapter.d.ts",
+      "import": "./dist/services/push/get-adapter.js"
+    },
+    "./services/rcs": {
+      "types": "./dist/services/rcs/index.d.ts",
+      "import": "./dist/services/rcs/index.js"
+    },
+    "./services/rcs/providers": {
+      "types": "./dist/services/rcs/providers/index.d.ts",
+      "import": "./dist/services/rcs/providers/index.js"
+    }
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "tsx dist/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "test": "vitest run",
@@ -16,7 +43,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx scripts/seed.ts",
-    "seed:marketing-blog": "tsx scripts/seed-marketing-blog.ts"
+    "seed:marketing-blog": "tsx scripts/seed-marketing-blog.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

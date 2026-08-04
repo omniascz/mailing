@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  fetchConnectedContent,
-  isHostAllowed,
-  parseConnectedUrl,
-} from './connected-content.js';
+import { fetchConnectedContent, isHostAllowed, parseConnectedUrl } from './connected-content.js';
 
 describe('parseConnectedUrl', () => {
   it('accepts http + https', () => {

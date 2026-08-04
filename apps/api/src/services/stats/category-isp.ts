@@ -33,7 +33,10 @@ interface EventCountRow {
  * Pure: fold flat (dimension, eventType, count) rows into per-dimension funnel
  * rows. Rows with a null dimension are grouped under `nullLabel`.
  */
-export function rollupEventCounts(rows: EventCountRow[], nullLabel = 'uncategorized'): DimensionStats[] {
+export function rollupEventCounts(
+  rows: EventCountRow[],
+  nullLabel = 'uncategorized',
+): DimensionStats[] {
   const byDim = new Map<string, DimensionStats>();
   for (const r of rows) {
     const key = r.dimension ?? nullLabel;

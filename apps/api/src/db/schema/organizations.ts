@@ -1,6 +1,15 @@
 import { sql } from 'drizzle-orm';
 // sql used only for defaultNow() below
-import { pgTable, uuid, varchar, boolean, timestamp, jsonb, index, integer } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  timestamp,
+  jsonb,
+  index,
+  integer,
+} from 'drizzle-orm/pg-core';
 import { planEnum, dataRegionEnum, billingTypeEnum } from './enums.js';
 
 export const organizations = pgTable(

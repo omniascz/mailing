@@ -18,7 +18,7 @@ import {
   type WorkflowNode,
   type WorkflowRun,
 } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { shouldSuppressDueToConversion } from './conversion-suppression.js';
 import { normalizeConditionConfig } from './condition-rules.js';
 import { resolveEventRelativeUntil, type EventRelativeUntil } from './wait-resolve.js';
@@ -75,7 +75,9 @@ export function substituteMergeTags(
  * payload) pass through; nested `event`/`order` objects are flattened into
  * namespaced tags ({{event_title}}, {{order_amount}}, …) and arrays joined.
  */
-export function buildRunMergeData(run: { data?: Record<string, unknown> | null }): Record<string, unknown> {
+export function buildRunMergeData(run: {
+  data?: Record<string, unknown> | null;
+}): Record<string, unknown> {
   const data = (run.data ?? {}) as Record<string, unknown>;
   const ev = (data.event ?? {}) as Record<string, unknown>;
   const ord = (data.order ?? {}) as Record<string, unknown>;
@@ -95,7 +97,8 @@ export function buildRunMergeData(run: { data?: Record<string, unknown> | null }
   if (ord.amount != null) out.order_amount = ord.amount;
   if (ord.currency != null) out.order_currency = ord.currency;
   if (ord.orderId != null) out.order_id = ord.orderId;
-  if (Array.isArray(data.recommendations)) out.recommendations = (data.recommendations as unknown[]).join(', ');
+  if (Array.isArray(data.recommendations))
+    out.recommendations = (data.recommendations as unknown[]).join(', ');
 
   return out;
 }
@@ -141,7 +144,9 @@ async function executeSendEmail(
         workflowRunId: run.id,
         campaignId: config.campaignId,
         templateId: config.templateId,
-        subject: config.subject ? substituteMergeTags(config.subject, ctx.contact, extra) : undefined,
+        subject: config.subject
+          ? substituteMergeTags(config.subject, ctx.contact, extra)
+          : undefined,
         html: config.html ? substituteMergeTags(config.html, ctx.contact, extra) : undefined,
         text: config.text ? substituteMergeTags(config.text, ctx.contact, extra) : undefined,
       })
@@ -156,7 +161,10 @@ async function executeSendSms(
   run: WorkflowRun,
   ctx: ActionContext,
 ): Promise<ActionResult> {
-  const config = node.config as { message: string; priority?: 'transactional' | 'marketing' | 'promotional' };
+  const config = node.config as {
+    message: string;
+    priority?: 'transactional' | 'marketing' | 'promotional';
+  };
   if (!config.message) return { type: 'error', message: 'SMS message text is required' };
   if (!ctx.contact?.phone) return { type: 'next', nextNodeId: null }; // skip if no phone
   if (!run.contactId) return { type: 'next', nextNodeId: null };
@@ -576,7 +584,9 @@ async function executeSendWhatsapp(
   const config = node.config as { templateId?: string; body?: string };
   return executeQueuedChannel('whatsapp', 'workflow-whatsapp', run, ctx, {
     templateId: config.templateId,
-    body: config.body ? substituteMergeTags(config.body, ctx.contact, buildRunMergeData(run)) : undefined,
+    body: config.body
+      ? substituteMergeTags(config.body, ctx.contact, buildRunMergeData(run))
+      : undefined,
     phone: ctx.contact?.phone,
   });
 }
@@ -588,8 +598,12 @@ async function executeSendPush(
 ): Promise<ActionResult> {
   const config = node.config as { title?: string; body?: string; url?: string };
   return executeQueuedChannel('push', 'workflow-push', run, ctx, {
-    title: config.title ? substituteMergeTags(config.title, ctx.contact, buildRunMergeData(run)) : undefined,
-    body: config.body ? substituteMergeTags(config.body, ctx.contact, buildRunMergeData(run)) : undefined,
+    title: config.title
+      ? substituteMergeTags(config.title, ctx.contact, buildRunMergeData(run))
+      : undefined,
+    body: config.body
+      ? substituteMergeTags(config.body, ctx.contact, buildRunMergeData(run))
+      : undefined,
     url: config.url,
   });
 }
@@ -601,7 +615,9 @@ async function executeMakeVoiceCall(
 ): Promise<ActionResult> {
   const config = node.config as { script?: string; scenarioId?: string };
   return executeQueuedChannel('voice', 'workflow-voice', run, ctx, {
-    script: config.script ? substituteMergeTags(config.script, ctx.contact, buildRunMergeData(run)) : undefined,
+    script: config.script
+      ? substituteMergeTags(config.script, ctx.contact, buildRunMergeData(run))
+      : undefined,
     scenarioId: config.scenarioId,
     phone: ctx.contact?.phone,
   });
@@ -1406,10 +1422,11 @@ async function executeSendReviewRequest(
     return { type: 'error', message: 'Failed to issue review request' };
   }
 
-  const base = (process.env.APP_URL ?? process.env.API_PUBLIC_URL ?? 'http://localhost:3000').replace(
-    /\/$/,
-    '',
-  );
+  const base = (
+    process.env.APP_URL ??
+    process.env.API_PUBLIC_URL ??
+    'http://localhost:3000'
+  ).replace(/\/$/, '');
   const reviewUrl = `${base}/review/${token}`;
   const extra = { ...buildRunMergeData(run), review_url: reviewUrl };
 

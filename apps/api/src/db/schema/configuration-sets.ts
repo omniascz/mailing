@@ -5,7 +5,16 @@
  * tracking flag, and a per-set sending on/off switch. A send references a set
  * by name and inherits its options.
  */
-import { pgTable, uuid, varchar, boolean, jsonb, timestamp, index, unique } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  jsonb,
+  timestamp,
+  index,
+  unique,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 
 /** A single event destination bound to a configuration set. */
@@ -16,7 +25,15 @@ export interface EventDestination {
   enabled: boolean;
   /** Event types this destination receives. */
   matchingEventTypes: Array<
-    'send' | 'delivery' | 'bounce' | 'complaint' | 'reject' | 'open' | 'click' | 'rendering_failure' | 'delivery_delay'
+    | 'send'
+    | 'delivery'
+    | 'bounce'
+    | 'complaint'
+    | 'reject'
+    | 'open'
+    | 'click'
+    | 'rendering_failure'
+    | 'delivery_delay'
   >;
   /** For type='webhook': destination URL. */
   url?: string;

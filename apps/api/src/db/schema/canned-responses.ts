@@ -1,18 +1,12 @@
 import { sql } from 'drizzle-orm';
-import {
-  pgTable,
-  uuid,
-  varchar,
-  text,
-  boolean,
-  timestamp,
-  index,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, timestamp, index } from 'drizzle-orm/pg-core';
 
 export const cannedResponses = pgTable(
   'canned_responses',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     orgId: uuid('org_id').notNull(),
     /** Short name shown in picker UI */
     name: varchar('name', { length: 255 }).notNull(),

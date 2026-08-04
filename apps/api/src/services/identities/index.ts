@@ -103,10 +103,7 @@ export function sandboxViolations(
  * Enforce the sandbox gate for a send. No-op when the org is in production.
  * Throws 403 listing the unverified recipients when in sandbox.
  */
-export async function assertSandboxSendAllowed(
-  orgId: string,
-  recipients: string[],
-): Promise<void> {
+export async function assertSandboxSendAllowed(orgId: string, recipients: string[]): Promise<void> {
   const [org] = await db
     .select({ sendingMode: organizations.sendingMode })
     .from(organizations)
@@ -172,7 +169,11 @@ export async function requestProductionAccess(
     .set({
       settings: {
         ...settings,
-        productionAccessRequest: { ...details, requestedAt: new Date().toISOString(), status: 'pending' },
+        productionAccessRequest: {
+          ...details,
+          requestedAt: new Date().toISOString(),
+          status: 'pending',
+        },
       },
       updatedAt: new Date(),
     })
@@ -194,7 +195,11 @@ export async function grantProductionAccess(orgId: string): Promise<void> {
       sendingMode: 'production',
       settings: {
         ...settings,
-        productionAccessRequest: { ...req, status: 'approved', approvedAt: new Date().toISOString() },
+        productionAccessRequest: {
+          ...req,
+          status: 'approved',
+          approvedAt: new Date().toISOString(),
+        },
       },
       updatedAt: new Date(),
     })

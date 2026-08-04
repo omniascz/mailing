@@ -12,14 +12,18 @@ export default async function shoptetAdvancedRoutes(app: FastifyInstance) {
 
   /** GET /api/v1/integrations/shoptet/abandoned-carts */
   app.get('/api/v1/integrations/shoptet/abandoned-carts', async (req) => {
-    const q = z.object({ limit: z.coerce.number().int().min(1).max(100).default(50) }).parse(req.query);
+    const q = z
+      .object({ limit: z.coerce.number().int().min(1).max(100).default(50) })
+      .parse(req.query);
     const carts = await getAbandonedCarts(req.user!.orgId, q.limit);
     return { data: carts };
   });
 
   /** GET /api/v1/integrations/shoptet/recent-orders */
   app.get('/api/v1/integrations/shoptet/recent-orders', async (req) => {
-    const q = z.object({ sinceHours: z.coerce.number().int().min(1).max(168).default(24) }).parse(req.query);
+    const q = z
+      .object({ sinceHours: z.coerce.number().int().min(1).max(168).default(24) })
+      .parse(req.query);
     const orders = await getRecentOrders(req.user!.orgId, q.sinceHours);
     return { data: orders };
   });

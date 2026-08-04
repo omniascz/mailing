@@ -75,15 +75,13 @@ export async function putObjectS3(
   ].join('\n');
 
   const scope = `${dateStamp}/${cfg.region}/${service}/aws4_request`;
-  const stringToSign = [
-    'AWS4-HMAC-SHA256',
-    amzDate,
-    scope,
-    sha256hex(canonicalRequest),
-  ].join('\n');
+  const stringToSign = ['AWS4-HMAC-SHA256', amzDate, scope, sha256hex(canonicalRequest)].join('\n');
 
   const signingKey = getSignatureKey(cfg.secretAccessKey, dateStamp, cfg.region, service);
-  const signature = crypto.createHmac('sha256', signingKey).update(stringToSign, 'utf8').digest('hex');
+  const signature = crypto
+    .createHmac('sha256', signingKey)
+    .update(stringToSign, 'utf8')
+    .digest('hex');
 
   const authorization =
     `AWS4-HMAC-SHA256 Credential=${cfg.accessKeyId}/${scope}, ` +

@@ -11,12 +11,7 @@
 
 export type MessagePriority = 'transactional' | 'marketing' | 'promotional';
 
-export type EngagementBand =
-  | 'highly_engaged'
-  | 'engaged'
-  | 'at_risk'
-  | 'dormant'
-  | 'cold';
+export type EngagementBand = 'highly_engaged' | 'engaged' | 'at_risk' | 'dormant' | 'cold';
 
 /**
  * Priority ranks — *lower* number = more critical. transactional is most

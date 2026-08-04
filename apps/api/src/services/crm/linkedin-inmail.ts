@@ -55,9 +55,7 @@ async function resolveLinkedInToken(orgId: string): Promise<string | null> {
  * Sends a LinkedIn InMail message.
  * If no LinkedIn token is configured, returns manualFallback: true.
  */
-export async function sendLinkedInInMail(
-  opts: LinkedInInMailOptions,
-): Promise<LinkedInSendResult> {
+export async function sendLinkedInInMail(opts: LinkedInInMailOptions): Promise<LinkedInSendResult> {
   const token = await resolveLinkedInToken(opts.orgId);
 
   if (!token) {
@@ -115,7 +113,5 @@ export function extractLinkedInUrn(linkedInProfileUrl: string | null | undefined
   if (!linkedInProfileUrl) return null;
   // linkedin.com/in/username → we cannot derive URN without API lookup
   // Return the URL as a fallback identifier; the actual URN requires enrichment
-  return linkedInProfileUrl.includes('urn:li:person:')
-    ? linkedInProfileUrl
-    : null;
+  return linkedInProfileUrl.includes('urn:li:person:') ? linkedInProfileUrl : null;
 }

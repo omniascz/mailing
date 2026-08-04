@@ -81,11 +81,7 @@ export function requiredScopeFor(method: string, path: string): string | null {
  * Decide whether a key's scope set satisfies the request. Mirrors requireScope
  * semantics: undefined (JWT), empty (legacy), or '*' → allowed.
  */
-export function scopeAllows(
-  scopes: string[] | undefined,
-  method: string,
-  path: string,
-): boolean {
+export function scopeAllows(scopes: string[] | undefined, method: string, path: string): boolean {
   if (scopes === undefined || scopes.length === 0 || scopes.includes('*')) return true;
   const required = requiredScopeFor(method, path);
   if (!required) return true; // route not gated

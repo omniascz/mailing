@@ -38,9 +38,7 @@ export default async function publicReputationRoutes(app: FastifyInstance) {
         });
       }
       // Cacheable at the edge for 1 h — reputation moves slowly.
-      return reply
-        .header('Cache-Control', 'public, max-age=3600')
-        .send({ data: badge });
+      return reply.header('Cache-Control', 'public, max-age=3600').send({ data: badge });
     },
   );
 

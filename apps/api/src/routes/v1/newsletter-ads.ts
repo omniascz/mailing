@@ -10,7 +10,9 @@ export default async function newsletterAdRoutes(app: FastifyInstance) {
   // ── Ad slots ─────────────────────────────────────────────────────────────────
 
   app.get('/api/v1/newsletter-ads/slots', async (req) => {
-    const rows = await db.select().from(newsletterAdSlots)
+    const rows = await db
+      .select()
+      .from(newsletterAdSlots)
       .where(eq(newsletterAdSlots.orgId, req.user!.orgId))
       .orderBy(desc(newsletterAdSlots.createdAt));
     return { data: rows };
@@ -18,14 +20,17 @@ export default async function newsletterAdRoutes(app: FastifyInstance) {
 
   const slotSchema = z.object({
     name: z.string().min(1).max(100),
-    placementType: z.enum(['banner', 'sponsored_section', 'native_content', 'classified']).default('banner'),
+    placementType: z
+      .enum(['banner', 'sponsored_section', 'native_content', 'classified'])
+      .default('banner'),
     priceEur: z.number().positive(),
     estimatedReach: z.number().int().min(0).default(0),
   });
 
   app.post('/api/v1/newsletter-ads/slots', async (req, reply) => {
     const body = slotSchema.parse(req.body);
-    const [row] = await db.insert(newsletterAdSlots)
+    const [row] = await db
+      .insert(newsletterAdSlots)
       .values({ orgId: req.user!.orgId, ...body, priceEur: String(body.priceEur) })
       .returning();
     return reply.status(201).send({ data: row });
@@ -39,7 +44,8 @@ export default async function newsletterAdRoutes(app: FastifyInstance) {
     if (body.placementType !== undefined) patch['placementType'] = body.placementType;
     if (body.priceEur !== undefined) patch['priceEur'] = String(body.priceEur);
     if (body.estimatedReach !== undefined) patch['estimatedReach'] = body.estimatedReach;
-    const [row] = await db.update(newsletterAdSlots)
+    const [row] = await db
+      .update(newsletterAdSlots)
       .set(patch as never)
       .where(and(eq(newsletterAdSlots.id, id), eq(newsletterAdSlots.orgId, req.user!.orgId)))
       .returning();
@@ -48,7 +54,8 @@ export default async function newsletterAdRoutes(app: FastifyInstance) {
 
   app.delete('/api/v1/newsletter-ads/slots/:id', async (req, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    await db.delete(newsletterAdSlots)
+    await db
+      .delete(newsletterAdSlots)
       .where(and(eq(newsletterAdSlots.id, id), eq(newsletterAdSlots.orgId, req.user!.orgId)));
     return reply.status(204).send();
   });
@@ -56,11 +63,17 @@ export default async function newsletterAdRoutes(app: FastifyInstance) {
   // ── Ads ────────────────────────────────────────────────────────────────────
 
   app.get('/api/v1/newsletter-ads', async (req) => {
-    const q = z.object({ status: z.string().optional(), slotId: z.string().uuid().optional() }).parse(req.query);
+    const q = z
+      .object({ status: z.string().optional(), slotId: z.string().uuid().optional() })
+      .parse(req.query);
     const conds = [eq(newsletterAds.orgId, req.user!.orgId)];
     if (q.status) conds.push(eq(newsletterAds.status, q.status as 'pending'));
     if (q.slotId) conds.push(eq(newsletterAds.slotId, q.slotId));
-    const rows = await db.select().from(newsletterAds).where(and(...conds)).orderBy(desc(newsletterAds.createdAt));
+    const rows = await db
+      .select()
+      .from(newsletterAds)
+      .where(and(...conds))
+      .orderBy(desc(newsletterAds.createdAt));
     return { data: rows };
   });
 
@@ -80,26 +93,36 @@ export default async function newsletterAdRoutes(app: FastifyInstance) {
 
   app.post('/api/v1/newsletter-ads', async (req, reply) => {
     const body = adSchema.parse(req.body);
-    const [row] = await db.insert(newsletterAds).values({
-      orgId: req.user!.orgId,
-      slotId: body.slotId,
-      advertiserName: body.advertiserName,
-      advertiserEmail: body.advertiserEmail,
-      headline: body.headline,
-      bodyText: body.bodyText,
-      imageUrl: body.imageUrl,
-      ctaText: body.ctaText,
-      ctaUrl: body.ctaUrl,
-      paidEur: body.paidEur ? String(body.paidEur) : null,
-      targeting: body.targeting ?? {},
-      scheduledFor: body.scheduledFor ? new Date(body.scheduledFor) : null,
-    }).returning();
+    const [row] = await db
+      .insert(newsletterAds)
+      .values({
+        orgId: req.user!.orgId,
+        slotId: body.slotId,
+        advertiserName: body.advertiserName,
+        advertiserEmail: body.advertiserEmail,
+        headline: body.headline,
+        bodyText: body.bodyText,
+        imageUrl: body.imageUrl,
+        ctaText: body.ctaText,
+        ctaUrl: body.ctaUrl,
+        paidEur: body.paidEur ? String(body.paidEur) : null,
+        targeting: body.targeting ?? {},
+        scheduledFor: body.scheduledFor ? new Date(body.scheduledFor) : null,
+      })
+      .returning();
     return reply.status(201).send({ data: row });
   });
 
   app.put('/api/v1/newsletter-ads/:id', async (req) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    const body = adSchema.partial().extend({ status: z.enum(['pending','approved','active','paused','completed','rejected']).optional() }).parse(req.body);
+    const body = adSchema
+      .partial()
+      .extend({
+        status: z
+          .enum(['pending', 'approved', 'active', 'paused', 'completed', 'rejected'])
+          .optional(),
+      })
+      .parse(req.body);
     const patch: Record<string, unknown> = { updatedAt: new Date() };
     if (body.advertiserName !== undefined) patch['advertiserName'] = body.advertiserName;
     if (body.headline !== undefined) patch['headline'] = body.headline;
@@ -111,7 +134,8 @@ export default async function newsletterAdRoutes(app: FastifyInstance) {
     if (body.targeting !== undefined) patch['targeting'] = body.targeting;
     if (body.scheduledFor !== undefined) patch['scheduledFor'] = new Date(body.scheduledFor);
     if (body.status !== undefined) patch['status'] = body.status;
-    const [row] = await db.update(newsletterAds)
+    const [row] = await db
+      .update(newsletterAds)
       .set(patch as never)
       .where(and(eq(newsletterAds.id, id), eq(newsletterAds.orgId, req.user!.orgId)))
       .returning();

@@ -55,10 +55,7 @@ export interface SubmitReviewInput {
   source?: string;
 }
 
-export async function submitReview(
-  orgId: string,
-  input: SubmitReviewInput,
-): Promise<Review> {
+export async function submitReview(orgId: string, input: SubmitReviewInput): Promise<Review> {
   if (input.rating < 1 || input.rating > 5 || !Number.isFinite(input.rating)) {
     throw AppError.badRequest('Rating must be 1..5');
   }
@@ -242,10 +239,7 @@ export async function getReviewRequest(token: string): Promise<ReviewRequest | n
   return row;
 }
 
-export async function markRequestResponded(
-  token: string,
-  reviewId: string,
-): Promise<void> {
+export async function markRequestResponded(token: string, reviewId: string): Promise<void> {
   await db
     .update(reviewRequests)
     .set({ reviewId, respondedAt: new Date() })

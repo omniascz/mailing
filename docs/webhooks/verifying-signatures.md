@@ -5,13 +5,13 @@ payload came from us and hasn't been tampered with or replayed.
 
 ## Headers we send
 
-| Header | Format | Required |
-| --- | --- | --- |
-| `X-ForgeMsg-Signature` | `sha256=<hex>` | Yes — legacy; HMAC over the raw body. |
+| Header                    | Format               | Required                                                                                        |
+| ------------------------- | -------------------- | ----------------------------------------------------------------------------------------------- |
+| `X-ForgeMsg-Signature`    | `sha256=<hex>`       | Yes — legacy; HMAC over the raw body.                                                           |
 | `X-ForgeMsg-Signature-V2` | `t=<epoch>,v1=<hex>` | Yes — Stripe-style. HMAC over `<timestamp>.<body>`, so replays past your tolerance window fail. |
-| `X-ForgeMsg-Timestamp` | Unix seconds | Yes — exposed plain so you can age-check without parsing v2. |
-| `X-ForgeMsg-Event` | string | Yes — e.g. `email.delivered`. |
-| `X-ForgeMsg-Delivery` | UUID | Yes — idempotency key for retries. |
+| `X-ForgeMsg-Timestamp`    | Unix seconds         | Yes — exposed plain so you can age-check without parsing v2.                                    |
+| `X-ForgeMsg-Event`        | string               | Yes — e.g. `email.delivered`.                                                                   |
+| `X-ForgeMsg-Delivery`     | UUID                 | Yes — idempotency key for retries.                                                              |
 
 **Prefer V2.** It binds the timestamp into the HMAC so an attacker who
 captures a valid signature can't replay it 30 days later. The legacy
@@ -26,8 +26,8 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 function verifyMailforge(
   secret: string,
-  body: string,         // raw request body, exactly as received
-  signatureV2: string,  // X-ForgeMsg-Signature-V2 header
+  body: string, // raw request body, exactly as received
+  signatureV2: string, // X-ForgeMsg-Signature-V2 header
   toleranceSec = 300,
 ): boolean {
   const tMatch = signatureV2.match(/t=(\d+)/);
@@ -38,9 +38,7 @@ function verifyMailforge(
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - timestamp) > toleranceSec) return false;
 
-  const expected = createHmac('sha256', secret)
-    .update(`${timestamp}.${body}`)
-    .digest('hex');
+  const expected = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
 
   // timingSafeEqual requires equal-length buffers
   if (expected.length !== vMatch[1]!.length) return false;

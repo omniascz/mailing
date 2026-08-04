@@ -1,10 +1,11 @@
+CREATE EXTENSION IF NOT EXISTS vector;--> statement-breakpoint
 CREATE TYPE "public"."auth_provider" AS ENUM('email', 'google', 'sso');--> statement-breakpoint
 CREATE TYPE "public"."billing_type" AS ENUM('contact_based', 'send_based', 'payg');--> statement-breakpoint
 CREATE TYPE "public"."bounce_type" AS ENUM('none', 'hard', 'soft', 'block');--> statement-breakpoint
 CREATE TYPE "public"."call_status" AS ENUM('initiated', 'ringing', 'in_progress', 'completed', 'no_answer', 'busy', 'voicemail', 'failed');--> statement-breakpoint
 CREATE TYPE "public"."campaign_status" AS ENUM('draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."campaign_type" AS ENUM('email', 'sms', 'whatsapp', 'push', 'voice', 'viber');--> statement-breakpoint
-CREATE TYPE "public"."contact_status" AS ENUM('active', 'unsubscribed', 'bounced', 'complained', 'pending');--> statement-breakpoint
+CREATE TYPE "public"."contact_status" AS ENUM('active', 'unsubscribed', 'bounced', 'complained', 'pending', 'non_subscribed', 'archived');--> statement-breakpoint
 CREATE TYPE "public"."custom_field_type" AS ENUM('text', 'number', 'date', 'select', 'boolean');--> statement-breakpoint
 CREATE TYPE "public"."data_region" AS ENUM('us', 'eu', 'ap');--> statement-breakpoint
 CREATE TYPE "public"."email_event_type" AS ENUM('send', 'deliver', 'open', 'click', 'bounce', 'unsubscribe', 'complaint');--> statement-breakpoint
@@ -13,9 +14,10 @@ CREATE TYPE "public"."message_stream" AS ENUM('broadcast', 'transactional', 'tri
 CREATE TYPE "public"."phone_status" AS ENUM('active', 'inactive', 'unknown', 'invalid');--> statement-breakpoint
 CREATE TYPE "public"."phone_type" AS ENUM('mobile', 'landline', 'voip', 'unknown');--> statement-breakpoint
 CREATE TYPE "public"."plan" AS ENUM('free', 'starter', 'pro', 'business', 'enterprise');--> statement-breakpoint
-CREATE TYPE "public"."suppression_reason" AS ENUM('hard_bounce', 'complaint', 'manual', 'unsubscribe');--> statement-breakpoint
+CREATE TYPE "public"."suppression_reason" AS ENUM('hard_bounce', 'complaint', 'manual', 'unsubscribe', 'block', 'invalid_email');--> statement-breakpoint
 CREATE TYPE "public"."template_category" AS ENUM('newsletter', 'promo', 'transactional', 'event', 'onboarding', 'seasonal', 'ecommerce', 'custom');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('owner', 'admin', 'editor', 'viewer', 'system_admin');--> statement-breakpoint
+CREATE TYPE "public"."seed_placement" AS ENUM('inbox', 'spam', 'promotions', 'updates', 'social', 'missing');--> statement-breakpoint
 CREATE TYPE "public"."import_job_format" AS ENUM('csv', 'xlsx');--> statement-breakpoint
 CREATE TYPE "public"."import_job_status" AS ENUM('uploaded', 'mapped', 'processing', 'completed', 'failed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."frequency_channel" AS ENUM('email', 'sms', 'push', 'whatsapp', 'voice', 'all');--> statement-breakpoint
@@ -24,7 +26,7 @@ CREATE TYPE "public"."alert_type" AS ENUM('bounce_rate_spike', 'complaint_rate_s
 CREATE TYPE "public"."ai_feature" AS ENUM('segment_from_description', 'generate_email', 'subject_lines', 'brand_voice', 'campaign_summary', 'translate', 'html_to_blocks', 'product_scraper', 'accessibility_check', 'other');--> statement-breakpoint
 CREATE TYPE "public"."workflow_run_status" AS ENUM('pending', 'running', 'waiting', 'completed', 'failed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."workflow_status" AS ENUM('draft', 'active', 'inactive', 'archived');--> statement-breakpoint
-CREATE TYPE "public"."workflow_trigger_type" AS ENUM('list_subscribe', 'tag_added', 'date_field', 'api_event', 'form_submit', 'purchase_event', 'manual', 'loyalty_points_earned', 'loyalty_tier_up', 'loyalty_reward_redeemed', 'name_day_today', 'lifecycle_stage_changed', 'n_days_before_holiday');--> statement-breakpoint
+CREATE TYPE "public"."workflow_trigger_type" AS ENUM('list_subscribe', 'tag_added', 'date_field', 'api_event', 'form_submit', 'purchase_event', 'manual', 'loyalty_points_earned', 'loyalty_tier_up', 'loyalty_reward_redeemed', 'name_day_today', 'lifecycle_stage_changed', 'n_days_before_holiday', 'segment_entered', 'segment_exited');--> statement-breakpoint
 CREATE TYPE "public"."webhook_delivery_status" AS ENUM('pending', 'success', 'failed', 'retrying');--> statement-breakpoint
 CREATE TYPE "public"."embed_type" AS ENUM('inline', 'popup', 'slide', 'floating');--> statement-breakpoint
 CREATE TYPE "public"."migration_job_status" AS ENUM('pending', 'running', 'completed', 'failed', 'cancelled', 'rolled_back');--> statement-breakpoint
@@ -103,6 +105,8 @@ CREATE TABLE "organizations" (
 	"stripe_subscription_id" varchar(255),
 	"parent_org_id" uuid,
 	"settings" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	"company_name" varchar(255),
+	"postal_address" varchar(500),
 	"onboarding_completed_at" timestamp with time zone,
 	"data_region" "data_region" DEFAULT 'us' NOT NULL,
 	"ip_restrictions_enabled" boolean DEFAULT false NOT NULL,
@@ -110,6 +114,7 @@ CREATE TABLE "organizations" (
 	"tracking_eu_strict" boolean DEFAULT false NOT NULL,
 	"sandbox_of_org_id" uuid,
 	"sandbox_mode" varchar(16) DEFAULT 'none' NOT NULL,
+	"sending_mode" varchar(16) DEFAULT 'production' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone,
@@ -157,6 +162,7 @@ CREATE TABLE "contacts" (
 	"first_name" varchar(100),
 	"last_name" varchar(100),
 	"status" "contact_status" DEFAULT 'active' NOT NULL,
+	"is_vip" boolean DEFAULT false NOT NULL,
 	"lifecycle_stage" "lifecycle_stage" DEFAULT 'subscriber' NOT NULL,
 	"lifecycle_stage_entered_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"custom_fields" jsonb DEFAULT '{}'::jsonb NOT NULL,
@@ -259,6 +265,52 @@ CREATE TABLE "templates" (
 	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
+CREATE TABLE "template_versions" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"template_id" uuid NOT NULL,
+	"version" integer NOT NULL,
+	"name" varchar(255),
+	"subject" varchar(255),
+	"preheader" varchar(255),
+	"blocks" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"global_styles" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	"created_by" uuid,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "seed_addresses" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"provider" varchar(40) NOT NULL,
+	"email" varchar(255) NOT NULL,
+	"active" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "seed_results" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"test_id" uuid NOT NULL,
+	"provider" varchar(40) NOT NULL,
+	"email" varchar(255) NOT NULL,
+	"message_id" varchar(255),
+	"placement" "seed_placement",
+	"arrived" boolean,
+	"reported_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "seed_tests" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"campaign_id" uuid,
+	"subject" varchar(255),
+	"status" varchar(20) DEFAULT 'sent' NOT NULL,
+	"sent_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "campaigns" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
@@ -278,6 +330,8 @@ CREATE TABLE "campaigns" (
 	"estimated_recipients" integer DEFAULT 0,
 	"utm_tracking" jsonb,
 	"ab_config" jsonb,
+	"configuration_set" varchar(128),
+	"category" varchar(128),
 	"parent_campaign_id" uuid,
 	"auto_resend_config" jsonb,
 	"scheduled_at" timestamp with time zone,
@@ -310,6 +364,8 @@ CREATE TABLE "email_events" (
 	"ip_address" varchar(45),
 	"device_type" varchar(50),
 	"email_client" varchar(100),
+	"geo_country" varchar(2),
+	"geo_city" varchar(120),
 	"metadata" jsonb,
 	"ab_variant_id" varchar(100),
 	"is_bot" boolean DEFAULT false NOT NULL,
@@ -317,6 +373,8 @@ CREATE TABLE "email_events" (
 	"bot_reason" varchar(255),
 	"mpp_detected" boolean DEFAULT false NOT NULL,
 	"mpp_real_open_prob" real,
+	"category" varchar(128),
+	"isp" varchar(32),
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -356,12 +414,21 @@ CREATE TABLE "import_jobs" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "segment_members" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"segment_id" uuid NOT NULL,
+	"contact_id" uuid NOT NULL,
+	"added_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "segments" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"description" varchar(1000),
 	"conditions" jsonb NOT NULL,
+	"last_membership_sync_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone
@@ -441,8 +508,12 @@ CREATE TABLE "sending_domains" (
 	"dkim_selector" varchar(63) DEFAULT 'fm1' NOT NULL,
 	"dkim_private_key" text,
 	"dkim_public_key" text,
+	"dkim_key_type" varchar(16) DEFAULT 'rsa' NOT NULL,
 	"dkim_verified" boolean DEFAULT false NOT NULL,
 	"dkim_verified_at" timestamp with time zone,
+	"dkim_byo" boolean DEFAULT false NOT NULL,
+	"open_tracking" boolean DEFAULT true NOT NULL,
+	"click_tracking" boolean DEFAULT true NOT NULL,
 	"spf_verified" boolean DEFAULT false NOT NULL,
 	"spf_verified_at" timestamp with time zone,
 	"dmarc_verified" boolean DEFAULT false NOT NULL,
@@ -453,6 +524,7 @@ CREATE TABLE "sending_domains" (
 	"warmup_status" varchar(20) DEFAULT 'cold' NOT NULL,
 	"warmup_started_at" timestamp with time zone,
 	"warmup_completed_at" timestamp with time zone,
+	"public_badge_enabled" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -533,6 +605,7 @@ CREATE TABLE "workflow_runs" (
 	"split_branch" varchar(100),
 	"converted" boolean DEFAULT false NOT NULL,
 	"converted_at" timestamp with time zone,
+	"conversion_value" numeric(12, 2),
 	"started_at" timestamp with time zone,
 	"completed_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -589,6 +662,7 @@ CREATE TABLE "api_keys" (
 	"scopes" text[] DEFAULT '{}'::text[] NOT NULL,
 	"active" boolean DEFAULT true NOT NULL,
 	"mode" varchar(8) DEFAULT 'live' NOT NULL,
+	"is_public" boolean DEFAULT false NOT NULL,
 	"last_used_at" timestamp with time zone,
 	"expires_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -626,6 +700,75 @@ CREATE TABLE "webhooks" (
 	"last_delivered_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "smtp_credentials" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"username" varchar(64) NOT NULL,
+	"password_hash" varchar(255) NOT NULL,
+	"label" varchar(100),
+	"active" boolean DEFAULT true NOT NULL,
+	"last_used_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "smtp_credentials_username_unique" UNIQUE("username")
+);
+--> statement-breakpoint
+CREATE TABLE "configuration_sets" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"name" varchar(128) NOT NULL,
+	"sending_enabled" boolean DEFAULT true NOT NULL,
+	"options" jsonb NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "configuration_sets_org_name_uq" UNIQUE("org_id","name")
+);
+--> statement-breakpoint
+CREATE TABLE "email_identities" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"email" varchar(320) NOT NULL,
+	"status" varchar(16) DEFAULT 'pending' NOT NULL,
+	"token" varchar(64) NOT NULL,
+	"verified_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "email_identities_org_email_uq" UNIQUE("org_id","email")
+);
+--> statement-breakpoint
+CREATE TABLE "inbound_rules" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"name" varchar(128) NOT NULL,
+	"priority" integer DEFAULT 100 NOT NULL,
+	"active" boolean DEFAULT true NOT NULL,
+	"match" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	"actions" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "contact_topic_subscriptions" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"contact_id" uuid NOT NULL,
+	"topic_id" uuid NOT NULL,
+	"status" varchar(16) NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "contact_topic_subs_uq" UNIQUE("contact_id","topic_id")
+);
+--> statement-breakpoint
+CREATE TABLE "subscription_topics" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"name" varchar(128) NOT NULL,
+	"display_name" varchar(255) NOT NULL,
+	"description" varchar(500),
+	"default_status" varchar(16) DEFAULT 'opt_in' NOT NULL,
+	"active" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "subscription_topics_org_name_uq" UNIQUE("org_id","name")
 );
 --> statement-breakpoint
 CREATE TABLE "migration_jobs" (
@@ -795,6 +938,22 @@ CREATE TABLE "whatsapp_templates" (
 	"usage_count" integer DEFAULT 0 NOT NULL,
 	"submitted_at" timestamp with time zone,
 	"approved_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "mobile_devices" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"contact_id" uuid,
+	"platform" varchar(16) NOT NULL,
+	"token" text NOT NULL,
+	"app_id" varchar(255),
+	"device_model" varchar(128),
+	"os_version" varchar(64),
+	"active" boolean DEFAULT true NOT NULL,
+	"invalidated_at" timestamp with time zone,
+	"last_seen_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -1228,6 +1387,8 @@ CREATE TABLE "contact_engagement" (
 	"rfm_segment" varchar(32),
 	"predicted_next_order_at" timestamp with time zone,
 	"avg_order_interval_days" integer,
+	"predicted_order_count" numeric(10, 2),
+	"avg_order_value" numeric(12, 2),
 	"email_score" integer,
 	"sms_score" integer,
 	"whatsapp_score" integer,
@@ -1332,6 +1493,10 @@ CREATE TABLE "coupon_batches" (
 	"expires_at" timestamp with time zone,
 	"total_codes" integer DEFAULT 0 NOT NULL,
 	"redeemed_count" integer DEFAULT 0 NOT NULL,
+	"store_platform" varchar(24),
+	"store_connection_id" uuid,
+	"store_discount_id" varchar(128),
+	"store_synced_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -1410,6 +1575,15 @@ CREATE TABLE "scheduled_reports" (
 	"last_run_at" timestamp with time zone,
 	"enabled" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "custom_reports" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"definition" jsonb NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "holdout_group_members" (
@@ -1630,6 +1804,7 @@ CREATE TABLE "dedicated_ips" (
 	"ip_address" varchar(45) NOT NULL,
 	"ptr_record" varchar(253),
 	"org_id" uuid,
+	"subaccount_id" uuid,
 	"pool_id" uuid,
 	"status" "dedicated_ip_status" DEFAULT 'pending' NOT NULL,
 	"warmup_day" integer DEFAULT 0 NOT NULL,
@@ -4304,6 +4479,44 @@ CREATE TABLE "unsubscribe_variants" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "event_attendance" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"contact_id" uuid NOT NULL,
+	"external_event_id" uuid NOT NULL,
+	"status" varchar(24) NOT NULL,
+	"order_id" varchar(128),
+	"amount" integer,
+	"currency" varchar(3) DEFAULT 'CZK',
+	"seats" integer DEFAULT 1,
+	"occurred_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"attended_at" timestamp with time zone,
+	"metadata" jsonb,
+	CONSTRAINT "event_attendance_uq" UNIQUE("org_id","contact_id","external_event_id","status")
+);
+--> statement-breakpoint
+CREATE TABLE "external_events" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"external_id" varchar(128) NOT NULL,
+	"title" varchar(500) NOT NULL,
+	"category" varchar(80),
+	"subcategory" varchar(80),
+	"venue_name" varchar(255),
+	"venue_city" varchar(120),
+	"currency" varchar(3) DEFAULT 'CZK',
+	"url" varchar(1000),
+	"starts_at" timestamp with time zone,
+	"status" varchar(32) DEFAULT 'on_sale' NOT NULL,
+	"unsold_seats" integer,
+	"unsold_by_tier" jsonb,
+	"tags" jsonb DEFAULT '[]'::jsonb,
+	"metadata" jsonb,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "external_events_org_ext_uq" UNIQUE("org_id","external_id")
+);
+--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "contacts" ADD CONSTRAINT "contacts_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -4316,6 +4529,13 @@ ALTER TABLE "contact_tags" ADD CONSTRAINT "contact_tags_contact_id_contacts_id_f
 ALTER TABLE "contact_tags" ADD CONSTRAINT "contact_tags_tag_id_tags_id_fk" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tags" ADD CONSTRAINT "tags_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "templates" ADD CONSTRAINT "templates_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "template_versions" ADD CONSTRAINT "template_versions_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "template_versions" ADD CONSTRAINT "template_versions_template_id_templates_id_fk" FOREIGN KEY ("template_id") REFERENCES "public"."templates"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "seed_addresses" ADD CONSTRAINT "seed_addresses_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "seed_results" ADD CONSTRAINT "seed_results_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "seed_results" ADD CONSTRAINT "seed_results_test_id_seed_tests_id_fk" FOREIGN KEY ("test_id") REFERENCES "public"."seed_tests"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "seed_tests" ADD CONSTRAINT "seed_tests_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "seed_tests" ADD CONSTRAINT "seed_tests_campaign_id_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."campaigns"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_template_id_templates_id_fk" FOREIGN KEY ("template_id") REFERENCES "public"."templates"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_list_id_lists_id_fk" FOREIGN KEY ("list_id") REFERENCES "public"."lists"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -4325,6 +4545,8 @@ ALTER TABLE "email_events" ADD CONSTRAINT "email_events_contact_id_contacts_id_f
 ALTER TABLE "suppressions" ADD CONSTRAINT "suppressions_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_jobs" ADD CONSTRAINT "import_jobs_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_jobs" ADD CONSTRAINT "import_jobs_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "segment_members" ADD CONSTRAINT "segment_members_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "segment_members" ADD CONSTRAINT "segment_members_segment_id_segments_id_fk" FOREIGN KEY ("segment_id") REFERENCES "public"."segments"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "segments" ADD CONSTRAINT "segments_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "frequency_suppressions" ADD CONSTRAINT "frequency_suppressions_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "frequency_suppressions" ADD CONSTRAINT "frequency_suppressions_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -4353,6 +4575,14 @@ ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_org_id_organizations_id_fk" FORE
 ALTER TABLE "webhook_deliveries" ADD CONSTRAINT "webhook_deliveries_webhook_id_webhooks_id_fk" FOREIGN KEY ("webhook_id") REFERENCES "public"."webhooks"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "webhook_deliveries" ADD CONSTRAINT "webhook_deliveries_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "webhooks" ADD CONSTRAINT "webhooks_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "smtp_credentials" ADD CONSTRAINT "smtp_credentials_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "configuration_sets" ADD CONSTRAINT "configuration_sets_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "email_identities" ADD CONSTRAINT "email_identities_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "inbound_rules" ADD CONSTRAINT "inbound_rules_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "contact_topic_subscriptions" ADD CONSTRAINT "contact_topic_subscriptions_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "contact_topic_subscriptions" ADD CONSTRAINT "contact_topic_subscriptions_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "contact_topic_subscriptions" ADD CONSTRAINT "contact_topic_subscriptions_topic_id_subscription_topics_id_fk" FOREIGN KEY ("topic_id") REFERENCES "public"."subscription_topics"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subscription_topics" ADD CONSTRAINT "subscription_topics_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "migration_jobs" ADD CONSTRAINT "migration_jobs_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "signup_form_submissions" ADD CONSTRAINT "signup_form_submissions_form_id_signup_forms_id_fk" FOREIGN KEY ("form_id") REFERENCES "public"."signup_forms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "signup_form_submissions" ADD CONSTRAINT "signup_form_submissions_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -4430,6 +4660,7 @@ ALTER TABLE "reviews" ADD CONSTRAINT "reviews_org_id_organizations_id_fk" FOREIG
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_moderated_by_user_id_users_id_fk" FOREIGN KEY ("moderated_by_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "scheduled_reports" ADD CONSTRAINT "scheduled_reports_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "custom_reports" ADD CONSTRAINT "custom_reports_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "holdout_group_members" ADD CONSTRAINT "holdout_group_members_group_id_holdout_groups_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."holdout_groups"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "holdout_group_members" ADD CONSTRAINT "holdout_group_members_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "holdout_groups" ADD CONSTRAINT "holdout_groups_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -4455,6 +4686,7 @@ ALTER TABLE "mv_test_variants" ADD CONSTRAINT "mv_test_variants_org_id_organizat
 ALTER TABLE "mv_variant_assignments" ADD CONSTRAINT "mv_variant_assignments_test_id_multivariate_tests_id_fk" FOREIGN KEY ("test_id") REFERENCES "public"."multivariate_tests"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mv_variant_assignments" ADD CONSTRAINT "mv_variant_assignments_variant_id_mv_test_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."mv_test_variants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dedicated_ips" ADD CONSTRAINT "dedicated_ips_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "dedicated_ips" ADD CONSTRAINT "dedicated_ips_subaccount_id_organizations_id_fk" FOREIGN KEY ("subaccount_id") REFERENCES "public"."organizations"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dedicated_ips" ADD CONSTRAINT "dedicated_ips_pool_id_ip_pools_id_fk" FOREIGN KEY ("pool_id") REFERENCES "public"."ip_pools"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ip_pools" ADD CONSTRAINT "ip_pools_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ip_warmup_schedules" ADD CONSTRAINT "ip_warmup_schedules_pool_id_ip_pools_id_fk" FOREIGN KEY ("pool_id") REFERENCES "public"."ip_pools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -4665,6 +4897,10 @@ ALTER TABLE "intent_signals" ADD CONSTRAINT "intent_signals_org_id_organizations
 ALTER TABLE "intent_signals" ADD CONSTRAINT "intent_signals_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "crm_extension_cards" ADD CONSTRAINT "crm_extension_cards_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "crm_extension_cards" ADD CONSTRAINT "crm_extension_cards_app_id_app_studio_apps_id_fk" FOREIGN KEY ("app_id") REFERENCES "public"."app_studio_apps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "event_attendance" ADD CONSTRAINT "event_attendance_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "event_attendance" ADD CONSTRAINT "event_attendance_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "event_attendance" ADD CONSTRAINT "event_attendance_external_event_id_external_events_id_fk" FOREIGN KEY ("external_event_id") REFERENCES "public"."external_events"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "external_events" ADD CONSTRAINT "external_events_org_id_organizations_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "organizations_slug_idx" ON "organizations" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "organizations_stripe_customer_idx" ON "organizations" USING btree ("stripe_customer_id");--> statement-breakpoint
 CREATE INDEX "organizations_parent_idx" ON "organizations" USING btree ("parent_org_id");--> statement-breakpoint
@@ -4680,6 +4916,7 @@ CREATE INDEX "contacts_org_id_idx" ON "contacts" USING btree ("org_id");--> stat
 CREATE INDEX "contacts_org_email_idx" ON "contacts" USING btree ("org_id","email");--> statement-breakpoint
 CREATE INDEX "contacts_org_phone_idx" ON "contacts" USING btree ("org_id","phone");--> statement-breakpoint
 CREATE INDEX "contacts_org_status_idx" ON "contacts" USING btree ("org_id","status");--> statement-breakpoint
+CREATE INDEX "contacts_org_vip_idx" ON "contacts" USING btree ("org_id","is_vip");--> statement-breakpoint
 CREATE INDEX "contacts_phone_status_idx" ON "contacts" USING btree ("phone_status");--> statement-breakpoint
 CREATE INDEX "contacts_phone_operator_idx" ON "contacts" USING btree ("phone_operator");--> statement-breakpoint
 CREATE INDEX "contacts_phone_district_idx" ON "contacts" USING btree ("phone_district");--> statement-breakpoint
@@ -4698,6 +4935,13 @@ CREATE INDEX "templates_org_id_idx" ON "templates" USING btree ("org_id");--> st
 CREATE INDEX "templates_category_idx" ON "templates" USING btree ("category");--> statement-breakpoint
 CREATE INDEX "templates_locale_idx" ON "templates" USING btree ("org_id","locale");--> statement-breakpoint
 CREATE INDEX "templates_tgroup_idx" ON "templates" USING btree ("translation_group_id");--> statement-breakpoint
+CREATE INDEX "template_versions_org_idx" ON "template_versions" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "template_versions_template_idx" ON "template_versions" USING btree ("template_id","version");--> statement-breakpoint
+CREATE UNIQUE INDEX "template_versions_template_version_uq" ON "template_versions" USING btree ("template_id","version");--> statement-breakpoint
+CREATE INDEX "seed_addresses_org_idx" ON "seed_addresses" USING btree ("org_id","active");--> statement-breakpoint
+CREATE INDEX "seed_results_test_idx" ON "seed_results" USING btree ("test_id");--> statement-breakpoint
+CREATE INDEX "seed_results_org_idx" ON "seed_results" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "seed_tests_org_idx" ON "seed_tests" USING btree ("org_id","created_at");--> statement-breakpoint
 CREATE INDEX "campaigns_org_id_idx" ON "campaigns" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "campaigns_status_idx" ON "campaigns" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "campaigns_scheduled_at_idx" ON "campaigns" USING btree ("scheduled_at");--> statement-breakpoint
@@ -4708,12 +4952,16 @@ CREATE INDEX "email_events_contact_id_idx" ON "email_events" USING btree ("conta
 CREATE INDEX "email_events_type_idx" ON "email_events" USING btree ("event_type");--> statement-breakpoint
 CREATE INDEX "email_events_created_at_idx" ON "email_events" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "email_events_ab_variant_idx" ON "email_events" USING btree ("campaign_id","ab_variant_id");--> statement-breakpoint
+CREATE INDEX "email_events_org_category_idx" ON "email_events" USING btree ("org_id","category");--> statement-breakpoint
+CREATE INDEX "email_events_org_isp_idx" ON "email_events" USING btree ("org_id","isp");--> statement-breakpoint
 CREATE INDEX "suppressions_org_id_idx" ON "suppressions" USING btree ("org_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "suppressions_org_email_idx" ON "suppressions" USING btree ("org_id","email");--> statement-breakpoint
 CREATE UNIQUE INDEX "suppressions_org_phone_idx" ON "suppressions" USING btree ("org_id","phone");--> statement-breakpoint
 CREATE INDEX "suppressions_email_idx" ON "suppressions" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "import_jobs_org_id_idx" ON "import_jobs" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "import_jobs_org_status_idx" ON "import_jobs" USING btree ("org_id","status");--> statement-breakpoint
+CREATE UNIQUE INDEX "segment_members_seg_contact_idx" ON "segment_members" USING btree ("segment_id","contact_id");--> statement-breakpoint
+CREATE INDEX "segment_members_org_seg_idx" ON "segment_members" USING btree ("org_id","segment_id");--> statement-breakpoint
 CREATE INDEX "segments_org_id_idx" ON "segments" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "frequency_suppressions_org_at_idx" ON "frequency_suppressions" USING btree ("org_id","suppressed_at");--> statement-breakpoint
 CREATE INDEX "frequency_suppressions_contact_idx" ON "frequency_suppressions" USING btree ("contact_id","suppressed_at");--> statement-breakpoint
@@ -4764,6 +5012,12 @@ CREATE INDEX "webhook_deliveries_status_idx" ON "webhook_deliveries" USING btree
 CREATE INDEX "webhook_deliveries_next_retry_at_idx" ON "webhook_deliveries" USING btree ("next_retry_at");--> statement-breakpoint
 CREATE INDEX "webhooks_org_id_idx" ON "webhooks" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "webhooks_active_idx" ON "webhooks" USING btree ("active");--> statement-breakpoint
+CREATE INDEX "smtp_credentials_org_idx" ON "smtp_credentials" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "configuration_sets_org_idx" ON "configuration_sets" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "email_identities_org_idx" ON "email_identities" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "inbound_rules_org_idx" ON "inbound_rules" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "contact_topic_subs_contact_idx" ON "contact_topic_subscriptions" USING btree ("contact_id");--> statement-breakpoint
+CREATE INDEX "subscription_topics_org_idx" ON "subscription_topics" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "migration_jobs_org_id_idx" ON "migration_jobs" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "migration_jobs_status_idx" ON "migration_jobs" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "signup_form_submissions_form_id_idx" ON "signup_form_submissions" USING btree ("form_id");--> statement-breakpoint
@@ -4791,6 +5045,9 @@ CREATE UNIQUE INDEX "wa_phone_numbers_id_idx" ON "whatsapp_phone_numbers" USING 
 CREATE INDEX "wa_templates_org_idx" ON "whatsapp_templates" USING btree ("org_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "wa_templates_org_name_lang_idx" ON "whatsapp_templates" USING btree ("org_id","name","language");--> statement-breakpoint
 CREATE INDEX "wa_templates_status_idx" ON "whatsapp_templates" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "mobile_devices_org_idx" ON "mobile_devices" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "mobile_devices_contact_idx" ON "mobile_devices" USING btree ("contact_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "mobile_devices_org_token_idx" ON "mobile_devices" USING btree ("org_id","token");--> statement-breakpoint
 CREATE INDEX "push_send_log_org_idx" ON "push_send_log" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "push_send_log_contact_idx" ON "push_send_log" USING btree ("contact_id");--> statement-breakpoint
 CREATE INDEX "push_subscriptions_org_idx" ON "push_subscriptions" USING btree ("org_id");--> statement-breakpoint
@@ -4875,6 +5132,7 @@ CREATE INDEX "reviews_org_status_idx" ON "reviews" USING btree ("org_id","status
 CREATE INDEX "reviews_org_product_idx" ON "reviews" USING btree ("org_id","product_sku");--> statement-breakpoint
 CREATE INDEX "reviews_org_created_idx" ON "reviews" USING btree ("org_id","created_at");--> statement-breakpoint
 CREATE INDEX "scheduled_reports_next_run_idx" ON "scheduled_reports" USING btree ("next_run_at");--> statement-breakpoint
+CREATE INDEX "custom_reports_org_idx" ON "custom_reports" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "holdout_members_contact_idx" ON "holdout_group_members" USING btree ("contact_id");--> statement-breakpoint
 CREATE INDEX "holdout_groups_org_idx" ON "holdout_groups" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "helpdesk_tickets_org_status_idx" ON "helpdesk_tickets" USING btree ("org_id","status");--> statement-breakpoint
@@ -4907,6 +5165,7 @@ CREATE INDEX "mv_assignments_test_contact_idx" ON "mv_variant_assignments" USING
 CREATE INDEX "mv_assignments_variant_idx" ON "mv_variant_assignments" USING btree ("variant_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "dedicated_ips_address_idx" ON "dedicated_ips" USING btree ("ip_address");--> statement-breakpoint
 CREATE INDEX "dedicated_ips_org_idx" ON "dedicated_ips" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "dedicated_ips_subaccount_idx" ON "dedicated_ips" USING btree ("subaccount_id");--> statement-breakpoint
 CREATE INDEX "dedicated_ips_pool_idx" ON "dedicated_ips" USING btree ("pool_id");--> statement-breakpoint
 CREATE INDEX "dedicated_ips_status_idx" ON "dedicated_ips" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "ip_pools_org_idx" ON "ip_pools" USING btree ("org_id");--> statement-breakpoint
@@ -5314,4 +5573,9 @@ CREATE INDEX "newsletter_sub_org_idx" ON "newsletter_paid_subscriptions" USING b
 CREATE INDEX "newsletter_plans_org_idx" ON "newsletter_plans" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "brand_guidelines_org_idx" ON "brand_guidelines" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "inbox_placement_org_idx" ON "inbox_placement_tests" USING btree ("org_id");--> statement-breakpoint
-CREATE INDEX "inbox_placement_campaign_idx" ON "inbox_placement_tests" USING btree ("campaign_id");
+CREATE INDEX "inbox_placement_campaign_idx" ON "inbox_placement_tests" USING btree ("campaign_id");--> statement-breakpoint
+CREATE INDEX "event_attendance_org_contact_idx" ON "event_attendance" USING btree ("org_id","contact_id");--> statement-breakpoint
+CREATE INDEX "event_attendance_org_event_idx" ON "event_attendance" USING btree ("org_id","external_event_id");--> statement-breakpoint
+CREATE INDEX "event_attendance_org_status_idx" ON "event_attendance" USING btree ("org_id","status");--> statement-breakpoint
+CREATE INDEX "external_events_org_starts_idx" ON "external_events" USING btree ("org_id","starts_at");--> statement-breakpoint
+CREATE INDEX "external_events_org_cat_idx" ON "external_events" USING btree ("org_id","category");

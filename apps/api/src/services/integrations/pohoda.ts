@@ -7,7 +7,7 @@ import { db } from '../../db/client.js';
 import { erpSyncLog } from '../../db/schema/erp-sync.js';
 
 export interface PohodaSettings {
-  url: string;        // e.g. http://192.168.1.100:38080/xml
+  url: string; // e.g. http://192.168.1.100:38080/xml
   username: string;
   password: string;
   ico: string;
@@ -51,7 +51,8 @@ function parseContactsXml(xml: string): PohodaContact[] {
   const matches = xml.matchAll(/<adb:addressbookItem[^>]*>([\s\S]*?)<\/adb:addressbookItem>/g);
   for (const m of matches) {
     const block = m[1] ?? '';
-    const get = (tag: string) => block.match(new RegExp(`<[^:]+:${tag}[^>]*>([^<]*)<\/`))?.[1]?.trim();
+    const get = (tag: string) =>
+      block.match(new RegExp(`<[^:]+:${tag}[^>]*>([^<]*)</`))?.[1]?.trim();
     const id = get('id') ?? crypto.randomUUID();
     const name = get('company') ?? get('name') ?? '';
     if (!name) continue;
@@ -77,14 +78,17 @@ export async function syncPohodaContacts(
   const started = new Date();
   let count = 0;
   try {
-    const xml = await pohodaRequest(settings, `
+    const xml = await pohodaRequest(
+      settings,
+      `
       <adb:addressbook version="1.0" xmlns:adb="http://www.stormware.cz/schema/version_2/addressbook.xsd">
         <adb:requestAddressbook>
           <adb:filter>
             <adb:requestAddressbookType>addressBook</adb:requestAddressbookType>
           </adb:filter>
         </adb:requestAddressbook>
-      </adb:addressbook>`);
+      </adb:addressbook>`,
+    );
 
     const contacts = parseContactsXml(xml);
     count = contacts.length;
@@ -122,12 +126,15 @@ export async function syncPohodaInvoices(
   const started = new Date();
   let count = 0;
   try {
-    const xml = await pohodaRequest(settings, `
+    const xml = await pohodaRequest(
+      settings,
+      `
       <inv:invoicing version="1.0" xmlns:inv="http://www.stormware.cz/schema/version_2/invoice.xsd">
         <inv:requestInvoice>
           <inv:requestInvoiceType>issuedInvoice</inv:requestInvoiceType>
         </inv:requestInvoice>
-      </inv:invoicing>`);
+      </inv:invoicing>`,
+    );
 
     const matches = Array.from(xml.matchAll(/<inv:invoice[^>]*>/g));
     count = matches.length;

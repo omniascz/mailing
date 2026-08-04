@@ -20,7 +20,10 @@ interface GenderizeResponse {
   count: number;
 }
 
-let _redis: { get(k: string): Promise<string | null>; set(k: string, v: string, ex: number): Promise<unknown> } | null = null;
+let _redis: {
+  get(k: string): Promise<string | null>;
+  set(k: string, v: string, ex: number): Promise<unknown>;
+} | null = null;
 
 async function getRedis() {
   if (_redis) return _redis;
@@ -70,9 +73,7 @@ export async function inferGenderInternational(
 
     const data = (await res.json()) as GenderizeResponse;
     const gender: Gender =
-      data.gender && data.probability >= CONFIDENCE_THRESHOLD
-        ? (data.gender as Gender)
-        : 'unknown';
+      data.gender && data.probability >= CONFIDENCE_THRESHOLD ? (data.gender as Gender) : 'unknown';
     result = {
       gender,
       confidence: data.probability ?? 0,

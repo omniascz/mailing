@@ -83,10 +83,34 @@ export function buildCascadeSteps(
   const pressure = Math.min(1, unsoldSeats / Math.max(1, audienceSize));
 
   const steps: CascadeStep[] = [
-    { wave: 1, audienceFraction: 0.2, discountPct: 0, daysBeforeEvent: 14, label: 'Best-fit early access' },
-    { wave: 2, audienceFraction: 0.5, discountPct: Math.round(maxDiscount / 3), daysBeforeEvent: 7, label: 'Affinity + light discount' },
-    { wave: 3, audienceFraction: 0.85, discountPct: Math.round((maxDiscount * 2) / 3), daysBeforeEvent: 3, label: 'Wider reach' },
-    { wave: 4, audienceFraction: 1.0, discountPct: maxDiscount, daysBeforeEvent: 1, label: 'Last-minute fill' },
+    {
+      wave: 1,
+      audienceFraction: 0.2,
+      discountPct: 0,
+      daysBeforeEvent: 14,
+      label: 'Best-fit early access',
+    },
+    {
+      wave: 2,
+      audienceFraction: 0.5,
+      discountPct: Math.round(maxDiscount / 3),
+      daysBeforeEvent: 7,
+      label: 'Affinity + light discount',
+    },
+    {
+      wave: 3,
+      audienceFraction: 0.85,
+      discountPct: Math.round((maxDiscount * 2) / 3),
+      daysBeforeEvent: 3,
+      label: 'Wider reach',
+    },
+    {
+      wave: 4,
+      audienceFraction: 1.0,
+      discountPct: maxDiscount,
+      daysBeforeEvent: 1,
+      label: 'Last-minute fill',
+    },
   ];
 
   // Under low pressure, drop the deepest-discount last waves (no need to give it away).
@@ -140,7 +164,9 @@ export async function loadCandidates(
       contactId: r.contactId,
       city: r.city,
       attendedCategories: (r.cats ?? []).filter((c): c is string => !!c),
-      lapsedDays: r.lastSeen ? Math.floor((now - new Date(r.lastSeen).getTime()) / 86_400_000) : Infinity,
+      lapsedDays: r.lastSeen
+        ? Math.floor((now - new Date(r.lastSeen).getTime()) / 86_400_000)
+        : Infinity,
       orders: Number(r.orders ?? 0),
     }));
 }

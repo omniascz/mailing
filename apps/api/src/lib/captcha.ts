@@ -22,10 +22,7 @@ export interface CaptchaResult {
 }
 
 /** A honeypot field that arrives non-empty means an automated submission. */
-export function isHoneypotTripped(
-  data: Record<string, string>,
-  field?: string,
-): boolean {
+export function isHoneypotTripped(data: Record<string, string>, field?: string): boolean {
   if (!field) return false;
   const v = data[field];
   return typeof v === 'string' && v.trim().length > 0;

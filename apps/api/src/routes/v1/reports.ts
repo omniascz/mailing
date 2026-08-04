@@ -118,7 +118,10 @@ const reportRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
       const body = z
-        .object({ name: z.string().min(1).max(255).optional(), definition: definitionSchema.optional() })
+        .object({
+          name: z.string().min(1).max(255).optional(),
+          definition: definitionSchema.optional(),
+        })
         .parse(req.body);
       return reply.send({
         data: await updateReport(req.user!.orgId, id, body as Parameters<typeof updateReport>[2]),

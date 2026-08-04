@@ -27,7 +27,7 @@ export function verifyStripeSignature(
   if (!signatureHeader) return false;
   const parts = signatureHeader.split(',').reduce<Record<string, string>>((acc, kv) => {
     const [k, v] = kv.split('=');
-    if (k && v) (acc[k.trim()] ??= v.trim());
+    if (k && v) acc[k.trim()] ??= v.trim();
     return acc;
   }, {});
   const t = parts['t'];

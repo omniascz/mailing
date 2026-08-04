@@ -123,9 +123,10 @@ export function bandFromScore(score: number): 'positive' | 'neutral' | 'negative
 }
 
 /** Map rating to a coarse sentiment when no model is available. */
-export function fallbackSentimentFromRating(
-  rating: number,
-): { sentiment: 'positive' | 'neutral' | 'negative'; score: number } {
+export function fallbackSentimentFromRating(rating: number): {
+  sentiment: 'positive' | 'neutral' | 'negative';
+  score: number;
+} {
   if (rating >= 4) return { sentiment: 'positive', score: 0.6 };
   if (rating === 3) return { sentiment: 'neutral', score: 0 };
   return { sentiment: 'negative', score: -0.6 };
@@ -139,10 +140,7 @@ export function generateReviewToken(): string {
 }
 
 /** Auto-derive an initial moderation status from spam + rating signals. */
-export function suggestInitialStatus(opts: {
-  spam: SpamCheck;
-  rating: number;
-}): ReviewStatus {
+export function suggestInitialStatus(opts: { spam: SpamCheck; rating: number }): ReviewStatus {
   if (opts.spam.likelySpam) return 'spam';
   return 'pending';
 }

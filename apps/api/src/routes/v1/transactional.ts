@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import { db } from '../../db/client.js';
 import { emailEvents, campaigns } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { and, eq, gte, lte } from 'drizzle-orm';
@@ -118,9 +118,8 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       let html = body.html ?? '';
       let text = body.text ?? '';
       if (body.templateId) {
-        const { renderStoredTemplate } = await import(
-          '../../services/transactional/render-template.js'
-        );
+        const { renderStoredTemplate } =
+          await import('../../services/transactional/render-template.js');
         try {
           const rendered = await renderStoredTemplate(orgId, body.templateId, body.mergeVars ?? {});
           html = rendered.html;
@@ -195,15 +194,13 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         recordUsage(orgId, 'email', 1).catch(() => {});
       }
 
-      return reply
-        .code(202)
-        .send({
-          data: {
-            messageId,
-            status: body.scheduleAt ? 'scheduled' : 'queued',
-            attachments: body.attachments?.length ?? 0,
-          },
-        });
+      return reply.code(202).send({
+        data: {
+          messageId,
+          status: body.scheduleAt ? 'scheduled' : 'queued',
+          attachments: body.attachments?.length ?? 0,
+        },
+      });
     },
   );
 
@@ -420,7 +417,10 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
     '/api/v1/transactional/batch',
     {
       preHandler: [app.authenticate, app.requireScope('emails:send')],
-      schema: { tags: ['Transactional'], summary: 'Send up to 1000 personalized transactional emails (with batchId tracking)' },
+      schema: {
+        tags: ['Transactional'],
+        summary: 'Send up to 1000 personalized transactional emails (with batchId tracking)',
+      },
     },
     async (req, reply) => {
       const body = z
@@ -527,7 +527,9 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         const { batchId } = req.params as { batchId: string };
         const orgId = req.user!.orgId;
         const svc = await import('../../services/transactional/scheduled-batch.js');
-        const fn = { cancel: svc.cancelBatch, pause: svc.pauseBatch, resume: svc.resumeBatch }[verb];
+        const fn = { cancel: svc.cancelBatch, pause: svc.pauseBatch, resume: svc.resumeBatch }[
+          verb
+        ];
         try {
           const rec = await fn(orgId, batchId);
           return reply.send({ data: { batchId, status: rec.status } });
@@ -536,7 +538,9 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           if (code === 'BATCH_NOT_FOUND') {
             return reply.code(404).send({ code, message: 'Batch not found or expired' });
           }
-          return reply.code(409).send({ code, message: `Batch cannot be ${verb}ed in its current state` });
+          return reply
+            .code(409)
+            .send({ code, message: `Batch cannot be ${verb}ed in its current state` });
         }
       },
     );
@@ -591,18 +595,17 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       // CSV format
       const header = 'id,messageId,campaignId,contactId,eventType,createdAt\n';
       const csvRows = rows
-        .map(
-          (r) =>
-            [
-              r.id,
-              r.messageId ?? '',
-              r.campaignId ?? '',
-              r.contactId ?? '',
-              r.eventType,
-              r.createdAt?.toISOString() ?? '',
-            ]
-              .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-              .join(','),
+        .map((r) =>
+          [
+            r.id,
+            r.messageId ?? '',
+            r.campaignId ?? '',
+            r.contactId ?? '',
+            r.eventType,
+            r.createdAt?.toISOString() ?? '',
+          ]
+            .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+            .join(','),
         )
         .join('\n');
 
@@ -627,7 +630,9 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       const { getBatch } = await import('../../services/transactional/scheduled-batch.js');
       const rec = await getBatch(orgId, batchId);
       if (!rec) {
-        return reply.code(404).send({ code: 'BATCH_NOT_FOUND', message: 'Batch not found or expired' });
+        return reply
+          .code(404)
+          .send({ code: 'BATCH_NOT_FOUND', message: 'Batch not found or expired' });
       }
       // Never leak the stored recipient payload in the status response.
       const { payload: _omit, ...view } = rec;

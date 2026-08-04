@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import type { UserRole } from '@forgemsg/shared';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';

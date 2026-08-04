@@ -24,7 +24,11 @@ export const socialContactIdentifiers = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    unique('social_contact_identifiers_platform_external_uniq').on(t.orgId, t.platform, t.externalId),
+    unique('social_contact_identifiers_platform_external_uniq').on(
+      t.orgId,
+      t.platform,
+      t.externalId,
+    ),
     index('social_contact_identifiers_contact_idx').on(t.contactId),
     index('social_contact_identifiers_org_platform_idx').on(t.orgId, t.platform),
   ],

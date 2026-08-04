@@ -24,7 +24,7 @@ const mockDb: Record<string, unknown> = {
 };
 
 vi.mock('../../db/client.js', () => ({ db: mockDb }));
-vi.mock('../../lib/redis.js', () => ({
+vi.mock('@forgemsg/shared/redis', () => ({
   redis: { get: vi.fn().mockResolvedValue(null), setex: vi.fn() },
 }));
 vi.mock('../../db/schema/index.js', () => ({
@@ -197,7 +197,7 @@ describe('runAnomalyCheckForOrg', () => {
   });
 
   it('detects bounce rate spike above absolute 5% threshold', async () => {
-    const { redis } = await import('../../lib/redis.js');
+    const { redis } = await import('@forgemsg/shared/redis');
     (redis.get as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     // Last hour: 100 sends, 10 bounces (10% bounce rate > 5% threshold)
@@ -221,7 +221,7 @@ describe('runAnomalyCheckForOrg', () => {
   });
 
   it('detects complaint rate above 0.1% threshold', async () => {
-    const { redis } = await import('../../lib/redis.js');
+    const { redis } = await import('@forgemsg/shared/redis');
     (redis.get as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     (mockDb.execute as ReturnType<typeof vi.fn>)
@@ -239,7 +239,7 @@ describe('runAnomalyCheckForOrg', () => {
   });
 
   it('detects open rate drop below 50% of baseline', async () => {
-    const { redis } = await import('../../lib/redis.js');
+    const { redis } = await import('@forgemsg/shared/redis');
     (redis.get as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     (mockDb.execute as ReturnType<typeof vi.fn>)
@@ -261,7 +261,7 @@ describe('runAnomalyCheckForOrg', () => {
   });
 
   it('does not create duplicate alerts within dedup window', async () => {
-    const { redis } = await import('../../lib/redis.js');
+    const { redis } = await import('@forgemsg/shared/redis');
     // Simulate alert already sent recently
     (redis.get as ReturnType<typeof vi.fn>).mockResolvedValue('1');
 
@@ -280,7 +280,7 @@ describe('runAnomalyCheckForOrg', () => {
   });
 
   it('no alerts when metrics are within normal range', async () => {
-    const { redis } = await import('../../lib/redis.js');
+    const { redis } = await import('@forgemsg/shared/redis');
     (redis.get as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     (mockDb.execute as ReturnType<typeof vi.fn>)

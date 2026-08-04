@@ -4,20 +4,28 @@
  * Inspired by Movable Ink, built into ForgeMsg at no extra cost.
  */
 import {
-  pgTable, uuid, text, timestamp, integer, boolean, jsonb, index, pgEnum,
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  integer,
+  boolean,
+  jsonb,
+  index,
+  pgEnum,
 } from 'drizzle-orm/pg-core';
 
 export const dcTriggerTypeEnum = pgEnum('dc_trigger_type', [
-  'time_of_day',    // morning / afternoon / evening
-  'day_of_week',    // weekday vs weekend
-  'days_since_send',// D+0, D+1, D+3, D+7
-  'stock_level',    // product in/out of stock
-  'weather',        // rain / sun / temperature
-  'contact_prop',   // based on contact property value
-  'geo',            // country / city of opener
-  'countdown',      // real-time countdown timer to deadline
-  'live_price',     // fetch live product price at open time
-  'custom_api',     // call org-defined API endpoint
+  'time_of_day', // morning / afternoon / evening
+  'day_of_week', // weekday vs weekend
+  'days_since_send', // D+0, D+1, D+3, D+7
+  'stock_level', // product in/out of stock
+  'weather', // rain / sun / temperature
+  'contact_prop', // based on contact property value
+  'geo', // country / city of opener
+  'countdown', // real-time countdown timer to deadline
+  'live_price', // fetch live product price at open time
+  'custom_api', // call org-defined API endpoint
 ]);
 
 /** A rule set: conditions → content variant to show */

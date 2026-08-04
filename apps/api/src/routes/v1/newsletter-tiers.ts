@@ -15,10 +15,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, eq, desc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  newsletterTiers,
-  newsletterSubscriptions,
-} from '../../db/schema/index.js';
+import { newsletterTiers, newsletterSubscriptions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { verifyStripeSignature } from '../../services/commerce/payments.js';
 
@@ -141,7 +138,12 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-      const query = z.object({ limit: z.coerce.number().int().min(1).max(200).default(50), cursor: z.string().optional() }).parse(req.query);
+      const query = z
+        .object({
+          limit: z.coerce.number().int().min(1).max(200).default(50),
+          cursor: z.string().optional(),
+        })
+        .parse(req.query);
 
       const rows = await db
         .select()
@@ -249,9 +251,10 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
         case 'customer.subscription.updated':
           status = obj.status as typeof status;
           cancelAtPeriodEnd = obj.cancel_at_period_end as boolean | undefined;
-          currentPeriodEnd = typeof obj.current_period_end === 'number'
-            ? new Date(obj.current_period_end * 1000)
-            : undefined;
+          currentPeriodEnd =
+            typeof obj.current_period_end === 'number'
+              ? new Date(obj.current_period_end * 1000)
+              : undefined;
           break;
         case 'customer.subscription.deleted':
           status = 'canceled';
@@ -289,7 +292,9 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
     { schema: { tags: ['Newsletter Tiers'], summary: 'Check contact tier access' } },
     async (req) => {
       const orgId = req.user!.orgId;
-      const { contactId, tierId } = z.object({ contactId: z.string().uuid(), tierId: z.string().uuid() }).parse(req.query);
+      const { contactId, tierId } = z
+        .object({ contactId: z.string().uuid(), tierId: z.string().uuid() })
+        .parse(req.query);
 
       const sub = await db
         .select({ status: newsletterSubscriptions.status })

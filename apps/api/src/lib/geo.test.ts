@@ -3,7 +3,19 @@ import { isPublicIp, parseGeoResponse } from './geo.js';
 
 describe('isPublicIp', () => {
   it('rejects private / loopback / link-local', () => {
-    for (const ip of ['10.0.0.1', '192.168.1.5', '172.16.0.1', '172.31.255.1', '127.0.0.1', '169.254.1.1', '0.0.0.0', '::1', '::', 'fe80::1', 'fd00::1']) {
+    for (const ip of [
+      '10.0.0.1',
+      '192.168.1.5',
+      '172.16.0.1',
+      '172.31.255.1',
+      '127.0.0.1',
+      '169.254.1.1',
+      '0.0.0.0',
+      '::1',
+      '::',
+      'fe80::1',
+      'fd00::1',
+    ]) {
       expect(isPublicIp(ip)).toBe(false);
     }
   });

@@ -23,7 +23,7 @@ import {
 import { and, eq, asc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { blogPostRevisions, blogPosts } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const blogRoutes: FastifyPluginAsync = async (app) => {
   // Posts
@@ -273,7 +273,8 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
         .from(blogPostRevisions)
         .where(and(eq(blogPostRevisions.postId, id), eq(blogPostRevisions.version, version)))
         .limit(1);
-      if (!rev) throw { statusCode: 404, code: 'REVISION_NOT_FOUND', message: 'Revision not found' };
+      if (!rev)
+        throw { statusCode: 404, code: 'REVISION_NOT_FOUND', message: 'Revision not found' };
 
       const [updated] = await db
         .update(blogPosts)
@@ -321,7 +322,12 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
 
       const revA = revs.find((r) => r.version === vA);
       const revB = revs.find((r) => r.version === vB);
-      if (!revA || !revB) throw { statusCode: 404, code: 'REVISION_NOT_FOUND', message: 'One or both revisions not found' };
+      if (!revA || !revB)
+        throw {
+          statusCode: 404,
+          code: 'REVISION_NOT_FOUND',
+          message: 'One or both revisions not found',
+        };
 
       // Simple line-count diff (no external diff library required)
       const linesA = revA.body.split('\n');
@@ -387,14 +393,13 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { token } = z.object({ token: z.string().uuid() }).parse(req.query);
       const raw = await redis.get(`blog:preview:${token}`);
-      if (!raw) return reply.code(401).send({ code: 'INVALID_TOKEN', message: 'Preview token expired or invalid' });
+      if (!raw)
+        return reply
+          .code(401)
+          .send({ code: 'INVALID_TOKEN', message: 'Preview token expired or invalid' });
 
       const { postId } = JSON.parse(raw) as { postId: string; orgId: string };
-      const [post] = await db
-        .select()
-        .from(blogPosts)
-        .where(eq(blogPosts.id, postId))
-        .limit(1);
+      const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, postId)).limit(1);
       if (!post) return reply.code(404).send({ code: 'POST_NOT_FOUND' });
       return { data: post };
     },

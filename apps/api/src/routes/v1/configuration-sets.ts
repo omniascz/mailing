@@ -46,9 +46,13 @@ const optionsSchema = z.object({
 const configurationSetRoutes: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', app.requireAuth);
 
-  app.get('/api/v1/configuration-sets', { schema: { tags: ['Configuration Sets'] } }, async (req) => {
-    return { data: await listConfigurationSets(req.user!.orgId) };
-  });
+  app.get(
+    '/api/v1/configuration-sets',
+    { schema: { tags: ['Configuration Sets'] } },
+    async (req) => {
+      return { data: await listConfigurationSets(req.user!.orgId) };
+    },
+  );
 
   app.get(
     '/api/v1/configuration-sets/:id',

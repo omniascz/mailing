@@ -16,8 +16,12 @@ import {
 } from '../../db/schema/index.js';
 import { onApiEvent } from '../workflows/triggers.js';
 import { openTicket, appendMessage } from '../helpdesk/index.js';
-import { classifyBounce, isBounceMessage, extractFailedRecipient } from '../sending/bounce-processor.js';
-import { decodeVerp } from '../sending/verp.js';
+import {
+  classifyBounce,
+  isBounceMessage,
+  extractFailedRecipient,
+} from '../sending/bounce-processor.js';
+import { decodeVerp } from '@forgemsg/shared/sending/verp';
 import { AppError } from '../../lib/app-error.js';
 
 export interface InboundPayload {

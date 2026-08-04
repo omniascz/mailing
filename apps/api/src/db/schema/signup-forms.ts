@@ -29,7 +29,16 @@ export interface FormFieldVisibilityRule {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'phone' | 'select' | 'checkbox' | 'hidden' | 'textarea' | 'number' | 'date';
+  type:
+    | 'text'
+    | 'email'
+    | 'phone'
+    | 'select'
+    | 'checkbox'
+    | 'hidden'
+    | 'textarea'
+    | 'number'
+    | 'date';
   required: boolean;
   options?: string[]; // for select fields
   placeholder?: string;

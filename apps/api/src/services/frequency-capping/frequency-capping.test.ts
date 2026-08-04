@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Redis } from 'ioredis';
 
 // Stub transitive imports so the service module can load without real Redis/DB.
-vi.mock('../../lib/redis.js', () => ({ redis: {} }));
+vi.mock('@forgemsg/shared/redis', () => ({ redis: {} }));
 vi.mock('../../db/client.js', () => ({
   db: {
     select: () => ({ from: () => ({ where: async () => [] }) }),

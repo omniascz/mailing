@@ -64,9 +64,7 @@ export default async function ReportsPage() {
                       ) : null}
                     </div>
                     <p className="mt-4 text-xs text-secondary-500">
-                      {r.definition.rangeDays
-                        ? `Last ${r.definition.rangeDays} days`
-                        : 'All time'}{' '}
+                      {r.definition.rangeDays ? `Last ${r.definition.rangeDays} days` : 'All time'}{' '}
                       · Updated {new Date(r.updatedAt).toLocaleDateString('cs-CZ')}
                     </p>
                   </CardContent>

@@ -7,7 +7,7 @@
  */
 
 import crypto from 'node:crypto';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const CACHE_TTL = 60 * 60 * 12; // 12 h

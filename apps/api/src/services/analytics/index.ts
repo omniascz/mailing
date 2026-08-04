@@ -63,22 +63,47 @@ export function computeCampaignStats(rows: CampaignEventRow[]): CampaignStats {
 }
 
 /** Pure: fold per-(day,event_type) counts into the OrgDailyStats series. */
-export function aggregateOrgDaily(rows: Array<{ date: string; eventType: string; cnt: number }>): OrgDailyStats[] {
+export function aggregateOrgDaily(
+  rows: Array<{ date: string; eventType: string; cnt: number }>,
+): OrgDailyStats[] {
   const map = new Map<string, OrgDailyStats>();
   for (const row of rows) {
     const date = row.date.slice(0, 10);
     if (!map.has(date)) {
-      map.set(date, { date, sent: 0, delivered: 0, opens: 0, clicks: 0, bounces: 0, unsubs: 0, complaints: 0 });
+      map.set(date, {
+        date,
+        sent: 0,
+        delivered: 0,
+        opens: 0,
+        clicks: 0,
+        bounces: 0,
+        unsubs: 0,
+        complaints: 0,
+      });
     }
     const s = map.get(date)!;
     switch (row.eventType) {
-      case 'send': s.sent += row.cnt; break;
-      case 'deliver': s.delivered += row.cnt; break;
-      case 'open': s.opens += row.cnt; break;
-      case 'click': s.clicks += row.cnt; break;
-      case 'bounce': s.bounces += row.cnt; break;
-      case 'unsubscribe': s.unsubs += row.cnt; break;
-      case 'complaint': s.complaints += row.cnt; break;
+      case 'send':
+        s.sent += row.cnt;
+        break;
+      case 'deliver':
+        s.delivered += row.cnt;
+        break;
+      case 'open':
+        s.opens += row.cnt;
+        break;
+      case 'click':
+        s.clicks += row.cnt;
+        break;
+      case 'bounce':
+        s.bounces += row.cnt;
+        break;
+      case 'unsubscribe':
+        s.unsubs += row.cnt;
+        break;
+      case 'complaint':
+        s.complaints += row.cnt;
+        break;
     }
   }
   return [...map.values()].sort((a, b) => a.date.localeCompare(b.date));

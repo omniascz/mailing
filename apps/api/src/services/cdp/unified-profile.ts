@@ -23,7 +23,7 @@ import {
   cdpEvents,
   type Contact,
 } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 
 const PROFILE_TTL_SEC = 60; // short enough that stale writes self-heal, long enough to absorb bursts

@@ -4,12 +4,28 @@ import { parseStreamEntries } from './event-stream.js';
 describe('parseStreamEntries', () => {
   it('parses XRANGE rows into typed events', () => {
     const out = parseStreamEntries([
-      ['1712-0', ['event', 'email.delivered', 'ts', '2026-07-03T00:00:00Z', 'data', '{"messageId":"m1"}']],
-      ['1713-0', ['event', 'email.opened', 'ts', '2026-07-03T00:01:00Z', 'data', '{"contactId":"c1"}']],
+      [
+        '1712-0',
+        ['event', 'email.delivered', 'ts', '2026-07-03T00:00:00Z', 'data', '{"messageId":"m1"}'],
+      ],
+      [
+        '1713-0',
+        ['event', 'email.opened', 'ts', '2026-07-03T00:01:00Z', 'data', '{"contactId":"c1"}'],
+      ],
     ]);
     expect(out).toEqual([
-      { id: '1712-0', event: 'email.delivered', ts: '2026-07-03T00:00:00Z', data: { messageId: 'm1' } },
-      { id: '1713-0', event: 'email.opened', ts: '2026-07-03T00:01:00Z', data: { contactId: 'c1' } },
+      {
+        id: '1712-0',
+        event: 'email.delivered',
+        ts: '2026-07-03T00:00:00Z',
+        data: { messageId: 'm1' },
+      },
+      {
+        id: '1713-0',
+        event: 'email.opened',
+        ts: '2026-07-03T00:01:00Z',
+        data: { contactId: 'c1' },
+      },
     ]);
   });
 

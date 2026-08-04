@@ -8,29 +8,29 @@ Metodika: 5 doménových agentů ověřilo **reálnou implementaci ForgeMsg př�
 
 ## Scoreboard (kdo vede v doméně)
 
-| Doména | Vítěz | Poznámka |
-|---|---|---|
-| Contacts, lists, segmentace | **ForgeMsg** | 8úrovňové AND/OR segmenty, engagement/RFM/prediktiva; CC jednodušší |
-| Signup forms | ForgeMsg (data) / **CC (hosting)** | MF: A/B, progressive, targeting, captcha, DOI ✅; ale **hostovaná stránka formuláře chybí** (embed loader.js neobsloužen) |
-| **Landing pages** | **Constant Contact** | MF nemá landing page builder vůbec 🔴 |
-| Email editor + šablony | ForgeMsg (engine) / **CC (šířka bloků + šablony)** | MF silnější merge/dynamic/Liquid; CC má video/event/survey/coupon bloky + stovky šablon |
-| AI obsah | **ForgeMsg** | reálné Claude API, širší (subject/body/translate/per-recipient/sequence/accessibility) |
-| Brand kit | **Constant Contact** | CC skenuje web → logo/barvy; MF jen manuální guidelines + AI brand voice z textu |
-| Automations / autorespondery | **ForgeMsg** | víc kanálů + triggerů, run-state persistuje přes wait; resend-to-non-openers ✅ |
-| Sending & deliverability | **ForgeMsg** | vlastní Go MTA + DKIM + DMARC + scheduler cron; CC nedává vlastní MTA |
-| **Event Marketing / RSVP** | **Constant Contact** | MF nemá nativní tvorbu eventů/registrace/RSVP/prodej lístků 🔴 (jen ingestní overlay nad externí ticketing app) |
-| Surveys, polls & feedback | **ForgeMsg** (data) | ✅ vč. NPS/CSAT; ale bez hostované vyplňovací stránky |
-| Coupons | **ForgeMsg** | unikátní kódy + store-sync (Shopify/Woo); CC má jednodušší |
-| **Donations (neziskovky)** | **Constant Contact** | MF nemá donation stránky 🔴 |
-| SMS / multichannel | **ForgeMsg** | SMS+WhatsApp+Viber+Push+Voice; CC jen SMS (US add-on) |
-| Social — organic posting | **remíza** | oba reálné (MF: FB/IG/LI/X/TikTok) |
-| Social — paid ads | **Constant Contact** | CC tvoří a spouští FB/IG/Google ads; MF jen audience sync + reporting 🟡 |
-| Ecommerce | **ForgeMsg** | 8 platforem + CZ storefronty + feedy + AI doporučení + coupon sync |
-| **Website / e-shop / logo builder** | **Constant Contact** | MF nemá 🔴 |
-| Reporting & analytics | **ForgeMsg** (hloubka) / CC (geo/device/heatmap polish) | MF: atribuce/cohorty/prediktiva; CC: mapa + device breakdown, kde MF má mrtvý write-path |
-| **Integrations marketplace** | **Constant Contact** | 300+ app + Zapier; MF ~30 nativních, žádný marketplace/Zapier 🔴 |
-| Účet / admin | **ForgeMsg** | SSO/SAML + audit log + 4 role + 2FA; CC bez SSO |
-| **Mobilní aplikace** | **Constant Contact** | MF nemá 🔴 (backend/web only) |
+| Doména                              | Vítěz                                                   | Poznámka                                                                                                                  |
+| ----------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Contacts, lists, segmentace         | **ForgeMsg**                                            | 8úrovňové AND/OR segmenty, engagement/RFM/prediktiva; CC jednodušší                                                       |
+| Signup forms                        | ForgeMsg (data) / **CC (hosting)**                      | MF: A/B, progressive, targeting, captcha, DOI ✅; ale **hostovaná stránka formuláře chybí** (embed loader.js neobsloužen) |
+| **Landing pages**                   | **Constant Contact**                                    | MF nemá landing page builder vůbec 🔴                                                                                     |
+| Email editor + šablony              | ForgeMsg (engine) / **CC (šířka bloků + šablony)**      | MF silnější merge/dynamic/Liquid; CC má video/event/survey/coupon bloky + stovky šablon                                   |
+| AI obsah                            | **ForgeMsg**                                            | reálné Claude API, širší (subject/body/translate/per-recipient/sequence/accessibility)                                    |
+| Brand kit                           | **Constant Contact**                                    | CC skenuje web → logo/barvy; MF jen manuální guidelines + AI brand voice z textu                                          |
+| Automations / autorespondery        | **ForgeMsg**                                            | víc kanálů + triggerů, run-state persistuje přes wait; resend-to-non-openers ✅                                           |
+| Sending & deliverability            | **ForgeMsg**                                            | vlastní Go MTA + DKIM + DMARC + scheduler cron; CC nedává vlastní MTA                                                     |
+| **Event Marketing / RSVP**          | **Constant Contact**                                    | MF nemá nativní tvorbu eventů/registrace/RSVP/prodej lístků 🔴 (jen ingestní overlay nad externí ticketing app)           |
+| Surveys, polls & feedback           | **ForgeMsg** (data)                                     | ✅ vč. NPS/CSAT; ale bez hostované vyplňovací stránky                                                                     |
+| Coupons                             | **ForgeMsg**                                            | unikátní kódy + store-sync (Shopify/Woo); CC má jednodušší                                                                |
+| **Donations (neziskovky)**          | **Constant Contact**                                    | MF nemá donation stránky 🔴                                                                                               |
+| SMS / multichannel                  | **ForgeMsg**                                            | SMS+WhatsApp+Viber+Push+Voice; CC jen SMS (US add-on)                                                                     |
+| Social — organic posting            | **remíza**                                              | oba reálné (MF: FB/IG/LI/X/TikTok)                                                                                        |
+| Social — paid ads                   | **Constant Contact**                                    | CC tvoří a spouští FB/IG/Google ads; MF jen audience sync + reporting 🟡                                                  |
+| Ecommerce                           | **ForgeMsg**                                            | 8 platforem + CZ storefronty + feedy + AI doporučení + coupon sync                                                        |
+| **Website / e-shop / logo builder** | **Constant Contact**                                    | MF nemá 🔴                                                                                                                |
+| Reporting & analytics               | **ForgeMsg** (hloubka) / CC (geo/device/heatmap polish) | MF: atribuce/cohorty/prediktiva; CC: mapa + device breakdown, kde MF má mrtvý write-path                                  |
+| **Integrations marketplace**        | **Constant Contact**                                    | 300+ app + Zapier; MF ~30 nativních, žádný marketplace/Zapier 🔴                                                          |
+| Účet / admin                        | **ForgeMsg**                                            | SSO/SAML + audit log + 4 role + 2FA; CC bez SSO                                                                           |
+| **Mobilní aplikace**                | **Constant Contact**                                    | MF nemá 🔴 (backend/web only)                                                                                             |
 
 ---
 
@@ -90,7 +90,7 @@ Metodika: 5 doménových agentů ověřilo **reálnou implementaci ForgeMsg př�
 
 **Toto je největší CC flagship, který ForgeMsg nemá.**
 
-**ForgeMsg má „ticketing", ale je to něco jiného:** ingestní / marketingový **overlay nad EXTERNÍ ticketing aplikací (Tixly)**, ne nativní event management. Schema `db/schema/ticketing.ts`: `externalEvents` (zrcadlo externího eventu — `externalId`, neprodaná místa/tiery) + `eventAttendance` (`purchased|attended|waitlisted|lottery_won|refunded|cart_abandoned`). Hlavička souboru to říká doslova: *„Populated by the ingestion/sync layer from a ticketing app (e.g. Tixly); ForgeMsg owns the marketing on top."* Route `ticketing.ts` = jen ingestní webhook (`POST /events`, `/events/batch`, `/seed-workflows`, `/recipes`) + crony (day-of / fill-the-house / discover).
+**ForgeMsg má „ticketing", ale je to něco jiného:** ingestní / marketingový **overlay nad EXTERNÍ ticketing aplikací (Tixly)**, ne nativní event management. Schema `db/schema/ticketing.ts`: `externalEvents` (zrcadlo externího eventu — `externalId`, neprodaná místa/tiery) + `eventAttendance` (`purchased|attended|waitlisted|lottery_won|refunded|cart_abandoned`). Hlavička souboru to říká doslova: _„Populated by the ingestion/sync layer from a ticketing app (e.g. Tixly); ForgeMsg owns the marketing on top."_ Route `ticketing.ts` = jen ingestní webhook (`POST /events`, `/events/batch`, `/seed-workflows`, `/recipes`) + crony (day-of / fill-the-house / discover).
 
 **Co MF NEMÁ (a CC má):** tvorba eventu v produktu, **hostovaná veřejná registrační / RSVP stránka**, prodej lístků / checkout, správa účastníků (attendee management), event reminder jako produktová funkce, event dashboard v UI. (`routes/v1/events.ts` je nesouvisející — je to custom-event tracking pro workflow triggery.)
 
@@ -202,6 +202,7 @@ Vlastní Go MTA + DKIM/DMARC · WhatsApp · Viber · Web Push/FCM · AI Voice bo
 V **e-mailu, automatizacích, datech, kanálech a deliverability je ForgeMsg dál než Constant Contact** — hlubší segmentace, RFM/prediktiva/atribuce, multivariate testy, vlastní MTA, multichannel (WhatsApp/Viber/Push/Voice), SSO/audit. **Constant Contact ale vyhrává v celé „hostované self-serve vrstvě", kterou ForgeMsg nemá vůbec:** landing pages, **Event Marketing/RSVP** (CC flagship), website+e-shop+logo builder, donations, hostované formuláře a survey stránky, mobilní app, 300+ marketplace + Zapier a vizuálně dotažené reporty (geo mapa, device breakdown, heat-map).
 
 **Pokud je cíl „reálně nahradit Constant Contact", priority (od největší mezery):**
+
 1. **Landing page builder** (hostované stránky) — a při té příležitosti dokončit **hostovanou stránku signup formuláře** (obojí stojí na stejné „hostované page" vrstvě, která dnes úplně chybí).
 2. **Event Marketing / RSVP** jako nativní produkt (tvorba eventu → hostovaná registrační/RSVP stránka → správa účastníků → event e-maily). Dnešní ticketing je jen ingestní overlay.
 3. **Mobilní app** a **integrations marketplace + Zapier**.

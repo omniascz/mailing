@@ -120,7 +120,8 @@ export const pushSendLog = pgTable(
     /** iOS badge count */
     badge: text('badge'),
     /** Action buttons e.g. [{action:'confirm',title:'Yes'},{action:'dismiss',title:'No'}] */
-    actionButtons: jsonb('action_buttons').$type<Array<{ action: string; title: string; icon?: string }>>(),
+    actionButtons:
+      jsonb('action_buttons').$type<Array<{ action: string; title: string; icon?: string }>>(),
     /** Which action button was clicked */
     actionClicked: text('action_clicked'),
     clickedAt: timestamp('clicked_at', { withTimezone: true }),

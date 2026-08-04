@@ -1,1 +1,0 @@
-ALTER TABLE "sending_domains" ADD COLUMN "public_badge_enabled" boolean DEFAULT false NOT NULL;

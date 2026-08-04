@@ -9,6 +9,38 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./redis": {
+      "types": "./dist/redis/index.d.ts",
+      "import": "./dist/redis/index.js"
+    },
+    "./sending/verp": {
+      "types": "./dist/sending/verp.d.ts",
+      "import": "./dist/sending/verp.js"
+    },
+    "./sending/isp-throttle": {
+      "types": "./dist/sending/isp-throttle.d.ts",
+      "import": "./dist/sending/isp-throttle.js"
+    },
+    "./viber/adapter": {
+      "types": "./dist/viber/adapter.d.ts",
+      "import": "./dist/viber/adapter.js"
+    },
+    "./viber/providers/infobip": {
+      "types": "./dist/viber/providers/infobip.d.ts",
+      "import": "./dist/viber/providers/infobip.js"
+    },
+    "./viber/providers/rakuten": {
+      "types": "./dist/viber/providers/rakuten.d.ts",
+      "import": "./dist/viber/providers/rakuten.js"
+    },
+    "./viber/providers/messagebird": {
+      "types": "./dist/viber/providers/messagebird.d.ts",
+      "import": "./dist/viber/providers/messagebird.js"
+    },
+    "./whatsapp/meta-adapter": {
+      "types": "./dist/whatsapp/meta-adapter.d.ts",
+      "import": "./dist/whatsapp/meta-adapter.js"
     }
   },
   "scripts": {
@@ -18,6 +50,9 @@
     "lint": "eslint src/",
     "test": "vitest run",
     "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "ioredis": "^5.10.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

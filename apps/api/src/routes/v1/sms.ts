@@ -44,7 +44,7 @@ import {
 } from '../../services/sms/compliance.js';
 import { BulkgateSmsAdapter } from '../../channels/sms/bulkgate-adapter.js';
 
-import { MetaWhatsAppAdapter } from '../../channels/whatsapp/meta-adapter.js';
+import { MetaWhatsAppAdapter } from '@forgemsg/shared/whatsapp/meta-adapter';
 import type { InboundMessage } from '@forgemsg/shared';
 
 export default async function smsRoutes(app: FastifyInstance) {

@@ -38,6 +38,30 @@ const engine = new Liquid({
   // Relax strict mode so missing variables render as '' not throw
   strictVariables: false,
   strictFilters: false,
+
+  // ─── Resource limits ───────────────────────────────────────────────────────
+  // Neither guard below the constructor actually bounds work: the 1 MB output
+  // check runs *after* the render finishes, and the 5 s Promise.race cannot
+  // interrupt a synchronous CPU-bound render because that render is what is
+  // blocking the event loop the timer lives on. Measured: a 106-byte template
+  // (`{% for %}` nested 3 deep over 1..400) ran 25.6 s and peaked at 2 GB heap
+  // before the output check fired. These are the limits that do the bounding.
+  //
+  // parseLimit — cap on template source parsed. Largest real templates
+  // measured: 222 B (seeded campaign), 876 B (largest inline HTML literal in
+  // apps/api), 3.7 KB (largest i18n email module). 500 KB leaves ~500x headroom
+  // over anything observed and still covers a rich block-editor newsletter,
+  // while staying under MAX_OUTPUT_BYTES so parse can never outgrow output.
+  parseLimit: 500_000,
+  // renderLimit — wall-clock budget per render, in ms. This is the one that
+  // actually stops the nested-loop DoS.
+  renderLimit: 1000,
+  // memoryLimit — bytes tracked by liquidjs across the render.
+  memoryLimit: 1e8, // 100 MB
+  // Pinned rather than inherited: liquidjs currently defaults this to true, but
+  // relying on a default means an upstream change silently re-opens prototype
+  // chain access from user templates.
+  ownPropertyOnly: true,
   // Jinja-style output tags so they coexist with {{ merge tags }} — we
   // process merge tags first, THEN Liquid, so by the time Liquid sees the
   // string the merge tags have already been replaced by their values.
@@ -50,7 +74,10 @@ const engine = new Liquid({
  * merge-tag path so `{{ name | vocative }}` behaves identically whether it is
  * rendered by the regex parser or by Liquid.
  */
-export function registerLiquidFilter(name: string, fn: (value: unknown, ...args: unknown[]) => unknown): void {
+export function registerLiquidFilter(
+  name: string,
+  fn: (value: unknown, ...args: unknown[]) => unknown,
+): void {
   engine.registerFilter(name, fn);
 }
 

@@ -28,8 +28,20 @@ describe('resolveEffectiveSendOptions', () => {
         tlsPolicy: 'require',
         trackingEnabled: false,
         eventDestinations: [
-          { name: 'a', type: 'webhook', enabled: true, matchingEventTypes: ['bounce'], url: 'https://x/hook' },
-          { name: 'b', type: 'webhook', enabled: false, matchingEventTypes: ['open'], url: 'https://y' },
+          {
+            name: 'a',
+            type: 'webhook',
+            enabled: true,
+            matchingEventTypes: ['bounce'],
+            url: 'https://x/hook',
+          },
+          {
+            name: 'b',
+            type: 'webhook',
+            enabled: false,
+            matchingEventTypes: ['open'],
+            url: 'https://y',
+          },
           { name: 'c', type: 'sns', enabled: true, matchingEventTypes: ['delivery'] },
           { name: 'd', type: 'webhook', enabled: true, matchingEventTypes: ['click'] }, // no url
         ],

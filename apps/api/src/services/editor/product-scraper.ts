@@ -5,7 +5,7 @@
  */
 
 import crypto from 'node:crypto';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';

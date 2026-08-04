@@ -15,7 +15,7 @@ const mockRedis = {
   expire: vi.fn(),
   decr: vi.fn(),
 };
-vi.mock('../lib/redis.js', () => ({ redis: mockRedis }));
+vi.mock('@forgemsg/shared/redis', () => ({ redis: mockRedis }));
 
 const mockDb: Record<string, unknown> = {
   select: vi.fn().mockReturnThis(),

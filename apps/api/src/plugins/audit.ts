@@ -66,8 +66,7 @@ export function deriveAudit(
   if (last && !last.startsWith(':')) {
     return { resource, action: `${resource}.${last}` };
   }
-  const verb =
-    method === 'POST' ? 'created' : method === 'DELETE' ? 'deleted' : 'updated';
+  const verb = method === 'POST' ? 'created' : method === 'DELETE' ? 'deleted' : 'updated';
   return { resource, action: `${resource}.${verb}` };
 }
 

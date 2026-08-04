@@ -21,7 +21,7 @@ import {
   checkThrottle,
   recordThrottleSignal,
   detectIsp,
-} from '../../../api/src/services/sending/isp-throttle.js';
+} from '@forgemsg/shared/sending/isp-throttle';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 

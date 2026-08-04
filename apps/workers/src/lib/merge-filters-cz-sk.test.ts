@@ -19,9 +19,7 @@ beforeAll(() => {
 describe('|vocative (Czech 5th case)', () => {
   it('Petr → Petře', () => {
     const ctx = { contact: { first_name: 'Petr' } };
-    expect(parseMergeTags('Vážený {{contact.first_name|vocative}},', ctx)).toBe(
-      'Vážený Petře,',
-    );
+    expect(parseMergeTags('Vážený {{contact.first_name|vocative}},', ctx)).toBe('Vážený Petře,');
   });
 
   it('Pavel → Pavle', () => {
@@ -77,9 +75,7 @@ describe('|dative (Czech 3rd case)', () => {
 describe('|sk_vocative (Slovak)', () => {
   it('Peter → Peter', () => {
     const ctx = { contact: { first_name: 'Peter' } };
-    expect(parseMergeTags('Vážený {{contact.first_name|sk_vocative}},', ctx)).toBe(
-      'Vážený Peter,',
-    );
+    expect(parseMergeTags('Vážený {{contact.first_name|sk_vocative}},', ctx)).toBe('Vážený Peter,');
   });
 
   it('Jana → Jana (Slovak vocative = nominative for most female names)', () => {
@@ -107,15 +103,15 @@ describe('|decline locale-aware alias', () => {
 describe('chained filters', () => {
   it('|vocative|default:"zákazníku" — fallback when name missing', () => {
     const ctx = { contact: {} };
-    expect(
-      parseMergeTags('Vážený {{contact.first_name|vocative|default:"zákazníku"}},', ctx),
-    ).toBe('Vážený zákazníku,');
+    expect(parseMergeTags('Vážený {{contact.first_name|vocative|default:"zákazníku"}},', ctx)).toBe(
+      'Vážený zákazníku,',
+    );
   });
 
   it('|vocative|default — name present, default ignored', () => {
     const ctx = { contact: { first_name: 'Petr' } };
-    expect(
-      parseMergeTags('Vážený {{contact.first_name|vocative|default:"zákazníku"}},', ctx),
-    ).toBe('Vážený Petře,');
+    expect(parseMergeTags('Vážený {{contact.first_name|vocative|default:"zákazníku"}},', ctx)).toBe(
+      'Vážený Petře,',
+    );
   });
 });

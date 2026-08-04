@@ -2,9 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # master, not main — this repo's default branch is master, so the push
+    # trigger pointed at a branch that does not exist and CI never ran on a
+    # merge. Only the pull_request trigger was firing.
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,15 +25,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Both checks run even if the earlier one fails, so a single CI run
+      # reports the full set of violations instead of stopping at the first.
       - run: pnpm format:check
+        if: always()
       - run: pnpm lint
+        if: always()
 
   typecheck:
     name: Type Check
@@ -37,8 +43,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -52,7 +56,11 @@ jobs:
     needs: [typecheck]
     services:
       postgres:
-        image: postgres:16-alpine
+        # pgvector, not plain postgres:16-alpine — the baseline migration opens
+        # with `CREATE EXTENSION IF NOT EXISTS vector;` and alpine answers
+        # `ERROR: extension "vector" is not available` (the control file is not
+        # on the image at all, so IF NOT EXISTS does not save it).
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: forgemsg_test
           POSTGRES_USER: forgemsg
@@ -79,14 +87,71 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The suite currently passes with no database at all (postgres-js connects
+      # lazily and nothing queries), so this does not change any result today.
+      # It exists so the Postgres service is actually schema-backed and the
+      # first test that does hit the DB gets a real one instead of an empty one.
+      - name: Apply migrations
+        run: pnpm --filter @forgemsg/api db:migrate
       - run: pnpm test
+
+  integration:
+    name: Integration (real DB)
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    # Deliberately NOT in the CI Pass needs list yet — this is one test, and a
+    # single new check should not be able to gate the whole pipeline until it
+    # has a track record.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: forgemsg_itest
+          POSTGRES_USER: forgemsg
+          POSTGRES_PASSWORD: forgemsg
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U forgemsg"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # 127.0.0.1, not localhost: postgres-js in the app's connection pool
+      # resolves `localhost` to ::1 on some hosts and then times out against a
+      # service published on IPv4. Reproduced locally as
+      # `write CONNECT_TIMEOUT localhost:55433`.
+      DATABASE_URL: postgresql://forgemsg:forgemsg@127.0.0.1:5432/forgemsg_itest
+      REDIS_URL: redis://127.0.0.1:6379
+      JWT_SECRET: integration-only-secret-not-for-production-1234567890
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # @forgemsg/shared "exports" point at ./dist, and the integration suite
+      # imports it (services/auth/sessions.ts -> @forgemsg/shared/redis), so the
+      # package has to be built first. Without this the run dies with
+      # `Cannot find package '@forgemsg/shared/redis'`.
+      - run: pnpm turbo build --filter=@forgemsg/shared
+      - run: pnpm --filter @forgemsg/api db:migrate
+      - run: pnpm seed
+      - run: pnpm --filter @forgemsg/api test:integration
 
   build:
     name: Build
@@ -95,8 +160,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -114,7 +177,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -175,12 +237,15 @@ jobs:
       DATABASE_URL: postgresql://forgemsg:forgemsg@localhost:5432/forgemsg_e2e
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: e2e-only-secret-not-for-production-use-1234567890
-      NEXT_PUBLIC_API_URL: http://127.0.0.1:3001
-      API_URL: http://127.0.0.1:3001
+      # localhost, not 127.0.0.1: the session cookie the API sets is host-only,
+      # so a cookie issued by 127.0.0.1:3001 is never sent to localhost:3000 and
+      # apps/web's middleware bounces every logged-in user back to /login.
+      # Both origins must agree on the hostname.
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      API_URL: http://localhost:3001
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -190,16 +255,44 @@ jobs:
       - run: pnpm seed
       - name: Build + start API in background
         run: |
-          pnpm --filter @forgemsg/api build
+          # `pnpm --filter <pkg> build` runs the package script directly and
+          # bypasses turbo, so turbo.json `build.dependsOn: ["^build"]` never
+          # applies and packages/shared/dist is never produced. That is why
+          # this step failed with 144 TS2307 "Cannot find module
+          # '@forgemsg/shared'" the first time the job ever ran.
+          pnpm turbo build --filter=@forgemsg/api
           nohup pnpm --filter @forgemsg/api start > /tmp/api.log 2>&1 &
           sleep 5
-          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3001/health
+          # --retry-connrefused is load-bearing, not decoration: plain --retry
+          # only retries *transient* errors (timeouts, 5xx, 429). A refused
+          # connection — exactly what a not-yet-listening API returns — is not
+          # in that set, so without this flag curl bails on the first attempt
+          # with exit 7 and the 10 retries never run at all.
+          #
+          # --retry 30 (not 10) buys headroom the old budget did not have.
+          # Measured cold start of this same command
+          # (`pnpm --filter @forgemsg/api start`, tsx dist/index.js):
+          #   - dev box (Windows): 13.6 / 14.5 / 16.0 s over three runs
+          #   - this runner (ubuntu-latest): under 5 s — the first curl after
+          #     the sleep succeeded, so the retries were never entered
+          # The runner is the faster of the two, so 5 + 10x2 = 25 s was not
+          # what broke the step; the missing --retry-connrefused was. 30
+          # retries (ceiling 5 + 30x2 = 65 s) cover a cold or loaded runner
+          # at ~4x the slowest start we have measured anywhere, and cost
+          # nothing when the API is already up — curl stops at first success.
+          curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:3001/health || {
+            echo "::group::/tmp/api.log"; cat /tmp/api.log; echo "::endgroup::"; exit 1;
+          }
       - name: Build + start web in background
         run: |
-          pnpm --filter @forgemsg/web build
+          pnpm turbo build --filter=@forgemsg/web
           nohup pnpm --filter @forgemsg/web start > /tmp/web.log 2>&1 &
           sleep 5
-          curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3000/landing
+          # Same reasoning as the API step above: without --retry-connrefused
+          # the retries are dead code for the one failure they exist to cover.
+          curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:3000/landing || {
+            echo "::group::/tmp/web.log"; cat /tmp/web.log; echo "::endgroup::"; exit 1;
+          }
       - name: Install Playwright browsers
         run: pnpm --filter @forgemsg/web exec playwright install --with-deps chromium
       - name: Run smoke

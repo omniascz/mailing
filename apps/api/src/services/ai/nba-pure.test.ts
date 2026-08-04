@@ -25,7 +25,9 @@ describe('pickBestChannel', () => {
   });
 
   it('applies the documented channel weights', () => {
-    expect(pickBestChannel({ email: 0, whatsapp: 100 }).score).toBe(100 * CHANNEL_WEIGHTS.whatsapp!);
+    expect(pickBestChannel({ email: 0, whatsapp: 100 }).score).toBe(
+      100 * CHANNEL_WEIGHTS.whatsapp!,
+    );
   });
 
   it('defaults to email when all scores are zero', () => {

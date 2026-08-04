@@ -225,7 +225,8 @@ describe('isBounceMessage', () => {
 
 describe('extractFailedRecipient', () => {
   it('parses RFC 3464 Final-Recipient', () => {
-    const body = 'Diagnostic-Code: smtp; 550 5.1.1 user unknown\nFinal-Recipient: rfc822; bob@example.com\n';
+    const body =
+      'Diagnostic-Code: smtp; 550 5.1.1 user unknown\nFinal-Recipient: rfc822; bob@example.com\n';
     expect(extractFailedRecipient(body)).toBe('bob@example.com');
   });
 

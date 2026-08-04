@@ -149,7 +149,9 @@ export default async function gamificationRoutes(app: FastifyInstance) {
       .where(and(eq(signupForms.orgId, req.user!.orgId), eq(signupForms.id, id)))
       .returning();
 
-    return reply.send({ data: (updated!.config as FormConfig & { wheelConfig?: WheelConfig }).wheelConfig });
+    return reply.send({
+      data: (updated!.config as FormConfig & { wheelConfig?: WheelConfig }).wheelConfig,
+    });
   });
 
   // ── Admin: spin analytics ─────────────────────────────────────────────────

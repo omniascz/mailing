@@ -87,11 +87,20 @@ export async function fillMissingAltTexts(
     const tag = m[0];
     const altMatch = ALT_RE.exec(m[1] ?? '');
     const srcMatch = SRC_RE.exec(m[1] ?? '');
-    if (!srcMatch) { skipped++; continue; }
+    if (!srcMatch) {
+      skipped++;
+      continue;
+    }
     // Only process if alt is missing or empty
-    if (altMatch && altMatch[1] && altMatch[1].trim()) { skipped++; continue; }
+    if (altMatch && altMatch[1] && altMatch[1].trim()) {
+      skipped++;
+      continue;
+    }
     const src = srcMatch[1] ?? '';
-    if (!src.startsWith('http')) { skipped++; continue; }
+    if (!src.startsWith('http')) {
+      skipped++;
+      continue;
+    }
     toProcess.push({ tag, src });
   }
 

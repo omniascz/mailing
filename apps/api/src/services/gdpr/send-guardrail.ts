@@ -16,7 +16,12 @@ import { and, eq, isNull, desc } from 'drizzle-orm';
 
 export interface ConsentCheckResult {
   allowed: boolean;
-  reason: 'no_purpose_configured' | 'consent_granted' | 'no_consent' | 'consent_expired' | 'consent_revoked';
+  reason:
+    | 'no_purpose_configured'
+    | 'consent_granted'
+    | 'no_consent'
+    | 'consent_expired'
+    | 'consent_revoked';
   purposeId?: string;
   purposeSlug?: string;
 }
@@ -71,25 +76,50 @@ export async function checkSendConsent(
 
   // No consent record → block
   if (!latest) {
-    return { allowed: false, reason: 'no_consent', purposeId: purpose.id, purposeSlug: purpose.slug };
+    return {
+      allowed: false,
+      reason: 'no_consent',
+      purposeId: purpose.id,
+      purposeSlug: purpose.slug,
+    };
   }
 
   // Revoked → block
   if (latest.revokedAt) {
-    return { allowed: false, reason: 'consent_revoked', purposeId: purpose.id, purposeSlug: purpose.slug };
+    return {
+      allowed: false,
+      reason: 'consent_revoked',
+      purposeId: purpose.id,
+      purposeSlug: purpose.slug,
+    };
   }
 
   // Explicitly not granted → block
   if (!latest.granted) {
-    return { allowed: false, reason: 'no_consent', purposeId: purpose.id, purposeSlug: purpose.slug };
+    return {
+      allowed: false,
+      reason: 'no_consent',
+      purposeId: purpose.id,
+      purposeSlug: purpose.slug,
+    };
   }
 
   // Expired → block
   if (latest.expiresAt && latest.expiresAt < new Date()) {
-    return { allowed: false, reason: 'consent_expired', purposeId: purpose.id, purposeSlug: purpose.slug };
+    return {
+      allowed: false,
+      reason: 'consent_expired',
+      purposeId: purpose.id,
+      purposeSlug: purpose.slug,
+    };
   }
 
-  return { allowed: true, reason: 'consent_granted', purposeId: purpose.id, purposeSlug: purpose.slug };
+  return {
+    allowed: true,
+    reason: 'consent_granted',
+    purposeId: purpose.id,
+    purposeSlug: purpose.slug,
+  };
 }
 
 /**

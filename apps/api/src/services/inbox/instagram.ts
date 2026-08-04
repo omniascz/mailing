@@ -162,7 +162,11 @@ export async function fetchInstagramThread(
   if (!res.ok) throw new Error(`Instagram thread fetch failed: HTTP ${res.status}`);
 
   const json = (await res.json()) as {
-    data?: Array<{ messages?: { data?: Array<{ id: string; message: string; from: { id: string }; created_time: string }> } }>;
+    data?: Array<{
+      messages?: {
+        data?: Array<{ id: string; message: string; from: { id: string }; created_time: string }>;
+      };
+    }>;
   };
   return json.data?.[0]?.messages?.data ?? [];
 }
@@ -170,7 +174,10 @@ export async function fetchInstagramThread(
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 /** Resolve a ForgeMsg contactId from an Instagram IGSID using social_contact_identifiers. */
-async function resolveContactByExternalId(orgId: string, externalId: string): Promise<string | null> {
+async function resolveContactByExternalId(
+  orgId: string,
+  externalId: string,
+): Promise<string | null> {
   const { socialContactIdentifiers } = await import('../../db/schema/index.js');
   const { eq, and } = await import('drizzle-orm');
   const [row] = await db

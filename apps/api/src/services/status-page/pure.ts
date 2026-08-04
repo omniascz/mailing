@@ -173,9 +173,7 @@ export function buildIncidentBody(kind: SignalKind, ctx: SignalContext = {}): st
  */
 export function buildResolveBody(durationSeconds: number, postmortemUrl?: string): string {
   const human = formatDuration(durationSeconds);
-  const lines = [
-    `Incident resolved after ${human}. All metrics back within nominal ranges.`,
-  ];
+  const lines = [`Incident resolved after ${human}. All metrics back within nominal ranges.`];
   if (postmortemUrl) {
     lines.push('');
     lines.push(`Post-mortem: ${postmortemUrl}`);
@@ -213,9 +211,7 @@ export function pickIncidentToUpdate(
   openIncidents: Array<{ id: string; dedupKey: string; status: IncidentStatus }>,
 ): string | null {
   const key = dedupKey(kind, ctx);
-  const match = openIncidents.find(
-    (i) => i.dedupKey === key && i.status !== 'RESOLVED',
-  );
+  const match = openIncidents.find((i) => i.dedupKey === key && i.status !== 'RESOLVED');
   return match?.id ?? null;
 }
 

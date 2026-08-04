@@ -7,7 +7,10 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { refreshAllIpBlacklists, refreshIpBlacklist } from '../../../services/deliverability/blacklist-monitor.js';
+import {
+  refreshAllIpBlacklists,
+  refreshIpBlacklist,
+} from '../../../services/deliverability/blacklist-monitor.js';
 
 export default async function internalBlacklistCheckRoutes(app: FastifyInstance) {
   app.post(
@@ -21,7 +24,9 @@ export default async function internalBlacklistCheckRoutes(app: FastifyInstance)
 
       if (query.ip) {
         const result = await refreshIpBlacklist(query.ip);
-        return { data: { checked: 1, listed: result.totalListings > 0 ? 1 : 0, details: [result] } };
+        return {
+          data: { checked: 1, listed: result.totalListings > 0 ? 1 : 0, details: [result] },
+        };
       }
 
       const result = await refreshAllIpBlacklists();

@@ -12,23 +12,19 @@ import { AppError } from '../../lib/app-error.js';
 const paramsSchema = z.object({ token: z.string().min(1).max(2048) });
 
 export default async function browserRoutes(app: FastifyInstance) {
-  app.get(
-    '/api/v1/browser/:token',
-    { schema: { tags: ['Public'] } },
-    async (request, reply) => {
-      const { token } = paramsSchema.parse(request.params);
-      const html = await renderCampaignForToken(token);
-      if (!html) {
-        throw new AppError({
-          code: 'NOT_FOUND',
-          message: 'This email is no longer available.',
-          statusCode: 404,
-        });
-      }
-      return reply
-        .header('Content-Type', 'text/html; charset=utf-8')
-        .header('Cache-Control', 'public, max-age=3600')
-        .send(html);
-    },
-  );
+  app.get('/api/v1/browser/:token', { schema: { tags: ['Public'] } }, async (request, reply) => {
+    const { token } = paramsSchema.parse(request.params);
+    const html = await renderCampaignForToken(token);
+    if (!html) {
+      throw new AppError({
+        code: 'NOT_FOUND',
+        message: 'This email is no longer available.',
+        statusCode: 404,
+      });
+    }
+    return reply
+      .header('Content-Type', 'text/html; charset=utf-8')
+      .header('Cache-Control', 'public, max-age=3600')
+      .send(html);
+  });
 }

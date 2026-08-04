@@ -18,7 +18,7 @@ import { and, desc, eq, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { deals, dealStageHistory } from '../../db/schema/deals.js';
 import { callClaude, cacheKey } from '../../lib/ai-client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 type Deal = typeof deals.$inferSelect;
 

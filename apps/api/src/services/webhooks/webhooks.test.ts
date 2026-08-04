@@ -26,7 +26,7 @@ const mockDb: Record<string, unknown> = {
 };
 
 vi.mock('../../db/client.js', () => ({ db: mockDb }));
-vi.mock('../../lib/redis.js', () => ({
+vi.mock('@forgemsg/shared/redis', () => ({
   redis: {
     get: vi.fn().mockResolvedValue(null),
     setex: vi.fn().mockResolvedValue('OK'),
@@ -220,7 +220,15 @@ describe('createApiKey', () => {
     ]);
 
     const { createApiKey } = await import('./index.js');
-    const result = await createApiKey('o1', 'u1', 'pub key', ['in_app:read'], undefined, 'live', true);
+    const result = await createApiKey(
+      'o1',
+      'u1',
+      'pub key',
+      ['in_app:read'],
+      undefined,
+      'live',
+      true,
+    );
 
     expect(result.rawKey).toMatch(/^fm_pub_/);
     expect(mockDb.values).toHaveBeenCalledWith(expect.objectContaining({ isPublic: true }));

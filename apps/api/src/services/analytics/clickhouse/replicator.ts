@@ -16,7 +16,7 @@
 import { and, or, eq, gt, lte, sql, asc } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { emailEvents } from '../../../db/schema/index.js';
-import { redis } from '../../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { chInsert, isClickHouseEnabled } from './client.js';
 
 const WM_KEY = 'ch:repl:email_events:wm';

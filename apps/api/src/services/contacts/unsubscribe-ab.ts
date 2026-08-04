@@ -30,17 +30,20 @@ export async function assignVariant(
   contactId: string,
 ): Promise<AssignedVariant | null> {
   // Find active experiment
-  const [exp] = await db.select().from(unsubscribeExperiments)
-    .where(and(
-      eq(unsubscribeExperiments.orgId, orgId),
-      eq(unsubscribeExperiments.status, 'active'),
-    ))
+  const [exp] = await db
+    .select()
+    .from(unsubscribeExperiments)
+    .where(
+      and(eq(unsubscribeExperiments.orgId, orgId), eq(unsubscribeExperiments.status, 'active')),
+    )
     .orderBy(desc(unsubscribeExperiments.createdAt))
     .limit(1);
 
   if (!exp) return null;
 
-  const variants = await db.select().from(unsubscribeVariants)
+  const variants = await db
+    .select()
+    .from(unsubscribeVariants)
     .where(eq(unsubscribeVariants.experimentId, exp.id));
 
   if (!variants.length) return null;
@@ -80,7 +83,8 @@ export async function assignVariant(
 
 /** Record that a contact was shown a variant (impression). */
 export async function recordImpression(variantId: string): Promise<void> {
-  await db.update(unsubscribeVariants)
+  await db
+    .update(unsubscribeVariants)
     .set({ impressions: sql`impressions + 1` })
     .where(eq(unsubscribeVariants.id, variantId));
 }
@@ -88,11 +92,13 @@ export async function recordImpression(variantId: string): Promise<void> {
 /** Record the final outcome: saved (kept subscribed) or unsubscribed. */
 export async function recordOutcome(variantId: string, saved: boolean): Promise<void> {
   if (saved) {
-    await db.update(unsubscribeVariants)
+    await db
+      .update(unsubscribeVariants)
       .set({ savedCount: sql`saved_count + 1` })
       .where(eq(unsubscribeVariants.id, variantId));
   } else {
-    await db.update(unsubscribeVariants)
+    await db
+      .update(unsubscribeVariants)
       .set({ unsubCount: sql`unsub_count + 1` })
       .where(eq(unsubscribeVariants.id, variantId));
   }
@@ -103,20 +109,24 @@ export async function analyzeExperiment(
   orgId: string,
   experimentId: string,
 ): Promise<Array<{ variant: UnsubscribeVariant; saveRate: number; significant: boolean }>> {
-  const variants = await db.select().from(unsubscribeVariants)
-    .where(and(
-      eq(unsubscribeVariants.experimentId, experimentId),
-      eq(unsubscribeVariants.orgId, orgId),
-    ));
+  const variants = await db
+    .select()
+    .from(unsubscribeVariants)
+    .where(
+      and(eq(unsubscribeVariants.experimentId, experimentId), eq(unsubscribeVariants.orgId, orgId)),
+    );
 
-  return variants.map((v) => {
-    const n = v.impressions;
-    const saves = v.savedCount;
-    const saveRate = n > 0 ? saves / n : 0;
-    // Wilson score lower bound (95% confidence interval)
-    const significant = n >= 50 && (saveRate - 1.96 * Math.sqrt(saveRate * (1 - saveRate) / n)) > 0;
-    return { variant: v, saveRate, significant };
-  }).sort((a, b) => b.saveRate - a.saveRate);
+  return variants
+    .map((v) => {
+      const n = v.impressions;
+      const saves = v.savedCount;
+      const saveRate = n > 0 ? saves / n : 0;
+      // Wilson score lower bound (95% confidence interval)
+      const significant =
+        n >= 50 && saveRate - 1.96 * Math.sqrt((saveRate * (1 - saveRate)) / n) > 0;
+      return { variant: v, saveRate, significant };
+    })
+    .sort((a, b) => b.saveRate - a.saveRate);
 }
 
 /** Declare a winner and mark experiment completed. */
@@ -125,9 +135,12 @@ export async function declareWinner(
   experimentId: string,
   winnerVariantId: string,
 ): Promise<UnsubscribeExperiment> {
-  const [row] = await db.update(unsubscribeExperiments)
+  const [row] = await db
+    .update(unsubscribeExperiments)
     .set({ status: 'completed', winnerVariantId, updatedAt: new Date() })
-    .where(and(eq(unsubscribeExperiments.id, experimentId), eq(unsubscribeExperiments.orgId, orgId)))
+    .where(
+      and(eq(unsubscribeExperiments.id, experimentId), eq(unsubscribeExperiments.orgId, orgId)),
+    )
     .returning();
   return row!;
 }

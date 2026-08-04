@@ -88,34 +88,24 @@ describe('localHourIn', () => {
 
 describe('isInQuietHours', () => {
   it('false when window unset', () => {
-    expect(
-      isInQuietHours({ start: null, end: 8, timezone: 'Europe/Prague' }),
-    ).toBe(false);
-    expect(
-      isInQuietHours({ start: 22, end: null, timezone: 'Europe/Prague' }),
-    ).toBe(false);
+    expect(isInQuietHours({ start: null, end: 8, timezone: 'Europe/Prague' })).toBe(false);
+    expect(isInQuietHours({ start: 22, end: null, timezone: 'Europe/Prague' })).toBe(false);
   });
   it('false when timezone missing', () => {
     expect(isInQuietHours({ start: 22, end: 8, timezone: null })).toBe(false);
   });
   it('false for out-of-range hours', () => {
-    expect(
-      isInQuietHours({ start: 25, end: 8, timezone: 'Europe/Prague' }),
-    ).toBe(false);
+    expect(isInQuietHours({ start: 25, end: 8, timezone: 'Europe/Prague' })).toBe(false);
   });
   it('true when current Prague hour is inside quiet window', () => {
     // 23:00 UTC → 01:00 Prague (DST)
     const now = new Date('2026-05-30T23:00:00Z');
-    expect(
-      isInQuietHours({ start: 22, end: 8, timezone: 'Europe/Prague', now }),
-    ).toBe(true);
+    expect(isInQuietHours({ start: 22, end: 8, timezone: 'Europe/Prague', now })).toBe(true);
   });
   it('false when current Prague hour is outside', () => {
     // 10:00 UTC → 12:00 Prague (DST)
     const now = new Date('2026-05-30T10:00:00Z');
-    expect(
-      isInQuietHours({ start: 22, end: 8, timezone: 'Europe/Prague', now }),
-    ).toBe(false);
+    expect(isInQuietHours({ start: 22, end: 8, timezone: 'Europe/Prague', now })).toBe(false);
   });
 });
 

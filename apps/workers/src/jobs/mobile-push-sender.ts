@@ -25,7 +25,7 @@ async function processMobilePush(job: Job<MobilePushJobData>) {
   const d = job.data;
   if (!d.title && !d.body) return { skipped: 'empty' };
 
-  const { sendContactMobilePush } = await import('../../../api/src/services/push/mobile.js');
+  const { sendContactMobilePush } = await import('@forgemsg/api/services/push/mobile');
   const summary = await sendContactMobilePush(
     d.orgId,
     d.contactId,

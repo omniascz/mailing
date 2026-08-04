@@ -17,36 +17,36 @@ or non-email channels, MailForge gets you both.
 
 ## 30-second comparison
 
-| | **MailForge** | **Resend** |
-| --- | --- | --- |
-| Transactional API | ✅ Resend-compatible shape | ✅ |
-| React Email support | ✅ via `@forgemsg/react-email` | ✅ |
-| Next.js SDK | ✅ `@forgemsg/next` | ✅ `resend` |
-| Idempotency-Key | ✅ | ✅ |
-| Batch send (≤ 100/request) | ✅ | ✅ |
-| Attachments | ✅ | ✅ |
-| Scheduled send | ✅ | ✅ |
-| Webhooks (delivered/bounce/complaint/open/click) | ✅ | ✅ |
-| Domain verification (SPF/DKIM/DMARC) | ✅ | ✅ |
-| Custom tracking domain | ✅ | ✅ |
-| Marketing campaigns | ✅ Full builder | ⚠️ Basic broadcasts |
-| Drag-and-drop block editor | ✅ | ❌ |
-| Workflows / automation | ✅ React Flow canvas | ❌ |
-| Segments (boolean + behavioural) | ✅ | ❌ |
-| RFM + CLV + churn prediction | ✅ | ❌ |
-| Engagement Score | ✅ proprietary | ❌ |
-| Channel Scoring per recipient | ✅ | ❌ |
-| Cross-channel frequency cap | ✅ | ❌ |
-| SMS | ✅ pass-through Twilio + 2× markup | ❌ |
-| WhatsApp Business | ✅ | ❌ |
-| Voice agent (Claude + ElevenLabs) | ✅ | ❌ |
-| AI features (subject, body, sentiment, NL→SQL) | ✅ Claude included | ❌ |
-| Shoptet / Upgates / Shopify | ✅ native | ❌ |
-| Czech / Slovak localisation | ✅ vokativ + jmeniny + ISDOC | ❌ |
-| EU data residency default | ✅ Frankfurt | ⚠️ via region |
-| Free tier | 500 contacts / 2 500 emails | 3 000 emails / 100 a day |
-| Transactional 50K emails | €19 / mo (Send Starter) | $20 / mo |
-| Marketing 50K contacts | €129 / mo (Business) | not offered |
+|                                                  | **MailForge**                      | **Resend**               |
+| ------------------------------------------------ | ---------------------------------- | ------------------------ |
+| Transactional API                                | ✅ Resend-compatible shape         | ✅                       |
+| React Email support                              | ✅ via `@forgemsg/react-email`     | ✅                       |
+| Next.js SDK                                      | ✅ `@forgemsg/next`                | ✅ `resend`              |
+| Idempotency-Key                                  | ✅                                 | ✅                       |
+| Batch send (≤ 100/request)                       | ✅                                 | ✅                       |
+| Attachments                                      | ✅                                 | ✅                       |
+| Scheduled send                                   | ✅                                 | ✅                       |
+| Webhooks (delivered/bounce/complaint/open/click) | ✅                                 | ✅                       |
+| Domain verification (SPF/DKIM/DMARC)             | ✅                                 | ✅                       |
+| Custom tracking domain                           | ✅                                 | ✅                       |
+| Marketing campaigns                              | ✅ Full builder                    | ⚠️ Basic broadcasts      |
+| Drag-and-drop block editor                       | ✅                                 | ❌                       |
+| Workflows / automation                           | ✅ React Flow canvas               | ❌                       |
+| Segments (boolean + behavioural)                 | ✅                                 | ❌                       |
+| RFM + CLV + churn prediction                     | ✅                                 | ❌                       |
+| Engagement Score                                 | ✅ proprietary                     | ❌                       |
+| Channel Scoring per recipient                    | ✅                                 | ❌                       |
+| Cross-channel frequency cap                      | ✅                                 | ❌                       |
+| SMS                                              | ✅ pass-through Twilio + 2× markup | ❌                       |
+| WhatsApp Business                                | ✅                                 | ❌                       |
+| Voice agent (Claude + ElevenLabs)                | ✅                                 | ❌                       |
+| AI features (subject, body, sentiment, NL→SQL)   | ✅ Claude included                 | ❌                       |
+| Shoptet / Upgates / Shopify                      | ✅ native                          | ❌                       |
+| Czech / Slovak localisation                      | ✅ vokativ + jmeniny + ISDOC       | ❌                       |
+| EU data residency default                        | ✅ Frankfurt                       | ⚠️ via region            |
+| Free tier                                        | 500 contacts / 2 500 emails        | 3 000 emails / 100 a day |
+| Transactional 50K emails                         | €19 / mo (Send Starter)            | $20 / mo                 |
+| Marketing 50K contacts                           | €129 / mo (Business)               | not offered              |
 
 ## Drop-in code migration
 
@@ -113,11 +113,11 @@ For those teams, Resend is excellent and we won't try to convert you.
 ## Pricing comparison at common volumes
 
 | Monthly emails | **MailForge Send Starter** | **Resend Pro** |
-| --- | --- | --- |
-| 10 000 | €9 (Send Lite) | $20 |
-| 50 000 | €19 (Send Starter) | $20 |
-| 200 000 | €59 (Send Growth) | $90 (Business) |
-| 1 000 000 | €189 (Send Pro) | $200 (Scale) |
+| -------------- | -------------------------- | -------------- |
+| 10 000         | €9 (Send Lite)             | $20            |
+| 50 000         | €19 (Send Starter)         | $20            |
+| 200 000        | €59 (Send Growth)          | $90 (Business) |
+| 1 000 000      | €189 (Send Pro)            | $200 (Scale)   |
 
 If you also want marketing features (contacts, segments, workflows),
 MailForge's contact-based plans include them at no extra cost.

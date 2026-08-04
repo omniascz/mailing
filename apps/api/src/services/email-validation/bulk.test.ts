@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Stub redis at the module level so bulk validation runs in isolation
 // from a live Redis instance.
-vi.mock('../../lib/redis.js', () => ({
+vi.mock('@forgemsg/shared/redis', () => ({
   redis: {
     get: vi.fn().mockResolvedValue(null),
     setex: vi.fn().mockResolvedValue('OK'),
@@ -81,11 +81,7 @@ describe('bulkValidate', () => {
 
   it('dedupes MX lookups per distinct domain', async () => {
     const dnsModule = await import('node:dns/promises');
-    await bulkValidate([
-      'a@example.com',
-      'b@example.com',
-      'c@example.com',
-    ]);
+    await bulkValidate(['a@example.com', 'b@example.com', 'c@example.com']);
     expect(dnsModule.default.resolveMx).toHaveBeenCalledTimes(1);
   });
 

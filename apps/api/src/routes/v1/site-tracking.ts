@@ -137,8 +137,8 @@ export default async function siteTrackingRoutes(app: FastifyInstance) {
         // matching has something to compare against.
         const site = await svc.getSiteByToken(body.siteToken).catch(() => null);
         if (site) {
-          const ip = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim()
-            ?? req.ip;
+          const ip =
+            (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ?? req.ip;
           const fp = buildFingerprint({
             ip,
             userAgent: req.headers['user-agent'],

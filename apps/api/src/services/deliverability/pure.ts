@@ -301,9 +301,7 @@ export interface ReputationProviderInput {
  * Aggregate per-provider reputation signals into a single summary.
  * Pure function: no Redis, no HTTP — testable in isolation.
  */
-export function aggregateReputation(
-  providers: ReputationProviderInput[],
-): ReputationSummary {
+export function aggregateReputation(providers: ReputationProviderInput[]): ReputationSummary {
   const known = providers.filter((p) => p.tier !== 'unknown' && !p.error);
   const tiers = known.map((p) => p.tier);
   const scores = known.filter((p) => p.score !== undefined).map((p) => p.score as number);
@@ -319,16 +317,11 @@ export function aggregateReputation(
           : 'high';
 
   const overallScore =
-    scores.length > 0
-      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-      : null;
+    scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
 
-  const maxSpamRate =
-    spamRates.length > 0 ? Math.max(...spamRates) : null;
+  const maxSpamRate = spamRates.length > 0 ? Math.max(...spamRates) : null;
 
-  const hasAlert =
-    overallTier === 'low' ||
-    (maxSpamRate !== null && maxSpamRate > 0.005); // > 0.5% spam rate
+  const hasAlert = overallTier === 'low' || (maxSpamRate !== null && maxSpamRate > 0.005); // > 0.5% spam rate
 
   return { overallTier, overallScore, maxSpamRate, hasAlert };
 }

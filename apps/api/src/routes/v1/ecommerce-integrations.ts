@@ -21,7 +21,7 @@ import crypto from 'node:crypto';
 import { db } from '../../db/client.js';
 import { ecommerceConnections } from '../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import {
   listConnections,
   getConnection,
@@ -467,7 +467,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
 
       // Find the connection by shop domain
       const rawBody =
-        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
+        JSON.stringify(req.body);
       const [conn] = await db
         .select()
         .from(ecommerceConnections)
@@ -507,7 +508,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       const signature = (req.headers['x-upgates-signature'] as string) ?? '';
       const topic = (req.headers['x-upgates-event'] as string) ?? '';
       const rawBody =
-        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
+        JSON.stringify(req.body);
 
       const [conn] = await db
         .select()
@@ -556,7 +558,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       const signature = (req.headers['x-shoptet-signature'] as string) ?? '';
       const topic = (req.headers['x-shoptet-event'] as string) ?? '';
       const rawBody =
-        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
+        JSON.stringify(req.body);
 
       const [conn] = await db
         .select()
@@ -597,7 +600,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       const signature = req.headers['x-wc-webhook-signature'] as string;
       const topic = req.headers['x-wc-webhook-topic'] as string;
       const rawBody =
-        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
+        JSON.stringify(req.body);
 
       const [conn] = await db
         .select()
@@ -634,7 +638,8 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       const { connectionId } = z.object({ connectionId: z.string().uuid() }).parse(req.params);
       const signature = (req.headers['x-bc-signature'] as string) ?? '';
       const rawBody =
-        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ?? JSON.stringify(req.body);
+        (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
+        JSON.stringify(req.body);
 
       const [conn] = await db
         .select()

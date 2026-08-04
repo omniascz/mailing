@@ -12,7 +12,11 @@
  * If the org doesn't have enough labelled data yet, trainLeadModel returns null
  * and callers fall back to the transparent heuristic in predictive.ts.
  */
-import { trainLogistic, predictLogistic, type LogisticModel } from '../../lib/logistic-regression.js';
+import {
+  trainLogistic,
+  predictLogistic,
+  type LogisticModel,
+} from '../../lib/logistic-regression.js';
 
 export interface LeadSample {
   leadScore: number;

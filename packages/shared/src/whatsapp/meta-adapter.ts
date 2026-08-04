@@ -27,7 +27,7 @@ import {
   type ChannelTemplate,
   type ValidationResult,
   type RateLimits,
-} from '@forgemsg/shared';
+} from '../index.js';
 
 const API_VERSION = 'v21.0';
 const BASE_URL = `https://graph.facebook.com/${API_VERSION}`;

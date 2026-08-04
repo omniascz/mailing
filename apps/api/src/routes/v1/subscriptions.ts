@@ -28,7 +28,7 @@ import {
   suppressions,
   organizations,
 } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 import { t, resolveLocale, verifyTrackingToken, type SupportedLocale } from '@forgemsg/shared';
@@ -289,7 +289,12 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/unsubscribe/:token',
-    { schema: { tags: ['Subscriptions'], summary: 'One-click unsubscribe (RFC 8058, token in path)' } },
+    {
+      schema: {
+        tags: ['Subscriptions'],
+        summary: 'One-click unsubscribe (RFC 8058, token in path)',
+      },
+    },
     async (req, reply) => {
       const { token } = z.object({ token: unsubTokenSchema }).parse(req.params);
       try {

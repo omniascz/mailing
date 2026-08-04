@@ -8,47 +8,47 @@ Metodika: 5 doménových agentů ověřilo **reálnou implementaci ForgeMsg př�
 
 ## Scoreboard (kdo vede v doméně)
 
-| Doména | Vítěz | Poznámka |
-|---|---|---|
-| Mail Send API (single) | **remíza** | MF: to/from/subject/html/text/templateId/mergeVars/scheduleAt/tags/attachments/config-set; chybí reply-to/headers/custom-args na JSON routě (jen přes raw MIME) |
-| Raw MIME send | **remíza** | oba ✅ (MF `/transactional/email/raw`) |
-| Batch / personalizations | **SendGrid** | MF má 2 batch endpointy (1000), ale **žádný cancel scheduled batche podle batch ID**; používá `recipients[]`, ne SendGrid `personalizations[]` |
-| **Dynamic Templates** | **SendGrid** | SendGrid Handlebars ({{#each}} loops) + verzování; MF merge-tags + DynamicBlock podmínky, **Liquid loops nezapojené** do template sendu, **žádné verzování** |
-| Categories | **SendGrid** | MF ukládá `tags` do metadata, ale **nedotazovatelné + žádné category-stats** |
-| Sandbox mode | **remíza** | MF: test-key + account sandbox gate; SendGrid má per-request `sandbox_mode` flag (MF ne) |
-| Mail/tracking settings | **SendGrid** | MF: jen combined `trackingEnabled`; chybí footer/bcc/bypass/spam-check/GA-UTM/separate open-vs-click |
-| **SMTP relay** | **remíza** | oba ✅ (MF Go submission server :587 AUTH LOGIN/PLAIN + credential issuance) |
-| Scheduled send | **remíza** | oba ✅ (MF přes BullMQ delay); MF nemá dedikovaný cron ani cancel delayed jobu |
-| Domain Authentication (DKIM/SPF/DMARC) | **remíza** | MF živé DNS ověření + BYODKIM + DMARC aggregate ingestion |
-| Link Branding (custom tracking domain) | **remíza** | oba ✅ (MF branded subdoména, verify wizard deferred) |
-| Reverse DNS / PTR | **SendGrid** | MF má jen store-only `ptrRecord` pole, žádné provisioning/verify |
-| Dedicated IP + pooly + warmup | **remíza** | MF: pickIpForSend → engine bind, warmup enforce; **ale config-set IP pool jen na transactional cestě, ne na kampaních** |
-| **VERP / Return-Path** | **remíza** | oba ✅ (MF engine MAIL FROM = Return-Path) |
-| TLS enforcement | **remíza** | MF config-set `require` → engine abort bez plaintext; **jen na transactional cestě** |
-| **Event Webhook** | **SendGrid** | MF firuje sent/delivered/opened/clicked/bounced/complained/unsubscribed; chybí processed/dropped/deferred/group_unsubscribe/group_resubscribe |
-| Webhook signature | **remíza (schéma se liší)** | MF HMAC-SHA256 + timestamped V2 (replay), SendGrid ECDSA; MF retries 5× |
-| Inbound Parse + routing | **ForgeMsg** | MF konfigurovatelná per-tenant rules engine (Mail Manager); SendGrid jen jeden webhook |
-| Suppression management | **SendGrid** | MF: CRUD + auto-add + check ✅, ale **1 reason enum** vs SendGridových 5 listů (Bounces/Blocks/Invalid/Spam/Global) |
-| **ASM Unsubscribe Groups** | **remíza / 🟡** | MF Topics (per-group opt-out ✅), ale one-click je global ne per-group; hosted page JSON-only na API vrstvě |
-| Stats API | **SendGrid** | MF: account + geo + device + client; **chybí ISP/mailbox-provider dimenze + category time-series** |
-| Bounce/complaint/ARF | **ForgeMsg** | 2 klasifikátory + ARF processor + auto-quarantine + real-time auto-pause |
-| Marketing: contacts/segmenty | **ForgeMsg** | 8úrovňové segmenty + behavioral; SendGrid segment query mělčí |
-| Single Sends + A/B + STO | **remíza** | oba ✅ (MF A/B winner + STO + Timewarp) |
-| Automations | **ForgeMsg** | 32 reálně volaných triggerů + víc kanálů akcí; SendGrid automations jednodušší |
-| Editor + šablony | **ForgeMsg** | 13 bloků + 71 šablon; SendGrid Design Library srovnatelný |
-| Signup Forms | **ForgeMsg** | hostovaná stránka + embed + A/B + targeting |
-| **Email Validation API** | **remíza** | MF: syntax/disposable/role/MX/score ✅ (wired do contact create + bulk); chybí „did-you-mean" korekce |
-| Verified single-sender | **remíza** | oba ✅ (MF email-identities) |
-| Subusers | **remíza** | MF parent-child + consolidated billing; **per-child dedicated IP/reputation nemodelováno** |
-| Teammates + role | **remíza** | MF 4 role + Teams layer |
-| **API-key scopes** | **remíza** | MF globálně vynucené (BC) + katalog `/api-keys/scopes` |
-| IP Access Management | **remíza** | MF per-org CIDR allow-list (IPv4-only) |
-| SSO + 2FA | **remíza** | MF SAML+OIDC + TOTP; **2FA nevynucené při loginu** |
-| Alerts | **SendGrid** | MF jen anomaly alerts, žádné usage-% quota alerts |
-| Email Activity Feed | **SendGrid** | MF: lookup/list, **ne searchable** podle příjemce/statusu |
-| Audit log | **SendGrid** | MF: query hotový, ale **zápisy jen ze superadmin** (org akce se nelogují) |
-| Rate limit / quota | **remíza** | MF flat 100/min + plan quotas + **per-second send-rate** (`enforceSendRate`, wired do transactional) |
-| Multichannel + CRM + CDP + AI | **ForgeMsg** | SendGrid nemá vůbec |
+| Doména                                 | Vítěz                       | Poznámka                                                                                                                                                        |
+| -------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mail Send API (single)                 | **remíza**                  | MF: to/from/subject/html/text/templateId/mergeVars/scheduleAt/tags/attachments/config-set; chybí reply-to/headers/custom-args na JSON routě (jen přes raw MIME) |
+| Raw MIME send                          | **remíza**                  | oba ✅ (MF `/transactional/email/raw`)                                                                                                                          |
+| Batch / personalizations               | **SendGrid**                | MF má 2 batch endpointy (1000), ale **žádný cancel scheduled batche podle batch ID**; používá `recipients[]`, ne SendGrid `personalizations[]`                  |
+| **Dynamic Templates**                  | **SendGrid**                | SendGrid Handlebars ({{#each}} loops) + verzování; MF merge-tags + DynamicBlock podmínky, **Liquid loops nezapojené** do template sendu, **žádné verzování**    |
+| Categories                             | **SendGrid**                | MF ukládá `tags` do metadata, ale **nedotazovatelné + žádné category-stats**                                                                                    |
+| Sandbox mode                           | **remíza**                  | MF: test-key + account sandbox gate; SendGrid má per-request `sandbox_mode` flag (MF ne)                                                                        |
+| Mail/tracking settings                 | **SendGrid**                | MF: jen combined `trackingEnabled`; chybí footer/bcc/bypass/spam-check/GA-UTM/separate open-vs-click                                                            |
+| **SMTP relay**                         | **remíza**                  | oba ✅ (MF Go submission server :587 AUTH LOGIN/PLAIN + credential issuance)                                                                                    |
+| Scheduled send                         | **remíza**                  | oba ✅ (MF přes BullMQ delay); MF nemá dedikovaný cron ani cancel delayed jobu                                                                                  |
+| Domain Authentication (DKIM/SPF/DMARC) | **remíza**                  | MF živé DNS ověření + BYODKIM + DMARC aggregate ingestion                                                                                                       |
+| Link Branding (custom tracking domain) | **remíza**                  | oba ✅ (MF branded subdoména, verify wizard deferred)                                                                                                           |
+| Reverse DNS / PTR                      | **SendGrid**                | MF má jen store-only `ptrRecord` pole, žádné provisioning/verify                                                                                                |
+| Dedicated IP + pooly + warmup          | **remíza**                  | MF: pickIpForSend → engine bind, warmup enforce; **ale config-set IP pool jen na transactional cestě, ne na kampaních**                                         |
+| **VERP / Return-Path**                 | **remíza**                  | oba ✅ (MF engine MAIL FROM = Return-Path)                                                                                                                      |
+| TLS enforcement                        | **remíza**                  | MF config-set `require` → engine abort bez plaintext; **jen na transactional cestě**                                                                            |
+| **Event Webhook**                      | **SendGrid**                | MF firuje sent/delivered/opened/clicked/bounced/complained/unsubscribed; chybí processed/dropped/deferred/group_unsubscribe/group_resubscribe                   |
+| Webhook signature                      | **remíza (schéma se liší)** | MF HMAC-SHA256 + timestamped V2 (replay), SendGrid ECDSA; MF retries 5×                                                                                         |
+| Inbound Parse + routing                | **ForgeMsg**                | MF konfigurovatelná per-tenant rules engine (Mail Manager); SendGrid jen jeden webhook                                                                          |
+| Suppression management                 | **SendGrid**                | MF: CRUD + auto-add + check ✅, ale **1 reason enum** vs SendGridových 5 listů (Bounces/Blocks/Invalid/Spam/Global)                                             |
+| **ASM Unsubscribe Groups**             | **remíza / 🟡**             | MF Topics (per-group opt-out ✅), ale one-click je global ne per-group; hosted page JSON-only na API vrstvě                                                     |
+| Stats API                              | **SendGrid**                | MF: account + geo + device + client; **chybí ISP/mailbox-provider dimenze + category time-series**                                                              |
+| Bounce/complaint/ARF                   | **ForgeMsg**                | 2 klasifikátory + ARF processor + auto-quarantine + real-time auto-pause                                                                                        |
+| Marketing: contacts/segmenty           | **ForgeMsg**                | 8úrovňové segmenty + behavioral; SendGrid segment query mělčí                                                                                                   |
+| Single Sends + A/B + STO               | **remíza**                  | oba ✅ (MF A/B winner + STO + Timewarp)                                                                                                                         |
+| Automations                            | **ForgeMsg**                | 32 reálně volaných triggerů + víc kanálů akcí; SendGrid automations jednodušší                                                                                  |
+| Editor + šablony                       | **ForgeMsg**                | 13 bloků + 71 šablon; SendGrid Design Library srovnatelný                                                                                                       |
+| Signup Forms                           | **ForgeMsg**                | hostovaná stránka + embed + A/B + targeting                                                                                                                     |
+| **Email Validation API**               | **remíza**                  | MF: syntax/disposable/role/MX/score ✅ (wired do contact create + bulk); chybí „did-you-mean" korekce                                                           |
+| Verified single-sender                 | **remíza**                  | oba ✅ (MF email-identities)                                                                                                                                    |
+| Subusers                               | **remíza**                  | MF parent-child + consolidated billing; **per-child dedicated IP/reputation nemodelováno**                                                                      |
+| Teammates + role                       | **remíza**                  | MF 4 role + Teams layer                                                                                                                                         |
+| **API-key scopes**                     | **remíza**                  | MF globálně vynucené (BC) + katalog `/api-keys/scopes`                                                                                                          |
+| IP Access Management                   | **remíza**                  | MF per-org CIDR allow-list (IPv4-only)                                                                                                                          |
+| SSO + 2FA                              | **remíza**                  | MF SAML+OIDC + TOTP; **2FA nevynucené při loginu**                                                                                                              |
+| Alerts                                 | **SendGrid**                | MF jen anomaly alerts, žádné usage-% quota alerts                                                                                                               |
+| Email Activity Feed                    | **SendGrid**                | MF: lookup/list, **ne searchable** podle příjemce/statusu                                                                                                       |
+| Audit log                              | **SendGrid**                | MF: query hotový, ale **zápisy jen ze superadmin** (org akce se nelogují)                                                                                       |
+| Rate limit / quota                     | **remíza**                  | MF flat 100/min + plan quotas + **per-second send-rate** (`enforceSendRate`, wired do transactional)                                                            |
+| Multichannel + CRM + CDP + AI          | **ForgeMsg**                | SendGrid nemá vůbec                                                                                                                                             |
 
 ---
 
@@ -130,7 +130,7 @@ Celý **multichannel** (SMS/WhatsApp/push/voice/Viber) · **CRM** · **CDP + ide
 
 ## Souhrn: kde SendGrid WINS (ForgeMsg chybí / slabší)
 
-**Handlebars dynamic templates** (`{{#each}}` loops) **+ verzování šablon** · **batch cancel podle batch ID** + `personalizations[]` tvar · **categories dotazovatelné + category-stats** · **5 samostatných suppression listů** (Bounces/Blocks/Invalid/Spam/Global) · **ISP/mailbox-provider stats dimenze** + category time-series · **processed/dropped/deferred + group_(un)subscribe eventy** · **ECDSA webhook podpis** · **reply-to/headers/custom-args** na JSON send routě · **per-request sandbox_mode** flag · **mail/tracking settings** (footer/bcc/bypass/spam-check/GA-UTM/separate open-click) · **reverse DNS/PTR provisioning** · **per-child dedicated IP/reputation** u subuserů · email-validation **did-you-mean** korekce · **usage-% alerts** · **searchable activity feed** · **audit log na org akce** · **per-group one-click** unsub.
+**Handlebars dynamic templates** (`{{#each}}` loops) **+ verzování šablon** · **batch cancel podle batch ID** + `personalizations[]` tvar · **categories dotazovatelné + category-stats** · **5 samostatných suppression listů** (Bounces/Blocks/Invalid/Spam/Global) · **ISP/mailbox-provider stats dimenze** + category time-series · **processed/dropped/deferred + group\_(un)subscribe eventy** · **ECDSA webhook podpis** · **reply-to/headers/custom-args** na JSON send routě · **per-request sandbox_mode** flag · **mail/tracking settings** (footer/bcc/bypass/spam-check/GA-UTM/separate open-click) · **reverse DNS/PTR provisioning** · **per-child dedicated IP/reputation** u subuserů · email-validation **did-you-mean** korekce · **usage-% alerts** · **searchable activity feed** · **audit log na org akce** · **per-group one-click** unsub.
 
 ## ⚠️ Kritické „postaveno, ale nekompletní" (nejnebezpečnější — vypadá hotově)
 

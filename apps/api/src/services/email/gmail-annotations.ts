@@ -10,26 +10,26 @@
 
 export interface PromoAnnotation {
   type: 'promotion';
-  discount?: string;           // "20%", "€10 off"
-  expiryDate?: string;         // ISO date
-  promoCode?: string;          // "SUMMER20"
-  imageUrl?: string;           // 1200×900 promo image
-  badgeLabel?: string;         // "Exclusive" | "Flash Sale" etc.
+  discount?: string; // "20%", "€10 off"
+  expiryDate?: string; // ISO date
+  promoCode?: string; // "SUMMER20"
+  imageUrl?: string; // 1200×900 promo image
+  badgeLabel?: string; // "Exclusive" | "Flash Sale" etc.
 }
 
 export interface OrderAnnotation {
   type: 'order';
   orderNumber: string;
-  orderDate: string;           // ISO date
+  orderDate: string; // ISO date
   orderStatus: 'ORDER_PLACED' | 'ORDER_SHIPPED' | 'ORDER_DELIVERED' | 'ORDER_CANCELLED';
   trackingUrl?: string;
-  estimatedArrival?: string;   // ISO date
+  estimatedArrival?: string; // ISO date
 }
 
 export interface EventAnnotation {
   type: 'event';
   eventName: string;
-  startDate: string;           // ISO date-time
+  startDate: string; // ISO date-time
   endDate?: string;
   location?: string;
   doorTime?: string;
@@ -53,7 +53,9 @@ function buildPromoJsonLd(promo: PromoAnnotation): Record<string, unknown> {
   if (promo.discount || promo.promoCode || promo.expiryDate) {
     schema['about'] = {
       '@type': 'Offer',
-      ...(promo.discount ? { priceSpecification: { '@type': 'PriceSpecification', description: promo.discount } } : {}),
+      ...(promo.discount
+        ? { priceSpecification: { '@type': 'PriceSpecification', description: promo.discount } }
+        : {}),
       ...(promo.promoCode ? { name: `Use code: ${promo.promoCode}` } : {}),
       ...(promo.expiryDate ? { availabilityEnds: promo.expiryDate } : {}),
     };
@@ -71,7 +73,15 @@ function buildOrderJsonLd(order: OrderAnnotation): Record<string, unknown> {
       orderNumber: order.orderNumber,
       orderDate: order.orderDate,
       orderStatus: `http://schema.org/${order.orderStatus}`,
-      ...(order.trackingUrl ? { potentialAction: { '@type': 'TrackAction', name: 'Track Package', url: order.trackingUrl } } : {}),
+      ...(order.trackingUrl
+        ? {
+            potentialAction: {
+              '@type': 'TrackAction',
+              name: 'Track Package',
+              url: order.trackingUrl,
+            },
+          }
+        : {}),
     },
   };
 }
@@ -105,9 +115,15 @@ function buildEventJsonLd(event: EventAnnotation): Record<string, unknown> {
 export function buildAnnotationScript(annotation: EmailAnnotation): string {
   let schema: Record<string, unknown>;
   switch (annotation.type) {
-    case 'promotion': schema = buildPromoJsonLd(annotation); break;
-    case 'order':     schema = buildOrderJsonLd(annotation); break;
-    case 'event':     schema = buildEventJsonLd(annotation); break;
+    case 'promotion':
+      schema = buildPromoJsonLd(annotation);
+      break;
+    case 'order':
+      schema = buildOrderJsonLd(annotation);
+      break;
+    case 'event':
+      schema = buildEventJsonLd(annotation);
+      break;
   }
   return `<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n</script>`;
 }

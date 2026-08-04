@@ -135,8 +135,7 @@ export async function refreshOrgChannelScores(orgId: string): Promise<{ scored: 
     const bundle = {
       email: facts.email.get(contactId) ?? blankFact(false),
       sms: facts.sms.get(contactId) ?? blankFact(facts.smsConsent.has(contactId)),
-      whatsapp:
-        facts.whatsapp.get(contactId) ?? blankFact(facts.whatsappConsent.has(contactId)),
+      whatsapp: facts.whatsapp.get(contactId) ?? blankFact(facts.whatsappConsent.has(contactId)),
       voice: facts.voice.get(contactId) ?? blankFact(facts.hasPhone.has(contactId)),
       push: facts.push.get(contactId) ?? blankFact(facts.pushReachable.has(contactId)),
     };
@@ -200,10 +199,7 @@ function blankFact(reachable: boolean): ChannelFacts {
   return { sends: 0, engagements: 0, daysSinceLastEngagement: null, reachable };
 }
 
-async function collectFacts(
-  orgId: string,
-  contactIds: string[],
-): Promise<CollectedFacts> {
+async function collectFacts(orgId: string, contactIds: string[]): Promise<CollectedFacts> {
   const since = new Date(Date.now() - SCORE_WINDOW_DAYS * 86_400_000);
 
   const facts: CollectedFacts = {
@@ -302,7 +298,10 @@ async function collectFacts(
     .where(
       and(
         eq(smsConsents.orgId, orgId),
-        inArray(smsConsents.contactId, contactIds.filter((id): id is string => !!id)),
+        inArray(
+          smsConsents.contactId,
+          contactIds.filter((id): id is string => !!id),
+        ),
       ),
     )) as unknown as Array<{ contactId: string | null }>;
   for (const r of smsConsentRows) {
@@ -357,11 +356,7 @@ async function collectFacts(
     .select({ id: contacts.id })
     .from(contacts)
     .where(
-      and(
-        eq(contacts.orgId, orgId),
-        inArray(contacts.id, contactIds),
-        isNotNull(contacts.phone),
-      ),
+      and(eq(contacts.orgId, orgId), inArray(contacts.id, contactIds), isNotNull(contacts.phone)),
     );
   for (const r of phoneRows) facts.hasPhone.add(r.id);
 
@@ -406,7 +401,10 @@ async function collectFacts(
     .where(
       and(
         eq(pushSubscriptions.orgId, orgId),
-        inArray(pushSubscriptions.contactId, contactIds.filter((id): id is string => !!id)),
+        inArray(
+          pushSubscriptions.contactId,
+          contactIds.filter((id): id is string => !!id),
+        ),
       ),
     )) as unknown as Array<{ contactId: string | null }>;
   for (const r of pushSubRows) {

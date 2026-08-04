@@ -29,9 +29,19 @@ describe('matchUrlRules', () => {
   });
 
   it('supports exact, starts_with and regex', () => {
-    expect(matchUrlRules([{ match: 'exact', value: 'https://x.com/' }], 'or', 'https://x.com/')).toBe(true);
-    expect(matchUrlRules([{ match: 'starts_with', value: 'https://x.com/p' }], 'or', 'https://x.com/pricing')).toBe(true);
-    expect(matchUrlRules([{ match: 'regex', value: '/product/\\d+' }], 'or', 'https://x.com/product/42')).toBe(true);
+    expect(
+      matchUrlRules([{ match: 'exact', value: 'https://x.com/' }], 'or', 'https://x.com/'),
+    ).toBe(true);
+    expect(
+      matchUrlRules(
+        [{ match: 'starts_with', value: 'https://x.com/p' }],
+        'or',
+        'https://x.com/pricing',
+      ),
+    ).toBe(true);
+    expect(
+      matchUrlRules([{ match: 'regex', value: '/product/\\d+' }], 'or', 'https://x.com/product/42'),
+    ).toBe(true);
   });
 
   it('treats a malformed regex as never-match', () => {
@@ -54,7 +64,10 @@ describe('evaluateFormTargeting', () => {
   });
 
   it('clamps scroll percent into 1..100', () => {
-    const d = evaluateFormTargeting({ trigger: { type: 'scroll', scrollPercent: 250 } }, { nowMs: NOW });
+    const d = evaluateFormTargeting(
+      { trigger: { type: 'scroll', scrollPercent: 250 } },
+      { nowMs: NOW },
+    );
     expect(d.trigger).toEqual({ type: 'scroll', scrollPercent: 100 });
   });
 
@@ -67,12 +80,16 @@ describe('evaluateFormTargeting', () => {
   it('blocks by URL rules', () => {
     const t: FormTargeting = { urlRules: [{ match: 'contains', value: '/pricing' }] };
     expect(evaluateFormTargeting(t, { url: 'https://x.com/blog', nowMs: NOW }).reason).toBe('url');
-    expect(evaluateFormTargeting(t, { url: 'https://x.com/pricing', nowMs: NOW }).eligible).toBe(true);
+    expect(evaluateFormTargeting(t, { url: 'https://x.com/pricing', nowMs: NOW }).eligible).toBe(
+      true,
+    );
   });
 
   it('enforces max impressions', () => {
     const t: FormTargeting = { frequency: { maxImpressions: 3 } };
-    expect(evaluateFormTargeting(t, { impressionCount: 3, nowMs: NOW }).reason).toBe('max_impressions');
+    expect(evaluateFormTargeting(t, { impressionCount: 3, nowMs: NOW }).reason).toBe(
+      'max_impressions',
+    );
     expect(evaluateFormTargeting(t, { impressionCount: 2, nowMs: NOW }).eligible).toBe(true);
   });
 
@@ -80,13 +97,17 @@ describe('evaluateFormTargeting', () => {
     const t: FormTargeting = { frequency: { cooldownDays: 7 } };
     const twoDaysAgo = NOW - 2 * 86_400_000;
     const tenDaysAgo = NOW - 10 * 86_400_000;
-    expect(evaluateFormTargeting(t, { lastSeenMs: twoDaysAgo, nowMs: NOW }).reason).toBe('cooldown');
+    expect(evaluateFormTargeting(t, { lastSeenMs: twoDaysAgo, nowMs: NOW }).reason).toBe(
+      'cooldown',
+    );
     expect(evaluateFormTargeting(t, { lastSeenMs: tenDaysAgo, nowMs: NOW }).eligible).toBe(true);
   });
 
   it('hides after submit when configured', () => {
     const t: FormTargeting = { frequency: { hideAfterSubmit: true } };
-    expect(evaluateFormTargeting(t, { hasSubmitted: true, nowMs: NOW }).reason).toBe('already_submitted');
+    expect(evaluateFormTargeting(t, { hasSubmitted: true, nowMs: NOW }).reason).toBe(
+      'already_submitted',
+    );
     expect(evaluateFormTargeting(t, { hasSubmitted: false, nowMs: NOW }).eligible).toBe(true);
   });
 });

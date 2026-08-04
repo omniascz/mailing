@@ -106,7 +106,9 @@ export interface ImportedDkimKey {
  * for the DNS record the customer must publish. Accepts RSA and Ed25519
  * (RFC 8463) keys; throws otherwise. Pure + testable.
  */
-export function importDkimPrivateKey(privateKeyPem: string): ImportedDkimKey & { keyType: DkimKeyType } {
+export function importDkimPrivateKey(
+  privateKeyPem: string,
+): ImportedDkimKey & { keyType: DkimKeyType } {
   let priv: crypto.KeyObject;
   try {
     priv = crypto.createPrivateKey(privateKeyPem);

@@ -20,7 +20,7 @@
 
 import { sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 
 const LOOKBACK_DAYS = 90;
 const MIN_EVENTS = 5;
@@ -37,10 +37,7 @@ export interface StoResult {
 
 // ─── Per-contact STO ─────────────────────────────────────────────────────────
 
-export async function getContactSendHour(
-  orgId: string,
-  contactId: string,
-): Promise<StoResult> {
+export async function getContactSendHour(orgId: string, contactId: string): Promise<StoResult> {
   const since = new Date(Date.now() - LOOKBACK_DAYS * 86400_000);
 
   const rows = (await db.execute(sql`

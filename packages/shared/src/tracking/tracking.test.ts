@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createTrackingToken,
-  verifyTrackingToken,
-  type UnsubscribePayload,
-} from './index.js';
+import { createTrackingToken, verifyTrackingToken, type UnsubscribePayload } from './index.js';
 
 describe('unsubscribe tracking token (#440 / one-click unsub)', () => {
   const payload: UnsubscribePayload = {

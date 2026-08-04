@@ -23,7 +23,9 @@ describe('deriveAudit', () => {
 
   it('uses a trailing action verb when present', () => {
     expect(deriveAudit('POST', '/api/v1/campaigns/:id/send')!.action).toBe('campaigns.send');
-    expect(deriveAudit('POST', '/api/v1/suppressions/:id/pause')!.action).toBe('suppressions.pause');
+    expect(deriveAudit('POST', '/api/v1/suppressions/:id/pause')!.action).toBe(
+      'suppressions.pause',
+    );
   });
 
   it('returns null for unaudited resources', () => {

@@ -34,7 +34,9 @@ const programCreateSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().optional(),
   conversionsPerReward: z.number().int().min(1).default(1),
-  rewardType: z.enum(['tier_upgrade', 'loyalty_points', 'stripe_credit', 'webhook', 'none']).default('none'),
+  rewardType: z
+    .enum(['tier_upgrade', 'loyalty_points', 'stripe_credit', 'webhook', 'none'])
+    .default('none'),
   rewardValue: z.string().optional(),
   workflowId: z.string().uuid().optional(),
 });
@@ -51,7 +53,12 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
       const rows = await db
         .select()
         .from(newsletterReferralPrograms)
-        .where(and(eq(newsletterReferralPrograms.orgId, orgId), sql`${newsletterReferralPrograms.isActive} = 1`))
+        .where(
+          and(
+            eq(newsletterReferralPrograms.orgId, orgId),
+            sql`${newsletterReferralPrograms.isActive} = 1`,
+          ),
+        )
         .orderBy(desc(newsletterReferralPrograms.createdAt));
       return { data: rows };
     },
@@ -90,14 +97,18 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
       const existing = await db
         .select({ id: newsletterReferralPrograms.id })
         .from(newsletterReferralPrograms)
-        .where(and(eq(newsletterReferralPrograms.id, id), eq(newsletterReferralPrograms.orgId, orgId)))
+        .where(
+          and(eq(newsletterReferralPrograms.id, id), eq(newsletterReferralPrograms.orgId, orgId)),
+        )
         .limit(1);
       if (!existing.length) throw AppError.notFound('Program');
 
       const [updated] = await db
         .update(newsletterReferralPrograms)
         .set({ ...body, updatedAt: new Date() })
-        .where(and(eq(newsletterReferralPrograms.id, id), eq(newsletterReferralPrograms.orgId, orgId)))
+        .where(
+          and(eq(newsletterReferralPrograms.id, id), eq(newsletterReferralPrograms.orgId, orgId)),
+        )
         .returning();
 
       return { data: updated };
@@ -114,7 +125,9 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
     { schema: { tags: ['Newsletter Referrals'], summary: 'Assign referral code to contact' } },
     async (req) => {
       const orgId = req.user!.orgId;
-      const { contactId, programId } = z.object({ contactId: z.string().uuid(), programId: z.string().uuid() }).parse(req.body);
+      const { contactId, programId } = z
+        .object({ contactId: z.string().uuid(), programId: z.string().uuid() })
+        .parse(req.body);
 
       // Idempotent — return existing code if already assigned
       const existing = await db
@@ -192,11 +205,13 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
     '/api/v1/newsletter-referrals/convert',
     { schema: { tags: ['Newsletter Referrals'], summary: 'Record a referral conversion' } },
     async (req, reply) => {
-      const body = z.object({
-        code: z.string(),
-        referredEmail: z.string().email().optional(),
-        referredContactId: z.string().uuid().optional(),
-      }).parse(req.body);
+      const body = z
+        .object({
+          code: z.string(),
+          referredEmail: z.string().email().optional(),
+          referredContactId: z.string().uuid().optional(),
+        })
+        .parse(req.body);
 
       const [referral] = await db
         .select()
@@ -258,12 +273,19 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
    */
   app.get(
     '/r/:code',
-    { schema: { tags: ['Newsletter Referrals'], summary: 'Referral link redirect' }, config: { public: true } },
+    {
+      schema: { tags: ['Newsletter Referrals'], summary: 'Referral link redirect' },
+      config: { public: true },
+    },
     async (req, reply) => {
       const { code } = z.object({ code: z.string().min(1).max(50) }).parse(req.params);
 
       const [referral] = await db
-        .select({ id: newsletterReferrals.id, orgId: newsletterReferrals.orgId, programId: newsletterReferrals.programId })
+        .select({
+          id: newsletterReferrals.id,
+          orgId: newsletterReferrals.orgId,
+          programId: newsletterReferrals.programId,
+        })
         .from(newsletterReferrals)
         .where(eq(newsletterReferrals.code, code))
         .limit(1);

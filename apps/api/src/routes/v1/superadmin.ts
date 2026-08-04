@@ -29,7 +29,7 @@ import {
   billingSubscriptions,
   abuseEvents,
 } from '../../db/schema/index.js';
-import { redis } from '../../lib/redis.js';
+import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 import { planEnum } from '../../db/schema/enums.js';
 import { logAuditEvent } from '../../services/audit-log/index.js';
@@ -212,7 +212,9 @@ export default async function superadminRoutes(app: FastifyInstance) {
   // ── Grant production sending access (leave sandbox) ────────────────────────
   app.post(
     '/api/v1/superadmin/orgs/:id/grant-production',
-    { schema: { tags: ['SuperAdmin'], summary: 'Grant production sending access (leave sandbox)' } },
+    {
+      schema: { tags: ['SuperAdmin'], summary: 'Grant production sending access (leave sandbox)' },
+    },
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
       const { grantProductionAccess } = await import('../../services/identities/index.js');

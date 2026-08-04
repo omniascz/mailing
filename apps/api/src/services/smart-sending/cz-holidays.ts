@@ -41,16 +41,40 @@ function toKey(d: Date): string {
 }
 
 const CZ_FIXED: Array<[number, number]> = [
-  [1, 1], [1, 5], [8, 5], [5, 7], [6, 7],
-  [28, 9], [28, 10], [17, 11], [24, 12], [25, 12], [26, 12],
+  [1, 1],
+  [1, 5],
+  [8, 5],
+  [5, 7],
+  [6, 7],
+  [28, 9],
+  [28, 10],
+  [17, 11],
+  [24, 12],
+  [25, 12],
+  [26, 12],
 ];
 
 const SK_FIXED: Array<[number, number]> = [
-  [1, 1], [6, 1], [1, 5], [8, 5], [5, 7], [29, 8],
-  [1, 9], [15, 9], [1, 11], [17, 11], [24, 12], [25, 12], [26, 12],
+  [1, 1],
+  [6, 1],
+  [1, 5],
+  [8, 5],
+  [5, 7],
+  [29, 8],
+  [1, 9],
+  [15, 9],
+  [1, 11],
+  [17, 11],
+  [24, 12],
+  [25, 12],
+  [26, 12],
 ];
 
-function buildSet(year: number, fixed: Array<[number, number]>, includeEaster: boolean): Set<string> {
+function buildSet(
+  year: number,
+  fixed: Array<[number, number]>,
+  includeEaster: boolean,
+): Set<string> {
   const s = new Set<string>();
   for (const [day, month] of fixed) {
     s.add(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
