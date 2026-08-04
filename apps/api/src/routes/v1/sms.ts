@@ -46,6 +46,7 @@ import { BulkgateSmsAdapter } from '../../channels/sms/bulkgate-adapter.js';
 
 import { MetaWhatsAppAdapter } from '@forgemsg/shared/whatsapp/meta-adapter';
 import type { InboundMessage } from '@forgemsg/shared';
+import { env } from '../../config/env.js';
 
 export default async function smsRoutes(app: FastifyInstance) {
   // ── Provider routing ──────────────────────────────────────────────────────
@@ -209,7 +210,7 @@ export default async function smsRoutes(app: FastifyInstance) {
     const token = query['hub.verify_token'];
     const challenge = query['hub.challenge'];
 
-    if (mode === 'subscribe' && token === (process.env.WHATSAPP_VERIFY_TOKEN ?? '')) {
+    if (mode === 'subscribe' && token === env.WHATSAPP_VERIFY_TOKEN) {
       return reply.status(200).send(challenge);
     }
 

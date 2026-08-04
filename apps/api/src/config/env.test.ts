@@ -84,6 +84,14 @@ describe('prodRequired — production must not fall back to a committed default'
     DMARC_INBOUND_SECRET: 'a-real-dmarc-secret-16+',
     MINIO_ACCESS_KEY: 'real-access-key',
     MINIO_SECRET_KEY: 'real-secret-key',
+    ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
+    INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
+    FORM_AUTOFILL_SECRET: 'a-real-form-autofill-secret-32-chars',
+    PREFERENCE_CENTRE_SECRET: 'a-real-preference-centre-secret-32ch',
+    FBL_WEBHOOK_SECRET: 'a-real-fbl-webhook-secret-32-chars-x',
+    META_WEBHOOK_VERIFY_TOKEN: 'a-real-meta-verify-token',
+    WHATSAPP_VERIFY_TOKEN: 'a-real-whatsapp-verify-tok',
+    FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
   };
 
   /** Security-critical fields and the dev default each one carries. */
@@ -100,6 +108,51 @@ describe('prodRequired — production must not fall back to a committed default'
     },
     { name: 'MINIO_ACCESS_KEY', devDefault: 'minioadmin', realValue: 'real-access-key' },
     { name: 'MINIO_SECRET_KEY', devDefault: 'minioadmin', realValue: 'real-secret-key' },
+    // Our own signing / encryption keys. Each previously fell back to a string
+    // committed in this repository, and a token forged with that fallback was
+    // accepted by the real verifier.
+    {
+      name: 'ASSET_SIGNING_SECRET',
+      devDefault: 'dev-asset-signing-secret-change-me-32',
+      realValue: 'a-real-asset-signing-secret-32-chars',
+    },
+    {
+      name: 'INBOUND_EMAIL_SECRET',
+      devDefault: 'dev-inbound-email-secret-change-me-32',
+      realValue: 'a-real-inbound-email-secret-32-chars',
+    },
+    {
+      name: 'FORM_AUTOFILL_SECRET',
+      devDefault: 'dev-form-autofill-secret-change-me-32',
+      realValue: 'a-real-form-autofill-secret-32-chars',
+    },
+    {
+      name: 'PREFERENCE_CENTRE_SECRET',
+      devDefault: 'dev-preference-centre-secret-change-32',
+      realValue: 'a-real-preference-centre-secret-32ch',
+    },
+    // Found while classifying the rest of the sensitive keys: these verify
+    // requests coming IN to us, so they belong here too.
+    {
+      name: 'FBL_WEBHOOK_SECRET',
+      devDefault: 'dev-fbl-webhook-secret-change-me-32ch',
+      realValue: 'a-real-fbl-webhook-secret-32-chars-x',
+    },
+    {
+      name: 'META_WEBHOOK_VERIFY_TOKEN',
+      devDefault: 'dev-meta-verify-token-change-me',
+      realValue: 'a-real-meta-verify-token',
+    },
+    {
+      name: 'WHATSAPP_VERIFY_TOKEN',
+      devDefault: 'dev-whatsapp-verify-token-change',
+      realValue: 'a-real-whatsapp-verify-tok',
+    },
+    {
+      name: 'FACEBOOK_WEBHOOK_VERIFY_TOKEN',
+      devDefault: 'dev-facebook-verify-token-change',
+      realValue: 'a-real-facebook-verify-tok',
+    },
   ];
 
   for (const field of CRITICAL) {
@@ -146,6 +199,18 @@ describe('prodRequired — production must not fall back to a committed default'
       'dev-cookie-secret-change-in-production',
       'dev-internal-secret-change-in-production',
       'minioadmin',
+      'dev-asset-signing-secret-change-me-32',
+      'dev-inbound-email-secret-change-me-32',
+      'dev-form-autofill-secret-change-me-32',
+      'dev-preference-centre-secret-change-32',
+      // the pre-fix hardcoded fallbacks, which must never reappear
+      'asset-signing-secret-change-me',
+      'changeme-32-byte-secret-key-here',
+      'preference-centre-secret-change-me',
+      'dev-fbl-webhook-secret-change-me-32ch',
+      'dev-meta-verify-token-change-me',
+      'dev-whatsapp-verify-token-change',
+      'dev-facebook-verify-token-change',
     ]) {
       expect(values).not.toContain(banned);
     }
@@ -249,5 +314,48 @@ describe('merged schema — datastore fields lost their defaults on purpose', ()
     expect(mod.env.DATABASE_URL).toContain('postgresql://');
     expect(mod.env.REDIS_URL).toContain('redis://');
     expect(mod.env.JWT_SECRET).toBeTruthy();
+  });
+});
+
+/**
+ * The two secrets left deliberately optional, and the guarantees that replace
+ * "required in production" for them.
+ */
+describe('optional-by-design secrets', () => {
+  it('HIPAA_FIELD_KEY stays optional — requiring it would stop every non-healthcare deploy booting', async () => {
+    process.env = {
+      NODE_ENV: 'production',
+      ...REQUIRED,
+      SESSION_SECRET: 'a-real-session-secret-at-least-32-chars',
+      INTERNAL_API_SECRET: 'a-real-internal-secret-at-least-32-chars',
+      DMARC_INBOUND_SECRET: 'a-real-dmarc-secret-16+',
+      MINIO_ACCESS_KEY: 'real-access-key',
+      MINIO_SECRET_KEY: 'real-secret-key',
+      ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
+      INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
+      FORM_AUTOFILL_SECRET: 'a-real-form-autofill-secret-32-chars',
+      PREFERENCE_CENTRE_SECRET: 'a-real-preference-centre-secret-32ch',
+      FBL_WEBHOOK_SECRET: 'a-real-fbl-webhook-secret-32-chars-x',
+      META_WEBHOOK_VERIFY_TOKEN: 'a-real-meta-verify-token',
+      WHATSAPP_VERIFY_TOKEN: 'a-real-whatsapp-verify-tok',
+      FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
+      API_PUBLIC_URL: 'https://api.example.com',
+      APP_URL: 'https://app.example.com',
+    };
+    const mod = await import('./env.js');
+    expect(mod.env.HIPAA_FIELD_KEY).toBeUndefined();
+  });
+
+  it('HIPAA_FIELD_KEY must be 64 hex chars when it is set', async () => {
+    process.env = { NODE_ENV: 'development', ...REQUIRED, HIPAA_FIELD_KEY: 'too-short' };
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
+    error.mockRestore();
+  });
+
+  it('PARTNER_PROVISION_SECRET stays optional', async () => {
+    process.env = { NODE_ENV: 'development', ...REQUIRED };
+    const mod = await import('./env.js');
+    expect(mod.env.PARTNER_PROVISION_SECRET).toBeUndefined();
   });
 });

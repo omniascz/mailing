@@ -10,10 +10,11 @@ import crypto from 'node:crypto';
 import { db } from '../../db/client.js';
 import { digitalAssets, digitalAssetDeliveries, licenseKeys } from '../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
+import { env } from '../../config/env.js';
 
 // ─── Signed URL generation ────────────────────────────────────────────────────
 
-const SIGNING_SECRET = process.env.ASSET_SIGNING_SECRET ?? 'asset-signing-secret-change-me';
+const SIGNING_SECRET = env.ASSET_SIGNING_SECRET;
 
 interface DeliveryToken {
   assetId: string;

@@ -28,6 +28,7 @@ import type { MessengerWebhookPayload } from '../../../services/inbox/messenger.
 import { db } from '../../../db/client.js';
 import { metaPageMappings } from '../../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
+import { env } from '../../../config/env.js';
 
 const verifyQuery = z.object({
   'hub.mode': z.string(),
@@ -47,7 +48,7 @@ export default async function metaWebhookRoutes(app: FastifyInstance) {
     }
 
     const { 'hub.mode': mode, 'hub.verify_token': token, 'hub.challenge': challenge } = query.data;
-    const expected = process.env['META_WEBHOOK_VERIFY_TOKEN'];
+    const expected = env.META_WEBHOOK_VERIFY_TOKEN;
 
     if (mode === 'subscribe' && token === expected) {
       return reply.send(challenge);
