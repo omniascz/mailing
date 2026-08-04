@@ -39,6 +39,7 @@ import {
   type MessageStream,
   type TimewarpConfig,
 } from '../queues/index.js';
+import { INTERNAL_SECRET, internalHeaders, internalGetHeaders } from '../lib/internal-api.js';
 
 interface ContactRow {
   id: string;
@@ -48,7 +49,11 @@ interface ContactRow {
   customFields: Record<string, unknown>;
 }
 
-async function processBatchSender(job: Job<BatchSenderJobData>) {
+/**
+ * Exported for the integration suite, which drives a real batch through the
+ * real filters rather than re-implementing them in a mock.
+ */
+export async function processBatchSender(job: Job<BatchSenderJobData>) {
   const data = job.data;
   const stream: MessageStream = data.stream ?? 'broadcast';
 
@@ -522,7 +527,7 @@ async function fetchContacts(orgId: string, contactIds: string[]): Promise<Conta
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/contacts/batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds }),
     });
     if (!res.ok) throw new Error(`API ${res.status}`);
@@ -545,7 +550,7 @@ async function fetchSuppressedBatch(orgId: string, emails: string[]): Promise<st
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/suppressions/check-batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({ orgId, emails }),
     });
     if (!res.ok) return [];
@@ -572,7 +577,7 @@ async function fetchNewsletterTierNames(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
+        'x-internal-secret': INTERNAL_SECRET,
       },
       body: JSON.stringify({ orgId, contactIds }),
     });
@@ -593,7 +598,7 @@ async function fetchCappedBatch(orgId: string, contactIds: string[]): Promise<st
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/frequency/check-batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds, channel: 'email' }),
     });
     if (!res.ok) return [];
@@ -615,7 +620,7 @@ async function fetchHeldOutBatch(orgId: string, contactIds: string[]): Promise<s
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/holdout/check-batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds }),
     });
     if (!res.ok) return [];
@@ -654,7 +659,7 @@ async function fetchConsentBlockedBatch(
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/consent/check-batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds, processingPurposeId: processingPurposeId ?? null }),
     });
     if (!res.ok) return empty; // transport/server fault → fail open
@@ -680,7 +685,7 @@ async function recordFrequencySend(orgId: string, contactId: string): Promise<vo
   try {
     await fetch(`${API_URL}/api/v1/internal/frequency/record`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactId, channel: 'email' }),
     });
   } catch {
@@ -696,7 +701,9 @@ async function recordFrequencySend(orgId: string, contactId: string): Promise<vo
  */
 async function fetchTrackingStrict(orgId: string): Promise<boolean> {
   try {
-    const res = await fetch(`${API_URL}/api/v1/internal/org/tracking-strict?orgId=${orgId}`);
+    const res = await fetch(`${API_URL}/api/v1/internal/org/tracking-strict?orgId=${orgId}`, {
+      headers: internalGetHeaders(),
+    });
     if (!res.ok) return false;
     const body = (await res.json()) as { data: { strict: boolean } };
     return body.data.strict === true;
@@ -714,7 +721,9 @@ async function fetchTrackingStrict(orgId: string): Promise<boolean> {
  */
 async function fetchOrgSuspended(orgId: string): Promise<boolean> {
   try {
-    const res = await fetch(`${API_URL}/api/v1/internal/org/suspended?orgId=${orgId}`);
+    const res = await fetch(`${API_URL}/api/v1/internal/org/suspended?orgId=${orgId}`, {
+      headers: internalGetHeaders(),
+    });
     if (!res.ok) return false;
     const body = (await res.json()) as { data: { suspended: boolean } };
     return body.data.suspended === true;
@@ -735,7 +744,7 @@ async function fetchOptedInForTracking(orgId: string, contactIds: string[]): Pro
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/consent/opted-in-batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({ orgId, channel: 'tracking', contactIds }),
     });
     if (!res.ok) return new Set();
@@ -757,7 +766,9 @@ async function fetchOptedInForTracking(orgId: string, contactIds: string[]): Pro
 async function fetchTrackingBaseUrl(orgId: string): Promise<string> {
   const fallback = process.env.TRACKING_BASE_URL ?? 'https://track.mailforge.io';
   try {
-    const res = await fetch(`${API_URL}/api/v1/internal/tracking-domain?orgId=${orgId}`);
+    const res = await fetch(`${API_URL}/api/v1/internal/tracking-domain?orgId=${orgId}`, {
+      headers: internalGetHeaders(),
+    });
     if (!res.ok) return fallback;
     const body = (await res.json()) as { data: { baseUrl: string; branded: boolean } };
     return body.data.baseUrl ?? fallback;
@@ -781,7 +792,7 @@ async function fetchTimewarpSchedule(
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/timewarp/schedule`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({
         orgId,
         contactIds,

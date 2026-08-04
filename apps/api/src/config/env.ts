@@ -50,7 +50,13 @@ const Env = z.object({
   SESSION_SECRET: prodRequired(z.string().min(32)).default(
     'dev-cookie-secret-change-in-production',
   ),
-  INTERNAL_API_SECRET: prodRequired(z.string().min(32)),
+  // Shared secret for /api/v1/internal/*. Required in production — the API is
+  // published on an internet-facing ingress with `path: /`, so an unset secret
+  // means those routes are open to the world. Dev/test get a fixed default so
+  // the worker↔API loop works out of the box.
+  INTERNAL_API_SECRET: prodRequired(z.string().min(32)).default(
+    'dev-internal-secret-change-in-production',
+  ),
   DMARC_INBOUND_SECRET: prodRequired(z.string().min(16)),
 
   // ─── External providers ───────────────────────────────────────────────────

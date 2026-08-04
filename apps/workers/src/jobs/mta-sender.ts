@@ -22,6 +22,7 @@ import {
   recordThrottleSignal,
   detectIsp,
 } from '@forgemsg/shared/sending/isp-throttle';
+import { internalHeaders } from '../lib/internal-api.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -145,7 +146,7 @@ async function recordEvent(event: {
   try {
     await fetch(`${API_URL}/api/v1/internal/events`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify(event),
     });
   } catch {
@@ -157,7 +158,7 @@ async function addToSuppressionList(orgId: string, email: string, reason: string
   try {
     await fetch(`${API_URL}/api/v1/internal/suppressions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({ orgId, email, reason }),
     });
   } catch {
@@ -173,7 +174,7 @@ async function updateContactStatus(
   try {
     await fetch(`${API_URL}/api/v1/internal/contacts/${contactId}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalHeaders(),
       body: JSON.stringify({ orgId, status }),
     });
   } catch {

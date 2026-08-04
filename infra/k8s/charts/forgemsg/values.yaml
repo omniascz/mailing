@@ -12,6 +12,17 @@ global:
   domain: staging.forgemsg.com
 
   # Reference an externally-managed Secret (created by ops or external-secrets).
+  #
+  # Required keys (both api and workers envFrom this secret, so they see the
+  # same values):
+  #   DATABASE_URL
+  #   REDIS_URL
+  #   JWT_SECRET
+  #   INTERNAL_API_SECRET  — shared secret for /api/v1/internal/*. The API
+  #     refuses to boot in production without it, and rejects internal requests
+  #     that do not carry it as x-internal-secret. It must be present because
+  #     api.ingress publishes `path: /` on an internet-facing ALB, so those
+  #     routes are reachable from outside the cluster.
   externalSecretName: forgemsg-app
 
   # IRSA — bind ServiceAccounts to AWS IAM roles for S3 / SES.

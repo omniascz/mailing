@@ -7,7 +7,7 @@ import { Worker, Queue } from 'bullmq';
 import { connection, QUEUE_NAMES } from '../queues/index.js';
 
 const API_BASE = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
-const INTERNAL_SECRET = process.env.INTERNAL_SECRET ?? '';
+const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? process.env.INTERNAL_SECRET ?? '';
 
 const feedPollQueue = new Queue(QUEUE_NAMES.EXTERNAL_FEED_POLL, { connection });
 
