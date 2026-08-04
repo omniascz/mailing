@@ -260,7 +260,20 @@ jobs:
           pnpm turbo build --filter=@forgemsg/api
           nohup pnpm --filter @forgemsg/api start > /tmp/api.log 2>&1 &
           sleep 5
-          curl --fail --retry 10 --retry-delay 2 http://localhost:3001/health || {
+          # --retry-connrefused is load-bearing, not decoration: plain --retry
+          # only retries *transient* errors (timeouts, 5xx, 429). A refused
+          # connection — exactly what a not-yet-listening API returns — is not
+          # in that set, so without this flag curl bails on the first attempt
+          # with exit 7 and the 10 retries never run at all.
+          #
+          # --retry 30 (not 10): measured cold start of this same command
+          # (`pnpm --filter @forgemsg/api start`, tsx dist/index.js) is
+          # 13.6 / 14.5 / 16.0 s over three local runs. The old ceiling was
+          # 5 + 10x2 = 25 s, which a 2-core runner at ~2x our wall clock
+          # (~32 s) blows straight through. 30 retries put the ceiling at
+          # 5 + 30x2 = 65 s, ~4x the slowest measured start. It costs nothing
+          # when the API is already up — curl stops at the first success.
+          curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:3001/health || {
             echo "::group::/tmp/api.log"; cat /tmp/api.log; echo "::endgroup::"; exit 1;
           }
       - name: Build + start web in background
@@ -268,7 +281,9 @@ jobs:
           pnpm turbo build --filter=@forgemsg/web
           nohup pnpm --filter @forgemsg/web start > /tmp/web.log 2>&1 &
           sleep 5
-          curl --fail --retry 10 --retry-delay 2 http://localhost:3000/landing || {
+          # Same reasoning as the API step above: without --retry-connrefused
+          # the retries are dead code for the one failure they exist to cover.
+          curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:3000/landing || {
             echo "::group::/tmp/web.log"; cat /tmp/web.log; echo "::endgroup::"; exit 1;
           }
       - name: Install Playwright browsers
