@@ -39,7 +39,13 @@ import {
   type MessageStream,
   type TimewarpConfig,
 } from '../queues/index.js';
-import { INTERNAL_SECRET, internalHeaders, internalGetHeaders } from '../lib/internal-api.js';
+import {
+  INTERNAL_SECRET,
+  internalHeaders,
+  internalGetHeaders,
+  throwIfAuthFailure,
+  rethrowIfAuthError,
+} from '../lib/internal-api.js';
 
 interface ContactRow {
   id: string;
@@ -136,7 +142,8 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
     // Use the configuration set's IP pool when the campaign specifies one.
     const ip = await pickIpForSend(data.orgId, data.ipPoolId);
     sendingIp = ip?.ipAddress ?? '';
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     sendingIp = '';
   }
 
@@ -553,10 +560,12 @@ async function fetchSuppressedBatch(orgId: string, emails: string[]): Promise<st
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, emails }),
     });
+    throwIfAuthFailure(res, '/internal/suppressions/check-batch');
     if (!res.ok) return [];
     const body = (await res.json()) as { data: { suppressed: string[] } };
     return body.data.suppressed;
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return [];
   }
 }
@@ -581,10 +590,12 @@ async function fetchNewsletterTierNames(
       },
       body: JSON.stringify({ orgId, contactIds }),
     });
+    throwIfAuthFailure(res, '/internal/newsletter-tiers/batch');
     if (!res.ok) return new Map();
     const body = (await res.json()) as { data: Array<{ contactId: string; tierName: string }> };
     return new Map(body.data.map((r) => [r.contactId, r.tierName]));
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return new Map();
   }
 }
@@ -601,10 +612,12 @@ async function fetchCappedBatch(orgId: string, contactIds: string[]): Promise<st
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds, channel: 'email' }),
     });
+    throwIfAuthFailure(res, '/internal/frequency/check-batch');
     if (!res.ok) return [];
     const body = (await res.json()) as { data: { capped: string[] } };
     return body.data.capped;
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return [];
   }
 }
@@ -623,10 +636,12 @@ async function fetchHeldOutBatch(orgId: string, contactIds: string[]): Promise<s
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds }),
     });
+    throwIfAuthFailure(res, '/internal/holdout/check-batch');
     if (!res.ok) return [];
     const body = (await res.json()) as { data: { heldOut: string[] } };
     return body.data.heldOut;
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return [];
   }
 }
@@ -662,6 +677,7 @@ async function fetchConsentBlockedBatch(
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds, processingPurposeId: processingPurposeId ?? null }),
     });
+    throwIfAuthFailure(res, '/internal/consent/check-batch');
     if (!res.ok) return empty; // transport/server fault → fail open
     const body = (await res.json()) as {
       data: {
@@ -676,7 +692,8 @@ async function fetchConsentBlockedBatch(
       reasons: body.data.reasons ?? {},
       configError: body.data.configError === true,
     };
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return empty; // transport fault → fail open
   }
 }
@@ -688,7 +705,8 @@ async function recordFrequencySend(orgId: string, contactId: string): Promise<vo
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactId, channel: 'email' }),
     });
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     // non-critical
   }
 }
@@ -704,10 +722,12 @@ async function fetchTrackingStrict(orgId: string): Promise<boolean> {
     const res = await fetch(`${API_URL}/api/v1/internal/org/tracking-strict?orgId=${orgId}`, {
       headers: internalGetHeaders(),
     });
+    throwIfAuthFailure(res, '/internal/org/tracking-strict');
     if (!res.ok) return false;
     const body = (await res.json()) as { data: { strict: boolean } };
     return body.data.strict === true;
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return false;
   }
 }
@@ -724,10 +744,12 @@ async function fetchOrgSuspended(orgId: string): Promise<boolean> {
     const res = await fetch(`${API_URL}/api/v1/internal/org/suspended?orgId=${orgId}`, {
       headers: internalGetHeaders(),
     });
+    throwIfAuthFailure(res, '/internal/org/suspended');
     if (!res.ok) return false;
     const body = (await res.json()) as { data: { suspended: boolean } };
     return body.data.suspended === true;
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return false;
   }
 }
@@ -747,10 +769,12 @@ async function fetchOptedInForTracking(orgId: string, contactIds: string[]): Pro
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, channel: 'tracking', contactIds }),
     });
+    throwIfAuthFailure(res, '/internal/consent/opted-in-batch');
     if (!res.ok) return new Set();
     const body = (await res.json()) as { data: { optedIn: string[] } };
     return new Set(body.data.optedIn);
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return new Set();
   }
 }
@@ -769,10 +793,12 @@ async function fetchTrackingBaseUrl(orgId: string): Promise<string> {
     const res = await fetch(`${API_URL}/api/v1/internal/tracking-domain?orgId=${orgId}`, {
       headers: internalGetHeaders(),
     });
+    throwIfAuthFailure(res, '/internal/tracking-domain');
     if (!res.ok) return fallback;
     const body = (await res.json()) as { data: { baseUrl: string; branded: boolean } };
     return body.data.baseUrl ?? fallback;
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return fallback;
   }
 }
@@ -803,10 +829,12 @@ async function fetchTimewarpSchedule(
         holidayCountry: cfg.holidayCountry ?? 'cz',
       }),
     });
+    throwIfAuthFailure(res, '/internal/timewarp/schedule');
     if (!res.ok) return null;
     const body = (await res.json()) as { data: Record<string, string> };
     return new Map(Object.entries(body.data));
-  } catch {
+  } catch (err) {
+    rethrowIfAuthError(err);
     return null;
   }
 }

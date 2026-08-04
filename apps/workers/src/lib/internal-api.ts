@@ -18,3 +18,46 @@ export function internalHeaders(): Record<string, string> {
 export function internalGetHeaders(): Record<string, string> {
   return { 'x-internal-secret': INTERNAL_SECRET };
 }
+
+/**
+ * The API rejected our shared secret.
+ *
+ * Distinct from every other failure on purpose. The internal fetches in this
+ * package fail OPEN — a flaky API must not halt a send — but that posture is
+ * only safe for *transient* faults. A 401 is not transient: it means this
+ * worker's INTERNAL_API_SECRET does not match the API's, and it will not match
+ * on the next contact either. Failing open on it would silently disable
+ * suppression, frequency capping, holdout and GDPR consent for every batch,
+ * which is the exact regression introduced by adding the auth guard.
+ */
+export class InternalAuthError extends Error {
+  readonly status: number;
+  constructor(path: string, status: number) {
+    super(
+      `Internal API rejected our credentials (${status}) on ${path}. ` +
+        `INTERNAL_API_SECRET does not match the API's. Refusing to continue — ` +
+        `failing open here would disable every send-path filter.`,
+    );
+    this.name = 'InternalAuthError';
+    this.status = status;
+  }
+}
+
+/**
+ * Call immediately after every internal fetch, before the fail-open branch.
+ * Turns 401/403 into a throw; every other status is left to the caller.
+ */
+export function throwIfAuthFailure(res: { status: number }, path: string): void {
+  if (res.status === 401 || res.status === 403) {
+    throw new InternalAuthError(path, res.status);
+  }
+}
+
+/**
+ * Call first inside a `catch` that would otherwise swallow into a fail-open
+ * default, so the auth failure is not re-swallowed by the very handler the
+ * transient-fault policy needs.
+ */
+export function rethrowIfAuthError(err: unknown): void {
+  if (err instanceof InternalAuthError) throw err;
+}
