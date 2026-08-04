@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # master, not main — this repo's default branch is master, so the push
+    # trigger pointed at a branch that does not exist and CI never ran on a
+    # merge. Only the pull_request trigger was firing.
+    branches: [master]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
@@ -266,13 +269,17 @@ jobs:
           # in that set, so without this flag curl bails on the first attempt
           # with exit 7 and the 10 retries never run at all.
           #
-          # --retry 30 (not 10): measured cold start of this same command
-          # (`pnpm --filter @forgemsg/api start`, tsx dist/index.js) is
-          # 13.6 / 14.5 / 16.0 s over three local runs. The old ceiling was
-          # 5 + 10x2 = 25 s, which a 2-core runner at ~2x our wall clock
-          # (~32 s) blows straight through. 30 retries put the ceiling at
-          # 5 + 30x2 = 65 s, ~4x the slowest measured start. It costs nothing
-          # when the API is already up — curl stops at the first success.
+          # --retry 30 (not 10) buys headroom the old budget did not have.
+          # Measured cold start of this same command
+          # (`pnpm --filter @forgemsg/api start`, tsx dist/index.js):
+          #   - dev box (Windows): 13.6 / 14.5 / 16.0 s over three runs
+          #   - this runner (ubuntu-latest): under 5 s — the first curl after
+          #     the sleep succeeded, so the retries were never entered
+          # The runner is the faster of the two, so 5 + 10x2 = 25 s was not
+          # what broke the step; the missing --retry-connrefused was. 30
+          # retries (ceiling 5 + 30x2 = 65 s) cover a cold or loaded runner
+          # at ~4x the slowest start we have measured anywhere, and cost
+          # nothing when the API is already up — curl stops at first success.
           curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:3001/health || {
             echo "::group::/tmp/api.log"; cat /tmp/api.log; echo "::endgroup::"; exit 1;
           }

@@ -2,7 +2,9 @@ name: CD
 
 on:
   push:
-    branches: [main]
+    # master, not main — this repo's default branch is master. Same dead
+    # trigger the CI workflow carried.
+    branches: [master]
     tags: ['v*']
   workflow_dispatch:
     inputs:
