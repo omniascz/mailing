@@ -1,11 +1,26 @@
 name: CD
 
+# Manual-only, deliberately. The push trigger (branches: [master] + tags: v*)
+# was removed after it fired for the first time on the PR #1 merge and failed
+# on every push, which is noise that trains people to ignore a red CD.
+#
+# Two things must be fixed before the push trigger comes back:
+#
+#   (a) await-ci races CI on the same push. Both workflows start from the same
+#       event, and `CI Pass` is the LAST job in CI — so the check does not
+#       exist yet when wait-on-check-action looks for it, and the action fails
+#       rather than waiting. It needs `running-workflow-name` (or an equivalent
+#       "wait for the check to appear" setting) before it can gate a push.
+#       Observed: run 30886102955, Await CI exit 1 after ~14s.
+#
+#   (b) The build matrix still publishes sms-gateway, and we have not decided
+#       whether that service ships. Turning the trigger on would start pushing
+#       images for it to GHCR on every merge.
+#
+# The await-ci gate itself is correct and stays as is — `build-push` runs only
+# on `needs.await-ci.result == 'success'`, so a red or missing CI cannot
+# publish. Do not weaken it when re-enabling the trigger.
 on:
-  push:
-    # master, not main — this repo's default branch is master. Same dead
-    # trigger the CI workflow carried.
-    branches: [master]
-    tags: ['v*']
   workflow_dispatch:
     inputs:
       services:
