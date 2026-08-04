@@ -16,8 +16,45 @@ import { z } from 'zod';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Required-in-production helper: optional in dev/test, required in prod.
-const prodRequired = (schema: z.ZodString) => (isProduction ? schema : schema.optional());
+/**
+ * Makes `.default()` un-callable on the result.
+ *
+ * `.default` still exists at runtime — this is a type-level block, not a
+ * deletion — but calling it is a compile error, which is the point: the bug
+ * this guards against was invisible at review and only showed up when someone
+ * booted production without the variable set.
+ */
+type NoChainedDefault<T> = T & { readonly default: never };
+
+/**
+ * Required in production, relaxed in dev/test.
+ *
+ * Do NOT write `prodRequired(schema).default('dev-value')`. `.default()` is
+ * applied to the *result*, so in production the schema becomes
+ * `schema.default('dev-value')` — a missing variable then parses successfully
+ * and the app silently runs on a value published in this repository, instead
+ * of refusing to boot. That is exactly how SESSION_SECRET and
+ * INTERNAL_API_SECRET were both wrong.
+ *
+ * Pass the dev default as the second argument instead. It is applied only when
+ * NODE_ENV is not production, so the two cases cannot be conflated:
+ *
+ *   SESSION_SECRET: prodRequired(z.string().min(32), 'dev-cookie-secret-…')
+ *
+ * The return type also makes the wrong form a typecheck error rather than a
+ * production incident.
+ */
+function prodRequired<T extends z.ZodString>(schema: T): NoChainedDefault<T | z.ZodOptional<T>>;
+function prodRequired<T extends z.ZodString>(
+  schema: T,
+  devDefault: string,
+): NoChainedDefault<T | z.ZodDefault<T>>;
+function prodRequired<T extends z.ZodString>(schema: T, devDefault?: string) {
+  if (isProduction) return schema as NoChainedDefault<T>;
+  return (
+    devDefault === undefined ? schema.optional() : schema.default(devDefault)
+  ) as NoChainedDefault<z.ZodOptional<T> | z.ZodDefault<T>>;
+}
 
 const Env = z.object({
   // ─── Runtime ──────────────────────────────────────────────────────────────
@@ -41,27 +78,21 @@ const Env = z.object({
   // ─── Object storage (MinIO in dev, S3 in prod) ────────────────────────────
   MINIO_ENDPOINT: z.string().default('localhost'),
   MINIO_PORT: z.coerce.number().int().default(9000),
-  MINIO_ACCESS_KEY: z.string().default('minioadmin'),
-  MINIO_SECRET_KEY: z.string().default('minioadmin'),
+  // Object-storage credentials. `minioadmin/minioadmin` is the MinIO default
+  // and is in this file, so booting production on it means anyone can read and
+  // write the bucket. Required in production, defaulted only in dev.
+  MINIO_ACCESS_KEY: prodRequired(z.string(), 'minioadmin'),
+  MINIO_SECRET_KEY: prodRequired(z.string(), 'minioadmin'),
   MINIO_BUCKET: z.string().default('forgemsg'),
   MINIO_USE_SSL: z.coerce.boolean().default(false),
 
   // ─── Secrets (must be set in prod) ────────────────────────────────────────
-  SESSION_SECRET: prodRequired(z.string().min(32)).default(
-    'dev-cookie-secret-change-in-production',
-  ),
+  SESSION_SECRET: prodRequired(z.string().min(32), 'dev-cookie-secret-change-in-production'),
   // Shared secret for /api/v1/internal/*. Required in production — the API is
   // published on an internet-facing ingress with `path: /`, so an unset secret
   // means those routes are open to the world. Dev/test get a fixed default so
   // the worker↔API loop works out of the box.
-  // NOTE: deliberately NOT `prodRequired(...).default(...)`. `.default()` is
-  // applied to the result, so in production the schema becomes
-  // `z.string().min(32).default('dev-…')` — a missing secret would parse
-  // successfully and hand the API a publicly-known value instead of refusing
-  // to boot. The default must exist only outside production.
-  INTERNAL_API_SECRET: isProduction
-    ? z.string().min(32)
-    : z.string().min(32).default('dev-internal-secret-change-in-production'),
+  INTERNAL_API_SECRET: prodRequired(z.string().min(32), 'dev-internal-secret-change-in-production'),
   DMARC_INBOUND_SECRET: prodRequired(z.string().min(16)),
 
   // ─── External providers ───────────────────────────────────────────────────
