@@ -8,6 +8,13 @@
       "when": 1785738822241,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785837472629,
+      "tag": "0001_campaign_processing_purpose",
+      "breakpoints": true
     }
   ]
 }
