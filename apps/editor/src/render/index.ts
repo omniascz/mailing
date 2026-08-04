@@ -15,3 +15,6 @@ export {
   registerLiquidFilter,
   type LiquidContext,
 } from './liquid.js';
+// CZ/SK declension filters. Registers into both the merge-tag and Liquid
+// paths; call once at process start (workers do this in index.ts).
+export { registerLocaleFilters } from './register-locale-filters.js';
