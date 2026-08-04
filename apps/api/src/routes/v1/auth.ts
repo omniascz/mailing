@@ -559,8 +559,17 @@ export default async function authRoutes(app: FastifyInstance) {
       reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions);
       reply.clearCookie('oauth_state', { path: '/' });
 
-      const redirectUrl = process.env.WEB_URL || 'http://localhost:3000';
-      return reply.redirect(`${redirectUrl}/dashboard`);
+      // `/dashboard` is a 404: apps/web puts the dashboard in the `(dashboard)`
+      // route group, and parentheses do not contribute a URL segment — the
+      // authed dashboard is served at `/`. Send OAuth users to the same place
+      // the password login sends them.
+      //
+      // Trailing slashes are stripped before appending: WEB_URL is free-form
+      // (`z.string().url()` accepts `https://app.mailforge.io/`), and
+      // `${WEB_URL}/` on such a value yields `https://app.mailforge.io//`,
+      // which is a different path to Next's router.
+      const redirectUrl = (process.env.WEB_URL || 'http://localhost:3000').replace(/\/+$/, '');
+      return reply.redirect(`${redirectUrl}/`);
     },
   );
 }
