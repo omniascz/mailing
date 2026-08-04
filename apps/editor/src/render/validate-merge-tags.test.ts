@@ -9,7 +9,12 @@ import { registerLocaleFilters } from './register-locale-filters.js';
 import type { MergeTagContext } from './merge-tags.js';
 
 const SAMPLE: MergeTagContext = {
-  contact: { email: 'p@n.cz', firstName: 'Petr', lastName: 'Novák', custom_fields: { plan: 'pro' } },
+  contact: {
+    email: 'p@n.cz',
+    firstName: 'Petr',
+    lastName: 'Novák',
+    custom_fields: { plan: 'pro' },
+  },
   system: { unsubscribeUrl: 'https://u/1', companyName: 'Acme' },
 };
 
@@ -67,7 +72,10 @@ describe('unknown tags', () => {
   });
 
   it('reports each distinct tag once, however often it appears', () => {
-    const w = validateMergeTags('{{contact.xx}} {{contact.xx}} {% if contact.xx %}a{% endif %}', keys);
+    const w = validateMergeTags(
+      '{{contact.xx}} {{contact.xx}} {% if contact.xx %}a{% endif %}',
+      keys,
+    );
     expect(w).toHaveLength(1);
   });
 });
