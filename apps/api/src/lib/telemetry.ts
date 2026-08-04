@@ -8,7 +8,7 @@
  * from the session).
  */
 import * as Sentry from '@sentry/node';
-import { env } from './env.js';
+import { env } from '../config/env.js';
 
 let initialized = false;
 
