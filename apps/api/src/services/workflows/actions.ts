@@ -105,6 +105,40 @@ export function buildRunMergeData(run: {
 
 // ─── Individual action handlers ───────────────────────────────────────────────
 
+/**
+ * Enqueue onto a channel queue, reporting failure instead of swallowing it.
+ *
+ * The four main send actions used to end in `.catch(() => {})` followed by an
+ * unconditional `return { type: 'next' }`, so a queue that was unreachable,
+ * unbound, or simply not there looked identical to a delivered message. The
+ * run advanced either way.
+ */
+async function enqueueOrFail(
+  channel: string,
+  jobName: string,
+  payload: Record<string, unknown>,
+): Promise<ActionResult> {
+  let queues: Record<string, { add: (n: string, d: unknown) => Promise<unknown> }> | null = null;
+  try {
+    ({ queues } = (await import('../../lib/queues.js')) as unknown as {
+      queues: Record<string, { add: (n: string, d: unknown) => Promise<unknown> }>;
+    });
+  } catch (err) {
+    return {
+      type: 'error',
+      message: `${channel}: queue module unavailable: ${(err as Error).message}`,
+    };
+  }
+  const queue = queues?.[channel];
+  if (!queue) return { type: 'error', message: `${channel}: no queue is bound to this channel` };
+  try {
+    await queue.add(jobName, payload);
+  } catch (err) {
+    return { type: 'error', message: `${channel}: enqueue failed: ${(err as Error).message}` };
+  }
+  return { type: 'next', nextNodeId: null };
+}
+
 async function executeSendEmail(
   node: WorkflowNode,
   run: WorkflowRun,
@@ -133,27 +167,16 @@ async function executeSendEmail(
   const extra = buildRunMergeData(run);
 
   // Queue email via BullMQ — workers/src handles the actual send
-  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-  if (queues) {
-    await (
-      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
-    ).email
-      ?.add('workflow-email', {
-        orgId: ctx.orgId,
-        contactId: run.contactId,
-        workflowRunId: run.id,
-        campaignId: config.campaignId,
-        templateId: config.templateId,
-        subject: config.subject
-          ? substituteMergeTags(config.subject, ctx.contact, extra)
-          : undefined,
-        html: config.html ? substituteMergeTags(config.html, ctx.contact, extra) : undefined,
-        text: config.text ? substituteMergeTags(config.text, ctx.contact, extra) : undefined,
-      })
-      .catch(() => {});
-  }
-
-  return { type: 'next', nextNodeId: null };
+  return enqueueOrFail('email', 'workflow-email', {
+    orgId: ctx.orgId,
+    contactId: run.contactId,
+    workflowRunId: run.id,
+    campaignId: config.campaignId,
+    templateId: config.templateId,
+    subject: config.subject ? substituteMergeTags(config.subject, ctx.contact, extra) : undefined,
+    html: config.html ? substituteMergeTags(config.html, ctx.contact, extra) : undefined,
+    text: config.text ? substituteMergeTags(config.text, ctx.contact, extra) : undefined,
+  });
 }
 
 async function executeSendSms(
@@ -188,22 +211,13 @@ async function executeSendSms(
 
   const message = substituteMergeTags(config.message, ctx.contact, buildRunMergeData(run));
   // Queue SMS job
-  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-  if (queues) {
-    await (
-      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
-    ).sms
-      ?.add('workflow-sms', {
-        orgId: ctx.orgId,
-        contactId: run.contactId,
-        workflowRunId: run.id,
-        phone: ctx.contact.phone,
-        message,
-      })
-      .catch(() => {});
-  }
-
-  return { type: 'next', nextNodeId: null };
+  return enqueueOrFail('sms', 'workflow-sms', {
+    orgId: ctx.orgId,
+    contactId: run.contactId,
+    workflowRunId: run.id,
+    phone: ctx.contact.phone,
+    message,
+  });
 }
 
 async function executeSendWebhook(
@@ -969,21 +983,13 @@ async function executeSendViber(
   if (shouldSuppressDueToConversion(run)) {
     return { type: 'next', nextNodeId: null };
   }
-  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-  if (queues) {
-    await (
-      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
-    ).viber
-      ?.add('workflow-viber', {
-        orgId: ctx.orgId,
-        contactId: run.contactId,
-        workflowRunId: run.id,
-        templateId: config.templateId,
-        body: config.body ? substituteMergeTags(config.body, ctx.contact) : undefined,
-      })
-      .catch(() => {});
-  }
-  return { type: 'next', nextNodeId: null };
+  return enqueueOrFail('viber', 'workflow-viber', {
+    orgId: ctx.orgId,
+    contactId: run.contactId,
+    workflowRunId: run.id,
+    templateId: config.templateId,
+    body: config.body ? substituteMergeTags(config.body, ctx.contact) : undefined,
+  });
 }
 
 async function executeCascadeStep(
@@ -1146,25 +1152,19 @@ async function executeSendPersonalEmail(
   const bodyText = substitutePersonalMergeTags(config.body, vars);
   const bodyHtml = buildPersonalHtml(bodyText);
 
-  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-  if (queues) {
-    await (
-      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
-    ).email
-      ?.add('personal-email', {
-        orgId: ctx.orgId,
-        contactId: run.contactId,
-        workflowRunId: run.id,
-        fromEmail: config.fromEmail,
-        fromName: config.fromName,
-        replyTo: config.replyTo ?? config.fromEmail,
-        subject,
-        bodyText,
-        bodyHtml,
-        isPersonal: true,
-      })
-      .catch(() => {});
-  }
+  const enqueued = await enqueueOrFail('email', 'personal-email', {
+    orgId: ctx.orgId,
+    contactId: run.contactId,
+    workflowRunId: run.id,
+    fromEmail: config.fromEmail,
+    fromName: config.fromName,
+    replyTo: config.replyTo ?? config.fromEmail,
+    subject,
+    bodyText,
+    bodyHtml,
+    isPersonal: true,
+  });
+  if (enqueued.type === 'error') return enqueued;
 
   return { type: 'next', nextNodeId: null };
 }

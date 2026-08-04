@@ -153,6 +153,61 @@ jobs:
       - run: pnpm seed
       - run: pnpm --filter @forgemsg/api test:integration
 
+  workers-integration:
+    name: Workers Integration (real DB + API)
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    # Deliberately NOT in the CI Pass needs list yet — same policy the api
+    # integration job got: earn a track record before it can gate the pipeline.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: forgemsg_witest
+          POSTGRES_USER: forgemsg
+          POSTGRES_PASSWORD: forgemsg
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U forgemsg"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://forgemsg:forgemsg@127.0.0.1:5432/forgemsg_witest
+      REDIS_URL: redis://127.0.0.1:6379
+      JWT_SECRET: workers-integration-secret-not-for-production-123456
+      INTERNAL_API_SECRET: workers-integration-internal-secret-32-chars-min
+      API_URL: http://127.0.0.1:3001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo build --filter=@forgemsg/api
+      - run: pnpm --filter @forgemsg/api db:migrate
+      - run: pnpm seed
+      - name: Start API in background
+        run: |
+          nohup pnpm --filter @forgemsg/api start > /tmp/wapi.log 2>&1 &
+          sleep 5
+          # --retry-connrefused for the same reason as the E2E job: plain
+          # --retry does not retry a refused connection.
+          curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://127.0.0.1:3001/health || {
+            echo "::group::/tmp/wapi.log"; cat /tmp/wapi.log; echo "::endgroup::"; exit 1;
+          }
+      - run: pnpm --filter @forgemsg/workers test:integration
+
   build:
     name: Build
     runs-on: ubuntu-latest

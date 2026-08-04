@@ -12,7 +12,7 @@ import { connection } from '../queues/index.js';
 import { captureJobException } from '../lib/telemetry.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
-const SECRET = process.env.INTERNAL_SECRET;
+const SECRET = process.env.INTERNAL_API_SECRET ?? process.env.INTERNAL_SECRET;
 
 interface WorkflowEmailJob {
   orgId: string;

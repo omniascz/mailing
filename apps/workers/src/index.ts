@@ -48,11 +48,24 @@ import { startWorkflowSchedulerWorkers, scheduleWorkflowJobs } from './jobs/work
 import { QUEUE_NAMES } from './queues/index.js';
 import { initTelemetry, flushTelemetry } from './lib/telemetry.js';
 import { registerCzSkMergeFilters } from './lib/merge-filters-cz-sk.js';
+import { assertApiReachable } from './lib/api-preflight.js';
 
 initTelemetry();
 // Register CZ/SK declension pipe-filters before any batch-sender starts (#606–#608)
 registerCzSkMergeFilters();
 console.log('ForgeMsg Workers starting...');
+
+// Refuse to start unless the API answers AND accepts our internal secret.
+// Not a warning: every internal read in this package fails open, so a worker
+// that starts without a working API processes batches with suppression,
+// frequency capping, holdout and GDPR consent all silently disabled. A warning
+// scrolls past; a dead process gets noticed.
+try {
+  await assertApiReachable();
+} catch (err) {
+  console.error((err as Error).message);
+  process.exit(1);
+}
 
 const campaignSplitter = startCampaignSplitterWorker();
 const batchSenderBroadcast = startBatchSenderWorker(QUEUE_NAMES.BATCH_SENDER);

@@ -23,12 +23,13 @@ import {
   recordSendForFblTracking,
 } from '../../services/sending/fbl-processor.js';
 import { redis } from '@forgemsg/shared/redis';
+import { env } from '../../config/env.js';
 
 // ─── Shared secret for unauthenticated FBL webhook endpoints ─────────────────
 // ISPs send ARF mails; our mailbox forwarder POSTs them with X-FBL-Secret.
 function verifyFblSecret(secret: string | undefined): boolean {
-  const expected = process.env.FBL_WEBHOOK_SECRET;
-  if (!expected) return true; // not configured — allow (dev mode)
+  // Was `if (!expected) return true` — an unset secret accepted every POST.
+  const expected = env.FBL_WEBHOOK_SECRET;
   if (!secret) return false;
   try {
     return timingSafeEqual(Buffer.from(secret), Buffer.from(expected));

@@ -12,7 +12,7 @@ import { connection, QUEUE_NAMES } from '../queues/index.js';
 import { captureJobException } from '../lib/telemetry.js';
 
 const API_URL = process.env.API_URL ?? process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
-const SECRET = process.env.INTERNAL_SECRET ?? '';
+const SECRET = process.env.INTERNAL_API_SECRET ?? process.env.INTERNAL_SECRET ?? '';
 
 const resumeQueue = new Queue(QUEUE_NAMES.WORKFLOW_RUN_RESUME, { connection });
 const dailyQueue = new Queue(QUEUE_NAMES.DAILY_TRIGGERS, { connection });

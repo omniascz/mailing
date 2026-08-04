@@ -10,6 +10,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { adAccounts } from '../../../db/schema/index.js';
 import { verifyMetaRequest } from '../../../lib/meta-signature.js';
+import { env } from '../../../config/env.js';
 
 const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
   // Facebook Lead Ads webhook verification + delivery
@@ -23,7 +24,7 @@ const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
       .parse(req.query);
     if (
       q['hub.mode'] === 'subscribe' &&
-      q['hub.verify_token'] === (process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? '')
+      q['hub.verify_token'] === env.FACEBOOK_WEBHOOK_VERIFY_TOKEN
     ) {
       return reply.send(q['hub.challenge']);
     }
