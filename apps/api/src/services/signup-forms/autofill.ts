@@ -21,6 +21,7 @@ import { db } from '../../db/client.js';
 import { contacts, signupForms } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
 import crypto from 'node:crypto';
+import { env } from '../../config/env.js';
 
 export interface AutofillPayload {
   /** Which form fields can be pre-filled */
@@ -34,7 +35,7 @@ export interface AutofillPayload {
  * Uses AES-256-GCM with a per-site secret so the contact ID is never exposed.
  */
 export function encryptContactId(contactId: string): string {
-  const secret = process.env['FORM_AUTOFILL_SECRET'] ?? 'changeme-32-byte-secret-key-here';
+  const secret = env.FORM_AUTOFILL_SECRET;
   const key = crypto.scryptSync(secret, 'fm-autofill-salt', 32);
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
@@ -49,7 +50,7 @@ export function decryptContactId(token: string): string | null {
     const iv = buf.subarray(0, 12);
     const tag = buf.subarray(12, 28);
     const enc = buf.subarray(28);
-    const secret = process.env['FORM_AUTOFILL_SECRET'] ?? 'changeme-32-byte-secret-key-here';
+    const secret = env.FORM_AUTOFILL_SECRET;
     const key = crypto.scryptSync(secret, 'fm-autofill-salt', 32);
     const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
     decipher.setAuthTag(tag);

@@ -13,8 +13,9 @@ import crypto from 'node:crypto';
 import { db } from '../../db/client.js';
 import { processingPurposes, contactGdprConsents, contacts } from '../../db/schema/index.js';
 import { and, eq, desc } from 'drizzle-orm';
+import { env } from '../../config/env.js';
 
-const SECRET = process.env.PREFERENCE_CENTRE_SECRET ?? 'preference-centre-secret-change-me';
+const SECRET = env.PREFERENCE_CENTRE_SECRET;
 const TOKEN_TTL_SECONDS = 7 * 24 * 3600; // 7 days
 
 // ─── Token generation ─────────────────────────────────────────────────────────

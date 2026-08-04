@@ -50,6 +50,7 @@ import { db } from '../../db/client.js';
 import { whatsappConsents, whatsappPhoneNumbers } from '../../db/schema/whatsapp.js';
 import { eq } from 'drizzle-orm';
 import { verifyMetaRequest } from '../../lib/meta-signature.js';
+import { env } from '../../config/env.js';
 
 export default async function whatsappRoutes(app: FastifyInstance) {
   // ── Template management ───────────────────────────────────────────────────
@@ -262,7 +263,7 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     const token = query['hub.verify_token'];
     const challenge = query['hub.challenge'];
 
-    if (mode === 'subscribe' && token === (process.env.WHATSAPP_VERIFY_TOKEN ?? '')) {
+    if (mode === 'subscribe' && token === env.WHATSAPP_VERIFY_TOKEN) {
       return reply.status(200).send(challenge);
     }
     return reply.status(403).send({ error: 'Forbidden' });

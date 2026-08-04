@@ -11,9 +11,10 @@
 
 import { Worker, Queue } from 'bullmq';
 import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { throwIfAuthFailure } from '../lib/internal-api.js';
 
 const API_BASE = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
-const INTERNAL_SECRET = process.env.INTERNAL_SECRET ?? '';
+const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? process.env.INTERNAL_SECRET ?? '';
 
 const transcodeQueue = new Queue(QUEUE_NAMES.VIDEO_TRANSCODE, { connection });
 
@@ -28,6 +29,7 @@ async function fetchPending(): Promise<VideoPending[]> {
   const res = await fetch(`${API_BASE}/api/v1/internal/video/pending`, {
     headers: { 'x-internal-secret': INTERNAL_SECRET },
   });
+  throwIfAuthFailure(res, '/internal/video/pending');
   if (!res.ok) return [];
   const json = (await res.json()) as { data: VideoPending[] };
   return json.data;

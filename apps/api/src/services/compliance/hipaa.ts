@@ -49,7 +49,16 @@ function getFieldKey(): Buffer | null {
  */
 export function encryptPhiValue(plaintext: string): string {
   const key = getFieldKey();
-  if (!key) return plaintext; // dev fallback — do not silently fail in prod
+  // Previously `if (!key) return plaintext` — the comment said "do not
+  // silently fail in prod" and the code did exactly that: PHI was written
+  // unencrypted with nothing in the logs. Verified by running it with the
+  // variable unset; it returned the input verbatim.
+  if (!key) {
+    throw new Error(
+      'HIPAA_FIELD_KEY is not set — refusing to store PHI unencrypted. ' +
+        'Set it (64 hex chars) or disable HIPAA mode for this org.',
+    );
+  }
 
   const iv = randomBytes(12);
   const cipher = createCipheriv(ALGORITHM, key, iv);
@@ -130,6 +139,14 @@ export function redactPhiFields(
 // ─── HIPAA mode toggle ────────────────────────────────────────────────────────
 
 export async function enableHipaaMode(orgId: string): Promise<void> {
+  // Turning HIPAA mode on without a key would arm a code path that now throws
+  // on every PHI write. Refuse here, where the operator is watching.
+  if (!getFieldKey()) {
+    throw new Error(
+      'Cannot enable HIPAA mode: HIPAA_FIELD_KEY is not set. PHI field ' +
+        'encryption would be unavailable.',
+    );
+  }
   await db
     .update(organizations)
     .set({ hipaaMode: true, updatedAt: new Date() })
