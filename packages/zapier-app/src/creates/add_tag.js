@@ -17,7 +17,7 @@ module.exports = {
     ],
     perform: async (z, bundle) => {
       await z.request({
-        url: `${process.env.BASE_URL}/api/v1/contacts/${bundle.inputData.contactId}/tags`,
+        url: `{{process.env.BASE_URL}}/api/v1/contacts/${bundle.inputData.contactId}/tags`,
         method: 'POST',
         headers: { 'X-API-Key': bundle.authData.apiKey },
         body: { tagName: bundle.inputData.tagName },
