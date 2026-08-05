@@ -124,6 +124,25 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
     );
   }
 
+  // Attach the rejection handlers NOW, not at the await below.
+  //
+  // These promises used to be incapable of rejecting — every filter swallowed
+  // its own failure. Now they reject, and there are five more `await`s between
+  // here and `await checksSettled`. A promise that rejects during those has no
+  // handler attached yet, which Node reports as an unhandled rejection and, on
+  // its default `--unhandled-rejections=throw`, uses to kill the process —
+  // turning a cleanly failed job into a dead worker. Building the Promise.all
+  // here attaches handlers to every member synchronously; awaiting it stays
+  // where it was, so the checks still run in parallel with the fetches below.
+  const checksSettled = Promise.all(checks);
+  // …including on the aggregate itself. Attaching handlers to the members is
+  // not enough: Promise.all returns a NEW promise, and that one has no handler
+  // until the await below. This no-op catch marks it handled straight away;
+  // `await checksSettled` still rejects with the same error, so nothing is
+  // swallowed — measured, because the first attempt at this fix kept all four
+  // unhandled rejections.
+  void checksSettled.catch(() => {});
+
   const timewarpSchedule = data.timewarp?.enabled
     ? await fetchTimewarpSchedule(data.orgId, data.contactIds, data.timewarp)
     : null;
@@ -164,7 +183,7 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
       ? await fetchOptedInForTracking(data.orgId, contactIds)
       : null;
 
-  await Promise.all(checks);
+  await checksSettled;
 
   const mtaJobs: Array<{
     queue: ReturnType<typeof getMtaQueue>;
