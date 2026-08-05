@@ -363,6 +363,14 @@ export async function assertUrlIsFetchable(rawUrl: string): Promise<void> {
   assertAllowedScheme(url);
 
   await new Promise<void>((resolve, reject) => {
-    guardedLookup(bareHost(url), { all: true }, (err) => (err ? reject(err) : resolve()));
+    guardedLookup(bareHost(url), { all: true }, (err) => {
+      // Only a blocked ADDRESS is a reason to refuse a registration. A name
+      // that does not resolve yet is not: a staging endpoint may be registered
+      // before it is deployed, and "cannot resolve" is not something safeFetch
+      // blocks either — it would simply fail to connect. Refusing here would
+      // reject a URL the delivery path considers perfectly legal.
+      if (err instanceof BlockedUrlError && err.reason === 'address') return reject(err);
+      return resolve();
+    });
   });
 }
