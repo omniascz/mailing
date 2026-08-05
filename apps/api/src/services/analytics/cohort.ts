@@ -99,7 +99,7 @@ export async function computeCohortRetention(
         .where(
           and(
             eq(emailEvents.orgId, orgId),
-            sql`contact_id = ANY(${contactIds})`,
+            sql`contact_id = ANY(${sql.param(contactIds)})`,
             gte(emailEvents.createdAt, periodStart),
             lt(emailEvents.createdAt, periodEnd),
             sql`event_type IN ('open', 'click')`,
@@ -222,7 +222,7 @@ export async function computeFunnel(
           eq(emailEvents.orgId, orgId),
           sql`event_type = ${step.eventType}`,
           gte(emailEvents.createdAt, windowStart),
-          sql`contact_id = ANY(${currentIds})`,
+          sql`contact_id = ANY(${sql.param(currentIds)})`,
           ...(step.entityId ? [sql`entity_id = ${step.entityId}`] : []),
         ),
       );

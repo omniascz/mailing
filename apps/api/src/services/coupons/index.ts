@@ -188,7 +188,7 @@ export async function allocateForBatch(
       and(
         eq(couponCodes.batchId, batchId),
         eq(couponCodes.orgId, orgId),
-        sql`${couponCodes.assignedTo} = ANY(${contactIds}::uuid[])`,
+        sql`${couponCodes.assignedTo} = ANY(${sql.param(contactIds)}::uuid[])`,
       ),
     );
 

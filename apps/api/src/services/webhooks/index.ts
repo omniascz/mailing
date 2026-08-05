@@ -24,6 +24,7 @@ import {
   type WebhookEvent,
 } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
+import type { WebhookEventPayloads } from './payloads.js';
 import { safeFetch, BlockedUrlError } from '../../lib/safe-fetch.js';
 import {
   signPayload,
@@ -249,10 +250,10 @@ export async function deleteWebhook(id: string, orgId: string): Promise<void> {
  * Called by API handlers / services whenever a notable event occurs.
  * Creates delivery rows and queues BullMQ jobs.
  */
-export async function dispatchEvent(
+export async function dispatchEvent<E extends WebhookEvent>(
   orgId: string,
-  event: WebhookEvent,
-  payload: Record<string, unknown>,
+  event: E,
+  payload: WebhookEventPayloads[E],
 ): Promise<void> {
   const timestamp = new Date().toISOString();
 
@@ -260,7 +261,9 @@ export async function dispatchEvent(
   // independent of whether any HTTP webhook is configured. Consumers can pull
   // via GET /events/stream without hosting a receiver. Fire-and-forget.
   void import('./event-stream.js')
-    .then(({ publishToStream }) => publishToStream(orgId, event, payload, timestamp))
+    .then(({ publishToStream }) =>
+      publishToStream(orgId, event, payload as unknown as Record<string, unknown>, timestamp),
+    )
     .catch(() => {});
 
   // Find active webhooks subscribed to this event
@@ -280,7 +283,7 @@ export async function dispatchEvent(
     event,
     orgId,
     timestamp,
-    data: payload,
+    data: payload as unknown as Record<string, unknown>,
   };
 
   for (const webhook of matching) {

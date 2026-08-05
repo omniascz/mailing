@@ -51,7 +51,7 @@ const calendarRoutes: FastifyPluginAsync = async (app) => {
         .where(
           and(
             eq(campaigns.orgId, req.user!.orgId),
-            sql`COALESCE(${campaigns.scheduledAt}, ${campaigns.sentAt}) BETWEEN ${from} AND ${to}`,
+            sql`COALESCE(${campaigns.scheduledAt}, ${campaigns.sentAt}) BETWEEN ${sql.param(from, campaigns.scheduledAt)} AND ${sql.param(to, campaigns.scheduledAt)}`,
           ),
         );
 
@@ -74,7 +74,7 @@ const calendarRoutes: FastifyPluginAsync = async (app) => {
           and(
             eq(socialPosts.orgId, req.user!.orgId),
             inArray(socialPosts.status, ['scheduled', 'published']),
-            sql`COALESCE(${socialPosts.scheduledAt}, ${socialPosts.publishedAt}) BETWEEN ${from} AND ${to}`,
+            sql`COALESCE(${socialPosts.scheduledAt}, ${socialPosts.publishedAt}) BETWEEN ${sql.param(from, socialPosts.scheduledAt)} AND ${sql.param(to, socialPosts.scheduledAt)}`,
           ),
         );
 

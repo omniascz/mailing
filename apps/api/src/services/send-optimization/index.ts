@@ -179,7 +179,7 @@ export async function computeTimewarpSchedule(
   const rs = await db.execute<{ id: string; tz: string | null }>(sql`
     SELECT contact_id AS id, timezone AS tz
     FROM contact_engagement
-    WHERE contact_id = ANY(${contactIds}::uuid[])
+    WHERE contact_id = ANY(${sql.param(contactIds)}::uuid[])
   `);
 
   const tzMap = new Map<string, string>();

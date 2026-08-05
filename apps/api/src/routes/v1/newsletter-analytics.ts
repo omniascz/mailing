@@ -14,6 +14,12 @@ import { db } from '../../db/client.js';
 import { contacts, emailEvents } from '../../db/schema/index.js';
 import { revenueEvents } from '../../db/schema/revenue.js';
 
+/** Unwrap a db.execute result, which is already the row array. */
+function toRows(result: unknown): unknown[] {
+  if (Array.isArray(result)) return result;
+  return (result as { rows?: unknown[] })?.rows ?? [];
+}
+
 export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
@@ -35,11 +41,15 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
              count(*) FILTER (WHERE status != 'unsubscribed') AS new_subscribers,
              count(*) FILTER (WHERE status = 'unsubscribed') AS unsubscribes
           FROM contacts
-          WHERE org_id = ${req.user!.orgId} AND created_at >= ${since}
+          WHERE org_id = ${req.user!.orgId} AND created_at >= ${since.toISOString()}::timestamptz
           GROUP BY period ORDER BY period ASC`,
     );
 
-    return { data: (rows as unknown as { rows: unknown[] }).rows };
+    // db.execute returns the row array itself with the postgres-js driver, not
+    // a { rows } envelope. Reading `.rows` returned undefined, so this route
+    // answered `{ data: undefined }` — a 200 with nothing in it. The Date
+    // encoding bug hid this one: the query threw before anyone saw the shape.
+    return { data: toRows(rows) };
   });
 
   // ── Churn metrics ──────────────────────────────────────────────────────────
@@ -103,11 +113,15 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
              count(*) filter (where event_type='click') AS clicks,
              count(*) filter (where event_type='unsubscribe') AS unsubscribes
           FROM email_events
-          WHERE org_id = ${req.user!.orgId} AND created_at >= ${since}
+          WHERE org_id = ${req.user!.orgId} AND created_at >= ${since.toISOString()}::timestamptz
           GROUP BY week ORDER BY week ASC`,
     );
 
-    return { data: (rows as unknown as { rows: unknown[] }).rows };
+    // db.execute returns the row array itself with the postgres-js driver, not
+    // a { rows } envelope. Reading `.rows` returned undefined, so this route
+    // answered `{ data: undefined }` — a 200 with nothing in it. The Date
+    // encoding bug hid this one: the query threw before anyone saw the shape.
+    return { data: toRows(rows) };
   });
 
   // ── Revenue per email / per subscriber ────────────────────────────────────
@@ -163,7 +177,7 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
         .select({
           total: sql<number>`count(*)`,
           active: sql<number>`count(*) filter (where ${contacts.status} = 'active')`,
-          newLast30d: sql<number>`count(*) filter (where ${contacts.createdAt} >= ${since30d})`,
+          newLast30d: sql<number>`count(*) filter (where ${contacts.createdAt} >= ${sql.param(since30d, contacts.createdAt)})`,
         })
         .from(contacts)
         .where(eq(contacts.orgId, orgId)),

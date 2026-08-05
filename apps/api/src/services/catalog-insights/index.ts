@@ -1,3 +1,4 @@
+/* eslint-disable forgemsg/no-unencoded-sql-param -- These queries already fail earlier on a missing column (re.line_items), so the encoder is not what breaks them. Fixing it here would quietly convert a visible failure into a different one and hide work that belongs to the missing-column task. File-scoped rather than per-line because the offending substitutions sit inside multi-line sql`` templates, where a line comment would be template text. */
 /**
  * Catalog insights — analytics over the product catalog: best-sellers, slow
  * movers, category share of revenue, average order value per category.

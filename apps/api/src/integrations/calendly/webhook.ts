@@ -8,6 +8,7 @@
  */
 
 import crypto from 'node:crypto';
+import { emitWebhookEvent, toContactSummary } from '../../services/webhooks/emit.js';
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts } from '../../db/schema/contacts.js';
@@ -86,8 +87,12 @@ export async function processCalendlyEvent(
           lastName: invitee.last_name ?? lastName,
           source: 'calendly',
         } as typeof contacts.$inferInsert)
-        .returning({ id: contacts.id });
+        .returning();
       contactId = created!.id;
+      emitWebhookEvent(orgId, 'contact.created', {
+        ...toContactSummary(created!),
+        source: 'calendly',
+      });
     }
 
     // Optionally create a deal

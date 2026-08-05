@@ -58,7 +58,7 @@ async function getContactChannelStats(
       and(
         eq(emailEvents.contactId, contactId),
         eq(emailEvents.orgId, orgId),
-        sql`${emailEvents.createdAt} >= ${since}`,
+        sql`${emailEvents.createdAt} >= ${sql.param(since, emailEvents.createdAt)}`,
       ),
     )
     .groupBy(emailEvents.eventType);

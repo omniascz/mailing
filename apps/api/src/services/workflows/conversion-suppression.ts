@@ -50,7 +50,7 @@ export async function hasContactConverted(opts: {
         eq(workflowEvents.orgId, opts.orgId),
         eq(workflowEvents.contactId, opts.contactId),
         eq(workflowEvents.eventName, opts.eventName),
-        sql`${workflowEvents.createdAt} >= ${opts.since}`,
+        sql`${workflowEvents.createdAt} >= ${sql.param(opts.since, workflowEvents.createdAt)}`,
       ),
     )
     .limit(1);

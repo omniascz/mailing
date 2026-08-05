@@ -72,7 +72,7 @@ export async function computeCrossChannelAttribution(
           .where(
             and(
               eq(emailEvents.orgId, orgId),
-              sql`contact_id = any(${contactIds})`,
+              sql`contact_id = any(${sql.param(contactIds)})`,
               sql`event_type = 'deliver'`,
               gte(emailEvents.createdAt, dateFrom),
             ),

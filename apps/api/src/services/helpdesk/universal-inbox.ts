@@ -14,6 +14,7 @@
  */
 
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
+import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import {
   helpdeskTickets,
@@ -155,7 +156,13 @@ async function resolveContact(
         phone: phone ?? null,
         source: 'inbox',
       })
-      .returning({ id: contacts.id });
+      .returning();
+    if (created) {
+      emitWebhookEvent(orgId, 'contact.created', {
+        ...toContactSummary(created),
+        source: 'inbox',
+      });
+    }
     return created?.id ?? null;
   }
 
@@ -391,7 +398,10 @@ export async function listInbox(
   if (opts.channel) conditions.push(eq(helpdeskTickets.channel, opts.channel));
   if (opts.status) conditions.push(eq(helpdeskTickets.status, opts.status));
   if (opts.assignedTo) conditions.push(eq(helpdeskTickets.assignedTo, opts.assignedTo));
-  if (opts.cursor) conditions.push(sql`${helpdeskTickets.updatedAt} < ${new Date(opts.cursor)}`);
+  if (opts.cursor)
+    conditions.push(
+      sql`${helpdeskTickets.updatedAt} < ${sql.param(new Date(opts.cursor), helpdeskTickets.updatedAt)}`,
+    );
 
   const tickets = await db
     .select()

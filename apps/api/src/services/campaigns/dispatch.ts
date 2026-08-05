@@ -6,6 +6,7 @@
  */
 
 import { and, eq, lte } from 'drizzle-orm';
+import { emitWebhookEvent } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { campaigns, sendingDomains, organizations } from '../../db/schema/index.js';
 import { campaignSplitterQueue, PRIORITY } from '../../lib/queues.js';
@@ -150,10 +151,32 @@ export async function setCampaignStatusInternal(
   campaignId: string,
   status: 'sending' | 'sent' | 'paused' | 'cancelled',
 ): Promise<void> {
-  await db
+  const [row] = await db
     .update(campaigns)
     .set({ status, updatedAt: new Date(), ...(status === 'sent' ? { sentAt: new Date() } : {}) })
-    .where(eq(campaigns.id, campaignId));
+    .where(eq(campaigns.id, campaignId))
+    .returning();
+
+  // campaign.sent fires here rather than when the send is enqueued, because
+  // this is the transition the splitter drives after the LAST batch finishes
+  // (campaign-splitter.ts → PATCH /internal/campaigns/:id/status). Emitting at
+  // enqueue time would mean "sent" arrived while the campaign still had hours
+  // of delivery ahead of it.
+  //
+  // Known caveat: channel-dispatch.ts sets 'sent' for SMS/WhatsApp/push right
+  // after the messages are queued, so on those channels this event is early.
+  // That is a pre-existing lifecycle bug in channel-dispatch, not something
+  // this emitter can fix from here.
+  if (status === 'sent' && row) {
+    emitWebhookEvent(row.orgId, 'campaign.sent', {
+      campaignId: row.id,
+      name: row.name ?? null,
+      subject: row.subject ?? null,
+      type: row.type ?? null,
+      recipientCount: row.estimatedRecipients ?? null,
+      sentAt: row.sentAt ? row.sentAt.toISOString() : null,
+    });
+  }
 }
 
 /**

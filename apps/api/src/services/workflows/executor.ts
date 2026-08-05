@@ -12,6 +12,7 @@
  */
 
 import { and, eq, isNull, lte, sql } from 'drizzle-orm';
+import { emitWebhookEvent } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import {
   contacts,
@@ -180,16 +181,34 @@ async function executeNode(
   }
 }
 
+/** Exported under an explicit test-only name so the integration suite can
+ *  reach the emitter without reconstructing an entire workflow run. */
+export const completeRunForTest = (runId: string, workflowId: string) =>
+  completeRun(runId, workflowId);
+
 async function completeRun(runId: string, workflowId: string): Promise<void> {
-  await db
+  const [run] = await db
     .update(workflowRuns)
     .set({ status: 'completed', completedAt: new Date(), nextExecutionAt: null })
-    .where(eq(workflowRuns.id, runId));
+    .where(eq(workflowRuns.id, runId))
+    .returning();
 
   await db
     .update(workflows)
     .set({ completedRuns: sql`${workflows.completedRuns} + 1` })
     .where(eq(workflows.id, workflowId));
+
+  // Only the completed path emits. failRun is the other terminus and there is
+  // no workflow.failed in the contract, so a run that errors out is silent —
+  // deliberately, rather than pretending an error was a completion.
+  if (run) {
+    emitWebhookEvent(run.orgId, 'workflow.completed', {
+      workflowId,
+      runId: run.id,
+      contactId: run.contactId ?? null,
+      completedAt: run.completedAt ? run.completedAt.toISOString() : null,
+    });
+  }
 }
 
 async function failRun(runId: string, workflowId: string, message: string): Promise<void> {

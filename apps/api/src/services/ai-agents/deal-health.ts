@@ -90,7 +90,7 @@ export async function analyzeLossPatterns(
       and(
         eq(deals.orgId, orgId),
         eq(deals.status, 'lost'),
-        sql`${deals.actualCloseDate} >= ${since}`,
+        sql`${deals.actualCloseDate} >= ${sql.param(since, deals.actualCloseDate)}`,
       ),
     )
     .limit(500);
@@ -102,7 +102,7 @@ export async function analyzeLossPatterns(
       and(
         eq(deals.orgId, orgId),
         eq(deals.status, 'won'),
-        sql`${deals.actualCloseDate} >= ${since}`,
+        sql`${deals.actualCloseDate} >= ${sql.param(since, deals.actualCloseDate)}`,
       ),
     )
     .limit(500);

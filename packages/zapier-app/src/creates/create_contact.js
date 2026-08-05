@@ -19,7 +19,7 @@ module.exports = {
     ],
     perform: async (z, bundle) => {
       const res = await z.request({
-        url: `${process.env.BASE_URL}/api/v1/contacts`,
+        url: `{{process.env.BASE_URL}}/api/v1/contacts`,
         method: 'POST',
         headers: { 'X-API-Key': bundle.authData.apiKey },
         body: {

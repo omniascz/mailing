@@ -14,6 +14,7 @@
  */
 
 import { eq, and, asc, sql } from 'drizzle-orm';
+import { emitWebhookEvent } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { smsRoutes, smsSendLog } from '../../db/schema/sms.js';
 import {
@@ -319,14 +320,40 @@ export async function updateSmsDeliveryStatus(
   providerMessageId: string,
   status: string,
   deliveredAt?: Date,
+  reason?: string,
 ) {
-  await db
+  const [row] = await db
     .update(smsSendLog)
     .set({
       status,
       ...(deliveredAt && { deliveredAt }),
     })
-    .where(eq(smsSendLog.providerMessageId, providerMessageId));
+    .where(eq(smsSendLog.providerMessageId, providerMessageId))
+    .returning();
+
+  // Both provider webhooks (Bulkgate DLR, Twilio status callback) normalise
+  // their vocabulary to 'delivered' / 'failed' before calling this, so this is
+  // the one place both terminal outcomes are known. Intermediate states
+  // ('queued', 'sent') are not events — the contract has no name for them.
+  if (!row) return;
+  if (status === 'delivered') {
+    emitWebhookEvent(row.orgId, 'sms.delivered', {
+      providerMessageId,
+      provider: row.provider ?? null,
+      to: row.phone ?? null,
+      contactId: row.contactId ?? null,
+      campaignId: row.campaignId ?? null,
+    });
+  } else if (status === 'failed') {
+    emitWebhookEvent(row.orgId, 'sms.failed', {
+      providerMessageId,
+      provider: row.provider ?? null,
+      to: row.phone ?? null,
+      contactId: row.contactId ?? null,
+      campaignId: row.campaignId ?? null,
+      reason: reason ?? row.errorMessage ?? null,
+    });
+  }
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────

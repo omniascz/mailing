@@ -5,6 +5,7 @@
  */
 
 import { and, eq, sql } from 'drizzle-orm';
+import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { smsKeywords, contacts, type SmsKeyword } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -84,12 +85,21 @@ export async function dispatchInboundSms(
       .where(and(eq(contacts.orgId, orgId), eq(contacts.phone, input.fromPhone)))
       .limit(1);
     if (!existing) {
-      await db.insert(contacts).values({
-        orgId,
-        phone: input.fromPhone,
-        status: 'active',
-        source: 'sms_keyword',
-      });
+      const [created] = await db
+        .insert(contacts)
+        .values({
+          orgId,
+          phone: input.fromPhone,
+          status: 'active',
+          source: 'sms_keyword',
+        })
+        .returning();
+      if (created) {
+        emitWebhookEvent(orgId, 'contact.created', {
+          ...toContactSummary(created),
+          source: 'sms_keyword',
+        });
+      }
     } else if (existing.status !== 'active') {
       await db.update(contacts).set({ status: 'active' }).where(eq(contacts.id, existing.id));
     }

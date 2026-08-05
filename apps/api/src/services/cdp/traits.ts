@@ -220,7 +220,7 @@ export async function recomputeAllTraits(
   const limit = opts.limit ?? 5000;
   const whereClauses = [eq(contacts.orgId, orgId)];
   if (opts.since) {
-    whereClauses.push(sql`${contacts.updatedAt} >= ${opts.since}`);
+    whereClauses.push(sql`${contacts.updatedAt} >= ${sql.param(opts.since, contacts.updatedAt)}`);
   }
   const rows = await db
     .select({ id: contacts.id })
@@ -278,7 +278,7 @@ export async function bumpCommerceTraits(orgId: string, contactId: string): Prom
     .onConflictDoUpdate({
       target: contactTraits.contactId,
       set: {
-        values: sql`${contactTraits.values} || ${values}::jsonb`,
+        values: sql`${contactTraits.values} || ${JSON.stringify(values)}::jsonb`,
         version: String(Date.now()),
         computedAt: new Date(),
       },
@@ -289,7 +289,7 @@ export async function bumpCommerceTraits(orgId: string, contactId: string): Prom
     UPDATE contact_engagement
     SET total_orders = COALESCE(${values.total_orders as number}, 0),
         total_revenue = COALESCE(${values.ltv as number}, 0)::numeric,
-        last_order_at = COALESCE(${last ? new Date(last as string) : null}, last_order_at),
+        last_order_at = COALESCE(${last ? new Date(last as string).toISOString() : null}::timestamptz, last_order_at),
         updated_at = now()
     WHERE contact_id = ${contactId}
   `);

@@ -222,8 +222,10 @@ export async function queryEvents(orgId: string, input: QueryEventsInput): Promi
   if (input.contactId) conds.push(eq(cdpEvents.contactId, input.contactId));
   if (input.anonymousId) conds.push(eq(cdpEvents.anonymousId, input.anonymousId));
   if (input.name) conds.push(eq(cdpEvents.name, input.name));
-  if (input.since) conds.push(sql`${cdpEvents.occurredAt} >= ${input.since}`);
-  if (input.until) conds.push(sql`${cdpEvents.occurredAt} <= ${input.until}`);
+  if (input.since)
+    conds.push(sql`${cdpEvents.occurredAt} >= ${sql.param(input.since, cdpEvents.occurredAt)}`);
+  if (input.until)
+    conds.push(sql`${cdpEvents.occurredAt} <= ${sql.param(input.until, cdpEvents.occurredAt)}`);
   return db
     .select()
     .from(cdpEvents)

@@ -198,6 +198,11 @@ function buildRule(rule: SegmentRule): SQL {
         const ref = fieldRef(rule.field);
         return sql`(CASE WHEN (${ref}) ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN (${ref})::numeric END) ${opSql} ${rule.value}`;
       }
+      // `rule.value` is `unknown` by design: a segment rule compares against
+      // whatever the field holds. Narrowing it needs the segment schema work,
+      // not an encoder — and what reaches here is strings and numbers from a
+      // zod-parsed body.
+      // eslint-disable-next-line forgemsg/no-unencoded-sql-param
       return sql`${fieldRef(rule.field)} ${opSql} ${rule.value}`;
     }
   }

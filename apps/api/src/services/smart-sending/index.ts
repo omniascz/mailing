@@ -90,9 +90,9 @@ export async function canSend(
 
   const [counts] = (await db.execute<{ day: string; week: string; last_sent: Date | null }>(sql`
     SELECT
-      COUNT(*) FILTER (WHERE sent_at >= ${dayAgo})::text  AS day,
-      COUNT(*) FILTER (WHERE sent_at >= ${weekAgo})::text AS week,
-      MAX(sent_at) FILTER (WHERE sent_at >= ${cooldownAgo}) AS last_sent
+      COUNT(*) FILTER (WHERE sent_at >= ${dayAgo.toISOString()}::timestamptz)::text  AS day,
+      COUNT(*) FILTER (WHERE sent_at >= ${weekAgo.toISOString()}::timestamptz)::text AS week,
+      MAX(sent_at) FILTER (WHERE sent_at >= ${cooldownAgo.toISOString()}::timestamptz) AS last_sent
     FROM contact_send_log
     WHERE org_id = ${orgId}::uuid AND contact_id = ${contactId}::uuid AND channel = ${channel}
   `)) as unknown as Array<{ day: string; week: string; last_sent: Date | null }>;

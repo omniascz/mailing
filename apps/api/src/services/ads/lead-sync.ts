@@ -5,6 +5,7 @@
  */
 
 import { eq, and } from 'drizzle-orm';
+import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -132,5 +133,9 @@ async function upsertLeadContact(
     })
     .returning();
   if (!created) throw AppError.internal('Failed to create lead contact');
+  emitWebhookEvent(orgId, 'contact.created', {
+    ...toContactSummary(created),
+    source: 'lead_ad',
+  });
   return created;
 }

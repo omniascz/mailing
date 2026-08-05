@@ -96,8 +96,8 @@ export async function rollbackMigration(
         // contacts.createdAt within the job's run window. completedAt
         // may be null for failed jobs, fall back to now() in that case
         // (the WHERE clause becomes open-ended, scoped only by from).
-        sql`${contacts.createdAt} >= ${job.createdAt}`,
-        sql`${contacts.createdAt} <= ${job.completedAt ?? new Date()}`,
+        sql`${contacts.createdAt} >= ${sql.param(job.createdAt, contacts.createdAt)}`,
+        sql`${contacts.createdAt} <= ${sql.param(job.completedAt ?? new Date(), contacts.createdAt)}`,
       ),
     );
 

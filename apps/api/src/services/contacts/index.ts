@@ -1,4 +1,6 @@
 import { and, asc, eq, gt, ilike, isNull, or, sql } from 'drizzle-orm';
+import { emitWebhookEvent, toContactSummary, changedFields } from '../webhooks/emit.js';
+import type { ContactSource } from '../webhooks/payloads.js';
 import { db } from '../../db/client.js';
 import { contacts, type Contact } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -145,17 +147,46 @@ function enrichPhone(input: CreateContactInput): CreateContactInput {
   };
 }
 
-export async function createContact(orgId: string, input: CreateContactInput) {
+/**
+ * Webhook events are emitted from HERE rather than from the routes, because
+ * these four functions are what every single-contact path goes through —
+ * POST /contacts, the Zapier action, the Resend-compat audience routes, the
+ * VIP toggle, archive and unarchive. Emitting at the routes would mean six
+ * call sites for contact.updated alone, and the next route added would
+ * silently not emit. This is the choke point.
+ *
+ * Paths that write to `contacts` directly (signup forms, SMS keywords, the
+ * inbox, ticketing, lead ads, Calendly, CDP identity resolution) do not come
+ * through here and emit for themselves. Bulk paths — CSV import, the four
+ * provider migrations, e-shop sync, sandboxes — deliberately do not emit at
+ * all; see docs/WEBHOOK-EVENTS.md.
+ */
+export async function createContact(
+  orgId: string,
+  input: CreateContactInput,
+  source: ContactSource = 'api',
+) {
   const [row] = await db
     .insert(contacts)
     .values({ orgId, ...enrichPhone(input) })
     .returning();
+  emitWebhookEvent(orgId, 'contact.created', { ...toContactSummary(row!), source });
   return row!;
 }
 
-export async function createContactsBatch(orgId: string, inputs: CreateContactInput[]) {
+export async function createContactsBatch(
+  orgId: string,
+  inputs: CreateContactInput[],
+  source: ContactSource = 'api',
+) {
   const values = inputs.map((input) => ({ orgId, ...enrichPhone(input) }));
-  return db.insert(contacts).values(values).returning();
+  const rows = await db.insert(contacts).values(values).returning();
+  // Per contact: this is the API batch endpoint, which is bounded by the
+  // request body, not the CSV importer that handles hundreds of thousands.
+  for (const row of rows) {
+    emitWebhookEvent(orgId, 'contact.created', { ...toContactSummary(row), source });
+  }
+  return rows;
 }
 
 export async function updateContact(orgId: string, id: string, patch: UpdateContactInput) {
@@ -165,6 +196,11 @@ export async function updateContact(orgId: string, id: string, patch: UpdateCont
     .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
     .returning();
   if (!row) throw AppError.notFound('Contact');
+  // After the write, so an event is never emitted for an update that failed.
+  emitWebhookEvent(orgId, 'contact.updated', {
+    ...toContactSummary(row),
+    changed: changedFields(patch as Record<string, unknown>),
+  });
   return row;
 }
 
@@ -175,4 +211,6 @@ export async function deleteContact(orgId: string, id: string) {
     .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
     .returning();
   if (!row) throw AppError.notFound('Contact');
+  // Identifiers only: the rest of the row is no longer current information.
+  emitWebhookEvent(orgId, 'contact.deleted', { id: row.id, email: row.email ?? null });
 }

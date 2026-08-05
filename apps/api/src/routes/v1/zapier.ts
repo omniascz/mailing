@@ -55,7 +55,7 @@ const zapierRoutes: FastifyPluginAsync = async (app) => {
           phone: z.string().max(32).optional(),
         })
         .parse(req.body);
-      const contact = await createContact(req.user!.orgId, body);
+      const contact = await createContact(req.user!.orgId, body, 'zapier');
       return reply.code(201).send({ data: contact });
     },
   );

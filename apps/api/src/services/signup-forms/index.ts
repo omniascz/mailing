@@ -6,6 +6,7 @@
  */
 
 import { and, eq, desc, sql } from 'drizzle-orm';
+import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import {
   signupForms,
@@ -247,8 +248,16 @@ export async function processFormSubmission(
             source: 'signup_form',
             sourceDetails: { formId },
           })
-          .returning({ id: contacts.id });
+          .returning();
         contactId = newContact!.id;
+        // Emitted here, from the row the insert already returned, rather than
+        // from a second SELECT — a new contact is the only case where this
+        // event is true, and the update branch above emits nothing because
+        // contact.updated belongs to the contacts service.
+        emitWebhookEvent(form.orgId, 'contact.created', {
+          ...toContactSummary(newContact!),
+          source: 'signup_form',
+        });
       }
     }
 
@@ -366,13 +375,6 @@ export async function processFormSubmission(
         })
         .catch(() => {});
     }
-
-    // Dispatch webhook event
-    import('../../services/webhooks/index.js')
-      .then(({ dispatchEvent }) =>
-        dispatchEvent(form.orgId, 'contact.created', { contactId, formId, email }),
-      )
-      .catch(() => {});
   } catch (_err) {
     return { contactId: null, success: false, message: 'Submission failed. Please try again.' };
   }

@@ -171,7 +171,9 @@ export default async function tagRoutes(app: FastifyInstance) {
       const ownedTags = await db
         .select({ id: tags.id })
         .from(tags)
-        .where(and(eq(tags.orgId, orgId), sql`${tags.id} = ANY(${body.tag_ids}::uuid[])`));
+        .where(
+          and(eq(tags.orgId, orgId), sql`${tags.id} = ANY(${sql.param(body.tag_ids)}::uuid[])`),
+        );
 
       if (ownedTags.length !== body.tag_ids.length) {
         throw AppError.forbidden('One or more tags do not belong to this organisation');
@@ -185,7 +187,7 @@ export default async function tagRoutes(app: FastifyInstance) {
           and(
             eq(contacts.orgId, orgId),
             isNull(contacts.deletedAt),
-            sql`${contacts.id} = ANY(${body.contact_ids}::uuid[])`,
+            sql`${contacts.id} = ANY(${sql.param(body.contact_ids)}::uuid[])`,
           ),
         );
 
@@ -207,7 +209,9 @@ export default async function tagRoutes(app: FastifyInstance) {
         const nameRows = await db
           .select({ name: tags.name })
           .from(tags)
-          .where(and(eq(tags.orgId, orgId), sql`${tags.id} = ANY(${body.tag_ids}::uuid[])`));
+          .where(
+            and(eq(tags.orgId, orgId), sql`${tags.id} = ANY(${sql.param(body.tag_ids)}::uuid[])`),
+          );
         const tagNames = nameRows.map((t) => t.name);
         void import('../../services/workflows/triggers.js')
           .then((m) => {
@@ -229,8 +233,8 @@ export default async function tagRoutes(app: FastifyInstance) {
         .delete(contactTags)
         .where(
           and(
-            sql`${contactTags.contactId} = ANY(${validContactIds}::uuid[])`,
-            sql`${contactTags.tagId} = ANY(${body.tag_ids}::uuid[])`,
+            sql`${contactTags.contactId} = ANY(${sql.param(validContactIds)}::uuid[])`,
+            sql`${contactTags.tagId} = ANY(${sql.param(body.tag_ids)}::uuid[])`,
           ),
         )
         .returning();

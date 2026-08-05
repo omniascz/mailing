@@ -85,7 +85,7 @@ export async function buildOrgSubjectModel(orgId: string): Promise<OrgSubjectMod
     JOIN email_events e ON e.campaign_id = c.id AND e.org_id = ${orgId}
     WHERE c.org_id = ${orgId}
       AND c.status = 'sent'
-      AND c.created_at >= ${since}
+      AND c.created_at >= ${since.toISOString()}::timestamptz
       AND c.subject IS NOT NULL
     GROUP BY c.id, c.subject
     HAVING COUNT(CASE WHEN e.event_type = 'send' THEN 1 END) >= ${MIN_SENDS_FOR_SIGNAL}

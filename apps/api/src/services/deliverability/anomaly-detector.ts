@@ -71,7 +71,7 @@ export async function evaluateCampaign(
       and(
         eq(emailEvents.orgId, orgId),
         eq(emailEvents.campaignId, campaignId),
-        sql`${emailEvents.createdAt} >= ${cutoff}`,
+        sql`${emailEvents.createdAt} >= ${sql.param(cutoff, emailEvents.createdAt)}`,
       ),
     )) as unknown as Array<{
     sends: string;

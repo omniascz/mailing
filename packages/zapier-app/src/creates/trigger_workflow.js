@@ -24,7 +24,7 @@ module.exports = {
     ],
     perform: async (z, bundle) => {
       const res = await z.request({
-        url: `${process.env.BASE_URL}/api/v1/workflows/${bundle.inputData.workflowId}/trigger`,
+        url: `{{process.env.BASE_URL}}/api/v1/workflows/${bundle.inputData.workflowId}/trigger`,
         method: 'POST',
         headers: { 'X-API-Key': bundle.authData.apiKey },
         body: { contactId: bundle.inputData.contactId },
