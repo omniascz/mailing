@@ -20,6 +20,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { and, eq, sql, desc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
@@ -153,8 +154,12 @@ export async function ingestSignals(input: IngestSignalInput): Promise<Resolutio
         phone: phoneSignal?.value ?? null,
         source: normalised[0]?.source ?? 'identity-graph',
       })
-      .returning({ id: contacts.id });
+      .returning();
     winnerId = newContact!.id;
+    emitWebhookEvent(input.orgId, 'contact.created', {
+      ...toContactSummary(newContact!),
+      source: 'cdp',
+    });
     created = true;
   } else if (uniqueCandidates.size === 1) {
     winnerId = Array.from(uniqueCandidates)[0]!;

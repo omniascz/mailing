@@ -6,6 +6,7 @@
  * marketing logic; the app only supplies data + triggers.
  */
 import { and, eq, sql } from 'drizzle-orm';
+import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { contacts } from '../../db/schema/contacts.js';
 import { revenueEvents } from '../../db/schema/revenue.js';
@@ -131,7 +132,11 @@ export async function upsertContactByEmail(
       customFields: c.city ? { city: c.city } : undefined,
       source: 'ticketing',
     })
-    .returning({ id: contacts.id });
+    .returning();
+  emitWebhookEvent(orgId, 'contact.created', {
+    ...toContactSummary(created!),
+    source: 'ticketing',
+  });
   return created!.id;
 }
 

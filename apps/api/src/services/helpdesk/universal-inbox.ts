@@ -14,6 +14,7 @@
  */
 
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
+import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import {
   helpdeskTickets,
@@ -155,7 +156,13 @@ async function resolveContact(
         phone: phone ?? null,
         source: 'inbox',
       })
-      .returning({ id: contacts.id });
+      .returning();
+    if (created) {
+      emitWebhookEvent(orgId, 'contact.created', {
+        ...toContactSummary(created),
+        source: 'inbox',
+      });
+    }
     return created?.id ?? null;
   }
 
