@@ -7,6 +7,7 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { createHash, randomBytes, createHmac } from 'node:crypto';
 import { db } from '../../db/client.js';
+import { safeFetch } from '../../lib/safe-fetch.js';
 import {
   appStudioApps,
   appStudioWebhookSubscribers,
@@ -200,12 +201,15 @@ export async function dispatchToApps(
     const sig = createHmac('sha256', s.secret).update(body).digest('hex');
     let ok = false;
     try {
-      const res = await fetch(s.targetUrl, {
+      // Developer-supplied URL from the app manifest — same threat model as a
+      // webhook endpoint, so the same guard. See lib/safe-fetch.
+      const res = await safeFetch(s.targetUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-forgemsg-signature': sig },
         body,
+        maxBytes: 4096,
       });
-      ok = res.ok;
+      ok = res.status >= 200 && res.status < 300;
     } catch {
       ok = false;
     }
@@ -333,22 +337,24 @@ export async function executeAction(
   for (const [k, v] of Object.entries(action.headers ?? {})) headers[k] = substitute(v, ctx);
   if (action.bodyTemplate && !headers['content-type']) headers['content-type'] = 'application/json';
 
-  const res = await fetch(url, {
+  // The URL comes from a substituted template in the app manifest, so it is
+  // both customer-influenced and attacker-influenced. Guarded — lib/safe-fetch.
+  const res = await safeFetch(url, {
     method: action.method,
     headers,
     body: action.bodyTemplate ? substitute(action.bodyTemplate, ctx) : undefined,
   });
 
   let raw: unknown;
-  const ct = res.headers.get('content-type') ?? '';
+  const ct = String(res.headers['content-type'] ?? '');
   if (ct.includes('application/json')) {
     try {
-      raw = await res.json();
+      raw = JSON.parse(res.body);
     } catch {
-      raw = await res.text();
+      raw = res.body;
     }
   } else {
-    raw = await res.text();
+    raw = res.body;
   }
 
   return {

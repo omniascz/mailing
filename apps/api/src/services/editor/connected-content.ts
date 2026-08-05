@@ -30,6 +30,7 @@
 
 import dns from 'node:dns/promises';
 import net from 'node:net';
+import { isPublicAddress } from '../../lib/safe-fetch.js';
 
 export interface ConnectedContentOptions {
   url: string;
@@ -57,28 +58,14 @@ export interface ConnectedContentResult {
 const DEFAULT_TIMEOUT_MS = 5_000;
 const DEFAULT_MAX_BYTES = 100 * 1024;
 
+/**
+ * Delegates to the shared guard. This used to be a fourth hand-written range
+ * list that disagreed with the others (it blocked multicast, fetch-attachment
+ * did not; neither blocked CGNAT).
+ */
 function isPrivateIp(ip: string): boolean {
   if (!net.isIP(ip)) return false;
-  if (net.isIPv4(ip)) {
-    const parts = ip.split('.').map(Number);
-    const a = parts[0]!;
-    const b = parts[1]!;
-    if (a === 10) return true;
-    if (a === 127) return true; // loopback
-    if (a === 169 && b === 254) return true; // link-local
-    if (a === 172 && b >= 16 && b <= 31) return true;
-    if (a === 192 && b === 168) return true;
-    if (a === 0) return true;
-    if (a >= 224) return true; // multicast / reserved
-    return false;
-  }
-  // IPv6
-  const lower = ip.toLowerCase();
-  if (lower === '::1') return true;
-  if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // unique local
-  if (lower.startsWith('fe80')) return true; // link-local
-  if (lower === '::') return true;
-  return false;
+  return !isPublicAddress(ip);
 }
 
 export function isHostAllowed(host: string, allowed: string[]): boolean {

@@ -198,8 +198,10 @@ export interface SafeFetchOptions {
 export interface SafeFetchResponse {
   status: number;
   headers: http.IncomingHttpHeaders;
-  /** Body, truncated at maxBytes. */
+  /** Body decoded as UTF-8, truncated at maxBytes. */
   body: string;
+  /** The same bytes undecoded — attachments and images must not go through UTF-8. */
+  bytes: Buffer;
   /** True when the body hit the cap and was cut short. */
   truncated: boolean;
   /** Final URL after redirects — differs from the request URL when hops were followed. */
@@ -263,14 +265,20 @@ function requestOnce(url: URL, opts: SafeFetchOptions): Promise<SafeFetchRespons
           chunks.push(c);
         });
 
-        const finish = () =>
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          const bytes = Buffer.concat(chunks);
           resolve({
             status: res.statusCode ?? 0,
             headers: res.headers,
-            body: Buffer.concat(chunks).toString('utf8'),
+            body: bytes.toString('utf8'),
+            bytes,
             truncated,
             url: url.toString(),
           });
+        };
 
         res.on('end', finish);
         // destroy() after the cap fires 'close' rather than 'end'.

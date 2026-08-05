@@ -11,6 +11,7 @@
  */
 
 import { AppError } from '../../lib/app-error.js';
+import { safeFetch, BlockedUrlError } from '../../lib/safe-fetch.js';
 
 export interface BrandKit {
   siteName: string | null;
@@ -215,27 +216,28 @@ export async function scrapeBrandFromUrl(url: string): Promise<BrandKit> {
     throw AppError.badRequest('URL must be http(s)');
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10_000);
   let html: string;
   try {
-    const res = await fetch(target.toString(), {
-      signal: controller.signal,
+    // Customer-supplied URL — guarded, see lib/safe-fetch.
+    const res = await safeFetch(target, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; ForgeMsg/1.0; +https://forgemsg.com)',
         Accept: 'text/html,application/xhtml+xml',
       },
+      timeoutMs: 10_000,
+      maxBytes: 2 * 1024 * 1024,
     });
-    if (!res.ok) throw AppError.badRequest(`URL returned HTTP ${res.status}`);
-    html = await res.text();
+    if (res.status < 200 || res.status >= 300) {
+      throw AppError.badRequest(`URL returned HTTP ${res.status}`);
+    }
+    html = res.body;
   } catch (err) {
-    if ((err as Error).name === 'AbortError') {
+    if (err instanceof BlockedUrlError) throw AppError.badRequest(err.message);
+    if (err instanceof AppError) throw err;
+    if ((err as Error).message?.includes('timed out')) {
       throw AppError.badRequest('URL timed out after 10 seconds');
     }
-    if (err instanceof AppError) throw err;
     throw AppError.badRequest('Could not fetch URL');
-  } finally {
-    clearTimeout(timeout);
   }
 
   // Cap size but KEEP <style> blocks (they hold brand colours + fonts).

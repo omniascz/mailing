@@ -12,6 +12,7 @@ import {
   type NewRssCampaign,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { safeFetch, BlockedUrlError } from '../../lib/safe-fetch.js';
 
 export interface RssItem {
   guid: string;
@@ -52,10 +53,22 @@ export async function getRssCampaign(id: string, orgId: string): Promise<RssCamp
 }
 
 export async function parseFeed(url: string): Promise<RssItem[]> {
-  const res = await fetch(url, { headers: { 'User-Agent': 'MailForge-RSS/1.0' } });
-  if (!res.ok) throw AppError.badRequest(`RSS fetch failed: ${String(res.status)}`);
-  const xml = await res.text();
-  return parseRssXml(xml);
+  // Customer-supplied URL — guarded, see lib/safe-fetch. A feed is XML, so the
+  // 1 MB cap is generous; without one this is a memory-exhaustion lever too.
+  let res;
+  try {
+    res = await safeFetch(url, {
+      headers: { 'User-Agent': 'MailForge-RSS/1.0' },
+      maxBytes: 1024 * 1024,
+    });
+  } catch (err) {
+    if (err instanceof BlockedUrlError) throw AppError.badRequest(err.message);
+    throw AppError.badRequest(`RSS fetch failed: ${(err as Error).message}`);
+  }
+  if (res.status < 200 || res.status >= 300) {
+    throw AppError.badRequest(`RSS fetch failed: ${String(res.status)}`);
+  }
+  return parseRssXml(res.body);
 }
 
 /**
