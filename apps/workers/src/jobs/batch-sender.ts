@@ -45,6 +45,8 @@ import {
   internalGetHeaders,
   throwIfAuthFailure,
   rethrowIfAuthError,
+  throwIfPermanentFailure,
+  asFilterError,
 } from '../lib/internal-api.js';
 
 interface ContactRow {
@@ -537,12 +539,14 @@ async function fetchContacts(orgId: string, contactIds: string[]): Promise<Conta
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds }),
     });
-    if (!res.ok) throw new Error(`API ${res.status}`);
+    throwIfPermanentFailure(res, '/internal/contacts/batch', orgId);
     const body = (await res.json()) as { data: ContactRow[] };
     return body.data;
   } catch (err) {
-    console.error('fetchContacts failed:', err);
-    return [];
+    // Returning [] here read as "this batch had no recipients" — a job that
+    // logged an error and then reported success. A batch whose recipients
+    // could not be loaded has not been sent, and must not look as if it was.
+    throw asFilterError(err, '/internal/contacts/batch', orgId);
   }
 }
 
@@ -560,13 +564,11 @@ async function fetchSuppressedBatch(orgId: string, emails: string[]): Promise<st
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, emails }),
     });
-    throwIfAuthFailure(res, '/internal/suppressions/check-batch');
-    if (!res.ok) return [];
+    throwIfPermanentFailure(res, '/internal/suppressions/check-batch', orgId);
     const body = (await res.json()) as { data: { suppressed: string[] } };
     return body.data.suppressed;
   } catch (err) {
-    rethrowIfAuthError(err);
-    return [];
+    throw asFilterError(err, '/internal/suppressions/check-batch', orgId);
   }
 }
 
@@ -612,13 +614,11 @@ async function fetchCappedBatch(orgId: string, contactIds: string[]): Promise<st
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds, channel: 'email' }),
     });
-    throwIfAuthFailure(res, '/internal/frequency/check-batch');
-    if (!res.ok) return [];
+    throwIfPermanentFailure(res, '/internal/frequency/check-batch', orgId);
     const body = (await res.json()) as { data: { capped: string[] } };
     return body.data.capped;
   } catch (err) {
-    rethrowIfAuthError(err);
-    return [];
+    throw asFilterError(err, '/internal/frequency/check-batch', orgId);
   }
 }
 
@@ -636,13 +636,11 @@ async function fetchHeldOutBatch(orgId: string, contactIds: string[]): Promise<s
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds }),
     });
-    throwIfAuthFailure(res, '/internal/holdout/check-batch');
-    if (!res.ok) return [];
+    throwIfPermanentFailure(res, '/internal/holdout/check-batch', orgId);
     const body = (await res.json()) as { data: { heldOut: string[] } };
     return body.data.heldOut;
   } catch (err) {
-    rethrowIfAuthError(err);
-    return [];
+    throw asFilterError(err, '/internal/holdout/check-batch', orgId);
   }
 }
 
@@ -677,8 +675,7 @@ async function fetchConsentBlockedBatch(
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, contactIds, processingPurposeId: processingPurposeId ?? null }),
     });
-    throwIfAuthFailure(res, '/internal/consent/check-batch');
-    if (!res.ok) return empty; // transport/server fault → fail open
+    throwIfPermanentFailure(res, '/internal/consent/check-batch', orgId);
     const body = (await res.json()) as {
       data: {
         blocked: string[];
@@ -693,8 +690,7 @@ async function fetchConsentBlockedBatch(
       configError: body.data.configError === true,
     };
   } catch (err) {
-    rethrowIfAuthError(err);
-    return empty; // transport fault → fail open
+    throw asFilterError(err, '/internal/consent/check-batch', orgId);
   }
 }
 
@@ -722,13 +718,11 @@ async function fetchTrackingStrict(orgId: string): Promise<boolean> {
     const res = await fetch(`${API_URL}/api/v1/internal/org/tracking-strict?orgId=${orgId}`, {
       headers: internalGetHeaders(),
     });
-    throwIfAuthFailure(res, '/internal/org/tracking-strict');
-    if (!res.ok) return false;
+    throwIfPermanentFailure(res, '/internal/org/tracking-strict', orgId);
     const body = (await res.json()) as { data: { strict: boolean } };
     return body.data.strict === true;
   } catch (err) {
-    rethrowIfAuthError(err);
-    return false;
+    throw asFilterError(err, '/internal/org/tracking-strict', orgId);
   }
 }
 
@@ -744,13 +738,11 @@ async function fetchOrgSuspended(orgId: string): Promise<boolean> {
     const res = await fetch(`${API_URL}/api/v1/internal/org/suspended?orgId=${orgId}`, {
       headers: internalGetHeaders(),
     });
-    throwIfAuthFailure(res, '/internal/org/suspended');
-    if (!res.ok) return false;
+    throwIfPermanentFailure(res, '/internal/org/suspended', orgId);
     const body = (await res.json()) as { data: { suspended: boolean } };
     return body.data.suspended === true;
   } catch (err) {
-    rethrowIfAuthError(err);
-    return false;
+    throw asFilterError(err, '/internal/org/suspended', orgId);
   }
 }
 
@@ -829,13 +821,16 @@ async function fetchTimewarpSchedule(
         holidayCountry: cfg.holidayCountry ?? 'cz',
       }),
     });
-    throwIfAuthFailure(res, '/internal/timewarp/schedule');
-    if (!res.ok) return null;
+    // Protective, with its own reason. "Postpone" without a new scheduling
+    // layer means exactly this: throw, and let BullMQ re-run the job later.
+    // Falling back to null sends immediately, which for a timewarp campaign
+    // can mean 3 a.m. in the recipient's timezone — a complaint and
+    // deliverability risk, not a cosmetic downgrade.
+    throwIfPermanentFailure(res, '/internal/timewarp/schedule', orgId);
     const body = (await res.json()) as { data: Record<string, string> };
     return new Map(Object.entries(body.data));
   } catch (err) {
-    rethrowIfAuthError(err);
-    return null;
+    throw asFilterError(err, '/internal/timewarp/schedule', orgId);
   }
 }
 
