@@ -11,6 +11,10 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { templates as campaignTemplates } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import {
+  validateOrgContent,
+  extractTemplateText,
+} from '../../services/editor/merge-tag-validation.js';
 
 import {
   TEMPLATES,
@@ -28,6 +32,18 @@ const VALID_CATEGORIES = [
   'seasonal',
   'ecommerce',
 ] as const;
+
+/** Merge tags in the renderable parts of a saved template. */
+async function templateWarnings(
+  orgId: string,
+  body: { subject?: string; preheader?: string | null; blocks?: unknown[] },
+) {
+  return validateOrgContent(orgId, [
+    body.subject,
+    body.preheader ?? undefined,
+    body.blocks ? extractTemplateText(body.blocks) : undefined,
+  ]);
+}
 
 export default async function templateRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
@@ -176,7 +192,9 @@ export default async function templateRoutes(app: FastifyInstance) {
           globalStyles: body.globalStyles ?? {},
         })
         .returning();
-      return reply.code(201).send({ data: row });
+      // Advisory only — see the campaign routes for why a typo is not a 400.
+      const warnings = await templateWarnings(req.user!.orgId, body);
+      return reply.code(201).send({ data: row, ...(warnings.length ? { warnings } : {}) });
     },
   );
 
@@ -241,7 +259,8 @@ export default async function templateRoutes(app: FastifyInstance) {
         )
         .returning();
       if (!row) throw AppError.notFound('Template');
-      return { data: row };
+      const warnings = await templateWarnings(req.user!.orgId, patch);
+      return { data: row, ...(warnings.length ? { warnings } : {}) };
     },
   );
 

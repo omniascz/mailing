@@ -82,6 +82,15 @@ export function registerLiquidFilter(
 }
 
 /**
+ * Names of every filter the Liquid path can apply — LiquidJS builtins plus
+ * anything registerLiquidFilter added. Read off the live engine rather than
+ * a maintained list, so a filter that exists is never reported as a typo.
+ */
+export function listLiquidFilters(): string[] {
+  return Object.keys((engine as unknown as { filters: Record<string, unknown> }).filters);
+}
+
+/**
  * Context available inside Liquid templates.
  *
  * - `contact` — all contact fields (first_name, email, custom_fields…)

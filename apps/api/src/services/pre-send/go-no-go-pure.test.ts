@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  classifyMergeTags,
   aggregateVerdict,
   classifyAudienceSize,
   classifyBounceRate,
@@ -257,5 +258,49 @@ describe('classifyScheduledTime', () => {
   it('passes for daytime send', () => {
     const d = new Date('2026-05-30T10:00:00Z');
     expect(classifyScheduledTime({ scheduledAt: d }).severity).toBe('pass');
+  });
+});
+
+describe('classifyMergeTags (15th check)', () => {
+  const tag = {
+    kind: 'unknown_tag',
+    token: 'contact.frist_name',
+    suggestion: 'contact.first_name',
+  };
+  const filter = { kind: 'unknown_filter', token: 'vokativ', suggestion: 'vocative' };
+
+  it('passes when nothing is wrong', () => {
+    const r = classifyMergeTags({ warnings: [] });
+    expect(r.severity).toBe('pass');
+    expect(r.id).toBe('merge-tags');
+    expect(r.category).toBe('content');
+  });
+
+  it('warns rather than fails — the mail is still deliverable, just wrong', () => {
+    expect(classifyMergeTags({ warnings: [tag] }).severity).toBe('warn');
+  });
+
+  it('counts tags and filters separately', () => {
+    const r = classifyMergeTags({ warnings: [tag, filter] });
+    expect(r.title).toContain('1× neznámý merge tag');
+    expect(r.title).toContain('1× neznámý filtr');
+    expect(r.metrics).toEqual({ unknownTags: 1, unknownFilters: 1 });
+  });
+
+  it('names the offenders and their suggestions in the detail', () => {
+    const r = classifyMergeTags({ warnings: [tag] });
+    expect(r.detail).toBe('contact.frist_name → contact.first_name');
+  });
+
+  it('keeps the detail inside the 240-char budget the panel allows', () => {
+    const many = Array.from({ length: 40 }, (_, i) => ({
+      kind: 'unknown_tag',
+      token: `contact.velmi_dlouhy_nazev_pole_${i}`,
+    }));
+    expect(classifyMergeTags({ warnings: many }).detail!.length).toBeLessThanOrEqual(240);
+  });
+
+  it('turns the verdict to caution, not no-go', () => {
+    expect(aggregateVerdict([classifyMergeTags({ warnings: [tag] })])).toBe('caution');
   });
 });

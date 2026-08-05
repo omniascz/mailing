@@ -82,43 +82,122 @@ export function registerMergeFilter(name: string, fn: MergeFilter): void {
   FILTERS[name] = fn;
 }
 
+/**
+ * Names of every filter the regex path can apply. The registry is the only
+ * source — template validation must not carry a second copy of this list, or
+ * registering a filter would silently make it "unknown".
+ */
+export function listMergeFilters(): string[] {
+  return Object.keys(FILTERS);
+}
+
+/** snake_case → camelCase, e.g. first_name → firstName. */
+function toCamel(field: string): string {
+  return field.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+}
+
+/** camelCase → snake_case, e.g. firstName → first_name. */
+function toSnake(field: string): string {
+  return field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+}
+
+/**
+ * Every contact key the template may reference, in both conventions.
+ *
+ * This is THE source of truth for both render paths. It used to be two: the
+ * regex path converted snake→camel per lookup, while the Liquid path carried a
+ * hand-written list of two aliases applied only at top level. The result was
+ * that `{{contact.first_name}}` resolved in one path and rendered empty in the
+ * other — and `{{system.unsubscribeUrl}}` did the opposite.
+ *
+ * Priority is preserved from the original pickContactField: an explicit key
+ * wins over its generated alias, so a contact carrying both `first_name` and
+ * `firstName` keeps the behaviour it had.
+ */
+export function expandContactScope(
+  contact: MergeTagContact | null | undefined,
+): Record<string, unknown> {
+  const c = (contact ?? {}) as Record<string, unknown>;
+  const custom = (c['custom_fields'] ?? c['customFields']) as Record<string, unknown> | undefined;
+
+  // Custom fields first so real contact props shadow them, matching the
+  // original lookup order (direct key → camel → custom_fields).
+  const out: Record<string, unknown> = { ...(custom ?? {}) };
+  for (const [k, v] of Object.entries(c)) out[k] = v;
+
+  // Generate the missing convention for every key. `??=` keeps explicit keys.
+  for (const k of Object.keys({ ...out })) {
+    const snake = toSnake(k);
+    const camel = toCamel(k);
+    if (!(snake in out)) out[snake] = out[k];
+    if (!(camel in out)) out[camel] = out[k];
+  }
+
+  // `custom_fields` addresses the same flat scope. Production's
+  // buildMergeContext spreads customFields straight into the contact, so there
+  // is no nested object to point at — aliasing the scope makes
+  // {{contact.custom_fields.plan}} resolve in both shapes.
+  const nested = custom ?? out;
+  out['custom_fields'] = nested;
+  out['customFields'] = nested;
+  return out;
+}
+
 function pickContactField(contact: MergeTagContact | null | undefined, field: string): unknown {
   if (!contact) return undefined;
-  // Direct lookup first (supports both snake_case source columns AND camelCase
-  // TypeScript props; callers usually flatten to one or the other).
-  if (field in contact) return contact[field];
-  // Snake → camel, e.g. first_name → firstName
-  const camel = field.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
-  if (camel in contact) return contact[camel];
-  // custom_fields lookup
-  const custom = contact['custom_fields'] ?? contact['customFields'];
-  if (custom && typeof custom === 'object' && field in (custom as Record<string, unknown>)) {
-    return (custom as Record<string, unknown>)[field];
+  return resolvePath(expandContactScope(contact), field);
+}
+
+/** Resolve a dotted path ("custom_fields.plan") against a plain object. */
+function resolvePath(scope: Record<string, unknown>, path: string): unknown {
+  if (path in scope) return scope[path];
+  const parts = path.split('.');
+  let cur: unknown = scope;
+  for (const part of parts) {
+    if (cur == null || typeof cur !== 'object') return undefined;
+    const obj = cur as Record<string, unknown>;
+    if (part in obj) {
+      cur = obj[part];
+      continue;
+    }
+    const camel = toCamel(part);
+    const snake = toSnake(part);
+    if (camel in obj) cur = obj[camel];
+    else if (snake in obj) cur = obj[snake];
+    else return undefined;
   }
-  return undefined;
+  return cur;
+}
+
+/**
+ * Every system value in both conventions, keyed the way templates address it.
+ * Derived from one table so the two render paths cannot drift apart again.
+ */
+export function expandSystemScope(system: MergeTagContext['system']): Record<string, unknown> {
+  const sys = system ?? {};
+  const pairs: Array<[snake: string, value: unknown]> = [
+    ['unsubscribe_url', sys.unsubscribeUrl],
+    ['view_in_browser_url', sys.viewInBrowserUrl],
+    ['preference_center_url', sys.preferenceCenterUrl],
+    ['current_date', sys.currentDate ?? new Date().toISOString().slice(0, 10)],
+    ['current_year', sys.currentYear ?? new Date().getFullYear().toString()],
+    ['company_name', sys.companyName],
+    ['company_address', sys.companyAddress],
+    ['footer_html', sys.footerHtml],
+    ['footer_text', sys.footerText],
+  ];
+  const out: Record<string, unknown> = {};
+  for (const [snake, value] of pairs) {
+    out[snake] = value ?? '';
+    out[toCamel(snake)] = value ?? '';
+  }
+  return out;
 }
 
 function resolveSystem(ctx: MergeTagContext, field: string): string | undefined {
-  const sys = ctx.system;
-  if (!sys) return undefined;
-  switch (field) {
-    case 'unsubscribe_url':
-      return sys.unsubscribeUrl;
-    case 'view_in_browser_url':
-      return sys.viewInBrowserUrl;
-    case 'preference_center_url':
-      return sys.preferenceCenterUrl;
-    case 'current_date':
-      return sys.currentDate ?? new Date().toISOString().slice(0, 10);
-    case 'current_year':
-      return sys.currentYear ?? new Date().getFullYear().toString();
-    case 'company_name':
-      return sys.companyName;
-    case 'company_address':
-      return sys.companyAddress;
-    default:
-      return undefined;
-  }
+  if (!ctx.system) return undefined;
+  const v = expandSystemScope(ctx.system)[field];
+  return v == null || v === '' ? undefined : String(v);
 }
 
 /**
@@ -195,27 +274,17 @@ const COUPON_SENTINEL_RE = /%%CPN(\d+)%%/g;
  * custom-fields and any explicit `data` collections become loopable.
  */
 function buildLiquidContext(ctx: MergeTagContext): Record<string, unknown> {
-  const c = (ctx.contact ?? {}) as Record<string, unknown>;
-  const custom = (c['custom_fields'] ?? c['customFields'] ?? {}) as Record<string, unknown>;
-  const sys = ctx.system ?? {};
-  const contactScope = { ...custom, ...c };
+  const contactScope = expandContactScope(ctx.contact);
+  const systemScope = expandSystemScope(ctx.system);
   return {
+    // Flat access — {{first_name}} / {{firstName}} / {{unsubscribe_url}}.
     ...contactScope,
-    // snake_case aliases for the common camelCase contact props
-    first_name: c['firstName'] ?? c['first_name'],
-    last_name: c['lastName'] ?? c['last_name'],
-    // system values flattened to top level
-    unsubscribe_url: sys.unsubscribeUrl ?? '',
-    view_in_browser_url: sys.viewInBrowserUrl ?? '',
-    preference_center_url: sys.preferenceCenterUrl ?? '',
-    current_date: sys.currentDate ?? new Date().toISOString().slice(0, 10),
-    current_year: sys.currentYear ?? new Date().getFullYear().toString(),
-    company_name: sys.companyName ?? '',
-    company_address: sys.companyAddress ?? '',
-    // namespaced access
+    ...systemScope,
+    // Namespaced access — {{contact.first_name}} / {{system.unsubscribeUrl}}.
+    // Same objects, so the two forms cannot disagree.
     contact: contactScope,
-    system: sys,
-    // explicit loop collections passed by the caller (products, items, …)
+    system: systemScope,
+    // Explicit loop collections passed by the caller (products, items, …).
     ...(ctx.data ?? {}),
   };
 }

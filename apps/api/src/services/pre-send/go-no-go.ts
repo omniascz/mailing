@@ -27,6 +27,7 @@ import {
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { checkSpam } from '../editor/spam-checker.js';
+import { validateOrgContent } from '../editor/merge-tag-validation.js';
 import {
   aggregateVerdict,
   classifyAudienceSize,
@@ -39,6 +40,7 @@ import {
   classifyScheduledTime,
   classifySpamScore,
   classifySubject,
+  classifyMergeTags,
   classifyUnsubscribeLink,
   classifySuppression,
   classifyWarmupCapacity,
@@ -133,6 +135,15 @@ export async function runPreSendChecks(orgId: string, campaignId: string): Promi
   );
   checks.push(classifyPlainText({ hasPlainText: hasPlainTextPart(campaign) }));
 
+  // 15th check — merge tags that will render empty. Validated against the same
+  // expanded context the renderer builds, so this cannot disagree with what
+  // the send actually produces.
+  checks.push(
+    classifyMergeTags({
+      warnings: await validateOrgContent(orgId, [campaign.subject, campaign.preheader, html]),
+    }),
+  );
+
   // IP warmup — sum remainingToday across all non-warm IPs. If the pool is
   // fully warm (-1 = unlimited), pass. Only emitted when org has tracked IPs.
   const warmupStatuses = await listWarmupStatuses(orgId).catch(() => []);
@@ -225,14 +236,21 @@ async function fetchRecentRates(orgId: string): Promise<{
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
   const oneDayAgo = new Date(Date.now() - 86_400_000);
 
+  // Interpolated as an ISO string with an explicit cast, not as a Date. A raw
+  // sql`` fragment bypasses the column's type mapper, so the driver received a
+  // Date it could not encode and the whole endpoint answered 500 — every
+  // pre-send panel request, not an edge case. Found by the first integration
+  // test to call this route.
+  const oneDayAgoSql = sql`${oneDayAgo.toISOString()}::timestamptz`;
+
   // Two windows in one query using conditional counts — cheaper than two passes.
   const [row] = (await db
     .select({
       sends7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'send')::text`,
       bounces7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'bounce')::text`,
       complaints7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'complaint')::text`,
-      sends24h: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'send' AND ${emailEvents.createdAt} >= ${oneDayAgo})::text`,
-      complaints24h: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'complaint' AND ${emailEvents.createdAt} >= ${oneDayAgo})::text`,
+      sends24h: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'send' AND ${emailEvents.createdAt} >= ${oneDayAgoSql})::text`,
+      complaints24h: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'complaint' AND ${emailEvents.createdAt} >= ${oneDayAgoSql})::text`,
     })
     .from(emailEvents)
     .where(and(eq(emailEvents.orgId, orgId), gte(emailEvents.createdAt, sevenDaysAgo)))) as Array<{
