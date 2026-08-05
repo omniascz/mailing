@@ -14,6 +14,12 @@ import { db } from '../../db/client.js';
 import { contacts, emailEvents } from '../../db/schema/index.js';
 import { revenueEvents } from '../../db/schema/revenue.js';
 
+/** Unwrap a db.execute result, which is already the row array. */
+function toRows(result: unknown): unknown[] {
+  if (Array.isArray(result)) return result;
+  return (result as { rows?: unknown[] })?.rows ?? [];
+}
+
 export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
@@ -39,7 +45,11 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
           GROUP BY period ORDER BY period ASC`,
     );
 
-    return { data: (rows as unknown as { rows: unknown[] }).rows };
+    // db.execute returns the row array itself with the postgres-js driver, not
+    // a { rows } envelope. Reading `.rows` returned undefined, so this route
+    // answered `{ data: undefined }` — a 200 with nothing in it. The Date
+    // encoding bug hid this one: the query threw before anyone saw the shape.
+    return { data: toRows(rows) };
   });
 
   // ── Churn metrics ──────────────────────────────────────────────────────────
@@ -107,7 +117,11 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
           GROUP BY week ORDER BY week ASC`,
     );
 
-    return { data: (rows as unknown as { rows: unknown[] }).rows };
+    // db.execute returns the row array itself with the postgres-js driver, not
+    // a { rows } envelope. Reading `.rows` returned undefined, so this route
+    // answered `{ data: undefined }` — a 200 with nothing in it. The Date
+    // encoding bug hid this one: the query threw before anyone saw the shape.
+    return { data: toRows(rows) };
   });
 
   // ── Revenue per email / per subscriber ────────────────────────────────────

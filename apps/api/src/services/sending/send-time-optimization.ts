@@ -37,6 +37,19 @@ export interface StoResult {
 
 // ─── Per-contact STO ─────────────────────────────────────────────────────────
 
+/**
+ * db.execute returns the row array itself with the postgres-js driver, not a
+ * { rows } envelope — canSend in smart-sending destructures it the same way.
+ * Reading `.rows` gave undefined here, so every STO query fell back to [] and
+ * reported "no data" for contacts that had plenty. That is a separate defect
+ * from the Date encoding, and it hid behind it: the query threw before anyone
+ * could notice it was also reading the result wrongly.
+ */
+function toRows<T>(result: unknown): T[] {
+  if (Array.isArray(result)) return result as T[];
+  return ((result as { rows?: T[] })?.rows ?? []) as T[];
+}
+
 export async function getContactSendHour(orgId: string, contactId: string): Promise<StoResult> {
   const since = new Date(Date.now() - LOOKBACK_DAYS * 86400_000);
 
@@ -54,7 +67,7 @@ export async function getContactSendHour(orgId: string, contactId: string): Prom
     ORDER BY 2 DESC
   `)) as unknown as { rows: Array<{ hour: number; score: number }> };
 
-  const hourRows = rows.rows ?? [];
+  const hourRows = toRows<{ hour: number; score: number }>(rows);
   return computeSto(hourRows);
 }
 
@@ -80,7 +93,7 @@ export async function getOrgPeakHour(orgId: string): Promise<StoResult> {
     ORDER BY 2 DESC
   `)) as unknown as { rows: Array<{ hour: number; score: number }> };
 
-  const result = computeSto(rows.rows ?? []);
+  const result = computeSto(toRows<{ hour: number; score: number }>(rows));
   await redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL_SECONDS).catch(() => {});
   return result;
 }
@@ -118,7 +131,7 @@ export async function getBatchSendHours(
 
   // Group by contact
   const byContact = new Map<string, Array<{ hour: number; score: number }>>();
-  for (const r of rows.rows ?? []) {
+  for (const r of toRows<{ contact_id: string; hour: number; score: number }>(rows)) {
     if (!byContact.has(r.contact_id)) byContact.set(r.contact_id, []);
     byContact.get(r.contact_id)!.push({ hour: r.hour, score: r.score });
   }
