@@ -65,7 +65,21 @@ export const webhooks = pgTable(
       .references(() => organizations.id, { onDelete: 'cascade' }),
 
     url: varchar('url', { length: 2048 }).notNull(),
-    /** HMAC-SHA256 signing secret (stored hashed — never returned in API) */
+    /**
+     * HMAC-SHA256 signing secret, stored in PLAINTEXT — necessarily so.
+     *
+     * The previous comment here claimed it was hashed and never returned by the
+     * API, and neither was true. Hashing is not an option: signing a delivery
+     * requires the key itself, and a hash cannot produce an HMAC. The receiver
+     * needs the same value to verify, so it is a shared secret, not a
+     * credential we can store one-way like a password.
+     *
+     * Returned only by POST /api/v1/webhooks, which is the one moment the
+     * customer can copy it — the 201 body carries it twice, as `secret` on the
+     * row and as `rawSecret`. listWebhooks projects it away and updateWebhook
+     * strips it from the returned row, so it never appears again; a customer
+     * who loses it has to create a new webhook.
+     */
     secret: varchar('secret', { length: 255 }).notNull(),
     /** Array of subscribed event types, e.g. ['email.opened', 'contact.created'] */
     events: text('events')

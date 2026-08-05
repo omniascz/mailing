@@ -16,6 +16,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { crmExtensionCards, appStudioApps } from '../../../db/schema/index.js';
 import { AppError } from '../../../lib/app-error.js';
+import { safeFetch } from '../../../lib/safe-fetch.js';
 
 const entityTypeEnum = z.enum(['contact', 'deal', 'account', 'ticket']);
 const positionEnum = z.enum(['sidebar', 'top', 'bottom']);
@@ -161,11 +162,19 @@ export default async function extensionCardRoutes(app: FastifyInstance) {
         url.searchParams.set('entity_id', entityId);
         url.searchParams.set('org_id', orgId);
 
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 5000);
         try {
-          const resp = await fetch(url.toString(), { signal: ctrl.signal });
-          const data = resp.ok ? await resp.json() : { error: `HTTP ${resp.status}` };
+          // dataUrl is supplied when the card is registered — customer input,
+          // so the SSRF guard applies. See lib/safe-fetch.
+          const resp = await safeFetch(url, { timeoutMs: 5000, maxBytes: 64 * 1024 });
+          const ok = resp.status >= 200 && resp.status < 300;
+          let data: unknown = { error: `HTTP ${resp.status}` };
+          if (ok) {
+            try {
+              data = JSON.parse(resp.body);
+            } catch {
+              data = { error: 'Response was not valid JSON' };
+            }
+          }
           return { cardId: card.id, key: card.key, name: card.name, position: card.position, data };
         } catch {
           return {
@@ -175,8 +184,6 @@ export default async function extensionCardRoutes(app: FastifyInstance) {
             position: card.position,
             data: { error: 'Timeout or network error' },
           };
-        } finally {
-          clearTimeout(timer);
         }
       }),
     );
@@ -208,7 +215,8 @@ export default async function extensionCardRoutes(app: FastifyInstance) {
     if (!card) throw AppError.notFound('ExtensionCard');
     if (!card.actionUrl) throw AppError.badRequest('Card has no actionUrl');
 
-    const resp = await fetch(card.actionUrl, {
+    // actionUrl is customer-supplied — guarded, see lib/safe-fetch.
+    const resp = await safeFetch(card.actionUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -217,9 +225,18 @@ export default async function extensionCardRoutes(app: FastifyInstance) {
         entity_id: entityId,
         org_id: orgId,
       }),
+      maxBytes: 64 * 1024,
     });
 
-    const result = resp.ok ? await resp.json() : { error: `HTTP ${resp.status}` };
+    const ok = resp.status >= 200 && resp.status < 300;
+    let result: unknown = { error: `HTTP ${resp.status}` };
+    if (ok) {
+      try {
+        result = JSON.parse(resp.body);
+      } catch {
+        result = { error: 'Response was not valid JSON' };
+      }
+    }
     return { data: result };
   });
 }

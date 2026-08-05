@@ -130,6 +130,9 @@ importers:
       ioredis:
         specifier: ^5.10.1
         version: 5.10.1
+      ipaddr.js:
+        specifier: 2.3.0
+        version: 2.3.0
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3

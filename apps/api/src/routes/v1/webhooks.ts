@@ -16,6 +16,8 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { WEBHOOK_EVENTS } from '../../db/schema/webhooks.js';
+import { assertUrlIsFetchable, BlockedUrlError } from '../../lib/safe-fetch.js';
+import { AppError } from '../../lib/app-error.js';
 import {
   createWebhook,
   listWebhooks,
@@ -76,6 +78,24 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
     description: z.string().max(255).optional(),
   });
 
+  /**
+   * Refuse at registration what delivery would refuse anyway.
+   *
+   * This is UX, not the security boundary: a hostname that resolves publicly
+   * today can resolve to 127.0.0.1 tomorrow, and a redirect can point anywhere
+   * regardless of what was registered. safeFetch re-checks at connect time and
+   * that is the check that holds. This one just means the customer finds out
+   * now instead of wondering why nothing ever arrives.
+   */
+  async function assertRegistrableUrl(url: string): Promise<void> {
+    try {
+      await assertUrlIsFetchable(url);
+    } catch (err) {
+      if (err instanceof BlockedUrlError) throw AppError.badRequest(err.message);
+      throw err;
+    }
+  }
+
   app.post(
     '/api/v1/webhooks',
     {
@@ -85,6 +105,7 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const orgId = req.user!.orgId;
       const body = createSchema.parse(req.body);
+      await assertRegistrableUrl(body.url);
       const result = await createWebhook(orgId, body as Parameters<typeof createWebhook>[1]);
       return reply.status(201).send({ data: result });
     },
@@ -93,7 +114,13 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
   // ── Update webhook ───────────────────────────────────────────────────────────
   const updateSchema = z.object({
     url: z.string().url().optional(),
-    events: z.array(z.string()).min(1).optional(),
+    // Same enum as create. PUT used to take z.array(z.string()), so any string
+    // — including the '*' wildcard that dispatchEvent honours and POST refuses
+    // — could be written to a webhook through the update path.
+    events: z
+      .array(z.enum(WEBHOOK_EVENTS as unknown as [string, ...string[]]))
+      .min(1)
+      .optional(),
     description: z.string().max(255).optional(),
     active: z.boolean().optional(),
   });
@@ -108,6 +135,7 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const orgId = req.user!.orgId;
       const body = updateSchema.parse(req.body);
+      if (body.url) await assertRegistrableUrl(body.url);
       return reply.send({
         data: await updateWebhook(id, orgId, body as Parameters<typeof updateWebhook>[2]),
       });

@@ -24,6 +24,7 @@ import {
   type WebhookEvent,
 } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
+import { safeFetch, BlockedUrlError } from '../../lib/safe-fetch.js';
 import {
   signPayload,
   signPayloadWithTimestamp,
@@ -292,6 +293,21 @@ export async function dispatchEvent(
   }
 }
 
+/**
+ * Response bodies are stored so a customer can debug their own receiver. They
+ * are NOT a channel for reading arbitrary responses out of our network, so the
+ * stored copy is capped: 2 KB holds an error page or a JSON error envelope and
+ * is far too little to exfiltrate anything useful.
+ */
+export const MAX_RESPONSE_BODY_BYTES = 2048;
+
+function truncateResponseBody(text: string | undefined): string | undefined {
+  if (text === undefined) return undefined;
+  return text.length <= MAX_RESPONSE_BODY_BYTES
+    ? text
+    : text.slice(0, MAX_RESPONSE_BODY_BYTES) + '… [truncated]';
+}
+
 /** Maximum number of delivery attempts before giving up */
 const MAX_ATTEMPTS = 5;
 
@@ -350,7 +366,9 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
   let success = false;
 
   try {
-    const res = await fetch(webhook.url, {
+    // safeFetch, not fetch: the URL is customer-supplied, so every hop is
+    // checked against the resolved address at connect time. See lib/safe-fetch.
+    const res = await safeFetch(webhook.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -361,14 +379,17 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
         'X-ForgeMsg-Delivery': deliveryId,
       },
       body,
-      signal: AbortSignal.timeout(15_000),
+      timeoutMs: 15_000,
+      maxBytes: MAX_RESPONSE_BODY_BYTES,
     });
 
     statusCode = res.status;
-    responseBody = await res.text().catch(() => undefined);
-    success = res.ok;
+    responseBody = truncateResponseBody(res.body);
+    success = res.status >= 200 && res.status < 300;
   } catch (err) {
-    responseBody = (err as Error).message;
+    responseBody = truncateResponseBody(
+      err instanceof BlockedUrlError ? 'Blocked: ' + err.message : (err as Error).message,
+    );
   }
 
   const now = new Date();
@@ -448,7 +469,7 @@ export async function processRetryQueue(): Promise<{ queued: number }> {
 export async function testWebhook(
   id: string,
   orgId: string,
-): Promise<{ success: boolean; statusCode?: number }> {
+): Promise<{ success: boolean; statusCode?: number; blocked?: string }> {
   const [webhook] = await db
     .select()
     .from(webhooks)
@@ -469,7 +490,7 @@ export async function testWebhook(
   const signatureV2 = signPayloadWithTimestamp(webhook.secret, body, testTimestamp);
 
   try {
-    const res = await fetch(webhook.url, {
+    const res = await safeFetch(webhook.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -480,17 +501,47 @@ export async function testWebhook(
         'X-ForgeMsg-Delivery': 'test',
       },
       body,
-      signal: AbortSignal.timeout(10_000),
+      timeoutMs: 10_000,
+      maxBytes: MAX_RESPONSE_BODY_BYTES,
     });
-    return { success: res.ok, statusCode: res.status };
-  } catch (_err) {
+    return { success: res.status >= 200 && res.status < 300, statusCode: res.status };
+  } catch (err) {
+    // A refused URL says so, because that is actionable for the customer.
+    // Everything else stays a bare `success: false` — this endpoint must not
+    // become a probe that tells apart "port closed" from "host unreachable".
+    if (err instanceof BlockedUrlError) return { success: false, blocked: err.message };
     return { success: false };
   }
 }
 
+/**
+ * Delivery log for a webhook.
+ *
+ * `response_body` is deliberately NOT projected. It is the response our server
+ * received from a URL the customer chose, which makes returning it a read
+ * primitive: point a webhook at something, read what it said. The SSRF guard
+ * makes that hard to aim at anything interesting, but defence in depth is
+ * cheaper than betting the guard is perfect — and the status code, which IS
+ * returned, is what a customer debugging their own receiver actually needs.
+ *
+ * The body is still stored (capped at MAX_RESPONSE_BODY_BYTES) so support can
+ * read it out of the database when a customer asks why their endpoint failed.
+ */
 export async function listDeliveries(webhookId: string, orgId: string, limit = 50) {
   return db
-    .select()
+    .select({
+      id: webhookDeliveries.id,
+      webhookId: webhookDeliveries.webhookId,
+      orgId: webhookDeliveries.orgId,
+      event: webhookDeliveries.event,
+      payload: webhookDeliveries.payload,
+      status: webhookDeliveries.status,
+      statusCode: webhookDeliveries.statusCode,
+      attempts: webhookDeliveries.attempts,
+      nextRetryAt: webhookDeliveries.nextRetryAt,
+      deliveredAt: webhookDeliveries.deliveredAt,
+      createdAt: webhookDeliveries.createdAt,
+    })
     .from(webhookDeliveries)
     .where(and(eq(webhookDeliveries.webhookId, webhookId), eq(webhookDeliveries.orgId, orgId)))
     .orderBy(desc(webhookDeliveries.createdAt))
