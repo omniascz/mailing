@@ -181,6 +181,11 @@ async function executeNode(
   }
 }
 
+/** Exported under an explicit test-only name so the integration suite can
+ *  reach the emitter without reconstructing an entire workflow run. */
+export const completeRunForTest = (runId: string, workflowId: string) =>
+  completeRun(runId, workflowId);
+
 async function completeRun(runId: string, workflowId: string): Promise<void> {
   const [run] = await db
     .update(workflowRuns)

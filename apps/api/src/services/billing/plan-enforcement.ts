@@ -7,7 +7,7 @@
  * (refuse to enqueue). Free plan is the only hard-stop tier; paid plans
  * accept overage and bill afterwards via Stripe metered usage.
  */
-import { eq, sql, and, isNull, ne } from 'drizzle-orm';
+import { eq, sql, and, isNull, ne, gte } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   organizations,
@@ -84,7 +84,11 @@ export async function getPlanCapacity(orgId: string): Promise<PlanCapacity> {
       and(
         eq(emailEvents.orgId, orgId),
         eq(emailEvents.eventType, 'send'),
-        sql`${emailEvents.createdAt} >= ${periodStart}`,
+        // gte(), not a raw sql fragment. A raw fragment bypasses the column's
+        // type mapper, so the driver received a Date it could not encode and
+        // every capacity check threw — which meant POST /api/v1/contacts
+        // answered 500. Same defect as the one fixed in the pre-send panel.
+        gte(emailEvents.createdAt, periodStart),
       ),
     );
   const sendCount = sendRow?.n ?? 0;
