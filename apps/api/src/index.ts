@@ -177,6 +177,7 @@ import internalArchiveRoutes from './routes/v1/internal/archive.js';
 import internalHoldoutRoutes from './routes/v1/internal/holdout.js';
 import internalHoldoutBatchRoutes from './routes/v1/internal/holdout-batch.js';
 import internalConsentBatchRoutes from './routes/v1/internal/consent-batch.js';
+import internalWebhookRoutes from './routes/v1/internal/webhooks.js';
 import internalTimewarpRoutes from './routes/v1/internal/timewarp.js';
 import internalContactsRoutes from './routes/v1/internal/contacts.js';
 import internalSuppressionsRoutes from './routes/v1/internal/suppressions.js';
@@ -514,6 +515,7 @@ export async function buildApp() {
   await app.register(internalHoldoutRoutes);
   await app.register(internalHoldoutBatchRoutes);
   await app.register(internalConsentBatchRoutes);
+  await app.register(internalWebhookRoutes);
   await app.register(internalTimewarpRoutes);
   await app.register(internalContactsRoutes);
   await app.register(internalSuppressionsRoutes);
