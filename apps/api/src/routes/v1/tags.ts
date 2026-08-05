@@ -171,7 +171,9 @@ export default async function tagRoutes(app: FastifyInstance) {
       const ownedTags = await db
         .select({ id: tags.id })
         .from(tags)
-        .where(and(eq(tags.orgId, orgId), sql`${tags.id} = ANY(${sql.param(body.tag_ids)}::uuid[])`));
+        .where(
+          and(eq(tags.orgId, orgId), sql`${tags.id} = ANY(${sql.param(body.tag_ids)}::uuid[])`),
+        );
 
       if (ownedTags.length !== body.tag_ids.length) {
         throw AppError.forbidden('One or more tags do not belong to this organisation');
@@ -207,7 +209,9 @@ export default async function tagRoutes(app: FastifyInstance) {
         const nameRows = await db
           .select({ name: tags.name })
           .from(tags)
-          .where(and(eq(tags.orgId, orgId), sql`${tags.id} = ANY(${sql.param(body.tag_ids)}::uuid[])`));
+          .where(
+            and(eq(tags.orgId, orgId), sql`${tags.id} = ANY(${sql.param(body.tag_ids)}::uuid[])`),
+          );
         const tagNames = nameRows.map((t) => t.name);
         void import('../../services/workflows/triggers.js')
           .then((m) => {

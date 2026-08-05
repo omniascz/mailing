@@ -398,7 +398,10 @@ export async function listInbox(
   if (opts.channel) conditions.push(eq(helpdeskTickets.channel, opts.channel));
   if (opts.status) conditions.push(eq(helpdeskTickets.status, opts.status));
   if (opts.assignedTo) conditions.push(eq(helpdeskTickets.assignedTo, opts.assignedTo));
-  if (opts.cursor) conditions.push(sql`${helpdeskTickets.updatedAt} < ${sql.param(new Date(opts.cursor), helpdeskTickets.updatedAt)}`);
+  if (opts.cursor)
+    conditions.push(
+      sql`${helpdeskTickets.updatedAt} < ${sql.param(new Date(opts.cursor), helpdeskTickets.updatedAt)}`,
+    );
 
   const tickets = await db
     .select()

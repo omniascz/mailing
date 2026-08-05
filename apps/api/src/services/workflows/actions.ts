@@ -379,7 +379,9 @@ async function executeCondition(
       ];
       if (config.withinDays) {
         const since = new Date(Date.now() - config.withinDays * 86_400_000);
-        conds.push(sql`${workflowEvents.createdAt} >= ${sql.param(since.toISOString(), workflowEvents.createdAt)}`);
+        conds.push(
+          sql`${workflowEvents.createdAt} >= ${sql.param(since.toISOString(), workflowEvents.createdAt)}`,
+        );
       }
       const [row] = await db
         .select({ id: workflowEvents.id })
