@@ -13,7 +13,7 @@
  */
 
 import { createHash, randomBytes } from 'node:crypto';
-import { and, eq, lte, desc, sql } from 'drizzle-orm';
+import { and, eq, desc, sql } from 'drizzle-orm';
 import { AppError } from '../../lib/app-error.js';
 import { db } from '../../db/client.js';
 import {
@@ -31,7 +31,6 @@ import {
   verifySignature,
   verifyTimestampedSignature,
   generateWebhookSecret,
-  retryDelaySec,
 } from '@shared/webhooks';
 
 // Re-export signing functions for consumers (SDK verify, route handlers)
@@ -192,6 +191,13 @@ export async function listWebhooks(orgId: string): Promise<Omit<Webhook, 'secret
       totalDeliveries: webhooks.totalDeliveries,
       failedDeliveries: webhooks.failedDeliveries,
       lastDeliveredAt: webhooks.lastDeliveredAt,
+      // Why the events stopped. `active: false` on its own cannot distinguish
+      // "the customer switched it off" from "we switched it off after it kept
+      // failing", and the second one is the case where they need an
+      // explanation rather than a boolean.
+      consecutiveFailures: webhooks.consecutiveFailures,
+      disabledAt: webhooks.disabledAt,
+      disabledReason: webhooks.disabledReason,
       createdAt: webhooks.createdAt,
       updatedAt: webhooks.updatedAt,
     })
@@ -206,9 +212,20 @@ export async function updateWebhook(
   orgId: string,
   data: Partial<{ url: string; events: WebhookEvent[]; description: string; active: boolean }>,
 ): Promise<Omit<Webhook, 'secret'>> {
+  // Turning a webhook back on clears the auto-disable state. Without this the
+  // reason would linger on a working webhook, and the failure streak would
+  // carry over so the next single failure could disable it again immediately.
+  const reEnable =
+    data.active === true ? { disabledAt: null, disabledReason: null, consecutiveFailures: 0 } : {};
+
   const [row] = await db
     .update(webhooks)
-    .set({ ...data, events: data.events as string[] | undefined, updatedAt: new Date() })
+    .set({
+      ...data,
+      ...reEnable,
+      events: data.events as string[] | undefined,
+      updatedAt: new Date(),
+    })
     .where(and(eq(webhooks.id, id), eq(webhooks.orgId, orgId)))
     .returning();
 
@@ -308,30 +325,87 @@ function truncateResponseBody(text: string | undefined): string | undefined {
     : text.slice(0, MAX_RESPONSE_BODY_BYTES) + '… [truncated]';
 }
 
-/** Maximum number of delivery attempts before giving up */
-const MAX_ATTEMPTS = 5;
+/**
+ * Consecutive exhausted deliveries before we turn a webhook off.
+ *
+ * Counted per DELIVERY, not per attempt: one increment already means five
+ * tries spread over about seven and a half minutes, so ten of them in a row is
+ * an endpoint that has been broken for a long time, not a blip. Ten is also
+ * few enough that a low-volume org does not lose weeks of events before we
+ * stop trying.
+ *
+ * A 410 Gone bypasses the counter entirely — see classifyOutcome.
+ */
+export const AUTO_DISABLE_AFTER_CONSECUTIVE_FAILURES = 10;
 
-/** Mailforge retry config: 30s base, 2× multiplier, 600s cap, 5 attempts */
-const MAILFORGE_RETRY_CONFIG = {
-  maxRetries: MAX_ATTEMPTS,
-  initialDelaySec: 30,
-  maxDelaySec: 600,
-  backoffMultiplier: 2,
-  autoDisableThreshold: 0,
-} as const;
+/**
+ * Retry policy lives in BullMQ now (see webhookQueue in lib/queues.ts):
+ * attempts 5, exponential from 30 s → 30/60/120/240 s between tries.
+ *
+ * This module used to compute `nextRetryAt` itself and write status
+ * 'retrying'. Nothing ever read it back: processRetryQueue was the only
+ * re-enqueuer and it had no caller, so a delivery that failed once sat in
+ * 'retrying' forever. deliverWebhook now THROWS on a retryable failure and
+ * lets the queue own the schedule; webhook_deliveries is audit only.
+ */
+export type DeliveryOutcome = 'success' | 'failed';
+
+/** Thrown when the attempt should be repeated — BullMQ turns this into a retry. */
+export class RetryableDeliveryError extends Error {
+  constructor(
+    readonly deliveryId: string,
+    readonly statusCode: number | undefined,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'RetryableDeliveryError';
+  }
+}
+
+/**
+ * Is this failure worth trying again?
+ *
+ * A 4xx means the receiver understood us and said no: a wrong URL, a revoked
+ * token, a deleted endpoint. Repeating that five times changes nothing and
+ * costs the receiver four more requests, so it is terminal. The exceptions are
+ * the two 4xx codes that explicitly mean "later": 408 Request Timeout and 429
+ * Too Many Requests.
+ *
+ * 410 Gone is terminal AND permanent — it is the code a receiver returns for an
+ * endpoint that has been deleted, which is exactly what Zapier answers once a
+ * Zap is removed. Counting to ten on that is pointless; the webhook is dead.
+ */
+export function classifyOutcome(statusCode: number | undefined): {
+  outcome: DeliveryOutcome | 'retry';
+  disableNow: boolean;
+} {
+  // No status at all: timeout, DNS failure, connection refused, TLS error, or
+  // a URL the SSRF guard refused. All transport-level, all worth retrying —
+  // a blocked URL will still be blocked next time and will simply exhaust.
+  if (statusCode === undefined) return { outcome: 'retry', disableNow: false };
+
+  if (statusCode >= 200 && statusCode < 300) return { outcome: 'success', disableNow: false };
+  if (statusCode === 410) return { outcome: 'failed', disableNow: true };
+  if (statusCode === 408 || statusCode === 429) return { outcome: 'retry', disableNow: false };
+  if (statusCode >= 400 && statusCode < 500) return { outcome: 'failed', disableNow: false };
+  return { outcome: 'retry', disableNow: false };
+}
 
 /**
  * Executes a single webhook delivery attempt.
  * Called by the BullMQ worker in apps/workers.
  */
-export async function deliverWebhook(deliveryId: string): Promise<void> {
+export async function deliverWebhook(deliveryId: string): Promise<{
+  outcome: DeliveryOutcome;
+  statusCode?: number;
+}> {
   const [delivery] = await db
     .select()
     .from(webhookDeliveries)
     .where(eq(webhookDeliveries.id, deliveryId))
     .limit(1);
 
-  if (!delivery) return;
+  if (!delivery) return { outcome: 'failed' };
 
   const [webhook] = await db
     .select()
@@ -340,11 +414,12 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
     .limit(1);
 
   if (!webhook || !webhook.active) {
+    // Not retryable: an inactive webhook does not become active by waiting.
     await db
       .update(webhookDeliveries)
-      .set({ status: 'failed' })
+      .set({ status: 'failed', responseBody: 'Webhook is not active' })
       .where(eq(webhookDeliveries.id, deliveryId));
-    return;
+    return { outcome: 'failed' };
   }
 
   const body = JSON.stringify(delivery.payload);
@@ -363,7 +438,6 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
 
   let statusCode: number | undefined;
   let responseBody: string | undefined;
-  let success = false;
 
   try {
     // safeFetch, not fetch: the URL is customer-supplied, so every hop is
@@ -385,7 +459,6 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
 
     statusCode = res.status;
     responseBody = truncateResponseBody(res.body);
-    success = res.status >= 200 && res.status < 300;
   } catch (err) {
     responseBody = truncateResponseBody(
       err instanceof BlockedUrlError ? 'Blocked: ' + err.message : (err as Error).message,
@@ -393,8 +466,9 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
   }
 
   const now = new Date();
+  const { outcome, disableNow } = classifyOutcome(statusCode);
 
-  if (success) {
+  if (outcome === 'success') {
     await db
       .update(webhookDeliveries)
       .set({
@@ -407,60 +481,114 @@ export async function deliverWebhook(deliveryId: string): Promise<void> {
       })
       .where(eq(webhookDeliveries.id, deliveryId));
 
-    // Update webhook stats
+    // A success clears the failure streak — a webhook that recovers must not
+    // be disabled later by failures it has already come back from.
     await db
       .update(webhooks)
       .set({
         totalDeliveries: webhook.totalDeliveries + 1,
         lastDeliveredAt: now,
+        consecutiveFailures: 0,
         updatedAt: now,
       })
       .where(eq(webhooks.id, webhook.id));
-  } else if (attempts >= MAX_ATTEMPTS) {
+
+    return { outcome: 'success', statusCode };
+  }
+
+  if (outcome === 'retry') {
+    // Audit only. The schedule belongs to BullMQ; throwing is what asks for it.
     await db
       .update(webhookDeliveries)
-      .set({ status: 'failed', statusCode, responseBody, attempts, nextRetryAt: null })
+      .set({ status: 'pending', statusCode, responseBody, attempts })
       .where(eq(webhookDeliveries.id, deliveryId));
 
-    await db
-      .update(webhooks)
-      .set({ failedDeliveries: webhook.failedDeliveries + 1, updatedAt: now })
-      .where(eq(webhooks.id, webhook.id));
-  } else {
-    const nextRetry = new Date(
-      now.getTime() + retryDelaySec(attempts, MAILFORGE_RETRY_CONFIG) * 1000,
+    throw new RetryableDeliveryError(
+      deliveryId,
+      statusCode,
+      statusCode === undefined
+        ? `Delivery ${deliveryId} failed at the transport layer: ${responseBody ?? 'unknown'}`
+        : `Delivery ${deliveryId} got HTTP ${statusCode}`,
     );
-    await db
-      .update(webhookDeliveries)
-      .set({ status: 'retrying', statusCode, responseBody, attempts, nextRetryAt: nextRetry })
-      .where(eq(webhookDeliveries.id, deliveryId));
   }
+
+  // Terminal on the first try — a 4xx will say the same thing five times.
+  await markDeliveryFailed(deliveryId, {
+    statusCode,
+    responseBody,
+    attempts,
+    disableNow,
+  });
+  return { outcome: 'failed', statusCode };
 }
 
 /**
- * Picks up retrying deliveries whose nextRetryAt <= now.
- * Called by the scheduler (every 30s).
+ * Record a delivery as finally failed and take the webhook down if it has now
+ * failed too many times in a row.
+ *
+ * Called from two places: deliverWebhook, when the very first attempt is
+ * terminal, and the exhausted-attempts route, when BullMQ has given up. Both
+ * must land in the same state, so the logic lives here rather than twice.
  */
-export async function processRetryQueue(): Promise<{ queued: number }> {
-  const now = new Date();
-  const due = await db
-    .select({ id: webhookDeliveries.id })
+export async function markDeliveryFailed(
+  deliveryId: string,
+  opts: {
+    statusCode?: number;
+    responseBody?: string;
+    attempts?: number;
+    disableNow?: boolean;
+  } = {},
+): Promise<{ disabled: boolean; consecutiveFailures: number }> {
+  const [delivery] = await db
+    .select()
     .from(webhookDeliveries)
-    .where(and(eq(webhookDeliveries.status, 'retrying'), lte(webhookDeliveries.nextRetryAt, now)))
-    .limit(100);
+    .where(eq(webhookDeliveries.id, deliveryId))
+    .limit(1);
+  if (!delivery) return { disabled: false, consecutiveFailures: 0 };
 
-  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-  for (const d of due) {
-    if (queues) {
-      await (
-        queues as Record<string, { add: (n: string, data: unknown) => Promise<unknown> }>
-      ).webhook
-        ?.add('webhook-deliver', { deliveryId: d.id })
-        .catch(() => {});
-    }
-  }
+  const now = new Date();
+  await db
+    .update(webhookDeliveries)
+    .set({
+      status: 'failed',
+      statusCode: opts.statusCode ?? delivery.statusCode,
+      responseBody: truncateResponseBody(opts.responseBody) ?? delivery.responseBody,
+      attempts: opts.attempts ?? delivery.attempts,
+      nextRetryAt: null,
+    })
+    .where(eq(webhookDeliveries.id, deliveryId));
 
-  return { queued: due.length };
+  const [webhook] = await db
+    .select()
+    .from(webhooks)
+    .where(eq(webhooks.id, delivery.webhookId))
+    .limit(1);
+  if (!webhook) return { disabled: false, consecutiveFailures: 0 };
+
+  const consecutiveFailures = webhook.consecutiveFailures + 1;
+  const disable =
+    opts.disableNow === true || consecutiveFailures >= AUTO_DISABLE_AFTER_CONSECUTIVE_FAILURES;
+
+  await db
+    .update(webhooks)
+    .set({
+      failedDeliveries: webhook.failedDeliveries + 1,
+      consecutiveFailures,
+      updatedAt: now,
+      ...(disable && webhook.active
+        ? {
+            active: false,
+            disabledAt: now,
+            disabledReason:
+              opts.disableNow === true
+                ? `Disabled automatically: the endpoint returned 410 Gone, which means it no longer exists.`
+                : `Disabled automatically after ${consecutiveFailures} consecutive failed deliveries.`,
+          }
+        : {}),
+    })
+    .where(eq(webhooks.id, webhook.id));
+
+  return { disabled: disable && webhook.active, consecutiveFailures };
 }
 
 /**

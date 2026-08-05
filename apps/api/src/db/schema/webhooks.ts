@@ -103,6 +103,22 @@ export const webhooks = pgTable(
     failedDeliveries: integer('failed_deliveries').notNull().default(0),
     lastDeliveredAt: timestamp('last_delivered_at', { withTimezone: true }),
 
+    /**
+     * Deliveries that exhausted every attempt, back to back. Reset to 0 by the
+     * first success. Counted per DELIVERY, not per attempt — one increment
+     * already means five tries over about seven and a half minutes.
+     */
+    consecutiveFailures: integer('consecutive_failures').notNull().default(0),
+
+    /**
+     * Set when WE turned the webhook off, not the customer. `active` alone
+     * cannot tell those apart, and a customer whose events stopped needs to
+     * know which happened and why — so the reason is stored alongside and
+     * returned by the API.
+     */
+    disabledAt: timestamp('disabled_at', { withTimezone: true }),
+    disabledReason: varchar('disabled_reason', { length: 255 }),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

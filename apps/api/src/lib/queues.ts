@@ -35,7 +35,27 @@ const queueOpts = {
 
 export const emailQueue = new Queue('email', queueOpts);
 export const smsQueue = new Queue('sms', queueOpts);
-export const webhookQueue = new Queue('webhook', queueOpts);
+/**
+ * Webhook delivery. Its own options because the default 3 attempts / 5 s is
+ * tuned for our own services, and a customer's endpoint is not one of those —
+ * a receiver that is redeploying needs minutes, not fifteen seconds.
+ *
+ * attempts 5, exponential from 30 s → BullMQ waits 30, 60, 120, 240 s between
+ * tries (Math.round(2^(attemptsMade-1) * delay)), so a delivery lives about
+ * 7.5 minutes before it is given up on.
+ *
+ * This is the ONLY retry mechanism. deliverWebhook used to compute its own
+ * nextRetryAt and write status 'retrying'; nothing re-enqueued those rows, so
+ * they sat there forever.
+ */
+export const webhookQueue = new Queue('webhook', {
+  ...queueOpts,
+  defaultJobOptions: {
+    ...queueOpts.defaultJobOptions,
+    attempts: 5,
+    backoff: { type: 'exponential' as const, delay: 30_000 },
+  },
+});
 /** Viber Business Messages async send queue (consumed by apps/workers viber-sender). */
 export const viberQueue = new Queue('viber-send', queueOpts);
 /** RCS async send queue (consumed by apps/workers rcs-sender). */

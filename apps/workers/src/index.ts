@@ -23,6 +23,7 @@ import { startArchiveWorker } from './jobs/archive-email-events.js';
 import { startSeoRankPollWorker, scheduleRankPoll } from './jobs/seo-rank-poll.js';
 import { startSocialSchedulerWorker, scheduleSocialJobs } from './jobs/social-scheduler.js';
 import { startInvoiceReminderWorker, scheduleCommerceJobs } from './jobs/invoice-reminder.js';
+import { startWebhookDeliverWorker } from './jobs/webhook-deliver.js';
 import { startVideoTranscodeWorker, scheduleVideoTranscode } from './jobs/video-transcode.js';
 import {
   startSubscriptionBillingWorker,
@@ -98,6 +99,7 @@ const dmarcImapPollWorker = startDmarcImapPollWorker();
 scheduleDmarcImapPoll().catch(console.error);
 const abWinnerWorker = startAbWinnerWorker();
 const blacklistMonitorWorker = startBlacklistMonitorWorker();
+const webhookDeliverWorker = startWebhookDeliverWorker();
 scheduleBlacklistMonitor().catch(console.error);
 
 // Engine bus — consumers for the workflow-triggered 'email'/'sms' queues + the
@@ -149,6 +151,7 @@ async function shutdown() {
     dmarcImapPollWorker.close(),
     abWinnerWorker.close(),
     blacklistMonitorWorker.close(),
+    webhookDeliverWorker.close(),
     rcsSenderWorker.close(),
     workflowEmailWorker.close(),
     workflowSmsWorker.close(),

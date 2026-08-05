@@ -15,6 +15,13 @@
       "when": 1785837472629,
       "tag": "0001_campaign_processing_purpose",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785924550431,
+      "tag": "0002_webhook_auto_disable",
+      "breakpoints": true
     }
   ]
 }
