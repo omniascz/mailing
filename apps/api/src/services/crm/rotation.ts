@@ -83,8 +83,8 @@ export async function assignNextUser(
       FROM rotation_assignment_logs
       WHERE org_id = ${orgId}::uuid
         AND entity_type = ${entityType}
-        AND assigned_at >= ${thirtyDaysAgo}
-        AND assigned_user_id = ANY(${userIds}::uuid[])
+        AND assigned_at >= ${thirtyDaysAgo.toISOString()}::timestamptz
+        AND assigned_user_id = ANY(${sql.param(userIds)}::uuid[])
       GROUP BY assigned_user_id
     `);
     const countMap = new Map<string, number>();

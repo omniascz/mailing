@@ -58,7 +58,7 @@ export async function getContactEmailThread(
     const camps = await db
       .select({ id: campaigns.id, name: campaigns.name })
       .from(campaigns)
-      .where(and(eq(campaigns.orgId, orgId), sql`id = any(${campaignIds})`));
+      .where(and(eq(campaigns.orgId, orgId), sql`id = any(${sql.param(campaignIds)})`));
     for (const c of camps) campaignMap[c.id] = c.name;
   }
 
@@ -71,7 +71,7 @@ export async function getContactEmailThread(
       .where(
         and(
           eq(emailEvents.orgId, orgId),
-          sql`message_id = any(${messageIds})`,
+          sql`message_id = any(${sql.param(messageIds)})`,
           sql`event_type in ('open','click','bounce','unsubscribe','complaint')`,
         ),
       );

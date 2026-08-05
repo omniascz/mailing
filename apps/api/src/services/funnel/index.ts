@@ -44,12 +44,12 @@ export async function computeFunnel(
   // because the per-event row count stays modest.
   const rows = await db.execute<{ contact_id: string; event_type: string; created_at: Date }>(sql`
     SELECT contact_id, event_type, created_at FROM email_events
-    WHERE org_id = ${orgId}::uuid AND created_at >= ${since}
-      AND contact_id IS NOT NULL AND event_type = ANY(${input.events})
+    WHERE org_id = ${orgId}::uuid AND created_at >= ${since.toISOString()}::timestamptz
+      AND contact_id IS NOT NULL AND event_type = ANY(${sql.param(input.events)})
     UNION ALL
     SELECT contact_id, event_type, created_at FROM revenue_events
-    WHERE org_id = ${orgId}::uuid AND created_at >= ${since}
-      AND contact_id IS NOT NULL AND event_type = ANY(${input.events})
+    WHERE org_id = ${orgId}::uuid AND created_at >= ${since.toISOString()}::timestamptz
+      AND contact_id IS NOT NULL AND event_type = ANY(${sql.param(input.events)})
     ORDER BY created_at ASC
   `);
 

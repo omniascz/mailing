@@ -581,7 +581,7 @@ export async function expireStaleSanctions(): Promise<{ expired: number }> {
   const rows = await db
     .update(abuseSanctions)
     .set({ active: false, liftedAt: now, updatedAt: now })
-    .where(and(eq(abuseSanctions.active, true), sql`${abuseSanctions.expiresAt} <= ${now}`))
+    .where(and(eq(abuseSanctions.active, true), sql`${abuseSanctions.expiresAt} <= ${sql.param(now, abuseSanctions.expiresAt)}`))
     .returning();
   return { expired: rows.length };
 }

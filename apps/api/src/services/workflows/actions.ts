@@ -342,7 +342,7 @@ async function executeCondition(
             eq(emailEvents.contactId, contact.id),
             eq(emailEvents.orgId, ctx.orgId),
             eq(emailEvents.eventType, 'open'),
-            sql`${emailEvents.createdAt} >= ${since.toISOString()}`,
+            sql`${emailEvents.createdAt} >= ${sql.param(since.toISOString(), emailEvents.createdAt)}`,
           ),
         )
         .limit(1);
@@ -379,7 +379,7 @@ async function executeCondition(
       ];
       if (config.withinDays) {
         const since = new Date(Date.now() - config.withinDays * 86_400_000);
-        conds.push(sql`${workflowEvents.createdAt} >= ${since.toISOString()}`);
+        conds.push(sql`${workflowEvents.createdAt} >= ${sql.param(since.toISOString(), workflowEvents.createdAt)}`);
       }
       const [row] = await db
         .select({ id: workflowEvents.id })
@@ -893,7 +893,7 @@ async function executeGoal(
           eq(workflowEvents.orgId, ctx.orgId),
           eq(workflowEvents.contactId, run.contactId!),
           eq(workflowEvents.eventName, config.goalEvent),
-          sql`${workflowEvents.createdAt} >= ${since}`,
+          sql`${workflowEvents.createdAt} >= ${sql.param(since, workflowEvents.createdAt)}`,
         ),
       )
       .limit(1);

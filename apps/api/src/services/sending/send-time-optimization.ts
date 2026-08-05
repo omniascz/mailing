@@ -49,7 +49,7 @@ export async function getContactSendHour(orgId: string, contactId: string): Prom
       AND contact_id = ${contactId}
       AND event_type IN ('open','click')
       AND is_bot IS NOT TRUE
-      AND created_at >= ${since}
+      AND created_at >= ${since.toISOString()}::timestamptz
     GROUP BY 1
     ORDER BY 2 DESC
   `)) as unknown as { rows: Array<{ hour: number; score: number }> };
@@ -75,7 +75,7 @@ export async function getOrgPeakHour(orgId: string): Promise<StoResult> {
     WHERE org_id = ${orgId}
       AND event_type IN ('open','click')
       AND is_bot IS NOT TRUE
-      AND created_at >= ${since}
+      AND created_at >= ${since.toISOString()}::timestamptz
     GROUP BY 1
     ORDER BY 2 DESC
   `)) as unknown as { rows: Array<{ hour: number; score: number }> };
@@ -108,10 +108,10 @@ export async function getBatchSendHours(
       SUM(CASE WHEN event_type = 'click' THEN 3 ELSE 1 END)::int AS score
     FROM email_events
     WHERE org_id = ${orgId}
-      AND contact_id = ANY(${contactIds}::uuid[])
+      AND contact_id = ANY(${sql.param(contactIds)}::uuid[])
       AND event_type IN ('open','click')
       AND is_bot IS NOT TRUE
-      AND created_at >= ${since}
+      AND created_at >= ${since.toISOString()}::timestamptz
     GROUP BY contact_id, hour
     ORDER BY contact_id, score DESC
   `)) as unknown as { rows: Array<{ contact_id: string; hour: number; score: number }> };

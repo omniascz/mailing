@@ -31,7 +31,7 @@ export async function generateHygieneReport(orgId: string): Promise<HygieneRepor
     LEFT JOIN contact_engagement ce ON ce.contact_id = c.id
     WHERE c.org_id = ${orgId}::uuid AND c.deleted_at IS NULL
       AND (ce.total_opens IS NULL OR ce.total_opens = 0)
-      AND c.created_at <= ${staleCutoff}
+      AND c.created_at <= ${staleCutoff.toISOString()}::timestamptz
   `)) as unknown as Array<{ n: string }>;
 
   const [bounces] = (await db.execute<{ n: string }>(sql`
@@ -70,7 +70,7 @@ export async function purgeInactive(orgId: string, days = 365): Promise<{ purged
   const res = await db.execute(sql`
     UPDATE contacts SET deleted_at = now()
     WHERE org_id = ${orgId}::uuid AND deleted_at IS NULL
-      AND created_at <= ${cutoff}
+      AND created_at <= ${cutoff.toISOString()}::timestamptz
       AND NOT EXISTS (SELECT 1 FROM email_events WHERE contact_id = contacts.id)
   `);
   void contactEngagement;

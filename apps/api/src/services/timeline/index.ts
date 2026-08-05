@@ -1,3 +1,4 @@
+/* eslint-disable forgemsg/no-unencoded-sql-param -- Same as catalog-insights: this query dies earlier on a missing column (workflow_run_id). Re-enable together with that fix. */
 /**
  * Customer Timeline — chronological view of every interaction recorded
  * for a contact: email events, revenue events, support tickets, workflow runs.

@@ -71,7 +71,7 @@ export async function getContactActivityFeed(
         and(
           eq(emailEvents.orgId, orgId),
           eq(emailEvents.contactId, contactId),
-          sql`${emailEvents.createdAt} < ${before}`,
+          sql`${emailEvents.createdAt} < ${sql.param(before, emailEvents.createdAt)}`,
         ),
       )
       .orderBy(desc(emailEvents.createdAt))
@@ -90,7 +90,7 @@ export async function getContactActivityFeed(
         and(
           eq(smsSendLog.orgId, orgId),
           eq(smsSendLog.contactId, contactId),
-          sql`${smsSendLog.createdAt} < ${before}`,
+          sql`${smsSendLog.createdAt} < ${sql.param(before, smsSendLog.createdAt)}`,
         ),
       )
       .orderBy(desc(smsSendLog.createdAt))
@@ -111,7 +111,7 @@ export async function getContactActivityFeed(
         and(
           eq(dealStageHistory.orgId, orgId),
           eq(deals.contactId, contactId),
-          sql`${dealStageHistory.changedAt} < ${before}`,
+          sql`${dealStageHistory.changedAt} < ${sql.param(before, dealStageHistory.changedAt)}`,
         ),
       )
       .orderBy(desc(dealStageHistory.changedAt))
@@ -145,7 +145,7 @@ export async function getContactActivityFeed(
         and(
           eq(workflowEvents.orgId, orgId),
           eq(workflowEvents.contactId, contactId),
-          sql`${workflowEvents.createdAt} < ${before}`,
+          sql`${workflowEvents.createdAt} < ${sql.param(before, workflowEvents.createdAt)}`,
         ),
       )
       .orderBy(desc(workflowEvents.createdAt))
@@ -165,7 +165,7 @@ export async function getContactActivityFeed(
           eq(crmNotes.orgId, orgId),
           eq(crmNotes.contactId, contactId),
           isNull(crmNotes.deletedAt),
-          sql`${crmNotes.createdAt} < ${before}`,
+          sql`${crmNotes.createdAt} < ${sql.param(before, crmNotes.createdAt)}`,
         ),
       )
       .orderBy(desc(crmNotes.createdAt))
@@ -188,7 +188,7 @@ export async function getContactActivityFeed(
           eq(crmTasks.orgId, orgId),
           eq(crmTasks.contactId, contactId),
           isNull(crmTasks.deletedAt),
-          sql`${crmTasks.createdAt} < ${before}`,
+          sql`${crmTasks.createdAt} < ${sql.param(before, crmTasks.createdAt)}`,
         ),
       )
       .orderBy(desc(crmTasks.createdAt))

@@ -401,7 +401,7 @@ export async function processDailyNameDayTriggers(): Promise<{ triggered: number
         WHERE org_id = ${workflow.orgId}
           AND deleted_at IS NULL
           AND first_name IS NOT NULL
-          AND lower(unaccent(first_name)) = ANY(${normalizedNames})
+          AND lower(unaccent(first_name)) = ANY(${sql.param(normalizedNames)})
       `,
     );
 

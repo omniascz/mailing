@@ -64,7 +64,7 @@ export async function archiveOldEvents(orgId: string, cutoffDays = 30): Promise<
 
     // Delete archived rows
     const ids = rows.map((r) => r.id);
-    await db.execute(sql`DELETE FROM email_events WHERE id = ANY(${ids}::uuid[])`);
+    await db.execute(sql`DELETE FROM email_events WHERE id = ANY(${sql.param(ids)}::uuid[])`);
 
     totalArchived += rows.length;
     totalDeleted += rows.length;

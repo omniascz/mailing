@@ -31,15 +31,15 @@ const ENTITY_QUERY: Record<
   (orgId: string, since: Date) => ReturnType<typeof sql>
 > = {
   contacts: (orgId, since) =>
-    sql`SELECT * FROM contacts WHERE org_id = ${orgId}::uuid AND updated_at >= ${since}`,
+    sql`SELECT * FROM contacts WHERE org_id = ${orgId}::uuid AND updated_at >= ${since.toISOString()}::timestamptz`,
   email_events: (orgId, since) =>
-    sql`SELECT * FROM email_events WHERE org_id = ${orgId} AND created_at >= ${since}`,
+    sql`SELECT * FROM email_events WHERE org_id = ${orgId} AND created_at >= ${since.toISOString()}::timestamptz`,
   revenue_events: (orgId, since) =>
-    sql`SELECT * FROM revenue_events WHERE org_id = ${orgId}::uuid AND created_at >= ${since}`,
+    sql`SELECT * FROM revenue_events WHERE org_id = ${orgId}::uuid AND created_at >= ${since.toISOString()}::timestamptz`,
   campaigns: (orgId, since) =>
-    sql`SELECT * FROM campaigns WHERE org_id = ${orgId}::uuid AND updated_at >= ${since}`,
+    sql`SELECT * FROM campaigns WHERE org_id = ${orgId}::uuid AND updated_at >= ${since.toISOString()}::timestamptz`,
   workflow_runs: (orgId, since) =>
-    sql`SELECT * FROM workflow_runs WHERE org_id = ${orgId}::uuid AND started_at >= ${since}`,
+    sql`SELECT * FROM workflow_runs WHERE org_id = ${orgId}::uuid AND started_at >= ${since.toISOString()}::timestamptz`,
 };
 
 export async function createWarehouseSync(

@@ -35,7 +35,7 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
              count(*) FILTER (WHERE status != 'unsubscribed') AS new_subscribers,
              count(*) FILTER (WHERE status = 'unsubscribed') AS unsubscribes
           FROM contacts
-          WHERE org_id = ${req.user!.orgId} AND created_at >= ${since}
+          WHERE org_id = ${req.user!.orgId} AND created_at >= ${since.toISOString()}::timestamptz
           GROUP BY period ORDER BY period ASC`,
     );
 
@@ -103,7 +103,7 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
              count(*) filter (where event_type='click') AS clicks,
              count(*) filter (where event_type='unsubscribe') AS unsubscribes
           FROM email_events
-          WHERE org_id = ${req.user!.orgId} AND created_at >= ${since}
+          WHERE org_id = ${req.user!.orgId} AND created_at >= ${since.toISOString()}::timestamptz
           GROUP BY week ORDER BY week ASC`,
     );
 
@@ -163,7 +163,7 @@ export default async function newsletterAnalyticsRoutes(app: FastifyInstance) {
         .select({
           total: sql<number>`count(*)`,
           active: sql<number>`count(*) filter (where ${contacts.status} = 'active')`,
-          newLast30d: sql<number>`count(*) filter (where ${contacts.createdAt} >= ${since30d})`,
+          newLast30d: sql<number>`count(*) filter (where ${contacts.createdAt} >= ${sql.param(since30d, contacts.createdAt)})`,
         })
         .from(contacts)
         .where(eq(contacts.orgId, orgId)),

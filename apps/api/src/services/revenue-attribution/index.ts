@@ -81,7 +81,7 @@ export async function trackPurchase(input: TrackPurchaseInput): Promise<RevenueE
   if (input.contactId) {
     await db.execute(sql`
       INSERT INTO contact_engagement (contact_id, org_id, total_orders, total_revenue, first_order_at, last_order_at)
-      VALUES (${input.contactId}::uuid, ${input.orgId}::uuid, 1, ${input.amount}, ${occurredAt}, ${occurredAt})
+      VALUES (${input.contactId}::uuid, ${input.orgId}::uuid, 1, ${input.amount}, ${occurredAt.toISOString()}::timestamptz, ${occurredAt.toISOString()}::timestamptz)
       ON CONFLICT (contact_id) DO UPDATE SET
         total_orders  = contact_engagement.total_orders + 1,
         total_revenue = contact_engagement.total_revenue + ${input.amount},
@@ -117,7 +117,7 @@ export async function campaignRevenueReport(
            SUM(amount)::text AS revenue,
            MAX(currency) AS currency
     FROM revenue_events
-    WHERE org_id = ${orgId}::uuid AND occurred_at >= ${since}
+    WHERE org_id = ${orgId}::uuid AND occurred_at >= ${since.toISOString()}::timestamptz
     GROUP BY attributed_campaign_id
     ORDER BY SUM(amount) DESC NULLS LAST
   `);
