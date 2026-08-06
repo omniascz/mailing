@@ -122,18 +122,52 @@ export type MessageStream = 'broadcast' | 'transactional' | 'triggered';
 export const campaignSplitterQueue = new Queue(QUEUE_NAMES.CAMPAIGN_SPLITTER, defaultOpts);
 export const abWinnerQueue = new Queue(QUEUE_NAMES.AB_WINNER, defaultOpts);
 
+/**
+ * Retry window for a broadcast batch.
+ *
+ * The protective filters stop the batch when they cannot answer, so this
+ * window is what decides whether an ordinary API restart costs a campaign.
+ * The previous default — 3 attempts from 5 s — gave 15 s, measured, which is
+ * shorter than a pod terminating and passing its readiness probe. A rolling
+ * deploy would have killed every batch in flight.
+ *
+ * 6 attempts from 15 s gives 15 + 30 + 60 + 120 + 240 = 465 s, about 7¾
+ * minutes. That covers a rolling deploy with room to spare, and is still far
+ * short of the point where a stuck batch should be somebody's problem rather
+ * than the retry policy's.
+ *
+ * It applies only to the batch-sender queues. `defaultOpts` is shared by
+ * fourteen others — the splitter, the A/B winner, all seven MTA queues — and
+ * widening their windows is a separate decision with different trade-offs.
+ */
+const BROADCAST_RETRY = {
+  attempts: 6,
+  backoff: { type: 'exponential' as const, delay: 15_000 },
+};
+
 export const batchSenderQueues = {
-  broadcast: new Queue(QUEUE_NAMES.BATCH_SENDER, defaultOpts),
+  broadcast: new Queue(QUEUE_NAMES.BATCH_SENDER, {
+    ...defaultOpts,
+    defaultJobOptions: { ...defaultOpts.defaultJobOptions, ...BROADCAST_RETRY },
+  }),
   transactional: new Queue(QUEUE_NAMES.BATCH_SENDER_TRANSACTIONAL, {
     ...defaultOpts,
     defaultJobOptions: {
       ...defaultOpts.defaultJobOptions,
-      // Transactional jobs get more retry attempts with shorter backoff
-      attempts: 5,
+      // Deliberately NOT the broadcast window. A password reset that arrives
+      // eight minutes late is a failed password reset — the user has already
+      // asked for another one, or given up. 6 attempts from 2 s gives
+      // 2 + 4 + 8 + 16 + 32 = 62 s: one more attempt than before, which is
+      // what buys the tail past a brief blip, while the whole window stays
+      // inside the minute a person will wait for a reset mail.
+      attempts: 6,
       backoff: { type: 'exponential', delay: 2000 },
     },
   }),
-  triggered: new Queue(QUEUE_NAMES.BATCH_SENDER_TRIGGERED, defaultOpts),
+  triggered: new Queue(QUEUE_NAMES.BATCH_SENDER_TRIGGERED, {
+    ...defaultOpts,
+    defaultJobOptions: { ...defaultOpts.defaultJobOptions, ...BROADCAST_RETRY },
+  }),
 } as const;
 
 /** @deprecated Use batchSenderQueues.broadcast for new code */

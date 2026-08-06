@@ -19,6 +19,8 @@ export function internalGetHeaders(): Record<string, string> {
   return { 'x-internal-secret': INTERNAL_SECRET };
 }
 
+import { UnrecoverableError } from 'bullmq';
+
 /**
  * A call into the internal API did not return an answer we can act on.
  *
@@ -32,6 +34,9 @@ export function internalGetHeaders(): Record<string, string> {
  * "request failed" is a support ticket nobody can answer.
  */
 export class InternalFilterError extends Error {
+  /** True when retrying cannot change the answer. */
+  readonly permanent: boolean;
+
   readonly status: number | undefined;
   readonly path: string;
   readonly orgId: string | undefined;
@@ -48,7 +53,46 @@ export class InternalFilterError extends Error {
     this.status = status;
     this.path = path;
     this.orgId = orgId;
+    this.permanent = status !== undefined && isPermanentStatus(status);
   }
+}
+
+/**
+ * A permanent failure, in the shape BullMQ stops retrying on.
+ *
+ * The retry window is 7¾ minutes because a transient outage deserves it. A
+ * 403 does not: the secret will not start matching, and spending six attempts
+ * and eight minutes to find that out delays the campaign and hides the real
+ * problem behind a queue that looks merely slow. UnrecoverableError makes
+ * BullMQ mark the job failed on the first attempt.
+ *
+ * It cannot extend InternalFilterError as well — JavaScript has no multiple
+ * inheritance — so it carries the same fields and `isFilterFailure` below
+ * recognises both.
+ */
+export class PermanentFilterError extends UnrecoverableError {
+  readonly status: number | undefined;
+  readonly path: string;
+  readonly orgId: string | undefined;
+  readonly permanent = true;
+
+  constructor(source: InternalFilterError) {
+    super(source.message);
+    this.name = 'PermanentFilterError';
+    this.status = source.status;
+    this.path = source.path;
+    this.orgId = source.orgId;
+  }
+}
+
+/** Either shape of filter failure — the retryable one or the terminal one. */
+export function isFilterFailure(err: unknown): err is InternalFilterError | PermanentFilterError {
+  return err instanceof InternalFilterError || err instanceof PermanentFilterError;
+}
+
+/** Turn a permanent filter failure into the error BullMQ will not retry. */
+export function toBullError(err: InternalFilterError): Error {
+  return err.permanent ? new PermanentFilterError(err) : err;
 }
 
 /**
@@ -105,17 +149,19 @@ export function throwIfPermanentFailure(
   orgId?: string,
 ): void {
   if (res.status === 401 || res.status === 403) {
-    throw new InternalAuthError(path, res.status, orgId);
+    throw toBullError(new InternalAuthError(path, res.status, orgId));
   }
   if (res.status >= 200 && res.status < 300) return;
 
-  throw new InternalFilterError(
-    path,
-    res.status,
-    orgId,
-    isPermanentStatus(res.status)
-      ? 'The API refused the request, and it will refuse it again.'
-      : 'The API is unavailable; this may clear on retry.',
+  throw toBullError(
+    new InternalFilterError(
+      path,
+      res.status,
+      orgId,
+      isPermanentStatus(res.status)
+        ? 'The API refused the request, and it will refuse it again.'
+        : 'The API is unavailable; this may clear on retry.',
+    ),
   );
 }
 
@@ -125,7 +171,10 @@ export function throwIfPermanentFailure(
  */
 export function throwIfAuthFailure(res: { status: number }, path: string, orgId?: string): void {
   if (res.status === 401 || res.status === 403) {
-    throw new InternalAuthError(path, res.status, orgId);
+    // Wrapped too: a rejected secret is permanent wherever it happens, and
+    // burning the whole retry window on it would delay the campaign without
+    // changing the outcome.
+    throw toBullError(new InternalAuthError(path, res.status, orgId));
   }
 }
 
@@ -135,7 +184,7 @@ export function throwIfAuthFailure(res: { status: number }, path: string, orgId?
  * fail-open policy needs. Covers InternalAuthError through the subtype.
  */
 export function rethrowIfAuthError(err: unknown): void {
-  if (err instanceof InternalFilterError) throw err;
+  if (isFilterFailure(err)) throw err;
 }
 
 /**
@@ -144,8 +193,8 @@ export function rethrowIfAuthError(err: unknown): void {
  * classify, and "the API is unreachable" is exactly as bad for a filter as a
  * 500 from it.
  */
-export function asFilterError(err: unknown, path: string, orgId?: string): InternalFilterError {
-  if (err instanceof InternalFilterError) return err;
+export function asFilterError(err: unknown, path: string, orgId?: string): Error {
+  if (isFilterFailure(err)) return err as Error;
   const message = err instanceof Error ? err.message : String(err);
   return new InternalFilterError(path, undefined, orgId, `Transport failure: ${message}.`);
 }
