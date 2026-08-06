@@ -11,12 +11,58 @@
  *   - Endpoint logs the click event then 302-redirects to the original URL
  *
  * Token format: base64url(JSON(payload)) + "." + base64url(HMAC-SHA256)
- * Signed with TRACKING_SECRET env var (falls back to a dev-only constant).
+ * Signed with the TRACKING_SECRET env var. Outside production it falls back to
+ * DEV_TRACKING_SECRET; in production an unset value throws rather than signing
+ * with a constant that is committed to this repository.
  */
 
 import crypto from 'node:crypto';
 
-const TRACKING_SECRET = process.env.TRACKING_SECRET ?? 'dev-tracking-secret-changeme';
+/**
+ * The value TRACKING_SECRET falls back to outside production.
+ *
+ * Exported so `apps/api` and `apps/workers` can use the same literal as the
+ * dev default in their env schemas instead of each keeping a copy that can
+ * drift. Three processes have to derive identical HMACs — the API verifies
+ * tokens the workers produced — so a mismatch is not a config nit, it is every
+ * open, click, unsubscribe and preference-centre link silently failing to
+ * verify.
+ *
+ * It was 'dev-tracking-secret-changeme' (28 chars), which the `min(32)` the
+ * other five signing keys are held to would reject. Lengthened to match them.
+ * Nothing was ever issued under the old value — CD has run once, on 2026-08-04,
+ * and failed, so no build was ever published — and dev links are disposable.
+ */
+export const DEV_TRACKING_SECRET = 'dev-tracking-secret-change-me-32ch';
+
+/**
+ * Resolve the signing key, refusing the dev fallback in production.
+ *
+ * Read on every call rather than captured at module load. The old module-level
+ * const meant whatever `process.env` held at *import* time won: a process that
+ * loads its .env after the first import, or a test that sets the variable in
+ * `beforeAll`, silently signed with the dev constant and had no way to notice.
+ *
+ * Failing here is a backstop, not the primary guard — both apps declare
+ * TRACKING_SECRET in their env schema, so a production process without it dies
+ * at boot with a readable message rather than on the first tracked link. This
+ * exists because this package is what actually signs, and a signing key that
+ * quietly defaults to a value published in a public repository is the kind of
+ * thing that has to fail closed at the point of use as well.
+ */
+function trackingSecret(): string {
+  const fromEnv = process.env.TRACKING_SECRET;
+  if (fromEnv) return fromEnv;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'TRACKING_SECRET is not set. It signs open, click, unsubscribe, ' +
+        'preference-centre and view-in-browser tokens; the development fallback is a ' +
+        'constant committed to this repository, so anyone could forge them. Refusing ' +
+        'to sign or verify in production without a real key.',
+    );
+  }
+  return DEV_TRACKING_SECRET;
+}
 
 // ─── Payload types ────────────────────────────────────────────────────────────
 
@@ -105,7 +151,7 @@ function fromBase64Url(str: string): Buffer {
 }
 
 function sign(payload: string): string {
-  return toBase64Url(crypto.createHmac('sha256', TRACKING_SECRET).update(payload).digest());
+  return toBase64Url(crypto.createHmac('sha256', trackingSecret()).update(payload).digest());
 }
 
 /**

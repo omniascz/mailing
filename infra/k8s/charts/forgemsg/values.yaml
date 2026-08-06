@@ -6,7 +6,7 @@ global:
     registry: ghcr.io
     repositoryPrefix: forgemsg-org/forgemsg
     pullPolicy: IfNotPresent
-    tag: ""        # Set per deploy from CI. Falls back to .Chart.AppVersion.
+    tag: '' # Set per deploy from CI. Falls back to .Chart.AppVersion.
     pullSecrets: [] # e.g. [ghcr-pull]
   environment: staging
   domain: staging.forgemsg.com
@@ -28,11 +28,18 @@ global:
   #     that do not carry it as x-internal-secret. It must be present because
   #     api.ingress publishes `path: /` on an internet-facing ALB, so those
   #     routes are reachable from outside the cluster.
+  #   TRACKING_SECRET      — HMAC key over every token handed to a recipient:
+  #     the open pixel, wrapped links, the unsubscribe link in List-Unsubscribe,
+  #     the preference centre, view-in-browser. The api and workers Deployments
+  #     both take it from this secret and must receive the SAME value — workers
+  #     sign the tokens, the API verifies them. Its dev fallback is a constant
+  #     in packages/shared, so without this anyone who reads the repository can
+  #     forge an open, a click, or somebody else's unsubscribe.
   externalSecretName: forgemsg-app
 
   # IRSA — bind ServiceAccounts to AWS IAM roles for S3 / SES.
   serviceAccount:
-    annotationsRolePrefix: ""  # e.g. arn:aws:iam::123:role/forgemsg-
+    annotationsRolePrefix: '' # e.g. arn:aws:iam::123:role/forgemsg-
 
 # ─── api ─────────────────────────────────────────────────────────────────────
 
@@ -44,7 +51,7 @@ api:
   port: 3001
   resources:
     requests: { cpu: 100m, memory: 256Mi }
-    limits:   { cpu: 1,    memory: 1Gi }
+    limits: { cpu: 1, memory: 1Gi }
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -68,7 +75,7 @@ workers:
     name: workers
   resources:
     requests: { cpu: 200m, memory: 512Mi }
-    limits:   { cpu: 2,    memory: 2Gi }
+    limits: { cpu: 2, memory: 2Gi }
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -87,7 +94,7 @@ voiceBot:
   port: 8787
   resources:
     requests: { cpu: 100m, memory: 256Mi }
-    limits:   { cpu: 1,    memory: 1Gi }
+    limits: { cpu: 1, memory: 1Gi }
   ingress:
     enabled: true
     className: alb
@@ -104,10 +111,10 @@ engine:
   replicaCount: 2
   image:
     name: engine
-  port: 50051   # gRPC
+  port: 50051 # gRPC
   resources:
     requests: { cpu: 200m, memory: 256Mi }
-    limits:   { cpu: 2,    memory: 1Gi }
+    limits: { cpu: 2, memory: 1Gi }
   # No ingress — internal only (workers dial it via service DNS).
 
 # ─── sms-gateway ─────────────────────────────────────────────────────────────
@@ -117,10 +124,10 @@ smsGateway:
   replicaCount: 1
   image:
     name: sms-gateway
-  port: 2775   # SMPP
+  port: 2775 # SMPP
   resources:
     requests: { cpu: 100m, memory: 128Mi }
-    limits:   { cpu: 1,    memory: 512Mi }
+    limits: { cpu: 1, memory: 512Mi }
   service:
     type: ClusterIP
     # SMPP egress is initiated by the gateway, no external Service required.

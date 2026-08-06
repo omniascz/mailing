@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { productionIssues } from './env.js';
+import { DEV_TRACKING_SECRET } from '@forgemsg/shared';
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -92,6 +93,7 @@ describe('prodRequired — production must not fall back to a committed default'
     META_WEBHOOK_VERIFY_TOKEN: 'a-real-meta-verify-token',
     WHATSAPP_VERIFY_TOKEN: 'a-real-whatsapp-verify-tok',
     FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
+    TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
   };
 
   /** Security-critical fields and the dev default each one carries. */
@@ -153,6 +155,15 @@ describe('prodRequired — production must not fall back to a committed default'
       devDefault: 'dev-facebook-verify-token-change',
       realValue: 'a-real-facebook-verify-tok',
     },
+    // Read in packages/shared, not here, which is why the original sweep — it
+    // walked `process.env` keys inside apps/api — never saw it. It signs every
+    // token we hand a recipient: the open pixel, wrapped links, the
+    // List-Unsubscribe link, the preference centre, view-in-browser.
+    {
+      name: 'TRACKING_SECRET',
+      devDefault: DEV_TRACKING_SECRET,
+      realValue: 'a-real-tracking-secret-32-chars-min',
+    },
   ];
 
   for (const field of CRITICAL) {
@@ -211,6 +222,9 @@ describe('prodRequired — production must not fall back to a committed default'
       'dev-meta-verify-token-change-me',
       'dev-whatsapp-verify-token-change',
       'dev-facebook-verify-token-change',
+      DEV_TRACKING_SECRET,
+      // the value it carried before it was brought under prodRequired
+      'dev-tracking-secret-changeme',
     ]) {
       expect(values).not.toContain(banned);
     }
@@ -339,6 +353,7 @@ describe('optional-by-design secrets', () => {
       META_WEBHOOK_VERIFY_TOKEN: 'a-real-meta-verify-token',
       WHATSAPP_VERIFY_TOKEN: 'a-real-whatsapp-verify-tok',
       FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
+      TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
       API_PUBLIC_URL: 'https://api.example.com',
       APP_URL: 'https://app.example.com',
     };
