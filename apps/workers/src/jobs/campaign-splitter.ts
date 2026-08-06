@@ -23,6 +23,11 @@ import {
   type AbWinnerJobData,
 } from '../queues/index.js';
 import { INTERNAL_SECRET, internalGetHeaders } from '../lib/internal-api.js';
+import {
+  claimDispatchBatches,
+  confirmDispatchBatches,
+  dispatchIdOf,
+} from '../lib/dispatch-ledger.js';
 
 const BATCH_SIZE = 1000;
 
@@ -54,10 +59,15 @@ function parseAbConfig(raw: Record<string, unknown> | undefined): AbConfig | nul
 
 // ─── Core splitter ────────────────────────────────────────────────────────────
 
-async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
+export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
   const data = job.data;
 
-  job.log(`Splitting campaign ${data.campaignId} for org ${data.orgId}`);
+  // Identity of this send attempt. Stable across BullMQ retries of this job,
+  // different for every fresh enqueue — so a retry recognises the batches it
+  // already produced, and a legitimate resend starts from a clean ledger.
+  const dispatchId = dispatchIdOf(job);
+
+  job.log(`Splitting campaign ${data.campaignId} for org ${data.orgId} (dispatch ${dispatchId})`);
 
   // Throws on API error — lets BullMQ retry rather than silently sending to 0 contacts.
   const rawIds = await fetchAudienceContactIds(data.orgId, data.campaignId);
@@ -104,41 +114,62 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
         variantBatches.push(variantIds.slice(i, i + BATCH_SIZE));
       }
 
-      const batchJobs = variantBatches.map((batch, index) => ({
-        name: `batch-${data.campaignId}-v${variant.id}-${index}`,
-        data: {
-          campaignId: data.campaignId,
-          orgId: data.orgId,
-          batchIndex: totalBatches + index,
-          contactIds: batch,
-          content: variant.content,
-          subject: variant.subject,
-          preheader: variant.preheader ?? data.preheader,
-          fromName: data.fromName,
-          fromEmail: data.fromEmail,
-          replyTo: data.replyTo,
-          dkimDomain: data.dkimDomain,
-          dkimSelector: data.dkimSelector,
-          dkimPrivateKey: data.dkimPrivateKey,
-          priority: data.priority,
-          stream,
-          timewarp: data.timewarp,
-          abVariantId: variant.id,
-          utmTracking: data.utmTracking,
-          companyName: data.companyName,
-          companyAddress: data.companyAddress,
-          footerHtml: data.footerHtml,
-          footerText: data.footerText,
-          openTracking: data.openTracking,
-          clickTracking: data.clickTracking,
-          ipPoolId: data.ipPoolId,
-          tlsPolicy: data.tlsPolicy,
-          processingPurposeId: data.processingPurposeId,
-        } satisfies BatchSenderJobData,
-        opts: { priority: data.priority },
-      }));
+      const variantKeys = variantBatches.map((_, index) => `v${variant.id}-${index}`);
+      const claim = await claimDispatchBatches(
+        data.campaignId,
+        data.orgId,
+        dispatchId,
+        variantKeys,
+      );
+      const wanted = new Set(claim.toEnqueue);
+      if (claim.alreadyEnqueued.length > 0) {
+        job.log(
+          `Variant ${variant.id}: ${claim.alreadyEnqueued.length} of ${variantKeys.length} ` +
+            `batches were already enqueued by an earlier run — skipping those`,
+        );
+      }
 
-      await batchSenderQueue.addBulk(batchJobs);
+      const batchJobs = variantBatches
+        .map((batch, index) => ({ batch, index, key: `v${variant.id}-${index}` }))
+        .filter(({ key }) => wanted.has(key))
+        .map(({ batch, index, key }) => ({
+          name: `batch-${data.campaignId}-v${variant.id}-${index}`,
+          data: {
+            campaignId: data.campaignId,
+            orgId: data.orgId,
+            batchIndex: totalBatches + index,
+            contactIds: batch,
+            content: variant.content,
+            subject: variant.subject,
+            preheader: variant.preheader ?? data.preheader,
+            fromName: data.fromName,
+            fromEmail: data.fromEmail,
+            replyTo: data.replyTo,
+            dkimDomain: data.dkimDomain,
+            dkimSelector: data.dkimSelector,
+            dkimPrivateKey: data.dkimPrivateKey,
+            priority: data.priority,
+            stream,
+            timewarp: data.timewarp,
+            abVariantId: variant.id,
+            utmTracking: data.utmTracking,
+            companyName: data.companyName,
+            companyAddress: data.companyAddress,
+            footerHtml: data.footerHtml,
+            footerText: data.footerText,
+            openTracking: data.openTracking,
+            clickTracking: data.clickTracking,
+            ipPoolId: data.ipPoolId,
+            tlsPolicy: data.tlsPolicy,
+            processingPurposeId: data.processingPurposeId,
+          } satisfies BatchSenderJobData,
+          opts: { priority: data.priority, jobId: `${dispatchId}:${key}` },
+        }));
+
+      if (batchJobs.length > 0) {
+        await batchSenderQueue.addBulk(batchJobs);
+        await confirmDispatchBatches(data.campaignId, dispatchId, claim.toEnqueue);
+      }
       totalBatches += variantBatches.length;
       job.log(
         `Variant ${variant.id}: ${variantIds.length} contacts, ${variantBatches.length} batches`,
@@ -184,40 +215,56 @@ async function processCampaignSplitter(job: Job<CampaignSplitterJobData>) {
       batches.push(contactIds.slice(i, i + BATCH_SIZE));
     }
 
-    const batchJobs = batches.map((batch, index) => ({
-      name: `batch-${data.campaignId}-${index}`,
-      data: {
-        campaignId: data.campaignId,
-        orgId: data.orgId,
-        batchIndex: index,
-        contactIds: batch,
-        content: data.content,
-        subject: data.subject,
-        preheader: data.preheader,
-        fromName: data.fromName,
-        fromEmail: data.fromEmail,
-        replyTo: data.replyTo,
-        dkimDomain: data.dkimDomain,
-        dkimSelector: data.dkimSelector,
-        dkimPrivateKey: data.dkimPrivateKey,
-        priority: data.priority,
-        stream,
-        timewarp: data.timewarp,
-        utmTracking: data.utmTracking,
-        companyName: data.companyName,
-        companyAddress: data.companyAddress,
-        footerHtml: data.footerHtml,
-        footerText: data.footerText,
-        openTracking: data.openTracking,
-        clickTracking: data.clickTracking,
-        ipPoolId: data.ipPoolId,
-        tlsPolicy: data.tlsPolicy,
-        processingPurposeId: data.processingPurposeId,
-      } satisfies BatchSenderJobData,
-      opts: { priority: data.priority },
-    }));
+    const keys = batches.map((_, index) => String(index));
+    const claim = await claimDispatchBatches(data.campaignId, data.orgId, dispatchId, keys);
+    const wanted = new Set(claim.toEnqueue);
+    if (claim.alreadyEnqueued.length > 0) {
+      job.log(
+        `${claim.alreadyEnqueued.length} of ${keys.length} batches were already enqueued by ` +
+          `an earlier run of this dispatch — skipping those`,
+      );
+    }
 
-    await batchSenderQueue.addBulk(batchJobs);
+    const batchJobs = batches
+      .map((batch, index) => ({ batch, index, key: String(index) }))
+      .filter(({ key }) => wanted.has(key))
+      .map(({ batch, index, key }) => ({
+        name: `batch-${data.campaignId}-${index}`,
+        data: {
+          campaignId: data.campaignId,
+          orgId: data.orgId,
+          batchIndex: index,
+          contactIds: batch,
+          content: data.content,
+          subject: data.subject,
+          preheader: data.preheader,
+          fromName: data.fromName,
+          fromEmail: data.fromEmail,
+          replyTo: data.replyTo,
+          dkimDomain: data.dkimDomain,
+          dkimSelector: data.dkimSelector,
+          dkimPrivateKey: data.dkimPrivateKey,
+          priority: data.priority,
+          stream,
+          timewarp: data.timewarp,
+          utmTracking: data.utmTracking,
+          companyName: data.companyName,
+          companyAddress: data.companyAddress,
+          footerHtml: data.footerHtml,
+          footerText: data.footerText,
+          openTracking: data.openTracking,
+          clickTracking: data.clickTracking,
+          ipPoolId: data.ipPoolId,
+          tlsPolicy: data.tlsPolicy,
+          processingPurposeId: data.processingPurposeId,
+        } satisfies BatchSenderJobData,
+        opts: { priority: data.priority, jobId: `${dispatchId}:${key}` },
+      }));
+
+    if (batchJobs.length > 0) {
+      await batchSenderQueue.addBulk(batchJobs);
+      await confirmDispatchBatches(data.campaignId, dispatchId, claim.toEnqueue);
+    }
     totalBatches = batches.length;
   }
 

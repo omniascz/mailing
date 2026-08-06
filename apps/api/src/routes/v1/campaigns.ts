@@ -41,6 +41,7 @@ import {
   markWinnerDispatched,
   storeHoldback,
 } from '../../services/campaigns/ab-winner.js';
+import { claimBatches, confirmBatches } from '../../services/campaigns/dispatch-ledger.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
@@ -104,7 +105,22 @@ async function mergeTagWarnings(
 }
 
 export default async function campaignRoutes(app: FastifyInstance) {
-  app.addHook('preHandler', app.requireAuth);
+  /**
+   * User auth for the customer-facing routes only.
+   *
+   * The internal endpoints at the bottom of this file are called by BullMQ
+   * workers, which hold a shared secret and no session. This hook used to run
+   * for them too, so every call from the ab-winner worker was answered with
+   * 401 "Authentication required" before it reached the handler — surfaced by
+   * the idempotency integration tests, which could not get the worker to run
+   * at all. They are not unprotected: the internal-auth plugin guards every
+   * /api/v1/internal/* path with a timing-safe compare against
+   * INTERNAL_API_SECRET, and the individual handlers below re-check it.
+   */
+  app.addHook('preHandler', async (req) => {
+    if ((req.url.split('?')[0] ?? '').startsWith('/api/v1/internal/')) return;
+    return app.requireAuth(req);
+  });
 
   /**
    * GET /api/v1/campaigns
@@ -403,6 +419,19 @@ export default async function campaignRoutes(app: FastifyInstance) {
   );
 
   // ── Internal endpoints (called by ab-winner BullMQ worker) ───────────────
+  //
+  // Auth here is the internal-auth plugin's onRequest hook: it covers every
+  // /api/v1/internal/* path and compares the x-internal-secret header against
+  // env.INTERNAL_API_SECRET in constant time.
+  //
+  // These handlers used to repeat that check by hand against
+  // `process.env.INTERNAL_SECRET`, which is not the name the API validates or
+  // the deployment sets — so every one of them answered 401 with an empty body
+  // no matter what the worker sent, and the ab-winner worker could never
+  // compute a winner or read a holdback page. The idempotency integration
+  // tests are what surfaced it: they could not get the worker past its first
+  // call. The duplicated check is gone rather than corrected, so there is one
+  // place that decides whether an internal request is authentic.
 
   /**
    * POST /api/v1/internal/campaigns/:id/ab-winner-compute
@@ -412,9 +441,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
   app.post(
     '/api/v1/internal/campaigns/:id/ab-winner-compute',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      const secret = req.headers['x-internal-secret'];
-      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+    async (req) => {
       const { id } = idParam.parse(req.params);
       const { orgId } = z.object({ orgId: z.string().uuid() }).parse(req.body);
       const result = await computeAbWinner(orgId, id);
@@ -430,9 +457,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
   app.get(
     '/api/v1/internal/campaigns/:id/ab-holdback',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      const secret = req.headers['x-internal-secret'];
-      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+    async (req) => {
       const { id } = idParam.parse(req.params);
       const q = z
         .object({
@@ -453,8 +478,6 @@ export default async function campaignRoutes(app: FastifyInstance) {
     '/api/v1/internal/campaigns/:id/ab-holdback',
     { schema: { tags: ['Internal'] } },
     async (req, reply) => {
-      const secret = req.headers['x-internal-secret'];
-      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
       const { id } = idParam.parse(req.params);
       const { orgId, contactIds } = z
         .object({ orgId: z.string().uuid(), contactIds: z.array(z.string().uuid()).max(100_000) })
@@ -465,15 +488,61 @@ export default async function campaignRoutes(app: FastifyInstance) {
   );
 
   /**
+   * POST /api/v1/internal/campaigns/:id/dispatch-batches/claim
+   *
+   * Reserve batch keys for one dispatch. The splitter and the ab-winner worker
+   * call this before `addBulk` and enqueue only what comes back, which is what
+   * stops a retried job from sending the campaign a second time.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/:id/dispatch-batches/claim',
+    { schema: { tags: ['Internal'] } },
+    // Auth is the internal-auth onRequest hook, which covers every
+    // /api/v1/internal/* route with a timing-safe compare against
+    // env.INTERNAL_API_SECRET. The older handlers in this file predate it and
+    // still re-check process.env.INTERNAL_SECRET by hand.
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const { orgId, dispatchId, keys } = z
+        .object({
+          orgId: z.string().uuid(),
+          dispatchId: z.string().min(1).max(128),
+          keys: z.array(z.string().min(1).max(128)).max(10_000),
+        })
+        .parse(req.body);
+      const result = await claimBatches(orgId, id, dispatchId, keys);
+      return { data: result };
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/campaigns/:id/dispatch-batches/confirm
+   * Called once `addBulk` has returned, so the keys are known to be queued.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/:id/dispatch-batches/confirm',
+    { schema: { tags: ['Internal'] } },
+    async (req) => {
+      idParam.parse(req.params);
+      const { dispatchId, keys } = z
+        .object({
+          dispatchId: z.string().min(1).max(128),
+          keys: z.array(z.string().min(1).max(128)).max(10_000),
+        })
+        .parse(req.body);
+      await confirmBatches(dispatchId, keys);
+      return { data: { confirmed: keys.length } };
+    },
+  );
+
+  /**
    * POST /api/v1/internal/campaigns/:id/ab-winner-dispatched
    * Called by the worker to mark the winner dispatch as completed.
    */
   app.post(
     '/api/v1/internal/campaigns/:id/ab-winner-dispatched',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      const secret = req.headers['x-internal-secret'];
-      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+    async (req) => {
       const { id } = idParam.parse(req.params);
       await markWinnerDispatched(id);
       return { data: { ok: true } };
@@ -489,9 +558,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
   app.patch(
     '/api/v1/internal/campaigns/:id/status',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      const secret = req.headers['x-internal-secret'];
-      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+    async (req) => {
       const { id } = idParam.parse(req.params);
       const { status } = z
         .object({ status: z.enum(['sending', 'sent', 'paused', 'cancelled']) })
@@ -509,9 +576,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
   app.post(
     '/api/v1/internal/campaigns/dispatch-scheduled',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      const secret = req.headers['x-internal-secret'];
-      if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
+    async () => {
       const result = await dispatchScheduledCampaigns();
       // Same tick also fires any due scheduled transactional batches.
       const { dispatchDueBatches } =

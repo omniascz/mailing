@@ -22,6 +22,11 @@ import {
   type AbWinnerJobData,
   type BatchSenderJobData,
 } from '../queues/index.js';
+import {
+  claimDispatchBatches,
+  confirmDispatchBatches,
+  dispatchIdOf,
+} from '../lib/dispatch-ledger.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? process.env.INTERNAL_SECRET ?? '';
@@ -68,9 +73,12 @@ async function internalGet<T>(path: string, query: Record<string, string> = {}):
   return ((await res.json()) as { data: T }).data;
 }
 
-async function processAbWinner(job: Job<AbWinnerJobData>) {
+export async function processAbWinner(job: Job<AbWinnerJobData>) {
   const { campaignId, orgId } = job.data;
-  job.log(`[ab-winner] Campaign ${campaignId} — computing winner`);
+  // See dispatchIdOf — the winner job's BullMQ id is fixed per campaign, so the
+  // timestamp is what separates a retry from a genuinely new dispatch.
+  const dispatchId = dispatchIdOf(job);
+  job.log(`[ab-winner] Campaign ${campaignId} — computing winner (dispatch ${dispatchId})`);
 
   // 1. Compute winner
   const result = await internalPost<WinnerComputeResult>(
@@ -120,28 +128,45 @@ async function processAbWinner(job: Job<AbWinnerJobData>) {
       chunks.push(page.contactIds.slice(i, i + BATCH_SIZE));
     }
 
-    const jobs = chunks.map((batch, idx) => ({
-      name: `ab-winner-${campaignId}-${batchIndex + idx}`,
-      data: {
-        campaignId,
-        orgId,
-        batchIndex: batchIndex + idx,
-        contactIds: batch,
-        content: winner.content,
-        subject: winner.subject,
-        preheader: winner.preheader ?? '',
-        fromName: fromName ?? '',
-        fromEmail: fromEmail ?? '',
-        replyTo: replyTo ?? '',
-        dkimDomain,
-        dkimSelector,
-        dkimPrivateKey,
-        priority: (priority ?? PRIORITY.CAMPAIGN) as typeof PRIORITY.CAMPAIGN,
-        stream: 'broadcast',
-      } satisfies BatchSenderJobData,
-    }));
+    const keys = chunks.map((_, idx) => `w${batchIndex + idx}`);
+    const claim = await claimDispatchBatches(campaignId, orgId, dispatchId, keys);
+    const wanted = new Set(claim.toEnqueue);
+    if (claim.alreadyEnqueued.length > 0) {
+      job.log(
+        `[ab-winner] ${claim.alreadyEnqueued.length} of ${keys.length} batches were already ` +
+          `enqueued by an earlier run of this dispatch — skipping those`,
+      );
+    }
 
-    await batchSenderQueue.addBulk(jobs);
+    const jobs = chunks
+      .map((batch, idx) => ({ batch, idx, key: `w${batchIndex + idx}` }))
+      .filter(({ key }) => wanted.has(key))
+      .map(({ batch, idx, key }) => ({
+        name: `ab-winner-${campaignId}-${batchIndex + idx}`,
+        data: {
+          campaignId,
+          orgId,
+          batchIndex: batchIndex + idx,
+          contactIds: batch,
+          content: winner.content,
+          subject: winner.subject,
+          preheader: winner.preheader ?? '',
+          fromName: fromName ?? '',
+          fromEmail: fromEmail ?? '',
+          replyTo: replyTo ?? '',
+          dkimDomain,
+          dkimSelector,
+          dkimPrivateKey,
+          priority: (priority ?? PRIORITY.CAMPAIGN) as typeof PRIORITY.CAMPAIGN,
+          stream: 'broadcast',
+        } satisfies BatchSenderJobData,
+        opts: { jobId: `${dispatchId}:${key}` },
+      }));
+
+    if (jobs.length > 0) {
+      await batchSenderQueue.addBulk(jobs);
+      await confirmDispatchBatches(campaignId, dispatchId, claim.toEnqueue);
+    }
     totalDispatched += page.contactIds.length;
     batchIndex += chunks.length;
     cursor = page.nextCursor ?? undefined;
