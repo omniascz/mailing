@@ -1,13 +1,17 @@
 /**
  * Shared secret for calls into the API's /api/v1/internal/* routes.
  *
- * Two env names were already in use — most jobs read INTERNAL_SECRET, the API's
- * own schema declares INTERNAL_API_SECRET, and subscription-billing read both.
- * INTERNAL_API_SECRET is the one the API validates against, so it wins here;
- * INTERNAL_SECRET stays as a fallback so an existing deployment does not break
- * on the way through.
+ * INTERNAL_API_SECRET, and nothing else. Two names used to be in circulation
+ * and the fallback that bridged them is gone: a second name is only ever a way
+ * for the two sides to end up comparing different values, which is precisely
+ * what happened — the API's hand-written checks read the other one and
+ * answered 401 to every worker.
+ *
+ * An empty value here still reaches the API, which rejects it. That is the
+ * intended failure: loud at the boundary rather than a client that quietly
+ * decides not to authenticate.
  */
-export const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? process.env.INTERNAL_SECRET ?? '';
+export const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
 /** Headers for a JSON POST/PATCH to an internal route. */
 export function internalHeaders(): Record<string, string> {

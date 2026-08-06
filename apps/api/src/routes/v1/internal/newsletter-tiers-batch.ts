@@ -8,6 +8,17 @@
  * Returns only contacts that have an ACTIVE subscription. Missing = no active tier.
  */
 
+/**
+ * Auth for every route in this file is the internal-auth plugin's onRequest
+ * hook: it covers each /api/v1/internal/* path and compares x-internal-secret
+ * against env.INTERNAL_API_SECRET in constant time.
+ *
+ * These handlers used to repeat that check by hand against
+ * the legacy `INTERNAL_SECRET` env name — which the API neither validates nor any
+ * deployment sets. Two gates that disagree are worse than one, so the
+ * duplicates are gone rather than corrected.
+ */
+
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, eq, inArray, sql } from 'drizzle-orm';
@@ -23,12 +34,7 @@ export default async function internalNewsletterTiersBatchRoutes(app: FastifyIns
   app.post(
     '/api/v1/internal/newsletter-tiers/batch',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      const secret = process.env.INTERNAL_SECRET;
-      if (secret && req.headers['x-internal-secret'] !== secret) {
-        return reply.code(403).send({ error: 'Forbidden' });
-      }
-
+    async (req) => {
       const { orgId, contactIds } = bodySchema.parse(req.body);
 
       if (contactIds.length === 0) {

@@ -2,6 +2,17 @@
  * Internal ticketing cron endpoints (secret-gated), driven by the workers
  * scheduler: day-of (per minute), fill-the-house (daily), discover (weekly).
  */
+/**
+ * Auth for every route in this file is the internal-auth plugin's onRequest
+ * hook: it covers each /api/v1/internal/* path and compares x-internal-secret
+ * against env.INTERNAL_API_SECRET in constant time.
+ *
+ * These handlers used to repeat that check by hand against
+ * the legacy `INTERNAL_SECRET` env name — which the API neither validates nor any
+ * deployment sets. Two gates that disagree are worse than one, so the
+ * duplicates are gone rather than corrected.
+ */
+
 import type { FastifyInstance } from 'fastify';
 import {
   runDayOfTick,
@@ -9,18 +20,11 @@ import {
   runDiscoverTick,
 } from '../../../services/ticketing/cron.js';
 
-function ok(req: { headers: Record<string, unknown> }): boolean {
-  return (
-    !process.env.INTERNAL_SECRET || req.headers['x-internal-secret'] === process.env.INTERNAL_SECRET
-  );
-}
-
 export default async function internalTicketingCronRoutes(app: FastifyInstance) {
   app.post(
     '/api/v1/internal/ticketing/day-of/tick',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      if (!ok(req)) return reply.status(401).send();
+    async (_req, reply) => {
       return reply.send({ data: await runDayOfTick() });
     },
   );
@@ -28,8 +32,7 @@ export default async function internalTicketingCronRoutes(app: FastifyInstance) 
   app.post(
     '/api/v1/internal/ticketing/fill-the-house/tick',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      if (!ok(req)) return reply.status(401).send();
+    async (_req, reply) => {
       return reply.send({ data: await runFillTheHouseTick() });
     },
   );
@@ -37,8 +40,7 @@ export default async function internalTicketingCronRoutes(app: FastifyInstance) 
   app.post(
     '/api/v1/internal/ticketing/discover/tick',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      if (!ok(req)) return reply.status(401).send();
+    async (_req, reply) => {
       return reply.send({ data: await runDiscoverTick() });
     },
   );

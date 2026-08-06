@@ -424,14 +424,14 @@ export default async function campaignRoutes(app: FastifyInstance) {
   // /api/v1/internal/* path and compares the x-internal-secret header against
   // env.INTERNAL_API_SECRET in constant time.
   //
-  // These handlers used to repeat that check by hand against
-  // `process.env.INTERNAL_SECRET`, which is not the name the API validates or
-  // the deployment sets — so every one of them answered 401 with an empty body
-  // no matter what the worker sent, and the ab-winner worker could never
-  // compute a winner or read a holdback page. The idempotency integration
-  // tests are what surfaced it: they could not get the worker past its first
-  // call. The duplicated check is gone rather than corrected, so there is one
-  // place that decides whether an internal request is authentic.
+  // These handlers used to repeat that check by hand against the legacy
+  // `INTERNAL_SECRET` env name, which is not what the API validates or the
+  // deployment sets — so every one of them answered 401 with an empty body no
+  // matter what the worker sent, and the ab-winner worker could never compute
+  // a winner or read a holdback page. The duplicated check is gone rather than
+  // corrected, so there is one place that decides whether an internal request
+  // is authentic. Every other internal route in the codebase has since had the
+  // same duplicate removed.
 
   /**
    * POST /api/v1/internal/campaigns/:id/ab-winner-compute
@@ -499,8 +499,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
     { schema: { tags: ['Internal'] } },
     // Auth is the internal-auth onRequest hook, which covers every
     // /api/v1/internal/* route with a timing-safe compare against
-    // env.INTERNAL_API_SECRET. The older handlers in this file predate it and
-    // still re-check process.env.INTERNAL_SECRET by hand.
+    // env.INTERNAL_API_SECRET.
     async (req) => {
       const { id } = idParam.parse(req.params);
       const { orgId, dispatchId, keys } = z

@@ -13,10 +13,6 @@ import {
   validateSmtpCredential,
 } from '../../services/smtp/credentials.js';
 
-function checkSecret(secret: unknown): boolean {
-  return !process.env.INTERNAL_SECRET || secret === process.env.INTERNAL_SECRET;
-}
-
 const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
   // ── Customer-facing credential management ─────────────────────────────────
   app.get(
@@ -60,9 +56,16 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  // ── Internal: called by the Go submission server ──────────────────────────
+  // ── Internal endpoints ────────────────────────────────────────────────────
+  //
+  // Auth is the internal-auth plugin's onRequest hook, which guards every
+  // /api/v1/internal/* path with a timing-safe compare against
+  // env.INTERNAL_API_SECRET. These handlers used to repeat that check by hand
+  // against the legacy `INTERNAL_SECRET` env name, which the API neither validates nor
+  // any deployment sets; the duplicate is gone rather than corrected.
+  //
+  // Called by the Go submission server (apps/engine, port 587).
   app.post('/api/v1/internal/smtp/auth', { schema: { tags: ['Internal'] } }, async (req, reply) => {
-    if (!checkSecret(req.headers['x-internal-secret'])) return reply.status(401).send();
     const body = z.object({ username: z.string(), password: z.string() }).parse(req.body);
     const orgId = await validateSmtpCredential(body.username, body.password);
     if (!orgId) return reply.status(401).send({ ok: false });
@@ -73,7 +76,6 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
     '/api/v1/internal/smtp/relay',
     { schema: { tags: ['Internal'] } },
     async (req, reply) => {
-      if (!checkSecret(req.headers['x-internal-secret'])) return reply.status(401).send();
       const body = z
         .object({
           orgId: z.string().uuid(),

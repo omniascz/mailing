@@ -14,7 +14,7 @@ import { captureJobException } from '../lib/telemetry.js';
 import { connection, QUEUE_NAMES } from '../queues/index.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
-const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? process.env.INTERNAL_SECRET ?? '';
+const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
 export interface BlacklistMonitorJobData {
   /** undefined = check all IPs; set to check a specific IP address only */

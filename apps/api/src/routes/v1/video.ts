@@ -96,11 +96,16 @@ export default async function videoRoutes(app: FastifyInstance) {
     return reply.status(204).send();
   });
 
-  // ── Internal worker callback ────────────────────────────────────────────────
-  app.get('/api/v1/internal/video/pending', async (req, reply) => {
-    const secret = req.headers['x-internal-secret'];
-    if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
-
+  // ── Internal endpoints ────────────────────────────────────────────────────
+  //
+  // Auth is the internal-auth plugin's onRequest hook, which guards every
+  // /api/v1/internal/* path with a timing-safe compare against
+  // env.INTERNAL_API_SECRET. These handlers used to repeat that check by hand
+  // against the legacy `INTERNAL_SECRET` env name, which the API neither validates nor
+  // any deployment sets; the duplicate is gone rather than corrected.
+  //
+  // Called by the video-transcode worker.
+  app.get('/api/v1/internal/video/pending', async (_req, reply) => {
     const { db } = await import('../../db/client.js');
     const { videoMessages } = await import('../../db/schema/video-messages.js');
     const { eq } = await import('drizzle-orm');
@@ -118,9 +123,6 @@ export default async function videoRoutes(app: FastifyInstance) {
   });
 
   app.post('/api/v1/internal/video/:id/transcode-result', async (req, reply) => {
-    const secret = req.headers['x-internal-secret'];
-    if (secret !== process.env.INTERNAL_SECRET) return reply.status(401).send();
-
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
     const body = z
       .object({
