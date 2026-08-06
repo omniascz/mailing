@@ -128,4 +128,33 @@ describe('batch-sender retry window (real queue + worker)', () => {
     const made = await runToEnd(6, 50);
     expect(made).toBe(1);
   }, 60_000);
+
+  it('the configured windows match what each queue is for', async () => {
+    // Cheap regression on the numbers themselves: they encode decisions
+    // (deploy length, greylist delay, how long a person waits for a reset)
+    // that are easy to change by accident and hard to notice when wrong.
+    const { batchSenderQueues, mtaQueues, campaignSplitterQueue } =
+      await import('../queues/index.js');
+    const opts = (q: Queue) => (q.defaultJobOptions ?? {}) as Record<string, unknown>;
+
+    expect(opts(batchSenderQueues.broadcast)).toMatchObject({
+      attempts: 6,
+      backoff: { type: 'exponential', delay: 15_000 },
+    });
+    expect(opts(batchSenderQueues.triggered)).toMatchObject({ attempts: 6 });
+    // Transactional stays short on purpose — a late password reset is a
+    // failed password reset.
+    expect(opts(batchSenderQueues.transactional)).toMatchObject({
+      attempts: 6,
+      backoff: { type: 'exponential', delay: 2000 },
+    });
+    // Long enough to outlast greylisting.
+    expect(opts(mtaQueues.gmail)).toMatchObject({
+      attempts: 6,
+      backoff: { type: 'exponential', delay: 60_000 },
+    });
+    // Deliberately NOT widened: the splitter is not idempotent, so every
+    // extra attempt is another chance to enqueue a duplicate campaign.
+    expect(opts(campaignSplitterQueue)).toMatchObject({ attempts: 3 });
+  });
 });

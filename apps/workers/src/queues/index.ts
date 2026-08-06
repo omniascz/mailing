@@ -119,6 +119,21 @@ export type MessageStream = 'broadcast' | 'transactional' | 'triggered';
 
 // ─── Queue instances ─────────────────────────────────────────────────────────
 
+/**
+ * These two keep the short default window, and that is not an oversight.
+ *
+ * Neither is idempotent. Both build their batch jobs and hand them to
+ * `addBulk` with no deterministic jobId, so a second run enqueues a second
+ * full set — measured: running the splitter twice with the same input left
+ * 3 batches, then 6. Every contact in those batches would receive the
+ * campaign twice.
+ *
+ * That inverts the usual trade-off. For batch-sender a longer window buys
+ * resilience; here every extra attempt is another chance to duplicate a whole
+ * campaign, so widening the window would make the failure mode worse rather
+ * than better. The fix is a deterministic jobId per batch — which is a
+ * separate change with its own testing, not a config tweak.
+ */
 export const campaignSplitterQueue = new Queue(QUEUE_NAMES.CAMPAIGN_SPLITTER, defaultOpts);
 export const abWinnerQueue = new Queue(QUEUE_NAMES.AB_WINNER, defaultOpts);
 
@@ -173,14 +188,44 @@ export const batchSenderQueues = {
 /** @deprecated Use batchSenderQueues.broadcast for new code */
 export const batchSenderQueue = batchSenderQueues.broadcast;
 
+/**
+ * Retry window for a message the receiving server deferred.
+ *
+ * mta-sender has no retry of its own. It classifies the SMTP reply — block,
+ * hard bounce, soft bounce — and for anything retryable it throws, which
+ * hands the decision to BullMQ. `isSoftBounce` is "any 4xx", so this window
+ * is what a greylisted message gets.
+ *
+ * Greylisting is the case that made the default wrong. A server that answers
+ * 451 wants the sender to come back later, and "later" is conventionally
+ * 5 minutes and often 15. The default 3 attempts from 5 s gave up after 15
+ * seconds — before the greylist entry had aged even once — so a greylisted
+ * message was recorded as a soft bounce and never sent, on a technique that
+ * is supposed to cost a legitimate sender nothing.
+ *
+ * 6 attempts from 60 s gives 60 + 120 + 240 + 480 + 960 = 1860 s, 31 minutes.
+ * That clears normal greylisting with room to spare and rides out the 421/451
+ * throttle signals the adaptive rate limiter is already reacting to. It is
+ * still short compared with a real MTA, which retries for days — this queue
+ * is not trying to be one, only to stop losing mail to a five-minute delay.
+ */
+const mtaOpts: QueueOptions = {
+  ...defaultOpts,
+  defaultJobOptions: {
+    ...defaultOpts.defaultJobOptions,
+    attempts: 6,
+    backoff: { type: 'exponential', delay: 60_000 },
+  },
+};
+
 export const mtaQueues = {
-  gmail: new Queue(QUEUE_NAMES.MTA_GMAIL, defaultOpts),
-  microsoft: new Queue(QUEUE_NAMES.MTA_MICROSOFT, defaultOpts),
-  yahoo: new Queue(QUEUE_NAMES.MTA_YAHOO, defaultOpts),
-  seznam: new Queue(QUEUE_NAMES.MTA_SEZNAM, defaultOpts),
-  volny: new Queue(QUEUE_NAMES.MTA_VOLNY, defaultOpts),
-  centrum: new Queue(QUEUE_NAMES.MTA_CENTRUM, defaultOpts),
-  other: new Queue(QUEUE_NAMES.MTA_OTHER, defaultOpts),
+  gmail: new Queue(QUEUE_NAMES.MTA_GMAIL, mtaOpts),
+  microsoft: new Queue(QUEUE_NAMES.MTA_MICROSOFT, mtaOpts),
+  yahoo: new Queue(QUEUE_NAMES.MTA_YAHOO, mtaOpts),
+  seznam: new Queue(QUEUE_NAMES.MTA_SEZNAM, mtaOpts),
+  volny: new Queue(QUEUE_NAMES.MTA_VOLNY, mtaOpts),
+  centrum: new Queue(QUEUE_NAMES.MTA_CENTRUM, mtaOpts),
+  other: new Queue(QUEUE_NAMES.MTA_OTHER, mtaOpts),
 } as const;
 
 export type IspName = keyof typeof mtaQueues;
