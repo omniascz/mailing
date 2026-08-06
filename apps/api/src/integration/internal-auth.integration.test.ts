@@ -171,6 +171,12 @@ describe('internal-auth guards /api/v1/internal/* on its own', () => {
     { method: 'POST', url: '/api/v1/internal/workflow/send-email' },
     { method: 'POST', url: '/api/v1/internal/smtp/auth' },
     { method: 'GET', url: '/api/v1/internal/video/pending' },
+    // The second handler in video.ts — the uuid is arbitrary, the gate runs
+    // before the handler ever looks at it.
+    {
+      method: 'POST',
+      url: '/api/v1/internal/video/00000000-0000-4000-8000-000000000000/transcode-result',
+    },
   ];
 
   for (const { method, url } of ROUTES) {
