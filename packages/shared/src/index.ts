@@ -16,6 +16,7 @@ export {
   isAppleMpp,
   injectOpenPixel,
   wrapLinks,
+  DEV_TRACKING_SECRET,
   type OpenTrackingPayload,
   type ClickTrackingPayload,
   type PreferenceCenterPayload,

@@ -15,6 +15,7 @@
  */
 
 import { z } from 'zod';
+import { DEV_TRACKING_SECRET } from '@forgemsg/shared';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -124,6 +125,15 @@ const Env = z.object({
     z.string().min(32),
     'dev-preference-centre-secret-change-32',
   ),
+  // HMAC-SHA256 over every token we hand to a recipient: the open pixel, every
+  // wrapped link, the unsubscribe link in List-Unsubscribe, the preference
+  // centre and view-in-browser. It is read in packages/shared, not here, so the
+  // PR #9 sweep — which walked `process.env` keys inside apps/api — never saw
+  // it. A forged open or click moves campaign statistics and, through them, the
+  // A/B winner; a forged unsubscribe token alters someone else's subscription.
+  // The dev fallback lives with the code that signs, so all three processes
+  // agree on one literal instead of keeping copies that drift.
+  TRACKING_SECRET: prodRequired(z.string().min(32), DEV_TRACKING_SECRET),
   // Deliberately optional: HIPAA mode is per-org opt-in (enableHipaaMode), so
   // requiring this would stop every non-healthcare deployment from booting.
   // The guarantee is enforced where it belongs instead — enableHipaaMode

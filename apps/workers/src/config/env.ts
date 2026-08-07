@@ -3,6 +3,7 @@
  * See `apps/api/src/config/env.ts` for design notes.
  */
 import { z } from 'zod';
+import { DEV_TRACKING_SECRET } from '@forgemsg/shared';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -53,6 +54,12 @@ const Env = z.object({
   MINIO_ACCESS_KEY: prodRequired(z.string(), 'minioadmin'),
   MINIO_SECRET_KEY: prodRequired(z.string(), 'minioadmin'),
   MINIO_BUCKET: z.string().default('forgemsg'),
+
+  // HMAC-SHA256 over the open pixel and every wrapped link. The workers are the
+  // side that *creates* these tokens (batch-sender injects them); the API
+  // verifies them. Both read packages/shared, which reads this variable, so the
+  // two processes must be given the same value or nothing verifies.
+  TRACKING_SECRET: prodRequired(z.string().min(32), DEV_TRACKING_SECRET),
 
   // External providers used in jobs
   ANTHROPIC_API_KEY: z.string().optional(),

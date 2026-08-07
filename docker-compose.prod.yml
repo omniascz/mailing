@@ -84,6 +84,12 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY is required}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
+      # Signs the open pixel, every wrapped link, the unsubscribe link and the
+      # preference-centre token. api and workers MUST get the same value — the
+      # workers sign, the API verifies. Its dev fallback lives in
+      # packages/shared and is committed, so an unset value in production means
+      # anyone reading this repository can forge those tokens.
+      TRACKING_SECRET: ${TRACKING_SECRET:?TRACKING_SECRET is required}
     ports:
       - '${API_PORT:-3001}:3001'
     healthcheck:
@@ -129,6 +135,8 @@ services:
       MTA_GRPC_ENDPOINT: engine:50051
       TRACKING_BASE_URL: ${TRACKING_BASE_URL:-}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET is required}
+      # Same value as the api service above — this is the side that signs.
+      TRACKING_SECRET: ${TRACKING_SECRET:?TRACKING_SECRET is required}
 
   web:
     build:
