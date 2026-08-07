@@ -104,9 +104,6 @@ jobs:
     name: Integration (real DB)
     runs-on: ubuntu-latest
     needs: [typecheck]
-    # Deliberately NOT in the CI Pass needs list yet — this is one test, and a
-    # single new check should not be able to gate the whole pipeline until it
-    # has a track record.
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -136,6 +133,11 @@ jobs:
       DATABASE_URL: postgresql://forgemsg:forgemsg@127.0.0.1:5432/forgemsg_itest
       REDIS_URL: redis://127.0.0.1:6379
       JWT_SECRET: integration-only-secret-not-for-production-1234567890
+      # The suite drives /api/v1/internal/* through the real internal-auth hook,
+      # which compares against this. Without it every such call is answered 401
+      # and 12 cases fail — not on the behaviour they test, but on the header.
+      # workers-integration has always set it; this job was simply missed.
+      INTERNAL_API_SECRET: integration-only-internal-secret-32-chars
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -362,16 +364,39 @@ jobs:
   ci-pass:
     name: CI Pass
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test, build, build-go]
+    # Every job that can fail on the code, including both integration suites.
+    #
+    # They were left out with a note saying one new test should not gate the
+    # pipeline "until it has a track record". They have one now — 9 files
+    # between them — and leaving them out had a cost: a red integration suite
+    # still produced a green CI Pass, so a PR could merge with it broken and
+    # nothing on the PR page said otherwise. That is how the missing
+    # INTERNAL_API_SECRET above reached master in the first place.
+    #
+    # `audit` and `e2e` stay out on purpose, see the step below.
+    needs: [lint, typecheck, test, build, build-go, integration, workers-integration]
     if: always()
     steps:
       - name: Verify all jobs succeeded
+        env:
+          # `skipped` counts as a failure for these: a required job that did not
+          # run is a required job that did not pass. e2e is label-gated and
+          # audit is continue-on-error, so neither is required here.
+          LINT: ${{ needs.lint.result }}
+          TYPECHECK: ${{ needs.typecheck.result }}
+          TEST: ${{ needs.test.result }}
+          BUILD: ${{ needs.build.result }}
+          BUILD_GO: ${{ needs['build-go'].result }}
+          INTEGRATION: ${{ needs.integration.result }}
+          WORKERS_INTEGRATION: ${{ needs['workers-integration'].result }}
         run: |
-          if [ "${{ needs.lint.result }}" != "success" ] \
-            || [ "${{ needs.typecheck.result }}" != "success" ] \
-            || [ "${{ needs.test.result }}" != "success" ] \
-            || [ "${{ needs.build.result }}" != "success" ] \
-            || [ "${{ needs.build-go.result }}" != "success" ]; then
-            echo "One or more required jobs failed."
+          failed=''
+          for job in LINT TYPECHECK TEST BUILD BUILD_GO INTEGRATION WORKERS_INTEGRATION; do
+            eval "result=\$$job"
+            echo "$job: $result"
+            [ "$result" = 'success' ] || failed="$failed $job"
+          done
+          if [ -n "$failed" ]; then
+            echo "::error::Required jobs did not succeed:$failed"
             exit 1
           fi
