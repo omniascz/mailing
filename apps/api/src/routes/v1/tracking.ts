@@ -18,6 +18,7 @@ import { parseUserAgent } from '../../lib/user-agent.js';
 import { emitEmailEvent } from '../../services/webhooks/email-events.js';
 import { resolveCampaignCategory } from '../../services/stats/category-isp.js';
 import { eq, and } from 'drizzle-orm';
+import { abVariantForContact } from '../../services/campaigns/variant-attribution.js';
 
 /**
  * 1×1 transparent GIF (35 bytes, base64-encoded).
@@ -74,6 +75,8 @@ export default async function trackingRoutes(app: FastifyInstance) {
             campaignId: payload.campaignId,
             contactId: payload.contactId,
             eventType: 'open',
+            // Recovered from the send row — the token cannot carry it.
+            abVariantId: abVariantForContact(payload.campaignId, payload.contactId),
             userAgent: userAgent.slice(0, 1024),
             ipAddress: ipAddress?.slice(0, 45) ?? null,
             deviceType,
@@ -185,6 +188,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
           campaignId: payload.campaignId,
           contactId: payload.contactId,
           eventType: 'click',
+          abVariantId: abVariantForContact(payload.campaignId, payload.contactId),
           linkUrl: payload.url.slice(0, 2048),
           userAgent: userAgent.slice(0, 1024),
           ipAddress: ipAddress?.slice(0, 45) ?? null,

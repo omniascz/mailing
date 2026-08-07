@@ -22,6 +22,7 @@ import { db } from '../../db/client.js';
 import { contacts, emailEvents, suppressions, organizations } from '../../db/schema/index.js';
 import { and, eq, sql } from 'drizzle-orm';
 import { redis } from '@forgemsg/shared/redis';
+import { abVariantForContact } from '../campaigns/variant-attribution.js';
 
 // ─── ARF parsing ──────────────────────────────────────────────────────────────
 
@@ -177,6 +178,7 @@ export async function processFblComplaint(
     campaignId: campaignId ?? null,
     contactId: contact.id,
     eventType: 'complaint',
+    abVariantId: campaignId ? abVariantForContact(campaignId, contact.id) : null,
     metadata: {
       feedbackType: report.feedbackType,
       source: report.source,
