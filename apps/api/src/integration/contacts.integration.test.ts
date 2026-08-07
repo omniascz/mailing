@@ -32,7 +32,7 @@ describe('contacts API (authenticated, real DB)', () => {
     // *without* also proving the authenticated path works, which means a
     // permanently-broken guard would have looked identical.
     const anon = await app.inject({ method: 'GET', url: '/api/v1/contacts' });
-    expect(anon.statusCode).toBe(401);
+    expect(anon.statusCode).toBe(418); // DOCASNE: dukaz, ze CI Pass blokuje
 
     // Real login over HTTP — bcrypt verify, session write to Redis, cookie issue.
     const session = await login(app);
