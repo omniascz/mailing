@@ -27,7 +27,7 @@ const AB_CONFIG = {
     { id: 'a', subject: 'Variant A', content: { blocks: [] }, percentage: 40 },
     { id: 'b', subject: 'Variant B', content: { blocks: [] }, percentage: 40 },
   ],
-  winnerCriteria: 'open_rate',
+  winnerCriteria: 'click_rate',
   testDurationHours: 4,
   autoSendWinner: true,
 };
@@ -101,12 +101,56 @@ describe('ab-winner idempotency (real DB + Redis + API)', () => {
         )}
       `;
     }
+
+    // The test-phase cohort. Without it computeAbWinner has nothing to compare
+    // and refuses outright — a campaign whose variants were never sent has no
+    // winner to pick, and it now says so instead of returning zeros and
+    // crowning ab_config.variants[0]. The holdback above is the slice that was
+    // deliberately NOT sent, so it cannot double as this.
+    const testTag = randomUUID().slice(0, 8);
+    for (const [variantId, clicks] of [
+      ['a', 10],
+      ['b', 40],
+    ] as const) {
+      const testers = await sql<{ id: string }[]>`
+        INSERT INTO contacts ${sql(
+          Array.from({ length: 100 }, (_, i) => ({
+            org_id: orgId,
+            email: `abi-test-${testTag}-${variantId}-${i}@test.local`,
+            status: 'active',
+          })),
+        )}
+        RETURNING id
+      `;
+      await sql`
+        INSERT INTO email_events ${sql(
+          testers.map((r) => ({
+            org_id: orgId,
+            campaign_id: campaignId,
+            contact_id: r.id,
+            event_type: 'send',
+            ab_variant_id: variantId,
+          })),
+        )}
+      `;
+      await sql`
+        INSERT INTO email_events ${sql(
+          testers.slice(0, clicks).map((r) => ({
+            org_id: orgId,
+            campaign_id: campaignId,
+            contact_id: r.id,
+            event_type: 'click',
+          })),
+        )}
+      `;
+    }
   }, 120_000);
 
   afterAll(async () => {
     await clearQueue();
     await sql`DELETE FROM ab_test_holdbacks WHERE campaign_id = ${campaignId}`;
     await sql`DELETE FROM campaigns WHERE id = ANY(${createdCampaigns})`;
+    await sql`DELETE FROM email_events WHERE campaign_id = ${campaignId}`;
     await sql`DELETE FROM contacts WHERE org_id = ${orgId} AND email LIKE 'abi-%@test.local'`;
     await sql.end();
     await batchSenderQueue.close();
