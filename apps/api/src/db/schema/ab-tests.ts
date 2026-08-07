@@ -59,7 +59,14 @@ export const abTestResults = pgTable(
       .references(() => organizations.id, { onDelete: 'cascade' }),
     /** id of the winning AbVariant (from ab_config.variants[].id) */
     winnerVariantId: varchar('winner_variant_id', { length: 100 }).notNull(),
-    winnerMetric: varchar('winner_metric', { length: 50 }).notNull().default('open_rate'),
+    /**
+     * The metric this test was decided on. Always written explicitly by
+     * computeAbWinner; the column default exists only so the NOT NULL holds for
+     * rows written before it. It is deliberately NOT the product default —
+     * that lives in one place, DEFAULT_WINNER_CRITERIA in ab-winner.ts, and a
+     * second copy here would drift the moment one of them changed.
+     */
+    winnerMetric: varchar('winner_metric', { length: 50 }).notNull().default('click_rate'),
     winnerScore: decimal('winner_score', { precision: 10, scale: 6 }).notNull().default('0'),
     runnerUpScore: decimal('runner_up_score', { precision: 10, scale: 6 }).notNull().default('0'),
     /** Statistical confidence of the winner over runner-up, 0–100. */
@@ -67,6 +74,17 @@ export const abTestResults = pgTable(
     holdbackCount: integer('holdback_count').notNull().default(0),
     /** True once the winner variant has been dispatched to the holdback slice. */
     autoSendDispatched: boolean('auto_send_dispatched').notNull().default(false),
+    /**
+     * What computeAbWinner decided: 'auto_send' or 'needs_review'.
+     *
+     * `confidenceThreshold` on ab_config was declared, documented and read by
+     * nothing, so an inconclusive test dispatched its winner exactly like a
+     * decisive one. Below the threshold the decision is now 'needs_review', the
+     * holdback stays unsent and the campaign is paused for a human.
+     */
+    decision: varchar('decision', { length: 32 }).notNull().default('auto_send'),
+    /** Customer-facing sentence explaining a 'needs_review' decision. */
+    decisionReason: varchar('decision_reason', { length: 500 }),
     dispatchedAt: timestamp('dispatched_at', { withTimezone: true }),
     selectedAt: timestamp('selected_at', { withTimezone: true }).notNull().defaultNow(),
   },

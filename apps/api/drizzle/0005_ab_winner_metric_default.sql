@@ -1,0 +1,1 @@
+ALTER TABLE "ab_test_results" ALTER COLUMN "winner_metric" SET DEFAULT 'click_rate';

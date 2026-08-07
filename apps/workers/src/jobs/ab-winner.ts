@@ -45,6 +45,8 @@ interface WinnerComputeResult {
     score: number;
   }>;
   autoSendWinner: boolean;
+  decision: 'auto_send' | 'needs_review';
+  decisionReason: string | null;
 }
 
 async function internalPost<T>(path: string, body: unknown): Promise<T> {
@@ -92,8 +94,15 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
   );
 
   if (!result.autoSendWinner) {
-    job.log('[ab-winner] autoSendWinner=false — skipping holdback dispatch');
-    return { dispatched: 0 };
+    // Below the configured confidence threshold, or auto-send is off, or there
+    // is only one arm to judge. The holdback stays unsent and the campaign is
+    // parked for a human — dispatching a winner the test could not actually
+    // establish is worse than waiting, because it looks like a decision.
+    job.log(`[ab-winner] ${result.decision} — ${result.decisionReason ?? 'no reason recorded'}`);
+    if (result.decision === 'needs_review') {
+      await updateCampaignStatus(campaignId, 'paused');
+    }
+    return { dispatched: 0, decision: result.decision };
   }
 
   // Resolve winning variant details from rankings
@@ -176,9 +185,32 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
 
   // 3. Mark dispatched
   await internalPost(`/api/v1/internal/campaigns/${campaignId}/ab-winner-dispatched`, {});
+  // Everyone in the audience now has the campaign; the splitter left it
+  // `sending` precisely so this step could close it out.
+  await updateCampaignStatus(campaignId, 'sent');
 
   job.log(`[ab-winner] Done — dispatched ${totalDispatched} contacts to winner variant`);
-  return { dispatched: totalDispatched };
+  return { dispatched: totalDispatched, decision: result.decision };
+}
+
+/**
+ * Drive the campaign lifecycle from the winner job. Best-effort: the dispatch
+ * already happened (or deliberately did not), and failing the job over a status
+ * write would re-run a dispatch that succeeded.
+ */
+async function updateCampaignStatus(campaignId: string, status: 'sent' | 'paused'): Promise<void> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/campaigns/${campaignId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_SECRET },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) {
+      console.error(`[ab-winner] status ${status} for ${campaignId} → HTTP ${res.status}`);
+    }
+  } catch (err) {
+    console.error(`[ab-winner] status ${status} for ${campaignId} failed:`, err);
+  }
 }
 
 export function startAbWinnerWorker() {
