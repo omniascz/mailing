@@ -23,6 +23,7 @@ import {
 } from '../sending/bounce-processor.js';
 import { decodeVerp } from '@forgemsg/shared/sending/verp';
 import { AppError } from '../../lib/app-error.js';
+import { abVariantForContact } from '../campaigns/variant-attribution.js';
 
 export interface InboundPayload {
   from: string;
@@ -120,6 +121,10 @@ export async function receiveInbound(
           contactId: ev?.contactId ?? null,
           messageId: verpMsgId,
           eventType: 'bounce',
+          abVariantId:
+            ev?.campaignId && ev?.contactId
+              ? abVariantForContact(ev.campaignId, ev.contactId)
+              : null,
           bounceType: cls.type === 'soft' ? 'soft' : cls.type === 'block' ? 'block' : 'hard',
           metadata: { source: 'verp', reason: cls.reason },
         })

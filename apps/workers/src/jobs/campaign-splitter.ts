@@ -44,6 +44,11 @@ interface AbVariant {
 
 interface AbConfig {
   variants: AbVariant[];
+  /**
+   * Carried through to the API, never interpreted here. The default when this
+   * is unset lives in DEFAULT_WINNER_CRITERIA (apps/api ab-winner.ts) and must
+   * stay in that one place — do not add a fallback on this line.
+   */
   winnerCriteria?: 'open_rate' | 'click_rate';
   testDurationHours?: number;
   autoSendWinner?: boolean;

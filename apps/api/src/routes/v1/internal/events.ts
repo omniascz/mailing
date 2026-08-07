@@ -22,6 +22,7 @@ import { z } from 'zod';
 import { db } from '../../../db/client.js';
 import { emailEvents } from '../../../db/schema/index.js';
 import { handleBounce } from '../../../services/campaigns/channel-fallback.js';
+import { abVariantForContact } from '../../../services/campaigns/variant-attribution.js';
 
 const bodySchema = z.object({
   type: z.enum(['send', 'deliver', 'bounce', 'fail']),
@@ -62,7 +63,13 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
       bounceType,
       stream:
         (meta.stream as 'broadcast' | 'transactional' | 'triggered' | undefined) ?? 'broadcast',
-      abVariantId: meta.abVariantId as string | undefined,
+      // mta-sender puts the variant in the metadata on the success path only;
+      // its three bounce branches do not. Fall back to the send row so a bounce
+      // is attributable to the variant that caused it — a subject line that
+      // trips more spam filters is a legitimate test outcome.
+      abVariantId:
+        (meta.abVariantId as string | undefined) ??
+        abVariantForContact(body.campaignId, body.contactId),
       category,
       isp,
       metadata: meta,
