@@ -21,6 +21,17 @@
  * no-op. Safe to retry on transient failures.
  */
 
+/**
+ * Auth for every route in this file is the internal-auth plugin's onRequest
+ * hook: it covers each /api/v1/internal/* path and compares x-internal-secret
+ * against env.INTERNAL_API_SECRET in constant time.
+ *
+ * These handlers used to repeat that check by hand against
+ * the legacy `INTERNAL_SECRET` env name — which the API neither validates nor any
+ * deployment sets. Two gates that disagree are worse than one, so the
+ * duplicates are gone rather than corrected.
+ */
+
 import type { FastifyPluginAsync } from 'fastify';
 import {
   processDailyDateTriggers,
@@ -59,13 +70,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         summary: 'Run all daily workflow triggers (date/name-day/holiday)',
       },
     },
-    async (req, reply) => {
-      if (
-        process.env.INTERNAL_SECRET &&
-        req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET
-      ) {
-        return reply.status(401).send();
-      }
+    async (_req, reply) => {
       // Run all three in parallel — they touch disjoint workflows
       // (filtered by triggerType) so there's no DB contention to fear.
       const [
@@ -188,13 +193,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/internal/browse-abandonment/tick',
     { schema: { tags: ['Internal'], summary: 'Run browse-abandonment detection for all orgs' } },
-    async (req, reply) => {
-      if (
-        process.env.INTERNAL_SECRET &&
-        req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET
-      ) {
-        return reply.status(401).send();
-      }
+    async (_req, reply) => {
       const { checkAllOrgsAbandonments } =
         await import('../../../services/browse-abandonment/index.js');
       return reply.send({ data: await checkAllOrgsAbandonments() });
@@ -206,13 +205,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/internal/segments/refresh-membership',
     { schema: { tags: ['Internal'], summary: 'Reconcile materialized segment membership' } },
-    async (req, reply) => {
-      if (
-        process.env.INTERNAL_SECRET &&
-        req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET
-      ) {
-        return reply.status(401).send();
-      }
+    async (_req, reply) => {
       const { refreshAllSegments } = await import('../../../services/segments/membership.js');
       return reply.send({ data: await refreshAllSegments() });
     },
@@ -222,13 +215,7 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/internal/scheduled-reports/run-due',
     { schema: { tags: ['Internal'], summary: 'Dispatch due scheduled reports' } },
-    async (req, reply) => {
-      if (
-        process.env.INTERNAL_SECRET &&
-        req.headers['x-internal-secret'] !== process.env.INTERNAL_SECRET
-      ) {
-        return reply.status(401).send();
-      }
+    async (_req, reply) => {
       const { runDueReports } = await import('../../../services/scheduled-reports/index.js');
       const results = await runDueReports();
       return reply.send({ data: { dispatched: results.length } });

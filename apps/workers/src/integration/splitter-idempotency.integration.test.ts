@@ -189,7 +189,7 @@ describe('campaign-splitter idempotency (real DB + Redis + API)', () => {
     const id = `partial-${randomUUID().slice(0, 8)}`;
     const ts = 1_700_000_000_000;
     const dispatchId = `${id}:${ts}`;
-    const secret = process.env.INTERNAL_API_SECRET ?? process.env.INTERNAL_SECRET ?? '';
+    const secret = process.env.INTERNAL_API_SECRET ?? '';
     const base = process.env.API_URL ?? 'http://localhost:3001';
 
     const claimRes = await fetch(

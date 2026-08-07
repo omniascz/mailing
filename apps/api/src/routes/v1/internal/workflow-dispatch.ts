@@ -10,6 +10,17 @@
  *
  * All require the x-internal-secret header (same scheme as internal/events).
  */
+/**
+ * Auth for every route in this file is the internal-auth plugin's onRequest
+ * hook: it covers each /api/v1/internal/* path and compares x-internal-secret
+ * against env.INTERNAL_API_SECRET in constant time.
+ *
+ * These handlers used to repeat that check by hand against
+ * the legacy `INTERNAL_SECRET` env name — which the API neither validates nor any
+ * deployment sets. Two gates that disagree are worse than one, so the
+ * duplicates are gone rather than corrected.
+ */
+
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
@@ -22,12 +33,6 @@ import {
 } from '../../../lib/queues.js';
 import { processWorkflowRuns } from '../../../services/workflows/executor.js';
 import { routedSmsSend } from '../../../services/sms/routing.js';
-
-function checkSecret(secret: unknown): boolean {
-  // Enforced when INTERNAL_SECRET is configured; open on the internal network
-  // boundary in dev where it's unset (matches existing internal-endpoint use).
-  return !process.env.INTERNAL_SECRET || secret === process.env.INTERNAL_SECRET;
-}
 
 /** Resolve a usable From identity for an org from its verified sending domains. */
 async function resolveOrgFrom(
@@ -47,8 +52,7 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
   app.post(
     '/api/v1/internal/workflow/process-runs',
     { schema: { tags: ['Internal'] } },
-    async (req, reply) => {
-      if (!checkSecret(req.headers['x-internal-secret'])) return reply.status(401).send();
+    async (_req, reply) => {
       const result = await processWorkflowRuns();
       return reply.send({ data: result });
     },
@@ -59,8 +63,6 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
     '/api/v1/internal/workflow/send-email',
     { schema: { tags: ['Internal'] } },
     async (req, reply) => {
-      if (!checkSecret(req.headers['x-internal-secret'])) return reply.status(401).send();
-
       const body = z
         .object({
           orgId: z.string().uuid(),
@@ -169,8 +171,6 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
     '/api/v1/internal/workflow/send-sms',
     { schema: { tags: ['Internal'] } },
     async (req, reply) => {
-      if (!checkSecret(req.headers['x-internal-secret'])) return reply.status(401).send();
-
       const body = z
         .object({
           orgId: z.string().uuid(),
