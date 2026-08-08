@@ -5,6 +5,7 @@ import { db } from '../../db/client.js';
 import { contacts, type Contact } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { parsePhonePrefix } from '../import/phone-prefix.js';
+import type { UnsubscribeSource } from './unsubscribe.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -189,7 +190,67 @@ export async function createContactsBatch(
   return rows;
 }
 
-export async function updateContact(orgId: string, id: string, patch: UpdateContactInput) {
+/**
+ * Context for a status change, when the caller is the one who knows it.
+ *
+ * `source` is passed in rather than guessed. This function cannot tell an
+ * admin clicking in the UI from a script calling the API — both arrive as the
+ * same patch — and the distinction is the whole point of recording it:
+ * deliverability cares whether the recipient asked to leave or whether an
+ * operator marked them.
+ */
+export interface UpdateContactContext {
+  source?: UnsubscribeSource;
+}
+
+export async function updateContact(
+  orgId: string,
+  id: string,
+  patch: UpdateContactInput,
+  ctx: UpdateContactContext = {},
+) {
+  // Read before the write so a transition can be told from a no-op: patching
+  // status to 'unsubscribed' on someone already unsubscribed is not an
+  // unsubscribe, and must not produce a second event.
+  const [before] = await db
+    .select({ status: contacts.status })
+    .from(contacts)
+    .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
+    .limit(1);
+
+  const becomingUnsubscribed =
+    (patch as { status?: string }).status === 'unsubscribed' && before?.status !== 'unsubscribed';
+
+  // Only that one transition is diverted. bounced, complained, archived, active
+  // and every other patch keep the exact behaviour they had — they are not
+  // unsubscribes and have their own handling elsewhere.
+  if (becomingUnsubscribed) {
+    const { unsubscribeContact } = await import('./unsubscribe.js');
+    await unsubscribeContact(orgId, id, {
+      scope: { kind: 'global' },
+      source: ctx.source ?? 'api',
+    });
+    // unsubscribeContact has written status + suppression + the per-list rows.
+    // Drop status from the patch so the update below cannot fight it, and let
+    // the rest of the patch through unchanged.
+    const rest = { ...(patch as Record<string, unknown>) };
+    delete rest.status;
+    if (Object.keys(rest).length === 0) {
+      const [row] = await db
+        .select()
+        .from(contacts)
+        .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId)))
+        .limit(1);
+      if (!row) throw AppError.notFound('Contact');
+      emitWebhookEvent(orgId, 'contact.updated', {
+        ...toContactSummary(row),
+        changed: changedFields(patch as Record<string, unknown>),
+      });
+      return row;
+    }
+    patch = rest as UpdateContactInput;
+  }
+
   const [row] = await db
     .update(contacts)
     .set({ ...patch, updatedAt: new Date() } as never)
