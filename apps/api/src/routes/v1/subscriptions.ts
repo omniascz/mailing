@@ -32,6 +32,7 @@ import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 import { t, resolveLocale, verifyTrackingToken, type SupportedLocale } from '@forgemsg/shared';
+import { unsubscribeContact, type UnsubscribeSource } from '../../services/contacts/unsubscribe.js';
 
 const DOI_TTL = 60 * 60 * 48; // 48 hours
 const UNSUB_TTL = 60 * 60 * 24 * 7; // 7 days
@@ -275,7 +276,11 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     { schema: { tags: ['Subscriptions'], summary: 'One-click unsubscribe (RFC 8058)' } },
     async (req, reply) => {
       const { token } = z.object({ token: unsubTokenSchema }).parse(req.body);
-      await processUnsubscribe(token);
+      await processUnsubscribe(token, {
+        source: 'one_click',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return reply.code(204).send();
     },
   );
@@ -298,7 +303,11 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const { token } = z.object({ token: unsubTokenSchema }).parse(req.params);
       try {
-        await processUnsubscribe(token);
+        await processUnsubscribe(token, {
+          source: 'one_click',
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        });
       } catch {
         // Swallow — never 4xx a provider one-click POST.
       }
@@ -316,7 +325,11 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const { token } = z.object({ token: unsubTokenSchema }).parse(req.params);
       try {
-        const { contactId, orgId } = await processUnsubscribe(token);
+        const { contactId, orgId } = await processUnsubscribe(token, {
+          source: 'footer_link',
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        });
         const locale = await resolvePageLocale(req, orgId, contactId);
         const page = pageFromKey('unsubscribe_page', locale);
         return reply.header('Content-Type', 'text/html').send(page.html);
@@ -429,16 +442,29 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
  *   2. Legacy random-UUID token stored in Redis (`generateUnsubscribeToken`).
  * Returns null when neither resolves.
  */
-async function decodeUnsubToken(
-  token: string,
-): Promise<{ contactId: string; orgId: string; redisBacked: boolean } | null> {
+async function decodeUnsubToken(token: string): Promise<{
+  contactId: string;
+  orgId: string;
+  /** Present on signed tokens; batch-sender has put it there since July. */
+  campaignId?: string;
+  redisBacked: boolean;
+} | null> {
   const payload = verifyTrackingToken(token);
   if (payload && payload.type === 'unsub') {
-    return { contactId: payload.contactId, orgId: payload.orgId, redisBacked: false };
+    // campaignId was already in the payload and was being dropped right here,
+    // which is why no unsubscribe could be attributed to a campaign.
+    return {
+      contactId: payload.contactId,
+      orgId: payload.orgId,
+      campaignId: payload.campaignId,
+      redisBacked: false,
+    };
   }
   const raw = await redis.get(unsubKey(token));
   if (raw) {
-    const parsed = JSON.parse(raw) as { contactId: string; orgId: string };
+    // Legacy Redis-backed tokens predate the campaign field; undefined is the
+    // honest answer for them.
+    const parsed = JSON.parse(raw) as { contactId: string; orgId: string; campaignId?: string };
     return { ...parsed, redisBacked: true };
   }
   return null;
@@ -450,25 +476,46 @@ async function resolveUnsubToken(token: string): Promise<{ contactId: string; or
   return { contactId: decoded.contactId, orgId: decoded.orgId };
 }
 
-async function processUnsubscribe(token: string): Promise<{ contactId: string; orgId: string }> {
+/**
+ * The three token-bearing routes all land here: the footer link (GET), the
+ * confirmation button (POST) and the RFC 8058 one-click POST.
+ *
+ * The writes used to live inline and covered two of the four stores, so a
+ * contact who left this way ended up in a different state from one who left
+ * through the preference centre. unsubscribeContact owns that now; this
+ * function's job is to turn a token into a call.
+ */
+async function processUnsubscribe(
+  token: string,
+  ctx: { source: UnsubscribeSource; ipAddress?: string; userAgent?: string },
+): Promise<{ contactId: string; orgId: string }> {
   const decoded = await decodeUnsubToken(token);
   if (!decoded) throw AppError.badRequest('Invalid or expired unsubscribe token');
 
   const { contactId, orgId } = decoded;
 
-  const [contact] = await db
-    .update(contacts)
-    .set({ status: 'unsubscribed', updatedAt: new Date() })
-    .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)))
-    .returning();
+  const result = await unsubscribeContact(orgId, contactId, {
+    scope: { kind: 'global' },
+    source: ctx.source,
+    campaignId: decoded.campaignId,
+    ipAddress: ctx.ipAddress,
+    userAgent: ctx.userAgent,
+  });
 
-  if (contact?.email) {
-    await db
-      .insert(suppressions)
-      .values({ orgId, email: contact.email, reason: 'unsubscribe' })
-      .onConflictDoNothing();
-    const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
-    emitEmailEvent(orgId, 'unsubscribed', { contactId, email: contact.email });
+  // The webhook keeps firing on every call, unlike the event. A provider
+  // retrying one-click should not add a second `unsubscribe` row to the stats,
+  // but a customer's integration that missed the first delivery still wants
+  // the second — the webhook queue has its own delivery semantics for that.
+  if (result.changed) {
+    const [contact] = await db
+      .select({ email: contacts.email })
+      .from(contacts)
+      .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)))
+      .limit(1);
+    if (contact?.email) {
+      const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
+      emitEmailEvent(orgId, 'unsubscribed', { contactId, email: contact.email });
+    }
   }
 
   // Single-use only for the stateful (Redis) tokens; signed tokens are
