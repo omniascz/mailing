@@ -16,6 +16,7 @@ import { verifyTrackingToken, type PreferenceCenterPayload } from '@forgemsg/sha
 import { db } from '../../db/client.js';
 import { contacts, lists, contactLists, suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { unsubscribeContact } from '../contacts/unsubscribe.js';
 
 // ─── View shape returned by GET /p/center/:token ─────────────────────────────
 
@@ -164,17 +165,15 @@ export async function updatePreferences(token: string, body: UpdateRequest): Pro
   const reason = body.reason?.slice(0, 255) ?? 'preference_center';
   const listChanges: UpdateResult['listChanges'] = [];
 
-  // 1. Global state — suppression row toggle
-  if (body.globalUnsubscribe && contact.email) {
-    await db
-      .insert(suppressions)
-      .values({
-        orgId,
-        email: contact.email,
-        reason: 'unsubscribe',
-        notes: `pref_center:${reason}`,
-      })
-      .onConflictDoNothing();
+  // 1. Global state. This used to write the suppression alone, leaving
+  //    contacts.status at 'active' — so the same person read as subscribed in
+  //    the UI while the send path refused to mail them.
+  if (body.globalUnsubscribe) {
+    await unsubscribeContact(orgId, contactId, {
+      scope: { kind: 'global' },
+      source: 'preference_centre',
+      reason,
+    });
   }
 
   if (body.globalResubscribe && contact.email) {
@@ -191,18 +190,15 @@ export async function updatePreferences(token: string, body: UpdateRequest): Pro
 
   if (body.unsubscribeFromLists?.length) {
     for (const listId of body.unsubscribeFromLists) {
-      const [updated] = await db
-        .update(contactLists)
-        .set({ unsubscribedAt: now, unsubscribedReason: reason })
-        .where(
-          and(
-            eq(contactLists.contactId, contactId),
-            eq(contactLists.listId, listId),
-            isNull(contactLists.unsubscribedAt),
-          ),
-        )
-        .returning({ listId: contactLists.listId });
-      if (updated) listChanges.push({ listId: updated.listId, subscribed: false });
+      // Still conditional on unsubscribedAt being null — unsubscribeContact
+      // keeps that behaviour and reports whether anything changed, which is
+      // what listChanges was already using the RETURNING row for.
+      const result = await unsubscribeContact(orgId, contactId, {
+        scope: { kind: 'list', listId },
+        source: 'preference_centre',
+        reason,
+      });
+      if (result.changed) listChanges.push({ listId, subscribed: false });
     }
   }
 

@@ -21,13 +21,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  contacts,
-  lists,
-  contactLists,
-  suppressions,
-  organizations,
-} from '../../db/schema/index.js';
+import { contacts, lists, contactLists, organizations } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
@@ -406,25 +400,26 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       const { contactId, orgId } = await resolveUnsubToken(token);
 
       if (body.unsubscribeAll) {
-        await db
-          .update(contacts)
-          .set({ status: 'unsubscribed', updatedAt: new Date() })
-          .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
-
-        // Auto-add to suppression list
-        const [c] = await db.select().from(contacts).where(eq(contacts.id, contactId)).limit(1);
-        if (c?.email) {
-          await db
-            .insert(suppressions)
-            .values({ orgId, email: c.email, reason: 'unsubscribe', notes: body.reason })
-            .onConflictDoNothing();
-        }
+        await unsubscribeContact(orgId, contactId, {
+          scope: { kind: 'global' },
+          source: 'preference_centre',
+          reason: body.reason,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        });
       } else if (body.listIdsToRemove?.length) {
-        // Remove from specific lists only
         for (const listId of body.listIdsToRemove) {
-          await db
-            .delete(contactLists)
-            .where(and(eq(contactLists.contactId, contactId), eq(contactLists.listId, listId)));
+          // Was a hard DELETE of the membership row, which erased the fact that
+          // the contact had ever been on the list along with when they left.
+          // The unsubscribed_at marker keeps both, and is what resolveAudience
+          // already filters on.
+          await unsubscribeContact(orgId, contactId, {
+            scope: { kind: 'list', listId },
+            source: 'preference_centre',
+            reason: body.reason,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+          });
         }
       }
 
