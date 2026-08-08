@@ -140,17 +140,6 @@ export async function setContactTopicStatus(
       set: { status, updatedAt: new Date() },
     });
 
-  // Leaving a topic is an unsubscribe with a topic scope. Recorded so the
-  // per-topic churn shows up in the same place as every other unsubscribe
-  // instead of only in this table, which nothing outside this module reads.
-  if (status === 'unsubscribed') {
-    const { unsubscribeContact } = await import('../contacts/unsubscribe.js');
-    await unsubscribeContact(orgId, contactId, {
-      scope: { kind: 'topic', topicId },
-      source: 'preference_centre',
-    });
-  }
-
   // Fan out the subscription-group preference change to the org's webhooks
   // (SendGrid group_unsubscribe / group_resubscribe). Fire-and-forget.
   const { emitEmailEvent } = await import('../webhooks/email-events.js');

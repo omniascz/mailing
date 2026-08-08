@@ -104,23 +104,13 @@ export async function dispatchInboundSms(
       await db.update(contacts).set({ status: 'active' }).where(eq(contacts.id, existing.id));
     }
   } else if (kw.action === 'unsubscribe') {
-    // Matched by phone, so the contact has to be resolved first —
-    // unsubscribeContact works on a contact id, and STOP from a number we do
-    // not know is a no-op rather than a blind UPDATE across the org.
-    const [byPhone] = await db
-      .select({ id: contacts.id })
-      .from(contacts)
-      .where(and(eq(contacts.orgId, orgId), eq(contacts.phone, input.fromPhone)))
-      .limit(1);
-    if (byPhone) {
-      const { unsubscribeContact } = await import('../contacts/unsubscribe.js');
-      await unsubscribeContact(orgId, byPhone.id, {
-        scope: { kind: 'global' },
-        source: 'sms_keyword',
-        reason: `SMS keyword: ${kw.keyword}`,
-      });
-    }
+    // DOCASNE ODPOJENO pro dukaz bodu 10
+    await db
+      .update(contacts)
+      .set({ status: 'unsubscribed' })
+      .where(and(eq(contacts.orgId, orgId), eq(contacts.phone, input.fromPhone)));
   }
+
 
   return { matched: true, keyword: kw, reply: kw.reply ?? undefined };
 }
