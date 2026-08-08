@@ -2,6 +2,7 @@
 // the boot with a clear message before any plugin tries to use them.
 // Boot-time env validation. Side-effect import kept first: this must run
 // before anything else reads process.env or opens a connection.
+import formbodyPlugin from '@fastify/formbody';
 import './config/env.js';
 // Sentry next — has to wrap the runtime as early as possible to instrument
 // http/console. No-op when SENTRY_DSN is unset (dev + tests).
@@ -324,6 +325,22 @@ export async function buildApp() {
     // (Cloudflare → Coolify → Fastify). Without this, rate-limit
     // keyGenerator sees the proxy IP and treats all traffic as one bucket.
     trustProxy: process.env.NODE_ENV === 'production',
+    // find-my-way defaults this to 100 characters, and every signed token we
+    // put in a URL path is longer than that: the open pixel is 286, a click is
+    // 384-456 depending on the destination URL, unsubscribe 218, the preference
+    // centre 216, view-in-browser 286. Each of those routes answered 404 —
+    // from the router, before any handler ran — for every real token ever
+    // issued. Open and click tracking has therefore never recorded anything,
+    // one-click unsubscribe never worked, and the failure was invisible because
+    // a router 404 is indistinguishable from a route that does not exist.
+    //
+    // 2048 is the traditional safe URL length. It is not a request-size limit:
+    // a query string of 8000 characters already returns 200 today, so this
+    // changes what the router will match, not how much the server accepts.
+    // Node's maxHeaderSize (16 kB, request line included) is the actual bound.
+    // The DoS concern find-my-way documents is pathological backtracking across
+    // many nested parametric segments; ours are a single trailing parameter.
+    maxParamLength: 2048,
   });
 
   // Global JSON parser that ALSO preserves the raw request bytes on
@@ -343,6 +360,15 @@ export async function buildApp() {
       done(err as Error, undefined);
     }
   });
+
+  // application/x-www-form-urlencoded. RFC 8058 one-click unsubscribe is the
+  // reason: Gmail and Yahoo POST to the List-Unsubscribe URL with that content
+  // type and a `List-Unsubscribe=One-Click` body. Without a parser for it
+  // Fastify answered FST_ERR_CTP_INVALID_MEDIA_TYPE — a 500 — even though the
+  // handler ignores the body entirely. Registered before the routes so every
+  // one of them can accept a form post; the JSON parser above is untouched, so
+  // webhook signature verification keeps its raw bytes.
+  await app.register(formbodyPlugin);
 
   // Plugins (order matters: cookie → auth → routes)
   await app.register(errorHandler);
