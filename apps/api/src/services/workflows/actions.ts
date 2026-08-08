@@ -546,19 +546,11 @@ async function executeUnsubscribe(
   ctx: ActionContext,
 ): Promise<ActionResult> {
   if (!run.contactId) return { type: 'next', nextNodeId: null };
-  const { suppressions } = await import('../../db/schema/index.js');
-  const [c] = await db
-    .update(contacts)
-    .set({ status: 'unsubscribed', updatedAt: new Date() })
-    .where(and(eq(contacts.id, run.contactId), eq(contacts.orgId, ctx.orgId)))
-    .returning({ email: contacts.email });
-  if (c?.email) {
-    await db
-      .insert(suppressions)
-      .values({ orgId: ctx.orgId, email: c.email, reason: 'unsubscribe' })
-      .onConflictDoNothing()
-      .catch(() => {});
-  }
+  const { unsubscribeContact } = await import('../contacts/unsubscribe.js');
+  await unsubscribeContact(ctx.orgId, run.contactId, {
+    scope: { kind: 'global' },
+    source: 'workflow',
+  });
   return { type: 'next', nextNodeId: null };
 }
 
