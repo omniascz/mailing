@@ -55,6 +55,8 @@ interface ContactRow {
   firstName: string | null;
   lastName: string | null;
   customFields: Record<string, unknown>;
+  /** Contact-level state. See the unsubscribed filter below. */
+  status: string | null;
 }
 
 /**
@@ -96,6 +98,26 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
 
   const contactIds = contacts.map((c) => c.id);
   const emails = contacts.map((c) => c.email);
+
+  // Contacts who unsubscribed. `suppressions` was the only store the send path
+  // consulted, and four of the fourteen unsubscribe paths — the contacts API,
+  // Resend-compat, the SMS keyword handler, importers — wrote `contacts.status`
+  // and nothing else. Those people kept receiving campaigns. resolveAudience
+  // did not catch them either: it excludes 'archived' and 'non_subscribed' and
+  // lets 'unsubscribed' through, on the assumption that suppressions would.
+  //
+  // The check belongs here rather than in /internal/contacts/batch because that
+  // endpoint serves every stream, and a transactional message rests on contract
+  // rather than marketing consent — the same reason the suppression check below
+  // is skipped for it. 'bounced' and 'complained' are deliberately not included:
+  // they get a suppression from mta-sender and fbl-processor at the moment they
+  // happen, and treating them here would change behaviour this is not fixing.
+  const unsubscribedSet = new Set<string>();
+  if (stream !== 'transactional') {
+    for (const c of contacts) {
+      if (c.status === 'unsubscribed') unsubscribedSet.add(c.id);
+    }
+  }
 
   const checks: Array<Promise<unknown>> = [];
   if (stream !== 'transactional') {
@@ -197,6 +219,10 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
     //    stream skips suppression; broadcast stream additionally checks
     //    frequency cap + holdout (the pre-fetch already gated these by
     //    stream so the sets are empty for non-applicable streams).
+    if (unsubscribedSet.has(contact.id)) {
+      skipped++;
+      continue;
+    }
     if (suppressedSet.has(contact.email.toLowerCase())) {
       skipped++;
       continue;
