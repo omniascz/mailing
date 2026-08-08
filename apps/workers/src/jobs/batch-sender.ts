@@ -219,10 +219,6 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
     //    stream skips suppression; broadcast stream additionally checks
     //    frequency cap + holdout (the pre-fetch already gated these by
     //    stream so the sets are empty for non-applicable streams).
-    if (unsubscribedSet.has(contact.id)) {
-      skipped++;
-      continue;
-    }
     if (suppressedSet.has(contact.email.toLowerCase())) {
       skipped++;
       continue;
