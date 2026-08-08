@@ -35,6 +35,11 @@ const internalContactsRoutes: FastifyPluginAsync = async (app) => {
           firstName: contacts.firstName,
           lastName: contacts.lastName,
           customFields: contacts.customFields,
+          // The batch-sender needs this to drop marketing to contacts who
+          // unsubscribed. Filtering here instead would be wrong: this endpoint
+          // also serves the transactional stream, and a receipt or a password
+          // reset must still reach someone who left the mailing list.
+          status: contacts.status,
         })
         .from(contacts)
         .where(
