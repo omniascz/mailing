@@ -214,10 +214,18 @@ export default async function contactRoutes(app: FastifyInstance) {
         emailValidatedAt = new Date();
       }
 
-      const contact = await updateContact(req.user!.orgId, id, {
-        ...patch,
-        ...(emailValidationScore !== undefined ? { emailValidationScore, emailValidatedAt } : {}),
-      });
+      // 'admin_ui': this is the route the dashboard's contact editor uses.
+      // Programmatic callers reach the same behaviour through the Resend-compat
+      // endpoint, which passes 'api'.
+      const contact = await updateContact(
+        req.user!.orgId,
+        id,
+        {
+          ...patch,
+          ...(emailValidationScore !== undefined ? { emailValidationScore, emailValidatedAt } : {}),
+        },
+        { source: 'admin_ui' },
+      );
       return { data: contact };
     },
   );

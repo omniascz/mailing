@@ -282,7 +282,11 @@ const audiencesRoutes: FastifyPluginAsync = async (app) => {
       if (body.unsubscribed !== undefined) {
         patch.status = body.unsubscribed ? 'unsubscribed' : 'active';
       }
-      const updated = await updateContact(req.user!.orgId, id, patch);
+      // 'api', same as the native route. `source` records whether the recipient
+      // asked to leave or an operator marked them; which SDK the operator used
+      // is not a fact deliverability cares about, and a separate value would
+      // only fragment the reporting.
+      const updated = await updateContact(req.user!.orgId, id, patch, { source: 'api' });
       return reply.send(contactShape(updated));
     },
   );
