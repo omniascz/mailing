@@ -1,7 +1,12 @@
-/* eslint-disable forgemsg/no-unencoded-sql-param -- Same as catalog-insights: this query dies earlier on a missing column (workflow_run_id). Re-enable together with that fix. */
 /**
  * Customer Timeline — chronological view of every interaction recorded
  * for a contact: email events, revenue events, support tickets, workflow runs.
+ *
+ * Each branch of the UNION carries its own timestamp column — email_events and
+ * helpdesk_tickets use `created_at`, revenue_events uses `occurred_at`,
+ * workflow_runs uses `started_at` — so the `before` cursor has to be built per
+ * branch rather than shared. A single shared fragment is what previously
+ * pushed `created_at` onto revenue_events, where no such column exists.
  */
 
 import { sql } from 'drizzle-orm';
@@ -23,7 +28,11 @@ export async function getTimeline(
   },
 ): Promise<TimelineEntry[]> {
   const limit = Math.min(500, opts?.limit ?? 100);
-  const beforeClause = opts?.before ? sql`AND created_at < ${opts.before}` : sql``;
+  /** `before` cursor for one branch, encoded against that branch's own column. */
+  const before = (column: 'created_at' | 'occurred_at' | 'started_at') =>
+    opts?.before
+      ? sql`AND ${sql.raw(column)} < ${opts.before.toISOString()}::timestamptz`
+      : sql``;
 
   const rs = await db.execute<{
     at: Date;
@@ -31,25 +40,25 @@ export async function getTimeline(
     type: string;
     data: Record<string, unknown>;
   }>(sql`
-    SELECT created_at AS at, 'email' AS source, event_type AS type,
-      jsonb_build_object('campaignId', campaign_id, 'workflowRunId', workflow_run_id) AS data
+    SELECT created_at AS at, 'email' AS source, event_type::text AS type,
+      jsonb_build_object('campaignId', campaign_id) AS data
     FROM email_events
-    WHERE org_id = ${orgId}::uuid AND contact_id = ${contactId}::uuid ${beforeClause}
+    WHERE org_id = ${orgId}::uuid AND contact_id = ${contactId}::uuid ${before('created_at')}
     UNION ALL
-    SELECT created_at, 'revenue', event_type,
-      jsonb_build_object('orderId', order_id, 'value', value, 'currency', currency)
+    SELECT occurred_at, 'revenue', 'purchase',
+      jsonb_build_object('orderId', order_id, 'value', amount, 'currency', currency)
     FROM revenue_events
-    WHERE org_id = ${orgId}::uuid AND contact_id = ${contactId}::uuid ${beforeClause}
+    WHERE org_id = ${orgId}::uuid AND contact_id = ${contactId}::uuid ${before('occurred_at')}
     UNION ALL
     SELECT created_at, 'ticket', status,
       jsonb_build_object('ticketId', id, 'subject', subject, 'priority', priority)
     FROM helpdesk_tickets
-    WHERE org_id = ${orgId}::uuid AND contact_id = ${contactId}::uuid ${beforeClause}
+    WHERE org_id = ${orgId}::uuid AND contact_id = ${contactId}::uuid ${before('created_at')}
     UNION ALL
-    SELECT started_at, 'workflow', status,
+    SELECT started_at, 'workflow', status::text,
       jsonb_build_object('runId', id, 'workflowId', workflow_id)
     FROM workflow_runs
-    WHERE contact_id = ${contactId}::uuid ${opts?.before ? sql`AND started_at < ${opts.before}` : sql``}
+    WHERE org_id = ${orgId}::uuid AND contact_id = ${contactId}::uuid ${before('started_at')}
     ORDER BY at DESC
     LIMIT ${limit}
   `);
