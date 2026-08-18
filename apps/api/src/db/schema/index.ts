@@ -168,3 +168,8 @@ export * from './contact-send-time.js';
 export * from './channel-fallback.js';
 export * from './unsubscribe-experiments.js';
 export * from './ticketing.js';
+// drizzle.config.ts points at this file as the single schema entry, so a table
+// that is not re-exported here never reaches drizzle-kit and never gets a
+// migration — while services still import it directly and query it at runtime.
+export * from './data-sets.js';
+export * from './permission-sets.js';
