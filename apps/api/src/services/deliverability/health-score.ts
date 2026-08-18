@@ -7,16 +7,42 @@
 
 import { sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { AppError } from '../../lib/app-error.js';
 import { computeEmailHealthScore, type EmailHealthScore } from './pure.js';
 
 export interface HealthScoreWindowOptions {
   orgId: string;
   /** Window in days (default 30). */
   days?: number;
-  /** Restrict to a specific sending domain (e.g. "mail.forgemsg.cz"). */
+  /**
+   * Restrict to a specific sending domain (e.g. "mail.forgemsg.cz").
+   * NOT SUPPORTED — see `assertScopeSupported`.
+   */
   domain?: string;
-  /** Restrict to a specific sending IP. */
+  /** Restrict to a specific sending IP. NOT SUPPORTED — see `assertScopeSupported`. */
   ip?: string;
+}
+
+/**
+ * `email_events` records the recipient side of a send: recipient `ip_address`,
+ * user agent, geo, ISP. It carries no sending domain and no sending IP — no
+ * column, no metadata key, no foreign key to `sending_domains` / `dedicated_ips`.
+ * Nothing on the write path emits one either; the Go engine would have to start
+ * stamping it before this scope can mean anything.
+ *
+ * So these two filters cannot be answered. Until the event carries the field,
+ * say so plainly. Both alternatives are worse: querying the non-existent column
+ * is the 500 this replaces, and silently dropping the filter would return the
+ * whole-org score labelled as one domain — a confidently wrong answer on the
+ * screen someone opens precisely when deliverability is already going wrong.
+ */
+function assertScopeSupported(opts: HealthScoreWindowOptions): void {
+  const unsupported = [opts.domain ? 'domain' : null, opts.ip ? 'ip' : null].filter(Boolean);
+  if (unsupported.length > 0) {
+    throw AppError.badRequest(
+      `Health score cannot be scoped by ${unsupported.join(' or ')}: email events do not record the sending ${unsupported.join('/')}. Request the org-wide score instead.`,
+    );
+  }
 }
 
 /**
@@ -27,13 +53,11 @@ export interface HealthScoreWindowOptions {
 export async function computeOrgHealth(
   opts: HealthScoreWindowOptions,
 ): Promise<EmailHealthScore & { windowDays: number; scope: string }> {
+  assertScopeSupported(opts);
   const days = opts.days ?? 30;
   const since = sql`now() - (${days} * INTERVAL '1 day')`;
 
-  const whereClauses: ReturnType<typeof sql>[] = [sql`org_id = ${opts.orgId}`];
-  if (opts.domain) whereClauses.push(sql`sending_domain = ${opts.domain}`);
-  if (opts.ip) whereClauses.push(sql`sending_ip = ${opts.ip}`);
-  const whereSql = whereClauses.reduce((acc, cur, i) => (i === 0 ? cur : sql`${acc} AND ${cur}`));
+  const whereSql = sql`org_id = ${opts.orgId}`;
 
   const result = await db.execute<{
     sends: number;
