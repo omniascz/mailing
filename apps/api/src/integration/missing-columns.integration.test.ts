@@ -103,7 +103,9 @@ async function plantTimeline(orgId: string, contactId: string) {
     .values({ orgId, contactId, eventType: 'open', createdAt: OPENED_AT });
   await db
     .insert(revenueEvents)
-    .values(purchase(orgId, contactId, [{ sku: SKU_FAST, name: 'Fast', qty: 2, price: 25 }], '50.00'));
+    .values(
+      purchase(orgId, contactId, [{ sku: SKU_FAST, name: 'Fast', qty: 2, price: 25 }], '50.00'),
+    );
   await db
     .insert(helpdeskTickets)
     .values({ orgId, contactId, subject: `t-${tag}`, status: 'open', createdAt: OPENED_AT });
@@ -139,7 +141,9 @@ beforeAll(async () => {
   // first order had qty 2, this one qty 3 ⇒ 5 units, 125.00 revenue.
   await db
     .insert(revenueEvents)
-    .values(purchase(orgA, contactA, [{ sku: SKU_FAST, name: 'Fast', qty: 3, price: 25 }], '75.00'));
+    .values(
+      purchase(orgA, contactA, [{ sku: SKU_FAST, name: 'Fast', qty: 3, price: 25 }], '75.00'),
+    );
 
   // AI usage for the consolidated billing report: 100 + 20 and 5 + 3 ⇒ 128.
   await db.insert(aiUsage).values([
@@ -198,7 +202,9 @@ describe('timeline', () => {
     // Everything was planted at least a moment ago; a cursor in the far past
     // must exclude all of it without erroring on a branch whose timestamp
     // column is named differently.
-    const none = await getTimeline(orgA, contactA, { before: new Date(Date.now() - 10 * 86_400_000) });
+    const none = await getTimeline(orgA, contactA, {
+      before: new Date(Date.now() - 10 * 86_400_000),
+    });
     expect(none).toEqual([]);
     const all = await getTimeline(orgA, contactA, { before: new Date(Date.now() + 86_400_000) });
     expect(all.length).toBe(5);
@@ -238,10 +244,7 @@ describe('catalog insights', () => {
   });
 
   it('slowMovers excludes soft-deleted products (active = false)', async () => {
-    await db
-      .update(products)
-      .set({ active: false })
-      .where(eq(products.sku, SKU_SLOW));
+    await db.update(products).set({ active: false }).where(eq(products.sku, SKU_SLOW));
     const after = await slowMovers(orgA, 90, 25);
     expect(after.find((r) => r.sku === SKU_SLOW)).toBeUndefined();
     await db.update(products).set({ active: true }).where(eq(products.sku, SKU_SLOW));
@@ -424,12 +427,7 @@ describe('cross-tenant isolation', () => {
     // that returns nothing for anybody.
     const own = await getTimeline(orgB, contactB);
     expect(own.length).toBe(4);
-    expect(own.map((r) => r.source).sort()).toEqual([
-      'email',
-      'revenue',
-      'ticket',
-      'workflow',
-    ]);
+    expect(own.map((r) => r.source).sort()).toEqual(['email', 'revenue', 'ticket', 'workflow']);
   });
 
   it('the workflow_runs branch specifically does not leak', async () => {

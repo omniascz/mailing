@@ -30,9 +30,7 @@ export async function getTimeline(
   const limit = Math.min(500, opts?.limit ?? 100);
   /** `before` cursor for one branch, encoded against that branch's own column. */
   const before = (column: 'created_at' | 'occurred_at' | 'started_at') =>
-    opts?.before
-      ? sql`AND ${sql.raw(column)} < ${opts.before.toISOString()}::timestamptz`
-      : sql``;
+    opts?.before ? sql`AND ${sql.raw(column)} < ${opts.before.toISOString()}::timestamptz` : sql``;
 
   const rs = await db.execute<{
     at: Date;
