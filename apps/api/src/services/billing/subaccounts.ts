@@ -153,8 +153,8 @@ export async function getConsolidatedReport(
     // AI token usage
     const aiStats = await db.execute<{ tokens: string; cost: string }>(sql`
       SELECT
-        COALESCE(SUM(tokens_used), 0) AS tokens,
-        COALESCE(SUM(cost_usd), 0)    AS cost
+        COALESCE(SUM(input_tokens + output_tokens), 0) AS tokens,
+        COALESCE(SUM(cost_usd), 0)                     AS cost
       FROM ai_usage
       WHERE org_id = ${orgId}
         AND created_at >= ${periodStart.toISOString()}

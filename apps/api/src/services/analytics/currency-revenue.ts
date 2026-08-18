@@ -45,7 +45,7 @@ export async function getCurrencyRevenue(
       currency: revenueEvents.currency,
       totalRevenue: sql<string>`coalesce(sum(amount::numeric), 0)`,
       orderCount: sql<number>`count(*)::int`,
-      topCampaignId: sql<string | null>`mode() within group (order by campaign_id)`,
+      topCampaignId: sql<string | null>`mode() within group (order by attributed_campaign_id)`,
     })
     .from(revenueEvents)
     .where(
