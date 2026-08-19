@@ -54,13 +54,17 @@ export async function trackVisitor(
 export interface MergeResult {
   visitorId: string;
   contactId: string;
-  emailEventsUpdated: number;
-  revenueEventsUpdated: number;
+  siteEventsUpdated: number;
 }
 
 /**
  * Backfill a known contactId onto every event previously tagged with the visitorId.
  * Idempotent: re-running with the same visitor ⇒ contact pair is a no-op.
+ *
+ * `site_events` is the anonymous stream — it is the only event table keyed by
+ * `visitor_id`. `email_events` and `revenue_events` have no such column and
+ * never had one: they are written with a contact_id already resolved, so there
+ * is nothing on them to backfill.
  */
 export async function mergeVisitorIntoContact(
   orgId: string,
@@ -76,39 +80,23 @@ export async function mergeVisitorIntoContact(
       and(eq(anonymousProfiles.orgId, orgId), eq(anonymousProfiles.visitorId, input.visitorId)),
     );
 
-  const ev = await db
-    .execute<{ updated: string }>(
-      sql`
+  // No .catch() here on purpose: a merge that cannot run must surface as a
+  // failed request, not as a 200 reporting zero rows. Swallowing it is how this
+  // stayed broken — the query never ran and the caller was told "0 updated".
+  const site = await db.execute<{ updated: string }>(sql`
     WITH upd AS (
-      UPDATE email_events SET contact_id = ${input.contactId}::uuid
-      WHERE org_id = ${orgId} AND visitor_id = ${input.visitorId} AND contact_id IS NULL
-      RETURNING 1
-    )
-    SELECT COUNT(*)::text AS updated FROM upd
-  `,
-    )
-    .catch(() => null);
-
-  const rev = await db
-    .execute<{ updated: string }>(
-      sql`
-    WITH upd AS (
-      UPDATE revenue_events SET contact_id = ${input.contactId}::uuid
+      UPDATE site_events SET contact_id = ${input.contactId}::uuid
       WHERE org_id = ${orgId}::uuid AND visitor_id = ${input.visitorId} AND contact_id IS NULL
       RETURNING 1
     )
     SELECT COUNT(*)::text AS updated FROM upd
-  `,
-    )
-    .catch(() => null);
+  `);
 
-  const evN = ev ? Number((ev as unknown as Array<{ updated: string }>)[0]?.updated ?? 0) : 0;
-  const revN = rev ? Number((rev as unknown as Array<{ updated: string }>)[0]?.updated ?? 0) : 0;
+  const siteN = Number((site as unknown as Array<{ updated: string }>)[0]?.updated ?? 0);
   return {
     visitorId: input.visitorId,
     contactId: input.contactId,
-    emailEventsUpdated: evN,
-    revenueEventsUpdated: revN,
+    siteEventsUpdated: siteN,
   };
 }
 

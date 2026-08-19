@@ -35,7 +35,7 @@ const ENTITY_QUERY: Record<
   email_events: (orgId, since) =>
     sql`SELECT * FROM email_events WHERE org_id = ${orgId} AND created_at >= ${since.toISOString()}::timestamptz`,
   revenue_events: (orgId, since) =>
-    sql`SELECT * FROM revenue_events WHERE org_id = ${orgId}::uuid AND created_at >= ${since.toISOString()}::timestamptz`,
+    sql`SELECT * FROM revenue_events WHERE org_id = ${orgId}::uuid AND occurred_at >= ${since.toISOString()}::timestamptz`,
   campaigns: (orgId, since) =>
     sql`SELECT * FROM campaigns WHERE org_id = ${orgId}::uuid AND updated_at >= ${since.toISOString()}::timestamptz`,
   workflow_runs: (orgId, since) =>

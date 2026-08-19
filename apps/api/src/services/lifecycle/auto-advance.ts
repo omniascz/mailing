@@ -42,16 +42,21 @@ async function loadFacts(orgId: string, contactId: string): Promise<ContactFacts
   const c = rows[0];
   if (!c) return null;
 
-  // Booked meeting (light check — full impl queries meetings table)
-  let hasBookedMeeting = false;
-  try {
-    const meetingRows = await db.execute<{ count: string }>(
-      sql`SELECT COUNT(*) AS count FROM meetings WHERE org_id = ${orgId} AND contact_id = ${contactId} AND status = 'scheduled' LIMIT 1`,
-    );
-    hasBookedMeeting = Number(meetingRows[0]?.count ?? '0') > 0;
-  } catch {
-    // meetings table may not exist in some deployments
-  }
+  // Booked meeting. The table is `bookings`, not `meetings`, and it has no
+  // contact_id — it is keyed by the invitee's email address, so the link back to
+  // a contact goes through contacts.email. Its confirmed state is 'confirmed';
+  // there is no 'scheduled'. No try/catch: if this stops resolving, the rule
+  // engine must fail loudly rather than quietly decide nobody ever booked.
+  const meetingRows = await db.execute<{ count: string }>(
+    sql`SELECT COUNT(*)::text AS count
+        FROM bookings b
+        JOIN contacts c ON c.email = b.invitee_email AND c.org_id = b.org_id
+        WHERE b.org_id = ${orgId}::uuid
+          AND c.id = ${contactId}::uuid
+          AND b.status = 'confirmed'`,
+  );
+  const hasBookedMeeting =
+    Number((meetingRows as unknown as Array<{ count: string }>)[0]?.count ?? '0') > 0;
 
   const cf = (c.customFields ?? {}) as Record<string, unknown>;
   return {

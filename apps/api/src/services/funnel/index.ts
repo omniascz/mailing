@@ -24,7 +24,9 @@ export interface FunnelResult {
  * Compute funnel over the supplied event list.
  * Each step must occur strictly after the previous one and within `windowDays`.
  * Events are taken from `email_events.event_type` (sends, opens, clicks…) and
- * `revenue_events.event_type` (purchase, …) — caller can mix them freely.
+ * from `revenue_events`, which carries no event-type column because it stores
+ * purchases only — its rows therefore contribute the single step name
+ * `purchase`, and are scanned at all only when the caller asks for it.
  */
 export async function computeFunnel(
   orgId: string,
@@ -43,13 +45,13 @@ export async function computeFunnel(
   // walk through the funnel in JS. This is fast for typical e-commerce funnels
   // because the per-event row count stays modest.
   const rows = await db.execute<{ contact_id: string; event_type: string; created_at: Date }>(sql`
-    SELECT contact_id, event_type, created_at FROM email_events
+    SELECT contact_id, event_type::text AS event_type, created_at FROM email_events
     WHERE org_id = ${orgId}::uuid AND created_at >= ${since.toISOString()}::timestamptz
-      AND contact_id IS NOT NULL AND event_type = ANY(${sql.param(input.events)})
+      AND contact_id IS NOT NULL AND event_type::text = ANY(${sql.param(input.events)})
     UNION ALL
-    SELECT contact_id, event_type, created_at FROM revenue_events
-    WHERE org_id = ${orgId}::uuid AND created_at >= ${since.toISOString()}::timestamptz
-      AND contact_id IS NOT NULL AND event_type = ANY(${sql.param(input.events)})
+    SELECT contact_id, 'purchase', occurred_at FROM revenue_events
+    WHERE org_id = ${orgId}::uuid AND occurred_at >= ${since.toISOString()}::timestamptz
+      AND contact_id IS NOT NULL AND 'purchase' = ANY(${sql.param(input.events)})
     ORDER BY created_at ASC
   `);
 
