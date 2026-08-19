@@ -756,4 +756,147 @@ describe('cascadeDeliveryNode', () => {
     );
     expect(result.type).toBe('next');
   });
+
+  // ── Full-cycle tests: drive the cascade the way the executor does, by
+  // re-passing the SAME run object across re-entries so run.data mutations
+  // carry over (executor.ts persists run.data after each action and reloads it
+  // on resume). Nothing here writes cascadeStep by hand — if the node does not
+  // advance it, these loop past the step count and fail. That is the bug the
+  // per-transition fixtures above could not catch, because they injected the
+  // state production never produced.
+
+  /** Run the cascade node repeatedly until it stops waiting, capped so a
+   *  non-advancing (infinite) cascade fails loudly instead of hanging. */
+  async function driveCascade(
+    node: unknown,
+    run: Record<string, unknown>,
+    ctx: unknown,
+    cap = 25,
+  ): Promise<{ cycles: number; lastType: string; hitCap: boolean }> {
+    const { executeAction } = await import('./actions.js');
+    let cycles = 0;
+    let lastType = 'wait';
+    for (let i = 0; i < cap; i++) {
+      const r = await executeAction(
+        node as Parameters<typeof executeAction>[0],
+        run as unknown as Parameters<typeof executeAction>[1],
+        ctx as Parameters<typeof executeAction>[2],
+      );
+      lastType = r.type;
+      if (r.type !== 'wait') return { cycles, lastType, hitCap: false };
+      cycles++;
+    }
+    return { cycles, lastType, hitCap: true };
+  }
+
+  const twoStepNode = {
+    id: 'cascade-1',
+    type: 'cascade' as const,
+    config: {
+      steps: [
+        { channel: 'email', delayHours: 4, condition: 'not_opened' },
+        { channel: 'sms', delayHours: 24, condition: 'not_clicked' },
+      ],
+    },
+  };
+  const fullCtx = {
+    orgId: 'org-1',
+    contact: {
+      id: 'c-1',
+      email: 'test@example.com',
+      phone: '+1234',
+      firstName: 'John',
+      lastName: 'Doe',
+      customFields: {},
+      tags: [],
+      listIds: [],
+    },
+  };
+
+  it('(a) a contact gets exactly N messages, then the cascade stops — not one per delay forever', async () => {
+    const { queues } = (await import('../../lib/queues.js')) as unknown as {
+      queues: { email: { add: ReturnType<typeof vi.fn> }; sms: { add: ReturnType<typeof vi.fn> } };
+    };
+    queues.email.add.mockClear();
+    queues.sms.add.mockClear();
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]); // never engaged → proceed
+
+    const run = {
+      id: 'run-1',
+      contactId: 'c-1',
+      workflowId: 'w-1',
+      orgId: 'org-1',
+      status: 'running',
+      currentNodeId: 'cascade-1',
+      data: {},
+      converted: false,
+    };
+
+    const { cycles, lastType, hitCap } = await driveCascade(twoStepNode, run, fullCtx);
+    expect(hitCap).toBe(false); // did NOT loop forever
+    expect(cycles).toBe(2); // one wait per step, then it stops
+    expect(lastType).toBe('next'); // (b) continues to the next node
+    const sends = queues.email.add.mock.calls.length + queues.sms.add.mock.calls.length;
+    expect(sends).toBe(2); // exactly N, not more
+  });
+
+  it('(b) after the last step the run continues to the next node', async () => {
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    const run = {
+      id: 'run-1',
+      contactId: 'c-1',
+      workflowId: 'w-1',
+      orgId: 'org-1',
+      status: 'running',
+      currentNodeId: 'cascade-1',
+      data: {},
+      converted: false,
+    };
+    const { lastType, hitCap } = await driveCascade(twoStepNode, run, fullCtx);
+    expect(hitCap).toBe(false);
+    expect(lastType).toBe('next');
+  });
+
+  it('(c) a mid-cascade conversion ends the cascade immediately', async () => {
+    const { queues } = (await import('../../lib/queues.js')) as unknown as {
+      queues: { email: { add: ReturnType<typeof vi.fn> }; sms: { add: ReturnType<typeof vi.fn> } };
+    };
+    queues.email.add.mockClear();
+    queues.sms.add.mockClear();
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+
+    const run: Record<string, unknown> = {
+      id: 'run-1',
+      contactId: 'c-1',
+      workflowId: 'w-1',
+      orgId: 'org-1',
+      status: 'running',
+      currentNodeId: 'cascade-1',
+      data: {},
+      converted: false,
+    };
+    const { executeAction } = await import('./actions.js');
+
+    // First entry sends step 0 and waits.
+    const first = await executeAction(
+      twoStepNode as Parameters<typeof executeAction>[0],
+      run as unknown as Parameters<typeof executeAction>[1],
+      fullCtx as Parameters<typeof executeAction>[2],
+    );
+    expect(first.type).toBe('wait');
+    const sendsBefore = queues.email.add.mock.calls.length + queues.sms.add.mock.calls.length;
+    expect(sendsBefore).toBe(1);
+
+    // The contact converts. On the next resume the cascade must exit without
+    // sending step 1.
+    run.converted = true;
+    const second = await executeAction(
+      twoStepNode as Parameters<typeof executeAction>[0],
+      run as unknown as Parameters<typeof executeAction>[1],
+      fullCtx as Parameters<typeof executeAction>[2],
+    );
+    expect(second.type).toBe('next');
+    const sendsAfter = queues.email.add.mock.calls.length + queues.sms.add.mock.calls.length;
+    expect(sendsAfter).toBe(1); // no further send after conversion
+  });
 });
