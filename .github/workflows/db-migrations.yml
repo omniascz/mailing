@@ -24,6 +24,17 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
+      # The drift check below can only see what the barrel exports, because
+      # drizzle.config.ts names db/schema/index.ts as the schema entry. A table
+      # whose module is missing from that file produces no diff and this job
+      # passes — which is exactly how data_sets, permission_sets and
+      # user_permission_sets went unmigrated while a live route queried them.
+      # So verify the barrel first; otherwise "no drift" is only true of the
+      # tables drizzle-kit happens to be able to see.
+      - name: Every pgTable is re-exported from the schema barrel
+        working-directory: apps/api
+        run: pnpm exec vitest run src/db/schema-barrel.test.ts
+
       - name: Generate migrations from current schema (dry)
         working-directory: apps/api
         run: pnpm db:generate
