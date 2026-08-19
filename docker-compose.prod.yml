@@ -77,6 +77,9 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       DOI_FROM_EMAIL: ${DOI_FROM_EMAIL:-no-reply@example.com}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET is required}
+      # Validates X-Inbound-Secret on the inbound-email endpoint; prodRequired in
+      # env.ts and matched by the engine's inbound receiver. Same value, same name.
+      INBOUND_EMAIL_SECRET: ${INBOUND_EMAIL_SECRET:?INBOUND_EMAIL_SECRET is required}
       # Required in production by apps/api/src/config/env.ts. Previously not
       # passed through at all, which meant the API booted on the dev defaults
       # committed in that file: a known session secret (forgeable cookies) and
@@ -109,6 +112,22 @@ services:
     # out of the box; on most cloud providers you must request unblock.
     ports:
       - '${MTA_PORT:-50051}:50051'
+    environment:
+      # The engine's submission and inbound servers call back to the API's
+      # protected endpoints and must present the SAME secrets the API validates.
+      # Same names on both sides — set once at the top level, referenced here and
+      # in the api service. The submission/inbound servers stay disabled unless
+      # their *_LISTEN vars are set; when set, a missing secret fails engine boot.
+      API_URL: http://api:3001
+      SUBMISSION_API_URL: http://api:3001
+      INBOUND_API_URL: http://api:3001/api/v1/inbound-email
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET is required}
+      INBOUND_EMAIL_SECRET: ${INBOUND_EMAIL_SECRET:?INBOUND_EMAIL_SECRET is required}
+      SUBMISSION_LISTEN: ${SUBMISSION_LISTEN:-}
+      SUBMISSION_TLS_CERT: ${SUBMISSION_TLS_CERT:-}
+      SUBMISSION_TLS_KEY: ${SUBMISSION_TLS_KEY:-}
+      SUBMISSION_ALLOW_INSECURE_AUTH: ${SUBMISSION_ALLOW_INSECURE_AUTH:-}
+      INBOUND_LISTEN: ${INBOUND_LISTEN:-}
     # gRPC service has no HTTP healthcheck. The workers' connection pool
     # detects unavailability via gRPC status codes and retries.
 

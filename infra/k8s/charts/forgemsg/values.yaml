@@ -27,7 +27,13 @@ global:
   #     refuses to boot in production without it, and rejects internal requests
   #     that do not carry it as x-internal-secret. It must be present because
   #     api.ingress publishes `path: /` on an internet-facing ALB, so those
-  #     routes are reachable from outside the cluster.
+  #     routes are reachable from outside the cluster. The engine's submission
+  #     server reads THIS SAME var (not a SUBMISSION_API_SECRET alias) and fails
+  #     to boot without it — one value, one name, given to both Deployments.
+  #   INBOUND_EMAIL_SECRET — validates X-Inbound-Secret on the inbound-email
+  #     endpoint. prodRequired on the API; the engine's inbound receiver reads
+  #     the same var (not an INBOUND_API_SECRET alias) and fails to boot without
+  #     it. Same value, same name, given to both the API and engine Deployments.
   #   TRACKING_SECRET      — HMAC key over every token handed to a recipient:
   #     the open pixel, wrapped links, the unsubscribe link in List-Unsubscribe,
   #     the preference centre, view-in-browser. The api and workers Deployments
