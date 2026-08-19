@@ -24,6 +24,13 @@ export default defineConfig({
     environment: 'node',
     include: ['src/integration/**/*.integration.test.ts'],
     globalSetup: ['src/integration/setup/global-setup.ts'],
+    env: {
+      // Layer 2 of the raw-SQL check: EXPLAIN every statement the app actually
+      // composes, before it runs. This is the only place it is switched on —
+      // the unit suite never reaches a database, and db/explain-guard.ts
+      // refuses to arm under NODE_ENV=production whatever this says.
+      SQL_EXPLAIN_GUARD: '1',
+    },
     // Booting the whole Fastify app and doing a bcrypt(cost 12) login is
     // slower than a unit test; and these must not run concurrently against
     // shared rows.
