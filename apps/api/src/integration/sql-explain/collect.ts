@@ -27,7 +27,23 @@ export interface Template {
   /** Literal chunks, one more than there are holes. */
   chunks: string[];
   holes: Hole[];
+  /** Opted out via a `sql-explain-ignore:` marker; carries the stated reason. */
+  ignoreReason: string | null;
 }
+
+/**
+ * Deliberately-invalid SQL does exist — the layer 2 guard is tested with
+ * queries that name a column on purpose. Those need a way to say so at the
+ * site, with a reason, rather than the collector growing a hardcoded list of
+ * blessed files.
+ *
+ *     // sql-explain-ignore: fixture for the guard, must name a missing column
+ *     await db.execute(sql`SELECT no_such_column FROM email_events`);
+ *
+ * The marker is searched for in the two lines above the tag only, so it cannot
+ * silence a whole file by accident.
+ */
+const IGNORE_MARKER = /sql-explain-ignore:\s*(.+)/;
 
 /** Identifiers a raw-SQL template can be tagged with, including local aliases. */
 const SQL_TAG_ROOTS = new Set(['sql', 'drizzleSql']);
@@ -75,6 +91,7 @@ export function collectTemplates(roots: string[], repoRoot: string): Template[] 
     if (!PREFILTER.test(source)) continue;
 
     const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+    const lines = source.split(/\r?\n/);
     const visit = (node: ts.Node): void => {
       if (ts.isTaggedTemplateExpression(node)) {
         const chain: string[] = [];
@@ -97,12 +114,16 @@ export function collectTemplates(roots: string[], repoRoot: string): Template[] 
               chunks.push(span.literal.text);
             }
           }
+          const line = sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;
+          const above = lines.slice(Math.max(0, line - 3), line).join('\n');
+          const marker = IGNORE_MARKER.exec(above);
           templates.push({
             file: path.relative(repoRoot, file).split(path.sep).join('/'),
-            line: sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1,
+            line,
             tag: [root, ...chain].join('.'),
             chunks,
             holes,
+            ignoreReason: marker ? marker[1]!.trim() : null,
           });
         }
       }

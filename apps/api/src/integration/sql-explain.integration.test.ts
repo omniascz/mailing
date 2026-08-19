@@ -76,6 +76,7 @@ let sql: postgres.Sql;
 let templates: Template[] = [];
 const findings: Finding[] = [];
 const unanalysable: Unanalysable[] = [];
+const ignored: Array<{ file: string; line: number; reason: string }> = [];
 let completeCount = 0;
 let fragmentCount = 0;
 let plannedOk = 0;
@@ -85,6 +86,12 @@ beforeAll(async () => {
   templates = collectTemplates(ROOTS, REPO_ROOT);
 
   for (const tpl of templates) {
+    // Opted out at the site, with a reason — deliberately-invalid SQL exists
+    // (layer 2's own fixtures name a missing column on purpose).
+    if (tpl.ignoreReason !== null) {
+      ignored.push({ file: tpl.file, line: tpl.line, reason: tpl.ignoreReason });
+      continue;
+    }
     // A fragment is not a statement; it has no FROM of its own and only makes
     // sense spliced into a parent. Layer 2 sees these once composed.
     if (!isCompleteStatement(materialise(tpl, 0).sql)) {
@@ -199,6 +206,23 @@ describe('layer 1 — static EXPLAIN over every raw sql`` statement', () => {
         ` These are excluded from the check above, so a real bug can hide here —` +
         ` look at any new entry before raising MAX_UNANALYSABLE:${report}\n`,
     ).toBeLessThanOrEqual(MAX_UNANALYSABLE);
+  });
+
+  it('every opt-out states a reason', () => {
+    // The marker is a hole in the check, so it is listed on every run rather
+    // than quietly honoured, and an empty reason is not accepted.
+    const report = ignored
+      .map(
+        (i) => `
+  ${i.file}:${i.line}  ${i.reason}`,
+      )
+      .join('');
+
+    console.log(`
+[layer 1] ${ignored.length} template(s) opted out:${report}
+`);
+    for (const i of ignored) expect(i.reason.length).toBeGreaterThan(10);
+    expect(ignored.length).toBeLessThanOrEqual(5);
   });
 
   it('reports its coverage', () => {
