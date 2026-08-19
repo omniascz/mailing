@@ -36,7 +36,12 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
         data: {
           ...cred,
           host: process.env.SMTP_SUBMISSION_HOST ?? 'smtp.forgemsg.io',
-          ports: [587, 465, 2587],
+          // 587 (STARTTLS) only. 465 was advertised but the submission server
+          // speaks plaintext-first and has no implicit-TLS listener, so a 465
+          // client (TLS from the first byte) cannot connect — advertising it was
+          // a broken promise. Implicit TLS is a separate, larger change; until
+          // then we only list ports that actually work.
+          ports: [587, 2587],
           note: 'Save the password now — it cannot be retrieved again.',
         },
       });

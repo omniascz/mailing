@@ -72,12 +72,13 @@ func main() {
 	// SUBMISSION_LISTEN is unset. Relays authenticated mail to the API.
 	if addr := os.Getenv("SUBMISSION_LISTEN"); addr != "" {
 		sub, err := submission.New(submission.Config{
-			ListenAddr: addr,
-			Hostname:   os.Getenv("SUBMISSION_HOSTNAME"),
-			APIURL:     os.Getenv("SUBMISSION_API_URL"),
-			APISecret:  os.Getenv("SUBMISSION_API_SECRET"),
-			TLSCert:    os.Getenv("SUBMISSION_TLS_CERT"),
-			TLSKey:     os.Getenv("SUBMISSION_TLS_KEY"),
+			ListenAddr:        addr,
+			Hostname:          os.Getenv("SUBMISSION_HOSTNAME"),
+			APIURL:            os.Getenv("SUBMISSION_API_URL"),
+			APISecret:         os.Getenv("SUBMISSION_API_SECRET"),
+			TLSCert:           os.Getenv("SUBMISSION_TLS_CERT"),
+			TLSKey:            os.Getenv("SUBMISSION_TLS_KEY"),
+			AllowInsecureAuth: os.Getenv("SUBMISSION_ALLOW_INSECURE_AUTH") == "1",
 		})
 		if err != nil {
 			log.Printf("submission server disabled: %v", err)
