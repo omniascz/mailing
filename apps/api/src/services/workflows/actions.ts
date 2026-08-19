@@ -1134,6 +1134,17 @@ async function executeSendPersonalEmail(
     return { type: 'error', message: 'send_personal_email requires fromEmail, subject, and body' };
   }
 
+  // The From must be a verified sender for the org, same rule as every other
+  // send path. A workflow author cannot mint a spoofed sender by configuring
+  // the node. Surfaced as an action error so the run records it rather than
+  // silently sending unowned mail.
+  try {
+    const { assertFromDomainOwned } = await import('../sending/from-domain.js');
+    await assertFromDomainOwned(ctx.orgId, config.fromEmail);
+  } catch (err) {
+    return { type: 'error', message: (err as Error).message };
+  }
+
   if (shouldSuppressDueToConversion(run)) {
     return { type: 'next', nextNodeId: null };
   }
