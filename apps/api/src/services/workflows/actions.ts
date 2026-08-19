@@ -929,12 +929,21 @@ async function executeCascade(
     return { type: 'next', nextNodeId: null };
   }
 
-  // Initialize cascade tracking on first execution
+  // A contact who converted mid-cascade should stop receiving nudges — the same
+  // rule every other send action follows. Exit to the next node without sending.
+  if (shouldSuppressDueToConversion(run)) {
+    return { type: 'next', nextNodeId: null };
+  }
+
+  // How many steps have already been sent. Persisted in run.data by the executor
+  // after each action (executor.ts) and reloaded on resume — so incrementing it
+  // below is what carries the cascade forward. It used to be read but never
+  // written, so currentStep was always 0 and the node re-sent step 0 forever.
   const cascadeData = (run.data as Record<string, unknown>) || {};
   const currentStep = (cascadeData.cascadeStep as number) ?? 0;
 
-  // On resume/re-entry: evaluate condition from the step we just sent
-  if (currentStep > 0 && cascadeData.cascadeStep !== undefined) {
+  // On resume/re-entry: evaluate the condition of the step we just sent.
+  if (currentStep > 0) {
     const sentStep = config.steps[currentStep - 1];
     if (!sentStep) return { type: 'next', nextNodeId: null };
     const shouldProceed = await evaluateCascadeCondition(
@@ -945,19 +954,23 @@ async function executeCascade(
     );
 
     if (!shouldProceed) {
-      // Condition not met — exit cascade
+      // The contact engaged (opened/clicked/was delivered) — exit the cascade.
       return { type: 'next', nextNodeId: null };
     }
   }
 
-  // Send current step if it exists
+  // Send the current step if one remains.
   if (currentStep < config.steps.length) {
     const step = config.steps[currentStep];
     if (!step) return { type: 'next', nextNodeId: null };
     await executeCascadeStep(step, run, ctx);
 
-    // Always schedule next check using this step's delay
-    // (allows resume point to evaluate condition and decide on next step or exit)
+    // Advance the step and persist it into run.data. The executor writes run.data
+    // back after this action returns, so the next resume sees the incremented
+    // step, evaluates this step's condition, and either sends the next one or
+    // exits. Without this the cascade never terminates.
+    run.data = { ...cascadeData, cascadeStep: currentStep + 1 };
+
     const nextExecutionAt = new Date(Date.now() + step.delayHours * 3_600_000);
     return {
       type: 'wait',
@@ -965,6 +978,7 @@ async function executeCascade(
     };
   }
 
+  // All steps sent (and their conditions held) — continue to the next node.
   return { type: 'next', nextNodeId: null };
 }
 
