@@ -41,6 +41,14 @@ export async function sendRawMessage(
   const recipients = opts.to ?? opts.envelopeTo ?? [...parsed.to, ...parsed.cc];
 
   if (!from) throw AppError.badRequest('No From address in message');
+
+  // The org may only relay mail from an address it has verified. This is the
+  // guard on the SMTP submission path: the Go server authenticates the org but
+  // never checks that the message's From belongs to it. Also checked in test
+  // mode — a sandboxed spoof is still a spoof.
+  const { assertFromDomainOwned } = await import('../sending/from-domain.js');
+  await assertFromDomainOwned(orgId, from);
+
   if (recipients.length === 0) throw AppError.badRequest('No recipients in message');
   if (!parsed.html && !parsed.text) throw AppError.badRequest('Message has no text/html body');
 

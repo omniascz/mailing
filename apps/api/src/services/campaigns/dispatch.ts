@@ -67,6 +67,20 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
   const { assertBulkSendAllowed } = await import('../identities/index.js');
   await assertBulkSendAllowed(orgId);
 
+  // From-domain ownership, checked at the click on Send rather than deep inside
+  // the batch-sender where no operator is watching. Only email campaigns carry
+  // an email From; sms/whatsapp/push fan out over their own channels. Read just
+  // the two fields, before sendCampaign() transitions any state.
+  const [row] = await db
+    .select({ fromEmail: campaigns.fromEmail, type: campaigns.type })
+    .from(campaigns)
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
+    .limit(1);
+  if (row && (!row.type || row.type === 'email') && row.fromEmail) {
+    const { assertFromDomainOwned } = await import('../sending/from-domain.js');
+    await assertFromDomainOwned(orgId, row.fromEmail);
+  }
+
   const campaign = await sendCampaign(orgId, campaignId);
 
   // Non-email campaigns (sms/whatsapp/push) fan out over their own channel

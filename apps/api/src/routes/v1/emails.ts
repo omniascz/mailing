@@ -31,6 +31,7 @@ import {
   cancelQueuedEmails,
 } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
+import { assertFromDomainOwned } from '../../services/sending/from-domain.js';
 import { parseScheduledAt } from '../../services/transactional/parse-scheduled-at.js';
 import { fetchRemoteAttachment } from '../../services/sending/fetch-attachment.js';
 
@@ -328,6 +329,10 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       const to = toArray(body.to);
       const testMode = req.user?.apiKeyMode === 'test' || body.sandbox_mode === true;
 
+      // The caller may only send from an address its org has verified. Checked
+      // even in test mode: a sandbox send with a spoofed From is still a spoof.
+      await assertFromDomainOwned(req.user!.orgId, body.from);
+
       // Enforce plan send-capacity for real (non-sandbox) sends before we
       // record or dispatch anything.
       const recipientCount = to.length + toArray(body.cc).length + toArray(body.bcc).length;
@@ -417,6 +422,11 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
             message: 'Each item must provide `html` or `text`.',
           });
         }
+      }
+      // Every From must be a verified sender for the org — up-front, so one bad
+      // From rejects the whole batch rather than sending the good ones first.
+      for (const item of parsed.data) {
+        await assertFromDomainOwned(req.user!.orgId, item.from);
       }
 
       const keyTestMode = req.user?.apiKeyMode === 'test';
