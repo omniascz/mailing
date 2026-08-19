@@ -259,6 +259,9 @@ jobs:
       - name: Vet ${{ matrix.service }}
         working-directory: apps/${{ matrix.service }}
         run: go vet ./...
+      - name: Test ${{ matrix.service }}
+        working-directory: apps/${{ matrix.service }}
+        run: go test ./...
 
   e2e:
     name: E2E Smoke (Playwright)
