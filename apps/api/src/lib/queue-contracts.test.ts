@@ -364,6 +364,9 @@ describe('enqueueValidated', () => {
 
 // ─── 4. No producer bypasses the contract ─────────────────────────────────────
 
+/** See the note on the it() below for why this is per-test, not global. */
+const SCAN_TIMEOUT_MS = 30_000;
+
 describe('no producer bypasses the contract', () => {
   /**
    * The three receiver shapes this repo uses to reach a contracted queue.
@@ -410,26 +413,38 @@ describe('no producer bypasses the contract', () => {
     return out;
   }
 
-  it('every enqueue onto email/sms/viber-send goes through enqueueValidated', () => {
-    const root = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-    const offenders: string[] = [];
+  /**
+   * Same wall-clock exposure as the AST scan in unsubscribe-single-writer:
+   * this reads the same 967-file, 5.4 MB corpus (measured: walk 18 ms, read
+   * 570 ms, regex 28 ms). Cheap on its own at 1.9 s inside the suite, but it
+   * reached 5.5 s on a loaded machine against a 10 s global limit, so it is
+   * on the same trajectory and gets the same explicit budget rather than
+   * waiting to become flaky as the repo grows.
+   */
+  it(
+    'every enqueue onto email/sms/viber-send goes through enqueueValidated',
+    () => {
+      const root = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+      const offenders: string[] = [];
 
-    for (const file of walk(root)) {
-      // The helper itself is the one place allowed to call queue.add for a
-      // contracted queue — that call IS the gate.
-      if (file.endsWith('queue-contracts.ts')) continue;
-      const src = stripComments(readFileSync(file, 'utf8'));
-      for (const { label, re } of BYPASS_PATTERNS) {
-        if (re.test(src)) {
-          offenders.push(`${file.slice(root.length)} — ${label}`);
+      for (const file of walk(root)) {
+        // The helper itself is the one place allowed to call queue.add for a
+        // contracted queue — that call IS the gate.
+        if (file.endsWith('queue-contracts.ts')) continue;
+        const src = stripComments(readFileSync(file, 'utf8'));
+        for (const { label, re } of BYPASS_PATTERNS) {
+          if (re.test(src)) {
+            offenders.push(`${file.slice(root.length)} — ${label}`);
+          }
         }
       }
-    }
 
-    expect(
-      offenders,
-      'These producers reach a contracted queue directly. Route them through ' +
-        'enqueueValidated() so their payload is checked against the consumer schema.',
-    ).toEqual([]);
-  });
+      expect(
+        offenders,
+        'These producers reach a contracted queue directly. Route them through ' +
+          'enqueueValidated() so their payload is checked against the consumer schema.',
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 });
