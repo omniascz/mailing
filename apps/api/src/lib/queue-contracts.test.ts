@@ -362,16 +362,39 @@ describe('enqueueValidated', () => {
   });
 });
 
-// ─── 4. No producer bypasses the contract ─────────────────────────────────────
+// ─── 4. Producers reach the queue the usual way ───────────────────────────────
+//
+// ── What this is NOT ────────────────────────────────────────────────────────
+//
+// This is not the barrier. It cannot be: it matches three receiver shapes with
+// regexes, and a producer that names its variable something else walks past it.
+// That is not hypothetical — `const q = queues.email; await q.add(…)` was run
+// against this scan and it passed, which is why the enforcement moved into the
+// queue object (guardQueue in ./queue-contracts.ts). A payload that does not
+// satisfy its consumer's schema now throws at `.add()` however the queue was
+// reached, and that is what actually holds the line.
+//
+// ── Why it stays anyway ─────────────────────────────────────────────────────
+//
+// The guard fails when the producer runs. Some producers run rarely — a
+// cascade step, a sequence that nobody has enrolled anyone into this week — so
+// "it throws in production eventually" is a slower feedback loop than "CI is
+// red on the pull request". This scan catches the ordinary case, which is
+// somebody copying an existing producer, before it ships.
+//
+// Treat a green run here as "nothing obvious was copied", never as "no
+// producer can bypass the contract". Do not try to close the gap by making the
+// regexes cleverer; that race is not winnable and the queue object already
+// wins it.
 
 /** See the note on the it() below for why this is per-test, not global. */
 const SCAN_TIMEOUT_MS = 30_000;
 
-describe('no producer bypasses the contract', () => {
+describe('producers reach the queue the usual way', () => {
   /**
    * The three receiver shapes this repo uses to reach a contracted queue.
    * A new producer copy-pasting any of them, instead of calling
-   * enqueueValidated, fails here.
+   * enqueueValidated, fails here — anything else is the guard's job.
    */
   const BYPASS_PATTERNS: Array<{ label: string; re: RegExp }> = [
     {
