@@ -10,6 +10,7 @@ import {
   type SequenceStep,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { enqueueValidated } from '../../lib/queue-contracts.js';
 import {
   buildMergeVars,
   substitutePersonalMergeTags,
@@ -312,50 +313,59 @@ async function runStep(
       const bodyText = substitutePersonalMergeTags(config.body ?? '', vars);
       const bodyHtml = buildPersonalHtml(bodyText);
 
-      // Queue via BullMQ
-      const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-      if (queues) {
-        await (
-          queues as unknown as Record<
-            string,
-            { add: (name: string, data: unknown) => Promise<void> }
-          >
-        ).email
-          ?.add('sequence-email', {
-            orgId: enrollment.orgId,
-            contactId: enrollment.contactId,
-            sequenceEnrollmentId: enrollment.id,
-            fromEmail,
-            fromName,
-            replyTo: fromEmail,
-            subject,
-            bodyText,
-            bodyHtml,
-            isPersonal: true,
-          })
-          .catch(() => {});
+      // Queue via BullMQ. Validated against the 'email' queue's consumer
+      // contract first — this payload used to name its content bodyHtml/bodyText,
+      // which the consumer's schema strips, so every sequence email was
+      // rejected 400 while the sequence advanced to the next step regardless.
+      const { queues } = await import('../../lib/queues.js');
+      const emailQueue = (
+        queues as unknown as Record<
+          string,
+          { add: (name: string, data: unknown) => Promise<unknown> } | undefined
+        >
+      ).email;
+      if (!emailQueue) {
+        throw new Error("sequence-email: no queue is bound to the 'email' channel");
       }
+      await enqueueValidated(emailQueue, 'email', 'sequence-email', {
+        orgId: enrollment.orgId,
+        contactId: enrollment.contactId,
+        sequenceEnrollmentId: enrollment.id,
+        // Carried for the job log. The consumer resolves the From from the
+        // org's verified sending domain and ignores these — see the PR's
+        // "rozhodnutí pro tebe".
+        fromEmail,
+        fromName,
+        replyTo: fromEmail,
+        subject,
+        html: bodyHtml,
+        text: bodyText,
+        isPersonal: true,
+      });
       break;
     }
 
     case 'sms': {
       const vars = buildMergeVars(contact ?? {});
       const message = substitutePersonalMergeTags(config.message ?? '', vars);
-      const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-      if (queues && contact?.phone) {
-        await (
+      const { queues } = await import('../../lib/queues.js');
+      // No phone is an audience fact, not a failure — skip as before.
+      if (contact?.phone) {
+        const smsQueue = (
           queues as unknown as Record<
             string,
-            { add: (name: string, data: unknown) => Promise<void> }
+            { add: (name: string, data: unknown) => Promise<unknown> } | undefined
           >
-        ).sms
-          ?.add('sequence-sms', {
-            orgId: enrollment.orgId,
-            contactId: enrollment.contactId,
-            phone: contact.phone,
-            message,
-          })
-          .catch(() => {});
+        ).sms;
+        if (!smsQueue) {
+          throw new Error("sequence-sms: no queue is bound to the 'sms' channel");
+        }
+        await enqueueValidated(smsQueue, 'sms', 'sequence-sms', {
+          orgId: enrollment.orgId,
+          contactId: enrollment.contactId,
+          phone: contact.phone,
+          message,
+        });
       }
       break;
     }

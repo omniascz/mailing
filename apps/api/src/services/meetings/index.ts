@@ -206,14 +206,26 @@ export async function createBooking(orgId: string, input: BookingInput) {
         )
       : et.ownerUserId;
 
-  // Generate meeting link
+  // Generate meeting link.
+  //
+  // The fallback to `et.locationValue` stays: a booking whose video provider is
+  // unreachable is still a booking, and changing that is a separate decision.
+  // What does not stay is the silence. `.catch(() => …)` discarded the reason,
+  // so a misconfigured Zoom/Teams integration produced confirmed bookings with
+  // no link and left nothing behind to explain why.
   const meetingUrl = await createVideoLink(et.locationType, {
     title: et.name,
     startAt: input.startAt,
     endAt,
     hostUserId,
     inviteeEmail: input.inviteeEmail,
-  }).catch(() => et.locationValue ?? null);
+  }).catch((err: unknown) => {
+    console.error(
+      `[meetings] video link for locationType='${et.locationType}' failed (eventType=${et.id}, org=${orgId}); booking falls back to locationValue:`,
+      err,
+    );
+    return et.locationValue ?? null;
+  });
 
   const [booking] = await db
     .insert(bookings)
