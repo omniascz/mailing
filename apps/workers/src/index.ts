@@ -39,6 +39,7 @@ import {
   scheduleExternalFeedPoll,
 } from './jobs/external-feed-poll.js';
 import { startWarmupAdvanceWorker, scheduleWarmupAdvance } from './jobs/warmup-advance.js';
+import { startDkimRetireWorker, scheduleDkimRetire } from './jobs/dkim-retire.js';
 import { startDmarcImapPollWorker, scheduleDmarcImapPoll } from './jobs/dmarc-imap-poll.js';
 import { startAbWinnerWorker } from './jobs/ab-winner.js';
 import { startBlacklistMonitorWorker, scheduleBlacklistMonitor } from './jobs/blacklist-monitor.js';
@@ -95,6 +96,8 @@ const externalFeedPollWorker = startExternalFeedPollWorker();
 scheduleExternalFeedPoll().catch(console.error);
 const warmupAdvanceWorker = startWarmupAdvanceWorker();
 scheduleWarmupAdvance().catch(console.error);
+const dkimRetireWorker = startDkimRetireWorker();
+scheduleDkimRetire().catch(console.error);
 const dmarcImapPollWorker = startDmarcImapPollWorker();
 scheduleDmarcImapPoll().catch(console.error);
 const abWinnerWorker = startAbWinnerWorker();
@@ -148,6 +151,7 @@ async function shutdown() {
     mobilePushSenderWorker.close(),
     externalFeedPollWorker.close(),
     warmupAdvanceWorker.close(),
+    dkimRetireWorker.close(),
     dmarcImapPollWorker.close(),
     abWinnerWorker.close(),
     blacklistMonitorWorker.close(),

@@ -79,6 +79,7 @@ export const QUEUE_NAMES = {
   MOBILE_PUSH_SEND: 'mobile-push-send',
   EXTERNAL_FEED_POLL: 'external-feed-poll',
   WARMUP_ADVANCE: 'warmup-advance',
+  DKIM_RETIRE: 'dkim-retire',
   DMARC_IMAP_POLL: 'dmarc-imap-poll',
   AB_WINNER: 'ab-winner',
   BLACKLIST_MONITOR: 'blacklist-monitor',
