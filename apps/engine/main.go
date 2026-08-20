@@ -54,13 +54,20 @@ func main() {
 	}()
 
 	// Optional MX-side inbound receiver. Disabled when INBOUND_LISTEN is unset.
+	// The secret is read as INBOUND_EMAIL_SECRET — the exact env var the API
+	// validates X-Inbound-Secret against — so one value, one name, set once. If
+	// the receiver is enabled but the secret is missing, fail the whole engine
+	// rather than run a receiver whose every forward is rejected 401.
 	if addr := os.Getenv("INBOUND_LISTEN"); addr != "" {
-		rcv := inbound.New(inbound.Config{
+		rcv, err := inbound.New(inbound.Config{
 			ListenAddr: addr,
 			Hostname:   os.Getenv("INBOUND_HOSTNAME"),
 			APIURL:     os.Getenv("INBOUND_API_URL"),
-			APISecret:  os.Getenv("INBOUND_API_SECRET"),
+			APISecret:  os.Getenv("INBOUND_EMAIL_SECRET"),
 		})
+		if err != nil {
+			log.Fatalf("inbound receiver misconfigured: %v", err)
+		}
 		go func() {
 			if err := rcv.ListenAndServe(); err != nil {
 				log.Printf("inbound receiver stopped: %v", err)
@@ -70,25 +77,31 @@ func main() {
 
 	// Optional customer SMTP submission server (port 587). Disabled when
 	// SUBMISSION_LISTEN is unset. Relays authenticated mail to the API.
+	//
+	// The secret is read as INTERNAL_API_SECRET — the same env var the API's
+	// /api/v1/internal/* gate checks — not a separate SUBMISSION_API_SECRET
+	// alias. One value with two names is a trap: set one and not the other, or
+	// set them differently, and the API rejects every relay with 401 that reads
+	// as a wrong password. A misconfigured-but-enabled submission server fails
+	// the whole engine rather than running silently broken.
 	if addr := os.Getenv("SUBMISSION_LISTEN"); addr != "" {
 		sub, err := submission.New(submission.Config{
 			ListenAddr:        addr,
 			Hostname:          os.Getenv("SUBMISSION_HOSTNAME"),
 			APIURL:            os.Getenv("SUBMISSION_API_URL"),
-			APISecret:         os.Getenv("SUBMISSION_API_SECRET"),
+			APISecret:         os.Getenv("INTERNAL_API_SECRET"),
 			TLSCert:           os.Getenv("SUBMISSION_TLS_CERT"),
 			TLSKey:            os.Getenv("SUBMISSION_TLS_KEY"),
 			AllowInsecureAuth: os.Getenv("SUBMISSION_ALLOW_INSECURE_AUTH") == "1",
 		})
 		if err != nil {
-			log.Printf("submission server disabled: %v", err)
-		} else {
-			go func() {
-				if err := sub.ListenAndServe(); err != nil {
-					log.Printf("submission server stopped: %v", err)
-				}
-			}()
+			log.Fatalf("submission server misconfigured: %v", err)
 		}
+		go func() {
+			if err := sub.ListenAndServe(); err != nil {
+				log.Printf("submission server stopped: %v", err)
+			}
+		}()
 	}
 
 	// Graceful shutdown

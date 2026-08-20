@@ -81,6 +81,18 @@ func New(cfg Config) (*Server, error) {
 		s.tlsConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
 	}
 
+	// Every request to the API's /api/v1/internal/* endpoints is rejected with
+	// 401 unless it carries the shared secret (the API gate has required it
+	// unconditionally since PR #18). Without a secret the submission server
+	// cannot even reach /internal/smtp/auth, so no one can log in and it looks
+	// like a wrong password. Refuse to start rather than run in that state.
+	if cfg.APISecret == "" {
+		return nil, fmt.Errorf(
+			"submission: APISecret is empty — every call to the API's /internal/* " +
+				"endpoints would be rejected 401. Set INTERNAL_API_SECRET (same value the API uses)",
+		)
+	}
+
 	// A submission server that can neither offer STARTTLS nor was told plaintext
 	// AUTH is acceptable can never authenticate anyone — it would advertise no
 	// AUTH and reject every login. Rather than run silently useless (or, worse,
@@ -393,9 +405,9 @@ func (s *Server) authenticate(user, pass string) (orgID string, retryable bool, 
 		return "", false, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if s.cfg.APISecret != "" {
-		req.Header.Set("X-Internal-Secret", s.cfg.APISecret)
-	}
+	// Always sent — the API gate requires it on every /internal/* request.
+	// New() guarantees APISecret is non-empty.
+	req.Header.Set("X-Internal-Secret", s.cfg.APISecret)
 	resp, err := s.client.Do(req)
 	if err != nil {
 		// Transport failure — the API may be momentarily unreachable. Retryable.
@@ -443,9 +455,8 @@ func (ss *session) relay(raw []byte) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if ss.srv.cfg.APISecret != "" {
-		req.Header.Set("X-Internal-Secret", ss.srv.cfg.APISecret)
-	}
+	// Always sent — see authenticate(); New() guarantees a non-empty secret.
+	req.Header.Set("X-Internal-Secret", ss.srv.cfg.APISecret)
 	resp, err := ss.srv.client.Do(req)
 	if err != nil {
 		return err

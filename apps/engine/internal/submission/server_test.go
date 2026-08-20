@@ -22,6 +22,9 @@ func newTestServer(t *testing.T, cfg Config, apiHandler http.HandlerFunc) (*Serv
 	if cfg.Hostname == "" {
 		cfg.Hostname = "test.local"
 	}
+	if cfg.APISecret == "" {
+		cfg.APISecret = "test-secret"
+	}
 	s, err := New(cfg)
 	if err != nil {
 		api.Close()
@@ -75,8 +78,22 @@ const insecureCfg = true // AllowInsecureAuth for tests that skip STARTTLS
 
 // ── F3: AUTH refused without TLS ──────────────────────────────────────────────
 
+func TestNew_refusesToStartWithoutAPISecret(t *testing.T) {
+	// F5: the API rejects every /internal/* call without the shared secret, so a
+	// submission server with no secret is dead on arrival — refuse to start.
+	_, err := New(Config{ListenAddr: ":0", AllowInsecureAuth: true})
+	if err == nil {
+		t.Fatal("expected New to refuse a server with an empty APISecret")
+	}
+	if !strings.Contains(err.Error(), "INTERNAL_API_SECRET") {
+		t.Fatalf("error should name the env var, got: %v", err)
+	}
+}
+
 func TestNew_refusesToStartWithoutTLSorInsecureOptIn(t *testing.T) {
-	_, err := New(Config{ListenAddr: ":0"})
+	// APISecret is set here so New() reaches the TLS/insecure check rather than
+	// stopping earlier on the missing secret.
+	_, err := New(Config{ListenAddr: ":0", APISecret: "s"})
 	if err == nil {
 		t.Fatal("expected New to refuse a server with no TLS and no AllowInsecureAuth")
 	}

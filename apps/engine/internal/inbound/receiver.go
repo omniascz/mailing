@@ -64,14 +64,23 @@ type Receiver struct {
 	cfg Config
 }
 
-func New(cfg Config) *Receiver {
+func New(cfg Config) (*Receiver, error) {
 	if cfg.MaxSize == 0 {
 		cfg.MaxSize = 30 * 1024 * 1024
 	}
 	if cfg.Hostname == "" {
 		cfg.Hostname = "mx.forgemsg.local"
 	}
-	return &Receiver{cfg: cfg}
+	// The inbound endpoint on the API validates X-Inbound-Secret; without a
+	// secret every forwarded message is rejected. Refuse to start rather than
+	// silently drop all inbound mail.
+	if cfg.APISecret == "" {
+		return nil, fmt.Errorf(
+			"inbound: APISecret is empty — forwarded messages would be rejected by the API. " +
+				"Set INBOUND_EMAIL_SECRET (same value the API uses)",
+		)
+	}
+	return &Receiver{cfg: cfg}, nil
 }
 
 // ListenAndServe runs a minimal SMTP listener (LHLO/MAIL/RCPT/DATA only).
@@ -285,9 +294,8 @@ func (r *Receiver) dispatch(envFrom, envTo string, raw []byte) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if r.cfg.APISecret != "" {
-		req.Header.Set("X-Inbound-Secret", r.cfg.APISecret)
-	}
+	// Always sent — the inbound endpoint requires it. New() guarantees non-empty.
+	req.Header.Set("X-Inbound-Secret", r.cfg.APISecret)
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
