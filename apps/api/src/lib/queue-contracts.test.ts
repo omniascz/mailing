@@ -116,6 +116,9 @@ vi.mock('../services/frequency-capping/index.js', () => ({
 vi.mock('../services/sending/from-domain.js', () => ({
   assertFromDomainOwned: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock('../services/reviews-v2/index.js', () => ({
+  createReviewRequest: async () => ({ token: 'tok-123' }),
+}));
 vi.mock('../services/crm/one-to-one-email.js', () => ({
   buildMergeVars: () => ({}),
   substitutePersonalMergeTags: (s: string) => s,
@@ -265,6 +268,45 @@ describe('internal_notification', () => {
   });
 });
 
+// ─── 1c. The producer that used to swallow its own failure ───────────────────
+
+describe('send_review_request reports an enqueue failure', () => {
+  /**
+   * This action reached the queue through a local alias and ended both branches
+   * in `.catch(() => {})`, so a refused enqueue returned `next` and the run
+   * recorded a message the contact never got. The swallow is gone — it goes
+   * through enqueueOrFail like every other send — but nothing pinned that, so
+   * putting it back would have been silent. This is that pin.
+   *
+   * The payload this action builds is valid today (the email branch always
+   * fills `html` from a default), so the failure has to come from the queue
+   * refusing, which is what a contract violation would look like at run time.
+   */
+  const node = {
+    id: 'n6',
+    type: 'send_review_request',
+    config: { channel: 'email', subject: 'How was your order?' },
+  };
+
+  it('surfaces the failure instead of returning next', async () => {
+    emailAdd.mockRejectedValueOnce(new Error('queue refused the job'));
+
+    const { executeAction } = await import('../services/workflows/actions.js');
+    const result = await executeAction(node as never, makeRun(), ctx);
+
+    expect(result.type, 'a refused enqueue was reported as success').toBe('error');
+    expect((result as { message: string }).message).toContain('queue refused the job');
+  });
+
+  it('still returns next when the enqueue succeeds', async () => {
+    const { executeAction } = await import('../services/workflows/actions.js');
+    const result = await executeAction(node as never, makeRun(), ctx);
+
+    expect(result.type).toBe('next');
+    expect(emailAdd).toHaveBeenCalledTimes(1);
+  });
+});
+
 // ─── 2. Sequence producers ────────────────────────────────────────────────────
 
 describe('sales sequence steps satisfy their consumer contract', () => {
@@ -366,13 +408,19 @@ describe('enqueueValidated', () => {
 //
 // ── What this is NOT ────────────────────────────────────────────────────────
 //
-// This is not the barrier. It cannot be: it matches three receiver shapes with
+// This is not the barrier. It cannot be: it matches four receiver shapes with
 // regexes, and a producer that names its variable something else walks past it.
-// That is not hypothetical — `const q = queues.email; await q.add(…)` was run
-// against this scan and it passed, which is why the enforcement moved into the
-// queue object (guardQueue in ./queue-contracts.ts). A payload that does not
-// satisfy its consumer's schema now throws at `.add()` however the queue was
-// reached, and that is what actually holds the line.
+// That is not hypothetical — all four patterns were run against
+// `const q = queues.email; await q.add(…)` and none of them matched, which is
+// why the enforcement moved into the queue object (guardQueue in
+// ./queue-contracts.ts). A payload that does not satisfy its consumer's schema
+// now throws at `.add()` however the queue was reached, and that is what
+// actually holds the line.
+//
+// The fourth pattern (`alias.email?.add(`) came in separately and does widen
+// the net — it catches an aliased *map*, `const q = queues; q.email?.add(…)`.
+// It does not catch an aliased *queue*, which is the case above. Widening it
+// further is the losing half of this: see the last paragraph.
 //
 // ── Why it stays anyway ─────────────────────────────────────────────────────
 //
