@@ -23,18 +23,15 @@ export async function resolveDkimForSender(
 ): Promise<{ dkimDomain: string; dkimSelector: string; dkimPrivateKey: string } | null> {
   const domain = fromEmail.split('@')[1]?.toLowerCase();
   if (!domain) return null;
-  const [row] = await db
-    .select({
-      domain: sendingDomains.domain,
-      selector: sendingDomains.dkimSelector,
-      privateKey: sendingDomains.dkimPrivateKey,
-      verified: sendingDomains.isVerified,
-    })
-    .from(sendingDomains)
-    .where(and(eq(sendingDomains.orgId, orgId), eq(sendingDomains.domain, domain)))
-    .limit(1);
-  if (!row || !row.verified || !row.privateKey) return null;
-  return { dkimDomain: row.domain, dkimSelector: row.selector, dkimPrivateKey: row.privateKey };
+  // The signing key is the domain's single ACTIVE dkim_keys row — never a
+  // pending key (not yet in DNS), and never null merely because a rotation is
+  // underway (the old key stays active until the new one is verified). This is
+  // the fix for the rotation window: mail is always signed with a key a receiver
+  // can look up.
+  const { resolveActiveKey } = await import('../domains/dkim-rotation.js');
+  const key = await resolveActiveKey(orgId, domain);
+  if (!key) return null;
+  return { dkimDomain: domain, dkimSelector: key.selector, dkimPrivateKey: key.privateKey };
 }
 
 /**

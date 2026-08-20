@@ -13,7 +13,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { sendingDomains } from '../../db/schema/index.js';
+import { sendingDomains, dkimKeys } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import {
   generateDkimKeyPair,
@@ -21,6 +21,13 @@ import {
   verifyDkimDns,
   buildDkimDnsRecord,
 } from '../../services/domains/dkim.js';
+import {
+  rotateDkimKey,
+  createInitialKey,
+  verifyAndPromotePending,
+  generateSelector,
+  getRotationStatus,
+} from '../../services/domains/dkim-rotation.js';
 import { buildDnsRecords, verifyDnsRecords } from '../../services/domains/dns-records.js';
 import { runQualityCheck } from '../../services/domains/quality-check.js';
 import { getDomainWarmupStatus, getWarmupQuota } from '../../services/domains/warmup-scheduler.js';
@@ -76,23 +83,34 @@ export default async function domainRoutes(app: FastifyInstance) {
         .parse(req.body);
 
       const sub = mailSubdomain ?? `mail.${domain}`;
-      const selector = 'fm1';
 
       // Generate DKIM key pair (algorithm per request; defaults to RSA).
       const keyPair = await generateDkimKeyPair(dkimKeyType ?? 'rsa');
 
-      const [row] = await db
-        .insert(sendingDomains)
-        .values({
-          orgId: req.user!.orgId,
-          domain,
-          mailSubdomain: sub,
-          dkimSelector: selector,
-          dkimPrivateKey: keyPair.privateKeyPem,
-          dkimPublicKey: keyPair.publicKeyBase64,
-          dkimKeyType: keyPair.keyType,
+      const row = await db
+        .transaction(async (tx) => {
+          const [inserted] = await tx
+            .insert(sendingDomains)
+            .values({ orgId: req.user!.orgId, domain, mailSubdomain: sub })
+            .returning();
+          // The DKIM key lives in dkim_keys as the source of truth; createInitialKey
+          // inserts it (pending) and syncs the sending_domains mirror. The mirror
+          // columns are never written directly here — only by the rotation service.
+          await createInitialKey(tx, {
+            orgId: req.user!.orgId,
+            domainId: inserted!.id,
+            selector: generateSelector(new Date()),
+            privateKeyPem: keyPair.privateKeyPem,
+            publicKeyBase64: keyPair.publicKeyBase64,
+            keyType: keyPair.keyType,
+          });
+          const [fresh] = await tx
+            .select()
+            .from(sendingDomains)
+            .where(eq(sendingDomains.id, inserted!.id))
+            .limit(1);
+          return fresh!;
         })
-        .returning()
         .catch((err: Error) => {
           if (err.message.includes('sending_domains_org_domain_idx')) {
             throw AppError.conflict(
@@ -102,7 +120,7 @@ export default async function domainRoutes(app: FastifyInstance) {
           throw err;
         });
 
-      return reply.code(201).send({ data: sanitise(row!) });
+      return reply.code(201).send({ data: sanitise(row) });
     },
   );
 
@@ -144,11 +162,12 @@ export default async function domainRoutes(app: FastifyInstance) {
 
   /**
    * POST /api/v1/domains/:id/dkim
-   * Rotate the DKIM key pair for a domain.
-   * Increments selector fm1 → fm2 → fm3 (wraps at 9).
+   * Rotate the DKIM key pair for a domain — WITHOUT an unsigned window.
    *
-   * Returns the new DNS TXT record the customer must publish before
-   * calling /verify (old key remains active until verified).
+   * Generates a new key as `pending`. The current `active` key keeps signing
+   * mail until the customer publishes the new record and calls /verify, which
+   * promotes the new key and retires the old. A second call returns the existing
+   * pending unchanged (idempotent); `?force=true` starts a fresh one.
    */
   app.post(
     '/api/v1/domains/:id/dkim',
@@ -156,50 +175,29 @@ export default async function domainRoutes(app: FastifyInstance) {
     async (req) => {
       const { id } = domainParam.parse(req.params);
       const [existing] = await db
-        .select()
+        .select({ id: sendingDomains.id, byo: sendingDomains.dkimByo })
         .from(sendingDomains)
         .where(and(eq(sendingDomains.id, id), eq(sendingDomains.orgId, req.user!.orgId)))
         .limit(1);
       if (!existing) throw AppError.notFound('Sending domain');
 
       const { force } = z.object({ force: z.coerce.boolean().optional() }).parse(req.query);
-      if (existing.dkimByo && !force) {
+      if (existing.byo && !force) {
         throw AppError.badRequest(
           'This domain uses an imported (BYODKIM) key. Pass ?force=true to overwrite with a generated key.',
         );
       }
 
-      // Rotate selector: fm1 → fm2 … fm9 → fm1
-      const currentNum = parseInt(existing.dkimSelector.replace('fm', '') || '1', 10);
-      const nextNum = (currentNum % 9) + 1;
-      const newSelector = `fm${nextNum}`;
-
-      const keyPair = await generateDkimKeyPair();
-
-      await db
-        .update(sendingDomains)
-        .set({
-          dkimSelector: newSelector,
-          dkimPrivateKey: keyPair.privateKeyPem,
-          dkimPublicKey: keyPair.publicKeyBase64,
-          dkimVerified: false,
-          dkimVerifiedAt: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(sendingDomains.id, id));
-
-      const dnsRecord = buildDkimDnsRecord(
-        newSelector,
-        existing.domain,
-        keyPair.publicKeyBase64,
-        keyPair.keyType,
-      );
+      const result = await rotateDkimKey(req.user!.orgId, id, { force });
 
       return {
         data: {
-          selector: newSelector,
-          dnsRecord,
-          message: `Publish the DNS TXT record, then call POST /api/v1/domains/${id}/verify`,
+          selector: result.key.selector,
+          dnsRecord: result.dnsRecord,
+          reused: result.reused,
+          message: result.reused
+            ? `A rotation is already pending on selector ${result.key.selector}. Publish that record, then call POST /api/v1/domains/${id}/verify. Pass ?force=true to start over.`
+            : `Publish the DNS TXT record, then call POST /api/v1/domains/${id}/verify. Your current key keeps signing until then.`,
         },
       };
     },
@@ -242,26 +240,41 @@ export default async function domainRoutes(app: FastifyInstance) {
         throw AppError.badRequest((err as Error).message);
       }
 
-      await db
-        .update(sendingDomains)
-        .set({
-          dkimSelector: body.selector,
-          dkimPrivateKey: imported.privateKeyPem,
-          dkimPublicKey: imported.publicKeyBase64,
-          dkimKeyType: imported.keyType,
-          dkimByo: true,
-          dkimVerified: false,
-          dkimVerifiedAt: null,
-          updatedAt: new Date(),
+      // BYODKIM rides the same lifecycle: the imported key enters as `pending`
+      // and /verify promotes it, so importing a new key over a verified one is a
+      // rotation with no unsigned window either. The `dkim_byo` flag is set so
+      // the generate-rotate endpoint refuses to clobber it without ?force.
+      const dnsRecord = await db
+        .transaction(async (tx) => {
+          await tx
+            .delete(dkimKeys)
+            .where(and(eq(dkimKeys.domainId, id), eq(dkimKeys.status, 'pending')));
+          await createInitialKey(tx, {
+            orgId: req.user!.orgId,
+            domainId: id,
+            selector: body.selector,
+            privateKeyPem: imported.privateKeyPem,
+            publicKeyBase64: imported.publicKeyBase64,
+            keyType: imported.keyType,
+            isByo: true,
+          });
+          await tx.update(sendingDomains).set({ dkimByo: true }).where(eq(sendingDomains.id, id));
+          return buildDkimDnsRecord(
+            body.selector,
+            existing.domain,
+            imported.publicKeyBase64,
+            imported.keyType,
+          );
         })
-        .where(eq(sendingDomains.id, id));
+        .catch((err: Error) => {
+          if (err.message.includes('dkim_keys_domain_selector_uq')) {
+            throw AppError.conflict(
+              `Selector "${body.selector}" is already in use for this domain (an active or retiring key holds it). Choose another selector.`,
+            );
+          }
+          throw err;
+        });
 
-      const dnsRecord = buildDkimDnsRecord(
-        body.selector,
-        existing.domain,
-        imported.publicKeyBase64,
-        imported.keyType,
-      );
       return {
         data: {
           selector: body.selector,
@@ -270,6 +283,30 @@ export default async function domainRoutes(app: FastifyInstance) {
           message: `Publish the DNS TXT record, then call POST /api/v1/domains/${id}/verify`,
         },
       };
+    },
+  );
+
+  /**
+   * GET /api/v1/domains/:id/dkim/rotation
+   * The state of a DKIM rotation so the customer knows exactly what to do:
+   *   - active:   the selector signing mail right now (and when it verified)
+   *   - pending:  a new selector awaiting DNS publication, with the record to add
+   *   - retiring: old selectors still in DNS, each with the date it becomes
+   *               safe to DELETE — without this list the zone silently accretes
+   *               dead _domainkey TXT records over successive rotations.
+   */
+  app.get(
+    '/api/v1/domains/:id/dkim/rotation',
+    { schema: { tags: ['Domains'], summary: 'DKIM rotation status' } },
+    async (req) => {
+      const { id } = domainParam.parse(req.params);
+      const [exists] = await db
+        .select({ id: sendingDomains.id })
+        .from(sendingDomains)
+        .where(and(eq(sendingDomains.id, id), eq(sendingDomains.orgId, req.user!.orgId)))
+        .limit(1);
+      if (!exists) throw AppError.notFound('Sending domain');
+      return { data: await getRotationStatus(req.user!.orgId, id) };
     },
   );
 
@@ -367,8 +404,25 @@ export default async function domainRoutes(app: FastifyInstance) {
 
       const { records: checked, allVerified } = await verifyDnsRecords(records);
 
-      // Also do targeted DKIM verification using dedicated function
-      const dkimOk = await verifyDkimDns(domain.dkimSelector, domain.domain, domain.dkimPublicKey);
+      // Promote a pending rotation key whose DNS is now live: pending → active,
+      // old active → retiring, mirror moves to the new key. Runs before the
+      // DKIM check below so that check reads the freshly-promoted mirror.
+      const promotion = await verifyAndPromotePending(req.user!.orgId, id);
+      const [afterPromo] = promotion.promoted
+        ? await db
+            .select({ selector: sendingDomains.dkimSelector, pub: sendingDomains.dkimPublicKey })
+            .from(sendingDomains)
+            .where(eq(sendingDomains.id, id))
+            .limit(1)
+        : [{ selector: domain.dkimSelector, pub: domain.dkimPublicKey }];
+
+      // Targeted DKIM verification against the current (possibly just-promoted)
+      // active selector.
+      const dkimOk = await verifyDkimDns(
+        afterPromo!.selector,
+        domain.domain,
+        afterPromo!.pub ?? domain.dkimPublicKey,
+      );
 
       const spfRec = checked.find((r) => r.purpose.startsWith('SPF'));
       const dmarcRec = checked.find((r) => r.purpose.startsWith('DMARC'));

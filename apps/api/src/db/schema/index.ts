@@ -19,6 +19,7 @@ export * from './frequency-rules.js';
 export * from './custom-fields.js';
 export * from './editor.js';
 export * from './domains.js';
+export * from './dkim-keys.js';
 export * from './campaign-alerts.js';
 export * from './inbox-preview.js';
 export * from './ai-usage.js';
