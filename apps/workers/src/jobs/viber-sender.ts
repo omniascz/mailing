@@ -10,33 +10,26 @@
 import { Worker, type Job } from 'bullmq';
 import { connection, QUEUE_NAMES } from '../queues/index.js';
 import { captureJobException } from '../lib/telemetry.js';
+import { viberSendJobSchema } from '@forgemsg/api/lib/queue-contracts';
+import type { z } from 'zod';
 
-export interface ViberSendJobData {
-  orgId: string;
-  contactId: string;
-  phone: string;
-  firstName?: string;
-  lastName?: string;
-  /** Viber message content */
-  body: string;
-  type: 'text' | 'picture' | 'video' | 'file' | 'action';
-  mediaUrl?: string;
-  actionUrl?: string;
-  actionText?: string;
-  sender?: string;
-  ttl?: number;
-  /** Optional correlation: campaign or workflow action ID */
-  campaignId?: string;
-  workflowRunId?: string;
-  templateId?: string;
-  /** Provider override — if absent, uses VIBER_PROVIDER env var */
-  provider?: 'infobip' | 'rakuten' | 'messagebird';
-}
+/**
+ * The job shape, derived from the contract rather than restated beside it.
+ *
+ * This used to be a hand-written interface, which TypeScript erases: `phone`
+ * and `type` were declared required and two producers shipped neither, so the
+ * adapter was handed `undefined` for the recipient and for the content
+ * discriminator. A type that is not checked at runtime does not make a queue
+ * safe — the schema does.
+ */
+export type ViberSendJobData = z.infer<typeof viberSendJobSchema>;
 
 async function processViberSend(
   job: Job<ViberSendJobData>,
 ): Promise<{ messageId: string; status: string }> {
-  const data = job.data;
+  // Parse, don't trust. A malformed job fails here with the offending field
+  // named, instead of reaching the provider as a message to nobody.
+  const data = viberSendJobSchema.parse(job.data);
   job.log(`Viber send to ${data.phone} (contact ${data.contactId}) org=${data.orgId}`);
 
   // Dynamically import to avoid loading the adapter in the worker bootstrap

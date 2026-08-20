@@ -22,7 +22,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { campaigns, templates, sendingDomains, contacts } from '../../../db/schema/index.js';
@@ -33,6 +32,10 @@ import {
 } from '../../../lib/queues.js';
 import { processWorkflowRuns } from '../../../services/workflows/executor.js';
 import { routedSmsSend } from '../../../services/sms/routing.js';
+// The payload contracts for the 'email' and 'sms' queues. Defined once in
+// lib/queue-contracts.ts so producers can be validated against the same object
+// this handler parses with — see that file's header.
+import { workflowEmailJobSchema, workflowSmsJobSchema } from '../../../lib/queue-contracts.js';
 
 /** Resolve a usable From identity for an org from its verified sending domains. */
 async function resolveOrgFrom(
@@ -63,17 +66,7 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
     '/api/v1/internal/workflow/send-email',
     { schema: { tags: ['Internal'] } },
     async (req, reply) => {
-      const body = z
-        .object({
-          orgId: z.string().uuid(),
-          contactId: z.string().uuid(),
-          campaignId: z.string().uuid().optional(),
-          templateId: z.string().uuid().optional(),
-          subject: z.string().optional(),
-          html: z.string().optional(),
-          text: z.string().optional(),
-        })
-        .parse(req.body);
+      const body = workflowEmailJobSchema.parse(req.body);
 
       // Inline-content path (seeded / self-contained workflows): send directly via
       // the transactional pipeline, no campaign/template lookup.
@@ -136,6 +129,11 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         fromName = from.fromName;
         fromEmail = from.fromEmail;
       } else {
+        // Unreachable while workflowEmailJobSchema's refine holds (it requires
+        // campaignId, templateId or html, and html returned above). Kept so the
+        // handler still refuses a contentless send if that refine is ever
+        // loosened — this branch is the behaviour the refine encodes, not a
+        // duplicate of it.
         return reply.status(400).send({ error: 'campaignId or templateId required' });
       }
 
@@ -171,18 +169,7 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
     '/api/v1/internal/workflow/send-sms',
     { schema: { tags: ['Internal'] } },
     async (req, reply) => {
-      const body = z
-        .object({
-          orgId: z.string().uuid(),
-          contactId: z.string().uuid(),
-          phone: z.string().min(3),
-          message: z.string().min(1),
-          // Set for bulk SMS campaigns — flags the send as marketing (consent +
-          // quiet-hours gate) and attributes the delivery to the campaign.
-          campaignId: z.string().uuid().optional(),
-          workflowId: z.string().uuid().optional(),
-        })
-        .parse(req.body);
+      const body = workflowSmsJobSchema.parse(req.body);
 
       try {
         const result = await routedSmsSend(

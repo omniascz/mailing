@@ -5,6 +5,10 @@
   "type": "module",
   "//exports": "Explicit list, deliberately not a ./dist/* wildcard: this is the entire surface apps/workers is allowed to reach into, and keeping it enumerated keeps that surface measurable.",
   "exports": {
+    "./lib/queue-contracts": {
+      "types": "./dist/lib/queue-contracts.d.ts",
+      "import": "./dist/lib/queue-contracts.js"
+    },
     "./services/campaigns/email-coupon-merge": {
       "types": "./dist/services/campaigns/email-coupon-merge.d.ts",
       "import": "./dist/services/campaigns/email-coupon-merge.js"

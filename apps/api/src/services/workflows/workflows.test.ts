@@ -35,7 +35,9 @@ vi.mock('../../lib/queues.js', () => ({
   queues: {
     email: { add: vi.fn().mockResolvedValue({}) },
     sms: { add: vi.fn().mockResolvedValue({}) },
+    viber: { add: vi.fn().mockResolvedValue({}) },
   },
+  sendTransactionalEmail: vi.fn().mockResolvedValue('msg-1'),
 }));
 vi.mock('../../db/schema/index.js', () => ({
   contacts: {
@@ -553,7 +555,20 @@ describe('cascadeDeliveryNode', () => {
     (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]);
   });
 
-  it('sends first step on initial execution', async () => {
+  // ── A note on what these assert now ────────────────────────────────────────
+  // A cascade step declares { channel, delayHours, condition } and nothing
+  // else: no template, no subject, no body. The three sendable branches used
+  // to build a payload from the little they had and enqueue it; every one of
+  // those jobs was rejected by its consumer AFTER the step had been recorded
+  // as sent. These tests used to assert that appearance of a send, and passed
+  // because the queue here is a mock that accepts anything.
+  //
+  // The node now refuses instead. Until a cascade step gets a content field
+  // these cannot assert a successful send, so they assert the refusal, that
+  // nothing is enqueued, and that the run does not walk past the message the
+  // contact never received.
+
+  it('refuses the first step — a cascade step carries no content to send', async () => {
     const { executeAction } = await import('./actions.js');
     const node = {
       id: 'cascade-1',
@@ -593,10 +608,11 @@ describe('cascadeDeliveryNode', () => {
       run as unknown as Parameters<typeof executeAction>[1],
       ctx,
     );
-    expect(result.type).toBe('wait'); // should schedule next check
+    expect(result.type).toBe('error');
+    expect((result as { message: string }).message).toContain('no content to send');
   });
 
-  it('evaluates not_opened condition and proceeds to next step', async () => {
+  it('evaluates the condition first, then refuses the step for the same reason', async () => {
     (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]); // no open event
 
     const { executeAction } = await import('./actions.js');
@@ -638,7 +654,11 @@ describe('cascadeDeliveryNode', () => {
       run as unknown as Parameters<typeof executeAction>[1],
       ctx,
     );
-    expect(result.type).toBe('wait'); // should schedule next step
+    // The condition (not_opened) held, so the node moved on to step 1 — and
+    // refused it. Reaching the refusal is what proves the condition machinery
+    // still runs ahead of the send.
+    expect(result.type).toBe('error');
+    expect((result as { message: string }).message).toContain("a 'sms' step");
   });
 
   it('exits cascade if condition not met', async () => {
@@ -813,13 +833,13 @@ describe('cascadeDeliveryNode', () => {
     },
   };
 
-  it('(a) a contact gets exactly N messages, then the cascade stops — not one per delay forever', async () => {
+  it('(a) the cascade enqueues nothing and does not loop', async () => {
     const { queues } = (await import('../../lib/queues.js')) as unknown as {
       queues: { email: { add: ReturnType<typeof vi.fn> }; sms: { add: ReturnType<typeof vi.fn> } };
     };
     queues.email.add.mockClear();
     queues.sms.add.mockClear();
-    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]); // never engaged → proceed
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]); // never engaged
 
     const run = {
       id: 'run-1',
@@ -832,32 +852,39 @@ describe('cascadeDeliveryNode', () => {
       converted: false,
     };
 
-    const { cycles, lastType, hitCap } = await driveCascade(twoStepNode, run, fullCtx);
-    expect(hitCap).toBe(false); // did NOT loop forever
-    expect(cycles).toBe(2); // one wait per step, then it stops
-    expect(lastType).toBe('next'); // (b) continues to the next node
-    const sends = queues.email.add.mock.calls.length + queues.sms.add.mock.calls.length;
-    expect(sends).toBe(2); // exactly N, not more
-  });
-
-  it('(b) after the last step the run continues to the next node', async () => {
-    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    const run = {
-      id: 'run-1',
-      contactId: 'c-1',
-      workflowId: 'w-1',
-      orgId: 'org-1',
-      status: 'running',
-      currentNodeId: 'cascade-1',
-      data: {},
-      converted: false,
-    };
     const { lastType, hitCap } = await driveCascade(twoStepNode, run, fullCtx);
-    expect(hitCap).toBe(false);
-    expect(lastType).toBe('next');
+    expect(hitCap).toBe(false); // still does not loop forever
+    expect(lastType).toBe('error');
+    const sends = queues.email.add.mock.calls.length + queues.sms.add.mock.calls.length;
+    expect(sends, 'a step it could not compose must not reach a queue').toBe(0);
   });
 
-  it('(c) a mid-cascade conversion ends the cascade immediately', async () => {
+  it('(b) the run stays parked on the step it could not send', async () => {
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    const run: Record<string, unknown> = {
+      id: 'run-1',
+      contactId: 'c-1',
+      workflowId: 'w-1',
+      orgId: 'org-1',
+      status: 'running',
+      currentNodeId: 'cascade-1',
+      data: {},
+      converted: false,
+    };
+    const { executeAction } = await import('./actions.js');
+    const r = await executeAction(
+      twoStepNode as Parameters<typeof executeAction>[0],
+      run as unknown as Parameters<typeof executeAction>[1],
+      fullCtx as Parameters<typeof executeAction>[2],
+    );
+
+    expect(r.type).toBe('error');
+    // The step counter must NOT advance: giving the step content later has to
+    // resume on the message the contact never got, not the one after it.
+    expect((run.data as Record<string, unknown>).cascadeStep).toBeUndefined();
+  });
+
+  it('(c) a converted contact exits before the step is even attempted', async () => {
     const { queues } = (await import('../../lib/queues.js')) as unknown as {
       queues: { email: { add: ReturnType<typeof vi.fn> }; sms: { add: ReturnType<typeof vi.fn> } };
     };
@@ -873,30 +900,78 @@ describe('cascadeDeliveryNode', () => {
       status: 'running',
       currentNodeId: 'cascade-1',
       data: {},
-      converted: false,
+      converted: true,
     };
     const { executeAction } = await import('./actions.js');
-
-    // First entry sends step 0 and waits.
-    const first = await executeAction(
+    const r = await executeAction(
       twoStepNode as Parameters<typeof executeAction>[0],
       run as unknown as Parameters<typeof executeAction>[1],
       fullCtx as Parameters<typeof executeAction>[2],
     );
-    expect(first.type).toBe('wait');
-    const sendsBefore = queues.email.add.mock.calls.length + queues.sms.add.mock.calls.length;
-    expect(sendsBefore).toBe(1);
 
-    // The contact converts. On the next resume the cascade must exit without
-    // sending step 1.
-    run.converted = true;
-    const second = await executeAction(
-      twoStepNode as Parameters<typeof executeAction>[0],
+    // Conversion suppression runs ahead of the step, so this is a clean exit,
+    // not the content error — the ordering matters and this pins it.
+    expect(r.type).toBe('next');
+    expect(queues.email.add.mock.calls.length + queues.sms.add.mock.calls.length).toBe(0);
+  });
+
+  it('refuses a viber step and enqueues nothing', async () => {
+    const { queues } = (await import('../../lib/queues.js')) as unknown as {
+      queues: { viber: { add: ReturnType<typeof vi.fn> } };
+    };
+    queues.viber.add.mockClear();
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+
+    const { executeAction } = await import('./actions.js');
+    const node = {
+      id: 'cascade-1',
+      type: 'cascade' as const,
+      config: { steps: [{ channel: 'viber', delayHours: 2, condition: 'not_opened' }] },
+    };
+    const run = {
+      id: 'run-1',
+      contactId: 'c-1',
+      workflowId: 'w-1',
+      orgId: 'org-1',
+      status: 'running',
+      currentNodeId: 'cascade-1',
+      data: {},
+      converted: false,
+    };
+    const r = await executeAction(
+      node as Parameters<typeof executeAction>[0],
       run as unknown as Parameters<typeof executeAction>[1],
       fullCtx as Parameters<typeof executeAction>[2],
     );
-    expect(second.type).toBe('next');
-    const sendsAfter = queues.email.add.mock.calls.length + queues.sms.add.mock.calls.length;
-    expect(sendsAfter).toBe(1); // no further send after conversion
+    expect(r.type).toBe('error');
+    expect((r as { message: string }).message).toContain("a 'viber' step");
+    expect(queues.viber.add).not.toHaveBeenCalled();
+  });
+
+  it('refuses an unimplemented cascade channel instead of skipping it', async () => {
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    const { executeAction } = await import('./actions.js');
+    const node = {
+      id: 'cascade-1',
+      type: 'cascade' as const,
+      config: { steps: [{ channel: 'push', delayHours: 1, condition: 'not_opened' }] },
+    };
+    const run = {
+      id: 'run-1',
+      contactId: 'c-1',
+      workflowId: 'w-1',
+      orgId: 'org-1',
+      status: 'running',
+      currentNodeId: 'cascade-1',
+      data: {},
+      converted: false,
+    };
+    const r = await executeAction(
+      node as Parameters<typeof executeAction>[0],
+      run as unknown as Parameters<typeof executeAction>[1],
+      fullCtx as Parameters<typeof executeAction>[2],
+    );
+    expect(r.type).toBe('error');
+    expect((r as { message: string }).message).toContain('not implemented');
   });
 });

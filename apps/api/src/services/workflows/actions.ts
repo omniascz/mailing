@@ -22,6 +22,11 @@ import { redis } from '@forgemsg/shared/redis';
 import { shouldSuppressDueToConversion } from './conversion-suppression.js';
 import { normalizeConditionConfig } from './condition-rules.js';
 import { resolveEventRelativeUntil, type EventRelativeUntil } from './wait-resolve.js';
+import {
+  enqueueValidated,
+  CHANNEL_TO_QUEUE,
+  type ContractedChannel,
+} from '../../lib/queue-contracts.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -114,7 +119,7 @@ export function buildRunMergeData(run: {
  * run advanced either way.
  */
 async function enqueueOrFail(
-  channel: string,
+  channel: ContractedChannel,
   jobName: string,
   payload: Record<string, unknown>,
 ): Promise<ActionResult> {
@@ -132,7 +137,10 @@ async function enqueueOrFail(
   const queue = queues?.[channel];
   if (!queue) return { type: 'error', message: `${channel}: no queue is bound to this channel` };
   try {
-    await queue.add(jobName, payload);
+    // Validated against the consumer's own schema before it reaches Redis. A
+    // payload the consumer would reject used to enqueue cleanly and die in a
+    // worker, long after this run had reported success.
+    await enqueueValidated(queue, CHANNEL_TO_QUEUE[channel], jobName, payload);
   } catch (err) {
     return { type: 'error', message: `${channel}: enqueue failed: ${(err as Error).message}` };
   }
@@ -743,26 +751,48 @@ async function executeRemoveFromList(
 
 async function executeInternalNotification(
   node: WorkflowNode,
-  run: WorkflowRun,
+  _run: WorkflowRun,
   ctx: ActionContext,
 ): Promise<ActionResult> {
   const config = node.config as { to: string; subject: string; body?: string };
   if (!config.to || !config.subject) return { type: 'next', nextNodeId: null };
 
-  // Queue notification email (fire-and-forget via BullMQ)
-  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-  if (queues) {
-    await (
-      queues as unknown as Record<string, { add: (name: string, data: unknown) => Promise<void> }>
-    ).email
-      ?.add('internal-notification', {
-        orgId: ctx.orgId,
-        to: config.to,
-        subject: substituteMergeTags(config.subject, ctx.contact),
-        body: config.body ? substituteMergeTags(config.body, ctx.contact) : undefined,
-        workflowRunId: run.id,
-      })
-      .catch(() => {});
+  // This notification goes to a colleague at `config.to`, not to the contact.
+  // It used to be pushed onto the 'email' queue, whose consumer is a
+  // single-contact triggered send: it requires a `contactId` and resolves the
+  // recipient from it. The job therefore had no valid shape — every internal
+  // notification this product has ever produced died in the worker after three
+  // attempts, and `.catch(() => {})` hid that from the run.
+  //
+  // The right transport for "send this text to this address" is the
+  // transactional helper, the same one scheduled reports use.
+  const { sendTransactionalEmail } = await import('../../lib/queues.js');
+
+  const from = process.env.SYSTEM_EMAIL_FROM ?? process.env.DOI_FROM_EMAIL;
+  if (!from) {
+    return {
+      type: 'error',
+      message:
+        'internal_notification: no sender address configured — set SYSTEM_EMAIL_FROM (or DOI_FROM_EMAIL)',
+    };
+  }
+
+  const body = config.body ? substituteMergeTags(config.body, ctx.contact) : '';
+  try {
+    await sendTransactionalEmail({
+      to: config.to,
+      from,
+      fromName: process.env.SYSTEM_EMAIL_FROM_NAME ?? 'ForgeMsg',
+      subject: substituteMergeTags(config.subject, ctx.contact),
+      html: body,
+      text: body,
+      orgId: ctx.orgId,
+    });
+  } catch (err) {
+    return {
+      type: 'error',
+      message: `internal_notification: send failed: ${(err as Error).message}`,
+    };
   }
 
   return { type: 'next', nextNodeId: null };
@@ -963,7 +993,13 @@ async function executeCascade(
   if (currentStep < config.steps.length) {
     const step = config.steps[currentStep];
     if (!step) return { type: 'next', nextNodeId: null };
-    await executeCascadeStep(step, run, ctx);
+
+    // Report the step's failure instead of walking past it. Returning before
+    // the increment below matters: the run stays parked on the step that
+    // failed, so fixing the node config resumes the cascade where it stopped
+    // rather than skipping the message nobody received.
+    const failed = await executeCascadeStep(step, run, ctx);
+    if (failed) return failed;
 
     // Advance the step and persist it into run.data. The executor writes run.data
     // back after this action returns, so the next resume sees the incremented
@@ -991,12 +1027,29 @@ async function executeSendViber(
   if (shouldSuppressDueToConversion(run)) {
     return { type: 'next', nextNodeId: null };
   }
+  // Deliberate skips, same shape as send_sms: no contact or no number is an
+  // audience fact, not a failure.
+  if (!run.contactId) return { type: 'next', nextNodeId: null };
+  if (!ctx.contact?.phone) return { type: 'next', nextNodeId: null };
+
+  // A node configured with neither a template nor body text has nothing to
+  // send. This used to enqueue a job with no `body` at all, which reached the
+  // provider as a message to nobody.
+  if (!config.templateId && !config.body) {
+    return { type: 'error', message: 'send_viber: node has neither templateId nor body' };
+  }
+
   return enqueueOrFail('viber', 'workflow-viber', {
     orgId: ctx.orgId,
     contactId: run.contactId,
     workflowRunId: run.id,
+    phone: ctx.contact.phone,
+    // The adapter switches on `type`; this action only ever composes running
+    // text. A template send carries its text provider-side, hence the empty
+    // body — the field is required, its content is not.
+    type: 'text',
     templateId: config.templateId,
-    body: config.body ? substituteMergeTags(config.body, ctx.contact) : undefined,
+    body: config.body ? substituteMergeTags(config.body, ctx.contact, buildRunMergeData(run)) : '',
   });
 }
 
@@ -1006,61 +1059,48 @@ async function executeCascadeStep(
     delayHours: number;
     condition: 'not_opened' | 'not_clicked' | 'not_delivered';
   },
-  run: WorkflowRun,
-  ctx: ActionContext,
-): Promise<void> {
-  try {
-    const { queues } = await import('../../lib/queues.js');
+  _run: WorkflowRun,
+  _ctx: ActionContext,
+): Promise<ActionResult | null> {
+  // ── Why every branch here is an error ──────────────────────────────────────
+  //
+  // A cascade step declares only { channel, delayHours, condition }. There is
+  // no field anywhere in the node config — nor in the run — that says WHAT to
+  // send: no templateId, no campaignId, no subject, no body. The three
+  // sendable branches used to build a payload out of the little they had
+  // (orgId, contactId, sometimes phone) and enqueue it; every one of those
+  // jobs was rejected by its consumer, after the run had already recorded the
+  // step as sent. push/whatsapp did not even do that much — the branch was a
+  // comment and a `break`.
+  //
+  // Supplying a default here (an empty body, a "last campaign", a house
+  // template) would restore the appearance of a working cascade while sending
+  // something nobody authored. That is the failure mode this change exists to
+  // remove, so the node fails loudly instead and the missing piece — where a
+  // cascade step's content comes from — is a product decision, not something
+  // to guess at. See docs/audit/ for the write-up.
+  const missingContent = `cascade: a '${step.channel}' step has no content to send — the cascade step config carries only channel/delayHours/condition, so there is no subject, body, template or campaign to put in the message. Configure the step's content before enabling this node.`;
 
-    switch (step.channel) {
-      case 'email':
-        if (queues && (queues as Record<string, unknown>).email) {
-          const emailQueue = (queues as Record<string, unknown>).email as {
-            add: (name: string, data: unknown) => Promise<void>;
-          };
-          await emailQueue.add('cascade-email', {
-            orgId: ctx.orgId,
-            contactId: run.contactId,
-            workflowRunId: run.id,
-          });
-        }
-        break;
+  switch (step.channel) {
+    case 'email':
+    case 'sms':
+    case 'viber':
+      return { type: 'error', message: missingContent };
 
-      case 'sms':
-        if (ctx.contact?.phone && queues && (queues as Record<string, unknown>).sms) {
-          const smsQueue = (queues as Record<string, unknown>).sms as {
-            add: (name: string, data: unknown) => Promise<void>;
-          };
-          await smsQueue.add('cascade-sms', {
-            orgId: ctx.orgId,
-            contactId: run.contactId,
-            workflowRunId: run.id,
-            phone: ctx.contact.phone,
-          });
-        }
-        break;
+    case 'push':
+    case 'whatsapp':
+      // Never implemented. Failing is honest; the previous `break` reported
+      // success for a message that was never built, let alone sent.
+      return {
+        type: 'error',
+        message: `cascade: the '${step.channel}' channel is not implemented — remove it from the cascade or use the dedicated send_${step.channel} action`,
+      };
 
-      case 'push':
-      case 'whatsapp':
-        // Placeholder for push/whatsapp queuing
-        break;
-
-      case 'viber':
-        if (queues && (queues as Record<string, unknown>).viber) {
-          const viberQueue = (queues as Record<string, unknown>).viber as {
-            add: (name: string, data: unknown) => Promise<void>;
-          };
-          await viberQueue.add('cascade-viber', {
-            orgId: ctx.orgId,
-            contactId: run.contactId,
-            workflowRunId: run.id,
-            phone: ctx.contact?.phone,
-          });
-        }
-        break;
-    }
-  } catch {
-    // Silently fail if queues not available
+    default:
+      return {
+        type: 'error',
+        message: `cascade: unknown channel '${String(step.channel)}'`,
+      };
   }
 }
 
@@ -1179,8 +1219,14 @@ async function executeSendPersonalEmail(
     fromName: config.fromName,
     replyTo: config.replyTo ?? config.fromEmail,
     subject,
-    bodyText,
-    bodyHtml,
+    // The consumer's inline-content fields are `html`/`text`. These were sent
+    // as `bodyHtml`/`bodyText`, which zod stripped, leaving a job with no
+    // content at all — rejected 400, after the run reported the mail as sent.
+    // NOTE: fromEmail/fromName/replyTo above are carried for the job log only.
+    // The consumer resolves the From from the org's verified sending domain
+    // and ignores them; see "rozhodnutí pro tebe" in the PR description.
+    html: bodyHtml,
+    text: bodyText,
     isPersonal: true,
   });
   if (enqueued.type === 'error') return enqueued;
