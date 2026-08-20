@@ -25,6 +25,11 @@ import { sendingDomains } from '../../../db/schema/index.js';
 import { AppError } from '../../../lib/app-error.js';
 import { buildDnsRecords, verifyDnsRecords } from '../../../services/domains/dns-records.js';
 import { generateDkimKeyPair, verifyDkimDns } from '../../../services/domains/dkim.js';
+import {
+  createInitialKey,
+  verifyAndPromotePending,
+  generateSelector,
+} from '../../../services/domains/dkim-rotation.js';
 
 const DMARC_REPORT_EMAIL = process.env.DMARC_REPORT_EMAIL ?? 'dmarc@forgemsg.com';
 
@@ -141,17 +146,30 @@ const domainsResendRoutes: FastifyPluginAsync = async (app) => {
       const sub = `mail.${body.data.name}`;
       const keyPair = await generateDkimKeyPair();
 
-      const [row] = await db
-        .insert(sendingDomains)
-        .values({
-          orgId: req.user!.orgId,
-          domain: body.data.name,
-          mailSubdomain: sub,
-          dkimSelector: 'fm1',
-          dkimPrivateKey: keyPair.privateKeyPem,
-          dkimPublicKey: keyPair.publicKeyBase64,
+      // DKIM key lives in dkim_keys (source of truth); createInitialKey inserts
+      // it and syncs the sending_domains mirror. Never write the mirror columns
+      // directly — only the rotation service does.
+      const row = await db
+        .transaction(async (tx) => {
+          const [inserted] = await tx
+            .insert(sendingDomains)
+            .values({ orgId: req.user!.orgId, domain: body.data.name, mailSubdomain: sub })
+            .returning();
+          await createInitialKey(tx, {
+            orgId: req.user!.orgId,
+            domainId: inserted!.id,
+            selector: generateSelector(new Date()),
+            privateKeyPem: keyPair.privateKeyPem,
+            publicKeyBase64: keyPair.publicKeyBase64,
+            keyType: keyPair.keyType,
+          });
+          const [fresh] = await tx
+            .select()
+            .from(sendingDomains)
+            .where(eq(sendingDomains.id, inserted!.id))
+            .limit(1);
+          return fresh!;
         })
-        .returning()
         .catch((err: Error) => {
           if (err.message.includes('sending_domains_org_domain_idx')) {
             throw AppError.conflict(`Domain "${body.data.name}" already registered for this org`);
@@ -159,7 +177,7 @@ const domainsResendRoutes: FastifyPluginAsync = async (app) => {
           throw err;
         });
 
-      return reply.code(200).send(domainShape(row!, rowToRecords(row!)));
+      return reply.code(200).send(domainShape(row, rowToRecords(row)));
     },
   );
 
@@ -273,7 +291,21 @@ const domainsResendRoutes: FastifyPluginAsync = async (app) => {
       });
 
       const { records: checked, allVerified } = await verifyDnsRecords(records);
-      const dkimOk = await verifyDkimDns(domain.dkimSelector, domain.domain, domain.dkimPublicKey);
+
+      // Promote a pending rotation key whose DNS is now live before checking DKIM.
+      const promotion = await verifyAndPromotePending(req.user!.orgId, id);
+      const [afterPromo] = promotion.promoted
+        ? await db
+            .select({ selector: sendingDomains.dkimSelector, pub: sendingDomains.dkimPublicKey })
+            .from(sendingDomains)
+            .where(eq(sendingDomains.id, id))
+            .limit(1)
+        : [{ selector: domain.dkimSelector, pub: domain.dkimPublicKey }];
+      const dkimOk = await verifyDkimDns(
+        afterPromo!.selector,
+        domain.domain,
+        afterPromo!.pub ?? domain.dkimPublicKey,
+      );
 
       const spfRec = checked.find((r) => r.purpose.startsWith('SPF'));
       const dmarcRec = checked.find((r) => r.purpose.startsWith('DMARC'));
