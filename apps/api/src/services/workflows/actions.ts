@@ -1570,48 +1570,37 @@ async function executeSendReviewRequest(
   const reviewUrl = `${base}/review/${token}`;
   const extra = { ...buildRunMergeData(run), review_url: reviewUrl };
 
-  const { queues } = await import('../../lib/queues.js').catch(() => ({ queues: null }));
-  if (!queues) return { type: 'next', nextNodeId: null };
-  const q = queues as unknown as Record<
-    string,
-    { add: (name: string, data: unknown) => Promise<void> } | undefined
-  >;
-
+  // Enqueue through the contract gate, not a raw queue.add: the review-request
+  // send is subject to the same producer↔consumer contract as every other
+  // email/sms job, so a malformed payload fails here rather than in a worker.
   if ((config.channel ?? 'email') === 'sms') {
     if (!ctx.contact?.phone || !config.message) return { type: 'next', nextNodeId: null };
-    await q.sms
-      ?.add('workflow-sms', {
-        orgId: ctx.orgId,
-        contactId: run.contactId,
-        workflowRunId: run.id,
-        phone: ctx.contact.phone,
-        message: substituteMergeTags(config.message, ctx.contact, extra),
-      })
-      .catch(() => {});
-    return { type: 'next', nextNodeId: null };
-  }
-
-  if (!ctx.contact?.email) return { type: 'next', nextNodeId: null };
-  await q.email
-    ?.add('workflow-email', {
+    return enqueueOrFail('sms', 'workflow-sms', {
       orgId: ctx.orgId,
       contactId: run.contactId,
       workflowRunId: run.id,
-      subject: substituteMergeTags(
-        config.subject ?? 'How was your order? Leave a review',
-        ctx.contact,
-        extra,
-      ),
-      html: config.html
-        ? substituteMergeTags(config.html, ctx.contact, extra)
-        : `<p>Hi ${ctx.contact.firstName ?? 'there'},</p><p>We'd love your feedback. <a href="${reviewUrl}">Leave a review</a>.</p>`,
-      text: config.text
-        ? substituteMergeTags(config.text, ctx.contact, extra)
-        : `Leave a review: ${reviewUrl}`,
-    })
-    .catch(() => {});
+      phone: ctx.contact.phone,
+      message: substituteMergeTags(config.message, ctx.contact, extra),
+    });
+  }
 
-  return { type: 'next', nextNodeId: null };
+  if (!ctx.contact?.email) return { type: 'next', nextNodeId: null };
+  return enqueueOrFail('email', 'workflow-email', {
+    orgId: ctx.orgId,
+    contactId: run.contactId,
+    workflowRunId: run.id,
+    subject: substituteMergeTags(
+      config.subject ?? 'How was your order? Leave a review',
+      ctx.contact,
+      extra,
+    ),
+    html: config.html
+      ? substituteMergeTags(config.html, ctx.contact, extra)
+      : `<p>Hi ${ctx.contact.firstName ?? 'there'},</p><p>We'd love your feedback. <a href="${reviewUrl}">Leave a review</a>.</p>`,
+    text: config.text
+      ? substituteMergeTags(config.text, ctx.contact, extra)
+      : `Leave a review: ${reviewUrl}`,
+  });
 }
 
 export async function executeAction(

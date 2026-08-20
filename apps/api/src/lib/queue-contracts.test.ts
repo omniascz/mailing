@@ -383,6 +383,13 @@ describe('no producer bypasses the contract', () => {
       label: ').email ?.add( — the cast-then-index shape',
       re: /\)\s*\.\s*(email|sms|viber)\s*\r?\n?\s*\??\.\s*add\s*\(/,
     },
+    {
+      // A queue reached through a local alias — `const q = queues as ...; q.email?.add(`.
+      // The plain identifier receiver slips past the `queues.`-anchored shape above,
+      // which is exactly how the review-request node bypassed the gate.
+      label: 'alias.email ?.add( — any identifier receiver',
+      re: /\b\w+\s*\.\s*(email|sms|viber)\s*\??\.\s*add\s*\(/,
+    },
   ];
 
   /** Comments describe the bug; they are not the bug. */
