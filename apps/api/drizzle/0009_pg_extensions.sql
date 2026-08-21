@@ -1,0 +1,22 @@
+-- Postgres extensions the application calls at runtime.
+--
+-- `vector` is created by 0000_baseline.sql because a column type needs it, so
+-- drizzle-kit emitted it. `unaccent` is different: nothing in the schema
+-- references it, only a query does —
+--
+--   services/workflows/triggers.ts, processDailyNameDayTriggers:
+--     AND lower(unaccent(first_name)) = ANY($2)
+--
+-- so no generator would ever produce it, and no migration did. On a database
+-- that has only ever been migrated, that daily cron fails with
+-- `ERROR: function unaccent(character varying) does not exist`. It went
+-- unnoticed because developer databases tend to have contrib extensions
+-- installed by hand, which is precisely the trap sql-explain.integration.test.ts
+-- was written to catch.
+--
+-- IF NOT EXISTS makes this safe on databases where it was created by hand.
+--
+-- Extensions are schema-qualified into `public` by default; unaccent() is then
+-- resolvable from the app's search_path without qualification, which is how the
+-- query above calls it.
+CREATE EXTENSION IF NOT EXISTS unaccent;

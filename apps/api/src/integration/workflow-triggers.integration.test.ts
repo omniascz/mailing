@@ -155,11 +155,6 @@ describe('workflow triggers fire (real HTTP, real DB)', () => {
     const session = await login(app);
     cookie = session.cookie;
     orgId = session.orgId;
-
-    // processDailyNameDayTriggers calls unaccent(); no migration creates the
-    // extension (a known gap, see sql-explain.integration.test.ts). Without it
-    // the name-day case fails for an unrelated reason.
-    await db.execute(sql`CREATE EXTENSION IF NOT EXISTS unaccent`);
   }, 60_000);
 
   // Everything this file creates is removed again. The suite shares one

@@ -64,6 +64,13 @@
       "when": 1787221642982,
       "tag": "0008_dkim_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787338168424,
+      "tag": "0009_pg_extensions",
+      "breakpoints": true
     }
   ]
 }
