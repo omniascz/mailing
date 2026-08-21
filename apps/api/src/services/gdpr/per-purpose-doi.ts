@@ -16,6 +16,7 @@ import { db } from '../../db/client.js';
 import { processingPurposes, contactGdprConsents, contacts } from '../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
 import { sendTransactionalEmail } from '../../lib/queues.js';
+import { env } from '../../config/env.js';
 
 const DOI_TOKEN_TTL = 24 * 3600; // 24 hours in seconds
 
@@ -100,8 +101,8 @@ export async function initiatePurposeDoi(
   const firstName = contact.firstName ?? '';
   await sendTransactionalEmail({
     to: contact.email,
-    from: process.env.SYSTEM_EMAIL_FROM ?? 'noreply@forgemsg.com',
-    fromName: process.env.SYSTEM_EMAIL_FROM_NAME ?? 'ForgeMsg',
+    from: env.SYSTEM_EMAIL_FROM,
+    fromName: env.SYSTEM_EMAIL_FROM_NAME,
     subject: `Potvrzení souhlasu — ${purpose.name}`,
     html: buildDoiEmailHtml(purpose.name, firstName, confirmUrl.toString()),
     text: `Potvrďte souhlas s účelem "${purpose.name}" kliknutím na odkaz: ${confirmUrl.toString()}`,

@@ -22,6 +22,7 @@ import { redis } from '@forgemsg/shared/redis';
 import { shouldSuppressDueToConversion } from './conversion-suppression.js';
 import { normalizeConditionConfig } from './condition-rules.js';
 import { resolveEventRelativeUntil, type EventRelativeUntil } from './wait-resolve.js';
+import { env } from '../../config/env.js';
 import {
   enqueueValidated,
   CHANNEL_TO_QUEUE,
@@ -768,21 +769,12 @@ async function executeInternalNotification(
   // transactional helper, the same one scheduled reports use.
   const { sendTransactionalEmail } = await import('../../lib/queues.js');
 
-  const from = process.env.SYSTEM_EMAIL_FROM ?? process.env.DOI_FROM_EMAIL;
-  if (!from) {
-    return {
-      type: 'error',
-      message:
-        'internal_notification: no sender address configured — set SYSTEM_EMAIL_FROM (or DOI_FROM_EMAIL)',
-    };
-  }
-
   const body = config.body ? substituteMergeTags(config.body, ctx.contact) : '';
   try {
     await sendTransactionalEmail({
       to: config.to,
-      from,
-      fromName: process.env.SYSTEM_EMAIL_FROM_NAME ?? 'ForgeMsg',
+      from: env.SYSTEM_EMAIL_FROM,
+      fromName: env.SYSTEM_EMAIL_FROM_NAME,
       subject: substituteMergeTags(config.subject, ctx.contact),
       html: body,
       text: body,

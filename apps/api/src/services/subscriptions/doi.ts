@@ -8,6 +8,7 @@
 import crypto from 'node:crypto';
 import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
+import { env } from '../../config/env.js';
 
 const DOI_TTL = 60 * 60 * 48; // 48h — must match subscriptions route
 
@@ -30,7 +31,7 @@ export async function sendListDoiConfirmation(opts: {
   const greeting = opts.firstName ? `Hi ${opts.firstName},` : 'Hi,';
   await sendTransactionalEmail({
     to: opts.email,
-    from: process.env.DOI_FROM_EMAIL ?? 'no-reply@example.com',
+    from: env.SYSTEM_EMAIL_FROM,
     fromName: opts.listName,
     subject: `Confirm your subscription to ${opts.listName}`,
     html: `<!doctype html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:40px auto;padding:24px;color:#1e293b">

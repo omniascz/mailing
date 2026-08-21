@@ -11,9 +11,13 @@ import { runSavedReport } from '../report-builder/index.js';
 import type { ReportResult } from '../report-builder/pure.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
+import { env } from '../../config/env.js';
 
-const REPORTS_FROM =
-  process.env.REPORTS_FROM_EMAIL ?? process.env.DOI_FROM_EMAIL ?? 'reports@forgemsg.com';
+// The one sanctioned second address: a report someone may want to reply to.
+// Validated in config/env.ts, and refused there unless it sits on the same
+// domain as SYSTEM_EMAIL_FROM. `??` is safe here — env.REPORTS_FROM_EMAIL is a
+// parsed optional, not a raw process.env read, so '' never reaches it.
+const REPORTS_FROM = env.REPORTS_FROM_EMAIL ?? env.SYSTEM_EMAIL_FROM;
 
 export type ReportFrequency = 'daily' | 'weekly' | 'monthly';
 export type ReportType =

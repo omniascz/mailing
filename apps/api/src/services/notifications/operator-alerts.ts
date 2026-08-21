@@ -9,9 +9,10 @@
  * couldn't be notified.
  */
 import { sendTransactionalEmail } from '../../lib/queues.js';
+import { env } from '../../config/env.js';
 
 const OPERATOR_EMAIL = process.env.OPERATOR_EMAIL;
-const FROM_EMAIL = process.env.DOI_FROM_EMAIL ?? 'no-reply@example.com';
+const FROM_EMAIL = env.SYSTEM_EMAIL_FROM;
 
 function operatorConfigured(): boolean {
   return Boolean(OPERATOR_EMAIL && OPERATOR_EMAIL.includes('@'));

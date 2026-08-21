@@ -18,6 +18,7 @@ import {
 } from '../../db/schema/index.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
+import { env } from '../../config/env.js';
 
 const API_BASE = process.env.API_BASE_URL ?? 'https://api.forgemsg.io';
 
@@ -37,7 +38,7 @@ export async function createEmailIdentity(orgId: string, email: string): Promise
   const link = `${API_BASE}/api/v1/email-identities/confirm/${token}`;
   await sendTransactionalEmail({
     to: email,
-    from: process.env.SYSTEM_FROM_EMAIL ?? 'no-reply@forgemsg.io',
+    from: env.SYSTEM_EMAIL_FROM,
     fromName: 'ForgeMsg',
     subject: 'Verify your email address',
     html: `<p>Confirm you control <strong>${email}</strong> so it can be used with ForgeMsg.</p><p><a href="${link}">Verify this address</a></p>`,

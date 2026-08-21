@@ -240,8 +240,8 @@ describe('internal_notification', () => {
   };
 
   it('does not enqueue onto the email queue at all', async () => {
-    process.env.SYSTEM_EMAIL_FROM = 'system@example.test';
     const { executeAction } = await import('../services/workflows/actions.js');
+    const { env } = await import('../config/env.js');
     const result = await executeAction(node as never, makeRun(), ctx);
 
     expect(result.type).toBe('next');
@@ -252,19 +252,33 @@ describe('internal_notification', () => {
     expect(sendTransactionalEmail).toHaveBeenCalledTimes(1);
     expect(sendTransactionalEmail.mock.calls[0]![0]).toMatchObject({
       to: 'ops@example.test',
-      from: 'system@example.test',
+      from: env.SYSTEM_EMAIL_FROM,
     });
   });
 
-  it('reports a missing sender instead of dropping the notification', async () => {
-    delete process.env.SYSTEM_EMAIL_FROM;
-    delete process.env.DOI_FROM_EMAIL;
+  /**
+   * This used to read `process.env.SYSTEM_EMAIL_FROM ?? process.env.DOI_FROM_EMAIL`
+   * and return an error result when both were absent — a runtime check, on one
+   * of thirteen call sites, for a condition the other twelve answered with a
+   * committed fallback instead.
+   *
+   * The sender is now a required field in config/env.ts, so "no sender
+   * configured" cannot be reached at run time: the process does not start. The
+   * old branch was deleted rather than left as unreachable code, and what
+   * remains to pin is that the action takes the sender from the validated
+   * config and from nowhere else.
+   */
+  it('takes its sender from validated config, not from a raw env read', async () => {
     const { executeAction } = await import('../services/workflows/actions.js');
-    const result = await executeAction(node as never, makeRun(), ctx);
+    const { env } = await import('../config/env.js');
+    await executeAction(node as never, makeRun(), ctx);
 
-    expect(result.type).toBe('error');
-    expect((result as { message: string }).message).toContain('SYSTEM_EMAIL_FROM');
-    expect(sendTransactionalEmail).not.toHaveBeenCalled();
+    const sent = sendTransactionalEmail.mock.calls[0]![0] as { from: string; fromName: string };
+    expect(sent.from).toBe(env.SYSTEM_EMAIL_FROM);
+    expect(sent.fromName).toBe(env.SYSTEM_EMAIL_FROM_NAME);
+    expect(sent.from, 'an empty From is what the old ?? produced on a set-but-empty var').not.toBe(
+      '',
+    );
   });
 });
 
