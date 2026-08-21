@@ -1357,23 +1357,15 @@ async function executeAwardLoyaltyPoints(
     const { getMemberByContact, creditPoints } = await import('../loyalty/enrollment.js');
     const member = await getMemberByContact(ctx.orgId, config.programId, run.contactId);
     if (member) {
-      const { tieredUp, tierName } = await creditPoints(ctx.orgId, member.id, config.points, {
+      // creditPoints fires the `loyalty_tier_up` trigger itself, for every
+      // caller rather than this one. Do not fire it again here — that would
+      // start the tier-up workflow twice for a workflow-awarded tier change.
+      await creditPoints(ctx.orgId, member.id, config.points, {
         description: config.description ?? 'Workflow bonus points',
         type: 'bonus',
         actorType: 'workflow',
         actorId: run.workflowId,
       });
-      // Fire tier-up trigger if applicable
-      if (tieredUp && member.currentTierId && tierName) {
-        const { onLoyaltyTierUp } = await import('./triggers.js');
-        await onLoyaltyTierUp(
-          ctx.orgId,
-          run.contactId,
-          config.programId,
-          member.currentTierId,
-          tierName,
-        );
-      }
     }
   } catch {
     // Don't fail the run

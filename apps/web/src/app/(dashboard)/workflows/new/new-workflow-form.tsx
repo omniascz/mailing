@@ -8,6 +8,11 @@ import { useToast } from '@/components/ui/toast';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+// Every value of workflowTriggerTypeEnum belongs here. A trigger the API
+// accepts but the UI never offers is a feature only an API caller can reach;
+// one the UI offers but nothing fires is worse. trigger-coverage.test.ts
+// asserts this list against the enum, so adding an enum value without a tile
+// fails the build.
 const TRIGGER_TYPES = [
   { value: 'manual', label: 'Manual', desc: 'Run on demand, no automatic trigger.' },
   { value: 'list_subscribe', label: 'List subscribe', desc: 'When a contact joins a list.' },
@@ -17,6 +22,41 @@ const TRIGGER_TYPES = [
   { value: 'form_submit', label: 'Form submit', desc: 'When a signup form is submitted.' },
   { value: 'purchase_event', label: 'Purchase', desc: 'When a contact buys something.' },
   { value: 'name_day_today', label: 'CZ jmeniny', desc: "On the contact's name day." },
+  {
+    value: 'segment_entered',
+    label: 'Segment entered',
+    desc: 'When a contact starts matching a segment.',
+  },
+  {
+    value: 'segment_exited',
+    label: 'Segment exited',
+    desc: 'When a contact stops matching a segment.',
+  },
+  {
+    value: 'lifecycle_stage_changed',
+    label: 'Lifecycle stage changed',
+    desc: 'When a contact moves to another lifecycle stage.',
+  },
+  {
+    value: 'n_days_before_holiday',
+    label: 'Before a CZ/SK holiday',
+    desc: 'N days before a Czech or Slovak public holiday.',
+  },
+  {
+    value: 'loyalty_points_earned',
+    label: 'Loyalty points earned',
+    desc: 'When a member earns points from an earning rule.',
+  },
+  {
+    value: 'loyalty_tier_up',
+    label: 'Loyalty tier up',
+    desc: 'When a member reaches a higher tier.',
+  },
+  {
+    value: 'loyalty_reward_redeemed',
+    label: 'Loyalty reward redeemed',
+    desc: 'When a member redeems a reward.',
+  },
 ] as const;
 
 type TriggerType = (typeof TRIGGER_TYPES)[number]['value'];

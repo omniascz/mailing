@@ -50,6 +50,8 @@ const triggerTypeValues = [
   'name_day_today',
   'lifecycle_stage_changed',
   'n_days_before_holiday',
+  'segment_entered',
+  'segment_exited',
 ] as const;
 
 const createSchema = z.object({

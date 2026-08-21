@@ -74,13 +74,19 @@ export async function transitionStage(
   });
 
   // Fire workflow event (dynamic import avoids circular deps with workflows)
+  //
+  // Two channels on purpose: `api_event` is the generic event bus that 29
+  // other call sites feed, and `lifecycle_stage_changed` is the dedicated
+  // trigger type. Before this, only the api_event went out, so a workflow
+  // built on the dedicated trigger could be activated and never ran.
   try {
-    const { onApiEvent } = await import('../workflows/triggers.js');
+    const { onApiEvent, onLifecycleStageChanged } = await import('../workflows/triggers.js');
     await onApiEvent(orgId, contactId, 'lifecycle_stage_changed', {
       fromStage,
       toStage,
       reason: opts.reason,
     });
+    await onLifecycleStageChanged(orgId, contactId, fromStage, toStage);
   } catch {
     // non-fatal — the stage change is persisted regardless
   }

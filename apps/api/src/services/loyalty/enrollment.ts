@@ -187,11 +187,26 @@ export async function creditPoints(
       actorId: opts.actorId,
     });
 
-    return newBalance;
+    return { newBalance, contactId: member.contactId, programId: member.programId };
   });
 
-  const { tieredUp, tierName } = await recalculateTier(orgId, memberId);
-  return { newBalance: result, tieredUp, tierName };
+  const { tierId, tieredUp, tierName } = await recalculateTier(orgId, memberId);
+
+  // Fire the `loyalty_tier_up` trigger here rather than at any one call site.
+  // creditPoints has three production callers — the earn-rule path
+  // (earning-rules.ts), the workflow award-points action (workflows/actions.ts)
+  // and the manual admin credit (routes/v1/loyalty/programs.ts). The call used
+  // to live in the workflow action alone, so tiering up through the loyalty API
+  // fired nothing. Sitting here it covers all three.
+  if (tieredUp && tierId && tierName && result.contactId) {
+    void import('../workflows/triggers.js')
+      .then(({ onLoyaltyTierUp }) =>
+        onLoyaltyTierUp(orgId, result.contactId, result.programId, tierId, tierName),
+      )
+      .catch(() => {});
+  }
+
+  return { newBalance: result.newBalance, tieredUp, tierName };
 }
 
 export async function debitPoints(

@@ -297,6 +297,91 @@ export function onSegmentExited(
   return fireSegmentTrigger(orgId, contactId, segmentId, 'segment_exited');
 }
 
+// ─── Trigger: form_submit ─────────────────────────────────────────────────────
+
+/**
+ * Fired when a signup form is submitted.
+ *
+ * `form_submit` was selectable in the UI, accepted by the API and present in
+ * the enum, and nothing ever queried it — a workflow on this trigger could be
+ * created and activated and would never run. The only thing a submission
+ * started was the form's own `config.workflowId` via `triggerManual`, which
+ * runs a workflow by id regardless of its trigger type.
+ *
+ * config: { formId?: string } — unset matches any form, same convention as
+ * `fireSegmentTrigger`'s segmentId. There is deliberately no `formSlug`
+ * filter: `signup_forms` has no slug column, so such a key would match
+ * nothing while looking like it filtered.
+ */
+export async function onFormSubmit(
+  orgId: string,
+  contactId: string,
+  formId: string,
+): Promise<void> {
+  const activeWorkflows = await db
+    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, 'form_submit'),
+        isNull(workflows.deletedAt),
+      ),
+    );
+
+  await Promise.allSettled(
+    activeWorkflows.map(async (w) => {
+      const config = w.triggerConfig as { formId?: string };
+      if (config.formId && config.formId !== formId) return;
+      await safeStartRun(w.id, orgId, contactId, { triggerEvent: 'form_submit', formId });
+    }),
+  );
+}
+
+// ─── Trigger: lifecycle_stage_changed ─────────────────────────────────────────
+
+/**
+ * Fired when a contact moves between lifecycle stages.
+ *
+ * `transitionStage` already announced the change, but only as a generic
+ * `api_event` named 'lifecycle_stage_changed', so the dedicated enum value
+ * nothing queried stayed dead. Both now fire: the api_event stream is the
+ * generic bus (29 other call sites use it) and stays as it was.
+ *
+ * config: { toStage?: string } — unset matches any transition.
+ */
+export async function onLifecycleStageChanged(
+  orgId: string,
+  contactId: string,
+  fromStage: string | null,
+  toStage: string,
+): Promise<void> {
+  const activeWorkflows = await db
+    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(
+      and(
+        eq(workflows.orgId, orgId),
+        eq(workflows.status, 'active'),
+        eq(workflows.triggerType, 'lifecycle_stage_changed'),
+        isNull(workflows.deletedAt),
+      ),
+    );
+
+  await Promise.allSettled(
+    activeWorkflows.map(async (w) => {
+      const config = w.triggerConfig as { toStage?: string };
+      if (config.toStage && config.toStage !== toStage) return;
+      await safeStartRun(w.id, orgId, contactId, {
+        triggerEvent: 'lifecycle_stage_changed',
+        fromStage,
+        toStage,
+      });
+    }),
+  );
+}
+
 // ─── Trigger: date_field (cron-based) ────────────────────────────────────────
 
 /**
@@ -697,7 +782,7 @@ export async function onLoyaltyPointsEarned(
       and(
         eq(workflows.orgId, orgId),
         eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'loyalty_points_earned' as never),
+        eq(workflows.triggerType, 'loyalty_points_earned'),
         isNull(workflows.deletedAt),
       ),
     );
@@ -735,7 +820,7 @@ export async function onLoyaltyTierUp(
       and(
         eq(workflows.orgId, orgId),
         eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'loyalty_tier_up' as never),
+        eq(workflows.triggerType, 'loyalty_tier_up'),
         isNull(workflows.deletedAt),
       ),
     );
@@ -772,7 +857,7 @@ export async function onLoyaltyRewardRedeemed(
       and(
         eq(workflows.orgId, orgId),
         eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'loyalty_reward_redeemed' as never),
+        eq(workflows.triggerType, 'loyalty_reward_redeemed'),
         isNull(workflows.deletedAt),
       ),
     );
@@ -786,236 +871,6 @@ export async function onLoyaltyRewardRedeemed(
         triggerType: 'loyalty_reward_redeemed',
         programId,
         rewardId,
-      });
-    }),
-  );
-}
-
-// ─── GDPR consent triggers ────────────────────────────────────────────────────
-
-/**
- * Fire all active workflows with trigger 'consent_granted'.
- * config: { purposeId?: string }  — optional filter by specific purpose.
- *
- * Called from grantConsent() in the GDPR service.
- */
-export async function onConsentGranted(
-  orgId: string,
-  contactId: string,
-  purposeId: string,
-  purposeSlug: string,
-): Promise<void> {
-  const activeWorkflows = await db
-    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
-    .from(workflows)
-    .where(
-      and(
-        eq(workflows.orgId, orgId),
-        eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'consent_granted' as never),
-        isNull(workflows.deletedAt),
-      ),
-    );
-
-  await Promise.allSettled(
-    activeWorkflows.map(async (w) => {
-      const config = w.triggerConfig as { purposeId?: string };
-      if (config.purposeId && config.purposeId !== purposeId) return;
-      await safeStartRun(w.id, orgId, contactId, {
-        triggerType: 'consent_granted',
-        purposeId,
-        purposeSlug,
-      });
-    }),
-  );
-}
-
-/**
- * Fire all active workflows with trigger 'consent_revoked'.
- * config: { purposeId?: string }
- *
- * Called from revokeConsent() in the GDPR service.
- */
-export async function onConsentRevoked(
-  orgId: string,
-  contactId: string,
-  purposeId: string,
-  purposeSlug: string,
-  reason?: string,
-): Promise<void> {
-  const activeWorkflows = await db
-    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
-    .from(workflows)
-    .where(
-      and(
-        eq(workflows.orgId, orgId),
-        eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'consent_revoked' as never),
-        isNull(workflows.deletedAt),
-      ),
-    );
-
-  await Promise.allSettled(
-    activeWorkflows.map(async (w) => {
-      const config = w.triggerConfig as { purposeId?: string };
-      if (config.purposeId && config.purposeId !== purposeId) return;
-      await safeStartRun(w.id, orgId, contactId, {
-        triggerType: 'consent_revoked',
-        purposeId,
-        purposeSlug,
-        reason,
-      });
-    }),
-  );
-}
-
-/**
- * Fire all active workflows with trigger 'consent_expired'.
- * Called nightly by the expireStaleConsents() cron job after marking records expired.
- *
- * config: { purposeId?: string }
- */
-export async function onConsentExpired(
-  orgId: string,
-  contactId: string,
-  purposeId: string,
-  purposeSlug: string,
-): Promise<void> {
-  const activeWorkflows = await db
-    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
-    .from(workflows)
-    .where(
-      and(
-        eq(workflows.orgId, orgId),
-        eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'consent_expired' as never),
-        isNull(workflows.deletedAt),
-      ),
-    );
-
-  await Promise.allSettled(
-    activeWorkflows.map(async (w) => {
-      const config = w.triggerConfig as { purposeId?: string };
-      if (config.purposeId && config.purposeId !== purposeId) return;
-      await safeStartRun(w.id, orgId, contactId, {
-        triggerType: 'consent_expired',
-        purposeId,
-        purposeSlug,
-      });
-    }),
-  );
-}
-
-/**
- * Fire workflows triggered by company events (#322).
- * eventType: 'company_enriched' | 'company_deal_won' | 'company_arr_threshold'
- * config: { eventType?: string; threshold?: number }
- */
-export async function onCompanyEvent(
-  orgId: string,
-  contactId: string,
-  eventType: string,
-  data: Record<string, unknown> = {},
-): Promise<void> {
-  const activeWorkflows = await db
-    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
-    .from(workflows)
-    .where(
-      and(
-        eq(workflows.orgId, orgId),
-        eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'company_event' as never),
-        isNull(workflows.deletedAt),
-      ),
-    );
-
-  await Promise.allSettled(
-    activeWorkflows.map(async (w) => {
-      const config = w.triggerConfig as { eventType?: string; threshold?: number };
-      if (config.eventType && config.eventType !== eventType) return;
-      if (config.threshold && eventType === 'company_arr_threshold') {
-        const arr = data['annualRevenueUsd'] as number | undefined;
-        if (!arr || arr < config.threshold) return;
-      }
-      await safeStartRun(w.id, orgId, contactId, {
-        triggerType: 'company_event',
-        eventType,
-        ...data,
-      });
-    }),
-  );
-}
-
-/**
- * Fire workflows triggered by helpdesk ticket events (#323).
- * eventType: 'ticket_created' | 'ticket_sla_breached' | 'ticket_reopened' | 'ticket_resolved'
- * config: { eventType?: string; priority?: string }
- */
-export async function onTicketEvent(
-  orgId: string,
-  contactId: string,
-  ticketId: string,
-  eventType: string,
-  data: Record<string, unknown> = {},
-): Promise<void> {
-  const activeWorkflows = await db
-    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
-    .from(workflows)
-    .where(
-      and(
-        eq(workflows.orgId, orgId),
-        eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'ticket_event' as never),
-        isNull(workflows.deletedAt),
-      ),
-    );
-
-  await Promise.allSettled(
-    activeWorkflows.map(async (w) => {
-      const config = w.triggerConfig as { eventType?: string; priority?: string };
-      if (config.eventType && config.eventType !== eventType) return;
-      if (config.priority && data['priority'] !== config.priority) return;
-      await safeStartRun(w.id, orgId, contactId, {
-        triggerType: 'ticket_event',
-        ticketId,
-        eventType,
-        ...data,
-      });
-    }),
-  );
-}
-
-/**
- * Fire workflows triggered by a tracked email link click (#481).
- * config: { urlPattern?: string } — optional substring match on the clicked URL.
- */
-export async function onEmailLinkClick(
-  orgId: string,
-  contactId: string,
-  campaignId: string,
-  clickedUrl: string,
-): Promise<void> {
-  const activeWorkflows = await db
-    .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
-    .from(workflows)
-    .where(
-      and(
-        eq(workflows.orgId, orgId),
-        eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'email_link_click' as never),
-        isNull(workflows.deletedAt),
-      ),
-    );
-
-  await Promise.allSettled(
-    activeWorkflows.map(async (w) => {
-      const config = w.triggerConfig as { urlPattern?: string; campaignId?: string };
-      if (config.campaignId && config.campaignId !== campaignId) return;
-      if (config.urlPattern && !clickedUrl.includes(config.urlPattern)) return;
-      await safeStartRun(w.id, orgId, contactId, {
-        triggerType: 'email_link_click',
-        campaignId,
-        clickedUrl,
       });
     }),
   );
@@ -1040,7 +895,7 @@ export async function onNewBlogPost(
       and(
         eq(workflows.orgId, orgId),
         eq(workflows.status, 'active'),
-        eq(workflows.triggerType, 'api_event' as never),
+        eq(workflows.triggerType, 'api_event'),
         isNull(workflows.deletedAt),
       ),
     );

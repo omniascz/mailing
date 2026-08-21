@@ -338,6 +338,15 @@ export async function processFormSubmission(
         .catch(() => {});
     }
 
+    // Fire `form_submit` workflow triggers. Separate from the branch above:
+    // that one runs one specific workflow by id whatever its trigger type is,
+    // this one runs every workflow that asked to be started by a form submit.
+    if (contactId) {
+      import('../../services/workflows/triggers.js')
+        .then(({ onFormSubmit }) => onFormSubmit(form.orgId, contactId!, formId))
+        .catch(() => {});
+    }
+
     // Log submission
     await db.insert(signupFormSubmissions).values({
       formId,
