@@ -449,6 +449,32 @@ export function getMtaQueue(isp: IspName): Queue {
   return mtaQueues[isp];
 }
 
+/** Redis queue name → the canonical Queue object, built once from mtaQueues. */
+const MTA_QUEUE_BY_NAME: ReadonlyMap<string, Queue> = new Map(
+  Object.values(mtaQueues).map((q) => [q.name, q] as const),
+);
+
+/**
+ * The canonical Queue object for an MTA queue name.
+ *
+ * Exists so a consumer that only knows `job.queueName` can put a message back
+ * without constructing its own Queue. An ad-hoc `new Queue(name, { connection })`
+ * carries no defaultJobOptions, and BullMQ then defaults `attempts` to 0 —
+ * which is how the throttle deferral used to strip a message's whole retry
+ * window. Throws rather than falling back: the only caller is the MTA worker,
+ * which runs on exactly these queues, so an unknown name is a wiring bug and
+ * should not be papered over with a queue that has no policy.
+ */
+export function getMtaQueueByName(name: string): Queue {
+  const q = MTA_QUEUE_BY_NAME.get(name);
+  if (!q) {
+    throw new Error(
+      `getMtaQueueByName: "${name}" is not an MTA queue (known: ${[...MTA_QUEUE_BY_NAME.keys()].join(', ')})`,
+    );
+  }
+  return q;
+}
+
 /**
  * Route a job to the correct batch-sender queue based on stream.
  * Transactional and triggered streams get dedicated queues so bulk broadcast

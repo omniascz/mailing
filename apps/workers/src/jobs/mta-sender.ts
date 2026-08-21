@@ -13,9 +13,15 @@
  * Produces: send/bounce/fail events to the event pipeline (Kafka / internal API)
  */
 
-import { Worker, Queue, type Job } from 'bullmq';
+import { Worker, type Job } from 'bullmq';
 import { captureJobException } from '../lib/telemetry.js';
-import { connection, QUEUE_NAMES, type MtaSendJobData } from '../queues/index.js';
+import {
+  connection,
+  QUEUE_NAMES,
+  getMtaQueueByName,
+  type MtaSendJobData,
+} from '../queues/index.js';
+import { throttleRequeueOptions } from '../lib/requeue-options.js';
 import * as mtaClient from '../lib/mta-grpc-client.js';
 import {
   checkThrottle,
@@ -31,15 +37,6 @@ const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 // a persistently-throttled message isn't deferred forever.
 const THROTTLE_REQUEUE_DELAY_MS = 60_000;
 const THROTTLE_MAX_DEFERRALS = 20; // ~20 min, then send anyway
-const requeueQueues = new Map<string, Queue>();
-function requeueQueue(name: string): Queue {
-  let q = requeueQueues.get(name);
-  if (!q) {
-    q = new Queue(name, { connection });
-    requeueQueues.set(name, q);
-  }
-  return q;
-}
 
 // ─── MTA Client (gRPC to Go engine) ──────────────────────────────────────────
 
@@ -200,10 +197,14 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
   if (deferrals < THROTTLE_MAX_DEFERRALS) {
     const throttle = await checkThrottle(data.orgId, recipientDomain, sendingIp).catch(() => null);
     if (throttle && !throttle.allowed) {
-      await requeueQueue(job.queueName).add(
+      // Back onto the canonical queue, carrying this job's own retry policy.
+      // Both halves matter: the ad-hoc queue this replaced had no
+      // defaultJobOptions, and passing no attempts leaves BullMQ's default of
+      // 0 — a deferred message that came back to a 4xx was simply dropped.
+      await getMtaQueueByName(job.queueName).add(
         job.name,
         { ...data, throttleAttempts: deferrals + 1 },
-        { delay: THROTTLE_REQUEUE_DELAY_MS, priority: data.priority },
+        throttleRequeueOptions(job, THROTTLE_REQUEUE_DELAY_MS, data.priority),
       );
       return { status: 'throttled', requeued: true, isp: throttle.isp };
     }
