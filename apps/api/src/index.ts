@@ -306,6 +306,11 @@ import perContactStoRoutes from './routes/v1/per-contact-sto.js';
 import channelFallbackRoutes from './routes/v1/channel-fallback.js';
 import aiAltTextRoutes from './routes/v1/ai-alt-text.js';
 import unsubscribeAbRoutes from './routes/v1/unsubscribe-ab.js';
+import {
+  metaLeadAdsWebhookEnabled,
+  instagramWebhookEnabled,
+  messengerWebhookEnabled,
+} from './lib/webhook-switches.js';
 
 // CZ/SK merge-tag filters. The workers process registers these at start-up;
 // the API never did, so every place the API renders or inspects a template —
@@ -524,8 +529,11 @@ export async function buildApp() {
   await app.register(aiAnalyticsRoutes);
   await app.register(hubspotRoutes);
   await app.register(calendlyRoutes);
-  await app.register(instagramWebhookRoutes);
-  await app.register(messengerWebhookRoutes);
+  // Off by default. Their signature verification opens when the app secret is
+  // unset — deliberately not repaired, because we are not launching these
+  // surfaces. Unregistered means the path 404s and no body is read.
+  if (instagramWebhookEnabled()) await app.register(instagramWebhookRoutes);
+  if (messengerWebhookEnabled()) await app.register(messengerWebhookRoutes);
   await app.register(helpdeskRoutingRoutes);
   await app.register(helpdeskAnalyticsRoutes);
   await app.register(aiSupportRoutes);
@@ -595,7 +603,8 @@ export async function buildApp() {
   await app.register(adLookalikeRoutes);
   await app.register(sklikLookalikeRoutes);
   await app.register(adReportingRoutes);
-  await app.register(adsWebhookRoutes);
+  // Off by default — see lib/webhook-switches.ts.
+  if (metaLeadAdsWebhookEnabled()) await app.register(adsWebhookRoutes);
   await app.register(sklikPixelRoutes);
   await app.register(commerceProductRoutes);
   await app.register(commerceQuoteRoutes);

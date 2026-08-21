@@ -29,6 +29,7 @@ import { db } from '../../../db/client.js';
 import { metaPageMappings } from '../../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
 import { env } from '../../../config/env.js';
+import { metaWebhookEnabled } from '../../../lib/webhook-switches.js';
 
 const verifyQuery = z.object({
   'hub.mode': z.string(),
@@ -41,7 +42,17 @@ export default async function metaWebhookRoutes(app: FastifyInstance) {
   const adminAuth = { preHandler: [app.authenticate, app.requireRole('admin', 'owner')] };
 
   // ── Verification handshake (GET) ──────────────────────────────────────────
+  // The two /webhook/meta routes are off by default; verifySignature below
+  // returns true when META_APP_SECRET is unset. Gated here rather than by
+  // skipping the whole route file, because this file also serves the
+  // authenticated /api/v1/meta/pages admin surface, which is unaffected.
   app.get('/webhook/meta', async (req, reply) => {
+    if (!metaWebhookEnabled()) {
+      return reply.code(501).send({
+        code: 'INTEGRATION_DISABLED',
+        message: 'Meta webhooks is disabled. Set ENABLE_META_WEBHOOK=true to enable.',
+      });
+    }
     const query = verifyQuery.safeParse(req.query);
     if (!query.success) {
       return reply.code(400).send({ error: 'Missing hub params' });
@@ -59,6 +70,12 @@ export default async function metaWebhookRoutes(app: FastifyInstance) {
 
   // ── Event delivery (POST) ─────────────────────────────────────────────────
   app.post('/webhook/meta', { config: { rawBody: true } }, async (req, reply) => {
+    if (!metaWebhookEnabled()) {
+      return reply.code(501).send({
+        code: 'INTEGRATION_DISABLED',
+        message: 'Meta webhooks is disabled. Set ENABLE_META_WEBHOOK=true to enable.',
+      });
+    }
     // Verify HMAC signature
     const signature = (req.headers['x-hub-signature-256'] as string | undefined) ?? '';
     if (!verifySignature(req, signature)) {

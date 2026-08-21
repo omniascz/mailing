@@ -4,6 +4,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { telnyxWebhookEnabled } from '../../lib/webhook-switches.js';
 import {
   placeOutboundCall,
   terminateCall,
@@ -101,6 +102,20 @@ const phoneRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { provider } = z.object({ provider: z.enum(['twilio', 'telnyx']) }).parse(req.params);
+
+      // Telnyx only. Its verifyWebhookSignature checks that the signature
+      // headers exist and the timestamp is fresh, then returns without looking
+      // at either — `void rawBody`, with a note that real Ed25519 verification
+      // needs a dependency we have not added. It accepts a forged body with a
+      // key configured just as readily as without one, so nothing short of not
+      // serving the endpoint closes it. Twilio's verifier is real and stays on.
+      if (provider === 'telnyx' && !telnyxWebhookEnabled()) {
+        return reply.code(501).send({
+          code: 'INTEGRATION_DISABLED',
+          message: 'Telnyx webhooks are disabled. Set ENABLE_TELNYX_WEBHOOK=true to enable.',
+        });
+      }
+
       const p = getVoipProvider(provider);
       const rawBody =
         (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
