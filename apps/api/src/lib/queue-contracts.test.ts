@@ -116,6 +116,9 @@ vi.mock('../services/frequency-capping/index.js', () => ({
 vi.mock('../services/sending/from-domain.js', () => ({
   assertFromDomainOwned: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock('../services/reviews-v2/index.js', () => ({
+  createReviewRequest: async () => ({ token: 'tok-123' }),
+}));
 vi.mock('../services/crm/one-to-one-email.js', () => ({
   buildMergeVars: () => ({}),
   substitutePersonalMergeTags: (s: string) => s,
@@ -265,6 +268,45 @@ describe('internal_notification', () => {
   });
 });
 
+// ─── 1c. The producer that used to swallow its own failure ───────────────────
+
+describe('send_review_request reports an enqueue failure', () => {
+  /**
+   * This action reached the queue through a local alias and ended both branches
+   * in `.catch(() => {})`, so a refused enqueue returned `next` and the run
+   * recorded a message the contact never got. The swallow is gone — it goes
+   * through enqueueOrFail like every other send — but nothing pinned that, so
+   * putting it back would have been silent. This is that pin.
+   *
+   * The payload this action builds is valid today (the email branch always
+   * fills `html` from a default), so the failure has to come from the queue
+   * refusing, which is what a contract violation would look like at run time.
+   */
+  const node = {
+    id: 'n6',
+    type: 'send_review_request',
+    config: { channel: 'email', subject: 'How was your order?' },
+  };
+
+  it('surfaces the failure instead of returning next', async () => {
+    emailAdd.mockRejectedValueOnce(new Error('queue refused the job'));
+
+    const { executeAction } = await import('../services/workflows/actions.js');
+    const result = await executeAction(node as never, makeRun(), ctx);
+
+    expect(result.type, 'a refused enqueue was reported as success').toBe('error');
+    expect((result as { message: string }).message).toContain('queue refused the job');
+  });
+
+  it('still returns next when the enqueue succeeds', async () => {
+    const { executeAction } = await import('../services/workflows/actions.js');
+    const result = await executeAction(node as never, makeRun(), ctx);
+
+    expect(result.type).toBe('next');
+    expect(emailAdd).toHaveBeenCalledTimes(1);
+  });
+});
+
 // ─── 2. Sequence producers ────────────────────────────────────────────────────
 
 describe('sales sequence steps satisfy their consumer contract', () => {
@@ -362,13 +404,45 @@ describe('enqueueValidated', () => {
   });
 });
 
-// ─── 4. No producer bypasses the contract ─────────────────────────────────────
+// ─── 4. Producers reach the queue the usual way ───────────────────────────────
+//
+// ── What this is NOT ────────────────────────────────────────────────────────
+//
+// This is not the barrier. It cannot be: it matches four receiver shapes with
+// regexes, and a producer that names its variable something else walks past it.
+// That is not hypothetical — all four patterns were run against
+// `const q = queues.email; await q.add(…)` and none of them matched, which is
+// why the enforcement moved into the queue object (guardQueue in
+// ./queue-contracts.ts). A payload that does not satisfy its consumer's schema
+// now throws at `.add()` however the queue was reached, and that is what
+// actually holds the line.
+//
+// The fourth pattern (`alias.email?.add(`) came in separately and does widen
+// the net — it catches an aliased *map*, `const q = queues; q.email?.add(…)`.
+// It does not catch an aliased *queue*, which is the case above. Widening it
+// further is the losing half of this: see the last paragraph.
+//
+// ── Why it stays anyway ─────────────────────────────────────────────────────
+//
+// The guard fails when the producer runs. Some producers run rarely — a
+// cascade step, a sequence that nobody has enrolled anyone into this week — so
+// "it throws in production eventually" is a slower feedback loop than "CI is
+// red on the pull request". This scan catches the ordinary case, which is
+// somebody copying an existing producer, before it ships.
+//
+// Treat a green run here as "nothing obvious was copied", never as "no
+// producer can bypass the contract". Do not try to close the gap by making the
+// regexes cleverer; that race is not winnable and the queue object already
+// wins it.
 
-describe('no producer bypasses the contract', () => {
+/** See the note on the it() below for why this is per-test, not global. */
+const SCAN_TIMEOUT_MS = 30_000;
+
+describe('producers reach the queue the usual way', () => {
   /**
    * The three receiver shapes this repo uses to reach a contracted queue.
    * A new producer copy-pasting any of them, instead of calling
-   * enqueueValidated, fails here.
+   * enqueueValidated, fails here — anything else is the guard's job.
    */
   const BYPASS_PATTERNS: Array<{ label: string; re: RegExp }> = [
     {
@@ -410,26 +484,38 @@ describe('no producer bypasses the contract', () => {
     return out;
   }
 
-  it('every enqueue onto email/sms/viber-send goes through enqueueValidated', () => {
-    const root = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-    const offenders: string[] = [];
+  /**
+   * Same wall-clock exposure as the AST scan in unsubscribe-single-writer:
+   * this reads the same 967-file, 5.4 MB corpus (measured: walk 18 ms, read
+   * 570 ms, regex 28 ms). Cheap on its own at 1.9 s inside the suite, but it
+   * reached 5.5 s on a loaded machine against a 10 s global limit, so it is
+   * on the same trajectory and gets the same explicit budget rather than
+   * waiting to become flaky as the repo grows.
+   */
+  it(
+    'every enqueue onto email/sms/viber-send goes through enqueueValidated',
+    () => {
+      const root = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+      const offenders: string[] = [];
 
-    for (const file of walk(root)) {
-      // The helper itself is the one place allowed to call queue.add for a
-      // contracted queue — that call IS the gate.
-      if (file.endsWith('queue-contracts.ts')) continue;
-      const src = stripComments(readFileSync(file, 'utf8'));
-      for (const { label, re } of BYPASS_PATTERNS) {
-        if (re.test(src)) {
-          offenders.push(`${file.slice(root.length)} — ${label}`);
+      for (const file of walk(root)) {
+        // The helper itself is the one place allowed to call queue.add for a
+        // contracted queue — that call IS the gate.
+        if (file.endsWith('queue-contracts.ts')) continue;
+        const src = stripComments(readFileSync(file, 'utf8'));
+        for (const { label, re } of BYPASS_PATTERNS) {
+          if (re.test(src)) {
+            offenders.push(`${file.slice(root.length)} — ${label}`);
+          }
         }
       }
-    }
 
-    expect(
-      offenders,
-      'These producers reach a contracted queue directly. Route them through ' +
-        'enqueueValidated() so their payload is checked against the consumer schema.',
-    ).toEqual([]);
-  });
+      expect(
+        offenders,
+        'These producers reach a contracted queue directly. Route them through ' +
+          'enqueueValidated() so their payload is checked against the consumer schema.',
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 });

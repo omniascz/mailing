@@ -4,6 +4,7 @@
  */
 
 import { Queue } from 'bullmq';
+import { guardQueue } from './queue-contracts.js';
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
@@ -33,8 +34,14 @@ const queueOpts = {
   },
 };
 
-export const emailQueue = new Queue('email', queueOpts);
-export const smsQueue = new Queue('sms', queueOpts);
+/**
+ * The three contracted queues are handed to `guardQueue`, which replaces `add`
+ * and `addBulk` on the instance so the consumer's schema is checked however a
+ * producer reaches the queue. The raw `new Queue(...)` is never bound to a
+ * name — there is no unguarded reference to import. See queue-contracts.ts.
+ */
+export const emailQueue = guardQueue(new Queue('email', queueOpts), 'email');
+export const smsQueue = guardQueue(new Queue('sms', queueOpts), 'sms');
 /**
  * Webhook delivery. Its own options because the default 3 attempts / 5 s is
  * tuned for our own services, and a customer's endpoint is not one of those —
@@ -57,7 +64,7 @@ export const webhookQueue = new Queue('webhook', {
   },
 });
 /** Viber Business Messages async send queue (consumed by apps/workers viber-sender). */
-export const viberQueue = new Queue('viber-send', queueOpts);
+export const viberQueue = guardQueue(new Queue('viber-send', queueOpts), 'viber-send');
 /** RCS async send queue (consumed by apps/workers rcs-sender). */
 export const rcsQueue = new Queue('rcs-send', queueOpts);
 /** WhatsApp async send queue (Meta Cloud API worker consumer). */

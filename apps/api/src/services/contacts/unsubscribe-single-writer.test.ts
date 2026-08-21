@@ -129,24 +129,51 @@ function findStatusWrites(file: string): Offence[] {
   return out;
 }
 
-describe('contacts.status has one writer', () => {
-  it('no file outside the allowlist writes contacts.status', () => {
-    const offences: Offence[] = [];
-    for (const file of walkFiles(SRC)) {
-      const rel = relative(SRC, file);
-      if (ALLOWED.has(rel)) continue;
-      offences.push(...findStatusWrites(file).map((o) => ({ ...o, file: rel })));
-    }
+/**
+ * This scan builds a full TypeScript AST for every file under src/ and walks
+ * it, and the suite's global testTimeout is 10 s. Measured on this corpus
+ * (967 files, 5.4 MB): walk 19 ms, read 693 ms, parse + visit 634 ms — about
+ * 1.35 s of actual work, and 1.66 s wall clock when the file runs on its own.
+ *
+ * That is not what decides whether it passes. Run inside the full suite the
+ * same test took 3.7 s on an idle machine and 13.3 s on a loaded one, where it
+ * exceeded the 10 s limit and failed — an 8x spread over identical work,
+ * because testTimeout measures wall clock and vitest runs 175 files in
+ * parallel workers. No amount of trimming the scan controls that: skipping the
+ * AST parse for files that cannot match (a lossless prefilter, measured at
+ * 487 ms saved) would still leave roughly 9.4 s under the load that already
+ * broke it.
+ *
+ * So the number is raised here, for this test, rather than globally — a global
+ * raise would also hide the next slow test, whatever its reason. 30 s is 2.3x
+ * the worst run observed.
+ */
+const SCAN_TIMEOUT_MS = 30_000;
 
-    expect(
-      offences,
-      offences.length === 0
-        ? ''
-        : `these write contacts.status directly instead of going through ` +
-            `unsubscribeContact:\n` +
-            offences.map((o) => `  ${o.file.split(sep).join('/')}:${o.line}  ${o.text}`).join('\n'),
-    ).toEqual([]);
-  });
+describe('contacts.status has one writer', () => {
+  it(
+    'no file outside the allowlist writes contacts.status',
+    () => {
+      const offences: Offence[] = [];
+      for (const file of walkFiles(SRC)) {
+        const rel = relative(SRC, file);
+        if (ALLOWED.has(rel)) continue;
+        offences.push(...findStatusWrites(file).map((o) => ({ ...o, file: rel })));
+      }
+
+      expect(
+        offences,
+        offences.length === 0
+          ? ''
+          : `these write contacts.status directly instead of going through ` +
+              `unsubscribeContact:\n` +
+              offences
+                .map((o) => `  ${o.file.split(sep).join('/')}:${o.line}  ${o.text}`)
+                .join('\n'),
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 
   it('the allowlist entries still exist, so it cannot rot into a no-op', () => {
     // An allowlist that names files nobody has any more stops guarding anything.
