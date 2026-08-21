@@ -210,6 +210,22 @@ export async function redeemReward(
     .set({ redemptionCount: reward.redemptionCount + 1, updatedAt: new Date() })
     .where(eq(loyaltyRewards.id, rewardId));
 
+  // Fire the `loyalty_reward_redeemed` trigger. The odpalovač existed and had
+  // no caller, so a workflow on this trigger could be activated and never ran.
+  const [redeemer] = await db
+    .select({ contactId: loyaltyMembers.contactId })
+    .from(loyaltyMembers)
+    .where(eq(loyaltyMembers.id, memberId))
+    .limit(1);
+
+  if (redeemer?.contactId) {
+    void import('../workflows/triggers.js')
+      .then(({ onLoyaltyRewardRedeemed }) =>
+        onLoyaltyRewardRedeemed(orgId, redeemer.contactId, reward.programId, rewardId),
+      )
+      .catch(() => {});
+  }
+
   return { success: true, redemption: redemption!, newBalance: debitResult.newBalance };
 }
 

@@ -197,5 +197,17 @@ export async function processEarnEvent(
     type: 'earn',
   });
 
+  // Fire the `loyalty_points_earned` trigger. Deliberately only here and not
+  // inside creditPoints: this is the "the member earned points by a rule" path.
+  // A manual admin credit (routes/v1/loyalty/programs.ts) also goes through
+  // creditPoints but is not an earning event, so it must not start these
+  // workflows. Tier-up is different and does fire from creditPoints, because a
+  // tier change is a tier change however the points arrived.
+  void import('../workflows/triggers.js')
+    .then(({ onLoyaltyPointsEarned }) =>
+      onLoyaltyPointsEarned(orgId, contactId, programId, totalPoints, newBalance),
+    )
+    .catch(() => {});
+
   return { pointsEarned: totalPoints, rulesApplied, newBalance, tieredUp, tierName };
 }

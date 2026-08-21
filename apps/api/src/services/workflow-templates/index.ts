@@ -14,7 +14,7 @@ import {
   type WorkflowTemplate,
   type TemplateCategory,
 } from './registry.js';
-import type { Workflow } from '../../db/schema/index.js';
+import { workflowTriggerTypeEnum, type Workflow } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 export { listTemplates, findTemplate, WORKFLOW_TEMPLATES };
@@ -46,14 +46,25 @@ export async function forkTemplate(
   const tpl = findTemplate(slug);
   if (!tpl) throw AppError.notFound('Template');
 
-  // workflowTriggerTypeEnum values that the DB accepts. The registry uses
-  // strings that map 1:1, but we still cast through the workflow service
-  // which validates the enum.
+  // Validate, don't cast. The old `as Workflow['triggerType']` claimed the
+  // workflow service would check the enum; it does not, so forking was the one
+  // way to write a trigger type the API's own Zod enum would have rejected.
+  // Checked against workflowTriggerTypeEnum rather than the route's
+  // triggerTypeValues both because a service must not import from routes and
+  // because the enum is what the column actually accepts — trigger-coverage
+  // asserts the two lists are identical.
+  const triggerType = tpl.trigger.type as Workflow['triggerType'];
+  if (!(workflowTriggerTypeEnum.enumValues as readonly string[]).includes(triggerType)) {
+    throw AppError.badRequest(
+      `Template "${slug}" declares unknown trigger type "${tpl.trigger.type}"`,
+    );
+  }
+
   const wf = await createWorkflow({
     orgId,
     name: override?.name ?? tpl.name,
     description: tpl.description,
-    triggerType: tpl.trigger.type as Workflow['triggerType'],
+    triggerType,
     triggerConfig: tpl.trigger.config,
     nodes: JSON.parse(JSON.stringify(tpl.nodes)),
     edges: JSON.parse(JSON.stringify(tpl.edges)),
