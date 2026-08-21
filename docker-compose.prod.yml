@@ -74,7 +74,11 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       LITMUS_API_KEY: ${LITMUS_API_KEY:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Was ${STRIPE_WEBHOOK_SECRET:-}. `:-` substitutes on unset AND on empty,
+      # so the API only ever saw a configured-but-empty secret — and both Stripe
+      # webhook handlers read that as "no secret, skip verification". Required
+      # now, in the same fail-fast form as every other required value here.
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?STRIPE_WEBHOOK_SECRET is required}
       # This was ${DOI_FROM_EMAIL:-no-reply@example.com}. `:-` substitutes on
       # unset AND on empty, so the API never saw an unconfigured sender — it saw
       # a configured one pointing at example.com, and production DOI mail would
