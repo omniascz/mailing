@@ -73,6 +73,35 @@ const Env = z.object({
   SENTRY_ENVIRONMENT: z.string().optional(),
   SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.05),
   SENTRY_RELEASE: z.string().optional(),
+
+  // ─── Bounce handling ───────────────────────────────────────────────────────
+  // VERP envelope sender domain. batch-sender encodes the Message-ID into
+  // `bounce+<id>@<this domain>` and sets it as Return-Path, so an out-of-band
+  // DSN can be matched back to the exact send (decoded by decodeVerp on the
+  // inbound side).
+  //
+  // It read `process.env.VERP_BOUNCE_DOMAIN ?? ''` at one call site and existed
+  // nowhere else — not in .env.example, not in compose, not in a schema. With
+  // it unset the Return-Path is empty and the engine falls back to the header
+  // From (smtp/sender.go:169), so DSNs go to the customer's own mailbox and we
+  // never see them. Sending still works; bounce processing goes blind, which on
+  // a shared IP pool is how the pool gets burned.
+  //
+  // prodRequired, not required-everywhere: this loader parses raw process.env
+  // with no test lane, and every unit test transitively imports it through
+  // lib/telemetry.js. Production is where the silence costs something.
+  //
+  // Setting this is necessary, not sufficient: the domain also needs MX
+  // pointing at the inbound receiver, which is ops, not code.
+  VERP_BOUNCE_DOMAIN: prodRequired(
+    z
+      .string()
+      .min(1, 'VERP_BOUNCE_DOMAIN must not be empty')
+      .regex(
+        /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)([.](?!-)[A-Za-z0-9-]{1,63}(?<!-))+$/,
+        'VERP_BOUNCE_DOMAIN must be a bare domain such as bounce.example.com — no scheme, no path, no @',
+      ),
+  ),
 });
 
 export type Env = z.infer<typeof Env>;
