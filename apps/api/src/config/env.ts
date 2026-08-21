@@ -19,6 +19,10 @@ import { DEV_TRACKING_SECRET } from '@forgemsg/shared';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+/** Domain half of an address, lowercased. Only ever called on `.email()`-validated input. */
+const domainOf = (address: string): string =>
+  address.slice(address.lastIndexOf('@') + 1).toLowerCase();
+
 /**
  * Blocks `.default()` at the type level. `.default` still exists at runtime —
  * this is a type guard, not a deletion — but calling it is a compile error.
@@ -58,149 +62,206 @@ function prodRequired<T extends z.ZodString>(schema: T, devDefault?: string) {
   ) as NoChainedDefault<z.ZodOptional<T> | z.ZodDefault<T>>;
 }
 
-const Env = z.object({
-  // ─── Runtime ──────────────────────────────────────────────────────────────
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-  PORT: z.coerce.number().int().min(1).max(65_535).default(3001),
+const Env = z
+  .object({
+    // ─── Runtime ──────────────────────────────────────────────────────────────
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+    PORT: z.coerce.number().int().min(1).max(65_535).default(3001),
 
-  // ─── Public URLs ──────────────────────────────────────────────────────────
-  API_BASE_URL: z.string().url().default('http://localhost:3001'),
-  WEB_URL: z.string().url().default('http://localhost:3000'),
-  CORS_ORIGIN: z.string().default('http://localhost:3000'),
-  // Checked again after parsing: both must actually be set in production, or
-  // DOI email links and tracking pixels point nowhere.
-  API_PUBLIC_URL: z.string().url().optional(),
-  APP_URL: z.string().url().optional(),
-  TRACKING_BASE_URL: z.string().url().optional(),
+    // ─── Public URLs ──────────────────────────────────────────────────────────
+    API_BASE_URL: z.string().url().default('http://localhost:3001'),
+    WEB_URL: z.string().url().default('http://localhost:3000'),
+    CORS_ORIGIN: z.string().default('http://localhost:3000'),
+    // Checked again after parsing: both must actually be set in production, or
+    // DOI email links and tracking pixels point nowhere.
+    API_PUBLIC_URL: z.string().url().optional(),
+    APP_URL: z.string().url().optional(),
+    TRACKING_BASE_URL: z.string().url().optional(),
 
-  // ─── Datastores ───────────────────────────────────────────────────────────
-  // No defaults. `lib/env.ts` required these outright and ran first, so a boot
-  // without them already failed — defaulting them here would be a regression
-  // dressed up as a merge. The test branch below supplies its own values.
-  DATABASE_URL: z.string().url({ message: 'DATABASE_URL must be a valid postgresql:// URL' }),
-  REDIS_URL: z.string().url({ message: 'REDIS_URL must be a valid redis:// URL' }),
-  EU_DATABASE_URL: z.string().url().optional(),
-  AP_DATABASE_URL: z.string().url().optional(),
-  CLICKHOUSE_URL: z.string().url().default('http://localhost:8123'),
-  KAFKA_BROKERS: z.string().default('localhost:9092'),
+    // ─── Datastores ───────────────────────────────────────────────────────────
+    // No defaults. `lib/env.ts` required these outright and ran first, so a boot
+    // without them already failed — defaulting them here would be a regression
+    // dressed up as a merge. The test branch below supplies its own values.
+    DATABASE_URL: z.string().url({ message: 'DATABASE_URL must be a valid postgresql:// URL' }),
+    REDIS_URL: z.string().url({ message: 'REDIS_URL must be a valid redis:// URL' }),
+    EU_DATABASE_URL: z.string().url().optional(),
+    AP_DATABASE_URL: z.string().url().optional(),
+    CLICKHOUSE_URL: z.string().url().default('http://localhost:8123'),
+    KAFKA_BROKERS: z.string().default('localhost:9092'),
 
-  // ─── Object storage (MinIO in dev, S3 in prod) ────────────────────────────
-  MINIO_ENDPOINT: z.string().default('localhost'),
-  MINIO_PORT: z.coerce.number().int().default(9000),
-  // `minioadmin/minioadmin` is the MinIO default and is written in this file,
-  // so booting production on it means anyone can read and write the bucket.
-  MINIO_ACCESS_KEY: prodRequired(z.string(), 'minioadmin'),
-  MINIO_SECRET_KEY: prodRequired(z.string(), 'minioadmin'),
-  MINIO_BUCKET: z.string().default('forgemsg'),
-  MINIO_USE_SSL: z.coerce.boolean().default(false),
+    // ─── Object storage (MinIO in dev, S3 in prod) ────────────────────────────
+    MINIO_ENDPOINT: z.string().default('localhost'),
+    MINIO_PORT: z.coerce.number().int().default(9000),
+    // `minioadmin/minioadmin` is the MinIO default and is written in this file,
+    // so booting production on it means anyone can read and write the bucket.
+    MINIO_ACCESS_KEY: prodRequired(z.string(), 'minioadmin'),
+    MINIO_SECRET_KEY: prodRequired(z.string(), 'minioadmin'),
+    MINIO_BUCKET: z.string().default('forgemsg'),
+    MINIO_USE_SSL: z.coerce.boolean().default(false),
 
-  // ─── Secrets (must be set in prod) ────────────────────────────────────────
-  JWT_SECRET: z.string().min(16, {
-    message: 'JWT_SECRET must be at least 16 chars (use a 64-byte random in production)',
-  }),
-  SESSION_SECRET: prodRequired(z.string().min(32), 'dev-cookie-secret-change-in-production'),
-  // Shared secret for /api/v1/internal/*. The API is published on an
-  // internet-facing ingress with `path: /`, so an unset secret in production
-  // means those routes are open to the world.
-  INTERNAL_API_SECRET: prodRequired(z.string().min(32), 'dev-internal-secret-change-in-production'),
-  DMARC_INBOUND_SECRET: prodRequired(z.string().min(16)),
+    // ─── Secrets (must be set in prod) ────────────────────────────────────────
+    JWT_SECRET: z.string().min(16, {
+      message: 'JWT_SECRET must be at least 16 chars (use a 64-byte random in production)',
+    }),
+    SESSION_SECRET: prodRequired(z.string().min(32), 'dev-cookie-secret-change-in-production'),
+    // Shared secret for /api/v1/internal/*. The API is published on an
+    // internet-facing ingress with `path: /`, so an unset secret in production
+    // means those routes are open to the world.
+    INTERNAL_API_SECRET: prodRequired(
+      z.string().min(32),
+      'dev-internal-secret-change-in-production',
+    ),
+    DMARC_INBOUND_SECRET: prodRequired(z.string().min(16)),
 
-  // ─── Our own signing / encryption keys ────────────────────────────────────
-  // Each of these signs or encrypts something WE issue, and each previously
-  // fell back to a string committed in this repository. Verified by running
-  // them with the variable unset: a forged token signed with the fallback was
-  // accepted by the real verifier in every case.
-  //
-  // HMAC-SHA256 over the signed-download token (assetId, contactId, exp).
-  ASSET_SIGNING_SECRET: prodRequired(z.string().min(32), 'dev-asset-signing-secret-change-me-32'),
-  // Shared secret on the inbound-email webhook. The check used to be
-  // `if (secret && …)`, so an unset value skipped authentication entirely.
-  INBOUND_EMAIL_SECRET: prodRequired(z.string().min(32), 'dev-inbound-email-secret-change-me-32'),
-  // AES-256-GCM key material for the `fmcid` contact token in form autofill.
-  FORM_AUTOFILL_SECRET: prodRequired(z.string().min(32), 'dev-form-autofill-secret-change-me-32'),
-  // HMAC-SHA256 over the preference-centre token (orgId, contactId, exp).
-  // A forged one lets anybody edit any contact's GDPR consent.
-  PREFERENCE_CENTRE_SECRET: prodRequired(
-    z.string().min(32),
-    'dev-preference-centre-secret-change-32',
-  ),
-  // HMAC-SHA256 over every token we hand to a recipient: the open pixel, every
-  // wrapped link, the unsubscribe link in List-Unsubscribe, the preference
-  // centre and view-in-browser. It is read in packages/shared, not here, so the
-  // PR #9 sweep — which walked `process.env` keys inside apps/api — never saw
-  // it. A forged open or click moves campaign statistics and, through them, the
-  // A/B winner; a forged unsubscribe token alters someone else's subscription.
-  // The dev fallback lives with the code that signs, so all three processes
-  // agree on one literal instead of keeping copies that drift.
-  TRACKING_SECRET: prodRequired(z.string().min(32), DEV_TRACKING_SECRET),
-  // Deliberately optional: HIPAA mode is per-org opt-in (enableHipaaMode), so
-  // requiring this would stop every non-healthcare deployment from booting.
-  // The guarantee is enforced where it belongs instead — enableHipaaMode
-  // refuses without a key, and encryptPhiValue throws rather than silently
-  // storing PHI as plaintext. 64 hex chars = the 32 bytes AES-256 needs.
-  HIPAA_FIELD_KEY: z
-    .string()
-    .regex(/^[0-9a-fA-F]{64}$/, 'HIPAA_FIELD_KEY must be 64 hex chars (32 bytes)')
-    .optional(),
-  // Deliberately optional: absent means the partner provisioning endpoint is
-  // closed, which is already the correct default. checkPartnerSecret returns
-  // false for every input when unset — pinned by a test.
-  PARTNER_PROVISION_SECRET: z.string().min(32).optional(),
+    // ─── Our own signing / encryption keys ────────────────────────────────────
+    // Each of these signs or encrypts something WE issue, and each previously
+    // fell back to a string committed in this repository. Verified by running
+    // them with the variable unset: a forged token signed with the fallback was
+    // accepted by the real verifier in every case.
+    //
+    // HMAC-SHA256 over the signed-download token (assetId, contactId, exp).
+    ASSET_SIGNING_SECRET: prodRequired(z.string().min(32), 'dev-asset-signing-secret-change-me-32'),
+    // Shared secret on the inbound-email webhook. The check used to be
+    // `if (secret && …)`, so an unset value skipped authentication entirely.
+    INBOUND_EMAIL_SECRET: prodRequired(z.string().min(32), 'dev-inbound-email-secret-change-me-32'),
+    // AES-256-GCM key material for the `fmcid` contact token in form autofill.
+    FORM_AUTOFILL_SECRET: prodRequired(z.string().min(32), 'dev-form-autofill-secret-change-me-32'),
+    // HMAC-SHA256 over the preference-centre token (orgId, contactId, exp).
+    // A forged one lets anybody edit any contact's GDPR consent.
+    PREFERENCE_CENTRE_SECRET: prodRequired(
+      z.string().min(32),
+      'dev-preference-centre-secret-change-32',
+    ),
+    // HMAC-SHA256 over every token we hand to a recipient: the open pixel, every
+    // wrapped link, the unsubscribe link in List-Unsubscribe, the preference
+    // centre and view-in-browser. It is read in packages/shared, not here, so the
+    // PR #9 sweep — which walked `process.env` keys inside apps/api — never saw
+    // it. A forged open or click moves campaign statistics and, through them, the
+    // A/B winner; a forged unsubscribe token alters someone else's subscription.
+    // The dev fallback lives with the code that signs, so all three processes
+    // agree on one literal instead of keeping copies that drift.
+    TRACKING_SECRET: prodRequired(z.string().min(32), DEV_TRACKING_SECRET),
+    // Deliberately optional: HIPAA mode is per-org opt-in (enableHipaaMode), so
+    // requiring this would stop every non-healthcare deployment from booting.
+    // The guarantee is enforced where it belongs instead — enableHipaaMode
+    // refuses without a key, and encryptPhiValue throws rather than silently
+    // storing PHI as plaintext. 64 hex chars = the 32 bytes AES-256 needs.
+    HIPAA_FIELD_KEY: z
+      .string()
+      .regex(/^[0-9a-fA-F]{64}$/, 'HIPAA_FIELD_KEY must be 64 hex chars (32 bytes)')
+      .optional(),
+    // Deliberately optional: absent means the partner provisioning endpoint is
+    // closed, which is already the correct default. checkPartnerSecret returns
+    // false for every input when unset — pinned by a test.
+    PARTNER_PROVISION_SECRET: z.string().min(32).optional(),
 
-  // Found while classifying the rest: these also guard requests coming IN to
-  // us, not calls going out, so they belong in this group rather than with the
-  // third-party credentials.
-  //
-  // verifyFblSecret read `if (!expected) return true; // not configured — allow`
-  // — an unset value accepted any feedback-loop POST, and those writes land in
-  // the suppression list.
-  FBL_WEBHOOK_SECRET: prodRequired(z.string().min(32), 'dev-fbl-webhook-secret-change-me-32ch'),
-  // Meta/WhatsApp subscription handshakes compared against `?? ''`, so an
-  // attacker sending an empty hub.verify_token matched when unset.
-  META_WEBHOOK_VERIFY_TOKEN: prodRequired(z.string().min(16), 'dev-meta-verify-token-change-me'),
-  WHATSAPP_VERIFY_TOKEN: prodRequired(z.string().min(16), 'dev-whatsapp-verify-token-change'),
-  FACEBOOK_WEBHOOK_VERIFY_TOKEN: prodRequired(
-    z.string().min(16),
-    'dev-facebook-verify-token-change',
-  ),
+    // Found while classifying the rest: these also guard requests coming IN to
+    // us, not calls going out, so they belong in this group rather than with the
+    // third-party credentials.
+    //
+    // verifyFblSecret read `if (!expected) return true; // not configured — allow`
+    // — an unset value accepted any feedback-loop POST, and those writes land in
+    // the suppression list.
+    FBL_WEBHOOK_SECRET: prodRequired(z.string().min(32), 'dev-fbl-webhook-secret-change-me-32ch'),
+    // Meta/WhatsApp subscription handshakes compared against `?? ''`, so an
+    // attacker sending an empty hub.verify_token matched when unset.
+    META_WEBHOOK_VERIFY_TOKEN: prodRequired(z.string().min(16), 'dev-meta-verify-token-change-me'),
+    WHATSAPP_VERIFY_TOKEN: prodRequired(z.string().min(16), 'dev-whatsapp-verify-token-change'),
+    FACEBOOK_WEBHOOK_VERIFY_TOKEN: prodRequired(
+      z.string().min(16),
+      'dev-facebook-verify-token-change',
+    ),
 
-  // ─── External providers ───────────────────────────────────────────────────
-  ANTHROPIC_API_KEY: z.string().optional(),
-  TWILIO_ACCOUNT_SID: z.string().optional(),
-  TWILIO_AUTH_TOKEN: z.string().optional(),
-  DEEPGRAM_API_KEY: z.string().optional(),
-  ELEVENLABS_API_KEY: z.string().optional(),
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    // ─── External providers ───────────────────────────────────────────────────
+    ANTHROPIC_API_KEY: z.string().optional(),
+    TWILIO_ACCOUNT_SID: z.string().optional(),
+    TWILIO_AUTH_TOKEN: z.string().optional(),
+    DEEPGRAM_API_KEY: z.string().optional(),
+    ELEVENLABS_API_KEY: z.string().optional(),
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
-  // ─── Telemetry ────────────────────────────────────────────────────────────
-  // With SENTRY_DSN unset, telemetry init is a no-op, so dev runs and tests
-  // ship nothing anywhere. Sample rate stays low by default; raise it during
-  // an incident.
-  SENTRY_DSN: z.string().url().optional(),
-  SENTRY_ENVIRONMENT: z.string().optional(),
-  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.05),
-  SENTRY_RELEASE: z.string().optional(),
+    // ─── Telemetry ────────────────────────────────────────────────────────────
+    // With SENTRY_DSN unset, telemetry init is a no-op, so dev runs and tests
+    // ship nothing anywhere. Sample rate stays low by default; raise it during
+    // an incident.
+    SENTRY_DSN: z.string().url().optional(),
+    SENTRY_ENVIRONMENT: z.string().optional(),
+    SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.05),
+    SENTRY_RELEASE: z.string().optional(),
 
-  // ─── Platform operator alerts ─────────────────────────────────────────────
-  // Address notified on platform events (new signups, abuse reports). Unset
-  // makes alerting a no-op.
-  OPERATOR_EMAIL: z.string().email().optional(),
+    // ─── Platform operator alerts ─────────────────────────────────────────────
+    // Address notified on platform events (new signups, abuse reports). Unset
+    // makes alerting a no-op.
+    OPERATOR_EMAIL: z.string().email().optional(),
 
-  // ─── Instatus status page ─────────────────────────────────────────────────
-  // Both keys must be set together. With either unset the status-page client
-  // is a no-op and /internal/status-page/* answers
-  // { status: 'noop', available: false } instead of erroring.
-  INSTATUS_API_KEY: z.string().optional(),
-  INSTATUS_PAGE_ID: z.string().optional(),
+    // ─── Instatus status page ─────────────────────────────────────────────────
+    // Both keys must be set together. With either unset the status-page client
+    // is a no-op and /internal/status-page/* answers
+    // { status: 'noop', available: false } instead of erroring.
+    INSTATUS_API_KEY: z.string().optional(),
+    INSTATUS_PAGE_ID: z.string().optional(),
 
-  // ─── Email / DMARC / deliverability ───────────────────────────────────────
-  DMARC_REPORT_EMAIL: z.string().email().default('dmarc-reports@forgemsg.com'),
+    // ─── Email / DMARC / deliverability ───────────────────────────────────────
+    DMARC_REPORT_EMAIL: z.string().email().default('dmarc-reports@forgemsg.com'),
 
-  // ─── Filesystem (dev-only paths) ──────────────────────────────────────────
-  IMPORT_UPLOAD_DIR: z.string().optional(),
-});
+    // ─── System mail sender ───────────────────────────────────────────────────
+    // One name for one thing. There used to be three — SYSTEM_EMAIL_FROM,
+    // SYSTEM_FROM_EMAIL and DOI_FROM_EMAIL — each read straight off process.env
+    // at its own call site with its own committed fallback, on three different
+    // domains. Setting one left the other two paths sending from somewhere else.
+    //
+    // Required in every environment, dev included. There is deliberately no
+    // devDefault: an address that "works" unconfigured is exactly how the old
+    // fallbacks shipped, and system mail has to come from a domain the operator
+    // controls and has SPF/DKIM for.
+    //
+    // .min(1) before .email() only buys a readable message — an empty string
+    // fails either way. It matters because the old call sites used `??`, which
+    // does not treat '' as absent: a set-but-empty variable produced an empty
+    // From rather than the fallback, all the way to MAIL FROM:<>.
+    SYSTEM_EMAIL_FROM: z
+      .string()
+      .min(1, 'SYSTEM_EMAIL_FROM is required and must not be empty')
+      .email('SYSTEM_EMAIL_FROM must be a valid email address'),
+    SYSTEM_EMAIL_FROM_NAME: z
+      .string()
+      .min(1, 'SYSTEM_EMAIL_FROM_NAME is required and must not be empty'),
+
+    // Optional override for scheduled-report delivery, so replies to a report can
+    // reach a mailbox someone reads. Empty is treated as absent here — unlike the
+    // required pair above — because a deploy that passes every variable through
+    // unconditionally has no other way to say "not set". Its domain is checked
+    // against SYSTEM_EMAIL_FROM below.
+    REPORTS_FROM_EMAIL: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      z.string().email('REPORTS_FROM_EMAIL must be a valid email address').optional(),
+    ),
+
+    // ─── Filesystem (dev-only paths) ──────────────────────────────────────────
+    IMPORT_UPLOAD_DIR: z.string().optional(),
+  })
+  .superRefine((cfg, ctx) => {
+    // Launch is on a shared IP pool: reputation is borrowed, not owned, and the
+    // only thing separating this mail from the rest of the pool is domain
+    // authentication. A reports sender on a second domain needs its own
+    // SPF/DKIM/DMARC, and unaligned mail off a shared pool is what gets the
+    // whole system stream filtered. One domain, verified once.
+    if (
+      cfg.REPORTS_FROM_EMAIL &&
+      domainOf(cfg.REPORTS_FROM_EMAIL) !== domainOf(cfg.SYSTEM_EMAIL_FROM)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['REPORTS_FROM_EMAIL'],
+        message:
+          `REPORTS_FROM_EMAIL (${cfg.REPORTS_FROM_EMAIL}) must be on the same domain as ` +
+          `SYSTEM_EMAIL_FROM (${cfg.SYSTEM_EMAIL_FROM}). A second sending domain needs its ` +
+          `own SPF/DKIM before it can carry system mail.`,
+      });
+    }
+  });
 
 export type Env = z.infer<typeof Env>;
 
@@ -253,6 +314,12 @@ function testDefaults(): NodeJS.ProcessEnv {
     DATABASE_URL: process.env.DATABASE_URL ?? 'postgresql://test:test@localhost:5432/test',
     REDIS_URL: process.env.REDIS_URL ?? 'redis://localhost:6379',
     JWT_SECRET: process.env.JWT_SECRET ?? 'test-secret-not-for-production',
+    // Listed before the spread deliberately: an unset variable gets this value,
+    // a set one — including a deliberately empty one — overrides it. That is
+    // what lets the tests exercise the empty-string case against the real
+    // loader instead of a re-implementation of it.
+    SYSTEM_EMAIL_FROM: 'no-reply@test.invalid',
+    SYSTEM_EMAIL_FROM_NAME: 'ForgeMsg Test',
     ...process.env,
     NODE_ENV: 'test',
   };

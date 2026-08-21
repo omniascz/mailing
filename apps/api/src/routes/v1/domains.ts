@@ -32,6 +32,7 @@ import { buildDnsRecords, verifyDnsRecords } from '../../services/domains/dns-re
 import { runQualityCheck } from '../../services/domains/quality-check.js';
 import { getDomainWarmupStatus, getWarmupQuota } from '../../services/domains/warmup-scheduler.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
+import { env } from '../../config/env.js';
 
 const domainParam = z.object({ id: z.string().uuid() });
 
@@ -511,7 +512,7 @@ export default async function domainRoutes(app: FastifyInstance) {
         .limit(1);
       if (!row) throw AppError.notFound('Sending domain');
 
-      const fromLocal = process.env.DOI_FROM_EMAIL?.split('@')[0] || 'no-reply';
+      const fromLocal = env.SYSTEM_EMAIL_FROM.split('@')[0]!;
       const fromAddress = `${fromLocal}@${row.domain}`;
       const sentAt = new Date().toISOString();
 

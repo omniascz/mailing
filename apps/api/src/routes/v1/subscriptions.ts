@@ -27,6 +27,7 @@ import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 import { t, resolveLocale, verifyTrackingToken, type SupportedLocale } from '@forgemsg/shared';
 import { unsubscribeContact, type UnsubscribeSource } from '../../services/contacts/unsubscribe.js';
+import { env } from '../../config/env.js';
 
 const DOI_TTL = 60 * 60 * 48; // 48 hours
 const UNSUB_TTL = 60 * 60 * 24 * 7; // 7 days
@@ -175,7 +176,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         await sendTransactionalEmail({
           to: body.email,
           toName: [body.firstName, body.lastName].filter(Boolean).join(' ') || undefined,
-          from: process.env.DOI_FROM_EMAIL ?? 'no-reply@example.com',
+          from: env.SYSTEM_EMAIL_FROM,
           fromName: list.name,
           subject: `Confirm your subscription to ${list.name}`,
           html: `<!doctype html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:40px auto;padding:24px;color:#1e293b">

@@ -46,6 +46,7 @@ import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 import { assertCampaignPurpose } from '../../services/gdpr/campaign-purpose-check.js';
+import { env } from '../../config/env.js';
 import {
   validateOrgContent,
   extractTemplateText,
@@ -382,7 +383,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
       try {
         await sendTransactionalEmail({
           to,
-          from: campaign.fromEmail ?? `no-reply@${process.env.DOI_FROM_DOMAIN ?? 'example.com'}`,
+          from: campaign.fromEmail ?? env.SYSTEM_EMAIL_FROM,
           fromName: campaign.fromName ?? undefined,
           replyTo: campaign.replyTo ?? undefined,
           subject: `[TEST] ${campaign.subject}`,

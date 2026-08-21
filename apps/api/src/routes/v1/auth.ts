@@ -16,6 +16,7 @@ import {
 import { AppError } from '../../lib/app-error.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { notifyOperatorOfSignup } from '../../services/notifications/operator-alerts.js';
+import { env } from '../../config/env.js';
 
 const SESSION_COOKIE = 'fm_session';
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days
@@ -162,7 +163,7 @@ export default async function authRoutes(app: FastifyInstance) {
       sendTransactionalEmail({
         to: user.email,
         toName: user.name ?? undefined,
-        from: process.env.DOI_FROM_EMAIL ?? 'no-reply@example.com',
+        from: env.SYSTEM_EMAIL_FROM,
         fromName: 'Mailforge',
         subject: 'Verify your email',
         html: `<!doctype html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:40px auto;padding:24px;color:#1e293b">
@@ -252,7 +253,7 @@ export default async function authRoutes(app: FastifyInstance) {
       await sendTransactionalEmail({
         to: u.email,
         toName: u.name ?? undefined,
-        from: process.env.DOI_FROM_EMAIL ?? 'no-reply@example.com',
+        from: env.SYSTEM_EMAIL_FROM,
         fromName: 'Mailforge',
         subject: 'Verify your email (resent)',
         html: `<!doctype html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:40px auto;padding:24px;color:#1e293b">
@@ -300,7 +301,7 @@ export default async function authRoutes(app: FastifyInstance) {
         sendTransactionalEmail({
           to: user.email,
           toName: user.name ?? undefined,
-          from: process.env.DOI_FROM_EMAIL ?? 'no-reply@example.com',
+          from: env.SYSTEM_EMAIL_FROM,
           fromName: 'Mailforge',
           subject: 'Reset your password',
           html: `<!doctype html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:40px auto;padding:24px;color:#1e293b">

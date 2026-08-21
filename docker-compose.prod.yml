@@ -75,7 +75,16 @@ services:
       LITMUS_API_KEY: ${LITMUS_API_KEY:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      DOI_FROM_EMAIL: ${DOI_FROM_EMAIL:-no-reply@example.com}
+      # This was ${DOI_FROM_EMAIL:-no-reply@example.com}. `:-` substitutes on
+      # unset AND on empty, so the API never saw an unconfigured sender — it saw
+      # a configured one pointing at example.com, and production DOI mail would
+      # have gone out from a domain we do not own. Required, no default, same
+      # form as every other required value in this file.
+      SYSTEM_EMAIL_FROM: ${SYSTEM_EMAIL_FROM:?SYSTEM_EMAIL_FROM is required}
+      SYSTEM_EMAIL_FROM_NAME: ${SYSTEM_EMAIL_FROM_NAME:?SYSTEM_EMAIL_FROM_NAME is required}
+      # Optional; bare ${...} so an unset variable stays unset rather than
+      # picking up a default. Refused at boot if it is on another domain.
+      REPORTS_FROM_EMAIL: ${REPORTS_FROM_EMAIL}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET is required}
       # Validates X-Inbound-Secret on the inbound-email endpoint; prodRequired in
       # env.ts and matched by the engine's inbound receiver. Same value, same name.

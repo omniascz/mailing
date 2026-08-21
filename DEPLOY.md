@@ -124,7 +124,11 @@ values (cross-reference `apps/api/.env.example` for the full inventory):
 - [ ] `CORS_ORIGIN` — `https://app.<domain>`
 - [ ] `INTERNAL_API_SECRET` — random 32+ chars; workers ↔ API auth
 - [ ] `ANTHROPIC_API_KEY` — for AI features
-- [ ] `DOI_FROM_EMAIL` — verified address (e.g. `no-reply@<domain>`)
+- [ ] `SYSTEM_EMAIL_FROM` — verified address (e.g. `no-reply@<domain>`); sender
+      for every system email. Required: the API exits at boot without it.
+- [ ] `SYSTEM_EMAIL_FROM_NAME` — display name shown to recipients
+- [ ] `REPORTS_FROM_EMAIL` — optional; scheduled-report sender. Must be on the
+      same domain as `SYSTEM_EMAIL_FROM` or the API refuses to boot.
 - [ ] `OPERATOR_EMAIL` — your address for new-signup + abuse alerts (Sprint T.4)
 - [ ] Stripe — create Products in Stripe Dashboard first, then set:
   - [ ] `STRIPE_SECRET_KEY` (`sk_live_...`)
