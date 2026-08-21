@@ -5,11 +5,18 @@
  *   hard  — permanent failure (5xx, user unknown, domain not found)
  *           → auto-add to suppression list, mark contact as bounced
  *   soft  — transient failure (4xx, mailbox full, greylisted)
- *           → schedule retry (handled by retry-manager), suppress after 3 soft bounces
+ *           → mta-sender throws, BullMQ retries; suppress after 3 soft bounces
  *   block — policy rejection (sender blocked, RBL listing, spam content)
  *           → log + alert, do NOT auto-suppress (domain issue, not contact issue)
  *
  * Each classification maps to a suppressionReason when auto-suppression occurs.
+ *
+ * Retry belongs to BullMQ, not to this module. mta-sender classifies the SMTP
+ * reply and throws for anything retryable; the MTA queues carry 6 attempts over
+ * 31 minutes, long enough to outlast greylisting. The line above used to name a
+ * retry-manager service that scheduled nothing and that nothing called. It was
+ * deleted rather than wired: BullMQ already owns the attempt counter, and a
+ * second one in Redis would only be a second thing to disagree with.
  */
 
 export type BounceType = 'hard' | 'soft' | 'block' | 'unknown';
