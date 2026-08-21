@@ -133,6 +133,12 @@ jobs:
       DATABASE_URL: postgresql://forgemsg:forgemsg@127.0.0.1:5432/forgemsg_itest
       REDIS_URL: redis://127.0.0.1:6379
       JWT_SECRET: integration-only-secret-not-for-production-1234567890
+      # Required by config/env.ts in every environment. The jobs below boot the
+      # real API (pnpm --filter @forgemsg/api start), which is not a vitest
+      # process, so it does not get the test defaults and refuses to start
+      # without a sender. That refusal is the point of the check.
+      SYSTEM_EMAIL_FROM: no-reply@ci.invalid
+      SYSTEM_EMAIL_FROM_NAME: ForgeMsg CI
       # The suite drives /api/v1/internal/* through the real internal-auth hook,
       # which compares against this. Without it every such call is answered 401
       # and 12 cases fail — not on the behaviour they test, but on the header.
@@ -186,6 +192,12 @@ jobs:
       DATABASE_URL: postgresql://forgemsg:forgemsg@127.0.0.1:5432/forgemsg_witest
       REDIS_URL: redis://127.0.0.1:6379
       JWT_SECRET: workers-integration-secret-not-for-production-123456
+      # Required by config/env.ts in every environment. The jobs below boot the
+      # real API (pnpm --filter @forgemsg/api start), which is not a vitest
+      # process, so it does not get the test defaults and refuses to start
+      # without a sender. That refusal is the point of the check.
+      SYSTEM_EMAIL_FROM: no-reply@ci.invalid
+      SYSTEM_EMAIL_FROM_NAME: ForgeMsg CI
       INTERNAL_API_SECRET: workers-integration-internal-secret-32-chars-min
       API_URL: http://127.0.0.1:3001
     steps:
@@ -297,6 +309,12 @@ jobs:
       DATABASE_URL: postgresql://forgemsg:forgemsg@localhost:5432/forgemsg_e2e
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: e2e-only-secret-not-for-production-use-1234567890
+      # Required by config/env.ts in every environment. The jobs below boot the
+      # real API (pnpm --filter @forgemsg/api start), which is not a vitest
+      # process, so it does not get the test defaults and refuses to start
+      # without a sender. That refusal is the point of the check.
+      SYSTEM_EMAIL_FROM: no-reply@ci.invalid
+      SYSTEM_EMAIL_FROM_NAME: ForgeMsg CI
       # localhost, not 127.0.0.1: the session cookie the API sets is host-only,
       # so a cookie issued by 127.0.0.1:3001 is never sent to localhost:3000 and
       # apps/web's middleware bounces every logged-in user back to /login.
