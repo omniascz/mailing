@@ -169,6 +169,11 @@ services:
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET is required}
       # Same value as the api service above — this is the side that signs.
       TRACKING_SECRET: ${TRACKING_SECRET:?TRACKING_SECRET is required}
+      # Return-Path domain for bulk sends. Required: with it unset the engine
+      # falls back to the header From and out-of-band bounces never reach us.
+      # Fail-fast rather than ${...:-}, which would substitute on empty too and
+      # leave the schema check unable to fire.
+      VERP_BOUNCE_DOMAIN: ${VERP_BOUNCE_DOMAIN:?VERP_BOUNCE_DOMAIN is required}
 
   web:
     build:
