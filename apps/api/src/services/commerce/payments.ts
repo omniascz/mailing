@@ -8,6 +8,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { invoices, quotes } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { unsignedWebhooksAllowed } from '../../lib/webhook-switches.js';
 
 /**
  * Verify a Stripe webhook signature against the RAW request body.
@@ -167,13 +168,24 @@ export async function createOrGetStripeCustomer(email: string, name?: string) {
 
 export async function handleStripeWebhook(payload: Buffer, signature: string): Promise<void> {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
-  // Enforce real HMAC signature verification when a secret is configured.
-  // Without this, a forged event with any signature header could mark invoices
-  // paid / activate subscriptions. Open only in dev where no secret is set.
-  if (webhookSecret) {
-    if (!verifyStripeSignature(payload, signature, webhookSecret)) {
-      throw AppError.unauthorized('Invalid Stripe webhook signature');
+
+  // Verification is mandatory. This used to read `if (webhookSecret) { … }`,
+  // so an unset or empty secret skipped the check entirely and a forged
+  // payment_intent.succeeded marked an invoice paid. docker-compose.prod.yml
+  // passed ${STRIPE_WEBHOOK_SECRET:-}, which substitutes on unset AND on
+  // empty, so that was the configured state in production rather than a
+  // theoretical one.
+  //
+  // The dev escape hatch is a separate, explicit flag. It is never inferred
+  // from the secret being absent, and it cannot be set in production.
+  if (!webhookSecret) {
+    if (!unsignedWebhooksAllowed()) {
+      throw AppError.unauthorized(
+        'Stripe webhook rejected: STRIPE_WEBHOOK_SECRET is not configured.',
+      );
     }
+  } else if (!verifyStripeSignature(payload, signature, webhookSecret)) {
+    throw AppError.unauthorized('Invalid Stripe webhook signature');
   }
 
   let event: { type: string; data: { object: Record<string, unknown> } };

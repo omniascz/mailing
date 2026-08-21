@@ -8,6 +8,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { unsignedWebhooksAllowed } from '../../lib/webhook-switches.js';
 import {
   receiveDmarcReport,
   listDmarcReports,
@@ -24,8 +25,20 @@ const dmarcRoutes: FastifyPluginAsync = async (app) => {
       schema: { tags: ['DMARC'], summary: 'Receive DMARC aggregate report (called by ISP)' },
     },
     async (req, reply) => {
-      const secret = process.env.DMARC_INBOUND_SECRET;
-      if (secret && req.headers['x-dmarc-secret'] !== secret) {
+      // Same shape as the two Stripe gates: `if (secret && …)` accepted every
+      // POST while the variable was unset, and this endpoint writes a DMARC
+      // report against any orgId the caller names. env.ts marks
+      // DMARC_INBOUND_SECRET prodRequired, so production was covered by
+      // another module's rule rather than by this check — which is not the
+      // same as being covered.
+      const secret = process.env.DMARC_INBOUND_SECRET ?? '';
+      if (!secret) {
+        if (!unsignedWebhooksAllowed()) {
+          return reply
+            .status(401)
+            .send({ code: 'UNAUTHORIZED', message: 'DMARC_INBOUND_SECRET is not configured' });
+        }
+      } else if (req.headers['x-dmarc-secret'] !== secret) {
         return reply.status(401).send({ code: 'UNAUTHORIZED', message: 'Invalid secret' });
       }
 

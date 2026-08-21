@@ -51,6 +51,7 @@ import { whatsappConsents, whatsappPhoneNumbers } from '../../db/schema/whatsapp
 import { eq } from 'drizzle-orm';
 import { verifyMetaRequest } from '../../lib/meta-signature.js';
 import { env } from '../../config/env.js';
+import { whatsappWebhookEnabled } from '../../lib/webhook-switches.js';
 
 export default async function whatsappRoutes(app: FastifyInstance) {
   // ── Template management ───────────────────────────────────────────────────
@@ -271,6 +272,18 @@ export default async function whatsappRoutes(app: FastifyInstance) {
 
   /** Meta webhook handler — receives quality_update, account_update, template_status_update */
   app.post('/api/v1/whatsapp/webhooks/meta', async (req, reply) => {
+    // Off by default. verifyMetaRequest returns true when the app secret is
+    // unset, so this endpoint accepted forged inbound messages and
+    // template-status flips in any deployment that had not configured Meta.
+    // We are not launching WhatsApp, so the endpoint is switched off rather
+    // than repaired. Answered before the body is looked at.
+    if (!whatsappWebhookEnabled()) {
+      return reply.code(404).send({
+        code: 'INTEGRATION_DISABLED',
+        message: 'WhatsApp webhooks are disabled. Set ENABLE_WHATSAPP_WEBHOOK=true to enable.',
+      });
+    }
+
     // Verify Meta's X-Hub-Signature-256 over the raw body before trusting any
     // inbound message / template-status event.
     if (!verifyMetaRequest(req, process.env.META_APP_SECRET ?? process.env.WHATSAPP_APP_SECRET)) {
