@@ -12,6 +12,10 @@ const REQUIRED = {
   DATABASE_URL: 'postgresql://u:p@db.internal:5432/forgemsg',
   REDIS_URL: 'redis://redis.internal:6379',
   JWT_SECRET: 'a-real-jwt-secret-64-bytes-random-value',
+  // Required in every environment now, not just production: system mail has to
+  // come from a domain the operator owns, and no committed default can be right.
+  SYSTEM_EMAIL_FROM: 'no-reply@ops.example',
+  SYSTEM_EMAIL_FROM_NAME: 'ForgeMsg',
 } as const;
 
 beforeEach(() => {
@@ -225,6 +229,12 @@ describe('prodRequired — production must not fall back to a committed default'
       DEV_TRACKING_SECRET,
       // the value it carried before it was brought under prodRequired
       'dev-tracking-secret-changeme',
+      // the four system-sender fallbacks, on four domains, two of them ours
+      // and two of them not
+      'no-reply@example.com',
+      'noreply@forgemsg.com',
+      'no-reply@forgemsg.io',
+      'reports@forgemsg.com',
     ]) {
       expect(values).not.toContain(banned);
     }
@@ -372,5 +382,117 @@ describe('optional-by-design secrets', () => {
     process.env = { NODE_ENV: 'development', ...REQUIRED };
     const mod = await import('./env.js');
     expect(mod.env.PARTNER_PROVISION_SECRET).toBeUndefined();
+  });
+});
+
+/**
+ * The system sender.
+ *
+ * Five names used to describe one thing — SYSTEM_EMAIL_FROM, SYSTEM_FROM_EMAIL,
+ * DOI_FROM_EMAIL, DOI_FROM_DOMAIN, REPORTS_FROM_EMAIL — each read straight off
+ * process.env at its call site with its own committed fallback, across four
+ * domains. Two failure modes had to close together:
+ *
+ *   missing  — the fallback fires, and mail leaves from a domain in this repo
+ *   empty    — `??` does not treat '' as absent, so the fallback does NOT fire
+ *              and the From is empty all the way to MAIL FROM:<>
+ *
+ * The empty case is the one that had no owner: docker-compose.prod.yml passed
+ * ${DOI_FROM_EMAIL:-no-reply@example.com}, and `:-` substitutes on empty too,
+ * so nothing downstream could tell "unconfigured" from "configured as
+ * example.com". Both now stop the boot.
+ */
+describe('SYSTEM_EMAIL_FROM — one sender, validated at boot', () => {
+  /** REQUIRED minus one field, so each absence is tested on its own. Removing
+   * both at once would let either requirement alone carry the assertion. */
+  const without = (field: string) => {
+    const rest: Record<string, string> = { ...REQUIRED };
+    delete rest[field];
+    return { NODE_ENV: 'development', ...rest } as NodeJS.ProcessEnv;
+  };
+  const base = () => ({ NODE_ENV: 'development', ...REQUIRED }) as NodeJS.ProcessEnv;
+
+  it('refuses to boot when SYSTEM_EMAIL_FROM is missing', async () => {
+    process.env = without('SYSTEM_EMAIL_FROM');
+    await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
+  });
+
+  it('refuses to boot when SYSTEM_EMAIL_FROM_NAME is missing', async () => {
+    process.env = without('SYSTEM_EMAIL_FROM_NAME');
+    await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
+  });
+
+  it('refuses to boot when SYSTEM_EMAIL_FROM is set but empty', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env = { ...base(), SYSTEM_EMAIL_FROM: '' };
+
+    await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
+    expect(
+      spy.mock.calls.flat().join(' '),
+      'the failure has to name the variable — an operator reads this line, not the stack',
+    ).toMatch(/SYSTEM_EMAIL_FROM/);
+    spy.mockRestore();
+  });
+
+  it('refuses to boot when SYSTEM_EMAIL_FROM is not an address', async () => {
+    process.env = { ...base(), SYSTEM_EMAIL_FROM: 'no-reply' };
+    await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
+  });
+
+  it('refuses to boot when SYSTEM_EMAIL_FROM_NAME is empty', async () => {
+    process.env = { ...base(), SYSTEM_EMAIL_FROM_NAME: '' };
+    await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
+  });
+
+  it('boots with a valid sender and exposes it', async () => {
+    process.env = {
+      ...base(),
+      SYSTEM_EMAIL_FROM: 'no-reply@ops.example',
+      SYSTEM_EMAIL_FROM_NAME: 'Ops',
+    };
+    const mod = await import('./env.js');
+    expect(mod.env.SYSTEM_EMAIL_FROM).toBe('no-reply@ops.example');
+    expect(mod.env.SYSTEM_EMAIL_FROM_NAME).toBe('Ops');
+  });
+
+  describe('REPORTS_FROM_EMAIL — the one sanctioned second address', () => {
+    it('is accepted on the same domain', async () => {
+      process.env = {
+        ...base(),
+        SYSTEM_EMAIL_FROM: 'no-reply@ops.example',
+        REPORTS_FROM_EMAIL: 'reports@ops.example',
+      };
+      const mod = await import('./env.js');
+      expect(mod.env.REPORTS_FROM_EMAIL).toBe('reports@ops.example');
+    });
+
+    it('refuses the boot on a different domain', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      process.env = {
+        ...base(),
+        SYSTEM_EMAIL_FROM: 'no-reply@ops.example',
+        REPORTS_FROM_EMAIL: 'reports@elsewhere.example',
+      };
+
+      await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
+      expect(spy.mock.calls.flat().join(' ')).toMatch(/same domain/);
+      spy.mockRestore();
+    });
+
+    it('compares domains case-insensitively rather than refusing a valid deploy', async () => {
+      process.env = {
+        ...base(),
+        SYSTEM_EMAIL_FROM: 'no-reply@Ops.Example',
+        REPORTS_FROM_EMAIL: 'reports@ops.example',
+      };
+      const mod = await import('./env.js');
+      expect(mod.env.REPORTS_FROM_EMAIL).toBe('reports@ops.example');
+    });
+
+    it('treats empty as "not set" — the required pair must not share that leniency', async () => {
+      process.env = { ...base(), REPORTS_FROM_EMAIL: '' };
+      const mod = await import('./env.js');
+      expect(mod.env.REPORTS_FROM_EMAIL).toBeUndefined();
+    });
   });
 });
