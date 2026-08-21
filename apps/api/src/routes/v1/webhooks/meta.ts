@@ -48,7 +48,7 @@ export default async function metaWebhookRoutes(app: FastifyInstance) {
   // authenticated /api/v1/meta/pages admin surface, which is unaffected.
   app.get('/webhook/meta', async (req, reply) => {
     if (!metaWebhookEnabled()) {
-      return reply.code(501).send({
+      return reply.code(404).send({
         code: 'INTEGRATION_DISABLED',
         message: 'Meta webhooks is disabled. Set ENABLE_META_WEBHOOK=true to enable.',
       });
@@ -71,7 +71,7 @@ export default async function metaWebhookRoutes(app: FastifyInstance) {
   // ── Event delivery (POST) ─────────────────────────────────────────────────
   app.post('/webhook/meta', { config: { rawBody: true } }, async (req, reply) => {
     if (!metaWebhookEnabled()) {
-      return reply.code(501).send({
+      return reply.code(404).send({
         code: 'INTEGRATION_DISABLED',
         message: 'Meta webhooks is disabled. Set ENABLE_META_WEBHOOK=true to enable.',
       });

@@ -12,10 +12,11 @@ import { buildApp } from '../../../index.js';
  * do not serve is work spent where nobody can reach it. They are switched off.
  *
  * Off means the request is answered before the body is read — either the route
- * is not registered (404) or the handler returns 501 as its first statement.
+ * is not registered (404) or the handler returns 404 with an INTEGRATION_DISABLED
+ * body as its first statement.
  * The tests below send NO signature header on purpose: the old code answered
- * such a request with 200, and a merely-broken switch would answer 401. Getting
- * 404/501 is what shows we returned before verification, not after it.
+ * such a request with 200, and a merely-broken switch would answer 401. A 404
+ * is what shows we returned before verification, not after it.
  *
  * Twilio is included as the control. Its verifier is fail-closed and correct,
  * it shares a route with Telnyx, and it must stay on — otherwise the switches
@@ -67,9 +68,9 @@ describe('webhook surfaces that are off by default', () => {
   ];
 
   for (const [name, url, flag, payload] of gated) {
-    it(`${name} answers 501 and names its switch`, async () => {
+    it(`${name} answers 404 and names its switch`, async () => {
       const res = await app.inject({ method: 'POST', url, payload: payload as object });
-      expect(res.statusCode, `${url} answered ${res.statusCode}`).toBe(501);
+      expect(res.statusCode, `${url} answered ${res.statusCode}`).toBe(404);
       const body = res.json() as { code?: string; message?: string };
       expect(body.code).toBe('INTEGRATION_DISABLED');
       expect(body.message).toContain(flag);
@@ -77,10 +78,10 @@ describe('webhook surfaces that are off by default', () => {
 
     it(`${name} refuses before verification, not after it`, async () => {
       // No signature header. A gate that ran verification first would answer
-      // 401/403 here; 501 is only reachable ahead of it.
+      // 401/403 here; 404 is only reachable ahead of it.
       const res = await app.inject({ method: 'POST', url, payload: payload as object });
       expect([401, 403]).not.toContain(res.statusCode);
-      expect(res.statusCode).toBe(501);
+      expect(res.statusCode).toBe(404);
     });
   }
 
@@ -89,7 +90,7 @@ describe('webhook surfaces that are off by default', () => {
       method: 'GET',
       url: '/webhook/meta?hub.mode=subscribe&hub.verify_token=x&hub.challenge=c',
     });
-    expect(res.statusCode).toBe(501);
+    expect(res.statusCode).toBe(404);
   });
 
   it('the authenticated /api/v1/meta/pages surface in the same file stays registered', async () => {
@@ -106,7 +107,7 @@ describe('webhook surfaces that are off by default', () => {
       url: '/api/v1/phone/webhook/twilio',
       payload: { CallSid: 'CA1' },
     });
-    expect(res.statusCode, 'the switches are per integration, not global').not.toBe(501);
+    expect(res.statusCode, 'the switches are per integration, not global').not.toBe(404);
     expect(res.statusCode, 'Twilio verification is fail-closed and must still run').toBe(401);
   });
 });

@@ -16,7 +16,8 @@
  *
  * 2. `*WebhookEnabled()` — per-integration kill switches for endpoints we are
  *    NOT launching with. Off by default; the routes are not registered, or the
- *    handler answers 501 before touching the body.
+ *    handler answers 404 before touching the body. Not 501: route-smoke refuses
+ *    any 5xx on a GET, and a deliberate off state is not a handler that threw.
  *
  * Each flag is its own named variable rather than a lookup by string, so
  * `grep ENABLE_` finds every one of them.

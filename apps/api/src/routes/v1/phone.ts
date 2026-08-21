@@ -110,7 +110,7 @@ const phoneRoutes: FastifyPluginAsync = async (app) => {
       // key configured just as readily as without one, so nothing short of not
       // serving the endpoint closes it. Twilio's verifier is real and stays on.
       if (provider === 'telnyx' && !telnyxWebhookEnabled()) {
-        return reply.code(501).send({
+        return reply.code(404).send({
           code: 'INTEGRATION_DISABLED',
           message: 'Telnyx webhooks are disabled. Set ENABLE_TELNYX_WEBHOOK=true to enable.',
         });

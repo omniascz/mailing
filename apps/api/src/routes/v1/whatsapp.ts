@@ -278,7 +278,7 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     // We are not launching WhatsApp, so the endpoint is switched off rather
     // than repaired. Answered before the body is looked at.
     if (!whatsappWebhookEnabled()) {
-      return reply.code(501).send({
+      return reply.code(404).send({
         code: 'INTEGRATION_DISABLED',
         message: 'WhatsApp webhooks are disabled. Set ENABLE_WHATSAPP_WEBHOOK=true to enable.',
       });
