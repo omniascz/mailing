@@ -18,6 +18,7 @@ import { db } from '../../db/client.js';
 import { newsletterTiers, newsletterSubscriptions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { verifyStripeSignature } from '../../services/commerce/payments.js';
+import { unsignedWebhooksAllowed } from '../../lib/webhook-switches.js';
 
 const tierCreateSchema = z.object({
   name: z.string().min(1).max(100),
@@ -226,8 +227,18 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
     '/api/v1/newsletter-tiers/stripe-webhook',
     { schema: { tags: ['Newsletter Tiers'], summary: 'Stripe subscription webhook' } },
     async (req, reply) => {
-      const secret = process.env.STRIPE_WEBHOOK_SECRET;
-      if (secret) {
+      // Second copy of the same gate as services/commerce/payments.ts, on the
+      // same secret, flipping subscription state instead of invoice state.
+      // Mandatory for the same reason: `if (secret) { … }` let a forged event
+      // through whenever the variable was unset or empty.
+      const secret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
+      if (!secret) {
+        if (!unsignedWebhooksAllowed()) {
+          return reply
+            .code(401)
+            .send({ error: 'STRIPE_WEBHOOK_SECRET is not configured; webhook rejected' });
+        }
+      } else {
         const sig = (req.headers['stripe-signature'] as string) ?? '';
         const raw =
           (req as unknown as { rawBody?: Buffer }).rawBody ?? Buffer.from(JSON.stringify(req.body));
