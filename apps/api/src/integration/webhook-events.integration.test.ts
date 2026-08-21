@@ -9,10 +9,10 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, like } from 'drizzle-orm';
 import { createTestApp, login } from './setup/harness.js';
 import { db } from '../db/client.js';
-import { webhooks, webhookDeliveries } from '../db/schema/index.js';
+import { webhooks, webhookDeliveries, contacts, campaigns } from '../db/schema/index.js';
 import { WEBHOOK_EVENTS } from '../db/schema/webhooks.js';
 
 const SECRET = 'events-itest-secret-0123456789abcdef';
@@ -75,6 +75,14 @@ describe('webhook events are emitted (authenticated, real DB)', () => {
 
   afterAll(async () => {
     await db.delete(webhooks).where(eq(webhooks.secret, SECRET));
+    // The contact this file creates is only soft-deleted by DELETE
+    // /contacts/:id, so the row survives every run and the table grows without
+    // bound in a long-lived CI database. It never broke the contact listing —
+    // that endpoint filters deleted_at — but leaving rows behind on purpose is
+    // how the next absolute-count assertion gets written against a moving
+    // target. Remove ours.
+    await db.delete(contacts).where(like(contacts.email, 'events-itest-%'));
+    await db.delete(campaigns).where(like(campaigns.name, 'events-itest%'));
   });
 
   describe('contacts', () => {

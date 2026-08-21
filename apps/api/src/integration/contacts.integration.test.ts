@@ -11,8 +11,28 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createTestApp, login } from './setup/harness.js';
 
-/** `apps/api/scripts/seed.ts` inserts exactly 6 contacts into the demo org. */
-const SEEDED_CONTACTS = 6;
+/**
+ * The contacts `apps/api/scripts/seed.ts` inserts into the demo org.
+ *
+ * Asserted as a subset, not as the whole list. This used to be
+ * `expect(body.data).toHaveLength(6)`, which quietly made every other file in
+ * the suite unable to create a contact: the list endpoint pages at 20 by
+ * default, so the seventh live contact anywhere in the org turned this into
+ * "expected length 6, got 7" — or, once a file created a dozen, "got 20" — in
+ * a test that has nothing to do with whatever created them. Shared mutable
+ * state plus an absolute count is a trap for whoever writes the next test.
+ *
+ * What this file is actually for is the authenticated happy path and org
+ * scoping, and both survive the change intact.
+ */
+const SEEDED_EMAILS = [
+  'adela.novakova@example.test',
+  'jan.svoboda@example.test',
+  'petra.dvorakova@example.test',
+  'tomas.prochazka@example.test',
+  'marketa.cerna@example.test',
+  'pavel.vesely@example.test',
+] as const;
 
 describe('contacts API (authenticated, real DB)', () => {
   let app: FastifyInstance;
@@ -38,9 +58,12 @@ describe('contacts API (authenticated, real DB)', () => {
     const session = await login(app);
     expect(session.orgId).toMatch(/^[0-9a-f-]{36}$/i);
 
+    // limit=100 is the route's maximum. Without it the default page of 20
+    // could hide a seeded contact once the org holds more than 20 live rows,
+    // which would reintroduce the coupling by the back door.
     const res = await app.inject({
       method: 'GET',
-      url: '/api/v1/contacts',
+      url: '/api/v1/contacts?limit=100',
       headers: { cookie: session.cookie },
     });
 
@@ -48,7 +71,12 @@ describe('contacts API (authenticated, real DB)', () => {
 
     const body = res.json() as { data: Array<{ id: string; orgId: string; email: string }> };
     expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data).toHaveLength(SEEDED_CONTACTS);
+
+    // Every seeded contact comes back. Extra rows left by other files in the
+    // suite are none of this test's business.
+    const returned = new Set(body.data.map((c) => c.email));
+    const missing = SEEDED_EMAILS.filter((e) => !returned.has(e));
+    expect(missing, `seeded contacts missing from the listing: ${missing.join(', ')}`).toEqual([]);
 
     // Multi-tenant isolation: every row belongs to the caller's org.
     for (const contact of body.data) {
