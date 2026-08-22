@@ -48,7 +48,27 @@ interface NavSection {
   items: Array<{ href: string; label: string; icon: typeof LayoutDashboard }>;
 }
 
-const NAV: NavSection[] = [
+/**
+ * Nav entries for domains outside the core product (CRM, helpdesk, booking,
+ * loyalty, commerce, reviews, product feeds, AI agents). The API hides their
+ * routes behind FEATURE_BEYOND_CORE; this hides the way in, so the dashboard
+ * never offers a page whose endpoints answer 404. The pages themselves stay —
+ * only the link goes.
+ */
+const BEYOND_CORE_HREFS = new Set([
+  '/ai-agents',
+  '/surveys',
+  '/coupons',
+  '/loyalty',
+  '/reviews',
+  '/meetings',
+  '/product-feeds',
+  '/helpdesk',
+]);
+
+const BEYOND_CORE_ENABLED = process.env.NEXT_PUBLIC_FEATURE_BEYOND_CORE === 'true';
+
+const ALL_NAV: NavSection[] = [
   {
     label: 'Overview',
     items: [{ href: '/', label: 'Insights', icon: LayoutDashboard }],
@@ -125,6 +145,14 @@ const NAV: NavSection[] = [
     ],
   },
 ];
+
+/** Sections with every beyond-core link removed; a section left empty is dropped. */
+const NAV: NavSection[] = BEYOND_CORE_ENABLED
+  ? ALL_NAV
+  : ALL_NAV.map((s) => ({
+      ...s,
+      items: s.items.filter((i) => !BEYOND_CORE_HREFS.has(i.href)),
+    })).filter((s) => s.items.length > 0);
 
 export function Sidebar() {
   const pathname = usePathname();

@@ -34,6 +34,12 @@ interface PaletteItem {
 // Static navigation set. Recent items + dynamic search comes later — for
 // now this gives keyboard-driven access to every top-level destination,
 // which is the 80 % of palette usage.
+// Same set the sidebar hides — Ctrl+K must not be a back door to a page whose
+// endpoints answer 404. Kept local rather than shared so this file has no new
+// import cycle; sidebar.tsx holds the canonical list and the comment.
+const BEYOND_CORE_HREFS = new Set(['/ai-agents']);
+const BEYOND_CORE_ENABLED = process.env.NEXT_PUBLIC_FEATURE_BEYOND_CORE === 'true';
+
 const ITEMS: PaletteItem[] = [
   { id: 'campaigns', label: 'Kampaně', href: '/campaigns', group: 'Send', icon: Mail },
   {
@@ -185,7 +191,8 @@ export function CommandPalette() {
 
   const filtered = useMemo(() => {
     if (!query.trim()) return ITEMS;
-    return ITEMS.map((item) => ({ item, s: score(query, item) }))
+    return ITEMS.filter((item) => BEYOND_CORE_ENABLED || !BEYOND_CORE_HREFS.has(item.href))
+      .map((item) => ({ item, s: score(query, item) }))
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
