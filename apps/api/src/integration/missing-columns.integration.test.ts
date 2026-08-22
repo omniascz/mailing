@@ -13,6 +13,7 @@
  * behind the column error: correct column names, valid SQL, and NULL for every
  * total. So each case plants known data and checks the arithmetic.
  */
+import { env } from '../config/env.js';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
@@ -185,6 +186,12 @@ afterAll(async () => {
   await app?.close();
 }, 60_000);
 
+/**
+ * The timeline HTTP surface is a beyond-core route (FEATURE_BEYOND_CORE); the
+ * service-level assertions around it are core and keep running either way.
+ */
+const itBeyondCore = env.FEATURE_BEYOND_CORE ? it : it.skip;
+
 describe('timeline', () => {
   it('unions all four sources instead of dying on workflow_run_id', async () => {
     const rows = await getTimeline(orgA, contactA);
@@ -210,7 +217,7 @@ describe('timeline', () => {
     expect(all.length).toBe(5);
   });
 
-  it('is reachable over HTTP', async () => {
+  itBeyondCore('is reachable over HTTP', async () => {
     const res = await app.inject({
       method: 'GET',
       url: `/api/v1/contacts/${contactA}/timeline`,
@@ -437,15 +444,18 @@ describe('cross-tenant isolation', () => {
     expect(own.filter((r) => r.source === 'workflow')).toHaveLength(1);
   });
 
-  it('over HTTP too: a session for one org cannot read another org’s timeline', async () => {
-    const res = await app.inject({
-      method: 'GET',
-      url: `/api/v1/contacts/${contactB}/timeline`,
-      headers: { cookie: session.cookie },
-    });
-    expect(res.statusCode).toBe(200);
-    expect(res.json().data).toEqual([]);
-  });
+  itBeyondCore(
+    'over HTTP too: a session for one org cannot read another org’s timeline',
+    async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/v1/contacts/${contactB}/timeline`,
+        headers: { cookie: session.cookie },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual([]);
+    },
+  );
 
   it('catalog insights count only the asking tenant’s orders', async () => {
     // Both orgs bought the same SKU, so its presence proves nothing — the

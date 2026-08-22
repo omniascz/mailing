@@ -32,6 +32,7 @@
  * its own bucket. Measured: 140 calls from one address give 100×200 + 40×429;
  * 140 from distinct addresses give 140×200.
  */
+import { env } from '../config/env.js';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import postgres from 'postgres';
@@ -221,7 +222,9 @@ describe('GET route smoke', () => {
   it('swept every GET route in the document', () => {
     // A sweep that finds nothing passes exactly as quietly as one that finds
     // everything, so pin the shape of the run itself.
-    expect(totalGet).toBeGreaterThan(600);
+    // Floor depends on how much of the product is registered: with
+    // FEATURE_BEYOND_CORE off the document is ~340 paths smaller by design.
+    expect(totalGet).toBeGreaterThan(env.FEATURE_BEYOND_CORE ? 600 : 400);
     expect(results.length).toBe(totalRequests);
     expect(totalRequests).toBeGreaterThan(totalGet);
     expect(results.filter((r) => r.status === 429)).toEqual([]);
@@ -275,7 +278,12 @@ describe('GET route smoke', () => {
     // The other direction matters more: an entry that has quietly started
     // passing must be removed, or the list slowly becomes a place where real
     // regressions can hide unnoticed.
-    const fixed = Object.keys(KNOWN_5XX).filter((p) => !failingPaths.has(p));
+    // Only judge entries the sweep actually visited. A path that is not in the
+    // document was never called, so it has not "started passing" — it is
+    // absent, which is what FEATURE_BEYOND_CORE does on purpose. Without this
+    // the message accuses the wrong thing on any route removal.
+    const sweptPaths = new Set(results.map((r) => r.path));
+    const fixed = Object.keys(KNOWN_5XX).filter((p) => sweptPaths.has(p) && !failingPaths.has(p));
     expect(
       fixed,
       `These are listed as known 5xx but answered fine. Delete them from` +

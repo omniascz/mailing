@@ -11,6 +11,7 @@
  * odpalovač into creditPoints while leaving the old call in workflows/actions.ts
  * would have fired it twice, and `> 0` would have called that a pass.
  */
+import { env } from '../config/env.js';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { and, eq, inArray, like, sql } from 'drizzle-orm';
@@ -31,6 +32,15 @@ import { workflowTriggerTypeEnum } from '../db/schema/workflows.js';
 import { czechHolidaysInDays } from '@forgemsg/i18n-cs';
 
 const TAG = 'trigitest';
+
+/**
+ * These cases drive the trigger through a loyalty or e-commerce endpoint, and
+ * those live behind FEATURE_BEYOND_CORE. The trigger types themselves are core
+ * and stay covered by trigger-coverage.test.ts either way; with the flag off
+ * there is simply no route left to fire them from, so the case is skipped
+ * rather than failed.
+ */
+const itBeyondCore = env.FEATURE_BEYOND_CORE ? it : it.skip;
 
 let app: FastifyInstance;
 let cookie: string;
@@ -262,109 +272,133 @@ describe('workflow triggers fire (real HTTP, real DB)', () => {
     expect(await settledRunCount(wf)).toBe(1);
   }, 60_000);
 
-  it('loyalty_points_earned — an earn event starts the workflow', async () => {
-    const wf = await activeWorkflow('loyalty_points_earned');
-    const { programId, contactId } = await loyaltySetup();
-    const earn = await api('POST', `/api/v1/loyalty/programs/${programId}/earn`, {
-      contactId,
-      eventType: 'signup',
-      properties: {},
-    });
-    expect(earn.status, earn.body).toBe(200);
-    expect(await settledRunCount(wf)).toBe(1);
-  }, 60_000);
+  itBeyondCore(
+    'loyalty_points_earned — an earn event starts the workflow',
+    async () => {
+      const wf = await activeWorkflow('loyalty_points_earned');
+      const { programId, contactId } = await loyaltySetup();
+      const earn = await api('POST', `/api/v1/loyalty/programs/${programId}/earn`, {
+        contactId,
+        eventType: 'signup',
+        properties: {},
+      });
+      expect(earn.status, earn.body).toBe(200);
+      expect(await settledRunCount(wf)).toBe(1);
+    },
+    60_000,
+  );
 
-  it('loyalty_points_earned — a manual admin credit does NOT start it', async () => {
-    // Deliberate: an admin adjustment is not an earning event. This pins the
-    // distinction so a later "fix" that moves the call into creditPoints —
-    // where tier-up lives — gets caught.
-    const wf = await activeWorkflow('loyalty_points_earned');
-    const { programId, memberId } = await loyaltySetup();
-    const credit = await api(
-      'POST',
-      `/api/v1/loyalty/programs/${programId}/members/${memberId}/credit`,
-      { points: 50, type: 'adjust', description: 'probe' },
-    );
-    expect(credit.status, credit.body).toBe(200);
-    await new Promise((r) => setTimeout(r, 2000));
-    expect(await runCount(wf)).toBe(0);
-  }, 60_000);
+  itBeyondCore(
+    'loyalty_points_earned — a manual admin credit does NOT start it',
+    async () => {
+      // Deliberate: an admin adjustment is not an earning event. This pins the
+      // distinction so a later "fix" that moves the call into creditPoints —
+      // where tier-up lives — gets caught.
+      const wf = await activeWorkflow('loyalty_points_earned');
+      const { programId, memberId } = await loyaltySetup();
+      const credit = await api(
+        'POST',
+        `/api/v1/loyalty/programs/${programId}/members/${memberId}/credit`,
+        { points: 50, type: 'adjust', description: 'probe' },
+      );
+      expect(credit.status, credit.body).toBe(200);
+      await new Promise((r) => setTimeout(r, 2000));
+      expect(await runCount(wf)).toBe(0);
+    },
+    60_000,
+  );
 
-  it('loyalty_reward_redeemed — redeeming a reward starts the workflow', async () => {
-    const wf = await activeWorkflow('loyalty_reward_redeemed');
-    const { programId, memberId, contactId } = await loyaltySetup();
-    await api('POST', `/api/v1/loyalty/programs/${programId}/earn`, {
-      contactId,
-      eventType: 'signup',
-      properties: {},
-    });
-    const reward = await api('POST', `/api/v1/loyalty/programs/${programId}/rewards`, {
-      name: `${TAG} reward`,
-      type: 'discount_pct',
-      pointCost: 10,
-      config: { percent: 5 },
-    });
-    expect(reward.status, reward.body).toBeLessThan(300);
-    const rewardId = reward.json<{ data: { id: string } }>().data.id;
+  itBeyondCore(
+    'loyalty_reward_redeemed — redeeming a reward starts the workflow',
+    async () => {
+      const wf = await activeWorkflow('loyalty_reward_redeemed');
+      const { programId, memberId, contactId } = await loyaltySetup();
+      await api('POST', `/api/v1/loyalty/programs/${programId}/earn`, {
+        contactId,
+        eventType: 'signup',
+        properties: {},
+      });
+      const reward = await api('POST', `/api/v1/loyalty/programs/${programId}/rewards`, {
+        name: `${TAG} reward`,
+        type: 'discount_pct',
+        pointCost: 10,
+        config: { percent: 5 },
+      });
+      expect(reward.status, reward.body).toBeLessThan(300);
+      const rewardId = reward.json<{ data: { id: string } }>().data.id;
 
-    const redeem = await api(
-      'POST',
-      `/api/v1/loyalty/programs/${programId}/members/${memberId}/redeem`,
-      { rewardId },
-    );
-    expect(redeem.status, redeem.body).toBe(200);
-    expect(await settledRunCount(wf)).toBe(1);
-  }, 60_000);
+      const redeem = await api(
+        'POST',
+        `/api/v1/loyalty/programs/${programId}/members/${memberId}/redeem`,
+        { rewardId },
+      );
+      expect(redeem.status, redeem.body).toBe(200);
+      expect(await settledRunCount(wf)).toBe(1);
+    },
+    60_000,
+  );
 
   // ── loyalty_tier_up: all three creditPoints callers ───────────────────────
 
-  it('loyalty_tier_up — fires from the earn-rule path', async () => {
-    const wf = await activeWorkflow('loyalty_tier_up');
-    const { programId, contactId } = await loyaltySetup();
-    const earn = await api('POST', `/api/v1/loyalty/programs/${programId}/earn`, {
-      contactId,
-      eventType: 'signup',
-      properties: {},
-    });
-    expect(earn.json<{ data: { tieredUp: boolean } }>().data.tieredUp).toBe(true);
-    expect(await settledRunCount(wf)).toBe(1);
-  }, 60_000);
+  itBeyondCore(
+    'loyalty_tier_up — fires from the earn-rule path',
+    async () => {
+      const wf = await activeWorkflow('loyalty_tier_up');
+      const { programId, contactId } = await loyaltySetup();
+      const earn = await api('POST', `/api/v1/loyalty/programs/${programId}/earn`, {
+        contactId,
+        eventType: 'signup',
+        properties: {},
+      });
+      expect(earn.json<{ data: { tieredUp: boolean } }>().data.tieredUp).toBe(true);
+      expect(await settledRunCount(wf)).toBe(1);
+    },
+    60_000,
+  );
 
-  it('loyalty_tier_up — fires from the manual admin credit path', async () => {
-    const wf = await activeWorkflow('loyalty_tier_up');
-    const { programId, memberId } = await loyaltySetup();
-    const credit = await api(
-      'POST',
-      `/api/v1/loyalty/programs/${programId}/members/${memberId}/credit`,
-      { points: 500, type: 'bonus' },
-    );
-    expect(credit.status, credit.body).toBe(200);
-    expect(await settledRunCount(wf)).toBe(1);
-  }, 60_000);
+  itBeyondCore(
+    'loyalty_tier_up — fires from the manual admin credit path',
+    async () => {
+      const wf = await activeWorkflow('loyalty_tier_up');
+      const { programId, memberId } = await loyaltySetup();
+      const credit = await api(
+        'POST',
+        `/api/v1/loyalty/programs/${programId}/members/${memberId}/credit`,
+        { points: 500, type: 'bonus' },
+      );
+      expect(credit.status, credit.body).toBe(200);
+      expect(await settledRunCount(wf)).toBe(1);
+    },
+    60_000,
+  );
 
-  it('loyalty_tier_up — fires exactly once from the workflow award-points action', async () => {
-    // The count is the point. The odpalovač used to live in this action; it now
-    // lives in creditPoints, which the action calls. If both were left in place
-    // this reads 2.
-    const wf = await activeWorkflow('loyalty_tier_up');
-    const { programId, contactId } = await loyaltySetup();
-    const awarder = await activeWorkflow(
-      'manual',
-      {},
-      [
-        { id: 't', type: 'trigger', config: {} },
-        {
-          id: 'a1',
-          type: 'award_loyalty_points',
-          config: { programId, points: 500, description: 'probe' },
-        },
-      ],
-      [{ id: 'x', source: 't', target: 'a1' }],
-    );
-    const fired = await api('POST', `/api/v1/workflows/${awarder}/trigger`, { contactId });
-    expect(fired.status, fired.body).toBe(200);
-    expect(await settledRunCount(wf)).toBe(1);
-  }, 60_000);
+  itBeyondCore(
+    'loyalty_tier_up — fires exactly once from the workflow award-points action',
+    async () => {
+      // The count is the point. The odpalovač used to live in this action; it now
+      // lives in creditPoints, which the action calls. If both were left in place
+      // this reads 2.
+      const wf = await activeWorkflow('loyalty_tier_up');
+      const { programId, contactId } = await loyaltySetup();
+      const awarder = await activeWorkflow(
+        'manual',
+        {},
+        [
+          { id: 't', type: 'trigger', config: {} },
+          {
+            id: 'a1',
+            type: 'award_loyalty_points',
+            config: { programId, points: 500, description: 'probe' },
+          },
+        ],
+        [{ id: 'x', source: 't', target: 'a1' }],
+      );
+      const fired = await api('POST', `/api/v1/workflows/${awarder}/trigger`, { contactId });
+      expect(fired.status, fired.body).toBe(200);
+      expect(await settledRunCount(wf)).toBe(1);
+    },
+    60_000,
+  );
 
   // ── the two that could not be created ─────────────────────────────────────
 
@@ -445,42 +479,46 @@ describe('workflow triggers fire (real HTTP, real DB)', () => {
     expect(await settledRunCount(wf)).toBe(1);
   }, 60_000);
 
-  it('purchase_event — an ingested order starts the workflow', async () => {
-    const wf = await activeWorkflow('purchase_event');
-    const contactId = await newContact('order');
-    const [contact] = await db
-      .select({ email: contacts.email })
-      .from(contacts)
-      .where(eq(contacts.id, contactId));
+  itBeyondCore(
+    'purchase_event — an ingested order starts the workflow',
+    async () => {
+      const wf = await activeWorkflow('purchase_event');
+      const contactId = await newContact('order');
+      const [contact] = await db
+        .select({ email: contacts.email })
+        .from(contacts)
+        .where(eq(contacts.id, contactId));
 
-    const conn = await api('POST', '/api/v1/ecommerce/connections', {
-      platform: 'magento',
-      name: `${TAG} magento`,
-      baseUrl: 'https://probe.example.com',
-      accessToken: 'probe-token',
-      webhookSecret: 'probe-secret',
-    });
-    expect(conn.status, conn.body).toBeLessThan(300);
-    const connectionId = conn.json<{ data: { id: string } }>().data.id;
+      const conn = await api('POST', '/api/v1/ecommerce/connections', {
+        platform: 'magento',
+        name: `${TAG} magento`,
+        baseUrl: 'https://probe.example.com',
+        accessToken: 'probe-token',
+        webhookSecret: 'probe-secret',
+      });
+      expect(conn.status, conn.body).toBeLessThan(300);
+      const connectionId = conn.json<{ data: { id: string } }>().data.id;
 
-    const hook = await app.inject({
-      method: 'POST',
-      url: `/api/v1/ecommerce/webhooks/generic/${connectionId}`,
-      headers: { 'x-webhook-secret': 'probe-secret' },
-      payload: {
-        increment_id: `${TAG}-${Date.now()}`,
-        entity_id: 1,
-        customer_email: contact!.email,
-        status: 'complete',
-        grand_total: '123.45',
-        order_currency_code: 'CZK',
-        created_at: new Date().toISOString(),
-        items: [{ sku: 'S1', name: 'Probe', qty_ordered: 1, price: 123.45, product_id: 'p1' }],
-      },
-    });
-    expect(hook.statusCode, hook.body).toBe(200);
-    expect(await settledRunCount(wf)).toBe(1);
-  }, 60_000);
+      const hook = await app.inject({
+        method: 'POST',
+        url: `/api/v1/ecommerce/webhooks/generic/${connectionId}`,
+        headers: { 'x-webhook-secret': 'probe-secret' },
+        payload: {
+          increment_id: `${TAG}-${Date.now()}`,
+          entity_id: 1,
+          customer_email: contact!.email,
+          status: 'complete',
+          grand_total: '123.45',
+          order_currency_code: 'CZK',
+          created_at: new Date().toISOString(),
+          items: [{ sku: 'S1', name: 'Probe', qty_ordered: 1, price: 123.45, product_id: 'p1' }],
+        },
+      });
+      expect(hook.statusCode, hook.body).toBe(200);
+      expect(await settledRunCount(wf)).toBe(1);
+    },
+    60_000,
+  );
 
   // ── cron-driven: the "event" is the daily run ─────────────────────────────
 
