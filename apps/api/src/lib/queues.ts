@@ -106,9 +106,43 @@ export const PRIORITY = {
  * password reset, verify email, campaign test sends — go here so we
  * don't need separate plumbing for one-shot sends.
  */
-export const mtaOtherQueue = new Queue('mta-other', queueOpts);
+/**
+ * Same Redis queue the workers' `mtaQueues.other` writes to, so it must carry
+ * the same retry window: job options come from whoever added the job, and this
+ * queue used to hand transactional mail 3 attempts over ~15 seconds while the
+ * campaign path handed the identical queue 6 over 31 minutes.
+ *
+ * Fifteen seconds does not survive greylisting, which is standard at Czech
+ * providers and asks the sender to come back in five minutes. The question is
+ * not "31 minutes late or now" — the first attempt was refused, so it cannot be
+ * now. It is "31 minutes late or never". A password reset that arrives half an
+ * hour late is a poor experience; one that never arrives is a support ticket.
+ *
+ * This is the MTA hop, not the API→worker hop. The deliberately short window on
+ * batchSenderQueues.transactional (6 × 2 s) is a different decision about a
+ * different stage and is untouched.
+ */
+export const mtaOtherQueue = new Queue('mta-other', {
+  ...queueOpts,
+  defaultJobOptions: {
+    ...queueOpts.defaultJobOptions,
+    attempts: 6,
+    backoff: { type: 'exponential' as const, delay: 60_000 },
+  },
+});
 
 import { randomUUID } from 'node:crypto';
+import { encodeVerp } from '@forgemsg/shared/sending/verp';
+
+/**
+ * Per-message VERP return path, or '' when no bounce domain is configured —
+ * the same ternary batch-sender.ts uses, so both paths are off or on together
+ * rather than disagreeing.
+ */
+function verpReturnPath(messageId: string): string {
+  const domain = process.env.VERP_BOUNCE_DOMAIN ?? '';
+  return domain ? encodeVerp(messageId, domain) : '';
+}
 
 export interface TransactionalAttachment {
   filename: string;
@@ -264,6 +298,17 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       replyTo: input.replyTo ?? '',
       customHeaders: input.customHeaders ?? {},
       sendingIp: input.sendingIp ?? '',
+      returnPath: verpReturnPath(messageId),
+      // VERP envelope sender, same codec the campaign path uses
+      // (workers/jobs/batch-sender.ts). Without it the engine falls back to the
+      // header From (engine/internal/smtp/sender.go:169), so a DSN for a DOI
+      // confirmation or a password reset is delivered to the customer's own
+      // mailbox and our inbound side never sees it — the address is never
+      // suppressed and the next campaign mails it again.
+      //
+      // The domain is validated in the workers env schema, which is the process
+      // that reads it there; here it is still a raw read. Bringing it under the
+      // API schema too is a configuration change, not a send-path one.
       tlsPolicy: input.tlsPolicy ?? '',
       rawMime: input.rawMime ?? '',
       priority: PRIORITY.TRANSACTIONAL,
