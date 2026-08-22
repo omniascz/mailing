@@ -63,6 +63,8 @@ export async function getContactActivity(
         bounce: 'Email bounced',
         complaint: 'Email complaint',
         unsubscribe: 'Unsubscribed',
+        deferred: 'Delivery deferred (will retry)',
+        failed: 'Delivery failed (no reply from server)',
       }[e.eventType] || e.eventType;
 
     activities.push({

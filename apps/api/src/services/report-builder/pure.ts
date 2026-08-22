@@ -22,7 +22,12 @@ export type ReportEventType =
   | 'click'
   | 'bounce'
   | 'unsubscribe'
-  | 'complaint';
+  | 'complaint'
+  // Not delivered, not rejected: a retry on the way past, and a transport
+  // failure that ran out of them. Reportable in their own right, and kept out
+  // of anything that counts bounces.
+  | 'deferred'
+  | 'failed';
 
 export type ReportMetric =
   | 'sends'
