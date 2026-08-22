@@ -1,3 +1,4 @@
+import { getCapabilities } from '@/lib/capabilities';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
@@ -37,6 +38,13 @@ export default async function InboxPreviewDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // Not a hidden-but-reachable page: without a Litmus key the provider is a
+  // mock that reports 'completed' with screenshots on preview.mock.local, so
+  // the route does not exist rather than showing broken renders. Set
+  // LITMUS_API_KEY and it is back.
+  const { inboxPreview } = await getCapabilities();
+  if (!inboxPreview) notFound();
+
   const { id } = await params;
   const job = await apiFetch<PreviewJob | null>(`/api/v1/inbox-preview/${id}`, { fallback: null });
   if (!job) notFound();

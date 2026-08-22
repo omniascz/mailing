@@ -22,6 +22,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+import {
+  NOTHING_AVAILABLE,
+  visibleEntries,
+  type Capabilities,
+  type CapabilityFlag,
+} from '@/lib/capabilities';
+
 interface PaletteItem {
   id: string;
   label: string;
@@ -29,6 +36,8 @@ interface PaletteItem {
   href: string;
   group: 'Send' | 'Audience' | 'Automation' | 'Settings';
   icon: React.ComponentType<{ className?: string }>;
+  /** Hidden unless the API reports this capability. See lib/capabilities.ts. */
+  requires?: CapabilityFlag;
 }
 
 // Static navigation set. Recent items + dynamic search comes later — for
@@ -51,6 +60,7 @@ const ITEMS: PaletteItem[] = [
     href: '/inbox-preview',
     group: 'Send',
     icon: Inbox,
+    requires: 'inboxPreview',
   },
   { id: 'contacts', label: 'Kontakty', href: '/contacts', group: 'Audience', icon: Users },
   {
@@ -152,7 +162,12 @@ function score(query: string, item: PaletteItem): number {
   return 0;
 }
 
-export function CommandPalette() {
+export function CommandPalette({
+  capabilities = NOTHING_AVAILABLE,
+}: {
+  capabilities?: Capabilities;
+}) {
+  const available = visibleEntries(ITEMS, capabilities);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -184,8 +199,9 @@ export function CommandPalette() {
   }, [open]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return ITEMS;
-    return ITEMS.map((item) => ({ item, s: score(query, item) }))
+    if (!query.trim()) return available;
+    return available
+      .map((item) => ({ item, s: score(query, item) }))
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);

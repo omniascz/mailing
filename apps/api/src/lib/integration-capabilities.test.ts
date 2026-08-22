@@ -184,3 +184,29 @@ describe('bookingWouldBeEmpty — no confirmed booking with nowhere to go', () =
     expect(bookingWouldBeEmpty('custom', null, null)).toBe(false);
   });
 });
+
+describe('inbox preview is refused, not mocked, when unconfigured', () => {
+  it('createPreviewJob throws instead of returning a preview.mock.local render', async () => {
+    process.env = {};
+    const { createPreviewJob } = await import('../services/preview/inbox-preview.js');
+    await expect(
+      createPreviewJob('00000000-0000-0000-0000-0000000000ff', {
+        html: '<p>x</p>',
+        clients: ['gmail'],
+      } as never),
+    ).rejects.toThrow(/not available in this deployment/);
+  });
+
+  it('does not throw once a Litmus key is set — hidden, not removed', async () => {
+    process.env = { LITMUS_API_KEY: 'key' };
+    const { createPreviewJob } = await import('../services/preview/inbox-preview.js');
+    // It will fail later reaching the DB; what matters is that it got past the
+    // availability gate rather than being refused by it.
+    await expect(
+      createPreviewJob('00000000-0000-0000-0000-0000000000ff', {
+        html: '<p>x</p>',
+        clients: ['gmail'],
+      } as never),
+    ).rejects.not.toThrow(/not available in this deployment/);
+  });
+});
