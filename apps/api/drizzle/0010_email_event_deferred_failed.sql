@@ -1,24 +1,20 @@
 -- Two new email_event_type values: 'deferred' and 'failed'.
 --
--- Both exist so that a message which was not delivered stops being counted as
--- a message the recipient rejected.
---
---   deferred — an attempt failed and another is coming (4xx, or a transport
+--   deferred — an attempt failed and another is coming (a 4xx, or a transport
 --              error). Written once per non-final attempt.
 --   failed   — retries ran out without the far side ever answering: timeout,
 --              DNS failure, unreachable host.
 --
--- Before this, the retry of a greylisted message was written as
--- `bounce`/`soft` on every attempt, and the MTA-error branch wrote nothing at
--- all. Every deliverability consumer filters `event_type = 'bounce'`, so the
--- first inflated the bounce rate sixfold for a message that was merely
--- delayed, and the second left transport faults invisible.
+-- Neither is a bounce. Every deliverability consumer filters
+-- `event_type = 'bounce'`, so recording a retry there made a greylisted
+-- message look like six rejections, and the transport-error branch — which
+-- wrote nothing at all — left network faults invisible.
 --
--- Additive only: no existing row changes, and no consumer counts a value it
--- has never seen. ClickHouse stores event_type as LowCardinality(String), not
--- an enum, so the replica needs no matching change.
+-- Additive: no existing row changes, and no consumer counts a value it has
+-- never seen. ClickHouse stores event_type as LowCardinality(String) rather
+-- than an enum, so the replica needs no matching change.
 --
--- ALTER TYPE ... ADD VALUE runs inside a transaction on PostgreSQL 12+ as long
--- as the new label is not used in that same transaction. Nothing here uses it.
+-- IF NOT EXISTS on both, so re-running against a database where they were
+-- added by hand is a no-op rather than an error.
 ALTER TYPE "public"."email_event_type" ADD VALUE IF NOT EXISTS 'deferred';--> statement-breakpoint
 ALTER TYPE "public"."email_event_type" ADD VALUE IF NOT EXISTS 'failed';
