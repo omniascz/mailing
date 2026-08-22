@@ -10,6 +10,7 @@
 
 import { EXTENDED_TEMPLATES } from './extended.js';
 import { EXTENDED_TEMPLATES_2 } from './extended2.js';
+import { CZECH_TEMPLATES } from './czech.js';
 
 export type TemplateCategory =
   | 'newsletter'
@@ -22,6 +23,21 @@ export type TemplateCategory =
   | 'b2b'
   | 'saas';
 
+/**
+ * Language a template is written in.
+ *
+ * Chosen over carrying several languages inside one template. A multilingual
+ * template would mean every text, subject and button label became a
+ * locale→string map, which is a change to EmailSchema itself: the renderer, the
+ * editor canvas and all 71 existing templates would have to follow. The
+ * language of an email is a property of the whole email — its tone, its length,
+ * its greeting — not a swappable string table, and a Czech order confirmation
+ * is a different email from an English one, not a translation of it.
+ *
+ * So a variant is its own entry, and `family` is what ties variants together.
+ */
+export type TemplateLocale = 'en' | 'cs' | 'sk';
+
 export interface TemplateMeta {
   id: string;
   name: string;
@@ -29,6 +45,22 @@ export interface TemplateMeta {
   description: string;
   thumbnailUrl: string | null;
   schema: object;
+  /**
+   * Absent means 'en'. Not an inference — the 71 templates that predate this
+   * field are English, and writing the field onto each of them would be 71
+   * edits that change nothing. `localeOf` is the single place that resolves it.
+   */
+  locale?: TemplateLocale;
+  /**
+   * Groups variants of the same email across languages, e.g. 'order-confirmation'.
+   * Absent means the template has no siblings.
+   */
+  family?: string;
+}
+
+/** The language of a template. Absent locale means English — see TemplateMeta. */
+export function localeOf(t: TemplateMeta): TemplateLocale {
+  return t.locale ?? 'en';
 }
 
 const DEFAULT_GLOBAL_STYLES = {
@@ -971,6 +1003,7 @@ export const TEMPLATES: TemplateMeta[] = [
 // Merge core + extended batches
 TEMPLATES.push(...EXTENDED_TEMPLATES);
 TEMPLATES.push(...EXTENDED_TEMPLATES_2);
+TEMPLATES.push(...CZECH_TEMPLATES);
 
 // ─── Thumbnails ─────────────────────────────────────────────────────────────────
 
@@ -1027,4 +1060,21 @@ export function getTemplatesByCategory(category: TemplateCategory): TemplateMeta
 
 export function getAllCategories(): TemplateCategory[] {
   return [...new Set(TEMPLATES.map((t) => t.category))];
+}
+
+export function getTemplatesByLocale(locale: TemplateLocale): TemplateMeta[] {
+  return TEMPLATES.filter((t) => localeOf(t) === locale);
+}
+
+/** Languages actually present in the library — what the gallery can offer as a filter. */
+export function getAllLocales(): TemplateLocale[] {
+  return [...new Set(TEMPLATES.map(localeOf))];
+}
+
+/**
+ * Variants of one email across languages, keyed by locale.
+ * Empty for a template with no `family`, which is most of them.
+ */
+export function getFamily(family: string): TemplateMeta[] {
+  return TEMPLATES.filter((t) => t.family === family);
 }
