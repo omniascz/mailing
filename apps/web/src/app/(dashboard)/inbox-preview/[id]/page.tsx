@@ -1,4 +1,4 @@
-import { getCapabilities } from '@/lib/capabilities';
+import { getCapabilities } from '@/lib/capabilities.server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';

@@ -9,12 +9,14 @@
  * from the web app reading its own copy of the environment: a second copy is a
  * second thing to be wrong, and it would be the wrong process's copy anyway.
  *
+ * This module is client-safe: it holds only types and the visibility rule, so a
+ * client component can import it without dragging next/headers into the browser
+ * bundle. The fetch lives in capabilities.server.ts.
+ *
  * The fallback when the API cannot be reached is everything off. A dashboard
  * that hides a working feature is a nuisance; one that offers a broken feature
  * is the bug being fixed.
  */
-import { apiFetch } from './api';
-
 export interface Capabilities {
   meetingLocationTypes: string[];
   videoProviders: string[];
@@ -31,10 +33,6 @@ export const NOTHING_AVAILABLE: Capabilities = {
   inboxPreview: false,
   geoAnalytics: false,
 };
-
-export async function getCapabilities(): Promise<Capabilities> {
-  return apiFetch<Capabilities>('/api/v1/capabilities', { fallback: NOTHING_AVAILABLE });
-}
 
 /** True when an entry with this requirement may be shown. */
 export function isAvailable(

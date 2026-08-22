@@ -4,7 +4,7 @@ import { ArrowLeft, Calendar, Inbox } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
-import { getCapabilities } from '@/lib/capabilities';
+import { getCapabilities } from '@/lib/capabilities.server';
 import { CampaignActions } from './campaign-actions';
 import { CloneCampaignButton } from './clone-campaign-button';
 

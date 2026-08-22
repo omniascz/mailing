@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getCapabilities } from '@/lib/capabilities';
+import { getCapabilities } from '@/lib/capabilities.server';
 import Link from 'next/link';
 import { Eye, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { CommandPalette } from '@/components/dashboard/command-palette';
-import { getCapabilities } from '@/lib/capabilities';
+import { getCapabilities } from '@/lib/capabilities.server';
 import { PlanUsageBanner } from '@/components/dashboard/plan-usage-banner';
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
