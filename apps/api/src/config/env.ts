@@ -62,12 +62,46 @@ function prodRequired<T extends z.ZodString>(schema: T, devDefault?: string) {
   ) as NoChainedDefault<z.ZodOptional<T> | z.ZodDefault<T>>;
 }
 
+/**
+ * An on/off env var that must never stop the app booting when it is absent.
+ *
+ * Deliberately not `z.coerce.boolean()`: that coerces by JS truthiness, so the
+ * string `'false'` — the obvious way to write it in a .env file — parses as
+ * `true`. Values are matched explicitly and anything else is a loud error,
+ * because a silently-misread feature switch is worse than a failed boot.
+ */
+const boolFlag = (fallback: boolean) =>
+  z
+    .preprocess(
+      (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v),
+      z.enum(['true', 'false', '1', '0', 'yes', 'no']).optional(),
+    )
+    .transform((v) => (v === undefined ? fallback : v === 'true' || v === '1' || v === 'yes'));
+
 const Env = z
   .object({
     // ─── Runtime ──────────────────────────────────────────────────────────────
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
     PORT: z.coerce.number().int().min(1).max(65_535).default(3001),
+
+    // ─── Product scope ────────────────────────────────────────────────────────
+    /**
+     * Everything outside the core product, behind one switch.
+     *
+     * ForgeMsg's core is sending: newsletters, transactional mail, attachments,
+     * scheduled one-off sends, templates rendered from a payload the customer's
+     * own system supplies — plus what sending needs (contacts, segmentation,
+     * deliverability, reporting). CRM, helpdesk, booking, loyalty, commerce,
+     * ads, CDP, SEO, social and blog were built to the wider 2026-05
+     * positioning in POZICOVANI.md and are not that product.
+     *
+     * Off: their routes are never registered, so they are absent from
+     * /docs/json and answer 404 — we do not advertise an endpoint we do not
+     * stand behind. Nothing is deleted; on, the app behaves exactly as before.
+     * Defaults on outside production so they keep being developed and tested.
+     */
+    FEATURE_BEYOND_CORE: boolFlag(!isProduction),
 
     // ─── Public URLs ──────────────────────────────────────────────────────────
     API_BASE_URL: z.string().url().default('http://localhost:3001'),
