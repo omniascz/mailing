@@ -1021,31 +1021,161 @@ const CATEGORY_COLOR: Record<TemplateCategory, string> = {
 };
 
 /**
- * Generate a lightweight inline SVG data-URI thumbnail (no network, no files)
- * so the template gallery shows a coloured preview card instead of a blank box.
+ * Draw a thumbnail from the template's actual blocks.
+ *
+ * The previous version took `(name, category)` and drew the same card every
+ * time: a coloured bar, the first letter of the name, three grey placeholder
+ * rectangles. Seventy-one templates, seventy-one identical tiles differing only
+ * in hue — a gallery nobody can browse, and a test ("gives every template a
+ * thumbnail") that passed because this function always returns a string.
+ *
+ * A real render is out of reach without a headless browser, which is not worth
+ * a template gallery. But the schema already says what the email looks like:
+ * the order of the blocks, which of them is a hero, what colour that hero is,
+ * where the buttons are, whether there are product cards or a coupon. Walking
+ * it produces a wireframe that differs per template and is derived from the
+ * thing it depicts — which is what a thumbnail is for.
  */
-function svgThumbnail(name: string, category: TemplateCategory): string {
-  const color = CATEGORY_COLOR[category] ?? '#334155';
-  const label = category.toUpperCase();
-  const initial = (name.trim()[0] ?? 'F').toUpperCase();
+interface ThumbBlock {
+  type?: string;
+  backgroundColor?: string;
+  height?: number;
+  columns?: unknown[];
+}
+
+function svgThumbnail(schema: unknown, category: TemplateCategory): string {
+  const accent = CATEGORY_COLOR[category] ?? '#334155';
+  const blocks = ((schema as { blocks?: ThumbBlock[] })?.blocks ?? []).slice(0, 12);
+
+  const W = 240;
+  const H = 180;
+  const PAD = 16;
+  const inner = W - PAD * 2;
+
+  /** Vertical weight of each block type, so the wireframe keeps its proportions. */
+  const weight = (b: ThumbBlock): number => {
+    switch (b.type) {
+      case 'hero':
+        return 3.2;
+      case 'product':
+        return 2.6;
+      case 'coupon':
+        return 2.2;
+      case 'columns':
+        return 2;
+      case 'image':
+      case 'video':
+        return 2.4;
+      case 'button':
+        return 1.1;
+      case 'footer':
+        return 1.4;
+      case 'divider':
+        return 0.35;
+      case 'spacer':
+        return 0.5;
+      default:
+        return 1.3; // text
+    }
+  };
+
+  const total = blocks.reduce((a, b) => a + weight(b), 0) || 1;
+  const avail = H - PAD * 2;
+  const parts: string[] = [
+    `<rect width="${W}" height="${H}" fill="#f1f5f9"/>`,
+    `<rect x="${PAD - 6}" y="${PAD - 6}" width="${inner + 12}" height="${avail + 12}" rx="4" fill="#ffffff"/>`,
+  ];
+
+  let y = PAD;
+  for (const b of blocks) {
+    const h = Math.max(2, (weight(b) / total) * avail);
+    const fill = typeof b.backgroundColor === 'string' ? b.backgroundColor : accent;
+    switch (b.type) {
+      case 'hero':
+        parts.push(
+          `<rect x="${PAD}" y="${y}" width="${inner}" height="${h}" rx="2" fill="${fill}"/>`,
+        );
+        parts.push(
+          `<rect x="${PAD + 24}" y="${y + h / 2 - 4}" width="${inner - 48}" height="6" rx="2" fill="#ffffff" opacity="0.85"/>`,
+        );
+        break;
+      case 'button':
+        parts.push(
+          `<rect x="${PAD + inner / 2 - 32}" y="${y}" width="64" height="${h}" rx="3" fill="${accent}"/>`,
+        );
+        break;
+      case 'divider':
+        parts.push(
+          `<rect x="${PAD}" y="${y + h / 2}" width="${inner}" height="1" fill="#cbd5e1"/>`,
+        );
+        break;
+      case 'spacer':
+        break;
+      case 'product':
+        parts.push(`<rect x="${PAD}" y="${y}" width="${h}" height="${h}" rx="2" fill="#cbd5e1"/>`);
+        parts.push(
+          `<rect x="${PAD + h + 6}" y="${y + 3}" width="${inner - h - 40}" height="5" rx="2" fill="#94a3b8"/>`,
+        );
+        parts.push(
+          `<rect x="${PAD + h + 6}" y="${y + 14}" width="40" height="5" rx="2" fill="${accent}"/>`,
+        );
+        break;
+      case 'coupon':
+        parts.push(
+          `<rect x="${PAD + 20}" y="${y}" width="${inner - 40}" height="${h}" rx="3" fill="#ffffff" stroke="${accent}" stroke-dasharray="4 3"/>`,
+        );
+        parts.push(
+          `<rect x="${PAD + inner / 2 - 26}" y="${y + h / 2 - 3}" width="52" height="6" rx="2" fill="${accent}"/>`,
+        );
+        break;
+      case 'columns': {
+        const n = Math.max(1, (b.columns ?? []).length);
+        const cw = (inner - (n - 1) * 6) / n;
+        for (let i = 0; i < n; i++) {
+          parts.push(
+            `<rect x="${PAD + i * (cw + 6)}" y="${y}" width="${cw}" height="${h}" rx="2" fill="#e2e8f0"/>`,
+          );
+        }
+        break;
+      }
+      case 'footer':
+        parts.push(
+          `<rect x="${PAD}" y="${y}" width="${inner}" height="${h}" rx="2" fill="#e2e8f0"/>`,
+        );
+        parts.push(
+          `<rect x="${PAD + inner / 2 - 30}" y="${y + h / 2 - 2}" width="60" height="4" rx="2" fill="#94a3b8"/>`,
+        );
+        break;
+      case 'image':
+      case 'video':
+        parts.push(
+          `<rect x="${PAD}" y="${y}" width="${inner}" height="${h}" rx="2" fill="#cbd5e1"/>`,
+        );
+        break;
+      default: {
+        // Text: two ragged lines, so a block of copy reads as copy.
+        const lines = h > 12 ? 2 : 1;
+        for (let i = 0; i < lines; i++) {
+          const w = inner - (i === lines - 1 ? 40 : 0);
+          parts.push(
+            `<rect x="${PAD}" y="${y + i * 8}" width="${w}" height="5" rx="2" fill="#cbd5e1"/>`,
+          );
+        }
+      }
+    }
+    y += h;
+  }
+
   const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="180" viewBox="0 0 240 180">` +
-    `<rect width="240" height="180" fill="#f1f5f9"/>` +
-    `<rect width="240" height="56" fill="${color}"/>` +
-    `<circle cx="30" cy="28" r="14" fill="#ffffff" opacity="0.9"/>` +
-    `<text x="30" y="34" font-family="Arial" font-size="16" font-weight="700" fill="${color}" text-anchor="middle">${initial}</text>` +
-    `<text x="56" y="33" font-family="Arial" font-size="11" font-weight="700" fill="#ffffff" letter-spacing="1">${label}</text>` +
-    `<rect x="20" y="78" width="200" height="12" rx="3" fill="#cbd5e1"/>` +
-    `<rect x="20" y="100" width="160" height="10" rx="3" fill="#e2e8f0"/>` +
-    `<rect x="20" y="118" width="180" height="10" rx="3" fill="#e2e8f0"/>` +
-    `<rect x="20" y="144" width="90" height="20" rx="5" fill="${color}"/>` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">` +
+    parts.join('') +
     `</svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-// Fill any missing thumbnails with a generated SVG placeholder.
+// Draw a wireframe for any template that has no thumbnail of its own.
 for (const tpl of TEMPLATES) {
-  if (!tpl.thumbnailUrl) tpl.thumbnailUrl = svgThumbnail(tpl.name, tpl.category);
+  if (!tpl.thumbnailUrl) tpl.thumbnailUrl = svgThumbnail(tpl.schema, tpl.category);
 }
 
 // ─── Lookup helpers ───────────────────────────────────────────────────────────
