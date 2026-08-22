@@ -434,9 +434,12 @@ const eventTypeSchema = z.object({
   minNoticeMinutes: z.number().int().min(0).default(60),
   maxPerDay: z.number().int().min(0).default(0),
   bookingWindowDays: z.number().int().min(1).max(365).default(60),
-  locationType: z
-    .enum(['physical', 'zoom', 'google_meet', 'teams', 'custom'])
-    .default('google_meet'),
+  // google_meet is not in this list: nothing here talks to Google, and the
+  // code that pretended to has been deleted. The default is 'physical' because
+  // it is the one option that needs no integration — an address in
+  // locationValue — so an event type created without choosing anything is
+  // honest rather than silently video.
+  locationType: z.enum(['physical', 'zoom', 'teams', 'custom']).default('physical'),
   locationValue: z.string().max(512).optional(),
   timezone: z.string().max(64).default('UTC'),
   schedulingType: z.enum(['single', 'round-robin', 'collective']).default('single'),
