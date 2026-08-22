@@ -24,6 +24,7 @@ import ipRestrictionsPlugin from './plugins/ip-restrictions.js';
 import internalAuthPlugin from './plugins/internal-auth.js';
 import multipartPlugin from './plugins/multipart.js';
 import healthRoutes from './routes/v1/health.js';
+import capabilityRoutes from './routes/v1/capabilities.js';
 import superadminRoutes from './routes/v1/superadmin.js';
 import contactRoutes from './routes/v1/contacts.js';
 import contactImportRoutes from './routes/v1/contact-imports.js';
@@ -393,6 +394,7 @@ export async function buildApp() {
 
   // Routes
   await app.register(healthRoutes);
+  await app.register(capabilityRoutes);
   await app.register(superadminRoutes);
   await app.register(contactRoutes);
   await app.register(contactImportRoutes);

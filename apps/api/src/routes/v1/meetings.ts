@@ -25,6 +25,7 @@ import { db } from '../../db/client.js';
 import { eventTypes, bookingPages, bookingAvailability } from '../../db/schema/booking-pages.js';
 import { bookings } from '../../db/schema/calendar.js';
 import { AppError } from '../../lib/app-error.js';
+import { assertLocationTypeAvailable } from '../../lib/integration-capabilities.js';
 import {
   getAvailableSlots,
   createBooking,
@@ -185,6 +186,7 @@ const meetingRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const body = eventTypeSchema.parse(req.body);
+      assertLocationTypeAvailable(body.locationType);
       const [row] = await db
         .insert(eventTypes)
         .values({
@@ -206,6 +208,7 @@ const meetingRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const body = eventTypeSchema.partial().parse(req.body);
+      assertLocationTypeAvailable(body.locationType);
       const [row] = await db
         .update(eventTypes)
         .set({ ...body, updatedAt: new Date() })
@@ -439,6 +442,11 @@ const eventTypeSchema = z.object({
   // it is the one option that needs no integration — an address in
   // locationValue — so an event type created without choosing anything is
   // honest rather than silently video.
+  //
+  // zoom and teams stay in the enum but are refused below unless this
+  // deployment has their credentials. Keeping them in the enum means the
+  // refusal can say WHICH provider is missing instead of "invalid value", and
+  // configuring the credentials brings the option back with no code change.
   locationType: z.enum(['physical', 'zoom', 'teams', 'custom']).default('physical'),
   locationValue: z.string().max(512).optional(),
   timezone: z.string().max(64).default('UTC'),
