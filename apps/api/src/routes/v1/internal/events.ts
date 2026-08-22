@@ -25,7 +25,7 @@ import { handleBounce } from '../../../services/campaigns/channel-fallback.js';
 import { abVariantForContact } from '../../../services/campaigns/variant-attribution.js';
 
 const bodySchema = z.object({
-  type: z.enum(['send', 'deliver', 'bounce', 'fail']),
+  type: z.enum(['send', 'deliver', 'bounce', 'deferred', 'failed']),
   orgId: z.string().uuid(),
   campaignId: z.string().uuid(),
   contactId: z.string().uuid(),
@@ -38,13 +38,17 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
     const body = bodySchema.parse(req.body);
     const meta = body.metadata ?? {};
 
-    // Map the worker's wire type to a valid email_event_type enum value.
-    // 'fail' has no enum member — record it as a soft bounce so it is not lost.
-    const eventType: 'send' | 'deliver' | 'bounce' =
-      body.type === 'send' ? 'send' : body.type === 'deliver' ? 'deliver' : 'bounce';
+    // The wire type is the enum value. It used to be narrowed to three, with
+    // the worker's 'fail' folded into a soft bounce "so it is not lost" — which
+    // put transport faults into the customer's bounce rate. 'deferred' and
+    // 'failed' now carry those cases in their own right.
+    const eventType = body.type;
 
+    // Only a real bounce gets a bounce_type. A deferral or a transport failure
+    // leaves it null, so `WHERE event_type = 'bounce' AND bounce_type = …`
+    // cannot pick them up by accident.
     const bounceType =
-      body.type === 'bounce' || body.type === 'fail'
+      body.type === 'bounce'
         ? ((meta.bounceType as 'hard' | 'soft' | 'block' | undefined) ?? 'soft')
         : undefined;
 
@@ -84,12 +88,18 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
       campaignId: body.campaignId,
     };
     if (eventType === 'deliver') emitEmailEvent(body.orgId, 'delivered', wePayload);
-    else if (eventType === 'bounce') {
-      // SendGrid semantics: a soft (transient) failure is a *deferral* that
-      // will be retried — emit delivery_delayed, not bounced. Permanent
-      // hard/block failures emit bounced.
-      if (bounceType === 'soft') emitEmailEvent(body.orgId, 'delivery_delayed', wePayload);
-      else emitEmailEvent(body.orgId, 'bounced', { ...wePayload, bounceType });
+    else if (eventType === 'deferred') {
+      // SendGrid semantics: a transient failure that will be retried is a
+      // deferral, not a bounce.
+      emitEmailEvent(body.orgId, 'delivery_delayed', wePayload);
+    } else if (eventType === 'failed') {
+      // Never delivered, never rejected. `rejected` is the closest existing
+      // subscriber-facing event; the metadata says which transport fault it was.
+      emitEmailEvent(body.orgId, 'rejected', wePayload);
+    } else if (eventType === 'bounce') {
+      // Retries are exhausted by the time a soft bounce is written, so this is
+      // a real bounce now and emits `bounced` like the permanent kinds.
+      emitEmailEvent(body.orgId, 'bounced', { ...wePayload, bounceType });
     } else if (eventType === 'send') emitEmailEvent(body.orgId, 'sent', wePayload);
 
     // Auto channel fallback: a hard/soft bounce on email can trigger a
