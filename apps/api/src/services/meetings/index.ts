@@ -12,6 +12,7 @@ import { eventTypes, bookingAvailability } from '../../db/schema/booking-pages.j
 import { bookings, calendarEvents } from '../../db/schema/calendar.js';
 import { AppError } from '../../lib/app-error.js';
 import { createVideoLink } from './video-links.js';
+import { bookingWouldBeEmpty } from '../../lib/integration-capabilities.js';
 import { triggerMeetingEvent } from './workflows.js';
 import { pickNextHost } from './round-robin.js';
 
@@ -226,6 +227,24 @@ export async function createBooking(orgId: string, input: BookingInput) {
     );
     return et.locationValue ?? null;
   });
+
+  // A video event type that produced no link and has no fallback location
+  // would be stored confirmed with meetingUrl: null and location: null — a
+  // confirmation for a meeting that is nowhere. The slot gets blocked and the
+  // invitee finds out at the start of the call.
+  //
+  // Chosen behaviour: refuse the booking, but only in that case. When the host
+  // set a locationValue the meeting still has somewhere to be, and saving it
+  // confirmed at that location is true — it simply has no video link.
+  if (bookingWouldBeEmpty(et.locationType, meetingUrl, et.locationValue)) {
+    throw new AppError({
+      code: 'VIDEO_LINK_UNAVAILABLE',
+      statusCode: 503,
+      message:
+        `This event type is set up for ${et.locationType}, which is not available right now. ` +
+        `The booking was not made — please try again later or contact the organiser.`,
+    });
+  }
 
   const [booking] = await db
     .insert(bookings)

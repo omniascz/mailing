@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+import { getCapabilities } from '@/lib/capabilities.server';
 import Link from 'next/link';
 import { Eye, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,6 +29,13 @@ const STATUS_TONE: Record<PreviewJob['status'], 'default' | 'primary' | 'success
 export const dynamic = 'force-dynamic';
 
 export default async function InboxPreviewPage() {
+  // Not a hidden-but-reachable page: without a Litmus key the provider is a
+  // mock that reports 'completed' with screenshots on preview.mock.local, so
+  // the route does not exist rather than showing broken renders. Set
+  // LITMUS_API_KEY and it is back.
+  const { inboxPreview } = await getCapabilities();
+  if (!inboxPreview) notFound();
+
   const jobs = await apiFetch<PreviewJob[]>('/api/v1/inbox-preview?limit=50', { fallback: [] });
 
   return (

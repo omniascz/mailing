@@ -3,9 +3,22 @@
  *
  * Supported providers:
  *   - zoom         — Zoom Meetings API (OAuth)
- *   - google_meet  — Google Calendar API (creates event → extracts hangoutLink)
  *   - teams        — Microsoft Graph API (createOnlineMeeting)
  *   - custom       — static URL pass-through
+ *
+ * google_meet is NOT supported and is not an option any more.
+ *
+ * It used to be, in the sense that this file answered the call. It did not talk
+ * to Google: it built a Meet code out of Math.random() and returned
+ * https://meet.google.com/<random>. The booking was then stored
+ * status:'confirmed' with that URL, so an invitee got a confirmation for a
+ * meeting with a link that has never existed and cannot be joined. A dead link
+ * is worse than a missing one — the invitee blocks the slot and finds out at
+ * the start of the call.
+ *
+ * Creating a real Meet link needs the Calendar API with a per-user OAuth token
+ * (conferenceData.createRequest against the calendar integration). That is not
+ * built, so the option is gone rather than faked.
  */
 
 export interface VideoLinkInput {
@@ -32,8 +45,6 @@ export async function createVideoLink(
   switch (locationType) {
     case 'zoom':
       return createZoomMeeting(input);
-    case 'google_meet':
-      return createGoogleMeetLink(input);
     case 'teams':
       return createTeamsMeeting(input);
     default:
@@ -87,25 +98,6 @@ async function createZoomMeeting(input: VideoLinkInput): Promise<string | null> 
   if (!res?.ok) return null;
   const data = (await res.json()) as { join_url?: string };
   return data.join_url ?? null;
-}
-
-// ─── Google Meet ──────────────────────────────────────────────────────────────
-
-async function createGoogleMeetLink(_input: VideoLinkInput): Promise<string | null> {
-  // Google Meet links are created via the Calendar API by inserting an event
-  // with conferenceDataVersion=1 + conferenceData.createRequest.
-  // This requires a per-user OAuth token (calendar integration).
-  // Full implementation uses the calendar integration stored in calendar_integrations.
-  // For now, return a formatted Meet URL that Google will redirect:
-  const meetCode = generateMeetCode();
-  return `https://meet.google.com/${meetCode}`;
-}
-
-function generateMeetCode(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz';
-  const rand = (n: number) =>
-    Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-  return `${rand(3)}-${rand(4)}-${rand(3)}`;
 }
 
 // ─── Microsoft Teams ──────────────────────────────────────────────────────────

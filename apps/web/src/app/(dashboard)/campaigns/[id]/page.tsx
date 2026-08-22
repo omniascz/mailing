@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Inbox } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
+import { getCapabilities } from '@/lib/capabilities.server';
 import { CampaignActions } from './campaign-actions';
 import { CloneCampaignButton } from './clone-campaign-button';
 
@@ -76,6 +77,8 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
   const delivered = campaign.totalDelivered;
   const rate = (n: number) => (delivered > 0 ? `${((n / delivered) * 100).toFixed(1)}%` : '—');
   const isSent = campaign.status === 'sent' || campaign.totalSent > 0;
+
+  const { geoAnalytics } = await getCapabilities();
 
   const emptyDevices: DeviceStats = { desktop: 0, mobile: 0, tablet: 0, unknown: 0 };
   const [devices, clients, geo]: [DeviceStats, ClientStat[], GeoStatRow[]] = isSent
@@ -259,30 +262,36 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Top countries</CardTitle>
-              <CardDescription>Opens / clicks by country</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {geo.length === 0 ? (
-                <p className="text-sm text-secondary-500">
-                  No geo data (configure GEOIP_API_URL to enable).
-                </p>
-              ) : (
-                <dl className="space-y-2 text-sm">
-                  {geo.slice(0, 8).map((g) => (
-                    <BreakdownRow
-                      key={g.country}
-                      label={g.country}
-                      value={g.opens}
-                      suffix={`${g.clicks} clicks`}
-                    />
-                  ))}
-                </dl>
-              )}
-            </CardContent>
-          </Card>
+          {/*
+            Rendered only where GeoIP is configured. lib/geo.ts resolves nothing
+            without GEOIP_API_URL, so this card was permanently empty and said so
+            in its own empty state — a panel whose only content is an apology for
+            having none. Setting the variable brings it back.
+          */}
+          {geoAnalytics ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Top countries</CardTitle>
+                <CardDescription>Opens / clicks by country</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {geo.length === 0 ? (
+                  <p className="text-sm text-secondary-500">No opens with a known location yet.</p>
+                ) : (
+                  <dl className="space-y-2 text-sm">
+                    {geo.slice(0, 8).map((g) => (
+                      <BreakdownRow
+                        key={g.country}
+                        label={g.country}
+                        value={g.opens}
+                        suffix={`${g.clicks} clicks`}
+                      />
+                    ))}
+                  </dl>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
         </section>
       ) : null}
     </div>
