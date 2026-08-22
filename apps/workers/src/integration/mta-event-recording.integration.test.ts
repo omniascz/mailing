@@ -127,10 +127,11 @@ async function run(
   await mtaQueues.seznam.obliterate({ force: true }).catch(() => {});
   await startWorkersOnce();
 
+  const messageId = `evt-${randomUUID()}`;
   const job = await mtaQueues.seznam.add(
     'probe',
     {
-      messageId: `evt-${randomUUID()}`,
+      messageId,
       orgId: randomUUID(),
       campaignId: randomUUID(),
       contactId: randomUUID(),
@@ -159,7 +160,10 @@ async function run(
   // Events are posted fire-and-forget; let the last one land.
   await new Promise((r) => setTimeout(r, 400));
   expect(QUEUE_NAMES.MTA_SEZNAM).toBe('mta-seznam');
-  return { events: [...captured], state };
+  // Only this message's events. The queue is shared and obliterate() cannot
+  // promise nothing else is mid-flight — a straggler from another run landing
+  // in the capture would be counted as one of ours.
+  return { events: captured.filter((e) => e.messageId === messageId), state };
 }
 
 describe('what a failed send writes to email_events', () => {
