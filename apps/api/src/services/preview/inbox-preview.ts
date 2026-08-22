@@ -17,6 +17,7 @@ import { and, eq, desc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { inboxPreviewJobs } from '../../db/schema/index.js';
 import { selectProvider, mockProvider, type PreviewClient } from './providers.js';
+import { inboxPreviewAvailable } from '../../lib/integration-capabilities.js';
 import { AppError } from '../../lib/app-error.js';
 
 export interface CreatePreviewInput {
@@ -32,6 +33,22 @@ export async function listSupportedClients(): Promise<PreviewClient[]> {
 }
 
 export async function createPreviewJob(orgId: string, input: CreatePreviewInput) {
+  // Backstop behind the UI, which does not render the page at all when this is
+  // unavailable. Without a Litmus key selectProvider() returns a mock that
+  // reports status:'completed' with screenshot URLs on preview.mock.local — a
+  // finished-looking preview of broken images. Refuse rather than produce one.
+  //
+  // INBOX_PREVIEW_PROVIDER=mock still works: asking for the mock by name is a
+  // decision, getting it because nothing was configured is the defect.
+  if (!inboxPreviewAvailable()) {
+    throw new AppError({
+      code: 'INBOX_PREVIEW_NOT_CONFIGURED',
+      statusCode: 501,
+      message:
+        'Inbox preview is not available in this deployment. Set LITMUS_API_KEY to enable it.',
+    });
+  }
+
   if (!input.html || input.html.length < 20) {
     throw new AppError({
       code: 'INVALID_HTML',

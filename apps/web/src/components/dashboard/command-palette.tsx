@@ -22,6 +22,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+import {
+  NOTHING_AVAILABLE,
+  visibleEntries,
+  type Capabilities,
+  type CapabilityFlag,
+} from '@/lib/capabilities';
+
 interface PaletteItem {
   id: string;
   label: string;
@@ -29,6 +36,8 @@ interface PaletteItem {
   href: string;
   group: 'Send' | 'Audience' | 'Automation' | 'Settings';
   icon: React.ComponentType<{ className?: string }>;
+  /** Hidden unless the API reports this capability. See lib/capabilities.ts. */
+  requires?: CapabilityFlag;
 }
 
 // Static navigation set. Recent items + dynamic search comes later — for
@@ -57,6 +66,7 @@ const ITEMS: PaletteItem[] = [
     href: '/inbox-preview',
     group: 'Send',
     icon: Inbox,
+    requires: 'inboxPreview',
   },
   { id: 'contacts', label: 'Kontakty', href: '/contacts', group: 'Audience', icon: Users },
   {
@@ -158,7 +168,16 @@ function score(query: string, item: PaletteItem): number {
   return 0;
 }
 
-export function CommandPalette() {
+export function CommandPalette({
+  capabilities = NOTHING_AVAILABLE,
+}: {
+  capabilities?: Capabilities;
+}) {
+  // Composed with the capability filter: capabilities answer "is this
+  // deployment wired for it", BEYOND_CORE_HREFS answers "is it part of the
+  // product at all".
+  const inScope = ITEMS.filter((i) => BEYOND_CORE_ENABLED || !BEYOND_CORE_HREFS.has(i.href));
+  const available = visibleEntries(inScope, capabilities);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -190,8 +209,8 @@ export function CommandPalette() {
   }, [open]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return ITEMS;
-    return ITEMS.filter((item) => BEYOND_CORE_ENABLED || !BEYOND_CORE_HREFS.has(item.href))
+    if (!query.trim()) return available;
+    return available
       .map((item) => ({ item, s: score(query, item) }))
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)

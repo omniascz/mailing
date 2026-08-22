@@ -42,10 +42,22 @@ import {
   Palette,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import {
+  NOTHING_AVAILABLE,
+  visibleSections,
+  type Capabilities,
+  type CapabilityFlag,
+} from '@/lib/capabilities';
 
 interface NavSection {
   label: string;
-  items: Array<{ href: string; label: string; icon: typeof LayoutDashboard }>;
+  items: Array<{
+    href: string;
+    label: string;
+    icon: typeof LayoutDashboard;
+    /** Hidden unless the API reports this capability. See lib/capabilities.ts. */
+    requires?: CapabilityFlag;
+  }>;
 }
 
 /**
@@ -68,7 +80,7 @@ const BEYOND_CORE_HREFS = new Set([
 
 const BEYOND_CORE_ENABLED = process.env.NEXT_PUBLIC_FEATURE_BEYOND_CORE === 'true';
 
-const ALL_NAV: NavSection[] = [
+const NAV: NavSection[] = [
   {
     label: 'Overview',
     items: [{ href: '/', label: 'Insights', icon: LayoutDashboard }],
@@ -85,7 +97,10 @@ const ALL_NAV: NavSection[] = [
       { href: '/rss-campaigns', label: 'RSS campaigns', icon: Rss },
       { href: '/site-messages', label: 'Site messages', icon: MonitorSmartphone },
       { href: '/sms-keywords', label: 'SMS keywords', icon: Hash },
-      { href: '/inbox-preview', label: 'Inbox preview', icon: Eye },
+      // Without a Litmus key the preview provider is a mock that reports
+      // 'completed' with screenshots on preview.mock.local. Hidden until the
+      // key is set, then it comes back on its own.
+      { href: '/inbox-preview', label: 'Inbox preview', icon: Eye, requires: 'inboxPreview' },
       { href: '/ai-agents', label: 'AI agents', icon: Bot },
     ],
   },
@@ -146,15 +161,20 @@ const ALL_NAV: NavSection[] = [
   },
 ];
 
-/** Sections with every beyond-core link removed; a section left empty is dropped. */
-const NAV: NavSection[] = BEYOND_CORE_ENABLED
-  ? ALL_NAV
-  : ALL_NAV.map((s) => ({
+/**
+ * NAV with every beyond-core link removed. Composed with — not instead of —
+ * the capability filter below: capabilities answer "is this deployment wired
+ * for it", this answers "is it part of the product at all".
+ */
+const CORE_NAV: NavSection[] = BEYOND_CORE_ENABLED
+  ? NAV
+  : NAV.map((s) => ({
       ...s,
       items: s.items.filter((i) => !BEYOND_CORE_HREFS.has(i.href)),
     })).filter((s) => s.items.length > 0);
 
-export function Sidebar() {
+export function Sidebar({ capabilities = NOTHING_AVAILABLE }: { capabilities?: Capabilities }) {
+  const nav = visibleSections(CORE_NAV, capabilities);
   const pathname = usePathname();
 
   return (
@@ -165,7 +185,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {NAV.map((section) => (
+        {nav.map((section) => (
           <div key={section.label} className="mb-6">
             <p className="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-secondary-400">
               {section.label}
