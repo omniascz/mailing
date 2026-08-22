@@ -60,6 +60,26 @@ interface NavSection {
   }>;
 }
 
+/**
+ * Nav entries for domains outside the core product (CRM, helpdesk, booking,
+ * loyalty, commerce, reviews, product feeds, AI agents). The API hides their
+ * routes behind FEATURE_BEYOND_CORE; this hides the way in, so the dashboard
+ * never offers a page whose endpoints answer 404. The pages themselves stay —
+ * only the link goes.
+ */
+const BEYOND_CORE_HREFS = new Set([
+  '/ai-agents',
+  '/surveys',
+  '/coupons',
+  '/loyalty',
+  '/reviews',
+  '/meetings',
+  '/product-feeds',
+  '/helpdesk',
+]);
+
+const BEYOND_CORE_ENABLED = process.env.NEXT_PUBLIC_FEATURE_BEYOND_CORE === 'true';
+
 const NAV: NavSection[] = [
   {
     label: 'Overview',
@@ -141,8 +161,20 @@ const NAV: NavSection[] = [
   },
 ];
 
+/**
+ * NAV with every beyond-core link removed. Composed with — not instead of —
+ * the capability filter below: capabilities answer "is this deployment wired
+ * for it", this answers "is it part of the product at all".
+ */
+const CORE_NAV: NavSection[] = BEYOND_CORE_ENABLED
+  ? NAV
+  : NAV.map((s) => ({
+      ...s,
+      items: s.items.filter((i) => !BEYOND_CORE_HREFS.has(i.href)),
+    })).filter((s) => s.items.length > 0);
+
 export function Sidebar({ capabilities = NOTHING_AVAILABLE }: { capabilities?: Capabilities }) {
-  const nav = visibleSections(NAV, capabilities);
+  const nav = visibleSections(CORE_NAV, capabilities);
   const pathname = usePathname();
 
   return (

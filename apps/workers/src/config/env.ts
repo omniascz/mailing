@@ -33,8 +33,26 @@ function prodRequired<T extends z.ZodString>(schema: T, devDefault?: string) {
   ) as NoChainedDefault<z.ZodOptional<T> | z.ZodDefault<T>>;
 }
 
+/** See apps/api/src/config/env.ts — same switch, same default, second process. */
+const boolFlag = (fallback: boolean) =>
+  z
+    .preprocess(
+      (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v),
+      z.enum(['true', 'false', '1', '0', 'yes', 'no']).optional(),
+    )
+    .transform((v) => (v === undefined ? fallback : v === 'true' || v === '1' || v === 'yes'));
+
 const Env = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+
+  /**
+   * Crons for domains outside the core product. Off in production, matching the
+   * API. They post to /api/v1/internal/* routes that the API no longer
+   * registers when the flag is off, so leaving them scheduled would mean a 404
+   * and a stack trace on every tick — noise that teaches people to ignore the
+   * log.
+   */
+  FEATURE_BEYOND_CORE: boolFlag(!isProduction),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
   // Datastores

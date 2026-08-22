@@ -16,6 +16,7 @@
  * suppression/frequency-cap rules apply.
  */
 
+import { env } from './config/env.js';
 import { startCampaignSplitterWorker } from './jobs/campaign-splitter.js';
 import { startBatchSenderWorker } from './jobs/batch-sender.js';
 import { startMtaSenderWorkers } from './jobs/mta-sender.js';
@@ -75,13 +76,20 @@ const batchSenderTransactional = startBatchSenderWorker(QUEUE_NAMES.BATCH_SENDER
 const batchSenderTriggered = startBatchSenderWorker(QUEUE_NAMES.BATCH_SENDER_TRIGGERED);
 const mtaSenders = startMtaSenderWorkers();
 const archiveWorker = startArchiveWorker();
-const seoRankPollWorker = startSeoRankPollWorker();
-scheduleRankPoll().catch(console.error);
-const { publishWorker: socialPublishWorker, monitorWorker: socialMonitorWorker } =
-  startSocialSchedulerWorker();
-scheduleSocialJobs().catch(console.error);
-const { worker: invoiceReminderWorker, adPerfWorker } = startInvoiceReminderWorker();
-scheduleCommerceJobs().catch(console.error);
+// SEO rank polling, social publishing and commerce/ads reminders drive
+// beyond-core API routes; started only when those routes exist. See
+// config/env.ts FEATURE_BEYOND_CORE.
+const beyondCore = env.FEATURE_BEYOND_CORE;
+const seoRankPollWorker = beyondCore ? startSeoRankPollWorker() : null;
+if (beyondCore) scheduleRankPoll().catch(console.error);
+const social = beyondCore ? startSocialSchedulerWorker() : null;
+const socialPublishWorker = social?.publishWorker ?? null;
+const socialMonitorWorker = social?.monitorWorker ?? null;
+if (beyondCore) scheduleSocialJobs().catch(console.error);
+const commerceWorkers = beyondCore ? startInvoiceReminderWorker() : null;
+const invoiceReminderWorker = commerceWorkers?.worker ?? null;
+const adPerfWorker = commerceWorkers?.adPerfWorker ?? null;
+if (beyondCore) scheduleCommerceJobs().catch(console.error);
 const videoTranscodeWorker = startVideoTranscodeWorker();
 scheduleVideoTranscode().catch(console.error);
 const subscriptionBillingWorker = startSubscriptionBillingWorker();
@@ -137,11 +145,11 @@ async function shutdown() {
     batchSenderTriggered.close(),
     ...mtaSenders.map((w) => w.close()),
     archiveWorker.close(),
-    seoRankPollWorker.close(),
-    socialPublishWorker.close(),
-    socialMonitorWorker.close(),
-    invoiceReminderWorker.close(),
-    adPerfWorker.close(),
+    seoRankPollWorker?.close(),
+    socialPublishWorker?.close(),
+    socialMonitorWorker?.close(),
+    invoiceReminderWorker?.close(),
+    adPerfWorker?.close(),
     videoTranscodeWorker.close(),
     subscriptionBillingWorker.close(),
     anomalyDetectorWorker.close(),

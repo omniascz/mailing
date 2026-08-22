@@ -7,6 +7,7 @@
  *   workflow-run-resume : every minute → POST /internal/workflow/process-runs
  *   daily-triggers      : 06:00 UTC daily → POST /internal/triggers/daily-run
  */
+import { env } from '../config/env.js';
 import { Worker, Queue } from 'bullmq';
 import { connection, QUEUE_NAMES } from '../queues/index.js';
 import { captureJobException } from '../lib/telemetry.js';
@@ -316,7 +317,10 @@ export async function scheduleWorkflowJobs() {
     );
     console.log('[workflow-scheduler] campaign-dispatch scheduled (every minute)');
   }
-  if (!(await browseAbandonmentQueue.getJob('browse-abandonment'))) {
+  // browse-abandonment posts to a beyond-core internal route; scheduling it
+  // with that route unregistered would 404 every 15 minutes. See
+  // config/env.ts FEATURE_BEYOND_CORE.
+  if (env.FEATURE_BEYOND_CORE && !(await browseAbandonmentQueue.getJob('browse-abandonment'))) {
     await browseAbandonmentQueue.add(
       'tick',
       {},

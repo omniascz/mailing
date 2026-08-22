@@ -1,3 +1,15 @@
+> **⚠️ Širší scope, než platí dnes.** Tento dokument je z **2026-05-18** a definuje
+> produkt jako „omnichannel messaging + lehký CRM". Dnešní jádro je užší:
+> odesílací infrastruktura — newslettery, transakční pošta, přílohy, naplánované
+> jednorázové e-maily, šablony s daty z payloadu zvenčí — plus to, co odesílání
+> potřebuje. CRM, helpdesk, rezervace, loyalty, commerce, ads, CDP, SEO, social
+> a blog jsou postavené podle tohohle dokumentu a od PR „feature flag pro domény
+> mimo jádro" jsou schované za `FEATURE_BEYOND_CORE` (výchozí: vypnuto
+> v produkci). Nic se nemazalo. Dokument zůstává jako záznam rozhodnutí, ne jako
+> platná definice scope.
+
+---
+
 # Pozicování — Mailforge / ForgeMsg
 
 > Strategický dokument: kam Mailforge patří na trhu, proti komu soutěží, čím vyhrává.
