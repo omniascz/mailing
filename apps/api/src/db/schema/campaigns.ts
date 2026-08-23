@@ -4,6 +4,7 @@ import { organizations } from './organizations.js';
 import { lists } from './lists.js';
 import { templates } from './templates.js';
 import { processingPurposes } from './processing-purposes.js';
+import { folders } from './folders.js';
 import { campaignTypeEnum, campaignStatusEnum } from './enums.js';
 
 export const campaigns = pgTable(
@@ -91,6 +92,13 @@ export const campaigns = pgTable(
     totalUnsubscribes: integer('total_unsubscribes').notNull().default(0),
     totalComplaints: integer('total_complaints').notNull().default(0),
 
+    /**
+     * Organising folder, or null for unfiled. SET NULL on delete: a folder is
+     * a label, not an owner — throwing one away must never take the campaigns
+     * with it.
+     */
+    folderId: uuid('folder_id').references(() => folders.id, { onDelete: 'set null' }),
+
     locale: varchar('locale', { length: 8 }).notNull().default('en'),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -102,6 +110,7 @@ export const campaigns = pgTable(
     index('campaigns_status_idx').on(t.status),
     index('campaigns_scheduled_at_idx').on(t.scheduledAt),
     index('campaigns_org_status_idx').on(t.orgId, t.status),
+    index('campaigns_org_folder_idx').on(t.orgId, t.folderId),
   ],
 );
 

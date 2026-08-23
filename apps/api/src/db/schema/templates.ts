@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { pgTable, uuid, varchar, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { templateCategoryEnum } from './enums.js';
+import { folders } from './folders.js';
 
 export const templates = pgTable(
   'templates',
@@ -27,6 +28,13 @@ export const templates = pgTable(
     isPublic: varchar('is_public', { length: 5 }).notNull().default('false'),
     tags: jsonb('tags').$type<string[]>().notNull().default([]),
 
+    /**
+     * Organising folder, or null for unfiled. Distinct from `category`, which
+     * is a fixed taxonomy the built-in library ships with — a folder is
+     * whatever this organisation decides to call a drawer.
+     */
+    folderId: uuid('folder_id').references(() => folders.id, { onDelete: 'set null' }),
+
     locale: varchar('locale', { length: 8 }).notNull().default('en'),
     translationGroupId: uuid('translation_group_id'),
 
@@ -38,6 +46,7 @@ export const templates = pgTable(
     index('templates_org_id_idx').on(t.orgId),
     index('templates_category_idx').on(t.category),
     index('templates_locale_idx').on(t.orgId, t.locale),
+    index('templates_org_folder_idx').on(t.orgId, t.folderId),
     index('templates_tgroup_idx').on(t.translationGroupId),
   ],
 );

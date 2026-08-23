@@ -137,6 +137,8 @@ export async function getCampaign(orgId: string, campaignId: string): Promise<Ca
 export interface ListCampaignsOpts {
   orgId: string;
   status?: CampaignStatus;
+  /** A folder id, or 'none' for the campaigns in no folder at all. */
+  folderId?: string | 'none';
   cursor?: string;
   limit?: number;
 }
@@ -148,6 +150,15 @@ export async function listCampaigns(opts: ListCampaignsOpts) {
 
   if (opts.status) {
     conditions.push(eq(campaigns.status, opts.status));
+  }
+
+  // 'none' is a real answer to "which folder", not a missing filter: it is the
+  // Unfiled drawer, and it has to be reachable, or a campaign filed by mistake
+  // can only be found again by clearing every filter.
+  if (opts.folderId === 'none') {
+    conditions.push(isNull(campaigns.folderId));
+  } else if (opts.folderId) {
+    conditions.push(eq(campaigns.folderId, opts.folderId));
   }
 
   if (opts.cursor) {
@@ -168,6 +179,30 @@ export async function listCampaigns(opts: ListCampaignsOpts) {
   const nextCursor = hasMore ? data[data.length - 1]?.id : undefined;
 
   return { data, cursor: nextCursor, hasMore };
+}
+
+/**
+ * Put a campaign in a folder, or take it out of one.
+ *
+ * Deliberately not part of updateCampaign, which refuses anything that is not
+ * a draft. Filing is not editing: the campaigns most in need of tidying are
+ * the sent ones, and a rule meant to protect content in flight must not stop
+ * someone from organising their own archive.
+ */
+export async function moveCampaignToFolder(
+  orgId: string,
+  campaignId: string,
+  folderId: string | null,
+): Promise<Campaign> {
+  const [row] = await db
+    .update(campaigns)
+    .set({ folderId, updatedAt: new Date() })
+    .where(
+      and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId), isNull(campaigns.deletedAt)),
+    )
+    .returning();
+  if (!row) throw AppError.notFound('Campaign');
+  return row;
 }
 
 export async function updateCampaign(

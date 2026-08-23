@@ -27,7 +27,9 @@ import {
   pauseCampaign,
   resumeCampaign,
   cancelCampaign,
+  moveCampaignToFolder,
 } from '../../services/campaigns/index.js';
+import { assertFolderAssignable } from './folders.js';
 import { scheduleResend } from '../../services/campaigns/auto-resend.js';
 import {
   enqueueCampaignSend,
@@ -79,8 +81,13 @@ const createSchema = z.object({
 
 const updateSchema = createSchema.partial();
 
+/** null means "take it out of whatever folder it is in". */
+const moveSchema = z.object({ folderId: z.string().uuid().nullable() });
+
 const listQuerySchema = z.object({
   status: z.enum(campaignStatuses).optional(),
+  /** A folder id, or the literal 'none' for the Unfiled drawer. */
+  folderId: z.union([z.string().uuid(), z.literal('none')]).optional(),
   cursor: z.string().uuid().optional(),
   limit: z
     .string()
@@ -137,6 +144,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
       const result = await listCampaigns({
         orgId: req.user!.orgId,
         status: query.status,
+        folderId: query.folderId,
         cursor: query.cursor,
         limit: query.limit,
       });
@@ -232,6 +240,29 @@ export default async function campaignRoutes(app: FastifyInstance) {
         .parse(req.body);
 
       const campaign = await scheduleCampaign(req.user!.orgId, id, new Date(scheduledAt), timezone);
+      return { data: campaign };
+    },
+  );
+
+  /**
+   * PUT /api/v1/campaigns/:id/folder
+   * File the campaign in a folder, or pass null to take it out of one.
+   *
+   * Its own endpoint rather than a field on PATCH /campaigns/:id, because that
+   * route refuses anything that is not a draft — and a sent campaign is
+   * exactly the kind that wants filing.
+   */
+  app.put(
+    '/api/v1/campaigns/:id/folder',
+    { schema: { tags: ['Campaigns'], summary: 'Move campaign to a folder' } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const { folderId } = moveSchema.parse(req.body);
+      // Checked before the write: the folder must exist, be this org's, and be
+      // a campaign folder. Anything else answers 404 rather than filing the
+      // campaign somewhere it can never be seen again.
+      await assertFolderAssignable(req.user!.orgId, 'campaign', folderId);
+      const campaign = await moveCampaignToFolder(req.user!.orgId, id, folderId);
       return { data: campaign };
     },
   );
