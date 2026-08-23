@@ -3,8 +3,19 @@
  * We mock the Claude API and Redis cache.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import { z } from 'zod';
+/**
+ * vitest reuses a forked worker across test files, so a replaced global.fetch
+ * outlives this one unless it is put back. A leaked stub is worse than a leaked
+ * env var: the next file's real network call silently gets this file's canned
+ * response.
+ */
+const ORIGINAL_FETCH = globalThis.fetch;
+// afterAll, not afterEach: this file installs its stub once at module scope.
+afterAll(() => {
+  globalThis.fetch = ORIGINAL_FETCH;
+});
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 

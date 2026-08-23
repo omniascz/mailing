@@ -3,8 +3,18 @@
  * Also covers API key helpers and SDK webhook signature verifier.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createHash, createHmac } from 'node:crypto';
+/**
+ * vitest reuses a forked worker across test files, so a replaced global.fetch
+ * outlives this one unless it is put back. A leaked stub is worse than a leaked
+ * env var: the next file's real network call silently gets this file's canned
+ * response.
+ */
+const ORIGINAL_FETCH = globalThis.fetch;
+afterEach(() => {
+  globalThis.fetch = ORIGINAL_FETCH;
+});
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 

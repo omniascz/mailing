@@ -21,6 +21,8 @@ import { Queue, Worker, type Job } from 'bullmq';
 import { connection } from '../queues/index.js';
 import { defer, deferralCount, nextUtcMidnight } from '../lib/defer.js';
 
+let ORIGINAL_API_URL: string | undefined;
+
 interface Captured {
   type: string;
   messageId?: string;
@@ -43,10 +45,15 @@ beforeAll(async () => {
     });
   });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+  // This lane runs files sequentially in one process, so a URL left pointing
+  // at a closed mock server would break whatever runs next.
+  ORIGINAL_API_URL = process.env.API_URL;
   process.env.API_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 }, 30_000);
 
 afterAll(async () => {
+  if (ORIGINAL_API_URL === undefined) delete process.env.API_URL;
+  else process.env.API_URL = ORIGINAL_API_URL;
   await new Promise<void>((r) => server.close(() => r()));
 }, 30_000);
 

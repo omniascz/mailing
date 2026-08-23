@@ -58,10 +58,13 @@ describe('signServiceAccountJwt (RS256)', () => {
 
 describe('config parsing', () => {
   it('getApnsConfig returns null when env is incomplete', () => {
-    const saved = { ...process.env };
+    // One key, put back by hand — reassigning process.env would swap the object
+    // itself for a plain one, for every file this forked worker runs next.
+    const saved = process.env.APNS_KEY_P8;
     delete process.env.APNS_KEY_P8;
     expect(getApnsConfig()).toBeNull();
-    process.env = saved;
+    if (saved === undefined) delete process.env.APNS_KEY_P8;
+    else process.env.APNS_KEY_P8 = saved;
   });
 
   it('getFcmConfig parses a service-account JSON and null on bad JSON', () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 // Mock redis before importing the module under test
 vi.mock('@forgemsg/shared/redis', () => ({
@@ -14,6 +14,12 @@ vi.stubGlobal('fetch', mockFetch);
 
 import { scrapeProduct } from './product-scraper.js';
 import { redis } from '@forgemsg/shared/redis';
+// vi.stubGlobal outlives the file unless it is unstubbed, and a forked worker
+// is reused for the next one. afterAll, not afterEach: the stub is installed once
+// at module scope and the rest of the file's tests still need it.
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
 
 const FAKE_API_KEY = 'test-api-key';
 

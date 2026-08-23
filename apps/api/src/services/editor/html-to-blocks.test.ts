@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 vi.mock('@forgemsg/shared/redis', () => ({
   redis: {
@@ -12,6 +12,12 @@ vi.stubGlobal('fetch', mockFetch);
 
 import { htmlToBlocks } from './html-to-blocks.js';
 import { redis } from '@forgemsg/shared/redis';
+// vi.stubGlobal outlives the file unless it is unstubbed, and a forked worker
+// is reused for the next one. afterAll, not afterEach: the stub is installed once
+// at module scope and the rest of the file's tests still need it.
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
 
 function makeClaudeResponse(json: object) {
   return {

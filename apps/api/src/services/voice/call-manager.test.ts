@@ -2,7 +2,7 @@
  * Tests for voice call management (task 8.17).
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   createCall,
   getCall,
@@ -10,6 +10,17 @@ import {
   getCallStats,
   queueOutboundCall,
 } from './call-manager.js';
+/**
+ * vitest reuses a forked worker across test files, so a replaced global.fetch
+ * outlives this one unless it is put back. A leaked stub is worse than a leaked
+ * env var: the next file's real network call silently gets this file's canned
+ * response.
+ */
+const ORIGINAL_FETCH = globalThis.fetch;
+afterEach(() => {
+  globalThis.fetch = ORIGINAL_FETCH;
+  vi.unstubAllEnvs();
+});
 
 // ─── Mock DB ──────────────────────────────────────────────────────────────────
 
@@ -44,11 +55,13 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockDb.returning.mockResolvedValue([]);
   mockDb.limit.mockResolvedValue([]);
-  // Set Twilio env vars for tests
-  process.env.TWILIO_ACCOUNT_SID = 'test-sid';
-  process.env.TWILIO_AUTH_TOKEN = 'test-token';
-  process.env.TWILIO_FROM_NUMBER = '+15551234567';
-  process.env.API_URL = 'http://localhost:3001';
+  // Twilio env for these tests. vi.stubEnv rather than assignment because
+  // vi.unstubAllEnvs below puts them back — API_URL in particular is read by
+  // other modules, and a forked worker is reused for the next test file.
+  vi.stubEnv('TWILIO_ACCOUNT_SID', 'test-sid');
+  vi.stubEnv('TWILIO_AUTH_TOKEN', 'test-token');
+  vi.stubEnv('TWILIO_FROM_NUMBER', '+15551234567');
+  vi.stubEnv('API_URL', 'http://localhost:3001');
 });
 
 // ─── Call creation ─────────────────────────────────────────────────────────

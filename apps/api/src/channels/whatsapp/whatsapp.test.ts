@@ -2,9 +2,19 @@
  * Tests for MetaWhatsAppAdapter (task 7.6).
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MetaWhatsAppAdapter } from '@forgemsg/shared/whatsapp/meta-adapter';
 import type { UnifiedMessage, Recipient } from '@forgemsg/shared';
+/**
+ * vitest reuses a forked worker across test files, so a replaced global.fetch
+ * outlives this one unless it is put back. A leaked stub is worse than a leaked
+ * env var: the next file's real network call silently gets this file's canned
+ * response.
+ */
+const ORIGINAL_FETCH = globalThis.fetch;
+afterEach(() => {
+  globalThis.fetch = ORIGINAL_FETCH;
+});
 
 const adapter = new MetaWhatsAppAdapter({
   phoneNumberId: '12345',
