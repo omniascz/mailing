@@ -144,6 +144,26 @@ export async function checkThrottle(
 }
 
 /**
+ * Milliseconds until this bucket refills.
+ *
+ * The window is fixed, not sliding: the token key carries a TTL and capacity
+ * returns when it expires. So a caller that has just been refused knows
+ * exactly how long there is no point asking again — which is what lets the
+ * send path sleep until then instead of polling.
+ *
+ * Falls back to the full window when the key has no TTL (-1) or has already
+ * gone (-2), both of which mean the next check will seed a fresh bucket.
+ */
+export async function throttleRefillMs(
+  orgId: string,
+  isp: IspName,
+  sendingIp: string,
+): Promise<number> {
+  const ttl = await redis.ttl(tokenKey(orgId, isp, sendingIp));
+  return ttl > 0 ? ttl * 1000 : WINDOW_SECONDS * 1000;
+}
+
+/**
  * Record an ISP throttle signal (421 / 451 response from the MTA).
  * Reduces the effective rate for this org+ISP+IP for 30 minutes.
  *
