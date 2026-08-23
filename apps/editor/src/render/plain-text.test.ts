@@ -20,13 +20,27 @@ function baseSchema(overrides: Partial<EmailSchema> = {}): EmailSchema {
 }
 
 describe('renderPlainText', () => {
+  // These two assert the whole output exactly, so they say 'transactional':
+  // marketing mail now always ends with an opt-out line whatever the template
+  // contains, and that rule is the subject of plain-text-compliance.test.ts.
+  // Here the point is the shape of the body itself.
   it('emits just the subject when there are no blocks or preheader', () => {
-    expect(renderPlainText(baseSchema({ subject: 'Hi there' }))).toBe('Hi there');
+    expect(renderPlainText(baseSchema({ subject: 'Hi there' }), { stream: 'transactional' })).toBe(
+      'Hi there',
+    );
   });
 
   it('includes the preheader on its own line', () => {
+    expect(
+      renderPlainText(baseSchema({ subject: 'Subj', preheader: 'Sneak peek' }), {
+        stream: 'transactional',
+      }),
+    ).toBe('Subj\n\nSneak peek');
+  });
+
+  it('and on the marketing default the same message ends with the opt-out', () => {
     expect(renderPlainText(baseSchema({ subject: 'Subj', preheader: 'Sneak peek' }))).toBe(
-      'Subj\n\nSneak peek',
+      'Subj\n\nSneak peek\n\nUnsubscribe: {{unsubscribe_url}}',
     );
   });
 

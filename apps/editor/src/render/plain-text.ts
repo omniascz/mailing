@@ -36,13 +36,38 @@ import type {
 import type { MergeTagContext } from './merge-tags.js';
 import { parseMergeTags } from './merge-tags.js';
 import { evaluateCondition } from './evaluate-condition.js';
+import {
+  isMarketingStream,
+  mustShowOptOut,
+  optOutUrl,
+  postalAddressLines,
+  unsubscribeLabel,
+  type MessageStream,
+  type RenderLocale,
+} from './compliance.js';
+
+/** Marks the chunk that already carries the opt-out, so none is appended twice. */
+const OPT_OUT_MARK = '<<fm-optout>>';
 
 export interface RenderPlainTextOptions {
   context?: MergeTagContext;
+  /**
+   * Same meaning as on renderEmail, and the same default.
+   *
+   * This half of a multipart message used to have no opinion at all: the HTML
+   * body got a compliance footer and the text alternative went out with no
+   * opt-out and no address. A recipient reading the text part — or a filter
+   * scoring it — saw a marketing email with no way out.
+   */
+  stream?: MessageStream;
+  /** Language of the strings this renderer adds itself. Falls back to English. */
+  locale?: RenderLocale;
 }
 
 export function renderPlainText(schema: EmailSchema, opts: RenderPlainTextOptions = {}): string {
   const ctx = opts.context ?? {};
+  const marketing = isMarketingStream(opts.stream);
+  const locale = opts.locale;
   const parts: string[] = [];
 
   const subject = parseMergeTags(schema.subject, ctx).trim();
@@ -52,14 +77,32 @@ export function renderPlainText(schema: EmailSchema, opts: RenderPlainTextOption
   if (preheader) parts.push(preheader);
 
   for (const block of schema.blocks) {
-    const chunk = renderBlock(block, schema, ctx).trim();
+    const chunk = renderBlock(block, schema, ctx, marketing, locale).trim();
     if (chunk) parts.push(chunk);
   }
 
-  return parts.join('\n\n');
+  // Same rule as the HTML side, taken from the same place: marketing mail
+  // leaves with an opt-out and an address whether or not the template has a
+  // footer block. 61 of the 81 built-in templates have none.
+  if (marketing && !parts.some((part) => part.includes(OPT_OUT_MARK))) {
+    parts.push(complianceFooter(ctx, locale));
+  }
+
+  return parts.join('\n\n').split(OPT_OUT_MARK).join('');
 }
 
-function renderBlock(block: Block, schema: EmailSchema, ctx: MergeTagContext): string {
+/** The trailing block appended to marketing mail whose template produced none. */
+function complianceFooter(ctx: MergeTagContext, locale: RenderLocale | undefined): string {
+  return [...postalAddressLines(ctx), `${unsubscribeLabel(locale)}: ${optOutUrl(ctx)}`].join('\n');
+}
+
+function renderBlock(
+  block: Block,
+  schema: EmailSchema,
+  ctx: MergeTagContext,
+  marketing: boolean,
+  locale: RenderLocale | undefined,
+): string {
   switch (block.type) {
     case 'text':
       return renderText(block, ctx);
@@ -72,9 +115,9 @@ function renderBlock(block: Block, schema: EmailSchema, ctx: MergeTagContext): s
     case 'spacer':
       return renderSpacer(block);
     case 'columns':
-      return renderColumns(block, schema, ctx);
+      return renderColumns(block, schema, ctx, marketing, locale);
     case 'hero':
-      return renderHero(block, schema, ctx);
+      return renderHero(block, schema, ctx, marketing, locale);
     case 'social':
       return renderSocial(block, ctx);
     case 'product':
@@ -84,9 +127,9 @@ function renderBlock(block: Block, schema: EmailSchema, ctx: MergeTagContext): s
     case 'coupon':
       return renderCoupon(block, ctx);
     case 'footer':
-      return renderFooter(block, ctx);
+      return renderFooter(block, ctx, marketing, locale);
     case 'dynamic':
-      return renderDynamic(block, schema, ctx);
+      return renderDynamic(block, schema, ctx, marketing, locale);
   }
 }
 
@@ -122,17 +165,29 @@ function renderSpacer(_block: SpacerBlock): string {
   return '';
 }
 
-function renderColumns(block: ColumnsBlock, schema: EmailSchema, ctx: MergeTagContext): string {
+function renderColumns(
+  block: ColumnsBlock,
+  schema: EmailSchema,
+  ctx: MergeTagContext,
+  marketing: boolean,
+  locale: RenderLocale | undefined,
+): string {
   // Plain text doesn't have columns; render each top-to-bottom.
   return block.columns
-    .map((col) => col.map((b) => renderBlock(b, schema, ctx)).join('\n\n'))
+    .map((col) => col.map((b) => renderBlock(b, schema, ctx, marketing, locale)).join('\n\n'))
     .filter(Boolean)
     .join('\n\n');
 }
 
-function renderHero(block: HeroBlock, schema: EmailSchema, ctx: MergeTagContext): string {
+function renderHero(
+  block: HeroBlock,
+  schema: EmailSchema,
+  ctx: MergeTagContext,
+  marketing: boolean,
+  locale: RenderLocale | undefined,
+): string {
   return block.content
-    .map((b) => renderBlock(b, schema, ctx))
+    .map((b) => renderBlock(b, schema, ctx, marketing, locale))
     .filter(Boolean)
     .join('\n\n');
 }
@@ -181,22 +236,34 @@ function renderCoupon(block: CouponBlock, ctx: MergeTagContext): string {
   return lines.filter(Boolean).join('\n');
 }
 
-function renderFooter(block: FooterBlock, ctx: MergeTagContext): string {
+function renderFooter(
+  block: FooterBlock,
+  ctx: MergeTagContext,
+  marketing: boolean,
+  locale: RenderLocale | undefined,
+): string {
   const body = stripTags(parseMergeTags(block.content, ctx));
-  const lines = [body];
-  if (block.showUnsubscribe) {
-    const url = ctx.system?.unsubscribeUrl ?? '{{unsubscribe_url}}';
-    lines.push(`Unsubscribe: ${url}`);
+  // The postal address rode along on the HTML side only. Same rule here, from
+  // the same helper — a text part is a legal copy of the message, not a summary.
+  const lines = [body, ...postalAddressLines(ctx)];
+  if (mustShowOptOut(marketing, block.showUnsubscribe)) {
+    lines.push(`${OPT_OUT_MARK}${unsubscribeLabel(locale)}: ${optOutUrl(ctx)}`);
   }
   return lines.filter(Boolean).join('\n');
 }
 
-function renderDynamic(block: DynamicBlock, schema: EmailSchema, ctx: MergeTagContext): string {
+function renderDynamic(
+  block: DynamicBlock,
+  schema: EmailSchema,
+  ctx: MergeTagContext,
+  marketing: boolean,
+  locale: RenderLocale | undefined,
+): string {
   const branch = evaluateCondition(block.condition, ctx.contact ?? undefined)
     ? block.ifContent
     : block.elseContent;
   return branch
-    .map((b) => renderBlock(b, schema, ctx))
+    .map((b) => renderBlock(b, schema, ctx, marketing, locale))
     .filter(Boolean)
     .join('\n\n');
 }

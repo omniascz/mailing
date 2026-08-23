@@ -66,6 +66,9 @@ const createSchema = z.object({
   fromEmail: z.string().email().optional(),
   replyTo: z.string().email().optional(),
   templateId: z.string().uuid().optional(),
+  // Explicit language for a campaign written from scratch. Omitted, it is
+  // inherited from the template, and failing that it is English.
+  locale: z.enum(['en', 'cs', 'sk']).optional(),
   content: z.record(z.unknown()).optional(),
   listId: z.string().uuid().optional(),
   segmentId: z.string().uuid().optional(),

@@ -123,6 +123,9 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
 
   await campaignSplitterQueue.add(`campaign-${campaignId}`, {
     companyName: org?.companyName ?? undefined,
+    // The last link: the column has existed since the campaigns table was
+    // written and nothing ever read it, so every send rendered as English.
+    locale: (campaign.locale ?? 'en') as 'en' | 'cs' | 'sk',
     companyAddress: org?.postalAddress ?? undefined,
     footerHtml: footer?.html || undefined,
     footerText: footer?.text || undefined,

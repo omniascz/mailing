@@ -68,7 +68,7 @@ export async function renderStoredTemplate(
   // different legal category from marketing mail, and the renderer defaults to
   // the marketing behaviour, so this has to say so.
   const { html } = renderEmail(email, { context, stream: 'transactional' });
-  const text = renderPlainText(email, { context });
+  const text = renderPlainText(email, { context, stream: 'transactional' });
   const subject = parseMergeTags(tpl.subject ?? '', context);
 
   return { subject, html, text };

@@ -28,7 +28,18 @@ const SRC = readFileSync(
 
 describe('marketing mail with no opt-out is refused by the sender', () => {
   it('the guard runs on every rendered message', () => {
-    expect(SRC).toContain('assertOptOutPresent(rendered.html, stream, unsubscribeUrl');
+    expect(SRC).toContain('assertOptOutPresent(rendered, stream, unsubscribeUrl');
+  });
+
+  it('it looks at both parts of the multipart, not only the HTML', () => {
+    // The whole point of the guard is that the message is lawful. A text
+    // alternative with no way out is the same violation, in the half a filter
+    // reads when it scores the mail.
+    const guard = SRC.slice(
+      SRC.indexOf('function assertOptOutPresent'),
+      SRC.indexOf('interface RenderedEmail'),
+    );
+    expect(guard).toContain("(['html', 'text'] as const)");
   });
 
   it('it throws rather than skipping the contact', () => {
@@ -57,13 +68,23 @@ describe('marketing mail with no opt-out is refused by the sender', () => {
       SRC.indexOf('function assertOptOutPresent'),
       SRC.indexOf('interface RenderedEmail'),
     );
-    expect(guard).toContain('html.includes(unsubscribeUrl)');
-    expect(guard).toContain('unsubscribe_url');
+    expect(guard).toContain('rendered[part].includes(unsubscribeUrl)');
+    expect(guard).toContain('UNRESOLVED_OPT_OUT_TAG.test(rendered[part])');
+    // And that pattern has to keep its escapes. An earlier inline version had
+    // lost them — `/{{s*unsubscribe_url/` reads as "zero or more letters s" —
+    // so the spaced form of the tag stopped matching and the guard refused
+    // compliant campaigns. Lift the literal out of the source and try it.
+    const literal = /const UNRESOLVED_OPT_OUT_TAG = \/(.+)\/;/.exec(SRC);
+    expect(literal, 'the opt-out tag pattern is not where the guard reads it').not.toBeNull();
+    expect(new RegExp(literal![1]!).test('{{ unsubscribe_url }}')).toBe(true);
+    expect(new RegExp(literal![1]!).test('{{unsubscribe_url}}')).toBe(true);
   });
 
-  it('the campaign render is told which stream it is', () => {
-    // Without this the renderer would default every campaign to marketing,
-    // which is safe but would put an opt-out on transactional batches.
-    expect(SRC).toContain('renderBlocks(parsed.data, { context: ctx, utm, stream })');
+  it('the campaign render is told which stream it is, and which language', () => {
+    // Without the stream the renderer would default every campaign to
+    // marketing, which is safe but would put an opt-out on transactional
+    // batches. Without the locale the footer it appends is always English.
+    expect(SRC).toContain('renderBlocks(parsed.data, { context: ctx, utm, stream, locale })');
+    expect(SRC).toContain('renderPlainText(parsed.data, { context: ctx, stream, locale })');
   });
 });
