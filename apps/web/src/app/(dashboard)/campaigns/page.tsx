@@ -3,6 +3,8 @@ import { Plus, Send } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
+import { FolderBar, type Folder } from '@/components/folders/folder-bar';
+import { FolderPicker } from '@/components/folders/folder-picker';
 
 interface Campaign {
   id: string;
@@ -17,6 +19,7 @@ interface Campaign {
   totalOpens: number;
   totalClicks: number;
   createdAt: string;
+  folderId: string | null;
 }
 
 const STATUS_TONE: Record<
@@ -46,11 +49,26 @@ export const dynamic = 'force-dynamic';
 export default async function CampaignsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; folderId?: string }>;
 }) {
   const params = await searchParams;
-  const qs = params.status ? `?status=${encodeURIComponent(params.status)}` : '';
-  const campaigns = await apiFetch<Campaign[]>(`/api/v1/campaigns${qs}`, { fallback: [] });
+  const query = new URLSearchParams();
+  if (params.status) query.set('status', params.status);
+  if (params.folderId) query.set('folderId', params.folderId);
+  const qs = query.toString() ? `?${query.toString()}` : '';
+
+  /** Switching status keeps the folder you are looking at, and vice versa. */
+  const statusHref = (status: string) => {
+    const next = new URLSearchParams();
+    if (status) next.set('status', status);
+    if (params.folderId) next.set('folderId', params.folderId);
+    return next.toString() ? `/campaigns?${next.toString()}` : '/campaigns';
+  };
+
+  const [campaigns, folders] = await Promise.all([
+    apiFetch<Campaign[]>(`/api/v1/campaigns${qs}`, { fallback: [] }),
+    apiFetch<Folder[]>('/api/v1/folders?kind=campaign', { fallback: [] }),
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -70,6 +88,14 @@ export default async function CampaignsPage({
         </Link>
       </header>
 
+      <FolderBar
+        kind="campaign"
+        folders={folders}
+        active={params.folderId}
+        basePath="/campaigns"
+        carry={params.status ? { status: params.status } : {}}
+      />
+
       {/* Status filter */}
       <div className="mb-4 flex flex-wrap gap-1.5">
         {STATUS_OPTIONS.map((s) => {
@@ -77,7 +103,7 @@ export default async function CampaignsPage({
           return (
             <Link
               key={s || 'all'}
-              href={s ? `/campaigns?status=${s}` : '/campaigns'}
+              href={statusHref(s)}
               className={
                 'rounded-full px-3 py-1 text-xs font-medium transition-colors ' +
                 (active
@@ -95,9 +121,13 @@ export default async function CampaignsPage({
         <Card>
           <CardContent className="py-12 text-center">
             <Send className="mx-auto h-8 w-8 text-secondary-300" aria-hidden="true" />
-            <p className="mt-3 text-sm font-medium text-secondary-900">No campaigns yet</p>
+            <p className="mt-3 text-sm font-medium text-secondary-900">
+              {params.folderId ? 'Nothing in this folder' : 'No campaigns yet'}
+            </p>
             <p className="mt-1 text-sm text-secondary-500">
-              Create a draft to start sending broadcasts.
+              {params.folderId
+                ? 'Move a campaign here from the Folder column of the list.'
+                : 'Create a draft to start sending broadcasts.'}
             </p>
             <Link
               href="/campaigns/new"
@@ -120,6 +150,7 @@ export default async function CampaignsPage({
                 <th className="px-4 py-3 font-medium">Open rate</th>
                 <th className="px-4 py-3 font-medium">Click rate</th>
                 <th className="px-4 py-3 font-medium">When</th>
+                <th className="px-4 py-3 font-medium">Folder</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-secondary-100 text-sm">
@@ -164,6 +195,14 @@ export default async function CampaignsPage({
                       {clickRate !== '—' ? '%' : ''}
                     </td>
                     <td className="px-4 py-3 text-secondary-500">{when}</td>
+                    <td className="px-4 py-3">
+                      <FolderPicker
+                        endpoint="/api/v1/campaigns"
+                        itemId={c.id}
+                        folders={folders}
+                        current={c.folderId}
+                      />
+                    </td>
                   </tr>
                 );
               })}
