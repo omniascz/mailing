@@ -20,9 +20,14 @@ import {
   TEMPLATES,
   getTemplateById,
   getTemplatesByCategory,
+  localeOf,
   type TemplateCategory,
+  type TemplateLocale,
 } from '../../services/editor/templates/index.js';
 
+// Every member of TemplateCategory. 'b2b' and 'saas' were missing, so a filter
+// on either was rejected by this route while the gallery happily offered the
+// chip — the chips come from the categories actually present in the data.
 const VALID_CATEGORIES = [
   'newsletter',
   'promo',
@@ -31,7 +36,11 @@ const VALID_CATEGORIES = [
   'onboarding',
   'seasonal',
   'ecommerce',
+  'b2b',
+  'saas',
 ] as const;
+
+const VALID_LOCALES = ['en', 'cs', 'sk'] as const;
 
 /** Merge tags in the renderable parts of a saved template. */
 async function templateWarnings(
@@ -57,19 +66,27 @@ export default async function templateRoutes(app: FastifyInstance) {
     '/api/v1/templates',
     { schema: { tags: ['Templates'], summary: 'List built-in email templates' } },
     async (req) => {
-      const { category } = z
-        .object({ category: z.enum(VALID_CATEGORIES).optional() })
+      const { category, locale } = z
+        .object({
+          category: z.enum(VALID_CATEGORIES).optional(),
+          locale: z.enum(VALID_LOCALES).optional(),
+        })
         .parse(req.query);
 
-      const list = category ? getTemplatesByCategory(category as TemplateCategory) : TEMPLATES;
+      let list = category ? getTemplatesByCategory(category as TemplateCategory) : TEMPLATES;
+      if (locale) list = list.filter((t) => localeOf(t) === (locale as TemplateLocale));
 
-      // Return metadata only — omit the full schema for the list view
-      const data = list.map(({ id, name, category: cat, description, thumbnailUrl }) => ({
-        id,
-        name,
-        category: cat,
-        description,
-        thumbnailUrl,
+      // Return metadata only — omit the full schema for the list view.
+      // locale and family travel with it so a gallery can group variants of the
+      // same email and show the one in the reader's language.
+      const data = list.map((t) => ({
+        id: t.id,
+        name: t.name,
+        category: t.category,
+        description: t.description,
+        thumbnailUrl: t.thumbnailUrl,
+        locale: localeOf(t),
+        family: t.family ?? null,
       }));
 
       return { data, total: data.length };
