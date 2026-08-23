@@ -130,10 +130,23 @@ function isBlockBounce(smtpCode: number, message: string): boolean {
   return /blocked|blacklist|policy|spam|rbl/i.test(message);
 }
 
+/**
+ * Is this the last attempt BullMQ will make?
+ *
+ * `attemptsMade` is the count of attempts already finished, so inside the
+ * handler for attempt n it reads n-1 (measured: a 6-attempt job logs 0..5).
+ * The distinction matters because a retryable failure is only news on the way
+ * past — the terminal event is what deliverability is allowed to count.
+ */
+function isFinalAttempt(job: { attemptsMade: number; opts: { attempts?: number } }): boolean {
+  const max = job.opts.attempts ?? 1;
+  return job.attemptsMade + 1 >= max;
+}
+
 // ─── Event recording ─────────────────────────────────────────────────────────
 
 async function recordEvent(event: {
-  type: 'send' | 'deliver' | 'bounce' | 'fail';
+  type: 'send' | 'deliver' | 'bounce' | 'deferred' | 'failed';
   orgId: string;
   campaignId: string;
   contactId: string;
@@ -281,25 +294,51 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
     if (smtpCode === 421 || smtpCode === 451) {
       await recordThrottleSignal(data.orgId, detectIsp(recipientDomain), sendingIp).catch(() => {});
     }
-    // Soft bounce — throw to trigger BullMQ retry
+    // A 4xx is a deferral until the retries run out. Only the last one is a
+    // soft bounce; the ones before it are `deferred`, so a greylisted message
+    // that gets through on attempt four leaves three deferrals and a delivery
+    // instead of three bounces and a delivery.
+    const final = isFinalAttempt(job);
     await recordEvent({
-      type: 'bounce',
+      type: final ? 'bounce' : 'deferred',
       orgId: data.orgId,
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
       metadata: {
-        bounceType: 'soft',
+        ...(final ? { bounceType: 'soft' } : { reason: 'soft_bounce' }),
         smtpCode,
         smtpMessage: result.smtpMessage,
         attempt: job.attemptsMade,
+        attempts: job.opts.attempts,
         isp,
       },
     });
     throw new Error(`Soft bounce (${smtpCode}): ${result.smtpMessage}`);
   }
 
-  // Unknown failure — also retry
+  // Transport failure — no SMTP reply at all: a timeout, a DNS failure, an
+  // unreachable host, or the engine refusing to dial. Retried like a 4xx, and
+  // recorded like one: `deferred` on the way past, `failed` at the end.
+  //
+  // This branch used to write nothing whatsoever. Six attempts over 31 minutes
+  // ended in a job marked failed and not one row in email_events, so a message
+  // lost to the network was indistinguishable from one that never existed.
+  await recordEvent({
+    type: isFinalAttempt(job) ? 'failed' : 'deferred',
+    orgId: data.orgId,
+    campaignId: data.campaignId,
+    contactId: data.contactId,
+    messageId: data.messageId,
+    metadata: {
+      reason: 'transport_error',
+      error: result.error,
+      smtpCode,
+      attempt: job.attemptsMade,
+      attempts: job.opts.attempts,
+      isp,
+    },
+  });
   throw new Error(`MTA error: ${result.error}`);
 }
 

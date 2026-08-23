@@ -71,6 +71,13 @@
       "when": 1787338168424,
       "tag": "0009_pg_extensions",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787435330225,
+      "tag": "0010_email_event_deferred_failed",
+      "breakpoints": true
     }
   ]
 }

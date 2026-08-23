@@ -84,6 +84,26 @@ export const emailEventTypeEnum = pgEnum('email_event_type', [
   'bounce',
   'unsubscribe',
   'complaint',
+  /**
+   * An attempt failed and another one is coming. Written once per non-final
+   * attempt, for a 4xx and for a transport error alike.
+   *
+   * Deliberately not `bounce`. Every consumer that measures deliverability
+   * counts `event_type = 'bounce'`, so recording a retry there made a message
+   * that was merely greylisted look like six rejections — and, through
+   * onBounceComplaintSignal, fed the auto-pause evaluator six times.
+   */
+  'deferred',
+  /**
+   * The message was never delivered and the recipient never rejected it:
+   * retries ran out against a timeout, a DNS failure, an unreachable host.
+   *
+   * Also not `bounce`. A bounce is something the far side said; this is the
+   * absence of anything being said. It used to be recorded as a soft bounce
+   * ("so it is not lost") which put transport faults into the customer's
+   * bounce rate, or — in the MTA-error branch — recorded nothing at all.
+   */
+  'failed',
 ]);
 
 export const bounceTypeEnum = pgEnum('bounce_type', ['none', 'hard', 'soft', 'block']);
