@@ -111,11 +111,8 @@ interface MtaJobData {
   textBody: string;
 }
 
-/**
- * Drive one campaign from the click on Send to the message the MTA would pick
- * up, and hand back what each hop carried.
- */
-async function sendAndCollect(campaignId: string) {
+/** Click Send, run the splitter, and stop with the batch job in hand. */
+async function sendToBatch(campaignId: string) {
   await api('POST', `/api/v1/campaigns/${campaignId}/send`);
 
   const [splitterData] = await jobsFor<CampaignSplitterJobData>(campaignSplitterQueue, campaignId);
@@ -125,6 +122,16 @@ async function sendAndCollect(campaignId: string) {
 
   const [batchData] = await jobsFor<BatchSenderJobData>(batchSenderQueue, campaignId);
   if (!batchData) throw new Error('[locale] splitter enqueued no batch job');
+
+  return { splitterData, batchData };
+}
+
+/**
+ * Drive one campaign from the click on Send to the message the MTA would pick
+ * up, and hand back what each hop carried.
+ */
+async function sendAndCollect(campaignId: string) {
+  const { splitterData, batchData } = await sendToBatch(campaignId);
 
   await processBatchSender(batchJob(batchData));
 
@@ -350,5 +357,34 @@ describe('campaign language end to end (real DB + Redis + API)', () => {
     const { mta } = await sendAndCollect(created.data.id);
     expect(mta.htmlBody, 'HTML part is not Slovak').toContain('Odhlásiť z odberu');
     expect(mta.textBody, 'text part is not Slovak').toContain('Odhlásiť z odberu');
+  }, 120_000);
+
+  it('a message with the opt-out in the HTML but not in the text is refused', async () => {
+    // The renderer cannot reach this one. A legacy campaign stored as raw
+    // { html, text } supplies its own text part verbatim, so the two halves
+    // can disagree — and this is the disagreement that matters. The guard in
+    // the sender is the last place it can be caught.
+    const created = await api<{ data: { id: string } }>('POST', '/api/v1/campaigns', {
+      name: `Half-compliant ${tag}`,
+      subject: 'Akce',
+      fromName: 'Obchod',
+      fromEmail,
+      listId,
+      content: {
+        html: '<p>Akce jen dnes.</p><a href="{{unsubscribe_url}}">Odhlásit</a>',
+        text: 'Akce jen dnes.',
+      },
+    });
+    createdCampaigns.push(created.data.id);
+
+    const { batchData } = await sendToBatch(created.data.id);
+
+    await expect(processBatchSender(batchJob(batchData))).rejects.toThrow(
+      /rendered text has no unsubscribe link/,
+    );
+
+    // Refused means refused: the compliant-looking half must not go out alone.
+    const queued = await jobsFor<MtaJobData>(mtaQueues.other, created.data.id);
+    expect(queued, 'the batch was sent anyway').toHaveLength(0);
   }, 120_000);
 });
