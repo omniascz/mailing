@@ -215,7 +215,10 @@ const mtaOpts: QueueOptions = {
   defaultJobOptions: {
     ...defaultOpts.defaultJobOptions,
     attempts: 6,
-    backoff: { type: 'exponential', delay: 60_000 },
+    // 'stream' is not a builtin, so BullMQ resolves it through the worker's
+    // settings.backoffStrategy — see lib/stream-backoff.ts for the ladders and
+    // why transactional, triggered and broadcast do not want the same one.
+    backoff: { type: 'stream' },
   },
 };
 
@@ -378,8 +381,13 @@ export interface MtaSendJobData {
   stream: MessageStream;
   /** A/B variant id propagated from BatchSenderJobData for event tagging. */
   abVariantId?: string;
-  /** How many times this message has been deferred by the adaptive ISP throttle. */
-  throttleAttempts?: number;
+
+  /**
+   * Times this message has been put to sleep on purpose, by reason. Deferrals
+   * do not consume BullMQ attempts (moveToDelayed skips them), so nothing else
+   * bounds them — see lib/defer.ts.
+   */
+  deferrals?: { throttle?: number; warmup_quota?: number };
   /**
    * File attachments (e-ticket PDFs etc.). Content is base64 so the job stays
    * JSON-serialisable through Redis/BullMQ; decoded to a Buffer at send time.
