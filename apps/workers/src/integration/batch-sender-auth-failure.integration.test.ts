@@ -81,7 +81,7 @@ describe('batch-sender fails loudly when the API rejects the secret', () => {
       orgId,
       batchIndex: 0,
       contactIds,
-      content: { html: '<p>Hello</p>' },
+      content: { html: '<p>Hello</p><a href="{{unsubscribe_url}}">Unsubscribe</a>' },
       subject: 'Auth failure integration test',
       fromName: 'ForgeMsg Test',
       fromEmail: 'test@forgemsg.test',

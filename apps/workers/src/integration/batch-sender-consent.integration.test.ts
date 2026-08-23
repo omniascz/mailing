@@ -90,7 +90,7 @@ describe('batch-sender consent enforcement (real DB + Redis + API)', () => {
       orgId,
       batchIndex: 0,
       contactIds: [consentedContactId, revokedContactId],
-      content: { html: '<p>Hello {{first_name}}</p>' },
+      content: { html: '<p>Hello {{first_name}}</p><a href="{{unsubscribe_url}}">Unsubscribe</a>' },
       subject: 'Consent integration test',
       fromName: 'ForgeMsg Test',
       fromEmail: 'test@forgemsg.test',

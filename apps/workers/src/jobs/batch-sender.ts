@@ -306,7 +306,8 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
     // 4. Render HTML + plain-text alternative (block JSON path via
     //    @forgemsg/editor renderEmail + renderPlainText; legacy { html }
     //    path uses parseMergeTags + HTML→text fallback).
-    const rendered = renderEmail(data.content, mergeCtx, data.preheader, data.utmTracking);
+    const rendered = renderEmail(data.content, mergeCtx, data.preheader, data.utmTracking, stream);
+    assertOptOutPresent(rendered.html, stream, unsubscribeUrl, data.campaignId);
     let htmlBody = rendered.html;
     let textBody = rendered.text;
 
@@ -467,6 +468,34 @@ function buildMergeContext(
   };
 }
 
+/**
+ * Refuse to send marketing mail whose body has no opt-out.
+ *
+ * The renderer guarantees one for the block path: it appends a compliance
+ * footer when the template has none. This covers the path it cannot reach —
+ * legacy campaigns stored as raw { html }, which skip renderEmail entirely and
+ * are copied to the wire as written. There is no template to fix there, and no
+ * renderer hook to add one, so the send path is the only place left.
+ *
+ * Throws rather than skipping the contact. A campaign that cannot produce a
+ * lawful body is not a per-recipient problem; sending it to the other 9,999
+ * would be the same violation nine thousand more times.
+ */
+function assertOptOutPresent(
+  html: string,
+  stream: MessageStream,
+  unsubscribeUrl: string,
+  campaignId: string,
+): void {
+  if (stream === 'transactional') return;
+  if (html.includes(unsubscribeUrl) || /{{s*unsubscribe_url/.test(html)) return;
+  throw new Error(
+    `Campaign ${campaignId}: rendered body has no unsubscribe link. Marketing mail ` +
+      `must carry one. Block templates get it from the renderer; this is a raw-HTML ` +
+      `campaign, so the link has to be in the HTML — add {{unsubscribe_url}}.`,
+  );
+}
+
 interface RenderedEmail {
   html: string;
   /** Auto-derived plain-text alternative for multipart/alternative MIME part. */
@@ -495,6 +524,7 @@ function renderEmail(
     content?: string;
     term?: string;
   } | null,
+  stream: MessageStream = 'broadcast',
 ): RenderedEmail {
   // Build UTM config if enabled
   const utm = utmTracking?.enabled
@@ -515,7 +545,7 @@ function renderEmail(
     } satisfies Partial<EmailSchema> | Record<string, unknown>);
 
     if (parsed.success) {
-      const html = renderBlocks(parsed.data, { context: ctx, utm }).html;
+      const html = renderBlocks(parsed.data, { context: ctx, utm, stream }).html;
       let text = renderPlainText(parsed.data, { context: ctx });
       // Org-wide custom footer (SendGrid Mail Settings) — HTML side is appended
       // by the renderer; mirror the plain-text side here.

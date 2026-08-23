@@ -50,6 +50,18 @@ describe('renderEmail', () => {
     btn1.url = 'https://same.com';
     btn2.url = 'https://same.com';
     const { links } = renderEmail(emailWith([btn1, btn2]));
+    // The opt-out is a link in the email, so the link checker sees it too. It
+    // appears because the default stream is marketing and this template has no
+    // footer block — which is the behaviour the compliance footer exists for,
+    // so the expectation is widened rather than the render made quieter.
+    expect(links).toEqual(['https://same.com', '{{unsubscribe_url}}']);
+  });
+
+  it('leaves the link list alone for transactional mail', () => {
+    const btn = createBlock('button');
+    if (btn.type !== 'button') throw new Error('bad factory');
+    btn.url = 'https://same.com';
+    const { links } = renderEmail(emailWith([btn]), { stream: 'transactional' });
     expect(links).toEqual(['https://same.com']);
   });
 
