@@ -476,6 +476,16 @@ function buildMergeContext(
 }
 
 /**
+ * An opt-out merge tag a later step still has to resolve, in any of the forms
+ * the tag parser accepts. Written as a named constant because the inline
+ * version of this pattern had lost its escapes: `/{{s*unsubscribe_url/` reads
+ * as "zero or more letters s", so `{{ unsubscribe_url }}` — spaces and all,
+ * which the parser accepts — did not match, and the guard refused a campaign
+ * that was in fact compliant.
+ */
+const UNRESOLVED_OPT_OUT_TAG = /\{\{\s*unsubscribe_url/;
+
+/**
  * Refuse to send marketing mail whose body has no opt-out.
  *
  * The renderer guarantees one for the block path: it appends a compliance
@@ -501,7 +511,7 @@ function assertOptOutPresent(
   // in a text-only client sees.
   const missing = (['html', 'text'] as const).filter(
     (part) =>
-      !rendered[part].includes(unsubscribeUrl) && !/{{s*unsubscribe_url/.test(rendered[part]),
+      !rendered[part].includes(unsubscribeUrl) && !UNRESOLVED_OPT_OUT_TAG.test(rendered[part]),
   );
   if (missing.length === 0) return;
   throw new Error(
