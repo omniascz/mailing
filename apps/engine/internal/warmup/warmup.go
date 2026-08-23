@@ -1,172 +1,125 @@
 // Package warmup enforces per-IP daily send limits during the IP warm-up period.
 //
-// Redis key schema (matches TypeScript apps/api/src/services/sending/ip-warmup.ts):
+// The engine does not hold the counter. It asks the API to claim one send's
+// worth of a sending IP's daily allowance, and the API decides — check and
+// increment in a single SQL statement against warmup_ips.today_sent.
 //
-//	warmup:{ip}:day        — current warmup day (int, set by the TS daily cron)
-//	warmup:{ip}:today_sent — emails sent today from this IP (INCR, TTL = midnight UTC)
+// It used to keep its own counter in Redis under warmup:{ip}:today_sent while
+// the API kept another under warmup:{ip}:sent:{date}. Neither enforcement path
+// was ever switched on, which is the only reason that never mattered: had both
+// run, each would have counted into its own key and the real daily cap would
+// have been twice the configured one. Redis also runs with
+// --maxmemory-policy allkeys-lru in both compose files, so the key was
+// evictable and losing it would silently restore full capacity to a cold IP.
 //
-// The Go engine reads these keys to decide which IP to use and increments
-// today_sent after every successful delivery.
+// One counter, in Postgres, reached over the same authenticated internal API
+// the engine already uses for /internal/smtp/auth.
 package warmup
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
-	"strconv"
+	"net/http"
 	"time"
-
-	"github.com/redis/go-redis/v9"
 )
 
-// Warmup schedule — mirrors WARMUP_SCHEDULE in apps/api/src/services/sending/ip-warmup.ts.
-func dailyLimit(warmupDay int) int {
-	switch {
-	case warmupDay <= 3:
-		return 50
-	case warmupDay <= 7:
-		return 200
-	case warmupDay <= 14:
-		return 1_000
-	case warmupDay <= 21:
-		return 5_000
-	case warmupDay <= 30:
-		return 20_000
-	default:
-		return -1 // warm — unlimited
-	}
-}
+// ErrAllExhausted is returned when every configured IP has hit its daily cap.
+// The workers' send path matches on this text to defer the message to midnight
+// rather than failing it — see apps/workers/src/jobs/mta-sender.ts.
+var ErrAllExhausted = fmt.Errorf("warmup: all sending IPs have reached their daily limit")
 
-const warmupCompleteDay = 31
-
-func warmupDayKey(ip string) string  { return "warmup:" + ip + ":day" }
-func todaySentKey(ip string) string  { return "warmup:" + ip + ":today_sent" }
-
-// IPStatus is the runtime state of a single sending IP.
-type IPStatus struct {
-	IP         string
-	WarmupDay  int
-	DailyLimit int
-	SentToday  int
-	Remaining  int  // -1 = unlimited (warm)
-	IsWarm     bool
-}
-
-// Manager reads and updates IP warmup state from Redis.
+// Manager claims warmup capacity from the API.
 type Manager struct {
-	rdb *redis.Client
+	apiURL string
+	secret string
+	client *http.Client
 }
 
-// New creates a Manager connected to the given Redis URL.
-// Returns nil, nil when redisURL is empty (warmup disabled).
-func New(redisURL string) (*Manager, error) {
-	if redisURL == "" {
+// Config is what the manager needs to reach the API.
+type Config struct {
+	APIURL string // base URL, e.g. http://api:3001
+	Secret string // INTERNAL_API_SECRET
+}
+
+// New creates a Manager. Returns nil when apiURL is empty (warmup disabled);
+// an apiURL without a secret is a configuration error, not a disabled feature,
+// because the claim endpoint would answer 401 for every send.
+func New(cfg Config) (*Manager, error) {
+	if cfg.APIURL == "" {
 		return nil, nil
 	}
-	opt, err := redis.ParseURL(redisURL)
-	if err != nil {
-		return nil, fmt.Errorf("warmup: parse redis url: %w", err)
+	if cfg.Secret == "" {
+		return nil, fmt.Errorf("warmup: API URL is set but INTERNAL_API_SECRET is empty")
 	}
-	return &Manager{rdb: redis.NewClient(opt)}, nil
+	return &Manager{
+		apiURL: cfg.APIURL,
+		secret: cfg.Secret,
+		client: &http.Client{Timeout: 5 * time.Second},
+	}, nil
 }
 
-// Close releases the Redis connection.
-func (m *Manager) Close() error {
-	if m == nil {
-		return nil
-	}
-	return m.rdb.Close()
+// Close exists so callers can defer it regardless of configuration.
+func (m *Manager) Close() error { return nil }
+
+type claimResponse struct {
+	Data struct {
+		IP         string `json:"ip"`
+		WarmupDay  int    `json:"warmupDay"`
+		SentToday  int    `json:"sentToday"`
+		DailyLimit *int   `json:"dailyLimit"`
+		IsWarm     bool   `json:"isWarm"`
+		Known      bool   `json:"known"`
+	} `json:"data"`
 }
 
-// ipStatus returns the current warmup state for one IP.
-func (m *Manager) ipStatus(ctx context.Context, ip string) IPStatus {
-	dayRaw, _ := m.rdb.Get(ctx, warmupDayKey(ip)).Result()
-	warmupDay, _ := strconv.Atoi(dayRaw)
-	if warmupDay == 0 {
-		warmupDay = 1
-	}
-
-	sentRaw, _ := m.rdb.Get(ctx, todaySentKey(ip)).Result()
-	sentToday, _ := strconv.Atoi(sentRaw)
-
-	limit := dailyLimit(warmupDay)
-	isWarm := warmupDay >= warmupCompleteDay
-
-	remaining := 0
-	if isWarm {
-		remaining = -1
-	} else if limit-sentToday > 0 {
-		remaining = limit - sentToday
-	}
-
-	return IPStatus{
-		IP:         ip,
-		WarmupDay:  warmupDay,
-		DailyLimit: limit,
-		SentToday:  sentToday,
-		Remaining:  remaining,
-		IsWarm:     isWarm,
-	}
-}
-
-// SelectIP picks the best sending IP from the given list.
+// Claim picks a sending IP that still has daily allowance and spends one unit
+// of it. Selection and the decrement happen together on the API side, so two
+// concurrent sends cannot both take the last one.
 //
-// Selection rules:
-//  1. Warm IPs (day ≥ 31) are always preferred — first warm IP wins.
-//  2. Among warming IPs, pick the one with the most remaining capacity.
-//  3. If all warming IPs are exhausted, return ("", ErrAllExhausted).
-//
-// Returns ("", nil) when ips is empty (warmup not configured).
-func (m *Manager) SelectIP(ctx context.Context, ips []string) (string, error) {
+// Returns ErrAllExhausted when every IP is out for today. A transport failure
+// is returned as-is and the caller decides; it does NOT silently allow the
+// send, because "the counter is unreachable" is exactly when an unbounded
+// send is most likely to be the wrong thing.
+func (m *Manager) Claim(ctx context.Context, ips []string) (string, error) {
 	if m == nil || len(ips) == 0 {
 		return "", nil
 	}
 
-	statuses := make([]IPStatus, len(ips))
-	for i, ip := range ips {
-		statuses[i] = m.ipStatus(ctx, ip)
+	body, err := json.Marshal(map[string]any{"ips": ips})
+	if err != nil {
+		return "", fmt.Errorf("warmup: encode claim: %w", err)
 	}
 
-	// Prefer fully warm IPs
-	for _, st := range statuses {
-		if st.IsWarm {
-			return st.IP, nil
-		}
+	req, err := http.NewRequestWithContext(
+		ctx, "POST", m.apiURL+"/api/v1/internal/sending/warmup/claim", bytes.NewReader(body),
+	)
+	if err != nil {
+		return "", fmt.Errorf("warmup: build claim: %w", err)
 	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Internal-Secret", m.secret)
 
-	// Warming IPs — pick best remaining capacity
-	var best *IPStatus
-	for i := range statuses {
-		st := &statuses[i]
-		if st.Remaining > 0 && (best == nil || st.Remaining > best.Remaining) {
-			best = st
-		}
+	resp, err := m.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("warmup: claim request: %w", err)
 	}
-	if best == nil {
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusTooManyRequests {
 		return "", ErrAllExhausted
 	}
-	return best.IP, nil
-}
-
-// ErrAllExhausted is returned when every configured IP has hit its daily cap.
-var ErrAllExhausted = fmt.Errorf("warmup: all sending IPs have reached their daily limit")
-
-// RecordSend atomically increments today_sent for the given IP.
-// TTL is set to end-of-day UTC + 60 s buffer so the key auto-expires.
-// Must be called AFTER a successful SMTP delivery.
-func (m *Manager) RecordSend(ctx context.Context, ip string) error {
-	if m == nil || ip == "" {
-		return nil
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("warmup: claim returned %d", resp.StatusCode)
 	}
-	key := todaySentKey(ip)
 
-	// Seconds until midnight UTC
-	now := time.Now().UTC()
-	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.UTC)
-	ttl := time.Until(midnight) + 60*time.Second
-
-	pipe := m.rdb.Pipeline()
-	pipe.Incr(ctx, key)
-	pipe.Expire(ctx, key, ttl)
-	_, err := pipe.Exec(ctx)
-	return err
+	var parsed claimResponse
+	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+		return "", fmt.Errorf("warmup: decode claim: %w", err)
+	}
+	if parsed.Data.IP == "" {
+		return "", fmt.Errorf("warmup: claim returned no IP")
+	}
+	return parsed.Data.IP, nil
 }

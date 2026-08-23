@@ -33,15 +33,34 @@ func main() {
 	})
 	defer connPool.Close()
 
-	// Optional IP warmup enforcement.
-	// Enabled when REDIS_URL + SENDING_IPS are both configured.
-	warmupMgr, err := warmup.New(cfg.RedisURL)
+	// IP warmup enforcement.
+	//
+	// No SENDING_IPS is a legitimate deployment: on a shared pool the engine
+	// does not choose the source address, and there is nothing to ramp. It says
+	// so once, loudly, because "warmup is on" was previously indistinguishable
+	// from "warmup is silently off" — the daily cron kept advancing warmup_day,
+	// so the API reported a ramp in progress while every limit was ignored.
+	//
+	// SENDING_IPS *with* no way to reach the counter is different: that is a
+	// misconfiguration whose failure mode is a cold dedicated IP sending without
+	// any limit at all, which is the reputation damage warmup exists to prevent.
+	// Refuse to boot instead.
+	warmupMgr, err := warmup.New(warmup.Config{APIURL: cfg.WarmupAPIURL, Secret: cfg.InternalAPISecret})
 	if err != nil {
 		log.Fatalf("warmup: %v", err)
 	}
 	defer warmupMgr.Close()
-	if warmupMgr != nil && len(cfg.SendingIPs) > 0 {
-		log.Printf("IP warmup enforcement enabled for %d IPs: %v", len(cfg.SendingIPs), cfg.SendingIPs)
+	switch {
+	case len(cfg.SendingIPs) == 0:
+		log.Printf("IP warmup enforcement OFF: SENDING_IPS is empty. " +
+			"Sends use the shared pool and no daily ramp limit is applied.")
+	case warmupMgr == nil:
+		log.Fatalf("SENDING_IPS is set (%v) but WARMUP_API_URL is empty. "+
+			"Warmup could not be enforced and these IPs would send unlimited; "+
+			"set WARMUP_API_URL + INTERNAL_API_SECRET, or unset SENDING_IPS.",
+			cfg.SendingIPs)
+	default:
+		log.Printf("IP warmup enforcement ON for %d IPs: %v", len(cfg.SendingIPs), cfg.SendingIPs)
 	}
 
 	// Start gRPC server
