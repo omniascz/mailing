@@ -4,9 +4,23 @@
  * New sending IPs must be gradually ramped up to avoid ISP reputation damage.
  * This service:
  *   1. Defines the warmup schedule (daily volume caps by day of warmup)
- *   2. Tracks per-IP progress in the `warmup_ips` DB table (Redis for fast checks)
- *   3. Distributes traffic between warm and cold IPs
+ *   2. Tracks per-IP progress in the `warmup_ips` table
+ *   3. Hands out daily capacity, one send at a time, atomically
  *   4. Advances the warmup day counter once per calendar day
+ *
+ * The counter lives in Postgres and nowhere else. There used to be three of
+ * them — `warmup_ips.today_sent` that nothing wrote, `warmup:{ip}:sent:{date}`
+ * in Redis written by this file, and `warmup:{ip}:today_sent` in Redis written
+ * by the Go engine — so if enforcement had ever been switched on, each half
+ * would have counted into its own and the real cap would have been double.
+ *
+ * Postgres rather than Redis, despite this being a hot-path counter, because
+ * Redis runs with `--maxmemory-policy allkeys-lru` in both compose files: the
+ * key is evictable, and a warmup counter that silently returns to zero lets a
+ * cold IP send its whole daily allowance again. That is the exact reputation
+ * damage warmup exists to prevent, so the failure has to be impossible rather
+ * than unlikely. The cost is bounded by the thing it limits — at most 20 000
+ * writes on the last day of the ramp, and none at all once the IP is warm.
  *
  * Warmup schedule (emails per day per IP):
  *   Days 1-3   →    50
@@ -17,10 +31,9 @@
  *   Days 30+   → unlimited (warm)
  */
 
-import { redis } from '@forgemsg/shared/redis';
 import { db } from '../../db/client.js';
 import { warmupIps } from '../../db/schema/index.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 // ─── Schedule ─────────────────────────────────────────────────────────────────
 
@@ -61,11 +74,6 @@ export function getWarmupPhase(warmupDay: number): string {
   return phase?.label ?? 'Phase 1 — Initial';
 }
 
-// ─── Redis key helpers ────────────────────────────────────────────────────────
-
-const todaySentKey = (ip: string) => `warmup:${ip}:sent:${todayString()}`;
-const warmupDayKey = (ip: string) => `warmup:${ip}:day`;
-
 function todayString(): string {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
 }
@@ -84,63 +92,136 @@ export interface WarmupStatus {
 
 /**
  * Start warmup tracking for a new IP.
- * Seeds Redis and inserts a DB row if not already present.
+ *
+ * Day 1, not 0: the schedule's first phase is `fromDay: 1`, so a row left at
+ * the column default of 0 falls through `WARMUP_SCHEDULE.find` and only gets a
+ * limit from the `?? 50` fallback — the right number by luck. It also
+ * disagreed with the Redis seed, which wrote 1.
  */
 export async function startWarmup(ipAddress: string, orgId?: string): Promise<void> {
-  const today = todayString();
-
   await db
     .insert(warmupIps)
     .values({
       ipAddress,
       orgId: orgId ?? null,
       status: 'warming',
-      currentDate: today,
+      warmupDay: 1,
+      todaySent: 0,
+      currentDate: todayString(),
     })
     .onConflictDoNothing();
-
-  // Seed Redis
-  await redis.set(warmupDayKey(ipAddress), '1', 'EX', 86_400 * 35);
-  await redis.set(todaySentKey(ipAddress), '0', 'EX', 86_400);
 }
 
 /**
- * Check whether a send is allowed for this IP given its warmup state.
- * Increments the today_sent counter if allowed.
+ * Claim one send's worth of daily capacity for `ipAddress`.
+ *
+ * Check and increment in a single statement, so two concurrent senders cannot
+ * both read "49 of 50 used" and both go. The day rollover is folded in: when
+ * `current_date` is stale the counter restarts at 1 for today rather than
+ * needing a cron to have run first, which means a send just after midnight is
+ * counted against the new day even if the advance job is late.
+ *
+ * A claim is spent by the *attempt*, not by a delivery. That is deliberate:
+ * what a receiving ISP saw is a connection and a delivery attempt from this
+ * IP, which is what warmup is rationing. It also errs toward sending less,
+ * which is the safe direction for a ramp.
+ *
+ * Returns `allowed: false` when today's allowance is gone; the caller defers
+ * the message rather than failing it. An unknown IP is allowed — an address
+ * nobody registered for warmup is not being warmed up, and refusing mail from
+ * it would be a surprising way to find that out.
  */
-export async function checkWarmupAllowance(
-  ipAddress: string,
-): Promise<{ allowed: boolean; status: WarmupStatus }> {
-  // Fast path via Redis
-  const dayRaw = await redis.get(warmupDayKey(ipAddress));
-  const warmupDay = dayRaw ? parseInt(dayRaw, 10) : 1;
-  const sentRaw = await redis.get(todaySentKey(ipAddress));
-  const sentToday = sentRaw ? parseInt(sentRaw, 10) : 0;
+export interface WarmupClaim {
+  allowed: boolean;
+  known: boolean;
+  warmupDay: number;
+  dailyLimit: number;
+  sentToday: number;
+  isWarm: boolean;
+}
 
-  const dailyLimit = getDailyLimit(warmupDay);
-  const isWarm = warmupDay >= WARMUP_COMPLETE_DAY;
-  const allowed = isWarm || sentToday < dailyLimit;
+export async function claimWarmupCapacity(ipAddress: string): Promise<WarmupClaim> {
+  const today = todayString();
 
-  const status: WarmupStatus = {
-    ipAddress,
-    warmupDay,
-    phase: getWarmupPhase(warmupDay),
-    dailyLimit: isWarm ? -1 : dailyLimit, // -1 = unlimited
-    sentToday,
-    remainingToday: isWarm ? -1 : Math.max(0, dailyLimit - sentToday),
-    isWarm,
-  };
+  // `current_date` is also a SQL function name, hence the quoting.
+  const rows = await db.execute(sql`
+    WITH current AS (
+      SELECT
+        ip_address,
+        warmup_day,
+        status,
+        CASE WHEN "current_date" = ${today} THEN today_sent ELSE 0 END AS sent_today
+      FROM warmup_ips
+      WHERE ip_address = ${ipAddress}
+      FOR UPDATE
+    ), limits AS (
+      SELECT
+        c.*,
+        CASE
+          WHEN c.status = 'warm' OR c.warmup_day >= ${WARMUP_COMPLETE_DAY} THEN NULL
+          WHEN c.warmup_day <= 3  THEN 50
+          WHEN c.warmup_day <= 7  THEN 200
+          WHEN c.warmup_day <= 14 THEN 1000
+          WHEN c.warmup_day <= 21 THEN 5000
+          WHEN c.warmup_day <= 30 THEN 20000
+          ELSE NULL
+        END AS daily_limit
+      FROM current c
+    )
+    UPDATE warmup_ips w
+       SET today_sent = l.sent_today + 1,
+           "current_date" = ${today},
+           updated_at = now()
+      FROM limits l
+     WHERE w.ip_address = l.ip_address
+       AND (l.daily_limit IS NULL OR l.sent_today < l.daily_limit)
+    RETURNING w.warmup_day AS warmup_day,
+              w.today_sent AS today_sent,
+              w.status AS status,
+              l.daily_limit AS daily_limit
+  `);
 
-  if (allowed) {
-    // Increment counter (TTL = rest of today UTC = seconds until midnight)
-    const now = new Date();
-    const secondsUntilMidnight =
-      86_400 - (now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds());
-    await redis.incr(todaySentKey(ipAddress));
-    await redis.expire(todaySentKey(ipAddress), secondsUntilMidnight + 60);
+  const claimed = (rows as unknown as Array<Record<string, unknown>>)[0];
+  if (claimed) {
+    const limit = claimed.daily_limit === null ? Infinity : Number(claimed.daily_limit);
+    return {
+      allowed: true,
+      known: true,
+      warmupDay: Number(claimed.warmup_day),
+      dailyLimit: limit,
+      sentToday: Number(claimed.today_sent),
+      isWarm: limit === Infinity,
+    };
   }
 
-  return { allowed, status };
+  // Nothing updated: either the IP is unknown, or the allowance is spent.
+  const [row] = await db
+    .select()
+    .from(warmupIps)
+    .where(eq(warmupIps.ipAddress, ipAddress))
+    .limit(1);
+
+  if (!row) {
+    return {
+      allowed: true,
+      known: false,
+      warmupDay: 0,
+      dailyLimit: Infinity,
+      sentToday: 0,
+      isWarm: true,
+    };
+  }
+
+  const sentToday = row.currentDate === today ? row.todaySent : 0;
+  const limit = getDailyLimit(row.warmupDay);
+  return {
+    allowed: false,
+    known: true,
+    warmupDay: row.warmupDay,
+    dailyLimit: limit,
+    sentToday,
+    isWarm: limit === Infinity,
+  };
 }
 
 /**
@@ -170,19 +251,14 @@ export async function advanceWarmupDay(ipAddress: string): Promise<number | null
     .set({
       warmupDay: newDay,
       currentDate: today,
+      // New day, new allowance. claimWarmupCapacity also resets on a stale
+      // date, so a send that beats this job to the new day is still counted
+      // correctly — this just keeps the stored row tidy.
+      todaySent: 0,
       status: isWarm ? 'warm' : 'warming',
       updatedAt: new Date(),
     })
     .where(eq(warmupIps.ipAddress, ipAddress));
-
-  // Sync Redis
-  await redis.set(warmupDayKey(ipAddress), String(newDay), 'EX', 86_400 * 35);
-  // Reset today_sent counter for new day
-  const _now = new Date();
-  const secondsElapsedToday =
-    _now.getUTCHours() * 3600 + _now.getUTCMinutes() * 60 + _now.getUTCSeconds();
-  const secondsUntilMidnight = 86_400 - secondsElapsedToday;
-  await redis.set(todaySentKey(ipAddress), '0', 'EX', secondsUntilMidnight + 60);
 
   return newDay;
 }
@@ -195,8 +271,9 @@ export async function listWarmupStatuses(orgId: string): Promise<WarmupStatus[]>
 
   return Promise.all(
     rows.map(async (row) => {
-      const sentRaw = await redis.get(todaySentKey(row.ipAddress));
-      const sentToday = sentRaw ? parseInt(sentRaw, 10) : 0;
+      // Same counter the send path claims against — no second reading of a
+      // different store that can disagree with it.
+      const sentToday = row.currentDate === todayString() ? row.todaySent : 0;
       const warmupDay = row.warmupDay;
       const dailyLimit = getDailyLimit(warmupDay);
       const isWarm = row.status === 'warm';
