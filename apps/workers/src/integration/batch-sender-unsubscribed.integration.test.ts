@@ -142,7 +142,9 @@ describe('batch-sender skips contacts flagged unsubscribed (real DB + Redis + AP
           campaignId: randomUUID(),
           orgId,
           batchIndex: 0,
-          contactIds: [flaggedOnlyId],
+          // A deliverable contact: an unsubscribed one is filtered out before
+          // the render, so the guard would never be reached.
+          contactIds: [activeId],
           content: { html: '<p>Buy our things</p>' },
           subject: 'Sale',
           fromName: 'ForgeMsg Test',

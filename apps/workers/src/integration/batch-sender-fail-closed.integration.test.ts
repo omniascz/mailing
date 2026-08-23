@@ -161,7 +161,9 @@ describe('batch-sender fail-closed policy (fake API + real Redis)', () => {
       contactIds: [contactId],
       // `content` is the editor blob the renderer reads; a plain html string is
       // one of the shapes it accepts.
-      content: { html: '<p>Hello {{contact.first_name}}</p><a href="{{unsubscribe_url}}">Unsubscribe</a>' },
+      content: {
+        html: '<p>Hello {{contact.first_name}}</p><a href="{{unsubscribe_url}}">Unsubscribe</a>',
+      },
       subject: 'Probe',
       fromName: 'Demo',
       fromEmail: 'demo@acme.test',
