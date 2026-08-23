@@ -16,6 +16,7 @@ import {
   startWarmup,
   listWarmupStatuses,
   advanceWarmupDay,
+  claimWarmupCapacity,
 } from '../../services/sending/ip-warmup.js';
 import { AppError } from '../../lib/app-error.js';
 import { db } from '../../db/client.js';
@@ -74,6 +75,16 @@ export default async function sendingRoutes(app: FastifyInstance) {
   app.addHook('preHandler', async (req) => {
     // Skip auth for fbl-inbound (handled above with shared secret)
     if (req.routeOptions?.url === '/api/v1/sending/fbl-inbound') return;
+    // /api/v1/internal/* is machine-to-machine and is already guarded by the
+    // internal-auth plugin's shared secret; a user session is the wrong
+    // credential for it and there is nobody to supply one.
+    //
+    // This hook covered them, so POST /internal/sending/warmup/advance-all
+    // answered 401 to the nightly cron that is its only caller — measured, not
+    // inferred. warmup_day therefore never advanced: an IP stayed on day 1 and
+    // its allowance stayed at 50 for as long as it existed. Nothing noticed,
+    // because no allowance was being enforced either.
+    if (req.routeOptions?.url?.startsWith('/api/v1/internal/')) return;
     await app.requireAuth(req);
   });
 
@@ -231,6 +242,62 @@ export default async function sendingRoutes(app: FastifyInstance) {
         sendAt: nextSendWindow(r.peakHour, r.confidence).toISOString(),
       }));
       return { data: results };
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/sending/warmup/claim
+   *
+   * The engine asks here before it dials. It sends the IPs it may bind to and
+   * gets back the one it should use, with a unit of that IP's daily allowance
+   * already spent — check and increment are one statement, so two concurrent
+   * senders cannot both take the last one.
+   *
+   * The engine could not hold this counter itself. It had one in Redis and the
+   * API had another under a different key, which meant the cap would have been
+   * double the moment both ran; and Redis here is allkeys-lru, so the key is
+   * evictable and a lost counter silently restores full capacity to a cold IP.
+   * One counter, in Postgres, reached the same way the engine already reaches
+   * /internal/smtp/auth.
+   */
+  app.post(
+    '/api/v1/internal/sending/warmup/claim',
+    { schema: { tags: ['Internal'], summary: 'Claim one send of daily warmup capacity' } },
+    async (req, reply) => {
+      const body = z
+        .object({ ips: z.array(z.string().min(1).max(45)).min(1).max(32) })
+        .parse(req.body);
+
+      // Prefer a warm IP; among warming ones take the first that still has
+      // room. Selection and claim happen together so the answer cannot go
+      // stale between deciding and sending.
+      let firstKnownRefusal: Awaited<ReturnType<typeof claimWarmupCapacity>> | null = null;
+      for (const ip of body.ips) {
+        const claim = await claimWarmupCapacity(ip);
+        if (claim.allowed) {
+          return reply.send({
+            data: {
+              ip,
+              warmupDay: claim.warmupDay,
+              sentToday: claim.sentToday,
+              dailyLimit: claim.dailyLimit === Infinity ? null : claim.dailyLimit,
+              isWarm: claim.isWarm,
+              known: claim.known,
+            },
+          });
+        }
+        firstKnownRefusal ??= claim;
+      }
+
+      // Every configured IP is out of allowance for today. 429 rather than an
+      // error: nothing is broken, the capacity comes back at midnight.
+      return reply.code(429).send({
+        code: 'WARMUP_QUOTA_EXHAUSTED',
+        message: 'warmup: all sending IPs have reached their daily limit',
+        warmupDay: firstKnownRefusal?.warmupDay ?? null,
+        dailyLimit: firstKnownRefusal?.dailyLimit ?? null,
+        sentToday: firstKnownRefusal?.sentToday ?? null,
+      });
     },
   );
 

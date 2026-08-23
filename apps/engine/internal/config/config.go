@@ -37,6 +37,15 @@ type Config struct {
 	// When set, the warmup manager selects the best IP per send.
 	// Example: "1.2.3.4,1.2.3.5"
 	SendingIPs []string
+
+	// WarmupAPIURL is the API base the engine asks for warmup capacity.
+	// Empty disables enforcement; set together with SENDING_IPS or the engine
+	// refuses to boot (see main.go).
+	WarmupAPIURL string
+
+	// InternalAPISecret authenticates the warmup claim, same header and same
+	// value the submission server already uses for /internal/smtp/auth.
+	InternalAPISecret string
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -52,6 +61,8 @@ func Load() *Config {
 		LogLevel:              envOrDefault("LOG_LEVEL", "info"),
 		RedisURL:              envOrDefault("REDIS_URL", ""),
 		SendingIPs:            envStringSlice("SENDING_IPS"),
+		WarmupAPIURL:          envOrDefault("WARMUP_API_URL", os.Getenv("API_URL")),
+		InternalAPISecret:     os.Getenv("INTERNAL_API_SECRET"),
 	}
 }
 

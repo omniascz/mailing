@@ -147,3 +147,14 @@ env:
   CLICKHOUSE_URL: http://clickhouse.forgemsg.svc.cluster.local:8123
   KAFKA_BROKERS: kafka.forgemsg.svc.cluster.local:9092
   ENGINE_GRPC_URL: forgemsg-engine.forgemsg.svc.cluster.local:50051
+
+  # ─── IP warmup ─────────────────────────────────────────────────────────────
+  # Local addresses the MTA may bind to when dialling out, comma-separated
+  # (apps/engine/internal/config/config.go: envStringSlice). Empty means a
+  # shared pool: no ramp is applied and the engine logs that at boot.
+  #
+  # Setting SENDING_IPS without WARMUP_API_URL makes the engine refuse to boot,
+  # because an unenforced warmup on a cold dedicated IP is the reputation
+  # damage warmup exists to prevent.
+  SENDING_IPS: ''
+  WARMUP_API_URL: http://forgemsg-api.forgemsg.svc.cluster.local:3001

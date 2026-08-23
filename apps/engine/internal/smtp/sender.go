@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -100,14 +99,17 @@ func (s *Sender) Send(msg *Message) *Result {
 	//
 	// If msg.SendingIP is already set (explicit caller override), skip selection.
 	selectedIP := msg.SendingIP
-	// useWarmupDial: warmup manager picked this IP → record it against the warmup
-	// counter after sending. Explicit caller overrides do NOT touch warmup state.
-	useWarmupDial := false
-
 	if selectedIP == "" && s.warmupMgr != nil && len(s.sendingIPs) > 0 {
-		ip, err := s.warmupMgr.SelectIP(ctx, s.sendingIPs)
+		// Claim spends the allowance as well as choosing the IP, so there is no
+		// second call after delivery and no window where two sends both take
+		// the last unit. An attempt counts whether or not it lands: what the
+		// receiving ISP saw is a connection from this IP, which is the thing
+		// being rationed.
+		ip, err := s.warmupMgr.Claim(ctx, s.sendingIPs)
 		if err != nil {
-			// All IPs at daily cap — reject rather than queue behind the wrong IP.
+			// Out of allowance, or the counter is unreachable. Either way do not
+			// send: the workers' send path recognises the exhausted message and
+			// defers it to midnight rather than failing it.
 			return &Result{
 				MessageID:  msg.MessageID,
 				Error:      err.Error(),
@@ -115,7 +117,6 @@ func (s *Sender) Send(msg *Message) *Result {
 			}
 		}
 		selectedIP = ip
-		useWarmupDial = true
 	}
 
 	// Build the message. When the caller supplied raw MIME, relay it verbatim
@@ -235,12 +236,7 @@ func (s *Sender) Send(msg *Message) *Result {
 	// cache; only warmup dials additionally record the warmup counter.
 	if boundDial {
 		s.pool.Discard(conn)
-		// Record the send against the warmup counter only for warmup-selected IPs.
-		if useWarmupDial {
-			if err := s.warmupMgr.RecordSend(ctx, selectedIP); err != nil {
-				log.Printf("[warmup] RecordSend %s: %v", selectedIP, err)
-			}
-		}
+		// Nothing to record: Claim already spent the unit before dialling.
 	} else {
 		s.pool.Put(conn)
 	}
