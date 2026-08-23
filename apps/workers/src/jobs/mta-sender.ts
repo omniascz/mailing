@@ -15,17 +15,14 @@
 
 import { Worker, type Job } from 'bullmq';
 import { captureJobException } from '../lib/telemetry.js';
-import {
-  connection,
-  QUEUE_NAMES,
-  getMtaQueueByName,
-  type MtaSendJobData,
-} from '../queues/index.js';
-import { throttleRequeueOptions } from '../lib/requeue-options.js';
+import { connection, QUEUE_NAMES, type MtaSendJobData } from '../queues/index.js';
+import { defer, deferralCount, nextUtcMidnight } from '../lib/defer.js';
+import { streamBackoff } from '../lib/stream-backoff.js';
 import * as mtaClient from '../lib/mta-grpc-client.js';
 import {
   checkThrottle,
   recordThrottleSignal,
+  throttleRefillMs,
   detectIsp,
 } from '@forgemsg/shared/sending/isp-throttle';
 import { internalHeaders } from '../lib/internal-api.js';
@@ -35,8 +32,25 @@ const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 // Adaptive-throttle backpressure: when an ISP bucket is exhausted a message is
 // re-enqueued (with a delay) onto its own queue rather than dropped. Capped so
 // a persistently-throttled message isn't deferred forever.
-const THROTTLE_REQUEUE_DELAY_MS = 60_000;
-const THROTTLE_MAX_DEFERRALS = 20; // ~20 min, then send anyway
+const THROTTLE_MAX_DEFERRALS = 20; // then send anyway rather than hold forever
+/**
+ * Longest single throttle sleep. The token window is an hour, so without a cap
+ * one refusal could park a message for that long; 10 minutes keeps it moving
+ * and still costs a twentieth of the Redis round-trips the old 60-second poll
+ * did.
+ */
+const THROTTLE_MAX_SLEEP_MS = 10 * 60_000;
+
+/** Nights a message will wait for warmup capacity before it is called failed. */
+const MAX_WARMUP_DEFERRALS = 2;
+
+/**
+ * The engine's warmup rejection, matched on its text because it arrives with
+ * no SMTP code — see apps/engine/internal/warmup/warmup.go, ErrAllExhausted.
+ */
+function isWarmupQuotaExhausted(error: string | undefined): boolean {
+  return !!error && /warmup:.*daily limit/i.test(error);
+}
 
 // ─── MTA Client (gRPC to Go engine) ──────────────────────────────────────────
 
@@ -194,7 +208,7 @@ async function updateContactStatus(
 
 // ─── Job processor ───────────────────────────────────────────────────────────
 
-async function processMtaSend(job: Job<MtaSendJobData>) {
+async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
   const data = job.data;
 
   const recipientDomain = data.toEmail.split('@')[1] ?? 'other';
@@ -206,20 +220,33 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
   // Adaptive per-ISP throttle gate. When the bucket is exhausted, defer the
   // message by re-enqueuing with a delay (backpressure) instead of blasting
   // past the ISP's limit. Capped so it can't loop forever.
-  const deferrals = data.throttleAttempts ?? 0;
+  const deferrals = deferralCount(data, 'throttle');
   if (deferrals < THROTTLE_MAX_DEFERRALS) {
     const throttle = await checkThrottle(data.orgId, recipientDomain, sendingIp).catch(() => null);
     if (throttle && !throttle.allowed) {
-      // Back onto the canonical queue, carrying this job's own retry policy.
-      // Both halves matter: the ad-hoc queue this replaced had no
-      // defaultJobOptions, and passing no attempts leaves BullMQ's default of
-      // 0 — a deferred message that came back to a 4xx was simply dropped.
-      await getMtaQueueByName(job.queueName).add(
-        job.name,
-        { ...data, throttleAttempts: deferrals + 1 },
-        throttleRequeueOptions(job, THROTTLE_REQUEUE_DELAY_MS, data.priority),
+      // The bucket is a fixed window, so capacity returns when its key expires
+      // — asking again before then can only get the same no. Sleep until the
+      // refill (capped, so a message keeps moving even against a long window)
+      // rather than polling every minute.
+      const refill = await throttleRefillMs(data.orgId, throttle.isp, sendingIp).catch(
+        () => THROTTLE_MAX_SLEEP_MS,
       );
-      return { status: 'throttled', requeued: true, isp: throttle.isp };
+      const wait = Math.min(Math.max(refill, 1_000), THROTTLE_MAX_SLEEP_MS);
+      await recordEvent({
+        type: 'deferred',
+        orgId: data.orgId,
+        campaignId: data.campaignId,
+        contactId: data.contactId,
+        messageId: data.messageId,
+        metadata: {
+          reason: 'throttle',
+          isp: throttle.isp,
+          deferral: deferrals + 1,
+          waitMs: wait,
+          attempt: job.attemptsMade,
+        },
+      });
+      await defer(job, token, 'throttle', Date.now() + wait);
     }
   }
 
@@ -317,6 +344,39 @@ async function processMtaSend(job: Job<MtaSendJobData>) {
     throw new Error(`Soft bounce (${smtpCode}): ${result.smtpMessage}`);
   }
 
+  // Warmup daily cap. The engine answers ErrAllExhausted with no SMTP code,
+  // so this used to fall into the transport branch below and be retried on the
+  // 31-minute ladder — six attempts against a limit that does not move until
+  // midnight, then failed. The allowance resets at midnight UTC, so wait for
+  // that instead. Not an error and not an attempt: a scheduled wait.
+  //
+  // Bounded by MAX_WARMUP_DEFERRALS so a misconfigured pool cannot park a
+  // message indefinitely; two nights is already long past the point where
+  // somebody should have noticed.
+  if (isWarmupQuotaExhausted(result.error)) {
+    const waits = deferralCount(data, 'warmup_quota');
+    if (waits < MAX_WARMUP_DEFERRALS) {
+      const until = nextUtcMidnight();
+      await recordEvent({
+        type: 'deferred',
+        orgId: data.orgId,
+        campaignId: data.campaignId,
+        contactId: data.contactId,
+        messageId: data.messageId,
+        metadata: {
+          reason: 'warmup_quota',
+          error: result.error,
+          deferral: waits + 1,
+          untilIso: new Date(until).toISOString(),
+          attempt: job.attemptsMade,
+          isp,
+        },
+      });
+      await defer(job, token, 'warmup_quota', until);
+    }
+    // Out of nights: fall through and let it be recorded as a real failure.
+  }
+
   // Transport failure — no SMTP reply at all: a timeout, a DNS failure, an
   // unreachable host, or the engine refusing to dial. Retried like a 4xx, and
   // recorded like one: `deferred` on the way past, `failed` at the end.
@@ -379,6 +439,12 @@ export function startMtaSenderWorkers() {
       limiter: {
         max: ISP_HOURLY_LIMITS[queueName] ?? 1000,
         duration: 3600_000, // per hour
+      },
+      settings: {
+        // Resolves backoff: { type: 'stream' } on the MTA queues. BullMQ passes
+        // attemptsMade + 1, so the first retry arrives as 1.
+        backoffStrategy: (attemptsMade, _type, _err, job) =>
+          streamBackoff(attemptsMade, (job?.data as MtaSendJobData | undefined)?.stream),
       },
     });
 
