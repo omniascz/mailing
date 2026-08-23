@@ -1,6 +1,7 @@
 import { ImageIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { apiFetch } from '@/lib/api';
+import { EditImageButton } from './edit-image-button';
 
 interface MediaAsset {
   id: string;
@@ -13,6 +14,7 @@ interface MediaAsset {
   storageUrl: string;
   thumbnailUrl: string | null;
   altText: string | null;
+  derivedFromId: string | null;
   createdAt: string;
 }
 
@@ -32,7 +34,8 @@ export default async function MediaPage() {
       <header className="mb-8">
         <h1 className="text-2xl font-semibold text-secondary-900">Media library</h1>
         <p className="mt-1 text-sm text-secondary-500">
-          Images and assets used across campaigns and templates.
+          Images and assets used across campaigns and templates. Editing one saves a new copy; the
+          original stays where campaigns already point at it.
         </p>
       </header>
 
@@ -71,7 +74,18 @@ export default async function MediaPage() {
                   <p className="mt-0.5 text-[11px] text-secondary-500">
                     {a.width && a.height ? `${a.width}×${a.height} · ` : ''}
                     {humanSize(a.sizeBytes)}
+                    {a.derivedFromId ? ' · edited copy' : ''}
                   </p>
+                  {a.mimeType.startsWith('image/') ? (
+                    <div className="mt-1.5">
+                      <EditImageButton
+                        id={a.id}
+                        filename={a.filename}
+                        width={a.width}
+                        height={a.height}
+                      />
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
             </li>
