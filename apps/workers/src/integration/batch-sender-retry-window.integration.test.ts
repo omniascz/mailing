@@ -18,6 +18,7 @@ import type { AddressInfo } from 'node:net';
 import { Queue, Worker, UnrecoverableError } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import { connection } from '../queues/index.js';
+import { ladderTotalMs } from '../lib/stream-backoff.js';
 import {
   throwIfPermanentFailure,
   asFilterError,
@@ -148,11 +149,17 @@ describe('batch-sender retry window (real queue + worker)', () => {
       attempts: 6,
       backoff: { type: 'exponential', delay: 2000 },
     });
-    // Long enough to outlast greylisting.
+    // The MTA queues no longer carry a fixed ladder: 'stream' is not a builtin
+    // strategy, so BullMQ resolves it through the worker's settings and the
+    // spacing comes from the message's stream. Still long enough to outlast
+    // greylisting — the transactional ladder is the old 31-minute one, and it
+    // is the shortest of the three. See lib/stream-backoff.ts.
     expect(opts(mtaQueues.gmail)).toMatchObject({
       attempts: 6,
-      backoff: { type: 'exponential', delay: 60_000 },
+      backoff: { type: 'stream' },
     });
+    expect(ladderTotalMs('transactional')).toBe(31 * 60_000);
+    expect(ladderTotalMs('broadcast')).toBeGreaterThan(ladderTotalMs('transactional'));
     // Deliberately NOT widened: the splitter is not idempotent, so every
     // extra attempt is another chance to enqueue a duplicate campaign.
     expect(opts(campaignSplitterQueue)).toMatchObject({ attempts: 3 });
