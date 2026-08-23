@@ -1,4 +1,27 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest';
+
+/**
+ * Pay for the module graph in a hook, not in the first test.
+ *
+ * These files import the module under test lazily — after vi.mock and after the
+ * env for the case is in place — so the whole graph (queues, bullmq, the db
+ * client, …) is transformed and executed inside whichever test ran first, and
+ * charged to its 10s budget. Measured on an idle machine this file needed
+ * 8-22s in the full suite while taking under 2s alone: the cost is contention
+ * during that first load, not the assertions.
+ *
+ * Loading it once here moves that to setup, where it belongs. vitest caches the
+ * transform, so the per-test vi.resetModules() re-executes a warm graph
+ * (measured: 1719ms cold, 309ms after a reset) and the tests time what they
+ * are actually about.
+ *
+ * The explicit budget is on this hook alone. Loading a module graph under
+ * contention is setup and needs room; the tests keep the suite's strict 10s,
+ * because a test that needs longer than that is telling you something.
+ */
+beforeAll(async () => {
+  await import('./payments.js');
+}, 60_000);
 
 /**
  * The Stripe webhook gate.
