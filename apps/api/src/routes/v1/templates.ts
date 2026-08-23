@@ -11,6 +11,7 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { templates as campaignTemplates } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { assertFolderAssignable } from './folders.js';
 import {
   validateOrgContent,
   extractTemplateText,
@@ -162,6 +163,14 @@ export default async function templateRoutes(app: FastifyInstance) {
 
   const savedIdParam = z.object({ id: z.string().uuid() });
 
+  /** A folder id, or the literal 'none' for the Unfiled drawer. */
+  const savedListQuerySchema = z.object({
+    folderId: z.union([z.string().uuid(), z.literal('none')]).optional(),
+  });
+
+  /** null means "take it out of whatever folder it is in". */
+  const moveSchema = z.object({ folderId: z.string().uuid().nullable() });
+
   const updateSavedSchema = z.object({
     name: z.string().min(1).max(255).optional(),
     description: z.string().max(1000).nullable().optional(),
@@ -185,14 +194,48 @@ export default async function templateRoutes(app: FastifyInstance) {
     '/api/v1/saved-templates',
     { schema: { tags: ['Templates'], summary: 'List org-owned saved templates' } },
     async (req) => {
+      const { folderId } = savedListQuerySchema.parse(req.query);
+      const conditions = [
+        eq(campaignTemplates.orgId, req.user!.orgId),
+        isNull(campaignTemplates.deletedAt),
+      ];
+      // 'none' is the Unfiled drawer, not an absent filter.
+      if (folderId === 'none') conditions.push(isNull(campaignTemplates.folderId));
+      else if (folderId) conditions.push(eq(campaignTemplates.folderId, folderId));
+
       const rows = await db
         .select()
         .from(campaignTemplates)
-        .where(
-          and(eq(campaignTemplates.orgId, req.user!.orgId), isNull(campaignTemplates.deletedAt)),
-        )
+        .where(and(...conditions))
         .orderBy(desc(campaignTemplates.updatedAt));
       return { data: rows };
+    },
+  );
+
+  /**
+   * PUT /api/v1/saved-templates/:id/folder
+   * File the template in a folder, or pass null to take it out of one.
+   */
+  app.put(
+    '/api/v1/saved-templates/:id/folder',
+    { schema: { tags: ['Templates'], summary: 'Move saved template to a folder' } },
+    async (req) => {
+      const { id } = savedIdParam.parse(req.params);
+      const { folderId } = moveSchema.parse(req.body);
+      await assertFolderAssignable(req.user!.orgId, 'template', folderId);
+      const [row] = await db
+        .update(campaignTemplates)
+        .set({ folderId, updatedAt: new Date() })
+        .where(
+          and(
+            eq(campaignTemplates.id, id),
+            eq(campaignTemplates.orgId, req.user!.orgId),
+            isNull(campaignTemplates.deletedAt),
+          ),
+        )
+        .returning();
+      if (!row) throw AppError.notFound('Template');
+      return { data: row };
     },
   );
 

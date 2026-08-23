@@ -33,6 +33,7 @@ import authRoutes from './routes/v1/auth.js';
 import segmentRoutes from './routes/v1/segments.js';
 import frequencyRoutes from './routes/v1/frequency-rules.js';
 import tagRoutes from './routes/v1/tags.js';
+import folderRoutes from './routes/v1/folders.js';
 import customFieldRoutes from './routes/v1/custom-fields.js';
 import suppressionRoutes from './routes/v1/suppressions.js';
 import subscriptionRoutes from './routes/v1/subscriptions.js';
@@ -417,6 +418,7 @@ export async function buildApp() {
   await app.register(segmentRoutes);
   await app.register(frequencyRoutes);
   await app.register(tagRoutes);
+  await app.register(folderRoutes);
   await app.register(customFieldRoutes);
   await app.register(zapierRoutes);
   await app.register(integrationsCatalogRoutes);

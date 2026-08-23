@@ -76,6 +76,9 @@ export const templateCategoryEnum = pgEnum('template_category', [
   'custom',
 ]);
 
+/** What a folder organises. One flat namespace per kind, per organisation. */
+export const folderKindEnum = pgEnum('folder_kind', ['campaign', 'template']);
+
 export const emailEventTypeEnum = pgEnum('email_event_type', [
   'send',
   'deliver',
