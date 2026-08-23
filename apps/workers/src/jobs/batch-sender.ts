@@ -306,8 +306,15 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
     // 4. Render HTML + plain-text alternative (block JSON path via
     //    @forgemsg/editor renderEmail + renderPlainText; legacy { html }
     //    path uses parseMergeTags + HTML→text fallback).
-    const rendered = renderEmail(data.content, mergeCtx, data.preheader, data.utmTracking, stream);
-    assertOptOutPresent(rendered.html, stream, unsubscribeUrl, data.campaignId);
+    const rendered = renderEmail(
+      data.content,
+      mergeCtx,
+      data.preheader,
+      data.utmTracking,
+      stream,
+      data.locale,
+    );
+    assertOptOutPresent(rendered, stream, unsubscribeUrl, data.campaignId);
     let htmlBody = rendered.html;
     let textBody = rendered.text;
 
@@ -482,17 +489,26 @@ function buildMergeContext(
  * would be the same violation nine thousand more times.
  */
 function assertOptOutPresent(
-  html: string,
+  rendered: RenderedEmail,
   stream: MessageStream,
   unsubscribeUrl: string,
   campaignId: string,
 ): void {
   if (stream === 'transactional') return;
-  if (html.includes(unsubscribeUrl) || /{{s*unsubscribe_url/.test(html)) return;
+  // Both halves of the multipart, because both are the message. Checking only
+  // the HTML let a text alternative go out with no way to opt out — which is
+  // the half a filter reads when it scores the message, and the half a reader
+  // in a text-only client sees.
+  const missing = (['html', 'text'] as const).filter(
+    (part) =>
+      !rendered[part].includes(unsubscribeUrl) && !/{{s*unsubscribe_url/.test(rendered[part]),
+  );
+  if (missing.length === 0) return;
   throw new Error(
-    `Campaign ${campaignId}: rendered body has no unsubscribe link. Marketing mail ` +
-      `must carry one. Block templates get it from the renderer; this is a raw-HTML ` +
-      `campaign, so the link has to be in the HTML — add {{unsubscribe_url}}.`,
+    `Campaign ${campaignId}: rendered ${missing.join(' and ')} has no unsubscribe link. ` +
+      `Marketing mail must carry one in every part. Block templates get it from the ` +
+      `renderer; this is a raw-HTML campaign, so the link has to be in the content — ` +
+      `add {{unsubscribe_url}}.`,
   );
 }
 
@@ -525,6 +541,7 @@ function renderEmail(
     term?: string;
   } | null,
   stream: MessageStream = 'broadcast',
+  locale?: 'en' | 'cs' | 'sk',
 ): RenderedEmail {
   // Build UTM config if enabled
   const utm = utmTracking?.enabled
@@ -545,8 +562,8 @@ function renderEmail(
     } satisfies Partial<EmailSchema> | Record<string, unknown>);
 
     if (parsed.success) {
-      const html = renderBlocks(parsed.data, { context: ctx, utm, stream }).html;
-      let text = renderPlainText(parsed.data, { context: ctx });
+      const html = renderBlocks(parsed.data, { context: ctx, utm, stream, locale }).html;
+      let text = renderPlainText(parsed.data, { context: ctx, stream, locale });
       // Org-wide custom footer (SendGrid Mail Settings) — HTML side is appended
       // by the renderer; mirror the plain-text side here.
       const footerText = ctx.system?.footerText?.trim();

@@ -16,6 +16,15 @@ import type {
   TextBlock,
 } from '../schema/blocks.js';
 import { parseMergeTags, type MergeTagContext } from './merge-tags.js';
+import {
+  isMarketingStream as streamIsMarketing,
+  mustShowOptOut,
+  optOutUrl,
+  postalAddressLines,
+  unsubscribeLabel,
+  type MessageStream,
+  type RenderLocale,
+} from './compliance.js';
 import { evaluateCondition } from './evaluate-condition.js';
 
 /**
@@ -89,24 +98,8 @@ export interface RenderOptions {
   locale?: RenderLocale;
 }
 
-export type MessageStream = 'broadcast' | 'triggered' | 'transactional';
-export type RenderLocale = 'en' | 'cs' | 'sk';
-
-/** Unsubscribe label per language. English is the fallback, not a translation gap. */
-const UNSUBSCRIBE_LABEL: Record<RenderLocale, string> = {
-  en: 'Unsubscribe',
-  cs: 'Odhlásit z odběru',
-  sk: 'Odhlásiť z odberu',
-};
-
-function unsubscribeLabel(locale: RenderLocale | undefined): string {
-  return UNSUBSCRIBE_LABEL[locale ?? 'en'] ?? UNSUBSCRIBE_LABEL.en;
-}
-
-/** Marketing mail must carry an opt-out. Transactional mail must not offer one. */
-export function isMarketingStream(stream: MessageStream | undefined): boolean {
-  return (stream ?? 'broadcast') !== 'transactional';
-}
+export type { MessageStream, RenderLocale } from './compliance.js';
+export { isMarketingStream } from './compliance.js';
 
 export interface RenderResult {
   html: string;
@@ -117,7 +110,7 @@ export interface RenderResult {
 export function renderEmail(schema: EmailSchema, opts: RenderOptions = {}): RenderResult {
   const ctx = opts.context ?? {};
   const preview = opts.previewAllDynamicBranches === true;
-  const marketing = isMarketingStream(opts.stream);
+  const marketing = streamIsMarketing(opts.stream);
   const locale = opts.locale;
   const links: string[] = [];
 
@@ -501,14 +494,9 @@ const COMPLIANCE_MARKER = 'data-fm-optout="1"';
 
 /** Sender identity block — the postal address CAN-SPAM and GDPR both want. */
 function postalAddress(ctx: MergeTagContext): string {
-  const address = ctx.system?.companyAddress?.trim();
-  if (!address) return '';
-  const name = ctx.system?.companyName?.trim();
-  const lines = [name, address]
-    .filter(Boolean)
-    .map((l) => escapeHtml(l!))
-    .join('<br/>');
-  return `<div style="margin-top:8px;">${lines}</div>`;
+  const lines = postalAddressLines(ctx);
+  if (lines.length === 0) return '';
+  return `<div style="margin-top:8px;">${lines.map((l) => escapeHtml(l)).join('<br/>')}</div>`;
 }
 
 function optOutLink(
@@ -517,7 +505,7 @@ function optOutLink(
   colour: string,
   links: string[],
 ): string {
-  const url = ctx.system?.unsubscribeUrl ?? '{{unsubscribe_url}}';
+  const url = optOutUrl(ctx);
   links.push(url);
   return `<div style="margin-top:8px;"><a href="${escapeAttr(url)}" style="color:${colour};text-decoration:underline;">${escapeHtml(unsubscribeLabel(locale))}</a></div>`;
 }
@@ -560,7 +548,7 @@ function renderFooter(
   // transactional mail, where an opt-out does not belong, and overridden for
   // marketing, where a template must not be able to switch off the one thing
   // the law requires.
-  const showOptOut = marketing || block.showUnsubscribe;
+  const showOptOut = mustShowOptOut(marketing, block.showUnsubscribe);
   const unsub = showOptOut ? optOutLink(ctx, locale, block.color, links) : '';
   const marker = showOptOut ? ` ${COMPLIANCE_MARKER}` : '';
 
