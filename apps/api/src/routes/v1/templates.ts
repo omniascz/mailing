@@ -144,6 +144,11 @@ export default async function templateRoutes(app: FastifyInstance) {
           preheader: schema.preheader ?? '',
           blocks: schema.blocks ?? [],
           globalStyles: schema.globalStyles ?? {},
+          // The first link in the chain that carries language to the inbox.
+          // Both tables have had a locale column all along and neither was ever
+          // written, so a Czech template became an English campaign the moment
+          // it was saved.
+          locale: localeOf(tpl),
         })
         .returning();
 

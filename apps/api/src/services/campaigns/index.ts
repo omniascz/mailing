@@ -12,7 +12,7 @@
 
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { campaigns, type Campaign } from '../../db/schema/index.js';
+import { campaigns, templates as campaignTemplates, type Campaign } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { fillMissingAltTexts } from '../editor/ai-alt-text.js';
 
@@ -71,6 +71,8 @@ export function validateTransition(current: CampaignStatus, next: CampaignStatus
 // ─── CRUD operations ─────────────────────────────────────────────────────────
 
 export interface CreateCampaignInput {
+  /** Language of the copy. Falls back to the template, then to English. */
+  locale?: 'en' | 'cs' | 'sk';
   orgId: string;
   name: string;
   type?: 'email' | 'sms' | 'whatsapp' | 'push' | 'voice';
@@ -91,8 +93,39 @@ export interface CreateCampaignInput {
   timezone?: string;
 }
 
+/**
+ * The language of a campaign, and where it comes from.
+ *
+ * Explicit wins: someone writing a campaign from scratch says what language it
+ * is in. Otherwise it is inherited from the template the campaign was started
+ * from — the template is where the copy came from, so it is where the language
+ * came from too. With neither, English, which is also the column default: a
+ * campaign with no stated language is not a broken campaign, it just renders
+ * the English label in the footer.
+ *
+ * Deliberately NOT the organisation's language. There is no such column, and
+ * adding one would be the wrong shape anyway: a Czech shop mailing its foreign
+ * customers in English is one organisation with two languages, and language
+ * belongs to the message. Deliberately NOT sniffed from the content either —
+ * guessing wrong puts the wrong word on the one link the law requires.
+ */
+async function resolveCampaignLocale(input: CreateCampaignInput): Promise<'en' | 'cs' | 'sk'> {
+  if (input.locale) return input.locale;
+  if (!input.templateId) return 'en';
+  const [tpl] = await db
+    .select({ locale: campaignTemplates.locale })
+    .from(campaignTemplates)
+    .where(
+      and(eq(campaignTemplates.id, input.templateId), eq(campaignTemplates.orgId, input.orgId)),
+    )
+    .limit(1);
+  const fromTemplate = tpl?.locale;
+  return fromTemplate === 'cs' || fromTemplate === 'sk' ? fromTemplate : 'en';
+}
+
 export async function createCampaign(input: CreateCampaignInput): Promise<Campaign> {
   const content = await applyAltText(input.orgId, input.content);
+  const locale = await resolveCampaignLocale(input);
   const [row] = await db
     .insert(campaigns)
     .values({
@@ -115,6 +148,7 @@ export async function createCampaign(input: CreateCampaignInput): Promise<Campai
       category: input.category,
       scheduledAt: input.scheduledAt,
       timezone: input.timezone ?? 'UTC',
+      locale,
     })
     .returning();
 

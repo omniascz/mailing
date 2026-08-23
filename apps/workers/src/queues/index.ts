@@ -294,6 +294,11 @@ export interface CampaignSplitterJobData {
   /** Org-wide custom footer (SendGrid Mail Settings) appended to every email. */
   footerHtml?: string;
   footerText?: string;
+  /**
+   * Language of this campaign, for the strings the renderer adds itself — the
+   * unsubscribe label today. Absent means English.
+   */
+  locale?: 'en' | 'cs' | 'sk';
   /** Per-domain tracking defaults — gate open-pixel / link-wrap injection. */
   openTracking?: boolean;
   clickTracking?: boolean;
@@ -341,6 +346,11 @@ export interface BatchSenderJobData {
   /** Org-wide custom footer (SendGrid Mail Settings) appended to every email. */
   footerHtml?: string;
   footerText?: string;
+  /**
+   * Language of this campaign, for the strings the renderer adds itself — the
+   * unsubscribe label today. Absent means English.
+   */
+  locale?: 'en' | 'cs' | 'sk';
   /** Per-domain tracking defaults — gate open-pixel / link-wrap injection. */
   openTracking?: boolean;
   clickTracking?: boolean;
