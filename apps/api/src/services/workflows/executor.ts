@@ -27,6 +27,7 @@ import {
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { executeAction, type ActionContext, type ContactData } from './actions.js';
+import { bumpNodeStats } from './node-stats.js';
 
 // ─── Contact loader ───────────────────────────────────────────────────────────
 
@@ -112,6 +113,13 @@ async function executeNode(
     .set({ status: 'running', currentNodeId: node.id, startedAt: run.startedAt ?? new Date() })
     .where(eq(workflowRuns.id, run.id));
 
+  // Step counters. `entered` is written before the action runs, so a node that
+  // throws still shows that contacts arrived at it — the difference between
+  // "nobody got here" and "everybody who got here died here" is the whole point
+  // of the report.
+  const statKey = { orgId: run.orgId, workflowId: workflow.id, nodeId: node.id };
+  await bumpNodeStats(statKey, ['entered']);
+
   const result = await executeAction(node, run, ctx);
 
   // Persist any in-place mutations the action made to the run (data from
@@ -134,10 +142,13 @@ async function executeNode(
       const nextNodeId =
         result.nextNodeId ?? resolveNextNode(node.id, workflow.edges as WorkflowEdge[]);
       if (!nextNodeId) {
-        // Terminal — no more edges
+        // Terminal — no more edges. Not a drop-out: the flow ends here by
+        // design, which is why it is counted apart from failures and waits.
+        await bumpNodeStats(statKey, ['endedHere']);
         await completeRun(run.id, workflow.id);
         return;
       }
+      await bumpNodeStats(statKey, ['advanced']);
       const nextNode = (workflow.nodes as WorkflowNode[]).find((n) => n.id === nextNodeId);
       if (!nextNode) {
         await failRun(run.id, workflow.id, `Node ${nextNodeId} not found in workflow`);
@@ -151,9 +162,18 @@ async function executeNode(
     case 'branch': {
       const nextNodeId = resolveNextNode(node.id, workflow.edges as WorkflowEdge[], result.branch);
       if (!nextNodeId) {
+        // The branch the condition chose has no edge — the flow ends on this
+        // side of the fork. Still not a failure.
+        await bumpNodeStats(statKey, ['endedHere']);
         await completeRun(run.id, workflow.id);
         return;
       }
+      // A contact on the other branch has not dropped out of anything, so the
+      // two directions are recorded separately and both count as advancing.
+      await bumpNodeStats(statKey, [
+        'advanced',
+        result.branch === 'true' ? 'branchedTrue' : 'branchedFalse',
+      ]);
       const nextNode = (workflow.nodes as WorkflowNode[]).find((n) => n.id === nextNodeId);
       if (!nextNode) {
         await failRun(run.id, workflow.id, `Branch node ${nextNodeId} not found`);
@@ -164,6 +184,8 @@ async function executeNode(
       break;
     }
     case 'wait': {
+      // Parked, not lost. `waited - resumed` is what is still sitting here.
+      await bumpNodeStats(statKey, ['waited']);
       await db
         .update(workflowRuns)
         .set({ status: 'waiting', currentNodeId: node.id, nextExecutionAt: result.until })
@@ -171,10 +193,13 @@ async function executeNode(
       break;
     }
     case 'complete': {
+      await bumpNodeStats(statKey, ['endedHere']);
       await completeRun(run.id, workflow.id);
       break;
     }
     case 'error': {
+      // The only one of the three that means something went wrong.
+      await bumpNodeStats(statKey, ['failedHere']);
       await failRun(run.id, workflow.id, result.message);
       break;
     }
@@ -248,6 +273,13 @@ export async function startWorkflowRun(
   const nodes = workflow.nodes as WorkflowNode[];
   const triggerNode = nodes.find((n) => n.type === 'trigger');
   if (!triggerNode) throw AppError.badRequest('Workflow has no trigger node');
+
+  // Mark the start of step tracking BEFORE the run exists, so this run counts
+  // as tracked. Written once per workflow; every later start is a no-op.
+  await db
+    .update(workflows)
+    .set({ nodeStatsSince: sql`COALESCE(${workflows.nodeStatsSince}, now())` })
+    .where(and(eq(workflows.id, workflowId), isNull(workflows.nodeStatsSince)));
 
   // Create run
   const [run] = await db
@@ -326,6 +358,13 @@ export async function resumeWorkflowRun(runId: string): Promise<void> {
     await failRun(run.id, run.workflowId, 'No current node to resume from');
     return;
   }
+
+  // Off the timer. Counted on the WAIT node, not on the one it moves to: the
+  // wait's own `advanced` stays zero and `resumed` is how it lets people
+  // through, which keeps "still parked" readable as waited - resumed.
+  await bumpNodeStats({ orgId: run.orgId, workflowId: run.workflowId, nodeId: run.currentNodeId }, [
+    'resumed',
+  ]);
 
   // Find the next node after the wait node
   const nextNodeId = resolveNextNode(run.currentNodeId, workflow.edges as WorkflowEdge[]);

@@ -27,6 +27,7 @@ import {
   getWorkflowRun,
   cancelWorkflowRun,
   getWorkflowAnalytics,
+  getWorkflowNodeAnalytics,
 } from '../../services/workflows/index.js';
 import { triggerManual } from '../../services/workflows/triggers.js';
 import { FLOW_TEMPLATES, getFlowTemplate } from '../../services/workflows/flow-templates.js';
@@ -252,6 +253,22 @@ export default async function workflowRoutes(app: FastifyInstance) {
     async (req) => {
       const { id } = idParam.parse(req.params);
       return { data: await getWorkflowAnalytics(id, req.user!.orgId) };
+    },
+  );
+
+  // Per-step breakdown — how far contacts get, and where they stop.
+  app.get(
+    '/api/v1/workflows/:id/node-analytics',
+    {
+      schema: {
+        tags: ['Workflows'],
+        summary: 'Per-step breakdown (entered / advanced / waiting / ended / failed)',
+        params: { type: 'object', properties: { id: { type: 'string' } } },
+      },
+    },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      return { data: await getWorkflowNodeAnalytics(id, req.user!.orgId) };
     },
   );
 
