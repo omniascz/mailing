@@ -141,6 +141,13 @@ services:
       SUBMISSION_TLS_KEY: ${SUBMISSION_TLS_KEY:-}
       SUBMISSION_ALLOW_INSECURE_AUTH: ${SUBMISSION_ALLOW_INSECURE_AUTH:-}
       INBOUND_LISTEN: ${INBOUND_LISTEN:-}
+      # IP warmup. SENDING_IPS is the comma-separated list of local addresses
+      # the engine may bind to when dialling out (config.go: envStringSlice).
+      # Leave it empty on a shared pool — the engine then logs that warmup is
+      # off and applies no ramp. Set it, and WARMUP_API_URL must be set too or
+      # the engine refuses to boot rather than send unlimited from a cold IP.
+      SENDING_IPS: ${SENDING_IPS:-}
+      WARMUP_API_URL: http://api:3001
     # gRPC service has no HTTP healthcheck. The workers' connection pool
     # detects unavailability via gRPC status codes and retries.
 
