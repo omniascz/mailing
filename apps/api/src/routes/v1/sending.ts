@@ -71,179 +71,184 @@ export default async function sendingRoutes(app: FastifyInstance) {
     },
   );
 
-  // ─── Auth-required routes below ─────────────────────────────────────────────
-  app.addHook('preHandler', async (req) => {
-    // Skip auth for fbl-inbound (handled above with shared secret)
-    if (req.routeOptions?.url === '/api/v1/sending/fbl-inbound') return;
-    // /api/v1/internal/* is machine-to-machine and is already guarded by the
-    // internal-auth plugin's shared secret; a user session is the wrong
-    // credential for it and there is nobody to supply one.
-    //
-    // This hook covered them, so POST /internal/sending/warmup/advance-all
-    // answered 401 to the nightly cron that is its only caller — measured, not
-    // inferred. warmup_day therefore never advanced: an IP stayed on day 1 and
-    // its allowance stayed at 50 for as long as it existed. Nothing noticed,
-    // because no allowance was being enforced either.
-    if (req.routeOptions?.url?.startsWith('/api/v1/internal/')) return;
-    await app.requireAuth(req);
+  /**
+   * Everything below this point needs a user session.
+   *
+   * It used to be a plugin-wide preHandler with a list of paths to skip, and a
+   * skip-list is only ever as good as the next person to add a route. It had
+   * already failed once: /api/v1/internal/* was not on the list, so
+   * POST /internal/sending/warmup/advance-all answered 401 to the nightly cron
+   * that is its only caller. warmup_day never advanced — a warming IP stayed on
+   * day 1, and on 50 sends a day, for as long as it existed. Nothing looked
+   * broken, because no allowance was being enforced either.
+   *
+   * Encapsulation instead of exemptions, the same shape as routes/v1/video.ts:
+   * the guard lives in a child context and reaches exactly what is registered
+   * inside it. Routes registered outside — fbl-inbound above, which carries its
+   * own shared secret, and the internal pair below, which the internal-auth
+   * plugin guards — cannot inherit a credential their callers do not hold, and
+   * a route added later inherits the context it was written in rather than a
+   * list somebody forgot to update.
+   */
+  await app.register(async (scope) => {
+    scope.addHook('preHandler', app.requireAuth);
+    /**
+     * GET /api/v1/sending/throttle
+     * Get current throttle state for all ISPs for this org.
+     *
+     * Query params: ?ip=1.2.3.4 (sending IP to check, required)
+     */
+    scope.get(
+      '/api/v1/sending/throttle',
+      { schema: { tags: ['Sending'], summary: 'Get ISP throttle state' } },
+      async (req) => {
+        const { ip } = z.object({ ip: z.string().min(7).max(45) }).parse(req.query);
+
+        const states = await Promise.all(
+          ISP_NAMES.map((isp) => getThrottleState(req.user!.orgId, isp, ip)),
+        );
+
+        return { data: states };
+      },
+    );
+
+    /**
+     * POST /api/v1/sending/throttle/reset
+     * Reset throttle counters for a specific ISP + IP (admin action, e.g. after IP change).
+     *
+     * Body: { ip: string, isp?: string }
+     */
+    scope.post(
+      '/api/v1/sending/throttle/reset',
+      { schema: { tags: ['Sending'], summary: 'Reset ISP throttle counters' } },
+      async (req) => {
+        const { ip, isp } = z
+          .object({
+            ip: z.string().min(7).max(45),
+            isp: z.enum(ISP_NAMES).optional(),
+          })
+          .parse(req.body);
+
+        const ispsToReset = isp ? [isp] : [...ISP_NAMES];
+        await Promise.all(ispsToReset.map((i) => resetThrottle(req.user!.orgId, i, ip)));
+
+        return { data: { reset: ispsToReset, ip } };
+      },
+    );
+
+    /**
+     * GET /api/v1/sending/warmup
+     * List warmup status for all IPs registered for this org.
+     */
+    scope.get(
+      '/api/v1/sending/warmup',
+      { schema: { tags: ['Sending'], summary: 'List IP warmup statuses' } },
+      async (req) => {
+        const statuses = await listWarmupStatuses(req.user!.orgId);
+        return { data: statuses };
+      },
+    );
+
+    /**
+     * POST /api/v1/sending/warmup
+     * Start warmup tracking for a new sending IP.
+     *
+     * Body: { ip: string }
+     */
+    scope.post(
+      '/api/v1/sending/warmup',
+      { schema: { tags: ['Sending'], summary: 'Start IP warmup' } },
+      async (req, reply) => {
+        const { ip } = z.object({ ip: z.string().min(7).max(45) }).parse(req.body);
+
+        await startWarmup(ip, req.user!.orgId);
+        return reply.code(201).send({ data: { ip, status: 'warming', warmupDay: 1 } });
+      },
+    );
+
+    /**
+     * POST /api/v1/sending/warmup/advance
+     * Advance warmup day for an IP. Called by the daily cron job (or manually by admin).
+     *
+     * Body: { ip: string }
+     */
+    scope.post(
+      '/api/v1/sending/warmup/advance',
+      { schema: { tags: ['Sending'], summary: 'Advance IP warmup day' } },
+      async (req) => {
+        const { ip } = z.object({ ip: z.string().min(7).max(45) }).parse(req.body);
+        const newDay = await advanceWarmupDay(ip);
+        if (newDay === null) {
+          throw AppError.badRequest('IP not found in warmup schedule or already fully warm');
+        }
+        return { data: { ip, warmupDay: newDay } };
+      },
+    );
+
+    // ── Send Time Optimization (#STO) ────────────────────────────────────────
+
+    /**
+     * GET /api/v1/sending/sto/contact/:contactId
+     * Returns the optimal send hour for a single contact based on engagement history.
+     */
+    scope.get(
+      '/api/v1/sending/sto/contact/:contactId',
+      {
+        preHandler: [app.authenticate],
+        schema: { tags: ['Sending'], summary: 'Per-contact send time optimization' },
+      },
+      async (req) => {
+        const { contactId } = req.params as { contactId: string };
+        const orgId = req.user!.orgId;
+        const sto = await getContactSendHour(orgId, contactId);
+        const sendAt = nextSendWindow(sto.peakHour, sto.confidence);
+        return { data: { ...sto, sendAt: sendAt.toISOString() } };
+      },
+    );
+
+    /**
+     * GET /api/v1/sending/sto/org
+     * Returns the peak engagement hour for the whole org (cached, used as fallback).
+     */
+    scope.get(
+      '/api/v1/sending/sto/org',
+      {
+        preHandler: [app.authenticate],
+        schema: { tags: ['Sending'], summary: 'Org-level peak send hour' },
+      },
+      async (req) => {
+        const orgId = req.user!.orgId;
+        const sto = await getOrgPeakHour(orgId);
+        const sendAt = nextSendWindow(sto.peakHour, sto.confidence);
+        return { data: { ...sto, sendAt: sendAt.toISOString() } };
+      },
+    );
+
+    /**
+     * POST /api/v1/sending/sto/batch
+     * Returns optimal send times for a list of contact IDs (up to 1000).
+     * Used by campaign splitter to schedule per-contact STO sends.
+     */
+    scope.post(
+      '/api/v1/sending/sto/batch',
+      {
+        preHandler: [app.authenticate],
+        schema: { tags: ['Sending'], summary: 'Batch per-contact send time optimization' },
+      },
+      async (req) => {
+        const { contactIds } = z
+          .object({ contactIds: z.array(z.string().uuid()).min(1).max(1000) })
+          .parse(req.body);
+        const orgId = req.user!.orgId;
+        const map = await getBatchSendHours(orgId, contactIds);
+        const results = Array.from(map.values()).map((r) => ({
+          ...r,
+          sendAt: nextSendWindow(r.peakHour, r.confidence).toISOString(),
+        }));
+        return { data: results };
+      },
+    );
   });
-
-  /**
-   * GET /api/v1/sending/throttle
-   * Get current throttle state for all ISPs for this org.
-   *
-   * Query params: ?ip=1.2.3.4 (sending IP to check, required)
-   */
-  app.get(
-    '/api/v1/sending/throttle',
-    { schema: { tags: ['Sending'], summary: 'Get ISP throttle state' } },
-    async (req) => {
-      const { ip } = z.object({ ip: z.string().min(7).max(45) }).parse(req.query);
-
-      const states = await Promise.all(
-        ISP_NAMES.map((isp) => getThrottleState(req.user!.orgId, isp, ip)),
-      );
-
-      return { data: states };
-    },
-  );
-
-  /**
-   * POST /api/v1/sending/throttle/reset
-   * Reset throttle counters for a specific ISP + IP (admin action, e.g. after IP change).
-   *
-   * Body: { ip: string, isp?: string }
-   */
-  app.post(
-    '/api/v1/sending/throttle/reset',
-    { schema: { tags: ['Sending'], summary: 'Reset ISP throttle counters' } },
-    async (req) => {
-      const { ip, isp } = z
-        .object({
-          ip: z.string().min(7).max(45),
-          isp: z.enum(ISP_NAMES).optional(),
-        })
-        .parse(req.body);
-
-      const ispsToReset = isp ? [isp] : [...ISP_NAMES];
-      await Promise.all(ispsToReset.map((i) => resetThrottle(req.user!.orgId, i, ip)));
-
-      return { data: { reset: ispsToReset, ip } };
-    },
-  );
-
-  /**
-   * GET /api/v1/sending/warmup
-   * List warmup status for all IPs registered for this org.
-   */
-  app.get(
-    '/api/v1/sending/warmup',
-    { schema: { tags: ['Sending'], summary: 'List IP warmup statuses' } },
-    async (req) => {
-      const statuses = await listWarmupStatuses(req.user!.orgId);
-      return { data: statuses };
-    },
-  );
-
-  /**
-   * POST /api/v1/sending/warmup
-   * Start warmup tracking for a new sending IP.
-   *
-   * Body: { ip: string }
-   */
-  app.post(
-    '/api/v1/sending/warmup',
-    { schema: { tags: ['Sending'], summary: 'Start IP warmup' } },
-    async (req, reply) => {
-      const { ip } = z.object({ ip: z.string().min(7).max(45) }).parse(req.body);
-
-      await startWarmup(ip, req.user!.orgId);
-      return reply.code(201).send({ data: { ip, status: 'warming', warmupDay: 1 } });
-    },
-  );
-
-  /**
-   * POST /api/v1/sending/warmup/advance
-   * Advance warmup day for an IP. Called by the daily cron job (or manually by admin).
-   *
-   * Body: { ip: string }
-   */
-  app.post(
-    '/api/v1/sending/warmup/advance',
-    { schema: { tags: ['Sending'], summary: 'Advance IP warmup day' } },
-    async (req) => {
-      const { ip } = z.object({ ip: z.string().min(7).max(45) }).parse(req.body);
-      const newDay = await advanceWarmupDay(ip);
-      if (newDay === null) {
-        throw AppError.badRequest('IP not found in warmup schedule or already fully warm');
-      }
-      return { data: { ip, warmupDay: newDay } };
-    },
-  );
-
-  // ── Send Time Optimization (#STO) ────────────────────────────────────────
-
-  /**
-   * GET /api/v1/sending/sto/contact/:contactId
-   * Returns the optimal send hour for a single contact based on engagement history.
-   */
-  app.get(
-    '/api/v1/sending/sto/contact/:contactId',
-    {
-      preHandler: [app.authenticate],
-      schema: { tags: ['Sending'], summary: 'Per-contact send time optimization' },
-    },
-    async (req) => {
-      const { contactId } = req.params as { contactId: string };
-      const orgId = req.user!.orgId;
-      const sto = await getContactSendHour(orgId, contactId);
-      const sendAt = nextSendWindow(sto.peakHour, sto.confidence);
-      return { data: { ...sto, sendAt: sendAt.toISOString() } };
-    },
-  );
-
-  /**
-   * GET /api/v1/sending/sto/org
-   * Returns the peak engagement hour for the whole org (cached, used as fallback).
-   */
-  app.get(
-    '/api/v1/sending/sto/org',
-    {
-      preHandler: [app.authenticate],
-      schema: { tags: ['Sending'], summary: 'Org-level peak send hour' },
-    },
-    async (req) => {
-      const orgId = req.user!.orgId;
-      const sto = await getOrgPeakHour(orgId);
-      const sendAt = nextSendWindow(sto.peakHour, sto.confidence);
-      return { data: { ...sto, sendAt: sendAt.toISOString() } };
-    },
-  );
-
-  /**
-   * POST /api/v1/sending/sto/batch
-   * Returns optimal send times for a list of contact IDs (up to 1000).
-   * Used by campaign splitter to schedule per-contact STO sends.
-   */
-  app.post(
-    '/api/v1/sending/sto/batch',
-    {
-      preHandler: [app.authenticate],
-      schema: { tags: ['Sending'], summary: 'Batch per-contact send time optimization' },
-    },
-    async (req) => {
-      const { contactIds } = z
-        .object({ contactIds: z.array(z.string().uuid()).min(1).max(1000) })
-        .parse(req.body);
-      const orgId = req.user!.orgId;
-      const map = await getBatchSendHours(orgId, contactIds);
-      const results = Array.from(map.values()).map((r) => ({
-        ...r,
-        sendAt: nextSendWindow(r.peakHour, r.confidence).toISOString(),
-      }));
-      return { data: results };
-    },
-  );
 
   /**
    * POST /api/v1/internal/sending/warmup/claim
