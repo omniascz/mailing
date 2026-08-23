@@ -62,6 +62,50 @@ export interface RenderOptions {
    * present in the URL are NOT overwritten.
    */
   utm?: UtmConfig;
+  /**
+   * Which message stream this render belongs to.
+   *
+   * Marketing streams ('broadcast', 'triggered') always get an unsubscribe link
+   * and the sender's postal address, whether or not the template has a footer
+   * block. 'transactional' gets neither: an order confirmation or a password
+   * reset is a different legal category, and offering to unsubscribe from one
+   * is both wrong and confusing.
+   *
+   * Defaults to 'broadcast' deliberately. A caller that forgets to say gets the
+   * compliant-but-noisy outcome rather than the silent one — 61 of the 81
+   * built-in templates have no footer block, and every one of them used to
+   * render with no opt-out at all.
+   */
+  stream?: MessageStream;
+  /**
+   * Language for the strings the renderer adds itself — today just the
+   * unsubscribe label. Falls back to English.
+   *
+   * Taken from the template's `locale`, the field TemplateMeta gained when the
+   * Czech library landed. Organisations have no language column, so there is
+   * nothing else to read: a campaign carries a copied schema with no locale and
+   * therefore renders the English label until it carries one.
+   */
+  locale?: RenderLocale;
+}
+
+export type MessageStream = 'broadcast' | 'triggered' | 'transactional';
+export type RenderLocale = 'en' | 'cs' | 'sk';
+
+/** Unsubscribe label per language. English is the fallback, not a translation gap. */
+const UNSUBSCRIBE_LABEL: Record<RenderLocale, string> = {
+  en: 'Unsubscribe',
+  cs: 'Odhlásit z odběru',
+  sk: 'Odhlásiť z odberu',
+};
+
+function unsubscribeLabel(locale: RenderLocale | undefined): string {
+  return UNSUBSCRIBE_LABEL[locale ?? 'en'] ?? UNSUBSCRIBE_LABEL.en;
+}
+
+/** Marketing mail must carry an opt-out. Transactional mail must not offer one. */
+export function isMarketingStream(stream: MessageStream | undefined): boolean {
+  return (stream ?? 'broadcast') !== 'transactional';
 }
 
 export interface RenderResult {
@@ -73,9 +117,27 @@ export interface RenderResult {
 export function renderEmail(schema: EmailSchema, opts: RenderOptions = {}): RenderResult {
   const ctx = opts.context ?? {};
   const preview = opts.previewAllDynamicBranches === true;
+  const marketing = isMarketingStream(opts.stream);
+  const locale = opts.locale;
   const links: string[] = [];
 
-  let body = schema.blocks.map((b) => renderBlock(b, schema, ctx, preview, links)).join('\n');
+  let body = schema.blocks
+    .map((b) => renderBlock(b, schema, ctx, preview, links, marketing, locale))
+    .join('\n');
+
+  // The compliance footer. Marketing mail leaves here with an opt-out link and
+  // the sender's postal address, or it does not leave at all.
+  //
+  // This used to depend on the template carrying a footer block, and 61 of the
+  // 81 built-in templates do not. Those rendered with no unsubscribe link and
+  // no address — a legal problem, and on a shared IP pool a deliverability one.
+  // Fixing it in the renderer rather than in 61 templates means a new template
+  // cannot reintroduce it, and neither can a template that sets
+  // showUnsubscribe: false (which is honoured for transactional and ignored
+  // for marketing, see renderFooter).
+  if (marketing && !body.includes(COMPLIANCE_MARKER)) {
+    body += '\n' + complianceFooter(ctx, locale, links);
+  }
 
   // Org-wide custom footer (SendGrid Mail Settings) — appended to every email
   // as a trailing row when configured on the org.
@@ -200,6 +262,8 @@ function renderBlock(
   ctx: MergeTagContext,
   previewAll: boolean,
   links: string[],
+  marketing: boolean,
+  locale: RenderLocale | undefined,
 ): string {
   switch (block.type) {
     case 'text':
@@ -213,9 +277,9 @@ function renderBlock(
     case 'spacer':
       return renderSpacer(block);
     case 'columns':
-      return renderColumns(block, schema, ctx, previewAll, links);
+      return renderColumns(block, schema, ctx, previewAll, links, marketing, locale);
     case 'hero':
-      return renderHero(block, schema, ctx, previewAll, links);
+      return renderHero(block, schema, ctx, previewAll, links, marketing, locale);
     case 'social':
       return renderSocial(block, ctx, links);
     case 'product':
@@ -225,9 +289,9 @@ function renderBlock(
     case 'coupon':
       return renderCoupon(block, ctx, links);
     case 'footer':
-      return renderFooter(block, ctx, links);
+      return renderFooter(block, ctx, links, marketing, locale);
     case 'dynamic':
-      return renderDynamic(block, schema, ctx, previewAll, links);
+      return renderDynamic(block, schema, ctx, previewAll, links, marketing, locale);
   }
 }
 
@@ -429,30 +493,79 @@ function renderCoupon(block: CouponBlock, ctx: MergeTagContext, links: string[])
   return `<tr><td${bgAttr(block)} align="${block.align}" style="padding:${cellPadding(block)};">${inner}</td></tr>`;
 }
 
-function renderFooter(block: FooterBlock, ctx: MergeTagContext, links: string[]): string {
+/**
+ * Marks a rendered row as carrying the opt-out, so renderEmail knows whether the
+ * template already produced one and does not append a second.
+ */
+const COMPLIANCE_MARKER = 'data-fm-optout="1"';
+
+/** Sender identity block — the postal address CAN-SPAM and GDPR both want. */
+function postalAddress(ctx: MergeTagContext): string {
+  const address = ctx.system?.companyAddress?.trim();
+  if (!address) return '';
+  const name = ctx.system?.companyName?.trim();
+  const lines = [name, address]
+    .filter(Boolean)
+    .map((l) => escapeHtml(l!))
+    .join('<br/>');
+  return `<div style="margin-top:8px;">${lines}</div>`;
+}
+
+function optOutLink(
+  ctx: MergeTagContext,
+  locale: RenderLocale | undefined,
+  colour: string,
+  links: string[],
+): string {
+  const url = ctx.system?.unsubscribeUrl ?? '{{unsubscribe_url}}';
+  links.push(url);
+  return `<div style="margin-top:8px;"><a href="${escapeAttr(url)}" style="color:${colour};text-decoration:underline;">${escapeHtml(unsubscribeLabel(locale))}</a></div>`;
+}
+
+/**
+ * The row appended to marketing mail whose template did not produce one.
+ *
+ * Deliberately plain: it exists so the message is lawful to send, not to look
+ * designed. A template that wants a designed footer gets one by carrying a
+ * footer block, and then this does not fire.
+ */
+function complianceFooter(
+  ctx: MergeTagContext,
+  locale: RenderLocale | undefined,
+  links: string[],
+): string {
+  const colour = '#6b7280';
+  return (
+    `<tr><td ${COMPLIANCE_MARKER} class="fm-footer-text" style="padding:16px 24px;font-size:12px;color:${colour};text-align:center;">` +
+    `${postalAddress(ctx)}${optOutLink(ctx, locale, colour, links)}` +
+    `</td></tr>`
+  );
+}
+
+function renderFooter(
+  block: FooterBlock,
+  ctx: MergeTagContext,
+  links: string[],
+  marketing: boolean,
+  locale: RenderLocale | undefined,
+): string {
   const body = escapeHtml(parseMergeTags(block.content, ctx));
 
   // CAN-SPAM: always append the sender's physical postal address when the org
   // has one configured (and the footer body doesn't already contain it).
-  let addr = '';
   const address = ctx.system?.companyAddress?.trim();
-  if (address && !block.content.includes(address)) {
-    const name = ctx.system?.companyName?.trim();
-    const lines = [name, address]
-      .filter(Boolean)
-      .map((l) => escapeHtml(l!))
-      .join('<br/>');
-    addr = `<div style="margin-top:8px;">${lines}</div>`;
-  }
+  const addr = address && !block.content.includes(address) ? postalAddress(ctx) : '';
 
-  let unsub = '';
-  if (block.showUnsubscribe) {
-    const url = ctx.system?.unsubscribeUrl ?? '{{unsubscribe_url}}';
-    links.push(url);
-    unsub = `<div style="margin-top:8px;"><a href="${escapeAttr(url)}" style="color:${block.color};text-decoration:underline;">Unsubscribe</a></div>`;
-  }
+  // showUnsubscribe is the template's opinion. It is honoured for
+  // transactional mail, where an opt-out does not belong, and overridden for
+  // marketing, where a template must not be able to switch off the one thing
+  // the law requires.
+  const showOptOut = marketing || block.showUnsubscribe;
+  const unsub = showOptOut ? optOutLink(ctx, locale, block.color, links) : '';
+  const marker = showOptOut ? ` ${COMPLIANCE_MARKER}` : '';
+
   const style = `font-size:${block.fontSize};color:${block.color};text-align:${block.textAlign};`;
-  return `<tr><td${bgAttr(block)} style="padding:${cellPadding(block)};${style}">${body}${addr}${unsub}</td></tr>`;
+  return `<tr><td${bgAttr(block)}${marker} style="padding:${cellPadding(block)};${style}">${body}${addr}${unsub}</td></tr>`;
 }
 
 // ---------- container blocks ----------
@@ -463,6 +576,8 @@ function renderColumns(
   ctx: MergeTagContext,
   previewAll: boolean,
   links: string[],
+  marketing: boolean,
+  locale: RenderLocale | undefined,
 ): string {
   const totalRatio = block.columnRatios.reduce((a, b) => a + b, 0) || 1;
   const width = schema.globalStyles.contentWidth;
@@ -472,7 +587,9 @@ function renderColumns(
     .map((colBlocks, i) => {
       const ratio = block.columnRatios[i] ?? 1;
       const colWidth = Math.floor((ratio / totalRatio) * width);
-      const inner = colBlocks.map((b) => renderBlock(b, schema, ctx, previewAll, links)).join('');
+      const inner = colBlocks
+        .map((b) => renderBlock(b, schema, ctx, previewAll, links, marketing, locale))
+        .join('');
       // Each column is its own table so the sub-blocks (which are <tr>s) have
       // a parent <table> wrapper. On mobile the <td class="fm-col"> becomes a
       // block so columns stack naturally.
@@ -494,13 +611,17 @@ function renderHero(
   ctx: MergeTagContext,
   previewAll: boolean,
   links: string[],
+  marketing: boolean,
+  locale: RenderLocale | undefined,
 ): string {
   const bg = block.backgroundColor ?? '#111827';
   const bgImage = block.backgroundImage
     ? `background-image:url('${escapeAttr(block.backgroundImage)}');background-size:cover;background-position:center;`
     : '';
   const minH = block.minHeight ?? '240px';
-  const inner = block.content.map((b) => renderBlock(b, schema, ctx, previewAll, links)).join('');
+  const inner = block.content
+    .map((b) => renderBlock(b, schema, ctx, previewAll, links, marketing, locale))
+    .join('');
   return `<tr><td bgcolor="${bg}" style="background-color:${bg};${bgImage}min-height:${minH};padding:${cellPadding(block)};"><table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">${inner}</table></td></tr>`;
 }
 
@@ -510,13 +631,15 @@ function renderDynamic(
   ctx: MergeTagContext,
   previewAll: boolean,
   links: string[],
+  marketing: boolean,
+  locale: RenderLocale | undefined,
 ): string {
   if (previewAll) {
     const ifHtml = block.ifContent
-      .map((b) => renderBlock(b, schema, ctx, previewAll, links))
+      .map((b) => renderBlock(b, schema, ctx, previewAll, links, marketing, locale))
       .join('');
     const elseHtml = block.elseContent
-      .map((b) => renderBlock(b, schema, ctx, previewAll, links))
+      .map((b) => renderBlock(b, schema, ctx, previewAll, links, marketing, locale))
       .join('');
     const label = escapeHtml(block.label ?? 'Dynamic block');
     return (
@@ -532,7 +655,9 @@ function renderDynamic(
   const branch = evaluateCondition(block.condition, ctx.contact ?? undefined)
     ? block.ifContent
     : block.elseContent;
-  return branch.map((b) => renderBlock(b, schema, ctx, previewAll, links)).join('');
+  return branch
+    .map((b) => renderBlock(b, schema, ctx, previewAll, links, marketing, locale))
+    .join('');
 }
 
 // ---------------------------------------------------------------------------

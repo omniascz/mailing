@@ -225,15 +225,14 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
     [
       hero('⚡ Flash Sale', '{{discount_pct|default:"30"}}% OFF — Today Only', '#dc2626'),
       sp(16),
-      {
-        id: 'cd1',
-        type: 'countdown',
-        endsAt: '{{sale_end_time|default:"2099-12-31T23:59:59Z"}}',
-        backgroundColor: '#fef2f2',
-        textColor: '#dc2626',
-        labelColor: '#7f1d1d',
-        borderRadius: '8px',
-      },
+      // Was a 'countdown' block. The renderer has no branch for that type, so
+      // it emitted nothing at all — the urgency this template is built around
+      // was invisible in every inbox. Replaced with a deadline the renderer can
+      // actually draw rather than adding a block type, which would be a new
+      // feature rather than making the existing ones agree.
+      txt(
+        '<p style="background:#fef2f2;color:#dc2626;font-weight:700;text-align:center;padding:14px;border-radius:8px;margin:0;">Ends {{sale_end_time|default:"tonight at 23:59"}}</p>',
+      ),
       sp(16),
       txt(
         '<p style="text-align:center;font-size:16px;">Use code <strong style="font-size:20px;color:#dc2626;letter-spacing:2px;">{{promo_code|default:"FLASH30"}}</strong> at checkout.</p>',
@@ -765,15 +764,10 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
     [
       hero('⬛ BLACK FRIDAY', '{{discount_pct|default:"40"}}% OFF — Limited Time', '#000000'),
       sp(16),
-      {
-        id: 'cd2',
-        type: 'countdown',
-        endsAt: '{{sale_end_time|default:"2099-11-30T23:59:59Z"}}',
-        backgroundColor: '#111827',
-        textColor: '#fbbf24',
-        labelColor: '#d97706',
-        borderRadius: '8px',
-      },
+      // Same as cd1: a countdown block the renderer never drew.
+      txt(
+        '<p style="background:#111827;color:#fbbf24;font-weight:700;text-align:center;padding:14px;border-radius:8px;margin:0;">Ends {{sale_end_time|default:"Sunday at 23:59"}}</p>',
+      ),
       sp(16),
       txt(
         '<p style="text-align:center;font-size:16px;">Use code <strong style="font-size:22px;color:#fbbf24;letter-spacing:3px;">{{promo_code|default:"BLACK40"}}</strong></p>',

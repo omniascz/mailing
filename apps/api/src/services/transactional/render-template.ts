@@ -64,7 +64,10 @@ export async function renderStoredTemplate(
   } as unknown as EmailSchema;
 
   const context = { contact: { customFields: mergeVars } };
-  const { html } = renderEmail(email, { context });
+  // Transactional: no unsubscribe link. A receipt or a password reset is a
+  // different legal category from marketing mail, and the renderer defaults to
+  // the marketing behaviour, so this has to say so.
+  const { html } = renderEmail(email, { context, stream: 'transactional' });
   const text = renderPlainText(email, { context });
   const subject = parseMergeTags(tpl.subject ?? '', context);
 
