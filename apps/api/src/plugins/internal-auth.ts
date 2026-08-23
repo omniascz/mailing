@@ -15,26 +15,12 @@
  */
 
 import fp from 'fastify-plugin';
-import crypto from 'node:crypto';
 import type { FastifyPluginAsync } from 'fastify';
+import { secretsMatch } from '../lib/shared-secret.js';
 import { env } from '../config/env.js';
 
 export const INTERNAL_SECRET_HEADER = 'x-internal-secret';
 const INTERNAL_PREFIX = '/api/v1/internal/';
-
-/**
- * Constant-time compare that does not leak length either.
- *
- * timingSafeEqual throws when the buffers differ in size, and a naive
- * try/catch around it turns "wrong length" into a fast reject — a length
- * oracle. Hashing both sides first makes every comparison run over 32 bytes
- * regardless of what the caller sent.
- */
-function secretsMatch(provided: string, expected: string): boolean {
-  const a = crypto.createHash('sha256').update(provided).digest();
-  const b = crypto.createHash('sha256').update(expected).digest();
-  return crypto.timingSafeEqual(a, b);
-}
 
 const internalAuthPlugin: FastifyPluginAsync = async (app) => {
   const expected = env.INTERNAL_API_SECRET;
