@@ -17,11 +17,14 @@ afterAll(async () => {
 });
 
 describe('API boot smoke', () => {
+  // Six files in this suite boot a full app with ~1500 routes, and they run in
+  // parallel, so the shared 10s testTimeout is not a meaningful budget for one
+  // of them — it measures machine contention, not whether boot works.
   it('buildApp() resolves without throwing', async () => {
     app = await buildApp();
     expect(app).toBeDefined();
     expect(typeof app.listen).toBe('function');
-  });
+  }, 30_000);
 
   it('exposes /health route registered by healthRoutes', async () => {
     if (!app) throw new Error('app not built');

@@ -17,5 +17,6 @@ export default defineConfig({
     // never as part of the infrastructure-free unit suite.
     exclude: ['**/node_modules/**', '**/dist/**', 'src/integration/**'],
     testTimeout: 10_000,
+    hookTimeout: 30_000,
   },
 });
