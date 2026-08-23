@@ -76,7 +76,7 @@ describe('batch-sender skips contacts flagged unsubscribed (real DB + Redis + AP
         orgId,
         batchIndex: 0,
         contactIds: [activeId, flaggedOnlyId],
-        content: { html: '<p>Hello</p>' },
+        content: { html: '<p>Hello</p><a href="{{unsubscribe_url}}">Unsubscribe</a>' },
         subject: 'Unsubscribed filter test',
         fromName: 'ForgeMsg Test',
         fromEmail: 'test@forgemsg.test',
@@ -108,6 +108,8 @@ describe('batch-sender skips contacts flagged unsubscribed (real DB + Redis + AP
         orgId,
         batchIndex: 0,
         contactIds: [flaggedOnlyId],
+        // No opt-out in the body on purpose: transactional mail must go out
+        // without one, and the send-path guard must let it.
         content: { html: '<p>Your receipt</p>' },
         subject: 'Receipt',
         fromName: 'ForgeMsg Test',
@@ -126,6 +128,37 @@ describe('batch-sender skips contacts flagged unsubscribed (real DB + Redis + AP
     await mtaQueues.other.obliterate({ force: true });
   }, 120_000);
 
+  it('refuses a raw-HTML marketing campaign whose body has no opt-out', async () => {
+    // The renderer cannot help here: a legacy { html } campaign never reaches
+    // renderEmail, so there is nothing to append a compliance footer to. The
+    // send path is the only place left, and it refuses the whole batch rather
+    // than dropping the contact — the same violation for the other recipients
+    // is still a violation.
+    await mtaQueues.other.obliterate({ force: true });
+
+    await expect(
+      processBatchSender(
+        fakeJob({
+          campaignId: randomUUID(),
+          orgId,
+          batchIndex: 0,
+          contactIds: [flaggedOnlyId],
+          content: { html: '<p>Buy our things</p>' },
+          subject: 'Sale',
+          fromName: 'ForgeMsg Test',
+          fromEmail: 'test@forgemsg.test',
+          priority: 3,
+          stream: 'broadcast',
+        } as BatchSenderJobData),
+      ),
+    ).rejects.toThrow(/no unsubscribe link/);
+
+    const jobs = await mtaQueues.other.getJobs(['waiting', 'delayed', 'prioritized', 'active']);
+    expect(jobs, 'nothing may be enqueued from a refused batch').toHaveLength(0);
+
+    await mtaQueues.other.obliterate({ force: true });
+  }, 120_000);
+
   it('a bounced contact behaves exactly as before', async () => {
     // The filter covers 'unsubscribed' only. Bounces get their suppression from
     // mta-sender when they happen, so nothing about them changes here — and if
@@ -138,7 +171,7 @@ describe('batch-sender skips contacts flagged unsubscribed (real DB + Redis + AP
         orgId,
         batchIndex: 0,
         contactIds: [bouncedId],
-        content: { html: '<p>Hello</p>' },
+        content: { html: '<p>Hello</p><a href="{{unsubscribe_url}}">Unsubscribe</a>' },
         subject: 'Bounced unchanged',
         fromName: 'ForgeMsg Test',
         fromEmail: 'test@forgemsg.test',
