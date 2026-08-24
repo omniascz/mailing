@@ -220,6 +220,8 @@ export async function createBooking(orgId: string, input: BookingInput) {
     endAt,
     hostUserId,
     inviteeEmail: input.inviteeEmail,
+    // 'custom' hands this straight back, validated.
+    locationValue: et.locationValue,
   }).catch((err: unknown) => {
     console.error(
       `[meetings] video link for locationType='${et.locationType}' failed (eventType=${et.id}, org=${orgId}); booking falls back to locationValue:`,
