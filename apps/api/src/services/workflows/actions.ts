@@ -96,8 +96,14 @@ export function substituteMergeTags(
  * Empty hrefs go too, since the other renderer in this repo
  * (apps/editor/src/render/merge-tags.ts) substitutes an unknown tag with an
  * empty string and templates move between the two.
+ *
+ * And a bare `#`, which is what `{{tag|default:#}}` leaves behind — a filter
+ * several seeded templates use, including the meeting follow-up button. In an
+ * email there is no page to anchor within, so `#` is not a destination; it is a
+ * button that looks alive and does nothing. `#section` is left alone.
  */
-const UNRESOLVED_HREF = /<a([^>]*)\shref\s*=\s*"(\s*|\{\{[^}]*\}\}\s*)"([^>]*)>([\s\S]*?)<\/a>/gi;
+const UNRESOLVED_HREF =
+  /<a([^>]*)\shref\s*=\s*"(\s*|#\s*|\{\{[^}]*\}\}\s*)"([^>]*)>([\s\S]*?)<\/a>/gi;
 
 export function dropUnresolvedLinks(html: string): string {
   return html.replace(UNRESOLVED_HREF, (_match, _before, _href, _after, text: string) => text);
@@ -125,6 +131,17 @@ export function buildRunMergeData(run: {
   // Flattened, namespaced event/order fields.
   if (ev.title != null) out.event_title = ev.title;
   if (data.eventTitle != null) out.event_title = data.eventTitle; // cron-supplied
+  // Meeting triggers pass the booking's fields in camelCase, which is the
+  // convention for a TypeScript payload; templates are snake_case, which is the
+  // convention for every merge tag in this repo — first_name, event_title,
+  // cart_url, unsubscribe_url. {{meeting_url}} therefore resolved to nothing and
+  // the follow-up button in the seeded template rendered a dead link. This is
+  // where the two conventions already meet, so this is where they are joined.
+  if (data.meetingUrl != null) out.meeting_url = data.meetingUrl;
+  if (data.bookingId != null) out.booking_id = data.bookingId;
+  if (data.startAt != null) out.meeting_starts_at = data.startAt;
+  if (data.endAt != null) out.meeting_ends_at = data.endAt;
+  if (data.timezone != null) out.meeting_timezone = data.timezone;
   if (ev.venueCity != null) out.event_city = ev.venueCity;
   if (ev.venueName != null) out.event_venue = ev.venueName;
   if (ev.startsAt != null) out.event_starts_at = ev.startsAt;
