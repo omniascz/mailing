@@ -46,6 +46,8 @@ import {
 } from '../../services/campaigns/ab-winner.js';
 import { claimBatches, confirmBatches } from '../../services/campaigns/dispatch-ledger.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
+import { renderEmail as renderBlocks, renderPlainText } from '@forgemsg/editor/render';
+import { readCampaignContent } from '@forgemsg/editor/schema';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 import { assertCampaignPurpose } from '../../services/gdpr/campaign-purpose-check.js';
@@ -461,8 +463,22 @@ export default async function campaignRoutes(app: FastifyInstance) {
         const { to } = z.object({ to: z.string().email() }).parse(req.body);
 
         const campaign = await getCampaign(req.user!.orgId, id);
-        const content = (campaign.content ?? {}) as { html?: string; plainText?: string };
-        if (!content.html && !content.plainText) {
+
+        // The test has to be a test OF THE CAMPAIGN, which means rendering it
+        // the way the send path renders it. This route used to read
+        // `content.html` directly, so for a campaign authored in the visual
+        // editor it mailed the browser's save-time snapshot — rendered against
+        // a hard-coded preview contact — and after that snapshot stopped being
+        // stored it would have reported "no content" for the product's main
+        // authoring path.
+        const parsed = readCampaignContent(
+          (campaign.content ?? {}) as Record<string, unknown>,
+          campaign.preheader ?? undefined,
+        );
+        const legacy = (campaign.content ?? {}) as { html?: string; plainText?: string };
+        const testHtml = parsed.schema ? renderBlocks(parsed.schema).html : legacy.html;
+        const testText = parsed.schema ? renderPlainText(parsed.schema) : legacy.plainText;
+        if (!testHtml && !testText) {
           throw AppError.badRequest(
             'Campaign has no content to test — add HTML or plain text first',
           );
@@ -496,8 +512,8 @@ export default async function campaignRoutes(app: FastifyInstance) {
             fromName: campaign.fromName ?? undefined,
             replyTo: campaign.replyTo ?? undefined,
             subject: `[TEST] ${campaign.subject}`,
-            html: content.html ?? '',
-            text: content.plainText ?? undefined,
+            html: testHtml ?? '',
+            text: testText ?? undefined,
             orgId: req.user!.orgId,
           });
         } catch (err) {
