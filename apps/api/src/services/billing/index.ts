@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { billingSubscriptions, contacts, organizations } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { onApiEvent } from '../workflows/triggers.js';
 
 // Plan catalogue — kept in sync with Stripe product catalogue.
 export const PLANS = {
@@ -347,18 +348,9 @@ async function upsertContactWithPurchase(
     contactId = created!.id;
   }
 
-  // Fire internal workflow trigger for stripe_purchase event
-  const apiUrl = process.env.API_URL ?? 'http://localhost:3001';
-  await fetch(`${apiUrl}/api/v1/internal/workflows/trigger`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      orgId,
-      trigger: 'stripe_purchase',
-      contactId,
-      metadata: { amount, source, externalId },
-    }),
-  }).catch(() => {
-    /* non-critical */
-  });
+  // Fire the stripe_purchase trigger in this process. Same story as the
+  // Calendly webhook: this POSTed to /api/v1/internal/workflows/trigger, which
+  // has never existed, and a 404 does not make fetch reject — so no purchase
+  // has ever started a workflow and nothing said so.
+  await onApiEvent(orgId, contactId, 'stripe_purchase', { amount, source, externalId });
 }

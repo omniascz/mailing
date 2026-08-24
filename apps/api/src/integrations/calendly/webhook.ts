@@ -15,6 +15,7 @@ import { contacts } from '../../db/schema/contacts.js';
 import { deals } from '../../db/schema/deals.js';
 import { pipelines } from '../../db/schema/pipelines.js';
 import { calendlyConnections } from '../../db/schema/calendly.js';
+import { onApiEvent } from '../../services/workflows/triggers.js';
 
 export interface CalendlyInviteeEvent {
   event: 'invitee.created' | 'invitee.canceled';
@@ -115,20 +116,16 @@ export async function processCalendlyEvent(
       }
     }
 
-    // Optionally fire workflow trigger via internal API
+    // Fire the workflow trigger in this process.
+    //
+    // This used to POST to /api/v1/internal/workflows/trigger, a path that was
+    // never registered in any commit in this repo's history. fetch does not
+    // reject on a 404, so the .catch() never ran: every Calendly booking
+    // reported success and started no workflow. onApiEvent is what the
+    // endpoint would have called anyway — it is one import away.
     if (conn.workflowTrigger) {
-      const apiUrl = process.env.API_URL ?? 'http://localhost:3001';
-      await fetch(`${apiUrl}/api/v1/internal/workflows/trigger`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orgId,
-          trigger: conn.workflowTrigger,
-          contactId,
-          metadata: { calendly_event: event.payload.scheduled_event.uri },
-        }),
-      }).catch(() => {
-        /* non-critical */
+      await onApiEvent(orgId, contactId, conn.workflowTrigger, {
+        calendly_event: event.payload.scheduled_event.uri,
       });
     }
   }
