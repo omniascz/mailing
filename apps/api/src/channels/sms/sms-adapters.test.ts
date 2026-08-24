@@ -2,12 +2,22 @@
  * Tests for SMS channel adapters + routing + compliance (tasks 7.1–7.5).
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BulkgateSmsAdapter } from './bulkgate-adapter.js';
 import { TwilioSmsAdapter } from './twilio-adapter.js';
 import { checkTcpaQuietHours, appendOptOutText } from '../../services/sms/compliance.js';
 import { phoneToCountry } from '../../services/sms/routing.js';
 import type { UnifiedMessage, Recipient } from '@forgemsg/shared';
+/**
+ * vitest reuses a forked worker across test files, so a replaced global.fetch
+ * outlives this one unless it is put back. A leaked stub is worse than a leaked
+ * env var: the next file's real network call silently gets this file's canned
+ * response.
+ */
+const ORIGINAL_FETCH = globalThis.fetch;
+afterEach(() => {
+  globalThis.fetch = ORIGINAL_FETCH;
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

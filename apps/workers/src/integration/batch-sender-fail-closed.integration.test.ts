@@ -23,6 +23,8 @@ import type { Job } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import type * as QueuesModuleNs from '../queues/index.js';
+
+let ORIGINAL_API_URL: string | undefined;
 type QueuesModule = typeof QueuesModuleNs;
 
 const sql = postgres(process.env.DATABASE_URL!, { max: 2, prepare: false });
@@ -113,6 +115,9 @@ async function queuedCount(): Promise<number> {
 describe('batch-sender fail-closed policy (fake API + real Redis)', () => {
   beforeAll(async () => {
     const port = await startFakeApi();
+    // This lane runs files sequentially in one process, so a URL left pointing
+    // at a closed mock server would break whatever runs next.
+    ORIGINAL_API_URL = process.env.API_URL;
     process.env.API_URL = `http://127.0.0.1:${port}`;
 
     const [org] = await sql<{ id: string }[]>`
@@ -142,6 +147,8 @@ describe('batch-sender fail-closed policy (fake API + real Redis)', () => {
   }, 60_000);
 
   afterAll(async () => {
+    if (ORIGINAL_API_URL === undefined) delete process.env.API_URL;
+    else process.env.API_URL = ORIGINAL_API_URL;
     await new Promise<void>((r) => server.close(() => r()));
     await sql`DELETE FROM campaigns WHERE id = ${campaignId}`;
     await sql`DELETE FROM contacts WHERE id = ${contactId}`;

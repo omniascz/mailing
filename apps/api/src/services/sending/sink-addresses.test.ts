@@ -1,5 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import { parseSinkAddress, sinkEventChain } from './sink-addresses.js';
+
+// Deleting a key is still a mutation of an object the whole forked worker
+// shares, and vitest reuses that worker for the next file.
+const ORIGINAL_SINK_DOMAIN = process.env.SINK_DOMAIN;
+afterAll(() => {
+  if (ORIGINAL_SINK_DOMAIN === undefined) delete process.env.SINK_DOMAIN;
+  else process.env.SINK_DOMAIN = ORIGINAL_SINK_DOMAIN;
+});
 
 describe('parseSinkAddress', () => {
   beforeEach(() => {

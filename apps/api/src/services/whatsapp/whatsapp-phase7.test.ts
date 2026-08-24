@@ -2,13 +2,23 @@
  * Phase 7.7–7.9 tests: WhatsApp template management, rich messaging, compliance.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MetaWhatsAppAdapter } from '@forgemsg/shared/whatsapp/meta-adapter';
 import {
   buildButtonPayloadForTest,
   buildListPayloadForTest,
   buildMediaPayloadForTest,
 } from './rich-messaging-test-exports.js';
+/**
+ * vitest reuses a forked worker across test files, so a replaced global.fetch
+ * outlives this one unless it is put back. A leaked stub is worse than a leaked
+ * env var: the next file's real network call silently gets this file's canned
+ * response.
+ */
+const ORIGINAL_FETCH = globalThis.fetch;
+afterEach(() => {
+  globalThis.fetch = ORIGINAL_FETCH;
+});
 
 // ─── Mock DB (vi.hoisted so it's available when vi.mock factory runs) ─────────
 

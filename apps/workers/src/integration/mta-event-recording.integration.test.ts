@@ -23,6 +23,8 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { randomUUID } from 'node:crypto';
 
+let ORIGINAL_API_URL: string | undefined;
+
 /** Controls what the "engine" replies with for the next send. */
 const reply = {
   success: false,
@@ -86,10 +88,15 @@ beforeAll(async () => {
     });
   });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+  // This lane runs files sequentially in one process, so a URL left pointing
+  // at a closed mock server would break whatever runs next.
+  ORIGINAL_API_URL = process.env.API_URL;
   process.env.API_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 }, 30_000);
 
 afterAll(async () => {
+  if (ORIGINAL_API_URL === undefined) delete process.env.API_URL;
+  else process.env.API_URL = ORIGINAL_API_URL;
   const { shutdownMtaSender } = await import('../jobs/mta-sender.js');
   shutdownMtaSender();
   await new Promise<void>((r) => server.close(() => r()));
