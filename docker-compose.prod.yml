@@ -100,6 +100,21 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY is required}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
+      # Where the store actually is. Only the two keys above were passed, so
+      # MINIO_ENDPOINT fell back to its development default of `localhost` —
+      # which inside this container is the API itself. Every upload aimed at
+      # the wrong host and failed at use rather than at boot. env.ts now
+      # refuses to start in production without it.
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:?MINIO_ENDPOINT is required}
+      MINIO_PORT: ${MINIO_PORT:-9000}
+      MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      # Buckets. MINIO_BUCKET holds media and the email-event archive; the other
+      # two are separate stores for video messages and downloadable assets, and
+      # fall back to MINIO_BUCKET's neighbours in code when unset.
+      MINIO_BUCKET: ${MINIO_BUCKET:-forgemsg}
+      MINIO_VIDEO_BUCKET: ${MINIO_VIDEO_BUCKET:-forgemsg-video}
+      ASSET_STORAGE_BUCKET: ${ASSET_STORAGE_BUCKET:-forgemsg-assets}
       # Signs the open pixel, every wrapped link, the unsubscribe link and the
       # preference-centre token. api and workers MUST get the same value — the
       # workers sign, the API verifies. Its dev fallback lives in
