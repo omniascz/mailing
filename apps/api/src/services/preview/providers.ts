@@ -23,6 +23,17 @@ export interface PreviewResult {
   thumbnailUrl?: string;
   width?: number;
   height?: number;
+  /**
+   * True when this render was not produced by a rendering service.
+   *
+   * Reaching the mock now takes INBOX_PREVIEW_PROVIDER=mock — createPreviewJob
+   * refuses with 501 when nothing is configured, so nobody gets it by accident
+   * any more. What was still wrong is what opting in returns: status
+   * 'completed' and image URLs on preview.mock.local, a domain that does not
+   * resolve. The screen showed three broken images and said nothing, which is
+   * indistinguishable from a real render that failed to load.
+   */
+  simulated?: boolean;
 }
 
 export interface PreviewProvider {
@@ -74,6 +85,7 @@ export const mockProvider: PreviewProvider = {
         thumbnailUrl: `https://preview.mock.local/${encodeURIComponent(providerJobId)}/${c}_thumb.png`,
         width: 600,
         height: 800,
+        simulated: true,
       })),
     };
   },
