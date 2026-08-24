@@ -13,26 +13,18 @@ import { campaignSplitterQueue, PRIORITY } from '../../lib/queues.js';
 import { sendCampaign } from './index.js';
 
 /**
- * Resolve DKIM signing material for a campaign's From address. Without this the
- * splitter forwards no key and the MTA sends unsigned mail (→ spam). Looks up
- * the verified sending domain matching the From address's domain.
+ * Re-exported so this module's existing importers keep working. The resolver
+ * itself moved to services/domains/dkim-rotation.ts, next to the key lifecycle
+ * that produces what it reads, because the transactional send path needs the
+ * same answer and cannot import this module without a cycle.
+ *
+ * The signing key is the domain's single ACTIVE dkim_keys row — never a pending
+ * key (not yet in DNS), and never null merely because a rotation is underway
+ * (the old key stays active until the new one is verified), so mail is always
+ * signed with a key a receiver can look up.
  */
-export async function resolveDkimForSender(
-  orgId: string,
-  fromEmail: string,
-): Promise<{ dkimDomain: string; dkimSelector: string; dkimPrivateKey: string } | null> {
-  const domain = fromEmail.split('@')[1]?.toLowerCase();
-  if (!domain) return null;
-  // The signing key is the domain's single ACTIVE dkim_keys row — never a
-  // pending key (not yet in DNS), and never null merely because a rotation is
-  // underway (the old key stays active until the new one is verified). This is
-  // the fix for the rotation window: mail is always signed with a key a receiver
-  // can look up.
-  const { resolveActiveKey } = await import('../domains/dkim-rotation.js');
-  const key = await resolveActiveKey(orgId, domain);
-  if (!key) return null;
-  return { dkimDomain: domain, dkimSelector: key.selector, dkimPrivateKey: key.privateKey };
-}
+import { resolveDkimForSender } from '../domains/dkim-rotation.js';
+export { resolveDkimForSender };
 
 /**
  * Resolve the From domain's open/click tracking defaults. Returns enabled for
