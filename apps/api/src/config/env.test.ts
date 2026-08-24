@@ -89,6 +89,11 @@ describe('prodRequired — production must not fall back to a committed default'
     DMARC_INBOUND_SECRET: 'a-real-dmarc-secret-16+',
     MINIO_ACCESS_KEY: 'real-access-key',
     MINIO_SECRET_KEY: 'real-secret-key',
+    // Required in production alongside the two above. Its default is
+    // `localhost`, which in a container is the API itself, so an unset value
+    // aimed every upload at this process — docker-compose.prod.yml passed the
+    // credentials and nothing else for exactly that long.
+    MINIO_ENDPOINT: 'minio.internal',
     ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
     INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
     FORM_AUTOFILL_SECRET: 'a-real-form-autofill-secret-32-chars',
@@ -99,6 +104,20 @@ describe('prodRequired — production must not fall back to a committed default'
     FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
     TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
   };
+
+  it('production without MINIO_ENDPOINT is refused', async () => {
+    // Not a nicety. The default is `localhost`, which inside the API container
+    // is the API, so every upload went to this process instead of the store and
+    // failed at use with a connection error rather than at boot with a reason.
+    // The credentials are already prodRequired, so a production deployment has
+    // asserted that object storage exists; leaving the endpoint at its
+    // development default beside them is a mistake, not a choice.
+    const env = { ...PROD_BASE };
+    delete (env as Record<string, string | undefined>).MINIO_ENDPOINT;
+    process.env = env;
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+  });
 
   /** Security-critical fields and the dev default each one carries. */
   const CRITICAL: Array<{ name: string; devDefault: string; realValue: string }> = [
@@ -355,6 +374,7 @@ describe('optional-by-design secrets', () => {
       DMARC_INBOUND_SECRET: 'a-real-dmarc-secret-16+',
       MINIO_ACCESS_KEY: 'real-access-key',
       MINIO_SECRET_KEY: 'real-secret-key',
+      MINIO_ENDPOINT: 'minio.internal',
       ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
       INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
       FORM_AUTOFILL_SECRET: 'a-real-form-autofill-secret-32-chars',

@@ -32,6 +32,7 @@ import { revenueEvents, campaigns } from '../../db/schema/index.js';
 import { toCsv } from '../../lib/csv.js';
 import { renderPdf } from '../../lib/pdf.js';
 import { isGeoConfigured } from '../../lib/geo.js';
+import { putObject, presignUrl } from '../../lib/object-store.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -518,31 +519,18 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       const screenshotBuffer = await page.screenshot({ fullPage: true, type: 'png' });
       await browser.close();
 
-      // Upload to MinIO/S3
-      const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
-      const s3 = new S3Client({
-        endpoint: `http://${process.env.MINIO_ENDPOINT ?? 'localhost'}:${process.env.MINIO_PORT ?? 9000}`,
-        region: 'us-east-1',
-        credentials: {
-          accessKeyId: process.env.MINIO_ACCESS_KEY ?? 'minioadmin',
-          secretAccessKey: process.env.MINIO_SECRET_KEY ?? 'minioadmin',
-        },
-        forcePathStyle: true,
-      });
-
       const key = `screenshots/${orgId}/${id}-${Date.now()}.png`;
       const bucket = process.env.MINIO_BUCKET ?? 'forgemsg';
 
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: key,
-          Body: screenshotBuffer,
-          ContentType: 'image/png',
-        }),
-      );
+      // Through the shared client. This built its own S3Client per request with
+      // the endpoint hard-coded to http:// — ignoring MINIO_USE_SSL, so against
+      // a TLS store it would have talked plaintext to port 9000.
+      await putObject(bucket, key, Buffer.from(screenshotBuffer), 'image/png');
 
-      const screenshotUrl = `http://${process.env.MINIO_ENDPOINT ?? 'localhost'}:${process.env.MINIO_PORT ?? 9000}/${bucket}/${key}`;
+      // Presigned, because this URL goes back to a browser that holds no AWS
+      // credentials. An hour: long enough to open the report and share the tab,
+      // short enough that a link pasted into a ticket stops working.
+      const screenshotUrl = await presignUrl('get', bucket, key, 3600);
 
       return { data: { screenshotUrl } };
     },

@@ -277,6 +277,33 @@ const Env = z
     IMPORT_UPLOAD_DIR: z.string().optional(),
   })
   .superRefine((cfg, ctx) => {
+    // MINIO_ENDPOINT defaults to localhost, which inside the API container is
+    // the API. docker-compose.prod.yml passed the credentials and nothing else,
+    // so every upload in production aimed at the wrong host and failed at use
+    // with a connection error rather than at boot with a reason.
+    //
+    // The credentials are prodRequired, so a production deployment has already
+    // asserted that object storage exists. Leaving the endpoint at its
+    // development default alongside them is a mistake, not a choice — the same
+    // shape as SENDING_IPS without WARMUP_API_URL in the engine.
+    //
+    // Not a boot requirement in general: an API with no object storage is a
+    // legitimate deployment. Sending, contacts, campaigns and workflows all
+    // work; the media library and the event archive do not, and refusing to
+    // start would take the whole product down over a feature many operators
+    // never enable.
+    if (isProduction && !process.env.MINIO_ENDPOINT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['MINIO_ENDPOINT'],
+        message:
+          'MINIO_ENDPOINT is required in production. It defaults to `localhost`, which ' +
+          'inside a container is this process — so uploads would be attempted against the ' +
+          'API itself. Set it to the object store, or unset MINIO_ACCESS_KEY/MINIO_SECRET_KEY ' +
+          'if this deployment has no object storage.',
+      });
+    }
+
     // Launch is on a shared IP pool: reputation is borrowed, not owned, and the
     // only thing separating this mail from the rest of the pool is domain
     // authentication. A reports sender on a second domain needs its own

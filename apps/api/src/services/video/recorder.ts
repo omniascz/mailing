@@ -20,6 +20,7 @@ import {
   type VideoMessage,
 } from '../../db/schema/video-messages.js';
 import { AppError } from '../../lib/app-error.js';
+import { presignUrl } from '../../lib/object-store.js';
 
 // ─── Config helpers ───────────────────────────────────────────────────────────
 
@@ -76,7 +77,22 @@ export async function requestUpload(orgId: string, input: RequestUploadInput) {
     .returning();
   if (!row) throw AppError.internal('Failed to create video record');
 
-  const uploadUrl = `${publicBaseUrl()}/${objectKey}`;
+  // Signed, and this is the one place a presigned URL is genuinely the right
+  // shape: the bytes are in the browser and never pass through this process.
+  //
+  // It used to be `${publicBaseUrl()}/${objectKey}` — the object's plain
+  // address, with `expiresInSeconds: 900` beside it promising an expiry that
+  // nothing enforced. Against a real store the browser's PUT drew a 403 and no
+  // video was ever uploaded; against a world-writable bucket it would have
+  // worked, which is worse.
+  //
+  // 900 seconds because that is what the response has always advertised and
+  // what the client's countdown is built on. It also fits the job: the window
+  // covers one upload of at most 500 MB, checked above, which is a few minutes
+  // on a poor connection and leaves room for a retry. Longer would leave a
+  // write capability lying around for a key the recipient never needs to write
+  // twice.
+  const uploadUrl = await presignUrl('put', BUCKET(), objectKey, 900, input.mimeType);
 
   return {
     videoId: row.id,

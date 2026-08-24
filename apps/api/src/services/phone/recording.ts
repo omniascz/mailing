@@ -11,6 +11,7 @@ import { db } from '../../db/client.js';
 import { calls } from '../../db/schema/calls.js';
 import { AppError } from '../../lib/app-error.js';
 import { transcribeCall } from './transcription.js';
+import { putObject, presignUrl } from '../../lib/object-store.js';
 
 export interface RecordingInfo {
   callId: string;
@@ -74,43 +75,29 @@ async function getProviderRecordingUrl(
 
 async function uploadToS3(sourceUrl: string, key: string): Promise<string> {
   const bucket = process.env.MINIO_BUCKET ?? 'forgemsg-recordings';
-  const endpoint = process.env.MINIO_ENDPOINT ?? 'localhost';
-  const port = process.env.MINIO_PORT ?? '9000';
-  const accessKey = process.env.MINIO_ACCESS_KEY ?? 'minioadmin';
-  const secretKey = process.env.MINIO_SECRET_KEY ?? 'minioadmin';
-
-  // In production this would use the AWS SDK or @aws-sdk/client-s3.
-  // For now, stream via fetch + MinIO presigned PUT.
-  const presignedUrl = await getPresignedPutUrl(endpoint, port, bucket, key, accessKey, secretKey);
 
   const sourceRes = await fetch(sourceUrl);
   if (!sourceRes.ok) throw new Error(`Failed to download recording: ${sourceRes.status}`);
-  const buffer = await sourceRes.arrayBuffer();
+  const buffer = Buffer.from(await sourceRes.arrayBuffer());
 
-  const uploadRes = await fetch(presignedUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(buffer.byteLength) },
-    body: buffer,
-  });
+  // Straight through the shared client.
+  //
+  // This used to call a local getPresignedPutUrl(endpoint, port, bucket, key,
+  // accessKey, secretKey) which ignored the last two arguments and returned a
+  // plain URL — a function named "presign" that did not sign. Against a real
+  // store the PUT drew a 403, and the status check turned that into a loud
+  // failure, so no recording was ever stored.
+  //
+  // It is not implemented properly, it is removed. A presigned PUT exists to
+  // hand an upload to somebody else; here the bytes are already in this
+  // process, downloaded from the provider two lines up. There was nobody to
+  // hand it to.
+  await putObject(bucket, key, buffer, 'audio/mpeg');
 
-  if (!uploadRes.ok) throw new Error(`S3 upload failed: ${uploadRes.status}`);
-
-  const useSSL = process.env.MINIO_USE_SSL === 'true';
-  const scheme = useSSL ? 'https' : 'http';
-  return `${scheme}://${endpoint}:${port}/${bucket}/${key}`;
-}
-
-async function getPresignedPutUrl(
-  endpoint: string,
-  port: string,
-  bucket: string,
-  key: string,
-  _accessKey: string,
-  _secretKey: string,
-): Promise<string> {
-  // Simplified presigned URL generation — in production use @aws-sdk/s3-request-presigner
-  const host = `${endpoint}:${port}`;
-  return `http://${host}/${bucket}/${key}`;
+  // Presigned GET: the only reader is transcribeCall, which passes it to a
+  // transcription provider that fetches it over the internet. Fifteen minutes
+  // covers that fetch and nothing beyond it.
+  return presignUrl('get', bucket, key, 15 * 60);
 }
 
 // ─── Recording status webhook ─────────────────────────────────────────────────

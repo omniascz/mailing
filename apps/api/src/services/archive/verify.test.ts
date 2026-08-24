@@ -12,10 +12,19 @@
  */
 import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
 
-const send = vi.fn();
+/**
+ * verifyArchive reads through lib/object-store's getObjectBytes now, so that is
+ * what is stubbed. `undefined` stands for the store answering with no body at
+ * all, which the helper turns into a throw.
+ */
+const readBack = vi.fn<(bucket: string, key: string) => Promise<Buffer>>();
 vi.mock('../../lib/object-store.js', () => ({
-  getObjectStore: async () => ({ send }),
+  getObjectStore: async () => ({ send: vi.fn() }),
   resetObjectStore: () => {},
+  putObject: vi.fn(),
+  listObjectKeys: vi.fn(),
+  presignUrl: vi.fn(),
+  getObjectBytes: (bucket: string, key: string) => readBack(bucket, key),
   objectStoreConfig: () => ({
     endpoint: 'http://stub:9000',
     region: 'us-east-1',
@@ -24,12 +33,13 @@ vi.mock('../../lib/object-store.js', () => ({
   }),
 }));
 
-const stored = (body: string | undefined) => ({
-  Body: body === undefined ? undefined : { transformToString: async () => body },
-});
+const stored = (body: string | undefined) =>
+  body === undefined
+    ? Promise.reject(new Error('no body'))
+    : Promise.resolve(Buffer.from(body, 'utf8'));
 
 afterEach(() => {
-  send.mockReset();
+  readBack.mockReset();
 });
 
 /**
@@ -50,7 +60,7 @@ const THREE = ['{"a":1}', '{"a":2}', '{"a":3}'].join(NL);
 describe('verifyArchive', () => {
   it('accepts an object that matches byte for byte', async () => {
     const { verifyArchive } = await import('./email-events.js');
-    send.mockResolvedValue(stored(THREE));
+    readBack.mockImplementation(() => stored(THREE));
     await expect(verifyArchive('k.ndjson', THREE)).resolves.toBeUndefined();
   });
 
@@ -58,31 +68,31 @@ describe('verifyArchive', () => {
     // The shape a swallowed body or a truncated write leaves behind, and the
     // one most likely to pass unnoticed: the key exists, the listing shows it.
     const { verifyArchive } = await import('./email-events.js');
-    send.mockResolvedValue(stored(''));
+    readBack.mockImplementation(() => stored(''));
     await expect(verifyArchive('k.ndjson', THREE)).rejects.toThrow(/stored object is empty/);
   });
 
   it('refuses a missing body', async () => {
     const { verifyArchive } = await import('./email-events.js');
-    send.mockResolvedValue(stored(undefined));
+    readBack.mockImplementation(() => stored(undefined));
     await expect(verifyArchive('k.ndjson', THREE)).rejects.toThrow(/stored object is empty/);
   });
 
   it('refuses a short object', async () => {
     const { verifyArchive } = await import('./email-events.js');
-    send.mockResolvedValue(stored(['{"a":1}', '{"a":2}'].join(NL)));
+    readBack.mockImplementation(() => stored(['{"a":1}', '{"a":2}'].join(NL)));
     await expect(verifyArchive('k.ndjson', THREE)).rejects.toThrow(/stored 2 lines, sent 3/);
   });
 
   it('refuses an object with the right line count but different bytes', async () => {
     const { verifyArchive } = await import('./email-events.js');
-    send.mockResolvedValue(stored(['{"a":1}', '{"a":2}', '{"a":9}'].join(NL)));
+    readBack.mockImplementation(() => stored(['{"a":1}', '{"a":2}', '{"a":9}'].join(NL)));
     await expect(verifyArchive('k.ndjson', THREE)).rejects.toThrow(/differ from what was sent/);
   });
 
   it('says the rows were kept, because that is what the operator needs to know', async () => {
     const { verifyArchive } = await import('./email-events.js');
-    send.mockResolvedValue(stored(''));
+    readBack.mockImplementation(() => stored(''));
     await expect(verifyArchive('k.ndjson', THREE)).rejects.toThrow(
       /left in place rather than deleted/,
     );

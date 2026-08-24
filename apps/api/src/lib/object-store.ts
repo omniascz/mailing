@@ -71,3 +71,72 @@ export function resetObjectStore(): void {
   cached = null;
   cachedFor = '';
 }
+
+// ─── Writing and reading ──────────────────────────────────────────────────────
+
+/** Store bytes under a key. Throws on anything the store did not accept. */
+export async function putObject(
+  bucket: string,
+  key: string,
+  body: Buffer,
+  contentType: string,
+): Promise<void> {
+  const { PutObjectCommand } = await import('@aws-sdk/client-s3');
+  const s3 = await getObjectStore();
+  await s3.send(
+    new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
+  );
+}
+
+/** Read an object back as bytes. Throws when it is not there. */
+export async function getObjectBytes(bucket: string, key: string): Promise<Buffer> {
+  const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+  const s3 = await getObjectStore();
+  const res = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+  const bytes = await res.Body?.transformToByteArray();
+  if (!bytes) throw new Error(`Object ${bucket}/${key} came back with no body`);
+  return Buffer.from(bytes);
+}
+
+/**
+ * A URL someone outside this process can use, for a limited time.
+ *
+ * The repo had three attempts at this before: two hand-rolled SigV4
+ * implementations and, in services/phone/recording.ts, a function called
+ * getPresignedPutUrl that took an access key and a secret and returned a plain
+ * URL without touching either. Against a real store all three of the unsigned
+ * ones draw a 403.
+ */
+export async function presignUrl(
+  op: 'get' | 'put',
+  bucket: string,
+  key: string,
+  expiresInSeconds: number,
+  contentType?: string,
+): Promise<string> {
+  const { GetObjectCommand, PutObjectCommand } = await import('@aws-sdk/client-s3');
+  const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+  const s3 = await getObjectStore();
+  const command =
+    op === 'get'
+      ? new GetObjectCommand({ Bucket: bucket, Key: key })
+      : new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType });
+  return getSignedUrl(s3, command, { expiresIn: expiresInSeconds });
+}
+
+/** Every key under a prefix, following continuation tokens. Throws on refusal. */
+export async function listObjectKeys(bucket: string, prefix: string): Promise<string[]> {
+  const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
+  const s3 = await getObjectStore();
+
+  const keys: string[] = [];
+  let token: string | undefined;
+  do {
+    const res = await s3.send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: token }),
+    );
+    for (const item of res.Contents ?? []) if (item.Key) keys.push(item.Key);
+    token = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (token);
+  return keys;
+}

@@ -23,6 +23,12 @@ global:
   #     apps/api/src/config/env.ts, which lets anyone forge a session.
   #   MINIO_ACCESS_KEY / MINIO_SECRET_KEY — object storage. Same story: the
   #     committed default was minioadmin/minioadmin.
+  #   MINIO_ENDPOINT       — where the store is. Not a secret, but listed here
+  #     because it belongs with the two above: the API refuses to boot in
+  #     production without it. Its development default is `localhost`, which in
+  #     a pod is the API container, so an unset value used to send every upload
+  #     to this process instead of the store. Set it alongside MINIO_PORT,
+  #     MINIO_USE_SSL and the bucket names in `env` below.
   #   INTERNAL_API_SECRET  — shared secret for /api/v1/internal/*. The API
   #     refuses to boot in production without it, and rejects internal requests
   #     that do not carry it as x-internal-secret. It must be present because
@@ -158,3 +164,19 @@ env:
   # damage warmup exists to prevent.
   SENDING_IPS: ''
   WARMUP_API_URL: http://forgemsg-api.forgemsg.svc.cluster.local:3001
+
+  # ─── Object storage ────────────────────────────────────────────────────────
+  # Media library, video messages, downloadable assets and the email-event
+  # archive all write here through apps/api/src/lib/object-store.ts.
+  #
+  # MINIO_ENDPOINT is the one that has to be set: its default is `localhost`,
+  # which in a pod is the API container, so an unset value used to point every
+  # upload at this process. The API refuses to boot in production without it.
+  # The credentials come from externalSecretName, not from here.
+  MINIO_ENDPOINT: minio.forgemsg.svc.cluster.local
+  MINIO_PORT: '9000'
+  MINIO_USE_SSL: 'false'
+  AWS_REGION: us-east-1
+  MINIO_BUCKET: forgemsg
+  MINIO_VIDEO_BUCKET: forgemsg-video
+  ASSET_STORAGE_BUCKET: forgemsg-assets
