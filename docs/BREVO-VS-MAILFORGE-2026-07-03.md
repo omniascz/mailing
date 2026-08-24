@@ -119,7 +119,9 @@ Metodika: 5 doménových agentů ověřilo **reálnou implementaci ForgeMsg př�
 
 ## 16. Meetings / booking — ForgeMsg vede
 
-**ForgeMsg ✅:** veřejné booking pages (`/meetings/:slug` + slot computation + book), event types (duration/buffers/notice/max-day/location zoom/meet/teams, single/**round-robin**/collective), availability + overrides, **round-robin team booking** (weighted, fairness v DB), **reálný Google Calendar + Microsoft Graph write-back** (OAuth + refresh + free/busy + zápis eventu + Meet/Teams link), + **Calendly** OAuth + signed webhook. Odpovídá/překonává Brevo Meetings.
+**ForgeMsg ✅:** veřejné booking pages (`/meetings/:slug` + slot computation + book), event types (duration/buffers/notice/max-day/location physical/zoom/teams/custom, single/**round-robin**/collective), availability + overrides, **round-robin team booking** (weighted, fairness v DB), **reálný Google Calendar + Microsoft Graph write-back** (OAuth + refresh + free/busy + zápis eventu), + **Calendly** OAuth + signed webhook.
+
+> Opraveno 2026-08-24: tvrdilo se tu `location zoom/meet/teams` a „+ Meet/Teams link". Google Meet nikdy jako provider nefungoval — `video-links.ts` si kód schůzky vymýšlelo přes `Math.random()` a vracelo neexistující `meet.google.com/…`; option je pryč. Zoom a Teams volají skutečné API, ale jen když jsou nastavené `ZOOM_*` / `MICROSOFT_*`, které žádný deployment nepředává — bez nich se typ události ani nedá založit. Odkaz na schůzku tedy dnes dodá jen `custom` (URL ze systému zákazníka).
 
 ## 17. Landing pages — Brevo vede (MF chybí 🔴)
 

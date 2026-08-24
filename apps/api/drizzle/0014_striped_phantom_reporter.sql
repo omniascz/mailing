@@ -1,0 +1,1 @@
+ALTER TABLE "event_types" ALTER COLUMN "location_type" SET DEFAULT 'physical';

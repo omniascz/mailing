@@ -53,8 +53,17 @@ vi.mock('../../db/schema/booking-pages.js', () => ({
   bookingAvailability: {},
 }));
 vi.mock('../../db/schema/calendar.js', () => ({ bookings: {}, calendarEvents: {} }));
+class FakeAppError extends Error {
+  code: string;
+  constructor(init: { code: string; message: string }) {
+    super(init.message);
+    this.code = init.code;
+  }
+}
 vi.mock('../../lib/app-error.js', () => ({
-  AppError: { notFound: (r = 'Resource') => new Error(`${r} not found`) },
+  AppError: Object.assign(FakeAppError, {
+    notFound: (r = 'Resource') => new Error(`${r} not found`),
+  }),
 }));
 
 describe('createBooking when the video provider fails', () => {
@@ -99,6 +108,63 @@ describe('createBooking when the video provider fails', () => {
       unknown
     >;
     expect(values.location).toBe('https://example.test/fallback');
+    expect(values.status).toBe('confirmed');
+  });
+});
+
+describe('a booking with nowhere to be is refused, not confirmed', () => {
+  beforeEach(() => {
+    createVideoLink.mockReset();
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([eventType]);
+    (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValue([booking]);
+    (mockDb.values as ReturnType<typeof vi.fn>).mockClear();
+  });
+
+  it('refuses when an unconfigured provider leaves no link and there is no fallback', async () => {
+    // The shape that shipped: Zoom answers nothing because ZOOM_* is unset,
+    // the event type has no static location, and the booking is stored
+    // confirmed with meetingUrl null and location null — a confirmation for a
+    // meeting that is nowhere. The slot is blocked and the invitee finds out
+    // at the start of the call.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { ...eventType, locationValue: null },
+    ]);
+    createVideoLink.mockRejectedValue(new Error('Zoom is not configured'));
+
+    const { createBooking } = await import('./index.js');
+    await expect(
+      createBooking('org-1', {
+        eventTypeId: 'et-1',
+        startAt: new Date('2026-09-01T10:00:00Z'),
+        inviteeEmail: 'guest@example.test',
+      } as never),
+    ).rejects.toThrow(/not available right now/);
+
+    expect(
+      (mockDb.values as ReturnType<typeof vi.fn>).mock.calls,
+      'a row was written for a booking that was refused',
+    ).toHaveLength(0);
+  });
+
+  it('a physical event type is unaffected — it never needed a link', async () => {
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { ...eventType, locationType: 'physical', locationValue: 'Kavárna Slavia, Praha' },
+    ]);
+    createVideoLink.mockResolvedValue(null);
+
+    const { createBooking } = await import('./index.js');
+    await createBooking('org-1', {
+      eventTypeId: 'et-1',
+      startAt: new Date('2026-09-01T10:00:00Z'),
+      inviteeEmail: 'guest@example.test',
+    } as never);
+
+    const values = (mockDb.values as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Record<
+      string,
+      unknown
+    >;
+    expect(values.location).toBe('Kavárna Slavia, Praha');
     expect(values.status).toBe('confirmed');
   });
 });
