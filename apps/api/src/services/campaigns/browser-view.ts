@@ -3,16 +3,28 @@
  * received, from a signed `view` token. Stateless: re-renders from the campaign
  * content + contact instead of storing per-recipient HTML.
  *
- * Handles both content shapes: block JSON (via the editor renderer) and the
- * legacy `{ html }` shape (merge-tag substitution only).
+ * Content shapes are resolved by readCampaignContent, the same function the
+ * send path uses, so the archive cannot disagree with the email about which
+ * branch a campaign takes. It disagreed for `{ schema, html }` — the shape the
+ * visual editor writes — because both asked `'blocks' in content` and both got
+ * false.
+ *
+ * Raw `{ html }` still cannot go through the block renderer (see the note at
+ * the bottom), but it does not reach this page unsanitised: it is a browser
+ * page on our own domain, where a `<script>` the customer typed stops being a
+ * tag a mail client ignores and starts executing.
  */
 
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { campaigns, contacts, organizations } from '../../db/schema/index.js';
 import { verifyTrackingToken, createTrackingToken } from '@forgemsg/shared';
-import { renderEmail as renderBlocks, parseMergeTags } from '@forgemsg/editor/render';
-import { emailSchema } from '@forgemsg/editor/schema';
+import {
+  renderEmail as renderBlocks,
+  parseMergeTags,
+  sanitizeUserHtml,
+} from '@forgemsg/editor/render';
+import { readCampaignContent } from '@forgemsg/editor/schema';
 import type { MergeTagContext } from '@forgemsg/editor/render';
 
 const UNSUB_TTL_TS = () => Math.floor(Date.now() / 1000);
@@ -83,18 +95,27 @@ export async function renderCampaignForToken(token: string): Promise<string | nu
 
   const content = (campaign.content ?? {}) as Record<string, unknown>;
 
-  // Block JSON → full editor render.
-  if ('blocks' in content && Array.isArray((content as { blocks?: unknown }).blocks)) {
-    const parsed = emailSchema.safeParse({ preheader: campaign.preheader ?? '', ...content });
-    if (parsed.success) {
-      return renderBlocks(parsed.data, { context: ctx }).html;
-    }
+  // Blocks, or the visual editor's { schema, html } — full editor render.
+  const parsed = readCampaignContent(content, campaign.preheader ?? undefined);
+  if (parsed.schema) {
+    return renderBlocks(parsed.schema, { context: ctx }).html;
+  }
+  if (parsed.error) {
+    console.warn(`[browser-view] ${parsed.shape} content did not parse:`, parsed.error);
   }
 
-  // Legacy { html } → merge-tag substitution only.
+  // Raw { html } → merge tags, then the allowlist.
+  //
+  // Not the block renderer: this shape holds a complete document, and the
+  // allowlist has no `html`, `head`, `body` or `style`, so rendering it as a
+  // code block would drop the whole stylesheet an externally-designed email
+  // depends on. What it does get is the SAME sanitizeUserHtml the code block
+  // runs — one allowlist, not a second opinion — which is what stops a
+  // `<script>` in customer content from executing on our domain. The document
+  // wrapper goes with it; the visible body does not.
   const html = (content as { html?: string }).html;
   if (typeof html === 'string' && html) {
-    return parseMergeTags(html, ctx);
+    return sanitizeUserHtml(parseMergeTags(html, ctx));
   }
 
   return null;

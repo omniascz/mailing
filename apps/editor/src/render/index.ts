@@ -12,6 +12,10 @@ export {
   type MergeFilter,
 } from './merge-tags.js';
 export { evaluateCondition } from './evaluate-condition.js';
+// The allowlist sanitiser the code block runs user HTML through. Exported so
+// the archive page can put raw-HTML campaigns through the SAME one rather than
+// growing a second opinion about what HTML is safe.
+export { sanitizeUserHtml } from './sanitize.js';
 export {
   renderLiquid,
   renderLiquidSync,
