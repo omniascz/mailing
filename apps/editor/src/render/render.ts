@@ -12,6 +12,8 @@ import type {
   VideoBlock,
   CouponBlock,
   SocialBlock,
+  CodeBlock,
+  ShareBlock,
   SpacerBlock,
   TextBlock,
 } from '../schema/blocks.js';
@@ -26,6 +28,8 @@ import {
   type RenderLocale,
 } from './compliance.js';
 import { evaluateCondition } from './evaluate-condition.js';
+import { sanitizeUserHtml } from './sanitize.js';
+import { shareTargets } from './share.js';
 
 /**
  * JSON → responsive HTML email renderer.
@@ -275,6 +279,10 @@ function renderBlock(
       return renderHero(block, schema, ctx, previewAll, links, marketing, locale);
     case 'social':
       return renderSocial(block, ctx, links);
+    case 'code':
+      return renderCode(block, ctx);
+    case 'share':
+      return renderShare(block, ctx, links);
     case 'product':
       return renderProduct(block, ctx, links);
     case 'video':
@@ -301,7 +309,11 @@ function bgAttr(block: Block): string {
 // ---------- leaf blocks ----------
 
 function renderText(block: TextBlock, ctx: MergeTagContext): string {
-  const content = parseMergeTags(block.content, ctx);
+  // Sanitised for the same reason the code block is: this content has always
+  // been embedded unescaped, and the rendered HTML is also what
+  // view-in-browser serves to a browser on our own domain. Merge tags resolve
+  // first, so a contact field carrying markup is covered too.
+  const content = sanitizeUserHtml(parseMergeTags(block.content, ctx));
   const style =
     `font-size:${block.fontSize};font-family:${block.fontFamily};color:${block.color};` +
     `line-height:${block.lineHeight};text-align:${block.textAlign};`;
@@ -371,6 +383,63 @@ function iconFor(type: SocialBlock['networks'][number]['type'], size: number): s
   return `<span style="display:inline-block;width:${size}px;height:${size}px;line-height:${size}px;text-align:center;border-radius:${Math.floor(
     size / 2,
   )}px;background:#111827;color:#ffffff;font-size:${Math.max(10, Math.floor(size / 3))}px;font-weight:600;">${label.charAt(0)}</span>`;
+}
+
+/**
+ * Customer-authored HTML.
+ *
+ * Merge tags ARE parsed. Not a concession: whoever can author a code block can
+ * already author a text block, and text blocks have always resolved tags, so
+ * refusing here would withhold nothing an attacker cannot have — it would only
+ * make the block useless for its actual purpose ("a table the editor cannot
+ * draw, with the customer's name in it"). It also matters for the opt-out:
+ * a literal `{{unsubscribe_url}}` that never resolves would satisfy the
+ * sender-side guard's regex while being no link at all.
+ *
+ * Sanitising AFTER substitution is the order that matters — see sanitize.ts.
+ *
+ * No links are pushed to `links`: the link checker's job is to flag broken
+ * destinations the editor produced, and re-parsing sanitised HTML to find
+ * hrefs would report on text the customer typed by hand.
+ */
+function renderCode(block: CodeBlock, ctx: MergeTagContext): string {
+  const html = sanitizeUserHtml(parseMergeTags(block.html, ctx));
+  if (!html.trim()) return '';
+  return `<tr><td${bgAttr(block)} style="padding:${cellPadding(block)};">${html}</td></tr>`;
+}
+
+/**
+ * Share buttons for the recipient.
+ *
+ * The share target is the campaign's view-in-browser URL: a public, permanent
+ * page that anyone can open, which is the only URL here that makes sense to
+ * hand to a stranger. When it is missing the block renders NOTHING — see
+ * share.ts for why that beats sharing a broken link.
+ */
+function renderShare(block: ShareBlock, ctx: MergeTagContext, links: string[]): string {
+  const targets = shareTargets(block, ctx);
+  if (targets.length === 0) return '';
+
+  const cells = targets
+    .map((t) => {
+      links.push(t.url);
+      return (
+        `<td style="padding:0 8px;">` +
+        `<a href="${escapeAttr(t.url)}" target="_blank" rel="noopener noreferrer" ` +
+        `style="color:${block.color};font-size:${block.fontSize};text-decoration:underline;">` +
+        `${escapeHtml(t.label)}</a></td>`
+      );
+    })
+    .join('');
+
+  const label = block.label.trim()
+    ? `<div style="font-size:${block.fontSize};color:#6b7280;margin-bottom:6px;">` +
+      `${escapeHtml(parseMergeTags(block.label, ctx))}</div>`
+    : '';
+  const inner =
+    `${label}<table role="presentation" border="0" cellpadding="0" cellspacing="0" ` +
+    `style="display:inline-table;"><tr>${cells}</tr></table>`;
+  return `<tr><td${bgAttr(block)} align="${block.align}" style="padding:${cellPadding(block)};">${inner}</td></tr>`;
 }
 
 function renderProduct(block: ProductBlock, ctx: MergeTagContext, links: string[]): string {

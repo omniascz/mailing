@@ -137,6 +137,48 @@ export const spacerBlockSchema = z.object({
 });
 export type SpacerBlock = z.infer<typeof spacerBlockSchema>;
 
+/**
+ * Raw HTML the customer wrote themselves — the escape hatch for anything the
+ * editor has no block for.
+ *
+ * The content is NOT trusted. It is sanitised at render time, in
+ * render/sanitize.ts, against an allowlist; nothing is validated here beyond a
+ * length bound, because a zod schema is the wrong place to decide what HTML is
+ * safe and a second opinion on that question is how the two disagree.
+ */
+export const codeBlockSchema = z.object({
+  ...baseBlockShape,
+  type: z.literal('code'),
+  /** Bounded so one block cannot be the whole message. */
+  html: z.string().max(50_000),
+});
+export type CodeBlock = z.infer<typeof codeBlockSchema>;
+
+/**
+ * Share buttons for the RECIPIENT — "forward this", "post this".
+ *
+ * Not an extension of `social`, which is the sender's own profile links: that
+ * block points AT the sender and its URLs are fixed for the campaign, while
+ * this one points at the campaign and its URL differs per recipient. Merging
+ * them would put two unrelated things behind one type and force every consumer
+ * to branch on a mode flag.
+ */
+export const shareNetworkSchema = z.enum(['email', 'facebook', 'x', 'linkedin', 'whatsapp']);
+export type ShareNetwork = z.infer<typeof shareNetworkSchema>;
+
+export const shareBlockSchema = z.object({
+  ...baseBlockShape,
+  type: z.literal('share'),
+  networks: z.array(shareNetworkSchema).min(1).default(['email', 'facebook', 'x', 'whatsapp']),
+  /** Prefilled subject/title for the share, before merge tags are resolved. */
+  shareText: z.string().max(200).default(''),
+  label: z.string().max(120).default(''),
+  align: z.enum(['left', 'center', 'right']).default('center'),
+  fontSize: z.string().default('13px'),
+  color: z.string().default('#2563eb'),
+});
+export type ShareBlock = z.infer<typeof shareBlockSchema>;
+
 export const socialBlockSchema = z.object({
   ...baseBlockShape,
   type: z.literal('social'),
@@ -276,6 +318,8 @@ export type LeafBlock =
   | DividerBlock
   | SpacerBlock
   | SocialBlock
+  | CodeBlock
+  | ShareBlock
   | ProductBlock
   | VideoBlock
   | CouponBlock
@@ -297,6 +341,8 @@ export const blockSchema: z.ZodType<Block, z.ZodTypeDef, any> = z.lazy(() =>
     dividerBlockSchema,
     spacerBlockSchema,
     socialBlockSchema,
+    codeBlockSchema,
+    shareBlockSchema,
     productBlockSchema,
     videoBlockSchema,
     couponBlockSchema,
@@ -383,6 +429,8 @@ export const BLOCK_TYPES = [
   'columns',
   'hero',
   'social',
+  'code',
+  'share',
   'product',
   'video',
   'coupon',
