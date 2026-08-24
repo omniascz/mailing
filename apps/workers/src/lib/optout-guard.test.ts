@@ -10,10 +10,16 @@ import { fileURLToPath } from 'node:url';
  * footer when the template has none, so no template — existing or future — can
  * produce marketing HTML without an opt-out.
  *
- * It cannot reach one path. A campaign stored as legacy raw `{ html }` skips
+ * It cannot reach one path. A campaign stored as raw `{ html }` skips
  * renderEmail entirely (batch-sender.ts path 2: parseMergeTags on the stored
  * string, straight to the wire). There is no template to fix and no renderer
  * hook to add, so the check has to sit in the sending path.
+ *
+ * That path is now genuinely only raw HTML. It used to catch the visual
+ * editor's `{ schema, html }` too, because the branch above tested
+ * `'blocks' in content` — so this guard was the thing refusing the product's
+ * own campaigns, and its message told the operator they had written a
+ * raw-HTML campaign when they had not.
  *
  * Asserted at source level because the guard lives inside a module that opens
  * Redis connections on import; the behaviour it enforces is one condition, and
@@ -84,7 +90,12 @@ describe('marketing mail with no opt-out is refused by the sender', () => {
     // Without the stream the renderer would default every campaign to
     // marketing, which is safe but would put an opt-out on transactional
     // batches. Without the locale the footer it appends is always English.
-    expect(SRC).toContain('renderBlocks(parsed.data, { context: ctx, utm, stream, locale })');
-    expect(SRC).toContain('renderPlainText(parsed.data, { context: ctx, stream, locale })');
+    // Matched on the options object rather than the whole call, so renaming the
+    // local that holds the schema does not read as the stream being dropped.
+    // It did once: the schema now comes from readCampaignContent and is called
+    // `parsed.schema`, and this assertion failed on the name while the
+    // behaviour was unchanged.
+    expect(SRC).toContain('renderBlocks(parsed.schema, { context: ctx, utm, stream, locale })');
+    expect(SRC).toContain('renderPlainText(parsed.schema, { context: ctx, stream, locale })');
   });
 });
