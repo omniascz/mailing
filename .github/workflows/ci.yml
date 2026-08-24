@@ -126,6 +126,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      MINIO_ENDPOINT: 127.0.0.1
+      MINIO_PORT: '9000'
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: forgemsg-itest
       # 127.0.0.1, not localhost: postgres-js in the app's connection pool
       # resolves `localhost` to ::1 on some hosts and then times out against a
       # service published on IPv4. Reproduced locally as
@@ -165,6 +170,23 @@ jobs:
       # package has to be built first. Without this the run dies with
       # `Cannot find package '@forgemsg/shared/redis'`.
       - run: pnpm turbo build --filter=@forgemsg/shared
+      # A step rather than a service container: the official image needs
+      # `server /data` as its command, and service containers cannot pass one.
+      # bitnami/minio, which can run without arguments, no longer publishes a
+      # public `latest`.
+      #
+      # The archive writes email_events to object storage and then deletes them
+      # from Postgres, so without a store here that path could only be covered
+      # by not covering it — which is how it shipped an unsigned PUT whose
+      # response nobody read.
+      - name: Start MinIO
+        run: |
+          docker run -d --name ci-minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio server /data
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:9000/minio/health/live; then echo "minio up"; exit 0; fi
+            sleep 2
+          done
+          echo "minio did not become healthy"; docker logs ci-minio; exit 1
       - run: pnpm --filter @forgemsg/api db:migrate
       - run: pnpm seed
       # MinIO as a step, not a service: a service container cannot pass a

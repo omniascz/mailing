@@ -9,11 +9,16 @@
  * Workers run this as a nightly BullMQ job (ARCHIVE_CUTOFF_DAYS env, default 30).
  */
 
+import { createHash } from 'node:crypto';
 import { lt, and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/email-events.js';
+import { getObjectStore } from '../../lib/object-store.js';
 
 const BATCH_SIZE = 5_000;
+
+/** NDJSON record separator. */
+const NEWLINE = String.fromCharCode(10);
 
 export interface ArchiveResult {
   orgId: string;
@@ -56,18 +61,31 @@ export async function archiveOldEvents(orgId: string, cutoffDays = 30): Promise<
       byDate.get(day)!.push(row);
     }
 
+    // Upload, read back, and only then delete — one day at a time, so a
+    // failure on the third day cannot take the first two days' rows with it.
+    //
+    // The delete used to be one statement for the whole 5000-row batch, run
+    // after a loop of uploads whose responses were never examined. Checking the
+    // PUT status is necessary and not sufficient: a 200 that stored nothing, or
+    // stored a truncated body, is indistinguishable from success at that point.
+    // So the object is fetched back and its contents compared before the rows
+    // it came from are removed. This costs one GET per file; the alternative
+    // costs the events.
     for (const [day, batch] of byDate) {
       const key = buildS3Key(orgId, day);
-      await uploadNdjson(key, batch);
+      const ndjson = batch.map((r) => JSON.stringify(r)).join(NEWLINE);
+
+      await uploadNdjson(key, ndjson);
+      await verifyArchive(key, ndjson);
+
+      const ids = batch.map((r) => r.id);
+      await db.execute(sql`DELETE FROM email_events WHERE id = ANY(${sql.param(ids)}::uuid[])`);
+
       s3Keys.push(key);
+      totalArchived += batch.length;
+      totalDeleted += batch.length;
     }
 
-    // Delete archived rows
-    const ids = rows.map((r) => r.id);
-    await db.execute(sql`DELETE FROM email_events WHERE id = ANY(${sql.param(ids)}::uuid[])`);
-
-    totalArchived += rows.length;
-    totalDeleted += rows.length;
     hasMore = rows.length === BATCH_SIZE;
   }
 
@@ -139,54 +157,93 @@ function buildS3Key(orgId: string, day: string): string {
   return `archives/email-events/${orgId}/year=${year}/month=${month}/day=${dayStr}/${batchId}.ndjson`;
 }
 
-async function uploadNdjson(key: string, rows: unknown[]): Promise<void> {
-  const endpoint = process.env.MINIO_ENDPOINT ?? 'localhost';
-  const port = process.env.MINIO_PORT ?? '9000';
-  const bucket = process.env.MINIO_BUCKET ?? 'forgemsg-recordings';
-  const useSSL = process.env.MINIO_USE_SSL === 'true';
-  const scheme = useSSL ? 'https' : 'http';
+function archiveBucket(): string {
+  return process.env.MINIO_BUCKET ?? 'forgemsg-recordings';
+}
 
-  const ndjson = rows.map((r) => JSON.stringify(r)).join('\n');
-  const body = Buffer.from(ndjson, 'utf8');
+/**
+ * Write the file, signed.
+ *
+ * This built a raw `fetch` PUT with no AWS signature. A real MinIO answers 403
+ * to that — measured — and the response was not examined, so the caller went
+ * straight on to delete the rows it had just failed to store. The SDK signs,
+ * and throws on any non-2xx, so there is no status left to forget to check.
+ */
+async function uploadNdjson(key: string, ndjson: string): Promise<void> {
+  const { PutObjectCommand } = await import('@aws-sdk/client-s3');
+  const s3 = await getObjectStore();
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: archiveBucket(),
+      Key: key,
+      Body: Buffer.from(ndjson, 'utf8'),
+      ContentType: 'application/x-ndjson',
+    }),
+  );
+}
 
-  const res = await fetch(`${scheme}://${endpoint}:${port}/${bucket}/${key}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/x-ndjson',
-      'Content-Length': String(body.byteLength),
-    },
-    body,
-  });
+/**
+ * Read the file back and prove it is the file we sent.
+ *
+ * A successful PUT is a claim about a request, not about what the store holds.
+ * A bucket with a lifecycle rule, a proxy that swallowed the body, a
+ * quota-truncated write — each returns 200 and leaves something else, or
+ * nothing, behind. Since the next statement destroys the only other copy, the
+ * check has to be on the stored bytes: same length, same SHA-256, same line
+ * count. An empty object fails all three, which is the case worth naming
+ * because it is the one a silent failure most often produces.
+ */
+export async function verifyArchive(key: string, expected: string): Promise<void> {
+  const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+  const s3 = await getObjectStore();
 
-  // The response was ignored, and the caller deletes the rows from Postgres on
-  // the next statement. A 403 from bad credentials or a 404 from a missing
-  // bucket both resolve happily, so a misconfigured bucket meant the events
-  // were destroyed and never written anywhere. Nothing about that is
-  // recoverable, so this throws and the delete never runs.
-  if (!res.ok) {
+  const res = await s3.send(new GetObjectCommand({ Bucket: archiveBucket(), Key: key }));
+  const stored = await res.Body?.transformToString('utf8');
+
+  if (stored === undefined || stored.length === 0) {
     throw new Error(
-      `Archive upload failed: ${res.status} ${res.statusText} for ${key}. ` +
+      `Archive verification failed for ${key}: the stored object is empty. ` +
+        'Rows left in place rather than deleted.',
+    );
+  }
+
+  const expectedLines = expected.split(NEWLINE).length;
+  const storedLines = stored.split(NEWLINE).length;
+  if (storedLines !== expectedLines) {
+    throw new Error(
+      `Archive verification failed for ${key}: stored ${storedLines} lines, sent ${expectedLines}. ` +
+        'Rows left in place rather than deleted.',
+    );
+  }
+
+  const digest = (v: string) => createHash('sha256').update(v, 'utf8').digest('hex');
+  if (digest(stored) !== digest(expected)) {
+    throw new Error(
+      `Archive verification failed for ${key}: the stored bytes differ from what was sent. ` +
         'Rows left in place rather than deleted.',
     );
   }
 }
 
 async function listS3Keys(prefix: string): Promise<string[]> {
-  const endpoint = process.env.MINIO_ENDPOINT ?? 'localhost';
-  const port = process.env.MINIO_PORT ?? '9000';
-  const bucket = process.env.MINIO_BUCKET ?? 'forgemsg-recordings';
-  const useSSL = process.env.MINIO_USE_SSL === 'true';
-  const scheme = useSSL ? 'https' : 'http';
+  // Also unsigned before, and it swallowed the 403 into an empty list — so
+  // "this org has no archives" and "we are not allowed to look" read the same.
+  const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
+  const s3 = await getObjectStore();
 
-  // MinIO S3-compatible ListObjectsV2
-  const res = await fetch(
-    `${scheme}://${endpoint}:${port}/${bucket}?list-type=2&prefix=${encodeURIComponent(prefix)}`,
-  ).catch(() => null);
-  if (!res?.ok) return [];
-
-  const xml = await res.text();
   const keys: string[] = [];
-  const matches = xml.matchAll(/<Key>([^<]+)<\/Key>/g);
-  for (const m of matches) if (m[1]) keys.push(m[1]);
+  let token: string | undefined;
+  do {
+    const res = await s3.send(
+      new ListObjectsV2Command({
+        Bucket: archiveBucket(),
+        Prefix: prefix,
+        ContinuationToken: token,
+      }),
+    );
+    for (const item of res.Contents ?? []) if (item.Key) keys.push(item.Key);
+    token = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (token);
+
   return keys;
 }
