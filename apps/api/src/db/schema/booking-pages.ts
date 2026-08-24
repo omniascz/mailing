@@ -59,8 +59,16 @@ export const eventTypes = pgTable(
     /** Furthest-out day that can be booked (days from today, 0 = unlimited) */
     bookingWindowDays: integer('booking_window_days').notNull().default(60),
 
-    /** Location / meeting platform: physical | zoom | google_meet | teams | custom */
-    locationType: varchar('location_type', { length: 32 }).notNull().default('google_meet'),
+    /**
+     * Location / meeting platform: physical | zoom | teams | custom.
+     *
+     * The default was 'google_meet', a provider that no longer exists — this
+     * file went on naming it after the option was withdrawn for fabricating
+     * links. Unreachable through the API, whose Zod schema defaults to
+     * 'physical' and spreads the parsed body over the insert, but a raw insert
+     * from a future importer would have taken it.
+     */
+    locationType: varchar('location_type', { length: 32 }).notNull().default('physical'),
     /** Static location string or override URL */
     locationValue: varchar('location_value', { length: 512 }),
 
