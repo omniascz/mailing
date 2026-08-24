@@ -4,8 +4,15 @@
 
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { workflows, workflowRuns, type Workflow, type WorkflowRun } from '../../db/schema/index.js';
+import {
+  workflows,
+  workflowRuns,
+  type Workflow,
+  type WorkflowNode,
+  type WorkflowRun,
+} from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { getNodeBreakdown, type WorkflowNodeBreakdown } from './node-stats.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -190,6 +197,31 @@ export async function getWorkflowAnalytics(
     totalRevenue,
     revenuePerRecipient: total > 0 ? totalRevenue / total : 0,
   };
+}
+
+/**
+ * Per-step breakdown: how many contacts reached each node, what happened to
+ * them there, and how many are sitting on it right now.
+ *
+ * Separate from getWorkflowAnalytics rather than folded into it: that function
+ * answers "how is this flow doing" from workflow_runs alone and works for every
+ * workflow ever run, while this one reads counters that only exist for runs
+ * since the counters did. Merging them would put a number that means "we did
+ * not measure" next to numbers that mean "we measured zero".
+ */
+export async function getWorkflowNodeAnalytics(
+  workflowId: string,
+  orgId: string,
+): Promise<WorkflowNodeBreakdown> {
+  // Org scope: this throws notFound for another organisation's id, and it is
+  // the only lookup — nothing below runs for a workflow the caller does not own.
+  const workflow = await getWorkflow(workflowId, orgId);
+  return getNodeBreakdown(
+    orgId,
+    workflowId,
+    workflow.nodes as WorkflowNode[],
+    workflow.nodeStatsSince,
+  );
 }
 
 export async function getWorkflowRun(runId: string, orgId: string): Promise<WorkflowRun> {

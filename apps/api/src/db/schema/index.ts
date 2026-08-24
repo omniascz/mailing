@@ -25,6 +25,7 @@ export * from './campaign-alerts.js';
 export * from './inbox-preview.js';
 export * from './ai-usage.js';
 export * from './workflows.js';
+export * from './workflow-node-stats.js';
 export * from './lead-scoring.js';
 export * from './webhooks.js';
 export * from './smtp-credentials.js';

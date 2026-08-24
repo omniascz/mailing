@@ -82,6 +82,19 @@ export const workflows = pgTable(
     /** Trigger-specific configuration */
     triggerConfig: jsonb('trigger_config').$type<Record<string, unknown>>().notNull().default({}),
 
+    /**
+     * When per-step counters started being written for this workflow.
+     *
+     * Set once, before the first run row is inserted — which is what makes it
+     * exact. Comparing a run against the first counter's own timestamp cannot
+     * work: the run that starts the counters is created milliseconds before
+     * them, so it would report itself as untracked.
+     *
+     * Null means no run has been recorded since step tracking existed, and the
+     * report says "no data" instead of showing zeros.
+     */
+    nodeStatsSince: timestamp('node_stats_since', { withTimezone: true }),
+
     /** Stats — updated as runs complete */
     totalRuns: integer('total_runs').notNull().default(0),
     completedRuns: integer('completed_runs').notNull().default(0),

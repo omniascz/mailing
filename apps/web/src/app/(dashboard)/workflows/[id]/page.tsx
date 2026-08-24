@@ -18,6 +18,29 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
 
+interface NodeStat {
+  nodeId: string;
+  type: string;
+  /** False when nothing was ever measured for this step — not the same as 0. */
+  recorded: boolean;
+  entered: number;
+  advanced: number;
+  branchedTrue: number;
+  branchedFalse: number;
+  waited: number;
+  resumed: number;
+  endedHere: number;
+  failedHere: number;
+  currentlyHere: number;
+}
+
+interface NodeBreakdown {
+  hasData: boolean;
+  runsPredatingTracking: number;
+  trackingSince: string | null;
+  nodes: NodeStat[];
+}
+
 interface WorkflowNode {
   id: string;
   type: string;
@@ -135,8 +158,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function WorkflowDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const wf = await apiFetch<Workflow | null>(`/api/v1/workflows/${id}`, { fallback: null });
+  const [wf, steps] = await Promise.all([
+    apiFetch<Workflow | null>(`/api/v1/workflows/${id}`, { fallback: null }),
+    apiFetch<NodeBreakdown | null>(`/api/v1/workflows/${id}/node-analytics`, { fallback: null }),
+  ]);
   if (!wf) notFound();
+
+  const statByNode = new Map((steps?.nodes ?? []).map((n) => [n.nodeId, n]));
 
   const ordered = linearize(wf.nodes, wf.edges);
   const success = wf.totalRuns > 0 ? ((wf.completedRuns / wf.totalRuns) * 100).toFixed(1) : '—';
@@ -200,6 +228,24 @@ export default async function WorkflowDetailPage({ params }: { params: Promise<{
             Read-only view. Open the editor to change the canvas — branching shown as parallel
             edges.
           </CardDescription>
+          {steps && !steps.hasData ? (
+            <p className="mt-3 rounded-md bg-secondary-50 px-3 py-2 text-xs text-secondary-600">
+              No step data for this workflow. Per-step counting starts the first time a contact
+              enters it — runs from before that are not counted, and are shown as “—” rather than
+              zero.
+            </p>
+          ) : null}
+          {steps?.hasData && steps.runsPredatingTracking > 0 ? (
+            <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {steps.runsPredatingTracking.toLocaleString('cs-CZ')} earlier{' '}
+              {steps.runsPredatingTracking === 1 ? 'run is' : 'runs are'} missing from these numbers
+              — they finished before step counting began
+              {steps.trackingSince
+                ? ` on ${new Date(steps.trackingSince).toLocaleDateString('cs-CZ')}`
+                : ''}
+              .
+            </p>
+          ) : null}
         </CardHeader>
         <CardContent>
           {ordered.length === 0 ? (
@@ -219,7 +265,7 @@ export default async function WorkflowDetailPage({ params }: { params: Promise<{
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </div>
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-secondary-900">
                         <span className="mr-2 text-secondary-400">{idx + 1}.</span>
                         {title}
@@ -228,6 +274,7 @@ export default async function WorkflowDetailPage({ params }: { params: Promise<{
                         <p className="mt-0.5 text-xs text-secondary-500 line-clamp-2">{subtitle}</p>
                       ) : null}
                     </div>
+                    <StepNumbers stat={statByNode.get(node.id)} />
                   </li>
                 );
               })}
@@ -238,6 +285,62 @@ export default async function WorkflowDetailPage({ params }: { params: Promise<{
           </p>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/**
+ * The per-step numbers, deliberately as separate figures.
+ *
+ * "Entered" and "moved on" are the two that matter at a glance; the rest are
+ * the three unrelated ways a contact stops being at a step, and they are shown
+ * apart because adding them together would read as a loss where there is none.
+ * A step nobody has reached shows “—”: a zero here would claim a measurement
+ * that was never taken.
+ */
+function StepNumbers({ stat }: { stat?: NodeStat }) {
+  if (!stat?.recorded) {
+    return (
+      <div className="shrink-0 text-right">
+        <p className="text-xs text-secondary-400" title="Nothing recorded for this step yet">
+          —
+        </p>
+      </div>
+    );
+  }
+
+  const parts: Array<{ label: string; value: number; tone?: 'bad' | 'muted' }> = [
+    { label: 'entered', value: stat.entered },
+    { label: 'moved on', value: stat.advanced },
+  ];
+  if (stat.branchedTrue || stat.branchedFalse) {
+    parts.push({ label: 'yes', value: stat.branchedTrue, tone: 'muted' });
+    parts.push({ label: 'no', value: stat.branchedFalse, tone: 'muted' });
+  }
+  if (stat.currentlyHere) parts.push({ label: 'here now', value: stat.currentlyHere });
+  if (stat.waited) parts.push({ label: 'waited', value: stat.waited, tone: 'muted' });
+  if (stat.endedHere) parts.push({ label: 'ended here', value: stat.endedHere, tone: 'muted' });
+  if (stat.failedHere) parts.push({ label: 'failed', value: stat.failedHere, tone: 'bad' });
+
+  return (
+    <div className="flex shrink-0 flex-wrap justify-end gap-x-4 gap-y-1 text-right">
+      {parts.map((p) => (
+        <div key={p.label} className="min-w-[4.5rem]">
+          <p
+            className={
+              'text-sm font-semibold tabular-nums ' +
+              (p.tone === 'bad'
+                ? 'text-rose-600'
+                : p.tone === 'muted'
+                  ? 'text-secondary-500'
+                  : 'text-secondary-900')
+            }
+          >
+            {p.value.toLocaleString('cs-CZ')}
+          </p>
+          <p className="text-[11px] uppercase tracking-wide text-secondary-400">{p.label}</p>
+        </div>
+      ))}
     </div>
   );
 }
