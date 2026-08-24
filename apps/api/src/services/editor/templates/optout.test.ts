@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderEmail } from '@forgemsg/editor/render';
-import type { EmailSchema } from '@forgemsg/editor/schema';
+import { BLOCK_TYPES, type EmailSchema } from '@forgemsg/editor/schema';
 import { TEMPLATES, localeOf } from './index.js';
 
 /**
@@ -75,21 +75,13 @@ describe('every built-in template', () => {
     // Two templates used to carry a 'countdown' block. The renderer has no
     // branch for it, so the urgency device those templates are built around was
     // invisible in every inbox. Both were rebuilt; this keeps them rebuilt.
-    const KNOWN = new Set([
-      'text',
-      'image',
-      'button',
-      'divider',
-      'spacer',
-      'social',
-      'product',
-      'video',
-      'coupon',
-      'footer',
-      'columns',
-      'hero',
-      'dynamic',
-    ]);
+    // Taken from the schema rather than written out here. The hand-written
+    // list went stale the moment PR #55 added `share`, and reported a template
+    // using a block the renderer draws perfectly well. BLOCK_TYPES is the same
+    // union `renderBlock` switches on exhaustively, so it cannot drift —
+    // and `countdown`, the type this test exists for, is absent from it for
+    // exactly the reason the renderer has no branch: it is not a block type.
+    const KNOWN = new Set<string>(BLOCK_TYPES);
     const unknown: string[] = [];
     const walk = (n: unknown, id: string): void => {
       if (Array.isArray(n)) return n.forEach((x) => walk(x, id));

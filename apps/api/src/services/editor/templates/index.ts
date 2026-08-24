@@ -11,6 +11,7 @@
 import { EXTENDED_TEMPLATES } from './extended.js';
 import { EXTENDED_TEMPLATES_2 } from './extended2.js';
 import { CZECH_TEMPLATES } from './czech.js';
+import { CZECH_TEMPLATES_2 } from './czech-2.js';
 
 export type TemplateCategory =
   | 'newsletter'
@@ -1004,6 +1005,7 @@ export const TEMPLATES: TemplateMeta[] = [
 TEMPLATES.push(...EXTENDED_TEMPLATES);
 TEMPLATES.push(...EXTENDED_TEMPLATES_2);
 TEMPLATES.push(...CZECH_TEMPLATES);
+TEMPLATES.push(...CZECH_TEMPLATES_2);
 
 // ─── Thumbnails ─────────────────────────────────────────────────────────────────
 
