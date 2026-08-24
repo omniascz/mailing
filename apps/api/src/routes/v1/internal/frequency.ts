@@ -8,7 +8,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { checkFrequencyCap } from '../../../services/frequency-capping/index.js';
+import { checkFrequencyCap, recordSend } from '../../../services/frequency-capping/index.js';
 import { canSend as smartCanSend } from '../../../services/smart-sending/index.js';
 
 // FrequencyChannel in service excludes 'all' (that's a rule-level value, not a
@@ -49,6 +49,39 @@ const internalFrequencyRoutes: FastifyPluginAsync = async (app) => {
 
       const capped = results.filter((id): id is string => id !== null);
       return reply.send({ data: { capped } });
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/frequency/record
+   *
+   * The write half of the cap, and until now it had no route at all.
+   * batch-sender has always POSTed here after a successful hand-off
+   * (batch-sender.ts, recordFrequencySend) — against a path nothing served.
+   * fetch does not reject on 404, so its try/catch never ran and nothing was
+   * ever logged: the send looked recorded.
+   *
+   * The consequence was not a missing statistic. checkFrequencyCap counts
+   * members of the Redis sorted set that recordSend writes, and the only other
+   * caller of recordSend in the repo is its own unit test — so the set was
+   * always empty, and the frequency cap has never capped anything.
+   */
+  app.post(
+    '/api/v1/internal/frequency/record',
+    {
+      schema: { tags: ['Internal'], summary: 'Record one send against the frequency cap' },
+    },
+    async (req, reply) => {
+      const body = z
+        .object({
+          orgId: z.string().uuid(),
+          contactId: z.string().uuid(),
+          channel: channelEnum,
+        })
+        .parse(req.body);
+
+      await recordSend({ orgId: body.orgId, contactId: body.contactId, channel: body.channel });
+      return reply.send({ data: { recorded: true } });
     },
   );
 };

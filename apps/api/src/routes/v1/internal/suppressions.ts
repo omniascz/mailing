@@ -41,6 +41,66 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
       return reply.send({ data: { suppressed } });
     },
   );
+
+  /**
+   * POST /api/v1/internal/suppressions
+   *
+   * The write half, and it had no route. mta-sender calls this the moment the
+   * MTA reports a hard bounce (mta-sender.ts, addToSuppressionList) — against a
+   * path nothing served. fetch does not reject on 404, so even its
+   * console.error never ran.
+   *
+   * So hard bounces were never suppressed. The contact is marked bounced on the
+   * contacts row by a separate call, but the suppression list — the thing the
+   * send path actually consults through check-batch above — never learned about
+   * the address, and the next campaign tried it again. Repeatedly mailing
+   * hard-bounced addresses is how sending reputation is lost.
+   *
+   * Idempotent: the same address suppressed twice for the same reason is one
+   * row, because a bounce can be reported more than once for one message.
+   */
+  app.post(
+    '/api/v1/internal/suppressions',
+    {
+      schema: { tags: ['Internal'], summary: 'Suppress an address for this org' },
+    },
+    async (req, reply) => {
+      const body = z
+        .object({
+          orgId: z.string().uuid(),
+          email: z.string().email(),
+          reason: z.enum([
+            'hard_bounce',
+            'complaint',
+            'manual',
+            'unsubscribe',
+            'block',
+            'invalid_email',
+          ]),
+        })
+        .parse(req.body);
+
+      const email = body.email.toLowerCase();
+      const existing = await db
+        .select({ id: suppressions.id })
+        .from(suppressions)
+        .where(
+          and(
+            eq(suppressions.orgId, body.orgId),
+            eq(suppressions.email, email),
+            eq(suppressions.reason, body.reason),
+          ),
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        return reply.send({ data: { suppressed: true, created: false } });
+      }
+
+      await db.insert(suppressions).values({ orgId: body.orgId, email, reason: body.reason });
+      return reply.send({ data: { suppressed: true, created: true } });
+    },
+  );
 };
 
 export default internalSuppressionsRoutes;
