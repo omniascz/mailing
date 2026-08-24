@@ -126,11 +126,25 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      # Uploads go here. The bucket and its public-read policy are created by
+      # the suite itself, so a bare `minio/minio server /data` is enough. Public
+      # read is the property under test: a mail client fetches with no session.
+      #
+      # ONE block, and it has to stay one. These five keys were declared TWICE in
+      # this same `env:` mapping, with two different bucket names. A parser that
+      # tolerates duplicate keys takes the last one silently; GitHub rejects the
+      # whole file, and then ci.yml is not a workflow at all - no PR gets checks
+      # and nothing says why. That is what happened, and it is why the names are
+      # reconciled here rather than appended below.
+      #
+      # One bucket serves both suites: archive-roundtrip and media-upload each
+      # create it if missing and tolerate "already exists", and both read this
+      # variable, so they cannot disagree about the name.
       MINIO_ENDPOINT: 127.0.0.1
       MINIO_PORT: '9000'
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      MINIO_BUCKET: forgemsg-itest
+      MINIO_BUCKET: forgemsg
       # 127.0.0.1, not localhost: postgres-js in the app's connection pool
       # resolves `localhost` to ::1 on some hosts and then times out against a
       # service published on IPv4. Reproduced locally as
@@ -149,14 +163,6 @@ jobs:
       # and 12 cases fail — not on the behaviour they test, but on the header.
       # workers-integration has always set it; this job was simply missed.
       INTERNAL_API_SECRET: integration-only-internal-secret-32-chars
-      # Uploads go here. The bucket and its public-read policy are created by
-      # the suite itself, so a bare `minio/minio server /data` is enough. Public
-      # read is the property under test: a mail client fetches with no session.
-      MINIO_ENDPOINT: 127.0.0.1
-      MINIO_PORT: 9000
-      MINIO_BUCKET: forgemsg
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
