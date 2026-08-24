@@ -76,6 +76,34 @@ export function substituteMergeTags(
 }
 
 /**
+ * Remove links whose destination did not resolve.
+ *
+ * substituteMergeTags leaves an unknown tag literal — `{{cart_url}}` stays
+ * `{{cart_url}}` — which is defensible in body copy, where a reader can see
+ * something went wrong, and indefensible inside an href. Six of the eight
+ * anchors in the seeded ticketing workflows point at a tag, and four of those
+ * tags are carried only by events the customer's own system fires, so they are
+ * routinely absent. What went out was
+ * `<a href="{{cart_url}}">Dokončit objednávku →</a>`: a relative link to a path
+ * of that literal name, which the click tracker then rewrites into a
+ * respectable-looking tracked URL that leads nowhere.
+ *
+ * A dead button is worse than no button. The recipient clicks, nothing
+ * happens, and an email cannot be corrected after it is sent. So the anchor is
+ * dropped and its text kept — the sentence still reads, minus a promise the
+ * template cannot keep.
+ *
+ * Empty hrefs go too, since the other renderer in this repo
+ * (apps/editor/src/render/merge-tags.ts) substitutes an unknown tag with an
+ * empty string and templates move between the two.
+ */
+const UNRESOLVED_HREF = /<a([^>]*)\shref\s*=\s*"(\s*|\{\{[^}]*\}\}\s*)"([^>]*)>([\s\S]*?)<\/a>/gi;
+
+export function dropUnresolvedLinks(html: string): string {
+  return html.replace(UNRESOLVED_HREF, (_match, _before, _href, _after, text: string) => text);
+}
+
+/**
  * Build the merge-tag data carried by a workflow run — the properties the
  * trigger event passed in (onApiEvent). Top-level scalars (URLs/ids from the
  * payload) pass through; nested `event`/`order` objects are flattened into
@@ -183,7 +211,9 @@ async function executeSendEmail(
     campaignId: config.campaignId,
     templateId: config.templateId,
     subject: config.subject ? substituteMergeTags(config.subject, ctx.contact, extra) : undefined,
-    html: config.html ? substituteMergeTags(config.html, ctx.contact, extra) : undefined,
+    html: config.html
+      ? dropUnresolvedLinks(substituteMergeTags(config.html, ctx.contact, extra))
+      : undefined,
     text: config.text ? substituteMergeTags(config.text, ctx.contact, extra) : undefined,
   });
 }

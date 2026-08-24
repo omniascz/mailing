@@ -88,10 +88,12 @@ export async function refreshAllIpBlacklists(): Promise<{
     ips.map((row, i) =>
       db
         .update(dedicatedIps)
-        .set({
-          blacklistCount: results[i]!.totalListings,
-          reputationUpdatedAt: new Date(),
-        })
+        // blacklistCount only. This used to stamp reputationUpdatedAt as well,
+        // which made "we counted DNSBL listings" indistinguishable from "we
+        // computed a reputation score" — and nothing computes the latter, so
+        // the timestamp was the one thing suggesting the 0.00 score meant
+        // something.
+        .set({ blacklistCount: results[i]!.totalListings })
         .where(eq(dedicatedIps.id, row.id)),
     ),
   );

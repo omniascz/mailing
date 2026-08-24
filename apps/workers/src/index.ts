@@ -20,7 +20,7 @@ import { env } from './config/env.js';
 import { startCampaignSplitterWorker } from './jobs/campaign-splitter.js';
 import { startBatchSenderWorker } from './jobs/batch-sender.js';
 import { startMtaSenderWorkers } from './jobs/mta-sender.js';
-import { startArchiveWorker } from './jobs/archive-email-events.js';
+import { startArchiveWorker, scheduleArchive } from './jobs/archive-email-events.js';
 import { startSeoRankPollWorker, scheduleRankPoll } from './jobs/seo-rank-poll.js';
 import { startSocialSchedulerWorker, scheduleSocialJobs } from './jobs/social-scheduler.js';
 import { startInvoiceReminderWorker, scheduleCommerceJobs } from './jobs/invoice-reminder.js';
@@ -76,6 +76,7 @@ const batchSenderTransactional = startBatchSenderWorker(QUEUE_NAMES.BATCH_SENDER
 const batchSenderTriggered = startBatchSenderWorker(QUEUE_NAMES.BATCH_SENDER_TRIGGERED);
 const mtaSenders = startMtaSenderWorkers();
 const archiveWorker = startArchiveWorker();
+scheduleArchive().catch(console.error);
 // SEO rank polling, social publishing and commerce/ads reminders drive
 // beyond-core API routes; started only when those routes exist. See
 // config/env.ts FEATURE_BEYOND_CORE.

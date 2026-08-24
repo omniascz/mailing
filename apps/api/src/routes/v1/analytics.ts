@@ -31,6 +31,7 @@ import { db } from '../../db/client.js';
 import { revenueEvents, campaigns } from '../../db/schema/index.js';
 import { toCsv } from '../../lib/csv.js';
 import { renderPdf } from '../../lib/pdf.js';
+import { isGeoConfigured } from '../../lib/geo.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -249,7 +250,12 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     },
     async (req) => {
       const { id } = idParam.parse(req.params);
-      return { data: await getCampaignGeoStats(id, req.user!.orgId) };
+      // `configured` so the panel can say "GeoIP is not set up" instead of
+      // drawing an empty map that looks like a real, sad result.
+      return {
+        data: await getCampaignGeoStats(id, req.user!.orgId),
+        configured: isGeoConfigured(),
+      };
     },
   );
 

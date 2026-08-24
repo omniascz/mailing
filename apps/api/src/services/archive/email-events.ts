@@ -88,16 +88,23 @@ export async function archiveAllOrgs(cutoffDays = 30): Promise<ArchiveResult[]> 
   );
 
   const results: ArchiveResult[] = [];
+  const failures: string[] = [];
   for (const { id } of orgs ?? []) {
-    const result = await archiveOldEvents(id, cutoffDays).catch((err) => ({
-      orgId: id,
-      rowsArchived: 0,
-      rowsDeleted: 0,
-      s3Keys: [],
-      cutoffDate: new Date(),
-      error: String(err),
-    }));
-    results.push(result as ArchiveResult);
+    try {
+      results.push(await archiveOldEvents(id, cutoffDays));
+    } catch (err) {
+      failures.push(`${id}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  // A failed org used to be pushed back as a row of zeros, which the route then
+  // summed into a cheerful `{ totalArchived: 0 }`. With no storage reachable
+  // that is what every run returned, so the nightly job would have reported
+  // success forever while email_events kept growing.
+  if (failures.length) {
+    throw new Error(
+      `Archive failed for ${failures.length} of ${(orgs ?? []).length} orgs — ${failures.join('; ')}`,
+    );
   }
   return results;
 }
@@ -142,7 +149,7 @@ async function uploadNdjson(key: string, rows: unknown[]): Promise<void> {
   const ndjson = rows.map((r) => JSON.stringify(r)).join('\n');
   const body = Buffer.from(ndjson, 'utf8');
 
-  await fetch(`${scheme}://${endpoint}:${port}/${bucket}/${key}`, {
+  const res = await fetch(`${scheme}://${endpoint}:${port}/${bucket}/${key}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/x-ndjson',
@@ -150,6 +157,18 @@ async function uploadNdjson(key: string, rows: unknown[]): Promise<void> {
     },
     body,
   });
+
+  // The response was ignored, and the caller deletes the rows from Postgres on
+  // the next statement. A 403 from bad credentials or a 404 from a missing
+  // bucket both resolve happily, so a misconfigured bucket meant the events
+  // were destroyed and never written anywhere. Nothing about that is
+  // recoverable, so this throws and the delete never runs.
+  if (!res.ok) {
+    throw new Error(
+      `Archive upload failed: ${res.status} ${res.statusText} for ${key}. ` +
+        'Rows left in place rather than deleted.',
+    );
+  }
 }
 
 async function listS3Keys(prefix: string): Promise<string[]> {
