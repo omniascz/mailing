@@ -125,6 +125,15 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports: ['9000:9000']
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     env:
       # 127.0.0.1, not localhost: postgres-js in the app's connection pool
       # resolves `localhost` to ::1 on some hosts and then times out against a
@@ -144,6 +153,14 @@ jobs:
       # and 12 cases fail — not on the behaviour they test, but on the header.
       # workers-integration has always set it; this job was simply missed.
       INTERNAL_API_SECRET: integration-only-internal-secret-32-chars
+      # Uploads go here. `:download` on MINIO_DEFAULT_BUCKETS makes the bucket
+      # anonymously readable, which is the property the suite asserts: a mail
+      # client fetches the image with no session.
+      MINIO_ENDPOINT: 127.0.0.1
+      MINIO_PORT: 9000
+      MINIO_BUCKET: forgemsg
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -159,6 +176,22 @@ jobs:
       - run: pnpm turbo build --filter=@forgemsg/shared
       - run: pnpm --filter @forgemsg/api db:migrate
       - run: pnpm seed
+      # MinIO as a step, not a service: a service container cannot pass a
+      # command, and minio/minio needs `server /data`. The media upload suite
+      # writes real bytes and reads them back over plain HTTP the way a mail
+      # client does — mocking the store would leave the one thing that path
+      # exists for untested. The bucket and its public-read policy are created
+      # by the suite itself, so this needs no extra setup.
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data
+          for i in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:9000/minio/health/live && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:9000/minio/health/live
       - run: pnpm --filter @forgemsg/api test:integration
 
   workers-integration:

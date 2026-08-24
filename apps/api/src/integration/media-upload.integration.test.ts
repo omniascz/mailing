@@ -43,6 +43,48 @@ async function storeIsUp(): Promise<boolean> {
   }
 }
 
+/**
+ * Create the bucket and make it anonymously readable.
+ *
+ * Done here rather than in the CI workflow so the suite needs no setup to run
+ * anywhere — a bare `minio/minio server /data` is enough, locally and in CI.
+ * Public read is not a convenience: it is the property under test, because an
+ * email client fetches the image with no session.
+ */
+async function ensureBucket(): Promise<void> {
+  const { bucket } = storageEndpoint();
+  const { host, port, useSsl } = storageEndpoint();
+  const { S3Client, CreateBucketCommand, PutBucketPolicyCommand } =
+    await import('@aws-sdk/client-s3');
+  const s3 = new S3Client({
+    endpoint: `${useSsl ? 'https' : 'http'}://${host}:${port}`,
+    region: process.env.AWS_REGION ?? 'us-east-1',
+    credentials: {
+      accessKeyId: process.env.MINIO_ACCESS_KEY ?? 'minioadmin',
+      secretAccessKey: process.env.MINIO_SECRET_KEY ?? 'minioadmin',
+    },
+    forcePathStyle: true,
+  });
+  // Already there on a re-run; that is not an error.
+  await s3.send(new CreateBucketCommand({ Bucket: bucket })).catch(() => undefined);
+  await s3.send(
+    new PutBucketPolicyCommand({
+      Bucket: bucket,
+      Policy: JSON.stringify({
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: { AWS: ['*'] },
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${bucket}/*`],
+          },
+        ],
+      }),
+    }),
+  );
+}
+
 let haveStore = false;
 
 const png = (w: number, h: number) =>
@@ -101,6 +143,7 @@ async function upload(
 
 beforeAll(async () => {
   haveStore = await storeIsUp();
+  if (haveStore) await ensureBucket();
   app = await createTestApp();
   await app.ready();
   session = await login(app);
