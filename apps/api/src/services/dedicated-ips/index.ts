@@ -399,7 +399,17 @@ export async function assignIpToSubaccount(
 export interface SubaccountIpReputation {
   subaccountId: string;
   ipCount: number;
-  avgReputation: number;
+  /** How many of those IPs have a reputation anything ever computed. */
+  measuredIpCount: number;
+  /**
+   * null when nothing has measured a single one of this subaccount's IPs,
+   * which is every subaccount today: updateReputation is the only writer of
+   * reputation_score and it has no caller. The inputs are not there to give it
+   * — email_events carries no sending-IP column, so a bounce or a complaint
+   * cannot be attributed to an IP at all. See the reputation note in
+   * docs/audit/UNWIRED-2026-08-19.md.
+   */
+  avgReputation: number | null;
   totalSentToday: number;
 }
 
@@ -408,13 +418,24 @@ export interface SubaccountIpReputation {
  * IPs with a null subaccountId (used by the parent itself) are excluded.
  */
 export function summarizeSubaccountReputation(
-  rows: Array<{ subaccountId: string | null; reputationScore: string | null; todaySent: number }>,
+  rows: Array<{
+    subaccountId: string | null;
+    reputationScore: string | null;
+    reputationUpdatedAt?: Date | null;
+    todaySent: number;
+  }>,
 ): SubaccountIpReputation[] {
-  const by = new Map<string, { sum: number; n: number; sent: number }>();
+  const by = new Map<string, { sum: number; measured: number; n: number; sent: number }>();
   for (const r of rows) {
     if (!r.subaccountId) continue;
-    const s = by.get(r.subaccountId) ?? { sum: 0, n: 0, sent: 0 };
-    s.sum += Number(r.reputationScore ?? 0);
+    const s = by.get(r.subaccountId) ?? { sum: 0, measured: 0, n: 0, sent: 0 };
+    // Only scores something actually computed. Averaging the untouched default
+    // produced a confident 0.00 for every subaccount — a number that reads as
+    // "measured, and bad" when it means "never measured".
+    if (r.reputationUpdatedAt != null && r.reputationScore != null) {
+      s.sum += Number(r.reputationScore);
+      s.measured += 1;
+    }
     s.n += 1;
     s.sent += r.todaySent ?? 0;
     by.set(r.subaccountId, s);
@@ -423,7 +444,8 @@ export function summarizeSubaccountReputation(
     .map(([subaccountId, s]) => ({
       subaccountId,
       ipCount: s.n,
-      avgReputation: s.n ? Math.round((s.sum / s.n) * 100) / 100 : 0,
+      measuredIpCount: s.measured,
+      avgReputation: s.measured ? Math.round((s.sum / s.measured) * 100) / 100 : null,
       totalSentToday: s.sent,
     }))
     .sort((a, b) => b.ipCount - a.ipCount || a.subaccountId.localeCompare(b.subaccountId));
@@ -437,6 +459,7 @@ export async function listSubaccountIpReputation(
     .select({
       subaccountId: dedicatedIps.subaccountId,
       reputationScore: dedicatedIps.reputationScore,
+      reputationUpdatedAt: dedicatedIps.reputationUpdatedAt,
       todaySent: dedicatedIps.todaySent,
     })
     .from(dedicatedIps)
