@@ -2,6 +2,7 @@ import { ImageIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { apiFetch } from '@/lib/api';
 import { EditImageButton } from './edit-image-button';
+import { UploadButton } from './upload-button';
 
 interface MediaAsset {
   id: string;
@@ -31,12 +32,15 @@ export default async function MediaPage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="mb-8">
-        <h1 className="text-2xl font-semibold text-secondary-900">Media library</h1>
-        <p className="mt-1 text-sm text-secondary-500">
-          Images and assets used across campaigns and templates. Editing one saves a new copy; the
-          original stays where campaigns already point at it.
-        </p>
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-secondary-900">Media library</h1>
+          <p className="mt-1 text-sm text-secondary-500">
+            Images and assets used across campaigns and templates. Editing one saves a new copy; the
+            original stays where campaigns already point at it.
+          </p>
+        </div>
+        <UploadButton />
       </header>
 
       {assets.length === 0 ? (
@@ -45,8 +49,12 @@ export default async function MediaPage() {
             <ImageIcon className="mx-auto h-8 w-8 text-secondary-300" aria-hidden="true" />
             <p className="mt-3 text-sm font-medium text-secondary-900">No media yet</p>
             <p className="mt-1 text-sm text-secondary-500">
-              Uploads from the editor and campaign builder appear here.
+              Nahrajte obrázek a použijte ho v kampani nebo v šabloně. Soubory ukládáme u nás, takže
+              se po odeslání kampaně nezmění.
             </p>
+            <div className="mt-4 flex justify-center">
+              <UploadButton />
+            </div>
           </CardContent>
         </Card>
       ) : (
