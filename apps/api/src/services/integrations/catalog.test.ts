@@ -20,6 +20,17 @@ describe('integration catalog', () => {
     expect(ecom.every((i) => i.category === 'ecommerce')).toBe(true);
   });
 
+  it('lists Google Analytics without claiming a connection it does not make', () => {
+    const ga = INTEGRATION_CATALOG.find((i) => i.id === 'google_analytics');
+    expect(ga, 'Google Analytics is missing from the catalog').toBeTruthy();
+    // `built_in`, not `oauth2`: nothing is sent to Google and no account is
+    // linked. Advertising OAuth here would promise a data flow that neither
+    // this product nor Mailchimp's equivalent performs.
+    expect(ga!.auth).toBe('built_in');
+    expect(ga!.description).toMatch(/UTM/);
+    expect(ga!.description).toMatch(/nothing is sent to Google/i);
+  });
+
   it('includes the Zapier bridge and REST API', () => {
     const ids = INTEGRATION_CATALOG.map((i) => i.id);
     expect(ids).toContain('zapier');

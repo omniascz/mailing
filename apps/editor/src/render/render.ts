@@ -203,7 +203,7 @@ export function renderEmail(schema: EmailSchema, opts: RenderOptions = {}): Rend
 </html>`;
 
   // UTM auto-append: rewrite href attrs for all http/https links
-  const finalHtml = opts.utm ? appendUtmParams(html, opts.utm) : html;
+  const finalHtml = opts.utm ? appendUtmParams(html, opts.utm, ctx) : html;
 
   // Dedup links, preserve order
   const seen = new Set<string>();
@@ -219,14 +219,49 @@ export function renderEmail(schema: EmailSchema, opts: RenderOptions = {}): Rend
 }
 
 /**
+ * The links UTM must never touch, identified by BEING them.
+ *
+ * These three are per-recipient signed tokens, not destinations: tagging them
+ * files an unsubscribe as campaign traffic, and makes the archive page's
+ * numbers incomparable with the campaign's own.
+ *
+ * The previous version guessed from the URL text — `['unsubscribe',
+ * 'preference', 'optout', 'opt-out']` matched as substrings — and two of the
+ * three URLs this system actually builds contain none of those words.
+ * Measured on master, with UTM on:
+ *
+ *   /api/v1/unsubscribe/TOKEN   skipped   (matched 'unsubscribe')
+ *   /p/center/TOKEN             TAGGED    (no 'preference' anywhere in it)
+ *   /api/v1/browser/TOKEN       TAGGED    (matched nothing at all)
+ *
+ * The renderer already knows these URLs — it put them in the email from the
+ * same context. Comparing against the values themselves cannot drift from
+ * whatever the routes are named next.
+ */
+function functionalLinks(ctx: MergeTagContext): Set<string> {
+  const urls = [
+    ctx.system?.unsubscribeUrl,
+    ctx.system?.preferenceCenterUrl,
+    ctx.system?.viewInBrowserUrl,
+  ];
+  return new Set(urls.filter((u): u is string => Boolean(u)));
+}
+
+/**
  * Post-process rendered HTML to append UTM query parameters to every
  * http/https href. Params already present in the URL are NOT overwritten
- * (first-writer wins). Unsubscribe / preference-center links are skipped.
+ * (first-writer wins). The per-recipient functional links are skipped.
  */
-function appendUtmParams(html: string, utm: UtmConfig): string {
+function appendUtmParams(html: string, utm: UtmConfig, ctx: MergeTagContext): string {
+  const functional = functionalLinks(ctx);
+  // Kept as a fallback for content that hard-codes an opt-out link rather than
+  // using the merge tag: the identity check above cannot see those, because
+  // they never came from the context.
   const skipPatterns = ['unsubscribe', 'preference', 'optout', 'opt-out'];
 
   return html.replace(/href="(https?:\/\/[^"]+)"/gi, (match, url: string) => {
+    // A link this renderer emitted as a functional one, matched exactly.
+    if (functional.has(url)) return match;
     // Skip functional links
     if (skipPatterns.some((p) => url.toLowerCase().includes(p))) return match;
 

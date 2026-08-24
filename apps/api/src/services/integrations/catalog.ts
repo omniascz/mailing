@@ -172,6 +172,24 @@ export const INTEGRATION_CATALOG: IntegrationEntry[] = [
     connectPath: '/api/v1/ads/accounts',
   },
   {
+    id: 'google_analytics',
+    name: 'Google Analytics',
+    category: 'ads',
+    /**
+     * `built_in`, not `oauth2`, and the description says why in the product's
+     * own words rather than implying a connection that does not exist.
+     *
+     * Mailchimp's equivalent does ask for OAuth, but only so it can name the
+     * campaign consistently — no data crosses. Claiming a Google connection
+     * here would promise a data flow that neither product performs.
+     */
+    auth: 'built_in',
+    description:
+      'Tag campaign links with UTM parameters so GA4 attributes the traffic. ' +
+      'No account connection: GA reads the tags on arrival, nothing is sent to Google.',
+    connectPath: '/api/v1/campaigns',
+  },
+  {
     id: 'google_ads',
     name: 'Google Ads',
     category: 'ads',
