@@ -76,3 +76,25 @@ describe('template library', () => {
     }
   });
 });
+
+describe('category filtering actually reaches every template', () => {
+  it('the b2b and saas templates are filed under their own categories', () => {
+    // All nine were filed as 'newsletter', so picking "B2B" in the gallery
+    // returned nothing and picking "Newsletter" returned nine emails that are
+    // not newsletters. Both categories have existed in the API since PR #44.
+    const b2b = TEMPLATES.filter((t) => t.id.startsWith('b2b-'));
+    const saas = TEMPLATES.filter((t) => t.id.startsWith('saas-'));
+    expect(b2b.length).toBeGreaterThan(0);
+    expect(saas.length).toBeGreaterThan(0);
+    for (const t of b2b) expect(t.category, t.id).toBe('b2b');
+    for (const t of saas) expect(t.category, t.id).toBe('saas');
+  });
+
+  it('every declared category has at least one template behind it', () => {
+    // An empty category in the gallery is a filter that looks broken.
+    const used = new Set(TEMPLATES.map((t) => t.category));
+    for (const c of ['newsletter', 'promo', 'transactional', 'ecommerce', 'b2b', 'saas']) {
+      expect(used, `no template is filed under "${c}"`).toContain(c);
+    }
+  });
+});

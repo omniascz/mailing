@@ -1011,7 +1011,7 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
   t(
     'b2b-001',
     'Cold Outreach (Plain)',
-    'newsletter',
+    'b2b',
     'Plain-text-style cold outreach from a sales rep.',
     '{{subject_line|default:"Quick question for you"}}',
     '{{preheader|default:"A short note from our team."}}',
@@ -1030,7 +1030,7 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
   t(
     'b2b-002',
     'Case Study Share',
-    'newsletter',
+    'b2b',
     'Share a customer case study with relevant prospects.',
     'How {{customer_name|default:"a customer like you"}} achieved {{result|default:"great results"}}',
     'Real results. Real company.',
@@ -1061,7 +1061,7 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
   t(
     'b2b-003',
     'Demo Invite',
-    'newsletter',
+    'b2b',
     'Invite a prospect to a product demo.',
     'See {{company|default:"our product"}} in action — book your demo',
     '15 minutes could change how you work.',
@@ -1090,7 +1090,7 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
   t(
     'b2b-004',
     'Proposal Follow-up',
-    'newsletter',
+    'b2b',
     'Follow up on a sent proposal to re-engage a prospect.',
     'Following up on the proposal I sent, {{first_name|default:"there"}}',
     'Did you get a chance to review it?',
@@ -1116,7 +1116,7 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
   t(
     'saas-001',
     'Feature Announcement',
-    'newsletter',
+    'saas',
     'New feature launch to existing users.',
     'New in {{company|default:"your app"}}: {{feature_name|default:"Feature Name"}} 🚀',
     'You asked for it. Here it is.',
@@ -1146,7 +1146,7 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
   t(
     'saas-002',
     'Monthly Usage Report',
-    'newsletter',
+    'saas',
     'Monthly account usage summary for power users.',
     'Your {{month|default:"monthly"}} usage report is ready',
     'See how you used your account this month.',
@@ -1179,7 +1179,7 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
   t(
     'saas-003',
     'Churn Winback',
-    'newsletter',
+    'saas',
     'Re-engage a cancelled or churned user.',
     'We miss you, {{first_name|default:"there"}} — come back?',
     'A lot has changed since you left.',
@@ -1212,7 +1212,7 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
   t(
     'saas-004',
     'NPS Survey',
-    'newsletter',
+    'saas',
     'Net Promoter Score survey email.',
     'Quick question for you, {{first_name|default:"there"}} — 2 minutes',
     'How likely are you to recommend us?',
@@ -1251,7 +1251,7 @@ export const EXTENDED_TEMPLATES: TemplateMeta[] = [
   t(
     'saas-005',
     'Reactivation (No Login)',
-    'newsletter',
+    'saas',
     'Re-engage users who have not logged in recently.',
     '{{first_name|default:"Hey"}}, we noticed you have not been around lately',
     'Your account is getting dusty.',
