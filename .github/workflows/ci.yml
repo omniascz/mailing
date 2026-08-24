@@ -185,6 +185,18 @@ jobs:
       # from Postgres, so without a store here that path could only be covered
       # by not covering it — which is how it shipped an unsigned PUT whose
       # response nobody read.
+      #
+      # ONE MinIO, and it has to stay one. This step existed twice, under two
+      # container names, both binding 9000 - steps are a list, so nothing warns
+      # you; the second just dies with "port is already allocated" and takes the
+      # job with it. It was invisible because the duplicate env keys had already
+      # made the whole workflow unparseable, so this job had not run at all.
+      #
+      # A step and not a service container: a service cannot pass a command, and
+      # minio/minio needs `server /data`. The media upload suite writes real
+      # bytes and reads them back over plain HTTP the way a mail client does, so
+      # mocking the store would leave the one thing that path exists for
+      # untested. Bucket and public-read policy are created by the suites.
       - name: Start MinIO
         run: |
           docker run -d --name ci-minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio server /data
@@ -195,22 +207,6 @@ jobs:
           echo "minio did not become healthy"; docker logs ci-minio; exit 1
       - run: pnpm --filter @forgemsg/api db:migrate
       - run: pnpm seed
-      # MinIO as a step, not a service: a service container cannot pass a
-      # command, and minio/minio needs `server /data`. The media upload suite
-      # writes real bytes and reads them back over plain HTTP the way a mail
-      # client does — mocking the store would leave the one thing that path
-      # exists for untested. The bucket and its public-read policy are created
-      # by the suite itself, so this needs no extra setup.
-      - name: Start MinIO
-        run: |
-          docker run -d --name minio -p 9000:9000 \
-            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
-            minio/minio:latest server /data
-          for i in $(seq 1 40); do
-            curl -fsS http://127.0.0.1:9000/minio/health/live && break
-            sleep 2
-          done
-          curl -fsS http://127.0.0.1:9000/minio/health/live
       - run: pnpm --filter @forgemsg/api test:integration
 
   workers-integration:
