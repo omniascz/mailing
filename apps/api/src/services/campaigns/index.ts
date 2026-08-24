@@ -15,6 +15,7 @@ import { db } from '../../db/client.js';
 import { campaigns, templates as campaignTemplates, type Campaign } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { fillMissingAltTexts } from '../editor/ai-alt-text.js';
+import type { UtmSettings } from './utm.js';
 
 /** Matches an <img …> tag that has no (non-empty) alt attribute. */
 const IMG_WITHOUT_ALT = /<img(?![^>]*\balt\s*=\s*"[^"]+")[^>]*>/i;
@@ -87,6 +88,8 @@ export interface CreateCampaignInput {
   segmentId?: string;
   excludeSegmentId?: string;
   abConfig?: Record<string, unknown>;
+  /** UTM auto-append settings. Absent leaves the column null, i.e. off. */
+  utmTracking?: UtmSettings;
   configurationSet?: string;
   category?: string;
   scheduledAt?: Date;
@@ -144,6 +147,7 @@ export async function createCampaign(input: CreateCampaignInput): Promise<Campai
       segmentId: input.segmentId,
       excludeSegmentId: input.excludeSegmentId,
       abConfig: input.abConfig,
+      utmTracking: input.utmTracking,
       configurationSet: input.configurationSet,
       category: input.category,
       scheduledAt: input.scheduledAt,

@@ -30,6 +30,7 @@ import {
   moveCampaignToFolder,
 } from '../../services/campaigns/index.js';
 import { assertFolderAssignable } from './folders.js';
+import { defaultUtmFor, previewTaggedUrl, resolveUtm } from '../../services/campaigns/utm.js';
 import { scheduleResend } from '../../services/campaigns/auto-resend.js';
 import {
   enqueueCampaignSend,
@@ -59,6 +60,24 @@ const idParam = z.object({ id: z.string().uuid() });
 const campaignStatuses = ['draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled'] as const;
 const campaignTypes = ['email', 'sms', 'whatsapp', 'push', 'voice'] as const;
 
+/**
+ * A UTM value is going into a URL and then into a GA report. Length-bounded
+ * and stripped of the characters that would need escaping in either.
+ */
+const utmValue = z
+  .string()
+  .max(120)
+  .regex(/^[^\s?#&=]*$/, 'must not contain spaces or URL separators (? # & =)');
+
+const utmSettingsSchema = z.object({
+  enabled: z.boolean(),
+  source: utmValue.optional(),
+  medium: utmValue.optional(),
+  campaign: utmValue.optional(),
+  content: utmValue.optional(),
+  term: utmValue.optional(),
+});
+
 const createSchema = z.object({
   name: z.string().min(1).max(255),
   type: z.enum(campaignTypes).optional(),
@@ -76,6 +95,10 @@ const createSchema = z.object({
   segmentId: z.string().uuid().optional(),
   excludeSegmentId: z.string().uuid().optional(),
   abConfig: z.record(z.unknown()).optional(),
+  // UTM auto-append. The column has existed since the campaigns table was
+  // written; until now no route could set it, so the whole feature — schema,
+  // dispatch, splitter, batch-sender, renderer — was unreachable.
+  utmTracking: utmSettingsSchema.optional(),
   configurationSet: z.string().max(128).optional(),
   category: z.string().max(128).optional(),
   scheduledAt: z.string().datetime().optional(),
@@ -276,6 +299,47 @@ export default async function campaignRoutes(app: FastifyInstance) {
         await assertFolderAssignable(req.user!.orgId, 'campaign', folderId);
         const campaign = await moveCampaignToFolder(req.user!.orgId, id, folderId);
         return { data: campaign };
+      },
+    );
+
+    /**
+     * GET /api/v1/campaigns/:id/utm
+     * The UTM settings in effect, and what they do to a link.
+     *
+     * Answers "what would happen if I turned this on" without writing
+     * anything: the defaults are computed the same way the send path computes
+     * them, and the preview runs the same parse-and-set the renderer runs, so
+     * a link that already carries a query string previews the way it will
+     * actually send.
+     */
+    scope.get(
+      '/api/v1/campaigns/:id/utm',
+      { schema: { tags: ['Campaigns'], summary: 'UTM settings and a tagged-link preview' } },
+      async (req) => {
+        const { id } = idParam.parse(req.params);
+        const { sampleUrl } = z
+          .object({ sampleUrl: z.string().url().optional() })
+          .parse(req.query ?? {});
+
+        // Org-scoped: throws notFound for another organisation's campaign, and
+        // it is the only lookup here.
+        const campaign = await getCampaign(req.user!.orgId, id);
+        const settings = resolveUtm(campaign, campaign.utmTracking);
+        const sample = sampleUrl ?? 'https://example.com/produkt?id=7';
+
+        return {
+          data: {
+            enabled: settings.enabled,
+            effective: settings,
+            defaults: defaultUtmFor(campaign),
+            preview: {
+              input: sample,
+              output: previewTaggedUrl(sample, { ...settings, enabled: true }),
+            },
+            /** Links that never get tagged, whatever the settings say. */
+            neverTagged: ['unsubscribe', 'preference centre', 'view in browser'],
+          },
+        };
       },
     );
 
