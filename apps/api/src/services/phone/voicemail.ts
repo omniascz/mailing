@@ -12,6 +12,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { calls } from '../../db/schema/calls.js';
 import { AppError } from '../../lib/app-error.js';
+import { putObject, presignUrl } from '../../lib/object-store.js';
 
 export interface VoicemailResult {
   callId: string;
@@ -59,11 +60,6 @@ async function storeVoicemail(
   sourceUrl: string,
 ): Promise<string> {
   const bucket = process.env.MINIO_BUCKET ?? 'forgemsg-recordings';
-  const endpoint = process.env.MINIO_ENDPOINT ?? 'localhost';
-  const port = process.env.MINIO_PORT ?? '9000';
-  const useSSL = process.env.MINIO_USE_SSL === 'true';
-  const scheme = useSSL ? 'https' : 'http';
-
   const key = `voicemails/${orgId}/${callId}/${recordingSid}.mp3`;
 
   // Fetch from Twilio (requires auth)
@@ -79,15 +75,17 @@ async function storeVoicemail(
   if (!sourceRes.ok) throw new Error(`Failed to fetch voicemail: ${sourceRes.status}`);
   const buffer = await sourceRes.arrayBuffer();
 
-  const putUrl = `${scheme}://${endpoint}:${port}/${bucket}/${key}`;
-  const uploadRes = await fetch(putUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(buffer.byteLength) },
-    body: buffer,
-  });
-  if (!uploadRes.ok) throw new Error(`Voicemail upload failed: ${uploadRes.status}`);
+  // Signed, through the shared client. This was a hand-built PUT with no AWS
+  // signature: it checked the status and so failed loudly, but against a real
+  // store the status was always 403 and no voicemail was ever stored.
+  await putObject(bucket, key, Buffer.from(buffer), 'audio/mpeg');
 
-  return putUrl;
+  // A presigned GET, because the only consumer of this URL is Deepgram, which
+  // fetches it from the internet. Returning the plain object URL moved the same
+  // defect one step along: unsigned, and readable only if the bucket happens to
+  // be public. Fifteen minutes is the transcription's window, not the
+  // recording's lifetime — the object stays, the link to it does not.
+  return presignUrl('get', bucket, key, 15 * 60);
 }
 
 async function transcribeVoicemail(audioUrl: string): Promise<string> {
