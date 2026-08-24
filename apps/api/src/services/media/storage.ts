@@ -25,6 +25,7 @@
 
 import { safeFetch, isPublicAddress, BlockedUrlError } from '../../lib/safe-fetch.js';
 import { AppError } from '../../lib/app-error.js';
+import { putObject } from '../../lib/object-store.js';
 
 /** Bytes we are willing to pull down for a transform. Mirrors MAX_INPUT_BYTES. */
 export const MAX_SOURCE_BYTES = 25 * 1024 * 1024;
@@ -127,20 +128,9 @@ export async function putMediaObject(
 ): Promise<string> {
   const { host, port, useSsl, bucket } = storageEndpoint();
   const scheme = useSsl ? 'https' : 'http';
-  const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
-  const s3 = new S3Client({
-    endpoint: `${scheme}://${host}:${port}`,
-    region: process.env.AWS_REGION ?? 'us-east-1',
-    credentials: {
-      accessKeyId: process.env.MINIO_ACCESS_KEY ?? 'minioadmin',
-      secretAccessKey: process.env.MINIO_SECRET_KEY ?? 'minioadmin',
-    },
-    forcePathStyle: true,
-  });
-
-  await s3.send(
-    new PutObjectCommand({ Bucket: bucket, Key: key, Body: bytes, ContentType: contentType }),
-  );
+  // Through the shared client: endpoint and credentials read in one place, and
+  // one client instead of a fresh one per upload.
+  await putObject(bucket, key, bytes, contentType);
 
   return `${scheme}://${host}:${port}/${bucket}/${key}`;
 }

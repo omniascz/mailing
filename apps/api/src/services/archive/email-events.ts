@@ -13,7 +13,7 @@ import { createHash } from 'node:crypto';
 import { lt, and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/email-events.js';
-import { getObjectStore } from '../../lib/object-store.js';
+import { putObject, getObjectBytes, listObjectKeys } from '../../lib/object-store.js';
 
 const BATCH_SIZE = 5_000;
 
@@ -170,16 +170,7 @@ function archiveBucket(): string {
  * and throws on any non-2xx, so there is no status left to forget to check.
  */
 async function uploadNdjson(key: string, ndjson: string): Promise<void> {
-  const { PutObjectCommand } = await import('@aws-sdk/client-s3');
-  const s3 = await getObjectStore();
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: archiveBucket(),
-      Key: key,
-      Body: Buffer.from(ndjson, 'utf8'),
-      ContentType: 'application/x-ndjson',
-    }),
-  );
+  await putObject(archiveBucket(), key, Buffer.from(ndjson, 'utf8'), 'application/x-ndjson');
 }
 
 /**
@@ -194,11 +185,12 @@ async function uploadNdjson(key: string, ndjson: string): Promise<void> {
  * because it is the one a silent failure most often produces.
  */
 export async function verifyArchive(key: string, expected: string): Promise<void> {
-  const { GetObjectCommand } = await import('@aws-sdk/client-s3');
-  const s3 = await getObjectStore();
-
-  const res = await s3.send(new GetObjectCommand({ Bucket: archiveBucket(), Key: key }));
-  const stored = await res.Body?.transformToString('utf8');
+  let stored: string | undefined;
+  try {
+    stored = (await getObjectBytes(archiveBucket(), key)).toString('utf8');
+  } catch {
+    stored = undefined;
+  }
 
   if (stored === undefined || stored.length === 0) {
     throw new Error(
@@ -228,22 +220,5 @@ export async function verifyArchive(key: string, expected: string): Promise<void
 async function listS3Keys(prefix: string): Promise<string[]> {
   // Also unsigned before, and it swallowed the 403 into an empty list — so
   // "this org has no archives" and "we are not allowed to look" read the same.
-  const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
-  const s3 = await getObjectStore();
-
-  const keys: string[] = [];
-  let token: string | undefined;
-  do {
-    const res = await s3.send(
-      new ListObjectsV2Command({
-        Bucket: archiveBucket(),
-        Prefix: prefix,
-        ContinuationToken: token,
-      }),
-    );
-    for (const item of res.Contents ?? []) if (item.Key) keys.push(item.Key);
-    token = res.IsTruncated ? res.NextContinuationToken : undefined;
-  } while (token);
-
-  return keys;
+  return listObjectKeys(archiveBucket(), prefix);
 }

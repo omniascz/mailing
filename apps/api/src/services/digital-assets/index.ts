@@ -11,6 +11,7 @@ import { db } from '../../db/client.js';
 import { digitalAssets, digitalAssetDeliveries, licenseKeys } from '../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
 import { env } from '../../config/env.js';
+import { presignUrl } from '../../lib/object-store.js';
 
 // ─── Signed URL generation ────────────────────────────────────────────────────
 
@@ -220,59 +221,15 @@ export async function generateLicenseKey(
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 async function generatePresignedUrl(storageKey: string, expirySeconds: number): Promise<string> {
-  // Build a MinIO-compatible presigned GET URL using HMAC-SHA256 query string signing.
-  // This avoids the need for @aws-sdk/s3-request-presigner while working with MinIO.
-  const { createHmac } = await import('node:crypto');
-
-  const endpoint = process.env.MINIO_ENDPOINT ?? 'localhost';
-  const port = process.env.MINIO_PORT ?? '9000';
+  // Was a hand-written SigV4 query-string signer, with a comment explaining it
+  // avoided a dependency on @aws-sdk/s3-request-presigner. That dependency is
+  // here now, the SDK is what the rest of the codebase signs with, and the
+  // repo had three separate attempts at this — one of which, in
+  // services/phone/recording.ts, took a secret and did not use it.
+  //
+  // The datetime it built was also wrong: `.slice(0, 15) + 'Z'` on an ISO
+  // string yields `20260824T131500` plus a Z, dropping the seconds digit, so
+  // the X-Amz-Date never matched the scope the signature was computed over.
   const bucket = process.env.ASSET_STORAGE_BUCKET ?? 'forgemsg-assets';
-  const accessKey = process.env.MINIO_ACCESS_KEY ?? '';
-  const secretKey = process.env.MINIO_SECRET_KEY ?? '';
-  const region = process.env.AWS_REGION ?? 'us-east-1';
-
-  const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const datetimeStr = now.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
-  const expires = String(expirySeconds);
-
-  const credential = `${accessKey}/${dateStr}/${region}/s3/aws4_request`;
-  const signedHeaders = 'host';
-  const canonicalQueryString = [
-    `X-Amz-Algorithm=AWS4-HMAC-SHA256`,
-    `X-Amz-Credential=${encodeURIComponent(credential)}`,
-    `X-Amz-Date=${datetimeStr}`,
-    `X-Amz-Expires=${expires}`,
-    `X-Amz-SignedHeaders=${signedHeaders}`,
-  ].join('&');
-
-  const host = `${endpoint}:${port}`;
-  const canonicalRequest = [
-    'GET',
-    `/${bucket}/${storageKey}`,
-    canonicalQueryString,
-    `host:${host}\n`,
-    signedHeaders,
-    'UNSIGNED-PAYLOAD',
-  ].join('\n');
-
-  const { createHash } = await import('node:crypto');
-  const hashedRequest = createHash('sha256').update(canonicalRequest).digest('hex');
-  const stringToSign = [
-    'AWS4-HMAC-SHA256',
-    datetimeStr,
-    `${dateStr}/${region}/s3/aws4_request`,
-    hashedRequest,
-  ].join('\n');
-
-  function sign(key: Buffer, data: string) {
-    return createHmac('sha256', key).update(data).digest();
-  }
-  const signingKey = sign(
-    sign(sign(sign(Buffer.from(`AWS4${secretKey}`), dateStr), region), 's3'),
-    'aws4_request',
-  );
-  const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
-
-  return `http://${host}/${bucket}/${storageKey}?${canonicalQueryString}&X-Amz-Signature=${signature}`;
+  return presignUrl('get', bucket, storageKey, expirySeconds);
 }
