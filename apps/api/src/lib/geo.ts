@@ -64,9 +64,35 @@ export function parseGeoResponse(raw: unknown): GeoLocation {
  * Resolve an IP to a location. Returns null when GeoIP is unconfigured, the IP
  * is private, or the lookup fails. Never throws.
  */
+/**
+ * Is a GeoIP provider configured at all?
+ *
+ * Exported because "no provider" and "provider returned nothing" are different
+ * answers and the difference has to reach the product. Without it every geo
+ * panel renders an empty map, which reads as "nobody opened this from anywhere"
+ * rather than "this was never switched on" — and GEOIP_API_URL is in neither
+ * compose file, so that is the state every deployment is in.
+ */
+export function isGeoConfigured(): boolean {
+  return !!process.env.GEOIP_API_URL;
+}
+
+let warnedUnconfigured = false;
+
 export async function resolveGeo(ip: string | null | undefined): Promise<GeoLocation | null> {
   const template = process.env.GEOIP_API_URL;
-  if (!template || !isPublicIp(ip)) return null;
+  if (!template) {
+    // Once per process, not per open — this is on the tracking hot path.
+    if (!warnedUnconfigured) {
+      warnedUnconfigured = true;
+      console.warn(
+        '[geo] GEOIP_API_URL is not set — opens and clicks are recorded without ' +
+          'country or city, and every geo panel will stay empty.',
+      );
+    }
+    return null;
+  }
+  if (!isPublicIp(ip)) return null;
   const url = template.includes('{ip}')
     ? template.replace('{ip}', encodeURIComponent(ip!))
     : `${template}${encodeURIComponent(ip!)}`;
