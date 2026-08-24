@@ -279,6 +279,39 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
   // up when due. Past/now → delay 0 (immediate).
   const delayMs = input.scheduleAt ? Math.max(0, input.scheduleAt.getTime() - Date.now()) : 0;
 
+  // DKIM. This payload was built by hand and simply had no dkim* fields, and
+  // the consumer declares all three optional, so nothing complained — the Go
+  // engine signs only when handed a key (`msg.DkimConfig != nil &&
+  // PrivateKeyPEM != ""`, engine/internal/smtp/sender.go:134), with no else and
+  // no default key. DOI confirmations, password resets, identity verification
+  // and customer order confirmations all went out unsigned, on a shared pool.
+  //
+  // Same resolver as campaign dispatch, so the same From address is signed with
+  // the same key whichever path sends it.
+  //
+  // Only with an org id: the lookup is org-scoped and a caller without one
+  // (services/identities/index.ts) has nothing to scope to — queues.ts
+  // substitutes a random uuid for the payload field below, and a lookup on that
+  // would be a wasted query with a guaranteed null.
+  //
+  // Null is not an error. A verified single email identity has no key and no
+  // domain row to hold one, and system mail is sent from OUR domain under the
+  // CUSTOMER's org id, which is org-scoped away. Unsigned is then the only
+  // outcome available, and for a DOI confirmation an unsigned mail that arrives
+  // beats a refused one that never does — a confirmation never sent is a
+  // consent record that never exists. The absence is logged so it is countable
+  // rather than silent.
+  let dkim: { dkimDomain: string; dkimSelector: string; dkimPrivateKey: string } | null = null;
+  if (input.orgId) {
+    const { resolveDkimForSender } = await import('../services/domains/dkim-rotation.js');
+    dkim = await resolveDkimForSender(input.orgId, input.from).catch(() => null);
+    if (!dkim) {
+      console.warn(
+        `[dkim] sending unsigned: no active key for From=${input.from} org=${input.orgId} stream=transactional`,
+      );
+    }
+  }
+
   await mtaOtherQueue.add(
     `txn-${randomUUID()}`,
     {
@@ -313,6 +346,11 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       rawMime: input.rawMime ?? '',
       priority: PRIORITY.TRANSACTIONAL,
       stream: 'transactional',
+      // Spread as a group or not at all. mta-sender keys the whole gRPC dkim
+      // message off `data.dkimDomain` being truthy, so an empty-string domain
+      // would send the engine a config with no key — which it then skips on the
+      // PrivateKeyPEM check, arriving at the same unsigned mail by a longer road.
+      ...(dkim ?? {}),
       ...(input.attachments && input.attachments.length > 0
         ? { attachments: input.attachments }
         : {}),

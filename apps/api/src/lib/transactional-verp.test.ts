@@ -47,6 +47,10 @@ beforeAll(async () => {
     // The graph the send path actually pays for. Warmed here for the same
     // reason as queues.js, and measured the same way.
     import('../services/sending/sink-addresses.js'),
+    // Added when the send path started resolving a DKIM key. send-path-warmup
+    // .test.ts went red on the new `await import` the moment it appeared, which
+    // is what that guard is for — this line is its answer, not an afterthought.
+    import('../services/domains/dkim-rotation.js'),
   ]);
 }, 60_000);
 

@@ -277,6 +277,46 @@ export async function resolveActiveKey(
   return key ?? null;
 }
 
+/** The three fields the MTA payload carries. Absent as a group or present as a group. */
+export interface DkimSigningMaterial {
+  dkimDomain: string;
+  dkimSelector: string;
+  dkimPrivateKey: string;
+}
+
+/**
+ * Signing material for a From address, or null when the domain has no active
+ * key. THE resolver — campaign dispatch and the transactional path both call
+ * this one, so a campaign and an order confirmation from the same address are
+ * signed with the same key by construction.
+ *
+ * It lives here rather than in campaigns/dispatch.ts, where it used to, for two
+ * reasons: the name was the only thing about it that was campaign-specific, and
+ * lib/queues.ts cannot reach into campaigns/dispatch.ts without a cycle (that
+ * module imports the splitter queue from it).
+ *
+ * Null is a normal answer, not an error. Two senders reach it legitimately — a
+ * verified single email identity, which has no domain row to hold a key, and
+ * system mail from our own domain under a customer's org id. The caller decides
+ * what to do about it; both current callers send unsigned rather than refuse.
+ */
+export async function resolveDkimForSender(
+  orgId: string,
+  from: string,
+): Promise<DkimSigningMaterial | null> {
+  // The same parser the From-ownership guard uses, so "Shop <a@b>" and a bare
+  // address resolve identically on both. Splitting on '@' by hand — which this
+  // function used to do — returns "b>" for a display-name From and then finds
+  // no key for it, silently.
+  const { fromAddressDomain } = await import('../sending/from-domain.js');
+  const domain = fromAddressDomain(from);
+  if (!domain) return null;
+
+  const key = await resolveActiveKey(orgId, domain);
+  if (!key) return null;
+  return { dkimDomain: domain, dkimSelector: key.selector, dkimPrivateKey: key.privateKey };
+}
+
 /**
  * Cron: retire keys whose grace has elapsed. A retired key is safe to remove
  * from DNS; we mark it (not delete it) so history and the "delete these records"
