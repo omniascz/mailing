@@ -10,6 +10,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { calls } from '../../db/schema/calls.js';
 import { AppError } from '../../lib/app-error.js';
+import { transcribeCall } from './transcription.js';
 
 export interface RecordingInfo {
   callId: string;
@@ -123,11 +124,9 @@ export async function handleRecordingCompleted(
 ): Promise<void> {
   const info = await storeRecording(orgId, callId, providerRecordingSid, provider);
 
-  // Kick off async transcription
-  const apiUrl = process.env.API_URL ?? 'http://localhost:3001';
-  await fetch(`${apiUrl}/api/v1/internal/phone/transcribe`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orgId, callId, storageUrl: info.storageUrl }),
-  }).catch(() => {});
+  // Transcription runs in this process. It used to POST to
+  // /api/v1/internal/phone/transcribe, a path that was never registered — and
+  // because fetch does not reject on 404, the .catch() never ran and no call
+  // was ever transcribed, silently. The function it wanted is right here.
+  await transcribeCall(orgId, callId, info.storageUrl);
 }

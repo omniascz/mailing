@@ -124,20 +124,23 @@ async function notifyAgent(
 ): Promise<void> {
   if (!agentId) return;
 
-  // Fire internal notification event — workers will route to email/push
-  const base = process.env.API_URL ?? 'http://localhost:3001';
-  await fetch(`${base}/api/v1/internal/notifications`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      orgId,
-      userId: agentId,
-      type: 'voicemail',
-      title: 'New voicemail',
-      body: transcript.slice(0, 200),
-      metadata: { callId },
-    }),
-  }).catch(() => {});
+  // There is no agent-notification sink in this product.
+  //
+  // This POSTed to /api/v1/internal/notifications with a comment saying
+  // "workers will route to email/push". No such route has ever been
+  // registered, no such worker exists, and there is no table behind it —
+  // in_app_messages is org-to-visitor marketing, not system-to-user. Because
+  // fetch does not reject on 404 the .catch() never ran, so every voicemail
+  // reported a delivered notification and delivered nothing.
+  //
+  // Writing the endpoint would mean inventing the subsystem, which is a
+  // feature and not this change. What is fixed here is the pretence: the gap
+  // is now visible in the log instead of hidden behind a call that could not
+  // fail.
+  console.warn(
+    `[voicemail] agent notification is not wired — dropping notice for user ${agentId} ` +
+      `(org ${orgId}, call ${callId}, ${transcript.length} chars of transcript)`,
+  );
 }
 
 // ─── TwiML: Voicemail greeting (called when machine/voicemail detected) ───────

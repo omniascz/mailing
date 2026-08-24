@@ -66,29 +66,33 @@ export async function scheduleMeetingReminders(bookingId: string, orgId: string)
   // 24h reminder
   const reminder24h = startMs - 24 * 60 * 60 * 1000;
   if (reminder24h > now) {
-    await scheduleReminder(base, orgId, bookingId, reminder24h).catch(() => {});
+    scheduleReminder(base, orgId, bookingId, reminder24h);
   }
 
   // 1h reminder
   const reminder1h = startMs - 60 * 60 * 1000;
   if (reminder1h > now) {
-    await scheduleReminder(base, orgId, bookingId, reminder1h).catch(() => {});
+    scheduleReminder(base, orgId, bookingId, reminder1h);
   }
 }
 
-async function scheduleReminder(
-  base: string,
-  orgId: string,
-  bookingId: string,
-  fireAtMs: number,
-): Promise<void> {
-  await fetch(`${base}/api/v1/internal/schedule-job`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      queue: 'meeting-reminders',
-      payload: { orgId, bookingId, eventType: 'meeting_reminder' },
-      runAt: new Date(fireAtMs).toISOString(),
-    }),
-  });
+/**
+ * The reminder scheduler does not exist, at any of the three places it needs to.
+ *
+ * This POSTed to /api/v1/internal/schedule-job, a path never registered in any
+ * commit here, asking for a job on the queue `meeting-reminders`, which has no
+ * consumer and is not in QUEUE_NAMES. scheduleMeetingReminders itself has no
+ * caller anywhere in the repo. So the chain is dead at the route, at the queue
+ * and at the entry point.
+ *
+ * Writing the endpoint would be worse than leaving it: a generic
+ * "enqueue this payload on this queue" route reachable over HTTP is a poor
+ * thing to own, and it would feed a queue nobody drains. So the phantom call
+ * goes, the intent stays, and the gap is now stated rather than mimed.
+ */
+function scheduleReminder(_base: string, orgId: string, bookingId: string, fireAtMs: number): void {
+  console.warn(
+    `[meetings] reminder scheduling is not wired — no job queued for booking ${bookingId} ` +
+      `(org ${orgId}, due ${new Date(fireAtMs).toISOString()})`,
+  );
 }
