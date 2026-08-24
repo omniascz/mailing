@@ -137,6 +137,23 @@ export const spacerBlockSchema = z.object({
 });
 export type SpacerBlock = z.infer<typeof spacerBlockSchema>;
 
+/**
+ * Raw HTML the customer wrote themselves — the escape hatch for anything the
+ * editor has no block for.
+ *
+ * The content is NOT trusted. It is sanitised at render time, in
+ * render/sanitize.ts, against an allowlist; nothing is validated here beyond a
+ * length bound, because a zod schema is the wrong place to decide what HTML is
+ * safe and a second opinion on that question is how the two disagree.
+ */
+export const codeBlockSchema = z.object({
+  ...baseBlockShape,
+  type: z.literal('code'),
+  /** Bounded so one block cannot be the whole message. */
+  html: z.string().max(50_000),
+});
+export type CodeBlock = z.infer<typeof codeBlockSchema>;
+
 export const socialBlockSchema = z.object({
   ...baseBlockShape,
   type: z.literal('social'),
@@ -276,6 +293,7 @@ export type LeafBlock =
   | DividerBlock
   | SpacerBlock
   | SocialBlock
+  | CodeBlock
   | ProductBlock
   | VideoBlock
   | CouponBlock
@@ -297,6 +315,7 @@ export const blockSchema: z.ZodType<Block, z.ZodTypeDef, any> = z.lazy(() =>
     dividerBlockSchema,
     spacerBlockSchema,
     socialBlockSchema,
+    codeBlockSchema,
     productBlockSchema,
     videoBlockSchema,
     couponBlockSchema,
@@ -383,6 +402,7 @@ export const BLOCK_TYPES = [
   'columns',
   'hero',
   'social',
+  'code',
   'product',
   'video',
   'coupon',

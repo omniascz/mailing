@@ -30,12 +30,14 @@ import type {
   VideoBlock,
   CouponBlock,
   SocialBlock,
+  CodeBlock,
   SpacerBlock,
   TextBlock,
 } from '../schema/blocks.js';
 import type { MergeTagContext } from './merge-tags.js';
 import { parseMergeTags } from './merge-tags.js';
 import { evaluateCondition } from './evaluate-condition.js';
+import { sanitizeUserText } from './sanitize.js';
 import {
   isMarketingStream,
   mustShowOptOut,
@@ -120,6 +122,8 @@ function renderBlock(
       return renderHero(block, schema, ctx, marketing, locale);
     case 'social':
       return renderSocial(block, ctx);
+    case 'code':
+      return renderCode(block, ctx);
     case 'product':
       return renderProduct(block, ctx);
     case 'video':
@@ -134,9 +138,12 @@ function renderBlock(
 }
 
 function renderText(block: TextBlock, ctx: MergeTagContext): string {
-  // Strip any inline HTML the editor might allow inside text blocks. The HTML
-  // renderer trusts the field, but plain text must be tag-free.
-  return stripTags(parseMergeTags(block.content, ctx));
+  // Strip any inline HTML the editor might allow inside text blocks; plain
+  // text must be tag-free. sanitizeUserText additionally removes the
+  // renderer's own opt-out sentinel, which customer text must not be able to
+  // forge — stripTags happens to eat it today, but only because it looks
+  // enough like a tag, which is not a guarantee to rely on.
+  return stripTags(sanitizeUserText(parseMergeTags(block.content, ctx)));
 }
 
 function renderImage(block: ImageBlock, ctx: MergeTagContext): string {
@@ -205,6 +212,20 @@ function renderSocial(block: SocialBlock, ctx: MergeTagContext): string {
     return `${labels[n.type] ?? n.type}: ${url}`;
   });
   return lines.join('\n');
+}
+
+/**
+ * Customer HTML in the text half.
+ *
+ * Reduced to its visible words by the same stripTags every other block uses —
+ * a `<table>` layout becomes the sentences inside it, which is what a text
+ * client would show anyway. A code block whose HTML has no text at all (a
+ * spacer image, a tracking pixel) contributes nothing, and that is correct:
+ * inventing a placeholder like "[HTML block]" would put words in the message
+ * that the sender never wrote.
+ */
+function renderCode(block: CodeBlock, ctx: MergeTagContext): string {
+  return stripTags(sanitizeUserText(parseMergeTags(block.html, ctx)));
 }
 
 function renderProduct(block: ProductBlock, ctx: MergeTagContext): string {

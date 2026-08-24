@@ -7,6 +7,7 @@ import type {
   DividerBlock,
   SpacerBlock,
   SocialBlock,
+  CodeBlock,
   ProductBlock,
   VideoBlock,
   CouponBlock,
@@ -122,6 +123,12 @@ export function createBlock(type: BlockType): Block {
         iconSize: 32,
         align: 'center',
       } satisfies SocialBlock;
+    case 'code':
+      return {
+        id: newId('code'),
+        type: 'code',
+        html: '<p style="font-size:15px;">Your HTML here.</p>',
+      } satisfies CodeBlock;
     case 'product':
       return {
         id: newId('prod'),
