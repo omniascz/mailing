@@ -8,6 +8,7 @@ import type {
   SpacerBlock,
   SocialBlock,
   CodeBlock,
+  ShareBlock,
   ProductBlock,
   VideoBlock,
   CouponBlock,
@@ -129,6 +130,17 @@ export function createBlock(type: BlockType): Block {
         type: 'code',
         html: '<p style="font-size:15px;">Your HTML here.</p>',
       } satisfies CodeBlock;
+    case 'share':
+      return {
+        id: newId('share'),
+        type: 'share',
+        networks: ['email', 'facebook', 'x', 'whatsapp'],
+        shareText: '',
+        label: 'Share this email',
+        align: 'center',
+        fontSize: '13px',
+        color: '#2563eb',
+      } satisfies ShareBlock;
     case 'product':
       return {
         id: newId('prod'),

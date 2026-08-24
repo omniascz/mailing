@@ -31,6 +31,7 @@ import type {
   CouponBlock,
   SocialBlock,
   CodeBlock,
+  ShareBlock,
   SpacerBlock,
   TextBlock,
 } from '../schema/blocks.js';
@@ -38,6 +39,7 @@ import type { MergeTagContext } from './merge-tags.js';
 import { parseMergeTags } from './merge-tags.js';
 import { evaluateCondition } from './evaluate-condition.js';
 import { sanitizeUserText } from './sanitize.js';
+import { shareTargets } from './share.js';
 import {
   isMarketingStream,
   mustShowOptOut,
@@ -124,6 +126,8 @@ function renderBlock(
       return renderSocial(block, ctx);
     case 'code':
       return renderCode(block, ctx);
+    case 'share':
+      return renderShare(block, ctx);
     case 'product':
       return renderProduct(block, ctx);
     case 'video':
@@ -226,6 +230,15 @@ function renderSocial(block: SocialBlock, ctx: MergeTagContext): string {
  */
 function renderCode(block: CodeBlock, ctx: MergeTagContext): string {
   return stripTags(sanitizeUserText(parseMergeTags(block.html, ctx)));
+}
+
+/** Share links as plain lines. Nothing at all when there is nothing to share. */
+function renderShare(block: ShareBlock, ctx: MergeTagContext): string {
+  const targets = shareTargets(block, ctx);
+  if (targets.length === 0) return '';
+  const label = block.label.trim() ? stripTags(parseMergeTags(block.label, ctx)) : '';
+  const lines = targets.map((t) => `${t.label}: ${t.url}`);
+  return [label, ...lines].filter(Boolean).join('\n');
 }
 
 function renderProduct(block: ProductBlock, ctx: MergeTagContext): string {

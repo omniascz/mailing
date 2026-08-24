@@ -13,6 +13,7 @@ import type {
   CouponBlock,
   SocialBlock,
   CodeBlock,
+  ShareBlock,
   SpacerBlock,
   TextBlock,
 } from '../schema/blocks.js';
@@ -28,6 +29,7 @@ import {
 } from './compliance.js';
 import { evaluateCondition } from './evaluate-condition.js';
 import { sanitizeUserHtml } from './sanitize.js';
+import { shareTargets } from './share.js';
 
 /**
  * JSON → responsive HTML email renderer.
@@ -279,6 +281,8 @@ function renderBlock(
       return renderSocial(block, ctx, links);
     case 'code':
       return renderCode(block, ctx);
+    case 'share':
+      return renderShare(block, ctx, links);
     case 'product':
       return renderProduct(block, ctx, links);
     case 'video':
@@ -402,6 +406,40 @@ function renderCode(block: CodeBlock, ctx: MergeTagContext): string {
   const html = sanitizeUserHtml(parseMergeTags(block.html, ctx));
   if (!html.trim()) return '';
   return `<tr><td${bgAttr(block)} style="padding:${cellPadding(block)};">${html}</td></tr>`;
+}
+
+/**
+ * Share buttons for the recipient.
+ *
+ * The share target is the campaign's view-in-browser URL: a public, permanent
+ * page that anyone can open, which is the only URL here that makes sense to
+ * hand to a stranger. When it is missing the block renders NOTHING — see
+ * share.ts for why that beats sharing a broken link.
+ */
+function renderShare(block: ShareBlock, ctx: MergeTagContext, links: string[]): string {
+  const targets = shareTargets(block, ctx);
+  if (targets.length === 0) return '';
+
+  const cells = targets
+    .map((t) => {
+      links.push(t.url);
+      return (
+        `<td style="padding:0 8px;">` +
+        `<a href="${escapeAttr(t.url)}" target="_blank" rel="noopener noreferrer" ` +
+        `style="color:${block.color};font-size:${block.fontSize};text-decoration:underline;">` +
+        `${escapeHtml(t.label)}</a></td>`
+      );
+    })
+    .join('');
+
+  const label = block.label.trim()
+    ? `<div style="font-size:${block.fontSize};color:#6b7280;margin-bottom:6px;">` +
+      `${escapeHtml(parseMergeTags(block.label, ctx))}</div>`
+    : '';
+  const inner =
+    `${label}<table role="presentation" border="0" cellpadding="0" cellspacing="0" ` +
+    `style="display:inline-table;"><tr>${cells}</tr></table>`;
+  return `<tr><td${bgAttr(block)} align="${block.align}" style="padding:${cellPadding(block)};">${inner}</td></tr>`;
 }
 
 function renderProduct(block: ProductBlock, ctx: MergeTagContext, links: string[]): string {
