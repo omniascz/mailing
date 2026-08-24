@@ -10,9 +10,14 @@ import { db } from '../../db/client.js';
 import { mediaAssets, type MediaAsset, type NewMediaAsset } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
+/**
+ * `id` is accepted so the upload path can name the storage key and the row in
+ * one go: the object is written before the row exists, and the two have to
+ * agree without a second round trip. Everything else defaults as before.
+ */
 export async function createMediaAsset(
   orgId: string,
-  data: Omit<NewMediaAsset, 'id' | 'orgId'>,
+  data: Omit<NewMediaAsset, 'orgId'>,
 ): Promise<MediaAsset> {
   const [row] = await db
     .insert(mediaAssets)
