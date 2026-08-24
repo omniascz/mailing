@@ -19,9 +19,35 @@ import { decodeVerp } from '@forgemsg/shared/sending/verp';
  * The explicit budget is on this hook alone. Loading a module graph under
  * contention is setup and needs room; the tests keep the suite's strict 10s,
  * because a test that needs longer than that is telling you something.
+ *
+ * ─── Why queues.js alone was not enough ──────────────────────────────────────
+ *
+ * `sendTransactionalEmail` imports sink-addresses.js DYNAMICALLY, inside the
+ * function body:
+ *
+ *     const sinks = await import('../services/sending/sink-addresses.js');
+ *
+ * A dynamic import inside a function is invisible to static loading, so
+ * warming `queues.js` never touched it — the first test to call send() paid
+ * for it instead. That module reaches db/client.js and the ~150-module schema
+ * barrel, and it is not cheap: measured under 12-way CPU contention, the cold
+ * import alone took **14505ms**, against this file's 10s budget.
+ *
+ * That is the whole failure, and both reported symptoms are one cause:
+ *   - the first test times out at 10s, mid-send;
+ *   - vitest moves on, the abandoned send finally resolves ~2s later and calls
+ *     the shared `queueAdd` spy, so the SECOND test sees "called 2 times".
+ *
+ * The spy count looked like leaked state between tests. It is leaked state,
+ * but the leak is a test the runner gave up on, not a mock nobody reset.
  */
 beforeAll(async () => {
-  await import('./queues.js');
+  await Promise.all([
+    import('./queues.js'),
+    // The graph the send path actually pays for. Warmed here for the same
+    // reason as queues.js, and measured the same way.
+    import('../services/sending/sink-addresses.js'),
+  ]);
 }, 60_000);
 
 /**
