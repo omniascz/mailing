@@ -74,10 +74,16 @@ export function EditCampaignForm({
           fromEmail: fromEmail.trim() || undefined,
           replyTo: replyTo.trim() || undefined,
           listId: listId || undefined,
-          content: {
-            html: html || undefined,
-            plainText: plainText || undefined,
-          },
+          // A campaign the visual editor owns does NOT get its content written
+          // from here. This form used to PUT `{ html, plainText }` whatever the
+          // campaign was, which replaced the whole content object and dropped
+          // the block schema — the banner above says the editor is the source
+          // of truth, and this is what makes that true rather than advisory.
+          // Since the send path renders from the schema, dropping it also
+          // silently downgraded the campaign to the raw-HTML branch.
+          ...(campaign.content?.schema
+            ? {}
+            : { content: { html: html || undefined, plainText: plainText || undefined } }),
         }),
       });
       if (!res.ok) {

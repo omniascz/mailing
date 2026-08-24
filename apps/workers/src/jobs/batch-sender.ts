@@ -23,7 +23,7 @@ import {
   parseMergeTags,
   type MergeTagContext,
 } from '@forgemsg/editor/render';
-import { emailSchema, type EmailSchema } from '@forgemsg/editor/schema';
+import { readCampaignContent } from '@forgemsg/editor/schema';
 import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/shared';
 // Cross-package import (same pattern as mta-sender → isp-throttle): the coupon
 // resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
@@ -533,10 +533,16 @@ interface RenderedEmail {
  * body and a plain-text alternative. The plain text is required by Gmail/
  * Yahoo 2024+ bulk-sender rules and reduces spam scoring across the board.
  *
- * Three input shapes are accepted, in priority order:
- *  1. EmailSchema (block JSON) — production path; renderBlocks() + renderPlainText()
- *  2. Legacy { html: string } [+ optional { text: string }] — backward compat
- *  3. Anything else → JSON.stringify (debug aid, never produced in prod)
+ * Input shapes, resolved by readCampaignContent (@forgemsg/editor/schema),
+ * which is also what the archive page uses so the two cannot diverge:
+ *  1. a flat EmailSchema, or the { schema, html } the visual editor writes —
+ *     renderBlocks() + renderPlainText(), the production path
+ *  2. raw { html: string } [+ optional { text: string }] — the Resend-compat
+ *     broadcasts API, the MCP server and the seed. Merge tags only; this path
+ *     still misses the renderer's footer, sanitisation and UTM, and the
+ *     opt-out is enforced for it by assertOptOutPresent instead
+ *  3. anything else → JSON.stringify. Reachable: services/rss/index.ts stores
+ *     { items, sourceFeed, generatedFrom } and schedules it
  */
 function renderEmail(
   content: Record<string, unknown>,
@@ -564,25 +570,32 @@ function renderEmail(
       }
     : undefined;
 
-  // Path 1: block JSON (production)
-  if ('blocks' in content && Array.isArray((content as { blocks?: unknown }).blocks)) {
-    const parsed = emailSchema.safeParse({
-      preheader: preheader ?? '',
-      ...content,
-    } satisfies Partial<EmailSchema> | Record<string, unknown>);
+  // Path 1: block JSON.
+  //
+  // The shape test used to be `'blocks' in content`, written here and again in
+  // browser-view.ts. That is FALSE for `{ schema, html }` — the shape the
+  // visual editor saves — because the blocks are one level down, so the
+  // product's primary authoring path fell through to Path 2 and shipped the
+  // `html` the BROWSER had rendered at save time, against a hard-coded preview
+  // contact. readCampaignContent is the one place that answers this now.
+  const parsed = readCampaignContent(content, preheader);
+  if (parsed.schema) {
+    const html = renderBlocks(parsed.schema, { context: ctx, utm, stream, locale }).html;
+    let text = renderPlainText(parsed.schema, { context: ctx, stream, locale });
+    // Org-wide custom footer (SendGrid Mail Settings) — HTML side is appended
+    // by the renderer; mirror the plain-text side here.
+    const footerText = ctx.system?.footerText?.trim();
+    if (footerText)
+      text += `
 
-    if (parsed.success) {
-      const html = renderBlocks(parsed.data, { context: ctx, utm, stream, locale }).html;
-      let text = renderPlainText(parsed.data, { context: ctx, stream, locale });
-      // Org-wide custom footer (SendGrid Mail Settings) — HTML side is appended
-      // by the renderer; mirror the plain-text side here.
-      const footerText = ctx.system?.footerText?.trim();
-      if (footerText) text += `\n\n${footerText}`;
-      return { html, text };
-    }
+${footerText}`;
+    return { html, text };
+  }
+  if (parsed.error) {
     console.warn(
-      `[batch-sender] Invalid EmailSchema, falling back to legacy render:`,
-      parsed.error.message,
+      `[batch-sender] ${parsed.shape} content did not parse as an EmailSchema, ` +
+        `falling back to raw render:`,
+      parsed.error,
     );
   }
 

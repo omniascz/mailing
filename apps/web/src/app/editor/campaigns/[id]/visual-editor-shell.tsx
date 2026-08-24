@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Save, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { Editor } from '@forgemsg/editor/canvas';
-import { renderEmail, type MergeTagContext } from '@forgemsg/editor/render';
+import type { MergeTagContext } from '@forgemsg/editor/render';
 import type { EmailSchema } from '@forgemsg/editor/schema';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -88,10 +88,17 @@ export function VisualEditorShell({
     if (!schema) return;
     setSaveState({ status: 'saving' });
     try {
-      const { html } = renderEmail(schema, {
-        context: PREVIEW_CONTEXT,
-        previewAllDynamicBranches: false,
-      });
+      // Nothing is rendered here any more.
+      //
+      // This used to render the schema in the BROWSER against PREVIEW_CONTEXT —
+      // a hard-coded contact named Ada with an unsubscribe URL on a domain that
+      // does not exist — and store the result as `content.html`. Every merge tag
+      // was already substituted, so nothing downstream could put the real
+      // recipient back, and both the send path and the archive page read that
+      // snapshot rather than the schema. Ada went to the recipients.
+      //
+      // The schema is the message. It is rendered per recipient, at send time,
+      // by the same renderer that renders the archive page.
       const res = await fetch(`${API_BASE}/api/v1/campaigns/${campaignId}`, {
         method: 'PUT',
         credentials: 'include',
@@ -101,7 +108,6 @@ export function VisualEditorShell({
           preheader: schema.preheader || undefined,
           content: {
             schema,
-            html,
             // Plain text auto-derived on send (E.10). Leaving unset preserves
             // any plain-text override the user typed in the HTML editor view.
           },
