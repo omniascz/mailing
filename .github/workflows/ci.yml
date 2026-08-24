@@ -125,7 +125,27 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
+      # The archive job writes email_events to object storage and then deletes
+      # them from Postgres. Without a store here that path could only be tested
+      # by not testing it, which is how it shipped an unsigned PUT whose
+      # response nobody read.
+      minio:
+        image: bitnami/minio:latest
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports: ['9000:9000']
+        options: >-
+          --health-cmd "mc ready local || curl -f http://127.0.0.1:9000/minio/health/live"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     env:
+      MINIO_ENDPOINT: 127.0.0.1
+      MINIO_PORT: '9000'
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: forgemsg-itest
       # 127.0.0.1, not localhost: postgres-js in the app's connection pool
       # resolves `localhost` to ::1 on some hosts and then times out against a
       # service published on IPv4. Reproduced locally as
