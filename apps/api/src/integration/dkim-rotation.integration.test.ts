@@ -107,6 +107,12 @@ describe('DKIM rotation lifecycle', () => {
     const { domainId, domain } = await makeVerifiedDomain('a');
     const before = await activeKeyRow(domainId);
     expect(before).not.toBeNull();
+    // The signing key as the sender sees it, captured before the rotation.
+    // Compared against the resolved key rather than against `before.privateKey`
+    // because that column now holds ciphertext: two equal ciphertexts would
+    // also compare equal if decryption were broken, so resolving both ends is
+    // the stronger claim, not a weaker one.
+    const signingBefore = await resolveActiveKey(orgId, domain);
 
     const { key: pending, reused } = await rotateDkimKey(orgId, domainId);
     expect(reused).toBe(false);
@@ -117,7 +123,9 @@ describe('DKIM rotation lifecycle', () => {
     const signing = await resolveActiveKey(orgId, domain);
     expect(signing).not.toBeNull();
     expect(signing!.selector).toBe(before!.selector); // STILL the old, in-DNS key
-    expect(signing!.privateKey).toBe(before!.privateKey);
+    expect(signing!.privateKey).toBe(signingBefore!.privateKey);
+    // …and it is a real key, not a decryption that quietly produced junk.
+    expect(signing!.privateKey).toContain('BEGIN PRIVATE KEY');
 
     // Mirror also still points at the old active key.
     expect((await mirrorOf(domainId)).selector).toBe(before!.selector);
