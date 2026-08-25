@@ -129,10 +129,13 @@ describe('getMasterKey', () => {
     expect(getMasterKey(ENV_VAR, 1)).toHaveLength(32);
   });
 
-  it('throws for any other version — rotation is not implemented, and silently ' +
-    'falling back to v1 would look like corruption', () => {
-    expect(() => getMasterKey(ENV_VAR, 2)).toThrow(EnvelopeKeyError);
-  });
+  it(
+    'throws for any other version — rotation is not implemented, and silently ' +
+      'falling back to v1 would look like corruption',
+    () => {
+      expect(() => getMasterKey(ENV_VAR, 2)).toThrow(EnvelopeKeyError);
+    },
+  );
 
   it('throws when the variable is absent — never returns null for a caller to ignore', () => {
     delete process.env[ENV_VAR];

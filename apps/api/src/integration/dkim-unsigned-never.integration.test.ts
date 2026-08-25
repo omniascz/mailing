@@ -136,9 +136,7 @@ describe('C6 (a) — campaigns: the send fails before anything is enqueued', () 
     const add = vi.spyOn(campaignSplitterQueue, 'add');
     process.env[DKIM_MASTER_KEY_ENV] = WRONG;
     try {
-      await expect(enqueueCampaignSend(orgId, campaignId)).rejects.toThrow(
-        DkimKeyDecryptionError,
-      );
+      await expect(enqueueCampaignSend(orgId, campaignId)).rejects.toThrow(DkimKeyDecryptionError);
       // The whole point: not one batch went out unsigned. The resolver sits
       // above campaignSplitterQueue.add in dispatch.ts, so the throw lands
       // before the queue is touched at all.

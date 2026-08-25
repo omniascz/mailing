@@ -303,9 +303,8 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
   // rather than silent.
   let dkim: { dkimDomain: string; dkimSelector: string; dkimPrivateKey: string } | null = null;
   if (input.orgId) {
-    const { resolveDkimForSender, DkimKeyDecryptionError } = await import(
-      '../services/domains/dkim-rotation.js'
-    );
+    const { resolveDkimForSender, DkimKeyDecryptionError } =
+      await import('../services/domains/dkim-rotation.js');
     // The catch used to be `.catch(() => null)`, and `null` here means "send it
     // unsigned". That was a correct reading of the only failure the function
     // had — a lookup that found nothing. It stopped being correct the moment

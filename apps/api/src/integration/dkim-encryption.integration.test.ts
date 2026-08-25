@@ -82,7 +82,13 @@ async function makeDomain(orgId: string, label: string, activate: boolean) {
     await verifyAndPromotePending(orgId, row!.id);
     dnsLive = false;
   }
-  return { domainId: row!.id, domain, selector, pem: pair.privateKeyPem, pub: pair.publicKeyBase64 };
+  return {
+    domainId: row!.id,
+    domain,
+    selector,
+    pem: pair.privateKeyPem,
+    pub: pair.publicKeyBase64,
+  };
 }
 
 /** What the column actually holds, straight from SQL. */
@@ -287,9 +293,7 @@ describe('C4 — a ciphertext is bound to its row', () => {
       WHERE domain_id = ${attacker.domainId}
     `;
     try {
-      await expect(resolveActiveKey(orgA, attacker.domain)).rejects.toThrow(
-        DkimKeyDecryptionError,
-      );
+      await expect(resolveActiveKey(orgA, attacker.domain)).rejects.toThrow(DkimKeyDecryptionError);
       // And the victim's own row is untouched and still works — the failure is
       // the binding, not collateral damage.
       const ok = await resolveActiveKey(orgA, victim.domain);
@@ -309,9 +313,7 @@ describe('C4 — a ciphertext is bound to its row', () => {
     `;
     await raw`UPDATE dkim_keys SET selector = ${'tampered1'} WHERE domain_id = ${attacker.domainId}`;
     try {
-      await expect(resolveActiveKey(orgA, attacker.domain)).rejects.toThrow(
-        DkimKeyDecryptionError,
-      );
+      await expect(resolveActiveKey(orgA, attacker.domain)).rejects.toThrow(DkimKeyDecryptionError);
     } finally {
       await raw`UPDATE dkim_keys SET selector = ${before!.selector} WHERE domain_id = ${attacker.domainId}`;
     }
