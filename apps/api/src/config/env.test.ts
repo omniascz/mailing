@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { productionIssues } from './env.js';
+import { productionIssues, DEV_DKIM_MASTER_KEY } from './env.js';
 import { DEV_TRACKING_SECRET } from '@forgemsg/shared';
 
 const ORIGINAL_ENV = { ...process.env };
@@ -103,6 +103,10 @@ describe('prodRequired — production must not fall back to a committed default'
     WHATSAPP_VERIFY_TOKEN: 'a-real-whatsapp-verify-tok',
     FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
     TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
+    // 64 hex chars. Not optional the way HIPAA_FIELD_KEY is: every deployment
+    // that sends mail signs it, so a production API without this key can
+    // neither store a new DKIM key nor read an existing one.
+    DKIM_MASTER_KEY: 'f'.repeat(64),
   };
 
   it('production without MINIO_ENDPOINT is refused', async () => {
@@ -187,6 +191,15 @@ describe('prodRequired — production must not fall back to a committed default'
       devDefault: DEV_TRACKING_SECRET,
       realValue: 'a-real-tracking-secret-32-chars-min',
     },
+    // Wraps the per-row DEK that encrypts every DKIM private key at rest.
+    // Without it the API can neither write a new key nor read a stored one,
+    // so booting production without it is a deploy-time error, not a
+    // first-send surprise.
+    {
+      name: 'DKIM_MASTER_KEY',
+      devDefault: DEV_DKIM_MASTER_KEY,
+      realValue: 'f'.repeat(64),
+    },
   ];
 
   for (const field of CRITICAL) {
@@ -246,6 +259,7 @@ describe('prodRequired — production must not fall back to a committed default'
       'dev-whatsapp-verify-token-change',
       'dev-facebook-verify-token-change',
       DEV_TRACKING_SECRET,
+      DEV_DKIM_MASTER_KEY,
       // the value it carried before it was brought under prodRequired
       'dev-tracking-secret-changeme',
       // the four system-sender fallbacks, on four domains, two of them ours
@@ -277,6 +291,38 @@ describe('productionIssues — checks carried over from the old lib/env.ts', () 
 
   it('a fully-configured production env has no issues', () => {
     expect(productionIssues(VALID)).toEqual([]);
+  });
+
+  /**
+   * The schema alone cannot catch this one.
+   *
+   * DKIM_MASTER_KEY is prodRequired, so production with the variable ABSENT
+   * already fails to boot — pinned in the prodRequired table above. But a
+   * deployment that copied .env.example, or a container that inherited the dev
+   * compose file, arrives with a value that is present, well-formed, 64 hex
+   * characters, and committed to this repository. Every DKIM private key in
+   * that database is then decryptable by anyone holding a checkout, which is
+   * the same as not encrypting them, while every health check reports the
+   * feature as on.
+   */
+  it('refuses to boot production on the committed dev DKIM master key', () => {
+    expect(productionIssues({ ...VALID, DKIM_MASTER_KEY: DEV_DKIM_MASTER_KEY })).toEqual([
+      expect.stringContaining('DKIM_MASTER_KEY is still the development default'),
+    ]);
+  });
+
+  it('accepts a real DKIM master key', () => {
+    expect(productionIssues({ ...VALID, DKIM_MASTER_KEY: 'a1'.repeat(32) })).toEqual([]);
+  });
+
+  it('does not fire outside production — dev runs on the default by design', () => {
+    expect(
+      productionIssues({
+        ...VALID,
+        NODE_ENV: 'development',
+        DKIM_MASTER_KEY: DEV_DKIM_MASTER_KEY,
+      }),
+    ).toEqual([]);
   });
 
   it('flags a JWT_SECRET that is still the dev placeholder', () => {
@@ -384,6 +430,10 @@ describe('optional-by-design secrets', () => {
       WHATSAPP_VERIFY_TOKEN: 'a-real-whatsapp-verify-tok',
       FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
       TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
+      // Required in production since DKIM keys are encrypted at rest. Listed
+      // here so this case still exercises what it is about — HIPAA_FIELD_KEY
+      // being optional — rather than failing on an unrelated missing variable.
+      DKIM_MASTER_KEY: 'f'.repeat(64),
       API_PUBLIC_URL: 'https://api.example.com',
       APP_URL: 'https://app.example.com',
     };
