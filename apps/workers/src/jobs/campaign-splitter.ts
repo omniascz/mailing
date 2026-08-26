@@ -106,6 +106,12 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
     const totalVariantPct = abConfig.variants.reduce((s, v) => s + v.percentage, 0);
     const holdbackPct = Math.max(0, 100 - totalVariantPct);
 
+    // Audience recorded, counter deliberately NOT armed. An A/B campaign is
+    // closed out by the winner job after the test window, not by its variant
+    // batches — a counter would reach zero when those finished and declare the
+    // campaign sent while the holdback was still waiting to go out.
+    await startDispatch(data.campaignId, data.orgId, contactIds.length, null);
+
     let cursor = 0;
     for (const variant of abConfig.variants) {
       const variantSize = Math.floor((variant.percentage / 100) * contactIds.length);
@@ -143,6 +149,8 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
             campaignId: data.campaignId,
             orgId: data.orgId,
             batchIndex: totalBatches + index,
+            dispatchId,
+            batchKey: key,
             contactIds: batch,
             content: variant.content,
             subject: variant.subject,
@@ -222,6 +230,13 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
     }
 
     const keys = batches.map((_, index) => String(index));
+
+    // Arm the counter BEFORE anything is enqueued. A batch can finish while the
+    // splitter is still working, and a completion that arrives before the
+    // counter exists has nothing to decrement and is lost — which would leave
+    // the campaign one short of closing, for good.
+    await startDispatch(data.campaignId, data.orgId, contactIds.length, batches.length);
+
     const claim = await claimDispatchBatches(data.campaignId, data.orgId, dispatchId, keys);
     const wanted = new Set(claim.toEnqueue);
     if (claim.alreadyEnqueued.length > 0) {
@@ -240,6 +255,8 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
           campaignId: data.campaignId,
           orgId: data.orgId,
           batchIndex: index,
+          dispatchId,
+          batchKey: key,
           contactIds: batch,
           content: data.content,
           subject: data.subject,
@@ -277,9 +294,27 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
 
   job.log(`Enqueued ${totalBatches} batch jobs`);
 
-  // Mark campaign fully sent once all batches are enqueued. A/B tests with a
-  // pending winner stay `sending` until the winner job dispatches + marks sent.
-  await updateCampaignStatus(data.campaignId, winnerScheduled ? 'sending' : 'sent');
+  // An audience that resolved to nobody. No batch exists, so nothing will ever
+  // report in and nothing can close the campaign out — leaving it in `sending`
+  // would be the stuck state under a new name. Closed here, loudly, as the one
+  // case the counter cannot handle.
+  if (totalBatches === 0) {
+    job.log('No batches were enqueued — the audience resolved to nobody. Marking failed.');
+    await updateCampaignStatus(data.campaignId, 'failed');
+    return { batches: 0, totalContacts: contactIds.length };
+  }
+
+  // Every batch is on the queue, so the send has begun — this is `sending`, not
+  // `sent`. It used to be `sent` here, which is why a campaign reported itself
+  // finished before a single message had been handed to an MX. It is closed out
+  // by its last batch reporting in, except for A/B, where the winner job still
+  // does it after the test window.
+  await updateCampaignStatus(data.campaignId, 'sending');
+  job.log(
+    winnerScheduled
+      ? 'Campaign is sending — the winner job closes it out after the test window'
+      : 'Campaign is sending — the last batch to report in closes it out',
+  );
 
   return { batches: totalBatches, totalContacts: contactIds.length };
 }
@@ -322,6 +357,32 @@ async function storeHoldback(
     });
   } catch (err) {
     console.error('storeHoldback failed:', err);
+  }
+}
+
+/**
+ * Tell the API how big this dispatch is, before any of it is enqueued.
+ *
+ * Not best-effort: if this fails the counter is never armed, every batch's
+ * completion report finds nothing to decrement, and the campaign sits in
+ * `sending` until the reaper picks it up. Better to fail the splitter job and
+ * retry — the ledger makes re-running it safe.
+ */
+async function startDispatch(
+  campaignId: string,
+  orgId: string,
+  plannedRecipients: number,
+  batchCount: number | null,
+): Promise<void> {
+  const url = `${process.env.API_URL ?? 'http://localhost:3001'}/api/v1/internal/campaigns/${campaignId}/dispatch-start`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_SECRET },
+    body: JSON.stringify({ orgId, plannedRecipients, batchCount }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`dispatch-start for ${campaignId} → ${res.status}: ${text.slice(0, 200)}`);
   }
 }
 

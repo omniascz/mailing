@@ -156,6 +156,8 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
           campaignId,
           orgId,
           batchIndex: batchIndex + idx,
+          dispatchId,
+          batchKey: key,
           contactIds: batch,
           content: winner.content,
           subject: winner.subject,

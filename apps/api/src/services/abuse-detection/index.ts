@@ -12,7 +12,7 @@
  * aggregators, campaign finish hooks, …) and callers invoke `evaluateSignal()`.
  */
 
-import { and, eq, desc, sql, isNull, gt, or } from 'drizzle-orm';
+import { and, eq, desc, sql, isNull, gt, or, inArray } from 'drizzle-orm';
 import crypto from 'node:crypto';
 import { db } from '../../db/client.js';
 import {
@@ -356,12 +356,19 @@ async function createSanctionForEvent(event: AbuseEvent, rule: AbuseRule): Promi
     expiresAt,
   });
 
-  // If pause_campaigns: flip any running campaign to paused
+  // If pause_campaigns: flip any running campaign to paused.
+  //
+  // Both live states, not just `sending`. A sanction is meant to stop the org
+  // from sending, and a campaign in `queueing` is one whose batches are being
+  // written to the queue right now — leaving it out would let the thing the
+  // sanction is trying to stop finish arming itself first.
   if (rule.action === 'pause_campaigns') {
     await db
       .update(campaigns)
       .set({ status: 'paused', updatedAt: now })
-      .where(and(eq(campaigns.orgId, event.orgId), eq(campaigns.status, 'sending')));
+      .where(
+        and(eq(campaigns.orgId, event.orgId), inArray(campaigns.status, ['queueing', 'sending'])),
+      );
   }
 }
 

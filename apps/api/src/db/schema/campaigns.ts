@@ -52,6 +52,32 @@ export const campaigns = pgTable(
      */
     pausedReason: text('paused_reason'),
 
+    /**
+     * How many recipients the splitter actually planned for, written when it
+     * knows the audience. Not `estimatedRecipients`, which is a guess made
+     * while the campaign was still a draft and is never reconciled.
+     *
+     * NULL means "not recorded" — every campaign that ran before this column
+     * existed. Readers must show that as unknown, never as zero: the history
+     * is not being backfilled, because the data to backfill it from does not
+     * exist (batch results lived in Redis and were evicted).
+     */
+    plannedRecipients: integer('planned_recipients'),
+
+    /**
+     * Batches still to report in. The splitter sets it to the number of
+     * batches it enqueued; each batch decrements it on completion, success or
+     * permanent failure; the one that takes it to zero closes the campaign.
+     *
+     * This is the closing condition, deliberately not a count of per-recipient
+     * events: a recipient can fail to produce any event at all, and a campaign
+     * whose closure waits for one that never comes is exactly the stuck state
+     * this model exists to remove.
+     *
+     * NULL means no dispatch is outstanding.
+     */
+    pendingBatches: integer('pending_batches'),
+
     // Email-specific
     subject: varchar('subject', { length: 255 }),
     preheader: varchar('preheader', { length: 255 }),

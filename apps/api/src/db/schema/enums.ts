@@ -56,6 +56,22 @@ export const campaignTypeEnum = pgEnum('campaign_type', [
 
 export const dataRegionEnum = pgEnum('data_region', ['us', 'eu', 'ap']);
 
+/**
+ * `sending` used to mean two different things, and the shorter one was
+ * drowning out the longer: the splitter marked a campaign `sent` the moment
+ * the last batch reached the queue, so `sending` lasted for the splitter's run
+ * and `sent` covered the hours of actual delivery. Anything watching a send in
+ * progress — the anomaly detector, an operator, the Pause button — was looking
+ * at a window that had already closed.
+ *
+ * So the two are separated. `queueing` is the splitter's run; `sending` is mail
+ * actually going out; `sent` is every batch finished. `failed` is the same
+ * finish line with nothing delivered.
+ *
+ * Order matters for `enumsortorder` but nothing sorts on it, and new values
+ * must be appended in the migration regardless — Postgres will not let a value
+ * be added and used inside the same transaction.
+ */
 export const campaignStatusEnum = pgEnum('campaign_status', [
   'draft',
   'scheduled',
@@ -63,6 +79,10 @@ export const campaignStatusEnum = pgEnum('campaign_status', [
   'sent',
   'paused',
   'cancelled',
+  /** The splitter is turning the audience into batches. Short, minutes at most. */
+  'queueing',
+  /** Every batch finished and not one of them sent anything. Terminal. */
+  'failed',
 ]);
 
 export const templateCategoryEnum = pgEnum('template_category', [

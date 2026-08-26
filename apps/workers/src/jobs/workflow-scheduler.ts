@@ -132,6 +132,20 @@ export function startWorkflowSchedulerWorkers() {
   const campaignDispatchWorker = new Worker(
     QUEUE_NAMES.CAMPAIGN_DISPATCH,
     async (job) => {
+      // One queue, two schedules. The jobId says which tick this is.
+      if (job.opts.jobId === 'campaign-reap-stalled' || job.name === 'reap') {
+        const r = (await post('/api/v1/internal/campaigns/reap-stalled')) as {
+          data?: { examined: number; closedSent: number; closedFailed: number };
+        };
+        if (r.data?.examined) {
+          job.log(
+            `Reaped ${r.data.examined} stalled campaign(s): ` +
+              `${r.data.closedSent} sent, ${r.data.closedFailed} failed`,
+          );
+        }
+        return;
+      }
+
       const r = (await post('/api/v1/internal/campaigns/dispatch-scheduled')) as {
         data?: { dispatched: number; errors: number };
       };
@@ -316,6 +330,22 @@ export async function scheduleWorkflowJobs() {
       },
     );
     console.log('[workflow-scheduler] campaign-dispatch scheduled (every minute)');
+  }
+  if (!(await campaignDispatchQueue.getJob('campaign-reap-stalled'))) {
+    // Hourly, not every minute: it only ever acts on campaigns that have been
+    // silent for a day, so checking sixty times more often would find the same
+    // nothing sixty times more often.
+    await campaignDispatchQueue.add(
+      'reap',
+      {},
+      {
+        jobId: 'campaign-reap-stalled',
+        repeat: { pattern: '17 * * * *' },
+        removeOnComplete: true,
+        removeOnFail: { count: 10 },
+      },
+    );
+    console.log('[workflow-scheduler] campaign-reap-stalled scheduled (hourly)');
   }
   // browse-abandonment posts to a beyond-core internal route; scheduling it
   // with that route unregistered would 404 every 15 minutes. See

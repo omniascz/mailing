@@ -42,7 +42,15 @@ async function applyAltText(
 
 // ─── State machine ───────────────────────────────────────────────────────────
 
-type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
+type CampaignStatus =
+  | 'draft'
+  | 'scheduled'
+  | 'queueing'
+  | 'sending'
+  | 'sent'
+  | 'failed'
+  | 'paused'
+  | 'cancelled';
 
 /**
  * Why a campaign is in `paused`. Deliberately NOT part of the status enum and
@@ -56,13 +64,29 @@ export type CampaignPausedReason = 'send_failed' | 'operator';
 
 /**
  * Allowed state transitions. Key = current status, value = set of valid next statuses.
+ *
+ * `queueing` sits between "the operator pressed Send" and "mail is going out".
+ * It is the splitter's run, and it is short; `sending` is the delivery itself,
+ * and it is long. They were one state before, which meant everything watching a
+ * send in progress was watching the wrong window.
+ *
+ * `queueing → failed` exists for one case: an audience that turns out to be
+ * empty. The splitter enqueues nothing, so no batch can ever close the campaign
+ * out, and leaving it in `sending` would be the stuck state under a new name.
+ *
+ * `paused → queueing` is the recovery path: resuming a send that failed before
+ * anything was queued goes through sendCampaign, which starts the dispatch over.
+ * `paused → sending` is the other resume — the operator's own pause, where the
+ * batches are already out and nothing is re-enqueued.
  */
 const TRANSITIONS: Record<CampaignStatus, Set<CampaignStatus>> = {
-  draft: new Set(['scheduled', 'sending']),
-  scheduled: new Set(['sending', 'cancelled']),
-  sending: new Set(['sent', 'paused']),
-  paused: new Set(['sending', 'cancelled']),
+  draft: new Set(['scheduled', 'queueing']),
+  scheduled: new Set(['queueing', 'cancelled']),
+  queueing: new Set(['sending', 'failed', 'paused', 'cancelled']),
+  sending: new Set(['sent', 'failed', 'paused']),
+  paused: new Set(['queueing', 'sending', 'cancelled']),
   sent: new Set(),
+  failed: new Set(),
   cancelled: new Set(),
 };
 
@@ -333,20 +357,28 @@ export async function scheduleCampaign(
 
 export async function sendCampaign(orgId: string, campaignId: string): Promise<Campaign> {
   const current = await getCampaign(orgId, campaignId);
-  validateTransition(current.status as CampaignStatus, 'sending');
+  validateTransition(current.status as CampaignStatus, 'queueing');
   validateCampaignReadiness(current);
 
   const [row] = await db
     .update(campaigns)
     .set({
-      status: 'sending',
+      // Not 'sending' — nothing is being sent yet. The splitter has not run, so
+      // there is no audience, no batches and no mail. It moves to 'sending'
+      // once every batch is on the queue.
+      status: 'queueing',
       sentAt: new Date(),
       updatedAt: new Date(),
-      // Entering 'sending' ends whatever pause came before, so the reason for
+      // Entering the send ends whatever pause came before, so the reason for
       // that pause stops being true here. Clearing it at the transition rather
       // than at the next pause is what keeps a stale value from ever being read
       // as the cause of a later one.
       pausedReason: null,
+      // A fresh dispatch starts with a clean slate. The previous attempt's
+      // counter must not survive into this one, or the first batch to report
+      // would decrement a number that belongs to a send that is over.
+      plannedRecipients: null,
+      pendingBatches: null,
     })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .returning();
@@ -429,16 +461,51 @@ export async function cancelCampaign(orgId: string, campaignId: string): Promise
 /**
  * Mark a campaign as fully sent. Called by the worker when all batches complete.
  */
-export async function markCampaignSent(orgId: string, campaignId: string): Promise<Campaign> {
+export async function markCampaignSent(
+  orgId: string,
+  campaignId: string,
+  totals?: { totalSent: number },
+): Promise<Campaign> {
   const current = await getCampaign(orgId, campaignId);
   validateTransition(current.status as CampaignStatus, 'sent');
 
   const [row] = await db
     .update(campaigns)
-    .set({ status: 'sent', updatedAt: new Date() })
+    .set({
+      status: 'sent',
+      updatedAt: new Date(),
+      // The dispatch is over, so nothing is outstanding. Left set, the counter
+      // would look like an unfinished send to the reaper.
+      pendingBatches: null,
+      ...(totals ? { totalSent: totals.totalSent } : {}),
+    })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .returning();
 
+  return row!;
+}
+
+/**
+ * The other end of the same finish line: every batch reported and not one of
+ * them sent anything. A sibling of markCampaignSent rather than a flag on it,
+ * because it is a different transition with a different meaning — `sent` with
+ * zero recipients would be a lie, and silence would be the stuck state again.
+ */
+export async function markCampaignFailed(
+  orgId: string,
+  campaignId: string,
+  reason: string,
+): Promise<Campaign> {
+  const current = await getCampaign(orgId, campaignId);
+  validateTransition(current.status as CampaignStatus, 'failed');
+
+  const [row] = await db
+    .update(campaigns)
+    .set({ status: 'failed', updatedAt: new Date(), pendingBatches: null, pausedReason: null })
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
+    .returning();
+
+  console.warn(`[campaign] ${campaignId} finished with nothing sent: ${reason}`);
   return row!;
 }
 

@@ -120,6 +120,13 @@
       "when": 1787760359752,
       "tag": "0016_campaign_paused_reason",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787765205559,
+      "tag": "0017_campaign_state_model",
+      "breakpoints": true
     }
   ]
 }
