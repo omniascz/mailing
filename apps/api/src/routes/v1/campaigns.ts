@@ -16,7 +16,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import { db } from '../../db/client.js';
-import { emailEvents } from '../../db/schema/index.js';
+import { campaigns, emailEvents } from '../../db/schema/index.js';
+import { eq } from 'drizzle-orm';
 import {
   createCampaign,
   getCampaign,
@@ -61,6 +62,40 @@ const idParam = z.object({ id: z.string().uuid() });
 
 const campaignStatuses = ['draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled'] as const;
 const campaignTypes = ['email', 'sms', 'whatsapp', 'push', 'voice'] as const;
+
+/**
+ * What PATCH /api/v1/internal/campaigns/:id/status is allowed to do.
+ *
+ * This is not the operator state machine (services/campaigns/index.ts owns
+ * that, and it is untouched). It is the much smaller set of writes the two
+ * workers that call this route actually perform, read off their call sites:
+ *
+ *   campaign-splitter.ts:282  → 'sent'    once every batch is enqueued
+ *                             → 'sending' when an A/B winner job is pending,
+ *                                         so the winner can close it out later
+ *   ab-winner.ts:190          → 'sent'    after the winner is dispatched
+ *   ab-winner.ts:103          → 'paused'  when the test needs a human
+ *
+ * Every one of those runs against a campaign the dispatch left in `sending`,
+ * so `sending` is the only source state either worker needs. The 'sending' →
+ * 'sending' case is a no-op and is handled before this map is consulted.
+ *
+ * Deliberately NOT here: `paused` → `sent`. It is reachable today — pause a
+ * campaign while the splitter is still enqueueing and the splitter's write
+ * lands afterwards — and what it does is erase the pause, including one an
+ * operator or the anomaly detector applied on purpose. Neither worker needs
+ * it to do its job. Refusing means such a campaign stays `paused` instead of
+ * reporting itself `sent`, which is the less wrong of two wrong answers.
+ */
+const INTERNAL_STATUS_TRANSITIONS: Readonly<Record<string, ReadonlySet<string>>> = {
+  sending: new Set(['sent', 'paused']),
+};
+
+/**
+ * States this route must never move a campaign out of, checked separately from
+ * the whitelist above so that adding an entry there cannot reopen the exit.
+ */
+const INTERNAL_STATUS_TERMINAL: ReadonlySet<string> = new Set(['sent', 'cancelled']);
 
 /**
  * A UTM value is going into a URL and then into a GA report. Length-bounded
@@ -680,15 +715,69 @@ export default async function campaignRoutes(app: FastifyInstance) {
    * Called by the splitter/winner worker to drive the sending→sent lifecycle.
    * (Previously the splitter called this endpoint but it did not exist, so
    * campaigns were never marked `sent`.)
+   *
+   * The route validates, not the setter. `setCampaignStatusInternal` bypasses
+   * `validateTransition` on purpose — the splitter legitimately performs writes
+   * the operator-facing state machine does not allow — but "the setter may do
+   * anything" was being read as "this route may do anything", and it could:
+   * one PATCH took a campaign out of `sent` or `cancelled` and back into
+   * `sending`, measured on a real database. So the narrowing lives here, where
+   * the untrusted input arrives, and the setter is left alone.
    */
   app.patch(
     '/api/v1/internal/campaigns/:id/status',
     { schema: { tags: ['Internal'] } },
     async (req) => {
       const { id } = idParam.parse(req.params);
+      // An unrecognised status is a ZodError, which the error handler renders as
+      // a 400 — not a 500, and not a write.
       const { status } = z
         .object({ status: z.enum(['sending', 'sent', 'paused', 'cancelled']) })
         .parse(req.body);
+
+      const [current] = await db
+        .select({ status: campaigns.status })
+        .from(campaigns)
+        .where(eq(campaigns.id, id))
+        .limit(1);
+      if (!current) throw AppError.notFound('Campaign');
+      const from = current.status;
+
+      // A no-op is not a transition. Both callers are best-effort and neither
+      // acks its BullMQ job before this write, so a worker dying in between
+      // replays the same PATCH on stalled-job recovery. Short-circuiting keeps
+      // that off the refusal log — and skips the write, so the `campaign.sent`
+      // webhook is not emitted a second time for the same campaign.
+      if (from === status) return { data: { ok: true, noop: true } };
+
+      // Terminal states are terminal, stated on its own rather than left to
+      // fall out of the whitelist below — so that widening the whitelist later
+      // cannot quietly reopen the way out of one.
+      if (INTERNAL_STATUS_TERMINAL.has(from)) {
+        req.log.warn(
+          { campaignId: id, from, to: status },
+          '[internal-status] refused: a terminal campaign status cannot be left through this route',
+        );
+        throw AppError.badRequest(
+          `Campaign is ${from}, which is terminal — refusing to move it to ${status}`,
+          { from, to: status },
+        );
+      }
+
+      if (!INTERNAL_STATUS_TRANSITIONS[from]?.has(status)) {
+        // Loudly, because neither caller looks at the response: ab-winner logs
+        // the status code and moves on, and the splitter does not even check
+        // `res.ok`. If this is not in our log it is nowhere.
+        req.log.warn(
+          { campaignId: id, from, to: status },
+          '[internal-status] refused: transition is not one the splitter or winner worker performs',
+        );
+        throw AppError.badRequest(`Campaign status ${from} → ${status} is not allowed here`, {
+          from,
+          to: status,
+        });
+      }
+
       await setCampaignStatusInternal(id, status);
       return { data: { ok: true } };
     },
