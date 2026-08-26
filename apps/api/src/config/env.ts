@@ -19,6 +19,18 @@ import { DEV_TRACKING_SECRET } from '@forgemsg/shared';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+/**
+ * The development DKIM master key. 64 hex characters, deliberately obvious.
+ *
+ * Exported rather than inlined so the production guard in productionIssues()
+ * compares against the same literal the schema hands out — a copy would drift,
+ * and a drifted guard is a guard that stops firing. Unlike DEV_TRACKING_SECRET
+ * this is not in packages/shared: only apps/api ever holds the master key, and
+ * putting it somewhere the workers can import would invite exactly that.
+ */
+export const DEV_DKIM_MASTER_KEY =
+  '00000000000000000000000000000000000000000000000000000000deadbeef';
+
 /** Domain half of an address, lowercased. Only ever called on `.email()`-validated input. */
 const domainOf = (address: string): string =>
   address.slice(address.lastIndexOf('@') + 1).toLowerCase();
@@ -185,6 +197,22 @@ const Env = z
       .string()
       .regex(/^[0-9a-fA-F]{64}$/, 'HIPAA_FIELD_KEY must be 64 hex chars (32 bytes)')
       .optional(),
+    // Master key for the DKIM private keys at rest (lib/crypto/envelope.ts). It
+    // wraps a per-row DEK, which encrypts the key itself.
+    //
+    // NOT optional the way HIPAA_FIELD_KEY is. HIPAA mode is per-org opt-in, so
+    // most deployments legitimately never set that one. DKIM is not opt-in —
+    // every deployment that sends mail signs it, so a production instance
+    // without this key can neither store a new key nor read an existing one,
+    // and refusing to boot says so at deploy time instead of at the first send.
+    //
+    // The dev default is committed on purpose: without it `pnpm dev` and the
+    // test suites cannot round-trip a key. productionIssues() below refuses to
+    // start production on this exact value, so the convenience cannot leak.
+    DKIM_MASTER_KEY: prodRequired(
+      z.string().regex(/^[0-9a-fA-F]{64}$/, 'DKIM_MASTER_KEY must be 64 hex chars (32 bytes)'),
+      DEV_DKIM_MASTER_KEY,
+    ),
     // Deliberately optional: absent means the partner provisioning endpoint is
     // closed, which is already the correct default. checkPartnerSecret returns
     // false for every input when unset — pinned by a test.
@@ -362,6 +390,24 @@ export function productionIssues(env: Env): string[] {
     issues.push('APP_URL must be set in production.');
   }
 
+  // The schema cannot catch this one. DKIM_MASTER_KEY is prodRequired, so a
+  // production boot with the variable absent already fails — but a deployment
+  // that copied .env.example, or a container that inherited the dev compose
+  // file, arrives with a *present* and well-formed value that happens to be the
+  // one committed to this repository. Every DKIM key in that database would
+  // then be decryptable by anyone holding a checkout, which is the same as not
+  // encrypting them at all, while every check reports the feature as on.
+  //
+  // Explicit rather than folded into the `startsWith('dev-')` shape used for
+  // JWT_SECRET: a hex key has no prefix to look for.
+  if (env.DKIM_MASTER_KEY === DEV_DKIM_MASTER_KEY) {
+    issues.push(
+      'DKIM_MASTER_KEY is still the development default committed to this repository. ' +
+        'Every DKIM private key encrypted with it is readable by anyone with a checkout. ' +
+        'Generate one with `openssl rand -hex 32`.',
+    );
+  }
+
   return issues;
 }
 
@@ -412,6 +458,20 @@ function loadEnv(): Env {
   if (issues.length > 0) {
     fail(issues.map((m) => `  - ${m}`).join('\n'));
   }
+
+  // Publish the RESOLVED master key back to process.env.
+  //
+  // lib/crypto/envelope.ts reads the variable at use time rather than importing
+  // this module — that is what lets a test point it at a different key without
+  // rebuilding the config, and it is the shape hipaa.ts already uses. But the
+  // dev default lives in the schema, not in the environment, so without this
+  // line a developer or a test with no DKIM_MASTER_KEY set would pass boot
+  // validation and then throw on the first key it tried to read: validated in
+  // one place, absent in the other.
+  //
+  // In production this is a no-op — the value came from process.env to begin
+  // with. It only ever materialises a default that was already decided here.
+  process.env.DKIM_MASTER_KEY = parsed.data.DKIM_MASTER_KEY;
 
   return parsed.data;
 }

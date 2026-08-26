@@ -303,8 +303,24 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
   // rather than silent.
   let dkim: { dkimDomain: string; dkimSelector: string; dkimPrivateKey: string } | null = null;
   if (input.orgId) {
-    const { resolveDkimForSender } = await import('../services/domains/dkim-rotation.js');
-    dkim = await resolveDkimForSender(input.orgId, input.from).catch(() => null);
+    const { resolveDkimForSender, DkimKeyDecryptionError } =
+      await import('../services/domains/dkim-rotation.js');
+    // The catch used to be `.catch(() => null)`, and `null` here means "send it
+    // unsigned". That was a correct reading of the only failure the function
+    // had — a lookup that found nothing. It stopped being correct the moment
+    // the key became something that can fail to DECRYPT: a wrong or missing
+    // DKIM_MASTER_KEY would have been swallowed into `null`, logged as "no
+    // active key", and every transactional mail for every customer would have
+    // gone out unsigned while the domain's DNS still advertised a key. Silent,
+    // fleet-wide, and visible only as a slow deliverability slide.
+    //
+    // So the two are separated. A key that exists but cannot be read is not an
+    // absence, and it propagates: the caller's request fails, nothing is
+    // enqueued, and somebody finds out.
+    dkim = await resolveDkimForSender(input.orgId, input.from).catch((err: unknown) => {
+      if (err instanceof DkimKeyDecryptionError) throw err;
+      return null;
+    });
     if (!dkim) {
       console.warn(
         `[dkim] sending unsigned: no active key for From=${input.from} org=${input.orgId} stream=transactional`,
