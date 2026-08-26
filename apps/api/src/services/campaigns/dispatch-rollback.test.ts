@@ -141,6 +141,28 @@ describe('enqueueCampaignSend — rollback out of "sending"', () => {
     expect(queueAdd).not.toHaveBeenCalled();
   });
 
+  it('(a) the rollback records send_failed, which is what makes it recoverable', async () => {
+    resolveDkimForSender.mockRejectedValue(new Error('dkim: key cannot be read'));
+
+    await expect(enqueueCampaignSend(ORG, CID)).rejects.toThrow();
+
+    // Without this the pause is indistinguishable from an operator's, and
+    // resumeCampaign has to take the conservative branch and never send.
+    expect(updateCalls).toHaveLength(1);
+    expect(updateCalls[0]).toMatchObject({ status: 'paused', pausedReason: 'send_failed' });
+  });
+
+  it('(a) a rolled-back non-email dispatch is marked send_failed too', async () => {
+    sendCampaign.mockResolvedValue(emailCampaign({ type: 'sms', fromEmail: null }));
+    selectResults.length = 0;
+    selectResults.push([{ fromEmail: null, type: 'sms' }]);
+    dispatchChannelCampaign.mockRejectedValue(new Error('sms: no body'));
+
+    await expect(enqueueCampaignSend(ORG, CID)).rejects.toThrow('sms: no body');
+
+    expect(updateCalls[0]).toMatchObject({ status: 'paused', pausedReason: 'send_failed' });
+  });
+
   it('(c) a second attempt with a working resolver goes through — not stuck in paused', async () => {
     resolveDkimForSender.mockRejectedValueOnce(new Error('dkim: key cannot be read'));
     await expect(enqueueCampaignSend(ORG, CID)).rejects.toThrow();

@@ -45,6 +45,16 @@ async function applyAltText(
 type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
 
 /**
+ * Why a campaign is in `paused`. Deliberately NOT part of the status enum and
+ * NOT part of TRANSITIONS — the state machine is unchanged; this only records
+ * which of two indistinguishable pauses happened, so resume can pick the right
+ * action. See campaigns.pausedReason in the schema for the full reasoning.
+ *
+ * NULL (no reason recorded) is the conservative case, never a third state.
+ */
+export type CampaignPausedReason = 'send_failed' | 'operator';
+
+/**
  * Allowed state transitions. Key = current status, value = set of valid next statuses.
  */
 const TRANSITIONS: Record<CampaignStatus, Set<CampaignStatus>> = {
@@ -332,6 +342,11 @@ export async function sendCampaign(orgId: string, campaignId: string): Promise<C
       status: 'sending',
       sentAt: new Date(),
       updatedAt: new Date(),
+      // Entering 'sending' ends whatever pause came before, so the reason for
+      // that pause stops being true here. Clearing it at the transition rather
+      // than at the next pause is what keeps a stale value from ever being read
+      // as the cause of a later one.
+      pausedReason: null,
     })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .returning();
@@ -345,7 +360,13 @@ export async function pauseCampaign(orgId: string, campaignId: string): Promise<
 
   const [row] = await db
     .update(campaigns)
-    .set({ status: 'paused', updatedAt: new Date() })
+    .set({
+      status: 'paused',
+      updatedAt: new Date(),
+      // A human did this. Batches may already be on their way, so resume must
+      // NOT enqueue — see resumeCampaign.
+      pausedReason: 'operator' satisfies CampaignPausedReason,
+    })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .returning();
 
@@ -356,9 +377,36 @@ export async function resumeCampaign(orgId: string, campaignId: string): Promise
   const current = await getCampaign(orgId, campaignId);
   validateTransition(current.status as CampaignStatus, 'sending');
 
+  // Two pauses that look identical in `status` need opposite actions, and the
+  // only thing that tells them apart is why the pause happened.
+  //
+  // 'send_failed': the dispatch threw after the flip to 'sending' and rolled
+  // back, so nothing ever reached the queue. Resuming means running the send
+  // for real — the same path the Send button takes, rollback and all.
+  //
+  // Anything else — an operator's pause, or NULL because the row predates this
+  // column or was paused by a path that records no reason (ab-winner parking a
+  // campaign for review) — keeps the old behaviour: flip the status and enqueue
+  // NOTHING.
+  //
+  // The default side is the safe one on purpose. Enqueueing again is not
+  // idempotent: the dispatch ledger is scoped per enqueue attempt
+  // (campaign-dispatch-batches.ts says so outright — "a legitimate resend
+  // starts with an empty ledger and is free to enqueue everything again"), so
+  // guessing wrong here sends the entire audience a second time. A campaign
+  // that stays put is a worse outcome for one campaign; a duplicate send is a
+  // worse outcome for every recipient on it.
+  if (current.pausedReason === ('send_failed' satisfies CampaignPausedReason)) {
+    // enqueueCampaignSend calls sendCampaign, which performs the flip and
+    // clears pausedReason — so a second Resume finds NULL and takes the branch
+    // below instead of enqueueing twice.
+    const { enqueueCampaignSend } = await import('./dispatch.js');
+    return enqueueCampaignSend(orgId, campaignId);
+  }
+
   const [row] = await db
     .update(campaigns)
-    .set({ status: 'sending', updatedAt: new Date() })
+    .set({ status: 'sending', updatedAt: new Date(), pausedReason: null })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .returning();
 
@@ -413,6 +461,12 @@ export async function updateCampaignStatus(
       status,
       ...(status === 'sending' && !current.sentAt ? { sentAt: new Date() } : {}),
       updatedAt: new Date(),
+      // Same rule as everywhere else: a reason only survives while the pause it
+      // describes does. This setter takes an arbitrary status, so it clears on
+      // anything that is not 'paused' — and it never sets one, because it has no
+      // idea why its caller is pausing. NULL then means "no reason recorded",
+      // which readers treat as the conservative case.
+      pausedReason: status === 'paused' ? current.pausedReason : null,
     })
     .where(eq(campaigns.id, campaignId));
 }
