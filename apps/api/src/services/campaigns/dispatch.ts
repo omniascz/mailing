@@ -72,77 +72,97 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
 
   const campaign = await sendCampaign(orgId, campaignId);
 
-  // Non-email campaigns (sms/whatsapp/push) fan out over their own channel
-  // queues instead of the email splitter → MTA pipeline.
-  if (campaign.type && campaign.type !== 'email') {
-    const { dispatchChannelCampaign } = await import('./channel-dispatch.js');
-    try {
+  // Everything from here to a SUCCESSFUL enqueue runs with the campaign already
+  // flipped to 'sending', so anything that throws in between has to put it back.
+  // A campaign left in 'sending' with nothing on the queue is stuck for good:
+  // the splitter never ran, so nothing ever drives it sending→sent, and
+  // dispatchScheduledCampaigns only ever selects status='scheduled', so the
+  // cron will not pick it up again either. It needs a human and a SQL console.
+  //
+  // The non-email branch already rolled back. The email branch — which has
+  // strictly more that can throw between the flip and the enqueue: a DKIM key
+  // that cannot be read, a configuration set that is unknown or has sending
+  // paused, four separate database reads, and the Redis write itself — did not.
+  // So this is that same rollback widened to cover both, not a new mechanism:
+  // same target state, same best-effort write, same rethrow. No new status and
+  // no change to the transition table.
+  try {
+    // Non-email campaigns (sms/whatsapp/push) fan out over their own channel
+    // queues instead of the email splitter → MTA pipeline.
+    if (campaign.type && campaign.type !== 'email') {
+      const { dispatchChannelCampaign } = await import('./channel-dispatch.js');
       await dispatchChannelCampaign(orgId, campaign);
-    } catch (err) {
-      // Roll the campaign back to draft so the operator can fix (e.g. missing
-      // content) and re-send, instead of leaving it stuck in 'sending'.
-      await setCampaignStatusInternal(campaignId, 'paused').catch(() => {});
-      throw err;
+      return campaign;
     }
-    return campaign;
+
+    const dkim = campaign.fromEmail ? await resolveDkimForSender(orgId, campaign.fromEmail) : null;
+
+    // Per-domain open/click tracking defaults — honored by batch-sender (gates
+    // pixel/link injection). Defaults to enabled when no domain row matches.
+    const tracking = campaign.fromEmail
+      ? await resolveTrackingForSender(orgId, campaign.fromEmail)
+      : { openTracking: true, clickTracking: true };
+
+    // Apply the configuration set (throws 403 if its sending is paused) → thread
+    // its IP pool + TLS policy to the batch/MTA path so per-config-set enforcement
+    // works for campaigns too (not just transactional).
+    const { applyConfigurationSet } = await import('../configuration-sets/index.js');
+    const cfg = await applyConfigurationSet(orgId, campaign.configurationSet ?? undefined);
+
+    // CAN-SPAM footer identity — auto-appended by the renderer when present.
+    const [org] = await db
+      .select({
+        companyName: organizations.companyName,
+        postalAddress: organizations.postalAddress,
+      })
+      .from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1);
+
+    // Org-wide custom footer (SendGrid Mail Settings) — appended to every email.
+    const { getMailSettings } = await import('../settings/mail-settings.js');
+    const mailSettings = await getMailSettings(orgId);
+    const footer = mailSettings.footer.enabled ? mailSettings.footer : null;
+
+    await campaignSplitterQueue.add(`campaign-${campaignId}`, {
+      companyName: org?.companyName ?? undefined,
+      // The last link: the column has existed since the campaigns table was
+      // written and nothing ever read it, so every send rendered as English.
+      locale: (campaign.locale ?? 'en') as 'en' | 'cs' | 'sk',
+      companyAddress: org?.postalAddress ?? undefined,
+      footerHtml: footer?.html || undefined,
+      footerText: footer?.text || undefined,
+      openTracking: tracking.openTracking,
+      clickTracking: tracking.clickTracking,
+      campaignId,
+      orgId,
+      listId: campaign.listId,
+      segmentId: campaign.segmentId,
+      excludeSegmentId: campaign.excludeSegmentId,
+      content: campaign.content,
+      subject: campaign.subject,
+      preheader: campaign.preheader,
+      fromName: campaign.fromName,
+      fromEmail: campaign.fromEmail,
+      replyTo: campaign.replyTo,
+      abConfig: campaign.abConfig ?? undefined,
+      utmTracking: campaign.utmTracking ?? undefined,
+      ipPoolId: cfg.ipPoolId ?? undefined,
+      tlsPolicy: cfg.tlsPolicy,
+      // GDPR purpose the batch-sender's consent pre-check enforces against.
+      processingPurposeId: campaign.processingPurposeId ?? null,
+      ...(dkim ?? {}),
+      priority: PRIORITY.CAMPAIGN,
+    });
+  } catch (err) {
+    // Roll the campaign back so the operator can fix what failed (missing
+    // content, a paused configuration set, an unreadable signing key) and press
+    // Send again, instead of leaving it stuck in 'sending'. Best effort: if the
+    // rollback write itself fails there is nothing better to do than surface the
+    // original error, which is the one that says what actually went wrong.
+    await setCampaignStatusInternal(campaignId, 'paused').catch(() => {});
+    throw err;
   }
-
-  const dkim = campaign.fromEmail ? await resolveDkimForSender(orgId, campaign.fromEmail) : null;
-
-  // Per-domain open/click tracking defaults — honored by batch-sender (gates
-  // pixel/link injection). Defaults to enabled when no domain row matches.
-  const tracking = campaign.fromEmail
-    ? await resolveTrackingForSender(orgId, campaign.fromEmail)
-    : { openTracking: true, clickTracking: true };
-
-  // Apply the configuration set (throws 403 if its sending is paused) → thread
-  // its IP pool + TLS policy to the batch/MTA path so per-config-set enforcement
-  // works for campaigns too (not just transactional).
-  const { applyConfigurationSet } = await import('../configuration-sets/index.js');
-  const cfg = await applyConfigurationSet(orgId, campaign.configurationSet ?? undefined);
-
-  // CAN-SPAM footer identity — auto-appended by the renderer when present.
-  const [org] = await db
-    .select({ companyName: organizations.companyName, postalAddress: organizations.postalAddress })
-    .from(organizations)
-    .where(eq(organizations.id, orgId))
-    .limit(1);
-
-  // Org-wide custom footer (SendGrid Mail Settings) — appended to every email.
-  const { getMailSettings } = await import('../settings/mail-settings.js');
-  const mailSettings = await getMailSettings(orgId);
-  const footer = mailSettings.footer.enabled ? mailSettings.footer : null;
-
-  await campaignSplitterQueue.add(`campaign-${campaignId}`, {
-    companyName: org?.companyName ?? undefined,
-    // The last link: the column has existed since the campaigns table was
-    // written and nothing ever read it, so every send rendered as English.
-    locale: (campaign.locale ?? 'en') as 'en' | 'cs' | 'sk',
-    companyAddress: org?.postalAddress ?? undefined,
-    footerHtml: footer?.html || undefined,
-    footerText: footer?.text || undefined,
-    openTracking: tracking.openTracking,
-    clickTracking: tracking.clickTracking,
-    campaignId,
-    orgId,
-    listId: campaign.listId,
-    segmentId: campaign.segmentId,
-    excludeSegmentId: campaign.excludeSegmentId,
-    content: campaign.content,
-    subject: campaign.subject,
-    preheader: campaign.preheader,
-    fromName: campaign.fromName,
-    fromEmail: campaign.fromEmail,
-    replyTo: campaign.replyTo,
-    abConfig: campaign.abConfig ?? undefined,
-    utmTracking: campaign.utmTracking ?? undefined,
-    ipPoolId: cfg.ipPoolId ?? undefined,
-    tlsPolicy: cfg.tlsPolicy,
-    // GDPR purpose the batch-sender's consent pre-check enforces against.
-    processingPurposeId: campaign.processingPurposeId ?? null,
-    ...(dkim ?? {}),
-    priority: PRIORITY.CAMPAIGN,
-  });
 
   return campaign;
 }
