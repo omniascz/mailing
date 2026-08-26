@@ -24,6 +24,12 @@ import { db } from '../../db/client.js';
 import { campaigns, campaignDispatchBatches } from '../../db/schema/index.js';
 import { markCampaignSent, markCampaignFailed } from './index.js';
 
+/**
+ * Statuses a campaign cannot move out of. A batch reporting into one of these
+ * is late, not wrong — the campaign ended while its work was still in flight.
+ */
+const TERMINAL_STATUSES: ReadonlySet<string> = new Set(['sent', 'failed', 'cancelled']);
+
 export interface DispatchStart {
   orgId: string;
   campaignId: string;
@@ -171,6 +177,36 @@ export async function reportBatchCompletion(
     );
 
   const totalSent = totals?.sent ?? 0;
+
+  // The campaign may have been cancelled while its batches were still out. That
+  // is an ordinary operator action — Pause, then Cancel — and it used to end
+  // here in an exception: markCampaignSent ran validateTransition, cancelled →
+  // sent is not a transition, and the worker got a 400 for reporting a batch it
+  // had genuinely finished. Worse, the number of messages that did go out was
+  // thrown away with it.
+  //
+  // So a terminal campaign is not a failure to close, it is a campaign that is
+  // already closed. Nothing transitions, nothing throws — but the count is
+  // still written, because those messages were really sent and the operator is
+  // entitled to know how many went before the cancel took effect.
+  const [current] = await db
+    .select({ status: campaigns.status })
+    .from(campaigns)
+    .where(and(eq(campaigns.id, input.campaignId), eq(campaigns.orgId, input.orgId)))
+    .limit(1);
+
+  if (current && TERMINAL_STATUSES.has(current.status)) {
+    await db
+      .update(campaigns)
+      .set({ totalSent, pendingBatches: null, updatedAt: new Date() })
+      .where(and(eq(campaigns.id, input.campaignId), eq(campaigns.orgId, input.orgId)));
+    console.info(
+      `[dispatch] campaign ${input.campaignId} was already ${current.status} when its last ` +
+        `batch reported; recorded ${totalSent} sent and left the status alone`,
+    );
+    return { counted: true, pending: 0, closed: null };
+  }
+
   if (totalSent > 0) {
     await markCampaignSent(input.orgId, input.campaignId, { totalSent });
     return { counted: true, pending: 0, closed: 'sent' };

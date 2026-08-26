@@ -799,6 +799,34 @@ export default async function campaignRoutes(app: FastifyInstance) {
   );
 
   /**
+   * GET /api/v1/internal/campaigns/:id/dispatch-state
+   *
+   * What a batch-sender job asks before it does any work: is this campaign
+   * still one I should be sending? The route exists because until now nothing
+   * in the send path read the campaign's status at all — pausing a campaign
+   * changed a column and stopped nothing, and cancelling it stopped nothing
+   * either.
+   *
+   * Deliberately not the PATCH route's twin. That one is a narrow whitelist of
+   * writes; this is a read, it is called once per batch, and it returns the two
+   * fields the brake needs and nothing else.
+   */
+  app.get(
+    '/api/v1/internal/campaigns/:id/dispatch-state',
+    { schema: { tags: ['Internal'] } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const [row] = await db
+        .select({ status: campaigns.status, pausedReason: campaigns.pausedReason })
+        .from(campaigns)
+        .where(eq(campaigns.id, id))
+        .limit(1);
+      if (!row) throw AppError.notFound('Campaign');
+      return { data: row };
+    },
+  );
+
+  /**
    * POST /api/v1/internal/campaigns/:id/dispatch-start
    * The splitter, once it knows the audience and before it enqueues anything.
    * Arms the counter that the last batch will take to zero.

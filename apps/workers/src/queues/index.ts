@@ -354,6 +354,15 @@ export interface BatchSenderJobData {
    */
   dispatchId?: string;
   batchKey?: string;
+  /**
+   * How many times this batch has been put back because its campaign was
+   * paused, and how long that has added up to. Carried on the job rather than
+   * derived from `attemptsMade`, because a delay is deliberately not an attempt
+   * — measured: 100 delays leave attemptsMade at 0 — so the retry counter says
+   * nothing about how long a batch has been waiting.
+   */
+  pauseDelays?: number;
+  pauseWaitedMs?: number;
   /** Contact IDs in this batch */
   contactIds: string[];
   content: Record<string, unknown>;
