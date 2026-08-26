@@ -2,12 +2,22 @@
  * Shared-secret guard for /api/v1/internal/*.
  *
  * These routes existed since the worker split and were never authenticated.
- * They were also never network-isolated: the Helm chart publishes the API
- * behind an `internet-facing` ALB with `path: /` and `pathType: Prefix`, so
- * every internal route was reachable from the public internet. Verified by
- * running the API and POSTing to /api/v1/internal/contacts/batch with no
- * credentials — it returned contact email, first name and last name for any
- * orgId supplied in the body.
+ * They are also not network-isolated. This shared secret is the whole of the
+ * access control on them: there is no private subnet, no VPN, no mTLS, and no
+ * path-level allow-list in front of the process. The API is published at `/`
+ * on a public host and `/api/v1/internal/*` is a path under it, reachable by
+ * anyone who can reach the app. Verified by running the API and POSTing to
+ * /api/v1/internal/contacts/batch with no credentials — it returned contact
+ * email, first name and last name for any orgId supplied in the body.
+ *
+ * That was written when the target was EKS behind an `internet-facing` ALB.
+ * The infrastructure has since moved (see infra/PIVOT_AWS_TO_HETZNER.md:
+ * Hetzner + Coolify for the API, Caddy terminating TLS, Vercel for the web
+ * app), and `infra/k8s` is a leftover of the old plan that no pipeline
+ * deploys — CD only builds and pushes images, and infra-plan.yml only runs
+ * `terraform plan`. The hosting changed; the exposure did not. A reverse proxy
+ * in front of the API could block the prefix at the edge, and none does, so
+ * treat this hook as the only thing standing there.
  *
  * Registered as ONE onRequest hook rather than per-route, because per-route
  * guards are exactly what lets the next new internal route ship unprotected.
