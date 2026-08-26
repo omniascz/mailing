@@ -40,13 +40,40 @@ function parseRedisUrl(url: string) {
 
 export const connection = parseRedisUrl(REDIS_URL);
 
+/**
+ * Retention. These values MUST stay in lockstep with the API's copy in
+ * `apps/api/src/lib/queues.ts` — the two sets are not alternatives, they are two
+ * producers writing to the SAME physical Redis queues (`mta-other` and
+ * `campaign-splitter` are written from both sides). BullMQ takes job options
+ * from whoever added the job, so a job's retention depends on which process
+ * enqueued it, not on which queue it landed in.
+ *
+ * They had already drifted and nobody noticed: the API side carried no `age` at
+ * all, so an API-enqueued job sat in the failed set until 500 newer failures
+ * pushed it out — unbounded in time — while this side gave a worker-enqueued
+ * job on the identical queue 7 days. Change one side, change the other.
+ *
+ * completed → 1 h: a completed job is a receipt nobody reads. The count cap is
+ * what keeps a short debugging window; the age cap is what stops a payload from
+ * outliving its usefulness.
+ *
+ * failed → 24 h, deliberately NOT 1 h: a failed `campaign-splitter` job is the
+ * only surviving evidence of a campaign stuck in `sending` (no cron re-picks
+ * it). That has to be readable the next working morning, so it must survive a
+ * night. 24 h is the shortest window that does. It is a cut from 7 days, which
+ * is why it is a cut and not a removal.
+ *
+ * Note on what `age` does and does not buy: BullMQ trims by age when a job
+ * reaches that state, so on a quiet queue an old entry lingers until the next
+ * job completes or fails. `age` is a ceiling on an active queue, not a timer.
+ */
 const defaultOpts: QueueOptions = {
   connection,
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: 'exponential', delay: 5000 },
-    removeOnComplete: { count: 1000, age: 86_400 },
-    removeOnFail: { count: 5000, age: 7 * 86_400 },
+    removeOnComplete: { count: 1000, age: 3_600 },
+    removeOnFail: { count: 5000, age: 24 * 3_600 },
   },
 };
 
