@@ -15,7 +15,15 @@ interface Campaign {
   id: string;
   name: string;
   type: string;
-  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
+  status:
+    | 'draft'
+    | 'scheduled'
+    | 'queueing'
+    | 'sending'
+    | 'sent'
+    | 'failed'
+    | 'paused'
+    | 'cancelled';
   subject: string | null;
   preheader: string | null;
   fromName: string | null;

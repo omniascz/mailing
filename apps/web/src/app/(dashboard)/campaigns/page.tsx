@@ -10,7 +10,15 @@ interface Campaign {
   id: string;
   name: string;
   type: string;
-  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
+  status:
+    | 'draft'
+    | 'scheduled'
+    | 'queueing'
+    | 'sending'
+    | 'sent'
+    | 'failed'
+    | 'paused'
+    | 'cancelled';
   subject: string | null;
   scheduledAt: string | null;
   sentAt: string | null;
@@ -28,8 +36,12 @@ const STATUS_TONE: Record<
 > = {
   draft: 'default',
   scheduled: 'primary',
+  // Preparing, not yet sending — the splitter is still building batches.
+  queueing: 'primary',
   sending: 'warning',
   sent: 'success',
+  // Finished with nothing delivered. Distinct from cancelled: nobody chose it.
+  failed: 'danger',
   paused: 'warning',
   cancelled: 'danger',
 };
@@ -38,8 +50,10 @@ const STATUS_OPTIONS = [
   '',
   'draft',
   'scheduled',
+  'queueing',
   'sending',
   'sent',
+  'failed',
   'paused',
   'cancelled',
 ] as const;

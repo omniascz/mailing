@@ -12,12 +12,31 @@ describe('Campaign State Machine', () => {
     expect(() => validateTransition('draft', 'scheduled')).not.toThrow();
   });
 
-  it('allows draft → sending', () => {
-    expect(() => validateTransition('draft', 'sending')).not.toThrow();
+  // Pressing Send now lands in `queueing`, not `sending`: the splitter has not
+  // run, so there is no audience, no batches and no mail. `sending` is what the
+  // splitter writes once every batch is on the queue.
+  it('allows draft → queueing', () => {
+    expect(() => validateTransition('draft', 'queueing')).not.toThrow();
   });
 
-  it('allows scheduled → sending', () => {
-    expect(() => validateTransition('scheduled', 'sending')).not.toThrow();
+  it('rejects draft → sending — a send does not start already sending', () => {
+    expect(() => validateTransition('draft', 'sending')).toThrow();
+  });
+
+  it('allows scheduled → queueing', () => {
+    expect(() => validateTransition('scheduled', 'queueing')).not.toThrow();
+  });
+
+  it('allows queueing → sending, which is the splitter finishing', () => {
+    expect(() => validateTransition('queueing', 'sending')).not.toThrow();
+  });
+
+  it('allows sending → failed, the other end of the same finish line', () => {
+    expect(() => validateTransition('sending', 'failed')).not.toThrow();
+  });
+
+  it('treats failed as terminal', () => {
+    expect(() => validateTransition('failed', 'sending')).toThrow();
   });
 
   it('allows scheduled → cancelled', () => {

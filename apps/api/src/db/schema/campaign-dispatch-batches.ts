@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  index,
+  uniqueIndex,
+  integer,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { campaigns } from './campaigns.js';
 
@@ -56,6 +64,24 @@ export const campaignDispatchBatches = pgTable(
     batchKey: varchar('batch_key', { length: 128 }).notNull(),
     /** Set once `addBulk` has returned for this batch. */
     enqueuedAt: timestamp('enqueued_at', { withTimezone: true }),
+
+    /**
+     * Set once the batch-sender job for this batch has finished — whether it
+     * sent anything or gave up. This is the row's completion flag, and the
+     * campaign's pending-batch counter is only decremented on the write that
+     * transitions it from NULL, so a job reported twice cannot decrement twice.
+     */
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    /**
+     * What the batch-sender returned. It has always computed these and always
+     * thrown them away: the numbers went into the BullMQ job's return value,
+     * which `removeOnComplete` deletes within the hour. They are the only
+     * record of how much of a campaign actually went out, and the sent/failed
+     * decision at the end of a dispatch reads them.
+     */
+    sentCount: integer('sent_count'),
+    skippedCount: integer('skipped_count'),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

@@ -148,6 +148,22 @@ export interface SweepResult {
 export async function scanForAnomalies(
   thresholds: AnomalyThresholds = DEFAULT_THRESHOLDS,
 ): Promise<SweepResult> {
+  // `sending` only, and deliberately not `queueing`.
+  //
+  // The instinct after splitting the states is to give this sweep back its old
+  // narrow window, which is now `queueing`. That would make it useless: during
+  // `queueing` the splitter is still turning the audience into batches, no
+  // message has been handed to an MX, and there is not one event to evaluate a
+  // bounce rate from. Every anomaly this detector exists to find happens in
+  // `sending`.
+  //
+  // The honest consequence is that the sweep now covers a window measured in
+  // hours instead of the minutes the splitter used to take, so it examines more
+  // campaigns and does so for longer. That is not a regression — it is the
+  // detector finally watching the part of the send where things go wrong.
+  // Before the split it was very nearly inert, because campaigns left `sending`
+  // within minutes of the splitter finishing and long before their bounces came
+  // back. `campaigns_status_idx` covers the predicate.
   const rows = await db
     .select({ id: campaigns.id, orgId: campaigns.orgId })
     .from(campaigns)

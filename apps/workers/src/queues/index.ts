@@ -341,6 +341,19 @@ export interface BatchSenderJobData {
   campaignId: string;
   orgId: string;
   batchIndex: number;
+  /**
+   * Which dispatch and which batch within it — the ledger row this job is the
+   * work for. Carried explicitly rather than parsed back out of the BullMQ
+   * jobId (`${dispatchId}:${batchKey}`, and dispatchId itself contains a colon),
+   * because the job has to be able to say which batch finished and a jobId
+   * format is not a contract.
+   *
+   * Optional: jobs enqueued before this field existed are still in flight, and
+   * a batch that cannot identify itself simply does not report — the reaper
+   * closes those campaigns rather than the counter.
+   */
+  dispatchId?: string;
+  batchKey?: string;
   /** Contact IDs in this batch */
   contactIds: string[];
   content: Record<string, unknown>;

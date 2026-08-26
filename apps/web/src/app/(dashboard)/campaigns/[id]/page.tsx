@@ -14,7 +14,15 @@ interface Campaign {
   id: string;
   name: string;
   type: string;
-  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
+  status:
+    | 'draft'
+    | 'scheduled'
+    | 'queueing'
+    | 'sending'
+    | 'sent'
+    | 'failed'
+    | 'paused'
+    | 'cancelled';
   pausedReason: string | null;
   subject: string | null;
   preheader: string | null;
@@ -62,8 +70,10 @@ const STATUS_TONE: Record<
 > = {
   draft: 'default',
   scheduled: 'primary',
+  queueing: 'primary',
   sending: 'warning',
   sent: 'success',
+  failed: 'danger',
   paused: 'warning',
   cancelled: 'danger',
 };

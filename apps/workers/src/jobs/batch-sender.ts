@@ -442,7 +442,54 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
 
   job.log(`Batch ${data.batchIndex}: sent=${sent}, skipped=${skipped}`);
 
+  await reportBatchCompletion(data, sent, skipped);
+
   return { sent, skipped };
+}
+
+/**
+ * Tell the API this batch is done, so the campaign's counter can come down.
+ *
+ * **This is the line the whole model rests on.** A batch that finishes without
+ * reporting leaves the counter one above zero and the campaign in `sending`
+ * forever — the exact failure this state model exists to remove. So it is
+ * called on the clean path here and on the give-up path in the worker's
+ * `failed` handler, and it never throws: a batch that has already done its work
+ * must not be retried because the bookkeeping call failed, which would send the
+ * whole batch a second time.
+ *
+ * The report is idempotent on the API side — the ledger row's completion flag
+ * is the hinge — so a replay after stalled-job recovery cannot decrement twice.
+ */
+async function reportBatchCompletion(
+  data: BatchSenderJobData,
+  sent: number,
+  skipped: number,
+): Promise<void> {
+  // Jobs enqueued before these fields existed cannot name their ledger row.
+  // Nothing to report against; the reaper closes those campaigns instead.
+  if (!data.dispatchId || !data.batchKey) return;
+  const url = `${API_URL}/api/v1/internal/campaigns/${data.campaignId}/batch-complete`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_SECRET },
+      body: JSON.stringify({
+        orgId: data.orgId,
+        dispatchId: data.dispatchId,
+        batchKey: data.batchKey,
+        sent,
+        skipped,
+      }),
+    });
+    if (!res.ok) {
+      console.error(
+        `[batch-sender] batch-complete ${data.campaignId}/${data.batchKey} → HTTP ${res.status}`,
+      );
+    }
+  } catch (err) {
+    console.error(`[batch-sender] batch-complete ${data.campaignId}/${data.batchKey} failed:`, err);
+  }
 }
 
 // ─── Merge tag context ───────────────────────────────────────────────────────
@@ -971,6 +1018,16 @@ export function startBatchSenderWorker(queueName: string = QUEUE_NAMES.BATCH_SEN
       orgId: (job?.data as { orgId?: string } | undefined)?.orgId,
       campaignId: (job?.data as { campaignId?: string } | undefined)?.campaignId,
     });
+
+    // Out of retries: this batch is over, and the campaign has to be able to
+    // finish without it. A give-up that does not report is indistinguishable
+    // from a batch still in flight, and the campaign would wait on it forever.
+    // Only on the LAST attempt — reporting on an intermediate failure would
+    // close the campaign while the retry is still to come.
+    const attemptsAllowed = job?.opts?.attempts ?? 1;
+    if (job && (job.attemptsMade ?? 0) >= attemptsAllowed) {
+      void reportBatchCompletion(job.data, 0, 0);
+    }
   });
 
   return worker;

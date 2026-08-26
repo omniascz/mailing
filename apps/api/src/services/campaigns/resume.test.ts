@@ -101,7 +101,9 @@ describe('resumeCampaign — which pause is this', () => {
 
     expect(enqueueCampaignSend).toHaveBeenCalledTimes(1);
     expect(enqueueCampaignSend).toHaveBeenCalledWith(ORG, CID);
-    expect(row.status).toBe('sending');
+    // The full send path starts over, and a send now begins in 'queueing':
+    // nothing is sent until the splitter has built the batches.
+    expect(row.status).toBe('queueing');
   });
 
   it('(c) an operator pause does NOT enqueue', async () => {
@@ -138,7 +140,11 @@ describe('resumeCampaign — which pause is this', () => {
     expect(row.pausedReason).toBeNull();
     // Asserted on the write as well as the row, so a future refactor that stops
     // writing the column is caught rather than passing on a stale object.
-    expect(updateSets.some((s) => s.status === 'sending' && s.pausedReason === null)).toBe(true);
+    expect(
+      updateSets.some(
+        (s) => (s.status === 'queueing' || s.status === 'sending') && s.pausedReason === null,
+      ),
+    ).toBe(true);
   });
 
   it('(e) resuming an operator pause clears the reason too', async () => {
@@ -154,9 +160,11 @@ describe('resumeCampaign — which pause is this', () => {
     await mod.resumeCampaign(ORG, CID);
     expect(enqueueCampaignSend).toHaveBeenCalledTimes(1);
 
-    // The operator presses it again. Status is 'sending' now, and
-    // sending → sending is not a legal transition, so this is refused outright.
-    await expect(mod.resumeCampaign(ORG, CID)).rejects.toThrow();
+    // The operator presses it again. The campaign is 'queueing' now, and
+    // queueing → sending is a legal transition — so what stops a second send is
+    // not the transition table but the reason being gone. It takes the safe
+    // branch and enqueues nothing.
+    await mod.resumeCampaign(ORG, CID);
     expect(enqueueCampaignSend).toHaveBeenCalledTimes(1);
 
     // And if the campaign lands back in paused by some other route, the reason
@@ -184,7 +192,7 @@ describe('pauseCampaign / sendCampaign — who writes the reason', () => {
 
     await mod.sendCampaign(ORG, CID);
 
-    expect(row.status).toBe('sending');
+    expect(row.status).toBe('queueing');
     expect(row.pausedReason).toBeNull();
   });
 });

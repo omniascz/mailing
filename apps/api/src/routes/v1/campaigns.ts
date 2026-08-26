@@ -46,6 +46,7 @@ import {
   storeHoldback,
 } from '../../services/campaigns/ab-winner.js';
 import { claimBatches, confirmBatches } from '../../services/campaigns/dispatch-ledger.js';
+import { startDispatch, reportBatchCompletion } from '../../services/campaigns/batch-completion.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { renderEmail as renderBlocks, renderPlainText } from '@forgemsg/editor/render';
 import { readCampaignContent } from '@forgemsg/editor/schema';
@@ -60,7 +61,16 @@ import {
 
 const idParam = z.object({ id: z.string().uuid() });
 
-const campaignStatuses = ['draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled'] as const;
+const campaignStatuses = [
+  'draft',
+  'scheduled',
+  'queueing',
+  'sending',
+  'sent',
+  'failed',
+  'paused',
+  'cancelled',
+] as const;
 const campaignTypes = ['email', 'sms', 'whatsapp', 'push', 'voice'] as const;
 
 /**
@@ -70,24 +80,29 @@ const campaignTypes = ['email', 'sms', 'whatsapp', 'push', 'voice'] as const;
  * that, and it is untouched). It is the much smaller set of writes the two
  * workers that call this route actually perform, read off their call sites:
  *
- *   campaign-splitter.ts:282  → 'sent'    once every batch is enqueued
- *                             → 'sending' when an A/B winner job is pending,
- *                                         so the winner can close it out later
- *   ab-winner.ts:190          → 'sent'    after the winner is dispatched
- *   ab-winner.ts:103          → 'paused'  when the test needs a human
+ *   campaign-splitter.ts  → 'sending' once every batch is on the queue
+ *                         → 'failed'  when the audience resolved to nobody, so
+ *                                     no batch will ever close the campaign out
+ *   ab-winner.ts:190      → 'sent'    after the winner is dispatched
+ *   ab-winner.ts:103      → 'paused'  when the test needs a human
  *
- * Every one of those runs against a campaign the dispatch left in `sending`,
- * so `sending` is the only source state either worker needs. The 'sending' →
- * 'sending' case is a no-op and is handled before this map is consulted.
+ * The splitter now writes from `queueing`, which is where sendCampaign leaves
+ * the campaign; ab-winner writes from `sending`, which is where the splitter
+ * leaves an A/B campaign with a winner job pending. Same-state writes are a
+ * no-op and are handled before this map is consulted.
  *
- * Deliberately NOT here: `paused` → `sent`. It is reachable today — pause a
- * campaign while the splitter is still enqueueing and the splitter's write
- * lands afterwards — and what it does is erase the pause, including one an
- * operator or the anomaly detector applied on purpose. Neither worker needs
- * it to do its job. Refusing means such a campaign stays `paused` instead of
+ * Not here, and not by accident: `sending` → `sent` for the ordinary path. A
+ * campaign is closed out by its last batch reporting in, through
+ * /batch-complete, not by anyone asserting a status over HTTP.
+ *
+ * Also deliberately absent: `paused` → anything. Pausing while the splitter is
+ * still enqueueing is reachable, and letting the splitter's write land
+ * afterwards erases a pause an operator or the anomaly detector applied on
+ * purpose. Neither worker needs it. Such a campaign stays `paused` instead of
  * reporting itself `sent`, which is the less wrong of two wrong answers.
  */
 const INTERNAL_STATUS_TRANSITIONS: Readonly<Record<string, ReadonlySet<string>>> = {
+  queueing: new Set(['sending', 'failed']),
   sending: new Set(['sent', 'paused']),
 };
 
@@ -95,7 +110,7 @@ const INTERNAL_STATUS_TRANSITIONS: Readonly<Record<string, ReadonlySet<string>>>
  * States this route must never move a campaign out of, checked separately from
  * the whitelist above so that adding an entry there cannot reopen the exit.
  */
-const INTERNAL_STATUS_TERMINAL: ReadonlySet<string> = new Set(['sent', 'cancelled']);
+const INTERNAL_STATUS_TERMINAL: ReadonlySet<string> = new Set(['sent', 'failed', 'cancelled']);
 
 /**
  * A UTM value is going into a URL and then into a GA report. Length-bounded
@@ -784,6 +799,58 @@ export default async function campaignRoutes(app: FastifyInstance) {
   );
 
   /**
+   * POST /api/v1/internal/campaigns/:id/dispatch-start
+   * The splitter, once it knows the audience and before it enqueues anything.
+   * Arms the counter that the last batch will take to zero.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/:id/dispatch-start',
+    { schema: { tags: ['Internal'] } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const body = z
+        .object({
+          orgId: z.string().uuid(),
+          plannedRecipients: z.number().int().min(0),
+          batchCount: z.number().int().min(0).nullable(),
+        })
+        .parse(req.body);
+      await startDispatch({ campaignId: id, ...body });
+      return { data: { ok: true } };
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/campaigns/:id/batch-complete
+   * One batch-sender job reporting that it is finished — sent, skipped, or gave
+   * up. The report that takes the counter to zero closes the campaign.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/:id/batch-complete',
+    { schema: { tags: ['Internal'] } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const body = z
+        .object({
+          orgId: z.string().uuid(),
+          dispatchId: z.string().min(1).max(128),
+          batchKey: z.string().min(1).max(128),
+          sent: z.number().int().min(0),
+          skipped: z.number().int().min(0),
+        })
+        .parse(req.body);
+      const result = await reportBatchCompletion({ campaignId: id, ...body });
+      if (result.counted && result.closed) {
+        req.log.info(
+          { campaignId: id, dispatchId: body.dispatchId, outcome: result.closed },
+          '[dispatch] campaign closed by its last batch',
+        );
+      }
+      return { data: result };
+    },
+  );
+
+  /**
    * POST /api/v1/internal/campaigns/dispatch-scheduled
    * Called every minute by the campaign-dispatch cron — finds scheduled
    * campaigns whose time has come and enqueues them.
@@ -798,6 +865,24 @@ export default async function campaignRoutes(app: FastifyInstance) {
         await import('../../services/transactional/scheduled-batch.js');
       const batches = await dispatchDueBatches().catch(() => ({ dispatched: 0, errors: 0 }));
       return { data: { ...result, batches } };
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/campaigns/reap-stalled
+   * Hourly safety net: closes campaigns whose batches have stopped reporting.
+   * Not the closing mechanism — see services/campaigns/dispatch-reaper.ts.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/reap-stalled',
+    { schema: { tags: ['Internal'] } },
+    async (req) => {
+      const { reapStalledDispatches } = await import('../../services/campaigns/dispatch-reaper.js');
+      const result = await reapStalledDispatches();
+      if (result.examined > 0) {
+        req.log.warn(result, '[dispatch-reaper] closed campaigns that stopped reporting');
+      }
+      return { data: result };
     },
   );
 }

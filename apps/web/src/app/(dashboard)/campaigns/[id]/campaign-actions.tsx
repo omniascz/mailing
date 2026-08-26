@@ -10,7 +10,15 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 interface MinimalCampaign {
   id: string;
-  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
+  status:
+    | 'draft'
+    | 'scheduled'
+    | 'queueing'
+    | 'sending'
+    | 'sent'
+    | 'failed'
+    | 'paused'
+    | 'cancelled';
   /**
    * Why the campaign is paused, when the API knows. 'send_failed' means the
    * dispatch rolled back before anything was queued, so resuming actually sends
@@ -74,7 +82,12 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
           Send now
         </Button>
       )}
-      {status === 'sending' && (
+      {/*
+        `queueing` is the splitter turning the audience into batches — short,
+        and nothing has been sent yet. Pause is offered here because stopping
+        before the batches exist is the one moment stopping is cheap.
+      */}
+      {(status === 'sending' || status === 'queueing') && (
         <Button
           variant="outline"
           loading={isBusy('Pause')}
@@ -84,6 +97,12 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
           Pause
         </Button>
       )}
+      {/*
+        No action on `failed`: every batch reported and none of them sent
+        anything, so there is nothing to resume and nothing to cancel. Sending
+        it again is a new send from a copy, which is a decision, not a button
+        that looks like a retry.
+      */}
       {/*
         Both go to the same endpoint — the API decides from paused_reason
         whether to enqueue — but they promise different things, so they are
