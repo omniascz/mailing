@@ -24,13 +24,35 @@ function parseRedisUrl(url: string) {
 
 const connection = parseRedisUrl(REDIS_URL);
 
+/**
+ * Retention. These values MUST stay in lockstep with the workers' copy in
+ * `apps/workers/src/queues/index.ts` — the two sets are not alternatives, they
+ * are two producers writing to the SAME physical Redis queues (`mta-other` and
+ * `campaign-splitter` are both written from here and from there). BullMQ takes
+ * job options from whoever added the job, so a job's retention depends on which
+ * process enqueued it, not on which queue it landed in.
+ *
+ * They had already drifted and nobody noticed: this side carried no `age` at
+ * all, so an API-enqueued job sat in the failed set until 500 newer failures
+ * pushed it out — unbounded in time — while the identical queue gave a
+ * worker-enqueued job 7 days. Change one side, change the other.
+ *
+ * completed → 1 h: a completed job is a receipt nobody reads. The count cap is
+ * what keeps a short debugging window; the age cap is what stops a payload from
+ * outliving its usefulness.
+ *
+ * failed → 24 h, deliberately NOT 1 h: a failed `campaign-splitter` job is the
+ * only surviving evidence of a campaign stuck in `sending` (no cron re-picks
+ * it). That has to be readable the next working morning, so it must survive a
+ * night. 24 h is the shortest window that does.
+ */
 const queueOpts = {
   connection,
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: 'exponential' as const, delay: 5000 },
-    removeOnComplete: { count: 1000 },
-    removeOnFail: { count: 500 },
+    removeOnComplete: { count: 1000, age: 3_600 },
+    removeOnFail: { count: 5000, age: 24 * 3_600 },
   },
 };
 
