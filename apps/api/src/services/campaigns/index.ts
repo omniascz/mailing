@@ -557,26 +557,3 @@ function validateCampaignReadiness(campaign: Campaign): void {
     throw AppError.badRequest(`Campaign is not ready: ${errors.join(', ')}`);
   }
 }
-
-// ─── Stats update (called from event pipeline) ──────────────────────────────
-
-export async function incrementCampaignStat(
-  campaignId: string,
-  stat:
-    | 'totalSent'
-    | 'totalDelivered'
-    | 'totalOpens'
-    | 'totalClicks'
-    | 'totalBounces'
-    | 'totalUnsubscribes'
-    | 'totalComplaints',
-  amount = 1,
-): Promise<void> {
-  await db
-    .update(campaigns)
-    .set({
-      [stat]: sql`${campaigns[stat]} + ${amount}`,
-      updatedAt: new Date(),
-    })
-    .where(eq(campaigns.id, campaignId));
-}
