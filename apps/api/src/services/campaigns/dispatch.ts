@@ -10,7 +10,7 @@ import { emitWebhookEvent } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { campaigns, sendingDomains, organizations } from '../../db/schema/index.js';
 import { campaignSplitterQueue, PRIORITY } from '../../lib/queues.js';
-import { sendCampaign } from './index.js';
+import { sendCampaign, type CampaignPausedReason } from './index.js';
 
 /**
  * Re-exported so this module's existing importers keep working. The resolver
@@ -160,7 +160,10 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
     // Send again, instead of leaving it stuck in 'sending'. Best effort: if the
     // rollback write itself fails there is nothing better to do than surface the
     // original error, which is the one that says what actually went wrong.
-    await setCampaignStatusInternal(campaignId, 'paused').catch(() => {});
+    // 'send_failed' is what makes this recoverable: nothing reached the queue,
+    // so resumeCampaign is allowed to enqueue rather than only flip the status
+    // back. Without it the pause is indistinguishable from an operator's.
+    await setCampaignStatusInternal(campaignId, 'paused', 'send_failed').catch(() => {});
     throw err;
   }
 
@@ -172,14 +175,27 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
  * campaignId). Bypasses the org-scoped transition validation because the
  * worker is trusted and drives the sending→sent lifecycle. Sets sentAt when
  * marking sent.
+ *
+ * `pausedReason` is only meaningful alongside 'paused'; every other status
+ * clears it. Callers that pause without a reason (ab-winner parking a campaign
+ * for review) leave it NULL, which readers treat as "do not enqueue".
  */
 export async function setCampaignStatusInternal(
   campaignId: string,
   status: 'sending' | 'sent' | 'paused' | 'cancelled',
+  pausedReason: CampaignPausedReason | null = null,
 ): Promise<void> {
   const [row] = await db
     .update(campaigns)
-    .set({ status, updatedAt: new Date(), ...(status === 'sent' ? { sentAt: new Date() } : {}) })
+    .set({
+      status,
+      updatedAt: new Date(),
+      // Cleared on anything that is not a pause — including 'sending', so a
+      // stale reason can never survive into the next pause and be read as its
+      // cause.
+      pausedReason: status === 'paused' ? pausedReason : null,
+      ...(status === 'sent' ? { sentAt: new Date() } : {}),
+    })
     .where(eq(campaigns.id, campaignId))
     .returning();
 

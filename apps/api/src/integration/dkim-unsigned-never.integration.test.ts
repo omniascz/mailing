@@ -179,26 +179,30 @@ describe('C6 (b) — scheduled campaigns: where the failure actually lands', () 
 
       // What state is the campaign left in? dispatchScheduledCampaigns calls
       // enqueueCampaignSend, which calls sendCampaign() — and sendCampaign
-      // flips status to 'sending' BEFORE the DKIM resolver runs. The throw
-      // therefore leaves the row in 'sending' with no rollback: the non-email
-      // branch above it has a try/catch that reverts to 'paused', the email
-      // branch has none.
+      // flips status to 'sending' BEFORE the DKIM resolver runs.
       //
-      // Asserted rather than argued, because the consequence is the finding:
-      // 'sending' is not a failed state. The cron selects status='scheduled',
-      // so this campaign is never picked up again — no infinite retry, but no
-      // failed state either. It is indistinguishable from a campaign that is
-      // genuinely in flight, and nothing surfaces to the operator except one
-      // console.error line.
+      // When this test was written the throw left the row in 'sending' with no
+      // rollback, and this assertion recorded that as the finding: 'sending' is
+      // not a failed state, the cron only selects 'scheduled', and the campaign
+      // was stuck with nothing but one console.error line to show for it.
+      //
+      // Both halves of that have since been closed. The rollback now covers the
+      // email branch too, so the row lands in 'paused'; and it records WHY,
+      // because a pause that queued nothing and a pause an operator chose need
+      // opposite handling on resume. 'send_failed' is what makes this one
+      // recoverable — see resumeCampaign.
       const [row] = await db
-        .select({ status: campaigns.status })
+        .select({ status: campaigns.status, pausedReason: campaigns.pausedReason })
         .from(campaigns)
         .where(eq(campaigns.id, campaignId))
         .limit(1);
-      expect(row!.status).toBe('sending');
+      expect(row!.status).toBe('paused');
+      expect(row!.pausedReason).toBe('send_failed');
 
-      // Second pass, master key repaired: the campaign is NOT retried, because
-      // it is no longer 'scheduled'. Fixing the environment does not recover it.
+      // Second pass, master key repaired: the cron still does not retry it,
+      // because it is no longer 'scheduled'. Recovery is an operator pressing
+      // the button, not the cron coming back around — that part is unchanged,
+      // and it is why the campaign has to land somewhere an operator can see.
       process.env[DKIM_MASTER_KEY_ENV] = MASTER;
       const second = await dispatchScheduledCampaigns(new Date());
       expect(second.dispatched).toBe(0);

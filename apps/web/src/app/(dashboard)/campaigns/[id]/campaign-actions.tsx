@@ -11,6 +11,13 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 interface MinimalCampaign {
   id: string;
   status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
+  /**
+   * Why the campaign is paused, when the API knows. 'send_failed' means the
+   * dispatch rolled back before anything was queued, so resuming actually sends
+   * — which is a different promise to the operator than resuming a send they
+   * paused themselves, and the button has to say so.
+   */
+  pausedReason?: string | null;
 }
 
 export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
@@ -77,7 +84,23 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
           Pause
         </Button>
       )}
-      {status === 'paused' && (
+      {/*
+        Both go to the same endpoint — the API decides from paused_reason
+        whether to enqueue — but they promise different things, so they are
+        labelled differently. A send that rolled back queued nothing, and
+        pressing this really does send. A pause the operator chose does not
+        re-send, because batches may already be out.
+      */}
+      {status === 'paused' && campaign.pausedReason === 'send_failed' && (
+        <Button
+          loading={isBusy('Try sending again')}
+          onClick={() => act('Try sending again', `/api/v1/campaigns/${campaign.id}/resume`)}
+        >
+          <Send className="h-4 w-4" />
+          Try sending again
+        </Button>
+      )}
+      {status === 'paused' && campaign.pausedReason !== 'send_failed' && (
         <Button
           loading={isBusy('Resume')}
           onClick={() => act('Resume', `/api/v1/campaigns/${campaign.id}/resume`)}

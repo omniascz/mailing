@@ -15,6 +15,7 @@ interface Campaign {
   name: string;
   type: string;
   status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
+  pausedReason: string | null;
   subject: string | null;
   preheader: string | null;
   fromName: string | null;

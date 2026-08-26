@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, jsonb, integer, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  jsonb,
+  integer,
+  index,
+  text,
+} from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { lists } from './lists.js';
 import { templates } from './templates.js';
@@ -20,6 +29,28 @@ export const campaigns = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     type: campaignTypeEnum('type').notNull().default('email'),
     status: campaignStatusEnum('status').notNull().default('draft'),
+
+    /**
+     * Why the campaign is in `paused`, when we know. Two states that look
+     * identical in `status` need opposite handling on resume:
+     *
+     *   'send_failed' — the dispatch threw after the flip to `sending` and was
+     *                   rolled back. Nothing reached the queue, so resuming
+     *                   means enqueueing.
+     *   'operator'    — somebody pressed Pause. Batches may already be out, and
+     *                   the dispatch ledger is scoped per enqueue attempt (see
+     *                   campaign-dispatch-batches.ts), so a fresh enqueue would
+     *                   deliberately re-send the whole audience.
+     *
+     * NULL is not a third case, it is the absence of an answer: rows written
+     * before this column existed, and pauses from paths that do not set it
+     * (ab-winner parks a campaign for review this way). Readers must treat NULL
+     * as the conservative branch — never enqueue.
+     *
+     * Cleared on every transition into `sending`, so it can never outlive the
+     * pause it describes and be read as the reason for a later one.
+     */
+    pausedReason: text('paused_reason'),
 
     // Email-specific
     subject: varchar('subject', { length: 255 }),
