@@ -11,7 +11,12 @@
  *                                 authoring path in the product.
  *   { html }  / { html, text }    raw HTML: the Resend-compat broadcasts API,
  *                                 the MCP server, the seed, the HTML form.
- *   { items, sourceFeed, … }      RSS campaign drafts.
+ *   { items, sourceFeed, … }      RSS campaign drafts. No longer written:
+ *                                 api/services/rss builds a block schema now,
+ *                                 because this shape reached the send path's
+ *                                 JSON.stringify fallback. Still recognised —
+ *                                 as 'unknown' — since the column is
+ *                                 z.record(z.unknown()) and old rows may exist.
  *
  * Both consumers — the send path in workers/jobs/batch-sender.ts and the
  * archive page in api/services/campaigns/browser-view.ts — asked the same

@@ -13,6 +13,7 @@ import {
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { safeFetch, BlockedUrlError } from '../../lib/safe-fetch.js';
+import { buildRssCampaignContent } from './email-schema.js';
 
 export interface RssItem {
   guid: string;
@@ -158,7 +159,14 @@ async function processOne(rss: RssCampaign): Promise<void> {
       fromName: rss.fromName,
       fromEmail: rss.fromEmail,
       listId: rss.listId,
-      content: { items: fresh, sourceFeed: rss.feedUrl, generatedFrom: 'rss' },
+      // A block schema, not the parsed feed. Storing `{ items, … }` made a
+      // fourth shape of campaigns.content that readCampaignContent reports as
+      // 'unknown', so the send path fell to its last branch and put
+      // JSON.stringify of the feed in the body. See ./email-schema.ts.
+      //
+      // sourceFeed/generatedFrom ride along as provenance; emailSchema strips
+      // unknown keys when it parses, so they change nothing about the render.
+      content: buildRssCampaignContent(subject, fresh, rss.feedUrl),
       scheduledAt: new Date(),
     });
   }
