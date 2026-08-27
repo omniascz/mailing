@@ -182,7 +182,7 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
  */
 export async function setCampaignStatusInternal(
   campaignId: string,
-  status: 'sending' | 'sent' | 'paused' | 'cancelled',
+  status: 'sending' | 'sent' | 'paused' | 'cancelled' | 'failed',
   pausedReason: CampaignPausedReason | null = null,
 ): Promise<void> {
   const [row] = await db
@@ -194,6 +194,12 @@ export async function setCampaignStatusInternal(
       // stale reason can never survive into the next pause and be read as its
       // cause.
       pausedReason: status === 'paused' ? pausedReason : null,
+      // A campaign that has ended has nothing outstanding. Left set, the
+      // counter reads as an unfinished dispatch — the same invariant
+      // markCampaignSent and markCampaignFailed already keep.
+      ...(status === 'sent' || status === 'failed' || status === 'cancelled'
+        ? { pendingBatches: null }
+        : {}),
       ...(status === 'sent' ? { sentAt: new Date() } : {}),
     })
     .where(eq(campaigns.id, campaignId))

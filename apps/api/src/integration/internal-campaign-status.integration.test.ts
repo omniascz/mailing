@@ -46,7 +46,9 @@ afterAll(async () => {
   await app.close();
 });
 
-async function campaignIn(status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'cancelled') {
+async function campaignIn(
+  status: 'draft' | 'scheduled' | 'queueing' | 'sending' | 'sent' | 'cancelled',
+) {
   const [c] = await db
     .insert(campaigns)
     .values({
@@ -197,5 +199,52 @@ describe('everything else is refused', () => {
   it('an unknown campaign is a 404, not a write', async () => {
     const res = await patch(randomUUID(), 'sent');
     expect(res.statusCode).toBe(404);
+  });
+});
+
+/**
+ * 'failed' was declared in INTERNAL_STATUS_TRANSITIONS and missing from the zod
+ * enum that guards it, so the route refused the one transition the splitter
+ * needs to close an empty-audience campaign — and the splitter does not check
+ * `res.ok`, so the refusal was invisible. Measured against a live API before
+ * the enum was corrected: PATCH {status:'failed'} on a `queueing` campaign
+ * answered 400 VALIDATION_ERROR and the row stayed `queueing` for good.
+ */
+describe('the route accepts the failed transitions its own whitelist declares', () => {
+  it('queueing → failed is accepted — the splitter closing an empty audience', async () => {
+    const id = await campaignIn('queueing');
+
+    const res = await patch(id, 'failed');
+
+    expect(res.statusCode).toBe(200);
+    expect(await statusOf(id)).toBe('failed');
+  });
+
+  it('sending → failed is accepted — the winner job giving up for good', async () => {
+    const id = await campaignIn('sending');
+
+    const res = await patch(id, 'failed');
+
+    expect(res.statusCode).toBe(200);
+    expect(await statusOf(id)).toBe('failed');
+  });
+
+  it('failed is terminal — it cannot be left through this route either', async () => {
+    const id = await campaignIn('queueing');
+    await patch(id, 'failed');
+
+    const res = await patch(id, 'sending');
+
+    expect(res.statusCode).toBe(400);
+    expect(await statusOf(id)).toBe('failed');
+  });
+
+  it('draft → failed is still refused; the whitelist does not name it', async () => {
+    const id = await campaignIn('draft');
+
+    const res = await patch(id, 'failed');
+
+    expect(res.statusCode).toBe(400);
+    expect(await statusOf(id)).toBe('draft');
   });
 });

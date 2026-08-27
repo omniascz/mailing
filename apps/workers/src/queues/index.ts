@@ -163,7 +163,34 @@ export type MessageStream = 'broadcast' | 'transactional' | 'triggered';
  * separate change with its own testing, not a config tweak.
  */
 export const campaignSplitterQueue = new Queue(QUEUE_NAMES.CAMPAIGN_SPLITTER, defaultOpts);
-export const abWinnerQueue = new Queue(QUEUE_NAMES.AB_WINNER, defaultOpts);
+
+/**
+ * The A/B winner job gets a wider window than `defaultOpts`.
+ *
+ * It is the only thing that can close an A/B campaign — those arm no batch
+ * counter and the reaper skips campaigns without one — so losing it to a
+ * transient outage costs a campaign, not just a job. The default 3 attempts
+ * from 5 s spans about fifteen seconds, which is shorter than an API pod
+ * restarting; every internal call this job makes would fail across it.
+ *
+ * 5 attempts from 30 s gives 30 + 60 + 120 + 240 = 450 s, about 7½ minutes,
+ * matching the broadcast ladder's reasoning. Unlike the splitter, widening this
+ * risks no duplicate send: the dispatch ledger refuses batch keys already
+ * enqueued, and a replay after a successful dispatch closes the campaign as
+ * sent rather than sending anything again.
+ *
+ * It does not help the deterministic failures — no variant has recorded sends,
+ * ab_config lost its variants — which fail identically on every attempt. Those
+ * are what the job's terminal handler closes the campaign for.
+ */
+export const abWinnerQueue = new Queue(QUEUE_NAMES.AB_WINNER, {
+  ...defaultOpts,
+  defaultJobOptions: {
+    ...defaultOpts.defaultJobOptions,
+    attempts: 5,
+    backoff: { type: 'exponential', delay: 30_000 },
+  },
+});
 
 /**
  * Retry window for a broadcast batch.
