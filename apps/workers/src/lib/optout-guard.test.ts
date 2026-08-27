@@ -2,100 +2,256 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertOptOutPresent, UNRESOLVED_OPT_OUT_TAG } from './optout-guard.js';
 
 /**
  * The send-path safety net, and why it exists alongside the renderer.
  *
  * The renderer is the barrier for block templates: it appends a compliance
  * footer when the template has none, so no template — existing or future — can
- * produce marketing HTML without an opt-out.
+ * produce marketing HTML without an opt-out. It cannot reach a campaign stored
+ * as raw `{ html }` (batch-sender path 2: parseMergeTags on the stored string,
+ * straight to the wire), nor content it did not recognise at all (path 3).
+ * So the check sits in the sending path.
  *
- * It cannot reach one path. A campaign stored as raw `{ html }` skips
- * renderEmail entirely (batch-sender.ts path 2: parseMergeTags on the stored
- * string, straight to the wire). There is no template to fix and no renderer
- * hook to add, so the check has to sit in the sending path.
+ * ─── Two kinds of test in this file, and what each is worth ─────────────────
  *
- * That path is now genuinely only raw HTML. It used to catch the visual
- * editor's `{ schema, html }` too, because the branch above tested
- * `'blocks' in content` — so this guard was the thing refusing the product's
- * own campaigns, and its message told the operator they had written a
- * raw-HTML campaign when they had not.
+ * 1. BEHAVIOUR. The guard is called and its outcome observed. This is the part
+ *    that can say the guard refuses. It became possible when the function moved
+ *    out of batch-sender.ts (which opens Redis connections on import) into
+ *    ./optout-guard.ts.
  *
- * Asserted at source level because the guard lives inside a module that opens
- * Redis connections on import; the behaviour it enforces is one condition, and
- * what matters is that the condition is on the path and refuses rather than
- * skips.
+ * 2. SCAN. Assertions on the SOURCE of batch-sender.ts, for the one thing a
+ *    behavioural test cannot reach: that the call site is still there, on every
+ *    rendered message, before the send.
+ *
+ * ─── What the scan half CANNOT see ──────────────────────────────────────────
+ *
+ *   - Whether the call is reached at runtime. A `return` above it, a `try`
+ *     that swallows the throw, or a branch that skips the whole render would
+ *     all leave the text intact. Only the integration suites walk that.
+ *   - Whether `rendered`, `stream` and `unsubscribeUrl` hold what their names
+ *     say at that point.
+ *   - Anything in the guard's own logic: that is what the behaviour half is
+ *     for, and the scan deliberately no longer asserts on the guard body.
+ *   - Code reached through a different call path — a second sender, a retry
+ *     wrapper, a future queue — that never mentions the guard at all.
+ *   - A call commented out with a leading `//`: the substring match would
+ *     still find it. The self-tests below pin what the matcher discriminates,
+ *     not that it is sufficient.
  */
 
-const SRC = readFileSync(
-  join(fileURLToPath(new URL('.', import.meta.url)), '..', 'jobs', 'batch-sender.ts'),
-  'utf8',
-);
+const HERE = fileURLToPath(new URL('.', import.meta.url));
+const SENDER_SRC = readFileSync(join(HERE, '..', 'jobs', 'batch-sender.ts'), 'utf8');
 
-describe('marketing mail with no opt-out is refused by the sender', () => {
-  it('the guard runs on every rendered message', () => {
-    expect(SRC).toContain('assertOptOutPresent(rendered, stream, unsubscribeUrl');
+const marketing = 'broadcast' as const;
+const UNSUB = 'https://track.example/unsubscribe/abc123';
+
+const body = (html: string, text: string, shape: 'raw-html' | 'blocks' | 'schema' | 'unknown') => ({
+  html,
+  text,
+  shape,
+});
+
+describe('BEHAVIOUR: marketing mail with no opt-out is refused', () => {
+  it('refuses a body that has neither the URL nor the tag', () => {
+    expect(() =>
+      assertOptOutPresent(body('<p>Akce</p>', 'Akce', 'raw-html'), marketing, UNSUB, 'c1'),
+    ).toThrow(/no unsubscribe link/);
   });
 
-  it('it looks at both parts of the multipart, not only the HTML', () => {
-    // The whole point of the guard is that the message is lawful. A text
-    // alternative with no way out is the same violation, in the half a filter
-    // reads when it scores the mail.
-    const guard = SRC.slice(
-      SRC.indexOf('function assertOptOutPresent'),
-      SRC.indexOf('interface RenderedEmail'),
+  it('refuses the JSON a fallback render produces', () => {
+    // The RSS shape, before api/services/rss built a block schema instead:
+    // readCampaignContent said 'unknown', the send path stringified the feed.
+    const json = JSON.stringify({ items: [{ title: 'Sleva' }], generatedFrom: 'rss' });
+    expect(() => assertOptOutPresent(body(json, json, 'unknown'), marketing, UNSUB, 'c2')).toThrow(
+      /no unsubscribe link/,
     );
-    expect(guard).toContain("(['html', 'text'] as const)");
   });
 
-  it('it throws rather than skipping the contact', () => {
+  it('lets through a body carrying the resolved URL', () => {
+    expect(() =>
+      assertOptOutPresent(
+        body(`<a href="${UNSUB}">Odhlásit</a>`, `Odhlásit: ${UNSUB}`, 'raw-html'),
+        marketing,
+        UNSUB,
+        'c3',
+      ),
+    ).not.toThrow();
+  });
+
+  it('lets through the unresolved merge tag, spaced or not', () => {
+    expect(() =>
+      assertOptOutPresent(
+        body('<a href="{{unsubscribe_url}}">x</a>', '{{ unsubscribe_url }}', 'raw-html'),
+        marketing,
+        UNSUB,
+        'c4',
+      ),
+    ).not.toThrow();
+  });
+
+  it('refuses when only the HTML half has the link', () => {
+    // A text alternative with no way out is the same violation, in the half a
+    // filter reads when it scores the mail.
+    expect(() =>
+      assertOptOutPresent(
+        body(`<a href="${UNSUB}">Odhlásit</a>`, 'Akce tohoto týdne', 'raw-html'),
+        marketing,
+        UNSUB,
+        'c5',
+      ),
+    ).toThrow(/rendered text has no unsubscribe link/);
+  });
+
+  it('refuses when only the text half has the link', () => {
+    expect(() =>
+      assertOptOutPresent(
+        body('<p>Akce</p>', `Odhlásit: ${UNSUB}`, 'raw-html'),
+        marketing,
+        UNSUB,
+        'c6',
+      ),
+    ).toThrow(/rendered html has no unsubscribe link/);
+  });
+
+  it('names both halves when both are missing', () => {
+    expect(() => assertOptOutPresent(body('a', 'b', 'raw-html'), marketing, UNSUB, 'c7')).toThrow(
+      /rendered html and text has no unsubscribe link/,
+    );
+  });
+
+  it('lets transactional mail through untouched', () => {
+    expect(() =>
+      assertOptOutPresent(
+        body('<p>Účtenka</p>', 'Účtenka', 'raw-html'),
+        'transactional',
+        UNSUB,
+        'c8',
+      ),
+    ).not.toThrow();
+  });
+
+  it('throws rather than reporting a skipped contact', () => {
     // Skipping would send the campaign to everyone whose render happened to
     // contain a link and silently drop the rest — the same violation, quieter.
-    const guard = SRC.slice(
-      SRC.indexOf('function assertOptOutPresent'),
-      SRC.indexOf('interface RenderedEmail'),
-    );
-    expect(guard.length, 'guard not found').toBeGreaterThan(200);
-    expect(guard).toContain('throw new Error(');
-    expect(guard).not.toContain('return { skipped');
+    let threw = false;
+    let returned: unknown = 'not-called';
+    try {
+      returned = assertOptOutPresent(body('a', 'b', 'raw-html'), marketing, UNSUB, 'c9');
+    } catch {
+      threw = true;
+    }
+    expect(threw).toBe(true);
+    expect(returned).toBe('not-called');
+  });
+});
+
+describe('BEHAVIOUR: the refusal says something true about the campaign', () => {
+  it('does not call an RSS-style fallback a raw-HTML campaign', () => {
+    // The message used to be one sentence for every shape: "this is a raw-HTML
+    // campaign, so the link has to be in the content — add {{unsubscribe_url}}".
+    // For generated content that is advice nobody can follow.
+    let message = '';
+    try {
+      assertOptOutPresent(body('{"items":[]}', '{"items":[]}', 'unknown'), marketing, UNSUB, 'c10');
+    } catch (err) {
+      message = (err as Error).message;
+    }
+    expect(message).not.toContain('raw-HTML campaign');
+    expect(message).not.toContain('add {{unsubscribe_url}}');
+    expect(message).toContain('did not recognise');
   });
 
-  it('it lets transactional mail through', () => {
-    const guard = SRC.slice(
-      SRC.indexOf('function assertOptOutPresent'),
-      SRC.indexOf('interface RenderedEmail'),
-    );
-    expect(guard).toContain("if (stream === 'transactional') return;");
+  it('still tells a raw-HTML campaign to put the tag in its content', () => {
+    let message = '';
+    try {
+      assertOptOutPresent(body('<p>x</p>', 'x', 'raw-html'), marketing, UNSUB, 'c11');
+    } catch (err) {
+      message = (err as Error).message;
+    }
+    expect(message).toContain('stored as raw HTML');
+    expect(message).toContain('{{unsubscribe_url}}');
   });
 
-  it('it accepts either the resolved URL or the unresolved merge tag', () => {
-    // The legacy path may carry {{unsubscribe_url}} that a later step resolves.
-    const guard = SRC.slice(
-      SRC.indexOf('function assertOptOutPresent'),
-      SRC.indexOf('interface RenderedEmail'),
-    );
-    expect(guard).toContain('rendered[part].includes(unsubscribeUrl)');
-    expect(guard).toContain('UNRESOLVED_OPT_OUT_TAG.test(rendered[part])');
-    // And that pattern has to keep its escapes. An earlier inline version had
-    // lost them — `/{{s*unsubscribe_url/` reads as "zero or more letters s" —
-    // so the spaced form of the tag stopped matching and the guard refused
-    // compliant campaigns. Lift the literal out of the source and try it.
-    const literal = /const UNRESOLVED_OPT_OUT_TAG = \/(.+)\/;/.exec(SRC);
-    expect(literal, 'the opt-out tag pattern is not where the guard reads it').not.toBeNull();
-    expect(new RegExp(literal![1]!).test('{{ unsubscribe_url }}')).toBe(true);
-    expect(new RegExp(literal![1]!).test('{{unsubscribe_url}}')).toBe(true);
+  it('tells a block campaign that the schema, not the body, is the problem', () => {
+    // Reaching the guard with shape 'schema' means the schema failed to parse
+    // and the render fell back — the footer never had a chance to be appended.
+    let message = '';
+    try {
+      assertOptOutPresent(body('<p>x</p>', 'x', 'schema'), marketing, UNSUB, 'c12');
+    } catch (err) {
+      message = (err as Error).message;
+    }
+    expect(message).toContain('did not parse');
+  });
+});
+
+describe('BEHAVIOUR: the tag pattern keeps its escapes', () => {
+  it('matches every form the tag parser accepts', () => {
+    // An earlier inline version had lost them — `/{{s*unsubscribe_url/` reads
+    // as "zero or more letters s" — so the spaced form stopped matching and the
+    // guard refused campaigns that were in fact compliant.
+    expect(UNRESOLVED_OPT_OUT_TAG.test('{{unsubscribe_url}}')).toBe(true);
+    expect(UNRESOLVED_OPT_OUT_TAG.test('{{ unsubscribe_url }}')).toBe(true);
+    expect(UNRESOLVED_OPT_OUT_TAG.test('{{\tunsubscribe_url}}')).toBe(true);
+  });
+
+  it('does not match the things a broken escape would have matched', () => {
+    expect(UNRESOLVED_OPT_OUT_TAG.test('unsubscribe_url')).toBe(false);
+    expect(UNRESOLVED_OPT_OUT_TAG.test('{unsubscribe_url}')).toBe(false);
+    expect(UNRESOLVED_OPT_OUT_TAG.test('xssunsubscribe_url')).toBe(false);
+  });
+});
+
+describe('SCAN: the guard is still on the send path', () => {
+  /** The one thing asserted about the source. Kept next to its self-tests. */
+  const callSite = (src: string): boolean =>
+    src.includes('assertOptOutPresent(rendered, stream, unsubscribeUrl');
+
+  it('SELF-TEST: the matcher fires on a positive control', () => {
+    // Without this, a renamed argument would turn the assertion below into a
+    // test that can only pass by accident — which is how five scan tests in
+    // this repo went quietly green.
+    expect(
+      callSite('  assertOptOutPresent(rendered, stream, unsubscribeUrl, data.campaignId);'),
+    ).toBe(true);
+  });
+
+  it('SELF-TEST: the matcher does not fire on near misses', () => {
+    expect(callSite('function assertOptOutPresent(')).toBe(false);
+    expect(callSite('assertOptOutPresent(rendered, unsubscribeUrl, stream)')).toBe(false);
+    expect(callSite('// assertOptOutPresent was here')).toBe(false);
+    expect(callSite('')).toBe(false);
+  });
+
+  it('SELF-TEST: the file it reads is the sender, and it is not empty', () => {
+    // A readFileSync on the wrong path throws, but a path that resolves to a
+    // stub or a moved file would not. Pin something only batch-sender has.
+    expect(SENDER_SRC.length).toBeGreaterThan(1000);
+    expect(SENDER_SRC).toContain('export async function processBatchSender');
+  });
+
+  it('the call is in batch-sender.ts, on every rendered message', () => {
+    expect(callSite(SENDER_SRC)).toBe(true);
+  });
+
+  it('the guard is imported rather than redefined locally', () => {
+    // Two copies of this rule would be two rules. The behaviour tests above
+    // only cover the one in ./optout-guard.ts.
+    expect(SENDER_SRC).toContain("import { assertOptOutPresent } from '../lib/optout-guard.js'");
+    expect(SENDER_SRC).not.toContain('function assertOptOutPresent(');
   });
 
   it('the campaign render is told which stream it is, and which language', () => {
     // Without the stream the renderer would default every campaign to
     // marketing, which is safe but would put an opt-out on transactional
     // batches. Without the locale the footer it appends is always English.
-    // Matched on the options object rather than the whole call, so renaming the
-    // local that holds the schema does not read as the stream being dropped.
-    // It did once: the schema now comes from readCampaignContent and is called
-    // `parsed.schema`, and this assertion failed on the name while the
-    // behaviour was unchanged.
-    expect(SRC).toContain('renderBlocks(parsed.schema, { context: ctx, utm, stream, locale })');
-    expect(SRC).toContain('renderPlainText(parsed.schema, { context: ctx, stream, locale })');
+    expect(SENDER_SRC).toContain(
+      'renderBlocks(parsed.schema, { context: ctx, utm, stream, locale })',
+    );
+    expect(SENDER_SRC).toContain(
+      'renderPlainText(parsed.schema, { context: ctx, stream, locale })',
+    );
   });
 });

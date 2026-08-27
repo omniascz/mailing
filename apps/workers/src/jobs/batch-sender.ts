@@ -24,6 +24,8 @@ import {
   type MergeTagContext,
 } from '@forgemsg/editor/render';
 import { readCampaignContent } from '@forgemsg/editor/schema';
+import type { CampaignContentShape } from '@forgemsg/editor/schema';
+import { assertOptOutPresent } from '../lib/optout-guard.js';
 import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/shared';
 // Cross-package import (same pattern as mta-sender → isp-throttle): the coupon
 // resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
@@ -642,57 +644,16 @@ function buildMergeContext(
   };
 }
 
-/**
- * An opt-out merge tag a later step still has to resolve, in any of the forms
- * the tag parser accepts. Written as a named constant because the inline
- * version of this pattern had lost its escapes: `/{{s*unsubscribe_url/` reads
- * as "zero or more letters s", so `{{ unsubscribe_url }}` — spaces and all,
- * which the parser accepts — did not match, and the guard refused a campaign
- * that was in fact compliant.
- */
-const UNRESOLVED_OPT_OUT_TAG = /\{\{\s*unsubscribe_url/;
-
-/**
- * Refuse to send marketing mail whose body has no opt-out.
- *
- * The renderer guarantees one for the block path: it appends a compliance
- * footer when the template has none. This covers the path it cannot reach —
- * legacy campaigns stored as raw { html }, which skip renderEmail entirely and
- * are copied to the wire as written. There is no template to fix there, and no
- * renderer hook to add one, so the send path is the only place left.
- *
- * Throws rather than skipping the contact. A campaign that cannot produce a
- * lawful body is not a per-recipient problem; sending it to the other 9,999
- * would be the same violation nine thousand more times.
- */
-function assertOptOutPresent(
-  rendered: RenderedEmail,
-  stream: MessageStream,
-  unsubscribeUrl: string,
-  campaignId: string,
-): void {
-  if (stream === 'transactional') return;
-  // Both halves of the multipart, because both are the message. Checking only
-  // the HTML let a text alternative go out with no way to opt out — which is
-  // the half a filter reads when it scores the message, and the half a reader
-  // in a text-only client sees.
-  const missing = (['html', 'text'] as const).filter(
-    (part) =>
-      !rendered[part].includes(unsubscribeUrl) && !UNRESOLVED_OPT_OUT_TAG.test(rendered[part]),
-  );
-  if (missing.length === 0) return;
-  throw new Error(
-    `Campaign ${campaignId}: rendered ${missing.join(' and ')} has no unsubscribe link. ` +
-      `Marketing mail must carry one in every part. Block templates get it from the ` +
-      `renderer; this is a raw-HTML campaign, so the link has to be in the content — ` +
-      `add {{unsubscribe_url}}.`,
-  );
-}
-
 interface RenderedEmail {
   html: string;
   /** Auto-derived plain-text alternative for multipart/alternative MIME part. */
   text: string;
+  /**
+   * Which branch of readCampaignContent produced this body. Carried out of the
+   * renderer so assertOptOutPresent can say something true about the campaign
+   * it is refusing, instead of calling everything raw HTML.
+   */
+  shape: CampaignContentShape;
 }
 
 /**
@@ -708,8 +669,13 @@ interface RenderedEmail {
  *     broadcasts API, the MCP server and the seed. Merge tags only; this path
  *     still misses the renderer's footer, sanitisation and UTM, and the
  *     opt-out is enforced for it by assertOptOutPresent instead
- *  3. anything else → JSON.stringify. Reachable: services/rss/index.ts stores
- *     { items, sourceFeed, generatedFrom } and schedules it
+ *  3. anything else → JSON.stringify. No writer in the product produces this
+ *     any more: services/rss used to store { items, sourceFeed, generatedFrom }
+ *     and schedule it, which landed here and put the feed's JSON in the body;
+ *     it now builds a block schema (api/services/rss/email-schema.ts) and takes
+ *     path 1. Kept because campaigns.content is z.record(z.unknown()) — the
+ *     column accepts anything, so the branch is the floor under a writer we do
+ *     not have rather than a path we expect to take.
  */
 function renderEmail(
   content: Record<string, unknown>,
@@ -756,7 +722,7 @@ function renderEmail(
       text += `
 
 ${footerText}`;
-    return { html, text };
+    return { html, text, shape: parsed.shape };
   }
   if (parsed.error) {
     console.warn(
@@ -776,12 +742,12 @@ ${footerText}`;
     }
     const textOverride = (content as { text?: string }).text;
     const text = textOverride ? parseMergeTags(textOverride, ctx) : deriveTextFromHtml(resolved);
-    return { html: resolved, text };
+    return { html: resolved, text, shape: parsed.shape };
   }
 
   // Path 3: fallback (should never happen in production)
   const serialised = JSON.stringify(content);
-  return { html: serialised, text: serialised };
+  return { html: serialised, text: serialised, shape: parsed.shape };
 }
 
 /**
