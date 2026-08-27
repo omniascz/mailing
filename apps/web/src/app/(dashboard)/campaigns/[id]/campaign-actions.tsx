@@ -88,14 +88,25 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
         before the batches exist is the one moment stopping is cheap.
       */}
       {(status === 'sending' || status === 'queueing') && (
-        <Button
-          variant="outline"
-          loading={isBusy('Pause')}
-          onClick={() => act('Pause', `/api/v1/campaigns/${campaign.id}/pause`)}
-        >
-          <Pause className="h-4 w-4" />
-          Pause
-        </Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            variant="outline"
+            loading={isBusy('Pause')}
+            onClick={() => act('Pause', `/api/v1/campaigns/${campaign.id}/pause`)}
+          >
+            <Pause className="h-4 w-4" />
+            Pause
+          </Button>
+          {/*
+            Said out loud rather than hidden. The brake is checked once per
+            batch, before the batch starts, so a batch already in progress runs
+            to the end — up to a thousand more messages. Promising an instant
+            stop and delivering this one is worse than saying so.
+          */}
+          <p className="max-w-[16rem] text-right text-xs text-secondary-500">
+            Takes effect between batches — up to 1,000 more messages may already be on their way.
+          </p>
+        </div>
       )}
       {/*
         No action on `failed`: every batch reported and none of them sent

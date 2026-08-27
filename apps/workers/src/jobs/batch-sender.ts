@@ -14,7 +14,7 @@
  * Produces: N × MtaSendJobData into mta-{isp} queues
  */
 
-import { Worker, type Job } from 'bullmq';
+import { Worker, DelayedError, type Job } from 'bullmq';
 import { captureJobException } from '../lib/telemetry.js';
 import crypto from 'node:crypto';
 import {
@@ -59,17 +59,117 @@ interface ContactRow {
   status: string | null;
 }
 
+/** First delay after a pause, doubling up to DELAY_MAX_MS on each retry. */
+const DELAY_BASE_MS = 30_000;
+const DELAY_MAX_MS = 5 * 60_000;
+/**
+ * Hard ceiling on how long a batch will sit waiting for a pause to lift.
+ *
+ * Not a give-up mechanism — the batch never decides on its own that a campaign
+ * is over. This exists so a job cannot be re-delayed forever if something goes
+ * wrong with the reaper; the reaper is what closes an abandoned campaign, and
+ * it acts at 72 h, well inside this.
+ */
+const DELAY_CEILING_MS = 7 * 24 * 60 * 60_000;
+
+/** Statuses the batch must not send under, and what it should do about each. */
+const BRAKE_STOP: ReadonlySet<string> = new Set(['cancelled', 'failed', 'sent']);
+
+/**
+ * Ask the API whether this campaign is still one we should be sending, and act
+ * on the answer.
+ *
+ * Returns a result to hand straight back from the processor when the batch must
+ * not run, or null to carry on. Three outcomes:
+ *
+ *   sending / queueing  → carry on. `queueing` is included because the splitter
+ *                         may still be enqueueing while the first batches are
+ *                         already being worked.
+ *   paused              → put the job back on the queue and throw DelayedError.
+ *                         It does NOT report completion: the campaign's counter
+ *                         has to keep waiting for this batch, or resuming would
+ *                         find the send already closed.
+ *   cancelled/failed/sent → drop the batch and DO report completion, as fully
+ *                         skipped. The campaign is over; a batch that stayed
+ *                         silent here would leave the counter hanging forever.
+ *
+ * Measured, not assumed: moveToDelayed does not consume the retry budget —
+ * 100 delays with `attempts: 2` left attemptsMade at 0 and the job still ran to
+ * completion — and returning a value after moveToDelayed instead of throwing
+ * makes the worker log "Missing lock for job … moveToFinished". Hence the throw.
+ */
+async function applyCampaignBrake(
+  job: Job<BatchSenderJobData>,
+  token: string | undefined,
+  stream: MessageStream,
+): Promise<{ sent: number; skipped: number; reason: string } | null> {
+  const data = job.data;
+  // Transactional and triggered mail is not part of a campaign the operator can
+  // pause; only a broadcast has a campaign row whose status means anything here.
+  if (stream !== 'broadcast') return null;
+
+  const state = await fetchCampaignDispatchState(data.campaignId);
+  // A campaign we cannot read is not a campaign we should refuse to send: this
+  // check fails open, exactly like the org-suspended one above it, because a
+  // transport blip must not silently stop every campaign in flight.
+  if (!state) return null;
+
+  if (BRAKE_STOP.has(state.status)) {
+    job.log(
+      `[brake] Campaign ${data.campaignId} is ${state.status} — dropping this batch of ` +
+        `${data.contactIds.length} and reporting it complete.`,
+    );
+    await reportBatchCompletion(data, 0, data.contactIds.length);
+    return { sent: 0, skipped: data.contactIds.length, reason: `campaign_${state.status}` };
+  }
+
+  if (state.status !== 'paused') return null;
+
+  const waited = data.pauseWaitedMs ?? 0;
+  if (waited >= DELAY_CEILING_MS) {
+    // Seven days of pause. Something is wrong with the reaper, which should
+    // have closed this campaign four days ago. Drop the batch so the counter
+    // can finish, and say so at error level — this is not routine.
+    console.error(
+      `[batch-sender] campaign ${data.campaignId} has been paused for over ` +
+        `${Math.round(DELAY_CEILING_MS / 86_400_000)} days and the reaper has not closed it. ` +
+        `Dropping batch ${data.batchKey ?? data.batchIndex} so the dispatch can finish.`,
+    );
+    await reportBatchCompletion(data, 0, data.contactIds.length);
+    return { sent: 0, skipped: data.contactIds.length, reason: 'pause_ceiling' };
+  }
+
+  const delay = Math.min(DELAY_BASE_MS * 2 ** (data.pauseDelays ?? 0), DELAY_MAX_MS);
+  job.log(
+    `[brake] Campaign ${data.campaignId} is paused — putting this batch back for ${delay / 1000}s ` +
+      `(waited ${Math.round(waited / 1000)}s so far).`,
+  );
+  await job.updateData({
+    ...data,
+    pauseDelays: (data.pauseDelays ?? 0) + 1,
+    pauseWaitedMs: waited + delay,
+  });
+  await job.moveToDelayed(Date.now() + delay, token);
+  throw new DelayedError();
+}
+
 /**
  * Exported for the integration suite, which drives a real batch through the
  * real filters rather than re-implementing them in a mock.
  */
-export async function processBatchSender(job: Job<BatchSenderJobData>) {
+export async function processBatchSender(job: Job<BatchSenderJobData>, token?: string) {
   const data = job.data;
   const stream: MessageStream = data.stream ?? 'broadcast';
 
   job.log(
     `Processing batch ${data.batchIndex} for campaign ${data.campaignId} stream=${stream} (${data.contactIds.length} contacts)`,
   );
+
+  // The brake. Until now nothing in the send path read the campaign's status,
+  // so Pause changed a column and stopped nothing and Cancel stopped nothing
+  // either — the batches already on the queue went out regardless.
+  const brake = await applyCampaignBrake(job, token, stream);
+  if (brake) return brake;
 
   // Platform-admin suspended this org while jobs were already enqueued —
   // skip the whole batch. Plan-enforcement on POST /campaigns/:id/send
@@ -461,6 +561,26 @@ export async function processBatchSender(job: Job<BatchSenderJobData>) {
  * The report is idempotent on the API side — the ledger row's completion flag
  * is the hinge — so a replay after stalled-job recovery cannot decrement twice.
  */
+/** The brake's read. Null on any failure, so a blip cannot stop a live send. */
+async function fetchCampaignDispatchState(
+  campaignId: string,
+): Promise<{ status: string; pausedReason: string | null } | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/campaigns/${campaignId}/dispatch-state`, {
+      headers: internalHeaders(),
+    });
+    if (!res.ok) {
+      console.error(`[batch-sender] dispatch-state ${campaignId} → HTTP ${res.status}`);
+      return null;
+    }
+    const body = (await res.json()) as { data?: { status: string; pausedReason: string | null } };
+    return body.data ?? null;
+  } catch (err) {
+    console.error(`[batch-sender] dispatch-state ${campaignId} failed:`, err);
+    return null;
+  }
+}
+
 async function reportBatchCompletion(
   data: BatchSenderJobData,
   sent: number,

@@ -22,7 +22,7 @@
 import { and, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { campaigns, campaignDispatchBatches } from '../../db/schema/index.js';
-import { markCampaignSent, markCampaignFailed } from './index.js';
+import { markCampaignSent, markCampaignFailed, cancelCampaign } from './index.js';
 
 /**
  * How long a campaign may go without a single batch reporting before it is
@@ -40,10 +40,28 @@ import { markCampaignSent, markCampaignFailed } from './index.js';
  */
 export const REAP_AFTER_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * The same idea for a different failure: a campaign somebody paused and never
+ * came back to.
+ *
+ * With a real brake in the batch-sender, a paused campaign's batches sit on the
+ * queue putting themselves back every few minutes, and its counter never comes
+ * down. That is correct while somebody intends to resume. Three days later it
+ * is not an intention, it is an abandoned send holding its batches open.
+ *
+ * Longer than the 24 h for `sending` on purpose, and the difference is the
+ * point: `sending` means "this should be moving and is not", which is a fault.
+ * `paused` means "a person stopped this", which is a decision, and a decision
+ * deserves more room before we overrule it.
+ */
+export const REAP_PAUSED_AFTER_MS = 72 * 60 * 60 * 1000;
+
 export interface ReapResult {
   examined: number;
   closedSent: number;
   closedFailed: number;
+  /** Abandoned paused campaigns cancelled so their batches can stop waiting. */
+  cancelledAbandoned: number;
   errors: number;
 }
 
@@ -83,6 +101,7 @@ export async function reapStalledDispatches(now: Date = new Date()): Promise<Rea
     examined: stalled.length,
     closedSent: 0,
     closedFailed: 0,
+    cancelledAbandoned: 0,
     errors: 0,
   };
 
@@ -119,5 +138,60 @@ export async function reapStalledDispatches(now: Date = new Date()): Promise<Rea
     }
   }
 
+  await reapAbandonedPauses(now, result);
   return result;
+}
+
+/**
+ * Campaigns paused long enough that nobody is coming back.
+ *
+ * Its own pass and its own log line rather than a branch inside the sweep
+ * above: a stalled `sending` campaign is a fault to investigate, an abandoned
+ * `paused` one is a person who moved on. Reading them from the same message
+ * would blur two diagnoses into one.
+ *
+ * `cancelCampaign` is the action, not markCampaignFailed — `paused → cancelled`
+ * is already a legal transition, and it is honest: nobody decided this send
+ * failed, somebody stopped it and never finished. Once cancelled, the brake in
+ * the batch-sender drops the waiting batches instead of re-delaying them, so
+ * the counter finally comes down.
+ */
+async function reapAbandonedPauses(now: Date, result: ReapResult): Promise<void> {
+  const cutoff = new Date(now.getTime() - REAP_PAUSED_AFTER_MS);
+
+  const abandoned = await db
+    .select({
+      id: campaigns.id,
+      orgId: campaigns.orgId,
+      pendingBatches: campaigns.pendingBatches,
+      updatedAt: campaigns.updatedAt,
+    })
+    .from(campaigns)
+    .where(
+      and(
+        eq(campaigns.status, 'paused'),
+        lt(campaigns.updatedAt, cutoff),
+        // Only a pause with a dispatch still open. A campaign paused before it
+        // ever queued anything holds nothing and can sit there indefinitely.
+        sql`${campaigns.pendingBatches} IS NOT NULL AND ${campaigns.pendingBatches} > 0`,
+      ),
+    )
+    .limit(200);
+
+  result.examined += abandoned.length;
+
+  for (const c of abandoned) {
+    const ageHours = Math.round((now.getTime() - c.updatedAt.getTime()) / 3_600_000);
+    try {
+      console.warn(
+        `[dispatch-reaper] campaign ${c.id} has been paused for ${ageHours}h with ` +
+          `${c.pendingBatches} batch(es) still held open. Cancelling it so they can stop waiting.`,
+      );
+      await cancelCampaign(c.orgId, c.id);
+      result.cancelledAbandoned++;
+    } catch (err) {
+      result.errors++;
+      console.error(`[dispatch-reaper] campaign ${c.id} could not be cancelled:`, err);
+    }
+  }
 }
