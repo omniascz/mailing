@@ -56,6 +56,16 @@ let listId: string;
 let contactId: string;
 let token: string;
 let previousSendingMode: string | null = null;
+/**
+ * The org's postal address, READ BACK after seeding rather than assumed.
+ *
+ * The seed leaves it empty and several integration files fill it in with
+ * COALESCE, so whichever runs first decides the value — and vitest runs files
+ * in parallel. Asserting on a literal here made this file's footer test depend
+ * on which suite won that race. The footer assertion below uses whatever the
+ * column actually holds.
+ */
+let postalAddress = '';
 const createdCampaigns: string[] = [];
 
 interface FeedItem {
@@ -220,6 +230,12 @@ describe('RSS campaign end to end (real DB + Redis + API)', () => {
     contactId = contact!.id;
     await sql`INSERT INTO contact_lists (contact_id, list_id) VALUES (${contactId}, ${listId})`;
 
+    const [withAddress] = await sql<{ postal_address: string | null }[]>`
+      SELECT postal_address FROM organizations WHERE id = ${orgId}
+    `;
+    postalAddress = withAddress?.postal_address ?? '';
+    if (!postalAddress) throw new Error('[rss] org has no postal address to assert on');
+
     const login = await api<{ token: string }>('POST', '/api/v1/auth/login', {
       email: 'demo@acme.test',
       password: 'Demo1234!',
@@ -287,9 +303,9 @@ describe('RSS campaign end to end (real DB + Redis + API)', () => {
     expect(mta.htmlBody, 'no unsubscribe link in the HTML part').toMatch(/\/unsubscribe\//);
     expect(mta.textBody, 'no unsubscribe link in the text part').toMatch(/\/unsubscribe\//);
     expect(mta.htmlBody, 'the postal address is the other half of the footer').toContain(
-      'Nadrazni 1',
+      postalAddress,
     );
-    expect(mta.textBody).toContain('Nadrazni 1');
+    expect(mta.textBody).toContain(postalAddress);
   }, 180_000);
 
   it('applies UTM to the links that came out of the feed', async () => {
