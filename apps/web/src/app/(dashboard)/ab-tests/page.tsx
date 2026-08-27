@@ -1,7 +1,9 @@
+import { notFound } from 'next/navigation';
 import { FlaskConical } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
+import { getCapabilities } from '@/lib/capabilities.server';
 
 interface MultivariateTest {
   id: string;
@@ -25,6 +27,15 @@ const STATUS_TONE: Record<string, 'default' | 'primary' | 'success' | 'warning'>
 };
 
 export default async function AbTestsPage() {
+  // Not hidden-but-reachable. This page lists multivariate tests, and that
+  // feature has no send-side: nothing assigns a variant, nothing records a
+  // figure, and every test finishes `completed` with no winner. The header
+  // below promises a winner selected on a chosen metric and auto-sent to the
+  // remaining audience — none of which happens. So the route does not exist
+  // rather than showing tests that cannot conclude.
+  const { multivariateTests } = await getCapabilities();
+  if (!multivariateTests) notFound();
+
   const tests = await apiFetch<MultivariateTest[]>('/api/v1/multivariate-tests', { fallback: [] });
 
   return (

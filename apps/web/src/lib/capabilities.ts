@@ -22,16 +22,25 @@ export interface Capabilities {
   videoProviders: string[];
   inboxPreview: boolean;
   geoAnalytics: boolean;
+  /**
+   * Multivariate tests. Reported false unconditionally by the API — the
+   * feature's send-side is not built, so a test can be created and started but
+   * never assigns a variant, never records a figure, and always finishes
+   * without a winner. See multivariateTestsAvailable() in
+   * apps/api/src/lib/integration-capabilities.ts for what is missing.
+   */
+  multivariateTests: boolean;
 }
 
 /** Feature keys a navigation entry can depend on. */
-export type CapabilityFlag = 'inboxPreview' | 'geoAnalytics';
+export type CapabilityFlag = 'inboxPreview' | 'geoAnalytics' | 'multivariateTests';
 
 export const NOTHING_AVAILABLE: Capabilities = {
   meetingLocationTypes: [],
   videoProviders: [],
   inboxPreview: false,
   geoAnalytics: false,
+  multivariateTests: false,
 };
 
 /** True when an entry with this requirement may be shown. */

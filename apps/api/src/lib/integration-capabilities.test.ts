@@ -4,6 +4,7 @@ import {
   availableLocationTypes,
   inboxPreviewAvailable,
   geoAnalyticsAvailable,
+  multivariateTestsAvailable,
   capabilities,
   assertLocationTypeAvailable,
   bookingWouldBeEmpty,
@@ -160,6 +161,37 @@ describe('geo analytics', () => {
   });
 });
 
+/**
+ * The one capability that is not derived from configuration.
+ *
+ * Every other entry in this file answers "is the integration behind this
+ * feature configured?". This one answers "is the feature built?", and the
+ * answer is no: a multivariate test can be created, started and scored, but
+ * nothing assigns a variant when a campaign is sent, nothing writes the
+ * per-variant counters, and nothing rolls a winner out. Measured against a real
+ * database, every test finishes `completed` with no winner, because every
+ * variant scores zero.
+ *
+ * So there is nothing to switch on, and no environment variable may switch it.
+ * That is what the second test here pins: a future reader looking for the
+ * missing config will not find one, and should read the three missing layers
+ * instead.
+ */
+describe('multivariate tests', () => {
+  it('is unavailable', () => {
+    expect(multivariateTestsAvailable()).toBe(false);
+  });
+
+  it('stays unavailable whatever the environment says', () => {
+    onlyEnv({
+      MULTIVARIATE_TESTS: '1',
+      MULTIVARIATE_TESTS_ENABLED: 'true',
+      ENABLE_MULTIVARIATE: 'yes',
+    });
+    expect(multivariateTestsAvailable()).toBe(false);
+  });
+});
+
 describe('the payload the frontend reads', () => {
   it('reports everything off in an unconfigured deployment', () => {
     expect(capabilities()).toEqual({
@@ -167,6 +199,7 @@ describe('the payload the frontend reads', () => {
       videoProviders: [],
       inboxPreview: false,
       geoAnalytics: false,
+      multivariateTests: false,
     });
   });
 
@@ -182,6 +215,8 @@ describe('the payload the frontend reads', () => {
       videoProviders: ['zoom', 'teams'],
       inboxPreview: true,
       geoAnalytics: true,
+      // The one that stays off. Configuring the others must not drag it on.
+      multivariateTests: false,
     });
   });
 });

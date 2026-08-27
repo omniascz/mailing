@@ -9,7 +9,7 @@
  * so a re-sent message or re-opened email always resolves to the same variant.
  */
 
-import { and, eq, desc, sql, inArray } from 'drizzle-orm';
+import { and, eq, desc, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   multivariateTests,
@@ -419,5 +419,3 @@ export async function processDueTests(): Promise<{ processed: number }> {
   }
   return { processed: due.length };
 }
-
-void inArray;
