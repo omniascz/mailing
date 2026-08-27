@@ -93,23 +93,57 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
       `(${result.metric}, confidence ${result.confidencePct.toFixed(1)}%)`,
   );
 
+  // Nothing below may return without writing a status.
+  //
+  // An A/B campaign arms no batch counter and the reaper skips campaigns that
+  // have none, so this job is the only thing that can close one. Every early
+  // exit here used to leave the campaign in `sending` with nothing left that
+  // could ever move it — which is why each one now names an outcome.
   if (!result.autoSendWinner) {
-    // Below the configured confidence threshold, or auto-send is off, or there
-    // is only one arm to judge. The holdback stays unsent and the campaign is
-    // parked for a human — dispatching a winner the test could not actually
-    // establish is worse than waiting, because it looks like a decision.
     job.log(`[ab-winner] ${result.decision} — ${result.decisionReason ?? 'no reason recorded'}`);
+
     if (result.decision === 'needs_review') {
-      await updateCampaignStatus(campaignId, 'paused');
+      // Below the confidence threshold, or auto-send is off, or there is only
+      // one arm to judge. The holdback stays unsent and the campaign is parked
+      // for a human — dispatching a winner the test could not establish is
+      // worse than waiting, because it looks like a decision.
+      //
+      // The reason is recorded now. Parking used to write a bare 'paused',
+      // indistinguishable from an operator's pause, and Resume answered that by
+      // flipping the campaign to `sending` with nothing on the queue.
+      await updateCampaignStatus(campaignId, 'paused', 'ab_needs_review');
+      return { dispatched: 0, decision: result.decision };
     }
-    return { dispatched: 0, decision: result.decision };
+
+    // decision is 'auto_send' but the holdback is not on offer: computeAbWinner
+    // returns autoSendWinner=false for an already-dispatched result. So a
+    // previous run of this job enqueued the whole holdback and marked it
+    // dispatched, then died before it could write the status — and this is the
+    // replay. The send really is complete; finishing what that run started is
+    // the correct outcome, and it is what its own last line would have written.
+    job.log(
+      '[ab-winner] The holdback was already dispatched by an earlier run of this job that did ' +
+        'not get as far as the status. Closing the campaign as sent.',
+    );
+    await updateCampaignStatus(campaignId, 'sent');
+    return { dispatched: 0, decision: result.decision, replayed: true };
   }
 
   // Resolve winning variant details from rankings
   const winner = result.rankings.find((r) => r.variantId === result.winnerVariantId);
   if (!winner) {
-    job.log('[ab-winner] Winner variant not found in rankings — skipping dispatch');
-    return { dispatched: 0 };
+    // The stored result names a variant that ab_config no longer holds — it was
+    // edited after the test started. There is no content to dispatch and no way
+    // for this job to guess one, so the holdback cannot go out automatically.
+    // That is the same situation as a result too close to call: a decision only
+    // a human can make, and the campaign is parked for one rather than left
+    // running with nothing behind it.
+    job.log(
+      `[ab-winner] Winner variant ${result.winnerVariantId} is not in the campaign's current ` +
+        `ab_config — it was changed after the test started. Parking for review.`,
+    );
+    await updateCampaignStatus(campaignId, 'paused', 'ab_needs_review');
+    return { dispatched: 0, decision: result.decision };
   }
 
   const { fromName, fromEmail, replyTo, dkimDomain, dkimSelector, dkimPrivateKey, priority } =
@@ -196,23 +230,86 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
 }
 
 /**
- * Drive the campaign lifecycle from the winner job. Best-effort: the dispatch
- * already happened (or deliberately did not), and failing the job over a status
- * write would re-run a dispatch that succeeded.
+ * Drive the campaign lifecycle from the winner job.
+ *
+ * This THROWS on failure, where it used to swallow everything and log. The old
+ * comment argued that failing the job over a status write would re-run a
+ * dispatch that succeeded — but a swallowed failure leaves the campaign in
+ * `sending` with no counter, no winner job and a reaper that skips it, which is
+ * permanent. Re-running is not: the dispatch ledger refuses batch keys it has
+ * already enqueued, and a replay whose holdback went out lands in the
+ * already-dispatched branch above and writes `sent`. So the retry is safe and
+ * the silence was not.
+ *
+ * If every attempt fails, the job's terminal handler closes the campaign from
+ * the API side rather than leaving it open.
  */
-async function updateCampaignStatus(campaignId: string, status: 'sent' | 'paused'): Promise<void> {
+async function updateCampaignStatus(
+  campaignId: string,
+  status: 'sent' | 'paused',
+  pausedReason?: 'ab_needs_review',
+): Promise<void> {
+  const res = await fetch(`${API_URL}/api/v1/internal/campaigns/${campaignId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_SECRET },
+    body: JSON.stringify(pausedReason ? { status, pausedReason } : { status }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(
+      `[ab-winner] status '${status}' for ${campaignId} → HTTP ${res.status}: ${text.slice(0, 200)}`,
+    );
+  }
+}
+
+/**
+ * Last exit: the winner job has failed on every attempt.
+ *
+ * The errors that get here are the ones retrying cannot help with — no variant
+ * has any recorded sends to compare, or ab_config no longer holds the variants
+ * the stored result names. Three attempts on a 5 s exponential backoff burn
+ * through that in about fifteen seconds and then the job is gone, and with it
+ * the only thing that could ever close this campaign.
+ *
+ * The sent-or-failed verdict is taken on the API side, where the dispatch
+ * ledger is: a campaign whose variants reached real people is not a failure
+ * merely because its holdback never followed.
+ */
+export async function closeAfterTerminalFailure(
+  campaignId: string,
+  orgId: string,
+  reason: string,
+): Promise<void> {
   try {
-    const res = await fetch(`${API_URL}/api/v1/internal/campaigns/${campaignId}/status`, {
-      method: 'PATCH',
+    const res = await fetch(`${API_URL}/api/v1/internal/campaigns/${campaignId}/ab-winner-failed`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_SECRET },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ orgId, reason: reason.slice(0, 500) }),
     });
     if (!res.ok) {
-      console.error(`[ab-winner] status ${status} for ${campaignId} → HTTP ${res.status}`);
+      const text = await res.text().catch(() => '');
+      console.error(
+        `[ab-winner] campaign ${campaignId} could not be closed after terminal failure: ` +
+          `HTTP ${res.status} ${text.slice(0, 200)}. It is left in 'sending' and needs a human.`,
+      );
+      return;
     }
+    const body = (await res.json()) as { data: { outcome: string; totalSent: number } };
+    console.error(
+      `[ab-winner] campaign ${campaignId} closed as '${body.data.outcome}' after its winner job ` +
+        `failed terminally (${reason}); ${body.data.totalSent} message(s) had gone out.`,
+    );
   } catch (err) {
-    console.error(`[ab-winner] status ${status} for ${campaignId} failed:`, err);
+    console.error(
+      `[ab-winner] campaign ${campaignId} could not be closed after terminal failure:`,
+      err,
+    );
   }
+}
+
+/** Whether BullMQ has just spent this job's last attempt. */
+export function isFinalAttempt(attemptsMade: number | undefined, attempts: number | undefined) {
+  return (attemptsMade ?? 0) >= (attempts ?? 1);
 }
 
 export function startAbWinnerWorker() {
@@ -235,6 +332,14 @@ export function startAbWinnerWorker() {
       orgId: (job?.data as { orgId?: string } | undefined)?.orgId,
       campaignId: (job?.data as { campaignId?: string } | undefined)?.campaignId,
     });
+
+    // The last attempt is the last chance. After this the job is gone, and an
+    // A/B campaign with no winner job has nothing left that can close it.
+    const campaignId = (job?.data as { campaignId?: string } | undefined)?.campaignId;
+    const orgId = (job?.data as { orgId?: string } | undefined)?.orgId;
+    if (campaignId && orgId && isFinalAttempt(job?.attemptsMade, job?.opts?.attempts)) {
+      void closeAfterTerminalFailure(campaignId, orgId, err.message);
+    }
   });
 
   return worker;

@@ -106,24 +106,65 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
     const totalVariantPct = abConfig.variants.reduce((s, v) => s + v.percentage, 0);
     const holdbackPct = Math.max(0, 100 - totalVariantPct);
 
-    // Audience recorded, counter deliberately NOT armed. An A/B campaign is
-    // closed out by the winner job after the test window, not by its variant
-    // batches — a counter would reach zero when those finished and declare the
-    // campaign sent while the holdback was still waiting to go out.
-    await startDispatch(data.campaignId, data.orgId, contactIds.length, null);
-
+    // Slice every variant up front so the number the counter is armed with and
+    // the batches actually enqueued come from one array. Computing that total
+    // twice would eventually let the two disagree, and a counter that is one
+    // out never reaches zero — the campaign would never close.
     let cursor = 0;
-    for (const variant of abConfig.variants) {
+    const variantPlan = abConfig.variants.map((variant) => {
       const variantSize = Math.floor((variant.percentage / 100) * contactIds.length);
       const variantIds = contactIds.slice(cursor, cursor + variantSize);
       cursor += variantSize;
-
-      if (variantIds.length === 0) continue;
 
       const variantBatches: string[][] = [];
       for (let i = 0; i < variantIds.length; i += BATCH_SIZE) {
         variantBatches.push(variantIds.slice(i, i + BATCH_SIZE));
       }
+      return { variant, variantIds, variantBatches };
+    });
+    const variantBatchTotal = variantPlan.reduce((n, p) => n + p.variantBatches.length, 0);
+
+    // Only a test that holds contacts back AND says how long to wait produces a
+    // winner job. Anything else is a single-phase send wearing an ab_config.
+    const testDurationHours = abConfig.testDurationHours ?? 0;
+    const willScheduleWinner = holdbackPct > 0 && testDurationHours > 0;
+
+    // The invariant this whole branch turns on: **either the winner job closes
+    // this campaign, or the counter does.** Never neither.
+    //
+    // Every A/B campaign used to arm no counter at all, on the reasoning that
+    // its variant batches are only the first phase — true when a winner job is
+    // coming, and the reason for the null below. But the splitter schedules
+    // that job only under the condition above, and when it does not, nothing
+    // was left that could ever close the campaign: no counter to reach zero, no
+    // winner job, and a reaper that skips campaigns without a counter. Measured
+    // on a live database: `sending`, pending_batches NULL, zero winner jobs,
+    // still `sending` after the reaper ran against a row aged 48 hours.
+    //
+    // Variants summing to 100 are the ordinary case of that — a legitimate
+    // single-phase test with no holdback — and they now close the way every
+    // other single-phase send does, on their last batch.
+    await startDispatch(
+      data.campaignId,
+      data.orgId,
+      contactIds.length,
+      willScheduleWinner ? null : variantBatchTotal,
+    );
+
+    if (holdbackPct > 0 && !willScheduleWinner) {
+      // validateCampaignReadiness refuses this config at the click on Send, so
+      // arriving here means something reached the splitter without passing that
+      // gate. The campaign will still close — the counter above is armed — but
+      // the held-back contacts are getting nothing, and that must not be quiet.
+      console.error(
+        `[campaign-splitter] campaign ${data.campaignId} holds back ${holdbackPct.toFixed(1)}% ` +
+          `of its audience but names no testDurationHours, so no winner job can be scheduled ` +
+          `and those contacts will not be sent anything. Closing on the variant batches instead.`,
+      );
+    }
+
+    for (const { variant, variantIds, variantBatches } of variantPlan) {
+      if (variantIds.length === 0) continue;
 
       const variantKeys = variantBatches.map((_, index) => `v${variant.id}-${index}`);
       const claim = await claimDispatchBatches(
@@ -191,7 +232,16 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
     }
 
     // ── Holdback: store remaining contacts + schedule winner dispatch ──────
-    if (holdbackPct > 0 && abConfig.testDurationHours && abConfig.autoSendWinner !== false) {
+    //
+    // `autoSendWinner !== false` used to be part of this condition, which meant
+    // a test with auto-send switched off got no winner job, no stored holdback
+    // and no way to finish: the held-back contacts were silently dropped and
+    // the campaign sat in `sending` for good. Auto-send off does not mean "do
+    // not run the test", it means "do not dispatch the winner without asking" —
+    // so the job is scheduled either way and computeAbWinner's own
+    // `autoSendConfigured` check parks the campaign for a human. That branch
+    // existed in decideDispatch and was unreachable from here.
+    if (willScheduleWinner) {
       const holdbackIds = contactIds.slice(cursor);
       job.log(
         `Holdback: ${holdbackIds.length} contacts (${holdbackPct.toFixed(1)}%) for winner dispatch`,
@@ -202,7 +252,7 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
       }
 
       // Schedule delayed winner job — fires after test window elapses
-      const delayMs = abConfig.testDurationHours * 3600_000;
+      const delayMs = testDurationHours * 3600_000;
       const winnerJobData: AbWinnerJobData = {
         campaignId: data.campaignId,
         orgId: data.orgId,
@@ -307,8 +357,11 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
   // Every batch is on the queue, so the send has begun — this is `sending`, not
   // `sent`. It used to be `sent` here, which is why a campaign reported itself
   // finished before a single message had been handed to an MX. It is closed out
-  // by its last batch reporting in, except for A/B, where the winner job still
-  // does it after the test window.
+  // by its last batch reporting in, except when a winner job was scheduled
+  // above, which closes it after the test window instead. `winnerScheduled` is
+  // exactly the condition under which the counter was left unarmed, so the two
+  // branches of the log line below are the two ways a campaign can end — and
+  // every campaign reaching this point has one of them.
   await updateCampaignStatus(data.campaignId, 'sending');
   job.log(
     winnerScheduled
@@ -386,10 +439,25 @@ async function startDispatch(
   }
 }
 
+/**
+ * Drive the campaign's status from the splitter.
+ *
+ * `res.ok` is checked, which it was not: the route validated the status against
+ * an enum that did not contain 'failed', so the empty-audience branch above got
+ * a 400 on every call and this function threw it away. The campaign it was
+ * meant to close stayed in `queueing` for good — measured against a live API.
+ * The enum has been corrected, and a refusal is now at least visible if it ever
+ * happens again.
+ *
+ * Still best-effort rather than throwing: by the time this runs the batches are
+ * on the queue, and failing the splitter job would re-run a dispatch that
+ * succeeded. A status that does not stick is recoverable by the reaper; a
+ * duplicate send is not.
+ */
 async function updateCampaignStatus(campaignId: string, status: string): Promise<void> {
   const url = `${process.env.API_URL ?? 'http://localhost:3001'}/api/v1/internal/campaigns/${campaignId}/status`;
   try {
-    await fetch(url, {
+    const res = await fetch(url, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -397,6 +465,13 @@ async function updateCampaignStatus(campaignId: string, status: string): Promise
       },
       body: JSON.stringify({ status }),
     });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error(
+        `[campaign-splitter] status '${status}' for ${campaignId} was REFUSED: ` +
+          `HTTP ${res.status} ${text.slice(0, 300)}`,
+      );
+    }
   } catch (err) {
     console.error('updateCampaignStatus failed:', err);
   }

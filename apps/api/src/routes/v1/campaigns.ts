@@ -83,8 +83,12 @@ const campaignTypes = ['email', 'sms', 'whatsapp', 'push', 'voice'] as const;
  *   campaign-splitter.ts  → 'sending' once every batch is on the queue
  *                         → 'failed'  when the audience resolved to nobody, so
  *                                     no batch will ever close the campaign out
- *   ab-winner.ts:190      → 'sent'    after the winner is dispatched
- *   ab-winner.ts:103      → 'paused'  when the test needs a human
+ *   ab-winner.ts          → 'sent'    after the winner is dispatched, and on a
+ *                                     replay whose dispatch already happened
+ *                         → 'paused'  when the test needs a human, carrying
+ *                                     pausedReason 'ab_needs_review'
+ *                         → 'failed'  via /ab-winner-failed, when the job has
+ *                                     exhausted its attempts and nothing was sent
  *
  * The splitter now writes from `queueing`, which is where sendCampaign leaves
  * the campaign; ab-winner writes from `sending`, which is where the splitter
@@ -103,7 +107,11 @@ const campaignTypes = ['email', 'sms', 'whatsapp', 'push', 'voice'] as const;
  */
 const INTERNAL_STATUS_TRANSITIONS: Readonly<Record<string, ReadonlySet<string>>> = {
   queueing: new Set(['sending', 'failed']),
-  sending: new Set(['sent', 'paused']),
+  // `sending → failed` is the A/B winner job giving up for good: its dispatch
+  // cannot be computed and no batch of that campaign sent anything, so nothing
+  // else will ever close it. Without this the job's only honest exits were a
+  // status the whitelist refused and no status at all.
+  sending: new Set(['sent', 'paused', 'failed']),
 };
 
 /**
@@ -712,6 +720,30 @@ export default async function campaignRoutes(app: FastifyInstance) {
   );
 
   /**
+   * POST /api/v1/internal/campaigns/:id/ab-winner-failed
+   *
+   * The A/B winner job has exhausted its attempts on an error that will not go
+   * away. Nothing else can close an A/B campaign — it arms no batch counter and
+   * the reaper skips it — so without this it stays in `sending` for good.
+   *
+   * The sent-or-failed verdict is decided here rather than in the worker,
+   * because it is read from the dispatch ledger and the worker has no database.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/:id/ab-winner-failed',
+    { schema: { tags: ['Internal'] } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const { orgId, reason } = z
+        .object({ orgId: z.string().uuid(), reason: z.string().min(1).max(500) })
+        .parse(req.body);
+      const { closeAfterWinnerFailure } = await import('../../services/campaigns/ab-closing.js');
+      const result = await closeAfterWinnerFailure(orgId, id, reason);
+      return { data: result };
+    },
+  );
+
+  /**
    * POST /api/v1/internal/campaigns/:id/ab-winner-dispatched
    * Called by the worker to mark the winner dispatch as completed.
    */
@@ -746,8 +778,22 @@ export default async function campaignRoutes(app: FastifyInstance) {
       const { id } = idParam.parse(req.params);
       // An unrecognised status is a ZodError, which the error handler renders as
       // a 400 — not a 500, and not a write.
-      const { status } = z
-        .object({ status: z.enum(['sending', 'sent', 'paused', 'cancelled']) })
+      //
+      // 'failed' was missing from this enum while INTERNAL_STATUS_TRANSITIONS
+      // above already declared `queueing → failed`. The splitter's empty-audience
+      // branch ("no batches were enqueued — marking failed") therefore got a 400
+      // on every call, and because that caller does not check `res.ok` the
+      // refusal was swallowed: the campaign stayed in `queueing` for good.
+      // Measured against a live API before this line changed.
+      //
+      // `pausedReason` travels with a pause so resume can tell the two apart.
+      // Only the reason a worker is entitled to set is accepted here; the
+      // others are written by API-side paths that call the setter directly.
+      const { status, pausedReason } = z
+        .object({
+          status: z.enum(['sending', 'sent', 'paused', 'cancelled', 'failed']),
+          pausedReason: z.literal('ab_needs_review').optional(),
+        })
         .parse(req.body);
 
       const [current] = await db
@@ -793,7 +839,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
         });
       }
 
-      await setCampaignStatusInternal(id, status);
+      await setCampaignStatusInternal(id, status, pausedReason ?? null);
       return { data: { ok: true } };
     },
   );

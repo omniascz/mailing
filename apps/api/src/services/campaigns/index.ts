@@ -55,12 +55,19 @@ type CampaignStatus =
 /**
  * Why a campaign is in `paused`. Deliberately NOT part of the status enum and
  * NOT part of TRANSITIONS — the state machine is unchanged; this only records
- * which of two indistinguishable pauses happened, so resume can pick the right
- * action. See campaigns.pausedReason in the schema for the full reasoning.
+ * which of several indistinguishable pauses happened, so resume can pick the
+ * right action. See campaigns.pausedReason in the schema for the full reasoning.
  *
- * NULL (no reason recorded) is the conservative case, never a third state.
+ * NULL (no reason recorded) stays the conservative case, never another state.
+ *
+ * 'ab_needs_review' is the A/B winner job parking a campaign for a human: the
+ * test ran, the holdback was deliberately not dispatched, and resuming must not
+ * pretend otherwise. It used to pause with no reason at all, which resume read
+ * as an operator's pause and answered by flipping the campaign back to
+ * `sending` with nothing on the queue — turning "parked, recoverable" into
+ * "stuck for good".
  */
-export type CampaignPausedReason = 'send_failed' | 'operator';
+export type CampaignPausedReason = 'send_failed' | 'operator' | 'ab_needs_review';
 
 /**
  * Allowed state transitions. Key = current status, value = set of valid next statuses.
@@ -409,6 +416,27 @@ export async function resumeCampaign(orgId: string, campaignId: string): Promise
   const current = await getCampaign(orgId, campaignId);
   validateTransition(current.status as CampaignStatus, 'sending');
 
+  // An A/B campaign parked for review is the one pause resume must refuse.
+  //
+  // Its variants went out and its holdback deliberately did not, so there is
+  // nothing on the queue to carry on with. Resume's other branch would flip it
+  // to `sending` and enqueue nothing; the counter is NULL for an A/B dispatch
+  // and the reaper skips those, so the campaign would sit in `sending` with no
+  // batch, no winner job and nothing that could ever close it. The operator's
+  // only button turned a recoverable park into a permanent stall.
+  //
+  // Refusing is honest: the decision this campaign is waiting for is which
+  // variant to send, and resume cannot answer it.
+  if (current.pausedReason === ('ab_needs_review' satisfies CampaignPausedReason)) {
+    throw AppError.badRequest(
+      'This A/B campaign is waiting for you to choose a winning variant, not for it to be ' +
+        'resumed. Its test variants have already gone out; the remaining contacts were held ' +
+        'back on purpose. Open the A/B result to see how the variants performed and pick one ' +
+        'from there — resuming would leave the campaign with nothing left to send.',
+      { pausedReason: current.pausedReason },
+    );
+  }
+
   // Two pauses that look identical in `status` need opposite actions, and the
   // only thing that tells them apart is why the pause happened.
   //
@@ -555,5 +583,49 @@ function validateCampaignReadiness(campaign: Campaign): void {
 
   if (errors.length > 0) {
     throw AppError.badRequest(`Campaign is not ready: ${errors.join(', ')}`);
+  }
+
+  assertAbConfigCanFinish(campaign);
+}
+
+/**
+ * Refuse an A/B configuration whose holdback nobody would ever send.
+ *
+ * An A/B campaign is closed out by its winner job, and the splitter only
+ * schedules that job when there is a test window to wait for. A config that
+ * holds contacts back but names no `testDurationHours` therefore produces a
+ * campaign with a holdback that never goes out and no mechanism that can ever
+ * finish it — it sits in `sending` until somebody opens a SQL console.
+ *
+ * Checked here, at the click on Send, rather than at save: this runs inside
+ * sendCampaign BEFORE the status flip, so a refused campaign stays exactly
+ * where it was instead of being rolled back to a pause. It also covers the
+ * scheduled-campaign cron, which reaches the same choke point.
+ *
+ * Deliberately narrow. Variants summing to 100 are NOT refused — that is a
+ * legitimate single-phase test with no holdback, and the splitter arms the
+ * ordinary batch counter for it. `autoSendWinner: false` is not refused either:
+ * the winner job still runs and parks the campaign for a human.
+ */
+function assertAbConfigCanFinish(campaign: Campaign): void {
+  const cfg = campaign.abConfig as
+    | { variants?: { percentage?: number }[]; testDurationHours?: number }
+    | null
+    | undefined;
+  if (!cfg || !Array.isArray(cfg.variants) || cfg.variants.length < 2) return;
+
+  const totalVariantPct = cfg.variants.reduce((sum, v) => sum + (Number(v?.percentage) || 0), 0);
+  const holdbackPct = Math.max(0, 100 - totalVariantPct);
+  if (holdbackPct <= 0) return;
+
+  if (!cfg.testDurationHours || cfg.testDurationHours <= 0) {
+    throw AppError.badRequest(
+      `This A/B test holds back ${holdbackPct.toFixed(1)}% of the audience for the winning ` +
+        'variant, but it does not say how long the test should run, so the winner would never ' +
+        'be picked and those contacts would never be sent anything. Set a test duration in ' +
+        'hours, or raise the variant percentages to 100 so the whole audience is part of the ' +
+        'test and there is no holdback.',
+      { holdbackPct, testDurationHours: cfg.testDurationHours ?? null },
+    );
   }
 }
