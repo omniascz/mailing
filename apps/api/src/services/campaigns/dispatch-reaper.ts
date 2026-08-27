@@ -13,6 +13,13 @@
  * set than "every campaign in sending" — the query the anomaly detector runs,
  * and the shape this file exists to avoid.
  *
+ * One state is excluded on purpose, and it is not a fault: an A/B test that has
+ * finished its variants and is waiting out its test window for the winner
+ * dispatch. That silence is intended and can outlast this sweep's cutoff by
+ * days. Everything else about an A/B send — its variant phase, and its holdback
+ * phase once the winner job has armed it — is now supervised here, where before
+ * no A/B campaign was visible to this sweep at all.
+ *
  * `updated_at` is the right clock, not `sent_at`. Every batch that reports in
  * decrements the counter and touches the row, so `updated_at` measures time
  * since the last sign of life rather than time since the send began. A campaign
@@ -90,9 +97,22 @@ export async function reapStalledDispatches(now: Date = new Date()): Promise<Rea
       and(
         eq(campaigns.status, 'sending'),
         lt(campaigns.updatedAt, cutoff),
-        // A/B campaigns are closed by the winner job and never arm a counter.
-        // Reaping them here would race that job and cut a test short.
         sql`${campaigns.pendingBatches} IS NOT NULL`,
+        // The one silence that is not a fault: an A/B test whose variants have
+        // all reported and which is waiting out its test window before the
+        // winner job dispatches the holdback. That wait is the feature — and it
+        // can legitimately be far longer than this sweep's cutoff, because
+        // `testDurationHours` is the customer's to choose. Closing such a
+        // campaign would cut the test short and strand the holdback.
+        //
+        // Narrower than the rule it replaces. Every A/B campaign used to be
+        // invisible here, because none of them armed a counter at all; now only
+        // this exact state is, and the sweep covers both of an A/B send's
+        // phases either side of it. In particular `pending_batches > 0` while
+        // awaiting the winner means variant batches are outstanding and the
+        // campaign has gone quiet with work still to do — a stall like any
+        // other, and reaped like one.
+        sql`NOT (${campaigns.awaitingAbWinner} AND ${campaigns.pendingBatches} = 0)`,
       ),
     )
     .limit(200);

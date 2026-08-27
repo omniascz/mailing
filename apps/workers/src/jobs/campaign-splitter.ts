@@ -129,26 +129,28 @@ export async function processCampaignSplitter(job: Job<CampaignSplitterJobData>)
     const testDurationHours = abConfig.testDurationHours ?? 0;
     const willScheduleWinner = holdbackPct > 0 && testDurationHours > 0;
 
-    // The invariant this whole branch turns on: **either the winner job closes
-    // this campaign, or the counter does.** Never neither.
+    // Both phases of an A/B send are counted, in one counter.
     //
     // Every A/B campaign used to arm no counter at all, on the reasoning that
-    // its variant batches are only the first phase — true when a winner job is
-    // coming, and the reason for the null below. But the splitter schedules
-    // that job only under the condition above, and when it does not, nothing
-    // was left that could ever close the campaign: no counter to reach zero, no
-    // winner job, and a reaper that skips campaigns without a counter. Measured
-    // on a live database: `sending`, pending_batches NULL, zero winner jobs,
-    // still `sending` after the reaper ran against a row aged 48 hours.
+    // its variant batches are only the first phase of the send. The reasoning
+    // was right and the answer was not: with no counter, neither phase was
+    // counted, and a campaign whose winner job never came had nothing that
+    // could close it. Measured on a live database: `sending`, pending_batches
+    // NULL, zero winner jobs, still `sending` after the reaper ran against a
+    // row aged 48 hours.
     //
-    // Variants summing to 100 are the ordinary case of that — a legitimate
-    // single-phase test with no holdback — and they now close the way every
-    // other single-phase send does, on their last batch.
+    // So the variants arm the counter like any other batches, and
+    // `willScheduleWinner` rides along to say whether zero means the end. When
+    // it is true, the winner job adds the holdback's batches to this same
+    // counter and the last of THOSE closes the campaign. When it is false —
+    // variants summing to 100, a legitimate single-phase test — zero closes it
+    // here, exactly as an ordinary send does.
     await startDispatch(
       data.campaignId,
       data.orgId,
       contactIds.length,
-      willScheduleWinner ? null : variantBatchTotal,
+      variantBatchTotal,
+      willScheduleWinner,
     );
 
     if (holdbackPct > 0 && !willScheduleWinner) {
@@ -426,12 +428,13 @@ async function startDispatch(
   orgId: string,
   plannedRecipients: number,
   batchCount: number | null,
+  awaitingAbWinner = false,
 ): Promise<void> {
   const url = `${process.env.API_URL ?? 'http://localhost:3001'}/api/v1/internal/campaigns/${campaignId}/dispatch-start`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_SECRET },
-    body: JSON.stringify({ orgId, plannedRecipients, batchCount }),
+    body: JSON.stringify({ orgId, plannedRecipients, batchCount, awaitingAbWinner }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');

@@ -41,12 +41,17 @@ import {
 import {
   computeAbWinner,
   getAbTestResult,
+  getHoldbackCount,
   getHoldbackPage,
   markWinnerDispatched,
   storeHoldback,
 } from '../../services/campaigns/ab-winner.js';
 import { claimBatches, confirmBatches } from '../../services/campaigns/dispatch-ledger.js';
-import { startDispatch, reportBatchCompletion } from '../../services/campaigns/batch-completion.js';
+import {
+  startDispatch,
+  reportBatchCompletion,
+  addWinnerPhase,
+} from '../../services/campaigns/batch-completion.js';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { renderEmail as renderBlocks, renderPlainText } from '@forgemsg/editor/render';
 import { readCampaignContent } from '@forgemsg/editor/schema';
@@ -887,10 +892,63 @@ export default async function campaignRoutes(app: FastifyInstance) {
           orgId: z.string().uuid(),
           plannedRecipients: z.number().int().min(0),
           batchCount: z.number().int().min(0).nullable(),
+          // An A/B test with a holdback: a winner dispatch will add more
+          // batches to this counter later, so zero is not the end of the send.
+          awaitingAbWinner: z.boolean().optional(),
         })
         .parse(req.body);
       await startDispatch({ campaignId: id, ...body });
       return { data: { ok: true } };
+    },
+  );
+
+  /**
+   * POST /api/v1/internal/campaigns/:id/ab-winner-phase-start
+   *
+   * The winner job, once it knows there is a winner to dispatch and before it
+   * enqueues anything. Adds the holdback's batches to the counter the variants
+   * already armed, and stops the campaign waiting for them.
+   *
+   * The batch count is computed here rather than sent by the worker, because it
+   * comes from `ab_test_holdbacks` and the worker has no database. The worker
+   * sends only its own batch size so the arithmetic matches the chunks it is
+   * about to build, and checks afterwards that it produced exactly this many.
+   */
+  app.post(
+    '/api/v1/internal/campaigns/:id/ab-winner-phase-start',
+    { schema: { tags: ['Internal'] } },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const { orgId, batchSize } = z
+        .object({
+          orgId: z.string().uuid(),
+          batchSize: z.number().int().min(1).max(10_000),
+        })
+        .parse(req.body);
+
+      const holdbackCount = await getHoldbackCount(id);
+      const expectedBatches = Math.ceil(holdbackCount / batchSize);
+
+      // Nothing to dispatch. Reported rather than armed: raising a counter by
+      // zero and clearing the flag would leave a campaign whose variants have
+      // all reported sitting at zero with nothing left to close it.
+      if (expectedBatches === 0) {
+        req.log.warn(
+          { campaignId: id },
+          '[ab-winner] a winner dispatch was requested but the holdback is empty',
+        );
+        return { data: { armed: false, reason: 'empty_holdback', expectedBatches: 0, holdbackCount } };
+      }
+
+      const result = await addWinnerPhase({ campaignId: id, orgId, batchCount: expectedBatches });
+      return {
+        data: {
+          armed: result.armed,
+          ...(result.armed ? {} : { reason: result.reason }),
+          expectedBatches,
+          holdbackCount,
+        },
+      };
     },
   );
 
