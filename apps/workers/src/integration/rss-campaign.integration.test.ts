@@ -66,6 +66,17 @@ let previousSendingMode: string | null = null;
  * column actually holds.
  */
 let postalAddress = '';
+
+/**
+ * The SAME literal campaign-content-shape and campaign-locale write.
+ *
+ * COALESCE means the first file to get there decides the value, and vitest runs
+ * these files in parallel — a different spelling here left those suites
+ * asserting on an address this file had already written. (It also has to live
+ * out here: inside the sql`` template a `//` comment is not a comment, it is
+ * SQL, and Postgres says so.)
+ */
+const POSTAL_ADDRESS = 'Nádražní 1, 110 00 Praha';
 const createdCampaigns: string[] = [];
 
 interface FeedItem {
@@ -210,7 +221,7 @@ describe('RSS campaign end to end (real DB + Redis + API)', () => {
       UPDATE organizations
       SET sending_mode = 'production',
           company_name = COALESCE(company_name, 'Obchod s.r.o.'),
-          postal_address = COALESCE(postal_address, ${'Nadrazni 1, 110 00 Praha'})
+          postal_address = COALESCE(postal_address, ${POSTAL_ADDRESS})
       WHERE id = ${orgId}
     `;
     await sql`
