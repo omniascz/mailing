@@ -315,17 +315,25 @@ describe('an A/B campaign always reaches an end state (real DB + Redis + API)', 
     expect(outcome.decision).toBe('auto_send');
     expect(outcome.dispatched).toBe(20);
 
-    const row = await campaignRow(campaignId);
-    expect(row.status).toBe('sent');
-
     const [res] = await sql<{ auto_send_dispatched: boolean }[]>`
       SELECT auto_send_dispatched FROM ab_test_results WHERE campaign_id = ${campaignId}`;
     expect(res!.auto_send_dispatched).toBe(true);
+
+    // Queued, not sent. This assertion used to read `sent` here, because the
+    // winner job wrote it the moment addBulk returned — the same defect the
+    // state model removed from the ordinary send path. The holdback's batches
+    // are counted now, and the campaign closes when the last of them reports.
+    expect((await campaignRow(campaignId)).status).toBe('sending');
+
+    for (const j of await batchJobsFor(campaignId)) {
+      await reportBatch(campaignId, j.data.dispatchId, j.data.batchKey, j.data.contactIds.length);
+    }
+    expect((await campaignRow(campaignId)).status).toBe('sent');
   }, 120_000);
 
   // ── (d) replay of a winner job whose dispatch already happened ────────────
 
-  it('a replayed winner job whose holdback already went out closes the campaign as sent', async () => {
+  it('a replayed winner job leaves the campaign to be closed by the batches already out', async () => {
     const cfg = { variants: VARIANTS_80, testDurationHours: 4, autoSendWinner: true };
     const campaignId = await makeCampaign(cfg);
 
@@ -342,18 +350,27 @@ describe('an A/B campaign always reaches an end state (real DB + Redis + API)', 
     // First run dispatches and marks the result dispatched.
     await processAbWinner(winnerJob({ campaignId, orgId } as unknown as AbWinnerJobData));
 
-    // Model the run that died before its status write: put the campaign back in
-    // `sending` while ab_test_results still says the holdback went out. That is
-    // exactly the state stalled-job recovery replays into.
-    await sql`UPDATE campaigns SET status = 'sending' WHERE id = ${campaignId}`;
+    // The state stalled-job recovery replays into: the holdback is dispatched
+    // and marked, and the job runs again.
     expect((await campaignRow(campaignId)).status).toBe('sending');
 
     const replay = await processAbWinner(
       winnerJob({ campaignId, orgId } as unknown as AbWinnerJobData),
     );
 
-    // The old code returned here without writing anything at all.
+    // It dispatches nothing a second time, and it writes no status either —
+    // which is the change from when this test was written. Back then the winner
+    // job owned the campaign's ending, so a replay that wrote nothing left it
+    // stuck and the fix was to write `sent` here. The holdback's batches are
+    // counted now, so they own the ending, and asserting `sent` at this point
+    // would be asserting the campaign finished while they were still queued.
     expect(replay.dispatched).toBe(0);
+    expect((await campaignRow(campaignId)).status).toBe('sending');
+
+    // What matters is unchanged: the campaign still reaches an end state.
+    for (const j of await batchJobsFor(campaignId)) {
+      await reportBatch(campaignId, j.data.dispatchId, j.data.batchKey, j.data.contactIds.length);
+    }
     expect((await campaignRow(campaignId)).status).toBe('sent');
   }, 120_000);
 

@@ -93,12 +93,12 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
       `(${result.metric}, confidence ${result.confidencePct.toFixed(1)}%)`,
   );
 
-  // Nothing below may return without writing a status.
+  // Nothing below may return leaving the campaign with no way to end.
   //
-  // An A/B campaign arms no batch counter and the reaper skips campaigns that
-  // have none, so this job is the only thing that can close one. Every early
-  // exit here used to leave the campaign in `sending` with nothing left that
-  // could ever move it — which is why each one now names an outcome.
+  // Either this job dispatches the holdback — and then the last of those
+  // batches closes the campaign through the counter — or it names an outcome
+  // itself. Every early exit used to do neither, leaving the campaign in
+  // `sending` with nothing that could ever move it.
   if (!result.autoSendWinner) {
     job.log(`[ab-winner] ${result.decision} — ${result.decisionReason ?? 'no reason recorded'}`);
 
@@ -118,14 +118,18 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
     // decision is 'auto_send' but the holdback is not on offer: computeAbWinner
     // returns autoSendWinner=false for an already-dispatched result. So a
     // previous run of this job enqueued the whole holdback and marked it
-    // dispatched, then died before it could write the status — and this is the
-    // replay. The send really is complete; finishing what that run started is
-    // the correct outcome, and it is what its own last line would have written.
+    // dispatched — this is the replay.
+    //
+    // It writes no status, and that is the change the two-phase counter makes
+    // here. The earlier run raised the counter by the holdback's batches before
+    // enqueueing them, so those batches are outstanding and the last one to
+    // report closes the campaign on its own. Writing `sent` here would be the
+    // old defect in a new place: the campaign marked finished while its final
+    // batches are still on the queue.
     job.log(
-      '[ab-winner] The holdback was already dispatched by an earlier run of this job that did ' +
-        'not get as far as the status. Closing the campaign as sent.',
+      '[ab-winner] The holdback was already dispatched by an earlier run of this job. Its ' +
+        'batches are counted and will close the campaign when the last of them reports in.',
     );
-    await updateCampaignStatus(campaignId, 'sent');
     return { dispatched: 0, decision: result.decision, replayed: true };
   }
 
@@ -149,7 +153,41 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
   const { fromName, fromEmail, replyTo, dkimDomain, dkimSelector, dkimPrivateKey, priority } =
     job.data;
 
-  // 2. Paginate holdback contacts and enqueue batch-sender jobs
+  // 2. Arm the counter for this phase BEFORE a single batch is enqueued.
+  //
+  // Same rule as the splitter's: a batch can finish while this job is still
+  // paginating, and a completion that arrives before the counter has been
+  // raised decrements a number that does not yet include it — leaving the
+  // campaign one short of closing, permanently.
+  //
+  // The count comes from the holdback table rather than from the pagination
+  // that follows, because it has to be known first. Nothing writes holdback
+  // rows after the splitter, so the two agree; the loop below checks that they
+  // did, and fails loudly if they ever do not.
+  const phase = await internalPost<{
+    armed: boolean;
+    reason?: string;
+    expectedBatches: number;
+    holdbackCount: number;
+  }>(`/api/v1/internal/campaigns/${campaignId}/ab-winner-phase-start`, { orgId, batchSize: BATCH_SIZE });
+
+  if (!phase.armed) {
+    // The campaign was not waiting for a winner dispatch. Either an earlier run
+    // of this job already added these batches — in which case they are on the
+    // queue and will close the campaign themselves — or this campaign never had
+    // a holdback to dispatch. Adding them a second time would leave a counter
+    // that can never reach zero.
+    job.log(
+      `[ab-winner] The counter was not expecting a winner dispatch (${phase.reason ?? 'unknown'}); ` +
+        `an earlier run of this job already added these batches. Leaving them to close the campaign.`,
+    );
+  }
+
+  job.log(
+    `[ab-winner] Holdback: ${phase.holdbackCount} contacts in ${phase.expectedBatches} batch(es)`,
+  );
+
+  // 3. Paginate holdback contacts and enqueue batch-sender jobs
   let cursor: string | undefined;
   let totalDispatched = 0;
   let batchIndex = 0;
@@ -219,13 +257,33 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
     job.log(`[ab-winner] Dispatched ${totalDispatched} so far (cursor: ${cursor ?? 'done'})`);
   } while (cursor);
 
-  // 3. Mark dispatched
-  await internalPost(`/api/v1/internal/campaigns/${campaignId}/ab-winner-dispatched`, {});
-  // Everyone in the audience now has the campaign; the splitter left it
-  // `sending` precisely so this step could close it out.
-  await updateCampaignStatus(campaignId, 'sent');
+  // The counter was raised by exactly `expectedBatches`, so exactly that many
+  // batches must have been produced. If they disagree the counter can never
+  // reach zero and the campaign would sit in `sending` for good — better to
+  // fail the job, which retries and then closes the campaign through the
+  // terminal handler, than to leave it silently unclosable.
+  if (phase.armed && batchIndex !== phase.expectedBatches) {
+    throw new Error(
+      `[ab-winner] campaign ${campaignId}: the counter was raised for ${phase.expectedBatches} ` +
+        `holdback batch(es) but ${batchIndex} were produced. Refusing to leave the campaign with ` +
+        `a counter that cannot reach zero.`,
+    );
+  }
 
-  job.log(`[ab-winner] Done — dispatched ${totalDispatched} contacts to winner variant`);
+  // 4. Mark dispatched
+  await internalPost(`/api/v1/internal/campaigns/${campaignId}/ab-winner-dispatched`, {});
+
+  // Deliberately NO status write here.
+  //
+  // This used to mark the campaign `sent` the moment `addBulk` returned — the
+  // exact defect the state model removed from the ordinary send path, where
+  // `sent` used to mean "queued". The holdback has been handed to the queue and
+  // not one of its messages has reached an MX yet. The campaign is closed by
+  // the last of these batches reporting in, like every other send.
+  job.log(
+    `[ab-winner] Done — ${totalDispatched} contacts queued to the winning variant. The last ` +
+      `of those batches to report in closes the campaign.`,
+  );
   return { dispatched: totalDispatched, decision: result.decision };
 }
 

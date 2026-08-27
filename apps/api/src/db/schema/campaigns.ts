@@ -6,6 +6,7 @@ import {
   timestamp,
   jsonb,
   integer,
+  boolean,
   index,
   text,
 } from 'drizzle-orm/pg-core';
@@ -65,9 +66,11 @@ export const campaigns = pgTable(
     plannedRecipients: integer('planned_recipients'),
 
     /**
-     * Batches still to report in. The splitter sets it to the number of
-     * batches it enqueued; each batch decrements it on completion, success or
-     * permanent failure; the one that takes it to zero closes the campaign.
+     * Batches still to report in, across every phase of the current send. The
+     * splitter sets it to the number of batches it enqueued; each batch
+     * decrements it on completion, success or permanent failure; the one that
+     * takes it to zero closes the campaign — unless `awaitingAbWinner` says
+     * more batches are still to come.
      *
      * This is the closing condition, deliberately not a count of per-recipient
      * events: a recipient can fail to produce any event at all, and a campaign
@@ -77,6 +80,27 @@ export const campaigns = pgTable(
      * NULL means no dispatch is outstanding.
      */
     pendingBatches: integer('pending_batches'),
+
+    /**
+     * An A/B winner dispatch is still expected to add batches to the counter.
+     *
+     * An A/B test with a holdback sends in two phases: the variants go out
+     * first, and the winning variant goes to the held-back remainder after the
+     * test window. Both are batches of the same send, and both belong in the
+     * same counter — but the counter reaching zero at the end of the first
+     * phase does not mean the send is over, and closing there would report the
+     * campaign `sent` with the holdback still unsent. That is what this flag
+     * distinguishes: while it is true, zero means "phase one is done", not
+     * "the campaign is done".
+     *
+     * The winner job clears it in the same statement that adds the holdback's
+     * batches, which is what makes a replayed winner job unable to add them
+     * twice: the add only happens when the flag is still true.
+     *
+     * False for everything else — an ordinary send, and an A/B test whose
+     * variants cover the whole audience, which has no second phase.
+     */
+    awaitingAbWinner: boolean('awaiting_ab_winner').notNull().default(false),
 
     // Email-specific
     subject: varchar('subject', { length: 255 }),

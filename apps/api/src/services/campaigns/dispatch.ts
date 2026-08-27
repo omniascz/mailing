@@ -198,7 +198,7 @@ export async function setCampaignStatusInternal(
       // counter reads as an unfinished dispatch — the same invariant
       // markCampaignSent and markCampaignFailed already keep.
       ...(status === 'sent' || status === 'failed' || status === 'cancelled'
-        ? { pendingBatches: null }
+        ? { pendingBatches: null, awaitingAbWinner: false }
         : {}),
       ...(status === 'sent' ? { sentAt: new Date() } : {}),
     })

@@ -386,6 +386,9 @@ export async function sendCampaign(orgId: string, campaignId: string): Promise<C
       // would decrement a number that belongs to a send that is over.
       plannedRecipients: null,
       pendingBatches: null,
+      // And the phase marker with them: a fresh send is not waiting on the
+      // previous attempt's winner dispatch.
+      awaitingAbWinner: false,
     })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .returning();
@@ -479,7 +482,7 @@ export async function cancelCampaign(orgId: string, campaignId: string): Promise
 
   const [row] = await db
     .update(campaigns)
-    .set({ status: 'cancelled', updatedAt: new Date() })
+    .set({ status: 'cancelled', updatedAt: new Date(), awaitingAbWinner: false })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .returning();
 
@@ -505,6 +508,8 @@ export async function markCampaignSent(
       // The dispatch is over, so nothing is outstanding. Left set, the counter
       // would look like an unfinished send to the reaper.
       pendingBatches: null,
+      // Nor is anything still to be added to it.
+      awaitingAbWinner: false,
       ...(totals ? { totalSent: totals.totalSent } : {}),
     })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
@@ -529,7 +534,13 @@ export async function markCampaignFailed(
 
   const [row] = await db
     .update(campaigns)
-    .set({ status: 'failed', updatedAt: new Date(), pendingBatches: null, pausedReason: null })
+    .set({
+      status: 'failed',
+      updatedAt: new Date(),
+      pendingBatches: null,
+      awaitingAbWinner: false,
+      pausedReason: null,
+    })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .returning();
 
