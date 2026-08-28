@@ -143,7 +143,21 @@ const Env = z
     // so booting production on it means anyone can read and write the bucket.
     MINIO_ACCESS_KEY: prodRequired(z.string(), 'minioadmin'),
     MINIO_SECRET_KEY: prodRequired(z.string(), 'minioadmin'),
-    MINIO_BUCKET: z.string().default('forgemsg'),
+    // One bucket, one name. Five call sites used to read this straight from
+    // process.env with their own fallback, and the fallbacks disagreed:
+    // 'forgemsg' in analytics + media, 'forgemsg-recordings' in the event
+    // archive, call recordings and voicemail. With the variable unset — which
+    // is every developer machine that skipped .env — media went to one bucket
+    // and the archive to another, and nothing said so.
+    //
+    // `.min(1)` because `??` does not catch an empty string: `MINIO_BUCKET=`
+    // in a .env file used to sail through and hand the S3 client `''`.
+    // prodRequired for the same reason MINIO_ACCESS_KEY has it — a committed
+    // default is a fine developer convenience and a bad production value.
+    MINIO_BUCKET: prodRequired(z.string().min(1), 'forgemsg'),
+    // Video messages live in their own store; it was read only in
+    // services/video/recorder.ts and never validated.
+    MINIO_VIDEO_BUCKET: prodRequired(z.string().min(1), 'forgemsg-videos'),
     MINIO_USE_SSL: z.coerce.boolean().default(false),
 
     // ─── Secrets (must be set in prod) ────────────────────────────────────────

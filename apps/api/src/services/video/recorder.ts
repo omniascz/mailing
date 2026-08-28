@@ -12,6 +12,7 @@
  */
 
 import { randomBytes } from 'node:crypto';
+import { env } from '../../config/env.js';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
@@ -24,10 +25,10 @@ import { presignUrl } from '../../lib/object-store.js';
 
 // ─── Config helpers ───────────────────────────────────────────────────────────
 
-const BUCKET = () => process.env.MINIO_VIDEO_BUCKET ?? 'forgemsg-videos';
-const ENDPOINT = () => process.env.MINIO_ENDPOINT ?? 'localhost';
-const PORT = () => process.env.MINIO_PORT ?? '9000';
-const USE_SSL = () => process.env.MINIO_USE_SSL === 'true';
+const BUCKET = () => env.MINIO_VIDEO_BUCKET;
+const ENDPOINT = () => env.MINIO_ENDPOINT;
+const PORT = () => String(env.MINIO_PORT);
+const USE_SSL = () => env.MINIO_USE_SSL;
 
 function publicBaseUrl(): string {
   const scheme = USE_SSL() ? 'https' : 'http';
