@@ -28,6 +28,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
+import { readSeedOrg } from './setup/seed-org.js';
 // Not via the package export map: apps/api does not export services/rss, and
 // adding an export for a test would be a change to the package's public
 // surface. The file imports only a TYPE from ./index.js, so nothing here opens
@@ -55,28 +56,9 @@ let orgId: string;
 let listId: string;
 let contactId: string;
 let token: string;
-let previousSendingMode: string | null = null;
-/**
- * The org's postal address, READ BACK after seeding rather than assumed.
- *
- * The seed leaves it empty and several integration files fill it in with
- * COALESCE, so whichever runs first decides the value — and vitest runs files
- * in parallel. Asserting on a literal here made this file's footer test depend
- * on which suite won that race. The footer assertion below uses whatever the
- * column actually holds.
- */
-let postalAddress = '';
+/** Read from the seed org, never written by this file. See setup/seed-org.ts. */
+let postalAddress: string;
 
-/**
- * The SAME literal campaign-content-shape and campaign-locale write.
- *
- * COALESCE means the first file to get there decides the value, and vitest runs
- * these files in parallel — a different spelling here left those suites
- * asserting on an address this file had already written. (It also has to live
- * out here: inside the sql`` template a `//` comment is not a comment, it is
- * SQL, and Postgres says so.)
- */
-const POSTAL_ADDRESS = 'Nádražní 1, 110 00 Praha';
 const createdCampaigns: string[] = [];
 
 interface FeedItem {
@@ -210,20 +192,9 @@ async function sendAndCollect(campaignId: string): Promise<MtaJobData> {
 
 describe('RSS campaign end to end (real DB + Redis + API)', () => {
   beforeAll(async () => {
-    const [org] = await sql<{ id: string; sending_mode: string | null }[]>`
-      SELECT id, sending_mode FROM organizations WHERE slug = 'acme-demo' LIMIT 1
-    `;
-    if (!org) throw new Error('[rss] seed org missing');
+    const org = await readSeedOrg(sql);
     orgId = org.id;
-    previousSendingMode = org.sending_mode;
-
-    await sql`
-      UPDATE organizations
-      SET sending_mode = 'production',
-          company_name = COALESCE(company_name, 'Obchod s.r.o.'),
-          postal_address = COALESCE(postal_address, ${POSTAL_ADDRESS})
-      WHERE id = ${orgId}
-    `;
+    postalAddress = org.postalAddress;
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
       VALUES (${orgId}, ${sendingDomain}, 'fm1', true, true)
@@ -240,12 +211,6 @@ describe('RSS campaign end to end (real DB + Redis + API)', () => {
     `;
     contactId = contact!.id;
     await sql`INSERT INTO contact_lists (contact_id, list_id) VALUES (${contactId}, ${listId})`;
-
-    const [withAddress] = await sql<{ postal_address: string | null }[]>`
-      SELECT postal_address FROM organizations WHERE id = ${orgId}
-    `;
-    postalAddress = withAddress?.postal_address ?? '';
-    if (!postalAddress) throw new Error('[rss] org has no postal address to assert on');
 
     const login = await api<{ token: string }>('POST', '/api/v1/auth/login', {
       email: 'demo@acme.test',
@@ -272,7 +237,6 @@ describe('RSS campaign end to end (real DB + Redis + API)', () => {
     await sql`DELETE FROM contacts WHERE id = ${contactId}`;
     await sql`DELETE FROM lists WHERE id = ${listId}`;
     await sql`DELETE FROM sending_domains WHERE org_id = ${orgId} AND domain = ${sendingDomain}`;
-    await sql`UPDATE organizations SET sending_mode = ${previousSendingMode} WHERE id = ${orgId}`;
     await sql.end({ timeout: 5 });
   }, 120_000);
 
