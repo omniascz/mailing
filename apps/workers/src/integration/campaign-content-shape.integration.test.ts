@@ -36,6 +36,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
+import { loginAsSeedUser } from './setup/login.js';
 import { readSeedOrg } from './setup/seed-org.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
@@ -186,11 +187,9 @@ describe('campaign content shape end to end (real DB + Redis + API)', () => {
     contactId = contact!.id;
     await sql`INSERT INTO contact_lists (contact_id, list_id) VALUES (${contactId}, ${listId})`;
 
-    const login = await api<{ token: string }>('POST', '/api/v1/auth/login', {
-      email: 'demo@acme.test',
-      password: 'Demo1234!',
-    });
-    token = login.token;
+    // Through setup/login.ts, not the local api() helper: the login route is
+    // rate limited per process and this suite is run repeatedly.
+    token = await loginAsSeedUser(API, 'shape');
   }, 120_000);
 
   afterAll(async () => {
