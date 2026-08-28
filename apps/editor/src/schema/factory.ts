@@ -9,6 +9,7 @@ import type {
   SocialBlock,
   CodeBlock,
   ShareBlock,
+  PollBlock,
   ProductBlock,
   VideoBlock,
   CouponBlock,
@@ -141,6 +142,19 @@ export function createBlock(type: BlockType): Block {
         fontSize: '13px',
         color: '#2563eb',
       } satisfies ShareBlock;
+    case 'poll':
+      return {
+        id: newId('poll'),
+        type: 'poll',
+        question: 'How did we do?',
+        options: ['Great', 'Fine', 'Not great'],
+        helpText: '',
+        align: 'left',
+        fontSize: '15px',
+        color: '#111827',
+        buttonBackgroundColor: '#f3f4f6',
+        buttonTextColor: '#111827',
+      } satisfies PollBlock;
     case 'product':
       return {
         id: newId('prod'),

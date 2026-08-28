@@ -21,4 +21,5 @@ export {
   type ClickTrackingPayload,
   type PreferenceCenterPayload,
   type TrackingPayload,
+  type PollVotePayload,
 } from './tracking/index.js';

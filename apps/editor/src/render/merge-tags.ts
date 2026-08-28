@@ -42,6 +42,18 @@ export interface MergeTagContext {
     /** Org-wide custom footer (SendGrid Mail Settings) appended to the body. */
     footerHtml?: string;
     footerText?: string;
+    /**
+     * Per-recipient vote links for `poll` blocks: block id → one signed URL per
+     * option, in the block's own option order.
+     *
+     * Lives here rather than in RenderOptions because it is exactly the same
+     * kind of value as `unsubscribeUrl` above — something only the sender can
+     * mint, because it carries this recipient's identity. The renderer never
+     * builds one; when the map is absent (previews, the archive page) the poll
+     * renders its answers as plain text, which is the share block's rule too:
+     * a link that cannot be honest is not rendered as a link.
+     */
+    pollUrls?: Record<string, string[]>;
   };
   /**
    * Arbitrary collections exposed to Liquid `{% for %}` loops (e.g. product

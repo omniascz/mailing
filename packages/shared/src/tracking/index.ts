@@ -127,12 +127,38 @@ export interface ViewInBrowserPayload {
   ts: number;
 }
 
+/**
+ * Poll vote token. One per option per recipient, embedded as the href of an
+ * answer in a `poll` block.
+ *
+ * Signed for the same reason the unsubscribe token is: the link carries the
+ * voter's identity, so an unsigned one would let anyone vote as anybody by
+ * editing a URL. `optionIndex` is inside the signature too — otherwise the
+ * recipient could change their own answer by editing a digit, which is not the
+ * same thing as voting again.
+ *
+ * Stateless like the others: a poll in a 100k send is 100k × N links and none
+ * of them needs a row until somebody clicks.
+ */
+export interface PollVotePayload {
+  type: 'poll';
+  orgId: string;
+  campaignId: string;
+  contactId: string;
+  /** The block's id inside the campaign schema — a campaign may hold two polls. */
+  blockId: string;
+  /** Index into the block's `options` array. */
+  optionIndex: number;
+  ts: number;
+}
+
 export type TrackingPayload =
   | OpenTrackingPayload
   | ClickTrackingPayload
   | PreferenceCenterPayload
   | UnsubscribePayload
-  | ViewInBrowserPayload;
+  | ViewInBrowserPayload
+  | PollVotePayload;
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
 

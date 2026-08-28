@@ -179,6 +179,39 @@ export const shareBlockSchema = z.object({
 });
 export type ShareBlock = z.infer<typeof shareBlockSchema>;
 
+/**
+ * A one-question poll the recipient answers from inside the email.
+ *
+ * Every answer is an ordinary link. There is no form in an email: Gmail strips
+ * `<form>`, and the AMP path that would allow one is not something a
+ * deliverability-conscious sender wants to depend on. So a vote is a GET, and
+ * the recipient's identity travels in the href — which is why the URL is a
+ * signed token (packages/shared PollVotePayload) rather than query parameters.
+ *
+ * The block stores only the question and the answers. It does NOT store the
+ * per-recipient URLs: those are built at render time, because they contain the
+ * contact id. A block that carried them would be a block whose stored content
+ * differs per recipient, which is the thing readCampaignContent exists to stop.
+ *
+ * Two to six options. One option is not a poll; past six the layout stops being
+ * readable on a phone and the answer set stops being analysable.
+ */
+export const pollBlockSchema = z.object({
+  ...baseBlockShape,
+  type: z.literal('poll'),
+  question: z.string().min(1).max(300),
+  /** Answer labels, in order. The INDEX is what a vote records. */
+  options: z.array(z.string().min(1).max(120)).min(2).max(6),
+  /** Shown under the answers; blank hides it. */
+  helpText: z.string().max(200).default(''),
+  align: z.enum(['left', 'center']).default('left'),
+  fontSize: z.string().default('15px'),
+  color: z.string().default('#111827'),
+  buttonBackgroundColor: z.string().default('#f3f4f6'),
+  buttonTextColor: z.string().default('#111827'),
+});
+export type PollBlock = z.infer<typeof pollBlockSchema>;
+
 export const socialBlockSchema = z.object({
   ...baseBlockShape,
   type: z.literal('social'),
@@ -320,6 +353,7 @@ export type LeafBlock =
   | SocialBlock
   | CodeBlock
   | ShareBlock
+  | PollBlock
   | ProductBlock
   | VideoBlock
   | CouponBlock
@@ -343,6 +377,7 @@ export const blockSchema: z.ZodType<Block, z.ZodTypeDef, any> = z.lazy(() =>
     socialBlockSchema,
     codeBlockSchema,
     shareBlockSchema,
+    pollBlockSchema,
     productBlockSchema,
     videoBlockSchema,
     couponBlockSchema,
@@ -431,6 +466,7 @@ export const BLOCK_TYPES = [
   'social',
   'code',
   'share',
+  'poll',
   'product',
   'video',
   'coupon',
