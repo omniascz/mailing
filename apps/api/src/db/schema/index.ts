@@ -2,6 +2,7 @@
 
 export * from './enums.js';
 export * from './organizations.js';
+export * from './poll-votes.js';
 export * from './users.js';
 export * from './sessions.js';
 export * from './contacts.js';
