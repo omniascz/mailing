@@ -179,9 +179,8 @@ export default function PricingPage() {
       <section className="mx-auto mt-16 max-w-3xl text-center text-sm text-secondary-600">
         <h3 className="text-lg font-semibold text-secondary-900">Add-ony</h3>
         <p className="mt-3">
-          Dedicated IP: <strong>500 Kč / měs</strong> · HLR lookup: <strong>0,40 Kč / dotaz</strong>{' '}
-          · Voice minuty mimo plán: <strong>2 Kč / minuta</strong> · SMS mimo plán:{' '}
-          <strong>1,90 Kč / kus</strong>
+          Dedicated IP: <strong>500 Kč / měs</strong> · Voice minuty mimo plán:{' '}
+          <strong>2 Kč / minuta</strong> · SMS mimo plán: <strong>1,90 Kč / kus</strong>
         </p>
         <p className="mt-4">
           Všechny ceny bez DPH. Fakturace měsíčně, platba kartou nebo bankovním převodem (ISDOC).

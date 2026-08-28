@@ -32,7 +32,7 @@ Turborepo monorepo with pnpm workspaces.
 
 - **Files**: `kebab-case.ts` for modules, `PascalCase.tsx` for React components
 - **Variables/Functions**: `camelCase`
-- **Types/Interfaces**: `PascalCase`, prefix interfaces with `I` only for adapter contracts (`IChannelAdapter`, `IHlrProvider`)
+- **Types/Interfaces**: `PascalCase`, prefix interfaces with `I` only for adapter contracts (`IChannelAdapter`)
 - **Database columns**: `snake_case`
 - **API routes**: `/api/v1/kebab-case`
 - **Environment variables**: `SCREAMING_SNAKE_CASE`
