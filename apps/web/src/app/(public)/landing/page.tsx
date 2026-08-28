@@ -77,12 +77,12 @@ export default function LandingPage() {
             <Channel
               icon={MessageSquare}
               title="SMS"
-              copy="SMPP gateway, HLR lookup, DLR tracking, CZ/SK operátoři."
+              copy="SMPP gateway, DLR tracking, CZ/SK operátoři."
             />
             <Channel
               icon={Phone}
               title="Voice agent"
-              copy="Outbound AI hovory s Claude + ElevenLabs jako kanál v kampani."
+              copy="Outbound AI hovory s Claude + ElevenLabs, spouštěné přes API."
             />
             <Channel
               icon={MessageSquare}

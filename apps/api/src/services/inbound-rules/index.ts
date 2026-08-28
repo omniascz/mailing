@@ -12,6 +12,7 @@ import {
   type InboundRuleMatch,
 } from '../../db/schema/inbound-rules.js';
 import { AppError } from '../../lib/app-error.js';
+import { env } from '../../config/env.js';
 
 export interface InboundMessageMeta {
   to: string;
@@ -83,11 +84,55 @@ export async function resolveInboundActions(
     .where(and(eq(inboundRules.orgId, orgId), eq(inboundRules.active, true)))
     .orderBy(asc(inboundRules.priority));
 
-  if (rules.length === 0) return defaultInboundActions(msg);
+  if (rules.length === 0) return withReachableTargets(defaultInboundActions(msg));
   const actions = evaluateInboundRules(rules, msg);
   // If custom rules exist but none matched, fall back to defaults so mail is
   // never silently lost.
-  return actions.length > 0 ? actions : defaultInboundActions(msg);
+  return withReachableTargets(actions.length > 0 ? actions : defaultInboundActions(msg));
+}
+
+/**
+ * Drop actions whose destination the customer cannot reach.
+ *
+ * Helpdesk is a beyond-core domain: with FEATURE_BEYOND_CORE off its routes are
+ * not registered, so `GET /api/v1/helpdesk/tickets` answers 404. Opening a
+ * ticket there would file the mail somewhere nobody can read it — the same
+ * shape of defect as a campaign that can never close, and worse for being
+ * customer data.
+ *
+ * `openTicket` still exists and still works; what changes is that nothing calls
+ * it on a deployment where the reader is switched off. Turn the flag on and the
+ * default routing is exactly as before.
+ *
+ * The substitution matters as much as the removal. The mail itself is already
+ * stored — `receiveInbound` inserts the `inbound_emails` row before any action
+ * runs, and `listInbound`/`getInbound` are core routes — so nothing is lost by
+ * not opening a ticket. Replacing the action with the workflow event rather
+ * than dropping it means a message to support@ still reaches automation, which
+ * is what every other address already gets from `defaultInboundActions`.
+ *
+ * Applies to configured rules as well as to the defaults: an operator can write
+ * a helpdesk rule through the (core) inbound-rules API, and the ticket it
+ * produced would be exactly as unreadable.
+ */
+function withReachableTargets(actions: InboundAction[]): InboundAction[] {
+  if (env.FEATURE_BEYOND_CORE) return actions;
+
+  const out: InboundAction[] = [];
+  let substituted = false;
+  for (const a of actions) {
+    if (a.type !== 'helpdesk') {
+      out.push(a);
+      continue;
+    }
+    // One substitute even if several rules asked for a ticket — the event is
+    // about the message, and firing it twice would run the automation twice.
+    if (!substituted) {
+      substituted = true;
+      out.push({ type: 'workflow_event', eventName: 'email_reply_received' });
+    }
+  }
+  return out;
 }
 
 // ── CRUD ────────────────────────────────────────────────────────────────────
