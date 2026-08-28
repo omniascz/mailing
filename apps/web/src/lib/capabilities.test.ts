@@ -135,14 +135,11 @@ describe('the fallback when the API cannot be reached', () => {
  * filter were removed.
  */
 describe('the A/B tests nav entry', () => {
-  const sidebar = readFileSync(
-    join(__dirname, '../components/dashboard/sidebar.tsx'),
-    'utf8',
-  );
+  const sidebar = readFileSync(join(__dirname, '../components/dashboard/sidebar.tsx'), 'utf8');
 
   it('is declared with a multivariateTests requirement', () => {
     const entry = /\{[^{}]*href:\s*'\/ab-tests'[\s\S]{0,200}?\}/.exec(sidebar)?.[0] ?? '';
-    expect(entry, "the /ab-tests nav entry was not found in sidebar.tsx").not.toBe('');
+    expect(entry, 'the /ab-tests nav entry was not found in sidebar.tsx').not.toBe('');
     expect(entry).toContain("requires: 'multivariateTests'");
   });
 
