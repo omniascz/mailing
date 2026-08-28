@@ -134,6 +134,13 @@
       "when": 1787851605559,
       "tag": "0018_ab_two_phase_counter",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1787943654873,
+      "tag": "0019_poll_votes",
+      "breakpoints": true
     }
   ]
 }

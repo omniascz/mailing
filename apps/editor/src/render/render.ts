@@ -14,6 +14,7 @@ import type {
   SocialBlock,
   CodeBlock,
   ShareBlock,
+  PollBlock,
   SpacerBlock,
   TextBlock,
 } from '../schema/blocks.js';
@@ -318,6 +319,8 @@ function renderBlock(
       return renderCode(block, ctx);
     case 'share':
       return renderShare(block, ctx, links);
+    case 'poll':
+      return renderPoll(block, ctx, links);
     case 'product':
       return renderProduct(block, ctx, links);
     case 'video':
@@ -381,6 +384,63 @@ function renderButton(block: ButtonBlock, ctx: MergeTagContext, links: string[])
     `border-radius:${block.borderRadius};padding:${paddingBySize};` +
     `font-size:${fontSizeBySize};font-weight:600;text-decoration:none;display:inline-block;">${text}</a>`;
   return `<tr><td${bgAttr(block)} align="${block.align}" style="padding:${cellPadding(block)};">${anchor}</td></tr>`;
+}
+
+/**
+ * A poll: the question, then one link per answer.
+ *
+ * The answers are links because an email cannot contain a form — Gmail strips
+ * `<form>` — so a vote is a GET on a URL that carries who is voting. Those URLs
+ * are signed and minted by the sender; see MergeTagContext.system.pollUrls.
+ *
+ * With no URLs in the context the answers render as PLAIN TEXT, not as links.
+ * Same rule as the share block: the archive page and previews have no
+ * recipient, so a link there would either vote as nobody or, worse, look
+ * clickable and do nothing. The question still renders — losing it would hide
+ * what the email said.
+ *
+ * Question and answers are escaped, not sanitised. They are plain text by
+ * schema (`z.string()`, not HTML), so escaping is the stricter treatment: a
+ * `<b>` a customer typed shows as `<b>` instead of turning into markup.
+ */
+function renderPoll(block: PollBlock, ctx: MergeTagContext, links: string[]): string {
+  const urls = ctx.system?.pollUrls?.[block.id];
+  const question = escapeHtml(parseMergeTags(block.question, ctx));
+  const align = block.align === 'center' ? 'center' : 'left';
+
+  const rows = block.options
+    .map((option, index) => {
+      const label = escapeHtml(parseMergeTags(option, ctx));
+      const url = urls?.[index];
+      const cell =
+        `style="background-color:${block.buttonBackgroundColor};color:${block.buttonTextColor};` +
+        `border:1px solid #e5e7eb;border-radius:6px;padding:10px 16px;font-size:${block.fontSize};` +
+        `text-decoration:none;display:block;"`;
+      if (!url) {
+        return `<tr><td style="padding:4px 0;"><div ${cell}>${label}</div></td></tr>`;
+      }
+      const href = escapeAttr(url);
+      links.push(href);
+      return (
+        `<tr><td style="padding:4px 0;">` +
+        `<a href="${href}" target="_blank" rel="noopener" ${cell}>${label}</a>` +
+        `</td></tr>`
+      );
+    })
+    .join('');
+
+  const help = block.helpText
+    ? `<p style="margin:8px 0 0;font-size:12px;color:#6b7280;">${escapeHtml(
+        parseMergeTags(block.helpText, ctx),
+      )}</p>`
+    : '';
+
+  const inner =
+    `<p style="margin:0 0 8px;font-size:${block.fontSize};color:${block.color};font-weight:600;">${question}</p>` +
+    `<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">${rows}</table>` +
+    help;
+
+  return `<tr><td${bgAttr(block)} align="${align}" style="padding:${cellPadding(block)};">${inner}</td></tr>`;
 }
 
 function renderDivider(block: DividerBlock): string {

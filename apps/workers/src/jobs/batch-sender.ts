@@ -400,6 +400,7 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
         companyAddress: data.companyAddress,
         footerHtml: data.footerHtml,
         footerText: data.footerText,
+        pollUrls: buildPollUrls(data.content, data, contact.id, trackingBaseUrl),
       },
       newsletterTierMap.get(contact.id),
     );
@@ -626,6 +627,51 @@ async function reportBatchCompletion(
  * giving us a single regex + filter registry (vocative, default, …) shared
  * across editor preview, server-side render, and worker dispatch.
  */
+/**
+ * One signed vote URL per poll answer, for this recipient.
+ *
+ * Built here rather than in the renderer because it carries the contact's
+ * identity, exactly like the unsubscribe and view-in-browser tokens a few lines
+ * above. The renderer is given the finished map and never mints anything; with
+ * no map it draws the answers as plain text, which is what the archive page and
+ * previews get.
+ *
+ * Reads the parsed schema, so a campaign with no poll costs one array scan.
+ */
+function buildPollUrls(
+  content: Record<string, unknown>,
+  data: BatchSenderJobData,
+  contactId: string,
+  trackingBaseUrl: string,
+): Record<string, string[]> | undefined {
+  const parsed = readCampaignContent(content);
+  const blocks = (parsed.schema?.blocks ?? []) as unknown as {
+    id: string;
+    type: string;
+    options?: unknown;
+  }[];
+  const polls = blocks.filter((b) => b.type === 'poll');
+  if (polls.length === 0) return undefined;
+
+  const out: Record<string, string[]> = {};
+  for (const block of polls) {
+    const options = Array.isArray(block.options) ? block.options : [];
+    out[block.id] = options.map((_option, optionIndex) => {
+      const token = createTrackingToken({
+        type: 'poll',
+        orgId: data.orgId,
+        campaignId: data.campaignId,
+        contactId,
+        blockId: block.id,
+        optionIndex,
+        ts: Math.floor(Date.now() / 1000),
+      });
+      return `${trackingBaseUrl}/api/v1/poll/${token}`;
+    });
+  }
+  return out;
+}
+
 function buildMergeContext(
   contact: ContactRow,
   systemContext?: MergeTagContext['system'],

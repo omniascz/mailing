@@ -32,6 +32,7 @@ import type {
   SocialBlock,
   CodeBlock,
   ShareBlock,
+  PollBlock,
   SpacerBlock,
   TextBlock,
 } from '../schema/blocks.js';
@@ -128,6 +129,8 @@ function renderBlock(
       return renderCode(block, ctx);
     case 'share':
       return renderShare(block, ctx);
+    case 'poll':
+      return renderPoll(block, ctx);
     case 'product':
       return renderProduct(block, ctx);
     case 'video':
@@ -165,6 +168,27 @@ function renderButton(block: ButtonBlock, ctx: MergeTagContext): string {
   const text = parseMergeTags(block.text, ctx).trim();
   const url = parseMergeTags(block.url, ctx).trim();
   return `${text} → ${url}`;
+}
+
+/**
+ * The poll in plain text: the question, then the answers, each followed by the
+ * URL that records it.
+ *
+ * The text half is the half a filter reads and the half a text-only client
+ * shows, so leaving the poll out of it would mean a recipient in that client
+ * sees an email with a question missing. Without per-recipient URLs the
+ * answers are listed without them — same rule as the HTML side.
+ */
+function renderPoll(block: PollBlock, ctx: MergeTagContext): string {
+  const urls = ctx.system?.pollUrls?.[block.id];
+  const lines = [parseMergeTags(block.question, ctx)];
+  block.options.forEach((option, index) => {
+    const label = parseMergeTags(option, ctx);
+    const url = urls?.[index];
+    lines.push(url ? `- ${label}: ${url}` : `- ${label}`);
+  });
+  if (block.helpText) lines.push(parseMergeTags(block.helpText, ctx));
+  return lines.join('\n');
 }
 
 function renderDivider(_block: DividerBlock): string {

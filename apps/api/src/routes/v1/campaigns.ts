@@ -591,6 +591,27 @@ export default async function campaignRoutes(app: FastifyInstance) {
     // ── A/B winner endpoints ──────────────────────────────────────────────────
 
     /**
+     * GET /api/v1/campaigns/:id/poll-results
+     * Per-answer counts for every poll block in the campaign.
+     *
+     * Lives on the campaign rather than under analytics because a poll belongs
+     * to one send: the question is stored in that campaign's schema and the
+     * votes are counted against that campaign id.
+     */
+    scope.get(
+      '/api/v1/campaigns/:id/poll-results',
+      {
+        preHandler: [app.authenticate],
+        schema: { tags: ['Campaigns'], summary: 'Poll results for a campaign' },
+      },
+      async (req) => {
+        const { id } = idParam.parse(req.params);
+        const { pollResultsForCampaign } = await import('../../services/polls/index.js');
+        return { data: await pollResultsForCampaign(req.user!.orgId, id) };
+      },
+    );
+
+    /**
      * GET /api/v1/campaigns/:id/ab-result
      * Returns the stored A/B test result (winner, confidence, rankings) for a campaign.
      */
