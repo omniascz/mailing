@@ -21,6 +21,7 @@ import {
   type CalendlyInviteeEvent,
 } from '../../../integrations/calendly/webhook.js';
 import { AppError } from '../../../lib/app-error.js';
+import { checkWebhookSignature } from '../../../lib/webhook-signature.js';
 
 const calendlyRoutes: FastifyPluginAsync = async (app) => {
   app.get(
@@ -137,11 +138,24 @@ const calendlyRoutes: FastifyPluginAsync = async (app) => {
         .where(eq(calendlyConnections.orgId, orgId))
         .limit(1);
 
-      if (
-        conn?.webhookSigningKey &&
-        !verifyWebhookSignature(rawBody, signature, conn.webhookSigningKey)
-      ) {
-        throw AppError.forbidden('Invalid Calendly webhook signature');
+      // Fail-closed, and that has a consequence worth stating: NOTHING in this
+      // codebase writes calendly_connections.webhook_signing_key. The column is
+      // declared (db/schema/calendly.ts:25), selected here, and never set — the
+      // connect flow has no field for it. So this receiver is refusing every
+      // request today, which is the honest form of what it was already doing:
+      // accepting every request without checking any of them, into
+      // processCalendlyEvent. Turning it back on is a connect-flow change, not
+      // a change here.
+      const sig = checkWebhookSignature({
+        integration: 'Calendly',
+        secret: conn?.webhookSigningKey,
+        signature,
+        rawBody,
+        verify: (body, s2, secret) => verifyWebhookSignature(body, s2, secret),
+      });
+      if (!sig.ok) {
+        req.log.warn({ orgId, code: sig.code }, '[calendly] webhook refused');
+        return reply.code(sig.status).send({ code: sig.code, message: sig.message });
       }
 
       await processCalendlyEvent(orgId, req.body as CalendlyInviteeEvent);

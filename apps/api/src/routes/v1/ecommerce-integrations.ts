@@ -56,6 +56,7 @@ import type {
   FastCentrikCredentials,
 } from '../../db/schema/index.js';
 import { ingestFeed as ingestFastCentrikFeed } from '../../integrations/fastcentrik/index.js';
+import { checkWebhookSignature, timingSafeEqualString } from '../../lib/webhook-signature.js';
 import { normalizeEshopUrl } from '../../integrations/shoptet/pure.js';
 import {
   normalizeUpgatesAdminUrl,
@@ -484,8 +485,16 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
 
       const creds = conn.credentials as ShopifyCredentials;
       if (creds.shopDomain !== shopDomain) return reply.code(204).send();
-      if (creds.webhookSecret && !verifyShopifyWebhook(rawBody, hmac, creds.webhookSecret)) {
-        return reply.code(401).send({ code: 'INVALID_SIGNATURE', message: 'HMAC mismatch' });
+      const sig = checkWebhookSignature({
+        integration: 'Shopify',
+        secret: creds.webhookSecret,
+        signature: hmac,
+        rawBody,
+        verify: (body, signature, secret) => verifyShopifyWebhook(body, signature, secret),
+      });
+      if (!sig.ok) {
+        req.log.warn({ connectionId: conn.id, code: sig.code }, '[shopify] webhook refused');
+        return reply.code(sig.status).send({ code: sig.code, message: sig.message });
       }
 
       if (topic === 'orders/create' || topic === 'orders/updated') {
@@ -525,11 +534,16 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       if (!conn) return reply.code(204).send();
 
       const creds = conn.credentials as UpgatesCredentials;
-      if (
-        creds.webhookSecret &&
-        !verifyUpgatesWebhookSignature(rawBody, signature, creds.webhookSecret)
-      ) {
-        return reply.code(401).send({ code: 'INVALID_SIGNATURE', message: 'HMAC mismatch' });
+      const sig = checkWebhookSignature({
+        integration: 'Upgates',
+        secret: creds.webhookSecret,
+        signature,
+        rawBody,
+        verify: (body, s2, secret) => verifyUpgatesWebhookSignature(body, s2, secret),
+      });
+      if (!sig.ok) {
+        req.log.warn({ connectionId: conn.id, code: sig.code }, '[upgates] webhook refused');
+        return reply.code(sig.status).send({ code: sig.code, message: sig.message });
       }
 
       const orderTopics = new Set([
@@ -575,8 +589,16 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       if (!conn) return reply.code(204).send();
 
       const creds = conn.credentials as ShoptetCredentials;
-      if (creds.webhookSecret && !verifyShoptetWebhook(rawBody, signature, creds.webhookSecret)) {
-        return reply.code(401).send({ code: 'INVALID_SIGNATURE', message: 'HMAC mismatch' });
+      const sig = checkWebhookSignature({
+        integration: 'Shoptet',
+        secret: creds.webhookSecret,
+        signature,
+        rawBody,
+        verify: (body, s2, secret) => verifyShoptetWebhook(body, s2, secret),
+      });
+      if (!sig.ok) {
+        req.log.warn({ connectionId: conn.id, code: sig.code }, '[shoptet] webhook refused');
+        return reply.code(sig.status).send({ code: sig.code, message: sig.message });
       }
 
       const orderTopics = new Set(['order/create', 'order/update', 'order.create', 'order.update']);
@@ -612,11 +634,16 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       if (!conn) return reply.code(204).send();
 
       const creds = conn.credentials as WooCommerceCredentials;
-      if (
-        creds.webhookSecret &&
-        !verifyWooCommerceWebhook(rawBody, signature, creds.webhookSecret)
-      ) {
-        return reply.code(401).send({ code: 'INVALID_SIGNATURE', message: 'HMAC mismatch' });
+      const sig = checkWebhookSignature({
+        integration: 'WooCommerce',
+        secret: creds.webhookSecret,
+        signature,
+        rawBody,
+        verify: (body, s2, secret) => verifyWooCommerceWebhook(body, s2, secret),
+      });
+      if (!sig.ok) {
+        req.log.warn({ connectionId: conn.id, code: sig.code }, '[woocommerce] webhook refused');
+        return reply.code(sig.status).send({ code: sig.code, message: sig.message });
       }
 
       if (topic === 'order.created' || topic === 'order.updated') {
@@ -650,11 +677,16 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       if (!conn) return reply.code(204).send();
 
       const creds = conn.credentials as BigCommerceCredentials;
-      if (
-        creds.webhookSecret &&
-        !verifyBigCommerceWebhook(rawBody, signature, creds.webhookSecret)
-      ) {
-        return reply.code(401).send({ code: 'INVALID_SIGNATURE', message: 'HMAC mismatch' });
+      const sig = checkWebhookSignature({
+        integration: 'BigCommerce',
+        secret: creds.webhookSecret,
+        signature,
+        rawBody,
+        verify: (body, s2, secret) => verifyBigCommerceWebhook(body, s2, secret),
+      });
+      if (!sig.ok) {
+        req.log.warn({ connectionId: conn.id, code: sig.code }, '[bigcommerce] webhook refused');
+        return reply.code(sig.status).send({ code: sig.code, message: sig.message });
       }
 
       const scope = ((req.body as Record<string, unknown>).scope as string) ?? '';
@@ -691,13 +723,19 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       if (!conn) return reply.code(204).send();
 
       const credAny = conn.credentials as unknown as Record<string, unknown>;
-      if (credAny['webhookSecret']) {
-        const expected = credAny['webhookSecret'] as string;
-        if (secret !== expected) {
-          return reply
-            .code(401)
-            .send({ code: 'INVALID_SECRET', message: 'Webhook secret mismatch' });
-        }
+      // This receiver compares the shared secret itself rather than an HMAC of
+      // the body, so the "signature" it is handed is the header value. `!==`
+      // returned on the first differing byte; timingSafeEqualString does not.
+      const sig = checkWebhookSignature({
+        integration: 'this',
+        secret: credAny['webhookSecret'] as string | undefined,
+        signature: secret,
+        rawBody: '',
+        verify: (_body, presented, expected) => timingSafeEqualString(presented, expected),
+      });
+      if (!sig.ok) {
+        req.log.warn({ connectionId: conn.id, code: sig.code }, '[generic] webhook refused');
+        return reply.code(sig.status).send({ code: sig.code, message: sig.message });
       }
 
       const raw = req.body as Record<string, unknown>;
