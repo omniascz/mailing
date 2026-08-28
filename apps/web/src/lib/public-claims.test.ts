@@ -19,8 +19,7 @@ import { join } from 'node:path';
 
 const PUBLIC_PAGES = ['landing/page.tsx', 'pricing/page.tsx'] as const;
 
-const read = (rel: string) =>
-  readFileSync(join(__dirname, '../app/(public)', rel), 'utf8');
+const read = (rel: string) => readFileSync(join(__dirname, '../app/(public)', rel), 'utf8');
 
 describe('cancelled features are not advertised', () => {
   it.each(PUBLIC_PAGES)('%s does not mention HLR', (page) => {
