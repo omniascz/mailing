@@ -153,12 +153,7 @@ async function waitFor<T>(probe: () => Promise<T | null>, timeoutMs: number): Pr
 }
 
 /** Report a batch finished, the way batch-sender does when its job ends. */
-async function reportBatch(
-  campaignId: string,
-  dispatchId: string,
-  batchKey: string,
-  sent: number,
-) {
+async function reportBatch(campaignId: string, dispatchId: string, batchKey: string, sent: number) {
   const res = await fetch(`${API}/api/v1/internal/campaigns/${campaignId}/batch-complete`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-internal-secret': SECRET },

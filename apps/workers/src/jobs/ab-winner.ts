@@ -169,7 +169,10 @@ export async function processAbWinner(job: Job<AbWinnerJobData>) {
     reason?: string;
     expectedBatches: number;
     holdbackCount: number;
-  }>(`/api/v1/internal/campaigns/${campaignId}/ab-winner-phase-start`, { orgId, batchSize: BATCH_SIZE });
+  }>(`/api/v1/internal/campaigns/${campaignId}/ab-winner-phase-start`, {
+    orgId,
+    batchSize: BATCH_SIZE,
+  });
 
   if (!phase.armed) {
     // The campaign was not waiting for a winner dispatch. Either an earlier run

@@ -937,7 +937,9 @@ export default async function campaignRoutes(app: FastifyInstance) {
           { campaignId: id },
           '[ab-winner] a winner dispatch was requested but the holdback is empty',
         );
-        return { data: { armed: false, reason: 'empty_holdback', expectedBatches: 0, holdbackCount } };
+        return {
+          data: { armed: false, reason: 'empty_holdback', expectedBatches: 0, holdbackCount },
+        };
       }
 
       const result = await addWinnerPhase({ campaignId: id, orgId, batchCount: expectedBatches });
