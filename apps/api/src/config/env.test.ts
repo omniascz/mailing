@@ -94,6 +94,11 @@ describe('prodRequired — production must not fall back to a committed default'
     // aimed every upload at this process — docker-compose.prod.yml passed the
     // credentials and nothing else for exactly that long.
     MINIO_ENDPOINT: 'minio.internal',
+    // Both buckets are prodRequired now: five call sites used to read
+    // MINIO_BUCKET straight from process.env with two different fallbacks, so
+    // an unset value split media and the event archive across two buckets.
+    MINIO_BUCKET: 'prod-bucket',
+    MINIO_VIDEO_BUCKET: 'prod-video-bucket',
     ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
     INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
     FORM_AUTOFILL_SECRET: 'a-real-form-autofill-secret-32-chars',
@@ -108,6 +113,58 @@ describe('prodRequired — production must not fall back to a committed default'
     // neither store a new DKIM key nor read an existing one.
     DKIM_MASTER_KEY: 'f'.repeat(64),
   };
+
+  it('production without MINIO_BUCKET is refused, and the message names it', async () => {
+    // The dev default is `forgemsg`. A production deployment that never set the
+    // variable would write media, campaign screenshots, the email-event
+    // archive, call recordings and voicemail into a bucket named after the
+    // product, which is nobody's deliberate choice.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const env = { ...PROD_BASE };
+    delete (env as Record<string, string | undefined>).MINIO_BUCKET;
+    process.env = env;
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+    expect(spy.mock.calls.flat().join(' '), 'an operator reads this line, not the stack').toMatch(
+      /MINIO_BUCKET/,
+    );
+    spy.mockRestore();
+  });
+
+  it('an EMPTY MINIO_BUCKET is refused exactly like a missing one', async () => {
+    // `??` does not catch `''`, which is why the old call sites let
+    // `MINIO_BUCKET=` through and handed the S3 client an empty bucket name.
+    // The failure then surfaced on the first upload, far from its cause.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env = { ...PROD_BASE, MINIO_BUCKET: '' };
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+    expect(spy.mock.calls.flat().join(' ')).toMatch(/MINIO_BUCKET/);
+    spy.mockRestore();
+  });
+
+  it('an empty MINIO_BUCKET is refused in development too', async () => {
+    // Development has a default, so a MISSING value is fine here. An empty one
+    // is not the same thing: it is someone having written the variable and left
+    // it blank, and it must not silently resolve to the default.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env = { NODE_ENV: 'development', ...REQUIRED, MINIO_BUCKET: '' };
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
+    expect(spy.mock.calls.flat().join(' ')).toMatch(/MINIO_BUCKET/);
+    spy.mockRestore();
+  });
+
+  it('production without MINIO_VIDEO_BUCKET is refused', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const env = { ...PROD_BASE };
+    delete (env as Record<string, string | undefined>).MINIO_VIDEO_BUCKET;
+    process.env = env;
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+    expect(spy.mock.calls.flat().join(' ')).toMatch(/MINIO_VIDEO_BUCKET/);
+    spy.mockRestore();
+  });
 
   it('production without MINIO_ENDPOINT is refused', async () => {
     // Not a nicety. The default is `localhost`, which inside the API container
@@ -421,6 +478,8 @@ describe('optional-by-design secrets', () => {
       MINIO_ACCESS_KEY: 'real-access-key',
       MINIO_SECRET_KEY: 'real-secret-key',
       MINIO_ENDPOINT: 'minio.internal',
+      MINIO_BUCKET: 'prod-bucket',
+      MINIO_VIDEO_BUCKET: 'prod-video-bucket',
       ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
       INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
       FORM_AUTOFILL_SECRET: 'a-real-form-autofill-secret-32-chars',

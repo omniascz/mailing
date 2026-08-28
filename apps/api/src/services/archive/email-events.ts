@@ -10,6 +10,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { env } from '../../config/env.js';
 import { lt, and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/email-events.js';
@@ -158,7 +159,7 @@ function buildS3Key(orgId: string, day: string): string {
 }
 
 function archiveBucket(): string {
-  return process.env.MINIO_BUCKET ?? 'forgemsg-recordings';
+  return env.MINIO_BUCKET;
 }
 
 /**

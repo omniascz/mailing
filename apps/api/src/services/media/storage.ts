@@ -24,6 +24,7 @@
  */
 
 import { safeFetch, isPublicAddress, BlockedUrlError } from '../../lib/safe-fetch.js';
+import { env } from '../../config/env.js';
 import { AppError } from '../../lib/app-error.js';
 import { putObject } from '../../lib/object-store.js';
 
@@ -41,10 +42,10 @@ export interface StorageEndpoint {
 /** The object store this process writes to, from the already-validated env. */
 export function storageEndpoint(): StorageEndpoint {
   return {
-    host: process.env.MINIO_ENDPOINT ?? 'localhost',
-    port: Number(process.env.MINIO_PORT ?? 9000),
-    useSsl: process.env.MINIO_USE_SSL === 'true',
-    bucket: process.env.MINIO_BUCKET ?? 'forgemsg',
+    host: env.MINIO_ENDPOINT,
+    port: env.MINIO_PORT,
+    useSsl: env.MINIO_USE_SSL,
+    bucket: env.MINIO_BUCKET,
   };
 }
 

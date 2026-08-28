@@ -10,6 +10,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { env } from '../../config/env.js';
 import { z } from 'zod';
 import {
   getCampaignStats,
@@ -520,7 +521,7 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       await browser.close();
 
       const key = `screenshots/${orgId}/${id}-${Date.now()}.png`;
-      const bucket = process.env.MINIO_BUCKET ?? 'forgemsg';
+      const bucket = env.MINIO_BUCKET;
 
       // Through the shared client. This built its own S3Client per request with
       // the endpoint hard-coded to http:// — ignoring MINIO_USE_SSL, so against

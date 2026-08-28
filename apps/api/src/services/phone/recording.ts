@@ -7,6 +7,7 @@
  */
 
 import { eq } from 'drizzle-orm';
+import { env } from '../../config/env.js';
 import { db } from '../../db/client.js';
 import { calls } from '../../db/schema/calls.js';
 import { AppError } from '../../lib/app-error.js';
@@ -74,7 +75,7 @@ async function getProviderRecordingUrl(
 }
 
 async function uploadToS3(sourceUrl: string, key: string): Promise<string> {
-  const bucket = process.env.MINIO_BUCKET ?? 'forgemsg-recordings';
+  const bucket = env.MINIO_BUCKET;
 
   const sourceRes = await fetch(sourceUrl);
   if (!sourceRes.ok) throw new Error(`Failed to download recording: ${sourceRes.status}`);
