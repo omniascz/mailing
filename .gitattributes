@@ -1,0 +1,57 @@
+# Line endings: LF in the repository, LF in every working tree.
+#
+# ─── Why this file exists ────────────────────────────────────────────────────
+#
+# Git for Windows ships core.autocrlf=true in its SYSTEM config, so a Windows
+# checkout gets CRLF in the working tree while the blobs stay LF. Prettier's
+# endOfLine default is "lf". The two disagree, and the result was that
+# `pnpm format:check` reported 1787 files locally against the 3 that CI saw —
+# 1784 of them purely about line endings.
+#
+# A check that is wrong 99.8% of the time is not a check. It gets ignored, or
+# it gets "fixed" with a `prettier --write` across the whole tree. In two days
+# it let two prettier breakages onto master (#74/#76, then #78), and since
+# branch protection went on, a red Lint + Format blocks every merge.
+#
+# `eol=lf` — not just `text=auto` — because the working tree is what tools
+# read. Measured on apps/api/drizzle/0000_baseline.sql:
+#
+#   sha256 of the blob        (LF, what CI computes)   5b7c4cf24eb14502…
+#   sha256 of the working copy (CRLF, what Windows had) 5aed7514f312d563…
+#
+# drizzle-orm/migrator.js:23 stores exactly that sha256 in __drizzle_migrations,
+# so the same migration hashed differently depending on which OS ran it.
+#
+# The repository itself needed no conversion: every text blob was already LF
+# (checked with `git grep -I -l -P '\r' HEAD`, which found none, while the same
+# expression against the working tree found 1988 files). This pins that state
+# rather than changing it.
+
+# Everything is text unless git's own detection says otherwise; store LF, and
+# check out LF on every platform.
+* text=auto eol=lf
+
+# ─── Exceptions ──────────────────────────────────────────────────────────────
+
+# The two binary files in the repo. Git's auto-detection would classify both
+# correctly (each has NUL bytes inside the first 8 KB), but both also contain
+# raw CR bytes — 1067 in the PDF, 4251 in the zip — so if the detection were
+# ever wrong, normalisation would corrupt them silently. Saying it outright
+# costs two lines.
+*.pdf binary
+*.zip binary
+
+# Shell scripts: LF is not a preference here. A CRLF shebang makes Linux report
+# "bad interpreter: /bin/bash^M" and the script does not run at all. Both
+# tracked scripts (scripts/apply-migrations.sh, scripts/dev-stack.sh) are LF
+# today; this keeps them that way even if someone commits from an editor that
+# does not care.
+*.sh text eol=lf
+
+# SQL migrations: covered by the rule above, restated because the consequence
+# is not cosmetic. drizzle hashes the file contents, so a CRLF copy of an
+# already-applied migration reads as a different migration.
+*.sql text eol=lf
+
+# No `eol=crlf` entries: the repo tracks no .bat, .cmd, .ps1 or .sln, so
+# nothing here wants CRLF in the working tree.
