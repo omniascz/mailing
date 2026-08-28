@@ -73,6 +73,17 @@ async function main() {
       dataRegion: 'eu',
       settings: { timezone: 'Europe/Prague', locale: 'cs', brandColor: '#2563eb' },
       onboardingCompletedAt: new Date(),
+      // The two halves of the compliance footer. Seed data rather than
+      // something a test fills in, because three integration files needed them
+      // and each filled them in with COALESCE — so the first file to run
+      // decided the value and every later assertion was reading someone else's
+      // write. See apps/workers/src/integration/setup/seed-org.ts.
+      //
+      // A campaign sent from a demo org with no address is also just wrong:
+      // marketing mail has to carry one, and leaving the column empty made the
+      // one deployment anybody actually runs the one that could not.
+      companyName: 'Obchod s.r.o.',
+      postalAddress: 'Nádražní 1, 110 00 Praha',
     })
     .returning();
   if (!org) throw new Error('Failed to insert organization');

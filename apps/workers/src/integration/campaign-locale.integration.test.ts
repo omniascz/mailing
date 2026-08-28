@@ -23,6 +23,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
+import { readSeedOrg } from './setup/seed-org.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import {
@@ -44,7 +45,6 @@ let orgId: string;
 let listId: string;
 let contactId: string;
 let token: string;
-let previousSendingMode: string | null = null;
 const createdCampaigns: string[] = [];
 const createdTemplates: string[] = [];
 
@@ -184,23 +184,13 @@ async function campaignFromSavedTemplate(builtInId: string, name: string) {
 
 describe('campaign language end to end (real DB + Redis + API)', () => {
   beforeAll(async () => {
-    const [org] = await sql<{ id: string; sending_mode: string | null }[]>`
-      SELECT id, sending_mode FROM organizations WHERE slug = 'acme-demo' LIMIT 1
-    `;
-    if (!org) throw new Error('[locale] seed org missing');
-    orgId = org.id;
-    previousSendingMode = org.sending_mode;
-
     // Three things the send path insists on before it will enqueue anything:
     // production mode, a verified From domain, and a postal address for the
-    // footer the language is printed in.
-    await sql`
-      UPDATE organizations
-      SET sending_mode = 'production',
-          company_name = COALESCE(company_name, 'Obchod s.r.o.'),
-          postal_address = COALESCE(postal_address, ${'Nádražní 1, 110 00 Praha'})
-      WHERE id = ${orgId}
-    `;
+    // footer the language is printed in. The first and third are seed data and
+    // this file only reads them — writing them here is what made three suites
+    // depend on which of them ran first. See setup/seed-org.ts.
+    const org = await readSeedOrg(sql);
+    orgId = org.id;
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
       VALUES (${orgId}, ${sendingDomain}, 'fm1', true, true)
@@ -246,7 +236,6 @@ describe('campaign language end to end (real DB + Redis + API)', () => {
     await sql`DELETE FROM contacts WHERE id = ${contactId}`;
     await sql`DELETE FROM lists WHERE id = ${listId}`;
     await sql`DELETE FROM sending_domains WHERE org_id = ${orgId} AND domain = ${sendingDomain}`;
-    await sql`UPDATE organizations SET sending_mode = ${previousSendingMode} WHERE id = ${orgId}`;
     await sql.end({ timeout: 5 });
   }, 60_000);
 

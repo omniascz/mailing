@@ -36,6 +36,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
+import { readSeedOrg } from './setup/seed-org.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import {
@@ -57,7 +58,8 @@ let orgId: string;
 let listId: string;
 let contactId: string;
 let token: string;
-let previousSendingMode: string | null = null;
+/** Read from the seed org, never written by this file. See setup/seed-org.ts. */
+let postalAddress: string;
 const createdCampaigns: string[] = [];
 
 async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -164,20 +166,9 @@ async function sendAndCollect(campaignId: string): Promise<MtaJobData> {
 
 describe('campaign content shape end to end (real DB + Redis + API)', () => {
   beforeAll(async () => {
-    const [org] = await sql<{ id: string; sending_mode: string | null }[]>`
-      SELECT id, sending_mode FROM organizations WHERE slug = 'acme-demo' LIMIT 1
-    `;
-    if (!org) throw new Error('[shape] seed org missing');
+    const org = await readSeedOrg(sql);
     orgId = org.id;
-    previousSendingMode = org.sending_mode;
-
-    await sql`
-      UPDATE organizations
-      SET sending_mode = 'production',
-          company_name = COALESCE(company_name, 'Obchod s.r.o.'),
-          postal_address = COALESCE(postal_address, ${'Nádražní 1, 110 00 Praha'})
-      WHERE id = ${orgId}
-    `;
+    postalAddress = org.postalAddress;
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
       VALUES (${orgId}, ${sendingDomain}, 'fm1', true, true)
@@ -220,7 +211,6 @@ describe('campaign content shape end to end (real DB + Redis + API)', () => {
     await sql`DELETE FROM contacts WHERE id = ${contactId}`;
     await sql`DELETE FROM lists WHERE id = ${listId}`;
     await sql`DELETE FROM sending_domains WHERE org_id = ${orgId} AND domain = ${sendingDomain}`;
-    await sql`UPDATE organizations SET sending_mode = ${previousSendingMode} WHERE id = ${orgId}`;
     await sql.end({ timeout: 5 });
   }, 120_000);
 
@@ -261,7 +251,7 @@ describe('campaign content shape end to end (real DB + Redis + API)', () => {
       expect(mta.htmlBody, 'no unsubscribe link in the HTML part').toMatch(/\/unsubscribe\//);
       expect(mta.textBody, 'no unsubscribe link in the text part').toMatch(/\/unsubscribe\//);
       expect(mta.htmlBody, 'the postal address is the other half of the footer').toContain(
-        'Nádražní 1',
+        postalAddress,
       );
     }, 180_000);
 
@@ -307,7 +297,7 @@ describe('campaign content shape end to end (real DB + Redis + API)', () => {
       expect(mta.htmlBody).toMatch(/\/unsubscribe\//);
       // And the renderer's own footer is NOT bolted on, because that would be a
       // second copy of the compliance rule on a path that already has one.
-      expect(mta.htmlBody).not.toContain('Nádražní 1');
+      expect(mta.htmlBody).not.toContain(postalAddress);
     }, 180_000);
   });
 });
