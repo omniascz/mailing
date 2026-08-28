@@ -74,6 +74,32 @@ export function geoAnalyticsAvailable(): boolean {
 }
 
 /**
+ * Multivariate tests. Always false, and not from configuration — unlike every
+ * other capability here, this one is not waiting on a key.
+ *
+ * The feature is half-built. What exists is the half that runs AFTER the
+ * numbers are in: a test can be created, started, and scored, and the scoring
+ * picks the right winner when given real figures. What does not exist is
+ * everything that would produce those figures — nothing assigns a variant when
+ * a campaign is sent, nothing writes the per-variant counters, and nothing
+ * rolls the winner out to the remaining audience. `test_audience_percent` and
+ * `auto_send_winner` are stored on create and read by nothing.
+ *
+ * Measured end to end against a real database: a test created, started, and
+ * processed after its window closes ends `completed` with winner_variant_id
+ * NULL — every time, for every test, because every variant scores zero. Fill
+ * the counters in by hand and the same code picks the winner correctly. So the
+ * defect is not the arithmetic; it is that no figure ever reaches it.
+ *
+ * There is therefore nothing to switch on, which is why this takes no
+ * environment variable. When the missing three layers are built, this becomes a
+ * real check — or goes away.
+ */
+export function multivariateTestsAvailable(): boolean {
+  return false;
+}
+
+/**
  * Refuse a video provider this deployment cannot reach.
  *
  * Without credentials createVideoLink returns null and the booking used to be
@@ -121,6 +147,8 @@ export interface Capabilities {
   inboxPreview: boolean;
   /** Campaign geo breakdown can produce rows. */
   geoAnalytics: boolean;
+  /** Multivariate tests can run end to end. Currently never. */
+  multivariateTests: boolean;
 }
 
 export function capabilities(): Capabilities {
@@ -129,5 +157,6 @@ export function capabilities(): Capabilities {
     videoProviders: availableVideoProviders(),
     inboxPreview: inboxPreviewAvailable(),
     geoAnalytics: geoAnalyticsAvailable(),
+    multivariateTests: multivariateTestsAvailable(),
   };
 }

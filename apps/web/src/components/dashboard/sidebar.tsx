@@ -92,7 +92,15 @@ const NAV: NavSection[] = [
       { href: '/templates', label: 'Templates', icon: FileText },
       { href: '/workflows', label: 'Workflows', icon: Workflow },
       { href: '/workflows/gallery', label: 'Workflow gallery', icon: Sparkles },
-      { href: '/ab-tests', label: 'A/B tests', icon: FlaskConical },
+      // Hidden: the multivariate feature this page lists cannot finish a test.
+      // A/B testing itself works, but only through the API — campaigns.ab_config
+      // has no dashboard of its own, and this page never listed those anyway.
+      {
+        href: '/ab-tests',
+        label: 'A/B tests',
+        icon: FlaskConical,
+        requires: 'multivariateTests',
+      },
       { href: '/media', label: 'Media library', icon: ImageIcon },
       { href: '/rss-campaigns', label: 'RSS campaigns', icon: Rss },
       { href: '/site-messages', label: 'Site messages', icon: MonitorSmartphone },

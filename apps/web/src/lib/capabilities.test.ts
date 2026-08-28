@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import {
   NOTHING_AVAILABLE,
@@ -29,6 +31,10 @@ const ALL: Capabilities = {
   videoProviders: ['zoom'],
   inboxPreview: true,
   geoAnalytics: true,
+  // Not something a deployment can turn on today — the API reports it false
+  // unconditionally — but this fixture is "everything available", and the rule
+  // under test is the visibility rule, not which flags are reachable.
+  multivariateTests: true,
 };
 
 const NAV = [
@@ -53,11 +59,13 @@ describe('isAvailable', () => {
   it('hides a requirement the deployment does not meet', () => {
     expect(isAvailable(NOTHING_AVAILABLE, 'inboxPreview')).toBe(false);
     expect(isAvailable(NOTHING_AVAILABLE, 'geoAnalytics')).toBe(false);
+    expect(isAvailable(NOTHING_AVAILABLE, 'multivariateTests')).toBe(false);
   });
 
   it('shows it again once the deployment meets it', () => {
     expect(isAvailable(ALL, 'inboxPreview')).toBe(true);
     expect(isAvailable(ALL, 'geoAnalytics')).toBe(true);
+    expect(isAvailable(ALL, 'multivariateTests')).toBe(true);
   });
 });
 
@@ -102,6 +110,53 @@ describe('the fallback when the API cannot be reached', () => {
       videoProviders: [],
       inboxPreview: false,
       geoAnalytics: false,
+      multivariateTests: false,
     });
+  });
+});
+
+/**
+ * The /ab-tests entry is hidden, pinned where it can actually drift.
+ *
+ * Two halves make the proof, because this suite runs in a node environment
+ * with no renderer:
+ *
+ *   1. `visibleSections` drops entries whose requirement is unmet — asserted
+ *      above, against NOTHING_AVAILABLE.
+ *   2. the real sidebar entry carries that requirement — asserted here, by
+ *      reading the file, the same way apps/api's wiring guards do.
+ *
+ * Together: with `multivariateTests: false` (which is what the API always
+ * reports) the entry is filtered out before render. The dashboard layout does
+ * fetch capabilities and pass them to Sidebar, so the filter is really applied.
+ *
+ * A test that only asserted the first half would pass with the requirement
+ * missing from the entry; one that only asserted the second would pass if the
+ * filter were removed.
+ */
+describe('the A/B tests nav entry', () => {
+  const sidebar = readFileSync(
+    join(__dirname, '../components/dashboard/sidebar.tsx'),
+    'utf8',
+  );
+
+  it('is declared with a multivariateTests requirement', () => {
+    const entry = /\{[^{}]*href:\s*'\/ab-tests'[\s\S]{0,200}?\}/.exec(sidebar)?.[0] ?? '';
+    expect(entry, "the /ab-tests nav entry was not found in sidebar.tsx").not.toBe('');
+    expect(entry).toContain("requires: 'multivariateTests'");
+  });
+
+  it('is dropped by the filter under the capabilities the API actually reports', () => {
+    const nav = [
+      {
+        label: 'Send',
+        items: [
+          { href: '/campaigns', label: 'Campaigns' },
+          { href: '/ab-tests', label: 'A/B tests', requires: 'multivariateTests' as const },
+        ],
+      },
+    ];
+    const out = visibleSections(nav, NOTHING_AVAILABLE);
+    expect(out[0]!.items.map((i) => i.href)).toEqual(['/campaigns']);
   });
 });

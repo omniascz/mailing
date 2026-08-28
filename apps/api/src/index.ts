@@ -105,7 +105,6 @@ import identityRoutes from './routes/v1/identity.js';
 import rcsRoutes from './routes/v1/rcs.js';
 import aiAgentRoutes from './routes/v1/ai-agents.js';
 import aiRecommendationsRoutes from './routes/v1/ai-recommendations.js';
-import multivariateTestsRoutes from './routes/v1/multivariate-tests.js';
 import dedicatedIpsRoutes from './routes/v1/dedicated-ips.js';
 import abuseDetectionRoutes from './routes/v1/abuse-detection.js';
 import ispFeedbackRoutes from './routes/v1/isp-feedback.js';
@@ -490,7 +489,13 @@ export async function buildApp() {
   await app.register(rcsRoutes);
   await registerBeyondCore(aiAgentRoutes);
   await registerBeyondCore(aiRecommendationsRoutes);
-  await app.register(multivariateTestsRoutes);
+  // Multivariate tests are NOT registered. The feature has no send-side —
+  // nothing assigns a variant when a campaign goes out, nothing writes the
+  // per-variant counters, and nothing rolls a winner out — so every test that
+  // could be created here would finish `completed` with no winner, measured.
+  // The dashboard page is hidden behind the `multivariateTests` capability;
+  // leaving the API reachable would have hidden the button and kept the hole.
+  // The routes file and the service are left in place for whoever finishes it.
   await app.register(dedicatedIpsRoutes);
   await app.register(abuseDetectionRoutes);
   await app.register(ispFeedbackRoutes);
