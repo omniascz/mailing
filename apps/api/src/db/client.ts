@@ -2,14 +2,19 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema/index.js';
 import { explainGuardEnabled, installExplainGuard } from './explain-guard.js';
+import { POOL_APPLICATION_NAME } from './stuck-connection-reaper.js';
 
-const connectionString =
+export const connectionString =
   process.env.DATABASE_URL || 'postgresql://forgemsg:forgemsg@localhost:5432/forgemsg';
 
 // Disable prefetch for compatibility with PgBouncer transaction mode
 const client = postgres(connectionString, {
   max: 10,
   prepare: false,
+  // Names every backend this pool opens, so the stuck-connection watchdog can
+  // scope pg_terminate_backend to our own sessions and nothing else sharing
+  // the database. See db/stuck-connection-reaper.ts.
+  connection: { application_name: POOL_APPLICATION_NAME },
 });
 
 // Test-only: EXPLAIN every composed statement before running it, to catch
