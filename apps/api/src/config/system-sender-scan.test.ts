@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SCAN_TIMEOUT_MS } from '../test-support/scan-budget.js';
 
 /**
  * EARLY WARNING — NOT A BARRIER.
@@ -115,39 +116,47 @@ describe('system sender — early warning (not a barrier)', () => {
     ).toBe(0);
   });
 
-  it('no source file reads a system-sender name off process.env', () => {
-    const hits: string[] = [];
-    for (const file of files) {
-      const src = readFileSync(file, 'utf8');
-      for (const name of FAMILY) {
-        const needle = 'process.env.' + name;
-        if (countWholeTokens(src, needle, IDENTIFIER_CHAR, IDENTIFIER_CHAR) > 0) {
-          hits.push(toPosix(relative(SRC, file)) + ': ' + needle);
+  it(
+    'no source file reads a system-sender name off process.env',
+    () => {
+      const hits: string[] = [];
+      for (const file of files) {
+        const src = readFileSync(file, 'utf8');
+        for (const name of FAMILY) {
+          const needle = 'process.env.' + name;
+          if (countWholeTokens(src, needle, IDENTIFIER_CHAR, IDENTIFIER_CHAR) > 0) {
+            hits.push(toPosix(relative(SRC, file)) + ': ' + needle);
+          }
         }
       }
-    }
-    expect(
-      hits,
-      'read it from `env` in config/env.ts instead — a raw process.env read is ' +
-        'unvalidated, and `??` does not treat an empty string as absent, so a ' +
-        'set-but-empty variable sends an empty From rather than the fallback',
-    ).toEqual([]);
-  });
+      expect(
+        hits,
+        'read it from `env` in config/env.ts instead — a raw process.env read is ' +
+          'unvalidated, and `??` does not treat an empty string as absent, so a ' +
+          'set-but-empty variable sends an empty From rather than the fallback',
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 
-  it('no source file carries one of the retired fallback addresses', () => {
-    const hits: string[] = [];
-    for (const file of files) {
-      // config/env.ts names them in a comment on purpose — that is history, not
-      // a fallback. Guessing "comment vs code" for every file would be less
-      // honest than skipping the one file by name.
-      if (toPosix(relative(SRC, file)) === 'config/env.ts') continue;
-      const src = readFileSync(file, 'utf8');
-      for (const address of RETIRED_ADDRESSES) {
-        if (countWholeTokens(src, address, LOCAL_PART_CHAR) > 0) {
-          hits.push(toPosix(relative(SRC, file)) + ': ' + address);
+  it(
+    'no source file carries one of the retired fallback addresses',
+    () => {
+      const hits: string[] = [];
+      for (const file of files) {
+        // config/env.ts names them in a comment on purpose — that is history, not
+        // a fallback. Guessing "comment vs code" for every file would be less
+        // honest than skipping the one file by name.
+        if (toPosix(relative(SRC, file)) === 'config/env.ts') continue;
+        const src = readFileSync(file, 'utf8');
+        for (const address of RETIRED_ADDRESSES) {
+          if (countWholeTokens(src, address, LOCAL_PART_CHAR) > 0) {
+            hits.push(toPosix(relative(SRC, file)) + ': ' + address);
+          }
         }
       }
-    }
-    expect(hits, 'system mail has one sender and it comes from config').toEqual([]);
-  });
+      expect(hits, 'system mail has one sender and it comes from config').toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 });

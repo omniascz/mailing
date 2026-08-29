@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SCAN_TIMEOUT_MS } from '../test-support/scan-budget.js';
 
 /**
  * EARLY WARNING — NOT A BARRIER.
@@ -117,24 +118,28 @@ describe('inbound gates — early warning (not a barrier)', () => {
     expect(openAndGuard('      if (conn.expiresAt && !isStale(conn)) {', '')).toBe(false);
   });
 
-  it('no verifying file reopens a gate on a missing secret', () => {
-    const hits: string[] = [];
-    for (const file of files) {
-      const rel = toPosix(relative(SRC, file));
-      if (KNOWN_OPEN.has(rel)) continue;
-      const lines = readFileSync(file, 'utf8').split('\n');
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i]!.replace(/\r$/, '');
-        const next = (lines[i + 1] ?? '').replace(/\r$/, '');
-        if (openReturnTrue(line, next) || openAndGuard(line, next)) {
-          hits.push(`${rel}:${i + 1}  ${line.trim()}`);
+  it(
+    'no verifying file reopens a gate on a missing secret',
+    () => {
+      const hits: string[] = [];
+      for (const file of files) {
+        const rel = toPosix(relative(SRC, file));
+        if (KNOWN_OPEN.has(rel)) continue;
+        const lines = readFileSync(file, 'utf8').split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i]!.replace(/\r$/, '');
+          const next = (lines[i + 1] ?? '').replace(/\r$/, '');
+          if (openReturnTrue(line, next) || openAndGuard(line, next)) {
+            hits.push(`${rel}:${i + 1}  ${line.trim()}`);
+          }
         }
       }
-    }
-    expect(
-      hits,
-      'a missing secret must refuse the request, not skip the check — if a dev ' +
-        'path is wanted, gate it on an explicit flag the way lib/webhook-switches.ts does',
-    ).toEqual([]);
-  });
+      expect(
+        hits,
+        'a missing secret must refuse the request, not skip the check — if a dev ' +
+          'path is wanted, gate it on an explicit flag the way lib/webhook-switches.ts does',
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 });

@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createVideoLink } from './video-links.js';
+import { SCAN_TIMEOUT_MS } from '../../test-support/scan-budget.js';
 
 /**
  * EARLY WARNING — NOT A BARRIER.
@@ -89,22 +90,26 @@ describe('no fabricated Google Meet links', () => {
     expect(generatesMeetCode('  const code = randomUUID();')).toBe(false);
   });
 
-  it('no source file builds a meet.google.com URL or a Meet code', () => {
-    const hits: string[] = [];
-    for (const file of files) {
-      const lines = readFileSync(file, 'utf8').split('\n');
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i]!.replace(/\r$/, '');
-        if (fabricatesMeetLink(line) || generatesMeetCode(line)) {
-          hits.push(`${toPosix(relative(SRC, file))}:${i + 1}  ${line.trim()}`);
+  it(
+    'no source file builds a meet.google.com URL or a Meet code',
+    () => {
+      const hits: string[] = [];
+      for (const file of files) {
+        const lines = readFileSync(file, 'utf8').split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i]!.replace(/\r$/, '');
+          if (fabricatesMeetLink(line) || generatesMeetCode(line)) {
+            hits.push(`${toPosix(relative(SRC, file))}:${i + 1}  ${line.trim()}`);
+          }
         }
       }
-    }
-    expect(
-      hits,
-      'a Meet link nobody created is a confirmed booking the invitee cannot join',
-    ).toEqual([]);
-  });
+      expect(
+        hits,
+        'a Meet link nobody created is a confirmed booking the invitee cannot join',
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 
   it('createVideoLink returns nothing for google_meet', async () => {
     // Not merely absent from the enum: the function itself has no branch, so a

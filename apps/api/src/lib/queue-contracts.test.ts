@@ -44,6 +44,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { QUEUE_CONTRACTS, enqueueValidated, QueueContractError } from './queue-contracts.js';
+import { SCAN_TIMEOUT_MS } from '../test-support/scan-budget.js';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -448,9 +449,6 @@ describe('enqueueValidated', () => {
 // producer can bypass the contract". Do not try to close the gap by making the
 // regexes cleverer; that race is not winnable and the queue object already
 // wins it.
-
-/** See the note on the it() below for why this is per-test, not global. */
-const SCAN_TIMEOUT_MS = 30_000;
 
 describe('producers reach the queue the usual way', () => {
   /**

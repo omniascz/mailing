@@ -18,6 +18,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SCAN_TIMEOUT_MS } from '../test-support/scan-budget.js';
 
 const SCHEMA_DIR = path.dirname(fileURLToPath(import.meta.url)) + path.sep + 'schema';
 const BARREL = path.join(SCHEMA_DIR, 'index.ts');
@@ -51,31 +52,39 @@ function barrelExports(): Set<string> {
 }
 
 describe('db/schema/index.ts barrel', () => {
-  it('finds the schema modules at all', () => {
-    // A check that scans nothing passes quietly; pin a floor so a moved
-    // directory fails loudly instead.
-    expect(declaredTables().length).toBeGreaterThan(250);
-    expect(barrelExports().size).toBeGreaterThan(100);
-  });
+  it(
+    'finds the schema modules at all',
+    () => {
+      // A check that scans nothing passes quietly; pin a floor so a moved
+      // directory fails loudly instead.
+      expect(declaredTables().length).toBeGreaterThan(250);
+      expect(barrelExports().size).toBeGreaterThan(100);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 
-  it('re-exports every module that declares a pgTable', () => {
-    const exported = barrelExports();
-    const missing = declaredTables().filter((d) => !exported.has(d.module));
+  it(
+    're-exports every module that declares a pgTable',
+    () => {
+      const exported = barrelExports();
+      const missing = declaredTables().filter((d) => !exported.has(d.module));
 
-    const report = missing
-      .map(
-        (d) =>
-          `\n  ${d.table.padEnd(28)} declared in schema/${d.module}.ts but not re-exported` +
-          `\n  ${''.padEnd(28)} → add: export * from './${d.module}.js';`,
-      )
-      .join('');
+      const report = missing
+        .map(
+          (d) =>
+            `\n  ${d.table.padEnd(28)} declared in schema/${d.module}.ts but not re-exported` +
+            `\n  ${''.padEnd(28)} → add: export * from './${d.module}.js';`,
+        )
+        .join('');
 
-    expect(
-      missing,
-      `${missing.length} table(s) are invisible to drizzle-kit because their module is not in` +
-        ` the barrel. No migration will ever be generated for them, while the services that` +
-        ` import them directly will query them at runtime and get` +
-        ` \`relation "…" does not exist\`.${report}\n`,
-    ).toEqual([]);
-  });
+      expect(
+        missing,
+        `${missing.length} table(s) are invisible to drizzle-kit because their module is not in` +
+          ` the barrel. No migration will ever be generated for them, while the services that` +
+          ` import them directly will query them at runtime and get` +
+          ` \`relation "…" does not exist\`.${report}\n`,
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 });

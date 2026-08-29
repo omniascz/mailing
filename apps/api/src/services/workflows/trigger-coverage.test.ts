@@ -36,6 +36,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { workflowTriggerTypeEnum } from '../../db/schema/workflows.js';
 import { WORKFLOW_TEMPLATES } from '../workflow-templates/registry.js';
+import { SCAN_TIMEOUT_MS } from '../../test-support/scan-budget.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const API_SRC = path.resolve(HERE, '../..');
@@ -429,16 +430,20 @@ describe('(3) every enum value has an odpalovač with a production caller', () =
 });
 
 describe('(4) no trigger type literal outside the enum', () => {
-  it('every triggerType comparison names a real enum value', () => {
-    const strays = allTriggerTypeLiterals().filter((l) => !ENUM_VALUES.includes(l.value));
-    expect(
-      strays.map((s) => `${s.value} (${s.where})`),
-      `These compare workflows.triggerType against a value the enum does not ` +
-        `contain, so the query matches zero rows every time and the code around ` +
-        `it is unreachable. Usually written with an \`as never\` cast to silence ` +
-        `the compiler.`,
-    ).toEqual([]);
-  });
+  it(
+    'every triggerType comparison names a real enum value',
+    () => {
+      const strays = allTriggerTypeLiterals().filter((l) => !ENUM_VALUES.includes(l.value));
+      expect(
+        strays.map((s) => `${s.value} (${s.where})`),
+        `These compare workflows.triggerType against a value the enum does not ` +
+          `contain, so the query matches zero rows every time and the code around ` +
+          `it is unreachable. Usually written with an \`as never\` cast to silence ` +
+          `the compiler.`,
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 });
 
 describe('(5) the UI offers every enum value', () => {
