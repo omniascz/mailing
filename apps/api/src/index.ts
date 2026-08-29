@@ -314,6 +314,8 @@ import {
   instagramWebhookEnabled,
   messengerWebhookEnabled,
 } from './lib/webhook-switches.js';
+import { connectionString } from './db/client.js';
+import { readReaperConfig, startStuckConnectionReaper } from './db/stuck-connection-reaper.js';
 
 // CZ/SK merge-tag filters. The workers process registers these at start-up;
 // the API never did, so every place the API renders or inspects a template —
@@ -705,6 +707,16 @@ export async function buildApp() {
   await app.register(channelFallbackRoutes);
   await app.register(aiAltTextRoutes);
   await app.register(unsubscribeAbRoutes);
+
+  // Watchdog for pool connections that wedge mid-protocol. Without it a single
+  // wedged connection means one request that never gets a response and one
+  // pool slot that is never returned — measured in CI as a route that logs
+  // `incoming request` and never `request completed`. See
+  // db/stuck-connection-reaper.ts for why no existing timeout catches it.
+  const reaper = startStuckConnectionReaper(connectionString, readReaperConfig(), app.log);
+  app.addHook('onClose', async () => {
+    await reaper.stop();
+  });
 
   return app;
 }
