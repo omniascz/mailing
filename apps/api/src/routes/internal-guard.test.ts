@@ -49,6 +49,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../index.js';
+import { SCAN_TIMEOUT_MS } from '../test-support/scan-budget.js';
 
 const INTERNAL_PREFIX = '/api/v1/internal/';
 const ROUTES_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -258,21 +259,25 @@ function scanRouteFiles(): Offence[] {
 }
 
 describe('a session guard beside an internal route is encapsulated, not exempted', () => {
-  it('no route file guards internal routes by a list of paths to skip', () => {
-    const offences = scanRouteFiles().map(
-      (o) => `${o.file}:${o.line} — ${o.hook}('preHandler', … requireAuth …)`,
-    );
+  it(
+    'no route file guards internal routes by a list of paths to skip',
+    () => {
+      const offences = scanRouteFiles().map(
+        (o) => `${o.file}:${o.line} — ${o.hook}('preHandler', … requireAuth …)`,
+      );
 
-    expect(
-      offences,
-      offences.length
-        ? `A plugin-wide auth hook sits in a file that also registers ` +
-            `${INTERNAL_PREFIX}* routes:\n  ${offences.join('\n  ')}\n` +
-            `Move the guarded routes into app.register(async (scope) => { ` +
-            `scope.addHook('preHandler', app.requireAuth); … }) — see ` +
-            `routes/v1/video.ts. A skip-list is only as good as the next person ` +
-            `who adds a route and does not know it exists.`
-        : undefined,
-    ).toEqual([]);
-  });
+      expect(
+        offences,
+        offences.length
+          ? `A plugin-wide auth hook sits in a file that also registers ` +
+              `${INTERNAL_PREFIX}* routes:\n  ${offences.join('\n  ')}\n` +
+              `Move the guarded routes into app.register(async (scope) => { ` +
+              `scope.addHook('preHandler', app.requireAuth); … }) — see ` +
+              `routes/v1/video.ts. A skip-list is only as good as the next person ` +
+              `who adds a route and does not know it exists.`
+          : undefined,
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 });

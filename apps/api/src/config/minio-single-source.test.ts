@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SCAN_TIMEOUT_MS } from '../test-support/scan-budget.js';
 
 /**
  * Object-storage configuration comes from the schema, not from process.env.
@@ -116,18 +117,22 @@ describe('SELF-TEST: the matcher fires on what it claims to', () => {
 });
 
 describe('one source of truth for object storage', () => {
-  it('no source file outside config/env.ts reads MINIO_* from process.env', () => {
-    const offenders = sourceFiles(SRC)
-      .filter((p) => readsMinioFromEnv(readFileSync(p, 'utf8')))
-      .map((p) => p.slice(SRC.length + 1).replace(/\\/g, '/'));
+  it(
+    'no source file outside config/env.ts reads MINIO_* from process.env',
+    () => {
+      const offenders = sourceFiles(SRC)
+        .filter((p) => readsMinioFromEnv(readFileSync(p, 'utf8')))
+        .map((p) => p.slice(SRC.length + 1).replace(/\\/g, '/'));
 
-    expect(
-      offenders,
-      `these files read MINIO_* directly. Import { env } from config/env.js instead — ` +
-        `a local fallback is how media and the email-event archive ended up in two ` +
-        `different buckets.`,
-    ).toEqual([]);
-  });
+      expect(
+        offenders,
+        `these files read MINIO_* directly. Import { env } from config/env.js instead — ` +
+          `a local fallback is how media and the email-event archive ended up in two ` +
+          `different buckets.`,
+      ).toEqual([]);
+    },
+    SCAN_TIMEOUT_MS,
+  );
 
   it('every bucket consumer therefore names the same variable', async () => {
     // Behavioural half: the schema is what they all read, so setting the

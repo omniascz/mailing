@@ -20,6 +20,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import ts from 'typescript';
+import { SCAN_TIMEOUT_MS } from '../../test-support/scan-budget.js';
 
 const SRC = join(process.cwd(), 'src');
 
@@ -144,11 +145,12 @@ function findStatusWrites(file: string): Offence[] {
  * 487 ms saved) would still leave roughly 9.4 s under the load that already
  * broke it.
  *
- * So the number is raised here, for this test, rather than globally — a global
- * raise would also hide the next slow test, whatever its reason. 30 s is 2.3x
- * the worst run observed.
+ * That is why the budget is SCAN_TIMEOUT_MS from test-support/scan-budget.ts
+ * rather than a number written here. This is not the only scanner in the
+ * package — it was one of two files carrying its own copy, while the scanners
+ * without one stayed on the global 10 s until one of them started crossing it.
+ * A budget that lives in two places is a budget that diverges.
  */
-const SCAN_TIMEOUT_MS = 30_000;
 
 describe('contacts.status has one writer', () => {
   it(
