@@ -16,9 +16,18 @@ apps/engine/engine.log
 apps/engine/engine.err
 
 # Environment
+#
+# Deny every .env variant, then let the committed templates back in. The old
+# list named the three shapes someone had thought of — .env, .env.local,
+# .env.*.local — so anything else was tracked by default. A probe env written
+# during an investigation (.env.probe) sat in a worktree holding five real
+# 66-character secrets, one `git add -A` away from the history.
+#
+# The negation is what keeps the six *.example templates committed; they are
+# the documentation for these variables and must stay visible.
 .env
-.env.local
-.env.*.local
+.env.*
+!.env*.example
 
 # IDE
 .idea
