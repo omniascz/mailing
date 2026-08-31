@@ -255,8 +255,27 @@ const Env = z
     TWILIO_AUTH_TOKEN: z.string().optional(),
     DEEPGRAM_API_KEY: z.string().optional(),
     ELEVENLABS_API_KEY: z.string().optional(),
-    STRIPE_SECRET_KEY: z.string().optional(),
-    STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    // Billing is not optional in production, and these were.
+    //
+    // routes/v1/billing.ts is registered with a plain app.register — core, not
+    // registerBeyondCore — so every deployment serves /billing/checkout,
+    // /billing/portal and /billing/webhook. With the keys unset the process
+    // starts happily and each of those fails at use instead: checkout, portal
+    // and cancel throw `AppError.badRequest('Stripe not configured')` (400),
+    // and the webhook throws `STRIPE_WEBHOOK_SECRET not configured` (500). A
+    // customer clicking Upgrade gets a broken button, and Stripe's
+    // subscription events are answered 500 and retried into nothing.
+    //
+    // Measured before this change: NODE_ENV=production with both unset and
+    // everything else set booted clean. That is the difference from MINIO_*,
+    // where the same audit found the boot already refusing.
+    //
+    // prodRequired with no dev default, like the object-store credentials in
+    // #99: absent in development, mandatory in production, and the failure
+    // moves from a 400 the customer sees to a refusal to start that the
+    // operator sees.
+    STRIPE_SECRET_KEY: prodRequired(z.string()),
+    STRIPE_WEBHOOK_SECRET: prodRequired(z.string()),
 
     // ─── Telemetry ────────────────────────────────────────────────────────────
     // With SENTRY_DSN unset, telemetry init is a no-op, so dev runs and tests
