@@ -66,3 +66,5 @@ Production gates apply behind a manual `gh workflow run` (see
   account; this skeleton only outputs LB hostnames.
 - Configure Karpenter / cluster-autoscaler / external-dns — those install
   via Helm in the EKS post-bootstrap stage.
+
+<!-- probe: trigger infra-plan.yml to measure what it does without credentials -->
