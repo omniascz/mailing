@@ -20,8 +20,7 @@
  */
 
 import { Worker, type Job } from 'bullmq';
-import { QUEUE_NAMES, connection as redisConnection } from '../queues/index.js';
-import { Queue } from 'bullmq';
+import { cronQueue, QUEUE_NAMES, connection as redisConnection } from '../queues/index.js';
 import * as zlib from 'node:zlib';
 import { promisify } from 'node:util';
 
@@ -231,7 +230,7 @@ export async function scheduleDmarcImapPoll(): Promise<void> {
   // Only schedule if IMAP is configured
   if (!process.env.DMARC_IMAP_HOST) return;
 
-  const queue = new Queue(QUEUE_NAMES.DMARC_IMAP_POLL, { connection: redisConnection });
+  const queue = cronQueue(QUEUE_NAMES.DMARC_IMAP_POLL);
   await queue.add(
     'poll',
     {},

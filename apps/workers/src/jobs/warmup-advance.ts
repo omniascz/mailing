@@ -4,13 +4,13 @@
  * all actively warming IPs by one day.
  */
 
-import { Worker, Queue } from 'bullmq';
-import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { Worker } from 'bullmq';
+import { connection, cronQueue, QUEUE_NAMES } from '../queues/index.js';
 
 const API_BASE = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
-const warmupAdvanceQueue = new Queue(QUEUE_NAMES.WARMUP_ADVANCE, { connection });
+const warmupAdvanceQueue = cronQueue(QUEUE_NAMES.WARMUP_ADVANCE);
 
 export function startWarmupAdvanceWorker() {
   const worker = new Worker(

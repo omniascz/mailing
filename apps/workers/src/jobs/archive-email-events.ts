@@ -13,8 +13,8 @@
  * months later rather than as a broken screen today.
  */
 
-import { Queue, Worker } from 'bullmq';
-import { connection } from '../queues/index.js';
+import { Worker } from 'bullmq';
+import { connection, cronQueue } from '../queues/index.js';
 import { QUEUE_NAMES } from '../queues/index.js';
 import { internalHeaders } from '../lib/internal-api.js';
 
@@ -22,7 +22,7 @@ export interface ArchiveJobData {
   cutoffDays?: number;
 }
 
-const archiveQueue = new Queue(QUEUE_NAMES.ARCHIVE_EMAIL_EVENTS, { connection });
+const archiveQueue = cronQueue(QUEUE_NAMES.ARCHIVE_EMAIL_EVENTS);
 
 export function startArchiveWorker(): Worker {
   const worker = new Worker<ArchiveJobData>(

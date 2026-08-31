@@ -4,13 +4,13 @@
  * via the API's internal endpoint (to avoid cross-package imports).
  */
 
-import { Worker, Queue } from 'bullmq';
-import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { Worker } from 'bullmq';
+import { connection, cronQueue, QUEUE_NAMES } from '../queues/index.js';
 
 const API_BASE = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
-const rankPollQueue = new Queue(QUEUE_NAMES.SEO_RANK_POLL, { connection });
+const rankPollQueue = cronQueue(QUEUE_NAMES.SEO_RANK_POLL);
 
 export function startSeoRankPollWorker() {
   const worker = new Worker(

@@ -3,13 +3,13 @@
  * Runs hourly; calls the internal API to poll all due external feeds.
  */
 
-import { Worker, Queue } from 'bullmq';
-import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { Worker } from 'bullmq';
+import { connection, cronQueue, QUEUE_NAMES } from '../queues/index.js';
 
 const API_BASE = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
-const feedPollQueue = new Queue(QUEUE_NAMES.EXTERNAL_FEED_POLL, { connection });
+const feedPollQueue = cronQueue(QUEUE_NAMES.EXTERNAL_FEED_POLL);
 
 export function startExternalFeedPollWorker() {
   const worker = new Worker(
