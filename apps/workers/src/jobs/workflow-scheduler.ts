@@ -8,24 +8,24 @@
  *   daily-triggers      : 06:00 UTC daily → POST /internal/triggers/daily-run
  */
 import { env } from '../config/env.js';
-import { Worker, Queue } from 'bullmq';
-import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { Worker } from 'bullmq';
+import { connection, cronQueue, QUEUE_NAMES } from '../queues/index.js';
 import { captureJobException } from '../lib/telemetry.js';
 
 const API_URL = process.env.API_URL ?? process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
 const SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
-const resumeQueue = new Queue(QUEUE_NAMES.WORKFLOW_RUN_RESUME, { connection });
-const dailyQueue = new Queue(QUEUE_NAMES.DAILY_TRIGGERS, { connection });
-const warehouseQueue = new Queue(QUEUE_NAMES.WAREHOUSE_SYNC, { connection });
-const clickhouseQueue = new Queue(QUEUE_NAMES.CLICKHOUSE_REPLICATE, { connection });
-const ticketingDayOfQueue = new Queue(QUEUE_NAMES.TICKETING_DAY_OF, { connection });
-const ticketingFillHouseQueue = new Queue(QUEUE_NAMES.TICKETING_FILL_HOUSE, { connection });
-const ticketingDiscoverQueue = new Queue(QUEUE_NAMES.TICKETING_DISCOVER, { connection });
-const campaignDispatchQueue = new Queue(QUEUE_NAMES.CAMPAIGN_DISPATCH, { connection });
-const browseAbandonmentQueue = new Queue(QUEUE_NAMES.BROWSE_ABANDONMENT, { connection });
-const scheduledReportsQueue = new Queue(QUEUE_NAMES.SCHEDULED_REPORTS, { connection });
-const segmentMembershipQueue = new Queue(QUEUE_NAMES.SEGMENT_MEMBERSHIP, { connection });
+const resumeQueue = cronQueue(QUEUE_NAMES.WORKFLOW_RUN_RESUME);
+const dailyQueue = cronQueue(QUEUE_NAMES.DAILY_TRIGGERS);
+const warehouseQueue = cronQueue(QUEUE_NAMES.WAREHOUSE_SYNC);
+const clickhouseQueue = cronQueue(QUEUE_NAMES.CLICKHOUSE_REPLICATE);
+const ticketingDayOfQueue = cronQueue(QUEUE_NAMES.TICKETING_DAY_OF);
+const ticketingFillHouseQueue = cronQueue(QUEUE_NAMES.TICKETING_FILL_HOUSE);
+const ticketingDiscoverQueue = cronQueue(QUEUE_NAMES.TICKETING_DISCOVER);
+const campaignDispatchQueue = cronQueue(QUEUE_NAMES.CAMPAIGN_DISPATCH);
+const browseAbandonmentQueue = cronQueue(QUEUE_NAMES.BROWSE_ABANDONMENT);
+const scheduledReportsQueue = cronQueue(QUEUE_NAMES.SCHEDULED_REPORTS);
+const segmentMembershipQueue = cronQueue(QUEUE_NAMES.SEGMENT_MEMBERSHIP);
 
 async function post(path: string): Promise<unknown> {
   const res = await fetch(`${API_URL}${path}`, {

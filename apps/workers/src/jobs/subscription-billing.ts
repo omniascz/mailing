@@ -6,13 +6,13 @@
  * subscription's period window and enqueues delivery via the invoice flow.
  */
 
-import { Worker, Queue } from 'bullmq';
-import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { Worker } from 'bullmq';
+import { connection, cronQueue, QUEUE_NAMES } from '../queues/index.js';
 
 const API_BASE = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
-const billingQueue = new Queue(QUEUE_NAMES.SUBSCRIPTION_BILLING, { connection });
+const billingQueue = cronQueue(QUEUE_NAMES.SUBSCRIPTION_BILLING);
 
 async function generateDue(): Promise<{ processed: number; generated: number; errors: number }> {
   const res = await fetch(`${API_BASE}/api/v1/internal/subscriptions/generate-due`, {

@@ -3,14 +3,18 @@
  * Daily cron: marks overdue invoices and sends reminder workflow events.
  */
 
-import { Worker, Queue } from 'bullmq';
-import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { Worker } from 'bullmq';
+import { connection, cronQueue, QUEUE_NAMES } from '../queues/index.js';
 
 const API_BASE = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
-const reminderQueue = new Queue(QUEUE_NAMES.INVOICE_REMINDER, { connection });
-const adPerfQueue = new Queue(QUEUE_NAMES.AD_PERF_SYNC, { connection });
+// Two queues, two verdicts. invoice-reminder is the one queue in the whole
+// set that must NOT retry — sendDueReminders re-sends to invoices it already
+// reminded today. ad-perf-sync upserts with onConflictDoNothing and is safe.
+// See CRON_PROFILE in queues/index.ts.
+const reminderQueue = cronQueue(QUEUE_NAMES.INVOICE_REMINDER);
+const adPerfQueue = cronQueue(QUEUE_NAMES.AD_PERF_SYNC);
 
 async function callInternal(path: string) {
   const res = await fetch(`${API_BASE}${path}`, {

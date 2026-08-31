@@ -9,14 +9,14 @@
  * in the worker container. No external transcoding service required.
  */
 
-import { Worker, Queue } from 'bullmq';
-import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { Worker } from 'bullmq';
+import { connection, cronQueue, QUEUE_NAMES } from '../queues/index.js';
 import { throwIfAuthFailure } from '../lib/internal-api.js';
 
 const API_BASE = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
-const transcodeQueue = new Queue(QUEUE_NAMES.VIDEO_TRANSCODE, { connection });
+const transcodeQueue = cronQueue(QUEUE_NAMES.VIDEO_TRANSCODE);
 
 interface VideoPending {
   id: string;

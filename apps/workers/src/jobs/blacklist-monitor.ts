@@ -9,9 +9,9 @@
  * Also handles one-off per-IP check jobs triggered by the operator.
  */
 
-import { Worker, Queue, type Job } from 'bullmq';
+import { Worker, type Job } from 'bullmq';
 import { captureJobException } from '../lib/telemetry.js';
-import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { connection, cronQueue, QUEUE_NAMES } from '../queues/index.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
@@ -23,9 +23,8 @@ export interface BlacklistMonitorJobData {
   repeat?: boolean;
 }
 
-export const blacklistMonitorQueue = new Queue<BlacklistMonitorJobData>(
+export const blacklistMonitorQueue = cronQueue<BlacklistMonitorJobData>(
   QUEUE_NAMES.BLACKLIST_MONITOR,
-  { connection },
 );
 
 async function processBlacklistMonitor(job: Job<BlacklistMonitorJobData>) {

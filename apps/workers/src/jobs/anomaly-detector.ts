@@ -12,13 +12,13 @@
  * reminder patterns already in place.
  */
 
-import { Queue, Worker } from 'bullmq';
-import { connection, QUEUE_NAMES } from '../queues/index.js';
+import { Worker } from 'bullmq';
+import { connection, cronQueue, QUEUE_NAMES } from '../queues/index.js';
 
 const API_BASE = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? '';
 
-const anomalyQueue = new Queue(QUEUE_NAMES.ANOMALY_DETECTOR, { connection });
+const anomalyQueue = cronQueue(QUEUE_NAMES.ANOMALY_DETECTOR);
 
 export function startAnomalyDetectorWorker(): Worker {
   const worker = new Worker(
