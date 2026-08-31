@@ -7,6 +7,8 @@ import type {
   DynamicRuleOp,
   EmailSchema,
   PollBlock,
+  ShareBlock,
+  SocialBlock,
 } from '../schema/blocks.js';
 import type { BlockPath } from './store.js';
 import {
@@ -18,6 +20,20 @@ import {
   removePollOption,
   setPollOption,
 } from './poll-options.js';
+import {
+  SOCIAL_NETWORK_TYPES,
+  addSocialNetwork,
+  removeSocialNetwork,
+  updateSocialNetwork,
+  type SocialNetworkType,
+} from './social-networks.js';
+import {
+  SHARE_NETWORKS,
+  SHARE_NETWORK_LABEL,
+  canRemoveShareNetwork,
+  toggleShareNetwork,
+} from './share-networks.js';
+import { parseBoundedInt, parseOptionalPositiveInt } from './numeric-fields.js';
 
 interface PropertyEditorProps {
   email: EmailSchema;
@@ -374,30 +390,278 @@ function BlockForm({
       );
 
     case 'social':
+      return <SocialEditor block={block} onUpdate={update} />;
+
+    case 'video':
       return (
         <>
-          <Field label="Icon size (px)">
+          <Field label="Video URL">
             <input
-              type="number"
-              min={16}
-              max={64}
-              value={block.iconSize}
-              onChange={(e) => update({ iconSize: Number(e.target.value) })}
+              type="text"
+              value={block.videoUrl}
+              onChange={(e) => update({ videoUrl: e.target.value })}
               className={inputCls}
             />
           </Field>
-          <Field label="Align">
+          <Field label="Thumbnail image URL">
+            {/* Stored, not derived: renderVideo reads block.thumbnailSrc as-is. */}
+            <input
+              type="text"
+              value={block.thumbnailSrc}
+              onChange={(e) => update({ thumbnailSrc: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Alt text">
+            <input
+              type="text"
+              value={block.alt}
+              onChange={(e) => update({ alt: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Width (px, blank = full width)">
+            <input
+              type="number"
+              min={1}
+              value={block.width ?? ''}
+              onChange={(e) => update({ width: parseOptionalPositiveInt(e.target.value) })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Play button colour">
+            <input
+              type="color"
+              value={block.playButtonColor}
+              onChange={(e) => update({ playButtonColor: e.target.value })}
+              className="h-9 w-full"
+            />
+          </Field>
+          <Field label="Overlay colour">
+            <input
+              type="text"
+              value={block.overlayColor}
+              onChange={(e) => update({ overlayColor: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <AlignField value={block.align} onChange={(align) => update({ align })} />
+        </>
+      );
+
+    case 'coupon':
+      return (
+        <>
+          <Field label="Code">
+            <input
+              type="text"
+              value={block.code}
+              onChange={(e) => update({ code: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Headline">
+            <input
+              type="text"
+              value={block.headline}
+              onChange={(e) => update({ headline: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Description">
+            <textarea
+              value={block.description}
+              onChange={(e) => update({ description: e.target.value })}
+              className={`${inputCls} h-20`}
+            />
+          </Field>
+          <Field label="Expiry text">
+            <input
+              type="text"
+              value={block.expiryText}
+              onChange={(e) => update({ expiryText: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Button text (blank hides the button)">
+            <input
+              type="text"
+              value={block.ctaText}
+              onChange={(e) => update({ ctaText: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Button URL">
+            <input
+              type="text"
+              value={block.ctaUrl}
+              onChange={(e) => update({ ctaUrl: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Code background">
+            <input
+              type="color"
+              value={block.codeBackgroundColor}
+              onChange={(e) => update({ codeBackgroundColor: e.target.value })}
+              className="h-9 w-full"
+            />
+          </Field>
+          <Field label="Code text colour">
+            <input
+              type="color"
+              value={block.codeTextColor}
+              onChange={(e) => update({ codeTextColor: e.target.value })}
+              className="h-9 w-full"
+            />
+          </Field>
+          <Field label="Border colour">
+            <input
+              type="color"
+              value={block.borderColor}
+              onChange={(e) => update({ borderColor: e.target.value })}
+              className="h-9 w-full"
+            />
+          </Field>
+          <Field label="Border style">
             <select
-              value={block.align}
-              onChange={(e) => update({ align: e.target.value })}
+              value={block.borderStyle}
+              onChange={(e) => update({ borderStyle: e.target.value })}
               className={inputCls}
             >
+              <option value="solid">solid</option>
+              <option value="dashed">dashed</option>
+              <option value="dotted">dotted</option>
+            </select>
+          </Field>
+          <AlignField value={block.align} onChange={(align) => update({ align })} />
+        </>
+      );
+
+    case 'code':
+      return (
+        <>
+          <Field label="HTML">
+            <textarea
+              value={block.html}
+              onChange={(e) => update({ html: e.target.value })}
+              maxLength={CODE_HTML_MAX}
+              className={`${inputCls} h-48 font-mono`}
+            />
+          </Field>
+          <div className="text-xs text-secondary-500">
+            {block.html.length.toLocaleString()} / {CODE_HTML_MAX.toLocaleString()} characters. The
+            renderer sanitises this before it is sent, so scripts and event handlers are dropped
+            whatever you paste here.
+          </div>
+        </>
+      );
+
+    case 'share':
+      return <ShareEditor block={block} onUpdate={update} />;
+
+    case 'product':
+      return (
+        <>
+          <Field label="Title">
+            <input
+              type="text"
+              value={block.title}
+              onChange={(e) => update({ title: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Image URL">
+            <input
+              type="text"
+              value={block.imageSrc}
+              onChange={(e) => update({ imageSrc: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Product URL">
+            <input
+              type="text"
+              value={block.productUrl}
+              onChange={(e) => update({ productUrl: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Price">
+            <input
+              type="text"
+              value={block.price}
+              onChange={(e) => update({ price: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Compare-at price (blank hides it)">
+            <input
+              type="text"
+              value={block.compareAtPrice}
+              onChange={(e) => update({ compareAtPrice: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Description">
+            <textarea
+              value={block.description}
+              onChange={(e) => update({ description: e.target.value })}
+              className={`${inputCls} h-20`}
+            />
+          </Field>
+          <Field label="Button text">
+            <input
+              type="text"
+              value={block.ctaText}
+              onChange={(e) => update({ ctaText: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Image position">
+            <select
+              value={block.imagePosition}
+              onChange={(e) => update({ imagePosition: e.target.value })}
+              className={inputCls}
+            >
+              <option value="top">top</option>
               <option value="left">left</option>
-              <option value="center">center</option>
               <option value="right">right</option>
             </select>
           </Field>
-          <div className="text-xs text-secondary-500">Networks: edit via JSON for now.</div>
+          <Field label="Title colour">
+            <input
+              type="color"
+              value={block.titleColor}
+              onChange={(e) => update({ titleColor: e.target.value })}
+              className="h-9 w-full"
+            />
+          </Field>
+          <Field label="Price colour">
+            <input
+              type="color"
+              value={block.priceColor}
+              onChange={(e) => update({ priceColor: e.target.value })}
+              className="h-9 w-full"
+            />
+          </Field>
+          <Field label="Button background">
+            <input
+              type="color"
+              value={block.ctaBackgroundColor}
+              onChange={(e) => update({ ctaBackgroundColor: e.target.value })}
+              className="h-9 w-full"
+            />
+          </Field>
+          <Field label="Button text colour">
+            <input
+              type="color"
+              value={block.ctaTextColor}
+              onChange={(e) => update({ ctaTextColor: e.target.value })}
+              className="h-9 w-full"
+            />
+          </Field>
+          <AlignField value={block.align} onChange={(align) => update({ align })} />
         </>
       );
 
@@ -454,7 +718,235 @@ function BlockForm({
 
     case 'dynamic':
       return <DynamicEditor block={block} onUpdate={update} />;
+
+    default:
+      // Unreachable while every BlockType above is handled, and
+      // property-panel-coverage.test.ts is what keeps it that way. It exists
+      // for the window between someone adding a block type and someone
+      // noticing: before this branch, that block selected an empty right
+      // rail under a heading — verified by rendering PropertyEditor with a
+      // video block, which produced 140 characters of markup and not one
+      // form control. Silence reads as "this block has no settings".
+      //
+      // Deliberately NOT a generic JSON editor. That would let the next
+      // missing panel look finished and would satisfy any test that only
+      // asks whether something rendered — the same trap a fallback label
+      // would have set in the palette. This branch renders no form control
+      // on purpose, so the coverage test still goes red.
+      return (
+        <div className="rounded border border-warning-500 bg-warning-50 p-2 text-xs text-warning-700">
+          This block type has no editor yet. It will still send exactly as it is — nothing here is
+          lost — but it can only be changed through the API.
+        </div>
+      );
   }
+}
+
+// ---------------------------------------------------------------------------
+
+/** `codeBlockSchema.html` is `.max(50_000)`; the counter and the input agree with it. */
+const CODE_HTML_MAX = 50_000;
+
+/** The left/center/right select that six blocks share verbatim. */
+function AlignField({
+  value,
+  onChange,
+}: {
+  value: 'left' | 'center' | 'right';
+  onChange: (align: 'left' | 'center' | 'right') => void;
+}) {
+  return (
+    <Field label="Align">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value as 'left' | 'center' | 'right')}
+        className={inputCls}
+      >
+        <option value="left">left</option>
+        <option value="center">center</option>
+        <option value="right">right</option>
+      </select>
+    </Field>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * The sender's own profile links.
+ *
+ * Add/remove follows DynamicEditor: pure closures that build a new array and
+ * hand it to onUpdate, never mutating in place. The arithmetic lives in
+ * social-networks.ts so it can be tested without a DOM.
+ */
+function SocialEditor({
+  block,
+  onUpdate,
+}: {
+  block: SocialBlock;
+  onUpdate: (patch: Record<string, unknown>) => void;
+}) {
+  const { networks } = block;
+
+  return (
+    <>
+      <Field label="Icon size (px)">
+        <input
+          type="number"
+          min={16}
+          max={64}
+          value={block.iconSize}
+          onChange={(e) =>
+            onUpdate({ iconSize: parseBoundedInt(e.target.value, 16, 64, block.iconSize) })
+          }
+          className={inputCls}
+        />
+      </Field>
+      <AlignField value={block.align} onChange={(align) => onUpdate({ align })} />
+
+      <div className="flex flex-col gap-2">
+        <div className="text-xs font-semibold uppercase tracking-wide text-secondary-500">
+          Networks
+        </div>
+        {networks.map((network, i) => (
+          <div key={i} className="flex flex-col gap-1 rounded border border-secondary-200 p-2">
+            <select
+              value={network.type}
+              onChange={(e) =>
+                onUpdate({
+                  networks: updateSocialNetwork(networks, i, {
+                    type: e.target.value as SocialNetworkType,
+                  }),
+                })
+              }
+              className={inputCls}
+            >
+              {SOCIAL_NETWORK_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={network.url}
+              onChange={(e) =>
+                onUpdate({ networks: updateSocialNetwork(networks, i, { url: e.target.value }) })
+              }
+              placeholder="https://facebook.com/yourpage"
+              className={inputCls}
+            />
+            <button
+              type="button"
+              onClick={() => onUpdate({ networks: removeSocialNetwork(networks, i) })}
+              className="self-end text-xs text-danger-600 hover:underline"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => onUpdate({ networks: addSocialNetwork(networks) })}
+          className="rounded border border-dashed border-secondary-300 px-2 py-1 text-xs text-secondary-600 hover:border-primary-400 hover:text-primary-600"
+        >
+          + Add network
+        </button>
+        {networks.length === 0 && (
+          <div className="text-xs text-secondary-500">
+            No networks: this block renders nothing at all.
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Which share buttons the recipient gets.
+ *
+ * A fixed set of checkboxes rather than a list, because a share network is a
+ * bare enum value: the link is built per send by shareTargets() from the
+ * view-in-browser URL, so there is nothing per-network to type in. The last
+ * ticked network cannot be unticked — `networks` is `.min(1)`.
+ */
+function ShareEditor({
+  block,
+  onUpdate,
+}: {
+  block: ShareBlock;
+  onUpdate: (patch: Record<string, unknown>) => void;
+}) {
+  const { networks } = block;
+  const isLastOne = !canRemoveShareNetwork(networks);
+
+  return (
+    <>
+      <Field label="Label above the buttons (blank hides it)">
+        <input
+          type="text"
+          value={block.label}
+          onChange={(e) => onUpdate({ label: e.target.value })}
+          maxLength={120}
+          className={inputCls}
+        />
+      </Field>
+      <Field label="Prefilled share text">
+        <input
+          type="text"
+          value={block.shareText}
+          onChange={(e) => onUpdate({ shareText: e.target.value })}
+          maxLength={200}
+          className={inputCls}
+        />
+      </Field>
+
+      <div className="flex flex-col gap-1">
+        <div className="text-xs font-semibold uppercase tracking-wide text-secondary-500">
+          Buttons
+        </div>
+        {SHARE_NETWORKS.map((network) => {
+          const on = networks.includes(network);
+          return (
+            <label key={network} className="flex items-center gap-2 text-sm text-secondary-800">
+              <input
+                type="checkbox"
+                checked={on}
+                disabled={on && isLastOne}
+                onChange={() => onUpdate({ networks: toggleShareNetwork(networks, network) })}
+              />
+              <span>{SHARE_NETWORK_LABEL[network]}</span>
+            </label>
+          );
+        })}
+        {isLastOne && (
+          <div className="text-xs text-secondary-500">
+            At least one button is required — a share block with none renders nothing.
+          </div>
+        )}
+      </div>
+
+      <Field label="Font size">
+        <input
+          type="text"
+          value={block.fontSize}
+          onChange={(e) => onUpdate({ fontSize: e.target.value })}
+          className={inputCls}
+        />
+      </Field>
+      <Field label="Link colour">
+        <input
+          type="color"
+          value={block.color}
+          onChange={(e) => onUpdate({ color: e.target.value })}
+          className="h-9 w-full"
+        />
+      </Field>
+      <AlignField value={block.align} onChange={(align) => onUpdate({ align })} />
+    </>
+  );
 }
 
 // ---------------------------------------------------------------------------
