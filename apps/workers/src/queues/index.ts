@@ -164,6 +164,175 @@ export type MessageStream = 'broadcast' | 'transactional' | 'triggered';
  */
 export const campaignSplitterQueue = new Queue(QUEUE_NAMES.CAMPAIGN_SPLITTER, defaultOpts);
 
+// ─── Cron queues ─────────────────────────────────────────────────────────────
+
+/**
+ * Retry policy for the scheduled (cron) queues.
+ *
+ * Twenty-five of them were built in their own job files as
+ * `new Queue(name, { connection })`. That carries no `defaultJobOptions`, and
+ * bullmq 5.73.4 then defaults `attempts` to 0. Its retry check is
+ *
+ *     this.attemptsMade + 1 < this.opts.attempts
+ *
+ * so on the first failure that is `0 + 1 < 0` — false. There is no retry, and
+ * nothing says so: the job lands in the failed set and the schedule carries on
+ * as if the run had happened.
+ *
+ * The fix is not one number. A job that runs every minute and a job that runs
+ * on Monday mornings want opposite things, and one of them wants no retry at
+ * all. So the policy is a table, the table lives here, and a queue that is not
+ * in it cannot be constructed.
+ *
+ * The numbers are not invented. Both windows are pinned to figures this repo
+ * already measured:
+ *   - the shortest cron here is video-transcode at 30 s, which is what bounds
+ *     the `frequent` window;
+ *   - `BROADCAST_RETRY` below records that an API rolling restart needs about
+ *     7¾ minutes to ride out, which is what the `sparse` window has to clear.
+ */
+export type CronRetryProfile = 'frequent' | 'sparse' | 'once';
+
+export const CRON_RETRY: Record<
+  CronRetryProfile,
+  { attempts: number; backoff: { type: 'exponential'; delay: number } | undefined }
+> = {
+  /**
+   * Runs every 15 minutes or sooner, and the next run redoes the work.
+   *
+   * A retry here buys little, so it is one extra attempt rather than a ladder,
+   * and the delay is chosen so the retry can never still be running when the
+   * next tick starts: 10 s is comfortably inside the shortest schedule on
+   * these queues (video-transcode, every 30 s). Two instances of the same
+   * sweep running at once is the risk this window exists to avoid.
+   *
+   * Not zero. "The next tick fixes it" is only true if somebody notices the
+   * failures, and today nobody can — the job fails silently. One retry turns
+   * a blip into a non-event and leaves a genuine outage still visible in the
+   * failed set.
+   */
+  frequent: { attempts: 2, backoff: { type: 'exponential', delay: 10_000 } },
+
+  /**
+   * Runs hourly or less often, and a missed run is not made up.
+   *
+   * warmup-advance is the clearest case: it advances a warming IP by one day,
+   * guarded by `currentDate === today`, so a night it never runs is a day that
+   * IP never gets back. Same shape for daily-triggers, the weekly ticketing
+   * discovery and the hourly reports.
+   *
+   * 5 attempts from 60 s is 60 + 120 + 240 + 480 = 900 s, fifteen minutes.
+   * That clears the ~7¾ minutes BROADCAST_RETRY records for a rolling API
+   * restart, and it is far inside the shortest schedule in this group (one
+   * hour), so the ladder cannot overlap the next run either.
+   */
+  sparse: { attempts: 5, backoff: { type: 'exponential', delay: 60_000 } },
+
+  /**
+   * Runs once. Deliberately.
+   *
+   * `attempts: 1` behaves exactly like the `attempts: 0` these queues have
+   * today — bullmq runs the job and never retries it. The difference is that
+   * 1 is a decision somebody wrote down and 0 is what you get for saying
+   * nothing, and the guard test can tell them apart.
+   */
+  once: { attempts: 1, backoff: undefined },
+};
+
+/**
+ * Which profile each scheduled queue gets, and why it is not the other one.
+ *
+ * Grouped by verdict rather than alphabetically, because the verdict is the
+ * thing a reader needs.
+ */
+const CRON_PROFILE: Partial<Record<QueueName, CronRetryProfile>> = {
+  // ── Frequent: the next tick redoes the work ────────────────────────────────
+  [QUEUE_NAMES.ANOMALY_DETECTOR]: 'frequent', // */5
+  [QUEUE_NAMES.SOCIAL_PUBLISH]: 'frequent', // every minute
+  [QUEUE_NAMES.SOCIAL_MONITOR]: 'frequent', // */15
+  [QUEUE_NAMES.SUBSCRIPTION_BILLING]: 'frequent', // */5
+  [QUEUE_NAMES.VIDEO_TRANSCODE]: 'frequent', // every 30 s
+  [QUEUE_NAMES.WORKFLOW_RUN_RESUME]: 'frequent', // every minute
+  [QUEUE_NAMES.CLICKHOUSE_REPLICATE]: 'frequent', // every minute
+  [QUEUE_NAMES.TICKETING_DAY_OF]: 'frequent', // every minute
+  [QUEUE_NAMES.CAMPAIGN_DISPATCH]: 'frequent', // every minute (+ hourly reap)
+  [QUEUE_NAMES.BROWSE_ABANDONMENT]: 'frequent', // */15
+  [QUEUE_NAMES.SEGMENT_MEMBERSHIP]: 'frequent', // */5
+
+  // ── Sparse: a missed run is not made up ────────────────────────────────────
+  [QUEUE_NAMES.WARMUP_ADVANCE]: 'sparse', // daily 00:05 — a lost day is lost
+  [QUEUE_NAMES.DKIM_RETIRE]: 'sparse', // daily 01:20
+  [QUEUE_NAMES.ARCHIVE_EMAIL_EVENTS]: 'sparse', // nightly 03:20
+  [QUEUE_NAMES.SEO_RANK_POLL]: 'sparse', // daily 06:00 — a hole in the history
+  [QUEUE_NAMES.AD_PERF_SYNC]: 'sparse', // daily 07:00
+  [QUEUE_NAMES.DAILY_TRIGGERS]: 'sparse', // daily 06:00
+  [QUEUE_NAMES.TICKETING_FILL_HOUSE]: 'sparse', // daily 10:00
+  [QUEUE_NAMES.TICKETING_DISCOVER]: 'sparse', // Mon 09:00 — a week to the next
+  [QUEUE_NAMES.DMARC_IMAP_POLL]: 'sparse', // every 4 h
+  [QUEUE_NAMES.BLACKLIST_MONITOR]: 'sparse', // every 6 h
+  [QUEUE_NAMES.EXTERNAL_FEED_POLL]: 'sparse', // hourly
+  [QUEUE_NAMES.WAREHOUSE_SYNC]: 'sparse', // hourly :15
+  [QUEUE_NAMES.SCHEDULED_REPORTS]: 'sparse', // hourly :05
+
+  /**
+   * ── Not idempotent: leave it at one run ──────────────────────────────────
+   *
+   * DO NOT "fix" this to 'sparse'. `sendDueReminders` in
+   * apps/api/src/services/commerce/invoicing.ts selects on due date alone:
+   *
+   *     eq(invoices.status, 'sent'),
+   *     sql`date_trunc('day', ${invoices.dueDate}) = ${targetDateStr}::date`
+   *
+   * It writes `remindersSent + 1` and `lastReminderAt` afterwards but never
+   * reads either back, so nothing in the predicate says "already reminded
+   * today". A second run inside the same day re-selects every invoice it just
+   * processed and fires `onApiEvent(..., 'invoice_reminder', ...)` again — a
+   * second reminder to a paying customer.
+   *
+   * The per-invoice `catch { /* non-fatal *\/ }` makes this worse rather than
+   * better: individual failures are swallowed, so the job only throws when
+   * something outside the loop breaks — which is exactly the case where some
+   * reminders have already gone out. That is the window the stuck-connection
+   * reaper widens: it kills a wedged backend after 15 s, mid-sweep, and hands
+   * the worker a failed request with part of the work done.
+   *
+   * Making this retryable is a real improvement, but it is a change to the
+   * SELECT, not to a queue option, and it needs its own test.
+   */
+  [QUEUE_NAMES.INVOICE_REMINDER]: 'once',
+};
+
+/**
+ * Build a scheduled queue with the retry policy its schedule calls for.
+ *
+ * Throws for a name with no entry in CRON_PROFILE, the same way
+ * `getMtaQueueByName` throws: a queue whose retry behaviour nobody decided is
+ * a wiring bug, and the whole point of this module is that it should not be
+ * possible to get one by saying nothing. Failing at import means the worker
+ * process refuses to boot rather than running with attempts: 0 again.
+ */
+export function cronQueue<DataType = unknown>(name: QueueName): Queue<DataType> {
+  const profile = CRON_PROFILE[name];
+  if (!profile) {
+    throw new Error(
+      `cronQueue: no retry profile for "${name}". Add it to CRON_PROFILE in ` +
+        `queues/index.ts and say which of frequent/sparse/once it is, and why.`,
+    );
+  }
+  return new Queue<DataType>(name, {
+    ...defaultOpts,
+    defaultJobOptions: { ...defaultOpts.defaultJobOptions, ...CRON_RETRY[profile] },
+  });
+}
+
+/** Exposed so the guard test can walk every scheduled queue without a Redis. */
+export const CRON_QUEUE_NAMES = Object.keys(CRON_PROFILE) as QueueName[];
+
+/** Exposed for the guard test; not for callers, who should use `cronQueue`. */
+export function cronProfileOf(name: QueueName): CronRetryProfile | undefined {
+  return CRON_PROFILE[name];
+}
+
 /**
  * The A/B winner job gets a wider window than `defaultOpts`.
  *
