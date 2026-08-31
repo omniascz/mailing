@@ -2,21 +2,7 @@
 
 import { useDraggable } from '@dnd-kit/core';
 import type { BlockType } from '../schema/blocks.js';
-
-const PALETTE: Array<{ type: BlockType; label: string; icon: string }> = [
-  { type: 'text', label: 'Text', icon: 'T' },
-  { type: 'image', label: 'Image', icon: '🖼' },
-  { type: 'button', label: 'Button', icon: '▭' },
-  { type: 'divider', label: 'Divider', icon: '─' },
-  { type: 'spacer', label: 'Spacer', icon: '↕' },
-  { type: 'columns', label: 'Columns', icon: '◫' },
-  { type: 'hero', label: 'Hero', icon: '★' },
-  { type: 'social', label: 'Social', icon: '@' },
-  { type: 'video', label: 'Video', icon: '▶' },
-  { type: 'coupon', label: 'Coupon', icon: '🏷' },
-  { type: 'footer', label: 'Footer', icon: '_' },
-  { type: 'dynamic', label: 'Dynamic', icon: '⟨⟩' },
-];
+import { PALETTE } from './palette-items.js';
 
 interface PaletteItemProps {
   type: BlockType;

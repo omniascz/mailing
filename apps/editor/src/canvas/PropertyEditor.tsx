@@ -6,8 +6,18 @@ import type {
   DynamicRule,
   DynamicRuleOp,
   EmailSchema,
+  PollBlock,
 } from '../schema/blocks.js';
 import type { BlockPath } from './store.js';
+import {
+  POLL_MAX_OPTIONS,
+  POLL_MIN_OPTIONS,
+  addPollOption,
+  canAddPollOption,
+  canRemovePollOption,
+  removePollOption,
+  setPollOption,
+} from './poll-options.js';
 
 interface PropertyEditorProps {
   email: EmailSchema;
@@ -439,9 +449,96 @@ function BlockForm({
         </>
       );
 
+    case 'poll':
+      return <PollEditor block={block} onUpdate={update} />;
+
     case 'dynamic':
       return <DynamicEditor block={block} onUpdate={update} />;
   }
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Question and answers for a poll block.
+ *
+ * An answer is a bare string. It has no URL field, and that is not an
+ * omission: the vote link carries the recipient's identity in a signed token,
+ * so it is built per contact at render time. A URL stored on the block would
+ * be the same for everyone, which is exactly the thing the poll design
+ * refuses. See the comment above pollBlockSchema.
+ *
+ * All list arithmetic is in poll-options.ts, where it is testable — this file
+ * cannot be, because apps/editor runs vitest with no DOM.
+ */
+function PollEditor({
+  block,
+  onUpdate,
+}: {
+  block: PollBlock;
+  onUpdate: (patch: Record<string, unknown>) => void;
+}) {
+  const { options } = block;
+  const canAdd = canAddPollOption(options);
+  const canRemove = canRemovePollOption(options);
+
+  return (
+    <>
+      <Field label="Question">
+        <input
+          type="text"
+          value={block.question}
+          onChange={(e) => onUpdate({ question: e.target.value })}
+          maxLength={300}
+          className={inputCls}
+        />
+      </Field>
+
+      <div className="flex flex-col gap-2">
+        <div className="text-xs font-semibold uppercase tracking-wide text-secondary-500">
+          Answers ({options.length}/{POLL_MAX_OPTIONS})
+        </div>
+        {options.map((option, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <input
+              type="text"
+              value={option}
+              onChange={(e) => onUpdate({ options: setPollOption(options, i, e.target.value) })}
+              placeholder={`Answer ${i + 1}`}
+              maxLength={120}
+              className={inputCls}
+            />
+            <button
+              type="button"
+              onClick={() => onUpdate({ options: removePollOption(options, i) })}
+              disabled={!canRemove}
+              title={
+                canRemove
+                  ? 'Remove this answer'
+                  : `A poll needs at least ${POLL_MIN_OPTIONS} answers`
+              }
+              className="shrink-0 px-1 text-xs text-danger-600 hover:underline disabled:cursor-not-allowed disabled:text-secondary-300 disabled:no-underline"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => onUpdate({ options: addPollOption(options) })}
+          disabled={!canAdd}
+          className="rounded border border-dashed border-secondary-300 px-2 py-1 text-xs text-secondary-600 hover:border-primary-400 hover:text-primary-600 disabled:cursor-not-allowed disabled:border-secondary-200 disabled:text-secondary-300 disabled:hover:border-secondary-200"
+        >
+          + Add answer
+        </button>
+        {!canAdd && (
+          <div className="text-xs text-secondary-500">
+            {POLL_MAX_OPTIONS} answers is the maximum — past that the buttons stop fitting a phone.
+          </div>
+        )}
+      </div>
+    </>
+  );
 }
 
 // ---------------------------------------------------------------------------
