@@ -403,7 +403,25 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
   return messageId;
 }
 
-/** Convenience map used by workflow actions */
+/**
+ * Queues reachable by name from a workflow or sequence action.
+ *
+ * Its one real consumer is services/crm/sales-sequences.ts, which indexes it
+ * by the step's channel — `queues.email`, `queues.sms` — and throws
+ * "no queue is bound to the 'X' channel" when the key is missing. So a queue
+ * that is absent here is a channel a sequence step cannot reach, and the
+ * failure surfaces at the step rather than at boot.
+ *
+ * It was a hand-written list beside twelve exported queues, and it had already
+ * drifted: `batchSenderTriggeredQueue` arrived on 2026-06-22 and this map was
+ * last touched on 2026-05-20. Nothing noticed, because nothing looks. The same
+ * shape as the block palette in #93.
+ *
+ * The list is still written out — a queue's key here is its channel name, not
+ * its variable name, so it cannot be derived — but what is NOT in it is now
+ * stated rather than left to silence, and queue-policy.test.ts fails if an
+ * exported queue appears in neither place.
+ */
 export const queues = {
   email: emailQueue,
   sms: smsQueue,
@@ -417,3 +435,28 @@ export const queues = {
   campaignSplitter: campaignSplitterQueue,
   mtaOther: mtaOtherQueue,
 };
+
+/**
+ * Exported queues deliberately absent from `queues`, each with the reason.
+ *
+ * A queue belongs here when it is a stage of a pipeline rather than a channel
+ * a workflow step can name. The reason is data, not a comment, so the test can
+ * insist one exists — a comment can be deleted and nothing notices.
+ *
+ * `campaignSplitter` and `mtaOther` are pipeline stages too and ARE in the map
+ * above. That is not a contradiction to fix by adding the third: they were put
+ * there before this distinction was written down, nothing indexes them by
+ * those keys, and removing a public key is a breaking change for a caller we
+ * would have to go looking for. New pipeline queues go here.
+ */
+export const QUEUES_NOT_BOUND_TO_A_CHANNEL: ReadonlyArray<{ queue: string; reason: string }> = [
+  {
+    queue: 'batch-sender-triggered',
+    reason:
+      'A stage of the send pipeline, not a channel. A workflow "send email" action ' +
+      'enqueues onto the email queue; batch-sender-triggered is what the WORKER ' +
+      'consumes afterwards to run render -> track -> suppress -> MTA for the one ' +
+      'contact. Producers reach it through the batchSenderTriggeredQueue export ' +
+      'directly, never by channel name.',
+  },
+];

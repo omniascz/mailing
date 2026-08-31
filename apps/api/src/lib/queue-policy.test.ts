@@ -36,6 +36,9 @@
  *  - Options passed per `add()` override these and are invisible here.
  *  - A queue that is constructed but never exported is invisible to the
  *    enumeration. That is what the source scan at the bottom is for.
+ *  - The channel-map check below proves an exported queue is either reachable
+ *    by channel name or written down as deliberately unreachable. It does not
+ *    prove the KEY is right: `queues.email` bound to the SMS queue passes.
  *  - The scan needs BOTH a `new Queue(` in the text and a `Queue` imported
  *    from bullmq. A file that gets the class by some other route — a
  *    re-export, `require`, a dynamic import — constructs a queue this cannot
@@ -348,5 +351,92 @@ describe('apps/api', () => {
         'shared retry policy nor guardQueue:\n' +
         offenders.join('\n'),
     ).toEqual([]);
+  });
+});
+
+describe('the channel map', () => {
+  /**
+   * Queues a workflow or sequence step can reach by channel name, against
+   * queues that exist. A hand-written list beside a set of exports is the
+   * shape that drifted here — `batchSenderTriggeredQueue` was added on
+   * 2026-06-22 and the map was last touched on 2026-05-20 — and it is the
+   * same shape the block palette drifted in #93.
+   *
+   * Kept as a free function over plain arrays so the assertions can feed it
+   * fabricated input and prove it can see a gap. A comparison that silently
+   * returns [] is exactly how a guard in this repo goes quietly green.
+   */
+  function unboundQueues(
+    allNames: readonly string[],
+    mappedNames: readonly string[],
+    excludedNames: readonly string[],
+  ): string[] {
+    const mapped = new Set(mappedNames);
+    const excluded = new Set(excludedNames);
+    return allNames.filter((n) => !mapped.has(n) && !excluded.has(n));
+  }
+
+  it('the matcher sees a queue that is in neither place', () => {
+    expect(unboundQueues(['a', 'b'], ['a'], [])).toEqual(['b']);
+  });
+
+  it('the matcher is satisfied by either the map or the exclusion list', () => {
+    expect(unboundQueues(['a', 'b'], ['a'], ['b'])).toEqual([]);
+    expect(unboundQueues(['a', 'b'], ['a', 'b'], [])).toEqual([]);
+  });
+
+  it('an exclusion silences only the queue it names', () => {
+    expect(unboundQueues(['a', 'b', 'c'], ['a'], ['b'])).toEqual(['c']);
+  });
+
+  it('an empty queue list cannot produce a gap, so a vacuous call is visible', () => {
+    expect(unboundQueues([], [], [])).toEqual([]);
+  });
+
+  it('every exported queue is either in the map or excluded with a reason', async () => {
+    const mod = (await import('./queues.js')) as Record<string, unknown>;
+    const all = (await loadQueues()).map(([, q]) => q.name);
+
+    const map = mod.queues as Record<string, { name: string }>;
+    const mapped = Object.values(map).map((q) => q.name);
+    const excluded = (
+      mod.QUEUES_NOT_BOUND_TO_A_CHANNEL as ReadonlyArray<{ queue: string; reason: string }>
+    ).map((e) => e.queue);
+
+    const gaps = unboundQueues(all, mapped, excluded);
+    expect(
+      gaps,
+      'these queues are exported but cannot be reached by channel name and are ' +
+        'not listed as deliberately unreachable — add them to `queues` or to ' +
+        'QUEUES_NOT_BOUND_TO_A_CHANNEL with a reason:\n' +
+        gaps.join('\n'),
+    ).toEqual([]);
+  });
+
+  it('every exclusion names a real queue and gives a reason', async () => {
+    const mod = (await import('./queues.js')) as Record<string, unknown>;
+    const all = new Set((await loadQueues()).map(([, q]) => q.name));
+    const excluded = mod.QUEUES_NOT_BOUND_TO_A_CHANNEL as ReadonlyArray<{
+      queue: string;
+      reason: string;
+    }>;
+
+    for (const entry of excluded) {
+      // A stale exclusion is worse than none: it would silence a future queue
+      // that happens to reuse the name.
+      expect(all, `excluded queue ${entry.queue} is not exported`).toContain(entry.queue);
+      expect(
+        entry.reason.trim().length,
+        `exclusion of ${entry.queue} has no reason`,
+      ).toBeGreaterThan(20);
+    }
+  });
+
+  it('every value in the map is a queue, so a stray export cannot pad it', async () => {
+    const mod = (await import('./queues.js')) as Record<string, unknown>;
+    const map = mod.queues as Record<string, unknown>;
+    for (const [key, value] of Object.entries(map)) {
+      expect(isQueueLike(value), `queues.${key} is not a queue`).toBe(true);
+    }
   });
 });
