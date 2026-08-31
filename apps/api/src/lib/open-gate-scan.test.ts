@@ -26,10 +26,6 @@ import { SCAN_TIMEOUT_MS } from '../test-support/scan-budget.js';
  *   - a secret read through a config object, a function call, or destructuring
  *   - the same logic written as a ternary, an early `return`, an `||`, or
  *     spread across two statements
- *   - the DB-sourced copies. Seven gates take a per-connection secret out of a
- *     row (ecommerce-integrations.ts, integrations/calendly.ts) and are still
- *     open at the time of writing; they are excluded by name below so this test
- *     reports today's state rather than failing on a known, listed gap.
  *   - anything outside apps/api/src, and any test file
  *
  * A green run means "these spellings did not come back in this directory". It
@@ -39,17 +35,36 @@ import { SCAN_TIMEOUT_MS } from '../test-support/scan-budget.js';
 const SRC = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const toPosix = (p: string): string => p.split(sep).join('/');
 
-/** Known-open, deliberately out of scope for this change. See the PR. */
+/**
+ * Files this scan does not look at.
+ *
+ * An entry here is a hole in the scan, so each one has to still be earning it.
+ * Three were not: `routes/v1/integrations/calendly.ts`,
+ * `routes/v1/ecommerce-integrations.ts` and `services/phone/voip.ts` were
+ * listed as "open at the time of writing" — but the commit that added this
+ * list, da2ee00, is also the commit that closed them, so the exemptions were
+ * stale on the day they were written. All three fail closed today: the first
+ * two through `checkWebhookSignature`, and voip.ts by throwing when either the
+ * signature or the auth token is missing. Measured one at a time, by deleting
+ * the entry and running this file: each stayed green, so nothing was holding
+ * the exemption up.
+ *
+ * That is not a cosmetic difference. While a file sits in this set the scan
+ * skips it entirely (`if (KNOWN_OPEN.has(rel)) continue`), so had any of the
+ * three regressed to an open gate, this test would have stayed green and said
+ * so. The exemption outliving the gap is the failure mode worth naming: it
+ * reads as a known gap and behaves as an unwatched file.
+ *
+ * What is left is deliberate and still true. The Meta-family verifiers keep
+ * their open shape on purpose — the endpoints are switched off in
+ * lib/webhook-switches.ts rather than repaired — and deleting any of these
+ * four does turn this test red, which is what keeps this list honest.
+ */
 const KNOWN_OPEN = new Set([
-  'routes/v1/ecommerce-integrations.ts',
-  'routes/v1/integrations/calendly.ts',
-  // The Meta-family verifiers keep their open shape on purpose: the endpoints
-  // are switched off in lib/webhook-switches.ts instead of being repaired.
   'lib/meta-signature.ts',
   'routes/v1/webhooks/meta.ts',
   'routes/v1/webhooks/instagram.ts',
   'routes/v1/webhooks/messenger.ts',
-  'services/phone/voip.ts',
 ]);
 
 /** Identifiers that name a secret. Deliberately narrow — see the header. */
