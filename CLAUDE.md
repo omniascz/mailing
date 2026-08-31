@@ -93,8 +93,8 @@ Use `AppError` class from `@forgemsg/shared`:
 
 - **Unit/Integration**: Vitest
 - **E2E**: Playwright
-- **Coverage target**: 80%+
-- Test files: colocated as `*.test.ts` next to source
+- **Coverage**: 80%+ is the aim, not a measured figure — there is no coverage reporter and no threshold anywhere in the repo (no `@vitest/coverage-*` dependency, nothing in any `vitest.config.ts`, nothing in CI). Treat it as an intention; do not cite it as a fact.
+- Test files: unit tests are colocated as `*.test.ts` next to source. Two exceptions, both requiring live infrastructure and both run by their own CI job: integration suites live in `apps/api/src/integration/` and `apps/workers/src/integration/` as `*.integration.test.ts`, and the Playwright smoke lives in `apps/web/e2e/`.
 - Use factories for test data (no raw object literals)
 
 ## Channel Adapter Pattern
