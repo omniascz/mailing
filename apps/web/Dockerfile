@@ -4,6 +4,7 @@
 # Build args:
 #   NEXT_PUBLIC_API_URL — baked into the client bundle at build time.
 #   API_URL — server-side only, can be overridden at runtime.
+#   NEXT_PUBLIC_FEATURE_BEYOND_CORE — must match the API's FEATURE_BEYOND_CORE.
 
 FROM node:22-alpine AS base
 RUN corepack enable && corepack prepare pnpm@10 --activate \
@@ -20,6 +21,19 @@ RUN pnpm install --frozen-lockfile --filter @forgemsg/web...
 FROM base AS builder
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Beyond-core nav (CRM, helpdesk, loyalty, AI agents, …). The sidebar and the
+# command palette read this at BUILD time — Next.js inlines NEXT_PUBLIC_* into
+# the client bundle, so setting it in the running container does nothing.
+#
+# Declared explicitly, and false. Until now the image simply had no such
+# variable, so `process.env.NEXT_PUBLIC_FEATURE_BEYOND_CORE === 'true'` was
+# false by absence — the right answer for the wrong reason, and one that
+# quietly flips the day someone adds a global build env. It has to be a
+# decision the file states, because it must agree with the API's
+# FEATURE_BEYOND_CORE: on with the API off, the dashboard offers pages whose
+# endpoints are not registered and answer 404.
+ARG NEXT_PUBLIC_FEATURE_BEYOND_CORE=false
+ENV NEXT_PUBLIC_FEATURE_BEYOND_CORE=$NEXT_PUBLIC_FEATURE_BEYOND_CORE
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/apps/editor/node_modules ./apps/editor/node_modules
