@@ -6,11 +6,9 @@
  *  GET  /api/v1/campaigns/:id/stats/links          — per-link clicks
  *  GET  /api/v1/campaigns/:id/stats/devices        — device breakdown
  *  GET  /api/v1/campaigns/:id/heatmap-data         — link click counts for overlay
- *  POST /api/v1/campaigns/:id/screenshot           — Puppeteer screenshot → S3
  */
 
 import type { FastifyInstance } from 'fastify';
-import { env } from '../../config/env.js';
 import { z } from 'zod';
 import {
   getCampaignStats,
@@ -33,7 +31,6 @@ import { revenueEvents, campaigns } from '../../db/schema/index.js';
 import { toCsv } from '../../lib/csv.js';
 import { renderPdf } from '../../lib/pdf.js';
 import { isGeoConfigured } from '../../lib/geo.js';
-import { putObject, presignUrl } from '../../lib/object-store.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 
@@ -434,106 +431,6 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       z.array(z.string().uuid()).min(1).max(20).parse(campaignIds);
       const orgId = req.user!.orgId;
       return { data: await compareCampaigns(orgId, campaignIds) };
-    },
-  );
-
-  /**
-   * POST /api/v1/campaigns/:id/screenshot
-   * Captures a screenshot of the campaign email for heatmap overlay.
-   * Returns the screenshot URL stored in S3/MinIO.
-   *
-   * Note: requires MINIO_ENDPOINT + puppeteer to be available.
-   * Responds with 501 if puppeteer is not installed.
-   */
-  app.post(
-    '/api/v1/campaigns/:id/screenshot',
-    {
-      schema: {
-        tags: ['Analytics'],
-        summary: 'Capture campaign screenshot for heatmap',
-        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
-      },
-    },
-    async (req) => {
-      const { id } = idParam.parse(req.params);
-      const orgId = req.user!.orgId;
-
-      let puppeteer: {
-        launch: (...args: unknown[]) => Promise<{
-          newPage: () => Promise<{
-            setViewport: (v: { width: number; height: number }) => Promise<void>;
-            setContent: (h: string, o: unknown) => Promise<void>;
-            screenshot: (o: unknown) => Promise<Buffer>;
-          }>;
-          close: () => Promise<void>;
-        }>;
-      } | null = null;
-      try {
-        const mod = await import('puppeteer');
-        puppeteer = mod.default as unknown as typeof puppeteer;
-      } catch {
-        return {
-          data: {
-            screenshotUrl: null,
-            message:
-              'Puppeteer is not installed. Install it with: pnpm add puppeteer --filter @forgemsg/api',
-          },
-        };
-      }
-
-      // Fetch campaign HTML
-      const { db } = await import('../../db/client.js');
-      const { campaigns } = await import('../../db/schema/index.js');
-      const { eq, and } = await import('drizzle-orm');
-
-      const [campaign] = await db
-        .select({ content: campaigns.content })
-        .from(campaigns)
-        .where(and(eq(campaigns.id, id), eq(campaigns.orgId, orgId)))
-        .limit(1);
-
-      if (!campaign) {
-        const { AppError } = await import('../../lib/app-error.js');
-        throw AppError.notFound('Campaign not found');
-      }
-
-      const html =
-        typeof campaign.content === 'object' && campaign.content !== null
-          ? ((campaign.content as Record<string, unknown>).html as string | undefined)
-          : undefined;
-
-      if (!html) {
-        return {
-          data: {
-            screenshotUrl: null,
-            message: 'Campaign has no rendered HTML content yet',
-          },
-        };
-      }
-
-      const browser = await puppeteer!.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      });
-      const page = await browser.newPage();
-      await page.setViewport({ width: 600, height: 800 });
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      const screenshotBuffer = await page.screenshot({ fullPage: true, type: 'png' });
-      await browser.close();
-
-      const key = `screenshots/${orgId}/${id}-${Date.now()}.png`;
-      const bucket = env.MINIO_BUCKET;
-
-      // Through the shared client. This built its own S3Client per request with
-      // the endpoint hard-coded to http:// — ignoring MINIO_USE_SSL, so against
-      // a TLS store it would have talked plaintext to port 9000.
-      await putObject(bucket, key, Buffer.from(screenshotBuffer), 'image/png');
-
-      // Presigned, because this URL goes back to a browser that holds no AWS
-      // credentials. An hour: long enough to open the report and share the tab,
-      // short enough that a link pasted into a ticket stops working.
-      const screenshotUrl = await presignUrl('get', bucket, key, 3600);
-
-      return { data: { screenshotUrl } };
     },
   );
 
