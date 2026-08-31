@@ -6,6 +6,7 @@
  * stubbed db client: requests land on the same Postgres the migrations and
  * seed ran against.
  */
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../index.js';
 
@@ -16,8 +17,48 @@ export const SEED = {
   orgSlug: 'acme-demo',
 } as const;
 
+/**
+ * Boots the app and gives it a rate-limit identity of its own.
+ *
+ * The limiter keys on `x-api-key ?? request.ip`, and every `.inject()` that
+ * does not say otherwise arrives from the same address. That was harmless
+ * while the counter lived in the process — each test file's app started with
+ * an empty bucket. Now the counter is in Redis, deliberately, so the whole
+ * suite would share one 100/min budget and the files that make the most calls
+ * would answer 429 to each other. Measured on CI before this: eleven cases
+ * across workflow-triggers and merge-tag-validation failed on
+ * `RATE_LIMIT: Too many requests`, none of them about rate limiting.
+ *
+ * So each app gets a synthetic key, and requests that do not bring their own
+ * are attributed to it. This restores per-file isolation for the suite without
+ * touching how the limiter behaves in production: it is a header these tests
+ * would otherwise not send, applied in the harness, not in the plugin.
+ *
+ * The key includes the request's own address, and that is not decoration. The
+ * first version of this hook used one key per app, which quietly broke
+ * route-smoke: that file spreads its several-hundred-request sweep across
+ * distinct addresses precisely to stay under the limit, and a single header
+ * applied to all of them put the whole sweep back in one bucket. Since the
+ * generator prefers `x-api-key` over the IP, overriding it beat a technique
+ * that was there for this exact reason. Folding the address in keeps both:
+ * different addresses still count separately, same-address requests are
+ * isolated per app.
+ *
+ * Two things it deliberately does NOT do. It does not raise or disable the
+ * limit, so a route that rate-limits its caller still rate-limits these tests.
+ * And it leaves a key a test sets for itself alone. Files that build the app
+ * through buildApp() directly — rate-limit-shared.integration.test.ts, which
+ * is about this very counter — do not get it at all.
+ */
 export async function createTestApp(): Promise<FastifyInstance> {
-  return buildApp();
+  const app = await buildApp();
+  const identity = `itest-${randomUUID()}`;
+  app.addHook('onRequest', async (request) => {
+    if (!request.headers['x-api-key']) {
+      request.headers['x-api-key'] = `${identity}:${request.ip}`;
+    }
+  });
+  return app;
 }
 
 export interface Session {
@@ -43,21 +84,13 @@ export async function login(
     method: 'POST',
     url: '/api/v1/auth/login',
     payload: { email, password },
-    // Each login comes from its own address, for the same reason route-smoke
-    // injects its sweep that way.
-    //
-    // /api/v1/auth/login is limited to 10 per 15 minutes per IP. That used to
-    // be survivable here by accident: the limiter kept its counter in the
-    // process, so every test file got a fresh ten. Now that the counter is in
-    // Redis — which is the point, one limit across all instances — it is one
-    // budget for the whole suite AND for the fifteen minutes after it, so a
-    // re-run inside the window would start already spent. Measured: eight
-    // suites failed at `login failed: 429` before this line existed.
-    //
-    // This does not weaken anything. The limit is not what these files test;
-    // they log in to get a session and then assert something else. The one
-    // place the shared counter IS the subject asserts it directly, in
-    // rate-limit-shared.integration.test.ts.
+    // /api/v1/auth/login allows 10 per 15 minutes, keyed by `x-api-key ?? ip`.
+    // Apps from createTestApp() already carry a per-app key, so this address
+    // is the belt to that pair of braces: it covers callers that build the app
+    // through buildApp() directly and would otherwise all log in as 127.0.0.1
+    // against one Redis counter that outlives the run by fifteen minutes.
+    // Measured before either existed: eight suites failed at
+    // `login failed: 429`.
     remoteAddress: `192.0.2.${Math.floor(Math.random() * 254) + 1}`,
   });
 
