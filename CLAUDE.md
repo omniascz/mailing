@@ -23,8 +23,8 @@ Turborepo monorepo with pnpm workspaces.
 - **Analytics DB**: ClickHouse (event pipeline, materialized views)
 - **Cache/Queue**: Redis 7 (sessions, BullMQ, rate limiting)
 - **Message Queue**: BullMQ → Kafka (later phases)
-- **Object Storage**: MinIO (S3-compatible) → AWS S3 in production
-- **Container Orchestration**: Kubernetes (EKS) via Terraform
+- **Object Storage**: MinIO, in development and in production — `docker-compose.prod.yml` requires `MINIO_ENDPOINT`, `MINIO_BUCKET` and `MINIO_VIDEO_BUCKET`, and `apps/api/src/lib/object-store.ts` reads the `MINIO_*` variables and nothing else. The client is `@aws-sdk/client-s3` with an endpoint override, so any S3-compatible store would serve, but nothing in the repo points at AWS S3.
+- **Deployment**: not automated. `.github/workflows/cd.yml` is manual-dispatch only, builds images and pushes them to GHCR, and does not deploy anything; `docker-compose.prod.yml` is what runs the services. The intended topology is Hetzner + Vercel — see `DEPLOY.md` and `infra/PIVOT_AWS_TO_HETZNER.md` (decided 2026-05-18, owner-approved). `infra/terraform/` and `infra/k8s/` describe the abandoned AWS EKS plan and have not been touched since that date.
 
 ## Conventions
 
@@ -60,7 +60,7 @@ Use `AppError` class from `@forgemsg/shared`:
 ## Database (Drizzle ORM)
 
 - All tables use `snake_case` column names
-- Primary keys: `id` (UUID v7 via `crypto.randomUUID()`)
+- Primary keys: `id`, a `uuid` column with Drizzle `defaultRandom()` — Postgres `gen_random_uuid()`, which is UUID **v4**. Not v7, and not `crypto.randomUUID()`: that returns v4 too (measured), and no table default uses it.
 - Timestamps: `created_at`, `updated_at` (timestamptz)
 - Soft deletes: `deleted_at` (nullable timestamptz)
 - All queries MUST be org-scoped (multi-tenant isolation)
