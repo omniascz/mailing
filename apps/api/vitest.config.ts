@@ -22,9 +22,14 @@ export default defineConfig({
       // The watchdog polls pg_stat_activity on a timer, so unlike every other
       // part of the app it does not wait to be asked — it would reach for a
       // database this suite deliberately does not have. Measured against a
-      // dead port: five `connect ECONNREFUSED` errors in six seconds, one per
-      // tick, on any app that outlives the interval. Nothing fails today only
-      // because those apps are closed within it. Off here keeps this suite
+      // dead port, with the defaults readReaperConfig() produces
+      // (stuckAfterMs 15_000 → intervalMs 5_000): one `connect ECONNREFUSED`
+      // per tick, so one error at +5_032 ms and nothing before it, on any app
+      // that outlives the interval. (This comment first said "five errors in
+      // six seconds"; at a five-second interval that was never arithmetically
+      // possible. Re-measured 2026-08-31.) Nothing fails today only because
+      // those apps are closed inside the first interval — which is luck about
+      // timing, not a property anything enforces. Off here keeps this suite
       // infrastructure-free by construction rather than by luck; the wiring is
       // covered where a database exists, in
       // src/integration/stuck-connection-reaper.integration.test.ts.

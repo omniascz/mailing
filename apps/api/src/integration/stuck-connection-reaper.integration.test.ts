@@ -11,11 +11,21 @@
  *
  * The wedge is produced deterministically with a paused cursor rather than by
  * racing the pool, because the real trigger (porsager/postgres#1033) is a
- * concurrency race that reproduces in roughly two runs out of three. A paused
- * cursor puts a backend in exactly the state the race leaves it in —
- * `state = 'active'`, `wait_event = 'Client/ClientRead'` — every time, which is
- * the state the watchdog keys on. `apps/api` itself uses no cursors and no
- * COPY, so nothing legitimate sits there.
+ * concurrency race that does not reproduce on demand. A paused cursor puts a
+ * backend in exactly the state the race leaves it in — `state = 'active'`,
+ * `wait_event = 'Client/ClientRead'` — every time, which is the state the
+ * watchdog keys on. `apps/api` itself uses no cursors and no COPY, so nothing
+ * legitimate sits there.
+ *
+ * This comment used to claim the race reproduces "in roughly two runs out of
+ * three". Do not rely on that number; it has been withdrawn. On 2026-08-31,
+ * against a migrated and seeded pgvector/pgvector:pg16, it did not reproduce
+ * once in more than 25 attempts across four shapes of load: the backed-up
+ * repro at its documented parameters (0 of 9), sixteen concurrent processes
+ * each with its own max=10 pool (0 of 16), continuous saturation at 434,266
+ * queries in 180 s (none), and six runs of route-smoke.integration.test.ts
+ * with this watchdog switched off (6 of 6 green, 716 requests in and 716 out
+ * every time). Details in mailforge-probes/README.md.
  *
  * ─── What this cannot see ───────────────────────────────────────────────────
  *
