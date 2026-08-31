@@ -432,10 +432,134 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
 
+  # ── DB migrations ──────────────────────────────────────────────────────────
+  #
+  # These two lived in db-migrations.yml, triggered by `on: pull_request:
+  # paths:`. That put them out of reach of `ci-pass`, whose `needs` cannot name
+  # a job in another workflow, and branch protection requires only `CI Pass` —
+  # so a PR with a broken migration merged with a green merge button and
+  # nothing said otherwise.
+  #
+  # Making them required where they were is not possible. GitHub's own
+  # troubleshooting page is explicit: a workflow skipped by a paths filter
+  # leaves its check "Pending" and blocks merging forever, so adding those two
+  # names to required_status_checks would hang every PR that does not touch
+  # migrations. (A job skipped by an `if:` reports Success instead — which is
+  # the opposite failure: it satisfies the requirement without running.)
+  #
+  # So they move here and run unconditionally. No paths filter, no `if:`, and
+  # `ci-pass` can keep treating `skipped` as a failure for every job it names.
+  # The cost is measured, not guessed: 21-26 s for the drift check and 36-41 s
+  # for the dry run, against a critical path of 3m49s (Integration). They are
+  # not on it, so the pipeline does not get slower.
+
+  drift-check:
+    name: Schema ↔ migrations drift
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # The drift check below can only see what the barrel exports, because
+      # drizzle.config.ts names db/schema/index.ts as the schema entry. A table
+      # whose module is missing from that file produces no diff and this job
+      # passes — which is exactly how data_sets, permission_sets and
+      # user_permission_sets went unmigrated while a live route queried them.
+      # So verify the barrel first; otherwise "no drift" is only true of the
+      # tables drizzle-kit happens to be able to see.
+      - name: Every pgTable is re-exported from the schema barrel
+        working-directory: apps/api
+        run: pnpm exec vitest run src/db/schema-barrel.test.ts
+
+      # drizzle-kit exits 0 even when it refuses to do any work. A snapshot
+      # chain with two children of one parent makes it print
+      #
+      #   Error: [0018_snapshot.json, 0019_snapshot.json] are pointing to a
+      #   parent snapshot: … which is a collision.
+      #
+      # and return success, having generated nothing. The next step then finds
+      # drizzle/ unchanged and reports "no drift" — so a generate that cannot
+      # run at all ships as a green check. That is not hypothetical: PR #88
+      # would have done exactly this.
+      #
+      # There is no exit code to read here, and no artefact either, because the
+      # failure mode IS "produced nothing". The printed message is the only
+      # signal drizzle-kit gives, so the message is what this checks. Table
+      # names are lower snake_case, so an anchored `^Error` cannot collide with
+      # the tool's normal per-table output.
+      - name: Generate migrations from current schema (dry)
+        working-directory: apps/api
+        run: |
+          set -o pipefail
+          pnpm db:generate 2>&1 | tee "$RUNNER_TEMP/generate.log"
+          if grep -q '^Error' "$RUNNER_TEMP/generate.log"; then
+            echo "::error::drizzle-kit did not complete — it printed an Error and exited 0. See the log above."
+            exit 1
+          fi
+
+      - name: Verify no uncommitted SQL was produced
+        working-directory: apps/api
+        run: |
+          # If `db:generate` writes a new SQL file or modifies the journal,
+          # the schema is ahead of the committed migrations. Block the PR.
+          if ! git diff --quiet --exit-code drizzle/; then
+            echo "::error::drizzle/ has uncommitted changes — schema and migrations are out of sync."
+            echo "Run \`pnpm db:generate\` locally and commit the result."
+            git status drizzle/
+            git diff drizzle/
+            exit 1
+          fi
+
+  apply-dry-run:
+    name: Apply migrations (dry run)
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: forgemsg_test
+          POSTGRES_USER: forgemsg
+          POSTGRES_PASSWORD: forgemsg
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U forgemsg"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://forgemsg:forgemsg@localhost:5432/forgemsg_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations against ephemeral Postgres
+        working-directory: apps/api
+        run: pnpm db:migrate
+
+      - name: Verify schema query reachability
+        run: |
+          # A trivial query against information_schema confirms migrations took.
+          PGPASSWORD=forgemsg psql -h localhost -U forgemsg -d forgemsg_test \
+            -c "select count(*) from information_schema.tables where table_schema='public';"
+
   ci-pass:
     name: CI Pass
     runs-on: ubuntu-latest
-    # Every job that can fail on the code, including both integration suites.
+    # Every job that can fail on the code: both integration suites, and both
+    # DB-migration checks.
     #
     # They were left out with a note saying one new test should not gate the
     # pipeline "until it has a track record". They have one now — 9 files
@@ -445,7 +569,18 @@ jobs:
     # INTERNAL_API_SECRET above reached master in the first place.
     #
     # `audit` and `e2e` stay out on purpose, see the step below.
-    needs: [lint, typecheck, test, build, build-go, integration, workers-integration]
+    needs:
+      [
+        lint,
+        typecheck,
+        test,
+        build,
+        build-go,
+        integration,
+        workers-integration,
+        drift-check,
+        apply-dry-run,
+      ]
     if: always()
     steps:
       - name: Verify all jobs succeeded
@@ -460,9 +595,11 @@ jobs:
           BUILD_GO: ${{ needs['build-go'].result }}
           INTEGRATION: ${{ needs.integration.result }}
           WORKERS_INTEGRATION: ${{ needs['workers-integration'].result }}
+          DRIFT_CHECK: ${{ needs['drift-check'].result }}
+          APPLY_DRY_RUN: ${{ needs['apply-dry-run'].result }}
         run: |
           failed=''
-          for job in LINT TYPECHECK TEST BUILD BUILD_GO INTEGRATION WORKERS_INTEGRATION; do
+          for job in LINT TYPECHECK TEST BUILD BUILD_GO INTEGRATION WORKERS_INTEGRATION DRIFT_CHECK APPLY_DRY_RUN; do
             eval "result=\$$job"
             echo "$job: $result"
             [ "$result" = 'success' ] || failed="$failed $job"
