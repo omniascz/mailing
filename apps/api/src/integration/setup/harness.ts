@@ -43,6 +43,22 @@ export async function login(
     method: 'POST',
     url: '/api/v1/auth/login',
     payload: { email, password },
+    // Each login comes from its own address, for the same reason route-smoke
+    // injects its sweep that way.
+    //
+    // /api/v1/auth/login is limited to 10 per 15 minutes per IP. That used to
+    // be survivable here by accident: the limiter kept its counter in the
+    // process, so every test file got a fresh ten. Now that the counter is in
+    // Redis — which is the point, one limit across all instances — it is one
+    // budget for the whole suite AND for the fifteen minutes after it, so a
+    // re-run inside the window would start already spent. Measured: eight
+    // suites failed at `login failed: 429` before this line existed.
+    //
+    // This does not weaken anything. The limit is not what these files test;
+    // they log in to get a session and then assert something else. The one
+    // place the shared counter IS the subject asserts it directly, in
+    // rate-limit-shared.integration.test.ts.
+    remoteAddress: `192.0.2.${Math.floor(Math.random() * 254) + 1}`,
   });
 
   if (res.statusCode !== 200) {
