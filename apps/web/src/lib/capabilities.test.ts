@@ -157,3 +157,35 @@ describe('the A/B tests nav entry', () => {
     expect(out[0]!.items.map((i) => i.href)).toEqual(['/campaigns']);
   });
 });
+
+/**
+ * The beyond-core nav is decided when the image is BUILT, not when it runs:
+ * Next.js inlines NEXT_PUBLIC_* into the client bundle, so a value set on the
+ * running container arrives too late to change anything.
+ *
+ * apps/web/Dockerfile used to declare no such build arg at all. The result was
+ * correct — `undefined === 'true'` is false, so the nav stayed hidden — but it
+ * was correct by absence rather than by decision, and it would flip the day a
+ * global build env or a CI matrix started passing the variable. It also has to
+ * agree with the API's own FEATURE_BEYOND_CORE: with the web on and the API
+ * off, the sidebar links to pages whose routes were never registered, because
+ * `registerBeyondCore` skips registration entirely rather than answering 404.
+ */
+describe('the beyond-core build flag is stated, not merely absent', () => {
+  const dockerfile = readFileSync(join(__dirname, '../../Dockerfile'), 'utf8');
+
+  it('the Dockerfile declares the build arg and defaults it to false', () => {
+    expect(dockerfile).toMatch(/^ARG NEXT_PUBLIC_FEATURE_BEYOND_CORE=false$/m);
+  });
+
+  it('and passes it into the build environment', () => {
+    expect(dockerfile).toMatch(
+      /^ENV NEXT_PUBLIC_FEATURE_BEYOND_CORE=\$NEXT_PUBLIC_FEATURE_BEYOND_CORE$/m,
+    );
+  });
+
+  it('the code it feeds still treats anything but the string "true" as off', () => {
+    const sidebar = readFileSync(join(__dirname, '../components/dashboard/sidebar.tsx'), 'utf8');
+    expect(sidebar).toContain("process.env.NEXT_PUBLIC_FEATURE_BEYOND_CORE === 'true'");
+  });
+});

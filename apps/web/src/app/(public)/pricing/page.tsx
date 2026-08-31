@@ -192,7 +192,7 @@ export default function PricingPage() {
         <dl className="mt-6 space-y-6 text-sm">
           <Faq
             q="Kde jsou moje data?"
-            a="V EU. Hostujeme v Hetzneru (Falkenstein nebo Helsinki). Při registraci si vyberete data region; přesun je možný po dohodě."
+            a="V EU. Hostujeme v Hetzneru (Falkenstein nebo Helsinki). Region si nevybíráte — odvodíme ho ze země, kterou uvedete při registraci, a u zemí EU vychází EU. Později ho sami neměníme; přesun je možný po dohodě."
           />
           <Faq
             q="Mám dedicated IP?"

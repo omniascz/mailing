@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
   ArrowRight,
-  Bot,
   Languages,
   Phone,
   Mail as MailIcon,
@@ -14,7 +13,7 @@ import {
 export const metadata = {
   title: 'Mailforge — Omnichannel messaging postavený v EU',
   description:
-    'Email, SMS, voice agent a WhatsApp pod jednou střechou. Česká lokalizace, AI agenti v ceně, hosting v EU.',
+    'Email, SMS, voice agent a WhatsApp pod jednou střechou. Česká lokalizace, hosting v EU.',
 };
 
 export default function LandingPage() {
@@ -33,8 +32,8 @@ export default function LandingPage() {
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-secondary-600">
               Email, SMS, voice agent a WhatsApp v jednom nástroji. Hluboká česká lokalizace
-              (skloňování, jmeniny, svátky), AI agenti v ceně, vlastní MTA. Bez kompromisů, které
-              vás drží u Mailchimpu.
+              (skloňování, jmeniny, svátky), vlastní MTA. Bez kompromisů, které vás drží u
+              Mailchimpu.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
@@ -108,11 +107,6 @@ export default function LandingPage() {
               copy="Vokativ (5. pád) v merge-tags, jmeniny jako trigger, české svátky, gender inference podle příjmení. Mailchimp ani Brevo to nezvládnou."
             />
             <Feature
-              icon={Bot}
-              title="AI agenti v ceně"
-              copy="Claude Sonnet 4.6 + Haiku 4.5 zahrnuté v Pro+ plánech. Žádný add-on za 200 $ jako u Klaviyo."
-            />
-            <Feature
               icon={Workflow}
               title="50+ pre-built workflows"
               copy="Welcome series, abandoned cart, post-purchase, winback, jmeniny, narozeniny. Fork & customize."
@@ -143,8 +137,7 @@ export default function LandingPage() {
             Postaveno pro týmy, co berou doručitelnost vážně
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-secondary-600">
-            Spusťte si free účet, importujte kontakty z CSV nebo Shoptetu, odešlete první kampaň
-            ještě dnes.
+            Spusťte si free účet, importujte kontakty z CSV, odešlete první kampaň ještě dnes.
           </p>
           <div className="mt-8 flex justify-center gap-3">
             <Link

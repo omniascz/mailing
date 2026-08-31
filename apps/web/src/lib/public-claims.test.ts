@@ -47,3 +47,48 @@ describe('claims match what the channel can actually do', () => {
     expect(read('landing/page.tsx')).toMatch(/Voice agent/);
   });
 });
+
+/**
+ * Everything registered through `registerBeyondCore` in apps/api/src/index.ts is
+ * absent — not 404, absent — whenever FEATURE_BEYOND_CORE is off, which is what
+ * the shipped images do (apps/web/Dockerfile now says so explicitly). The public
+ * site is read by people who have not signed up yet and cannot see a feature
+ * flag, so it may only promise what a default deployment actually serves.
+ */
+describe('the landing page does not sell what is behind FEATURE_BEYOND_CORE', () => {
+  /**
+   * `aiAgentRoutes` is beyond-core, so /ai-agents has no endpoints in a default
+   * deployment. The per-plan AI quotas on the pricing page are a different
+   * thing and stay: those are core and are not asserted against here.
+   */
+  it('does not advertise AI agents', () => {
+    expect(read('landing/page.tsx')).not.toMatch(/AI\s+agent/i);
+  });
+
+  /**
+   * Shoptet's OAuth install/callback and the whole ecommerce connections CRUD
+   * live in `ecommerceRoutes`, which is beyond-core — so a default deployment
+   * cannot connect a Shoptet store at all, and an import from one cannot start.
+   * CSV import is core (`contactImportRoutes`) and is what the page offers now.
+   */
+  it('does not offer importing contacts from Shoptet', () => {
+    expect(read('landing/page.tsx')).not.toMatch(/shoptet/i);
+  });
+});
+
+describe('the data-residency answer describes what registration really does', () => {
+  /**
+   * There is no region picker. `POST /api/v1/auth/register` derives the region
+   * from the signup country — `suggestRegionForCountry`, EU list → 'eu', APAC →
+   * 'ap', everything else → 'us' — and the comment there says it is never moved
+   * automatically afterwards. The page used to say "při registraci si vyberete
+   * data region", which describes a control that does not exist.
+   */
+  it('does not claim the customer picks a region', () => {
+    expect(read('pricing/page.tsx')).not.toMatch(/vyberete\s+data\s+region/i);
+  });
+
+  it('says the region is derived instead', () => {
+    expect(read('pricing/page.tsx')).toMatch(/odvod[íi]me ho ze zem[ěe]/i);
+  });
+});
