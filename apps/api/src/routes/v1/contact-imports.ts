@@ -17,6 +17,7 @@ import {
   runImport,
   type ContactField,
 } from '../../services/import/index.js';
+import { checkContactCapacity } from '../../services/billing/plan-enforcement.js';
 
 const UPLOAD_DIR = process.env.IMPORT_UPLOAD_DIR || path.join(os.tmpdir(), 'forgemsg-imports');
 
@@ -183,6 +184,37 @@ export default async function contactImportRoutes(app: FastifyInstance) {
           `Import must be in status 'mapped' to execute (was ${job.status})`,
         );
       }
+
+      // The plan limit applies to bulk import too.
+      //
+      // POST /api/v1/contacts has always called this, one contact at a time
+      // (`checkContactCapacity(orgId, 1)`). This route called nothing, so the
+      // whole limit came off if you uploaded a file instead of posting — the
+      // enforcement was there, it just sat on the slower of the two doors.
+      //
+      // Checked HERE rather than inside runImport, and the whole import is
+      // refused rather than filled to the limit:
+      //
+      //   - The caller finds out synchronously, from the request that asked
+      //     for the work. runImport is fire-and-forget into setImmediate, so a
+      //     refusal in there could only be discovered by polling the job row.
+      //   - A truncated import is the worse failure. The customer gets a list
+      //     that is quietly missing an unknown subset, with the cut made in
+      //     whatever order the file happened to be in; re-uploading after an
+      //     upgrade then re-walks rows that already landed. Refusing is a state
+      //     they can act on and undo.
+      //   - It keeps the two doors consistent. Single-contact creation refuses
+      //     at the limit; bulk importing part of a file would make the same
+      //     limit mean two different things.
+      //
+      // KNOWN OVER-ESTIMATE, and deliberately on the safe side: totalRows is
+      // rows in the file, and a row matching an existing contact updates it
+      // rather than adding one. So a file that is mostly a re-import of people
+      // already on the list is judged as if all of them were new, and can be
+      // refused when it would in fact have fitted. Counting only genuinely new
+      // rows means parsing and de-duplicating before deciding, which is a
+      // different mechanism than the one this route is asked to share.
+      await checkContactCapacity(request.user!.orgId, job.totalRows ?? 0);
 
       // Fire and forget — progress is persisted to the import_jobs row.
       // In Fáze 1.2b this will move to a BullMQ worker process; the service
