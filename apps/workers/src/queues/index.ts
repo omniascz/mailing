@@ -148,19 +148,39 @@ export type MessageStream = 'broadcast' | 'transactional' | 'triggered';
 // ─── Queue instances ─────────────────────────────────────────────────────────
 
 /**
- * These two keep the short default window, and that is not an oversight.
+ * The splitter keeps the shared default window, and a retry of it is safe.
  *
- * Neither is idempotent. Both build their batch jobs and hand them to
- * `addBulk` with no deterministic jobId, so a second run enqueues a second
- * full set — measured: running the splitter twice with the same input left
- * 3 batches, then 6. Every contact in those batches would receive the
- * campaign twice.
+ * This comment used to say the opposite — that the splitter was not
+ * idempotent, that `addBulk` ran with no deterministic jobId, and that a
+ * second run left 3 batches then 6, so widening the retry window would be
+ * making the failure mode worse. That was true when it was written and it has
+ * not been true since #17. Two layers were added and the comment was not.
  *
- * That inverts the usual trade-off. For batch-sender a longer window buys
- * resilience; here every extra attempt is another chance to duplicate a whole
- * campaign, so widening the window would make the failure mode worse rather
- * than better. The fix is a deterministic jobId per batch — which is a
- * separate change with its own testing, not a config tweak.
+ * Re-measured on 2026-08-31 against a real Postgres, Redis and API, 2500
+ * contacts, running processCampaignSplitter four times:
+ *
+ *   run 1  first dispatch                          3 batches queued
+ *   run 2  same job.id + job.timestamp (a retry)   3 — nothing added,
+ *                                                  2500 distinct contacts,
+ *                                                  none in more than one batch
+ *   run 3  same dispatch, ledger rows deleted      3 — still nothing added
+ *   run 4  new job.id + timestamp (a real resend)  6 — a fresh set, correctly
+ *
+ * Run 3 is the one worth keeping: with the ledger wiped so
+ * `claimDispatchBatches` hands back every key as unclaimed, the batch jobs
+ * still do not duplicate, because each carries `jobId: ${dispatchId}:${key}`
+ * and BullMQ refuses an id it already holds. The ledger and the jobId are
+ * independent, and either alone is sufficient.
+ *
+ * What makes the line fall in the right place is `dispatchIdOf(job)` =
+ * `${job.id}:${job.timestamp}`. `job.timestamp` is stamped when the job is
+ * created and does not change between attempts, so a retry reuses the
+ * dispatch id and a genuine resend mints a new one — run 2 against run 4.
+ *
+ * So `attempts: 3` here is not a hazard, and a future decision to widen it
+ * does not have to argue with this paragraph. If the retry window is ever
+ * revisited, the thing to check is the campaign STATE machine, not duplicate
+ * sends.
  */
 export const campaignSplitterQueue = new Queue(QUEUE_NAMES.CAMPAIGN_SPLITTER, defaultOpts);
 
