@@ -89,6 +89,11 @@ describe('prodRequired — production must not fall back to a committed default'
     DMARC_INBOUND_SECRET: 'a-real-dmarc-secret-16+',
     MINIO_ACCESS_KEY: 'real-access-key',
     MINIO_SECRET_KEY: 'real-secret-key',
+    // Production-required since billing routes are core and answered 400 at
+    // use without them. Listed so the cases below fail on the field they are
+    // about rather than on an unrelated missing variable.
+    STRIPE_SECRET_KEY: 'sk_live_real_key',
+    STRIPE_WEBHOOK_SECRET: 'whsec_real_secret',
     // Required in production alongside the two above. Its default is
     // `localhost`, which in a container is the API itself, so an unset value
     // aimed every upload at this process — docker-compose.prod.yml passed the
@@ -478,6 +483,8 @@ describe('optional-by-design secrets', () => {
       MINIO_ACCESS_KEY: 'real-access-key',
       MINIO_SECRET_KEY: 'real-secret-key',
       MINIO_ENDPOINT: 'minio.internal',
+      STRIPE_SECRET_KEY: 'sk_live_real_key',
+      STRIPE_WEBHOOK_SECRET: 'whsec_real_secret',
       MINIO_BUCKET: 'prod-bucket',
       MINIO_VIDEO_BUCKET: 'prod-video-bucket',
       ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
@@ -505,6 +512,63 @@ describe('optional-by-design secrets', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
     error.mockRestore();
+  });
+
+  /**
+   * The Stripe pair is the opposite case, and it changed: both used to be
+   * plain `.optional()`, so production booted clean without them and every
+   * billing route failed at use instead — checkout, portal and cancel with
+   * `Stripe not configured` (400), the webhook with a 500. Those routes are
+   * core (`app.register(billingRoutes)`), so that is every deployment.
+   *
+   * They carry no dev default, which is why they are here rather than in
+   * CRITICAL above: nothing to fall back TO, only "absent in development,
+   * mandatory in production".
+   */
+  it('STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are refused when missing in production', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Built inline, the way the HIPAA case above is: PROD_BASE belongs to the
+    // prodRequired describe and is not in scope here. Everything production
+    // needs EXCEPT the two under test, so the failure names them and nothing
+    // else.
+    process.env = {
+      NODE_ENV: 'production',
+      ...REQUIRED,
+      SESSION_SECRET: 'a-real-session-secret-at-least-32-chars',
+      INTERNAL_API_SECRET: 'a-real-internal-secret-at-least-32-chars',
+      DMARC_INBOUND_SECRET: 'a-real-dmarc-secret-16+',
+      MINIO_ACCESS_KEY: 'real-access-key',
+      MINIO_SECRET_KEY: 'real-secret-key',
+      MINIO_ENDPOINT: 'minio.internal',
+      MINIO_BUCKET: 'prod-bucket',
+      MINIO_VIDEO_BUCKET: 'prod-video-bucket',
+      ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
+      INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
+      FORM_AUTOFILL_SECRET: 'a-real-form-autofill-secret-32-chars',
+      PREFERENCE_CENTRE_SECRET: 'a-real-preference-centre-secret-32ch',
+      FBL_WEBHOOK_SECRET: 'a-real-fbl-webhook-secret-32-chars-x',
+      META_WEBHOOK_VERIFY_TOKEN: 'a-real-meta-verify-token',
+      WHATSAPP_VERIFY_TOKEN: 'a-real-whatsapp-verify-tok',
+      FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
+      TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
+      DKIM_MASTER_KEY: 'f'.repeat(64),
+      API_PUBLIC_URL: 'https://api.example.com',
+      APP_URL: 'https://app.example.com',
+    };
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+    const printed = spy.mock.calls.flat().join(' ');
+    expect(printed, 'an operator reads this line, not the stack').toMatch(/STRIPE_SECRET_KEY/);
+    expect(printed).toMatch(/STRIPE_WEBHOOK_SECRET/);
+    spy.mockRestore();
+  });
+
+  it('but development boots without them', async () => {
+    process.env = { NODE_ENV: 'development', ...REQUIRED };
+    vi.resetModules();
+    const mod = await import('./env.js');
+    expect(mod.env.STRIPE_SECRET_KEY).toBeUndefined();
+    expect(mod.env.STRIPE_WEBHOOK_SECRET).toBeUndefined();
   });
 
   it('PARTNER_PROVISION_SECRET stays optional', async () => {
