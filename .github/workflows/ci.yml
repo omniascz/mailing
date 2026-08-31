@@ -213,8 +213,10 @@ jobs:
     name: Workers Integration (real DB + API)
     runs-on: ubuntu-latest
     needs: [typecheck]
-    # Deliberately NOT in the CI Pass needs list yet — same policy the api
-    # integration job got: earn a track record before it can gate the pipeline.
+    # In the CI Pass needs list since 85b1d16 (2026-08-07). This comment used
+    # to say the opposite — that the job was deliberately left out until it
+    # earned a track record — and it stayed there for three and a half weeks
+    # after the code stopped agreeing with it.
     services:
       postgres:
         image: pgvector/pgvector:pg16
