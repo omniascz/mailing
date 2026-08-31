@@ -76,6 +76,10 @@ describe('the retry profiles themselves', () => {
   });
 
   it('once means one run, written down rather than defaulted', () => {
+    // No queue carries this profile today — invoice-reminder was the only one
+    // and it became idempotent. The profile stays because the reason for it
+    // does: the next job that cannot be run twice needs somewhere to say so,
+    // and `attempts: 1` has to keep meaning "decided" rather than "defaulted".
     expect(CRON_RETRY.once.attempts).toBe(1);
     expect(CRON_RETRY.once.backoff).toBeUndefined();
   });
@@ -116,16 +120,22 @@ describe('every scheduled queue', () => {
 });
 
 describe('the queues whose verdict is load-bearing', () => {
-  it('invoice-reminder does not retry — sendDueReminders re-sends', () => {
-    // The one 'once' in the table. If this flips to a retrying profile, a
-    // customer gets a second copy of a payment reminder.
-    expect(cronProfileOf(QUEUE_NAMES.INVOICE_REMINDER)).toBe('once');
-    expect(build(QUEUE_NAMES.INVOICE_REMINDER).opts.defaultJobOptions?.attempts).toBe(1);
+  it('invoice-reminder retries, now that the sweep claims before it sends', () => {
+    // This used to assert 'once', because sendDueReminders re-sent on a second
+    // run. It claims each invoice with a conditional UPDATE now, proven in
+    // apps/api/src/integration/invoice-reminder-idempotent.integration.test.ts
+    // (five sweeps, one reminder). If that guarantee is ever removed, this
+    // profile has to go back to 'once' with it.
+    expect(cronProfileOf(QUEUE_NAMES.INVOICE_REMINDER)).toBe('sparse');
+    expect(build(QUEUE_NAMES.INVOICE_REMINDER).opts.defaultJobOptions?.attempts).toBe(
+      CRON_RETRY.sparse.attempts,
+    );
   });
 
-  it('ad-perf-sync DOES retry, though it shares a file with invoice-reminder', () => {
-    // Same job module, opposite verdict: syncAdPerformance inserts with
-    // onConflictDoNothing. Pinned so nobody "tidies" the two into one profile.
+  it('ad-perf-sync retries too, though it shares a file with invoice-reminder', () => {
+    // Same job module. It reached 'sparse' by a different route —
+    // syncAdPerformance inserts with onConflictDoNothing — so the two are
+    // still independent verdicts that happen to agree.
     expect(cronProfileOf(QUEUE_NAMES.AD_PERF_SYNC)).toBe('sparse');
   });
 

@@ -295,31 +295,25 @@ const CRON_PROFILE: Partial<Record<QueueName, CronRetryProfile>> = {
   [QUEUE_NAMES.SCHEDULED_REPORTS]: 'sparse', // hourly :05
 
   /**
-   * ── Not idempotent: leave it at one run ──────────────────────────────────
+   * Idempotent since the reminder sweep started claiming before it sends.
    *
-   * DO NOT "fix" this to 'sparse'. `sendDueReminders` in
-   * apps/api/src/services/commerce/invoicing.ts selects on due date alone:
+   * This entry was 'once', with a paragraph telling the next person not to
+   * change it: `sendDueReminders` selected on the due date alone and wrote
+   * `reminders_sent` without ever reading it back, so a retry sent a second
+   * payment chase to a customer who was not late. Measured against a real
+   * database at the time: two sweeps left the counter at 2, five left it at 5.
    *
-   *     eq(invoices.status, 'sent'),
-   *     sql`date_trunc('day', ${invoices.dueDate}) = ${targetDateStr}::date`
+   * That is fixed. The sweep now claims each invoice with a conditional UPDATE
+   * carrying the same "not reminded today" condition as its select, so the
+   * number of runs stops mattering — measured the same way: five sweeps leave
+   * the counter at 1. See apps/api/src/services/commerce/invoicing.ts and
+   * apps/api/src/integration/invoice-reminder-idempotent.integration.test.ts.
    *
-   * It writes `remindersSent + 1` and `lastReminderAt` afterwards but never
-   * reads either back, so nothing in the predicate says "already reminded
-   * today". A second run inside the same day re-selects every invoice it just
-   * processed and fires `onApiEvent(..., 'invoice_reminder', ...)` again — a
-   * second reminder to a paying customer.
-   *
-   * The per-invoice `catch { /* non-fatal *\/ }` makes this worse rather than
-   * better: individual failures are swallowed, so the job only throws when
-   * something outside the loop breaks — which is exactly the case where some
-   * reminders have already gone out. That is the window the stuck-connection
-   * reaper widens: it kills a wedged backend after 15 s, mid-sweep, and hands
-   * the worker a failed request with part of the work done.
-   *
-   * Making this retryable is a real improvement, but it is a change to the
-   * SELECT, not to a queue option, and it needs its own test.
+   * So it joins the other daily crons. It runs at 08:00 UTC and a missed run
+   * is not made up: nothing re-reminds yesterday's rung tomorrow, because
+   * tomorrow's 7-day bucket is a different due date.
    */
-  [QUEUE_NAMES.INVOICE_REMINDER]: 'once',
+  [QUEUE_NAMES.INVOICE_REMINDER]: 'sparse',
 };
 
 /**
