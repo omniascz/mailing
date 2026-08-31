@@ -13,7 +13,8 @@ import { SCAN_TIMEOUT_MS } from '../test-support/scan-budget.js';
  * straight from process.env anyway, each with its own fallback — and the
  * fallbacks disagreed:
  *
- *   'forgemsg'             analytics.ts (campaign screenshots), media/storage.ts
+ *   'forgemsg'             analytics.ts (the campaign screenshot route, since
+ *                          removed with puppeteer), media/storage.ts
  *   'forgemsg-recordings'  archive/email-events.ts, phone/recording.ts,
  *                          phone/voicemail.ts
  *

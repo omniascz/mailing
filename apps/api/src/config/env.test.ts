@@ -116,8 +116,8 @@ describe('prodRequired — production must not fall back to a committed default'
 
   it('production without MINIO_BUCKET is refused, and the message names it', async () => {
     // The dev default is `forgemsg`. A production deployment that never set the
-    // variable would write media, campaign screenshots, the email-event
-    // archive, call recordings and voicemail into a bucket named after the
+    // variable would write media, the email-event archive, call recordings
+    // and voicemail into a bucket named after the
     // product, which is nobody's deliberate choice.
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const env = { ...PROD_BASE };
