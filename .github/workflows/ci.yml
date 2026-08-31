@@ -329,11 +329,24 @@ jobs:
     name: E2E Smoke (Playwright)
     runs-on: ubuntu-latest
     needs: [typecheck]
-    # Skip by default — the dev stack is heavyweight and the suite is
-    # opt-in. Trigger by labeling a PR with `run-e2e` or running the
-    # workflow manually. When we have a staging deploy we can run it
-    # post-merge against staging instead.
-    if: contains(github.event.pull_request.labels.*.name, 'run-e2e') || github.event_name == 'workflow_dispatch'
+    # Runs on every PR. It used to be label-gated ("the dev stack is
+    # heavyweight and the suite is opt-in"), and the label was applied exactly
+    # once, to PR #1, on 2026-08-02. Twenty-one consecutive PRs since then
+    # reported `skipping`, so the only browser-level check this repo has
+    # verified nothing for four weeks while sitting on the PR page looking
+    # like part of CI.
+    #
+    # The gate is off because the premise behind it did not survive
+    # measurement. The three runs this job has ever had all passed and all
+    # took about the same time:
+    #
+    #   PR #1              2026-08-02   3m57s   pass
+    #   workflow_dispatch  2026-08-04   3m41s   pass
+    #   workflow_dispatch  2026-08-04   3m38s   pass
+    #
+    # against a critical path of 3m54s (Integration (real DB)). The suite is
+    # not heavier than what the pipeline already waits for — it is the same
+    # length — so gating it bought no wall-clock time at all.
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -558,8 +571,8 @@ jobs:
   ci-pass:
     name: CI Pass
     runs-on: ubuntu-latest
-    # Every job that can fail on the code: both integration suites, and both
-    # DB-migration checks.
+    # Every job that can fail on the code: both integration suites, both
+    # DB-migration checks, and the browser smoke.
     #
     # They were left out with a note saying one new test should not gate the
     # pipeline "until it has a track record". They have one now — 9 files
@@ -580,14 +593,20 @@ jobs:
         workers-integration,
         drift-check,
         apply-dry-run,
+        e2e,
       ]
     if: always()
     steps:
       - name: Verify all jobs succeeded
         env:
           # `skipped` counts as a failure for these: a required job that did not
-          # run is a required job that did not pass. e2e is label-gated and
-          # audit is continue-on-error, so neither is required here.
+          # run is a required job that did not pass. That rule is why e2e had
+          # to lose its `if:` before it could be listed — a label-gated job
+          # would have reported `skipped` on every PR and failed this check.
+          #
+          # `audit` stays out because it is continue-on-error: it reports
+          # success whatever `pnpm audit` returns, so requiring it would assert
+          # nothing.
           LINT: ${{ needs.lint.result }}
           TYPECHECK: ${{ needs.typecheck.result }}
           TEST: ${{ needs.test.result }}
@@ -597,9 +616,10 @@ jobs:
           WORKERS_INTEGRATION: ${{ needs['workers-integration'].result }}
           DRIFT_CHECK: ${{ needs['drift-check'].result }}
           APPLY_DRY_RUN: ${{ needs['apply-dry-run'].result }}
+          E2E: ${{ needs.e2e.result }}
         run: |
           failed=''
-          for job in LINT TYPECHECK TEST BUILD BUILD_GO INTEGRATION WORKERS_INTEGRATION DRIFT_CHECK APPLY_DRY_RUN; do
+          for job in LINT TYPECHECK TEST BUILD BUILD_GO INTEGRATION WORKERS_INTEGRATION DRIFT_CHECK APPLY_DRY_RUN E2E; do
             eval "result=\$$job"
             echo "$job: $result"
             [ "$result" = 'success' ] || failed="$failed $job"
