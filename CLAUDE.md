@@ -72,7 +72,7 @@ Use `AppError` class from `@forgemsg/shared`:
 
 - Zod validation on all request inputs (params, query, body)
 - OpenAPI auto-generation via `@fastify/swagger`
-- Rate limiting via `@fastify/rate-limit` (Redis-backed)
+- Rate limiting via `@fastify/rate-limit`, counter in Redis so the limit is one limit across all instances (passing `redis` is what picks `RedisStore` over the in-process default; without it each process counts on its own and the real ceiling is the limit times the instance count)
 - Auth: JWT + Redis sessions, RBAC middleware (owner/admin/editor/viewer)
 - Response format: `{ data, cursor?, hasMore?, total? }` for lists
 - Errors: `{ code, message, statusCode, details? }`
