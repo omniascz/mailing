@@ -30,8 +30,12 @@
  *   Fastify requestTimeout     is Node's server.requestTimeout: it bounds
  *                              receiving the request, not running the handler.
  *   Postgres statement_timeout does not fire — the backend is not executing
- *                              anything, it is waiting on the client. Measured:
- *                              statement_timeout=2s left 4 of 6 runs hung.
+ *                              anything, it is waiting on the client. This one
+ *                              is a mechanism, not a measurement: the timeout
+ *                              bounds execution, and nothing is executing. (An
+ *                              accompanying figure, "statement_timeout=2s left
+ *                              4 of 6 runs hung", is withdrawn — see "How often"
+ *                              below. The conclusion does not rest on it.)
  *
  * ─── What this does instead ─────────────────────────────────────────────────
  *
@@ -57,6 +61,47 @@
  *
  * The reaper holds its own one-connection client. It has to: the pool it is
  * rescuing is by definition saturated at the moment it is needed.
+ *
+ * ─── How often does this actually happen? UNKNOWN ───────────────────────────
+ *
+ * Read this before deleting any of it.
+ *
+ * Three separate things, and they are worth keeping apart:
+ *
+ *   The cause is real and still open. porsager/postgres#1033, filed
+ *   2025-02-11, open as of 2026-08-31. 3.4.9 (2026-04-05) is the newest
+ *   published release and does not fix it.
+ *
+ *   The failure was really observed. A route that logged `incoming request`
+ *   and never `request completed`, with a backend of this pool sitting in
+ *   active/Client/ClientRead. That is what this file was written for.
+ *
+ *   The FREQUENCY is not known. Not "low" — not known. An earlier version of
+ *   the integration test claimed the race reproduces "in roughly two runs out
+ *   of three"; that has been withdrawn, because on 2026-08-31 it did not
+ *   reproduce once in more than 25 attempts across four shapes of load,
+ *   including six runs of route-smoke with this watchdog switched off. The
+ *   measurements are in mailforge-probes/README.md.
+ *
+ * So the honest summary is: a real defect with an open upstream ticket, whose
+ * rate of occurrence nobody here can currently state. Whether that rate is
+ * zero on the deployment you are looking at, or merely small enough that you
+ * have not hit it yet, this evidence cannot tell you apart.
+ *
+ * That asymmetry is the argument for keeping it. The cost is one connection,
+ * one query per interval against pg_stat_activity, and this file. The cost of
+ * being wrong the other way is a request that never answers and a pool that is
+ * permanently one connection smaller, which is exactly the failure that is
+ * hardest to diagnose from the outside — nothing errors, nothing logs, a
+ * counter simply goes down and stays down.
+ *
+ * The event that justifies removing this is upstream fixing #1033 and the
+ * dependency being raised past it — not a quiet period, and not a failed
+ * attempt to reproduce the race. If you do remove it, note that
+ * db/no-held-portals.test.ts exists only to protect the assumption this file
+ * relies on (that nothing here holds a portal open), and goes with it; and
+ * that `DB_STUCK_CONNECTION_REAPER=off` already switches this off without a
+ * deploy, which is the cheaper experiment.
  */
 import postgres from 'postgres';
 
