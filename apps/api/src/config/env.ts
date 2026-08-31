@@ -324,16 +324,29 @@ const Env = z
     // so every upload in production aimed at the wrong host and failed at use
     // with a connection error rather than at boot with a reason.
     //
-    // The credentials are prodRequired, so a production deployment has already
-    // asserted that object storage exists. Leaving the endpoint at its
-    // development default alongside them is a mistake, not a choice — the same
-    // shape as SENDING_IPS without WARMUP_API_URL in the engine.
+    // Object storage is not optional in production. The surfaces that need it
+    // are core, not add-ons: mediaRoutes and digitalAssetRoutes are both
+    // registered with a plain app.register (index.ts), not through
+    // registerBeyondCore, so they exist in every deployment — and both write
+    // and read through lib/object-store.ts. An image in a template is served
+    // from that store to every recipient's mail client. MINIO_ACCESS_KEY,
+    // MINIO_SECRET_KEY, MINIO_BUCKET and MINIO_VIDEO_BUCKET are all
+    // prodRequired above, which means a production process with any of them
+    // unset does not start.
     //
-    // Not a boot requirement in general: an API with no object storage is a
-    // legitimate deployment. Sending, contacts, campaigns and workflows all
-    // work; the media library and the event archive do not, and refusing to
-    // start would take the whole product down over a feature many operators
-    // never enable.
+    // The endpoint has to be checked here rather than being prodRequired
+    // because it carries a dev default of `localhost` and defaults survive
+    // prodRequired's dev branch only — it is the one MINIO_* variable whose
+    // absence would otherwise resolve to a plausible, wrong value instead of
+    // an error. Leaving it at that default in production is the same shape as
+    // SENDING_IPS without WARMUP_API_URL in the engine.
+    //
+    // This comment used to say the opposite — "an API with no object storage
+    // is a legitimate deployment" — and the message below used to offer
+    // unsetting the credentials as the way to declare that. Neither was true.
+    // prodRequired makes them required, so following that advice produced
+    // `MINIO_ACCESS_KEY: Required` and a refusal to boot: an escape hatch that
+    // did not exist, printed by the very check that closed it.
     if (isProduction && !process.env.MINIO_ENDPOINT) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -341,8 +354,9 @@ const Env = z
         message:
           'MINIO_ENDPOINT is required in production. It defaults to `localhost`, which ' +
           'inside a container is this process — so uploads would be attempted against the ' +
-          'API itself. Set it to the object store, or unset MINIO_ACCESS_KEY/MINIO_SECRET_KEY ' +
-          'if this deployment has no object storage.',
+          'API itself. Set it to the host of the object store. Production always needs one — ' +
+          'the media library and digital assets are core surfaces and serve from it — which ' +
+          'is why MINIO_ACCESS_KEY, MINIO_SECRET_KEY and MINIO_BUCKET are required too.',
       });
     }
 
