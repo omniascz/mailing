@@ -53,6 +53,19 @@ function buildSvgFrame(parts: Parts, style: Required<CountdownStyle>): string {
   const { bgColor, textColor, labelColor, fontFamily, width, height } = style;
 
   const cellW = width / 4;
+  // Both of these are BASELINES, and neither text element carries
+  // `dominant-baseline`. That attribute is why this frame is renderer-
+  // dependent: librsvg as shipped with vips 8.15.3 ignored
+  // `dominant-baseline="middle"` on the digits and put the baseline at `y`,
+  // while 8.18.6 honours it and centres the glyph box there instead — the same
+  // markup, thirteen pixels apart, with nothing in the file to say which was
+  // meant. Measured 2026-08-31 by bumping sharp 0.33.5 → 0.35.4.
+  //
+  // Digits have no descenders, so a baseline at 0.52·height puts their bottom
+  // edge there and their body above it, which is what this has always drawn
+  // and what the labels at 0.78·height were spaced for. Stating it as a
+  // baseline means every renderer draws the same thing, because there is no
+  // longer anything to interpret.
   const numY = height * 0.52;
   const labelY = height * 0.78;
   const numSize = Math.round(height * 0.38);
@@ -70,10 +83,10 @@ function buildSvgFrame(parts: Parts, style: Required<CountdownStyle>): string {
       const x = cellW * i + cellW / 2;
       const separator =
         i < 3
-          ? `<text x="${cellW * (i + 1)}" y="${numY}" font-family="${fontFamily}" font-size="${numSize}" fill="${textColor}" text-anchor="middle" dominant-baseline="middle" font-weight="bold">:</text>`
+          ? `<text x="${cellW * (i + 1)}" y="${numY}" font-family="${fontFamily}" font-size="${numSize}" fill="${textColor}" text-anchor="middle" font-weight="bold">:</text>`
           : '';
       return `
-        <text x="${x}" y="${numY}" font-family="${fontFamily}" font-size="${numSize}" fill="${textColor}" text-anchor="middle" dominant-baseline="middle" font-weight="bold">${value}</text>
+        <text x="${x}" y="${numY}" font-family="${fontFamily}" font-size="${numSize}" fill="${textColor}" text-anchor="middle" font-weight="bold">${value}</text>
         <text x="${x}" y="${labelY}" font-family="${fontFamily}" font-size="${labelSize}" fill="${labelColor}" text-anchor="middle">${label}</text>
         ${separator}`;
     })
