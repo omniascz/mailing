@@ -41,7 +41,7 @@
  *    re-export, `require`, a dynamic import — constructs a queue this cannot
  *    see. That is the price of not exempting files by name.
  */
-import { describe, it, expect, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -130,15 +130,54 @@ function tsFilesUnder(dir: string): string[] {
 }
 
 const opened: QueueLike[] = [];
+
+/**
+ * The queues, imported ONCE and outside any test body.
+ *
+ * This used to be `await import('./queues.js')` inside each case that needed
+ * it. That import is not cheap and it is not pure: queues.ts constructs its
+ * queues at module scope — `new Queue('email', …)`, sms, webhook, viber-send
+ * and the rest — so resolving it opens a dozen-plus ioredis connections to
+ * REDIS_URL. Paying for that inside `it()` puts it against `testTimeout`,
+ * which is 10_000 ms, and under sixteen busy workers that is not always
+ * enough: measured here as one `Test timed out in 10000ms` in five suite runs,
+ * on a file whose tests otherwise finish in under a second.
+ *
+ * It is the same shape that made this suite flaky before — a dynamic import in
+ * a function body, charged to a budget sized for assertions.
+ *
+ * `beforeAll` rather than a top-level import, deliberately. A static import
+ * would move the cost to collection, which vitest runs for every file in the
+ * suite at once — the moment of heaviest contention, and one with no timeout
+ * to report if it goes wrong. It would also open those Redis connections even
+ * for a run that selected only the source-scanning cases in this file, which
+ * need no queues at all. In a hook the cost is paid once, lazily, against
+ * `hookTimeout` (30_000 ms), and it stays symmetrical with the `afterAll`
+ * below that closes what it opened.
+ *
+ * No SCAN_TIMEOUT_MS here: the scanning half of this file has roughly twenty
+ * times the headroom it needs. The import was the problem, not the scan.
+ */
+let queues: [string, QueueLike][] | null = null;
+
+beforeAll(async () => {
+  const mod = (await import('./queues.js')) as Record<string, unknown>;
+  queues = Object.entries(mod).filter((e): e is [string, QueueLike] => isQueueLike(e[1]));
+  for (const [, q] of queues) if (!opened.includes(q)) opened.push(q);
+});
+
 afterAll(async () => {
   await Promise.all(opened.map((q) => q.close().catch(() => {})));
 });
 
-async function loadQueues(): Promise<[string, QueueLike][]> {
-  const mod = (await import('./queues.js')) as Record<string, unknown>;
-  const found = Object.entries(mod).filter((e): e is [string, QueueLike] => isQueueLike(e[1]));
-  for (const [, q] of found) if (!opened.includes(q)) opened.push(q);
-  return found;
+/**
+ * Synchronous by design. If the hook above did not run — a `.only` elsewhere, a
+ * refactor that drops it — this says so instead of quietly enumerating nothing
+ * and letting every per-queue assertion pass over an empty list.
+ */
+function loadQueues(): [string, QueueLike][] {
+  if (queues === null) throw new Error('queues were not loaded: the beforeAll hook did not run');
+  return queues;
 }
 
 describe('isQueueLike (predicate self-test)', () => {
@@ -224,12 +263,12 @@ describe('every queue apps/api exports', () => {
   it('there are at least as many as the module defines today', () => {
     // A floor. An enumeration that silently returned [] would make the
     // per-queue checks below pass without looking at anything.
-    return loadQueues().then((qs) => expect(qs.length).toBeGreaterThanOrEqual(12));
+    expect(loadQueues().length).toBeGreaterThanOrEqual(12);
   });
 
   it('carries a non-zero attempts', async () => {
     const failures: string[] = [];
-    for (const [exportName, q] of await loadQueues()) {
+    for (const [exportName, q] of loadQueues()) {
       const attempts = q.opts?.defaultJobOptions?.attempts;
       if (typeof attempts !== 'number' || attempts < 1) {
         failures.push(`${exportName} (queue "${q.name}") has attempts: ${String(attempts)}`);
@@ -247,14 +286,14 @@ describe('every queue apps/api exports', () => {
     // Named rather than derived: these are the ones where a missing policy on
     // this side would be invisible from the other. If they leave queues.ts,
     // this goes red and somebody has to think about it.
-    const names = new Set((await loadQueues()).map(([, q]) => q.name));
+    const names = new Set(loadQueues().map(([, q]) => q.name));
     for (const shared of ['campaign-splitter', 'mta-other', 'batch-sender-triggered']) {
       expect(names, `${shared} is no longer defined here`).toContain(shared);
     }
   });
 
   it('has a name, so a nameless queue cannot pass the checks above', async () => {
-    for (const [exportName, q] of await loadQueues()) {
+    for (const [exportName, q] of loadQueues()) {
       expect(q.name.trim().length, `${exportName} has a blank name`).toBeGreaterThan(0);
     }
   });
