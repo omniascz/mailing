@@ -130,8 +130,8 @@ export default async function CampaignEditPage({ params }: { params: Promise<{ i
         <CardHeader>
           <CardTitle>Campaign content</CardTitle>
           <CardDescription>
-            Subject, sender, audience, A/B test, HTML body. Plain text is auto-derived if you
-            leave it blank.
+            Subject, sender, audience, A/B test, HTML body. Plain text is auto-derived if you leave
+            it blank.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -111,9 +111,7 @@ export function AbResultCard({
               <li
                 key={v.id}
                 className={`flex items-baseline justify-between gap-4 rounded-md border px-3 py-2 text-sm ${
-                  isWinner
-                    ? 'border-emerald-200 bg-emerald-50'
-                    : 'border-secondary-200 bg-white'
+                  isWinner ? 'border-emerald-200 bg-emerald-50' : 'border-secondary-200 bg-white'
                 }`}
               >
                 <span className="min-w-0">
@@ -186,15 +184,7 @@ export function AbResultCard({
   );
 }
 
-function ResultRow({
-  label,
-  value,
-  suffix,
-}: {
-  label: string;
-  value: string;
-  suffix?: string;
-}) {
+function ResultRow({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
       <dt className="shrink-0 text-secondary-500">{label}</dt>
