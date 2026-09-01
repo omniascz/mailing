@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { buildCreatePayload } from './create-payload';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -48,17 +49,9 @@ export function NewCampaignForm({ lists }: { lists: AudienceList[] }) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          type,
-          listId: listId || undefined,
-          ...(type === 'email' && {
-            subject: subject.trim() || undefined,
-            preheader: preheader.trim() || undefined,
-            fromName: fromName.trim() || undefined,
-            fromEmail: fromEmail.trim() || undefined,
-          }),
-        }),
+        body: JSON.stringify(
+          buildCreatePayload({ name, type, listId, subject, preheader, fromName, fromEmail }),
+        ),
       });
       if (!res.ok) {
         const text = await res.text().catch(() => '');

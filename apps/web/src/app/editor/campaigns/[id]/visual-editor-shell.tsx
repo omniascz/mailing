@@ -6,6 +6,7 @@ import { ArrowLeft, Save, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { Editor } from '@forgemsg/editor/canvas';
 import type { MergeTagContext } from '@forgemsg/editor/render';
 import type { EmailSchema } from '@forgemsg/editor/schema';
+import { buildEditorSavePayload } from './editor-save-payload';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -103,15 +104,7 @@ export function VisualEditorShell({
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: schema.subject,
-          preheader: schema.preheader || undefined,
-          content: {
-            schema,
-            // Plain text auto-derived on send (E.10). Leaving unset preserves
-            // any plain-text override the user typed in the HTML editor view.
-          },
-        }),
+        body: JSON.stringify(buildEditorSavePayload(schema)),
       });
       if (!res.ok) {
         const text = await res.text().catch(() => '');
