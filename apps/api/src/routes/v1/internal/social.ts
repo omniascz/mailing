@@ -8,6 +8,7 @@ import { organizations } from '../../../db/schema/index.js';
 import { sql } from 'drizzle-orm';
 import { dispatchDuePosts } from '../../../services/social/publisher.js';
 import { runMonitoringPoll } from '../../../services/social/monitoring.js';
+import { sweepOrgs } from '../../../lib/per-org-sweep.js';
 
 const internalSocialRoutes: FastifyPluginAsync = async (app) => {
   app.post('/api/v1/internal/social/dispatch-due', async (_req, reply) => {
@@ -21,16 +22,22 @@ const internalSocialRoutes: FastifyPluginAsync = async (app) => {
       .from(organizations)
       .where(sql`deleted_at IS NULL`);
 
-    let totalIngested = 0;
-    for (const org of orgs) {
-      try {
-        const { ingested } = await runMonitoringPoll(org.id);
-        totalIngested += ingested;
-      } catch {
-        /* skip */
-      }
-    }
-    return reply.send({ data: { orgsPolled: orgs.length, totalIngested } });
+    const outcome = await sweepOrgs(
+      orgs.map((o) => o.id),
+      'social-monitor',
+      (orgId) => runMonitoringPoll(orgId),
+    );
+    const totalIngested = outcome.succeeded.reduce((n, r) => n + r.ingested, 0);
+    return reply.send({
+      data: {
+        orgsPolled: outcome.attempted,
+        totalIngested,
+        // This poll re-reads a rolling window every 15 minutes, so a transient
+        // failure does recover. A permanent one — a revoked token — does not,
+        // and used to be invisible.
+        orgsFailed: outcome.failures.length,
+      },
+    });
   });
 };
 
