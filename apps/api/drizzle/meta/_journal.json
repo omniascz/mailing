@@ -141,6 +141,13 @@
       "when": 1787943654873,
       "tag": "0019_poll_votes",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788265265062,
+      "tag": "0020_campaign_timewarp",
+      "breakpoints": true
     }
   ]
 }
