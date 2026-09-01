@@ -27,6 +27,14 @@ interface Campaign {
   replyTo: string | null;
   content: CampaignContent | null;
   listId: string | null;
+  timewarp: TimewarpSettings | null;
+}
+
+/** Deliver at the same local hour in each recipient's own timezone. */
+interface TimewarpSettings {
+  enabled: boolean;
+  localHour: number;
+  fallbackTimezone?: string;
 }
 
 interface AudienceList {
@@ -58,6 +66,11 @@ export function EditCampaignForm({
   const [listId, setListId] = useState(campaign.listId ?? '');
   const [html, setHtml] = useState(campaign.content?.html ?? '');
   const [plainText, setPlainText] = useState(campaign.content?.plainText ?? '');
+  const [timewarpOn, setTimewarpOn] = useState(campaign.timewarp?.enabled ?? false);
+  const [timewarpHour, setTimewarpHour] = useState(campaign.timewarp?.localHour ?? 9);
+  const [timewarpFallback, setTimewarpFallback] = useState(
+    campaign.timewarp?.fallbackTimezone ?? 'Europe/Prague',
+  );
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -74,6 +87,14 @@ export function EditCampaignForm({
           fromEmail: fromEmail.trim() || undefined,
           replyTo: replyTo.trim() || undefined,
           listId: listId || undefined,
+          // Sent on every save, including when switched off, so turning it off
+          // actually turns it off. `undefined` would leave the stored value in
+          // place and the campaign would keep time-warping.
+          timewarp: {
+            enabled: timewarpOn,
+            localHour: timewarpHour,
+            fallbackTimezone: timewarpFallback.trim() || undefined,
+          },
           // A campaign the visual editor owns does NOT get its content written
           // from here. This form used to PUT `{ html, plainText }` whatever the
           // campaign was, which replaced the whole content object and dropped
@@ -195,6 +216,53 @@ export function EditCampaignForm({
               </option>
             ))}
           </select>
+        )}
+      </div>
+
+      {/* Time-warp */}
+      <div className="space-y-1.5">
+        <label className="flex items-center gap-2 text-sm font-medium text-secondary-700">
+          <input
+            type="checkbox"
+            checked={timewarpOn}
+            onChange={(e) => setTimewarpOn(e.target.checked)}
+            disabled={disabled}
+          />
+          Deliver at the same local hour for every recipient
+        </label>
+        {timewarpOn && (
+          <div className="flex flex-wrap items-end gap-3 rounded-md border border-secondary-200 p-3">
+            <div className="space-y-1">
+              <label className="block text-xs text-secondary-600">Local hour</label>
+              <select
+                value={timewarpHour}
+                onChange={(e) => setTimewarpHour(Number(e.target.value))}
+                disabled={disabled}
+                className="h-9 rounded-md border border-secondary-300 px-2 text-sm focus:border-primary-500 focus:outline-none"
+              >
+                {Array.from({ length: 24 }, (_, h) => (
+                  <option key={h} value={h}>
+                    {String(h).padStart(2, '0')}:00
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs text-secondary-600">
+                Timezone for contacts whose own is unknown
+              </label>
+              <Input
+                value={timewarpFallback}
+                onChange={(e) => setTimewarpFallback(e.target.value)}
+                disabled={disabled}
+                placeholder="Europe/Prague"
+              />
+            </div>
+            <p className="w-full text-xs text-secondary-500">
+              Each recipient is sent at this hour in their own timezone. Contacts whose timezone we
+              do not know are sent at this hour in the fallback zone — nobody is skipped.
+            </p>
+          </div>
         )}
       </div>
 

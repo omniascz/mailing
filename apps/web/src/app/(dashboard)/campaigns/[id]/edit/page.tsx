@@ -31,6 +31,11 @@ interface Campaign {
   replyTo: string | null;
   content: CampaignContent | null;
   listId: string | null;
+  timewarp: {
+    enabled: boolean;
+    localHour: number;
+    fallbackTimezone?: string;
+  } | null;
   segmentId: string | null;
   excludeSegmentId: string | null;
 }
