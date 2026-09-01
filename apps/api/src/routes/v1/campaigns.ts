@@ -143,6 +143,24 @@ const utmSettingsSchema = z.object({
   term: utmValue.optional(),
 });
 
+/**
+ * Time-warp settings a campaign can carry.
+ *
+ * `localHour` is the hour in the RECIPIENT's timezone, which is the whole
+ * point: 9 means nine in the morning wherever they are, not nine at the
+ * sender's desk. The remaining fields have worker-side defaults and are here
+ * so an org can override them; `baseDate` is deliberately absent — it is the
+ * campaign's own send time and is filled in at dispatch, not by the caller.
+ */
+const timewarpSettingsSchema = z.object({
+  enabled: z.boolean(),
+  localHour: z.number().int().min(0).max(23),
+  /** IANA zone for contacts whose timezone is unknown. */
+  fallbackTimezone: z.string().min(1).max(64).optional(),
+  skipHolidays: z.boolean().optional(),
+  holidayCountry: z.enum(['cz', 'sk']).optional(),
+});
+
 const createSchema = z.object({
   name: z.string().min(1).max(255),
   type: z.enum(campaignTypes).optional(),
@@ -164,6 +182,10 @@ const createSchema = z.object({
   // written; until now no route could set it, so the whole feature — schema,
   // dispatch, splitter, batch-sender, renderer — was unreachable.
   utmTracking: utmSettingsSchema.optional(),
+  // Time-warp. Same story as utmTracking one line up: the column, the
+  // splitter, the batch-sender and both scheduler endpoints were all built and
+  // no route could set it, so nobody could switch it on.
+  timewarp: timewarpSettingsSchema.optional(),
   configurationSet: z.string().max(128).optional(),
   category: z.string().max(128).optional(),
   scheduledAt: z.string().datetime().optional(),

@@ -49,6 +49,53 @@ export async function resolveTrackingForSender(
  * batches). Forwards A/B config, UTM tracking, and DKIM so those features
  * activate. Throws on invalid state transition / readiness failure.
  */
+/**
+ * The time-warp config the splitter should carry, or undefined.
+ *
+ * Two things happen here that the stored value does not say.
+ *
+ * `baseDate` is the anchor day the worker measures each recipient's local hour
+ * against, and it defaults — inside the worker — to "whenever the batch
+ * happened to run". For a scheduled campaign that is wrong in a way nobody
+ * would notice until a send straddled midnight: the cron picks the campaign up
+ * within a minute of `scheduledAt`, but the splitter and the batches behind it
+ * run later, and a batch that starts at 23:58 would anchor the next day for
+ * everyone in it. Pinning it to the campaign's own scheduled time makes every
+ * batch of one send agree on which day it is, whoever runs first.
+ *
+ * `fallbackTimezone` is filled in here rather than left to the worker's
+ * default so the value that decides where an unknown contact is sent is
+ * visible in the campaign's own dispatch, not two packages away. Europe/Prague
+ * because that is the market this launches into; an org that sends elsewhere
+ * sets it on the campaign.
+ *
+ * A contact with no known timezone is sent at `localHour` in that fallback —
+ * never dropped. Dropping would mean a recipient silently receives nothing
+ * because we could not guess their country, which is a worse failure than an
+ * email arriving at 9 a.m. Prague instead of 9 a.m. wherever they are.
+ */
+function timewarpForDispatch(campaign: {
+  timewarp?: {
+    enabled: boolean;
+    localHour: number;
+    fallbackTimezone?: string;
+    skipHolidays?: boolean;
+    holidayCountry?: 'cz' | 'sk';
+  } | null;
+  scheduledAt?: Date | null;
+}) {
+  const tw = campaign.timewarp;
+  if (!tw?.enabled) return undefined;
+  return {
+    enabled: true,
+    localHour: tw.localHour,
+    baseDate: (campaign.scheduledAt ?? new Date()).toISOString(),
+    fallbackTimezone: tw.fallbackTimezone ?? 'Europe/Prague',
+    skipHolidays: tw.skipHolidays ?? false,
+    holidayCountry: tw.holidayCountry ?? 'cz',
+  };
+}
+
 export async function enqueueCampaignSend(orgId: string, campaignId: string) {
   // Sandbox gate: a non-production org cannot fire bulk campaigns (the audience
   // can't be verified per-recipient at dispatch). Mirrors the transactional
@@ -147,6 +194,7 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
       replyTo: campaign.replyTo,
       abConfig: campaign.abConfig ?? undefined,
       utmTracking: campaign.utmTracking ?? undefined,
+      timewarp: timewarpForDispatch(campaign),
       ipPoolId: cfg.ipPoolId ?? undefined,
       tlsPolicy: cfg.tlsPolicy,
       // GDPR purpose the batch-sender's consent pre-check enforces against.

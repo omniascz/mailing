@@ -129,6 +129,27 @@ export const campaigns = pgTable(
       term?: string;
     }>(),
 
+    /**
+     * Time-warp: deliver at the same LOCAL hour in each recipient's timezone.
+     *
+     * The whole machinery behind this already existed and could not be reached.
+     * campaign-splitter forwards it to every batch job, batch-sender turns it
+     * into a per-contact BullMQ `delay`, and the API has both an internal and
+     * an authenticated scheduler endpoint — but nothing ever put a value on a
+     * campaign, so the feature was unreachable from the product. Same shape as
+     * utmTracking above before #56.
+     *
+     * Contacts whose timezone is unknown are sent at `localHour` in
+     * `fallbackTimezone`. Nobody is dropped: see enqueueCampaignSend.
+     */
+    timewarp: jsonb('timewarp').$type<{
+      enabled: boolean;
+      localHour: number;
+      fallbackTimezone?: string;
+      skipHolidays?: boolean;
+      holidayCountry?: 'cz' | 'sk';
+    }>(),
+
     // A/B testing
     abConfig: jsonb('ab_config').$type<Record<string, unknown>>(),
 
