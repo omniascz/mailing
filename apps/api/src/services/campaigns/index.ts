@@ -131,6 +131,17 @@ export interface CreateCampaignInput {
   abConfig?: Record<string, unknown>;
   /** UTM auto-append settings. Absent leaves the column null, i.e. off. */
   utmTracking?: UtmSettings;
+  /**
+   * Time-warp: deliver at `localHour` in each recipient's own timezone.
+   * Absent leaves the column null, i.e. off — same convention as utmTracking.
+   */
+  timewarp?: {
+    enabled: boolean;
+    localHour: number;
+    fallbackTimezone?: string;
+    skipHolidays?: boolean;
+    holidayCountry?: 'cz' | 'sk';
+  };
   configurationSet?: string;
   category?: string;
   scheduledAt?: Date;
@@ -189,6 +200,11 @@ export async function createCampaign(input: CreateCampaignInput): Promise<Campai
       excludeSegmentId: input.excludeSegmentId,
       abConfig: input.abConfig,
       utmTracking: input.utmTracking,
+      // Explicit, because this insert names its columns one by one. A field
+      // added to CreateCampaignInput and not to this list is accepted by the
+      // route, validated, and then silently dropped — which is exactly how the
+      // time-warp column stayed null while the request said 201.
+      timewarp: input.timewarp,
       configurationSet: input.configurationSet,
       category: input.category,
       scheduledAt: input.scheduledAt,
