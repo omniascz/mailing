@@ -113,6 +113,52 @@ describe('the settings can finally be set', () => {
     expect(utm.enabled).toBe(false);
   });
 
+  it('accepts the exact payload the campaign form sends', async () => {
+    // #56 wired the column, the dispatch, the splitter, the batch-sender and
+    // the renderer, and the campaign form had no field — so for two months the
+    // only way to set this was curl. The form sends all three values on every
+    // save, blank included, because an absent key does not clear a stored one.
+    // This pins the shape it sends: blanks must be accepted and must fall
+    // through to the server's own defaults rather than storing empty strings.
+    const data = await createCampaign({ name: `Form shape ${tag}` });
+    const res = await app.inject({
+      method: 'PUT',
+      url: `/api/v1/campaigns/${data!.id}`,
+      headers: { authorization: `Bearer ${session.token}` },
+      payload: {
+        utmTracking: { enabled: true, source: undefined, medium: undefined, campaign: undefined },
+      },
+    });
+    expect(res.statusCode, res.body).toBe(200);
+
+    const utm = await utmOf(data!.id);
+    expect(utm.enabled).toBe(true);
+    expect(utm.effective.source).toBe('email');
+    expect(utm.effective.medium).toBe('newsletter');
+    expect(utm.effective.campaign).toBe(`form-shape-${tag}`);
+  });
+
+  it('unticking the box in the form actually turns tagging off', async () => {
+    // The form posts `enabled: false` rather than omitting the key. If it
+    // omitted it, PUT would leave the stored value alone and the campaign
+    // would keep tagging — which is what makes the "sent whether on or off"
+    // comment in the form a decision rather than noise.
+    const data = await createCampaign({
+      name: `Untick ${tag}`,
+      utmTracking: { enabled: true, source: 'x' },
+    });
+    expect((await utmOf(data!.id)).enabled).toBe(true);
+
+    const res = await app.inject({
+      method: 'PUT',
+      url: `/api/v1/campaigns/${data!.id}`,
+      headers: { authorization: `Bearer ${session.token}` },
+      payload: { utmTracking: { enabled: false, source: 'x' } },
+    });
+    expect(res.statusCode, res.body).toBe(200);
+    expect((await utmOf(data!.id)).enabled).toBe(false);
+  });
+
   it('the defaults come from the campaign name, slugged', async () => {
     const data = await createCampaign({ name: `Vánoční sleva 2026 ${tag}` });
     const utm = await utmOf(data!.id);

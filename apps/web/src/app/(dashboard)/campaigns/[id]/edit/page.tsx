@@ -36,6 +36,14 @@ interface Campaign {
     localHour: number;
     fallbackTimezone?: string;
   } | null;
+  utmTracking: {
+    enabled: boolean;
+    source?: string;
+    medium?: string;
+    campaign?: string;
+    content?: string;
+    term?: string;
+  } | null;
   segmentId: string | null;
   excludeSegmentId: string | null;
 }

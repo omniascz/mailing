@@ -28,6 +28,24 @@ interface Campaign {
   content: CampaignContent | null;
   listId: string | null;
   timewarp: TimewarpSettings | null;
+  utmTracking: UtmSettings | null;
+}
+
+/**
+ * UTM parameters appended to every tracked link at render time.
+ *
+ * Values are URL-safe by contract, not by convention: the API rejects spaces
+ * and `? # & =` (utmValue in routes/v1/campaigns.ts). A campaign name with
+ * diacritics is not a valid value — it has to be slugged first — which is why
+ * the field below does not prefill itself from the campaign name.
+ */
+interface UtmSettings {
+  enabled: boolean;
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  content?: string;
+  term?: string;
 }
 
 /** Deliver at the same local hour in each recipient's own timezone. */
@@ -71,6 +89,16 @@ export function EditCampaignForm({
   const [timewarpFallback, setTimewarpFallback] = useState(
     campaign.timewarp?.fallbackTimezone ?? 'Europe/Prague',
   );
+  const [utmOn, setUtmOn] = useState(campaign.utmTracking?.enabled ?? false);
+  // All three start blank rather than prefilled, because the server already
+  // has defaults and duplicating them here is how the two drift apart:
+  // resolveUtm (services/campaigns/utm.ts:87) falls back to source `email`,
+  // medium `newsletter`, and the campaign's own name slugged — so a Czech name
+  // becomes a valid UTM value without the operator doing anything. The
+  // placeholders below say what a blank field will become.
+  const [utmSource, setUtmSource] = useState(campaign.utmTracking?.source ?? '');
+  const [utmMedium, setUtmMedium] = useState(campaign.utmTracking?.medium ?? '');
+  const [utmCampaign, setUtmCampaign] = useState(campaign.utmTracking?.campaign ?? '');
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -94,6 +122,14 @@ export function EditCampaignForm({
             enabled: timewarpOn,
             localHour: timewarpHour,
             fallbackTimezone: timewarpFallback.trim() || undefined,
+          },
+          // Sent whether on or off, for the same reason as timewarp above:
+          // an absent key is not an instruction to clear.
+          utmTracking: {
+            enabled: utmOn,
+            source: utmSource.trim() || undefined,
+            medium: utmMedium.trim() || undefined,
+            campaign: utmCampaign.trim() || undefined,
           },
           // A campaign the visual editor owns does NOT get its content written
           // from here. This form used to PUT `{ html, plainText }` whatever the
@@ -261,6 +297,54 @@ export function EditCampaignForm({
             <p className="w-full text-xs text-secondary-500">
               Each recipient is sent at this hour in their own timezone. Contacts whose timezone we
               do not know are sent at this hour in the fallback zone — nobody is skipped.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* UTM */}
+      <div className="space-y-1.5">
+        <label className="flex items-center gap-2 text-sm font-medium text-secondary-700">
+          <input
+            type="checkbox"
+            checked={utmOn}
+            onChange={(e) => setUtmOn(e.target.checked)}
+            disabled={disabled}
+          />
+          Tag links with UTM parameters
+        </label>
+        {utmOn && (
+          <div className="flex flex-wrap items-end gap-3 rounded-md border border-secondary-200 p-3">
+            <div className="space-y-1">
+              <label className="block text-xs text-secondary-600">utm_source</label>
+              <Input
+                value={utmSource}
+                onChange={(e) => setUtmSource(e.target.value)}
+                disabled={disabled}
+                placeholder="email (default)"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs text-secondary-600">utm_medium</label>
+              <Input
+                value={utmMedium}
+                onChange={(e) => setUtmMedium(e.target.value)}
+                disabled={disabled}
+                placeholder="newsletter (default)"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs text-secondary-600">utm_campaign</label>
+              <Input
+                value={utmCampaign}
+                onChange={(e) => setUtmCampaign(e.target.value)}
+                disabled={disabled}
+                placeholder="campaign name, slugged (default)"
+              />
+            </div>
+            <p className="w-full text-xs text-secondary-500">
+              No spaces and none of <code>? # &amp; =</code> — these go straight into the query
+              string. Leave a field blank to use the default shown.
             </p>
           </div>
         )}
