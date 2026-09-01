@@ -7,6 +7,8 @@ import { apiFetch } from '@/lib/api';
 import { getCapabilities } from '@/lib/capabilities.server';
 import { CampaignActions } from './campaign-actions';
 import { CloneCampaignButton } from './clone-campaign-button';
+import { PollResultsCard, type PollResult } from './poll-results-card';
+import { AbResultCard, type AbConfigLite, type AbResult } from './ab-result-card';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -43,6 +45,7 @@ interface Campaign {
   listId: string | null;
   segmentId: string | null;
   excludeSegmentId: string | null;
+  abConfig: AbConfigLite | null;
   createdAt: string;
 }
 
@@ -90,6 +93,17 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
   const isSent = campaign.status === 'sent' || campaign.totalSent > 0;
 
   const { geoAnalytics } = await getCapabilities();
+
+  // Both are cheap and both answer "there is nothing here" by themselves —
+  // pollResultsForCampaign returns [] when the campaign has no poll block, and
+  // ab-result returns null until a winner is picked. Neither is gated on
+  // `isSent`: a draft that carries a poll should show its questions at zero,
+  // and an A/B test that has not been decided yet is exactly what an operator
+  // is looking at the page to find out.
+  const [polls, abResult] = await Promise.all([
+    apiFetch<PollResult[]>(`/api/v1/campaigns/${id}/poll-results`, { fallback: [] }),
+    apiFetch<AbResult | null>(`/api/v1/campaigns/${id}/ab-result`, { fallback: null }),
+  ]);
 
   const emptyDevices: DeviceStats = { desktop: 0, mobile: 0, tablet: 0, unknown: 0 };
   const [devices, clients, geo]: [DeviceStats, ClientStat[], GeoStatRow[]] = isSent
@@ -305,6 +319,9 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
           ) : null}
         </section>
       ) : null}
+
+      <AbResultCard abConfig={campaign.abConfig} result={abResult} />
+      <PollResultsCard results={polls} />
     </div>
   );
 }
