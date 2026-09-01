@@ -55,6 +55,22 @@ export function startWorkflowSchedulerWorkers() {
   const dailyWorker = new Worker(
     QUEUE_NAMES.DAILY_TRIGGERS,
     async (job) => {
+      // One queue, two schedules — the same shape campaign-dispatch uses for
+      // its tick and its reaper. A second queue would need its own retry
+      // profile, its own entry in CRON_PROFILE and its own worker, for a job
+      // that runs beside this one and fails independently anyway: BullMQ
+      // retries the failed JOB, not the queue.
+      if (job.opts.jobId === 'sto-refresh-predictions' || job.name === 'sto-refresh') {
+        const r = (await post('/api/v1/internal/send-optimization/refresh-predictions')) as {
+          data?: { orgs: number; refreshed: number; failed: number };
+        };
+        job.log(
+          `STO: ${r.data?.refreshed ?? 0} predictions refreshed across ` +
+            `${r.data?.orgs ?? 0} org(s) using time-warp, ${r.data?.failed ?? 0} failed`,
+        );
+        return;
+      }
+
       await post('/api/v1/internal/triggers/daily-run');
       job.log('Daily triggers + refresh executed');
     },
@@ -252,6 +268,27 @@ export async function scheduleWorkflowJobs() {
       },
     );
     console.log('[workflow-scheduler] daily-triggers scheduled (06:00 UTC)');
+  }
+  if (!(await dailyQueue.getJob('sto-refresh-predictions'))) {
+    // 04:40 UTC: after the nightly archive (03:20) and the DKIM sweep (01:20),
+    // before the daily triggers at 06:00 — the predictions this writes are
+    // read on the send path, so they want to be current before the day's
+    // campaigns go out rather than after.
+    //
+    // Daily rather than hourly because a prediction is fitted over 180 days of
+    // opens; an hour of new events cannot move it enough to matter, and the
+    // run costs ~80 s at the 10 000-contact cap.
+    await dailyQueue.add(
+      'sto-refresh',
+      {},
+      {
+        jobId: 'sto-refresh-predictions',
+        repeat: { pattern: '40 4 * * *' },
+        removeOnComplete: true,
+        removeOnFail: { count: 5 },
+      },
+    );
+    console.log('[workflow-scheduler] sto-refresh scheduled (04:40 UTC)');
   }
   if (!(await warehouseQueue.getJob('warehouse-sync-run'))) {
     await warehouseQueue.add(
