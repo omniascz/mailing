@@ -6,10 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
 import { EditCampaignForm } from './edit-campaign-form';
 
-interface CampaignContent {
+/**
+ * `& Record<string, unknown>` is not slack: campaigns.content has four shapes
+ * in this codebase and the visual editor's is `{ schema, html }`. The form
+ * copies the whole object into each A/B variant, so it must not be narrowed
+ * away to the two keys this page happens to read.
+ */
+type CampaignContent = {
   html?: string;
   plainText?: string;
-}
+} & Record<string, unknown>;
 
 interface Campaign {
   id: string;
@@ -46,6 +52,7 @@ interface Campaign {
   } | null;
   segmentId: string | null;
   excludeSegmentId: string | null;
+  abConfig: Record<string, unknown> | null;
 }
 
 interface ListLite {
@@ -54,13 +61,19 @@ interface ListLite {
   liveContactCount: number;
 }
 
+interface SegmentLite {
+  id: string;
+  name: string;
+}
+
 export const dynamic = 'force-dynamic';
 
 export default async function CampaignEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [campaign, lists] = await Promise.all([
+  const [campaign, lists, segments] = await Promise.all([
     apiFetch<Campaign | null>(`/api/v1/campaigns/${id}`, { fallback: null }),
     apiFetch<ListLite[]>('/api/v1/lists', { fallback: [] }),
+    apiFetch<SegmentLite[]>('/api/v1/segments', { fallback: [] }),
   ]);
   if (!campaign) notFound();
 
@@ -117,13 +130,15 @@ export default async function CampaignEditPage({ params }: { params: Promise<{ i
         <CardHeader>
           <CardTitle>Campaign content</CardTitle>
           <CardDescription>
-            Subject, sender, audience, HTML body. Plain text is auto-derived if you leave it blank.
+            Subject, sender, audience, A/B test, HTML body. Plain text is auto-derived if you leave
+            it blank.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <EditCampaignForm
             campaign={campaign}
             lists={lists.map((l) => ({ id: l.id, name: l.name, count: l.liveContactCount }))}
+            segments={segments.map((sgm) => ({ id: sgm.id, name: sgm.name }))}
             editable={editable}
           />
         </CardContent>

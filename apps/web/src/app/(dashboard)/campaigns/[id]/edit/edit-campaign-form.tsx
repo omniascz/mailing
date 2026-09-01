@@ -10,12 +10,17 @@ import { useToast } from '@/components/ui/toast';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-interface CampaignContent {
+/**
+ * Not narrowed to these keys: campaigns.content has four shapes here and the
+ * whole object is copied into every A/B variant, because the splitter passes
+ * `content: variant.content` to the batch with no fallback to the campaign.
+ */
+type CampaignContent = {
   html?: string;
   plainText?: string;
   /** Block-tree schema produced by the visual editor. When present, HTML is its rendered output. */
   schema?: unknown;
-}
+} & Record<string, unknown>;
 
 interface Campaign {
   id: string;
@@ -27,6 +32,9 @@ interface Campaign {
   replyTo: string | null;
   content: CampaignContent | null;
   listId: string | null;
+  segmentId: string | null;
+  excludeSegmentId: string | null;
+  abConfig: Record<string, unknown> | null;
   timewarp: TimewarpSettings | null;
   utmTracking: UtmSettings | null;
 }
@@ -55,19 +63,36 @@ interface TimewarpSettings {
   fallbackTimezone?: string;
 }
 
+import {
+  AB_OFF,
+  abFormStateFrom,
+  buildAbConfig,
+  defaultAbFormState,
+  holdbackPercentage,
+  type AbFormState,
+} from './ab-config';
+import { buildSavePayload } from './save-payload';
+
 interface AudienceList {
   id: string;
   name: string;
   count: number;
 }
 
+interface AudienceSegment {
+  id: string;
+  name: string;
+}
+
 export function EditCampaignForm({
   campaign,
   lists,
+  segments,
   editable,
 }: {
   campaign: Campaign;
   lists: AudienceList[];
+  segments: AudienceSegment[];
   editable: boolean;
 }) {
   const router = useRouter();
@@ -82,6 +107,8 @@ export function EditCampaignForm({
   const [fromEmail, setFromEmail] = useState(campaign.fromEmail ?? '');
   const [replyTo, setReplyTo] = useState(campaign.replyTo ?? '');
   const [listId, setListId] = useState(campaign.listId ?? '');
+  const [segmentId, setSegmentId] = useState(campaign.segmentId ?? '');
+  const [excludeSegmentId, setExcludeSegmentId] = useState(campaign.excludeSegmentId ?? '');
   const [html, setHtml] = useState(campaign.content?.html ?? '');
   const [plainText, setPlainText] = useState(campaign.content?.plainText ?? '');
   const [timewarpOn, setTimewarpOn] = useState(campaign.timewarp?.enabled ?? false);
@@ -100,48 +127,61 @@ export function EditCampaignForm({
   const [utmMedium, setUtmMedium] = useState(campaign.utmTracking?.medium ?? '');
   const [utmCampaign, setUtmCampaign] = useState(campaign.utmTracking?.campaign ?? '');
 
+  const storedAb = abFormStateFrom(campaign.abConfig);
+  const [abOn, setAbOn] = useState(storedAb !== null);
+  const [ab, setAb] = useState<AbFormState>(storedAb ?? defaultAbFormState());
+  const [abError, setAbError] = useState<string | null>(null);
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
+
+    // Built before anything is sent: a rejected config must not leave half of
+    // the form saved and the operator wondering which half.
+    let abPayload: Record<string, unknown> = AB_OFF;
+    if (abOn) {
+      // Every variant carries the campaign's own body — the splitter passes
+      // `content: variant.content` with no fallback. Re-snapshotted on every
+      // save, which is what keeps it current after the body is changed in the
+      // visual editor, since that editor does not know about this form.
+      const built = buildAbConfig(ab, (campaign.content ?? {}) as Record<string, unknown>);
+      if (!built.ok) {
+        setAbError(built.error);
+        toast('error', built.error);
+        return;
+      }
+      abPayload = built.config as unknown as Record<string, unknown>;
+    }
+    setAbError(null);
+
     setSaving(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/campaigns/${campaign.id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: subject.trim() || undefined,
-          preheader: preheader.trim() || undefined,
-          fromName: fromName.trim() || undefined,
-          fromEmail: fromEmail.trim() || undefined,
-          replyTo: replyTo.trim() || undefined,
-          listId: listId || undefined,
-          // Sent on every save, including when switched off, so turning it off
-          // actually turns it off. `undefined` would leave the stored value in
-          // place and the campaign would keep time-warping.
-          timewarp: {
-            enabled: timewarpOn,
-            localHour: timewarpHour,
-            fallbackTimezone: timewarpFallback.trim() || undefined,
-          },
-          // Sent whether on or off, for the same reason as timewarp above:
-          // an absent key is not an instruction to clear.
-          utmTracking: {
-            enabled: utmOn,
-            source: utmSource.trim() || undefined,
-            medium: utmMedium.trim() || undefined,
-            campaign: utmCampaign.trim() || undefined,
-          },
-          // A campaign the visual editor owns does NOT get its content written
-          // from here. This form used to PUT `{ html, plainText }` whatever the
-          // campaign was, which replaced the whole content object and dropped
-          // the block schema — the banner above says the editor is the source
-          // of truth, and this is what makes that true rather than advisory.
-          // Since the send path renders from the schema, dropping it also
-          // silently downgraded the campaign to the raw-HTML branch.
-          ...(campaign.content?.schema
-            ? {}
-            : { content: { html: html || undefined, plainText: plainText || undefined } }),
-        }),
+        body: JSON.stringify(
+          buildSavePayload({
+            subject,
+            preheader,
+            fromName,
+            fromEmail,
+            replyTo,
+            listId,
+            segmentId,
+            excludeSegmentId,
+            abConfig: abPayload,
+            timewarpOn,
+            timewarpHour,
+            timewarpFallback,
+            utmOn,
+            utmSource,
+            utmMedium,
+            utmCampaign,
+            html,
+            plainText,
+            hasEditorSchema: Boolean(campaign.content?.schema),
+          }),
+        ),
       });
       if (!res.ok) {
         const text = await res.text().catch(() => '');
@@ -252,6 +292,208 @@ export function EditCampaignForm({
               </option>
             ))}
           </select>
+        )}
+      </div>
+
+      {/* Segments */}
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-secondary-700">Segment (optional)</label>
+        {segments.length === 0 ? (
+          <p className="rounded-md border border-dashed border-secondary-300 bg-secondary-50 p-3 text-xs text-secondary-500">
+            No segments yet. Create one in <code>/segments</code>.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <select
+                aria-label="Include segment"
+                value={segmentId}
+                onChange={(e) => setSegmentId(e.target.value)}
+                disabled={disabled}
+                className="h-10 w-full rounded-md border border-secondary-300 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-secondary-50 disabled:text-secondary-500"
+              >
+                <option value="">— Include: no segment —</option>
+                {segments.map((sgm) => (
+                  <option key={sgm.id} value={sgm.id}>
+                    {sgm.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Exclude segment"
+                value={excludeSegmentId}
+                onChange={(e) => setExcludeSegmentId(e.target.value)}
+                disabled={disabled}
+                className="h-10 w-full rounded-md border border-secondary-300 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-secondary-50 disabled:text-secondary-500"
+              >
+                <option value="">— Exclude: nobody —</option>
+                {segments.map((sgm) => (
+                  <option key={sgm.id} value={sgm.id}>
+                    {sgm.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p className="text-xs text-secondary-500">
+              A segment narrows the list — a contact has to be in both. It does not replace the
+              list: sending is refused without one, whatever the segment says. The exclude segment
+              is subtracted last.
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* A/B test */}
+      <div className="space-y-1.5">
+        <label className="flex items-center gap-2 text-sm font-medium text-secondary-700">
+          <input
+            type="checkbox"
+            checked={abOn}
+            onChange={(e) => setAbOn(e.target.checked)}
+            disabled={disabled}
+          />
+          Test subject lines against each other (A/B)
+        </label>
+        {abOn && (
+          <div className="space-y-3 rounded-md border border-secondary-200 p-3">
+            <p className="text-xs text-secondary-500">
+              Each variant is sent to its share of the audience with its own subject line and the
+              campaign&apos;s body. What is left over is the holdback, and it gets the winner once
+              the test window closes.
+            </p>
+
+            {ab.variants.map((v, i) => (
+              <div key={v.id} className="flex flex-wrap items-end gap-3">
+                <div className="min-w-[16rem] flex-1 space-y-1">
+                  <label className="block text-xs text-secondary-600">
+                    Variant {v.id} — subject
+                  </label>
+                  <Input
+                    value={v.subject}
+                    onChange={(e) =>
+                      setAb({
+                        ...ab,
+                        variants: ab.variants.map((x, j) =>
+                          j === i ? { ...x, subject: e.target.value } : x,
+                        ),
+                      })
+                    }
+                    disabled={disabled}
+                    placeholder="Subject line for this variant"
+                  />
+                </div>
+                <div className="w-28 space-y-1">
+                  <label className="block text-xs text-secondary-600">Share %</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={v.percentage}
+                    onChange={(e) =>
+                      setAb({
+                        ...ab,
+                        variants: ab.variants.map((x, j) =>
+                          j === i ? { ...x, percentage: e.target.value } : x,
+                        ),
+                      })
+                    }
+                    disabled={disabled}
+                  />
+                </div>
+                {ab.variants.length > 2 ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAb({ ...ab, variants: ab.variants.filter((_, j) => j !== i) })
+                    }
+                    disabled={disabled}
+                    className="h-10 rounded-md border border-secondary-300 px-3 text-sm text-secondary-600 hover:bg-secondary-50 disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() =>
+                setAb({
+                  ...ab,
+                  variants: [
+                    ...ab.variants,
+                    {
+                      id: String.fromCharCode(97 + ab.variants.length),
+                      subject: '',
+                      percentage: '10',
+                    },
+                  ],
+                })
+              }
+              disabled={disabled || ab.variants.length >= 6}
+              className="rounded-md border border-secondary-300 px-3 py-1.5 text-sm text-secondary-700 hover:bg-secondary-50 disabled:opacity-50"
+            >
+              Add a variant
+            </button>
+
+            <div className="flex flex-wrap items-end gap-3 border-t border-secondary-200 pt-3">
+              <div className="w-36 space-y-1">
+                <label className="block text-xs text-secondary-600">Test runs for (hours)</label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={ab.testDurationHours}
+                  onChange={(e) => setAb({ ...ab, testDurationHours: e.target.value })}
+                  disabled={disabled || holdbackPercentage(ab.variants) === 0}
+                />
+              </div>
+              <div className="w-44 space-y-1">
+                <label className="block text-xs text-secondary-600">Decide on</label>
+                <select
+                  value={ab.winnerCriteria}
+                  onChange={(e) =>
+                    setAb({
+                      ...ab,
+                      winnerCriteria: e.target.value === 'open_rate' ? 'open_rate' : 'click_rate',
+                    })
+                  }
+                  disabled={disabled}
+                  className="h-10 w-full rounded-md border border-secondary-300 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-secondary-50 disabled:text-secondary-500"
+                >
+                  <option value="click_rate">Click rate</option>
+                  <option value="open_rate">Open rate</option>
+                </select>
+              </div>
+              <div className="w-36 space-y-1">
+                <label className="block text-xs text-secondary-600">Confidence %</label>
+                <Input
+                  type="number"
+                  min={50}
+                  max={100}
+                  value={ab.confidenceThreshold}
+                  onChange={(e) => setAb({ ...ab, confidenceThreshold: e.target.value })}
+                  disabled={disabled}
+                />
+              </div>
+              <label className="flex h-10 items-center gap-2 text-sm text-secondary-700">
+                <input
+                  type="checkbox"
+                  checked={ab.autoSendWinner}
+                  onChange={(e) => setAb({ ...ab, autoSendWinner: e.target.checked })}
+                  disabled={disabled}
+                />
+                Send the winner automatically
+              </label>
+            </div>
+
+            <p className="text-xs text-secondary-500">
+              {holdbackPercentage(ab.variants) === 0
+                ? 'The variants cover the whole audience — no holdback, so no winner is sent afterwards and the test duration does not apply.'
+                : `Holdback: ${holdbackPercentage(ab.variants)}% of the audience. Open rate is biased by Apple Mail Privacy Protection pre-fetching the tracking pixel, which is why click rate is the default.`}
+            </p>
+
+            {abError ? <p className="text-xs text-rose-600">{abError}</p> : null}
+          </div>
         )}
       </div>
 
