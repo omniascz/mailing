@@ -4,23 +4,9 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Copy } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
+import { buildClonePayload, type CloneSource } from './clone-payload';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-
-interface CloneSource {
-  id: string;
-  name: string;
-  type: string;
-  subject: string | null;
-  preheader: string | null;
-  fromName: string | null;
-  fromEmail: string | null;
-  replyTo: string | null;
-  content: Record<string, unknown> | null;
-  listId: string | null;
-  segmentId: string | null;
-  excludeSegmentId: string | null;
-}
 
 /**
  * Client-side clone — no dedicated backend endpoint exists. We POST a
@@ -41,19 +27,7 @@ export function CloneCampaignButton({ campaign }: { campaign: CloneSource }) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: `Copy of ${campaign.name}`,
-          type: campaign.type,
-          subject: campaign.subject ?? undefined,
-          preheader: campaign.preheader ?? undefined,
-          fromName: campaign.fromName ?? undefined,
-          fromEmail: campaign.fromEmail ?? undefined,
-          replyTo: campaign.replyTo ?? undefined,
-          content: campaign.content ?? undefined,
-          listId: campaign.listId ?? undefined,
-          segmentId: campaign.segmentId ?? undefined,
-          excludeSegmentId: campaign.excludeSegmentId ?? undefined,
-        }),
+        body: JSON.stringify(buildClonePayload(campaign)),
       });
       if (!res.ok) {
         const text = await res.text().catch(() => '');

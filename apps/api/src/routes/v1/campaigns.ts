@@ -14,6 +14,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { createSchema, updateSchema } from './campaign-settings-schema.js';
 import { randomUUID } from 'node:crypto';
 import { db } from '../../db/client.js';
 import { campaigns, emailEvents } from '../../db/schema/index.js';
@@ -76,7 +77,6 @@ const campaignStatuses = [
   'paused',
   'cancelled',
 ] as const;
-const campaignTypes = ['email', 'sms', 'whatsapp', 'push', 'voice'] as const;
 
 /**
  * What PATCH /api/v1/internal/campaigns/:id/status is allowed to do.
@@ -124,75 +124,6 @@ const INTERNAL_STATUS_TRANSITIONS: Readonly<Record<string, ReadonlySet<string>>>
  * the whitelist above so that adding an entry there cannot reopen the exit.
  */
 const INTERNAL_STATUS_TERMINAL: ReadonlySet<string> = new Set(['sent', 'failed', 'cancelled']);
-
-/**
- * A UTM value is going into a URL and then into a GA report. Length-bounded
- * and stripped of the characters that would need escaping in either.
- */
-const utmValue = z
-  .string()
-  .max(120)
-  .regex(/^[^\s?#&=]*$/, 'must not contain spaces or URL separators (? # & =)');
-
-const utmSettingsSchema = z.object({
-  enabled: z.boolean(),
-  source: utmValue.optional(),
-  medium: utmValue.optional(),
-  campaign: utmValue.optional(),
-  content: utmValue.optional(),
-  term: utmValue.optional(),
-});
-
-/**
- * Time-warp settings a campaign can carry.
- *
- * `localHour` is the hour in the RECIPIENT's timezone, which is the whole
- * point: 9 means nine in the morning wherever they are, not nine at the
- * sender's desk. The remaining fields have worker-side defaults and are here
- * so an org can override them; `baseDate` is deliberately absent — it is the
- * campaign's own send time and is filled in at dispatch, not by the caller.
- */
-const timewarpSettingsSchema = z.object({
-  enabled: z.boolean(),
-  localHour: z.number().int().min(0).max(23),
-  /** IANA zone for contacts whose timezone is unknown. */
-  fallbackTimezone: z.string().min(1).max(64).optional(),
-  skipHolidays: z.boolean().optional(),
-  holidayCountry: z.enum(['cz', 'sk']).optional(),
-});
-
-const createSchema = z.object({
-  name: z.string().min(1).max(255),
-  type: z.enum(campaignTypes).optional(),
-  subject: z.string().max(255).optional(),
-  preheader: z.string().max(255).optional(),
-  fromName: z.string().max(100).optional(),
-  fromEmail: z.string().email().optional(),
-  replyTo: z.string().email().optional(),
-  templateId: z.string().uuid().optional(),
-  // Explicit language for a campaign written from scratch. Omitted, it is
-  // inherited from the template, and failing that it is English.
-  locale: z.enum(['en', 'cs', 'sk']).optional(),
-  content: z.record(z.unknown()).optional(),
-  listId: z.string().uuid().optional(),
-  segmentId: z.string().uuid().optional(),
-  excludeSegmentId: z.string().uuid().optional(),
-  abConfig: z.record(z.unknown()).optional(),
-  // UTM auto-append. The column has existed since the campaigns table was
-  // written; until now no route could set it, so the whole feature — schema,
-  // dispatch, splitter, batch-sender, renderer — was unreachable.
-  utmTracking: utmSettingsSchema.optional(),
-  // Time-warp. Same story as utmTracking one line up: the column, the
-  // splitter, the batch-sender and both scheduler endpoints were all built and
-  // no route could set it, so nobody could switch it on.
-  timewarp: timewarpSettingsSchema.optional(),
-  configurationSet: z.string().max(128).optional(),
-  category: z.string().max(128).optional(),
-  scheduledAt: z.string().datetime().optional(),
-  timezone: z.string().max(100).optional(),
-});
-
-const updateSchema = createSchema.partial();
 
 /** null means "take it out of whatever folder it is in". */
 const moveSchema = z.object({ folderId: z.string().uuid().nullable() });
