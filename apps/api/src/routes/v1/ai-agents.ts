@@ -52,15 +52,40 @@ const createAgentBodySchema = z.object({
   schedule: z.string().max(100).optional(),
 });
 
+/**
+ * Six of the routes below read the org like this:
+ *
+ *     const { orgId } = request as unknown as { orgId: string };
+ *
+ * `request.orgId` does not exist. `decorateRequest` is never called anywhere in
+ * apps/api, and plugins/auth.ts declares exactly one property on the request —
+ * `user?: SessionData`. The cast satisfied the compiler and produced
+ * `undefined` at runtime, every time.
+ *
+ * Both halves of that were live defects, and they hid each other. The routes
+ * carried no `preHandler`, so anyone could call them; and because `orgId` was
+ * always undefined they could not read anything either, which is why three of
+ * them are recorded in integration/route-smoke/known-failures.ts as
+ * `UNDEFINED_VALUE: undefined bound into the ai_agents query` rather than as a
+ * data leak. The two write paths were not so lucky: POST /api/v1/ai-agents
+ * inserted with `org_id: undefined`, and POST /:id/run and
+ * POST /build-campaign reached the paid Claude API with no caller identity at
+ * all.
+ *
+ * The fix is the same one the other eight routes in this file already use —
+ * `preHandler: [app.authenticate]` and `request.user!.orgId`. Nothing here
+ * invents a mechanism; it stops six routes opting out of the one that exists.
+ */
 export default async function aiAgentRoutes(app: FastifyInstance) {
   // POST /api/v1/ai-agents/build-campaign — one-shot campaign builder (no agent record)
   app.post(
     '/api/v1/ai-agents/build-campaign',
     {
+      preHandler: [app.authenticate],
       schema: { tags: ['AI Agents'] },
     },
     async (request, reply) => {
-      const { orgId } = request as unknown as { orgId: string };
+      const { orgId } = request.user!;
       const body = buildCampaignBodySchema.parse(request.body);
       const result = await buildCampaign(orgId, body as CampaignBuildInput);
       return reply.send({ data: result });
@@ -71,10 +96,11 @@ export default async function aiAgentRoutes(app: FastifyInstance) {
   app.get(
     '/api/v1/ai-agents',
     {
+      preHandler: [app.authenticate],
       schema: { tags: ['AI Agents'] },
     },
     async (request, reply) => {
-      const { orgId } = request as unknown as { orgId: string };
+      const { orgId } = request.user!;
       const agents = await db
         .select()
         .from(aiAgents)
@@ -88,10 +114,11 @@ export default async function aiAgentRoutes(app: FastifyInstance) {
   app.post(
     '/api/v1/ai-agents',
     {
+      preHandler: [app.authenticate],
       schema: { tags: ['AI Agents'] },
     },
     async (request, reply) => {
-      const { orgId } = request as unknown as { orgId: string };
+      const { orgId } = request.user!;
       const body = createAgentBodySchema.parse(request.body);
       const [agent] = await db
         .insert(aiAgents)
@@ -109,10 +136,11 @@ export default async function aiAgentRoutes(app: FastifyInstance) {
   app.post(
     '/api/v1/ai-agents/:id/run',
     {
+      preHandler: [app.authenticate],
       schema: { tags: ['AI Agents'] },
     },
     async (request, reply) => {
-      const { orgId } = request as unknown as { orgId: string };
+      const { orgId } = request.user!;
       const { id } = request.params as { id: string };
       const body = request.body as { context?: Record<string, unknown> } | undefined;
 
@@ -311,10 +339,11 @@ export default async function aiAgentRoutes(app: FastifyInstance) {
   app.get(
     '/api/v1/ai-agents/:id',
     {
+      preHandler: [app.authenticate],
       schema: { tags: ['AI Agents'] },
     },
     async (request, reply) => {
-      const { orgId } = request as unknown as { orgId: string };
+      const { orgId } = request.user!;
       const { id } = request.params as { id: string };
       const [agent] = await db
         .select()
@@ -332,10 +361,11 @@ export default async function aiAgentRoutes(app: FastifyInstance) {
   app.get(
     '/api/v1/ai-agents/:id/runs',
     {
+      preHandler: [app.authenticate],
       schema: { tags: ['AI Agents'] },
     },
     async (request, reply) => {
-      const { orgId } = request as unknown as { orgId: string };
+      const { orgId } = request.user!;
       const { id } = request.params as { id: string };
       const runs = await db
         .select()

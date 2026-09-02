@@ -127,16 +127,36 @@ const ctaRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  // Public serve + tracking
+  // ── Browser-called serve + tracking ───────────────────────────────────────
+  //
+  // These three are genuinely public in the sense that matters — they run in a
+  // visitor's browser on the customer's own website, and no visitor has a
+  // session. What they must NOT be is anonymous about which org they act on:
+  // all three took `orgId` from the request body, so anyone could enumerate
+  // orgs and read another tenant's targeting rules out of /serve, or write
+  // impressions, clicks and dismissals into their CTA statistics.
+  //
+  // `authenticatePublic` is this repository's existing answer to exactly that
+  // shape — its own docstring names "in-app message match, event ingest" as the
+  // intended use, and POST /api/v1/events, GET /api/v1/in-app/messages/sdk and
+  // POST /api/v1/push/devices already sit behind it. It accepts the publishable
+  // `fm_pub_` key that packages/web-sdk embeds in page JS (sent as `X-API-Key`,
+  // see web-sdk/src/index.ts:apiFetch), and it resolves the org FROM the key.
+  //
+  // So the fix is not "make them private". It is: the page keeps calling them
+  // with the key it already carries, and `orgId` stops being a caller-supplied
+  // claim. A signed per-CTA token was the alternative and is the wrong tool —
+  // it would need issuing, rotating and embedding per CTA, and the publishable
+  // key already carries the one fact these routes need.
   app.post(
     '/api/v1/ctas/serve',
     {
+      preHandler: [app.authenticatePublic],
       schema: { tags: ['CTAs'], summary: 'Public: resolve eligible CTAs for a visitor' },
     },
     async (req) => {
       const body = z
         .object({
-          orgId: z.string().uuid(),
           visitorId: z.string().optional(),
           contactId: z.string().uuid().optional(),
           context: z.object({
@@ -151,26 +171,26 @@ const ctaRoutes: FastifyPluginAsync = async (app) => {
           }),
         })
         .parse(req.body);
-      return { data: await serveCtas(body) };
+      return { data: await serveCtas({ ...body, orgId: req.user!.orgId }) };
     },
   );
 
   app.post(
     '/api/v1/ctas/:id/click',
     {
+      preHandler: [app.authenticatePublic],
       schema: { tags: ['CTAs'], summary: 'Public: record CTA click' },
     },
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
       const body = z
         .object({
-          orgId: z.string().uuid(),
           variantId: z.string().uuid().optional(),
           visitorId: z.string().optional(),
           contactId: z.string().uuid().optional(),
         })
         .parse(req.body);
-      await recordCtaClick({ ...body, ctaId: id });
+      await recordCtaClick({ ...body, orgId: req.user!.orgId, ctaId: id });
       return reply.code(204).send();
     },
   );
@@ -178,18 +198,18 @@ const ctaRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/ctas/:id/dismiss',
     {
+      preHandler: [app.authenticatePublic],
       schema: { tags: ['CTAs'], summary: 'Public: record CTA dismiss' },
     },
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
       const body = z
         .object({
-          orgId: z.string().uuid(),
           variantId: z.string().uuid().optional(),
           visitorId: z.string().optional(),
         })
         .parse(req.body);
-      await recordCtaDismiss({ ...body, ctaId: id });
+      await recordCtaDismiss({ ...body, orgId: req.user!.orgId, ctaId: id });
       return reply.code(204).send();
     },
   );

@@ -30,6 +30,7 @@ import { getSegment } from '../segments/index.js';
 import { buildSegmentWhere } from '../segments/query-builder.js';
 import type { SegmentConditions } from '../../db/schema/segments.js';
 import { getTraits } from './traits.js';
+import { safeFetch, BlockedUrlError } from '../../lib/safe-fetch.js';
 
 export type DestinationKind =
   | 'webhook'
@@ -171,7 +172,21 @@ function applyFieldMap(
 
 // ─── Connectors ──────────────────────────────────────────────────────────────
 
-async function deliverWebhook(
+/**
+ * `config.url` is typed by an operator when they create the destination, which
+ * makes this the same customer-supplied-URL shape lib/safe-fetch.ts exists for:
+ * the destination could be `http://127.0.0.1:3001/api/v1/internal/...`, and the
+ * body we would POST there is a batch of enriched contact rows. That it takes
+ * an authenticated admin to configure narrows who can do it; it does not make
+ * the request safe, and the guard is one import.
+ *
+ * Only the webhook connector is switched. The others (Mailchimp, HubSpot,
+ * Salesforce…) build their URL from a fixed vendor host — Salesforce takes
+ * `config.url` as an instance host, but changing that connector is a separate
+ * question about which hosts are legitimate, and this change is about the one
+ * that accepts an arbitrary URL by design.
+ */
+export async function deliverWebhook(
   config: ActivationConfig,
   rows: Record<string, unknown>[],
   mode: ActivationMode,
@@ -184,8 +199,18 @@ async function deliverWebhook(
     const sig = createHmac('sha256', config.secret).update(body).digest('hex');
     headers['x-forgemsg-signature'] = sig;
   }
-  const res = await fetch(config.url, { method: 'POST', headers, body });
-  if (!res.ok) throw new Error(`webhook ${res.status}: ${await res.text().catch(() => '')}`);
+  let res;
+  try {
+    res = await safeFetch(config.url, { method: 'POST', headers, body });
+  } catch (err) {
+    // Surfaced as a 400 rather than a run failure: the destination is
+    // misconfigured, and the operator who typed the URL is the one who can fix it.
+    if (err instanceof BlockedUrlError) throw AppError.badRequest(err.message);
+    throw err;
+  }
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`webhook ${res.status}: ${res.body}`);
+  }
 }
 
 async function deliverMailchimp(

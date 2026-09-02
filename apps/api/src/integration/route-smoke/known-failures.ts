@@ -20,11 +20,14 @@
 
 export const KNOWN_5XX: Record<string, string> = {
   // ── Drizzle passes an undefined value to the driver ──────────────────────
-  // `UNDEFINED_VALUE: Undefined values are not allowed`. One root cause, three
-  // routes; the query dies before it reaches Postgres.
-  '/api/v1/ai-agents': 'UNDEFINED_VALUE: undefined bound into the ai_agents query',
-  '/api/v1/ai-agents/{id}': 'UNDEFINED_VALUE: same root cause as /api/v1/ai-agents',
-  '/api/v1/ai-agents/{id}/runs': 'UNDEFINED_VALUE: same root cause, over ai_agent_runs',
+  //
+  // Three entries lived here — /api/v1/ai-agents, /{id} and /{id}/runs, all
+  // `UNDEFINED_VALUE: Undefined values are not allowed`. The undefined was
+  // `orgId`, read off `request.orgId`, a property no plugin sets; those routes
+  // also had no auth guard, which is the half the 500 was hiding. Both are
+  // fixed in routes/v1/ai-agents.ts — the sweep now gets 401 for a request
+  // without a session, and 200 with one. Removed rather than re-worded,
+  // because the list fails the run when an entry starts passing.
 
   // ── Broken SQL that the EXPLAIN layers cannot reach ──────────────────────
   // `FILTER specified, but abs is not an aggregate function` — the FILTER is
@@ -73,7 +76,8 @@ export const KNOWN_5XX: Record<string, string> = {
 };
 
 /**
- * Ceiling on the accepted holes. Fourteen today. Lowering it never needs
- * permission; raising it should be a conscious decision with a reason above.
+ * Ceiling on the accepted holes. Eleven today, down from fourteen: the three
+ * ai-agents routes are fixed. Lowering it never needs permission; raising it
+ * should be a conscious decision with a reason above.
  */
-export const MAX_KNOWN_5XX = 14;
+export const MAX_KNOWN_5XX = 11;
