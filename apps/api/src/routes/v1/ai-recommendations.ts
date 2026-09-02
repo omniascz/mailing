@@ -16,14 +16,27 @@ const recommendBodySchema = z.object({
   recentActions: z.array(z.string()).optional(),
 });
 
+/**
+ * Same defect as routes/v1/ai-agents.ts: no `preHandler`, and the org read off
+ * `request.orgId`, which no plugin sets. Unlike the ai-agents list routes this
+ * one did not fail on the undefined — `getRecommendations` passes the org to
+ * the Claude client as a cache/quota key, so an anonymous caller reached the
+ * paid API and every such call shared one bucket keyed on `undefined`.
+ *
+ * The dashboard sidebar is the only intended caller and it is a logged-in
+ * surface, so `app.authenticate` (session or secret key), not
+ * `authenticatePublic` — a publishable key embedded in a page must not be able
+ * to spend an org's AI quota.
+ */
 export default async function aiRecommendationsRoutes(app: FastifyInstance) {
   app.post(
     '/api/v1/ai/recommend',
     {
+      preHandler: [app.authenticate],
       schema: { tags: ['AI'] },
     },
     async (request, reply) => {
-      const { orgId } = request as unknown as { orgId: string };
+      const { orgId } = request.user!;
       const body = recommendBodySchema.parse(request.body);
       const recommendations = await getRecommendations(orgId, body);
       return reply.send({ data: recommendations });
