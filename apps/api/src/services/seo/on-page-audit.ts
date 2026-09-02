@@ -9,6 +9,7 @@ import { eq, and, desc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { seoAuditResults } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { safeFetch, BlockedUrlError } from '../../lib/safe-fetch.js';
 
 // ── Simple HTML parsing helpers (no heavy dep, regex-based) ──────────────────
 
@@ -181,17 +182,44 @@ function scoreFromIssues(issues: Issue[]): number {
 
 // ── Main audit function ───────────────────────────────────────────────────────
 
+/**
+ * `url` comes from the request body, so this is an SSRF primitive unless the
+ * destination is checked: the caller picks the address and the server picks the
+ * source, and the handler returns what it read — title, meta description, H1s —
+ * straight back to them. `http://169.254.169.254/latest/meta-data/` is a page
+ * with a title.
+ *
+ * It used a bare global `fetch`, which resolves the hostname a second time
+ * inside the socket layer and so cannot be guarded from outside; lib/safe-fetch.ts
+ * validates inside net.connect's `lookup`, re-checks every redirect hop, and was
+ * already the rule here — seven services use it. This was an omission, not an
+ * exemption: safeFetch returns the decoded body as `body`, which is exactly what
+ * an HTML scraper needs, and services/brand/brand-scraper.ts does the same job
+ * through it.
+ *
+ * maxBytes is raised over the 256 KiB default and matched to the brand scraper.
+ * The default would silently truncate a large page, and a truncated document
+ * scores differently — a missing H1 at the end of the file reads as an SEO
+ * issue rather than as a cut-off download.
+ */
 export async function auditUrl(orgId: string, url: string) {
   let html: string;
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       headers: { 'User-Agent': 'ForgeMsg-SEO-Auditor/1.0' },
-      signal: AbortSignal.timeout(15_000),
+      timeoutMs: 15_000,
+      maxBytes: 2 * 1024 * 1024,
     });
-    if (!res.ok) throw AppError.badRequest(`Failed to fetch URL: HTTP ${res.status}`);
-    html = await res.text();
+    if (res.status < 200 || res.status >= 300) {
+      throw AppError.badRequest(`Failed to fetch URL: HTTP ${res.status}`);
+    }
+    html = res.body;
   } catch (err) {
     if (err instanceof AppError) throw err;
+    // A refused URL is the customer's input being wrong, so 400 with the
+    // guard's own wording — it names the hostname they typed and nothing about
+    // our network.
+    if (err instanceof BlockedUrlError) throw AppError.badRequest(err.message);
     throw AppError.badRequest(`Could not reach URL: ${(err as Error).message}`);
   }
 
