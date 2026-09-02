@@ -8,7 +8,7 @@
  *  POST   /api/v1/cdp/sources/:id/sync       — trigger manual sync
  *  GET    /api/v1/cdp/sources/:id/runs       — list sync runs
  *
- *  POST   /api/v1/cdp/sources/:id/webhook    — inbound push webhook (no auth — HMAC verified)
+ *  POST   /api/v1/cdp/sources/:id/webhook    — inbound push webhook (no session — HMAC verified)
  */
 
 import type { FastifyPluginAsync } from 'fastify';
@@ -24,6 +24,31 @@ import {
   CONNECTOR_CATALOG,
 } from '../../../services/cdp/connectors/index.js';
 import { upsertContactFromCdp } from '../../../services/cdp/source-sync.js';
+import { checkWebhookSignature } from '../../../lib/webhook-signature.js';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+/** Header the push sender presents. Same name this product signs OUTBOUND
+ *  activations with (services/cdp/activation.ts:deliverWebhook), so a customer
+ *  wiring ForgeMsg→ForgeMsg sees one convention rather than two. */
+const CDP_SIGNATURE_HEADER = 'x-forgemsg-signature';
+
+/**
+ * HMAC-SHA256 of the exact bytes received, compared in constant time.
+ *
+ * Two encodings are accepted for one reason each: bare hex is what our own
+ * outbound activation emits, and `sha256=<hex>` is what every sender that
+ * copied GitHub/Meta emits. Both are the same digest; refusing one of them
+ * would be a compatibility trap, not a security property.
+ */
+function verifyCdpSignature(rawBody: string, presented: string, secret: string): boolean {
+  const expected = createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
+  const offered = presented.startsWith('sha256=') ? presented.slice(7) : presented;
+  // timingSafeEqual throws on a length mismatch, which would both 500 the route
+  // and leak the length. Hex of a fixed-width digest is always 64 chars, so a
+  // different length is simply wrong.
+  if (offered.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(offered, 'utf8'), Buffer.from(expected, 'utf8'));
+}
 
 const cdpSourceRoutes: FastifyPluginAsync = async (app) => {
   // ── Connector catalog ─────────────────────────────────────────────────────────
@@ -196,7 +221,24 @@ const cdpSourceRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  // ── Inbound push webhook (no auth — sources POST events here) ──────────────
+  // ── Inbound push webhook (no session — sources POST events here) ───────────
+  //
+  // The docstring above this route used to say "no auth — HMAC verified" and
+  // there was no HMAC verification in the handler. Anyone who learned a source
+  // UUID could POST 500 contact records straight into that source's org: the
+  // handler reads `source.orgId` from the row it just loaded, so the caller
+  // chose the tenant by choosing the id in the URL.
+  //
+  // Fail-closed via lib/webhook-signature.ts (#86), the same gate the six
+  // e-commerce receivers and Calendly use. A source with no
+  // `config.webhookSecret` is REFUSED, not waved through — and that has a
+  // consequence worth stating plainly: any push source configured before this
+  // change has no secret, so it starts answering 401
+  // WEBHOOK_SECRET_NOT_CONFIGURED until an operator sets one through
+  // `PATCH /api/v1/cdp/sources/:id`. That is the honest form of what the route
+  // was already doing, which was accepting every caller without checking any
+  // of them. The secret lives in the existing `config` jsonb — no migration,
+  // and `sourceSchema.config` is already `z.record(z.unknown())`.
 
   app.post(
     '/api/v1/cdp/sources/:id/webhook',
@@ -208,6 +250,28 @@ const cdpSourceRoutes: FastifyPluginAsync = async (app) => {
       const [source] = await db.select().from(cdpSources).where(eq(cdpSources.id, id)).limit(1);
       if (!source || source.direction !== 'push') {
         return reply.code(404).send({ error: 'Not found' });
+      }
+
+      // The exact bytes, from the global buffer parser in index.ts. A
+      // re-serialised JSON.stringify(req.body) reorders keys and drops
+      // whitespace, so it can never reproduce the sender's digest — several
+      // receivers in this repo carry that fallback and it is a permanent
+      // signature failure dressed up as a default. Absent rawBody (a body that
+      // did not arrive as application/json) is a refusal.
+      const rawBody = (req as unknown as { rawBody?: Buffer }).rawBody;
+      const config = source.config as Record<string, unknown>;
+      const header = req.headers[CDP_SIGNATURE_HEADER];
+      const sig = checkWebhookSignature({
+        integration: 'CDP push source',
+        secret: config['webhookSecret'] as string | undefined,
+        signature: Array.isArray(header) ? header[0] : header,
+        rawBody: rawBody ? rawBody.toString('utf8') : '',
+        verify: (body, presented, secret) =>
+          rawBody !== undefined && verifyCdpSignature(body, presented, secret),
+      });
+      if (!sig.ok) {
+        req.log.warn({ sourceId: source.id, code: sig.code }, '[cdp] push webhook refused');
+        return reply.code(sig.status).send({ code: sig.code, message: sig.message });
       }
 
       // Accept a batch of contact records
