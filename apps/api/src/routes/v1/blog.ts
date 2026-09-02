@@ -1,5 +1,23 @@
 /**
  * Blog routes (#336/#412).
+ *
+ * Six not-found paths in this file threw a plain object literal:
+ *
+ *     throw { statusCode: 404, code: 'POST_NOT_FOUND', message: 'Post not found' };
+ *
+ * `plugins/error-handler.ts` dispatches on `error instanceof AppError` and then
+ * on `instanceof ZodError`; an object literal is neither, so it fell through to
+ * the 500 branch. Every not-found on these routes was served as
+ * `500 INTERNAL_ERROR` — the handler had run correctly, decided the row did not
+ * exist, and the answer was still an internal error. Two of them are recorded
+ * in integration/route-smoke/known-failures.ts because that sweep visits GETs;
+ * the other four are on POST/PUT/DELETE, which it does not call, so they failed
+ * the same way unobserved.
+ *
+ * All six now throw `AppError`. The explicit constructor rather than
+ * `AppError.notFound()`, because that helper rewrites the code to `NOT_FOUND`
+ * and these carry `POST_NOT_FOUND` / `REVISION_NOT_FOUND`, which a caller may
+ * already branch on. Only the status changes: 500 -> 404.
  */
 
 import type { FastifyPluginAsync } from 'fastify';
@@ -23,6 +41,7 @@ import {
 import { and, eq, asc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { blogPostRevisions, blogPosts } from '../../db/schema/index.js';
+import { AppError } from '../../lib/app-error.js';
 import { redis } from '@forgemsg/shared/redis';
 
 const blogRoutes: FastifyPluginAsync = async (app) => {
@@ -240,7 +259,8 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
         .from(blogPosts)
         .where(and(eq(blogPosts.id, id), eq(blogPosts.orgId, orgId)))
         .limit(1);
-      if (!post) throw { statusCode: 404, code: 'POST_NOT_FOUND', message: 'Post not found' };
+      if (!post)
+        throw new AppError({ code: 'POST_NOT_FOUND', message: 'Post not found', statusCode: 404 });
 
       const revisions = await db
         .select()
@@ -274,7 +294,11 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
         .where(and(eq(blogPostRevisions.postId, id), eq(blogPostRevisions.version, version)))
         .limit(1);
       if (!rev)
-        throw { statusCode: 404, code: 'REVISION_NOT_FOUND', message: 'Revision not found' };
+        throw new AppError({
+          code: 'REVISION_NOT_FOUND',
+          message: 'Revision not found',
+          statusCode: 404,
+        });
 
       const [updated] = await db
         .update(blogPosts)
@@ -287,7 +311,8 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
         })
         .where(and(eq(blogPosts.id, id), eq(blogPosts.orgId, orgId)))
         .returning();
-      if (!updated) throw { statusCode: 404, code: 'POST_NOT_FOUND', message: 'Post not found' };
+      if (!updated)
+        throw new AppError({ code: 'POST_NOT_FOUND', message: 'Post not found', statusCode: 404 });
       return { data: updated };
     },
   );
@@ -313,7 +338,8 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
         .from(blogPosts)
         .where(and(eq(blogPosts.id, id), eq(blogPosts.orgId, orgId)))
         .limit(1);
-      if (!post) throw { statusCode: 404, code: 'POST_NOT_FOUND', message: 'Post not found' };
+      if (!post)
+        throw new AppError({ code: 'POST_NOT_FOUND', message: 'Post not found', statusCode: 404 });
 
       const revs = await db
         .select()
@@ -323,11 +349,11 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
       const revA = revs.find((r) => r.version === vA);
       const revB = revs.find((r) => r.version === vB);
       if (!revA || !revB)
-        throw {
-          statusCode: 404,
+        throw new AppError({
           code: 'REVISION_NOT_FOUND',
           message: 'One or both revisions not found',
-        };
+          statusCode: 404,
+        });
 
       // Simple line-count diff (no external diff library required)
       const linesA = revA.body.split('\n');
@@ -367,7 +393,8 @@ const blogRoutes: FastifyPluginAsync = async (app) => {
         .from(blogPosts)
         .where(and(eq(blogPosts.id, id), eq(blogPosts.orgId, orgId)))
         .limit(1);
-      if (!post) throw { statusCode: 404, code: 'POST_NOT_FOUND', message: 'Post not found' };
+      if (!post)
+        throw new AppError({ code: 'POST_NOT_FOUND', message: 'Post not found', statusCode: 404 });
 
       const token = randomUUID();
       await redis.set(`blog:preview:${token}`, JSON.stringify({ postId: id, orgId }), 'EX', 900);
