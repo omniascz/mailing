@@ -76,13 +76,30 @@ export async function addContactToGroup(
   await db.insert(contactGroups).values({ contactId, groupId }).onConflictDoNothing();
 }
 
-export async function removeContactFromGroup(contactId: string, groupId: string): Promise<void> {
+/**
+ * `contact_groups` has no org_id — membership belongs to a tenant only through
+ * its group. `addContactToGroup` resolves the group scoped to the caller and
+ * 404s if it is not theirs; this, its mirror, did not, so any authenticated
+ * user could remove a contact from another tenant's group given two UUIDs.
+ * Same file, same pair, opposite direction.
+ */
+export async function removeContactFromGroup(
+  orgId: string,
+  contactId: string,
+  groupId: string,
+): Promise<void> {
+  const [grp] = await db
+    .select({ id: groups.id })
+    .from(groups)
+    .where(and(eq(groups.id, groupId), eq(groups.orgId, orgId)))
+    .limit(1);
+  if (!grp) throw AppError.notFound('Group');
   await db
     .delete(contactGroups)
     .where(and(eq(contactGroups.contactId, contactId), eq(contactGroups.groupId, groupId)));
 }
 
-export async function getContactGroups(contactId: string): Promise<Group[]> {
+export async function getContactGroups(orgId: string, contactId: string): Promise<Group[]> {
   const rs = await db.execute<{
     id: string;
     name: string;
@@ -93,6 +110,7 @@ export async function getContactGroups(contactId: string): Promise<Group[]> {
     SELECT g.* FROM groups g
     JOIN contact_groups cg ON cg.group_id = g.id
     WHERE cg.contact_id = ${contactId}::uuid
+      AND g.org_id = ${orgId}::uuid
   `);
   return (
     rs as unknown as Array<{

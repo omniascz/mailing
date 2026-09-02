@@ -36,6 +36,7 @@ export interface ContactEngagementResult {
 }
 
 export async function getContactEngagementScore(
+  orgId: string,
   contactId: string,
 ): Promise<ContactEngagementResult | null> {
   const [row] = await db
@@ -46,7 +47,7 @@ export async function getContactEngagementScore(
       scoredAt: contactEngagement.engagementScoredAt,
     })
     .from(contactEngagement)
-    .where(eq(contactEngagement.contactId, contactId))
+    .where(and(eq(contactEngagement.contactId, contactId), eq(contactEngagement.orgId, orgId)))
     .limit(1);
   if (!row) return null;
   return {

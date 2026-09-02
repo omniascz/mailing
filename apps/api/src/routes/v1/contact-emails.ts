@@ -19,7 +19,7 @@ const contactEmailRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
-      return reply.send({ data: await listEmails(contactId) });
+      return reply.send({ data: await listEmails(req.user!.orgId, contactId) });
     },
   );
 
@@ -52,7 +52,7 @@ const contactEmailRoutes: FastifyPluginAsync = async (app) => {
       const p = z
         .object({ contactId: z.string().uuid(), emailId: z.string().uuid() })
         .parse(req.params);
-      return reply.send({ data: await setPrimary(p.contactId, p.emailId) });
+      return reply.send({ data: await setPrimary(req.user!.orgId, p.contactId, p.emailId) });
     },
   );
 
@@ -67,7 +67,9 @@ const contactEmailRoutes: FastifyPluginAsync = async (app) => {
         .object({ contactId: z.string().uuid(), emailId: z.string().uuid() })
         .parse(req.params);
       const body = z.object({ consent: z.enum(['subscribed', 'unsubscribed']) }).parse(req.body);
-      return reply.send({ data: await setConsent(p.contactId, p.emailId, body.consent) });
+      return reply.send({
+        data: await setConsent(req.user!.orgId, p.contactId, p.emailId, body.consent),
+      });
     },
   );
 
@@ -81,7 +83,7 @@ const contactEmailRoutes: FastifyPluginAsync = async (app) => {
       const p = z
         .object({ contactId: z.string().uuid(), emailId: z.string().uuid() })
         .parse(req.params);
-      return reply.send({ data: await verifyEmail(p.contactId, p.emailId) });
+      return reply.send({ data: await verifyEmail(req.user!.orgId, p.contactId, p.emailId) });
     },
   );
 
@@ -95,7 +97,7 @@ const contactEmailRoutes: FastifyPluginAsync = async (app) => {
       const p = z
         .object({ contactId: z.string().uuid(), emailId: z.string().uuid() })
         .parse(req.params);
-      await removeEmail(p.contactId, p.emailId);
+      await removeEmail(req.user!.orgId, p.contactId, p.emailId);
       return reply.code(204).send();
     },
   );
@@ -108,7 +110,7 @@ const contactEmailRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
-      return reply.send({ data: await bestSendableEmail(contactId) });
+      return reply.send({ data: await bestSendableEmail(req.user!.orgId, contactId) });
     },
   );
 };

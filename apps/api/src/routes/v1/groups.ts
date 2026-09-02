@@ -100,7 +100,7 @@ const groupRoutes: FastifyPluginAsync = async (app) => {
           contactId: z.string().uuid(),
         })
         .parse(req.params);
-      await removeContactFromGroup(contactId, groupId);
+      await removeContactFromGroup(req.user!.orgId, contactId, groupId);
       return reply.code(204).send();
     },
   );
@@ -113,7 +113,7 @@ const groupRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
-      return reply.send({ data: await getContactGroups(contactId) });
+      return reply.send({ data: await getContactGroups(req.user!.orgId, contactId) });
     },
   );
 };

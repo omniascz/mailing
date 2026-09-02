@@ -177,7 +177,7 @@ export async function selectBestChannel(
   // run for this org, prefer the cached preferredChannel — it has
   // multi-channel signal (SMS replies, voice answers, push clicks) the
   // legacy rules can't see.
-  const persisted = await getContactChannelScores(contactId);
+  const persisted = await getContactChannelScores(orgId, contactId);
   if (persisted && persisted.preferredChannel) {
     const band = confidenceBand(persisted.scores);
     if (band !== 'low' && band !== 'none') {
