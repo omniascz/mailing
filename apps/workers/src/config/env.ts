@@ -4,6 +4,12 @@
  */
 import { z } from 'zod';
 import { DEV_TRACKING_SECRET } from '@forgemsg/shared';
+import {
+  resolveBeyondCoreGroups,
+  BeyondCoreConfigError,
+  type BeyondCoreGroup,
+  type BeyondCoreResolution,
+} from '@forgemsg/shared/beyond-core';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -53,6 +59,17 @@ const Env = z.object({
    * log.
    */
   FEATURE_BEYOND_CORE: boolFlag(!isProduction),
+
+  /**
+   * The same list the API reads, and it has to be the same value.
+   *
+   * Each of these crons posts to an /api/v1/internal/* route that only exists
+   * when its group is registered on the API side. Scheduling one whose group
+   * the API does not have means a 404 and a stack trace on every tick — the
+   * exact noise that teaches people to ignore the log, and the state
+   * subscription-billing has been in since it shipped.
+   */
+  BEYOND_CORE_GROUPS: z.string().default(''),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
   // Datastores
@@ -141,4 +158,28 @@ function loadEnv(): Env {
   return parsed.data;
 }
 
-export const env: Env = loadEnv();
+const base = loadEnv();
+
+let resolved: BeyondCoreResolution;
+try {
+  resolved = resolveBeyondCoreGroups({
+    raw: base.BEYOND_CORE_GROUPS,
+    all: base.FEATURE_BEYOND_CORE,
+    isProduction,
+  });
+} catch (err) {
+  if (err instanceof BeyondCoreConfigError) {
+    console.error(`✖ Invalid environment configuration:
+  - ${err.message}`);
+    if (isProduction) process.exit(1);
+    throw new Error('Invalid environment configuration');
+  }
+  throw err;
+}
+
+console.log(`[env] ${resolved.summary}`);
+
+export const env: Env & { BEYOND_CORE_ENABLED: ReadonlySet<BeyondCoreGroup> } = {
+  ...base,
+  BEYOND_CORE_ENABLED: resolved.enabled,
+};

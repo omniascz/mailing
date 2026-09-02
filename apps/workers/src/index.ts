@@ -17,6 +17,7 @@
  */
 
 import { env } from './config/env.js';
+import type { BeyondCoreGroup } from '@forgemsg/shared/beyond-core';
 import { startCampaignSplitterWorker } from './jobs/campaign-splitter.js';
 import { startBatchSenderWorker } from './jobs/batch-sender.js';
 import { startMtaSenderWorkers } from './jobs/mta-sender.js';
@@ -78,19 +79,31 @@ const mtaSenders = startMtaSenderWorkers();
 const archiveWorker = startArchiveWorker();
 scheduleArchive().catch(console.error);
 // SEO rank polling, social publishing and commerce/ads reminders drive
-// beyond-core API routes; started only when those routes exist. See
-// config/env.ts FEATURE_BEYOND_CORE.
-const beyondCore = env.FEATURE_BEYOND_CORE;
-const seoRankPollWorker = beyondCore ? startSeoRankPollWorker() : null;
-if (beyondCore) scheduleRankPoll().catch(console.error);
-const social = beyondCore ? startSocialSchedulerWorker() : null;
+// beyond-core API routes; each starts only when the group that registers the
+// route it posts to is enabled. Per group, not per flag: a cron whose route the
+// API does not have 404s on every tick, and one enabled a release ahead of its
+// route does exactly that. See @forgemsg/shared/beyond-core.
+const groupOn = (g: BeyondCoreGroup) => env.BEYOND_CORE_ENABLED.has(g);
+
+// POST /api/v1/internal/seo/rank-poll — registered by the internal-seo-rank-poll group.
+const seoOn = groupOn('internal-seo-rank-poll');
+const seoRankPollWorker = seoOn ? startSeoRankPollWorker() : null;
+if (seoOn) scheduleRankPoll().catch(console.error);
+
+// POST /api/v1/internal/social/{dispatch-due,monitor-poll} — internal-social.
+const socialOn = groupOn('internal-social');
+const social = socialOn ? startSocialSchedulerWorker() : null;
 const socialPublishWorker = social?.publishWorker ?? null;
 const socialMonitorWorker = social?.monitorWorker ?? null;
-if (beyondCore) scheduleSocialJobs().catch(console.error);
-const commerceWorkers = beyondCore ? startInvoiceReminderWorker() : null;
+if (socialOn) scheduleSocialJobs().catch(console.error);
+
+// POST /api/v1/internal/commerce/invoice-reminders and /internal/ads/sync-performance
+// — both registered by internal-commerce, so both crons ride on it.
+const commerceOn = groupOn('internal-commerce');
+const commerceWorkers = commerceOn ? startInvoiceReminderWorker() : null;
 const invoiceReminderWorker = commerceWorkers?.worker ?? null;
 const adPerfWorker = commerceWorkers?.adPerfWorker ?? null;
-if (beyondCore) scheduleCommerceJobs().catch(console.error);
+if (commerceOn) scheduleCommerceJobs().catch(console.error);
 const videoTranscodeWorker = startVideoTranscodeWorker();
 scheduleVideoTranscode().catch(console.error);
 const subscriptionBillingWorker = startSubscriptionBillingWorker();
