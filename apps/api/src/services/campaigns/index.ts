@@ -81,6 +81,12 @@ export type CampaignPausedReason = 'send_failed' | 'operator' | 'ab_needs_review
  * empty. The splitter enqueues nothing, so no batch can ever close the campaign
  * out, and leaving it in `sending` would be the stuck state under a new name.
  *
+ * `scheduled → draft` is un-scheduling. Cancel cannot serve as "not now":
+ * `cancelled` is terminal, so a campaign parked with it can never be edited or
+ * sent again, only cloned. Moving back to draft is what lets an operator change
+ * their mind about a date — and it is also what makes the campaign editable
+ * again, since PATCH /campaigns/:id refuses anything that is not a draft.
+ *
  * `paused → queueing` is the recovery path: resuming a send that failed before
  * anything was queued goes through sendCampaign, which starts the dispatch over.
  * `paused → sending` is the other resume — the operator's own pause, where the
@@ -88,7 +94,7 @@ export type CampaignPausedReason = 'send_failed' | 'operator' | 'ab_needs_review
  */
 const TRANSITIONS: Record<CampaignStatus, Set<CampaignStatus>> = {
   draft: new Set(['scheduled', 'queueing']),
-  scheduled: new Set(['queueing', 'cancelled']),
+  scheduled: new Set(['queueing', 'cancelled', 'draft']),
   queueing: new Set(['sending', 'failed', 'paused', 'cancelled']),
   sending: new Set(['sent', 'failed', 'paused']),
   paused: new Set(['queueing', 'sending', 'cancelled']),
@@ -372,6 +378,28 @@ export async function scheduleCampaign(
       timezone: timezone ?? current.timezone,
       updatedAt: new Date(),
     })
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
+    .returning();
+
+  return row!;
+}
+
+/**
+ * Take a scheduled campaign off the schedule and put it back in draft.
+ *
+ * Back to `draft`, not to some "unscheduled" state: draft is what the rest of
+ * the product already means by "not going anywhere yet", it is the only status
+ * the edit form will write to, and it is the status the campaign came from.
+ * `scheduledAt` is cleared with it — a leftover time would keep showing on the
+ * detail page and in the campaign list as though the send were still coming.
+ */
+export async function unscheduleCampaign(orgId: string, campaignId: string): Promise<Campaign> {
+  const current = await getCampaign(orgId, campaignId);
+  validateTransition(current.status as CampaignStatus, 'draft');
+
+  const [row] = await db
+    .update(campaigns)
+    .set({ status: 'draft', scheduledAt: null, updatedAt: new Date() })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .returning();
 

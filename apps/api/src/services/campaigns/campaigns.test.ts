@@ -99,10 +99,18 @@ describe('Campaign State Machine', () => {
     );
   });
 
-  it('rejects scheduled → draft', () => {
-    expect(() => validateTransition('scheduled', 'draft')).toThrow(
-      /Invalid campaign status transition/,
-    );
+  /**
+   * This used to be a rejection. It is un-scheduling, and it is allowed now
+   * because cancel could not serve as "not now": `cancelled` is terminal, so a
+   * campaign parked with it can never be edited or sent again, only cloned.
+   * Going back to draft is also what makes the campaign editable, since
+   * PATCH /campaigns/:id refuses anything that is not a draft.
+   *
+   * Note that `sending → draft` and `paused → draft` stay rejections either
+   * side of this: once batches exist there is nothing to go back to.
+   */
+  it('allows scheduled → draft, which is un-scheduling', () => {
+    expect(() => validateTransition('scheduled', 'draft')).not.toThrow();
   });
 
   it('rejects paused → draft', () => {

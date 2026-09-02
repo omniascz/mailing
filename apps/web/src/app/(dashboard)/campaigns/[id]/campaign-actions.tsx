@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Pause, Play, X, RefreshCw } from 'lucide-react';
+import { Send, Pause, Play, X, RefreshCw, CalendarClock, CalendarX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { buildSchedulePayload, toLocalInputValue } from './schedule-payload';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -33,6 +34,10 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState<string | null>(null);
+  // Opens closed. A date field sitting permanently beside Send now reads like
+  // something that has to be filled in before the campaign can go out.
+  const [pickingDate, setPickingDate] = useState(false);
+  const [when, setWhen] = useState('');
 
   async function act(action: string, path: string, body?: unknown) {
     setBusy(action);
@@ -68,6 +73,15 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
     });
   }
 
+  async function schedule() {
+    const built = buildSchedulePayload(when);
+    if (!built.ok) {
+      toast('error', built.error);
+      return;
+    }
+    await act('Schedule', `/api/v1/campaigns/${campaign.id}/schedule`, built.payload);
+  }
+
   const isBusy = (a: string) => busy === a || pending;
   const status = campaign.status;
 
@@ -80,6 +94,58 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
         >
           <Send className="h-4 w-4" />
           Send now
+        </Button>
+      )}
+      {status === 'draft' &&
+        (pickingDate ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="datetime-local"
+              aria-label="Send at"
+              value={when}
+              onChange={(e) => setWhen(e.target.value)}
+              // No `min`: the browser would silently clamp instead of saying
+              // anything, and the refusal is worth hearing out loud.
+              className="h-10 rounded-md border border-secondary-300 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            <Button loading={isBusy('Schedule')} onClick={schedule}>
+              <CalendarClock className="h-4 w-4" />
+              Schedule
+            </Button>
+            <Button variant="outline" onClick={() => setPickingDate(false)}>
+              Back
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => {
+              // Opens on the next round hour, in the operator's own zone, so
+              // the common case is two clicks and no typing.
+              const next = new Date();
+              next.setHours(next.getHours() + 1, 0, 0, 0);
+              setWhen(toLocalInputValue(next));
+              setPickingDate(true);
+            }}
+          >
+            <CalendarClock className="h-4 w-4" />
+            Schedule for later
+          </Button>
+        ))}
+      {/*
+        Back to draft, not cancelled. Cancel is terminal — a campaign parked
+        with it can never be edited or sent, only cloned — so it cannot double
+        as "not now". This is beside Cancel rather than instead of it: they are
+        different intentions and both belong to a scheduled campaign.
+      */}
+      {status === 'scheduled' && (
+        <Button
+          variant="outline"
+          loading={isBusy('Unschedule')}
+          onClick={() => act('Unschedule', `/api/v1/campaigns/${campaign.id}/unschedule`)}
+        >
+          <CalendarX className="h-4 w-4" />
+          Unschedule
         </Button>
       )}
       {/*

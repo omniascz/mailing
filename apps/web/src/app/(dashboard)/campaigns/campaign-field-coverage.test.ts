@@ -16,9 +16,11 @@
  *
  *   API side  `Object.keys(createSchema.shape)` — the zod object the route
  *             parses request bodies with, imported directly.
- *   web side  the union of `Object.keys(...)` over the four functions that
- *             build a campaign body in this app. They exist as pure functions
- *             precisely so that they can be read here.
+ *   web side  the union of `Object.keys(...)` over the five functions that
+ *             build a campaign request body in this app, across every endpoint
+ *             that sets a campaign field — POST/PUT /campaigns and
+ *             :id/schedule. They exist as pure functions precisely so that
+ *             they can be read here.
  *
  * A grep-based version was considered and rejected on evidence. The #117 probe
  * searched for the literal string `/api/v1/campaigns/:id/folder`, found
@@ -57,6 +59,7 @@ import { buildSavePayload } from './[id]/edit/save-payload';
 import { createPayloadKeys } from './new/create-payload';
 import { clonePayloadKeys } from './[id]/clone-payload';
 import { editorSavePayloadKeys } from '../../editor/campaigns/[id]/editor-save-payload';
+import { schedulePayloadKeys } from './[id]/schedule-payload';
 
 /** A decision about a field, carried as data. A comment can be deleted in silence. */
 interface FieldDecision {
@@ -106,11 +109,6 @@ const API_ONLY: FieldDecision[] = [
  */
 const KNOWN_GAPS: FieldDecision[] = [
   {
-    field: 'scheduledAt',
-    reason:
-      'A campaign cannot be scheduled for later from the UI. POST /campaigns/:id/schedule exists and nothing in apps/web calls it — campaign-actions.tsx offers send, pause, resume, cancel and schedule-resend, and no date picker. Measured, not assumed: the #117 probe recorded this field as reachable through campaign-actions, and it is not.',
-  },
-  {
     field: 'timezone',
     reason:
       'A dead column. Written on create and update with a default of UTC, read by nothing — no service in apps/api and no worker. Time-warp does not use it; that has its own fallbackTimezone. Deliberately out of scope here: giving it a UI would be building a control for a value with no effect.',
@@ -148,6 +146,10 @@ function fieldsTheWebSends(): string[] {
       ...createPayloadKeys(),
       ...clonePayloadKeys(),
       ...editorSavePayloadKeys(),
+      // Not a body of POST/PUT /campaigns — it goes to :id/schedule. It counts
+      // all the same: the question this guard asks is whether a person can set
+      // the field, not which endpoint carries it.
+      ...schedulePayloadKeys(),
     ]),
   ].sort();
 }
@@ -180,6 +182,10 @@ describe('matcher self-test', () => {
     expect(API_FIELDS).toContain('configurationSet');
     expect(WEB_FIELDS).toContain('abConfig');
     expect(WEB_FIELDS).toContain('segmentId');
+    // Closed by the scheduling UI. It was the live KNOWN_GAPS entry when this
+    // guard was written; if the schedule control is ever removed, the web side
+    // loses this key and the orphan check below fails rather than going quiet.
+    expect(WEB_FIELDS).toContain('scheduledAt');
   });
 
   it('the comparison really reports a field that nobody claims', () => {

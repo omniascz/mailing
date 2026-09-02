@@ -282,7 +282,7 @@ export async function setCampaignStatusInternal(
  */
 export async function dispatchScheduledCampaigns(
   now: Date = new Date(),
-): Promise<{ dispatched: number; errors: number }> {
+): Promise<{ dispatched: number; errors: number; withdrawn: number }> {
   const due = await db
     .select({ id: campaigns.id, orgId: campaigns.orgId })
     .from(campaigns)
@@ -291,8 +291,33 @@ export async function dispatchScheduledCampaigns(
 
   let dispatched = 0;
   let errors = 0;
+  let withdrawn = 0;
   for (const c of due) {
     try {
+      // Read the status again, immediately before sending.
+      //
+      // The select above can be seconds old by the time this iteration runs —
+      // it takes up to 500 campaigns and each one does several round trips. An
+      // operator who takes a due campaign off the schedule inside that window
+      // gets it back as a draft, and `draft → queueing` is a legal transition
+      // (it is the manual Send path), so without this check sendCampaign would
+      // send the campaign they just stopped. Cancel does not have the problem:
+      // `cancelled` is terminal and the transition is refused.
+      //
+      // This narrows the window to one statement rather than closing it. Closing
+      // it needs the select and the claim to be one atomic UPDATE ... RETURNING,
+      // which changes how every scheduled send is claimed and is not this
+      // change's to make.
+      const [still] = await db
+        .select({ status: campaigns.status })
+        .from(campaigns)
+        .where(eq(campaigns.id, c.id))
+        .limit(1);
+      if (still?.status !== 'scheduled') {
+        withdrawn++;
+        continue;
+      }
+
       await enqueueCampaignSend(c.orgId, c.id);
       dispatched++;
     } catch (err) {
@@ -300,5 +325,5 @@ export async function dispatchScheduledCampaigns(
       console.error(`[dispatch-scheduled] campaign ${c.id} failed:`, err);
     }
   }
-  return { dispatched, errors };
+  return { dispatched, errors, withdrawn };
 }

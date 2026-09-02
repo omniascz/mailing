@@ -26,6 +26,7 @@ import {
   updateCampaign,
   deleteCampaign,
   scheduleCampaign,
+  unscheduleCampaign,
   pauseCampaign,
   resumeCampaign,
   cancelCampaign,
@@ -293,6 +294,24 @@ export default async function campaignRoutes(app: FastifyInstance) {
           new Date(scheduledAt),
           timezone,
         );
+        return { data: campaign };
+      },
+    );
+
+    /**
+     * POST /api/v1/campaigns/:id/unschedule
+     * Take a scheduled campaign off the schedule; it goes back to draft.
+     *
+     * Its own endpoint rather than a scheduledAt of null on PATCH, to match
+     * /schedule on the way in — and because it is a status change, which that
+     * route does not make.
+     */
+    scope.post(
+      '/api/v1/campaigns/:id/unschedule',
+      { schema: { tags: ['Campaigns'], summary: 'Take a campaign off the schedule' } },
+      async (req) => {
+        const { id } = idParam.parse(req.params);
+        const campaign = await unscheduleCampaign(req.user!.orgId, id);
         return { data: campaign };
       },
     );
