@@ -4,6 +4,7 @@
 // before anything else reads process.env or opens a connection.
 import formbodyPlugin from '@fastify/formbody';
 import { env } from './config/env.js';
+import type { BeyondCoreGroup } from '@forgemsg/shared/beyond-core';
 // Sentry next — has to wrap the runtime as early as possible to instrument
 // http/console. No-op when SENTRY_DSN is unset (dev + tests).
 import { initTelemetry } from './lib/telemetry.js';
@@ -398,16 +399,26 @@ export async function buildApp() {
   await app.register(auditPlugin);
 
   /**
-   * Registers a route plugin only when FEATURE_BEYOND_CORE is on.
+   * Registers a route plugin only when its group is enabled.
    *
    * Not registered rather than registered-and-404: an unregistered route is
    * absent from the OpenAPI document for free, whereas a handler that answers
    * 404 would still be advertised in /docs/json unless a second mechanism
    * stripped it — and two mechanisms drift apart. Fastify's own not-found
    * handler then answers exactly as it would for a path that never existed.
+   *
+   * The group name is a required argument rather than something derived from
+   * the plugin, so that the set of names is a list a person can read and an
+   * operator can type. `beyond-core-registry.test.ts` reads this file and
+   * checks the names against BEYOND_CORE_GROUPS in @forgemsg/shared, so a new
+   * group whose name is not in that list fails a test instead of quietly
+   * becoming unreachable.
+   *
+   * The resolution itself happened at boot, in config/env.ts — an unknown or
+   * blocked name has already refused the process by the time we get here.
    */
-  const registerBeyondCore = async (plugin: FastifyPluginAsync) => {
-    if (!env.FEATURE_BEYOND_CORE) return;
+  const registerBeyondCore = async (group: BeyondCoreGroup, plugin: FastifyPluginAsync) => {
+    if (!env.BEYOND_CORE_ENABLED.has(group)) return;
     await app.register(plugin);
   };
 
@@ -464,35 +475,35 @@ export async function buildApp() {
   await app.register(preSendRoutes);
   await app.register(predictiveRoutes);
   await app.register(mediaRoutes);
-  await registerBeyondCore(surveyRoutes);
+  await registerBeyondCore('survey', surveyRoutes);
   await app.register(groupRoutes);
   await app.register(qrCodeRoutes);
-  await registerBeyondCore(revenueRoutes);
+  await registerBeyondCore('revenue', revenueRoutes);
   await app.register(calendarRoutes);
   await app.register(rssRoutes);
   await app.register(transactionalRoutes);
   await app.register(twoFactorRoutes);
   await app.register(oauthRoutes);
-  await registerBeyondCore(productRoutes);
+  await registerBeyondCore('product', productRoutes);
   await app.register(benchmarkRoutes);
   await app.register(hygieneRoutes);
   await app.register(rfmRoutes);
   await app.register(smartSendingRoutes);
   await app.register(quietHoursRoutes);
-  await registerBeyondCore(stockAlertRoutes);
-  await registerBeyondCore(couponRoutes);
-  await registerBeyondCore(reviewRoutes);
+  await registerBeyondCore('stock-alert', stockAlertRoutes);
+  await registerBeyondCore('coupon', couponRoutes);
+  await registerBeyondCore('review', reviewRoutes);
   await app.register(scheduledReportRoutes);
   await app.register(holdoutRoutes);
-  await registerBeyondCore(advancedAnalyticsRoutes);
-  await registerBeyondCore(helpdeskRoutes);
+  await registerBeyondCore('advanced-analytics', advancedAnalyticsRoutes);
+  await registerBeyondCore('helpdesk', helpdeskRoutes);
   await app.register(warehouseSyncRoutes);
   await app.register(smsKeywordRoutes);
   await app.register(contactEmailRoutes);
   await app.register(identityRoutes);
   await app.register(rcsRoutes);
-  await registerBeyondCore(aiAgentRoutes);
-  await registerBeyondCore(aiRecommendationsRoutes);
+  await registerBeyondCore('ai-agent', aiAgentRoutes);
+  await registerBeyondCore('ai-recommendations', aiRecommendationsRoutes);
   // Multivariate tests are NOT registered. The feature has no send-side —
   // nothing assigns a variant when a campaign goes out, nothing writes the
   // per-variant counters, and nothing rolls a winner out — so every test that
@@ -503,58 +514,58 @@ export async function buildApp() {
   await app.register(dedicatedIpsRoutes);
   await app.register(abuseDetectionRoutes);
   await app.register(ispFeedbackRoutes);
-  await registerBeyondCore(ecommerceRoutes);
-  await registerBeyondCore(browseAbandonmentRoutes);
+  await registerBeyondCore('ecommerce', ecommerceRoutes);
+  await registerBeyondCore('browse-abandonment', browseAbandonmentRoutes);
   await app.register(inboundEmailRoutes);
   await app.register(ssoRoutes);
   await app.register(complianceRoutes);
   await app.register(auditLogRoutes);
   await app.register(billingRoutes);
-  await registerBeyondCore(crmAccountRoutes);
-  await registerBeyondCore(crmPipelineRoutes);
-  await registerBeyondCore(crmDealRoutes);
-  await registerBeyondCore(crmReportRoutes);
-  await registerBeyondCore(aiSalesRoutes);
+  await registerBeyondCore('crm-account', crmAccountRoutes);
+  await registerBeyondCore('crm-pipeline', crmPipelineRoutes);
+  await registerBeyondCore('crm-deal', crmDealRoutes);
+  await registerBeyondCore('crm-report', crmReportRoutes);
+  await registerBeyondCore('ai-sales', aiSalesRoutes);
   await app.register(customObjectRoutes);
   await app.register(salesforceRoutes);
   await app.register(raynetRoutes);
-  await registerBeyondCore(productFeedRoutes);
+  await registerBeyondCore('product-feed', productFeedRoutes);
   await app.register(lifecycleRoutes);
   await app.register(deliverabilityRoutes);
   await app.register(publicReputationRoutes);
   await app.register(browserRoutes);
   await app.register(pollRoutes);
-  await registerBeyondCore(seoSitemapRoutes);
-  await registerBeyondCore(blogRoutes);
-  await registerBeyondCore(ctaRoutes);
+  await registerBeyondCore('seo-sitemap', seoSitemapRoutes);
+  await registerBeyondCore('blog', blogRoutes);
+  await registerBeyondCore('cta', ctaRoutes);
   await app.register(savedQueryRoutes);
   await app.register(dataSetRoutes);
   await app.register(appStudioRoutes);
-  await registerBeyondCore(crmTaskRoutes);
-  await registerBeyondCore(crmNoteRoutes);
-  await registerBeyondCore(crmActivityRoutes);
-  await registerBeyondCore(crmSequenceRoutes);
+  await registerBeyondCore('crm-task', crmTaskRoutes);
+  await registerBeyondCore('crm-note', crmNoteRoutes);
+  await registerBeyondCore('crm-activity', crmActivityRoutes);
+  await registerBeyondCore('crm-sequence', crmSequenceRoutes);
   await app.register(siteTrackingRoutes);
   await app.register(siteMessageRoutes);
   await app.register(webPersonalizationRoutes);
-  await registerBeyondCore(liveChatRoutes);
-  await registerBeyondCore(universalInboxRoutes);
+  await registerBeyondCore('live-chat', liveChatRoutes);
+  await registerBeyondCore('universal-inbox', universalInboxRoutes);
   await app.register(schedulingRoutes);
   await app.register(enrichmentRoutes);
   await app.register(dmarcRoutes);
-  await registerBeyondCore(loyaltyProgramRoutes);
-  await registerBeyondCore(loyaltyRewardRoutes);
-  await registerBeyondCore(loyaltyEarningRuleRoutes);
-  await registerBeyondCore(loyaltyAnalyticsRoutes);
-  await registerBeyondCore(loyaltyLedgerRoutes);
+  await registerBeyondCore('loyalty-program', loyaltyProgramRoutes);
+  await registerBeyondCore('loyalty-reward', loyaltyRewardRoutes);
+  await registerBeyondCore('loyalty-earning-rule', loyaltyEarningRuleRoutes);
+  await registerBeyondCore('loyalty-analytics', loyaltyAnalyticsRoutes);
+  await registerBeyondCore('loyalty-ledger', loyaltyLedgerRoutes);
   await app.register(hipaaRoutes);
   await app.register(phoneRoutes);
-  await registerBeyondCore(calendarSyncRoutes);
-  await registerBeyondCore(identityGraphRoutes);
-  await registerBeyondCore(cdpProfileRoutes);
-  await registerBeyondCore(cdpEventRoutes);
-  await registerBeyondCore(cdpTraitRoutes);
-  await registerBeyondCore(cdpActivationRoutes);
+  await registerBeyondCore('calendar-sync', calendarSyncRoutes);
+  await registerBeyondCore('identity-graph', identityGraphRoutes);
+  await registerBeyondCore('cdp-profile', cdpProfileRoutes);
+  await registerBeyondCore('cdp-event', cdpEventRoutes);
+  await registerBeyondCore('cdp-trait', cdpTraitRoutes);
+  await registerBeyondCore('cdp-activation', cdpActivationRoutes);
   await app.register(aiAnalyticsRoutes);
   await app.register(hubspotRoutes);
   await app.register(calendlyRoutes);
@@ -563,13 +574,13 @@ export async function buildApp() {
   // surfaces. Unregistered means the path 404s and no body is read.
   if (instagramWebhookEnabled()) await app.register(instagramWebhookRoutes);
   if (messengerWebhookEnabled()) await app.register(messengerWebhookRoutes);
-  await registerBeyondCore(helpdeskRoutingRoutes);
-  await registerBeyondCore(helpdeskAnalyticsRoutes);
-  await registerBeyondCore(aiSupportRoutes);
+  await registerBeyondCore('helpdesk-routing', helpdeskRoutingRoutes);
+  await registerBeyondCore('helpdesk-analytics', helpdeskAnalyticsRoutes);
+  await registerBeyondCore('ai-support', aiSupportRoutes);
   await app.register(phoneNumberRoutes);
   await app.register(softphoneRoutes);
-  await registerBeyondCore(meetingRoutes);
-  await registerBeyondCore(cdpSourceRoutes);
+  await registerBeyondCore('meeting', meetingRoutes);
+  await registerBeyondCore('cdp-source', cdpSourceRoutes);
   await app.register(crossAccountRoutes);
   await app.register(sharedAssetsRoutes);
   await app.register(billingExtendedRoutes);
@@ -589,7 +600,7 @@ export async function buildApp() {
   await app.register(internalDkimRetireRoutes);
   await app.register(internalEPrivacyRoutes);
   await app.register(internalAudienceRoutes);
-  await registerBeyondCore(internalCouponsRoutes);
+  await registerBeyondCore('internal-coupons', internalCouponsRoutes);
   await app.register(internalTriggersRoutes);
   await app.register(statusPageInternalRoutes);
   await app.register(internalChannelScoringRoutes);
@@ -607,7 +618,7 @@ export async function buildApp() {
   await app.register(dnsHealthRoutes);
   await app.register(anomalyDetectorInternalRoutes);
   await app.register(emailValidationRoutes);
-  await registerBeyondCore(reviewsV2Routes);
+  await registerBeyondCore('reviews-v2', reviewsV2Routes);
   await app.register(reportRoutes);
   await app.register(internalRfmRoutes);
   await app.register(internalPredictiveRoutes);
@@ -617,32 +628,32 @@ export async function buildApp() {
   await app.register(internalClickHouseRoutes);
   await app.register(internalTicketingCronRoutes);
   await app.register(messagingSendRoutes);
-  await registerBeyondCore(seoClustersRoutes);
-  await registerBeyondCore(seoKeywordsRoutes);
-  await registerBeyondCore(seoAuditRoutes);
-  await registerBeyondCore(seoRankTrackerRoutes);
-  await registerBeyondCore(internalSeoRankPollRoutes);
+  await registerBeyondCore('seo-clusters', seoClustersRoutes);
+  await registerBeyondCore('seo-keywords', seoKeywordsRoutes);
+  await registerBeyondCore('seo-audit', seoAuditRoutes);
+  await registerBeyondCore('seo-rank-tracker', seoRankTrackerRoutes);
+  await registerBeyondCore('internal-seo-rank-poll', internalSeoRankPollRoutes);
   await app.register(internalExternalFeedPollRoutes);
-  await registerBeyondCore(socialAccountRoutes);
-  await registerBeyondCore(socialPostRoutes);
-  await registerBeyondCore(socialMentionRoutes);
-  await registerBeyondCore(socialAnalyticsRoutes);
-  await registerBeyondCore(adAccountRoutes);
-  await registerBeyondCore(adAudienceSyncRoutes);
-  await registerBeyondCore(internalSocialRoutes);
-  await registerBeyondCore(adLookalikeRoutes);
-  await registerBeyondCore(sklikLookalikeRoutes);
-  await registerBeyondCore(adReportingRoutes);
+  await registerBeyondCore('social-account', socialAccountRoutes);
+  await registerBeyondCore('social-post', socialPostRoutes);
+  await registerBeyondCore('social-mention', socialMentionRoutes);
+  await registerBeyondCore('social-analytics', socialAnalyticsRoutes);
+  await registerBeyondCore('ad-account', adAccountRoutes);
+  await registerBeyondCore('ad-audience-sync', adAudienceSyncRoutes);
+  await registerBeyondCore('internal-social', internalSocialRoutes);
+  await registerBeyondCore('ad-lookalike', adLookalikeRoutes);
+  await registerBeyondCore('sklik-lookalike', sklikLookalikeRoutes);
+  await registerBeyondCore('ad-reporting', adReportingRoutes);
   // Off by default — see lib/webhook-switches.ts.
-  if (metaLeadAdsWebhookEnabled()) await registerBeyondCore(adsWebhookRoutes);
-  await registerBeyondCore(sklikPixelRoutes);
-  await registerBeyondCore(commerceProductRoutes);
-  await registerBeyondCore(commerceQuoteRoutes);
-  await registerBeyondCore(commerceInvoiceRoutes);
-  await registerBeyondCore(stripeWebhookRoutes);
-  await registerBeyondCore(commerceSubscriptionRoutes);
-  await registerBeyondCore(internalCommerceRoutes);
-  await registerBeyondCore(associationRoutes);
+  if (metaLeadAdsWebhookEnabled()) await registerBeyondCore('ads-webhook', adsWebhookRoutes);
+  await registerBeyondCore('sklik-pixel', sklikPixelRoutes);
+  await registerBeyondCore('commerce-product', commerceProductRoutes);
+  await registerBeyondCore('commerce-quote', commerceQuoteRoutes);
+  await registerBeyondCore('commerce-invoice', commerceInvoiceRoutes);
+  await registerBeyondCore('stripe-webhook', stripeWebhookRoutes);
+  await registerBeyondCore('commerce-subscription', commerceSubscriptionRoutes);
+  await registerBeyondCore('internal-commerce', internalCommerceRoutes);
+  await registerBeyondCore('association', associationRoutes);
   await app.register(videoRoutes);
   await app.register(ragRoutes);
   await app.register(i18nRoutes);
@@ -656,26 +667,26 @@ export async function buildApp() {
   await app.register(dataPipelineRoutes);
   await app.register(viberRoutes);
   await app.register(gdprPurposesRoutes);
-  await registerBeyondCore(gamificationRoutes);
+  await registerBeyondCore('gamification', gamificationRoutes);
   await app.register(socialInboxRoutes);
   await app.register(metaWebhookRoutes);
   await app.register(genderRoutes);
   await app.register(digitalAssetRoutes);
-  await registerBeyondCore(cannedResponseRoutes);
+  await registerBeyondCore('canned-response', cannedResponseRoutes);
   await app.register(workflowExportRoutes);
   await app.register(cohortAnalyticsRoutes);
-  await registerBeyondCore(surveysNpsRoutes);
+  await registerBeyondCore('surveys-nps', surveysNpsRoutes);
   await app.register(externalFeedsRoutes);
   await app.register(internalBlacklistCheckRoutes);
   await app.register(internalNewsletterTiersBatchRoutes);
   await app.register(newsletterTierRoutes);
   await app.register(newsletterReferralRoutes);
   await app.register(bimiRoutes);
-  await registerBeyondCore(playbookRoutes);
-  await registerBeyondCore(rotationRoutes);
-  await registerBeyondCore(quoteTemplateRoutes);
+  await registerBeyondCore('playbook', playbookRoutes);
+  await registerBeyondCore('rotation', rotationRoutes);
+  await registerBeyondCore('quote-template', quoteTemplateRoutes);
   await app.register(intentSignalRoutes);
-  await registerBeyondCore(extensionCardRoutes);
+  await registerBeyondCore('extension-card', extensionCardRoutes);
   await app.register(brandVoiceRoutes);
   await app.register(nbaRoutes);
   await app.register(attributionRoutes);

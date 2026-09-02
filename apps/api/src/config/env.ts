@@ -16,6 +16,12 @@
 
 import { z } from 'zod';
 import { DEV_TRACKING_SECRET } from '@forgemsg/shared';
+import {
+  resolveBeyondCoreGroups,
+  BeyondCoreConfigError,
+  type BeyondCoreGroup,
+  type BeyondCoreResolution,
+} from '@forgemsg/shared/beyond-core';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -114,6 +120,21 @@ const Env = z
      * Defaults on outside production so they keep being developed and tested.
      */
     FEATURE_BEYOND_CORE: boolFlag(!isProduction),
+
+    /**
+     * The groups to register, by name, comma-separated.
+     *
+     * This is the production way in; FEATURE_BEYOND_CORE is refused there. A
+     * plain string rather than a parsed list because the parsing has to reject
+     * unknown and blocked names with a message, which zod would flatten into
+     * "Invalid enum value" — see resolveBeyondCoreGroups.
+     *
+     * `.default('')` and not `.optional()`: unset and empty must be the same
+     * answer, and making the empty string the value rather than a nullish hole
+     * is what stops a later `??` from inventing a different default. Both mean
+     * no groups.
+     */
+    BEYOND_CORE_GROUPS: z.string().default(''),
 
     // ─── Public URLs ──────────────────────────────────────────────────────────
     API_BASE_URL: z.string().url().default('http://localhost:3001'),
@@ -523,4 +544,34 @@ function loadEnv(): Env {
   return parsed.data;
 }
 
-export const env: Env = loadEnv();
+const base = loadEnv();
+
+/**
+ * Resolve the beyond-core groups at boot, not per request.
+ *
+ * An unknown or blocked name has to stop the process, and it has to stop it
+ * here — the same place every other configuration mistake is caught — rather
+ * than at the first request that would have needed the group. `fail()` exits in
+ * production and throws in dev/test, which is what lets a test assert the
+ * refusal without killing the runner.
+ */
+let resolved: BeyondCoreResolution;
+try {
+  resolved = resolveBeyondCoreGroups({
+    raw: base.BEYOND_CORE_GROUPS,
+    all: base.FEATURE_BEYOND_CORE,
+    isProduction,
+  });
+} catch (err) {
+  if (err instanceof BeyondCoreConfigError) fail(`  - ${err.message}`);
+  throw err;
+}
+
+// Printed, not inferred. An operator reading the boot log sees the rollout as
+// a list of names; a boolean would have made them go and read the code.
+console.log(`[env] ${resolved.summary}`);
+
+export const env: Env & { BEYOND_CORE_ENABLED: ReadonlySet<BeyondCoreGroup> } = {
+  ...base,
+  BEYOND_CORE_ENABLED: resolved.enabled,
+};
