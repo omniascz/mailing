@@ -41,20 +41,42 @@ const helpdeskAnalyticsRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  /**
+   * CSAT submission — authenticated, org from the session.
+   *
+   * It had no `preHandler` and took `orgId` from the request body, so the
+   * caller named the tenant it was writing to: an unauthenticated POST with a
+   * guessed ticket UUID and org UUID set `channel_metadata.csat_score` on
+   * another customer's ticket.
+   *
+   * Auth rather than a signed token, and that is a deliberate choice about
+   * what exists. A mailed "rate this ticket" link would need a token, but
+   * nothing in this repository sends one — `csat` appears only here, in the
+   * survey templates, and in a workflow-template slug; there is no producer of
+   * a CSAT URL anywhere. Inventing a token flow would mean writing the
+   * verification half of a chain whose other half does not exist, which is the
+   * mistake services/meetings/workflows.ts documents at length. When someone
+   * builds the mailed link, the token belongs in that change, next to the
+   * thing that issues it.
+   *
+   * `orgId` leaves the body entirely rather than being validated against the
+   * session — a field that must equal the session value is a field with no
+   * job, and leaving it accepted invites a caller to keep sending it.
+   */
   app.post(
     '/api/v1/helpdesk/tickets/:id/csat',
     {
+      preHandler: [app.authenticate],
       schema: { tags: ['Helpdesk'] },
     },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const { score, orgId } = z
+      const { score } = z
         .object({
           score: z.number().int().min(1).max(5),
-          orgId: z.string().uuid(),
         })
         .parse(req.body);
-      await recordCsat(orgId, id, score);
+      await recordCsat(req.user!.orgId, id, score);
       return reply.send({ data: { recorded: true } });
     },
   );
