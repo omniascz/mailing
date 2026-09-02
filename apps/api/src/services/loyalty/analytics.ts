@@ -52,8 +52,8 @@ export async function getProgramStats(
   const [ptStats] = await db
     .select({
       issued: sql<number>`coalesce(sum(points) filter (where type in ('earn','bonus')), 0)::int`,
-      redeemed: sql<number>`coalesce(abs(sum(points)) filter (where type = 'redeem'), 0)::int`,
-      expired: sql<number>`coalesce(abs(sum(points)) filter (where type = 'expire'), 0)::int`,
+      redeemed: sql<number>`coalesce(abs(sum(points) filter (where type = 'redeem')), 0)::int`,
+      expired: sql<number>`coalesce(abs(sum(points) filter (where type = 'expire')), 0)::int`,
     })
     .from(loyaltyPoints)
     .where(and(eq(loyaltyPoints.orgId, orgId), gte(loyaltyPoints.createdAt, since)));

@@ -30,31 +30,26 @@ export const KNOWN_5XX: Record<string, string> = {
   // because the list fails the run when an entry starts passing.
 
   // ── Broken SQL that the EXPLAIN layers cannot reach ──────────────────────
-  // `FILTER specified, but abs is not an aggregate function` — the FILTER is
-  // attached to abs() instead of the sum() inside it. Invisible to layer 1
-  // because it lives in a fragment, not a whole statement, and not a schema
-  // fault so layer 2's guard correctly lets it through to Postgres.
-  '/api/v1/loyalty/programs/{programId}/analytics/overview':
-    'abs(sum(points)) FILTER (...) — FILTER attached to abs(), not to sum()',
-  '/api/v1/loyalty/programs/{programId}/members/{memberId}/ledger/summary':
-    'abs(sum(points)) FILTER (...) — same shape as the overview route',
-
-  // `syntax error at or near "$5"` — EXTRACT(EPOCH FROM INTERVAL $5); INTERVAL
-  // does not take a bind parameter. `AS offset` in GROUP BY is a second fault
-  // behind it, offset being reserved.
-  '/api/v1/analytics/cohorts':
-    'INTERVAL cannot take a bind parameter; also `AS offset` is reserved',
+  //
+  // Three entries lived here and are fixed. Two loyalty routes wrote
+  // `abs(sum(points)) FILTER (...)`, attaching FILTER to abs() rather than to
+  // the sum() inside it — `FILTER specified, but abs is not an aggregate
+  // function`, reproduced in psql. `/api/v1/analytics/cohorts` carried
+  // `EXTRACT(EPOCH FROM INTERVAL ${interval})`, and INTERVAL does not take a
+  // bind parameter, plus `GROUP BY offset` on a reserved word. Both classes are
+  // invisible to the EXPLAIN layers: layer 1 sees fragments rather than whole
+  // statements, and layer 2 correctly passes non-schema faults through.
 
   // `syntax error at or near "null"` in the external_feeds select.
   '/api/v1/external-feeds': 'malformed generated SQL — syntax error at or near "null"',
 
   // ── Thrown object literals, so 404 becomes 500 ───────────────────────────
-  // `throw { statusCode: 404, ... }` throws a plain object, not an Error.
-  // Fastify does not recognise it, so every not-found on these routes is
-  // answered 500. Six sites in routes/v1/blog.ts; these two are the GETs.
-  '/api/v1/blog/posts/{id}/revisions': 'throws an object literal, so 404 is served as 500',
-  '/api/v1/blog/posts/{id}/revisions/{vA}/diff/{vB}':
-    'throws an object literal, so 404 is served as 500',
+  //
+  // Both blog entries are fixed. `throw { statusCode: 404, ... }` is not an
+  // Error, so error-handler.ts fell through to its 500 branch and every
+  // not-found was served as INTERNAL_ERROR. All six sites in routes/v1/blog.ts
+  // throw AppError now — the other four are on POST/PUT/DELETE, which this
+  // sweep never called, so they were failing the same way unobserved.
 
   // ── Application errors, nothing to do with SQL ───────────────────────────
   '/api/v1/analytics/cohort': 'TypeError: rawCohorts.rows is not iterable',
@@ -76,8 +71,9 @@ export const KNOWN_5XX: Record<string, string> = {
 };
 
 /**
- * Ceiling on the accepted holes. Eleven today, down from fourteen: the three
- * ai-agents routes are fixed. Lowering it never needs permission; raising it
- * should be a conscious decision with a reason above.
+ * Ceiling on the accepted holes. Six today: fourteen before the ai-agents
+ * three, eleven before the two loyalty aggregates, cohorts, and the two blog
+ * revision routes. Lowering it never needs permission; raising it should be a
+ * conscious decision with a reason above.
  */
-export const MAX_KNOWN_5XX = 11;
+export const MAX_KNOWN_5XX = 6;

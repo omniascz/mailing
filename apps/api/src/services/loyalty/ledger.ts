@@ -317,8 +317,8 @@ export async function getLedgerSummary(memberId: string): Promise<LedgerSummary>
   const [row] = await db
     .select({
       totalEarned: sql<number>`coalesce(sum(points) filter (where type in ('earn', 'bonus', 'refund')), 0)::int`,
-      totalRedeemed: sql<number>`coalesce(abs(sum(points)) filter (where type = 'redeem'), 0)::int`,
-      totalExpired: sql<number>`coalesce(abs(sum(points)) filter (where type = 'expire'), 0)::int`,
+      totalRedeemed: sql<number>`coalesce(abs(sum(points) filter (where type = 'redeem')), 0)::int`,
+      totalExpired: sql<number>`coalesce(abs(sum(points) filter (where type = 'expire')), 0)::int`,
       totalAdjusted: sql<number>`coalesce(sum(points) filter (where type = 'adjust'), 0)::int`,
       transactionCount: sql<number>`count(*)::int`,
     })
