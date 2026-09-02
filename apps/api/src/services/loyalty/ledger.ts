@@ -12,6 +12,7 @@
 import { and, desc, eq, gt, gte, lt, lte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { loyaltyPoints, loyaltyMembers, type LoyaltyPointTx } from '../../db/schema/index.js';
+import { AppError } from '../../lib/app-error.js';
 
 // ─── Transaction history ──────────────────────────────────────────────────────
 
@@ -57,12 +58,13 @@ export async function getLedger(
  * non-expired point transactions). Slower than reading the cached column,
  * but guaranteed to be correct.
  */
-export async function computeLedgerBalance(memberId: string): Promise<number> {
+export async function computeLedgerBalance(orgId: string, memberId: string): Promise<number> {
   const [row] = await db
     .select({ total: sql<number>`coalesce(sum(points), 0)::int` })
     .from(loyaltyPoints)
     .where(
       and(
+        eq(loyaltyPoints.orgId, orgId),
         eq(loyaltyPoints.memberId, memberId),
         // Exclude future-expired transactions (points not yet expired)
         // An expired row has type='expire' and is already negative — included
@@ -79,7 +81,7 @@ export async function computeLedgerBalance(memberId: string): Promise<number> {
  * Returns the corrected balance.
  */
 export async function reconcileBalance(orgId: string, memberId: string): Promise<number> {
-  const ledgerBalance = await computeLedgerBalance(memberId);
+  const ledgerBalance = await computeLedgerBalance(orgId, memberId);
 
   const [member] = await db
     .select({ pointBalance: loyaltyMembers.pointBalance })
@@ -124,6 +126,7 @@ export interface ExpiringPoints {
  * Used to power "Your X points expire in Y days" member messaging.
  */
 export async function getExpiringPoints(
+  orgId: string,
   memberId: string,
   warningDays = 30,
 ): Promise<ExpiringPoints[]> {
@@ -138,6 +141,7 @@ export async function getExpiringPoints(
     .from(loyaltyPoints)
     .where(
       and(
+        eq(loyaltyPoints.orgId, orgId),
         eq(loyaltyPoints.memberId, memberId),
         eq(loyaltyPoints.type, 'earn'),
         gt(loyaltyPoints.points, sql`0`),
@@ -313,7 +317,7 @@ export interface LedgerSummary {
   transactionCount: number;
 }
 
-export async function getLedgerSummary(memberId: string): Promise<LedgerSummary> {
+export async function getLedgerSummary(orgId: string, memberId: string): Promise<LedgerSummary> {
   const [row] = await db
     .select({
       totalEarned: sql<number>`coalesce(sum(points) filter (where type in ('earn', 'bonus', 'refund')), 0)::int`,
@@ -323,20 +327,28 @@ export async function getLedgerSummary(memberId: string): Promise<LedgerSummary>
       transactionCount: sql<number>`count(*)::int`,
     })
     .from(loyaltyPoints)
-    .where(eq(loyaltyPoints.memberId, memberId));
+    .where(and(eq(loyaltyPoints.orgId, orgId), eq(loyaltyPoints.memberId, memberId)));
 
   const [memberRow] = await db
     .select({ pointBalance: loyaltyMembers.pointBalance })
     .from(loyaltyMembers)
-    .where(eq(loyaltyMembers.id, memberId))
+    .where(and(eq(loyaltyMembers.id, memberId), eq(loyaltyMembers.orgId, orgId)))
     .limit(1);
+
+  // A member the caller does not own is absent, not empty. The org filters
+  // above already keep the other tenant's numbers out, so returning the
+  // all-zero summary would be safe — but it answers 200 to a question the
+  // caller had no right to ask, and "zero points" is indistinguishable from
+  // "not yours". `reconcileBalance` on the same member already refuses; this
+  // now matches it.
+  if (!memberRow) throw AppError.notFound('Loyalty member');
 
   return {
     totalEarned: row?.totalEarned ?? 0,
     totalRedeemed: row?.totalRedeemed ?? 0,
     totalExpired: row?.totalExpired ?? 0,
     totalAdjusted: row?.totalAdjusted ?? 0,
-    currentBalance: memberRow?.pointBalance ?? 0,
+    currentBalance: memberRow.pointBalance,
     transactionCount: row?.transactionCount ?? 0,
   };
 }
