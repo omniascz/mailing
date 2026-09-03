@@ -3,6 +3,8 @@ import { Store, Plug, LayoutGrid } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
+import { getCapabilities } from '@/lib/capabilities.server';
+import { hasGroup } from '@/lib/capabilities';
 
 interface Connection {
   id: string;
@@ -34,9 +36,24 @@ const PLATFORMS = [
 ];
 
 export default async function IntegrationsPage() {
-  const connections = await apiFetch<Connection[]>('/api/v1/ecommerce/connections', {
-    fallback: [],
-  });
+  /**
+   * Ask whether the group is registered before asking for its data.
+   *
+   * `apiFetch(..., { fallback: [] })` turns the 404 from an unregistered route
+   * into an empty list, which this page then rendered as "No stores connected".
+   * That is a lie with a plausible shape: the operator reads it as "nobody has
+   * connected a store yet" and goes looking for a connect button, when the
+   * truth is that the e-commerce group is not switched on in this deployment.
+   *
+   * The fallback stays — a momentarily unreachable API should still render a
+   * shell rather than throw — but it is no longer the only thing standing
+   * between a 404 and a sentence claiming a fact about the customer's data.
+   */
+  const capabilities = await getCapabilities();
+  const ecommerceOn = hasGroup(capabilities, 'ecommerce');
+  const connections = ecommerceOn
+    ? await apiFetch<Connection[]>('/api/v1/ecommerce/connections', { fallback: [] })
+    : [];
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -56,7 +73,22 @@ export default async function IntegrationsPage() {
         </Link>
       </header>
 
-      {connections.length === 0 ? (
+      {!ecommerceOn ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Plug className="mx-auto h-8 w-8 text-secondary-300" aria-hidden="true" />
+            <p className="mt-3 text-sm font-medium text-secondary-900">
+              E-commerce integrations are not enabled
+            </p>
+            <p className="mt-1 text-sm text-secondary-500">
+              This deployment does not have the e-commerce group switched on, so there is nothing to
+              connect to yet. Ask your operator to add{' '}
+              <code className="font-mono text-xs">ecommerce</code> to{' '}
+              <code className="font-mono text-xs">BEYOND_CORE_GROUPS</code>.
+            </p>
+          </CardContent>
+        </Card>
+      ) : connections.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Plug className="mx-auto h-8 w-8 text-secondary-300" aria-hidden="true" />
