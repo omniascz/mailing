@@ -45,6 +45,7 @@ import { cn } from '@/lib/cn';
 import {
   NOTHING_AVAILABLE,
   visibleSections,
+  type BeyondCoreGroupName,
   type Capabilities,
   type CapabilityFlag,
 } from '@/lib/capabilities';
@@ -57,28 +58,10 @@ interface NavSection {
     icon: typeof LayoutDashboard;
     /** Hidden unless the API reports this capability. See lib/capabilities.ts. */
     requires?: CapabilityFlag;
+    /** Hidden unless the API registered this beyond-core group. */
+    requiresGroup?: BeyondCoreGroupName;
   }>;
 }
-
-/**
- * Nav entries for domains outside the core product (CRM, helpdesk, booking,
- * loyalty, commerce, reviews, product feeds, AI agents). The API hides their
- * routes behind FEATURE_BEYOND_CORE; this hides the way in, so the dashboard
- * never offers a page whose endpoints answer 404. The pages themselves stay —
- * only the link goes.
- */
-const BEYOND_CORE_HREFS = new Set([
-  '/ai-agents',
-  '/surveys',
-  '/coupons',
-  '/loyalty',
-  '/reviews',
-  '/meetings',
-  '/product-feeds',
-  '/helpdesk',
-]);
-
-const BEYOND_CORE_ENABLED = process.env.NEXT_PUBLIC_FEATURE_BEYOND_CORE === 'true';
 
 const NAV: NavSection[] = [
   {
@@ -109,7 +92,7 @@ const NAV: NavSection[] = [
       // 'completed' with screenshots on preview.mock.local. Hidden until the
       // key is set, then it comes back on its own.
       { href: '/inbox-preview', label: 'Inbox preview', icon: Eye, requires: 'inboxPreview' },
-      { href: '/ai-agents', label: 'AI agents', icon: Bot },
+      { href: '/ai-agents', label: 'AI agents', icon: Bot, requiresGroup: 'ai-agent' },
     ],
   },
   {
@@ -123,17 +106,17 @@ const NAV: NavSection[] = [
       { href: '/custom-objects', label: 'Custom objects', icon: Boxes },
       { href: '/lead-scoring', label: 'Lead scoring', icon: TrendingUp },
       { href: '/signup-forms', label: 'Signup forms', icon: FileText },
-      { href: '/surveys', label: 'Surveys & NPS', icon: ClipboardList },
+      { href: '/surveys', label: 'Surveys & NPS', icon: ClipboardList, requiresGroup: 'survey' },
     ],
   },
   {
     label: 'Commerce',
     items: [
-      { href: '/coupons', label: 'Coupons', icon: Ticket },
-      { href: '/loyalty', label: 'Loyalty', icon: Gift },
-      { href: '/reviews', label: 'Reviews', icon: Star },
-      { href: '/meetings', label: 'Meetings', icon: CalendarClock },
-      { href: '/product-feeds', label: 'Product feeds', icon: Rss },
+      { href: '/coupons', label: 'Coupons', icon: Ticket, requiresGroup: 'coupon' },
+      { href: '/loyalty', label: 'Loyalty', icon: Gift, requiresGroup: 'loyalty-program' },
+      { href: '/reviews', label: 'Reviews', icon: Star, requiresGroup: 'reviews-v2' },
+      { href: '/meetings', label: 'Meetings', icon: CalendarClock, requiresGroup: 'meeting' },
+      { href: '/product-feeds', label: 'Product feeds', icon: Rss, requiresGroup: 'product-feed' },
       { href: '/digital-assets', label: 'Digital assets', icon: FileDown },
       { href: '/newsletter-tiers', label: 'Paid tiers', icon: CreditCard },
       { href: '/integrations', label: 'Integrations', icon: Plug },
@@ -148,7 +131,7 @@ const NAV: NavSection[] = [
   },
   {
     label: 'Support',
-    items: [{ href: '/helpdesk', label: 'Helpdesk', icon: LifeBuoy }],
+    items: [{ href: '/helpdesk', label: 'Helpdesk', icon: LifeBuoy, requiresGroup: 'helpdesk' }],
   },
   {
     label: 'Deliverability',
@@ -169,20 +152,14 @@ const NAV: NavSection[] = [
   },
 ];
 
-/**
- * NAV with every beyond-core link removed. Composed with — not instead of —
- * the capability filter below: capabilities answer "is this deployment wired
- * for it", this answers "is it part of the product at all".
- */
-const CORE_NAV: NavSection[] = BEYOND_CORE_ENABLED
-  ? NAV
-  : NAV.map((s) => ({
-      ...s,
-      items: s.items.filter((i) => !BEYOND_CORE_HREFS.has(i.href)),
-    })).filter((s) => s.items.length > 0);
-
 export function Sidebar({ capabilities = NOTHING_AVAILABLE }: { capabilities?: Capabilities }) {
-  const nav = visibleSections(CORE_NAV, capabilities);
+  // One filter, two questions. `requires` asks whether the deployment is wired
+  // for a feature (Litmus, geo); `requiresGroup` asks whether the API
+  // registered that part of the product at all. Both used to need their own
+  // pass — the second was a build-time boolean applied here, before the render
+  // — and two places deciding visibility is how one of them keeps offering a
+  // page the other hides.
+  const nav = visibleSections(NAV, capabilities);
   const pathname = usePathname();
 
   return (

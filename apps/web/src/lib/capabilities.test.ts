@@ -35,6 +35,20 @@ const ALL: Capabilities = {
   // unconditionally — but this fixture is "everything available", and the rule
   // under test is the visibility rule, not which flags are reachable.
   multivariateTests: true,
+  // Every beyond-core group the dashboard has a page for. Same reasoning as
+  // multivariateTests above: the fixture means "everything available", and the
+  // rule under test is the visibility rule.
+  beyondCoreGroups: [
+    'ai-agent',
+    'coupon',
+    'ecommerce',
+    'helpdesk',
+    'loyalty-program',
+    'meeting',
+    'product-feed',
+    'reviews-v2',
+    'survey',
+  ],
 };
 
 const NAV = [
@@ -111,6 +125,10 @@ describe('the fallback when the API cannot be reached', () => {
       inboxPreview: false,
       geoAnalytics: false,
       multivariateTests: false,
+      // No group is enabled either. Same reasoning as the flags above: a
+      // dashboard that hides a working page is a nuisance, one that links to a
+      // page whose routes were never registered is the bug being fixed.
+      beyondCoreGroups: [],
     });
   });
 });
@@ -159,33 +177,50 @@ describe('the A/B tests nav entry', () => {
 });
 
 /**
- * The beyond-core nav is decided when the image is BUILT, not when it runs:
- * Next.js inlines NEXT_PUBLIC_* into the client bundle, so a value set on the
- * running container arrives too late to change anything.
+ * The beyond-core nav is decided at RUNTIME now, and this pins that it stays so.
  *
- * apps/web/Dockerfile used to declare no such build arg at all. The result was
- * correct — `undefined === 'true'` is false, so the nav stayed hidden — but it
- * was correct by absence rather than by decision, and it would flip the day a
- * global build env or a CI matrix started passing the variable. It also has to
- * agree with the API's own FEATURE_BEYOND_CORE: with the web on and the API
- * off, the sidebar links to pages whose routes were never registered, because
- * `registerBeyondCore` skips registration entirely rather than answering 404.
+ * It used to be a build-time boolean: Next.js inlines NEXT_PUBLIC_* into the
+ * client bundle, so `NEXT_PUBLIC_FEATURE_BEYOND_CORE` was fixed when the image
+ * was built. Revealing a page meant rebuilding and redeploying the web app, and
+ * docker-compose.prod.yml never passed the build arg — the value was right by
+ * absence rather than by decision. It was also one boolean against the API's
+ * list of groups, so it could not show /surveys and hide /loyalty.
+ *
+ * The answer now comes from GET /api/v1/capabilities (`beyondCoreGroups`), the
+ * same route the dashboard already asks about Litmus and geo, read fresh per
+ * request by the process that made the decision.
+ *
+ * These three assert the old mechanism is GONE rather than merely unused. A
+ * leftover `ARG` that nothing reads is a switch an operator will eventually
+ * set, and then wonder why nothing happened.
  */
-describe('the beyond-core build flag is stated, not merely absent', () => {
+describe('the beyond-core nav is not decided at build time any more', () => {
   const dockerfile = readFileSync(join(__dirname, '../../Dockerfile'), 'utf8');
 
-  it('the Dockerfile declares the build arg and defaults it to false', () => {
-    expect(dockerfile).toMatch(/^ARG NEXT_PUBLIC_FEATURE_BEYOND_CORE=false$/m);
+  it('the Dockerfile declares no such build arg', () => {
+    expect(dockerfile).not.toMatch(/^ARG NEXT_PUBLIC_FEATURE_BEYOND_CORE/m);
+    expect(dockerfile).not.toMatch(/^ENV NEXT_PUBLIC_FEATURE_BEYOND_CORE/m);
   });
 
-  it('and passes it into the build environment', () => {
-    expect(dockerfile).toMatch(
-      /^ENV NEXT_PUBLIC_FEATURE_BEYOND_CORE=\$NEXT_PUBLIC_FEATURE_BEYOND_CORE$/m,
-    );
+  it('and no component reads the variable', () => {
+    for (const file of [
+      '../components/dashboard/sidebar.tsx',
+      '../components/dashboard/command-palette.tsx',
+    ]) {
+      const source = readFileSync(join(__dirname, file), 'utf8');
+      expect(source, `${file} still reads the build-time flag`).not.toContain(
+        'NEXT_PUBLIC_FEATURE_BEYOND_CORE',
+      );
+    }
   });
 
-  it('the code it feeds still treats anything but the string "true" as off', () => {
-    const sidebar = readFileSync(join(__dirname, '../components/dashboard/sidebar.tsx'), 'utf8');
-    expect(sidebar).toContain("process.env.NEXT_PUBLIC_FEATURE_BEYOND_CORE === 'true'");
+  it('both components gate on the group reported by the API instead', () => {
+    for (const file of [
+      '../components/dashboard/sidebar.tsx',
+      '../components/dashboard/command-palette.tsx',
+    ]) {
+      const source = readFileSync(join(__dirname, file), 'utf8');
+      expect(source, `${file} must carry requiresGroup`).toContain('requiresGroup');
+    }
   });
 });
