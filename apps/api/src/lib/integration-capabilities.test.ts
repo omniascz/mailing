@@ -9,6 +9,7 @@ import {
   assertLocationTypeAvailable,
   bookingWouldBeEmpty,
 } from './integration-capabilities.js';
+import { env } from '../config/env.js';
 
 /**
  * Pay for the module graph in a hook, not in the first test.
@@ -192,6 +193,16 @@ describe('multivariate tests', () => {
   });
 });
 
+/**
+ * What this process resolved BEYOND_CORE_GROUPS to, read once.
+ *
+ * Not a hardcoded list: the resolution belongs to config/env.ts and is already
+ * tested in @forgemsg/shared. What matters here is that `capabilities()`
+ * reports it faithfully and that no key of the payload escapes the exhaustive
+ * comparison below.
+ */
+const RESOLVED_GROUPS = [...env.BEYOND_CORE_ENABLED].sort();
+
 describe('the payload the frontend reads', () => {
   it('reports everything off in an unconfigured deployment', () => {
     expect(capabilities()).toEqual({
@@ -200,6 +211,13 @@ describe('the payload the frontend reads', () => {
       inboxPreview: false,
       geoAnalytics: false,
       multivariateTests: false,
+      // Beyond-core groups come from BEYOND_CORE_GROUPS, resolved once at
+      // import, so onlyEnv() cannot move them — and under NODE_ENV=test
+      // FEATURE_BEYOND_CORE defaults on, which is every group. Compared
+      // against that resolution rather than a copied list of 76 names: the
+      // point of the exhaustive toEqual is that a NEW key cannot be added
+      // unnoticed, and restating the names here would only duplicate #124.
+      beyondCoreGroups: RESOLVED_GROUPS,
     });
   });
 
@@ -217,6 +235,9 @@ describe('the payload the frontend reads', () => {
       geoAnalytics: true,
       // The one that stays off. Configuring the others must not drag it on.
       multivariateTests: false,
+      // Unchanged by the credentials above: switching on Zoom or Litmus must
+      // not move a route group. Two different questions, kept apart.
+      beyondCoreGroups: RESOLVED_GROUPS,
     });
   });
 });
