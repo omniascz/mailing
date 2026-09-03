@@ -115,26 +115,87 @@ export async function exchangeShopifyCode(
 }
 
 /**
+ * The topics we register with Shopify.
+ *
+ * This list is a promise: every topic on it is answered by a branch in the
+ * `/api/v1/ecommerce/webhooks/shopify` receiver. `customers/create` used to be
+ * on it and nothing read it — creating contacts out of a shop's customer list
+ * is a consent decision, not plumbing (this codebase does not create a contact
+ * even from a paid order), so the promise is withdrawn rather than faked.
+ */
+export const SHOPIFY_WEBHOOK_TOPICS = [
+  'orders/create',
+  'orders/updated',
+  'app/uninstalled',
+] as const;
+
+/** The one path the Shopify receiver is mounted on. */
+export const SHOPIFY_WEBHOOK_PATH = '/api/v1/ecommerce/webhooks/shopify';
+
+/**
  * Register Shopify webhooks after OAuth completes.
+ *
+ * Every topic is registered at the SAME address. That is not a simplification —
+ * it is how the receiver already works: it dispatches on the `X-Shopify-Topic`
+ * header, and the path plays no part in the topic branch or in the HMAC check.
+ * The address used to carry the topic as a suffix
+ * (`.../shopify/orders_create`), which matched no mounted route — no parameter,
+ * no wildcard — so every webhook we registered pointed at a 404 and the
+ * integration only worked for a shop whose owner had set the URL by hand.
+ *
+ * The alternative, a route with a `:connectionId` parameter like the other five
+ * platforms, is not open here: `integrations/shopify/index.ts` registers the
+ * webhooks BEFORE `createConnection`, so at registration time there is no
+ * connection id to put in the path. The shop domain header is the identifier,
+ * and the receiver looks the connection up by it.
  */
 export async function registerShopifyWebhooks(
   shopDomain: string,
   accessToken: string,
 ): Promise<void> {
-  const webhookBase = `${process.env.API_BASE_URL ?? ''}/api/v1/ecommerce/webhooks/shopify`;
-  const topics = ['orders/create', 'orders/updated', 'customers/create', 'app/uninstalled'];
+  // Refuse rather than guess. `process.env.API_BASE_URL` is read raw here —
+  // `config/env.ts` parses into its own object and never writes back — so the
+  // old `?? ''` produced the relative address `/api/v1/ecommerce/...`, which
+  // Shopify rejects at the door. Both callers then swallowed the rejection, so
+  // the install reported success and no webhook was ever delivered.
+  const base = process.env.API_BASE_URL;
+  if (!base || !/^https?:\/\//i.test(base)) {
+    throw new AppError({
+      code: 'API_BASE_URL_NOT_CONFIGURED',
+      message:
+        'API_BASE_URL must be an absolute http(s) URL before Shopify webhooks can be registered — Shopify rejects a relative address.',
+      statusCode: 500,
+      details: { received: base ?? null },
+    });
+  }
+  const address = `${base.replace(/\/+$/, '')}${SHOPIFY_WEBHOOK_PATH}`;
 
-  for (const topic of topics) {
-    await fetch(`https://${shopDomain}/admin/api/2024-01/webhooks.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': accessToken,
-      },
-      body: JSON.stringify({
-        webhook: { topic, address: `${webhookBase}/${topic.replace('/', '_')}`, format: 'json' },
-      }),
-    }).catch(() => {});
+  const failed: string[] = [];
+  for (const topic of SHOPIFY_WEBHOOK_TOPICS) {
+    try {
+      const res = await fetch(`https://${shopDomain}/admin/api/2024-01/webhooks.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Access-Token': accessToken,
+        },
+        body: JSON.stringify({ webhook: { topic, address, format: 'json' } }),
+      });
+      if (!res.ok) failed.push(`${topic} (${res.status})`);
+    } catch {
+      failed.push(`${topic} (network)`);
+    }
+  }
+
+  // A partial registration is a shop that receives some events and not others.
+  // Saying so beats returning void and looking identical to a full success.
+  if (failed.length > 0) {
+    throw new AppError({
+      code: 'SHOPIFY_WEBHOOK_REGISTRATION_FAILED',
+      message: `Shopify refused webhook registration for: ${failed.join(', ')}`,
+      statusCode: 502,
+      details: { shopDomain, failed },
+    });
   }
 }
 
