@@ -127,6 +127,21 @@ services:
       # packages/shared and is committed, so an unset value in production means
       # anyone reading this repository can forge those tokens.
       TRACKING_SECRET: ${TRACKING_SECRET:?TRACKING_SECRET is required}
+      # Which beyond-core route groups this deployment registers, by name,
+      # comma-separated. See @forgemsg/shared/beyond-core for the 76 valid
+      # names and the two that are blocked.
+      #
+      # Bare `${BEYOND_CORE_GROUPS:-}` on purpose. Empty and unset are the same
+      # answer — no groups — because the resolver parses a list rather than
+      # defaulting a nullish value, so `:-` cannot substitute something else in.
+      # No default here either: a rollout is an operator decision, and baking
+      # one into this file would make enabling a group a commit rather than a
+      # deploy.
+      #
+      # It has to be here at all because compose only forwards what it names:
+      # the variable was in the API's schema since the per-group switch shipped,
+      # but nothing passed it, so setting it in .env changed nothing.
+      BEYOND_CORE_GROUPS: ${BEYOND_CORE_GROUPS:-}
     ports:
       - '${API_PORT:-3001}:3001'
     healthcheck:
@@ -202,6 +217,11 @@ services:
       # Fail-fast rather than ${...:-}, which would substitute on empty too and
       # leave the schema check unable to fire.
       VERP_BOUNCE_DOMAIN: ${VERP_BOUNCE_DOMAIN:?VERP_BOUNCE_DOMAIN is required}
+      # The SAME value the api service gets, and it must stay the same. Each
+      # beyond-core cron posts to an /api/v1/internal/* route that only exists
+      # when its group is registered on the API side; a worker enabled without
+      # its route 404s on every tick.
+      BEYOND_CORE_GROUPS: ${BEYOND_CORE_GROUPS:-}
 
   web:
     build:
