@@ -19,7 +19,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import crypto from 'node:crypto';
 import { db } from '../../db/client.js';
-import { ecommerceConnections } from '../../db/schema/index.js';
+import { ecommerceConnections, ecommerceWebhookEvents } from '../../db/schema/index.js';
 import { and, eq, sql } from 'drizzle-orm';
 import { redis } from '@forgemsg/shared/redis';
 import {
@@ -262,8 +262,17 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       };
       const conn = await createConnection(orgId, { platform: 'shopify', name, credentials });
 
-      // Register webhooks (fire-and-forget)
-      registerShopifyWebhooks(shop, accessToken).catch(() => {});
+      // Register webhooks. Still fire-and-forget — the merchant should land on
+      // the success page rather than watch four Shopify round-trips — but no
+      // longer silent. `.catch(() => {})` meant a misconfigured API_BASE_URL, a
+      // refused registration and a full success were the same observable event,
+      // and the install looked fine while no webhook was ever delivered.
+      registerShopifyWebhooks(shop, accessToken).catch((err: unknown) => {
+        req.log.error(
+          { err, connectionId: conn.id, shop },
+          '[shopify] webhook registration failed — this shop will send no webhooks',
+        );
+      });
 
       // Redirect to frontend success page
       const webBase = process.env.WEB_BASE_URL ?? 'https://app.forgemsg.io';
@@ -513,9 +522,39 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
         return reply.code(sig.status).send({ code: sig.code, message: sig.message });
       }
 
+      // Every topic in SHOPIFY_WEBHOOK_TOPICS has a branch here. That pairing is
+      // the point: a topic we register and do not read is a promise we do not
+      // keep, and it is invisible — Shopify reports the delivery as successful.
       if (topic === 'orders/create' || topic === 'orders/updated') {
         const order = normalizeShopifyOrder(req.body as Record<string, unknown>);
         await ingestOrder(conn, order).catch(() => {});
+      } else if (topic === 'app/uninstalled') {
+        // The app is gone from the shop: the access token is dead and no
+        // further webhook will ever arrive. Leaving the row `active` meant the
+        // receiver kept matching that shop domain forever and the UI kept
+        // showing a healthy connection.
+        //
+        // `revoked` is already in the enum — "OAuth token revoked / API key
+        // deleted" is exactly this — so no migration is involved.
+        await db
+          .update(ecommerceConnections)
+          .set({ status: 'revoked', updatedAt: new Date() })
+          .where(eq(ecommerceConnections.id, conn.id));
+        await db
+          .insert(ecommerceWebhookEvents)
+          .values({
+            connectionId: conn.id,
+            orgId: conn.orgId,
+            topic: 'app/uninstalled',
+            processed: true,
+          })
+          .onConflictDoNothing();
+        req.log.info({ connectionId: conn.id }, '[shopify] app uninstalled — connection revoked');
+      } else {
+        // A topic we did not ask for. 200 rather than 4xx on purpose: Shopify
+        // retries a non-2xx for days and then disables the subscription, and an
+        // unexpected topic is not worth losing the ones we do want.
+        req.log.info({ connectionId: conn.id, topic }, '[shopify] unhandled webhook topic');
       }
 
       return reply.code(200).send({ received: true });
