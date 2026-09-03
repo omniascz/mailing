@@ -10,6 +10,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./beyond-core": {
+      "types": "./dist/beyond-core/index.d.ts",
+      "import": "./dist/beyond-core/index.js"
+    },
     "./redis": {
       "types": "./dist/redis/index.d.ts",
       "import": "./dist/redis/index.js"

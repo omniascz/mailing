@@ -384,10 +384,18 @@ export async function scheduleWorkflowJobs() {
     );
     console.log('[workflow-scheduler] campaign-reap-stalled scheduled (hourly)');
   }
-  // browse-abandonment posts to a beyond-core internal route; scheduling it
-  // with that route unregistered would 404 every 15 minutes. See
-  // config/env.ts FEATURE_BEYOND_CORE.
-  if (env.FEATURE_BEYOND_CORE && !(await browseAbandonmentQueue.getJob('browse-abandonment'))) {
+  // browse-abandonment ticks POST /api/v1/internal/browse-abandonment/tick.
+  //
+  // That route is core — internalTriggersRoutes registers it unconditionally —
+  // so the cron would not 404. It is still gated on the browse-abandonment
+  // group, because what the tick DOES is fire browse_abandoned workflow events
+  // from product views, and a deployment that has not turned the feature on
+  // should not start emitting its events. The group, not the route, is the
+  // thing being switched.
+  if (
+    env.BEYOND_CORE_ENABLED.has('browse-abandonment') &&
+    !(await browseAbandonmentQueue.getJob('browse-abandonment'))
+  ) {
     await browseAbandonmentQueue.add(
       'tick',
       {},

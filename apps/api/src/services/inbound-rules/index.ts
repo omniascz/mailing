@@ -116,7 +116,13 @@ export async function resolveInboundActions(
  * produced would be exactly as unreadable.
  */
 function withReachableTargets(actions: InboundAction[]): InboundAction[] {
-  if (env.FEATURE_BEYOND_CORE) return actions;
+  // The question here has always been "can the customer read a helpdesk
+  // ticket", which used to be answerable only as "is the whole beyond-core flag
+  // on". Now that groups switch individually it asks the precise thing: is the
+  // group that registers GET /api/v1/helpdesk/tickets enabled. A deployment
+  // rolling out, say, loyalty alone no longer starts filing support mail into a
+  // ticket list nobody can open.
+  if (env.BEYOND_CORE_ENABLED.has('helpdesk')) return actions;
 
   const out: InboundAction[] = [];
   let substituted = false;
