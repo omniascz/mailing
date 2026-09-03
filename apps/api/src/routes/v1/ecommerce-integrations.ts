@@ -20,7 +20,7 @@ import { z } from 'zod';
 import crypto from 'node:crypto';
 import { db } from '../../db/client.js';
 import { ecommerceConnections } from '../../db/schema/index.js';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { redis } from '@forgemsg/shared/redis';
 import {
   listConnections,
@@ -466,7 +466,20 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
           .send({ code: 'MISSING_HEADERS', message: 'Shopify headers missing' });
       }
 
-      // Find the connection by shop domain
+      // Find the connection by shop domain.
+      //
+      // This used to select every active Shopify connection with `.limit(50)`
+      // and then destructure `const [conn]` — one row, whichever Postgres
+      // returned first — and compare ITS domain to the header. With more than
+      // one active Shopify connection the webhook worked for exactly one
+      // organisation and every other tenant got a silent 204: their orders
+      // simply never arrived, with nothing in the log to say so.
+      //
+      // The domain is the only thing in the request that identifies the shop —
+      // Shopify's webhook URL carries no connection id, unlike the other five
+      // receivers, which take `:connectionId` from the path and look up by
+      // primary key. So the domain has to be IN the query rather than checked
+      // after it, and it lives inside the credentials jsonb.
       const rawBody =
         (req as unknown as { rawBody?: Buffer }).rawBody?.toString('utf8') ??
         JSON.stringify(req.body);
@@ -477,14 +490,17 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
           and(
             eq(ecommerceConnections.platform, 'shopify'),
             eq(ecommerceConnections.status, 'active'),
+            sql`${ecommerceConnections.credentials}->>'shopDomain' = ${shopDomain}`,
           ),
         )
-        .limit(50); // scan up to 50 — filter by domain below
+        .limit(1);
 
+      // Unknown shop: 204 rather than 404, deliberately. Shopify retries a
+      // non-2xx for days and disables the subscription after enough failures,
+      // and an uninstalled or paused connection is not an error worth that.
       if (!conn) return reply.code(204).send();
 
       const creds = conn.credentials as ShopifyCredentials;
-      if (creds.shopDomain !== shopDomain) return reply.code(204).send();
       const sig = checkWebhookSignature({
         integration: 'Shopify',
         secret: creds.webhookSecret,
