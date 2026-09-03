@@ -66,12 +66,39 @@ export async function updateSurvey(
   return row;
 }
 
+/**
+ * Record a response to a hosted survey.
+ *
+ * `orgId` is NOT a parameter, and that is the fix rather than an omission.
+ * It used to be one, taken straight from the body of the unauthenticated
+ * `POST /public/surveys/:id/submit`, and nothing here checked that the survey
+ * belonged to it — so anyone could write a `survey_responses` row tagged with
+ * any organisation's id and bump that survey's counter. Same shape as the
+ * helpdesk CSAT hole closed in #121, surviving because that probe looked for
+ * unguarded routes that READ org data and this one is unauthenticated on
+ * purpose and WRITES.
+ *
+ * A field nobody sends cannot be forged, so the org is derived from the survey
+ * the caller is already naming in the URL — the pattern the sibling public
+ * route `POST /public/forms/:id/spin` uses, comment and all ("Resolve orgId
+ * from formId (public endpoint — no auth token)").
+ *
+ * An unknown survey is a 404 rather than a silent no-op: the response would
+ * otherwise be accepted and dropped, and a respondent who is told "thanks"
+ * deserves the answer to have landed somewhere.
+ */
 export async function submitResponse(input: {
   surveyId: string;
-  orgId: string;
   contactId?: string | null;
   answers: Record<string, unknown>;
 }): Promise<void> {
+  const [survey] = await db
+    .select({ orgId: surveys.orgId })
+    .from(surveys)
+    .where(eq(surveys.id, input.surveyId))
+    .limit(1);
+  if (!survey) throw AppError.notFound('Survey');
+
   // Extract NPS score if survey has an nps question.
   let npsScore: number | null = null;
   for (const [qid, val] of Object.entries(input.answers)) {
@@ -83,7 +110,7 @@ export async function submitResponse(input: {
 
   await db.insert(surveyResponses).values({
     surveyId: input.surveyId,
-    orgId: input.orgId,
+    orgId: survey.orgId,
     contactId: input.contactId ?? null,
     answers: input.answers,
     npsScore,

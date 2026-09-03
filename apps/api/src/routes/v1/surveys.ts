@@ -119,16 +119,20 @@ const surveyRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+      // `orgId` is gone from this schema on purpose. It was accepted here and
+      // passed through unchecked, so an anonymous caller could tag a response
+      // with any organisation's id; the org is now derived from the survey
+      // named in the path. Dropped rather than validated against the survey —
+      // a field that must equal a value we already have is a field with no
+      // job, and leaving it accepted invites a caller to keep sending it.
       const body = z
         .object({
-          orgId: z.string().uuid(),
           contactId: z.string().uuid().optional(),
           answers: z.record(z.unknown()),
         })
         .parse(req.body);
       await submitResponse({
         surveyId: id,
-        orgId: body.orgId,
         contactId: body.contactId ?? null,
         answers: body.answers,
       });
