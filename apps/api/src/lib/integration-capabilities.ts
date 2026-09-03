@@ -17,6 +17,7 @@
  */
 
 import { AppError } from './app-error.js';
+import { env } from '../config/env.js';
 
 const configured = (...vars: Array<string | undefined>): boolean =>
   vars.every((v) => (v ?? '').trim() !== '');
@@ -149,6 +150,20 @@ export interface Capabilities {
   geoAnalytics: boolean;
   /** Multivariate tests can run end to end. Currently never. */
   multivariateTests: boolean;
+  /**
+   * The beyond-core route groups this deployment registered, by name.
+   *
+   * The dashboard needs it because its own copy of the answer was a build-time
+   * boolean: Next.js inlines NEXT_PUBLIC_* into the client bundle, so the web
+   * image had to be rebuilt to reveal a page, and docker-compose.prod.yml never
+   * passed the build arg anyway. Reporting it here puts the answer where the
+   * rest of the deployment's shape already lives — read fresh per request, from
+   * the process that actually made the decision.
+   *
+   * A list rather than a boolean, matching BEYOND_CORE_GROUPS: the nav has to
+   * hide `/loyalty` and show `/surveys` in the same render.
+   */
+  beyondCoreGroups: string[];
 }
 
 export function capabilities(): Capabilities {
@@ -158,5 +173,8 @@ export function capabilities(): Capabilities {
     inboxPreview: inboxPreviewAvailable(),
     geoAnalytics: geoAnalyticsAvailable(),
     multivariateTests: multivariateTestsAvailable(),
+    // Sorted so the response is stable: an unstable order would churn any
+    // cache keyed on the body and make a diff of two deployments unreadable.
+    beyondCoreGroups: [...env.BEYOND_CORE_ENABLED].sort(),
   };
 }

@@ -115,12 +115,18 @@ describe('the capabilities payload tells the dashboard to hide the page', () => 
     // The regression guard: hiding one feature must not have switched off the
     // others, and must not have dropped a key the dashboard reads.
     expect(Object.keys(body.data).sort()).toEqual([
+      // Added when the dashboard's beyond-core nav moved from a build-time
+      // boolean to this payload. Listed here so the guard keeps doing its job:
+      // the dashboard reads this key, and dropping it would hide every
+      // beyond-core page in every deployment.
+      'beyondCoreGroups',
       'geoAnalytics',
       'inboxPreview',
       'meetingLocationTypes',
       'multivariateTests',
       'videoProviders',
     ]);
+    expect(Array.isArray(body.data.beyondCoreGroups)).toBe(true);
     expect(Array.isArray(body.data.meetingLocationTypes)).toBe(true);
     expect(body.data.meetingLocationTypes).toContain('physical');
     expect(body.data.meetingLocationTypes).toContain('custom');

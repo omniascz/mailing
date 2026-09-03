@@ -25,6 +25,7 @@ import {
 import {
   NOTHING_AVAILABLE,
   visibleEntries,
+  type BeyondCoreGroupName,
   type Capabilities,
   type CapabilityFlag,
 } from '@/lib/capabilities';
@@ -38,16 +39,18 @@ interface PaletteItem {
   icon: React.ComponentType<{ className?: string }>;
   /** Hidden unless the API reports this capability. See lib/capabilities.ts. */
   requires?: CapabilityFlag;
+  /** Hidden unless the API registered this beyond-core group. */
+  requiresGroup?: BeyondCoreGroupName;
 }
 
 // Static navigation set. Recent items + dynamic search comes later — for
 // now this gives keyboard-driven access to every top-level destination,
 // which is the 80 % of palette usage.
-// Same set the sidebar hides — Ctrl+K must not be a back door to a page whose
-// endpoints answer 404. Kept local rather than shared so this file has no new
-// import cycle; sidebar.tsx holds the canonical list and the comment.
-const BEYOND_CORE_HREFS = new Set(['/ai-agents']);
-const BEYOND_CORE_ENABLED = process.env.NEXT_PUBLIC_FEATURE_BEYOND_CORE === 'true';
+// Ctrl+K must not be a back door to a page whose endpoints answer 404, so the
+// palette carries the same `requiresGroup` the sidebar does and both go through
+// visibleEntries. The pair used to be a local copy of the sidebar's href set
+// plus its own read of the build-time flag — two copies of "should this be
+// visible", which is how one of them ends up still offering it.
 
 const ITEMS: PaletteItem[] = [
   { id: 'campaigns', label: 'Kampaně', href: '/campaigns', group: 'Send', icon: Mail },
@@ -116,7 +119,14 @@ const ITEMS: PaletteItem[] = [
     group: 'Automation',
     icon: Workflow,
   },
-  { id: 'ai-agents', label: 'AI agenti', href: '/ai-agents', group: 'Automation', icon: Bot },
+  {
+    id: 'ai-agents',
+    label: 'AI agenti',
+    href: '/ai-agents',
+    group: 'Automation',
+    icon: Bot,
+    requiresGroup: 'ai-agent',
+  },
   { id: 'domains', label: 'Domény', href: '/domains', group: 'Settings', icon: Globe },
   { id: 'settings', label: 'Nastavení', href: '/settings', group: 'Settings', icon: Settings },
   { id: 'settings-team', label: 'Tým', href: '/settings/team', group: 'Settings', icon: Users },
@@ -173,11 +183,7 @@ export function CommandPalette({
 }: {
   capabilities?: Capabilities;
 }) {
-  // Composed with the capability filter: capabilities answer "is this
-  // deployment wired for it", BEYOND_CORE_HREFS answers "is it part of the
-  // product at all".
-  const inScope = ITEMS.filter((i) => BEYOND_CORE_ENABLED || !BEYOND_CORE_HREFS.has(i.href));
-  const available = visibleEntries(inScope, capabilities);
+  const available = visibleEntries(ITEMS, capabilities);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
