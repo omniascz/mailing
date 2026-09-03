@@ -37,7 +37,7 @@ const sendOptimizationRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
-      const hour = await bestHourForContact(contactId);
+      const hour = await bestHourForContact(req.user!.orgId, contactId);
       return reply.send({ data: { hour, label: `${String(hour).padStart(2, '0')}:00` } });
     },
   );

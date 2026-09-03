@@ -27,7 +27,7 @@ const channelScoringRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-      const scores = await getContactChannelScores(id);
+      const scores = await getContactChannelScores(req.user!.orgId, id);
       if (!scores) return reply.code(404).send({ error: 'No scores computed yet' });
       return reply.send({ data: scores });
     },

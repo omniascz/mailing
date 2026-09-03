@@ -210,10 +210,16 @@ const cdpSourceRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.query);
 
+      // `cdp_sync_runs` carries its own org_id, so the tenant check is a column
+      // comparison rather than a lookup through the source. Without it this
+      // listed another tenant's sync history — row counts, error strings and
+      // timings — for any source UUID. Every sibling route in this file already
+      // resolves the source with `eq(cdpSources.orgId, req.user!.orgId)` before
+      // touching it; this one read straight from the child table.
       const rows = await db
         .select()
         .from(cdpSyncRuns)
-        .where(eq(cdpSyncRuns.sourceId, id))
+        .where(and(eq(cdpSyncRuns.sourceId, id), eq(cdpSyncRuns.orgId, req.user!.orgId)))
         .orderBy(desc(cdpSyncRuns.startedAt))
         .limit(query.limit);
 

@@ -190,7 +190,7 @@ export async function refreshAllOrgsRfm(): Promise<{
   return { orgs: orgs.length, scored, errors };
 }
 
-export async function getContactRfm(contactId: string): Promise<RfmScore | null> {
+export async function getContactRfm(orgId: string, contactId: string): Promise<RfmScore | null> {
   const [row] = await db
     .select({
       r: contactEngagement.rfmRecency,
@@ -200,7 +200,7 @@ export async function getContactRfm(contactId: string): Promise<RfmScore | null>
       segment: contactEngagement.rfmSegment,
     })
     .from(contactEngagement)
-    .where(eq(contactEngagement.contactId, contactId))
+    .where(and(eq(contactEngagement.contactId, contactId), eq(contactEngagement.orgId, orgId)))
     .limit(1);
   if (!row || row.r == null || row.f == null || row.m == null) return null;
   return {

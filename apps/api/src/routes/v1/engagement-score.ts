@@ -24,7 +24,7 @@ const engagementScoreRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-      const result = await getContactEngagementScore(id);
+      const result = await getContactEngagementScore(req.user!.orgId, id);
       if (!result || result.score === null) {
         return reply.code(404).send({ error: 'No engagement score computed yet' });
       }

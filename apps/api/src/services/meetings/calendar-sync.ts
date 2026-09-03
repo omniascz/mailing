@@ -596,14 +596,24 @@ async function getFreshAccessToken(integration: CalendarIntegration): Promise<st
 
 // ─── Sync ────────────────────────────────────────────────────────────────────
 
+/**
+ * `orgId` is a parameter, not something the caller is trusted to have checked.
+ *
+ * This took only `integrationId` — straight from the `:id` of
+ * `POST /api/v1/calendar/integrations/:id/sync` — and loaded the row by id
+ * alone. An authenticated user of any org could name another tenant's
+ * integration and make the server refresh that tenant's OAuth token and pull
+ * their calendar, learning `{ imported, nextSyncToken }` in the response.
+ */
 export async function syncIntegration(
+  orgId: string,
   integrationId: string,
   window: { daysBack?: number; daysForward?: number } = {},
 ): Promise<{ imported: number; nextSyncToken: string | null }> {
   const [integration] = await db
     .select()
     .from(calendarIntegrations)
-    .where(eq(calendarIntegrations.id, integrationId))
+    .where(and(eq(calendarIntegrations.id, integrationId), eq(calendarIntegrations.orgId, orgId)))
     .limit(1);
   if (!integration) throw AppError.notFound('Calendar integration');
   if (integration.provider !== 'google' && integration.provider !== 'microsoft') {

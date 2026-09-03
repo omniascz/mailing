@@ -53,7 +53,7 @@ const rfmRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
-      return reply.send({ data: await getContactRfm(contactId) });
+      return reply.send({ data: await getContactRfm(req.user!.orgId, contactId) });
     },
   );
 

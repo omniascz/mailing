@@ -91,7 +91,7 @@ const ctaRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-      return { data: await listVariants(id) };
+      return { data: await listVariants(req.user!.orgId, id) };
     },
   );
 
@@ -110,7 +110,7 @@ const ctaRoutes: FastifyPluginAsync = async (app) => {
           content: z.record(z.unknown()),
         })
         .parse(req.body);
-      return reply.code(201).send({ data: await addVariant(id, body) });
+      return reply.code(201).send({ data: await addVariant(req.user!.orgId, id, body) });
     },
   );
 

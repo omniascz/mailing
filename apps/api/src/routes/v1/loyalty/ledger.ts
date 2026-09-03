@@ -48,7 +48,7 @@ const loyaltyLedgerRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req) => {
       const { memberId } = memberParams.parse(req.params);
-      return { data: await getLedgerSummary(memberId) };
+      return { data: await getLedgerSummary(req.user!.orgId, memberId) };
     },
   );
 
@@ -63,7 +63,7 @@ const loyaltyLedgerRoutes: FastifyPluginAsync = async (app) => {
       const { days } = z
         .object({ days: z.coerce.number().int().min(1).max(365).default(30) })
         .parse(req.query);
-      return { data: await getExpiringPoints(memberId, days) };
+      return { data: await getExpiringPoints(req.user!.orgId, memberId, days) };
     },
   );
 

@@ -52,6 +52,7 @@ export interface ContactChannelScores {
 // ─── Public reads ─────────────────────────────────────────────────────────
 
 export async function getContactChannelScores(
+  orgId: string,
   contactId: string,
 ): Promise<ContactChannelScores | null> {
   const [row] = await db
@@ -66,7 +67,7 @@ export async function getContactChannelScores(
       scoredAt: contactEngagement.channelScoredAt,
     })
     .from(contactEngagement)
-    .where(eq(contactEngagement.contactId, contactId))
+    .where(and(eq(contactEngagement.contactId, contactId), eq(contactEngagement.orgId, orgId)))
     .limit(1);
   if (!row) return null;
   return {
@@ -153,7 +154,7 @@ export async function refreshOrgChannelScores(orgId: string): Promise<{ scored: 
         preferredChannel: preferred,
         channelScoredAt: new Date(),
       })
-      .where(eq(contactEngagement.contactId, contactId));
+      .where(and(eq(contactEngagement.contactId, contactId), eq(contactEngagement.orgId, orgId)));
     scored++;
   }
   return { scored };

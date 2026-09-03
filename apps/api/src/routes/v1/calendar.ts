@@ -102,7 +102,7 @@ const calendarSyncRoutes: FastifyPluginAsync = async (app) => {
           daysForward: z.number().int().min(1).max(365).optional(),
         })
         .parse(req.body ?? {});
-      return reply.send({ data: await syncIntegration(id, body) });
+      return reply.send({ data: await syncIntegration(req.user!.orgId, id, body) });
     },
   );
 

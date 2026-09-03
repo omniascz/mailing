@@ -83,11 +83,11 @@ function argmax(histogram: number[], fallback: number): number {
 }
 
 /** Best hour to send to a specific contact (UTC). Falls back to 10 AM. */
-export async function bestHourForContact(contactId: string): Promise<number> {
+export async function bestHourForContact(orgId: string, contactId: string): Promise<number> {
   const [row] = await db
     .select({ hist: contactEngagement.openHourHistogram })
     .from(contactEngagement)
-    .where(eq(contactEngagement.contactId, contactId))
+    .where(and(eq(contactEngagement.contactId, contactId), eq(contactEngagement.orgId, orgId)))
     .limit(1);
 
   if (!row?.hist) return 10;

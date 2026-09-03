@@ -68,10 +68,35 @@ export async function deleteCta(orgId: string, id: string): Promise<void> {
 
 // ─── Variants ──────────────────────────────────────────────────────────────
 
+/**
+ * `cta_variants` has no org_id of its own — a variant belongs to a tenant only
+ * through its CTA. So the tenant check cannot be a column comparison on the
+ * variant table; the parent has to be resolved first, scoped to the caller.
+ *
+ * That is why both functions take `orgId` and start here rather than trusting
+ * the route to have checked. Before this, `addVariant(ctaId, …)` and
+ * `listVariants(ctaId)` took an id straight from the URL and queried by it
+ * alone: any authenticated user could read another tenant's variants, and — the
+ * worse half — write a variant into another tenant's CTA, where it would then
+ * be served to that tenant's visitors by `serveCtas`.
+ */
+async function assertCtaInOrg(orgId: string, ctaId: string): Promise<void> {
+  const [row] = await db
+    .select({ id: ctas.id })
+    .from(ctas)
+    .where(and(eq(ctas.id, ctaId), eq(ctas.orgId, orgId), isNull(ctas.deletedAt)))
+    .limit(1);
+  // 404 rather than 403: a caller who does not own the CTA should not learn
+  // that it exists.
+  if (!row) throw AppError.notFound('CTA');
+}
+
 export async function addVariant(
+  orgId: string,
   ctaId: string,
   input: { name: string; weight?: number; content: Record<string, unknown> },
 ) {
+  await assertCtaInOrg(orgId, ctaId);
   const [row] = await db
     .insert(ctaVariants)
     .values({
@@ -84,7 +109,8 @@ export async function addVariant(
   return row!;
 }
 
-export async function listVariants(ctaId: string) {
+export async function listVariants(orgId: string, ctaId: string) {
+  await assertCtaInOrg(orgId, ctaId);
   return db.select().from(ctaVariants).where(eq(ctaVariants.ctaId, ctaId));
 }
 
