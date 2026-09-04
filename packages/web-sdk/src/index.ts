@@ -281,6 +281,37 @@ export const ForgeMsg = {
       body: JSON.stringify({ event, contactId: _config?.contactId, properties }),
     });
   },
+
+  /**
+   * Ask to be told when a product comes back into stock.
+   *
+   *   const ok = await ForgeMsg.notifyWhenBackInStock('SKU-123', 'a@example.com');
+   *
+   * The address is required and is the only identifier a page may send: the
+   * publishable key is visible in the page source, so the API refuses a
+   * `contactId` from it — see the note on the endpoint.
+   *
+   * Returns whether the request was accepted. `apiFetch` answers `null` for
+   * every non-2xx, which is fine for fire-and-forget tracking and NOT fine
+   * here: a form that says "we'll let you know" when the call was rate-limited
+   * or refused is lying to the visitor, so the outcome is reported.
+   */
+  async notifyWhenBackInStock(sku: string, email: string): Promise<boolean> {
+    const res = await apiFetch('/api/v1/back-in-stock/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ sku, email }),
+    });
+    return res !== null;
+  },
+
+  /** Ask to be told when a product's price drops below what it is now. */
+  async notifyOnPriceDrop(sku: string, email: string): Promise<boolean> {
+    const res = await apiFetch('/api/v1/price-drop/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ sku, email }),
+    });
+    return res !== null;
+  },
 };
 
 // Browser global for script tag usage
