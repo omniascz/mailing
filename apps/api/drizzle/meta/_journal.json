@@ -148,6 +148,13 @@
       "when": 1788265265062,
       "tag": "0020_campaign_timewarp",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788526714783,
+      "tag": "0021_abandoned_checkout",
+      "breakpoints": true
     }
   ]
 }

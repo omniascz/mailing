@@ -12,6 +12,7 @@ import {
   boolean,
   timestamp,
   jsonb,
+  text,
   index,
   pgEnum,
   uniqueIndex,
@@ -220,6 +221,65 @@ export const ecommerceOrders = pgTable(
   ],
 );
 
+// ─── Checkouts ────────────────────────────────────────────────────────────────
+
+/**
+ * A checkout that was started. Not an order.
+ *
+ * It has no order id, no fulfilment and no payment, and it may never become
+ * either — which is why it cannot live in `ecommerce_orders`: that table
+ * requires `external_order_id`, is unique on it, and feeds `trackPurchase` and
+ * the `contact_engagement` revenue aggregate. Recording a not-yet-purchase
+ * there would inflate every revenue figure in the product.
+ *
+ * `token` is the join to the order. Shopify guarantees that an order created
+ * from this checkout carries the same value in `checkout_token`, which is a
+ * far more precise conversion signal than matching on an email address.
+ *
+ * `completedAt` is set when that order arrives. It is written but never read
+ * as a suppression condition: see the note on `hasContactConverted` — a flow
+ * asks at the moment it is about to send, not at the moment it was scheduled.
+ */
+export const ecommerceCheckouts = pgTable(
+  'ecommerce_checkouts',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    connectionId: uuid('connection_id')
+      .notNull()
+      .references(() => ecommerceConnections.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    /** Platform's native checkout id */
+    externalCheckoutId: varchar('external_checkout_id', { length: 128 }).notNull(),
+    /** Shopify's checkout token — equals `order.checkout_token` on conversion */
+    token: varchar('token', { length: 191 }).notNull(),
+    contactId: uuid('contact_id'),
+    customerEmail: varchar('customer_email', { length: 255 }),
+    totalAmount: varchar('total_amount', { length: 32 }),
+    currency: varchar('currency', { length: 3 }).notNull().default('USD'),
+    items: jsonb('items').$type<EcommerceOrderItem[]>().notNull().default([]),
+    /** Shopify's own recovery link, when the payload carries one */
+    recoveryUrl: text('recovery_url'),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    /** Set when an order arrives carrying this token */
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    completedOrderId: varchar('completed_order_id', { length: 128 }),
+    syncedAt: timestamp('synced_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // Same shape as the order dedup key. checkouts/update arrives repeatedly
+    // for one checkout and must land on one row.
+    uniqueIndex('ecommerce_checkouts_token_uq').on(t.connectionId, t.token),
+    index('ecommerce_checkouts_org_idx').on(t.orgId),
+    index('ecommerce_checkouts_contact_idx').on(t.contactId),
+    index('ecommerce_checkouts_completed_idx').on(t.completedAt),
+  ],
+);
+
 // ─── Webhook event log ────────────────────────────────────────────────────────
 
 export const ecommerceWebhookEvents = pgTable(
@@ -248,3 +308,4 @@ export type EcommerceConnection = typeof ecommerceConnections.$inferSelect;
 export type NewEcommerceConnection = typeof ecommerceConnections.$inferInsert;
 export type EcommerceOrder = typeof ecommerceOrders.$inferSelect;
 export type EcommerceWebhookEvent = typeof ecommerceWebhookEvents.$inferSelect;
+export type EcommerceCheckout = typeof ecommerceCheckouts.$inferSelect;
