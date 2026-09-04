@@ -19,7 +19,7 @@
 
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { workflowEvents } from '../../db/schema/index.js';
+import { workflowEvents, workflows } from '../../db/schema/index.js';
 import type { WorkflowRun } from '../../db/schema/workflows.js';
 
 /**
@@ -55,4 +55,39 @@ export async function hasContactConverted(opts: {
     )
     .limit(1);
   return !!row;
+}
+
+/**
+ * The send-time question: has this contact converted since the run began?
+ *
+ * Layer 2 above was described in this file's own docstring and had no caller,
+ * so a workflow declaring `suppressOnEvent` was declaring nothing — the field
+ * was read by no one. This is the caller, and WHERE it is called is the whole
+ * point: `executeAction` runs a node at the moment that node executes, which
+ * for a reminder is after its wait has elapsed. #114 is the standing lesson —
+ * a condition evaluated when the action was scheduled, rather than read back
+ * when it fires, lets the action happen anyway.
+ *
+ * The cheap in-memory check comes first so the common path stays free; the
+ * query runs only for a run whose workflow actually asked for it.
+ */
+export async function isSuppressedAtSendTime(run: WorkflowRun, orgId: string): Promise<boolean> {
+  if (shouldSuppressDueToConversion(run)) return true;
+  if (!run.contactId) return false;
+
+  const [wf] = await db
+    .select({ triggerConfig: workflows.triggerConfig })
+    .from(workflows)
+    .where(eq(workflows.id, run.workflowId))
+    .limit(1);
+
+  const eventName = (wf?.triggerConfig as { suppressOnEvent?: unknown } | null)?.suppressOnEvent;
+  if (typeof eventName !== 'string' || eventName === '') return false;
+
+  return hasContactConverted({
+    orgId,
+    contactId: run.contactId,
+    eventName,
+    since: run.startedAt ?? run.createdAt,
+  });
 }
