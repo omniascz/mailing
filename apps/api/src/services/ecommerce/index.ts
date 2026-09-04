@@ -10,11 +10,12 @@
  */
 
 import crypto from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   ecommerceConnections,
   ecommerceOrders,
+  ecommerceCheckouts,
   ecommerceWebhookEvents,
   type EcommerceConnection,
   type ShopifyCredentials,
@@ -126,6 +127,10 @@ export async function exchangeShopifyCode(
 export const SHOPIFY_WEBHOOK_TOPICS = [
   'orders/create',
   'orders/updated',
+  // Shopify has no abandonment webhook. These two say a checkout STARTED;
+  // whether it was abandoned is the absence of an order, judged at send time.
+  'checkouts/create',
+  'checkouts/update',
   'app/uninstalled',
 ] as const;
 
@@ -382,6 +387,12 @@ interface NormalizedOrder {
   currency: string;
   items: EcommerceOrderItem[];
   orderedAt: Date | null;
+  /**
+   * Shopify's `checkout_token`, when the order carries one. Optional because
+   * only Shopify has a checkout concept here; the other five normalizers leave
+   * it undefined and are otherwise untouched.
+   */
+  checkoutToken?: string | null;
 }
 
 /**
@@ -458,6 +469,132 @@ async function findOrCreateBuyer(
   });
 }
 
+/** A checkout that was started. Deliberately NOT a NormalizedOrder — see the table. */
+export interface NormalizedCheckout {
+  externalCheckoutId: string;
+  /** Joins to `order.checkout_token` when this checkout converts */
+  token: string;
+  customerEmail: string | null;
+  totalAmount: string;
+  currency: string;
+  items: EcommerceOrderItem[];
+  recoveryUrl: string | null;
+  startedAt: Date | null;
+}
+
+/**
+ * Record a started checkout and, the first time we see it, start the flow.
+ *
+ * Shopify has no abandonment webhook — `checkouts/create` fires when the
+ * shopper enters contact details and `checkouts/update` fires again on every
+ * subsequent edit, both long before anyone could call the checkout abandoned.
+ * Abandonment is therefore never an event we receive; it is the absence of an
+ * order, and the only place that can be judged is at the moment the reminder
+ * is about to go out. This function does not judge it. It records the checkout
+ * and says "a checkout started", once.
+ *
+ * Once, because `checkouts/update` arrives repeatedly for one checkout: a
+ * shopper editing their address three times must not enter the flow three
+ * times. The unique key on (connection, token) is the same dedup shape the
+ * order path uses, and the trigger fires only on the insert that wins it.
+ */
+export async function ingestCheckout(
+  connection: EcommerceConnection,
+  checkout: NormalizedCheckout,
+  topic: 'checkouts/create' | 'checkouts/update' = 'checkouts/create',
+): Promise<void> {
+  await db
+    .insert(ecommerceWebhookEvents)
+    .values({
+      connectionId: connection.id,
+      orgId: connection.orgId,
+      topic,
+      externalId: checkout.token,
+    })
+    .onConflictDoNothing();
+
+  const contactId = checkout.customerEmail
+    ? await findOrCreateBuyer(
+        connection,
+        checkout.customerEmail.toLowerCase(),
+        checkout.externalCheckoutId,
+      )
+    : undefined;
+
+  const [row] = await db
+    .insert(ecommerceCheckouts)
+    .values({
+      connectionId: connection.id,
+      orgId: connection.orgId,
+      externalCheckoutId: checkout.externalCheckoutId,
+      token: checkout.token,
+      contactId: contactId ?? null,
+      customerEmail: checkout.customerEmail,
+      totalAmount: checkout.totalAmount,
+      currency: checkout.currency,
+      items: checkout.items,
+      recoveryUrl: checkout.recoveryUrl,
+      startedAt: checkout.startedAt ?? new Date(),
+    })
+    // An update refreshes the basket but must not re-announce the checkout.
+    // `xmax = 0` is true only for a row this statement inserted, which is how
+    // the first arrival is told apart from every later one.
+    .onConflictDoUpdate({
+      target: [ecommerceCheckouts.connectionId, ecommerceCheckouts.token],
+      set: {
+        totalAmount: checkout.totalAmount,
+        currency: checkout.currency,
+        items: checkout.items,
+        recoveryUrl: checkout.recoveryUrl,
+        customerEmail: checkout.customerEmail,
+        contactId: sql`COALESCE(${ecommerceCheckouts.contactId}, ${contactId ?? null})`,
+        updatedAt: new Date(),
+      },
+    })
+    .returning({ id: ecommerceCheckouts.id, inserted: sql<boolean>`(xmax = 0)` });
+
+  if (!row?.inserted || !contactId) return;
+
+  const { onCheckoutStarted } = await import('../workflows/triggers.js');
+  await onCheckoutStarted(connection.orgId, contactId, {
+    checkoutId: checkout.externalCheckoutId,
+    checkoutToken: checkout.token,
+    amount: parseFloat(checkout.totalAmount) || 0,
+    currency: checkout.currency,
+    itemCount: checkout.items.length,
+    recoveryUrl: checkout.recoveryUrl ?? undefined,
+  }).catch(() => {});
+}
+
+/**
+ * Mark the checkout an order came from as completed.
+ *
+ * Shopify guarantees `order.checkout_token` equals the token of the checkout it
+ * came from, so this is an exact join rather than a guess based on the email
+ * address and a time window.
+ *
+ * This closes the record. It is NOT the suppression mechanism: a flag written
+ * here would still have to be read at the moment of the send, and #114 is the
+ * standing reminder that a condition nobody reads back lets the action repeat.
+ * The read-back lives in `executeAction`.
+ */
+async function markCheckoutConverted(
+  connection: EcommerceConnection,
+  checkoutToken: string,
+  externalOrderId: string,
+): Promise<void> {
+  await db
+    .update(ecommerceCheckouts)
+    .set({ completedAt: new Date(), completedOrderId: externalOrderId, updatedAt: new Date() })
+    .where(
+      and(
+        eq(ecommerceCheckouts.connectionId, connection.id),
+        eq(ecommerceCheckouts.token, checkoutToken),
+        isNull(ecommerceCheckouts.completedAt),
+      ),
+    );
+}
+
 export async function ingestOrder(
   connection: EcommerceConnection,
   order: NormalizedOrder,
@@ -472,6 +609,13 @@ export async function ingestOrder(
       externalId: order.externalOrderId,
     })
     .onConflictDoNothing();
+
+  // Close the checkout this order came from, before the duplicate guard below:
+  // orders/create and orders/updated both arrive, and the second one must still
+  // find the checkout closed rather than return early having done nothing.
+  if (order.checkoutToken) {
+    await markCheckoutConverted(connection, order.checkoutToken, order.externalOrderId);
+  }
 
   // Check for duplicate
   const [existing] = await db
@@ -591,6 +735,35 @@ export function normalizeShopifyOrder(raw: Record<string, unknown>): NormalizedO
     currency: (raw.currency as string) ?? 'USD',
     items: lineItems,
     orderedAt: raw.created_at ? new Date(raw.created_at as string) : null,
+    checkoutToken: (raw.checkout_token as string) || null,
+  };
+}
+
+/**
+ * Shopify checkouts/create and checkouts/update.
+ *
+ * `email` may be absent on the earliest payloads — the shopper reaches the
+ * contact step before filling it in — and without an address there is nobody to
+ * remind, so the checkout is still recorded but starts no flow.
+ */
+export function normalizeShopifyCheckout(raw: Record<string, unknown>): NormalizedCheckout {
+  const lineItems = ((raw.line_items as Array<Record<string, unknown>>) ?? []).map((item) => ({
+    sku: (item.sku as string) || undefined,
+    name: (item.title as string) ?? (item.name as string) ?? '',
+    qty: Number(item.quantity ?? 1),
+    price: parseFloat((item.price as string) ?? '0'),
+    productId: String(item.product_id ?? ''),
+  }));
+
+  return {
+    externalCheckoutId: String(raw.id ?? raw.token ?? ''),
+    token: String(raw.token ?? raw.id ?? ''),
+    customerEmail: (raw.email as string) || null,
+    totalAmount: (raw.total_price as string) ?? '0',
+    currency: (raw.currency as string) ?? 'USD',
+    items: lineItems,
+    recoveryUrl: (raw.abandoned_checkout_url as string) || null,
+    startedAt: raw.created_at ? new Date(raw.created_at as string) : null,
   };
 }
 

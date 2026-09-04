@@ -31,6 +31,8 @@ import {
   buildShopifyInstallUrl,
   exchangeShopifyCode,
   registerShopifyWebhooks,
+  normalizeShopifyCheckout,
+  ingestCheckout,
   verifyShopifyWebhook,
   verifyWooCommerceWebhook,
   verifyBigCommerceWebhook,
@@ -528,6 +530,9 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       if (topic === 'orders/create' || topic === 'orders/updated') {
         const order = normalizeShopifyOrder(req.body as Record<string, unknown>);
         await ingestOrder(conn, order).catch(() => {});
+      } else if (topic === 'checkouts/create' || topic === 'checkouts/update') {
+        const checkout = normalizeShopifyCheckout(req.body as Record<string, unknown>);
+        await ingestCheckout(conn, checkout, topic).catch(() => {});
       } else if (topic === 'app/uninstalled') {
         // The app is gone from the shop: the access token is dead and no
         // further webhook will ever arrive. Leaving the row `active` meant the
