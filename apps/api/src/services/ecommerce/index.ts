@@ -384,6 +384,80 @@ interface NormalizedOrder {
   orderedAt: Date | null;
 }
 
+/**
+ * Find the buyer among the org's contacts, or create them.
+ *
+ * The consent question, answered deliberately rather than by omission.
+ *
+ * A person who checks out has handed over an address for the purpose of buying
+ * something. That is a contractual basis for transactional mail; it is not a
+ * marketing opt-in, and this codebase must not manufacture one. So the contact
+ * is created `non_subscribed` — "has an address but no marketing opt-in", in
+ * the enum's own words — and two independent things then keep marketing away
+ * from it: `resolveAudience` excludes that status in SQL, and a contact created
+ * here belongs to no list. Transactional and behaviour-triggered messages,
+ * which rest on contract, still reach them.
+ *
+ * No GDPR consent record is written either. There is none to write: the order
+ * payload carries no opt-in that we read, and processing purposes are defined
+ * per organisation, so any row we invented would assert a legal basis nobody
+ * gave us. `checkSendConsent` consequently returns `no_consent` the moment an
+ * org configures the purpose, which is the correct answer.
+ *
+ * An address we already know is only looked up. Buying does not rewrite an
+ * existing contact's status, provenance or name — overwriting `active` with
+ * `non_subscribed` would silently unsubscribe a subscriber for placing an
+ * order, and overwriting `unsubscribed` would resurrect someone who left.
+ */
+async function findOrCreateBuyer(
+  connection: EcommerceConnection,
+  email: string,
+  externalOrderId: string,
+): Promise<string | undefined> {
+  const find = async (tx: typeof db) =>
+    (
+      await tx
+        .select({ id: contacts.id })
+        .from(contacts)
+        .where(and(eq(contacts.orgId, connection.orgId), eq(contacts.email, email)))
+        .limit(1)
+    )[0]?.id;
+
+  const found = await find(db);
+  if (found) return found;
+
+  // `contacts` has no unique index on (org_id, email) — only a plain lookup
+  // index — so `onConflictDoNothing` has nothing to catch on, and two webhooks
+  // for the same new buyer would each insert. Shopify makes that ordinary:
+  // orders/create and orders/updated for one order arrive together and both
+  // land here. An advisory lock keyed on org + address serialises the pair
+  // without a migration on a hot table.
+  return db.transaction(async (tx) => {
+    await tx.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${connection.orgId}:${email}`}, 0))`,
+    );
+    const raced = await find(tx as unknown as typeof db);
+    if (raced) return raced;
+
+    const [created] = await tx
+      .insert(contacts)
+      .values({
+        orgId: connection.orgId,
+        email,
+        status: 'non_subscribed',
+        lifecycleStage: 'customer',
+        source: 'ecommerce_order',
+        sourceDetails: {
+          platform: connection.platform,
+          connectionId: connection.id,
+          externalOrderId,
+        },
+      })
+      .returning({ id: contacts.id });
+    return created?.id;
+  });
+}
+
 export async function ingestOrder(
   connection: EcommerceConnection,
   order: NormalizedOrder,
@@ -413,21 +487,18 @@ export async function ingestOrder(
 
   if (existing) return; // already processed
 
-  // Find or create contact
-  let contactId: string | undefined;
-  if (order.customerEmail) {
-    const [contact] = await db
-      .select({ id: contacts.id })
-      .from(contacts)
-      .where(
-        and(
-          eq(contacts.orgId, connection.orgId),
-          eq(contacts.email, order.customerEmail.toLowerCase()),
-        ),
-      )
-      .limit(1);
-    contactId = contact?.id;
-  }
+  // Find the buyer — or create them.
+  //
+  // This said "Find or create contact" and only found. On a miss the order was
+  // stored with `contactId: null`, which skipped everything below it: revenue
+  // attribution, the engagement aggregate and the order_placed /
+  // purchase_event triggers. A customer's FIRST order therefore started no
+  // automation, and a first order is the normal case — nothing imports a shop's
+  // existing customers into contacts, so a freshly connected shop matches
+  // nobody at all.
+  const contactId = order.customerEmail
+    ? await findOrCreateBuyer(connection, order.customerEmail.toLowerCase(), order.externalOrderId)
+    : undefined;
 
   // Record order
   await db.insert(ecommerceOrders).values({
