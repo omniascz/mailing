@@ -534,7 +534,10 @@ describe('workflow triggers', () => {
     (mockDb.where as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
     const { onApiEvent } = await import('./triggers.js');
-    await expect(onApiEvent('org-1', 'c-1', 'purchase', {})).resolves.toBeUndefined();
+    // Returns the number of runs it started — no active workflows here, so 0.
+    // That count is what lets a one-shot subscription tell "dispatched" from
+    // "nobody was listening" before it marks itself spent.
+    await expect(onApiEvent('org-1', 'c-1', 'purchase', {})).resolves.toBe(0);
   });
 });
 

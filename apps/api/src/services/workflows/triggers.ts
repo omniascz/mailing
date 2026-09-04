@@ -176,7 +176,7 @@ export async function onApiEvent(
   contactId: string,
   eventName: string,
   properties: Record<string, unknown> = {},
-): Promise<void> {
+): Promise<number> {
   // `processed: true`, and that is load-bearing rather than tidy.
   // `processQueuedWorkflowEvents` sweeps `processed = false` rows every minute
   // and calls THIS function for each one. A row written here as unprocessed
@@ -208,14 +208,48 @@ export async function onApiEvent(
       ),
     );
 
-  await Promise.allSettled(
+  const settled = await Promise.allSettled(
     activeWorkflows.map(async (w) => {
       const config = w.triggerConfig as { eventName?: string };
       if (!config.eventName || config.eventName === eventName) {
-        await safeStartRun(w.id, orgId, contactId, { triggerEvent: eventName, ...properties });
+        return safeStartRun(w.id, orgId, contactId, { triggerEvent: eventName, ...properties });
       }
+      return false;
     }),
   );
+
+  // How many runs actually started. `safeStartRun` already returns this and it
+  // used to be discarded; a caller that must not spend a one-shot subscription
+  // unless something really went out needs to know the difference between
+  // "dispatched" and "there was nobody listening". Existing callers ignore the
+  // number, so widening the return type changes nothing for them.
+  return settled.filter((r) => r.status === 'fulfilled' && r.value === true).length;
+}
+
+/**
+ * A product a contact was waiting for is back in stock.
+ *
+ * `api_event` rather than a trigger type of its own: the enum has no stock
+ * value, adding one costs a migration and a `triggerTypeValues` update (#117),
+ * and it would give a single event two ways to be caught — a workflow could
+ * match on both and enrol the same contact twice. `onOrderPlaced` firing an
+ * api_event AND a typed trigger is the existing wart, not the pattern to copy.
+ */
+export async function onBackInStock(
+  orgId: string,
+  contactId: string,
+  product: Record<string, unknown> = {},
+): Promise<number> {
+  return onApiEvent(orgId, contactId, 'back_in_stock', product);
+}
+
+/** A product a contact was watching has fallen below the price they saw. */
+export async function onPriceDropped(
+  orgId: string,
+  contactId: string,
+  product: Record<string, unknown> = {},
+): Promise<number> {
+  return onApiEvent(orgId, contactId, 'price_dropped', product);
 }
 
 /**
