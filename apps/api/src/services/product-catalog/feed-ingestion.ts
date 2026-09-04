@@ -69,6 +69,32 @@ async function downloadFeed(feed: ProductFeed): Promise<string> {
   return res.text();
 }
 
+/**
+ * Write the catalogue, and notice what CHANGED while doing it.
+ *
+ * The transition is detected here rather than in a transport, because every
+ * source of truth ends at this table. The feed overwrote `price` and `stock`
+ * and read back only `{ id }`, so the previous values were not merely ignored —
+ * they were never fetched, and no comparison was possible anywhere in the
+ * product. Nothing knew a SKU had come back into stock or fallen in price.
+ *
+ * A webhook would not have helped on its own: Shopify's
+ * `inventory_levels/update` carries `available`, `inventory_item_id` and
+ * `location_id` — state, not a delta, and no SKU, which is the key these
+ * subscriptions are held by. Whoever wants the transition has to keep the
+ * previous value and compare. Doing that at the write means the feed gets it
+ * today and any webhook that lands here gets it for free.
+ *
+ * Alerts are dispatched after the row is written, so the notification an
+ * alert triggers reads the new price rather than the old one.
+ */
+export async function ingestProducts(
+  orgId: string,
+  items: NormalizedProduct[],
+): Promise<{ inserted: number; updated: number }> {
+  return upsertAll(orgId, items);
+}
+
 async function upsertAll(
   orgId: string,
   items: NormalizedProduct[],
@@ -78,12 +104,27 @@ async function upsertAll(
   for (const p of items) {
     if (!p.sku) continue;
     const [existing] = await db
-      .select({ id: products.id })
+      .select({ id: products.id, price: products.price, stock: products.stock })
       .from(products)
       .where(and(eq(products.orgId, orgId), eq(products.sku, p.sku)))
       .limit(1);
 
     if (existing) {
+      const oldStock = existing.stock;
+      const oldPrice = Number(existing.price);
+      const newStock = p.stock ?? null;
+      const newPrice = Number(p.price);
+
+      // Out of stock, then in stock. `null` counts as unknown-and-unavailable:
+      // a feed that starts reporting a quantity where it reported none is the
+      // same event to the person waiting.
+      const cameBackInStock =
+        (oldStock === null || oldStock <= 0) && newStock !== null && newStock > 0;
+      // Strictly lower. Equal is not a drop, and re-running the same feed must
+      // not read as one.
+      const priceFell =
+        Number.isFinite(newPrice) && Number.isFinite(oldPrice) && newPrice < oldPrice;
+
       await db
         .update(products)
         .set({
@@ -99,6 +140,18 @@ async function upsertAll(
         })
         .where(eq(products.id, existing.id));
       updated++;
+
+      // Never let an alert failure lose the catalogue write that already
+      // succeeded — the next ingest would then see no transition and the
+      // change would be silent forever.
+      if (cameBackInStock) {
+        const { notifyRestock } = await import('../back-in-stock/index.js');
+        await notifyRestock(orgId, p.sku).catch(() => {});
+      }
+      if (priceFell) {
+        const { notifyPriceChange } = await import('../price-drop/index.js');
+        await notifyPriceChange(orgId, p.sku, newPrice).catch(() => {});
+      }
     } else {
       await db.insert(products).values({
         orgId,
