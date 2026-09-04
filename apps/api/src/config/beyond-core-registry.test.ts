@@ -114,12 +114,18 @@ describe('the blocklist is data, and carries its reason', () => {
     }
   });
 
-  it('blocks stock-alert, and says what it destroys', () => {
-    const entry = BEYOND_CORE_BLOCKED.find((b) => b.group === 'stock-alert');
-    expect(
-      entry,
-      'stock-alert must stay blocked — it consumes subscriptions and sends nothing',
-    ).toBeDefined();
-    expect(entry!.reason).toMatch(/notifiedAt/);
+  it('blocks ads-webhook, and says why', () => {
+    const entry = BEYOND_CORE_BLOCKED.find((b) => b.group === 'ads-webhook');
+    expect(entry, 'ads-webhook must stay blocked').toBeDefined();
+    expect(entry!.reason).toMatch(/ENABLE_META_LEAD_ADS_WEBHOOK/);
+  });
+
+  it('no longer blocks stock-alert — the hazard it named is gone', () => {
+    // The entry said notifyRestock and notifyPriceChange consume every pending
+    // subscription while sending nothing. Both now dispatch per subscriber and
+    // set notifiedAt only for one whose notification actually started a run, so
+    // the reason no longer describes the code. A block that outlives its
+    // justification is exactly what keeping the reason as data guards against.
+    expect(BEYOND_CORE_BLOCKED.map((b) => b.group)).not.toContain('stock-alert');
   });
 });

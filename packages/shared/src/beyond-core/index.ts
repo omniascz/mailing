@@ -146,17 +146,19 @@ const KNOWN: ReadonlySet<string> = new Set(BEYOND_CORE_GROUPS);
  *     ANTHROPIC_API_KEY to do anything useful, but an unconfigured AI client
  *     fails loudly and destroys nothing. Blocking them would assert a hazard
  *     the code no longer has.
+ *
+ *   stock-alert — listed here until now because notifyRestock and
+ *     notifyPriceChange marked every pending subscriber notifiedAt and
+ *     returned, with no queue, no workflow event and nothing sent: turning the
+ *     group on destroyed the back-in-stock and price-drop lists quietly. That
+ *     was the entire stated reason, and it no longer holds. Both functions now
+ *     dispatch per subscriber and mark notifiedAt ONLY for a subscriber whose
+ *     notification actually started a workflow run, so a subscription that
+ *     could not be delivered survives to fire on the next restock. Keeping the
+ *     block would assert a hazard the code no longer has — the same test the
+ *     two entries above are held to.
  */
 export const BEYOND_CORE_BLOCKED: ReadonlyArray<{ group: BeyondCoreGroup; reason: string }> = [
-  {
-    group: 'stock-alert',
-    reason:
-      'notifyRestock and notifyPriceChange mark every pending subscriber notifiedAt and ' +
-      'return — no queue, no workflow event, nothing sent (verified: neither function ' +
-      'mentions a queue, dispatch or onApiEvent). Because notifiedAt is set, the ' +
-      'subscription is spent and can never fire again, so turning this on destroys the ' +
-      'back-in-stock and price-drop lists quietly. Fix the send path first.',
-  },
   {
     group: 'ads-webhook',
     reason:
