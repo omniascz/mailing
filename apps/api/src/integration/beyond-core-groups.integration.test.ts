@@ -148,15 +148,27 @@ describe('a misconfiguration refuses the boot', () => {
   }, 120_000);
 
   it('a blocked group, however it is written down', async () => {
-    const message = await bootFails({ groups: 'stock-alert' });
+    const message = await bootFails({ groups: 'ads-webhook' });
     expect(message).toMatch(/Invalid environment configuration/);
   }, 120_000);
 
   it('and the blocked group is not registered as a consolation prize', async () => {
     // The refusal is the property, but assert the surface too: there is no
-    // path by which naming stock-alert produces its routes.
-    await bootFails({ groups: 'stock-alert' });
+    // path by which naming a blocked group produces its routes.
+    await bootFails({ groups: 'ads-webhook' });
     const s = await surfaceWith({ groups: 'survey' });
     expect(s.has('/api/v1/back-in-stock/subscribe')).toBe(false);
+  }, 120_000);
+});
+
+describe('stock-alert can now be turned on', () => {
+  it('the group boots and its routes appear', async () => {
+    // It was blocked because notifyRestock and notifyPriceChange consumed the
+    // subscription lists while sending nothing. Both now dispatch per
+    // subscriber and mark only what was really sent, so the block came off —
+    // and this asserts the consequence rather than the intention.
+    const s = await surfaceWith({ groups: 'stock-alert' });
+    expect(s.has('/api/v1/back-in-stock/subscribe')).toBe(true);
+    expect(s.has('/api/v1/price-drop/subscribe')).toBe(true);
   }, 120_000);
 });

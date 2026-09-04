@@ -88,28 +88,28 @@ describe('an unknown name refuses the boot', () => {
 });
 
 describe('a blocked group refuses the boot, with the reason', () => {
-  it('refuses stock-alert however it is written into the config', () => {
-    expect(() => resolveBeyondCoreGroups({ raw: 'stock-alert', ...prod })).toThrow(
+  it('refuses ads-webhook however it is written into the config', () => {
+    expect(() => resolveBeyondCoreGroups({ raw: 'ads-webhook', ...prod })).toThrow(
       BeyondCoreConfigError,
     );
-    expect(() => resolveBeyondCoreGroups({ raw: 'survey,stock-alert', ...dev })).toThrow(
-      /stock-alert/,
+    expect(() => resolveBeyondCoreGroups({ raw: 'survey,ads-webhook', ...dev })).toThrow(
+      /ads-webhook/,
     );
   });
 
   it('carries the reason into the message — the operator must learn why', () => {
     let message = '';
     try {
-      resolveBeyondCoreGroups({ raw: 'stock-alert', ...prod });
+      resolveBeyondCoreGroups({ raw: 'ads-webhook', ...prod });
     } catch (e) {
       message = (e as Error).message;
     }
-    expect(message).toMatch(/notifiedAt/);
-    expect(message).toMatch(/never fire again|spent/);
+    expect(message).toMatch(/ENABLE_META_LEAD_ADS_WEBHOOK/);
+    expect(message).toMatch(/signature/);
   });
 
   it('blocks in development too — a rollout is a rollout wherever it is rehearsed', () => {
-    expect(() => resolveBeyondCoreGroups({ raw: 'stock-alert', ...dev })).toThrow();
+    expect(() => resolveBeyondCoreGroups({ raw: 'ads-webhook', ...dev })).toThrow();
   });
 
   it('every blocked group is refused, not just the one we remembered', () => {
@@ -118,6 +118,28 @@ describe('a blocked group refuses the boot, with the reason', () => {
         BeyondCoreConfigError,
       );
     }
+  });
+});
+
+describe('stock-alert is no longer blocked', () => {
+  // It was blocked for exactly one reason: notifyRestock and notifyPriceChange
+  // marked every pending subscriber notifiedAt and sent nothing, so enabling
+  // the group destroyed the lists. Both now dispatch per subscriber and mark
+  // only what was really sent, so the stated hazard is gone — and a block that
+  // outlives its justification is the failure this list was shaped to avoid.
+  it('can be enabled in production, on its own', () => {
+    const r = resolveBeyondCoreGroups({ raw: 'stock-alert', ...prod });
+    expect(r.enabled.has('stock-alert')).toBe(true);
+    expect(r.enabled.size).toBe(1);
+  });
+
+  it('can be enabled alongside others without taking the boot down', () => {
+    const r = resolveBeyondCoreGroups({ raw: 'helpdesk,stock-alert,product-feed', ...prod });
+    expect([...r.enabled].sort()).toEqual(['helpdesk', 'product-feed', 'stock-alert']);
+  });
+
+  it('and it is not on the blocklist any more', () => {
+    expect(BEYOND_CORE_BLOCKED.map((b) => b.group)).not.toContain('stock-alert');
   });
 });
 
@@ -150,8 +172,8 @@ describe('FEATURE_BEYOND_CORE, the all-at-once shortcut', () => {
     // blocked group down is always an error even when it would have been on
     // anyway. Asking for it is the thing being refused.
     expect(() =>
-      resolveBeyondCoreGroups({ raw: 'stock-alert', all: true, isProduction: false }),
-    ).toThrow(/stock-alert/);
+      resolveBeyondCoreGroups({ raw: 'ads-webhook', all: true, isProduction: false }),
+    ).toThrow(/ads-webhook/);
   });
 });
 
