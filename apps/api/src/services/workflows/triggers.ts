@@ -161,12 +161,41 @@ export async function onTagAdded(orgId: string, contactId: string, tagName: stri
  * Called when a custom event is tracked via POST /api/v1/events.
  * config: { eventName: string }
  */
+/**
+ * Record the event, then start the workflows waiting on it.
+ *
+ * The recording half is new and it is what makes suppression possible at all.
+ * `workflow_events` had exactly one writer — the public `POST /events` route —
+ * so an order placed through a webhook was invisible to both the Goal node and
+ * `hasContactConverted`, and every "stop if they already bought" condition in
+ * the product silently answered no. An abandoned-cart flow would have kept
+ * chasing a customer who had already paid.
+ */
 export async function onApiEvent(
   orgId: string,
   contactId: string,
   eventName: string,
   properties: Record<string, unknown> = {},
 ): Promise<void> {
+  // `processed: true`, and that is load-bearing rather than tidy.
+  // `processQueuedWorkflowEvents` sweeps `processed = false` rows every minute
+  // and calls THIS function for each one. A row written here as unprocessed
+  // would be picked up a minute later, start the same workflows a second time,
+  // and insert another unprocessed row — a self-feeding loop that grows. The
+  // row is a record of an event already handled, not an item in a queue.
+  //
+  // try/catch and not `.catch()`: a throw here can be synchronous, and a
+  // failure to write the audit row must never stop the workflows from
+  // starting. Firing the trigger is the primary job; recording it is what
+  // makes suppression possible later.
+  try {
+    await db
+      .insert(workflowEvents)
+      .values({ orgId, contactId, eventName, properties, processed: true });
+  } catch {
+    // recorded nowhere, but the trigger still fires
+  }
+
   const activeWorkflows = await db
     .select({ id: workflows.id, triggerConfig: workflows.triggerConfig })
     .from(workflows)

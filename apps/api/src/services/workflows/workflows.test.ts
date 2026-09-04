@@ -513,6 +513,11 @@ describe('workflow triggers', () => {
     (mockDb.from as ReturnType<typeof vi.fn>).mockReturnThis();
     (mockDb.where as ReturnType<typeof vi.fn>).mockReturnThis();
     (mockDb.orderBy as ReturnType<typeof vi.fn>).mockReturnThis();
+    // onApiEvent now records the event before dispatching it. Stubbed here so
+    // the test exercises that write rather than passing because it threw and
+    // was swallowed.
+    (mockDb.insert as ReturnType<typeof vi.fn>).mockReturnThis();
+    (mockDb.values as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
   });
 
   it('onListSubscribe finds matching active workflows', async () => {

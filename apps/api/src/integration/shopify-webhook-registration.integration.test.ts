@@ -188,10 +188,15 @@ describe('the registered address resolves against the app’s own route table', 
 });
 
 describe('we register exactly the topics we can process', () => {
-  it('orders/create, orders/updated and app/uninstalled — and nothing else', async () => {
+  it('the five we handle — and nothing else', async () => {
+    // The list grew with the abandoned-checkout work, and this assertion is why
+    // that had to be a deliberate act: adding a topic here fails until a branch
+    // in the receiver answers it.
     const sent = await captureRegistration('https://api.example.test');
     expect(sent.map((s) => s.topic).sort()).toEqual([
       'app/uninstalled',
+      'checkouts/create',
+      'checkouts/update',
       'orders/create',
       'orders/updated',
     ]);

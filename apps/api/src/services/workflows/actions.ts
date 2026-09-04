@@ -19,7 +19,7 @@ import {
   type WorkflowRun,
 } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
-import { shouldSuppressDueToConversion } from './conversion-suppression.js';
+import { shouldSuppressDueToConversion, isSuppressedAtSendTime } from './conversion-suppression.js';
 import { normalizeConditionConfig } from './condition-rules.js';
 import { resolveEventRelativeUntil, type EventRelativeUntil } from './wait-resolve.js';
 import { env } from '../../config/env.js';
@@ -1634,11 +1634,41 @@ async function executeSendReviewRequest(
   });
 }
 
+/**
+ * Node types that actually reach the contact. Only these are worth a database
+ * read before they run — a tag or a field update is not a message, and
+ * suppressing it would change the run's shape rather than spare anyone a
+ * needless email.
+ */
+const SENDING_NODE_TYPES: ReadonlySet<string> = new Set([
+  'send_email',
+  'send_sms',
+  'send_whatsapp',
+  'send_push',
+  'show_in_app',
+  'send_viber',
+  'make_voice_call',
+  'cascade',
+  'smart_channel',
+  'send_personal_email',
+  'send_review_request',
+]);
+
 export async function executeAction(
   node: WorkflowNode,
   run: WorkflowRun,
   ctx: ActionContext,
 ): Promise<ActionResult> {
+  // Asked here, and here only, because here is the moment the message goes out.
+  // A cart-abandonment reminder is scheduled hours before it sends, and the
+  // customer may buy in between; a condition evaluated at scheduling time would
+  // let it go anyway (#114). The individual send actions keep their own cheap
+  // `shouldSuppressDueToConversion` check — this adds the read-back that a
+  // workflow declaring `suppressOnEvent` was always promised and never given.
+  if (SENDING_NODE_TYPES.has(node.type) && (await isSuppressedAtSendTime(run, ctx.orgId))) {
+    return { type: 'next', nextNodeId: null };
+  }
+
   switch (node.type) {
     case 'send_email':
       return executeSendEmail(node, run, ctx);
