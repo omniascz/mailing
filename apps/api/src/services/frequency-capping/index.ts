@@ -36,6 +36,14 @@ export interface FrequencyCheckResult {
   blockedBy: OrgFrequencyRule | null;
   currentCount: number;
   reason: SuppressionReason | null;
+  /**
+   * When the quiet window ends, for `reason: 'quiet_hours'` only.
+   *
+   * The caller needs it to park the send until morning instead of dropping it,
+   * and computing it a second time at the call site would be the
+   * two-implementations mistake #135 removed.
+   */
+  nextSendAt?: Date;
 }
 
 function freqKey(orgId: string, contactId: string, channel: FrequencyChannel): string {
@@ -92,13 +100,29 @@ export async function checkFrequencyCap(
   // `rules.length === 0 → allowed`, so a quiet window only applied to an org
   // that had also configured a frequency cap. Nothing about "don't message my
   // customers at night" implies "and cap my volume".
-  const quiet = await isQuiet(input.orgId, input.channel, new Date(now));
+  //
+  // TRANSACTIONAL IS EXEMPT, and this line is a fix rather than a refinement.
+  // #135 moved the quiet check above the rules, which also moved it above
+  // `filterApplicableRules` — the function that applies `priorityFloor`. From
+  // that commit until now a transactional message was held by quiet hours,
+  // and `services/ticketing/seed-workflows.ts` ships send_sms nodes with
+  // `priority: 'transactional'`, so verification codes and order
+  // confirmations were being dropped overnight. A code that arrives eight
+  // hours late is not a late message, it is a broken login.
+  //
+  // Same rule the email path settled on in #136: the transactional stream is
+  // never held, because the person receiving it asked for it moments ago.
+  const quiet =
+    priority === 'transactional'
+      ? { inQuietHours: false as const, nextSendAt: undefined }
+      : await isQuiet(input.orgId, input.channel, new Date(now));
   if (quiet.inQuietHours) {
     const result: FrequencyCheckResult = {
       allowed: false,
       blockedBy: null,
       currentCount: 0,
       reason: 'quiet_hours',
+      nextSendAt: quiet.nextSendAt,
     };
     // `blockedBy` is null because no frequency rule did this — the suppression
     // log takes the reason without one rather than attributing it to a cap
