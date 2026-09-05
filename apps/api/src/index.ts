@@ -188,6 +188,7 @@ import internalSendOptimizationRoutes from './routes/v1/internal/send-optimizati
 import internalContactsRoutes from './routes/v1/internal/contacts.js';
 import internalSuppressionsRoutes from './routes/v1/internal/suppressions.js';
 import internalFrequencyRoutes from './routes/v1/internal/frequency.js';
+import internalQuietHoursRoutes from './routes/v1/internal/quiet-hours.js';
 import internalTrackingDomainRoutes from './routes/v1/internal/tracking-domain.js';
 import internalDkimRetireRoutes from './routes/v1/internal/dkim-retire.js';
 import internalEPrivacyRoutes from './routes/v1/internal/eprivacy.js';
@@ -596,6 +597,7 @@ export async function buildApp() {
   await app.register(internalContactsRoutes);
   await app.register(internalSuppressionsRoutes);
   await app.register(internalFrequencyRoutes);
+  await app.register(internalQuietHoursRoutes);
   await app.register(internalTrackingDomainRoutes);
   await app.register(internalDkimRetireRoutes);
   await app.register(internalEPrivacyRoutes);
