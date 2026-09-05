@@ -7,7 +7,6 @@ import {
   index,
   uniqueIndex,
   pgEnum,
-  smallint,
   varchar,
   jsonb,
 } from 'drizzle-orm/pg-core';
@@ -35,11 +34,12 @@ export const orgFrequencyRules = pgTable(
     channel: frequencyChannelEnum('channel').notNull(),
     maxCount: integer('max_count').notNull(),
     periodHours: integer('period_hours').notNull(),
-    // Quiet hours window (org-local). When start == end, no quiet window
-    // applies. When start > end the window wraps across midnight.
-    quietHoursStart: smallint('quiet_hours_start'),
-    quietHoursEnd: smallint('quiet_hours_end'),
-    timezone: varchar('timezone', { length: 64 }),
+    // Quiet hours deliberately do NOT live here. They have exactly one home,
+    // `quiet_hours`, which is the table the PUT route writes and the dashboard
+    // shows. These three columns used to duplicate it and were the pair the
+    // send path actually enforced — while being unsettable through any HTTP
+    // route, so the enforced window could never be configured and the
+    // configured one was never enforced. Dropped in 0023.
     // When set, rule only applies to contacts in this engagement band.
     engagementBand: varchar('engagement_band', { length: 20 }),
     // When set, sends with this priority or stricter still go through;
