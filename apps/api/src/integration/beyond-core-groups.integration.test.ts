@@ -25,10 +25,19 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 
-/** Measured on 907c7d7 before this mechanism existed. */
+/**
+ * Measured on 907c7d7 before this mechanism existed, then moved by exactly one
+ * route: POST /api/v1/internal/quiet-hours/check, added as a CORE route so the
+ * triggered stream can ask about quiet hours without acquiring the frequency
+ * cap that /internal/frequency/check-batch also applies.
+ *
+ * +1 path and +1 operation on both surfaces, which is the number that matters:
+ * had the new route landed inside a group, or pulled a group in with it, the
+ * two figures would have moved by different amounts.
+ */
 const BASELINE = {
-  coreOnly: { paths: 897, operations: 1117 },
-  everything: { paths: 1239, operations: 1554 },
+  coreOnly: { paths: 898, operations: 1118 },
+  everything: { paths: 1240, operations: 1555 },
 } as const;
 
 interface Surface {
