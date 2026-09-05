@@ -6,6 +6,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { quietHours, type QuietHours } from '../../db/schema/index.js';
+import { isInQuietHours, localHourIn } from '../frequency-capping/pure.js';
 
 export async function listRules(orgId: string): Promise<QuietHours[]> {
   return db.select().from(quietHours).where(eq(quietHours.orgId, orgId));
@@ -71,22 +72,6 @@ export async function upsertRule(
   return row!;
 }
 
-/** Computes the local hour at the given timezone for a moment in time. */
-function hourInZone(at: Date, timezone: string): number {
-  try {
-    const fmt = new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      hour12: false,
-      timeZone: timezone,
-    });
-    const parts = fmt.formatToParts(at);
-    const h = parts.find((p) => p.type === 'hour')?.value;
-    return h ? Number(h) % 24 : at.getUTCHours();
-  } catch {
-    return at.getUTCHours();
-  }
-}
-
 export interface QuietCheckResult {
   inQuietHours: boolean;
   nextSendAt?: Date;
@@ -100,14 +85,22 @@ export async function isQuiet(
   const rule = await getRule(orgId, channel);
   if (!rule || !rule.enabled) return { inQuietHours: false };
 
-  const localHour = hourInZone(at, rule.timezone);
-  // Quiet window may wrap midnight (e.g. 21 → 8).
-  const inQuiet =
-    rule.startHour <= rule.endHour
-      ? localHour >= rule.startHour && localHour < rule.endHour
-      : localHour >= rule.startHour || localHour < rule.endHour;
-
-  if (!inQuiet) return { inQuietHours: false };
+  // Delegated, not re-implemented. This file used to carry its own copy of
+  // `start <= end ? … : …` and its own timezone resolver while
+  // frequency-capping/pure.ts carried another, tested pair — two spellings of
+  // one rule is how they drift, and an off-by-one at the midnight wrap is
+  // invisible until somebody is messaged at 03:00.
+  if (
+    !isInQuietHours({
+      start: rule.startHour,
+      end: rule.endHour,
+      timezone: rule.timezone,
+      now: at,
+    })
+  ) {
+    return { inQuietHours: false };
+  }
+  const localHour = localHourIn(rule.timezone, at) ?? at.getUTCHours();
 
   // Compute next allowed send time = the next occurrence of `endHour` in the rule's tz.
   const minutesPastHour = at.getUTCMinutes();
