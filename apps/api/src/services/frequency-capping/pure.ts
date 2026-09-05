@@ -123,9 +123,6 @@ export interface AnyRule {
   maxCount: number;
   periodHours: number;
   channel: string;
-  quietHoursStart?: number | null;
-  quietHoursEnd?: number | null;
-  timezone?: string | null;
   engagementBand?: string | null;
   priorityFloor?: string | null;
 }

@@ -10,11 +10,11 @@ import {
 import { AppError } from '../../lib/app-error.js';
 import {
   filterApplicableRules,
-  isInQuietHours,
   type EngagementBand,
   type MessagePriority,
   type SuppressionReason,
 } from './pure.js';
+import { isQuiet } from '../quiet-hours/index.js';
 
 export type FrequencyChannel = 'email' | 'sms' | 'push' | 'whatsapp' | 'voice' | 'all';
 
@@ -77,37 +77,43 @@ export async function checkFrequencyCap(
 ): Promise<FrequencyCheckResult> {
   const now = input.now ?? Date.now();
   const priority: MessagePriority = input.priority ?? 'marketing';
+  // 1. Quiet hours, from `quiet_hours` — the ONE authority.
+  //
+  // This used to read `org_frequency_rules.quiet_hours_start/_end`, and those
+  // columns could not be set by anyone: the Zod schema on
+  // PUT /api/v1/frequency-rules accepts { channel, maxCount, periodHours } and
+  // nothing else. Meanwhile `quiet_hours` — which HAS a PUT route and is what
+  // the dashboard's /quiet-hours page displays — was read by no one on the
+  // send path. The enforced setting was unreachable and the reachable setting
+  // was unenforced, in the same product, for the same rule.
+  //
+  // It also runs BEFORE the rules are loaded, and that is a behaviour change
+  // worth naming: the old check sat inside the per-rule loop, after an early
+  // `rules.length === 0 → allowed`, so a quiet window only applied to an org
+  // that had also configured a frequency cap. Nothing about "don't message my
+  // customers at night" implies "and cap my volume".
+  const quiet = await isQuiet(input.orgId, input.channel, new Date(now));
+  if (quiet.inQuietHours) {
+    const result: FrequencyCheckResult = {
+      allowed: false,
+      blockedBy: null,
+      currentCount: 0,
+      reason: 'quiet_hours',
+    };
+    // `blockedBy` is null because no frequency rule did this — the suppression
+    // log takes the reason without one rather than attributing it to a cap
+    // that may not exist.
+    if (input.logSuppression !== false) {
+      await logSuppression(input, null, 'quiet_hours', priority).catch(() => {});
+    }
+    return result;
+  }
+
   const allRules = await getRulesForChannel(input.orgId, input.channel, redis);
   const rules = filterApplicableRules(allRules, input.channel, priority, input.band ?? null);
 
   if (rules.length === 0) {
     return { allowed: true, blockedBy: null, currentCount: 0, reason: null };
-  }
-
-  // 1. Quiet hours — any matching rule that is currently in its quiet
-  //    window blocks the send, regardless of count. Suppression reason
-  //    captures the distinction so reports can split "we hit the cap" vs
-  //    "we waited politely".
-  for (const rule of rules) {
-    if (
-      isInQuietHours({
-        start: rule.quietHoursStart ?? null,
-        end: rule.quietHoursEnd ?? null,
-        timezone: rule.timezone ?? null,
-        now: new Date(now),
-      })
-    ) {
-      const result: FrequencyCheckResult = {
-        allowed: false,
-        blockedBy: rule,
-        currentCount: 0,
-        reason: 'quiet_hours',
-      };
-      if (input.logSuppression !== false) {
-        await logSuppression(input, rule, 'quiet_hours', priority).catch(() => {});
-      }
-      return result;
-    }
   }
 
   // 2. Count-based cap — check each rule against the window.
@@ -141,7 +147,8 @@ export async function checkFrequencyCap(
 
 async function logSuppression(
   input: FrequencyCheckInput,
-  rule: OrgFrequencyRule,
+  /** null for a quiet-hours block: no frequency rule caused it. */
+  rule: OrgFrequencyRule | null,
   reason: SuppressionReason,
   priority: MessagePriority,
 ): Promise<void> {
@@ -150,14 +157,17 @@ async function logSuppression(
     contactId: input.contactId,
     channel: input.channel,
     reason,
-    ruleId: rule.id,
+    ruleId: rule?.id ?? null,
     priority,
-    metadata: {
-      ruleChannel: rule.channel,
-      maxCount: rule.maxCount,
-      periodHours: rule.periodHours,
-      ...(rule.engagementBand ? { engagementBand: rule.engagementBand } : {}),
-    },
+    metadata: rule
+      ? {
+          ruleChannel: rule.channel,
+          maxCount: rule.maxCount,
+          periodHours: rule.periodHours,
+          ...(rule.engagementBand ? { engagementBand: rule.engagementBand } : {}),
+        }
+      : // Quiet hours are org-wide, not a property of any cap.
+        { quietHours: true },
   });
 }
 
@@ -209,29 +219,12 @@ export async function upsertRule(
     channel: FrequencyChannel;
     maxCount: number;
     periodHours: number;
-    quietHoursStart?: number | null;
-    quietHoursEnd?: number | null;
-    timezone?: string | null;
     engagementBand?: EngagementBand | null;
     priorityFloor?: MessagePriority | null;
   },
 ) {
   if (input.maxCount <= 0 || input.periodHours <= 0) {
     throw AppError.badRequest('maxCount and periodHours must be positive');
-  }
-  if (
-    input.quietHoursStart !== null &&
-    input.quietHoursStart !== undefined &&
-    (input.quietHoursStart < 0 || input.quietHoursStart > 23)
-  ) {
-    throw AppError.badRequest('quietHoursStart must be 0..23');
-  }
-  if (
-    input.quietHoursEnd !== null &&
-    input.quietHoursEnd !== undefined &&
-    (input.quietHoursEnd < 0 || input.quietHoursEnd > 23)
-  ) {
-    throw AppError.badRequest('quietHoursEnd must be 0..23');
   }
   const [row] = await db
     .insert(orgFrequencyRules)
@@ -241,9 +234,6 @@ export async function upsertRule(
       set: {
         maxCount: input.maxCount,
         periodHours: input.periodHours,
-        quietHoursStart: input.quietHoursStart,
-        quietHoursEnd: input.quietHoursEnd,
-        timezone: input.timezone,
         engagementBand: input.engagementBand,
         priorityFloor: input.priorityFloor,
         updatedAt: new Date(),

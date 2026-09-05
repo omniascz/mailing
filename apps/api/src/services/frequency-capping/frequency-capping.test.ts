@@ -3,9 +3,20 @@ import type { Redis } from 'ioredis';
 
 // Stub transitive imports so the service module can load without real Redis/DB.
 vi.mock('@forgemsg/shared/redis', () => ({ redis: {} }));
+// `where()` is awaited directly by the rules query and `.limit(1)`-ed by the
+// quiet-hours lookup, so the fake chain has to answer both. Before quiet hours
+// moved to their own table this branch was never reached, and a `where` that
+// is only awaitable made the whole check throw rather than return "no rules".
+const emptyChain = () => {
+  const result: Promise<never[]> & { limit: () => Promise<never[]> } = Object.assign(
+    Promise.resolve([] as never[]),
+    { limit: async () => [] as never[] },
+  );
+  return result;
+};
 vi.mock('../../db/client.js', () => ({
   db: {
-    select: () => ({ from: () => ({ where: async () => [] }) }),
+    select: () => ({ from: () => ({ where: emptyChain }) }),
   },
 }));
 
