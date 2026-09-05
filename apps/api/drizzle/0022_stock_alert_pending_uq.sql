@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX "back_in_stock_pending_uq" ON "back_in_stock_subscriptions" USING btree ("org_id","sku","contact_id") WHERE notified_at IS NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "price_drop_pending_uq" ON "price_drop_subscriptions" USING btree ("org_id","sku","contact_id") WHERE notified_at IS NULL;

@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, timestamp, decimal, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  decimal,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { organizations } from './organizations.js';
 import { contacts } from './contacts.js';
 
@@ -17,7 +26,17 @@ export const backInStockSubscriptions = pgTable(
     notifiedAt: timestamp('notified_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('back_in_stock_org_sku_idx').on(t.orgId, t.sku)],
+  (t) => [
+    index('back_in_stock_org_sku_idx').on(t.orgId, t.sku),
+    // One PENDING subscription per person per SKU. The endpoint is public, so a
+    // page that submits the form twice — or an abuser that submits it a
+    // thousand times — must not turn into a thousand notifications. Partial, on
+    // `notified_at IS NULL`, so a person who was notified and comes back to
+    // wait for the next restock can subscribe again.
+    uniqueIndex('back_in_stock_pending_uq')
+      .on(t.orgId, t.sku, t.contactId)
+      .where(sql`notified_at IS NULL`),
+  ],
 );
 
 export const priceDropSubscriptions = pgTable(
@@ -36,7 +55,12 @@ export const priceDropSubscriptions = pgTable(
     notifiedAt: timestamp('notified_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('price_drop_org_sku_idx').on(t.orgId, t.sku)],
+  (t) => [
+    index('price_drop_org_sku_idx').on(t.orgId, t.sku),
+    uniqueIndex('price_drop_pending_uq')
+      .on(t.orgId, t.sku, t.contactId)
+      .where(sql`notified_at IS NULL`),
+  ],
 );
 
 export type BackInStockSubscription = typeof backInStockSubscriptions.$inferSelect;
