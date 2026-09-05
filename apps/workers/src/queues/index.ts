@@ -573,6 +573,13 @@ export interface BatchSenderJobData {
    */
   pauseDelays?: number;
   pauseWaitedMs?: number;
+  /**
+   * How many times this batch has been put back for quiet hours. A window is
+   * at most 24h wide by construction, so one delay always suffices and two is
+   * already a configuration that changed mid-wait; the counter exists to stop
+   * a malfunctioning delay from looping forever, not to pace retries.
+   */
+  quietDelays?: number;
   /** Contact IDs in this batch */
   contactIds: string[];
   content: Record<string, unknown>;

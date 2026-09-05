@@ -156,6 +156,103 @@ async function applyCampaignBrake(
 }
 
 /**
+ * Is it currently quiet hours for this org?
+ *
+ * Asked only for the triggered stream, and asked on its OWN endpoint rather
+ * than through /internal/frequency/check-batch. That endpoint answers "is this
+ * contact capped", which also applies the volume cap and the holdout — both
+ * campaign concepts. Routing flow mail through it to reach the quiet-hours
+ * answer would silently start capping flow mail too, which is a different
+ * decision from not sending it at 3am.
+ *
+ * Fails OPEN, like every other filter in this file: a transport blip must not
+ * hold a customer's password-reset-adjacent flow mail for ten hours. The cost
+ * of failing open here is one message at a bad hour; the cost of failing
+ * closed is a queue that stops on an API hiccup.
+ */
+async function fetchQuietHours(
+  orgId: string,
+): Promise<{ inQuietHours: boolean; nextSendAt: Date | null }> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/quiet-hours/check`, {
+      method: 'POST',
+      headers: internalHeaders(),
+      body: JSON.stringify({ orgId, channel: 'email' }),
+    });
+    if (!res.ok) return { inQuietHours: false, nextSendAt: null };
+    const body = (await res.json()) as {
+      data: { inQuietHours: boolean; nextSendAt: string | null };
+    };
+    return {
+      inQuietHours: body.data.inQuietHours,
+      nextSendAt: body.data.nextSendAt ? new Date(body.data.nextSendAt) : null,
+    };
+  } catch {
+    return { inQuietHours: false, nextSendAt: null };
+  }
+}
+
+/**
+ * Hold a triggered batch until the org's quiet window ends.
+ *
+ * WHICH STREAMS. Broadcasts already learn this through the frequency check
+ * (#135) and are left exactly as they were. Transactional mail is deliberately
+ * exempt: a receipt or a password reset was asked for by the person receiving
+ * it, and holding those until morning would be a worse product than the bug
+ * this fixes. Only `triggered` changes — the stream abandoned-checkout
+ * reminders (#132) and restock / price-drop alerts (#133) go out on, whose
+ * timing is a `wait` node or a feed cron rather than an hour anyone chose.
+ *
+ * DELAY, NOT SKIP. A cart reminder is still worth sending at 9am; dropping it
+ * loses the message and the sale. `moveToDelayed` + `throw DelayedError` is the
+ * shape applyCampaignBrake already proves in this file — measured there not to
+ * consume the retry budget, and to need the throw so BullMQ does not log
+ * "Missing lock for job".
+ *
+ * The delay is until `nextSendAt`, computed once by the quiet-hours service,
+ * not a backoff. The window is at most 24h wide, so one delay lands after it.
+ */
+const QUIET_MAX_DELAYS = 2;
+
+async function applyQuietHours(
+  job: Job<BatchSenderJobData>,
+  token: string | undefined,
+  stream: MessageStream,
+): Promise<{ sent: number; skipped: number; reason: string } | null> {
+  if (stream !== 'triggered') return null;
+
+  const data = job.data;
+  const quiet = await fetchQuietHours(data.orgId);
+  if (!quiet.inQuietHours || !quiet.nextSendAt) return null;
+
+  const delays = data.quietDelays ?? 0;
+  if (delays >= QUIET_MAX_DELAYS) {
+    // Unreachable under any valid configuration: a window is at most 24h and
+    // nextSendAt is inside it, so the first delay always clears it. Getting
+    // here means the delay machinery is misbehaving, and the honest answer is
+    // to stop rather than to send — a guard that gives up and sends anyway at
+    // 3am is not a guard, which is the whole lesson of the setting that used
+    // to do nothing.
+    console.error(
+      `[batch-sender] batch ${data.batchKey ?? data.batchIndex} for org ${data.orgId} has been ` +
+        `held ${delays} times for quiet hours and is still inside the window. Dropping it ` +
+        `rather than sending outside the window the org configured.`,
+    );
+    return { sent: 0, skipped: data.contactIds.length, reason: 'quiet_hours_ceiling' };
+  }
+
+  const delayMs = Math.max(quiet.nextSendAt.getTime() - Date.now(), 60_000);
+  job.log(
+    `[quiet-hours] org ${data.orgId} is in its quiet window — holding this batch of ` +
+      `${data.contactIds.length} until ${quiet.nextSendAt.toISOString()} ` +
+      `(${Math.round(delayMs / 60_000)} min).`,
+  );
+  await job.updateData({ ...data, quietDelays: delays + 1 });
+  await job.moveToDelayed(Date.now() + delayMs, token);
+  throw new DelayedError();
+}
+
+/**
  * Exported for the integration suite, which drives a real batch through the
  * real filters rather than re-implementing them in a mock.
  */
@@ -172,6 +269,13 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   // either — the batches already on the queue went out regardless.
   const brake = await applyCampaignBrake(job, token, stream);
   if (brake) return brake;
+
+  // Quiet hours for flow mail. The broadcast stream already learns this from
+  // the frequency check; until now the triggered stream asked nobody, so an
+  // abandoned-checkout reminder or a restock alert went out whenever its wait
+  // node or its feed cron happened to fire.
+  const quiet = await applyQuietHours(job, token, stream);
+  if (quiet) return quiet;
 
   // Platform-admin suspended this org while jobs were already enqueued —
   // skip the whole batch. Plan-enforcement on POST /campaigns/:id/send
