@@ -84,10 +84,16 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       const cfgSet = await applyConfigurationSet(orgId, body.configurationSet);
       // Resolve the config set's IP pool → sending IP for this send.
       let sendingIp = '';
+      let sendingIpId: string | null = null;
       if (cfgSet.ipPoolId) {
         const { pickIpForSend } = await import('../../services/dedicated-ips/index.js');
         const ip = await pickIpForSend(orgId, cfgSet.ipPoolId).catch(() => null);
         sendingIp = ip?.ipAddress ?? '';
+        // Kept so the volume can be attributed after the message is accepted.
+        // The address alone is not enough: recordIpSend is keyed by row id, so
+        // a value that names no registered IP updates nothing rather than
+        // creating a reputation row for whatever string arrived.
+        sendingIpId = ip?.id ?? null;
       }
 
       // Sandbox gate: unverified accounts may only send to verified recipients.
@@ -164,6 +170,22 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
         tlsPolicy: cfgSet.tlsPolicy,
         testMode,
       });
+
+      // Charge the IP for this message.
+      //
+      // At acceptance rather than at delivery, matching the two counters this
+      // sits beside: recordFrequencySend in the batch sender is deliberately
+      // taken before the enqueue, and the engine's warmup claim is spent
+      // "whether or not it lands, because what the receiving ISP saw is a
+      // connection from this IP". A rate limiter that under-counts is the
+      // failure that costs reputation; one that over-counts costs a send.
+      //
+      // Best-effort: an accepted message must not be reported as failed
+      // because its bookkeeping did not land.
+      if (sendingIpId) {
+        const { recordIpSend } = await import('../../services/dedicated-ips/index.js');
+        await recordIpSend(sendingIpId, 1).catch(() => {});
+      }
 
       // Log send event for analytics + delivery webhooks.
       await db.insert(emailEvents).values({
