@@ -7,13 +7,13 @@
  *
  * PLANNED SHAPE — roughly 45 tools, in areas, not 260 wrappers:
  *
- *   1. campaign performance      3   ← this PR
- *   2. audience & segments       5   find/describe a segment, size it, who is in it
- *   3. campaign authoring        6   draft, schedule, pause, duplicate, send test
- *   4. deliverability            7   domain + DKIM health, blacklist, seed test,
+ *   1. campaign performance      3   ← #138
+ *   2. contacts                  4   ← this PR: find, overview, activity, suppress
+ *   3. flows                     3   ← this PR: find, performance by step, pause
+ *   4. audience & segments       5   find/describe a segment, size it, who is in it
+ *   5. campaign authoring        6   draft, schedule, pause, duplicate, send test
+ *   6. deliverability            7   domain + DKIM health, blacklist, seed test,
  *                                    bounce reasons, reputation, warmup state
- *   5. flows                     5   list, describe, enrolment counts, pause
- *   6. contacts                  5   look up, consent state, suppression, timeline
  *   7. transactional send        3   the existing send_email / send_sms, tidied
  *   8. revenue & attribution     4   revenue by campaign, by channel, RFM
  *   9. account & billing         3   plan, usage, sending limits
@@ -25,10 +25,17 @@
  */
 
 import { campaignPerformanceTools } from './tools/campaign-performance.js';
+import { contactTools } from './tools/contacts.js';
+import { flowTools } from './tools/flows.js';
 import { legacyTools } from './tools/legacy.js';
 import { toJsonSchema, type McpTool } from './registry.js';
 
-export const ALL_TOOLS: McpTool[] = [...campaignPerformanceTools, ...legacyTools];
+export const ALL_TOOLS: McpTool[] = [
+  ...campaignPerformanceTools,
+  ...contactTools,
+  ...flowTools,
+  ...legacyTools,
+];
 
 /** The `tools/list` payload, derived from the same schemas the handlers parse with. */
 export function describeTools() {
