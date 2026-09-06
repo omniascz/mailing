@@ -262,6 +262,19 @@ async function executeSendSms(
     priority: config.priority ?? 'marketing',
   });
   if (!cap.allowed) {
+    // Quiet hours are a WAIT, not a skip. `{ type: 'next' }` walks the run past
+    // this node and the message is gone — nobody gets the reminder, at 3am or
+    // at 9am. `wait` parks the run ON the node (executor.ts sets
+    // status='waiting', currentNodeId and nextExecutionAt), so it is retried
+    // once the window closes. Same call as #136 made for email: a reminder is
+    // still worth sending in the morning, and dropping it loses the sale.
+    //
+    // Every other cap reason keeps skipping. A contact who is over their
+    // weekly limit is not going to be under it in eight hours, so parking the
+    // run there would hold it open for nothing.
+    if (cap.reason === 'quiet_hours' && cap.nextSendAt) {
+      return { type: 'wait', until: cap.nextSendAt };
+    }
     return { type: 'next', nextNodeId: null };
   }
 
