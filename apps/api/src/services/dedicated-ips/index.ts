@@ -20,6 +20,7 @@ import {
   type DedicatedIp,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { startWarmup as startIpWarmup } from '../sending/ip-warmup.js';
 
 // ─── Default warmup ramp (30-day ReturnPath-style) ────────────────────────────
 
@@ -257,6 +258,23 @@ export async function allocateDedicatedIp(input: {
         })
         .where(eq(dedicatedIps.id, free.id))
         .returning();
+    }
+
+    if (input.startWarmup && row) {
+      // The ramp the engine actually enforces lives in `warmup_ips`, not here:
+      // it asks POST /internal/sending/warmup/claim BEFORE it dials, and that
+      // route reads only that table. Allocating with startWarmup used to set
+      // `status='warming'` and `warmup_day=1` on this row alone, so an IP the
+      // configuration called "in warmup" had no ceiling on the send path.
+      //
+      // Seeded here rather than on first send, and that is the whole point:
+      // the claim happens before the message goes out, so a row created by
+      // sending would let day one through unmetered — the one day the ramp
+      // exists for.
+      //
+      // startWarmup() is ON CONFLICT DO NOTHING, so re-allocating an address
+      // that is already ramping does not restart its day count.
+      await startIpWarmup(row.ipAddress, input.orgId);
     }
 
     return row!;
