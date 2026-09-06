@@ -43,6 +43,7 @@ import { refreshAllOrgsPredictions } from '../../../services/predictive-segmenta
 import { refreshAllOrgsChannelScores } from '../../../services/channel-scoring/index.js';
 import { refreshAllOrgsEngagement } from '../../../services/engagement-score/index.js';
 import { runDnsHealthSweep } from '../../../services/deliverability/dns-health.js';
+import { dailyIpMaintenance } from '../../../services/dedicated-ips/index.js';
 
 interface RunSummary {
   date: { triggered: number; error?: string };
@@ -82,6 +83,12 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         channelResult,
         engagementResult,
         dnsHealthResult,
+        // dedicated_ips.today_sent is the column pickIpForSend orders by and
+        // gates a warming IP on. Without a daily reset it is a lifetime total
+        // wearing a daily name: after the first day every warming IP reads as
+        // over its ramp and the pool stops offering any of them. The reset is
+        // therefore part of the counter, not housekeeping around it.
+        ipMaintenanceResult,
       ] = await Promise.allSettled([
         processDailyDateTriggers(),
         processDailyNameDayTriggers(),
@@ -91,7 +98,9 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         refreshAllOrgsChannelScores(),
         refreshAllOrgsEngagement(),
         runDnsHealthSweep(),
+        dailyIpMaintenance(),
       ]);
+      void ipMaintenanceResult;
 
       const summary: RunSummary = {
         date:
