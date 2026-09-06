@@ -32,6 +32,10 @@
     "./services/rcs/providers": {
       "types": "./dist/services/rcs/providers/index.d.ts",
       "import": "./dist/services/rcs/providers/index.js"
+    },
+    "./services/mcp": {
+      "types": "./dist/services/mcp/index.d.ts",
+      "import": "./dist/services/mcp/index.js"
     }
   },
   "scripts": {
