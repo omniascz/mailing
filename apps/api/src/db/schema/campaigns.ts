@@ -110,6 +110,34 @@ export const campaigns = pgTable(
     replyTo: varchar('reply_to', { length: 255 }),
 
     // Content (block JSON or template reference)
+    /**
+     * The saved template a campaign was started from.
+     *
+     * NOTHING IN THE PRODUCT SETS THIS. It is writable only by an integrator
+     * who passes `templateId` to POST /api/v1/campaigns; every path a person
+     * can take through the app leaves it null, because there is no
+     * "start a campaign from this template" flow to set it:
+     *
+     *   - the new-campaign form has no template picker — see
+     *     apps/web/.../campaigns/new/create-payload.ts, whose output is the
+     *     whole set of fields the form can send;
+     *   - "Use this template" (UseTemplateButton) POSTs
+     *     /api/v1/templates/:id/use, which clones a built-in design into a
+     *     SAVED TEMPLATE and returns to the template library. It never touches
+     *     a campaign;
+     *   - the editor writes content onto the campaign directly.
+     *
+     * apps/web/.../campaign-field-coverage.test.ts records the same fact from
+     * the other side, as data rather than as prose: templateId is listed
+     * API_ONLY with the reason.
+     *
+     * So anything grouping delivery statistics by template — "which template
+     * performs best" — would today group by a column that is null for every
+     * campaign the product created. That is why no such reporting exists, and
+     * why the MCP batch left `get_template_performance` out rather than
+     * shipping a tool that answers over an empty join. Giving this column a
+     * writer means building the flow first; it is not a missing assignment.
+     */
     templateId: uuid('template_id').references(() => templates.id),
     content: jsonb('content').$type<Record<string, unknown>>().notNull().default({}),
 
