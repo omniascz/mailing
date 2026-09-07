@@ -27,6 +27,9 @@
 import { campaignPerformanceTools } from './tools/campaign-performance.js';
 import { contactTools } from './tools/contacts.js';
 import { flowTools } from './tools/flows.js';
+import { segmentTools } from './tools/segments.js';
+import { templateTools } from './tools/templates.js';
+import { deliverabilityTools } from './tools/deliverability.js';
 import { legacyTools } from './tools/legacy.js';
 import { toJsonSchema, type McpTool } from './registry.js';
 
@@ -34,6 +37,9 @@ export const ALL_TOOLS: McpTool[] = [
   ...campaignPerformanceTools,
   ...contactTools,
   ...flowTools,
+  ...segmentTools,
+  ...templateTools,
+  ...deliverabilityTools,
   ...legacyTools,
 ];
 
