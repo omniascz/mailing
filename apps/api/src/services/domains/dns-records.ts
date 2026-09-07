@@ -6,6 +6,7 @@
  */
 
 import dns from 'node:dns';
+import { env } from '../../config/env.js';
 import { promisify } from 'node:util';
 
 const resolveTxtAsync = promisify(dns.resolveTxt);
@@ -28,12 +29,29 @@ export interface DnsRecord {
   lastCheckedAt: string | null;
 }
 
+/**
+ * The three names a customer is told to publish that point back at US.
+ *
+ * These are not cosmetic. They are copied verbatim into the customer's zone:
+ * an SPF `include:` that does not resolve makes the whole record a permerror,
+ * which is worse for their deliverability than having no SPF at all, and a
+ * Return-Path CNAME to a name that does not exist breaks bounce processing
+ * silently. They were all on `example.invalid`, registered to nobody.
+ *
+ * Derived from one variable rather than three, because they are one decision —
+ * the domain this deployment is operated on — and three variables is three
+ * chances to set two of them. Unset, they read `spf.example.invalid`, which is
+ * obviously wrong on the screen where the customer copies it; `.invalid` is
+ * reserved by RFC 2606 precisely so it can never resolve. That is the #85 rule:
+ * a placeholder that looks like it works is the one that gets deployed.
+ */
+const PLATFORM_DOMAIN = env.PLATFORM_DOMAIN;
 /** Platform's shared SPF include identifier */
-const FORGEMSG_SPF_INCLUDE = 'spf.forgemsg.com';
+const FORGEMSG_SPF_INCLUDE = `spf.${PLATFORM_DOMAIN}`;
 /** Platform's Return-Path CNAME target */
-const FORGEMSG_RETURN_PATH_TARGET = 'return-path.forgemsg.com';
+const FORGEMSG_RETURN_PATH_TARGET = `return-path.${PLATFORM_DOMAIN}`;
 /** Platform's inbound MX for bounce processing */
-const FORGEMSG_BOUNCE_MX = 'bounce.forgemsg.com';
+const FORGEMSG_BOUNCE_MX = `bounce.${PLATFORM_DOMAIN}`;
 
 /**
  * Build all required DNS records for a sending domain.

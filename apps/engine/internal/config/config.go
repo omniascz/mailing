@@ -46,6 +46,18 @@ type Config struct {
 	// InternalAPISecret authenticates the warmup claim, same header and same
 	// value the submission server already uses for /internal/smtp/auth.
 	InternalAPISecret string
+
+	// EhloHostname is the name the engine gives in EHLO.
+	//
+	// It was "mta.example.invalid", hard-coded in pool.go, on a domain nobody
+	// registered. Receiving MTAs compare EHLO against the connecting IP's
+	// reverse DNS; a name that does not resolve fails that check at Gmail,
+	// Outlook and Seznam alike, and it fails identically for every message.
+	//
+	// Default "example.invalid" rather than something plausible: RFC 2606
+	// reserves .invalid so it can never resolve, which makes a misconfigured
+	// deployment obvious instead of quietly bad.
+	EhloHostname string
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -63,6 +75,7 @@ func Load() *Config {
 		SendingIPs:            envStringSlice("SENDING_IPS"),
 		WarmupAPIURL:          envOrDefault("WARMUP_API_URL", os.Getenv("API_URL")),
 		InternalAPISecret:     os.Getenv("INTERNAL_API_SECRET"),
+		EhloHostname:          envOrDefault("EHLO_HOSTNAME", "example.invalid"),
 	}
 }
 

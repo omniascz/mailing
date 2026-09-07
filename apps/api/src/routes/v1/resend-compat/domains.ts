@@ -17,6 +17,7 @@
  * helpers + Vercel marketplace integration render correctly.
  */
 
+import { dmarcReportEmail } from '../../../config/env.js';
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { and, desc, eq } from 'drizzle-orm';
@@ -31,7 +32,7 @@ import {
   generateSelector,
 } from '../../../services/domains/dkim-rotation.js';
 
-const DMARC_REPORT_EMAIL = process.env.DMARC_REPORT_EMAIL ?? 'dmarc@forgemsg.com';
+const DMARC_REPORT_EMAIL = dmarcReportEmail();
 
 type DnsType = 'TXT' | 'CNAME' | 'MX';
 

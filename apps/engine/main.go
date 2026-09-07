@@ -30,6 +30,7 @@ func main() {
 		ReadTimeout:       cfg.SMTPReadTimeout,
 		WriteTimeout:      cfg.SMTPWriteTimeout,
 		PreferStartTLS:    cfg.TLSPreferred,
+		EhloHostname:      cfg.EhloHostname,
 	})
 	defer connPool.Close()
 

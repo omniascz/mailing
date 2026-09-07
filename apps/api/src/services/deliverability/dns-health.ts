@@ -16,6 +16,7 @@
  * predictive + channel scoring + engagement.
  */
 
+import { dmarcReportEmail } from '../../config/env.js';
 import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { sendingDomains } from '../../db/schema/index.js';
@@ -23,7 +24,7 @@ import { buildDnsRecords, verifyDnsRecords, type DnsRecord } from '../domains/dn
 import { verifyDkimDns } from '../domains/dkim.js';
 import { reportIncident } from '../status-page/index.js';
 
-const DMARC_REPORT_EMAIL = process.env.DMARC_REPORT_EMAIL ?? 'dmarc@forgemsg.com';
+const DMARC_REPORT_EMAIL = dmarcReportEmail();
 
 export interface DomainHealthDelta {
   domainId: string;
