@@ -73,6 +73,7 @@ export * from './viber-templates.js';
 export * from './ai-agents.js';
 export * from './multivariate-tests.js';
 export * from './dedicated-ips.js';
+export * from './ip-blacklist-events.js';
 export * from './abuse-detection.js';
 export * from './isp-fbl.js';
 export * from './ecommerce-integrations.js';
