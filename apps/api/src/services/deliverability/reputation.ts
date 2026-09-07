@@ -14,9 +14,55 @@
  * limits and avoid excessive external calls.
  */
 
+import { and, eq, or } from 'drizzle-orm';
 import { redis } from '@forgemsg/shared/redis';
+import { db } from '../../db/client.js';
+import { sendingDomains } from '../../db/schema/index.js';
+import { AppError } from '../../lib/app-error.js';
 
 const CACHE_TTL = 4 * 3600; // 4 hours
+
+/**
+ * Refuse a domain this organisation does not send from.
+ *
+ * The scoping used to live entirely in the callers: every exported fetcher took
+ * a bare domain and trusted whoever passed it, and the two routes happened to
+ * pass one straight off the query string without checking it. That is the shape
+ * #123 was — a check split across layers, where the layer holding the data does
+ * not enforce it and the next caller reassembles the hole. It survives exactly
+ * as long as nobody adds a third caller.
+ *
+ * What leaks is not our data: these adapters read public DNS and third-party
+ * reputation APIs, and the answer about someone else's domain is the same
+ * answer anyone could get. What leaks is the SHARED CREDENTIAL. The keys are
+ * account-wide (SENDERSCORE_API_KEY, GOOGLE_POSTMASTER_TOKEN, and two more),
+ * every provider prices or rate-limits per key, and the response is cached
+ * under a key naming only the domain — so one tenant could spend the quota all
+ * tenants depend on, on domains none of them own.
+ *
+ * Matched against `domain` and `mail_subdomain`, because a customer who set up
+ * `example.com` sends from `mail.example.com` and will ask about either.
+ *
+ * NOT FOUND rather than FORBIDDEN, deliberately: telling an unauthorised
+ * caller that a domain exists elsewhere in the system is itself an answer.
+ */
+export async function assertDomainOwned(orgId: string, domain: string): Promise<void> {
+  const host = domain.trim().toLowerCase();
+  const [row] = await db
+    .select({ id: sendingDomains.id })
+    .from(sendingDomains)
+    .where(
+      and(
+        eq(sendingDomains.orgId, orgId),
+        or(eq(sendingDomains.domain, host), eq(sendingDomains.mailSubdomain, host)),
+      ),
+    )
+    .limit(1);
+
+  if (!row) {
+    throw AppError.notFound(`Sending domain ${host}`);
+  }
+}
 
 // ─── Shared output type ───────────────────────────────────────────────────────
 
@@ -49,9 +95,11 @@ export interface AggregatedReputation {
 // For a proper integration, the Validity / Return Path enterprise API is used.
 
 export async function fetchSenderScore(
+  orgId: string,
   domain: string,
   senderScoreApiKey?: string,
 ): Promise<ProviderReputation> {
+  await assertDomainOwned(orgId, domain);
   const cacheKey = `rep:senderscore:${domain}`;
   const cached = await redis.get(cacheKey);
   if (cached) return JSON.parse(cached) as ProviderReputation;
@@ -119,9 +167,11 @@ export async function fetchSenderScore(
 // API: https://gmailpostmastertools.googleapis.com/v1/domains/{domain}/trafficStats
 
 export async function fetchGooglePostmaster(
+  orgId: string,
   domain: string,
   accessToken?: string,
 ): Promise<ProviderReputation> {
+  await assertDomainOwned(orgId, domain);
   const cacheKey = `rep:google_postmaster:${domain}`;
   const cached = await redis.get(cacheKey);
   if (cached) return JSON.parse(cached) as ProviderReputation;
@@ -211,9 +261,11 @@ export async function fetchGooglePostmaster(
 // CSV download: https://sendersupport.olc.protection.outlook.com/snds/data.aspx?key=<apiKey>
 
 export async function fetchMicrosoftSNDS(
+  orgId: string,
   domain: string,
   sndsApiKey?: string,
 ): Promise<ProviderReputation> {
+  await assertDomainOwned(orgId, domain);
   const cacheKey = `rep:microsoft_snds:${domain}`;
   const cached = await redis.get(cacheKey);
   if (cached) return JSON.parse(cached) as ProviderReputation;
@@ -286,9 +338,11 @@ export async function fetchMicrosoftSNDS(
 // Base URL: https://postmaster.seznam.cz/api/v1/
 
 export async function fetchSeznamPostmaster(
+  orgId: string,
   domain: string,
   seznamApiKey?: string,
 ): Promise<ProviderReputation> {
+  await assertDomainOwned(orgId, domain);
   const cacheKey = `rep:seznam_postmaster:${domain}`;
   const cached = await redis.get(cacheKey);
   if (cached) return JSON.parse(cached) as ProviderReputation;
@@ -369,6 +423,7 @@ export async function fetchSeznamPostmaster(
 // ─── Aggregator ───────────────────────────────────────────────────────────────
 
 export async function fetchAllReputation(
+  orgId: string,
   domain: string,
   options?: {
     senderScoreApiKey?: string;
@@ -379,11 +434,23 @@ export async function fetchAllReputation(
 ): Promise<AggregatedReputation> {
   const opts = options ?? {};
 
+  // Checked once here as well as inside each fetcher, so the aggregate refuses
+  // before it fans out rather than after four parallel refusals.
+  await assertDomainOwned(orgId, domain);
+
   const [senderscore, google, snds, seznam] = await Promise.all([
-    fetchSenderScore(domain, opts.senderScoreApiKey ?? process.env['SENDERSCORE_API_KEY']),
-    fetchGooglePostmaster(domain, opts.googleAccessToken ?? process.env['GOOGLE_POSTMASTER_TOKEN']),
-    fetchMicrosoftSNDS(domain, opts.sndsApiKey ?? process.env['MICROSOFT_SNDS_API_KEY']),
-    fetchSeznamPostmaster(domain, opts.seznamApiKey ?? process.env['SEZNAM_POSTMASTER_API_KEY']),
+    fetchSenderScore(orgId, domain, opts.senderScoreApiKey ?? process.env['SENDERSCORE_API_KEY']),
+    fetchGooglePostmaster(
+      orgId,
+      domain,
+      opts.googleAccessToken ?? process.env['GOOGLE_POSTMASTER_TOKEN'],
+    ),
+    fetchMicrosoftSNDS(orgId, domain, opts.sndsApiKey ?? process.env['MICROSOFT_SNDS_API_KEY']),
+    fetchSeznamPostmaster(
+      orgId,
+      domain,
+      opts.seznamApiKey ?? process.env['SEZNAM_POSTMASTER_API_KEY'],
+    ),
   ]);
 
   const providers = [senderscore, google, snds, seznam];
