@@ -2,7 +2,7 @@
  * Internal status page endpoints (Sprint H.5).
  *
  * Lets monitoring tools (Sentry alert action, /health/ready probe, BullMQ
- * queue depth watcher) push an incident to status.mailforge.io without
+ * queue depth watcher) push an incident to status.example.invalid without
  * each tool having to speak Instatus directly. The orchestrator in
  * `services/status-page/index.ts` handles dedup, severity, and component
  * routing.

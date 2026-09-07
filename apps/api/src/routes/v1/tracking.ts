@@ -141,7 +141,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
 
       if (!payload || payload.type !== 'click') {
         // Invalid token — redirect to safe fallback
-        return reply.redirect(process.env.APP_URL ?? 'https://forgemsg.com', 302);
+        return reply.redirect(process.env.APP_URL ?? 'https://example.invalid', 302);
       }
 
       const now = new Date();
@@ -258,7 +258,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
 
       const destination = dest
         ? decodeURIComponent(dest)
-        : (process.env.APP_URL ?? 'https://forgemsg.com');
+        : (process.env.APP_URL ?? 'https://example.invalid');
 
       // Execute click action best-effort (non-blocking on failure)
       if (action && cid && oid) {

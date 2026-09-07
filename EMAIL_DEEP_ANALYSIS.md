@@ -328,7 +328,7 @@
 **`batch-sender.ts`** — per-contact preparation:
 
 - Per contact: suppression check (skip pro transactional stream — řádek 58), frequency cap (only broadcast — řádek 67), merge-tag resolve subject + HTML
-- Builds `messageId` (`{uuid}@forgemsg.com`)
+- Builds `messageId` (`{uuid}@example.invalid`)
 - Generates `List-Unsubscribe` headery (mailto + https) s base64url tokenem obsahujícím `{orgId, contactId, campaignId}` (řádek 84) — RFC 8058 compliant
 - `X-Mailer`, `X-ForgeMsg-Campaign`, `X-ForgeMsg-Org` debug headery
 - **Per-ISP routing**: `detectIsp(domain)` → `getMtaQueue(isp)` → bulk enqueue do mta-gmail/mta-microsoft/mta-yahoo/mta-other front (řádky 100-101)
@@ -357,7 +357,7 @@
 - `apps/api/src/db/schema/isp-fbl.ts:5-12` — `ispEnum` postrádá `seznam`, `volny`, `centrum` přestože engine je handles
 - `apps/api/src/services/sending/isp-throttle.ts:28-45` — `ISP_CONFIG` zná pouze gmail/microsoft/yahoo/other; CZ ISPs route do "other" bucket (no Seznam-specific throttle v Redis)
 - Žádný `bimi` column v `sendingDomains` (BIMI status not tracked)
-- Žádný `oneClickUnsubscribePostUrl` storage — URL je hardcoded `https://app.forgemsg.com/unsubscribe/...` v batch-sender (řádek 94)
+- Žádný `oneClickUnsubscribePostUrl` storage — URL je hardcoded `https://app.example.invalid/unsubscribe/...` v batch-sender (řádek 94)
 
 **Úplně chybějící schemas / routes** (no file found):
 
@@ -969,7 +969,7 @@ Top 15 features to build first for **CZ/SK SMB launch**, with estimates and depe
 | 8   | **Per-recipient send-time optimization** (real ML, not stub)             | Klaviyo/AC/Mailchimp Standard+ all have; raises open rates 15-30%                        | 6 days                | ClickHouse engagement view                                                 | `services/send-optimization/predict-best-hour.ts`, integrate do batch-sender                   |
 | 9   | **Time-zone delivery scheduling** (timewarp finalized)                   | Stub exists; needs worker to slice batch by recipient tz                                 | 3 days                | `send-optimization/backfill-timezones` (already there)                     | `apps/workers/src/jobs/timewarp-scheduler.ts`                                                  |
 | 10  | **Pre-send email validation** (MX + syntax + role-account)               | Mailchimp's #1 user complaint (G2 0/5); easy moat pro SMB                                | 4 days                | none                                                                       | `services/validation/email-validator.ts`, hooked into list-import + pre-send                   |
-| 11  | **Branded tracking domain auto-CNAME wizard**                            | Klaviyo / Brevo standard; clicks should hit customer's subdomain, not `app.forgemsg.com` | 4 days                | `sendingDomains` (already has `mailSubdomain`)                             | `/domains/:id/tracking-domain` + tracking.ts URL signing                                       |
+| 11  | **Branded tracking domain auto-CNAME wizard**                            | Klaviyo / Brevo standard; clicks should hit customer's subdomain, not `app.example.invalid` | 4 days                | `sendingDomains` (already has `mailSubdomain`)                             | `/domains/:id/tracking-domain` + tracking.ts URL signing                                       |
 | 12  | **Subscription preference center** (per-list opt-out, multi-lang)        | Brevo/Mailchimp/Klaviyo all have; required for granular GDPR consent                     | 6 days                | `lists`, `groups`, `signup-forms`                                          | new `apps/api/src/routes/v1/preference-center.ts`, public `/p/center/:token`, new schema       |
 | 13  | **Mailchimp merge-tag compat** (`\*                                      | FNAME                                                                                    | \*`→`{{first_name}}`) | Eases Mailchimp migration audience-side (templates already need rewrite)   | 2 days                                                                                         | merge-tags.ts | extend `apps/editor/src/render/merge-tags.ts` parser |
 | 14  | **CZ ISP enum + Seznam FBL registration**                                | `isp-fbl.ts:5` is missing CZ ISPs; needed pro any real Seznam FBL flow                   | 1 day                 | `isp-fbl` schema                                                           | extend `ispEnum`, generate migration                                                           |

@@ -88,7 +88,7 @@ export async function runQualityCheck(orgId: string, domainId: string): Promise<
     message: spfRec?.verified
       ? 'SPF record found with ForgeMsg include.'
       : 'No matching SPF TXT record found at the apex.',
-    fix: `Add this TXT record to ${domain}: ${spfRec?.value ?? 'v=spf1 include:spf.forgemsg.com ~all'}`,
+    fix: `Add this TXT record to ${domain}: ${spfRec?.value ?? 'v=spf1 include:spf.example.invalid ~all'}`,
   });
 
   // 2. DKIM — mandatory.
@@ -136,7 +136,7 @@ export async function runQualityCheck(orgId: string, domainId: string): Promise<
     message: rpRec?.verified
       ? `Return-Path CNAME on ${rpRec.hostname} resolved.`
       : `Return-Path CNAME missing at ${rpRec?.hostname ?? mailSubdomain}.`,
-    fix: `Add CNAME ${rpRec?.hostname ?? mailSubdomain} → ${rpRec?.value ?? 'return-path.forgemsg.com'}.`,
+    fix: `Add CNAME ${rpRec?.hostname ?? mailSubdomain} → ${rpRec?.value ?? 'return-path.example.invalid'}.`,
   });
 
   // 5. DMARC policy enforcement — advisory. Sending at p=none is allowed

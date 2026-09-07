@@ -277,7 +277,7 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       });
 
       // Redirect to frontend success page
-      const webBase = process.env.WEB_BASE_URL ?? 'https://app.forgemsg.io';
+      const webBase = process.env.WEB_BASE_URL ?? 'https://app.example.invalid';
       return reply.redirect(`${webBase}/settings/integrations/ecommerce/${conn.id}?installed=1`);
     },
   );
@@ -353,7 +353,7 @@ const ecommerceRoutes: FastifyPluginAsync = async (app) => {
       };
       const conn = await createConnection(orgId, { platform: 'shoptet', name, credentials });
 
-      const webBase = process.env.WEB_BASE_URL ?? 'https://app.forgemsg.io';
+      const webBase = process.env.WEB_BASE_URL ?? 'https://app.example.invalid';
       return reply.redirect(`${webBase}/settings/integrations/ecommerce/${conn.id}?installed=1`);
     },
   );

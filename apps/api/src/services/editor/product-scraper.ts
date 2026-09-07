@@ -49,7 +49,7 @@ async function fetchPageHtml(url: string): Promise<string> {
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ForgeMsg/1.0; +https://forgemsg.com)',
+        'User-Agent': 'Mozilla/5.0 (compatible; ForgeMsg/1.0; +https://example.invalid)',
         Accept: 'text/html,application/xhtml+xml',
       },
     });

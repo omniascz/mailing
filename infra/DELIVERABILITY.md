@@ -51,8 +51,8 @@ Z toho plyne všechno, co následuje.
 
 **Každá** sending IP musí mít forward + reverse DNS shoda:
 
-- A: `mta-1.mailforge.io → 49.13.X.X`
-- PTR: `49.13.X.X → mta-1.mailforge.io`
+- A: `mta-1.example.invalid → 49.13.X.X`
+- PTR: `49.13.X.X → mta-1.example.invalid`
 
 Bez tohohle Outlook a Gmail odmítnou 5xx s `policy reasons`. Hetzner umožňuje PTR setup přes Robot UI — vyřídit Týden 2.5.
 
@@ -93,7 +93,7 @@ Dedicated klienti (Pro Plan add-on):
 
 | Cesta                        | Kdo posílá                            | DKIM signing                   | DMARC alignment                              |
 | ---------------------------- | ------------------------------------- | ------------------------------ | -------------------------------------------- |
-| **Subdomain delegation**     | `klient.send.mailforge.io` od klienta | Naše klíče, naše DKIM          | Naše DMARC; klient nemusí měnit svoje DNS    |
+| **Subdomain delegation**     | `klient.send.example.invalid` od klienta | Naše klíče, naše DKIM          | Naše DMARC; klient nemusí měnit svoje DNS    |
 | **Klientova vlastní doména** | `newsletter.klientova-firma.cz`       | Klient přidá CNAME → naše DKIM | Klient přidá SPF include + DMARC; my pošleme |
 
 **Default:** klientova vlastní doména (lepší branding a deliverability). Subdomain delegation jako fallback pro klienty, co neumí editovat DNS.
@@ -102,16 +102,16 @@ Dedicated klienti (Pro Plan add-on):
 
 ```dns
 ; SPF — autorizuje naše MTAs
-klient-domena.cz.        TXT   "v=spf1 include:_spf.mailforge.io ~all"
+klient-domena.cz.        TXT   "v=spf1 include:_spf.example.invalid ~all"
 
 ; DKIM — kanonický CNAME na náš key
-mf2026._domainkey.klient-domena.cz.   CNAME   mf2026._domainkey.mailforge.io.
+mf2026._domainkey.klient-domena.cz.   CNAME   mf2026._domainkey.example.invalid.
 
 ; DMARC — minimální (quarantine; relaxed)
-_dmarc.klient-domena.cz.    TXT   "v=DMARC1; p=quarantine; rua=mailto:dmarc@mailforge.io; ruf=mailto:dmarc-forensic@mailforge.io; pct=100; adkim=r; aspf=r"
+_dmarc.klient-domena.cz.    TXT   "v=DMARC1; p=quarantine; rua=mailto:dmarc@example.invalid; ruf=mailto:dmarc-forensic@example.invalid; pct=100; adkim=r; aspf=r"
 
 ; Return-Path / bounce subdomain
-bounce.klient-domena.cz.    CNAME   bounce.mailforge.io.
+bounce.klient-domena.cz.    CNAME   bounce.example.invalid.
 ```
 
 ### 2.3 DKIM klíče
@@ -156,7 +156,7 @@ FBL = ISP nám reportuje "tenhle uživatel kliknul Mark as Spam".
 
 - Zaregistrovat FBL u všech provider který to poskytují
 - Implementovat **ARF parser** (Abuse Reporting Format, RFC 5965)
-- Endpoint `fbl@mailforge.io` přijímá zprávy → parser → `email_complaints` tabulka → trigger:
+- Endpoint `fbl@example.invalid` přijímá zprávy → parser → `email_complaints` tabulka → trigger:
   - auto-unsubscribe kontakta
   - decrement org `health_score`
   - alert v dashboardu klienta
@@ -166,7 +166,7 @@ FBL = ISP nám reportuje "tenhle uživatel kliknul Mark as Spam".
 
 Setup:
 
-1. Verifikuj `mailforge.io` v Google Search Console (TXT DNS record)
+1. Verifikuj `example.invalid` v Google Search Console (TXT DNS record)
 2. Postmaster auto-přidá doménu po dosažení ~100 emailů/den z dané sender doiméně
 3. Dashboard ukáže:
    - IP reputation (Bad / Low / Medium / High)
@@ -195,7 +195,7 @@ Po registraci dostáváš denně:
 
 ### 4.1 Problém
 
-Jeden klient s purchased listem 50 000 adres pošle kampaň → 8 % complaint rate → Gmail nás zablokuje na úrovni domény `mailforge.io` a / nebo IP poolu → **všech 200 klientů přestane doručovat**.
+Jeden klient s purchased listem 50 000 adres pošle kampaň → 8 % complaint rate → Gmail nás zablokuje na úrovni domény `example.invalid` a / nebo IP poolu → **všech 200 klientů přestane doručovat**.
 
 ### 4.2 Vrstvy izolace
 
@@ -322,7 +322,7 @@ Implementace:
 - **Right to be forgotten** — `DELETE /contacts/:id` skutečně mažeme (ne soft delete) z PG + ClickHouse (`ALTER TABLE … DELETE WHERE` async)
 - **Right to data portability** — `GET /contacts/:id/export` → JSON se všemi events
 - **DPA** — Data Processing Agreement s každým klientem (B2B), template draftnout Phase 6
-- **Sub-processor list** — veřejně na `mailforge.io/legal/subprocessors`: Hetzner, Cloudflare, Vercel, ClickHouse Cloud, Anthropic, Stripe, Doppler
+- **Sub-processor list** — veřejně na `example.invalid/legal/subprocessors`: Hetzner, Cloudflare, Vercel, ClickHouse Cloud, Anthropic, Stripe, Doppler
 - **Tracking pixel a click tracking** — under ePrivacy je TO **cookie-like tracking** a vyžaduje souhlas příjemce. Buď:
   - vypnout tracking pro EU recipients by default (klient zapne s opt-in od kontakta)
   - nebo: argumentovat "legitimate interest" pro B2B (riziko)

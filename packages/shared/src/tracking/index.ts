@@ -306,7 +306,7 @@ function shouldSkip(url: string): boolean {
  * Wrap all outbound links in the HTML with tracked redirect URLs.
  *
  * Original: `<a href="https://example.com/product">Shop now</a>`
- * Wrapped:  `<a href="https://track.forgemsg.com/track/c/{token}">Shop now</a>`
+ * Wrapped:  `<a href="https://track.example.invalid/track/c/{token}">Shop now</a>`
  *
  * UTM parameters are appended to the destination (not the tracking URL) before
  * encoding, so the redirect preserves them.

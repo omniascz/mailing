@@ -7,20 +7,20 @@ describe('evaluatePtr', () => {
   it('confirms match + FCrDNS when PTR forward-resolves back to the IP', () => {
     const r = evaluatePtr(
       '203.0.113.5',
-      'mta1.forgemsg.com',
-      ['mta1.forgemsg.com.'],
-      { 'mta1.forgemsg.com': ['203.0.113.5'] },
+      'mta1.example.invalid',
+      ['mta1.example.invalid.'],
+      { 'mta1.example.invalid': ['203.0.113.5'] },
       AT,
     );
     expect(r.matchesConfigured).toBe(true);
     expect(r.forwardConfirmed).toBe(true);
-    expect(r.resolvedPtr).toEqual(['mta1.forgemsg.com']);
+    expect(r.resolvedPtr).toEqual(['mta1.example.invalid']);
   });
 
   it('flags mismatch when the live PTR differs from the configured one', () => {
     const r = evaluatePtr(
       '203.0.113.5',
-      'mta1.forgemsg.com',
+      'mta1.example.invalid',
       ['other.example.net'],
       { 'other.example.net': ['203.0.113.5'] },
       AT,
@@ -32,9 +32,9 @@ describe('evaluatePtr', () => {
   it('is not forward-confirmed when the PTR host resolves to a different IP', () => {
     const r = evaluatePtr(
       '203.0.113.5',
-      'mta1.forgemsg.com',
-      ['mta1.forgemsg.com'],
-      { 'mta1.forgemsg.com': ['198.51.100.9'] },
+      'mta1.example.invalid',
+      ['mta1.example.invalid'],
+      { 'mta1.example.invalid': ['198.51.100.9'] },
       AT,
     );
     expect(r.matchesConfigured).toBe(true);
@@ -42,7 +42,7 @@ describe('evaluatePtr', () => {
   });
 
   it('handles an empty reverse-DNS answer', () => {
-    const r = evaluatePtr('203.0.113.5', 'mta1.forgemsg.com', [], {}, AT);
+    const r = evaluatePtr('203.0.113.5', 'mta1.example.invalid', [], {}, AT);
     expect(r.matchesConfigured).toBe(false);
     expect(r.forwardConfirmed).toBe(false);
     expect(r.resolvedPtr).toEqual([]);
@@ -51,9 +51,9 @@ describe('evaluatePtr', () => {
   it('normalises case + trailing dot', () => {
     const r = evaluatePtr(
       '203.0.113.5',
-      'MTA1.ForgeMsg.com',
-      ['mta1.forgemsg.com.'],
-      { 'mta1.forgemsg.com': ['203.0.113.5'] },
+      'MTA1.example.invalid',
+      ['mta1.example.invalid.'],
+      { 'mta1.example.invalid': ['203.0.113.5'] },
       AT,
     );
     expect(r.matchesConfigured).toBe(true);

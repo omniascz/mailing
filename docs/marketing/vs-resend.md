@@ -1,6 +1,6 @@
 # MailForge vs Resend
 
-> Source content for `mailforge.io/vs/resend`. Pure markdown — the
+> Source content for `example.invalid/vs/resend`. Pure markdown — the
 > marketing-site renderer pulls headings + tables + code blocks
 > directly. Update here and the site picks it up on next deploy.
 
@@ -138,7 +138,7 @@ easily.
 
 ## Migration tools
 
-- `mailforge.io/migrate-from-resend` — one-click contact + suppression
+- `example.invalid/migrate-from-resend` — one-click contact + suppression
   import via Resend's API key.
 - `@forgemsg/react-email` — drop-in adapter so existing templates work
   without changes.

@@ -9,7 +9,7 @@ describe('buildDnsRecords', () => {
     mailSubdomain: 'mail.acme.cz',
     dkimSelector: 'fm1',
     dkimPublicKey: 'PUBLICKEY==',
-    dmarcEmail: 'dmarc@forgemsg.com',
+    dmarcEmail: 'dmarc@example.invalid',
   };
 
   it('returns 5 records', () => {
@@ -45,7 +45,7 @@ describe('buildDnsRecords', () => {
     expect(dmarc!.hostname).toBe('_dmarc.acme.cz');
     expect(dmarc!.value).toMatch(/v=DMARC1/);
     expect(dmarc!.value).toMatch(/p=quarantine/);
-    expect(dmarc!.value).toContain('dmarc@forgemsg.com');
+    expect(dmarc!.value).toContain('dmarc@example.invalid');
   });
 
   it('includes a Return-Path CNAME record', () => {

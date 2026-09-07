@@ -9,7 +9,7 @@ global:
     tag: '' # Set per deploy from CI. Falls back to .Chart.AppVersion.
     pullSecrets: [] # e.g. [ghcr-pull]
   environment: staging
-  domain: staging.forgemsg.com
+  domain: staging.example.invalid
 
   # Reference an externally-managed Secret (created by ops or external-secrets).
   #
@@ -72,7 +72,7 @@ api:
   ingress:
     enabled: true
     className: alb
-    host: api.staging.forgemsg.com
+    host: api.staging.example.invalid
     annotations:
       alb.ingress.kubernetes.io/scheme: internet-facing
       alb.ingress.kubernetes.io/target-type: ip
@@ -110,7 +110,7 @@ voiceBot:
   ingress:
     enabled: true
     className: alb
-    host: voice.staging.forgemsg.com
+    host: voice.staging.example.invalid
     annotations:
       alb.ingress.kubernetes.io/scheme: internet-facing
       alb.ingress.kubernetes.io/target-type: ip

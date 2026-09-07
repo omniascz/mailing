@@ -20,7 +20,7 @@ Registered office: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
 Company number (IČO): **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
 VAT ID (DIČ): **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
 Represented by: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
-Data-protection contact: `dpo@mailforge.io`
+Data-protection contact: `dpo@example.invalid`
 
 **Controller**
 Name: **\*\***\*\*\*\***\*\***\_\_\_\_**\*\***\*\*\*\***\*\***
@@ -206,7 +206,7 @@ include:
 
 - Nature of the breach + approximate number of data subjects + records.
 - The likely consequences and the measures taken or proposed.
-- The Processor's data-protection contact at `dpo@mailforge.io` for
+- The Processor's data-protection contact at `dpo@example.invalid` for
   follow-up.
 
 The Processor will assist the Controller in meeting the Controller's

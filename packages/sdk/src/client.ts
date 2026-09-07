@@ -9,7 +9,7 @@ import type {
   PaginationOptions,
 } from './types.js';
 
-const DEFAULT_BASE_URL = 'https://api.forgemsg.io';
+const DEFAULT_BASE_URL = 'https://api.example.invalid';
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_TIMEOUT = 30_000;
 

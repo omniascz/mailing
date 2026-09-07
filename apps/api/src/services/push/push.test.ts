@@ -74,7 +74,7 @@ describe('WebPushAdapter', () => {
     adapter = new WebPushAdapter({
       vapidPublicKey: keys.publicKey,
       vapidPrivateKey: keys.privateKey,
-      vapidSubject: 'mailto:test@forgemsg.com',
+      vapidSubject: 'mailto:test@example.invalid',
     });
     resetChain();
   });
@@ -198,7 +198,7 @@ describe('getMatchingMessages — targeting', () => {
 
     const msgs = await getMatchingMessages('org1', {
       sessionId: 'sess-1',
-      pageUrl: 'https://app.forgemsg.com/pricing?tab=annual',
+      pageUrl: 'https://app.example.invalid/pricing?tab=annual',
     });
     expect(msgs).toHaveLength(1);
   });

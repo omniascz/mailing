@@ -35,7 +35,7 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
       return reply.code(201).send({
         data: {
           ...cred,
-          host: process.env.SMTP_SUBMISSION_HOST ?? 'smtp.forgemsg.io',
+          host: process.env.SMTP_SUBMISSION_HOST ?? 'smtp.example.invalid',
           // 587 (STARTTLS) only. 465 was advertised but the submission server
           // speaks plaintext-first and has no implicit-TLS listener, so a 465
           // client (TLS from the first byte) cannot connect — advertising it was

@@ -1,7 +1,7 @@
 /**
  * Instatus REST client (Sprint H.5).
  *
- * Instatus is a third-party status page (status.mailforge.io). We push
+ * Instatus is a third-party status page (status.example.invalid). We push
  * incidents to it whenever monitoring detects a service-level signal;
  * Instatus then handles subscriber email + SMS + Atom feed delivery.
  *

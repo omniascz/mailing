@@ -81,9 +81,10 @@ describe('MARKETING_POSTS fixtures', () => {
 
   it('every body ends with a CTA link', () => {
     for (const p of MARKETING_POSTS) {
-      expect(/\[.+\]\(https?:\/\/mailforge\.io\//.test(p.body), `${p.slug}: missing CTA link`).toBe(
-        true,
-      );
+      expect(
+        /\[.+\]\(https?:\/\/example\.invalid\//.test(p.body),
+        `${p.slug}: missing CTA link`,
+      ).toBe(true);
     }
   });
 });

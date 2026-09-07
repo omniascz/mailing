@@ -1,18 +1,18 @@
 global:
   environment: staging
-  domain: staging.forgemsg.com
+  domain: staging.example.invalid
   image:
     repositoryPrefix: forgemsg-org/forgemsg
 
 api:
   replicaCount: 2
   ingress:
-    host: api.staging.forgemsg.com
+    host: api.staging.example.invalid
 
 voiceBot:
   replicaCount: 1
   ingress:
-    host: voice.staging.forgemsg.com
+    host: voice.staging.example.invalid
 
 workers:
   replicaCount: 2

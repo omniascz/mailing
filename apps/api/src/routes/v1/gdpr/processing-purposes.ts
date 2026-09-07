@@ -181,7 +181,7 @@ export default async function gdprPurposesRoutes(app: FastifyInstance) {
     const { generatePreferenceCentreToken } =
       await import('../../../services/gdpr/preference-centre.js');
     const token = generatePreferenceCentreToken(req.user!.orgId, contactId);
-    const baseUrl = process.env['APP_BASE_URL'] ?? 'https://app.forgemsg.com';
+    const baseUrl = process.env['APP_BASE_URL'] ?? 'https://app.example.invalid';
     const url = `${baseUrl}/preferences?token=${token}`;
     return reply.send({ data: { token, url } });
   });

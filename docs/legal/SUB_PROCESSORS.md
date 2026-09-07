@@ -60,7 +60,7 @@ Kafka) is **not** sub-processing — that is Mailforge's own processing.
 
 ### Cloudflare, Inc.
 
-- **Purpose**: DNS (mailforge.io zone), CDN for static assets,
+- **Purpose**: DNS (example.invalid zone), CDN for static assets,
   Workers (tracking pixel + click redirect endpoints). Acts as a
   TLS-terminating proxy; receives recipient IP + user-agent when an
   email is opened or a link is clicked, forwards to Hetzner-hosted

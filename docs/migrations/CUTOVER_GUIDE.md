@@ -115,10 +115,10 @@ brand benefits from any reputation Mailforge builds on shared IPs.
 5. Optional: configure `mailSubdomain` (e.g. `mail.your-domain.com`) and
    verify it too. Mailforge then signs from that subdomain and routes
    tracking pixels + click redirects through it — your recipients see
-   `your-domain.com` everywhere, not `mailforge.io`.
+   `your-domain.com` everywhere, not `example.invalid`.
 
 **Strategy B — Mailforge-hosted subdomain.**
-Faster setup but `forgemsg.com` shows in some headers. Fine for early
+Faster setup but `example.invalid` shows in some headers. Fine for early
 beta sends; revisit when you have time for DNS.
 
 ### Hour 3 — Send a test batch
@@ -145,7 +145,7 @@ first 7–14 days of sending. You don't have to do anything — the
 default schedule is conservative.
 
 For high-volume orgs (>500K sends/day on the source), email
-`support@mailforge.io` after Hour 3 — we'll allocate a dedicated IP
+`support@example.invalid` after Hour 3 — we'll allocate a dedicated IP
 and schedule a managed warm-up against your historical volume.
 
 ---

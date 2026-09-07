@@ -14,7 +14,7 @@ from .resources.contacts import ContactsResource
 from .resources.events import EventsResource
 
 
-DEFAULT_BASE_URL = "https://api.forgemsg.io"
+DEFAULT_BASE_URL = "https://api.example.invalid"
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_TIMEOUT = 30
 
