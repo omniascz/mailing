@@ -30,7 +30,15 @@ export default async function internalBlacklistCheckRoutes(app: FastifyInstance)
     if (query.ip) {
       const result = await refreshIpBlacklist(query.ip);
       return {
-        data: { checked: 1, listed: result.totalListings > 0 ? 1 : 0, details: [result] },
+        data: {
+          checked: 1,
+          listed: result.totalListings > 0 ? 1 : 0,
+          // A zone that refused or did not answer is not a clean IP. Reporting
+          // only `listed` would let "we could not read Spamhaus" arrive as
+          // "nothing lists this address".
+          inconclusive: result.inconclusive ? 1 : 0,
+          details: [result],
+        },
       };
     }
 
