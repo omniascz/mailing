@@ -117,6 +117,9 @@ describe('prodRequired — production must not fall back to a committed default'
     // that sends mail signs it, so a production API without this key can
     // neither store a new DKIM key nor read an existing one.
     DKIM_MASTER_KEY: 'f'.repeat(64),
+    // prodRequired: the SPF include, Return-Path target and bounce MX printed
+    // in a customer's DNS instructions all derive from it.
+    PLATFORM_DOMAIN: 'ops.example.com',
   };
 
   it('production without MINIO_BUCKET is refused, and the message names it', async () => {
@@ -327,9 +330,9 @@ describe('prodRequired — production must not fall back to a committed default'
       // the four system-sender fallbacks, on four domains, two of them ours
       // and two of them not
       'no-reply@example.com',
-      'noreply@forgemsg.com',
-      'no-reply@forgemsg.io',
-      'reports@forgemsg.com',
+      'noreply@example.invalid',
+      'no-reply@example.invalid',
+      'reports@example.invalid',
     ]) {
       expect(values).not.toContain(banned);
     }
@@ -496,6 +499,7 @@ describe('optional-by-design secrets', () => {
       WHATSAPP_VERIFY_TOKEN: 'a-real-whatsapp-verify-tok',
       FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
       TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
+      PLATFORM_DOMAIN: 'ops.example.com',
       // Required in production since DKIM keys are encrypted at rest. Listed
       // here so this case still exercises what it is about — HIPAA_FIELD_KEY
       // being optional — rather than failing on an unrelated missing variable.
@@ -595,6 +599,111 @@ describe('optional-by-design secrets', () => {
  * so nothing downstream could tell "unconfigured" from "configured as
  * example.com". Both now stop the boot.
  */
+/**
+ * PLATFORM_DOMAIN — the one name for the domain this deployment is operated on.
+ *
+ * Everything that has to name US rather than the customer derives from it: the
+ * SPF include, the Return-Path CNAME target and the bounce MX printed in a
+ * customer's DNS instructions, and the DMARC rua address in the same block.
+ * Those three used to be committed constants on a vendor domain registered to
+ * nobody, which a customer would have copied into their own zone
+ * — an SPF include that does not resolve makes the whole record a permerror.
+ *
+ * In production it is required. Everywhere else it defaults to
+ * `example.invalid`, reserved by RFC 2606 so it can never resolve: the
+ * difference between a placeholder and #85 is whether it looks like it works.
+ */
+describe('PLATFORM_DOMAIN — required in production, obviously invalid elsewhere', () => {
+  /** Everything a production boot needs, so a case fails on its own field. */
+  const prodBase = () =>
+    ({
+      NODE_ENV: 'production',
+      ...REQUIRED,
+      API_PUBLIC_URL: 'https://api.example.com',
+      APP_URL: 'https://app.example.com',
+      SESSION_SECRET: 'a-real-session-secret-at-least-32-chars',
+      INTERNAL_API_SECRET: 'a-real-internal-secret-at-least-32-chars',
+      DMARC_INBOUND_SECRET: 'a-real-dmarc-secret-16+',
+      MINIO_ACCESS_KEY: 'real-access-key',
+      MINIO_SECRET_KEY: 'real-secret-key',
+      STRIPE_SECRET_KEY: 'sk_live_real_key',
+      STRIPE_WEBHOOK_SECRET: 'whsec_real_secret',
+      MINIO_ENDPOINT: 'minio.internal',
+      MINIO_BUCKET: 'prod-bucket',
+      MINIO_VIDEO_BUCKET: 'prod-video-bucket',
+      ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
+      INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
+      FORM_AUTOFILL_SECRET: 'a-real-form-autofill-secret-32-chars',
+      PREFERENCE_CENTRE_SECRET: 'a-real-preference-centre-secret-32ch',
+      FBL_WEBHOOK_SECRET: 'a-real-fbl-webhook-secret-32-chars-x',
+      META_WEBHOOK_VERIFY_TOKEN: 'a-real-meta-verify-token',
+      WHATSAPP_VERIFY_TOKEN: 'a-real-whatsapp-verify-tok',
+      FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
+      TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
+      DKIM_MASTER_KEY: 'f'.repeat(64),
+      PLATFORM_DOMAIN: 'ops.example.com',
+    }) as NodeJS.ProcessEnv;
+
+  it('defaults to a domain that cannot resolve outside production', async () => {
+    process.env = { NODE_ENV: 'development', ...REQUIRED } as NodeJS.ProcessEnv;
+    const { env } = await import('./env.js');
+    expect(env.PLATFORM_DOMAIN).toBe('example.invalid');
+  });
+
+  it('refuses to boot in production when it is missing', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const e = prodBase();
+    delete (e as Record<string, string | undefined>).PLATFORM_DOMAIN;
+    process.env = e;
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+    expect(
+      spy.mock.calls.flat().join(' '),
+      'the failure has to name the variable — an operator reads this line, not the stack',
+    ).toMatch(/PLATFORM_DOMAIN/);
+    spy.mockRestore();
+  });
+
+  it('refuses to boot in production when it is set but EMPTY', async () => {
+    // The half `??` never catches. A deploy that passes every variable through
+    // unconditionally sends '' for the ones nobody filled in, and `?? default`
+    // hands back the empty string rather than the default — which is how #85
+    // put a dev secret into production.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env = { ...prodBase(), PLATFORM_DOMAIN: '' };
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+    expect(spy.mock.calls.flat().join(' ')).toMatch(/PLATFORM_DOMAIN/);
+    spy.mockRestore();
+  });
+
+  it('refuses a URL where a bare domain belongs', async () => {
+    // The value is pasted into DNS records verbatim. `https://example.com` in
+    // an SPF include is not a near-miss, it is an unparseable record.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env = { ...prodBase(), PLATFORM_DOMAIN: 'https://example.com' };
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+    expect(spy.mock.calls.flat().join(' ')).toMatch(/PLATFORM_DOMAIN/);
+    spy.mockRestore();
+  });
+
+  it('refuses a single label, which cannot carry the records either', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env = { ...prodBase(), PLATFORM_DOMAIN: 'localhost' };
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+    expect(spy.mock.calls.flat().join(' ')).toMatch(/PLATFORM_DOMAIN/);
+    spy.mockRestore();
+  });
+
+  it('accepts a real bare domain in production', async () => {
+    process.env = { ...prodBase(), PLATFORM_DOMAIN: 'ops.example.com' };
+    const { env } = await import('./env.js');
+    expect(env.PLATFORM_DOMAIN).toBe('ops.example.com');
+  });
+});
+
 describe('SYSTEM_EMAIL_FROM — one sender, validated at boot', () => {
   /** REQUIRED minus one field, so each absence is tested on its own. Removing
    * both at once would let either requirement alone carry the assertion. */

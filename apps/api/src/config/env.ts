@@ -319,8 +319,46 @@ const Env = z
     INSTATUS_API_KEY: z.string().optional(),
     INSTATUS_PAGE_ID: z.string().optional(),
 
+    // ─── Our own domain ───────────────────────────────────────────────────────
+    // The domain this deployment is operated on. Everything that has to name
+    // US rather than the customer derives from it: the SPF include, the
+    // Return-Path CNAME target and the bounce MX we print in a customer's DNS
+    // instructions, and the DMARC rua address in the same block.
+    //
+    // One variable rather than four, because it is one decision, and four
+    // variables is three chances to set three of them and forget the fourth.
+    //
+    // The dev default is `example.invalid` on purpose. RFC 2606 reserves
+    // `.invalid` so it can never resolve, which is the whole difference from
+    // the previous values — `example.invalid` and `example.invalid` are registered to
+    // nobody but look entirely plausible on the screen where a customer copies
+    // them into their zone. #85 is the same shape: a value that looks like it
+    // works is the one that gets deployed.
+    PLATFORM_DOMAIN: prodRequired(
+      z
+        .string()
+        .min(1, 'PLATFORM_DOMAIN must not be empty')
+        .regex(
+          /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)([.](?!-)[A-Za-z0-9-]{1,63}(?<!-))+$/,
+          'PLATFORM_DOMAIN must be a bare domain such as example.com — no scheme, no path, no @',
+        ),
+      'example.invalid',
+    ),
+
     // ─── Email / DMARC / deliverability ───────────────────────────────────────
-    DMARC_REPORT_EMAIL: z.string().email().default('dmarc-reports@forgemsg.com'),
+    // No default here. It used to carry `dmarc-reports@example.invalid`, and two
+    // other files read `process.env.DMARC_REPORT_EMAIL` directly with their own
+    // fallbacks — one of them `dmarc@example.invalid`, a different mailbox. Three
+    // readers, two answers, and the one printed in the customer's DNS
+    // instructions depended on which file happened to build the record.
+    //
+    // Now it is optional here and resolved in one place below, from
+    // PLATFORM_DOMAIN, so an unset variable produces one address rather than
+    // two.
+    DMARC_REPORT_EMAIL: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      z.string().email('DMARC_REPORT_EMAIL must be a valid email address').optional(),
+    ),
 
     // ─── System mail sender ───────────────────────────────────────────────────
     // One name for one thing. There used to be three — SYSTEM_EMAIL_FROM,
@@ -571,7 +609,23 @@ try {
 // a list of names; a boolean would have made them go and read the code.
 console.log(`[env] ${resolved.summary}`);
 
-export const env: Env & { BEYOND_CORE_ENABLED: ReadonlySet<BeyondCoreGroup> } = {
+/**
+ * The address DMARC aggregate reports are asked to go to.
+ *
+ * Resolved once, here, rather than at each call site. Three files used to read
+ * `process.env.DMARC_REPORT_EMAIL` with their own `??` fallback and two of the
+ * three disagreed about the mailbox, so which address a customer was told to
+ * publish depended on which code path built the record.
+ *
+ * `??` is not enough on its own — it does not treat '' as absent — so the
+ * schema preprocesses an empty string to undefined before this runs.
+ */
+export const dmarcReportEmail = (): string =>
+  base.DMARC_REPORT_EMAIL ?? `dmarc-reports@${base.PLATFORM_DOMAIN ?? 'example.invalid'}`;
+
+export const env: Env & {
+  BEYOND_CORE_ENABLED: ReadonlySet<BeyondCoreGroup>;
+} = {
   ...base,
   BEYOND_CORE_ENABLED: resolved.enabled,
 };
