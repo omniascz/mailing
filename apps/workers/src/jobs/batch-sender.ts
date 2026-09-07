@@ -386,14 +386,20 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   // its pool). Empty → the engine picks from the default/shared pool. This
   // wires org→pool→IP through to the MTA (previously sendingIp was hardcoded '').
   let sendingIp = '';
+  // Kept alongside the address so the batch's volume can be charged to the row
+  // it came from. recordIpSend is keyed by id, so a value naming no registered
+  // IP updates nothing instead of creating a reputation row for it.
+  let sendingIpId: string | null = null;
   try {
     const { pickIpForSend } = await import('@forgemsg/api/services/dedicated-ips');
     // Use the configuration set's IP pool when the campaign specifies one.
     const ip = await pickIpForSend(data.orgId, data.ipPoolId);
     sendingIp = ip?.ipAddress ?? '';
+    sendingIpId = ip?.id ?? null;
   } catch (err) {
     rethrowIfAuthError(err);
     sendingIp = '';
+    sendingIpId = null;
   }
 
   // VERP bounce domain — when set, each message gets a Return-Path encoding its
@@ -645,6 +651,25 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
 
   for (const [queue, jobs] of byQueue) {
     await queue.addBulk(jobs.map((j) => ({ name: j.name, data: j.data, opts: j.opts })));
+  }
+
+  // Charge the IP for the batch, after the jobs are on the queue.
+  //
+  // The same reading as recordFrequencySend six lines above: the count is
+  // taken once the messages are committed to being sent, not once each lands,
+  // because the thing being rationed is connections the receiving ISP sees.
+  // pickIpForSend orders by this column and gates a warming IP on it, so a
+  // batch that does not report leaves both reads looking at a zero — which is
+  // exactly the state this replaces. Best-effort: a batch that has done its
+  // work must not be retried because the bookkeeping failed.
+  if (sendingIpId && sent > 0) {
+    try {
+      const { recordIpSend } = await import('@forgemsg/api/services/dedicated-ips');
+      await recordIpSend(sendingIpId, sent);
+    } catch (err) {
+      rethrowIfAuthError(err);
+      console.error('[batch-sender] recordIpSend failed:', err);
+    }
   }
 
   job.log(`Batch ${data.batchIndex}: sent=${sent}, skipped=${skipped}`);
