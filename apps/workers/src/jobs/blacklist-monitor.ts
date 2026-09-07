@@ -49,11 +49,14 @@ async function processBlacklistMonitor(job: Job<BlacklistMonitorJobData>) {
   }
 
   const body = (await res.json()) as {
-    data: { checked: number; listed: number; details: unknown[] };
+    data: { checked: number; listed: number; inconclusive?: number; details: unknown[] };
   };
   const { checked, listed } = body.data;
+  const inconclusive = body.data.inconclusive ?? 0;
 
-  job.log(`[blacklist-monitor] Done — checked ${checked} IPs, ${listed} listed`);
+  job.log(
+    `[blacklist-monitor] Done — checked ${checked} IPs, ${listed} listed, ${inconclusive} inconclusive`,
+  );
 
   if (listed > 0) {
     console.warn(
@@ -61,7 +64,19 @@ async function processBlacklistMonitor(job: Job<BlacklistMonitorJobData>) {
     );
   }
 
-  return { checked, listed };
+  // Said separately from `listed`, because it is a different problem with a
+  // different fix: the zones we could not read tell us nothing about these
+  // addresses, and a run that reports 0 listed out of 4 checked while 4 were
+  // unreadable is the run that would be believed.
+  if (inconclusive > 0) {
+    console.warn(
+      `[blacklist-monitor] ${inconclusive}/${checked} IPs could not be checked completely — ` +
+        `a zone refused or did not answer. This is not a clean result. ` +
+        `A refusal is usually 127.255.255.254: the query left through a public resolver.`,
+    );
+  }
+
+  return { checked, listed, inconclusive };
 }
 
 /** Schedule a repeatable check every 6 hours. Call once on worker boot. */
