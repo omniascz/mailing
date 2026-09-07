@@ -71,7 +71,7 @@ const deliverabilityRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { domain } = domainQuery.parse(req.query);
-      const result = await fetchAllReputation(domain);
+      const result = await fetchAllReputation(req.user!.orgId, domain);
       return reply.send({ data: result });
     },
   );
@@ -96,19 +96,31 @@ const deliverabilityRoutes: FastifyPluginAsync = async (app) => {
         .parse(req.params);
       const { domain } = domainQuery.parse(req.query);
 
+      // The keys were missing here and present on the aggregate route, so this
+      // one answered "API key not configured" even on a deployment that had
+      // configured them. Same source, same defaults, one place they come from.
+      const orgId = req.user!.orgId;
       let result;
       switch (provider) {
         case 'senderscore':
-          result = await fetchSenderScore(domain);
+          result = await fetchSenderScore(orgId, domain, process.env['SENDERSCORE_API_KEY']);
           break;
         case 'google_postmaster':
-          result = await fetchGooglePostmaster(domain);
+          result = await fetchGooglePostmaster(
+            orgId,
+            domain,
+            process.env['GOOGLE_POSTMASTER_TOKEN'],
+          );
           break;
         case 'microsoft_snds':
-          result = await fetchMicrosoftSNDS(domain);
+          result = await fetchMicrosoftSNDS(orgId, domain, process.env['MICROSOFT_SNDS_API_KEY']);
           break;
         case 'seznam_postmaster':
-          result = await fetchSeznamPostmaster(domain);
+          result = await fetchSeznamPostmaster(
+            orgId,
+            domain,
+            process.env['SEZNAM_POSTMASTER_API_KEY'],
+          );
           break;
       }
       return reply.send({ data: result });
