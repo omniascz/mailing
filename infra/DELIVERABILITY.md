@@ -91,10 +91,10 @@ Dedicated klienti (Pro Plan add-on):
 
 ### 2.1 Sender domény — dvě cesty
 
-| Cesta                        | Kdo posílá                            | DKIM signing                   | DMARC alignment                              |
-| ---------------------------- | ------------------------------------- | ------------------------------ | -------------------------------------------- |
+| Cesta                        | Kdo posílá                               | DKIM signing                   | DMARC alignment                              |
+| ---------------------------- | ---------------------------------------- | ------------------------------ | -------------------------------------------- |
 | **Subdomain delegation**     | `klient.send.example.invalid` od klienta | Naše klíče, naše DKIM          | Naše DMARC; klient nemusí měnit svoje DNS    |
-| **Klientova vlastní doména** | `newsletter.klientova-firma.cz`       | Klient přidá CNAME → naše DKIM | Klient přidá SPF include + DMARC; my pošleme |
+| **Klientova vlastní doména** | `newsletter.klientova-firma.cz`          | Klient přidá CNAME → naše DKIM | Klient přidá SPF include + DMARC; my pošleme |
 
 **Default:** klientova vlastní doména (lepší branding a deliverability). Subdomain delegation jako fallback pro klienty, co neumí editovat DNS.
 
