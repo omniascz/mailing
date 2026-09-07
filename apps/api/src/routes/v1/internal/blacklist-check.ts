@@ -22,6 +22,7 @@ import {
   refreshAllIpBlacklists,
   refreshIpBlacklist,
 } from '../../../services/deliverability/blacklist-monitor.js';
+import { recordAndAlert } from '../../../services/deliverability/blacklist-alerts.js';
 
 export default async function internalBlacklistCheckRoutes(app: FastifyInstance) {
   app.post('/api/v1/internal/blacklist-check', { schema: { tags: ['Internal'] } }, async (req) => {
@@ -29,8 +30,10 @@ export default async function internalBlacklistCheckRoutes(app: FastifyInstance)
 
     if (query.ip) {
       const result = await refreshIpBlacklist(query.ip);
+      const alerts = await recordAndAlert([result]);
       return {
         data: {
+          alerts,
           checked: 1,
           listed: result.totalListings > 0 ? 1 : 0,
           // A zone that refused or did not answer is not a clean IP. Reporting
@@ -43,6 +46,12 @@ export default async function internalBlacklistCheckRoutes(app: FastifyInstance)
     }
 
     const result = await refreshAllIpBlacklists();
-    return { data: result };
+
+    // The sweep has run on a six-hourly cron since it was written and told
+    // nobody anything — it set a column and logged a line. This is where a
+    // finding leaves the process.
+    const alerts = await recordAndAlert(result.details);
+
+    return { data: { ...result, alerts } };
   });
 }
