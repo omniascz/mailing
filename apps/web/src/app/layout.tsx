@@ -3,7 +3,7 @@ import { ToastProvider } from '@/components/ui/toast';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ForgeMsg',
+  title: 'MailForge',
   description: 'Unified omnichannel messaging platform',
 };
 

@@ -73,7 +73,7 @@ export default async function MarketplacePage() {
       <header className="mb-8">
         <h1 className="text-2xl font-semibold text-secondary-900">Integrations marketplace</h1>
         <p className="mt-1 text-sm text-secondary-500">
-          Browse everything ForgeMsg connects to — plus Zapier and the developer API.
+          Browse everything MailForge connects to — plus Zapier and the developer API.
         </p>
       </header>
 

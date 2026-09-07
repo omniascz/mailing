@@ -139,7 +139,7 @@ export function NewCampaignForm({ lists }: { lists: AudienceList[] }) {
           />
           <Input
             label="From name"
-            placeholder="ForgeMsg Team"
+            placeholder="MailForge Team"
             value={fromName}
             onChange={(e) => setFromName(e.target.value)}
           />

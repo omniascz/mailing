@@ -248,7 +248,7 @@ export function EditCampaignForm({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Input
           label="From name"
-          placeholder="ForgeMsg Team"
+          placeholder="MailForge Team"
           value={fromName}
           onChange={(e) => setFromName(e.target.value)}
           disabled={disabled}

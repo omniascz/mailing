@@ -166,7 +166,7 @@ export function Sidebar({ capabilities = NOTHING_AVAILABLE }: { capabilities?: C
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-secondary-200 bg-white lg:flex">
       <div className="flex h-16 items-center gap-2 border-b border-secondary-200 px-6">
         <div className="h-8 w-8 rounded-md bg-primary-600" aria-hidden="true" />
-        <span className="text-base font-semibold text-secondary-900">ForgeMsg</span>
+        <span className="text-base font-semibold text-secondary-900">MailForge</span>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">

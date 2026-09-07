@@ -1,5 +1,5 @@
 /**
- * Thin API client for the ForgeMsg mobile app.
+ * Thin API client for the MailForge mobile app.
  * Sends the stored API key as `x-api-key` and unwraps the `{ data }` envelope.
  */
 

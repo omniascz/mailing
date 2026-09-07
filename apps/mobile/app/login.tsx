@@ -44,7 +44,7 @@ export default function Login() {
       style={styles.container}
     >
       <View style={styles.card}>
-        <Text style={styles.brand}>ForgeMsg</Text>
+        <Text style={styles.brand}>MailForge</Text>
         <Text style={styles.subtitle}>Sign in with your API key</Text>
 
         <Text style={styles.label}>API base URL</Text>
@@ -55,7 +55,7 @@ export default function Login() {
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="url"
-          placeholder="https://api.forgemsg.io"
+          placeholder="https://api.example.invalid"
         />
 
         <Text style={styles.label}>API key</Text>
@@ -80,7 +80,7 @@ export default function Login() {
         </TouchableOpacity>
 
         <Text style={styles.hint}>
-          Create an API key in the ForgeMsg dashboard under Settings → API keys.
+          Create an API key in the MailForge dashboard under Settings → API keys.
         </Text>
       </View>
     </KeyboardAvoidingView>

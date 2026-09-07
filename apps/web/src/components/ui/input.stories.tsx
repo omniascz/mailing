@@ -55,7 +55,7 @@ export const Disabled: Story = {
 
 export const WithValue: Story = {
   args: {
-    value: 'alice@forgemsg.com',
+    value: 'alice@example.invalid',
   },
 };
 
