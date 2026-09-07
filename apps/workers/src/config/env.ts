@@ -128,6 +128,45 @@ const Env = z.object({
   //
   // Setting this is necessary, not sufficient: the domain also needs MX
   // pointing at the inbound receiver, which is ops, not code.
+  // ─── Our own domain ────────────────────────────────────────────────────────
+  // The domain this deployment is operated on, used wherever a message has to
+  // name us rather than the customer: the right-hand side of a Message-ID, and
+  // the mailbox in a List-Unsubscribe mailto.
+  //
+  // It was `example.invalid`, hard-coded twice in batch-sender, and that domain is
+  // not registered. A Message-ID whose domain does not exist is a weak spam
+  // signal on its own; a List-Unsubscribe mailto pointing at a mailbox nobody
+  // reads is worse, because Gmail's and Yahoo's bulk-sender rules require the
+  // unsubscribe to work and a bouncing one counts against the sender.
+  //
+  // The dev default is `example.invalid` on purpose. RFC 2606 reserves
+  // `.invalid` precisely so it can never resolve, which is the difference
+  // between a placeholder and #85: a value that looks like it works gets
+  // deployed, and one that obviously cannot does not.
+  PLATFORM_DOMAIN: prodRequired(
+    z
+      .string()
+      .min(1, 'PLATFORM_DOMAIN must not be empty')
+      .regex(
+        /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)([.](?!-)[A-Za-z0-9-]{1,63}(?<!-))+$/,
+        'PLATFORM_DOMAIN must be a bare domain such as example.com — no scheme, no path, no @',
+      ),
+    'example.invalid',
+  ),
+
+  // Mailbox behind the List-Unsubscribe mailto, when there is one.
+  //
+  // Optional, and empty means absent — the shape REPORTS_FROM_EMAIL uses, for
+  // the same reason: a deploy that passes every variable through has no other
+  // way to say "not set". When it is absent, batch-sender emits the https URI
+  // ALONE rather than inventing a mailbox. RFC 8058 one-click only needs the
+  // https form, and an advertised address that bounces is a worse answer than
+  // not advertising one.
+  UNSUBSCRIBE_MAILBOX: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().email('UNSUBSCRIBE_MAILBOX must be a valid email address').optional(),
+  ),
+
   VERP_BOUNCE_DOMAIN: prodRequired(
     z
       .string()

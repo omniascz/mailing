@@ -19,6 +19,6 @@ export async function getPushAdapterForOrg(orgId: string): Promise<WebPushAdapte
   return new WebPushAdapter({
     vapidPublicKey: key.publicKey,
     vapidPrivateKey: key.privateKey,
-    vapidSubject: `mailto:${process.env.VAPID_EMAIL ?? 'push@forgemsg.com'}`,
+    vapidSubject: `mailto:${process.env.VAPID_EMAIL ?? 'push@example.invalid'}`,
   });
 }

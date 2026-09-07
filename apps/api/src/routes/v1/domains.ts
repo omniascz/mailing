@@ -9,6 +9,7 @@
  *  - POST   /api/v1/domains/:id/verify          — trigger DNS verification for all records
  */
 
+import { dmarcReportEmail } from '../../config/env.js';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, desc, eq } from 'drizzle-orm';
@@ -36,7 +37,7 @@ import { env } from '../../config/env.js';
 
 const domainParam = z.object({ id: z.string().uuid() });
 
-const DMARC_REPORT_EMAIL = process.env.DMARC_REPORT_EMAIL ?? 'dmarc-reports@forgemsg.com';
+const DMARC_REPORT_EMAIL = dmarcReportEmail();
 
 export default async function domainRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);

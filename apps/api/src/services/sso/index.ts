@@ -129,7 +129,7 @@ export async function buildLoginUrl(orgId: string, redirectUri: string): Promise
   }
 
   // SAML: SP-initiated SSO — generate deflated AuthnRequest redirect URL
-  const spEntityId = process.env.APP_URL ?? 'https://app.forgemsg.com';
+  const spEntityId = process.env.APP_URL ?? 'https://app.example.invalid';
   const acsUrl = `${spEntityId}/api/v1/sso/saml/acs`;
   return buildSamlRedirectUrl(
     { entityId: spEntityId, acsUrl },
@@ -143,7 +143,7 @@ export async function buildLoginUrl(orgId: string, redirectUri: string): Promise
 }
 
 export function getSpMetadataXml(_orgId: string): string {
-  const spEntityId = process.env.APP_URL ?? 'https://app.forgemsg.com';
+  const spEntityId = process.env.APP_URL ?? 'https://app.example.invalid';
   const acsUrl = `${spEntityId}/api/v1/sso/saml/acs`;
   return buildSpMetadataXml({ entityId: spEntityId, acsUrl });
 }
@@ -207,7 +207,7 @@ export async function processSamlAcs(
   if (!cfg || cfg.type !== 'saml') throw AppError.badRequest('SAML not configured');
   if (!cfg.samlCertificate) throw AppError.badRequest('SAML certificate not configured');
 
-  const spEntityId = process.env.APP_URL ?? 'https://app.forgemsg.com';
+  const spEntityId = process.env.APP_URL ?? 'https://app.example.invalid';
   const acsUrl = `${spEntityId}/api/v1/sso/saml/acs`;
 
   let attrs;

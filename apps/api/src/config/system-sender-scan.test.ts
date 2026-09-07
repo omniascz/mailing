@@ -45,9 +45,9 @@ const FAMILY = [
 /** The fallbacks that used to ship: four addresses across four domains. */
 const RETIRED_ADDRESSES = [
   'no-reply@example.com',
-  'noreply@forgemsg.com',
-  'no-reply@forgemsg.io',
-  'reports@forgemsg.com',
+  'noreply@example.invalid',
+  'no-reply@example.invalid',
+  'reports@example.invalid',
 ] as const;
 
 const SRC = join(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -60,8 +60,8 @@ const LOCAL_PART_CHAR = /[A-Za-z0-9._%+-]/;
 /**
  * Occurrences of `needle` in `src` that are not part of a longer token.
  *
- * `before` guards the left edge (so `dmarc-reports@forgemsg.com` does not count
- * as `reports@forgemsg.com`), `after` the right edge (so `SYSTEM_EMAIL_FROM`
+ * `before` guards the left edge (so `dmarc-reports@example.invalid` does not count
+ * as `reports@example.invalid`), `after` the right edge (so `SYSTEM_EMAIL_FROM`
  * does not count a hit inside `SYSTEM_EMAIL_FROM_NAME`).
  */
 function countWholeTokens(src: string, needle: string, before: RegExp, after?: RegExp): number {
@@ -111,7 +111,7 @@ describe('system sender — early warning (not a barrier)', () => {
       'a hit inside a longer name is not a hit',
     ).toBe(0);
     expect(
-      countWholeTokens('dmarc-reports@forgemsg.com', 'reports@forgemsg.com', LOCAL_PART_CHAR),
+      countWholeTokens('dmarc-reports@example.invalid', 'reports@example.invalid', LOCAL_PART_CHAR),
       'a hit inside a longer address is not a hit',
     ).toBe(0);
   });

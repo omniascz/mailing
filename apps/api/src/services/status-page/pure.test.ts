@@ -123,9 +123,9 @@ describe('buildResolveBody', () => {
     expect(body).toContain('15 minutes');
   });
   it('appends post-mortem link when provided', () => {
-    const body = buildResolveBody(600, 'https://mailforge.io/incidents/2026-05-30');
+    const body = buildResolveBody(600, 'https://example.invalid/incidents/2026-05-30');
     expect(body).toContain('Post-mortem');
-    expect(body).toContain('mailforge.io/incidents/2026-05-30');
+    expect(body).toContain('example.invalid/incidents/2026-05-30');
   });
 });
 

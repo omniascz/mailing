@@ -221,7 +221,7 @@ export async function scrapeBrandFromUrl(url: string): Promise<BrandKit> {
     // Customer-supplied URL — guarded, see lib/safe-fetch.
     const res = await safeFetch(target, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ForgeMsg/1.0; +https://forgemsg.com)',
+        'User-Agent': 'Mozilla/5.0 (compatible; ForgeMsg/1.0; +https://example.invalid)',
         Accept: 'text/html,application/xhtml+xml',
       },
       timeoutMs: 10_000,

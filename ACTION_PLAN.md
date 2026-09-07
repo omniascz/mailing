@@ -174,7 +174,7 @@ Z UNPLANNED_FEATURES_AND_FLOW_AUDIT §D.1 — TOP 10 nejhodnotnějších UNPLANN
 | H.2  | **Beta klient identification** — 30-50 lidí z PulseUp + Ticketarium network + LinkedIn                        | 3 dny                   |
 | H.3  | **Onboarding concierge calls** s prvními 20 beta klienty                                                      | 10 dnů                  |
 | H.4  | **Production smoke test** — send 10K email kampaní přes celý pipeline                                         | 2 dny                   |
-| H.5  | **Status page** (`status.mailforge.io`) Instatus setup                                                        | 1 den                   |
+| H.5  | **Status page** (`status.example.invalid`) Instatus setup                                                     | 1 den                   |
 | H.6  | **Public pricing page** s CZK/EUR/USD multi-currency                                                          | 2 dny                   |
 | H.7  | **Migration landing pages** `/migrate-from-mailchimp`, `/migrate-from-ecomail`, `/migrate-from-smartemailing` | 3 dny                   |
 | H.8  | **10 SEO blog posts** ("How to switch from X to Mailforge")                                                   | 10 dnů (Claude content) |

@@ -1,6 +1,6 @@
 global:
   environment: production
-  domain: forgemsg.com
+  domain: example.invalid
   image:
     repositoryPrefix: forgemsg-org/forgemsg
 
@@ -13,7 +13,7 @@ api:
     minReplicas: 3
     maxReplicas: 20
   ingress:
-    host: api.forgemsg.com
+    host: api.example.invalid
 
 workers:
   replicaCount: 3
@@ -27,7 +27,7 @@ workers:
 voiceBot:
   replicaCount: 2
   ingress:
-    host: voice.forgemsg.com
+    host: voice.example.invalid
 
 engine:
   replicaCount: 3

@@ -20,7 +20,7 @@ import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 import { env } from '../../config/env.js';
 
-const API_BASE = process.env.API_BASE_URL ?? 'https://api.forgemsg.io';
+const API_BASE = process.env.API_BASE_URL ?? 'https://api.example.invalid';
 
 // ── Email identities ────────────────────────────────────────────────────────
 

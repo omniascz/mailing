@@ -10,7 +10,7 @@
 
 /**
  * Encode a Message-ID into a VERP return-path local part + address.
- * `<abc@forgemsg.com>` → `bounce+abc=forgemsg.com@<domain>`.
+ * `<abc@example.invalid>` → `bounce+abc=example.invalid@<domain>`.
  */
 export function encodeVerp(messageId: string, bounceDomain: string): string {
   const local = messageId.replace(/[<>]/g, '').replace(/@/g, '=');

@@ -92,7 +92,7 @@ export async function initiatePurposeDoi(
   await redis.set(tokenKey, JSON.stringify(payload), DOI_TOKEN_TTL);
 
   // Build confirmation URL
-  const baseUrl = process.env.APP_BASE_URL ?? 'https://app.forgemsg.com';
+  const baseUrl = process.env.APP_BASE_URL ?? 'https://app.example.invalid';
   const confirmUrl = new URL('/gdpr/doi/confirm', baseUrl);
   confirmUrl.searchParams.set('token', token);
   if (options?.redirectUrl) confirmUrl.searchParams.set('redirect', options.redirectUrl);

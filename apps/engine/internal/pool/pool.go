@@ -26,16 +26,17 @@ type Conn struct {
 
 // Pool manages per-domain SMTP connection pools.
 type Pool struct {
-	mu              sync.Mutex
-	pools           map[string][]*Conn
-	maxPerDomain    int
-	idleTimeout     time.Duration
-	connectTimeout  time.Duration
-	readTimeout     time.Duration
-	writeTimeout    time.Duration
-	preferStartTLS  bool
-	closed          bool
-	activeConns     int
+	mu             sync.Mutex
+	pools          map[string][]*Conn
+	maxPerDomain   int
+	idleTimeout    time.Duration
+	connectTimeout time.Duration
+	readTimeout    time.Duration
+	writeTimeout   time.Duration
+	preferStartTLS bool
+	ehloHostname   string
+	closed         bool
+	activeConns    int
 }
 
 // Config for creating a new Pool.
@@ -46,6 +47,9 @@ type Config struct {
 	ReadTimeout       time.Duration
 	WriteTimeout      time.Duration
 	PreferStartTLS    bool
+	// EhloHostname is the name given in EHLO. Empty falls back to the reserved
+	// example.invalid, which cannot resolve — see config.EhloHostname.
+	EhloHostname string
 }
 
 // New creates a connection pool.
@@ -58,6 +62,7 @@ func New(cfg Config) *Pool {
 		readTimeout:    cfg.ReadTimeout,
 		writeTimeout:   cfg.WriteTimeout,
 		preferStartTLS: cfg.PreferStartTLS,
+		ehloHostname:   cfg.EhloHostname,
 	}
 
 	// Background reaper for idle connections
@@ -194,8 +199,7 @@ func (p *Pool) DialFrom(domain, localIP string, requireTLS bool) (*Conn, error) 
 		return nil, fmt.Errorf("pool: smtp new client %s: %w", addr, err)
 	}
 
-	hostname, _ := hostName()
-	if err := client.Hello(hostname); err != nil {
+	if err := client.Hello(p.ehloName()); err != nil {
 		client.Close()
 		return nil, fmt.Errorf("pool: EHLO %s: %w", addr, err)
 	}
@@ -284,9 +288,8 @@ func (p *Pool) dial(domain string, requireTLS bool) (*Conn, error) {
 		return nil, fmt.Errorf("pool: smtp new client %s: %w", addr, err)
 	}
 
-	// EHLO with our hostname
-	hostname, _ := hostName()
-	if err := client.Hello(hostname); err != nil {
+	// EHLO with our configured hostname
+	if err := client.Hello(p.ehloName()); err != nil {
 		client.Close()
 		return nil, fmt.Errorf("pool: EHLO %s: %w", addr, err)
 	}
@@ -374,8 +377,15 @@ func resolveMX(domain string) (string, error) {
 	return host, nil
 }
 
-func hostName() (string, error) {
-	// In production, use a configured FQDN or reverse DNS of the sending IP
-	hostname := "mta.forgemsg.com"
-	return hostname, nil
+// ehloName is the name this engine announces in EHLO.
+//
+// Configured, not hard-coded: receiving MTAs compare it against the reverse DNS
+// of the connecting IP, so a name that does not resolve fails that check on
+// every message to Gmail, Outlook and Seznam. It was "mta.example.invalid", a
+// domain registered to nobody.
+func (p *Pool) ehloName() string {
+	if p.ehloHostname != "" {
+		return p.ehloHostname
+	}
+	return "example.invalid"
 }

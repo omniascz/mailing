@@ -276,10 +276,10 @@
   - `CC` → "Implementuj campaign API: status state machine: DRAFT → SCHEDULED → SENDING → SENT → PAUSED (manual). API: POST /campaigns (create draft), PUT /campaigns/:id (update), POST /campaigns/:id/schedule (schedule), POST /campaigns/:id/send (send immediately), POST /campaigns/:id/pause, POST /campaigns/:id/resume, POST /campaigns/:id/cancel. Audience: list_id + segment_id (optional), exclude segment_id (optional)."
 
 - [ ] **Open tracking** — pixel
-  - `CC` → "Implementuj open tracking: při renderování emailu vlož 1px tracking pixel <img src='https://track.forgemsg.com/o/{unique_id}.gif'/>. Endpoint vrátí 1px GIF a loguj event: {campaign_id, contact_id, timestamp, user_agent, ip} → Kafka topic 'email_events'. CDN (CloudFront) před tracking endpoint pro nízkou latenci. Respektuj Apple MPP (Mail Privacy Protection) — flag suspected bot opens."
+  - `CC` → "Implementuj open tracking: při renderování emailu vlož 1px tracking pixel <img src='https://track.example.invalid/o/{unique_id}.gif'/>. Endpoint vrátí 1px GIF a loguj event: {campaign_id, contact_id, timestamp, user_agent, ip} → Kafka topic 'email_events'. CDN (CloudFront) před tracking endpoint pro nízkou latenci. Respektuj Apple MPP (Mail Privacy Protection) — flag suspected bot opens."
 
 - [ ] **Click tracking** — link wrapping
-  - `CC` → "Implementuj click tracking: při renderování nahraď všechny URLs za tracked verze: https://track.forgemsg.com/c/{unique_id}. Endpoint: loguj click event → Kafka → redirect 302 na original URL. UTM parametry: auto-append utm_source=forgemsg, utm_medium=email, utm_campaign={campaign_name}. Dashboard: per-link click counts."
+  - `CC` → "Implementuj click tracking: při renderování nahraď všechny URLs za tracked verze: https://track.example.invalid/c/{unique_id}. Endpoint: loguj click event → Kafka → redirect 302 na original URL. UTM parametry: auto-append utm_source=forgemsg, utm_medium=email, utm_campaign={campaign_name}. Dashboard: per-link click counts."
 
 - [ ] **Event pipeline** — Kafka → ClickHouse
   - `CC` → "Implementuj event pipeline: Kafka topics: email_sends, email_deliveries, email_opens, email_clicks, email_bounces, email_unsubscribes, email_complaints. Kafka consumer → batch insert do ClickHouse (email_events table: event_type, campaign_id, contact_id, timestamp, metadata JSONB). Retention: 2 roky. Materialized views pro aggregace (per campaign, per day, per ISP)."

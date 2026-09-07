@@ -118,7 +118,7 @@ describe('isAppleMpp', () => {
 // ─── Open pixel injection ─────────────────────────────────────────────────────
 
 describe('injectOpenPixel', () => {
-  const baseUrl = 'https://track.forgemsg.com';
+  const baseUrl = 'https://track.example.invalid';
   const orgId = 'org-1';
   const campaignId = 'camp-1';
   const contactId = 'contact-1';
@@ -126,14 +126,14 @@ describe('injectOpenPixel', () => {
   it('injects a pixel before </body>', () => {
     const html = '<html><body><p>Hello</p></body></html>';
     const result = injectOpenPixel(html, baseUrl, orgId, campaignId, contactId);
-    expect(result).toContain('<img src="https://track.forgemsg.com/track/o/');
+    expect(result).toContain('<img src="https://track.example.invalid/track/o/');
     expect(result).toMatch(/<img[^>]+><\/body>/);
   });
 
   it('appends pixel when no </body> tag', () => {
     const html = '<p>Plain content without body tag</p>';
     const result = injectOpenPixel(html, baseUrl, orgId, campaignId, contactId);
-    expect(result).toContain('<img src="https://track.forgemsg.com/track/o/');
+    expect(result).toContain('<img src="https://track.example.invalid/track/o/');
     expect(result.endsWith('>')).toBe(true);
   });
 
@@ -169,7 +169,7 @@ describe('injectOpenPixel', () => {
 // ─── Click link wrapping ──────────────────────────────────────────────────────
 
 describe('wrapLinks', () => {
-  const baseUrl = 'https://track.forgemsg.com';
+  const baseUrl = 'https://track.example.invalid';
   const orgId = 'org-1';
   const campaignId = 'camp-1';
   const contactId = 'contact-1';
@@ -177,7 +177,7 @@ describe('wrapLinks', () => {
   it('wraps a standard href link', () => {
     const html = '<a href="https://example.com">Click me</a>';
     const result = wrapLinks(html, baseUrl, orgId, campaignId, contactId);
-    expect(result).toContain('https://track.forgemsg.com/track/c/');
+    expect(result).toContain('https://track.example.invalid/track/c/');
     expect(result).not.toContain('https://example.com"');
   });
 
@@ -221,7 +221,7 @@ describe('wrapLinks', () => {
   });
 
   it('does not double-wrap already tracked links', () => {
-    const html = '<a href="https://track.forgemsg.com/track/c/sometoken">Link</a>';
+    const html = '<a href="https://track.example.invalid/track/c/sometoken">Link</a>';
     const result = wrapLinks(html, baseUrl, orgId, campaignId, contactId);
     // Should remain unchanged — already tracked
     expect(result).toBe(html);

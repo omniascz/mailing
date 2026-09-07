@@ -458,9 +458,9 @@ describe('processFormSubmission', () => {
 describe('generateEmbedScript', () => {
   it('includes form ID in the script', async () => {
     const { generateEmbedScript } = await import('../signup-forms/index.js');
-    const script = generateEmbedScript('form-123', 'https://api.forgemsg.io');
+    const script = generateEmbedScript('form-123', 'https://api.example.invalid');
     expect(script).toContain('form-123');
-    expect(script).toContain('https://api.forgemsg.io');
+    expect(script).toContain('https://api.example.invalid');
     expect(script).toContain('<script>');
   });
 });

@@ -395,7 +395,7 @@ Globální MarketingTechnology trh: ~$500 mld., omnichannel customer engagement 
 - Public brand: **Mailforge**
 - Tagline CZ: _"Vykuté zprávy. Email, SMS, voice — vše v jednom."_
 - Tagline EN: _"Forge your messaging. Email, SMS, voice — one platform."_
-- Doména: `mailforge.io` (primary), `mailforge.cz`, `mailforge.sk`
+- Doména: `example.invalid` (primary), `mailforge.cz`, `mailforge.sk`
 
 ### 7.2 Vizuální identita
 

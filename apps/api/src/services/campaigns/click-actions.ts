@@ -53,7 +53,7 @@ export function decodeClickAction(encoded: string): ClickAction | null {
 /**
  * Wraps a destination URL with a click-action tracking URL.
  *
- * @param baseTrackingUrl - e.g. 'https://api.forgemsg.io'
+ * @param baseTrackingUrl - e.g. 'https://api.example.invalid'
  * @param linkId - unique link ID for the tracking record
  * @param destination - the actual href
  * @param action - the action to fire on click

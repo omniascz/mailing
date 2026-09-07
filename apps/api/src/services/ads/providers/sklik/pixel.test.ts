@@ -27,8 +27,8 @@ describe('generateSklikSnippet', () => {
   });
 
   it('uses a custom endpoint base when supplied', () => {
-    const out = generateSklikSnippet('s1', { endpointBase: 'https://api.forgemsg.com' });
-    expect(out).toContain('"https://api.forgemsg.com"');
+    const out = generateSklikSnippet('s1', { endpointBase: 'https://api.example.invalid' });
+    expect(out).toContain('"https://api.example.invalid"');
   });
 
   it('rejects fully unsafe / empty site tokens', () => {

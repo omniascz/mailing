@@ -1,7 +1,7 @@
-# @forgemsg/mobile — ForgeMsg mobile app (Expo / React Native)
+# @forgemsg/mobile — MailForge mobile app (Expo / React Native)
 
-A native iOS/Android companion app for ForgeMsg. Built with **Expo (SDK 52) +
-expo-router**. It talks to the existing ForgeMsg REST API using an **API key**
+A native iOS/Android companion app for MailForge. Built with **Expo (SDK 52) +
+expo-router**. It talks to the existing MailForge REST API using an **API key**
 (the same `x-api-key` mechanism the Zapier bridge uses), so there's no separate
 mobile auth backend.
 
@@ -44,7 +44,7 @@ npm install
 npx expo start        # then press i (iOS) / a (Android), or scan the QR in Expo Go
 ```
 
-Sign in with your ForgeMsg API key (Dashboard → Settings → API keys) and, if not
+Sign in with your MailForge API key (Dashboard → Settings → API keys) and, if not
 using the hosted API, your API base URL (e.g. `http://<your-machine-ip>:3001`).
 
 ## Status / verification

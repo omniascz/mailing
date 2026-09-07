@@ -60,7 +60,7 @@ function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign in to ForgeMsg</CardTitle>
+        <CardTitle>Sign in to MailForge</CardTitle>
         <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
       <CardContent>

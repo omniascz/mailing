@@ -4,9 +4,9 @@ description: ForgeMsg unified messaging platform — API, workers, voice-bot, MT
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
-icon: https://forgemsg.com/icon.png
+icon: https://example.invalid/icon.png
 sources:
   - https://github.com/forgemsg/forgemsg
 maintainers:
   - name: ForgeMsg Engineering
-    email: ops@forgemsg.com
+    email: ops@example.invalid

@@ -55,9 +55,9 @@ describe('list double opt-in confirmation', () => {
     expect(sent.from, 'empty From reaches the MTA unchallenged').not.toBe('');
     for (const stale of [
       'no-reply@example.com',
-      'noreply@forgemsg.com',
-      'no-reply@forgemsg.io',
-      'reports@forgemsg.com',
+      'noreply@example.invalid',
+      'no-reply@example.invalid',
+      'reports@example.invalid',
     ]) {
       expect(sent.from).not.toBe(stale);
     }

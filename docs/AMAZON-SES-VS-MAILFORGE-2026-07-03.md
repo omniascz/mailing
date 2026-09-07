@@ -69,7 +69,7 @@ Metodika: 5 doménových agentů ověřilo **reálnou implementaci ForgeMsg př�
 
 ## 8. Custom MAIL FROM / Return-Path / VERP — Amazon SES vede 🟡
 
-**ForgeMsg 🟡:** DNS záznamy pro custom Return-Path subdoménu se **generují i ověřují** (`CNAME → return-path.forgemsg.com`, bounce `MX`), tracked `returnPathVerified`. **ALE engine nastaví envelope sender na header From** (`sender.go:151` `conn.Client.Mail(msg.FromEmail)`) — **žádný custom Return-Path/MAIL FROM override a žádný VERP** (`Message` struct nemá envelope-from pole). Takže SPF-alignment přes custom MAIL FROM subdoménu se reálně neaplikuje a out-of-band bounces nejdou spárovat přes VERP. SES custom MAIL FROM je běžná featura.
+**ForgeMsg 🟡:** DNS záznamy pro custom Return-Path subdoménu se **generují i ověřují** (`CNAME → return-path.example.invalid`, bounce `MX`), tracked `returnPathVerified`. **ALE engine nastaví envelope sender na header From** (`sender.go:151` `conn.Client.Mail(msg.FromEmail)`) — **žádný custom Return-Path/MAIL FROM override a žádný VERP** (`Message` struct nemá envelope-from pole). Takže SPF-alignment přes custom MAIL FROM subdoménu se reálně neaplikuje a out-of-band bounces nejdou spárovat přes VERP. SES custom MAIL FROM je běžná featura.
 
 ## 9. SPF / DMARC / BIMI — ForgeMsg vede ✅
 
@@ -101,7 +101,7 @@ Tabulka `suppressions` (org-scoped, reasons hard_bounce/complaint/manual/unsubsc
 
 ## 15. Open / click tracking + custom tracking domain — ForgeMsg vede ✅
 
-Pixel `GET /track/o/:token` (1×1 GIF + MPP detekce + bot scoring + geo) + click `GET /track/c/:token` (log + 302), HMAC signed tokeny. **Custom tracking domain** ✅ — resolvuje org `mailSubdomain` (CNAME → `track.mailforge.io`), branded baseUrl, volané per-batch. (Verifikační wizard UI deferred.) SES custom tracking domain je featura config setů; MF má.
+Pixel `GET /track/o/:token` (1×1 GIF + MPP detekce + bot scoring + geo) + click `GET /track/c/:token` (log + 302), HMAC signed tokeny. **Custom tracking domain** ✅ — resolvuje org `mailSubdomain` (CNAME → `track.example.invalid`), branded baseUrl, volané per-batch. (Verifikační wizard UI deferred.) SES custom tracking domain je featura config setů; MF má.
 
 ## 16. Sandbox → production model — Amazon SES vede 🔴
 

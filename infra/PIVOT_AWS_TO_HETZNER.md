@@ -24,8 +24,8 @@
 ```
                        ┌─────────────────────────────────────┐
                        │           Cloudflare DNS + CDN       │
-                       │  (mailforge.io, *.mailforge.io,      │
-                       │   click.mailforge.io tracking)       │
+                       │  (example.invalid, *.example.invalid,      │
+                       │   click.example.invalid tracking)       │
                        └────────────┬────────────────────────┘
                                     │
               ┌─────────────────────┼─────────────────────────────────┐
@@ -206,7 +206,7 @@ Zaniká: `AWS_*`, `MINIO_*` (prod), všechny AWS-specific proměnné.
   - Otevřít účet, doložit firmu (IČO + DIČ), odeslat support ticket: "Request port 25 unblock for marketing email service. Volume: 5M emails/month target. Will provide DKIM, SPF, DMARC for all sending domains, run FBL processing, maintain bounce rate <2% and complaint rate <0.1%."
 - [ ] **Vercel účet + Pro plán + Frankfurt region pin**
   - Connect GitHub repo `mailforge`, configure project pro `apps/web`
-- [ ] **Cloudflare účet + transfer mailforge.io**
+- [ ] **Cloudflare účet + transfer example.invalid**
   - Nameserver change, configure DNS, enable proxy pro web tier, **vypnout proxy pro MX/SMTP záznamy** (jinak rozbije mail)
 - [ ] **Doppler workspace** + project `mailforge` s envs `development`, `staging`, `production`
 - [ ] **Hetzner Cloud projekt** `mailforge-prod`
@@ -228,11 +228,11 @@ Zaniká: `AWS_*`, `MINIO_*` (prod), všechny AWS-specific proměnné.
 
 ### Týden 2.6 — DNS a doménová příprava (3 dny)
 
-- [ ] DNS zóna pro `mailforge.io` v Cloudflare
+- [ ] DNS zóna pro `example.invalid` v Cloudflare
 - [ ] Subdomény: `app.` (Vercel), `api.` (Hetzner Coolify), `mta-1.`, `mta-2.` (Dedicated), `track.` (tracking pixel přes Cloudflare Worker → ClickHouse), `dkim._domainkey.` (vlastní sender)
-- [ ] **rDNS / PTR records** na všech MTA IPs — kontaktovat Hetzner support s mapováním `IP → mta-N.mailforge.io`
-- [ ] SPF + DKIM + DMARC pro `mailforge.io` (sender domain pro transactional)
-- [ ] **Postmaster URL** `https://postmaster.mailforge.io` (zatím statika)
+- [ ] **rDNS / PTR records** na všech MTA IPs — kontaktovat Hetzner support s mapováním `IP → mta-N.example.invalid`
+- [ ] SPF + DKIM + DMARC pro `example.invalid` (sender domain pro transactional)
+- [ ] **Postmaster URL** `https://postmaster.example.invalid` (zatím statika)
 
 ### Týden 2.7 — Smoke test (2 dny)
 

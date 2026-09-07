@@ -142,7 +142,7 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
         .limit(1);
 
       if (existing.length) {
-        const baseUrl = process.env.APP_BASE_URL ?? 'https://app.forgemsg.com';
+        const baseUrl = process.env.APP_BASE_URL ?? 'https://app.example.invalid';
         return { data: { ...existing[0], referralUrl: `${baseUrl}/r/${existing[0]!.code}` } };
       }
 
@@ -163,7 +163,7 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
         .values({ orgId, programId, referrerContactId: contactId, code })
         .returning();
 
-      const baseUrl = process.env.APP_BASE_URL ?? 'https://app.forgemsg.com';
+      const baseUrl = process.env.APP_BASE_URL ?? 'https://app.example.invalid';
       return { data: { ...referral, referralUrl: `${baseUrl}/r/${referral!.code}` } };
     },
   );
@@ -292,7 +292,7 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
 
       if (!referral) {
         // Redirect to homepage rather than 404 to avoid leaking info
-        return reply.redirect(process.env.APP_BASE_URL ?? 'https://app.forgemsg.com');
+        return reply.redirect(process.env.APP_BASE_URL ?? 'https://app.example.invalid');
       }
 
       // Increment click count + record event (fire-and-forget)
@@ -310,7 +310,7 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
       });
 
       // Redirect to subscribe page with code embedded
-      const base = process.env.APP_BASE_URL ?? 'https://app.forgemsg.com';
+      const base = process.env.APP_BASE_URL ?? 'https://app.example.invalid';
       const subscribeUrl = `${base}/subscribe?ref=${encodeURIComponent(code)}&prog=${encodeURIComponent(referral.programId)}`;
       return reply.redirect(subscribeUrl, 302);
     },

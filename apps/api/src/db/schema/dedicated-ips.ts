@@ -99,7 +99,7 @@ export const dedicatedIps = pgTable(
 
     /** IPv4 or IPv6 address */
     ipAddress: varchar('ip_address', { length: 45 }).notNull(),
-    /** PTR (reverse DNS) record — e.g. mta1.customer.forgemsg.com */
+    /** PTR (reverse DNS) record — e.g. mta1.customer.example.invalid */
     ptrRecord: varchar('ptr_record', { length: 253 }),
 
     /** Org this IP is assigned to. NULL = unallocated / system pool. */

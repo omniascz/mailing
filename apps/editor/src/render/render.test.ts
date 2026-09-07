@@ -38,9 +38,9 @@ describe('renderEmail', () => {
   it('collects all links from button blocks', () => {
     const btn = createBlock('button');
     if (btn.type !== 'button') throw new Error('bad factory');
-    btn.url = 'https://forgemsg.com/landing';
+    btn.url = 'https://example.invalid/landing';
     const { links } = renderEmail(emailWith([btn]));
-    expect(links).toContain('https://forgemsg.com/landing');
+    expect(links).toContain('https://example.invalid/landing');
   });
 
   it('dedups link list', () => {

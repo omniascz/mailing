@@ -3,7 +3,7 @@
 export interface ForgemsgClientOptions {
   /** API key (X-API-Key header). Required. */
   apiKey: string;
-  /** Base URL of the ForgeMsg API. Defaults to https://api.forgemsg.io */
+  /** Base URL of the ForgeMsg API. Defaults to https://api.example.invalid */
   baseUrl?: string;
   /** Maximum number of automatic retries on 429/5xx. Default: 3 */
   maxRetries?: number;

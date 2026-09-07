@@ -37,7 +37,7 @@ import { evaluateFormTargeting } from '../../services/signup-forms/targeting.js'
 import type { FormConfig } from '../../db/schema/signup-forms.js';
 
 const signupFormRoutes: FastifyPluginAsync = async (app) => {
-  const API_BASE = process.env.API_BASE_URL ?? 'https://api.forgemsg.io';
+  const API_BASE = process.env.API_BASE_URL ?? 'https://api.example.invalid';
 
   // ── Authenticated CRUD ────────────────────────────────────────────────────────
 

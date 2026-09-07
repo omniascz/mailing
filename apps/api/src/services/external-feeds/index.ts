@@ -119,7 +119,7 @@ async function fetchRaw(
   headers: Record<string, string> = {},
 ): Promise<{ text: string; contentType: string }> {
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'ForgeMsg/1.0 (+https://forgemsg.com)', ...headers },
+    headers: { 'User-Agent': 'ForgeMsg/1.0 (+https://example.invalid)', ...headers },
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);

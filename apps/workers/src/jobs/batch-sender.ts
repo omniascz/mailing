@@ -16,6 +16,7 @@
 
 import { Worker, DelayedError, type Job } from 'bullmq';
 import { captureJobException } from '../lib/telemetry.js';
+import { env } from '../config/env.js';
 import crypto from 'node:crypto';
 import {
   renderEmail as renderBlocks,
@@ -572,13 +573,34 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
     // 5. Build custom headers. The List-Unsubscribe https URL is the API
     //    endpoint that also accepts the RFC 8058 one-click POST — same token
     //    backs the {{unsubscribe_url}} merge tag above.
-    const messageId = `${crypto.randomUUID()}@forgemsg.com`;
+    // The right-hand side names US, not the customer, and it has to be a
+    // domain that exists: a Message-ID whose domain does not resolve is a weak
+    // spam signal by itself and an unusable handle when a postmaster asks about
+    // a specific message. It was `example.invalid`, which is registered to nobody.
+    const messageId = `${crypto.randomUUID()}@${env.PLATFORM_DOMAIN}`;
+
+    // List-Unsubscribe: the https URI is the one that matters, and the mailto
+    // is offered only when there is a mailbox behind it.
+    //
+    // It used to advertise `unsubscribe@example.invalid` unconditionally. That
+    // address does not exist, so every recipient who took the mailto route got
+    // a bounce instead of an unsubscribe — and both Gmail's and Yahoo's
+    // bulk-sender rules count a failing unsubscribe against the sender, which
+    // makes this a deliverability defect rather than a broken link.
+    //
+    // RFC 8058 one-click needs only the https form, which is why dropping the
+    // mailto when it is unconfigured is a complete header rather than a
+    // degraded one. `List-Unsubscribe-Post` stays either way; it is what marks
+    // the https URI as accepting the one-click POST.
+    const unsubscribeTargets = env.UNSUBSCRIBE_MAILBOX
+      ? `<mailto:${env.UNSUBSCRIBE_MAILBOX}?subject=${unsubToken}>, <${unsubscribeUrl}>`
+      : `<${unsubscribeUrl}>`;
 
     const customHeaders: Record<string, string> = {
-      'X-Mailer': 'ForgeMsg/1.0',
+      'X-Mailer': 'MailForge/1.0',
       'X-ForgeMsg-Campaign': data.campaignId,
       'X-ForgeMsg-Org': data.orgId,
-      'List-Unsubscribe': `<mailto:unsubscribe@forgemsg.com?subject=${unsubToken}>, <${unsubscribeUrl}>`,
+      'List-Unsubscribe': unsubscribeTargets,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     };
 
@@ -1203,7 +1225,7 @@ async function fetchOptedInForTracking(orgId: string, contactIds: string[]): Pro
  * resolver outage.
  */
 async function fetchTrackingBaseUrl(orgId: string): Promise<string> {
-  const fallback = process.env.TRACKING_BASE_URL ?? 'https://track.mailforge.io';
+  const fallback = process.env.TRACKING_BASE_URL ?? 'https://track.example.invalid';
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/tracking-domain?orgId=${orgId}`, {
       headers: internalGetHeaders(),

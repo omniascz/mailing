@@ -11,7 +11,7 @@
  *  3. Otherwise → return the default TRACKING_BASE_URL.
  *
  * Verification flow (customer-facing wizard, not implemented here):
- *  - Customer adds CNAME: {mailSubdomain} → track.mailforge.io
+ *  - Customer adds CNAME: {mailSubdomain} → track.example.invalid
  *  - GET /api/v1/domains/:id/tracking-cname → DNS lookup verifies
  *  - On success → return_path_verified flips true
  *
@@ -25,7 +25,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { sendingDomains } from '../../../db/schema/index.js';
 
-const DEFAULT_TRACKING_BASE_URL = process.env.TRACKING_BASE_URL ?? 'https://track.mailforge.io';
+const DEFAULT_TRACKING_BASE_URL = process.env.TRACKING_BASE_URL ?? 'https://track.example.invalid';
 
 const internalTrackingDomainRoutes: FastifyPluginAsync = async (app) => {
   app.get(

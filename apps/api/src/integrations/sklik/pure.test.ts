@@ -13,7 +13,7 @@ describe('buildAuthorizeUrl', () => {
   it('builds a query-string with all required OAuth params', () => {
     const url = buildAuthorizeUrl({
       clientId: 'cid',
-      redirectUri: 'https://app.forgemsg.com/oauth/sklik/callback',
+      redirectUri: 'https://app.example.invalid/oauth/sklik/callback',
       state: 's-1',
     });
     const u = new URL(url);
@@ -21,7 +21,7 @@ describe('buildAuthorizeUrl', () => {
     expect(u.searchParams.get('response_type')).toBe('code');
     expect(u.searchParams.get('client_id')).toBe('cid');
     expect(u.searchParams.get('redirect_uri')).toBe(
-      'https://app.forgemsg.com/oauth/sklik/callback',
+      'https://app.example.invalid/oauth/sklik/callback',
     );
     expect(u.searchParams.get('state')).toBe('s-1');
     expect(u.searchParams.get('scope')).toBe(DEFAULT_SCOPES.join(' '));
@@ -111,7 +111,7 @@ describe('encodeForm', () => {
 
 describe('isValidRedirectUri', () => {
   it('accepts https://', () => {
-    expect(isValidRedirectUri('https://app.forgemsg.com/cb')).toBe(true);
+    expect(isValidRedirectUri('https://app.example.invalid/cb')).toBe(true);
   });
 
   it('accepts http://localhost', () => {

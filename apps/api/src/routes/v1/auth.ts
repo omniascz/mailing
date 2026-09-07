@@ -27,10 +27,10 @@ const COOKIE_SECURE = process.env.NODE_ENV === 'production';
 // by api.example.com is never sent to app.example.com — and apps/web's
 // middleware, which reads `fm_session` off the web host, redirects every
 // logged-in user straight back to /login. Production runs exactly that split
-// (API_PUBLIC_URL=https://api.mailforge.io, APP_URL=https://app.mailforge.io;
-// the Helm chart does the same with api.forgemsg.com).
+// (API_PUBLIC_URL=https://api.example.invalid, APP_URL=https://app.example.invalid;
+// the Helm chart does the same with api.example.invalid).
 //
-// Set COOKIE_DOMAIN to the shared parent — e.g. `.mailforge.io` — so both
+// Set COOKIE_DOMAIN to the shared parent — e.g. `.example.invalid` — so both
 // hosts see it. Left unset the cookie stays host-only, which is correct for
 // single-origin setups and for local dev.
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
@@ -566,8 +566,8 @@ export default async function authRoutes(app: FastifyInstance) {
       // the password login sends them.
       //
       // Trailing slashes are stripped before appending: WEB_URL is free-form
-      // (`z.string().url()` accepts `https://app.mailforge.io/`), and
-      // `${WEB_URL}/` on such a value yields `https://app.mailforge.io//`,
+      // (`z.string().url()` accepts `https://app.example.invalid/`), and
+      // `${WEB_URL}/` on such a value yields `https://app.example.invalid//`,
       // which is a different path to Next's router.
       const redirectUrl = (process.env.WEB_URL || 'http://localhost:3000').replace(/\/+$/, '');
       return reply.redirect(`${redirectUrl}/`);

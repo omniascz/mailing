@@ -11,7 +11,7 @@ import {
 } from '../../services/surveys/index.js';
 import { renderHostedSurveyPage } from '../../services/surveys/render.js';
 
-const API_BASE = process.env.API_BASE_URL ?? 'https://api.forgemsg.io';
+const API_BASE = process.env.API_BASE_URL ?? 'https://api.example.invalid';
 
 const questionSchema = z.object({
   id: z.string().min(1),

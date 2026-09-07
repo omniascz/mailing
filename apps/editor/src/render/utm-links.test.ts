@@ -41,9 +41,9 @@ const schema = (blocks: unknown[]) =>
   ({ subject: 's', preheader: 'p', globalStyles: GS, blocks }) as unknown as EmailSchema;
 
 /** The URLs this system actually builds — not invented for the test. */
-const UNSUB = 'https://app.forgemsg.com/api/v1/unsubscribe/TOKEN';
-const PREF = 'https://app.forgemsg.com/p/center/TOKEN';
-const VIEW = 'https://app.forgemsg.com/api/v1/browser/TOKEN';
+const UNSUB = 'https://app.example.invalid/api/v1/unsubscribe/TOKEN';
+const PREF = 'https://app.example.invalid/p/center/TOKEN';
+const VIEW = 'https://app.example.invalid/api/v1/browser/TOKEN';
 
 const CTX = {
   system: {

@@ -62,7 +62,7 @@ When IP reputation is solid and your automations look right, flip the source-of-
 
 Half the price at every tier, native Czech and Slovak localisation, a public preference centre that lawyers approve of, and unlimited seats — no Pro upgrade just to add a teammate. The full Mailchimp migration usually takes one afternoon.
 
-[Start your free migration →](https://mailforge.io/migrate-from-mailchimp)`,
+[Start your free migration →](https://example.invalid/migrate-from-mailchimp)`,
   },
   {
     slug: 'switch-from-klaviyo-to-mailforge',
@@ -103,7 +103,7 @@ You keep: revenue attribution model, RFM bands, last-active date, predicted CLV 
 
 Half the cost at the same contact count, EU data centre on every plan, and a Czech localisation layer that Klaviyo simply does not have. Plus a working preference centre that actually meets ePrivacy.
 
-[Get the Klaviyo migration guide →](https://mailforge.io/migrate-from-klaviyo)`,
+[Get the Klaviyo migration guide →](https://example.invalid/migrate-from-klaviyo)`,
   },
   {
     slug: 'migrace-z-ecomailu-na-mailforge',
@@ -148,7 +148,7 @@ Doporučujeme nechat oba nástroje běžet 14 dní zároveň. Z MailForge posíl
 
 Migrace je vždy zdarma. Pokud po 30 dnech zůstáváte u Ecomailu, MailForge účet jen zavřete — Ecomail účet je po celou dobu netknutý.
 
-[Začít migraci z Ecomailu →](https://mailforge.io/migrate-from-ecomail)`,
+[Začít migraci z Ecomailu →](https://example.invalid/migrate-from-ecomail)`,
   },
   {
     slug: 'migrace-ze-smartemailingu-na-mailforge',
@@ -194,7 +194,7 @@ MailForge přidá nad SmartEmailing:
 
 Den 1: konektor + DNS. Den 2–14: paralelní provoz. Den 15: cut‑over. Den 16–30: ostrý monitoring doručitelnosti.
 
-[Spustit migraci ze SmartEmailingu →](https://mailforge.io/migrate-from-smartemailing)`,
+[Spustit migraci ze SmartEmailingu →](https://example.invalid/migrate-from-smartemailing)`,
   },
   {
     slug: 'brevo-alternativa-pro-cesky-trh',
@@ -234,7 +234,7 @@ Konektor je přímočarý: API klíč Brevo → vyberete účet → MailForge zk
 
 E‑shopy na Shoptetu, Upgatesu, FastCentriku. B2B firmy s Raynetem. Klienti, kteří chtějí Sklik kampaně a hashed audiences přímo v platformě. Týmy s českým a slovenským trhem, kde dokonalá lokalizace přímo ovlivňuje doručitelnost u Seznamu.
 
-[Začít migraci z Brevo →](https://mailforge.io/migrate-from-brevo)`,
+[Začít migraci z Brevo →](https://example.invalid/migrate-from-brevo)`,
   },
   {
     slug: 'ecomail-vs-mailforge-srovnani-2026',
@@ -281,7 +281,7 @@ Pokud potřebujete jen jednoduchý newsletter a dva scénáře, jste s Ecomailem
 
 Pokud používáte Sklik, Raynet nebo chcete AI optimalizaci, MailForge je výrazně vpřed. Plus stojí polovinu.
 
-[Vyzkoušet MailForge zdarma →](https://mailforge.io/signup)`,
+[Vyzkoušet MailForge zdarma →](https://example.invalid/signup)`,
   },
   {
     slug: 'smartemailing-vs-mailforge-srovnani',
@@ -338,7 +338,7 @@ B2B týmy s dlouhou historií na platformě, které mají customizované workflo
 
 Nové B2B týmy nebo ti, co chtějí AI agenty a moderní stack.
 
-[Začít zdarma →](https://mailforge.io/signup)`,
+[Začít zdarma →](https://example.invalid/signup)`,
   },
   {
     slug: 'mailchimp-cenik-2026-cz',
@@ -392,7 +392,7 @@ Pokud platíte přes 5 000 Kč měsíčně za Mailchimp a posíláte víc než d
 
 Migrace je zdarma, Mailchimp zůstává netknutý 30 dní pro případné vrácení, a všechny GDPR souhlasy se přenesou.
 
-[Vyzkoušet migraci →](https://mailforge.io/migrate-from-mailchimp)`,
+[Vyzkoušet migraci →](https://example.invalid/migrate-from-mailchimp)`,
   },
   {
     slug: 'klaviyo-alternative-eu-gdpr',
@@ -436,7 +436,7 @@ The combination of EU residency + ePrivacy + predictive metrics + transparent pr
 
 MailForge ships a Klaviyo connector that imports lists, segments, flows, predictive metrics seed data, and Shopify webhooks. Parallel sending during the 14-day cut-over keeps revenue attribution intact.
 
-[Compare full feature matrix →](https://mailforge.io/klaviyo-alternative)`,
+[Compare full feature matrix →](https://example.invalid/klaviyo-alternative)`,
   },
   {
     slug: 'eu-data-residency-email-marketing',
@@ -488,6 +488,6 @@ US-headquartered ESPs typically offer "EU data centre" tier for an upcharge but 
 
 EU residency is a deal-breaker for many EU senders post-Schrems II. Verify the entire stack, not just the marketing claim.
 
-[Read MailForge DPA →](https://mailforge.io/legal/dpa)`,
+[Read MailForge DPA →](https://example.invalid/legal/dpa)`,
   },
 ];

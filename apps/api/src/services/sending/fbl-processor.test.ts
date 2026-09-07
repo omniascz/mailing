@@ -36,7 +36,7 @@ import { parseArfReport } from './fbl-processor.js';
 // ─── ARF parsing tests (pure function, no DB) ─────────────────────────────────
 
 const SAMPLE_ARF = `From: abuse@yahoo.com
-To: fbl@forgemsg.com
+To: fbl@example.invalid
 Subject: FBL report
 
 --boundary
@@ -45,21 +45,21 @@ Content-Type: message/feedback-report
 Feedback-Type: abuse
 User-Agent: Yahoo!-Mail-Feedback/2.0
 Original-Rcpt-To: victim@yahoo.com
-Original-Message-ID: <abc123@forgemsg.com>
+Original-Message-ID: <abc123@example.invalid>
 Reporting-MTA: dns; mx.yahoo.com
 
 --boundary--`;
 
 const GMAIL_ARF = `From: noreply-dmarc-support@google.com
-To: postmaster@forgemsg.com
-Subject: This is an email abuse report for an email message from forgemsg.com
+To: postmaster@example.invalid
+Subject: This is an email abuse report for an email message from example.invalid
 
 --boundary
 Content-Type: message/feedback-report
 
 Feedback-Type: abuse
 Original-Rcpt-To: user@gmail.com
-Original-Message-ID: <xyz456@forgemsg.com>
+Original-Message-ID: <xyz456@example.invalid>
 Reporting-MTA: dns; gmr-smtp-in.l.google.com
 
 --boundary--`;
@@ -76,7 +76,7 @@ describe('parseArfReport', () => {
 
   it('extracts original message-id', () => {
     const r = parseArfReport(SAMPLE_ARF);
-    expect(r.originalMessageId).toBe('abc123@forgemsg.com');
+    expect(r.originalMessageId).toBe('abc123@example.invalid');
   });
 
   it('detects feedback type: abuse', () => {
@@ -92,7 +92,7 @@ describe('parseArfReport', () => {
   it('parses gmail ARF', () => {
     const r = parseArfReport(GMAIL_ARF);
     expect(r.originalRecipient).toBe('user@gmail.com');
-    expect(r.originalMessageId).toBe('xyz456@forgemsg.com');
+    expect(r.originalMessageId).toBe('xyz456@example.invalid');
   });
 
   it('handles minimal ARF with Original-Recipient header', () => {

@@ -224,7 +224,7 @@ Deploy = GitHub Actions → SSH + scp + `systemctl restart` (Ansible role v `inf
 | Vercel Edge Function                                   | Stejně dobré jako CF                                      | Vendor lock-in; Vercel logy pro debugging horší                                        |
 | Vlastní Go endpoint na Hetzneru                        | Plná kontrola                                             | Latence z USA ~150ms                                                                   |
 
-**Doporučení:** Cloudflare Workers — `https://track.mailforge.io/o/:id.gif` a `/c/:id`. Worker:
+**Doporučení:** Cloudflare Workers — `https://track.example.invalid/o/:id.gif` a `/c/:id`. Worker:
 
 1. Log event do Cloudflare Queues (managed)
 2. Cloudflare Queue → custom consumer na Hetzner → Kafka → ClickHouse
@@ -247,10 +247,10 @@ Internet
    │                                                   MTA cluster
    │ A/AAAA, CNAME, MX, TXT                            (NO Cloudflare proxy!
    │                                                    bulk SMTP musí mít
-   ├─→ app.mailforge.io ─→ Vercel                      přímé IP)
-   ├─→ api.mailforge.io ─→ Hetzner Coolify LB
-   ├─→ track.mailforge.io ─→ Cloudflare Workers
-   └─→ mta-{1..N}.mailforge.io ─→ Hetzner Dedicated IPs
+   ├─→ app.example.invalid ─→ Vercel                      přímé IP)
+   ├─→ api.example.invalid ─→ Hetzner Coolify LB
+   ├─→ track.example.invalid ─→ Cloudflare Workers
+   └─→ mta-{1..N}.example.invalid ─→ Hetzner Dedicated IPs
 
 
 Privátní síť (Hetzner Cloud Network 10.0.0.0/16)
@@ -289,7 +289,7 @@ Bandwidth privátní = unmetered
 
 - Dedicated MTA cluster má **public IPs** pro outbound SMTP (port 25 outbound), ale **inbound** jen na port 50051 (gRPC) přijímá jen z `10.0.0.0/16` (privátní síť přes vSwitch).
 - Aplikační tier (Coolify) komunikuje s MTA přes gRPC na privátní bridge IPs
-- Bounce inbound: dedikované MX záznamy pro `bounce.mailforge.io` → dedicated MTA s receive logic
+- Bounce inbound: dedikované MX záznamy pro `bounce.example.invalid` → dedicated MTA s receive logic
 - WireGuard / Tailscale pro admin SSH access — žádné SSH port 22 veřejně
 
 ---

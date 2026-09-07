@@ -4,7 +4,7 @@
  * <5KB gzipped. Zero dependencies. Works in any browser.
  *
  * Usage:
- *   <script src="https://cdn.forgemsg.com/sdk/v1.js"></script>
+ *   <script src="https://cdn.example.invalid/sdk/v1.js"></script>
  *   <script>
  *     ForgeMsg.init({ publicKey: 'fm_pub_xxx', contactId: 'user-uuid' });
  *   </script>
@@ -84,7 +84,7 @@ function generateId(): string {
 async function apiFetch(path: string, opts?: RequestInit): Promise<unknown> {
   if (!_config) throw new Error('ForgeMsg not initialized');
 
-  const base = _config.apiBase ?? 'https://api.forgemsg.com';
+  const base = _config.apiBase ?? 'https://api.example.invalid';
   const key = _config.publicKey ?? _config.apiKey ?? '';
   const resp = await fetch(`${base}${path}`, {
     ...opts,

@@ -7,7 +7,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ default .Chart.AppVersion .Values.global.image.tag | quote }}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" }}
-forgemsg.com/environment: {{ .Values.global.environment }}
+example.invalid/environment: {{ .Values.global.environment }}
 {{- end -}}
 
 {{/*

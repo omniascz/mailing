@@ -30,7 +30,7 @@ export default async function competitiveMonitorRoutes(app: FastifyInstance) {
       .parse(req.body);
 
     // Generate a unique monitor inbox address for this competitor
-    const monitorEmail = `monitor-${randomUUID().slice(0, 8)}@inbox.forgemsg.io`;
+    const monitorEmail = `monitor-${randomUUID().slice(0, 8)}@inbox.example.invalid`;
 
     const [row] = await db
       .insert(competitorWatchlist)

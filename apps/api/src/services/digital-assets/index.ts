@@ -111,7 +111,7 @@ export async function generateDeliveryUrl(
   // Re-sign with real deliveryId
   const token = signToken({ assetId, contactId, deliveryId: delivery!.id, exp });
 
-  const baseUrl = process.env.APP_BASE_URL ?? 'https://app.forgemsg.com';
+  const baseUrl = process.env.APP_BASE_URL ?? 'https://app.example.invalid';
   const downloadUrl = `${baseUrl}/api/v1/assets/download?token=${token}`;
 
   return { token, downloadUrl, expiresAt, licenseKey: licenseKeyValue };

@@ -41,7 +41,7 @@ const seoSitemapRoutes: FastifyPluginAsync = async (app) => {
       const origin =
         query.origin ??
         (typeof settings.publicOrigin === 'string' ? settings.publicOrigin : null) ??
-        `https://${query.org}.forgemsg.io`;
+        `https://${query.org}.example.invalid`;
 
       const xml = await generateSitemap({ orgId: org.id, origin });
       return reply
@@ -75,7 +75,7 @@ const seoSitemapRoutes: FastifyPluginAsync = async (app) => {
       const origin =
         query.origin ??
         (typeof settings.publicOrigin === 'string' ? settings.publicOrigin : null) ??
-        `https://${query.org}.forgemsg.io`;
+        `https://${query.org}.example.invalid`;
 
       return reply
         .header('Content-Type', 'text/plain; charset=utf-8')
