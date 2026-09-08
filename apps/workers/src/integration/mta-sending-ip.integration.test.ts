@@ -33,6 +33,8 @@ const reply = {
   smtpCode: 250,
   smtpMessage: 'OK',
   error: '',
+  /** What the engine says the connection went out from. '' = it did not connect. */
+  sendingIp: '',
 };
 
 vi.mock('../lib/mta-grpc-client.js', () => ({
@@ -44,6 +46,7 @@ vi.mock('../lib/mta-grpc-client.js', () => ({
     smtpMessage: reply.smtpMessage,
     error: reply.error,
     durationMs: '5',
+    sendingIp: reply.sendingIp,
   }),
 }));
 
@@ -98,7 +101,11 @@ async function run(
   jobExtras: Record<string, unknown>,
   scenario: Partial<typeof reply> = {},
 ): Promise<Captured[]> {
-  Object.assign(reply, { success: true, smtpCode: 250, smtpMessage: 'OK', error: '' }, scenario);
+  Object.assign(
+    reply,
+    { success: true, smtpCode: 250, smtpMessage: 'OK', error: '', sendingIp: '' },
+    scenario,
+  );
   captured.length = 0;
 
   const { mtaQueues } = await import('../queues/index.js');
@@ -196,5 +203,68 @@ describe('a message the engine or the kernel routed', () => {
         `${e.type} turned an empty string into an attributable address`,
       ).toBe(false);
     }
+  }, 60_000);
+});
+
+describe('the address the engine reports', () => {
+  it('MODE B/C: an address only the engine knows is recorded', async () => {
+    // No sendingIp on the job — the engine chose from SENDING_IPS, or the
+    // kernel chose off the shared pool. Before the engine reported it, this
+    // message was unattributable, which meant the shared pool, the route the
+    // launch runs on, had no reputation at all.
+    const events = await run({}, { sendingIp: '203.0.113.9' });
+
+    expect(events.length).toBeGreaterThan(0);
+    for (const e of events) {
+      expect(e.metadata.sendingIp, `${e.type} lost the address the engine reported`).toBe(
+        '203.0.113.9',
+      );
+    }
+  }, 60_000);
+
+  it('beats what the worker asked for, and says so when they differ', async () => {
+    // The API aimed at .77; the connection went out from .9. The observation
+    // wins, because that is the address whose reputation this message affects.
+    const events = await run({ sendingIp: '198.51.100.77' }, { sendingIp: '203.0.113.9' });
+
+    for (const e of events) {
+      expect(e.metadata.sendingIp).toBe('203.0.113.9');
+      expect(
+        e.metadata.requestedSendingIp,
+        'the disagreement was smoothed over instead of recorded',
+      ).toBe('198.51.100.77');
+    }
+  }, 60_000);
+
+  it('records no discrepancy when the two agree', async () => {
+    const events = await run({ sendingIp: '198.51.100.77' }, { sendingIp: '198.51.100.77' });
+
+    for (const e of events) {
+      expect(e.metadata.sendingIp).toBe('198.51.100.77');
+      expect(
+        Object.prototype.hasOwnProperty.call(e.metadata, 'requestedSendingIp'),
+        'the ordinary case carried a discrepancy key',
+      ).toBe(false);
+    }
+  }, 60_000);
+
+  it('falls back to the requested address when the engine reports none', async () => {
+    // An engine older than the field, or a call that never reached a socket.
+    // proto3 omits an empty string, so the key simply is not there.
+    const events = await run({ sendingIp: '198.51.100.77' }, { sendingIp: '' });
+
+    for (const e of events) {
+      expect(e.metadata.sendingIp).toBe('198.51.100.77');
+    }
+  }, 60_000);
+
+  it('an address the engine reports on a BOUNCE is kept — that is the event a rate is built from', async () => {
+    const events = await run(
+      {},
+      { success: false, smtpCode: 550, smtpMessage: 'user unknown', sendingIp: '203.0.113.9' },
+    );
+    const bounce = events.find((e) => e.type === 'bounce');
+    expect(bounce).toBeDefined();
+    expect(bounce!.metadata.sendingIp).toBe('203.0.113.9');
   }, 60_000);
 });

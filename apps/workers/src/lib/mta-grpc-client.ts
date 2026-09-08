@@ -88,6 +88,15 @@ export interface SendResponse {
   error: string;
   /** int64 → string (e.g. "123") */
   durationMs: string;
+  /**
+   * The address the message actually left from, read off the connected socket.
+   *
+   * Empty when no connection was made, and on any engine older than the field.
+   * Optional for that second reason: proto3 omits an empty string on the wire,
+   * so a response from a previous build arrives without the key rather than
+   * with an empty one.
+   */
+  sendingIp?: string;
 }
 
 export interface SendBatchRequest {

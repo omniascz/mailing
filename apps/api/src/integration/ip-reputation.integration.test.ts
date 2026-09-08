@@ -206,3 +206,60 @@ describe('it runs from the daily run, not just from a function', () => {
     expect(Number(after!.bounceRate)).toBe(20);
   }, 90_000);
 });
+
+describe('the shared pool is scored too', () => {
+  it('an address only the engine could name gets a score it did not have before', async () => {
+    // Mode B/C: the API never routed to this address — the engine chose it from
+    // SENDING_IPS, or the kernel did off the shared pool. Before the engine
+    // reported it, no event could name it and it was scored not at all, which
+    // meant the route the launch runs on had no reputation whatsoever.
+    await db.insert(dedicatedIps).values({ ipAddress: IP_SILENT, orgId, status: 'active' });
+
+    const before = await row(IP_SILENT);
+    expect(before!.reputationUpdatedAt, 'precondition: not scored yet').toBeNull();
+    expect(Number(before!.reputationScore)).toBe(0);
+
+    // Events carrying the address, as the worker now writes them.
+    await events('send', 200, { ip: IP_SILENT });
+    await events('deliver', 190, { ip: IP_SILENT });
+    await events('bounce', 10, { ip: IP_SILENT, bounceType: 'hard' });
+
+    await refreshAllIpReputations();
+
+    const after = await row(IP_SILENT);
+    expect(
+      after!.reputationUpdatedAt,
+      'an address the engine named was still not scored',
+    ).not.toBeNull();
+    expect(
+      Number(after!.reputationScore),
+      'the score did not move — the attribution reached the table but not the aggregate',
+    ).toBeGreaterThan(0);
+    expect(Number(after!.bounceRate)).toBe(5);
+  });
+
+  it('an address the engine names that we do not have is counted nowhere', async () => {
+    // The worker does not validate the reported address against a known list,
+    // deliberately: on the shared pool it is by definition not in SENDING_IPS.
+    // The join is the gate — an address with no dedicated_ips row matches
+    // nothing and cannot invent one.
+    await db.insert(dedicatedIps).values({ ipAddress: IP_CLEAN, orgId, status: 'active' });
+    await events('send', 50, { ip: IP_CLEAN });
+    await events('deliver', 50, { ip: IP_CLEAN });
+    // Two hundred bounces from an address nobody registered.
+    await events('send', 200, { ip: '203.0.113.200' });
+    await events('bounce', 200, { ip: '203.0.113.200', bounceType: 'hard' });
+
+    const summary = await refreshAllIpReputations();
+
+    // The stranger created no row and moved no score.
+    const strangerRows = await db
+      .select()
+      .from(dedicatedIps)
+      .where(eq(dedicatedIps.ipAddress, '203.0.113.200'));
+    expect(strangerRows, 'an unknown address created a reputation row').toHaveLength(0);
+    expect(summary.details.map((d) => d.ipAddress)).not.toContain('203.0.113.200');
+    // And it did not bleed onto the address we do have.
+    expect(Number((await row(IP_CLEAN))!.bounceRate)).toBe(0);
+  });
+});
