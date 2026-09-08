@@ -34,10 +34,17 @@ import type { FastifyInstance } from 'fastify';
  * +1 path and +1 operation on both surfaces, which is the number that matters:
  * had the new route landed inside a group, or pulled a group in with it, the
  * two figures would have moved by different amounts.
+ *
+ * Moved by one route again: POST /api/v1/saved-templates/:id/create-campaign,
+ * the step that lets a design in the library become a campaign. CORE, like the
+ * rest of the templates surface, so it appears on BOTH counts — +1 path and +1
+ * operation on each. That symmetry is the check: a route that landed inside a
+ * group would have moved `everything` and left `coreOnly` alone, and the four
+ * numbers below would disagree about what happened.
  */
 const BASELINE = {
-  coreOnly: { paths: 898, operations: 1118 },
-  everything: { paths: 1240, operations: 1555 },
+  coreOnly: { paths: 899, operations: 1119 },
+  everything: { paths: 1241, operations: 1556 },
 } as const;
 
 interface Surface {

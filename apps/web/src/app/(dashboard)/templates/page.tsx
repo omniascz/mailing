@@ -7,6 +7,7 @@ import { FolderBar, type Folder } from '@/components/folders/folder-bar';
 import { FolderPicker } from '@/components/folders/folder-picker';
 import { UseTemplateButton } from './use-template-button';
 import { DeleteSavedButton } from './delete-saved-button';
+import { CreateCampaignButton } from './create-campaign-button';
 
 interface SavedTemplate {
   id: string;
@@ -147,7 +148,10 @@ export default async function TemplatesPage({
                         </p>
                       ) : null}
                     </div>
-                    <div className="mt-4 flex items-center justify-between gap-2 text-xs">
+                    <div className="mt-4">
+                      <CreateCampaignButton templateId={t.id} name={t.name} />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-2 text-xs">
                       <FolderPicker
                         endpoint="/api/v1/saved-templates"
                         itemId={t.id}

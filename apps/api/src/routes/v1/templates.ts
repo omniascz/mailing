@@ -12,6 +12,7 @@ import { db } from '../../db/client.js';
 import { templates as campaignTemplates } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { assertFolderAssignable } from './folders.js';
+import { createCampaign } from '../../services/campaigns/index.js';
 import {
   validateOrgContent,
   extractTemplateText,
@@ -352,6 +353,89 @@ export default async function templateRoutes(app: FastifyInstance) {
       const { restoreTemplateVersion } = await import('../../services/editor/template-versions.js');
       const data = await restoreTemplateVersion(req.user!.orgId, id, versionId, req.user!.userId);
       return { data };
+    },
+  );
+
+  /**
+   * POST /api/v1/saved-templates/:id/create-campaign
+   *
+   * The step the product never had. There are 106 designs in the library and
+   * until now not one of them could become a campaign: the new-campaign form
+   * has no template picker, and "Use this template" clones a built-in design
+   * into the SAVED library and stops there. So campaigns.template_id was null
+   * on every campaign the product created — 67 out of 67 in the test database —
+   * and anything grouping delivery by template had no axis to group on.
+   *
+   * THE CONTENT IS COPIED, NOT REFERENCED, and that is not a preference. The
+   * renderer reads campaigns.content and nothing dereferences template_id:
+   * readCampaignContent recognises four shapes ({blocks}, {schema:{blocks}},
+   * {html}, unknown) and resolves none of them through a foreign key. A
+   * reference is not a thing this schema can express. It is also the answer
+   * that keeps the archive honest — that page re-renders from
+   * campaigns.content on every request, so a campaign whose body could change
+   * when somebody edits a template would rewrite history that has already been
+   * delivered.
+   *
+   * The copy is written in the `blocks` shape, which is what emailSchema parses
+   * and what the editor writes, so a campaign made this way opens in the
+   * editor like any other.
+   *
+   * LOCALE IS NOT PASSED, deliberately. createCampaign resolves it from the
+   * template when the caller stays quiet (resolveCampaignLocale), which is one
+   * inheritance rule in one place rather than two that can disagree. Passing it
+   * here would duplicate that decision.
+   *
+   * A DELETED TEMPLATE DOES NOT BREAK ANYTHING. Saved templates are
+   * soft-deleted — the row stays with deletedAt set — so template_id keeps
+   * resolving for reporting, and the campaign was never depending on it for
+   * content anyway. What a delete does prevent is starting a NEW campaign from
+   * it, which is the lookup below refusing.
+   */
+  app.post(
+    '/api/v1/saved-templates/:id/create-campaign',
+    {
+      schema: { tags: ['Templates'], summary: 'Start a campaign from a saved template' },
+    },
+    async (req, reply) => {
+      const { id } = savedIdParam.parse(req.params);
+      const { name } = z
+        .object({ name: z.string().min(1).max(255).optional() })
+        .parse(req.body ?? {});
+
+      // Org-scoped and deleted-aware in the same query: another tenant's id and
+      // a deleted one are both "not found", and neither confirms the row exists.
+      const [tpl] = await db
+        .select()
+        .from(campaignTemplates)
+        .where(
+          and(
+            eq(campaignTemplates.id, id),
+            eq(campaignTemplates.orgId, req.user!.orgId),
+            isNull(campaignTemplates.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (!tpl) throw AppError.notFound('Template');
+
+      const campaign = await createCampaign({
+        orgId: req.user!.orgId,
+        name: name ?? tpl.name,
+        type: 'email',
+        subject: tpl.subject ?? '',
+        preheader: tpl.preheader ?? '',
+        templateId: tpl.id,
+        // The snapshot. `subject` and `preheader` are inside it as well as on
+        // the row because emailSchema requires them and the editor reads them
+        // from here.
+        content: {
+          subject: tpl.subject ?? '',
+          preheader: tpl.preheader ?? '',
+          globalStyles: tpl.globalStyles ?? {},
+          blocks: tpl.blocks ?? [],
+        },
+      });
+
+      return reply.code(201).send({ data: campaign });
     },
   );
 
