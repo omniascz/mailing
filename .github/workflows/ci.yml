@@ -676,7 +676,8 @@ jobs:
     # nothing on the PR page said otherwise. That is how the missing
     # INTERNAL_API_SECRET above reached master in the first place.
     #
-    # `audit` and `e2e` stay out on purpose, see the step below.
+    # The list below is the ONLY list. The step reads it back through
+    # `toJSON(needs)` rather than repeating it, so the two cannot disagree.
     needs:
       [
         lint,
@@ -693,35 +694,54 @@ jobs:
       ]
     if: always()
     steps:
-      - name: Verify all jobs succeeded
+      # ONE LIST, not two.
+      #
+      # This used to name every job twice: once in `needs`, and again in an env
+      # block and a `for job in …` loop that read it back. Nothing checked the
+      # two agreed, so adding a job to `needs` and forgetting the loop produced
+      # a job that gates nothing — it could be red while this stayed green. That
+      # is not hypothetical here: workers-integration sat outside `needs` for
+      # three and a half weeks under a comment claiming otherwise, and #18
+      # merged with the integration suite broken.
+      #
+      # `toJSON(needs)` serialises the whole context, which is an object keyed
+      # by job id with a `result` on each — so the list of jobs to check IS the
+      # list of dependencies, read at run time. A job added to `needs` is
+      # checked from that moment, and there is no second place to forget.
+      #
+      # A matrix job is ONE entry: `needs` is keyed by job id, and build-go's
+      # two legs produce one id whose result is success only if both legs
+      # succeeded. The dump below prints what was actually read, so that is
+      # visible rather than assumed.
+      #
+      # `audit` and `e2e`: audit is continue-on-error, so it reports success
+      # whatever `pnpm audit` returns and requiring it would assert nothing.
+      # e2e IS required and is in `needs` — it lost its `if:` first, because a
+      # label-gated job reports `skipped` and this step treats that as failure.
+      - name: Verify every needed job succeeded
         env:
-          # `skipped` counts as a failure for these: a required job that did not
-          # run is a required job that did not pass. That rule is why e2e had
-          # to lose its `if:` before it could be listed — a label-gated job
-          # would have reported `skipped` on every PR and failed this check.
-          #
-          # `audit` stays out because it is continue-on-error: it reports
-          # success whatever `pnpm audit` returns, so requiring it would assert
-          # nothing.
-          LINT: ${{ needs.lint.result }}
-          TYPECHECK: ${{ needs.typecheck.result }}
-          TEST: ${{ needs.test.result }}
-          BUILD: ${{ needs.build.result }}
-          BUILD_GO: ${{ needs['build-go'].result }}
-          INTEGRATION: ${{ needs.integration.result }}
-          WORKERS_INTEGRATION: ${{ needs['workers-integration'].result }}
-          DRIFT_CHECK: ${{ needs['drift-check'].result }}
-          APPLY_DRY_RUN: ${{ needs['apply-dry-run'].result }}
-          PROTO_DRIFT: ${{ needs['proto-drift'].result }}
-          E2E: ${{ needs.e2e.result }}
+          NEEDS: ${{ toJSON(needs) }}
         run: |
-          failed=''
-          for job in LINT TYPECHECK TEST BUILD BUILD_GO INTEGRATION WORKERS_INTEGRATION DRIFT_CHECK APPLY_DRY_RUN PROTO_DRIFT E2E; do
-            eval "result=\$$job"
-            echo "$job: $result"
-            [ "$result" = 'success' ] || failed="$failed $job"
-          done
-          if [ -n "$failed" ]; then
-            echo "::error::Required jobs did not succeed:$failed"
+          set -euo pipefail
+
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+
+          # An empty or unreadable context would make the check below pass
+          # vacuously — nothing failed because nothing was looked at. That is
+          # the same shape as a scan test that finds nothing because it reads
+          # nothing, so the count is asserted before the results are.
+          count=$(echo "$NEEDS" | jq -r 'length')
+          if [ "$count" -lt 10 ]; then
+            echo "::error::CI Pass read only $count dependencies. It gates every job in its own needs list, and that list is far shorter than expected — the context is empty or malformed."
             exit 1
           fi
+
+          # `skipped` and `cancelled` are failures, not exemptions: a required
+          # job that did not run is a required job that did not pass.
+          failed=$(echo "$NEEDS" | jq -r '[to_entries[] | select(.value.result != "success") | "\(.key)=\(.value.result)"] | join(" ")')
+          if [ -n "$failed" ]; then
+            echo "::error::Required jobs did not succeed: $failed"
+            exit 1
+          fi
+
+          echo "All $count required jobs succeeded."
