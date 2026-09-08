@@ -47,6 +47,7 @@ func (s *MTAServer) Send(_ context.Context, req *pb.SendRequest) (*pb.SendRespon
 		SmtpMessage: result.SMTPMessage,
 		Error:       result.Error,
 		DurationMs:  result.DurationMs,
+		SendingIp:   result.SendingIP,
 	}, nil
 }
 
@@ -79,6 +80,7 @@ func (s *MTAServer) SendBatch(_ context.Context, req *pb.SendBatchRequest) (*pb.
 				SmtpMessage: result.SMTPMessage,
 				Error:       result.Error,
 				DurationMs:  result.DurationMs,
+				SendingIp:   result.SendingIP,
 			}
 
 			mu.Lock()
@@ -129,14 +131,14 @@ func (s *MTAServer) ListenAndServe(addr string) error {
 
 func requestToMessage(req *pb.SendRequest) *smtpsend.Message {
 	msg := &smtpsend.Message{
-		MessageID: req.MessageId,
-		FromEmail: req.FromEmail,
-		FromName:  req.FromName,
-		ToEmail:   req.ToEmail,
-		ToName:    req.ToName,
-		Subject:   req.Subject,
-		HTMLBody:  req.HtmlBody,
-		TextBody:  req.TextBody,
+		MessageID:  req.MessageId,
+		FromEmail:  req.FromEmail,
+		FromName:   req.FromName,
+		ToEmail:    req.ToEmail,
+		ToName:     req.ToName,
+		Subject:    req.Subject,
+		HTMLBody:   req.HtmlBody,
+		TextBody:   req.TextBody,
 		ReplyTo:    req.ReplyTo,
 		Headers:    req.CustomHeaders,
 		SendingIP:  req.SendingIp,

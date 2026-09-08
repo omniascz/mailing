@@ -79,6 +79,12 @@ message SendResponse {
   string error = 5;
   // Duration in milliseconds
   int64 duration_ms = 6;
+  // The source address the message actually left from, read off the connected
+  // socket. Empty when no connection was established.
+  //
+  // On the shared pool this is the only place the answer exists: the kernel
+  // chooses by routing table and nothing upstream can know it.
+  string sending_ip = 7;
 }
 
 message SendBatchRequest {

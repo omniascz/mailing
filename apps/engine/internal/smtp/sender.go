@@ -19,21 +19,21 @@ import (
 
 // Message represents a fully structured outgoing email.
 type Message struct {
-	MessageID    string
-	FromEmail    string
-	FromName     string
-	ToEmail      string
-	ToName       string
-	Subject      string
-	HTMLBody     string
-	TextBody     string
-	ReplyTo      string
-	Headers      map[string]string // custom headers
-	DkimConfig   *dkim.SignConfig
-	SendingIP    string // optional override
-	ReturnPath   string // VERP envelope sender (MAIL FROM); empty = FromEmail
-	TLSPolicy    string // "require" = abort if no STARTTLS; else opportunistic
-	RawMIME      string // when set, relayed verbatim (SendRawEmail); skips build+DKIM
+	MessageID  string
+	FromEmail  string
+	FromName   string
+	ToEmail    string
+	ToName     string
+	Subject    string
+	HTMLBody   string
+	TextBody   string
+	ReplyTo    string
+	Headers    map[string]string // custom headers
+	DkimConfig *dkim.SignConfig
+	SendingIP  string // optional override
+	ReturnPath string // VERP envelope sender (MAIL FROM); empty = FromEmail
+	TLSPolicy  string // "require" = abort if no STARTTLS; else opportunistic
+	RawMIME    string // when set, relayed verbatim (SendRawEmail); skips build+DKIM
 
 	// ISP-deliverability hints (#387). Leave zero-valued to skip enrichment.
 	CampaignID       string // tenant-facing identifier for Feedback-ID
@@ -62,6 +62,19 @@ type Result struct {
 	SMTPMessage string
 	Error       string
 	DurationMs  int64
+
+	// SendingIP is the address the message actually left from, read off the
+	// socket after it was connected.
+	//
+	// Reported for every outcome that reached a connection, success or bounce,
+	// because a bounce is the event a reputation is built from. Empty when no
+	// connection was made — a DNS failure or a refused dial has no source
+	// address, and inventing one would attribute somebody else's problem to a
+	// real IP.
+	//
+	// This is the only place the answer exists for the shared pool: nothing
+	// upstream chose that address, the kernel did.
+	SendingIP string
 }
 
 // Sender sends emails via the connection pool.
@@ -158,12 +171,19 @@ func (s *Sender) Send(msg *Message) *Result {
 		conn, connErr = s.pool.Get(domain, requireTLS)
 	}
 	if connErr != nil {
+		// No connection, so no source address. Empty rather than the address we
+		// intended: a dial that never happened must not be attributed to an IP.
 		return &Result{
 			MessageID:  msg.MessageID,
 			Error:      fmt.Sprintf("connect: %v", connErr),
 			DurationMs: time.Since(start).Milliseconds(),
 		}
 	}
+
+	// Read once, off the connected socket, and carried on every outcome below.
+	// A bounce is the event a reputation is built from, so the failure paths
+	// need it as much as the success path does.
+	sendingIP := conn.LocalIP
 
 	// SMTP envelope — use the VERP Return-Path as MAIL FROM when set so
 	// out-of-band bounces come back attributable; else the header From.
@@ -180,6 +200,7 @@ func (s *Sender) Send(msg *Message) *Result {
 			SMTPMessage: smtpMsg,
 			Error:       err.Error(),
 			DurationMs:  time.Since(start).Milliseconds(),
+			SendingIP:   sendingIP,
 		}
 	}
 
@@ -192,6 +213,7 @@ func (s *Sender) Send(msg *Message) *Result {
 			SMTPMessage: smtpMsg,
 			Error:       err.Error(),
 			DurationMs:  time.Since(start).Milliseconds(),
+			SendingIP:   sendingIP,
 		}
 	}
 
@@ -206,6 +228,7 @@ func (s *Sender) Send(msg *Message) *Result {
 			SMTPMessage: smtpMsg,
 			Error:       err.Error(),
 			DurationMs:  time.Since(start).Milliseconds(),
+			SendingIP:   sendingIP,
 		}
 	}
 
@@ -228,6 +251,7 @@ func (s *Sender) Send(msg *Message) *Result {
 			SMTPMessage: smtpMsg,
 			Error:       err.Error(),
 			DurationMs:  time.Since(start).Milliseconds(),
+			SendingIP:   sendingIP,
 		}
 	}
 
@@ -247,6 +271,7 @@ func (s *Sender) Send(msg *Message) *Result {
 		SMTPCode:    250,
 		SMTPMessage: "OK",
 		DurationMs:  time.Since(start).Milliseconds(),
+		SendingIP:   sendingIP,
 	}
 }
 

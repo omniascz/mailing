@@ -61,6 +61,8 @@ interface MtaSendResult {
   smtpMessage: string;
   error: string;
   durationMs: number;
+  /** The address the engine says the message left from. Empty when it did not connect. */
+  sendingIp: string;
 }
 
 /**
@@ -113,6 +115,7 @@ async function sendViaMta(data: MtaSendJobData): Promise<MtaSendResult> {
       error: res.error,
       // proto int64 → string; parseInt safe (durations fit in MAX_SAFE_INTEGER)
       durationMs: Number.parseInt(res.durationMs, 10) || 0,
+      sendingIp: res.sendingIp ?? '',
     };
   } catch (err) {
     // gRPC ServiceError has .code (status code) and .details/.message
@@ -125,6 +128,8 @@ async function sendViaMta(data: MtaSendJobData): Promise<MtaSendResult> {
       smtpMessage: '',
       error: `MTA gRPC error${e.code !== undefined ? ` (${e.code})` : ''}: ${detail}`,
       durationMs: 0,
+      // The call itself failed, so there was no connection and no address.
+      sendingIp: '',
     };
   }
 }
@@ -266,9 +271,53 @@ async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
   // The key is then ABSENT rather than empty: an event that does not say which
   // address it left from must not be attributable to one, and `metadata ?
   // 'sendingIp'` is what the aggregate filters on.
-  const ipMeta: { sendingIp?: string } = data.sendingIp ? { sendingIp: data.sendingIp } : {};
-
   const result = await sendViaMta(data);
+
+  // What the engine says beats what this worker asked for.
+  //
+  // `data.sendingIp` is an intention: the address the API resolved from the
+  // org's pool and passed down. The engine's value is an observation, read off
+  // the connected socket after the dial. They are usually the same, and where
+  // they are not, the observation is the one a reputation is built from.
+  //
+  // It is also the only value that exists for two of the three routes. When the
+  // engine picks for itself from SENDING_IPS, and on the shared pool where the
+  // kernel picks by routing table, nothing upstream knows the answer — which is
+  // the whole reason the engine now reports it.
+  //
+  // NOT VALIDATED against a known list, deliberately. The previous rule — drop
+  // an address that is not one of ours — was about a value arriving in an
+  // internal HTTP payload, where a wrong string could name any row. This one
+  // comes from the kernel via LocalAddr, and the consumer joins it to
+  // dedicated_ips, so an address we do not know matches nothing and is counted
+  // nowhere. Filtering it here would instead discard exactly the shared-pool
+  // case this exists for, because those addresses are by definition not in
+  // SENDING_IPS.
+  const observedIp = result.sendingIp;
+  const intendedIp = data.sendingIp ?? '';
+  const effectiveIp = observedIp || intendedIp;
+
+  // A disagreement is not smoothed over. It means the pool handed out a
+  // connection bound somewhere other than where the API aimed it, and silently
+  // preferring one would leave the reputation attributed correctly while nobody
+  // learns the routing is wrong.
+  if (observedIp && intendedIp && observedIp !== intendedIp) {
+    console.warn(
+      `[mta-sender] message ${data.messageId} was aimed at ${intendedIp} but left from ${observedIp}`,
+    );
+  }
+
+  const ipMeta: { sendingIp?: string; requestedSendingIp?: string } = effectiveIp
+    ? {
+        sendingIp: effectiveIp,
+        // Kept only when it differs, so the discrepancy is queryable rather
+        // than just logged — and absent in the ordinary case, which is most of
+        // them.
+        ...(intendedIp && observedIp && intendedIp !== observedIp
+          ? { requestedSendingIp: intendedIp }
+          : {}),
+      }
+    : {};
 
   if (result.success) {
     const successMeta = {

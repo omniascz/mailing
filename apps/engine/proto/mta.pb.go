@@ -366,7 +366,13 @@ type SendResponse struct {
 	SmtpMessage string                 `protobuf:"bytes,4,opt,name=smtp_message,json=smtpMessage,proto3" json:"smtp_message,omitempty"`
 	Error       string                 `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
 	// Duration in milliseconds
-	DurationMs    int64 `protobuf:"varint,6,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	DurationMs int64 `protobuf:"varint,6,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	// The source address the message actually left from, read off the connected
+	// socket. Empty when no connection was established.
+	//
+	// On the shared pool this is the only place the answer exists: the kernel
+	// chooses by routing table and nothing upstream can know it.
+	SendingIp     string `protobuf:"bytes,7,opt,name=sending_ip,json=sendingIp,proto3" json:"sending_ip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -441,6 +447,13 @@ func (x *SendResponse) GetDurationMs() int64 {
 		return x.DurationMs
 	}
 	return 0
+}
+
+func (x *SendResponse) GetSendingIp() string {
+	if x != nil {
+		return x.SendingIp
+	}
+	return ""
 }
 
 type SendBatchRequest struct {
@@ -699,7 +712,7 @@ const file_proto_mta_proto_rawDesc = "" +
 	"DkimConfig\x12\x16\n" +
 	"\x06domain\x18\x01 \x01(\tR\x06domain\x12\x1a\n" +
 	"\bselector\x18\x02 \x01(\tR\bselector\x12&\n" +
-	"\x0fprivate_key_pem\x18\x03 \x01(\tR\rprivateKeyPem\"\xbe\x01\n" +
+	"\x0fprivate_key_pem\x18\x03 \x01(\tR\rprivateKeyPem\"\xdd\x01\n" +
 	"\fSendResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
@@ -708,7 +721,9 @@ const file_proto_mta_proto_rawDesc = "" +
 	"\fsmtp_message\x18\x04 \x01(\tR\vsmtpMessage\x12\x14\n" +
 	"\x05error\x18\x05 \x01(\tR\x05error\x12\x1f\n" +
 	"\vduration_ms\x18\x06 \x01(\x03R\n" +
-	"durationMs\"@\n" +
+	"durationMs\x12\x1d\n" +
+	"\n" +
+	"sending_ip\x18\a \x01(\tR\tsendingIp\"@\n" +
 	"\x10SendBatchRequest\x12,\n" +
 	"\bmessages\x18\x01 \x03(\v2\x10.mta.SendRequestR\bmessages\"\x82\x01\n" +
 	"\x11SendBatchResponse\x12+\n" +

@@ -22,6 +22,22 @@ type Conn struct {
 	CreatedAt time.Time
 	LastUsed  time.Time
 	UseTLS    bool
+
+	// LocalIP is the address this connection actually went out from, read off
+	// the socket once, right after the dial.
+	//
+	// A STRING, not the net.Conn it came from. Ownership of that conn passes to
+	// smtp.Client the moment NewClient takes it — every close path in this file
+	// calls c.Client.Close() and none touches the socket directly — so keeping
+	// a second reference would mean holding something somebody else closes.
+	// The only thing anyone wants from it is the address, and the address does
+	// not change for the life of the connection.
+	//
+	// This is the only place the value exists. On the bound path the caller
+	// already knows which address it asked for, but on the shared pool the
+	// kernel picks by routing table and nothing upstream can know the answer —
+	// which is the whole reason for reading it here.
+	LocalIP string
 }
 
 // Pool manages per-domain SMTP connection pools.
@@ -217,6 +233,7 @@ func (p *Pool) DialFrom(domain, localIP string, requireTLS bool) (*Conn, error) 
 		CreatedAt: now,
 		LastUsed:  now,
 		UseTLS:    useTLS,
+		LocalIP:   localIPOf(netConn),
 	}, nil
 }
 
@@ -307,6 +324,9 @@ func (p *Pool) dial(domain string, requireTLS bool) (*Conn, error) {
 		CreatedAt: now,
 		LastUsed:  now,
 		UseTLS:    useTLS,
+		// The shared-pool path, and the only place the answer exists: nothing
+		// upstream chose this address, the kernel did, by routing table.
+		LocalIP: localIPOf(netConn),
 	}
 
 	p.mu.Lock()
@@ -375,6 +395,42 @@ func resolveMX(domain string) (string, error) {
 	// Strip trailing dot from hostname
 	host := strings.TrimRight(best.Host, ".")
 	return host, nil
+}
+
+// localIPOf extracts the source address of a connected socket.
+//
+// Deliberately not LocalAddr().String(): on a TCP connection that returns
+// "1.2.3.4:54321", and the port is meaningless here — it changes per
+// connection and would never match a configured address.
+//
+// An IPv4-mapped IPv6 address is normalised to its dotted-quad form. A dual
+// stack host dialling an IPv4 MX reports ::ffff:203.0.113.5 for what everyone
+// else in the system calls 203.0.113.5, and the consumer joins these values
+// against configured addresses by string equality.
+func localIPOf(c net.Conn) string {
+	if c == nil {
+		return ""
+	}
+	if tcp, ok := c.LocalAddr().(*net.TCPAddr); ok && tcp.IP != nil {
+		if v4 := tcp.IP.To4(); v4 != nil {
+			return v4.String()
+		}
+		return tcp.IP.String()
+	}
+	// Not a TCP socket, or an address shape we do not recognise. Empty rather
+	// than a guess: a wrong address here is attributed to a real IP's
+	// reputation.
+	host, _, err := net.SplitHostPort(c.LocalAddr().String())
+	if err != nil {
+		return ""
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		if v4 := ip.To4(); v4 != nil {
+			return v4.String()
+		}
+		return ip.String()
+	}
+	return ""
 }
 
 // ehloName is the name this engine announces in EHLO.
