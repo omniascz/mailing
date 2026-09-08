@@ -13,6 +13,7 @@ import { templates as campaignTemplates } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { assertFolderAssignable } from './folders.js';
 import { createCampaign } from '../../services/campaigns/index.js';
+import { getTemplatePerformance } from '../../services/templates/performance.js';
 import {
   validateOrgContent,
   extractTemplateText,
@@ -436,6 +437,28 @@ export default async function templateRoutes(app: FastifyInstance) {
       });
 
       return reply.code(201).send({ data: campaign });
+    },
+  );
+
+  /**
+   * GET /api/v1/saved-templates/:id/performance
+   *
+   * What the campaigns started from this template did. Grouped by
+   * campaigns.template_id, which is the axis that only started existing when
+   * the library grew a way to begin a campaign — before that this route would
+   * have answered over an empty join for every template in every account.
+   *
+   * Computed on request rather than kept as a rolling aggregate: it reads
+   * email_events for one template's campaigns, which is bounded by that
+   * template's use, and a stored figure would be one more thing to keep in
+   * step with a table that is already the source of truth.
+   */
+  app.get(
+    '/api/v1/saved-templates/:id/performance',
+    { schema: { tags: ['Templates'], summary: 'Delivery outcomes for campaigns from a template' } },
+    async (req) => {
+      const { id } = savedIdParam.parse(req.params);
+      return { data: await getTemplatePerformance(req.user!.orgId, id) };
     },
   );
 
