@@ -19,10 +19,18 @@
  * template is the body of every campaign that points at it, so editing one
  * changes mail that has already been written and approved. Same rule as the
  * segments area: read and judge, never rewrite.
+ *
+ * `get_template_performance` joins this batch late and on purpose. It was left
+ * out twice because it groups by `campaigns.template_id`, and until the library
+ * grew a way to start a campaign that column was null on every row the product
+ * created — 103 campaigns in the test database, none with a template. A tool
+ * answering over an empty join returns zeros an assistant reports as "this
+ * template does not perform", which is a different sentence from "nobody has
+ * used it".
  */
 
 import { z } from 'zod';
-import { defineTool, expectOk } from '../registry.js';
+import { defineTool, expectOk, ToolError, type ToolContext } from '../registry.js';
 
 interface BuiltInTemplate {
   id: string;
@@ -197,4 +205,119 @@ export const checkTemplateContent = defineTool({
   },
 });
 
-export const templateTools = [findTemplates, checkTemplateContent];
+/** Resolve a saved template by id or by name, the way the other areas do. */
+async function resolveSavedTemplate(
+  ctx: ToolContext,
+  ref: string,
+): Promise<{ id: string; name: string }> {
+  const isId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref);
+  const body = (await expectOk(ctx, '/api/v1/saved-templates')) as { data?: SavedTemplate[] };
+  const rows = body.data ?? [];
+
+  if (isId) {
+    // Asked of the product rather than filtered out of the list: the
+    // performance route is org-scoped and answers 404 for somebody else's id,
+    // and filtering here would turn another tenant's template into "no such
+    // template", which reads as "you never made one".
+    const hit = rows.find((t) => t.id === ref);
+    if (hit) return { id: hit.id, name: hit.name };
+    return { id: ref, name: ref };
+  }
+
+  const needle = ref.trim().toLowerCase();
+  const exact = rows.filter((t) => t.name.toLowerCase() === needle);
+  const matches =
+    exact.length > 0 ? exact : rows.filter((t) => t.name.toLowerCase().includes(needle));
+  if (matches.length === 0) {
+    throw new ToolError(`No saved template in this account matches "${ref}".`, 404);
+  }
+  if (matches.length > 1) {
+    throw new ToolError(
+      `"${ref}" matches ${matches.length} templates: ${matches
+        .slice(0, 5)
+        .map((t) => `${t.name} (${t.id})`)
+        .join(', ')}. Ask for one by id.`,
+      409,
+    );
+  }
+  return { id: matches[0]!.id, name: matches[0]!.name };
+}
+
+const rate = (v: number | null, label: string): string | null =>
+  v === null ? null : `  ${label.padEnd(14)} ${v}%`;
+
+export const getTemplatePerformanceTool = defineTool({
+  name: 'get_template_performance',
+  description:
+    'How the campaigns started from one saved template have performed: how many campaigns used ' +
+    'it, and their delivery, opens, clicks, bounces and unsubscribes with rates. Use it to answer ' +
+    '"which of our designs actually works". Accepts a template id or its name.',
+  input: z.object({
+    template: z.string().describe('Saved template id, or the template name'),
+  }),
+  async run(input, ctx) {
+    const tpl = await resolveSavedTemplate(ctx, input.template);
+    const body = (await expectOk(ctx, `/api/v1/saved-templates/${tpl.id}/performance`)) as {
+      data?: {
+        templateName?: string;
+        campaigns?: number;
+        campaignsSent?: number;
+        sends?: number;
+        delivered?: number;
+        uniqueOpens?: number;
+        uniqueClicks?: number;
+        bounces?: number;
+        complaints?: number;
+        unsubscribes?: number;
+        deliveryRatePct?: number | null;
+        openRatePct?: number | null;
+        clickRatePct?: number | null;
+        bounceRatePct?: number | null;
+        unsubscribeRatePct?: number | null;
+        revenue?: { available: boolean; reason?: string; total?: number };
+      };
+    };
+    const p = body.data ?? {};
+    const name = p.templateName ?? tpl.name;
+
+    // Three distinct answers, because "nobody used it", "used but not sent"
+    // and "sent" are three different situations and only the third has rates.
+    if ((p.campaigns ?? 0) === 0) {
+      return `No campaign has been started from "${name}" yet, so there is nothing to measure. It is not performing badly — it has not been used.`;
+    }
+    if ((p.sends ?? 0) === 0) {
+      return `"${name}" is behind ${p.campaigns} campaign(s), none of which has been sent yet. Nothing to measure until one goes out.`;
+    }
+
+    const lines = [
+      `"${name}" — ${p.campaigns} campaign(s), ${p.campaignsSent} of them sent`,
+      `  sends          ${p.sends}`,
+      `  delivered      ${p.delivered}`,
+      `  opens          ${p.uniqueOpens} unique`,
+      `  clicks         ${p.uniqueClicks} unique`,
+      `  bounces        ${p.bounces}`,
+      `  complaints     ${p.complaints}`,
+      `  unsubscribes   ${p.unsubscribes}`,
+      '',
+      ...([
+        rate(p.deliveryRatePct ?? null, 'delivered'),
+        rate(p.openRatePct ?? null, 'opened'),
+        rate(p.clickRatePct ?? null, 'clicked'),
+        rate(p.bounceRatePct ?? null, 'bounced'),
+        rate(p.unsubscribeRatePct ?? null, 'unsubscribed'),
+      ].filter(Boolean) as string[]),
+    ];
+
+    // Said out loud rather than shown as 0. A missing figure that reads as a
+    // zero is the failure this whole tool was held back to avoid.
+    if (p.revenue && p.revenue.available === false) {
+      lines.push('', `  revenue        not available on this deployment — ${p.revenue.reason}`);
+    } else if (p.revenue?.available) {
+      lines.push('', `  revenue        ${p.revenue.total}`);
+    }
+
+    return lines.join('\n');
+  },
+});
+
+export const templateTools = [findTemplates, checkTemplateContent, getTemplatePerformanceTool];
