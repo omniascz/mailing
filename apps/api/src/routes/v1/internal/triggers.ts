@@ -44,6 +44,7 @@ import { refreshAllOrgsChannelScores } from '../../../services/channel-scoring/i
 import { refreshAllOrgsEngagement } from '../../../services/engagement-score/index.js';
 import { runDnsHealthSweep } from '../../../services/deliverability/dns-health.js';
 import { dailyIpMaintenance } from '../../../services/dedicated-ips/index.js';
+import { refreshAllIpReputations } from '../../../services/deliverability/ip-reputation.js';
 
 interface RunSummary {
   date: { triggered: number; error?: string };
@@ -89,6 +90,12 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         // over its ramp and the pool stops offering any of them. The reset is
         // therefore part of the counter, not housekeeping around it.
         ipMaintenanceResult,
+        // Seventh aggregate over events, in the same place as the other six.
+        // reputation_score, bounce_rate and complaint_rate on dedicated_ips
+        // have stood at zero since they were added: their only writer takes
+        // numbers, and until the worker started stamping metadata.sendingIp
+        // nobody could compute them.
+        ipReputationResult,
       ] = await Promise.allSettled([
         processDailyDateTriggers(),
         processDailyNameDayTriggers(),
@@ -99,8 +106,10 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
         refreshAllOrgsEngagement(),
         runDnsHealthSweep(),
         dailyIpMaintenance(),
+        refreshAllIpReputations(),
       ]);
       void ipMaintenanceResult;
+      void ipReputationResult;
 
       const summary: RunSummary = {
         date:
