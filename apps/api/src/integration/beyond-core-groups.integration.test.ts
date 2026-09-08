@@ -41,10 +41,16 @@ import type { FastifyInstance } from 'fastify';
  * operation on each. That symmetry is the check: a route that landed inside a
  * group would have moved `everything` and left `coreOnly` alone, and the four
  * numbers below would disagree about what happened.
+ *
+ * And by one again: GET /api/v1/saved-templates/:id/performance, the report
+ * behind get_template_performance. CORE, like the rest of the templates
+ * surface, so +1 on both counts and the four numbers move together. A route
+ * that had landed inside a group would have moved `everything` alone, and the
+ * disagreement is the thing this guard is for.
  */
 const BASELINE = {
-  coreOnly: { paths: 899, operations: 1119 },
-  everything: { paths: 1241, operations: 1556 },
+  coreOnly: { paths: 900, operations: 1120 },
+  everything: { paths: 1242, operations: 1557 },
 } as const;
 
 interface Surface {
