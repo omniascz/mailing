@@ -250,6 +250,24 @@ async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
     }
   }
 
+  // The address this message actually left from, carried on every event it
+  // produces.
+  //
+  // Nothing recorded the sending IP anywhere: email_events.ip_address is the
+  // RECIPIENT's, filled from the tracking pixel's X-Forwarded-For, and `isp` is
+  // the RECEIVING provider. So a bounce could never be attributed to the
+  // address that caused it, which is why dedicated_ips.bounce_rate,
+  // complaint_rate and reputation_score have stood at zero since they were
+  // added — their only writer takes numbers nobody could compute.
+  //
+  // Only set when the API chose the address (a dedicated IP resolved from the
+  // org's pool). Empty means the engine picked for itself from SENDING_IPS, or
+  // the kernel picked off the shared pool, and neither is knowable from here.
+  // The key is then ABSENT rather than empty: an event that does not say which
+  // address it left from must not be attributable to one, and `metadata ?
+  // 'sendingIp'` is what the aggregate filters on.
+  const ipMeta: { sendingIp?: string } = data.sendingIp ? { sendingIp: data.sendingIp } : {};
+
   const result = await sendViaMta(data);
 
   if (result.success) {
@@ -257,6 +275,7 @@ async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       smtpCode: result.smtpCode,
       durationMs: result.durationMs,
       isp,
+      ...ipMeta,
       ...(data.abVariantId ? { abVariantId: data.abVariantId } : {}),
     };
     // 'send' = handed off to MX; 'deliver' = MX returned SMTP 250 (this engine
@@ -292,7 +311,7 @@ async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
-      metadata: { bounceType: 'block', smtpCode, smtpMessage: result.smtpMessage, isp },
+      metadata: { bounceType: 'block', smtpCode, smtpMessage: result.smtpMessage, isp, ...ipMeta },
     });
     // Don't retry block bounces
     return { status: 'blocked', messageId: data.messageId, smtpCode };
@@ -310,7 +329,7 @@ async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
-      metadata: { bounceType: 'hard', smtpCode, smtpMessage: result.smtpMessage, isp },
+      metadata: { bounceType: 'hard', smtpCode, smtpMessage: result.smtpMessage, isp, ...ipMeta },
     });
     return { status: 'hard_bounce', messageId: data.messageId, smtpCode };
   }
@@ -339,6 +358,7 @@ async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
         attempt: job.attemptsMade,
         attempts: job.opts.attempts,
         isp,
+        ...ipMeta,
       },
     });
     throw new Error(`Soft bounce (${smtpCode}): ${result.smtpMessage}`);
@@ -397,6 +417,7 @@ async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       attempt: job.attemptsMade,
       attempts: job.opts.attempts,
       isp,
+      ...ipMeta,
     },
   });
   throw new Error(`MTA error: ${result.error}`);
