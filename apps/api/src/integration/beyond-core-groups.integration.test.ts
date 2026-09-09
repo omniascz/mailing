@@ -5,18 +5,64 @@
  * covers the thing those cannot: that the decision reaches Fastify, that a
  * group named in the environment produces its routes and an unnamed one does
  * not, and — the case with the most at stake — that a deployment which sets
- * nothing serves exactly what it served before this mechanism existed.
+ * nothing serves no group at all.
  *
- * The counts below were measured on the commit this branch started from
- * (907c7d7) by booting the real app and counting operations in /docs/json:
+ * ─── Why the absolute counts are gone ────────────────────────────────────────
  *
- *   FEATURE_BEYOND_CORE unset/false   897 paths, 1117 operations
- *   FEATURE_BEYOND_CORE=true          1239 paths, 1554 operations
+ * This file used to pin four numbers: the paths and operations of the core
+ * surface, and the same pair for `everything`. They were measured by hand, and
+ * every new CORE route moved all four, because a core route appears on both
+ * surfaces. Three PRs in a row carried a commit that did nothing but retype
+ * them, and the fourth did not — that run failed as
  *
- * They are pinned rather than derived. A derived expectation ("core plus the
- * enabled groups") would move with the code and could not catch a group
- * becoming reachable by accident, which is the whole failure this mechanism is
- * meant to make impossible.
+ *     expected 8 to be 7
+ *
+ * on the survey delta, which was a subtraction against a stale core constant.
+ * It reads as a fault in surveyRoutes and is nothing of the kind. A guard whose
+ * failure names the wrong subsystem is worse than what it guards against,
+ * because the person who sees it starts by looking somewhere else.
+ *
+ * ─── The invariant, stated without a single count ────────────────────────────
+ *
+ * For any configuration C, the surface served is exactly
+ *
+ *     core  union  ( routes(g) for every g in C )
+ *
+ * and that union is DISJOINT. Three consequences, each asserted below:
+ *
+ *   I1  core is unconditional — every core route is served under every
+ *       configuration, so core minus everything is empty.
+ *   I2  a group is off until it is named — no route of any group is served by
+ *       the default deployment, so everything minus core is the whole of the
+ *       beyond-core surface and none of it has leaked into core.
+ *   I3  naming a group adds that group and nothing else — the surface with g
+ *       minus core is exactly the routes of g.
+ *
+ * ─── What is still pinned, and why it is the right thing to pin ──────────────
+ *
+ * One pair of numbers survives: the SIZE OF THE DIFFERENCE, everything minus
+ * core. It is the only figure here that does not move when the product grows a
+ * core route — a core route lands on both sides of the subtraction and cancels
+ * — so the ordinary change that used to cost a commit now costs nothing, while
+ * the three ways this mechanism can actually break all move it:
+ *
+ *   - a core route registered only under a group      -> the difference GROWS
+ *   - a group's route reachable without its group     -> the difference SHRINKS
+ *   - a group registered without being gated at all   -> the difference SHRINKS
+ *
+ * It is still two hand-written numbers, and the honest reason it is not derived
+ * from the group registrations is cost and circularity. Deriving it means
+ * measuring, for each of the 76 groups, the surface with only that group minus
+ * core — 76 boots of the real app, three seconds each, over three minutes added
+ * to a lane that runs in five. And the expectation would then come from the
+ * same registration table this file exists to check, so it could not fail in
+ * the direction that matters. The half that CAN be derived without circularity
+ * already is: config/beyond-core-registry.test.ts proves index.ts registers
+ * exactly the 76 declared groups, by reading the source rather than the app.
+ *
+ * Where a set is as cheap as a count, this file now compares sets — so a change
+ * that swaps one route for another, which four equal counts could never see,
+ * fails here with both names in the message.
  *
  * `env` is parsed once at import, so each case resets the module graph and
  * re-imports buildApp with the environment already in place — the technique
@@ -26,37 +72,43 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 
 /**
- * Measured on 907c7d7 before this mechanism existed, then moved by exactly one
- * route: POST /api/v1/internal/quiet-hours/check, added as a CORE route so the
- * triggered stream can ask about quiet hours without acquiring the frequency
- * cap that /internal/frequency/check-batch also applies.
+ * The whole beyond-core surface, measured on 103d6d1 by booting the real app
+ * twice and subtracting.
  *
- * +1 path and +1 operation on both surfaces, which is the number that matters:
- * had the new route landed inside a group, or pulled a group in with it, the
- * two figures would have moved by different amounts.
- *
- * Moved by one route again: POST /api/v1/saved-templates/:id/create-campaign,
- * the step that lets a design in the library become a campaign. CORE, like the
- * rest of the templates surface, so it appears on BOTH counts — +1 path and +1
- * operation on each. That symmetry is the check: a route that landed inside a
- * group would have moved `everything` and left `coreOnly` alone, and the four
- * numbers below would disagree about what happened.
- *
- * And by one again: GET /api/v1/saved-templates/:id/performance, the report
- * behind get_template_performance. CORE, like the rest of the templates
- * surface, so +1 on both counts and the four numbers move together. A route
- * that had landed inside a group would have moved `everything` alone, and the
- * disagreement is the thing this guard is for.
+ * Update this ONLY when a beyond-core group gains or loses routes — the moment
+ * a human should be looking. Adding a core route must leave it alone; if a core
+ * route moves it, the route did not land in core.
  */
-const BASELINE = {
-  coreOnly: { paths: 900, operations: 1120 },
-  everything: { paths: 1242, operations: 1557 },
-} as const;
+const BEYOND_CORE_SURFACE = { paths: 342, operations: 437 } as const;
+
+/**
+ * surveyRoutes, in full. Pinned as names rather than as the count 7 it used to
+ * be: a count cannot tell a renamed route from an unchanged one, and that count
+ * was computed against the core constant, which is what produced the
+ * "expected 8 to be 7" that named the wrong subsystem.
+ */
+const SURVEY_OPERATIONS = [
+  'GET /api/v1/surveys',
+  'GET /api/v1/surveys/{id}',
+  'GET /api/v1/surveys/{id}/results',
+  'GET /public/surveys/{id}/hosted',
+  'POST /api/v1/surveys',
+  'POST /public/surveys/{id}/submit',
+  'PUT /api/v1/surveys/{id}',
+] as const;
 
 interface Surface {
-  paths: number;
-  operations: number;
+  /** Sorted OpenAPI path templates. */
+  paths: string[];
+  /** Sorted `METHOD path` keys — the finer measure; one path can carry several. */
+  operations: string[];
   has(path: string): boolean;
+}
+
+/** Members of `a` that are not in `b`. Input is sorted, so a failure reads in order. */
+function without(a: readonly string[], b: readonly string[]): string[] {
+  const seen = new Set(b);
+  return a.filter((x) => !seen.has(x));
 }
 
 const opened: FastifyInstance[] = [];
@@ -82,13 +134,19 @@ async function surfaceWith(cfg: { all?: boolean; groups?: string }): Promise<Sur
     const res = await app.inject({ method: 'GET', url: '/docs/json' });
     const doc = res.json() as { paths: Record<string, Record<string, unknown>> };
     const keys = Object.keys(doc.paths);
-    let operations = 0;
-    for (const methods of Object.values(doc.paths)) {
+    const operations: string[] = [];
+    for (const [path, methods] of Object.entries(doc.paths)) {
       for (const m of Object.keys(methods)) {
-        if (['get', 'post', 'put', 'patch', 'delete'].includes(m)) operations++;
+        if (['get', 'post', 'put', 'patch', 'delete'].includes(m)) {
+          operations.push(`${m.toUpperCase()} ${path}`);
+        }
       }
     }
-    return { paths: keys.length, operations, has: (p) => keys.includes(p) };
+    return {
+      paths: [...keys].sort(),
+      operations: operations.sort(),
+      has: (p) => keys.includes(p),
+    };
   } finally {
     if (prevAll === undefined) delete process.env.FEATURE_BEYOND_CORE;
     else process.env.FEATURE_BEYOND_CORE = prevAll;
@@ -107,14 +165,39 @@ async function bootFails(cfg: { all?: boolean; groups?: string }): Promise<strin
   throw new Error('expected the boot to be refused, but it succeeded');
 }
 
-describe('the default deployment is unchanged', () => {
-  it('with nothing configured, serves exactly the pre-existing core surface', async () => {
-    const s = await surfaceWith({});
-    expect(s.paths).toBe(BASELINE.coreOnly.paths);
-    expect(s.operations).toBe(BASELINE.coreOnly.operations);
-  }, 120_000);
+describe('core and the groups partition the surface', () => {
+  it('I1: every core route is still served when every group is on', async () => {
+    const core = await surfaceWith({});
+    const everything = await surfaceWith({ all: true });
 
-  it('and none of the beyond-core paths are among them', async () => {
+    // No count. A group that shadowed or replaced a core route would empty a
+    // slot here, and the message names the route rather than a total.
+    expect(without(core.paths, everything.paths), 'core paths lost when groups are on').toEqual([]);
+    expect(
+      without(core.operations, everything.operations),
+      'core operations lost when groups are on',
+    ).toEqual([]);
+  }, 180_000);
+
+  it('I2: the beyond-core surface is exactly this size, and core growth does not move it', async () => {
+    const core = await surfaceWith({});
+    const everything = await surfaceWith({ all: true });
+
+    const extraPaths = without(everything.paths, core.paths);
+    const extraOperations = without(everything.operations, core.operations);
+
+    // The point of the whole file. A new CORE route appears on both surfaces
+    // and cancels out of this subtraction, so it needs no edit here. A route
+    // that landed inside a group, or a group route that became reachable
+    // without its group, moves one of these two numbers, and this is the only
+    // place that would say so.
+    expect(extraPaths.length, 'beyond-core paths').toBe(BEYOND_CORE_SURFACE.paths);
+    expect(extraOperations.length, 'beyond-core operations').toBe(BEYOND_CORE_SURFACE.operations);
+  }, 180_000);
+});
+
+describe('the default deployment serves no group', () => {
+  it('none of the beyond-core paths are among them', async () => {
     const s = await surfaceWith({});
     expect(s.has('/api/v1/surveys')).toBe(false);
     expect(s.has('/api/v1/coupons/batches')).toBe(false);
@@ -125,11 +208,11 @@ describe('the default deployment is unchanged', () => {
 describe('development is unchanged', () => {
   it('FEATURE_BEYOND_CORE=true still serves every group, as it always did', async () => {
     const s = await surfaceWith({ all: true });
-    expect(s.paths).toBe(BASELINE.everything.paths);
-    expect(s.operations).toBe(BASELINE.everything.operations);
     // Including the blocked one: dev is not a rollout, and route-smoke sweeps
     // this surface.
     expect(s.has('/api/v1/back-in-stock/subscribe')).toBe(true);
+    expect(s.has('/api/v1/surveys')).toBe(true);
+    expect(s.has('/api/v1/revenue/report')).toBe(true);
   }, 120_000);
 });
 
@@ -142,25 +225,43 @@ describe('a named group is registered, an unnamed one is not', () => {
     expect(s.has('/api/v1/revenue/report')).toBe(false);
   }, 120_000);
 
-  it('adds only that group’s routes to the core surface', async () => {
-    const s = await surfaceWith({ groups: 'survey' });
-    expect(s.operations).toBeGreaterThan(BASELINE.coreOnly.operations);
-    // surveyRoutes is seven endpoints; the delta must be exactly that, or
-    // something else came along with it.
-    expect(s.operations - BASELINE.coreOnly.operations).toBe(7);
-  }, 120_000);
+  it('I3: adds exactly that group’s routes to the core surface, by name', async () => {
+    const core = await surfaceWith({});
+    const withSurvey = await surfaceWith({ groups: 'survey' });
 
-  it('registers two groups when two are named', async () => {
-    const s = await surfaceWith({ groups: 'survey,revenue' });
-    expect(s.has('/api/v1/surveys')).toBe(true);
-    expect(s.has('/api/v1/revenue/report')).toBe(true);
-    expect(s.has('/api/v1/coupons/batches')).toBe(false);
-  }, 120_000);
+    // Measured against the core surface of THIS commit rather than a constant,
+    // so the assertion is about surveyRoutes and can only fail about
+    // surveyRoutes.
+    expect(without(withSurvey.operations, core.operations)).toEqual([...SURVEY_OPERATIONS]);
+    // And nothing went the other way: naming a group never removes a route.
+    expect(without(core.operations, withSurvey.operations)).toEqual([]);
+  }, 180_000);
 
-  it('an empty value is the same as unset — no groups', async () => {
-    const s = await surfaceWith({ groups: '' });
-    expect(s.operations).toBe(BASELINE.coreOnly.operations);
-  }, 120_000);
+  it('registers two groups when two are named, and contains the one-group delta', async () => {
+    const core = await surfaceWith({});
+    const both = await surfaceWith({ groups: 'survey,revenue' });
+
+    expect(both.has('/api/v1/surveys')).toBe(true);
+    expect(both.has('/api/v1/revenue/report')).toBe(true);
+    expect(both.has('/api/v1/coupons/batches')).toBe(false);
+
+    // survey's routes are a subset of what the pair adds, and revenue brought
+    // something of its own: the union is additive, not a replacement.
+    const delta = without(both.operations, core.operations);
+    expect(without([...SURVEY_OPERATIONS], delta), 'survey routes missing from the pair').toEqual(
+      [],
+    );
+    expect(without(delta, [...SURVEY_OPERATIONS]).length).toBeGreaterThan(0);
+  }, 180_000);
+
+  it('an empty value is the same as unset — the same surface, route for route', async () => {
+    const unset = await surfaceWith({});
+    const empty = await surfaceWith({ groups: '' });
+    // Set equality rather than an equal count: two surfaces of the same size
+    // can still differ.
+    expect(without(empty.operations, unset.operations)).toEqual([]);
+    expect(without(unset.operations, empty.operations)).toEqual([]);
+  }, 180_000);
 });
 
 describe('a misconfiguration refuses the boot', () => {
