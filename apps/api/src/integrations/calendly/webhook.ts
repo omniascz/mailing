@@ -9,7 +9,7 @@
 
 import crypto from 'node:crypto';
 import { emitWebhookEvent, toContactSummary } from '../../services/webhooks/emit.js';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts } from '../../db/schema/contacts.js';
 import { deals } from '../../db/schema/deals.js';
@@ -68,11 +68,15 @@ export async function processCalendlyEvent(
     const [firstName, ...rest] = (invitee.name ?? '').split(' ');
     const lastName = rest.join(' ') || null;
 
-    // Upsert contact
+    // Upsert contact, org-scoped. Without the org_id this found whichever
+    // tenant held the address first, and the id then travelled onward under
+    // the RECEIVING org: into a deal row and into onApiEvent, which pairs the
+    // two in workflow_events and starts this org's automations on somebody
+    // else's contact.
     const [existing] = await db
       .select({ id: contacts.id })
       .from(contacts)
-      .where(eq(contacts.email, invitee.email))
+      .where(and(eq(contacts.orgId, orgId), eq(contacts.email, invitee.email)))
       .limit(1);
 
     let contactId: string;
