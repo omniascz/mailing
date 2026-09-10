@@ -300,10 +300,15 @@ async function handleCustomerUpsert(obj: Record<string, unknown>) {
   const [firstName, ...rest] = name.split(' ');
   const lastName = rest.join(' ') || null;
 
+  // Org-scoped, for the same reason upsertContactWithPurchase is. Here the
+  // consequence is an absence rather than a wrong write: this branches on
+  // whether a row exists and writes nothing when one does, so an address
+  // another org already held meant the org the event NAMED silently got no
+  // contact at all.
   const [existing] = await db
     .select({ id: contacts.id })
     .from(contacts)
-    .where(eq(contacts.email, email))
+    .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
     .limit(1);
 
   if (!existing) {
