@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { billingSubscriptions, contacts, organizations } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -327,10 +327,16 @@ async function upsertContactWithPurchase(
   source: string,
   externalId: string,
 ): Promise<void> {
+  // Org-scoped, like every other read of this table. Without the org_id the
+  // lookup returned whichever tenant happened to hold the address first, and
+  // the id went to onApiEvent under the PAYING org — a workflow_events row
+  // pairing one org with another org's contact. The route is public and
+  // signature-gated, and a Stripe signature says nothing about which tenant
+  // an address belongs to.
   const [existing] = await db
     .select({ id: contacts.id })
     .from(contacts)
-    .where(eq(contacts.email, email))
+    .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
     .limit(1);
 
   let contactId: string;
