@@ -1,9 +1,9 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { billingSubscriptions, contacts, organizations } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { onApiEvent } from '../workflows/triggers.js';
+import { verifyStripeSignature } from '../commerce/payments.js';
 
 // Plan catalogue — kept in sync with Stripe product catalogue.
 export const PLANS = {
@@ -152,20 +152,18 @@ export async function handleStripeWebhook(rawBody: string, signature: string) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) throw new Error('STRIPE_WEBHOOK_SECRET not configured');
 
-  // Verify Stripe-Signature header (format: t=ts,v1=sig)
-  const ts = signature
-    .split(',')
-    .find((p) => p.startsWith('t='))
-    ?.slice(2);
-  const v1 = signature
-    .split(',')
-    .find((p) => p.startsWith('v1='))
-    ?.slice(3);
-  if (!ts || !v1) throw new Error('Invalid Stripe-Signature header');
-
-  const expected = createHmac('sha256', secret).update(`${ts}.${rawBody}`, 'utf8').digest('hex');
-
-  if (!timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(v1, 'hex'))) {
+  // One verifier, shared with the commerce webhook, rather than a second
+  // hand-rolled one. The parsing and the constant-time compare were the same;
+  // replay window was not. This code read t= to rebuild the signed payload and
+  // then never compared it to the clock, so a correctly signed body stayed
+  // valid for ever and a captured request could be posted back at any time.
+  //
+  // verifyStripeSignature applies |now - t| <= 300 s, two-sided, so a sender
+  // whose clock runs slightly fast is still accepted. Imported from
+  // services/commerce rather than moved into lib/: routes/v1/newsletter-tiers.ts
+  // already imports it from there, and mailing-e2e.test.ts pins the
+  // implementation text to that file.
+  if (!verifyStripeSignature(Buffer.from(rawBody, 'utf8'), signature, secret)) {
     throw new Error('Stripe signature verification failed');
   }
 
