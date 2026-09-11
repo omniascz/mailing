@@ -309,10 +309,15 @@ export async function processMigration(
             if (member.tags.length > 0) {
               const { tags: tagsTable, contactTags } = await import('../../db/schema/index.js');
               for (const mcTag of member.tags) {
+                // Org-scoped: tags is UNIQUE on (org_id, name), so a bare
+                // name is not a key - it names one row per org. Matching on the
+                // name alone found another tenant's tag, skipped the create
+                // below, and wrote that foreign tag id into contact_tags, which
+                // carries no org_id of its own.
                 let [tag] = await db
                   .select({ id: tagsTable.id })
                   .from(tagsTable)
-                  .where(eq(tagsTable.name, mcTag.name))
+                  .where(and(eq(tagsTable.orgId, orgId), eq(tagsTable.name, mcTag.name)))
                   .limit(1);
 
                 if (!tag) {
