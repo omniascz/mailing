@@ -14,7 +14,7 @@
  * Runs as a background job. Progress is persisted to migration_jobs.progress.
  */
 
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   migrationJobs,
@@ -263,11 +263,15 @@ export async function processMigration(
             const firstName = member.merge_fields['FNAME'] || null;
             const lastName = member.merge_fields['LNAME'] || null;
 
-            // Upsert contact
+            // Upsert contact, org-scoped. Without the org_id a member already
+            // held by another tenant took the "already exists" branch, and that
+            // FOREIGN contact id was then written into this org's join tables
+            // below - contact_lists has no org_id of its own, so membership is
+            // whatever list it points at, and that list belongs to this org.
             const existing = await db
               .select({ id: contacts.id })
               .from(contacts)
-              .where(eq(contacts.email, email))
+              .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
               .limit(1);
 
             let contactId: string;
