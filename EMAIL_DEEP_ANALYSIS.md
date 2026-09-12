@@ -140,7 +140,7 @@
 - `GET /api/v1/sending/throttle?ip=` (per-ISP throttle state z Redis token buckets)
 - `POST /api/v1/sending/throttle/reset` (admin)
 - `GET/POST /api/v1/sending/warmup` (list + start)
-- `POST /api/v1/sending/warmup/advance` (admin/cron — manual day++)
+- `POST /api/v1/internal/sending/warmup/advance-all` (noční cron za sdíleným tajemstvím — den++ pro všechny zahřívané IP)
 
 **Transactional** (`routes/v1/transactional.ts`):
 

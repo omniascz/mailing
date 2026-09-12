@@ -5,7 +5,6 @@
  *  - POST /api/v1/sending/throttle/reset     — reset throttle counters (admin)
  *  - GET  /api/v1/sending/warmup             — list IP warmup statuses for org
  *  - POST /api/v1/sending/warmup             — start warmup for a new IP
- *  - POST /api/v1/sending/warmup/advance     — manually advance warmup day (admin/cron)
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -163,25 +162,6 @@ export default async function sendingRoutes(app: FastifyInstance) {
 
         await startWarmup(ip, req.user!.orgId);
         return reply.code(201).send({ data: { ip, status: 'warming', warmupDay: 1 } });
-      },
-    );
-
-    /**
-     * POST /api/v1/sending/warmup/advance
-     * Advance warmup day for an IP. Called by the daily cron job (or manually by admin).
-     *
-     * Body: { ip: string }
-     */
-    scope.post(
-      '/api/v1/sending/warmup/advance',
-      { schema: { tags: ['Sending'], summary: 'Advance IP warmup day' } },
-      async (req) => {
-        const { ip } = z.object({ ip: z.string().min(7).max(45) }).parse(req.body);
-        const newDay = await advanceWarmupDay(ip);
-        if (newDay === null) {
-          throw AppError.badRequest('IP not found in warmup schedule or already fully warm');
-        }
-        return { data: { ip, warmupDay: newDay } };
       },
     );
 
