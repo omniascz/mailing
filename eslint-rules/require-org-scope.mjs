@@ -69,13 +69,15 @@ function deriveTenantTables() {
   const here = dirname(fileURLToPath(import.meta.url));
   const schemaDir = join(here, '..', 'apps', 'api', 'src', 'db', 'schema');
   const tenant = new Set();
+  /** export name -> Set of primary-key property names, read from the schema. */
+  const primaryKeys = new Map();
   let files;
   try {
     files = readdirSync(schemaDir);
   } catch {
     // No schema to read (rule used outside this repo): match nothing rather
     // than guess, so the rule is silent instead of wrong.
-    return tenant;
+    return { tenant, primaryKeys };
   }
   for (const file of files) {
     if (!file.endsWith('.ts') || file.endsWith('.test.ts') || file === 'index.ts') continue;
@@ -86,12 +88,35 @@ function deriveTenantTables() {
       const name = /^([A-Za-z0-9_]+)\s*=\s*pgTable\(/.exec(chunk)?.[1];
       if (!name) continue;
       if (/\n\s*orgId:\s*(uuid|varchar|text)\(/.test(chunk)) tenant.add(name);
+
+      // Primary key read from the schema, not guessed from a column being
+      // called `id`. Both shapes this repo uses are covered: 305 inline
+      // `id: uuid('id').primaryKey()` and 5 composite
+      // `primaryKey({ columns: [t.contactId, t.listId] })`.
+      // Sliced per property rather than matched on one line: the common
+      // declaration here wraps, as `id: uuid('id')\n  .primaryKey()`, and a
+      // single-line regex sees none of them.
+      const pk = new Set();
+      const props = [...chunk.matchAll(/\n\s{2,}([A-Za-z0-9_]+):/g)];
+      for (let i = 0; i < props.length; i++) {
+        const start = props[i].index;
+        const end = i + 1 < props.length ? props[i + 1].index : chunk.length;
+        if (chunk.slice(start, end).includes('.primaryKey()')) pk.add(props[i][1]);
+      }
+      const composite = /primaryKey\(\{\s*columns:\s*\[([^\]]+)\]/.exec(chunk);
+      if (composite) {
+        for (const part of composite[1].split(',')) {
+          const col = /\.([A-Za-z0-9_]+)\s*$/.exec(part.trim())?.[1];
+          if (col) pk.add(col);
+        }
+      }
+      if (pk.size > 0) primaryKeys.set(name, pk);
     }
   }
-  return tenant;
+  return { tenant, primaryKeys };
 }
 
-const TENANT_TABLES = deriveTenantTables();
+const { tenant: TENANT_TABLES, primaryKeys: PRIMARY_KEYS } = deriveTenantTables();
 
 /** Does this subtree mention orgId at all? Identifier, property or string. */
 function mentionsOrgScope(node, sourceCode) {
@@ -133,6 +158,164 @@ function collectChain(root) {
     }
   }
   return calls.reverse();
+}
+
+/**
+ * EXEMPTION 1 — a predicate that is equality on this table's primary key.
+ *
+ * `update(contacts).set({…}).where(eq(contacts.id, existing.id))` is already as
+ * narrow as a query can be: one row, found by the key. In every instance read
+ * from the 603 warnings the id came from a lookup the same function had already
+ * scoped — ads/lead-sync.ts:109 is the clearest, fetching `existing` with
+ * `eq(contacts.orgId, orgId)` two statements earlier. Reporting it asks for a
+ * condition that cannot change which row is touched.
+ *
+ * The key comes from the schema, so a table whose key is not called `id` is
+ * handled and a plain column called `id` on a keyless table is not.
+ */
+function isPrimaryKeyPredicate(arg, table) {
+  const pk = PRIMARY_KEYS.get(table);
+  if (!pk || !arg || arg.type !== 'CallExpression') return false;
+  if (arg.callee.type !== 'Identifier' || arg.callee.name !== 'eq') return false;
+  const [column] = arg.arguments;
+  if (!column || column.type !== 'MemberExpression') return false;
+  if (column.property.type !== 'Identifier') return false;
+  // The column must belong to the table being queried, not to a joined one.
+  if (column.object.type !== 'Identifier' || column.object.name !== table) return false;
+  return pk.has(column.property.name);
+}
+
+/**
+ * A stricter mention, for the same-scope exemptions only: the org has to appear
+ * as a COLUMN (`accounts.orgId`) or as a property being written (`{ orgId }`),
+ * not merely as an identifier handed to something.
+ *
+ * The loose check would accept `const conditions = buildConditions(orgId)` —
+ * which proves nothing, because whether that helper filters on the org is
+ * exactly what cannot be seen from here. The test
+ * "conditions built by a helper in another scope" is that case, and it caught
+ * this being too wide.
+ */
+function mentionsOrgColumnOrProperty(node) {
+  let found = false;
+  const visit = (n) => {
+    if (found || !n || typeof n.type !== 'string') return;
+    if (
+      n.type === 'MemberExpression' &&
+      n.property.type === 'Identifier' &&
+      (n.property.name === 'orgId' || n.property.name === 'org_id')
+    ) {
+      found = true;
+      return;
+    }
+    if (
+      n.type === 'Property' &&
+      ((n.key.type === 'Identifier' && (n.key.name === 'orgId' || n.key.name === 'org_id')) ||
+        (n.key.type === 'Literal' && n.key.value === 'org_id'))
+    ) {
+      found = true;
+      return;
+    }
+    for (const key of Object.keys(n)) {
+      if (key === 'parent') continue;
+      const child = n[key];
+      if (Array.isArray(child)) child.forEach(visit);
+      else if (child && typeof child === 'object' && typeof child.type === 'string') visit(child);
+    }
+  };
+  visit(node);
+  return found;
+}
+
+/** The enclosing function body, for the two "filled in the same scope" exemptions. */
+function enclosingFunction(node) {
+  let n = node;
+  while (n) {
+    if (
+      n.type === 'FunctionDeclaration' ||
+      n.type === 'FunctionExpression' ||
+      n.type === 'ArrowFunctionExpression' ||
+      n.type === 'Program'
+    ) {
+      return n;
+    }
+    n = n.parent;
+  }
+  return null;
+}
+
+/**
+ * EXEMPTIONS 2 and 3 — a name whose value is assembled in this same function,
+ * where one of the pieces mentions orgId.
+ *
+ * `const conds = [eq(accounts.orgId, orgId)]; if (x) conds.push(…);
+ * .where(and(...conds))` is scoped, and crm/accounts.ts:60 is exactly that
+ * shape. So is `toInsert.push({ orgId, … }); .values(toInsert)` at
+ * inbox/messenger.ts:106. The rule cannot evaluate the array, but it can read
+ * the declarations and pushes that build it.
+ *
+ * Same function only — no cross-file and no cross-scope analysis, so a value
+ * assembled by a helper is still reported.
+ */
+function scopeBuiltInSameFunction(name, fromNode) {
+  const fn = enclosingFunction(fromNode);
+  if (!fn) return false;
+  let found = false;
+  const visit = (n) => {
+    if (found || !n || typeof n.type !== 'string') return;
+    // `const name = [ … orgId … ]` / `let name = …`
+    if (
+      n.type === 'VariableDeclarator' &&
+      n.id.type === 'Identifier' &&
+      n.id.name === name &&
+      n.init &&
+      mentionsOrgColumnOrProperty(n.init)
+    ) {
+      found = true;
+      return;
+    }
+    // `name.push(… orgId …)` — and `name.unshift`, same thing
+    if (
+      n.type === 'CallExpression' &&
+      n.callee.type === 'MemberExpression' &&
+      n.callee.object.type === 'Identifier' &&
+      n.callee.object.name === name &&
+      n.callee.property.type === 'Identifier' &&
+      (n.callee.property.name === 'push' || n.callee.property.name === 'unshift') &&
+      n.arguments.some((a) => mentionsOrgColumnOrProperty(a))
+    ) {
+      found = true;
+      return;
+    }
+    for (const key of Object.keys(n)) {
+      if (key === 'parent') continue;
+      const child = n[key];
+      if (Array.isArray(child)) child.forEach(visit);
+      else if (child && typeof child === 'object' && typeof child.type === 'string') visit(child);
+    }
+  };
+  visit(fn);
+  return found;
+}
+
+/** Names referenced by a carrier argument, directly or through and(...xs) / spread. */
+function referencedNames(arg) {
+  const names = [];
+  const visit = (n) => {
+    if (!n || typeof n.type !== 'string') return;
+    if (n.type === 'Identifier') {
+      names.push(n.name);
+      return;
+    }
+    for (const key of Object.keys(n)) {
+      if (key === 'parent') continue;
+      const child = n[key];
+      if (Array.isArray(child)) child.forEach(visit);
+      else if (child && typeof child === 'object' && typeof child.type === 'string') visit(child);
+    }
+  };
+  visit(arg);
+  return names;
 }
 
 /** The table name in a `from(x)` / `insert(x)` style argument, if recognisable. */
@@ -218,7 +401,20 @@ export default {
         }
 
         const scoped = carriers.some((l) =>
-          l.node.arguments.some((arg) => mentionsOrgScope(arg, sourceCode)),
+          l.node.arguments.some((arg) => {
+            if (mentionsOrgScope(arg, sourceCode)) return true;
+
+            // 1 — equality on this table's primary key. Only for update and
+            // delete: a SELECT by key still hands a row to a caller that may
+            // not check whose it is, which is how the Stripe defects worked.
+            if ((kind === 'update' || kind === 'delete') && isPrimaryKeyPredicate(arg, table)) {
+              return true;
+            }
+
+            // 2 and 3 — the predicate or the row is assembled in this same
+            // function out of a piece that names the org.
+            return referencedNames(arg).some((name) => scopeBuiltInSameFunction(name, l.node));
+          }),
         );
         if (!scoped) {
           context.report({

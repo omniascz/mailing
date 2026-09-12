@@ -42,6 +42,44 @@ test('require-org-scope', () => {
         name: 'orgId reached through a variable still counts as a mention',
         code: `db.update(contacts).set({ status }).where(and(eq(contacts.orgId, org), eq(contacts.id, id)))`,
       },
+
+      // ── exemption 1: equality on this table's primary key ─────────────────
+      {
+        name: 'update keyed on the primary key',
+        code: `db.update(contacts).set({ status }).where(eq(contacts.id, existing.id))`,
+      },
+      {
+        name: 'delete keyed on the primary key',
+        code: `db.delete(contacts).where(eq(contacts.id, id))`,
+      },
+
+      // ── exemption 2: conditions assembled in the same function ────────────
+      {
+        name: 'conditions seeded with orgId, then pushed to',
+        code: `function listAccounts(orgId, opts) {
+          const conditions = [eq(accounts.orgId, orgId)];
+          if (opts.industry) conditions.push(eq(accounts.industry, opts.industry));
+          return db.select().from(accounts).where(and(...conditions));
+        }`,
+      },
+      {
+        name: 'orgId pushed onto conditions rather than seeded',
+        code: `function listAccounts(orgId) {
+          const conditions = [isNull(accounts.deletedAt)];
+          conditions.push(eq(accounts.orgId, orgId));
+          return db.select().from(accounts).where(and(...conditions));
+        }`,
+      },
+
+      // ── exemption 3: rows assembled in the same function ──────────────────
+      {
+        name: 'values() given an array built with orgId in each row',
+        code: `function ingest(orgId, rows) {
+          const toInsert = [];
+          for (const r of rows) toInsert.push({ orgId, body: r.body });
+          return db.insert(inboxMessages).values(toInsert);
+        }`,
+      },
     ],
     invalid: [
       {
@@ -59,9 +97,49 @@ test('require-org-scope', () => {
         code: `db.select().from(contacts)`,
         errors: [{ messageId: 'noScopeCarrier' }],
       },
+      // ── the near misses each exemption must NOT swallow ───────────────────
       {
-        name: 'update scoped only by primary key',
-        code: `db.update(contacts).set({ status }).where(eq(contacts.id, id))`,
+        // 1: equality, but on a column that is not the key. This is the exact
+        // shape of the four defects found by hand (#155–#158).
+        name: 'update keyed on a non-key column',
+        code: `db.update(contacts).set({ status }).where(eq(contacts.email, email))`,
+        errors: [{ messageId: 'missingOrgScope' }],
+      },
+      {
+        // 1: a SELECT by key is still reported. It hands a row to a caller who
+        // may not check whose it is — which is how the Stripe lookups leaked.
+        name: 'select keyed on the primary key is still reported',
+        code: `db.select().from(contacts).where(eq(contacts.id, id))`,
+        errors: [{ messageId: 'missingOrgScope' }],
+      },
+      {
+        // 2: conditions assembled, none of them the org.
+        name: 'conditions built without orgId',
+        code: `function listAccounts(opts) {
+          const conditions = [isNull(accounts.deletedAt)];
+          if (opts.industry) conditions.push(eq(accounts.industry, opts.industry));
+          return db.select().from(accounts).where(and(...conditions));
+        }`,
+        errors: [{ messageId: 'missingOrgScope' }],
+      },
+      {
+        // 3: rows assembled, none of them naming the org.
+        name: 'values() given an array built without orgId',
+        code: `function ingest(rows) {
+          const toInsert = [];
+          for (const r of rows) toInsert.push({ body: r.body });
+          return db.insert(inboxMessages).values(toInsert);
+        }`,
+        errors: [{ messageId: 'missingOrgScope' }],
+      },
+      {
+        // 2 and 3 are same-function only: a value built by a helper elsewhere
+        // is not followed, so it is still reported.
+        name: 'conditions built by a helper in another scope',
+        code: `function listAccounts(orgId) {
+          const conditions = buildConditions(orgId);
+          return db.select().from(accounts).where(and(...conditions));
+        }`,
         errors: [{ messageId: 'missingOrgScope' }],
       },
     ],
