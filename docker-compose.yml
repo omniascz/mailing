@@ -76,7 +76,7 @@ services:
       start_period: 30s
 
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:RELEASE.2025-06-13T11-33-47Z@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
     container_name: forgemsg-minio
     ports:
       - "9000:9000"   # API
