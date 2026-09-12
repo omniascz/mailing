@@ -127,7 +127,7 @@ jobs:
           --health-retries 5
     env:
       # Uploads go here. The bucket and its public-read policy are created by
-      # the suite itself, so a bare `minio/minio server /data` is enough. Public
+      # the suite itself, so a bare `server /data` is enough. Public
       # read is the property under test: a mail client fetches with no session.
       #
       # ONE block, and it has to stay one. These five keys were declared TWICE in
@@ -193,13 +193,30 @@ jobs:
       # made the whole workflow unparseable, so this job had not run at all.
       #
       # A step and not a service container: a service cannot pass a command, and
-      # minio/minio needs `server /data`. The media upload suite writes real
+      # the image needs `server /data`. The media upload suite writes real
       # bytes and reads them back over plain HTTP the way a mail client does, so
       # mocking the store would leave the one thing that path exists for
       # untested. Bucket and public-read policy are created by the suites.
+      #
+      # Docker Hub `minio/minio` is gone. MinIO stopped publishing community
+      # images in October 2025 and the repository was withdrawn, so the pull
+      # fails with "pull access denied … repository does not exist" and the job
+      # dies before db:migrate - every check after it reports skipped, which
+      # reads as a test failure and is not one.
+      #
+      # Pinned to the last community release on Quay, by tag AND digest: the tag
+      # says which release this is to a human, the digest is what Docker
+      # resolves. No `:latest` - there is no upstream left to track, so a
+      # floating tag could only move to something unrelated or vanish too.
+      #
+      # cgr.dev/chainguard/minio was the other candidate and was measured and
+      # rejected: it pulls, but its entrypoint is /usr/bin/minio running as uid
+      # 65532, and `server /data` then dies with "Unable to initialize backend:
+      # file access denied". Using it means also granting write access to /data,
+      # which is a change to this step rather than to one string.
       - name: Start MinIO
         run: |
-          docker run -d --name ci-minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio server /data
+          docker run -d --name ci-minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin quay.io/minio/minio:RELEASE.2025-06-13T11-33-47Z@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8 server /data
           for i in $(seq 1 30); do
             if curl -sf http://127.0.0.1:9000/minio/health/live; then echo "minio up"; exit 0; fi
             sleep 2
