@@ -255,6 +255,51 @@ inside the compose network. Digital assets and video are different: those are
 handed out as presigned URLs with an expiry
 (`services/digital-assets/index.ts`, `services/video/recorder.ts`).
 
+#### Bucket policy: readable, never listable
+
+`MINIO_BUCKET` is not only the media bucket. Four different things share it:
+
+| what                           | key                                                                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| media, thumbnails, derivatives | `media/<org-uuid>/<asset-uuid>-original.<ext>` (`services/media/ingest.ts:148`)                                     |
+| email-event archive            | `archives/email-events/<org-uuid>/year=/month=/day=/<ms-timestamp>.ndjson` (`services/archive/email-events.ts:158`) |
+| call recordings                | `recordings/<org-uuid>/<call-id>/<recording-sid>.mp3` (`services/phone/recording.ts:56`)                            |
+| voicemail                      | `voicemails/<org-uuid>/<call-id>/<recording-sid>.mp3` (`services/phone/voicemail.ts:64`)                            |
+
+Media force that bucket to be anonymously readable, so the other three are
+readable by anyone holding the key as well. Handing recordings out as presigned
+URLs (`services/phone/recording.ts:101`) does not change that: a presigned URL
+is a way to reach an object in a _private_ bucket, not a restriction on one that
+is public.
+
+What keeps them closed today is that the keys are not guessable — every one of
+them starts with an organisation UUID, and the media and call ids are UUIDs or
+provider SIDs. That is secrecy of the URL, not access control, and it has one
+sharp edge:
+
+- [ ] Grant anonymous **`GetObject` only**. Anonymous `ListBucket` must be off.
+      With listing allowed the keys stop being secret and the whole archive,
+      every recording and every voicemail can be enumerated by anyone who knows
+      the bucket's address.
+
+The archive is the part worth understanding before deciding. It is a dump of
+every column of `email_events` (`services/archive/email-events.ts` selects the
+whole row), which includes the recipient's `ip_address`, the full `user_agent`,
+`geo_country` and `geo_city`, and `link_url` — which link each recipient
+clicked. There is no e-mail address in it: the recipient is a `contact_id`
+UUID, resolvable only against the database. It is still behavioural personal
+data on other people's customers.
+
+**Open item, not done here.** The sensitive three could move to a private
+bucket without changing any behaviour: the archive is read only by the server
+(`getObjectBytes` / `listObjectKeys`, never handed to a client), and recordings
+and voicemail are already served through presigned GETs, which work against a
+private bucket by design. Only media genuinely needs public read, because its
+URL is unsigned. Scope of that change: the bucket name is already behind a
+one-line seam in the archive (`archiveBucket()`), and read directly from `env`
+in the two phone services — so roughly four code files plus one new variable in
+`config/env.ts`, `docker-compose.prod.yml` and `.env.production.example`.
+
 Not object storage, but the same shape of growth: **contact import files are
 written to the local filesystem**, `IMPORT_UPLOAD_DIR` or
 `os.tmpdir()/forgemsg-imports` (`apps/api/src/routes/v1/contact-imports.ts:22`),
