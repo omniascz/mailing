@@ -124,17 +124,47 @@ function computeNextRun(frequency: string, sendTime: string): Date {
   return next;
 }
 
-/** Run any RSS campaigns that are due — called by worker cron. */
-export async function runDueRssCampaigns(now: Date = new Date()): Promise<{ processed: number }> {
+/** Seam so the tests can drive a run without asking the network for a feed. */
+export interface RssRunDeps {
+  fetchFeed?: (url: string) => Promise<RssItem[]>;
+}
+
+/**
+ * Run the due RSS campaigns of ONE organisation.
+ *
+ * The orgId is load-bearing. Without it this selected every tenant's due feeds,
+ * and its only caller is POST /api/v1/rss-campaigns/run-due — a CORE route that
+ * any org's admin or owner can reach. What that produced was not a report:
+ * processOne() inserts a `campaigns` row under the feed's own orgId with
+ * status 'scheduled' and scheduledAt = now, and the minute cron
+ * POST /api/v1/internal/campaigns/dispatch-scheduled picks exactly that up and
+ * enqueues the send. So one call sent other organisations' mail, and moved
+ * their next_run_at and last_seen_guids so their own scheduled run was skipped.
+ *
+ * There is no RSS cron in the repo — no worker job, no internal endpoint — so
+ * this route is the only way a feed ever runs, and scoping it is the fix rather
+ * than moving it behind the internal secret.
+ */
+export async function runDueRssCampaigns(
+  orgId: string,
+  now: Date = new Date(),
+  deps: RssRunDeps = {},
+): Promise<{ processed: number }> {
   const due = await db
     .select()
     .from(rssCampaigns)
-    .where(and(eq(rssCampaigns.active, true), lte(rssCampaigns.nextRunAt, now)));
+    .where(
+      and(
+        eq(rssCampaigns.orgId, orgId),
+        eq(rssCampaigns.active, true),
+        lte(rssCampaigns.nextRunAt, now),
+      ),
+    );
 
   let processed = 0;
   for (const rss of due) {
     try {
-      await processOne(rss);
+      await processOne(rss, deps.fetchFeed ?? parseFeed);
       processed++;
     } catch {
       // swallow — next run-through will retry.
@@ -143,8 +173,11 @@ export async function runDueRssCampaigns(now: Date = new Date()): Promise<{ proc
   return { processed };
 }
 
-async function processOne(rss: RssCampaign): Promise<void> {
-  const items = await parseFeed(rss.feedUrl);
+async function processOne(
+  rss: RssCampaign,
+  fetchFeed: (url: string) => Promise<RssItem[]>,
+): Promise<void> {
+  const items = await fetchFeed(rss.feedUrl);
   const seen = new Set(rss.lastSeenGuids);
   const fresh = items.filter((i) => !seen.has(i.guid)).slice(0, 10);
 

@@ -78,8 +78,8 @@ const rssRoutes: FastifyPluginAsync = async (app) => {
       preHandler: [app.authenticate, app.requireRole('admin', 'owner')],
       schema: { tags: ['RSS'] },
     },
-    async (_req, reply) => {
-      return reply.send({ data: await runDueRssCampaigns() });
+    async (req, reply) => {
+      return reply.send({ data: await runDueRssCampaigns(req.user!.orgId) });
     },
   );
 };
