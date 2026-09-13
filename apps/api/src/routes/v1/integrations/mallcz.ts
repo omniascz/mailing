@@ -14,6 +14,10 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { socialAccounts } from '../../../db/schema/index.js';
 import { AppError } from '../../../lib/app-error.js';
+// Static, so the call below is type-checked. The webhook handler used to reach
+// this through `await import(...).catch(() => ({ createContact: null }))` and a
+// cast, which is what let an orgId out of the request body go unnoticed.
+import { createContact } from '../../../services/contacts/index.js';
 
 const MALL_API_BASE = 'https://app.api.mall.cz';
 
@@ -172,6 +176,32 @@ export default async function mallCzRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/integrations/mallcz/webhooks — receive Mall.cz webhook events
+  //
+  // The organisation comes from the authenticated caller and their stored
+  // Mall.cz connection. It used to come from `shop_id` in the request body:
+  //
+  //     const orgId = String(event['shop_id'] ?? '');
+  //     createContact(orgId, { email, source: 'mallcz' })
+  //
+  // `shop_id` is Mall.cz's identifier for a shop, not our organisation id, and
+  // nothing checked it against anything. Every route in this plugin sits behind
+  // the plugin-wide `app.requireAuth` above, so the caller was always some
+  // authenticated user — and any of them, in any organisation and any role,
+  // could name another organisation's UUID and have a contact created there,
+  // which also fires that organisation's own `contact.created` webhooks with
+  // the supplied address. No foreign secret was needed, only the victim's org id.
+  //
+  // `shop_id` is deliberately NOT used to pick the tenant, and not rejected on
+  // mismatch either: the connect flow stores Mall.cz's `clientId`
+  // (metadata.clientId / platformUsername), and nothing in this repo establishes
+  // that a webhook's `shop_id` is that same identifier. Guessing that they match
+  // would swap one unverified assumption for another.
+  //
+  // What this is NOT: a verified webhook. Mall.cz cannot call this endpoint at
+  // all — it has no session and no API key, so the auth hook refuses it. Making
+  // it a real webhook needs a per-organisation signing secret and a route
+  // outside this authenticated plugin; that is a change of mechanism, not a
+  // filter, and is left as a proposal.
   app.post('/api/v1/integrations/mallcz/webhooks', async (req, reply) => {
     const event = (req.body ?? {}) as Record<string, unknown>;
     const eventType = String(event['event'] ?? '');
@@ -180,16 +210,30 @@ export default async function mallCzRoutes(app: FastifyInstance) {
       const order = (event['data'] ?? {}) as Record<string, unknown>;
       const customer = (order['customer'] ?? {}) as Record<string, unknown>;
       const email = String((customer['email'] as string | undefined) ?? '');
+      const orgId = req.user!.orgId;
 
-      if (email.includes('@')) {
-        const orgId = String(event['shop_id'] ?? '');
-        const { createContact } = await import('../../../services/contacts/index.js').catch(() => ({
-          createContact: null,
-        }));
-        if (createContact && orgId) {
-          await (
-            createContact as (orgId: string, data: Record<string, unknown>) => Promise<unknown>
-          )(orgId, { email, source: 'mallcz' }).catch(() => {});
+      // The stored mapping, not the payload: an organisation that never
+      // connected Mall.cz has no business receiving Mall.cz contacts.
+      const [connection] = await db
+        .select({ id: socialAccounts.id })
+        .from(socialAccounts)
+        .where(
+          and(
+            eq(socialAccounts.orgId, orgId),
+            eq(socialAccounts.platform, 'mallcz'),
+            eq(socialAccounts.active, true),
+          ),
+        )
+        .limit(1);
+
+      if (email.includes('@') && connection) {
+        try {
+          await createContact(orgId, { email, source: 'mallcz' });
+        } catch (err) {
+          // Logged, not swallowed. The endpoint still answers 200 because the
+          // sender retries on anything else, but a failure nobody can see is
+          // how the old cast survived.
+          console.error('[mallcz] webhook createContact failed', { orgId, err });
         }
       }
     }
