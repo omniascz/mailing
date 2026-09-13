@@ -67,10 +67,50 @@ async function decompressAttachment(buf: Buffer, filename: string): Promise<stri
   return null;
 }
 
-function extractOrgIdFromXml(xml: string): string | null {
-  // Some senders include our custom org ID in the report_metadata/comments block.
-  const m = xml.match(/<comment>[^<]*orgId:([a-f0-9-]{36})[^<]*<\/comment>/i);
-  return m?.[1] ?? null;
+/** Hands one report to the ingestion endpoint. Injected so the decision below is testable. */
+export type ReportSender = (orgId: string, xml: string) => Promise<boolean>;
+
+/**
+ * Decide which organisation one polled report belongs to, and ingest it.
+ *
+ * The organisation comes from configuration — `DMARC_IMAP_ORG_ID` — and from
+ * nothing else. It used to come from the report itself:
+ *
+ *     xml.match(/<comment>[^<]*orgId:([a-f0-9-]{36})[^<]*<\/comment>/i)
+ *
+ * with a comment claiming "some senders include our custom org ID". No sender
+ * does, and nothing in this repository ever wrote such a field. `<comment>` is
+ * a real element of the DMARC aggregate schema (RFC 7489, Appendix C), but it
+ * belongs to PolicyOverrideReason — free text the RECEIVING mail host writes to
+ * explain why it did not apply the published policy, alongside a `type` of
+ * forwarded / sampled_out / trusted_forwarder / mailing_list / local_policy /
+ * other. It is filled in by whoever generated the report, which is to say: by
+ * someone outside this system.
+ *
+ * The mailbox is one platform address shared by every customer — every domain's
+ * DMARC record points `rua=` at `dmarcReportEmail()` (apps/api config/env.ts) —
+ * so anyone able to deliver a message there could name the organisation their
+ * report was filed under, and the worker signed the request with the platform
+ * secret on their behalf.
+ *
+ * A report that cannot be attributed is dropped and logged, never filed under a
+ * guess.
+ */
+export async function ingestReportXml(
+  xml: string,
+  defaultOrgId: string | undefined,
+  send: ReportSender,
+): Promise<boolean> {
+  if (!xml.includes('<feedback>')) return false;
+
+  if (!defaultOrgId) {
+    console.warn(
+      '[dmarc-imap] DMARC_IMAP_ORG_ID is not set — dropping a report rather than filing it under a guess',
+    );
+    return false;
+  }
+
+  return send(defaultOrgId, xml);
 }
 
 // ─── Core poll logic (decoupled from BullMQ for testability) ─────────────────
@@ -137,20 +177,21 @@ async function pollViaSelfHttp(
 
           for (const { filename, data } of xmlBlocks) {
             const xml = await decompressAttachment(data, filename);
-            if (!xml || !xml.includes('<feedback>')) continue;
+            if (!xml) continue;
 
-            const orgId = extractOrgIdFromXml(xml) ?? defaultOrgId;
-
-            const resp = await fetch(`${apiBase}/t/dmarc/report`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-dmarc-secret': secret,
-              },
-              body: JSON.stringify({ orgId, xml }),
+            const ok = await ingestReportXml(xml, defaultOrgId, async (orgId, reportXml) => {
+              const resp = await fetch(`${apiBase}/t/dmarc/report`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-dmarc-secret': secret,
+                },
+                body: JSON.stringify({ orgId, xml: reportXml }),
+              });
+              return resp.ok;
             });
 
-            if (resp.ok) ingested++;
+            if (ok) ingested++;
             else errors++;
           }
 
