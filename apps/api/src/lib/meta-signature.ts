@@ -5,18 +5,31 @@
  * webhooks (spoofed customer messages, fake leads, bogus template-status flips).
  */
 import crypto from 'node:crypto';
+import { unsignedWebhooksAllowed } from './webhook-switches.js';
 
 /**
- * Returns true when the signature matches (or when no app secret is configured,
- * i.e. dev). `rawBody` MUST be the exact bytes Meta sent — use req.rawBody from
- * the global raw-body parser, not a re-serialized req.body.
+ * Returns true only when the signature matches. `rawBody` MUST be the exact
+ * bytes Meta sent — use req.rawBody from the global raw-body parser, not a
+ * re-serialized req.body.
+ *
+ * A missing app secret means NOT VERIFIED, not verified. This used to read
+ * `if (!appSecret) return true; // not configured (dev) — open`, which turned
+ * the absence of configuration into a pass: a deployment that never set
+ * META_APP_SECRET, or one that lost it on a redeploy, accepted a forged lead
+ * from anyone who knew the URL. It was the last live copy of a shape this
+ * repository removed four times elsewhere — see webhook-switches.ts:5-9.
+ *
+ * The development escape hatch survives, but it has to be asked for:
+ * `unsignedWebhooksAllowed()` is the switch that exists for exactly this, and
+ * it is unreachable in production by construction. An unset secret on its own
+ * no longer opens anything.
  */
 export function verifyMetaSignature(
   rawBody: Buffer,
   signatureHeader: string | undefined,
   appSecret: string | undefined,
 ): boolean {
-  if (!appSecret) return true; // not configured (dev) — open
+  if (!appSecret) return unsignedWebhooksAllowed();
   if (!signatureHeader) return false;
   const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex')}`;
   try {

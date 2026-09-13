@@ -189,6 +189,77 @@ describe('prodRequired — production must not fall back to a committed default'
     await expect(import('./env.js')).rejects.toThrow();
   });
 
+  /**
+   * LINKEDIN_CLIENT_ID / LINKEDIN_CLIENT_SECRET — a pair, not two variables.
+   *
+   * Both were read straight from process.env with `?? ''`
+   * (services/ads/accounts.ts:45-46, services/social/accounts.ts:51-52) and
+   * neither was in the schema. Half a configuration therefore booted happily
+   * and broke later, in front of a customer: initiateAdOAuth checks only the
+   * client id, so with the id set and the secret empty the customer is sent to
+   * LinkedIn, consents, comes back — and the token exchange fails with
+   * `Token exchange failed: 401`, after the part they can see has succeeded.
+   *
+   * Required only as a pair, and only in production. A deployment that does not
+   * connect LinkedIn sets neither and is not asked to change anything — this is
+   * deliberately not prodRequired, which would have made every production
+   * deployment carry a variable for an integration most of them never use.
+   */
+  it('production with a LinkedIn client id but no secret is refused, and the message names it', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env = { ...PROD_BASE, LINKEDIN_CLIENT_ID: '86xyzclientid' };
+    vi.resetModules();
+    // In production loadEnv prints and exits rather than throwing a parse
+    // error, same as the MINIO_ENDPOINT case above — what matters is that the
+    // process does not come up, and that the message says which variable.
+    await expect(import('./env.js')).rejects.toThrow();
+    expect(spy.mock.calls.flat().join(' ')).toMatch(/LINKEDIN_CLIENT_SECRET/);
+    spy.mockRestore();
+  });
+
+  it('production with a LinkedIn secret but no client id is refused as well', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env = { ...PROD_BASE, LINKEDIN_CLIENT_SECRET: 'a-real-linkedin-client-secret' };
+    vi.resetModules();
+    await expect(import('./env.js')).rejects.toThrow();
+    expect(spy.mock.calls.flat().join(' ')).toMatch(/LINKEDIN_CLIENT_ID/);
+    spy.mockRestore();
+  });
+
+  it('production with both LinkedIn variables boots, and they come from the schema', async () => {
+    process.env = {
+      ...PROD_BASE,
+      LINKEDIN_CLIENT_ID: '86xyzclientid',
+      LINKEDIN_CLIENT_SECRET: 'a-real-linkedin-client-secret',
+    };
+    vi.resetModules();
+    const mod = await import('./env.js');
+    expect(mod.env.LINKEDIN_CLIENT_ID).toBe('86xyzclientid');
+    expect(mod.env.LINKEDIN_CLIENT_SECRET).toBe('a-real-linkedin-client-secret');
+  });
+
+  it('production with neither LinkedIn variable boots', async () => {
+    // The negative control that matters most: not connecting LinkedIn must
+    // stay a legitimate deployment, so this check can never become a reason to
+    // add a variable to a production environment that has no use for it.
+    process.env = { ...PROD_BASE };
+    vi.resetModules();
+    const mod = await import('./env.js');
+    expect(mod.env.LINKEDIN_CLIENT_ID).toBeUndefined();
+    expect(mod.env.LINKEDIN_CLIENT_SECRET).toBeUndefined();
+  });
+
+  it('development with half the LinkedIn pair still boots', async () => {
+    // Outside production this is a warning at most. A developer trying the
+    // OAuth flow with one variable exported should get the runtime error, not
+    // a process that refuses to start.
+    process.env = { NODE_ENV: 'development', ...REQUIRED, LINKEDIN_CLIENT_ID: '86xyzclientid' };
+    vi.resetModules();
+    const mod = await import('./env.js');
+    expect(mod.env.LINKEDIN_CLIENT_ID).toBe('86xyzclientid');
+    expect(mod.env.LINKEDIN_CLIENT_SECRET).toBeUndefined();
+  });
+
   /** Security-critical fields and the dev default each one carries. */
   const CRITICAL: Array<{ name: string; devDefault: string; realValue: string }> = [
     {
