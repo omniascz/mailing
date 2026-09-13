@@ -60,7 +60,7 @@ async function storeVoicemail(
   recordingSid: string,
   sourceUrl: string,
 ): Promise<string> {
-  const bucket = env.MINIO_BUCKET;
+  const bucket = env.MINIO_PRIVATE_BUCKET;
   const key = `voicemails/${orgId}/${callId}/${recordingSid}.mp3`;
 
   // Fetch from Twilio (requires auth)

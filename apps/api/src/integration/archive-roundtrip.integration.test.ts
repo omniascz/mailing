@@ -28,7 +28,8 @@ import { organizations, emailEvents } from '../db/schema/index.js';
 import { archiveOldEvents, listArchivedFiles } from '../services/archive/email-events.js';
 import { getObjectStore, resetObjectStore } from '../lib/object-store.js';
 
-const BUCKET = process.env.MINIO_BUCKET ?? 'forgemsg-recordings';
+// The archive lives in the private bucket, not the public media one.
+const BUCKET = process.env.MINIO_PRIVATE_BUCKET ?? 'forgemsg-private';
 const GOOD_KEY = process.env.MINIO_ACCESS_KEY ?? 'minioadmin';
 const GOOD_SECRET = process.env.MINIO_SECRET_KEY ?? 'minioadmin';
 

@@ -159,7 +159,7 @@ function buildS3Key(orgId: string, day: string): string {
 }
 
 function archiveBucket(): string {
-  return env.MINIO_BUCKET;
+  return env.MINIO_PRIVATE_BUCKET;
 }
 
 /**

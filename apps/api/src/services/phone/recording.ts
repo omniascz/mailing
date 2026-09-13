@@ -75,7 +75,7 @@ async function getProviderRecordingUrl(
 }
 
 async function uploadToS3(sourceUrl: string, key: string): Promise<string> {
-  const bucket = env.MINIO_BUCKET;
+  const bucket = env.MINIO_PRIVATE_BUCKET;
 
   const sourceRes = await fetch(sourceUrl);
   if (!sourceRes.ok) throw new Error(`Failed to download recording: ${sourceRes.status}`);
