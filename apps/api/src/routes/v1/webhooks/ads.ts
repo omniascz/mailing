@@ -12,6 +12,32 @@ import { adAccounts } from '../../../db/schema/index.js';
 import { verifyMetaRequest } from '../../../lib/meta-signature.js';
 import { env } from '../../../config/env.js';
 
+/**
+ * The sponsored ad account id out of a LinkedIn lead notification `owner`.
+ *
+ * LinkedIn names the owner of every lead it pushes, and for `leadType:
+ * SPONSORED` that owner is a sponsored ad account URN —
+ * `urn:li:sponsoredAccount:<id>`. The `<id>` is the same string
+ * services/ads/accounts.ts reads from /adAccounts and stores in
+ * ad_accounts.platform_account_id for linkedin_ads (:127-133, :195), so it is
+ * the one thing in the payload that says whose lead this is. A bare id is
+ * accepted too — the URN prefix is the only part of the shape that varies.
+ *
+ * Returns '' when the payload names no account; the caller must then write
+ * nothing rather than choose an organisation of its own.
+ */
+function sponsoredAccountId(owner: unknown): string {
+  const raw =
+    typeof owner === 'string'
+      ? owner
+      : typeof (owner as { sponsoredAccount?: unknown } | null)?.sponsoredAccount === 'string'
+        ? (owner as { sponsoredAccount: string }).sponsoredAccount
+        : '';
+  const trimmed = raw.trim();
+  const prefix = 'urn:li:sponsoredAccount:';
+  return (trimmed.startsWith(prefix) ? trimmed.slice(prefix.length) : trimmed).trim();
+}
+
 const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
   // Facebook Lead Ads webhook verification + delivery
   app.get('/api/v1/webhooks/ads/facebook/leads', async (req, reply) => {
@@ -82,13 +108,50 @@ const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
 
     for (const lead of leads) {
       const campaignId = String(lead.campaignId ?? '');
-      const [account] = await db
+
+      // Whose lead this is comes from the payload, not from the table order.
+      // The previous query filtered on the platform alone and took the first
+      // row, so every customer's leads were written into one arbitrary
+      // organisation — with its automations fired on a stranger's details.
+      const accountId = sponsoredAccountId(lead.owner ?? body.owner);
+      if (!accountId) {
+        req.log.warn(
+          { leadId: String(lead.leadId ?? '') },
+          'linkedin lead webhook: notification names no sponsored account, dropping',
+        );
+        continue;
+      }
+
+      // Two rows, not one: ad_accounts is unique on (org_id, platform,
+      // platform_account_id), so nothing stops two organisations from claiming
+      // the same ad account id. If both do, there is no answer to whose lead
+      // this is and taking either one would be the same bug again.
+      //
+      // It carries no orgId because this lookup IS how the organisation is
+      // determined; the ambiguity check is what keeps it from returning an
+      // arbitrary tenant the way the previous query did.
+      // eslint-disable-next-line forgemsgOrg/require-org-scope -- resolves the org
+      const matches = await db
         .select()
         .from(adAccounts)
-        .where(eq(adAccounts.platform, 'linkedin_ads'))
-        .limit(1);
+        .where(
+          and(eq(adAccounts.platform, 'linkedin_ads'), eq(adAccounts.platformAccountId, accountId)),
+        )
+        .limit(2);
 
-      if (!account) continue;
+      const account = matches.length === 1 ? matches[0] : undefined;
+      if (!account) {
+        // Nothing written, and still a 200 below: LinkedIn retries anything
+        // else, so an error here would mean the same undeliverable lead
+        // arriving for as long as it keeps trying.
+        req.log.warn(
+          { accountId, matched: matches.length, leadId: String(lead.leadId ?? '') },
+          matches.length === 0
+            ? 'linkedin lead webhook: no ad account for this sponsored account, dropping'
+            : 'linkedin lead webhook: sponsored account claimed by several organisations, dropping',
+        );
+        continue;
+      }
 
       await handleLinkedInLead(account.orgId, {
         leadId: String(lead.leadId ?? ''),
