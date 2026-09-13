@@ -107,17 +107,32 @@ export default async function dynamicContentRoutes(app: FastifyInstance) {
     return { data: { html } };
   });
 
-  /** Resolve endpoint — called from email open tracking proxy to swap content. */
+  /**
+   * Resolve endpoint — called from email open tracking proxy to swap content.
+   *
+   * The organisation comes from the session, never from the body. It used to be
+   * `orgId: z.string().uuid()` in the payload, and this route sits behind the
+   * plugin-wide `app.requireAuth` above — so any authenticated user could name
+   * another organisation and get that organisation's dynamic blocks rendered
+   * back to them. Not only read: resolveBlock also increments `impressions` on
+   * the block it resolves, and where a block has a `dataSourceUrl` it fetches
+   * that URL with the owner's stored `dataSourceHeaders` and renders the answer
+   * into the HTML that is returned to the caller.
+   *
+   * `orgId` is simply dropped from the schema rather than rejected: zod strips
+   * unknown keys by default, so a caller that still sends one is unaffected —
+   * the value is ignored instead of deciding whose content comes back. Nothing
+   * in this repo calls this route, so there is no caller to migrate.
+   */
   app.post('/api/v1/dynamic-content/resolve', async (req) => {
     const body = z
       .object({
-        orgId: z.string().uuid(),
         emailHtml: z.string().max(5_000_000),
         geoCountry: z.string().optional(),
         contactProps: z.record(z.unknown()).optional(),
       })
       .parse(req.body);
-    const resolved = await resolveDynamicContent(body.orgId, body.emailHtml, {
+    const resolved = await resolveDynamicContent(req.user!.orgId, body.emailHtml, {
       openedAt: new Date(),
       geoCountry: body.geoCountry,
       contactProps: body.contactProps,
