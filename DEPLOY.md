@@ -100,6 +100,21 @@ Apex zone configured before the first deploy:
 - [ ] `mail.<domain>` A → Dedicated server primary IP (proxy: OFF — SMTP
       can't traverse Cloudflare proxy)
 - [ ] `t.<domain>` — A to API server initially; switch to Workers later.
+- [ ] **DMARC report authorisation** (`TXT *._report._dmarc.<domain>`):
+      `v=DMARC1`
+
+      Without this record **no customer's DMARC reports ever arrive.** Every
+      sending domain we hand out points `rua=` at `dmarc-reports@<domain>`,
+      which is an external destination for the customer's own domain. RFC 7489
+      §7.1 says the report generator must first find a TXT record at
+      `<policy-domain>._report._dmarc.<destination>` — or the wildcard above,
+      which authorises any domain — and where it does not, it MUST NOT send the
+      report. The failure is silent on every side: the mailbox stays empty, the
+      IMAP poller ingests nothing, and the DMARC dashboard shows a clean zero.
+
+      One wildcard record covers every customer; it is never per-domain. The
+      daily DNS-health sweep checks it and reports a status-page incident when
+      it is missing (`services/deliverability/dns-health.ts`).
 
 Per-sending-domain (do this when adding the first verified domain in the
 dashboard — the UI prints the exact records):
