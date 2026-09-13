@@ -241,15 +241,41 @@ export async function identifyVisitor(input: {
   }
 
   if (contactId) {
-    // Back-fill contactId on recent page views for this visitor
+    // Back-fill contactId on this visitor's rows — the ones belonging to the
+    // organisation whose site token was presented, and no others.
+    //
+    // `/t/id` has no authentication and `visitorId` comes out of the request
+    // body, while the id itself is a Math.random() UUID the page keeps in the
+    // `_fm_vid` cookie and repeats in every beacon. Without the org filter a
+    // visitor id was enough to stamp this contact onto another tenant's page
+    // views and events — and because the back-fill only takes rows where
+    // contact_id IS NULL, that made the victim's own rows unclaimable for good.
+    //
+    // org_id rather than site_id: identity is per organisation (the contact
+    // lookup above is), so an org with several tracked sites keeps pairing
+    // across them, which site_id would break. Both columns are NOT NULL and
+    // indexed. Same shape as identity-merge/index.ts, which back-fills
+    // site_events with org_id in the WHERE.
     await db
       .update(sitePageViews)
       .set({ contactId })
-      .where(and(eq(sitePageViews.visitorId, input.visitorId), isNull(sitePageViews.contactId)));
+      .where(
+        and(
+          eq(sitePageViews.orgId, site.orgId),
+          eq(sitePageViews.visitorId, input.visitorId),
+          isNull(sitePageViews.contactId),
+        ),
+      );
     await db
       .update(siteEvents)
       .set({ contactId })
-      .where(and(eq(siteEvents.visitorId, input.visitorId), isNull(siteEvents.contactId)));
+      .where(
+        and(
+          eq(siteEvents.orgId, site.orgId),
+          eq(siteEvents.visitorId, input.visitorId),
+          isNull(siteEvents.contactId),
+        ),
+      );
 
     // Merge anonymous profile
     const { mergeVisitorIntoContact } = await import('../identity-merge/index.js').catch(() => ({
