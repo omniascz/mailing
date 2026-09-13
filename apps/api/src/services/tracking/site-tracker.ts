@@ -10,6 +10,12 @@ import {
   type TrackedSite,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+// Static, not `await import(...)`. The dynamic import it replaces was wrapped in
+// a `.catch(() => ({ mergeVisitorIntoContact: null }))`, which meant the call
+// below was typed `unknown` and then cast — so TypeScript never saw that it was
+// being handed a visitor id where an orgId goes. identity-merge imports only
+// drizzle, the db client and the schema, so there is no cycle to avoid here.
+import { mergeVisitorIntoContact } from '../identity-merge/index.js';
 
 // ─── Site management ──────────────────────────────────────────────────────────
 
@@ -277,15 +283,31 @@ export async function identifyVisitor(input: {
         ),
       );
 
-    // Merge anonymous profile
-    const { mergeVisitorIntoContact } = await import('../identity-merge/index.js').catch(() => ({
-      mergeVisitorIntoContact: null,
-    }));
-    if (mergeVisitorIntoContact) {
-      await (mergeVisitorIntoContact as unknown as (a: string, b: string) => Promise<void>)(
-        input.visitorId,
+    // Merge the anonymous profile.
+    //
+    // This used to be called as `(input.visitorId, contactId)` against a
+    // signature of `(orgId, { visitorId, contactId })`, cast through
+    // `as unknown as` so nothing complained. Measured against the real database:
+    // it threw on the first statement every time — the visitor id went in as
+    // org_id, `input.visitorId` was `undefined`, and postgres-js refuses that
+    // with `UNDEFINED_VALUE: Undefined values are not allowed` — and the empty
+    // `.catch` swallowed it. anonymous_profiles.merged_into was never written by
+    // this path, for any visitor, ever.
+    //
+    // The catch stays, but it logs. By the time we get here the two back-fills
+    // above have already committed, so letting this throw would make the route
+    // answer `{ contactId: null }` for an identification that did happen and did
+    // claim rows — a worse lie than the one being fixed. What must not happen
+    // again is a failure nobody can see.
+    try {
+      await mergeVisitorIntoContact(site.orgId, { visitorId: input.visitorId, contactId });
+    } catch (err) {
+      console.error('[site-tracker] mergeVisitorIntoContact failed', {
+        orgId: site.orgId,
+        visitorId: input.visitorId,
         contactId,
-      ).catch(() => {});
+        err,
+      });
     }
   }
 
