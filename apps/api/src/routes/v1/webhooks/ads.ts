@@ -72,9 +72,14 @@ const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
       for (const change of entry.changes ?? []) {
         const value = change.value;
         if (value.form_id) {
-          // Find the org for this page
+          // Find the org for this page. Two rows, not one: ad_accounts is
+          // unique on (org_id, platform, platform_account_id), which is per
+          // organisation, so two of them can register the same page id. Taking
+          // the first row then hands the lead to whichever one Postgres returns
+          // first and tells the other nothing.
           const pageId = String(entry.id);
-          const [account] = await db
+          // eslint-disable-next-line forgemsgOrg/require-org-scope -- resolves the org
+          const matches = await db
             .select()
             .from(adAccounts)
             .where(
@@ -83,9 +88,21 @@ const adsWebhookRoutes: FastifyPluginAsync = async (app) => {
                 eq(adAccounts.platformAccountId, pageId),
               ),
             )
-            .limit(1);
+            .limit(2);
 
-          if (!account) continue;
+          const account = matches.length === 1 ? matches[0] : undefined;
+          if (!account) {
+            // Nothing written, and still the 200 below: Meta disables a
+            // subscription whose endpoint keeps failing, so answering with an
+            // error would cost the leads that do resolve.
+            if (matches.length > 1) {
+              req.log.warn(
+                { pageId, matched: matches.length },
+                'facebook lead webhook: page claimed by several organisations, dropping',
+              );
+            }
+            continue;
+          }
 
           await handleFacebookLead(account.orgId, {
             leadgenId: String(value.leadgen_id ?? ''),
