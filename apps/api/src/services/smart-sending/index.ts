@@ -5,7 +5,7 @@
  * If allowed, must call `recordSend(...)` after the actual send so the cap state stays current.
  */
 
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { smartSendingRules, contactSendLog, type SmartSendingRule } from '../../db/schema/index.js';
 
@@ -119,6 +119,13 @@ export async function recordSend(orgId: string, contactId: string, channel: stri
 /**
  * Garbage-collect log rows older than 30 days, for one organisation.
  *
+ * `lt`, not `gte`. The predicate used to be sent_at >= cutoff, which is
+ * everything INSIDE the window, so the call deleted the recent rows and left
+ * the month-old ones to accumulate. Those recent rows are precisely what the
+ * cap counts, so an inverted prune lifted the fatigue limit instead of tidying
+ * up behind it. Same shape as the retention handlers in
+ * services/compliance/index.ts, which scope by org and compare with `lt`.
+ *
  * The orgId is not decoration. Without it this deleted `contact_send_log` for
  * every tenant, and the route that calls it is reachable by any org's admin.
  * The log is what the fatigue cap counts (see `canSend`), so emptying another
@@ -134,7 +141,7 @@ export async function pruneSendLog(orgId: string): Promise<{ deleted: number }> 
   // anything. dkim-rotation.ts:retireExpiredKeys already counts this way.
   const deleted = await db
     .delete(contactSendLog)
-    .where(and(eq(contactSendLog.orgId, orgId), gte(contactSendLog.sentAt, cutoff)))
+    .where(and(eq(contactSendLog.orgId, orgId), lt(contactSendLog.sentAt, cutoff)))
     .returning({ id: contactSendLog.id });
   return { deleted: deleted.length };
 }
