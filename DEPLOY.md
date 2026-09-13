@@ -189,7 +189,8 @@ deploy:
 - [ ] `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`,
       `MINIO_VIDEO_BUCKET` — object storage. `lib/object-store.ts` reads the
       `MINIO_*` names and nothing else, so an S3-compatible store such as R2 is
-      configured through them
+      configured through them. See §4.1 — four more variables aim the client,
+      and one of them stops the boot
 
 After Stripe is configured, set up the webhook in Stripe Dashboard with
 these events:
@@ -201,6 +202,63 @@ these events:
 - `invoice.payment_failed`
 
 Wire Doppler into Coolify per-app via the Doppler CLI or the integration.
+
+### 4.1 Object storage
+
+There is **no storage service in `docker-compose.prod.yml`** — the services
+there are postgres, redis, api, engine, workers and web. That is deliberate
+rather than an omission: `.env.production.example` (§ Object storage) states the
+expectation as "REQUIRED — Cloudflare R2 or AWS S3. MinIO only for self-hosted"
+and gives a worked external example. Bring an S3-compatible store, or run one
+yourself outside this compose file. Which provider is a decision, not a fact,
+and this runbook does not make it for you.
+
+The `MINIO_` prefix is only a name. `lib/object-store.ts` builds one
+`@aws-sdk/client-s3` client out of these, so anything speaking S3 works:
+
+- [ ] `MINIO_ENDPOINT` — the store's host, no scheme and no path. **The API
+      refuses to start in production without it** (`apps/api/src/config/env.ts`,
+      the `superRefine` on `MINIO_ENDPOINT`), because its development default is
+      `localhost` — inside a container that is the API itself, so uploads would
+      aim at this process and fail at first use instead of at boot.
+- [ ] `MINIO_PORT` (default `9000`) and `MINIO_USE_SSL` (default `false`) — the
+      endpoint is assembled as `<scheme>://<host>:<port>`
+      (`apps/api/src/lib/object-store.ts:29-38`), so a hosted store needs `443`
+      and `true` spelled out; the port is always appended.
+- [ ] `AWS_REGION` (default `us-east-1`) — passed straight to the SDK.
+- [ ] `MINIO_BUCKET` — media, campaign screenshots, the email-event archive,
+      call recordings and voicemail all live in this one bucket.
+- [ ] `MINIO_VIDEO_BUCKET` — video messages, separate bucket.
+
+Two things the code fixes and configuration cannot change. The client always
+uses **path-style** addressing (`forcePathStyle: true`,
+`apps/api/src/lib/object-store.ts:63`), so the store has to accept
+`host/bucket/key` rather than `bucket.host/key`. And nothing **deletes** from
+the store: the module offers put, get, presign and list, and no delete
+(`apps/api/src/lib/object-store.ts:78-128`). Whatever goes in stays, including
+the nightly event archive (`apps/api/src/services/archive/email-events.ts` —
+events older than `ARCHIVE_CUTOFF_DAYS`, default 30, written at 03:20 UTC).
+Capacity and any lifecycle rules are the provider's side of the line.
+
+Verify after the API is deployed: upload an image in the dashboard's media
+library and confirm it renders. Media and digital assets are registered with a
+plain `app.register` (`apps/api/src/index.ts`), not behind a feature flag, so
+they exist in every deployment — an image in a template is served from this
+store to every recipient's mail client.
+
+That last part decides one more thing for you: the media URL handed to the
+template is a plain, unsigned `<scheme>://<host>:<port>/<bucket>/<key>`
+(`apps/api/src/services/media/storage.ts:136`). Recipients fetch it with no
+credentials, so `MINIO_BUCKET` has to be readable anonymously over the public
+internet, and the endpoint has to be reachable from outside — not only from
+inside the compose network. Digital assets and video are different: those are
+handed out as presigned URLs with an expiry
+(`services/digital-assets/index.ts`, `services/video/recorder.ts`).
+
+Not object storage, but the same shape of growth: **contact import files are
+written to the local filesystem**, `IMPORT_UPLOAD_DIR` or
+`os.tmpdir()/forgemsg-imports` (`apps/api/src/routes/v1/contact-imports.ts:22`),
+and nothing removes them. That is server disk, not bucket.
 
 ---
 
