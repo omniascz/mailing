@@ -81,8 +81,8 @@ const smartSendingRoutes: FastifyPluginAsync = async (app) => {
       preHandler: [app.authenticate, app.requireRole('admin', 'owner')],
       schema: { tags: ['SmartSending'] },
     },
-    async (_req, reply) => {
-      return reply.send({ data: await pruneSendLog() });
+    async (req, reply) => {
+      return reply.send({ data: await pruneSendLog(req.user!.orgId) });
     },
   );
 };

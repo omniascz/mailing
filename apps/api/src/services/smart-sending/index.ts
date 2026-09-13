@@ -116,9 +116,25 @@ export async function recordSend(orgId: string, contactId: string, channel: stri
   await db.insert(contactSendLog).values({ orgId, contactId, channel });
 }
 
-/** Garbage-collect log rows older than 30 days. */
-export async function pruneSendLog(): Promise<{ deleted: number }> {
+/**
+ * Garbage-collect log rows older than 30 days, for one organisation.
+ *
+ * The orgId is not decoration. Without it this deleted `contact_send_log` for
+ * every tenant, and the route that calls it is reachable by any org's admin.
+ * The log is what the fatigue cap counts (see `canSend`), so emptying another
+ * tenant's rows lifts their per-day, per-week and cooldown limits and their
+ * next batch goes out to contacts that should have been held back.
+ */
+export async function pruneSendLog(orgId: string): Promise<{ deleted: number }> {
   const cutoff = new Date(Date.now() - 30 * 86_400_000);
-  const res = await db.delete(contactSendLog).where(gte(contactSendLog.sentAt, cutoff));
-  return { deleted: (res as unknown as { rowCount?: number }).rowCount ?? 0 };
+  // Counted from returned ids, not from `rowCount`. Measured on this driver:
+  // a postgres-js delete resolves to an array whose `length` is 0 and whose
+  // `count` holds the real number, while `rowCount` is undefined — so the old
+  // `rowCount ?? 0` reported `deleted: 0` for every call that ever deleted
+  // anything. dkim-rotation.ts:retireExpiredKeys already counts this way.
+  const deleted = await db
+    .delete(contactSendLog)
+    .where(and(eq(contactSendLog.orgId, orgId), gte(contactSendLog.sentAt, cutoff)))
+    .returning({ id: contactSendLog.id });
+  return { deleted: deleted.length };
 }
