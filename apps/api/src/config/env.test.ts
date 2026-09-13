@@ -103,6 +103,7 @@ describe('prodRequired — production must not fall back to a committed default'
     // MINIO_BUCKET straight from process.env with two different fallbacks, so
     // an unset value split media and the event archive across two buckets.
     MINIO_BUCKET: 'prod-bucket',
+    MINIO_PRIVATE_BUCKET: 'prod-private-bucket',
     MINIO_VIDEO_BUCKET: 'prod-video-bucket',
     ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
     INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
@@ -489,6 +490,7 @@ describe('optional-by-design secrets', () => {
       STRIPE_SECRET_KEY: 'sk_live_real_key',
       STRIPE_WEBHOOK_SECRET: 'whsec_real_secret',
       MINIO_BUCKET: 'prod-bucket',
+      MINIO_PRIVATE_BUCKET: 'prod-private-bucket',
       MINIO_VIDEO_BUCKET: 'prod-video-bucket',
       ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
       INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
@@ -545,6 +547,7 @@ describe('optional-by-design secrets', () => {
       MINIO_SECRET_KEY: 'real-secret-key',
       MINIO_ENDPOINT: 'minio.internal',
       MINIO_BUCKET: 'prod-bucket',
+      MINIO_PRIVATE_BUCKET: 'prod-private-bucket',
       MINIO_VIDEO_BUCKET: 'prod-video-bucket',
       ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
       INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',
@@ -630,6 +633,7 @@ describe('PLATFORM_DOMAIN — required in production, obviously invalid elsewher
       STRIPE_WEBHOOK_SECRET: 'whsec_real_secret',
       MINIO_ENDPOINT: 'minio.internal',
       MINIO_BUCKET: 'prod-bucket',
+      MINIO_PRIVATE_BUCKET: 'prod-private-bucket',
       MINIO_VIDEO_BUCKET: 'prod-video-bucket',
       ASSET_SIGNING_SECRET: 'a-real-asset-signing-secret-32-chars',
       INBOUND_EMAIL_SECRET: 'a-real-inbound-email-secret-32-chars',

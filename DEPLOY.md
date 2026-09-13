@@ -226,8 +226,9 @@ The `MINIO_` prefix is only a name. `lib/object-store.ts` builds one
       (`apps/api/src/lib/object-store.ts:29-38`), so a hosted store needs `443`
       and `true` spelled out; the port is always appended.
 - [ ] `AWS_REGION` (default `us-east-1`) — passed straight to the SDK.
-- [ ] `MINIO_BUCKET` — media, campaign screenshots, the email-event archive,
-      call recordings and voicemail all live in this one bucket.
+- [ ] `MINIO_BUCKET` — media and campaign screenshots. Public; see below.
+- [ ] `MINIO_PRIVATE_BUCKET` — the email-event archive, call recordings and
+      voicemail. Never public; see below.
 - [ ] `MINIO_VIDEO_BUCKET` — video messages, separate bucket.
 
 Two things the code fixes and configuration cannot change. The client always
@@ -255,50 +256,42 @@ inside the compose network. Digital assets and video are different: those are
 handed out as presigned URLs with an expiry
 (`services/digital-assets/index.ts`, `services/video/recorder.ts`).
 
-#### Bucket policy: readable, never listable
+#### Two buckets, two policies
 
-`MINIO_BUCKET` is not only the media bucket. Four different things share it:
+`MINIO_BUCKET` is the public one and `MINIO_PRIVATE_BUCKET` is not. What goes
+where, and why:
 
-| what                           | key                                                                                                                 |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| media, thumbnails, derivatives | `media/<org-uuid>/<asset-uuid>-original.<ext>` (`services/media/ingest.ts:148`)                                     |
-| email-event archive            | `archives/email-events/<org-uuid>/year=/month=/day=/<ms-timestamp>.ndjson` (`services/archive/email-events.ts:158`) |
-| call recordings                | `recordings/<org-uuid>/<call-id>/<recording-sid>.mp3` (`services/phone/recording.ts:56`)                            |
-| voicemail                      | `voicemails/<org-uuid>/<call-id>/<recording-sid>.mp3` (`services/phone/voicemail.ts:64`)                            |
+| bucket                 | what                           | key                                                                                                                 |
+| ---------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `MINIO_BUCKET`         | media, thumbnails, derivatives | `media/<org-uuid>/<asset-uuid>-original.<ext>` (`services/media/ingest.ts:148`)                                     |
+| `MINIO_PRIVATE_BUCKET` | email-event archive            | `archives/email-events/<org-uuid>/year=/month=/day=/<ms-timestamp>.ndjson` (`services/archive/email-events.ts:158`) |
+| `MINIO_PRIVATE_BUCKET` | call recordings                | `recordings/<org-uuid>/<call-id>/<recording-sid>.mp3` (`services/phone/recording.ts:56`)                            |
+| `MINIO_PRIVATE_BUCKET` | voicemail                      | `voicemails/<org-uuid>/<call-id>/<recording-sid>.mp3` (`services/phone/voicemail.ts:64`)                            |
 
-Media force that bucket to be anonymously readable, so the other three are
-readable by anyone holding the key as well. Handing recordings out as presigned
-URLs (`services/phone/recording.ts:101`) does not change that: a presigned URL
-is a way to reach an object in a _private_ bucket, not a restriction on one that
-is public.
+- [ ] `MINIO_BUCKET` — grant anonymous **`GetObject` only**. It has to be
+      readable without credentials, because the media URL in an email template
+      is unsigned and the recipient's mail client has nothing to authenticate
+      with. Anonymous `ListBucket` must be off: the keys carry an organisation
+      UUID and are the only thing making one customer's media unfindable from
+      another's.
+- [ ] `MINIO_PRIVATE_BUCKET` — **no anonymous access at all.** Nothing fetches
+      from it without credentials. The archive is read by the server
+      (`getObjectBytes` / `listObjectKeys`) and never handed to a client;
+      recordings and voicemail go out as presigned GETs with a fifteen-minute
+      expiry, which is exactly what a private bucket is for.
 
-What keeps them closed today is that the keys are not guessable — every one of
-them starts with an organisation UUID, and the media and call ids are UUIDs or
-provider SIDs. That is secrecy of the URL, not access control, and it has one
-sharp edge:
+Those three used to sit in `MINIO_BUCKET` beside the images, protected only by
+their keys being unguessable — secrecy of a URL rather than access control. The
+archive is the reason it mattered: it is a dump of every column of
+`email_events`, which includes each recipient's `ip_address`, the full
+`user_agent`, `geo_country`, `geo_city` and `link_url` — which link they
+clicked. There is no e-mail address in it, the recipient being a `contact_id`
+UUID resolvable only against the database, but it is still behavioural personal
+data about other people's customers.
 
-- [ ] Grant anonymous **`GetObject` only**. Anonymous `ListBucket` must be off.
-      With listing allowed the keys stop being secret and the whole archive,
-      every recording and every voicemail can be enumerated by anyone who knows
-      the bucket's address.
-
-The archive is the part worth understanding before deciding. It is a dump of
-every column of `email_events` (`services/archive/email-events.ts` selects the
-whole row), which includes the recipient's `ip_address`, the full `user_agent`,
-`geo_country` and `geo_city`, and `link_url` — which link each recipient
-clicked. There is no e-mail address in it: the recipient is a `contact_id`
-UUID, resolvable only against the database. It is still behavioural personal
-data on other people's customers.
-
-**Open item, not done here.** The sensitive three could move to a private
-bucket without changing any behaviour: the archive is read only by the server
-(`getObjectBytes` / `listObjectKeys`, never handed to a client), and recordings
-and voicemail are already served through presigned GETs, which work against a
-private bucket by design. Only media genuinely needs public read, because its
-URL is unsigned. Scope of that change: the bucket name is already behind a
-one-line seam in the archive (`archiveBucket()`), and read directly from `env`
-in the two phone services — so roughly four code files plus one new variable in
-`config/env.ts`, `docker-compose.prod.yml` and `.env.production.example`.
+The two buckets are separate names, not separate stores: one provider, one set
+of credentials, two policies. `MINIO_VIDEO_BUCKET` and `ASSET_STORAGE_BUCKET`
+are unchanged and are served presigned.
 
 Not object storage, but the same shape of growth: **contact import files are
 written to the local filesystem**, `IMPORT_UPLOAD_DIR` or

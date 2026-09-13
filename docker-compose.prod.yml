@@ -116,6 +116,12 @@ services:
       # validated in config/env.ts and required in production, so the defaults
       # below only ever apply to a non-production compose run.
       MINIO_BUCKET: ${MINIO_BUCKET:-forgemsg}
+      # The bucket that must NOT be anonymously readable. MINIO_BUCKET has to
+      # be public, because the media URL in an email template is unsigned and
+      # the recipient's mail client fetches it with no credentials. The event
+      # archive, call recordings and voicemail used to sit in there beside the
+      # images; they live here now, and this one stays private.
+      MINIO_PRIVATE_BUCKET: ${MINIO_PRIVATE_BUCKET:-forgemsg-private}
       # Was `forgemsg-video` while the code fell back to `forgemsg-videos`,
       # so an operator who did not set it got a different bucket depending on
       # whether compose or the code supplied the value.

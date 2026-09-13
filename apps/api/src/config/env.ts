@@ -176,6 +176,23 @@ const Env = z
     // prodRequired for the same reason MINIO_ACCESS_KEY has it — a committed
     // default is a fine developer convenience and a bad production value.
     MINIO_BUCKET: prodRequired(z.string().min(1), 'forgemsg'),
+    // The bucket that must NOT be readable without credentials.
+    //
+    // MINIO_BUCKET has to allow anonymous GetObject, because the media URL put
+    // into an email template is unsigned (services/media/storage.ts) and the
+    // recipient's mail client fetches it with nothing to authenticate with.
+    // That is fine for an image. It was not fine for what shared the bucket
+    // with it: the email-event archive — every column of email_events,
+    // including each recipient's ip_address, user_agent, geo and the link they
+    // clicked — plus call recordings and voicemail.
+    //
+    // Those three were protected only by their keys being unguessable, which
+    // is secrecy of a URL rather than access control, and it collapses the
+    // moment the bucket also allows listing. They live here instead, and this
+    // bucket is never made public: the archive is read only by the server, and
+    // recordings and voicemail are handed out as presigned GETs, which is what
+    // a private bucket is for.
+    MINIO_PRIVATE_BUCKET: prodRequired(z.string().min(1), 'forgemsg-private'),
     // Video messages live in their own store; it was read only in
     // services/video/recorder.ts and never validated.
     MINIO_VIDEO_BUCKET: prodRequired(z.string().min(1), 'forgemsg-videos'),
