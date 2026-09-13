@@ -14,6 +14,7 @@ import { db } from '../../db/client.js';
 import { socialAccounts, socialOauthStates } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import type { SocialPlatform } from '../../db/schema/social-accounts.js';
+import { env } from '../../config/env.js';
 
 // ── OAuth config per platform ─────────────────────────────────────────────────
 
@@ -48,8 +49,8 @@ function getOAuthConfig(platform: SocialPlatform): OAuthConfig {
     linkedin: {
       authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
       tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
-      clientId: process.env.LINKEDIN_CLIENT_ID ?? '',
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET ?? '',
+      clientId: env.LINKEDIN_CLIENT_ID ?? '',
+      clientSecret: env.LINKEDIN_CLIENT_SECRET ?? '',
       scope: 'w_member_social,r_organization_social,rw_organization_admin',
       userInfoUrl: 'https://api.linkedin.com/v2/userinfo',
     },

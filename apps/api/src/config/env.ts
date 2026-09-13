@@ -336,6 +336,26 @@ const Env = z
     INSTATUS_API_KEY: z.string().optional(),
     INSTATUS_PAGE_ID: z.string().optional(),
 
+    // ─── LinkedIn OAuth (ad accounts + social accounts) ───────────────────────
+    // A pair, not two variables, and enforced as one in production below.
+    //
+    // Both were read straight from process.env with `?? ''` and neither was in
+    // this schema: services/ads/accounts.ts:45-46 and
+    // services/social/accounts.ts:51-52. Half a configuration therefore booted
+    // without complaint and broke in front of a customer — initiateAdOAuth
+    // checks only the client id, so with the id set and the secret empty the
+    // customer is sent to LinkedIn, consents, comes back, and the token
+    // exchange fails with `Token exchange failed: 401` after the visible part
+    // has already succeeded.
+    //
+    // Optional rather than prodRequired: a deployment that does not connect
+    // LinkedIn sets neither and is not asked to change anything. Requiring them
+    // outright would add a variable for an unused integration to every
+    // production environment — a configuration change for everybody, to prevent
+    // a mistake only a LinkedIn deployment can make.
+    LINKEDIN_CLIENT_ID: z.string().min(1).optional(),
+    LINKEDIN_CLIENT_SECRET: z.string().min(1).optional(),
+
     // ─── Our own domain ───────────────────────────────────────────────────────
     // The domain this deployment is operated on. Everything that has to name
     // US rather than the customer derives from it: the SPF include, the
@@ -452,6 +472,28 @@ const Env = z
           'API itself. Set it to the host of the object store. Production always needs one — ' +
           'the media library and digital assets are core surfaces and serve from it — which ' +
           'is why MINIO_ACCESS_KEY, MINIO_SECRET_KEY and MINIO_BUCKET are required too.',
+      });
+    }
+
+    // LinkedIn is configured as a pair or not at all. The half-configured case
+    // is the one that hurts: initiateAdOAuth (services/ads/accounts.ts:80)
+    // refuses only when the client id is missing, so an id without a secret
+    // passes that check, sends the customer to LinkedIn, and fails on the token
+    // exchange after they have already consented. Neither variable set is a
+    // legitimate deployment and stays one — this fires only when somebody has
+    // started configuring LinkedIn and stopped halfway.
+    if (isProduction && Boolean(cfg.LINKEDIN_CLIENT_ID) !== Boolean(cfg.LINKEDIN_CLIENT_SECRET)) {
+      const missing = cfg.LINKEDIN_CLIENT_ID ? 'LINKEDIN_CLIENT_SECRET' : 'LINKEDIN_CLIENT_ID';
+      const present = cfg.LINKEDIN_CLIENT_ID ? 'LINKEDIN_CLIENT_ID' : 'LINKEDIN_CLIENT_SECRET';
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [missing],
+        message:
+          `${missing} is required in production because ${present} is set. LinkedIn OAuth ` +
+          `needs both: with only one of them the connect flow still starts, the customer ` +
+          `consents on linkedin.com, and the token exchange then fails with a 401 they ` +
+          `cannot act on. Set both, or unset ${present} to declare that this deployment ` +
+          `does not connect LinkedIn.`,
       });
     }
 
