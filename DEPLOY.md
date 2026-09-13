@@ -119,10 +119,19 @@ Apex zone configured before the first deploy:
 Per-sending-domain (do this when adding the first verified domain in the
 dashboard — the UI prints the exact records):
 
-- [ ] SPF (`TXT @`): `v=spf1 mx ip4:<MTA-IP> -all`
+- [ ] SPF (`TXT <sending-domain>`): `v=spf1 include:spf.<domain> ~all`
 - [ ] DKIM (`TXT fm1._domainkey.<sending-domain>`): from `/api/v1/domains/:id/dns-records`
-- [ ] DMARC (`TXT _dmarc.<sending-domain>`): `v=DMARC1; p=quarantine; rua=mailto:dmarc@<domain>; pct=10`
-- [ ] Return-Path (`CNAME bounces.<sending-domain>`) → MTA's bounce host
+- [ ] DMARC (`TXT _dmarc.<sending-domain>`):
+      `v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc-reports@<domain>; ruf=mailto:dmarc-reports@<domain>; fo=1`
+- [ ] Return-Path (`CNAME mail.<sending-domain>`) → `return-path.<domain>`
+- [ ] Bounce MX (`MX mail.<sending-domain>`) → `bounce.<domain>` — receives
+      bounces, FBL reports and out-of-office replies
+
+The five above are what `buildDnsRecords()` emits
+(`apps/api/src/services/domains/dns-records.ts`); the dashboard prints the same
+list with the real values filled in. The Return-Path and MX hostnames are the
+domain's mail subdomain, which defaults to `mail.<sending-domain>` and is
+whatever was passed as `mailSubdomain` when the domain was added.
 
 ---
 
@@ -153,8 +162,34 @@ values (cross-reference `apps/api/.env.example` for the full inventory):
   - [ ] `STRIPE_PRICE_STARTER` — Price ID for the Starter plan
   - [ ] `STRIPE_PRICE_PRO` — Price ID for the Pro plan
   - [ ] `STRIPE_PRICE_BUSINESS` — Price ID for the Business plan
+  - [ ] `STRIPE_PRICE_ENTERPRISE` — Price ID for the Enterprise plan
+        (`services/billing/index.ts` reads all four; a tier with no price ID
+        answers `No Stripe price ID configured for tier`)
 - [ ] `SENTRY_DSN` (api), `NEXT_PUBLIC_SENTRY_DSN` (web) — error tracking
       (Sprint J + O)
+
+**The API refuses to boot in production without these**, and the list above
+does not cover them. `config/env.ts` marks them `prodRequired`, which is a hard
+failure at startup, not a warning — set every one of them before the first
+deploy:
+
+- [ ] `SESSION_SECRET`, `TRACKING_SECRET`, `ASSET_SIGNING_SECRET`,
+      `PREFERENCE_CENTRE_SECRET`, `FORM_AUTOFILL_SECRET` — signing keys for
+      sessions, tracking links, signed asset URLs, the preference centre and
+      form autofill. Generate each separately: `openssl rand -base64 48`
+- [ ] `DKIM_MASTER_KEY` — encrypts customers' DKIM private keys at rest.
+      Losing it means every sending domain has to be re-keyed
+- [ ] `PLATFORM_DOMAIN` — the bare apex domain, no scheme and no path. Every
+      DNS record handed to a customer is built from it
+- [ ] `INBOUND_EMAIL_SECRET`, `FBL_WEBHOOK_SECRET`, `DMARC_INBOUND_SECRET` —
+      shared secrets on the inbound mail, feedback-loop and DMARC endpoints
+- [ ] `META_WEBHOOK_VERIFY_TOKEN`, `FACEBOOK_WEBHOOK_VERIFY_TOKEN`,
+      `WHATSAPP_VERIFY_TOKEN` — verification tokens the Meta platforms echo
+      back when a webhook is registered
+- [ ] `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`,
+      `MINIO_VIDEO_BUCKET` — object storage. `lib/object-store.ts` reads the
+      `MINIO_*` names and nothing else, so an S3-compatible store such as R2 is
+      configured through them
 
 After Stripe is configured, set up the webhook in Stripe Dashboard with
 these events:
@@ -261,14 +296,21 @@ refused` on outbound port 25.
 
 Per `infra/DELIVERABILITY.md`. Don't skip this.
 
-- [ ] Day 1–3: ≤500 emails/day, only to engaged contacts (last 90d openers)
-- [ ] Day 4–7: ramp to 1000/day, still engaged-only
-- [ ] Day 8–14: 5000/day, broaden to last 180d
-- [ ] Day 15–30: 25k/day, full audience
+- [ ] Day 1–3: 50 emails/day, only to engaged contacts (last 90d openers)
+- [ ] Day 4–7: 200/day, still engaged-only
+- [ ] Day 8–14: 1000/day, broaden to last 180d
+- [ ] Day 15–21: 5000/day
+- [ ] Day 22–30: 20 000/day, full audience
+- [ ] Day 31+: no cap
 - [ ] Monitor Postmaster Tools (Gmail) + SNDS (Microsoft) daily
 
-The MTA's warmup-scheduler enforces these caps automatically once the
-domain is added — they're visible at `/domains/:id` in the dashboard.
+Those are the caps the platform actually enforces — `WARMUP_SCHEDULE` in
+`apps/api/src/services/sending/ip-warmup.ts`. The limit is **per sending IP**,
+not per domain, and the clock starts when an IP is allocated with warmup
+enabled, not when a domain is added. Enforcement is real: the engine asks
+`POST /api/v1/internal/sending/warmup/claim` before it dials and spends one unit
+of the day's allowance, so a send over the cap is refused rather than merely
+reported. Progress is visible at `/domains/:id` in the dashboard.
 
 ---
 
