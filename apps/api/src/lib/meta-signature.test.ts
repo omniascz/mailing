@@ -24,7 +24,36 @@ describe('verifyMetaSignature', () => {
     expect(verifyMetaSignature(body, undefined, SECRET)).toBe(false);
   });
 
-  it('opens (returns true) when no app secret is configured (dev)', () => {
-    expect(verifyMetaSignature(body, undefined, undefined)).toBe(true);
+  it('does not verify anything when no app secret is configured', () => {
+    // Was: 'opens (returns true) when no app secret is configured (dev)'. An
+    // unset secret is the absence of a check, and the absence of a check is
+    // not a pass — that shape accepted forged webhooks in any deployment that
+    // had not configured Meta.
+    expect(verifyMetaSignature(body, undefined, undefined)).toBe(false);
+    expect(verifyMetaSignature(body, goodSig, undefined)).toBe(false);
+  });
+
+  it('opens without a secret only when the operator asks for it', () => {
+    process.env.ALLOW_UNSIGNED_WEBHOOKS = 'true';
+    try {
+      expect(verifyMetaSignature(body, undefined, undefined)).toBe(true);
+    } finally {
+      delete process.env.ALLOW_UNSIGNED_WEBHOOKS;
+    }
+  });
+
+  it('the escape hatch cannot be reached in production', () => {
+    // webhook-switches.ts:35 checks NODE_ENV before the flag, and the flag
+    // cannot override it. Asserted here because this module is now the thing
+    // that depends on it.
+    const prevEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    process.env.ALLOW_UNSIGNED_WEBHOOKS = 'true';
+    try {
+      expect(verifyMetaSignature(body, undefined, undefined)).toBe(false);
+    } finally {
+      process.env.NODE_ENV = prevEnv;
+      delete process.env.ALLOW_UNSIGNED_WEBHOOKS;
+    }
   });
 });

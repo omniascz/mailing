@@ -39,12 +39,14 @@ export function unsignedWebhooksAllowed(): boolean {
 /**
  * The Meta-family and Telnyx endpoints are off by default.
  *
- * Their signature verification still contains the open-when-unconfigured shape
- * — deliberately untouched, because we are not shipping these endpoints and
- * repairing verification we do not use would be work spent on a surface nobody
- * can reach. The switch therefore requires the secret as well as the flag: an
- * endpoint that would verify nothing does not come back on just because
- * somebody exported one variable.
+ * The switch requires the secret as well as the flag: an endpoint that would
+ * verify nothing does not come back on just because somebody exported one
+ * variable. That was written when `lib/meta-signature.ts` still contained the
+ * open-when-unconfigured shape and this switch was the only thing standing in
+ * front of it. It no longer does — an unset secret there means not verified —
+ * so this is now a second belt. It stays: refusing to register an endpoint
+ * whose secret is missing is a better failure than registering one that
+ * answers 401 to everything.
  */
 const enabledWithSecret = (flag: string | undefined, secret: string | undefined): boolean =>
   on(flag) && (secret ?? '') !== '';
