@@ -347,7 +347,16 @@ async function searchAvailableNumbers(opts: {
       capabilities: ['voice', 'sms'],
     }));
   }
-  return [];
+
+  // Was `return []`, which the caller cannot tell from "no numbers match your
+  // area code" — so a search on telnyx looked like a provider with nothing to
+  // sell rather than a provider we never asked. #186 made the purchase branch
+  // refuse for the same reason; this is the step before it and should not be
+  // the one place that still answers with silence.
+  throw AppError.badRequest(
+    `Searching for numbers through ${opts.provider} is not implemented — only twilio is. ` +
+      'The empty result this used to return could not be told apart from no matches.',
+  );
 }
 
 /** Seam so the tests can buy a number without asking Twilio for one. */
