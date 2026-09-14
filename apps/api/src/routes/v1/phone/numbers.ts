@@ -157,6 +157,13 @@ const phoneNumberRoutes: FastifyPluginAsync = async (app) => {
         .limit(1);
       if (!num) throw AppError.notFound('Phone number');
 
+      // Provider first, row second, and the row only if the provider agreed.
+      // The other order is what shipped: the number stayed on the Twilio
+      // account, billed, while this table said it was gone — and a row that
+      // says `released` drops out of the listing above, so the only place the
+      // charge was visible was the Twilio invoice. A number left `active` after
+      // a failed release is the lesser wrong: it is true (we still hold it),
+      // the operator can see it, and the delete can be retried.
       await releaseNumberWithProvider(num.provider, num.providerSid);
       await db
         .update(phoneNumbers)
@@ -374,25 +381,78 @@ export async function provisionNumberWithProvider(
     const data = (await res.json()) as { sid?: string };
     return { providerSid: data.sid ?? null, monthlyRateUsd: '1.00' };
   }
-  return { providerSid: null, monthlyRateUsd: null };
+
+  // Anything else — today that means telnyx, which the route's enum offers.
+  // This used to return nulls and the caller wrote the row anyway: a number in
+  // phone_numbers, listed as active, with no provider sid, that nobody bought
+  // and that nothing can send from or receive on. searchAvailableNumbers has
+  // the same gap (it returns [] for telnyx), so the only way here was to type
+  // the number in by hand — and the answer was a 201.
+  //
+  // Telnyx is not fictional in this repo: services/phone/voip.ts:244 implements
+  // it as a VOICE provider. Number provisioning simply is not written, and an
+  // enum that offers it promised otherwise. Saying so is better than a row that
+  // looks provisioned.
+  throw AppError.badRequest(
+    `Provisioning numbers through ${provider} is not implemented — only twilio is. ` +
+      'The number was not saved. Buy it from the provider directly; recording it here ' +
+      'needs provisioning support that does not exist yet.',
+  );
 }
 
+/**
+ * Gives the number back to the provider. Throws if it did not happen.
+ *
+ * It used to swallow everything: `.catch(() => {})` around the request and no
+ * look at `res.ok`, so a 401, a 404 or a network outage were indistinguishable
+ * from success — and the caller marked the row `released` regardless. The
+ * number stayed on the account, Twilio kept charging the monthly fee, and it
+ * disappeared from the listing (which filters status = 'active'), so nobody
+ * could see what they were paying for.
+ *
+ * Deleting really is the way to stop the charge:
+ * <https://www.twilio.com/docs/phone-numbers/api/incomingphonenumber-resource>
+ * — DELETE on `/IncomingPhoneNumbers/{Sid}.json` releases the number from the
+ * account and Twilio stops charging the monthly fee for it. Which makes a
+ * failure here expensive rather than cosmetic.
+ *
+ * `!providerSid` stays a no-op on purpose: that is a row the operator brought
+ * themselves, never bought through us, so there is nothing at the provider to
+ * give back and the release is pure bookkeeping. Missing credentials with a
+ * providerSid present is the opposite — we did buy it and now cannot return it.
+ */
 async function releaseNumberWithProvider(
   provider: string,
   providerSid: string | null,
+  deps: ProvisionDeps = {},
 ): Promise<void> {
   if (!providerSid) return;
   if (provider === 'twilio') {
     const sid = process.env.TWILIO_ACCOUNT_SID;
     const token = process.env.TWILIO_AUTH_TOKEN;
-    if (!sid || !token) return;
-    await fetch(
+    if (!sid || !token) {
+      throw AppError.badRequest(
+        `${providerSid} was provisioned through Twilio, but no Twilio credentials are ` +
+          'configured, so it cannot be released. The number is still on the account and still ' +
+          'billed; it has been left active rather than marked returned.',
+      );
+    }
+    const doFetch = deps.fetchImpl ?? fetch;
+    const res = await doFetch(
       `https://api.twilio.com/2010-04-01/Accounts/${sid}/IncomingPhoneNumbers/${providerSid}.json`,
       {
         method: 'DELETE',
         headers: { Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}` },
       },
-    ).catch(() => {});
+    ).catch(() => null);
+
+    if (!res?.ok) {
+      throw AppError.badRequest(
+        `Twilio did not release ${providerSid}` +
+          (res ? ` (HTTP ${res.status})` : ' (the request did not complete)') +
+          '. The number is still on the account and still billed, so it has been left active.',
+      );
+    }
   }
 }
 
