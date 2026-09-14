@@ -31,14 +31,28 @@
  * that matters asserts the row field by field in the organisation that owns the
  * number.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { and, eq } from 'drizzle-orm';
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { db } from '../db/client.js';
 import { organizations } from '../db/schema/index.js';
 import { phoneNumbers } from '../db/schema/phone-numbers.js';
 import { smsInbound } from '../db/schema/sms.js';
+
+/**
+ * #184 made these endpoints verify Twilio's signature, so the requests here
+ * have to be signed — and the Auth Token and public base have to be in place
+ * BEFORE the imports run, because config/env.ts parses process.env once at
+ * import time. vi.hoisted is the only hook early enough.
+ */
+const { AUTH_TOKEN, PUBLIC_BASE } = vi.hoisted(() => {
+  const token = 'itest-twilio-auth-token';
+  const base = 'https://api.itest.invalid';
+  process.env.TWILIO_AUTH_TOKEN = token;
+  process.env.API_PUBLIC_URL = base;
+  return { AUTH_TOKEN: token, PUBLIC_BASE: base };
+});
 
 const tag = randomUUID().slice(0, 6);
 
@@ -81,18 +95,27 @@ async function waitForInbound(
 }
 
 /** Twilio posts application/x-www-form-urlencoded; @fastify/formbody parses it. */
+const PATH = '/api/v1/sms/webhooks/twilio/inbound';
+
 const post = async (toNumber: string, fromNumber: string, body: string) => {
-  const payload = new URLSearchParams({
+  const params: Record<string, string> = {
     MessageSid: `SM${tag}${fromNumber.slice(-4)}`,
     From: fromNumber,
     To: toNumber,
     Body: body,
-  }).toString();
+  };
+  // Twilio signs the URL plus the parameters, sorted and concatenated.
+  const canonical = Object.keys(params)
+    .sort()
+    .reduce((acc, key) => acc + key + params[key], `${PUBLIC_BASE}${PATH}`);
   const res = await app.inject({
     method: 'POST',
-    url: '/api/v1/sms/webhooks/twilio/inbound',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    payload,
+    url: PATH,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'x-twilio-signature': createHmac('sha1', AUTH_TOKEN).update(canonical).digest('base64'),
+    },
+    payload: new URLSearchParams(params).toString(),
   });
   return { statusCode: res.statusCode, body: res.body };
 };
