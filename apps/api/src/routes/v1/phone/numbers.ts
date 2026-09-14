@@ -18,6 +18,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { phoneNumbers, phoneNumberPortRequests } from '../../../db/schema/phone-numbers.js';
 import { AppError } from '../../../lib/app-error.js';
+import { env } from '../../../config/env.js';
 
 const phoneNumberRoutes: FastifyPluginAsync = async (app) => {
   // ── List numbers ──────────────────────────────────────────────────────────────
@@ -289,16 +290,61 @@ async function searchAvailableNumbers(opts: {
   return [];
 }
 
-async function provisionNumberWithProvider(
+/** Seam so the tests can buy a number without asking Twilio for one. */
+export interface ProvisionDeps {
+  fetchImpl?: typeof fetch;
+}
+
+/**
+ * The URL Twilio must call when this number receives an SMS.
+ *
+ * It has to match, byte for byte, the URL #184 rebuilds to verify the
+ * signature: `API_PUBLIC_URL` + the route path. Twilio signs the URL it was
+ * configured with, so a number registered against a different host, scheme or
+ * port produces a signature we compute differently and refuse — the number goes
+ * quiet and the log says INVALID_SIGNATURE. One expression, used by both sides,
+ * is the only way those two stay equal.
+ */
+function smsWebhookUrl(): string | null {
+  const base = (env.API_PUBLIC_URL ?? '').replace(/\/+$/, '');
+  return base ? `${base}/api/v1/sms/webhooks/twilio/inbound` : null;
+}
+
+export async function provisionNumberWithProvider(
   provider: string,
   number: string,
+  deps: ProvisionDeps = {},
 ): Promise<{ providerSid: string | null; monthlyRateUsd: string | null }> {
   if (provider === 'twilio') {
     const sid = process.env.TWILIO_ACCOUNT_SID;
     const token = process.env.TWILIO_AUTH_TOKEN;
     if (!sid || !token) return { providerSid: null, monthlyRateUsd: null };
 
-    const res = await fetch(
+    // Refused before the purchase, not after: buying a number we cannot point
+    // at ourselves leaves a number that costs money every month and receives
+    // nothing, and the customer has no way to tell.
+    const smsUrl = smsWebhookUrl();
+    if (!smsUrl) {
+      throw AppError.badRequest(
+        'API_PUBLIC_URL is not set, so the inbound SMS webhook cannot be configured on the ' +
+          'number. Set it to the public base of this API — the same origin the Twilio ' +
+          'signature is verified against — and buy the number again.',
+      );
+    }
+
+    // SmsUrl is what makes the number receive: without it Twilio has nowhere to
+    // deliver an inbound message and answers the sender with its default. Every
+    // number bought before this line was bought without it.
+    //
+    // Only the SMS webhook is set here. The number-level StatusCallback is
+    // documented on the IncomingPhoneNumber resource beside the voice
+    // properties, not as an SMS delivery callback, and SMS delivery receipts
+    // already come from the per-message StatusCallback the adapter sets
+    // (channels/sms/twilio-adapter.ts:126-131). Pointing a voice status
+    // callback at a handler that reads MessageSid/MessageStatus would be worse
+    // than leaving it unset.
+    const doFetch = deps.fetchImpl ?? fetch;
+    const res = await doFetch(
       `https://api.twilio.com/2010-04-01/Accounts/${sid}/IncomingPhoneNumbers.json`,
       {
         method: 'POST',
@@ -306,11 +352,25 @@ async function provisionNumberWithProvider(
           Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({ PhoneNumber: number }),
+        body: new URLSearchParams({
+          PhoneNumber: number,
+          SmsUrl: smsUrl,
+          SmsMethod: 'POST',
+        }),
       },
     ).catch(() => null);
 
-    if (!res?.ok) return { providerSid: null, monthlyRateUsd: null };
+    // Was `return { providerSid: null, monthlyRateUsd: null }`, and the caller
+    // then wrote the row anyway — a number in phone_numbers that Twilio never
+    // sold us, indistinguishable from one it did. A failure here has to reach
+    // the caller, so that no row is written and the operator sees why.
+    if (!res?.ok) {
+      throw AppError.badRequest(
+        `Twilio refused to provision ${number}` +
+          (res ? ` (HTTP ${res.status})` : ' (the request did not complete)') +
+          '. The number was not saved.',
+      );
+    }
     const data = (await res.json()) as { sid?: string };
     return { providerSid: data.sid ?? null, monthlyRateUsd: '1.00' };
   }
