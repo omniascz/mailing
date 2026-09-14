@@ -20,7 +20,6 @@
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import crypto from 'crypto';
 import { processInstagramWebhook } from '../../../services/inbox/instagram.js';
 import type { MetaWebhookPayload } from '../../../services/inbox/instagram.js';
 import { processMessengerWebhook } from '../../../services/inbox/messenger.js';
@@ -30,6 +29,7 @@ import { metaPageMappings } from '../../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
 import { env } from '../../../config/env.js';
 import { metaWebhookEnabled } from '../../../lib/webhook-switches.js';
+import { verifyMetaSignature } from '../../../lib/meta-signature.js';
 
 const verifyQuery = z.object({
   'hub.mode': z.string(),
@@ -42,8 +42,7 @@ export default async function metaWebhookRoutes(app: FastifyInstance) {
   const adminAuth = { preHandler: [app.authenticate, app.requireRole('admin', 'owner')] };
 
   // ── Verification handshake (GET) ──────────────────────────────────────────
-  // The two /webhook/meta routes are off by default; verifySignature below
-  // returns true when META_APP_SECRET is unset. Gated here rather than by
+  // The two /webhook/meta routes are off by default. Gated here rather than by
   // skipping the whole route file, because this file also serves the
   // authenticated /api/v1/meta/pages admin surface, which is unaffected.
   app.get('/webhook/meta', async (req, reply) => {
@@ -189,17 +188,26 @@ async function handlePayload(
   }
 }
 
-function verifySignature(req: FastifyRequest, signature: string): boolean {
-  const appSecret = process.env['META_APP_SECRET'];
-  if (!appSecret) return true; // Skip verification in dev
-
+/**
+ * Verifies Meta's X-Hub-Signature-256 over the raw request body.
+ *
+ * Exported for its unit test (meta.test.ts) and used nowhere else. Through the
+ * route the unconfigured case is unreachable — metaWebhookEnabled() requires
+ * the secret — so the test has to reach the function directly.
+ */
+export function verifySignature(req: FastifyRequest, signature: string): boolean {
+  // The raw bytes are required, not merely preferred: this route registers with
+  // `config: { rawBody: true }`, so their absence means something is wrong with
+  // the request, not that a re-serialised body should be hashed instead. That is
+  // the one way this stays stricter than lib/meta-signature.ts, which falls back
+  // to JSON.stringify(req.body) for callers with no raw body — hence the
+  // lower-level verifyMetaSignature here rather than verifyMetaRequest.
   const raw = (req as unknown as { rawBody?: Buffer }).rawBody;
   if (!raw) return false;
 
-  const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(raw).digest('hex')}`;
-  try {
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-  } catch {
-    return false;
-  }
+  // The comparison — and, above all, the unconfigured case — is the shared
+  // helper's. This function used to begin `if (!appSecret) return true`, the
+  // shape #180 removed from that helper; a second copy living here meant the
+  // repair had missed the one file that never imported it.
+  return verifyMetaSignature(raw, signature, process.env['META_APP_SECRET']);
 }
