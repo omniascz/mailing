@@ -47,6 +47,9 @@ import { BulkgateSmsAdapter } from '../../channels/sms/bulkgate-adapter.js';
 import { MetaWhatsAppAdapter } from '@forgemsg/shared/whatsapp/meta-adapter';
 import type { InboundMessage } from '@forgemsg/shared';
 import { env } from '../../config/env.js';
+import { and, eq } from 'drizzle-orm';
+import { db } from '../../db/client.js';
+import { phoneNumbers } from '../../db/schema/phone-numbers.js';
 
 export default async function smsRoutes(app: FastifyInstance) {
   // ── Provider routing ──────────────────────────────────────────────────────
@@ -183,9 +186,17 @@ export default async function smsRoutes(app: FastifyInstance) {
       metadata: { provider: 'twilio' },
     };
 
-    // Need orgId — derive from the To number (our number) registered in env
-    // In a real multi-tenant setup this would look up orgId from the inbound To number
-    const orgId = process.env.DEFAULT_ORG_ID ?? '';
+    // Whose number this message came to. Was DEFAULT_ORG_ID, with the comment
+    // that a real multi-tenant setup would look the number up — which is what
+    // this now does.
+    const toNumber = payload.To ?? '';
+    const orgId = await resolveOrgByInboundNumber(toNumber);
+    if (!orgId) {
+      req.log.warn(
+        { toNumber, messageSid: payload.MessageSid },
+        'inbound sms: no active phone number matches this recipient, dropping',
+      );
+    }
 
     if (orgId) {
       const result = await processInboundSms(orgId, 'twilio', inboundMsg);
@@ -288,4 +299,36 @@ export default async function smsRoutes(app: FastifyInstance) {
     });
     return { data: result };
   });
+}
+
+/**
+ * The organisation that provisioned the number an inbound message came to.
+ *
+ * This used to be process.env.DEFAULT_ORG_ID, under a comment saying that a
+ * real multi-tenant setup would look the number up. Until it did, every
+ * inbound SMS to every provisioned number was processed as if it belonged to
+ * one organisation — and processInboundSms does more than store a row: STOP
+ * revokes that organisation s SMS consent for the sender, START records it,
+ * anything else fires an sms_reply workflow event.
+ *
+ * phone_numbers is written when a customer provisions the number
+ * (routes/v1/phone/numbers.ts:92). Only active rows count: releasing a number
+ * gives it back to the provider (:162), and the listing route already filters
+ * the same way (:35).
+ *
+ * Two rows are asked for because the unique key is (org_id, number), which is
+ * per organisation — nothing stops two of them from claiming the same number,
+ * and handing the message to whichever came back first would be the bug this
+ * replaces. No single match means no organisation: nothing is written, and the
+ * caller still answers TwiML so Twilio does not retry.
+ */
+async function resolveOrgByInboundNumber(toNumber: string): Promise<string | null> {
+  if (!toNumber) return null;
+  // eslint-disable-next-line forgemsgOrg/require-org-scope -- resolves the org
+  const matches = await db
+    .select({ orgId: phoneNumbers.orgId })
+    .from(phoneNumbers)
+    .where(and(eq(phoneNumbers.number, toNumber), eq(phoneNumbers.status, 'active')))
+    .limit(2);
+  return matches.length === 1 ? matches[0]!.orgId : null;
 }
