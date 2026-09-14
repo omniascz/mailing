@@ -381,7 +381,23 @@ export async function provisionNumberWithProvider(
     const data = (await res.json()) as { sid?: string };
     return { providerSid: data.sid ?? null, monthlyRateUsd: '1.00' };
   }
-  return { providerSid: null, monthlyRateUsd: null };
+
+  // Anything else — today that means telnyx, which the route's enum offers.
+  // This used to return nulls and the caller wrote the row anyway: a number in
+  // phone_numbers, listed as active, with no provider sid, that nobody bought
+  // and that nothing can send from or receive on. searchAvailableNumbers has
+  // the same gap (it returns [] for telnyx), so the only way here was to type
+  // the number in by hand — and the answer was a 201.
+  //
+  // Telnyx is not fictional in this repo: services/phone/voip.ts:244 implements
+  // it as a VOICE provider. Number provisioning simply is not written, and an
+  // enum that offers it promised otherwise. Saying so is better than a row that
+  // looks provisioned.
+  throw AppError.badRequest(
+    `Provisioning numbers through ${provider} is not implemented — only twilio is. ` +
+      'The number was not saved. Buy it from the provider directly; recording it here ' +
+      'needs provisioning support that does not exist yet.',
+  );
 }
 
 /**
