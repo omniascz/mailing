@@ -12,6 +12,7 @@ import { helpdeskTickets, ticketMessages } from '../../../db/schema/helpdesk.js'
 import { verifyMessengerWebhook } from '../../../channels/messenger/adapter.js';
 import { AppError } from '../../../lib/app-error.js';
 import { env } from '../../../config/env.js';
+import { unsignedWebhooksAllowed } from '../../../lib/webhook-switches.js';
 
 interface MetaWebhookEntry {
   id: string;
@@ -63,7 +64,19 @@ const messengerWebhookRoutes: FastifyPluginAsync = async (app) => {
       const signature = (req.headers['x-hub-signature-256'] as string) ?? '';
       const rawBody = (req as { rawBody?: string }).rawBody ?? JSON.stringify(req.body);
 
-      if (appSecret && !verifyMessengerWebhook(rawBody, signature, appSecret)) {
+      // An absent secret is the absence of a check, not a pass. The old guard
+      // was "if (appSecret && !verify(...))", so an empty secret skipped
+      // verification altogether and the request walked into processing — the
+      // same shape #180 removed from lib/meta-signature.ts and #181 from
+      // routes/v1/webhooks/meta.ts. This route is registered at boot
+      // (index.ts), so the switch that does require the secret is consulted
+      // once; losing the variable afterwards left a live endpoint verifying
+      // nothing.
+      if (!appSecret) {
+        if (!unsignedWebhooksAllowed()) {
+          throw AppError.forbidden('Messenger webhook is not configured to verify signatures');
+        }
+      } else if (!verifyMessengerWebhook(rawBody, signature, appSecret)) {
         throw AppError.forbidden('Invalid Messenger webhook signature');
       }
 

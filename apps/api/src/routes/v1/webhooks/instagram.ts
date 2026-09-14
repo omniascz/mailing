@@ -12,6 +12,7 @@ import { helpdeskTickets, ticketMessages } from '../../../db/schema/helpdesk.js'
 import { verifyInstagramWebhook } from '../../../channels/instagram/adapter.js';
 import { AppError } from '../../../lib/app-error.js';
 import { env } from '../../../config/env.js';
+import { unsignedWebhooksAllowed } from '../../../lib/webhook-switches.js';
 
 interface MetaWebhookEntry {
   id: string;
@@ -62,7 +63,19 @@ const instagramWebhookRoutes: FastifyPluginAsync = async (app) => {
       const signature = (req.headers['x-hub-signature-256'] as string) ?? '';
       const rawBody = (req as { rawBody?: string }).rawBody ?? JSON.stringify(req.body);
 
-      if (appSecret && !verifyInstagramWebhook(rawBody, signature, appSecret)) {
+      // An absent secret is the absence of a check, not a pass. The old guard
+      // was "if (appSecret && !verify(...))", so an empty secret skipped
+      // verification altogether and the request walked into processing — the
+      // same shape #180 removed from lib/meta-signature.ts and #181 from
+      // routes/v1/webhooks/meta.ts. This route is registered at boot
+      // (index.ts), so the switch that does require the secret is consulted
+      // once; losing the variable afterwards left a live endpoint verifying
+      // nothing.
+      if (!appSecret) {
+        if (!unsignedWebhooksAllowed()) {
+          throw AppError.forbidden('Instagram webhook is not configured to verify signatures');
+        }
+      } else if (!verifyInstagramWebhook(rawBody, signature, appSecret)) {
         throw AppError.forbidden('Invalid Instagram webhook signature');
       }
 
