@@ -8,6 +8,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
+import { metaPageMappings } from '../../../db/schema/index.js';
 import { helpdeskTickets, ticketMessages } from '../../../db/schema/helpdesk.js';
 import { verifyInstagramWebhook } from '../../../channels/instagram/adapter.js';
 import { AppError } from '../../../lib/app-error.js';
@@ -159,10 +160,36 @@ async function processInstagramEvents(payload: MetaWebhookPayload): Promise<void
   }
 }
 
-async function resolveOrgByInstagramPage(_pageId: string): Promise<string | null> {
-  // Stub: in production, look up ecommerce_connections or a meta_pages table
-  // by page_id. For now, fall back to env variable for single-org deployments.
-  return process.env.DEFAULT_ORG_ID ?? null;
+/**
+ * The organisation that registered this page for this channel.
+ *
+ * This used to ignore its argument — the parameter was named _pageId — and
+ * return process.env.DEFAULT_ORG_ID, so every inbound message to every
+ * connected page opened a ticket in one organisation. The stub comment asked
+ * for "a meta_pages table by page_id"; meta_page_mappings is it, and #181
+ * made routes/v1/webhooks/meta.ts resolve the same way.
+ *
+ * The channel is half the key: the unique constraint is (page_id, channel),
+ * so one page id may be registered for instagram by one organisation and for
+ * messenger by another. With both columns in the where clause at most one row
+ * can match. No mapping means no organisation — nothing is written, and the
+ * caller still answers 200 so Meta does not retry forever.
+ */
+async function resolveOrgByInstagramPage(pageId: string): Promise<string | null> {
+  if (!pageId) return null;
+  // eslint-disable-next-line forgemsgOrg/require-org-scope -- resolves the org
+  const [mapping] = await db
+    .select({ orgId: metaPageMappings.orgId })
+    .from(metaPageMappings)
+    .where(
+      and(
+        eq(metaPageMappings.pageId, pageId),
+        eq(metaPageMappings.channel, 'instagram'),
+        eq(metaPageMappings.active, true),
+      ),
+    )
+    .limit(1);
+  return mapping?.orgId ?? null;
 }
 
 export default instagramWebhookRoutes;
