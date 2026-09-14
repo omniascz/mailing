@@ -84,27 +84,80 @@ const phoneNumberRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.body);
 
+      // The database first, the provider second. The other order is what
+      // shipped: the number was bought and only then did the unique index on
+      // (org_id, number) reject the row — a 500 with the purchase already made
+      // and the new provider sid thrown away with the local variable. Nothing
+      // in this repo can find that number again; releasing takes a providerSid
+      // and there is no lookup by phone number.
+      const [existing] = await db
+        .select()
+        .from(phoneNumbers)
+        .where(and(eq(phoneNumbers.orgId, req.user!.orgId), eq(phoneNumbers.number, body.number)))
+        .limit(1);
+
+      if (existing && existing.status !== 'released') {
+        throw AppError.badRequest(
+          `${body.number} is already provisioned for this organisation. Nothing was bought.`,
+        );
+      }
+
       const { providerSid, monthlyRateUsd } = await provisionNumberWithProvider(
         body.provider,
         body.number,
       );
 
-      const [row] = await db
-        .insert(phoneNumbers)
-        .values({
-          orgId: req.user!.orgId,
-          number: body.number,
-          provider: body.provider,
-          providerSid,
-          label: body.label,
-          assignedUserId: body.assignedUserId ?? null,
-          routingTargetType: body.routingTargetType ?? null,
-          routingTargetId: body.routingTargetId ?? null,
-          recordCalls: body.recordCalls ?? false,
-          monthlyRateUsd,
-          provisionedAt: new Date(),
-        })
-        .returning();
+      // A released row is revived rather than duplicated. The unique key is
+      // (org_id, number), so one number is one row per organisation and its
+      // history lives in the status; giving a number back and later wanting it
+      // again is a legitimate thing to do, and refusing it — or deleting the
+      // old row — would be the wrong two ways of respecting that index.
+      const values = {
+        orgId: req.user!.orgId,
+        number: body.number,
+        provider: body.provider,
+        providerSid,
+        label: body.label,
+        assignedUserId: body.assignedUserId ?? null,
+        routingTargetType: body.routingTargetType ?? null,
+        routingTargetId: body.routingTargetId ?? null,
+        recordCalls: body.recordCalls ?? false,
+        monthlyRateUsd,
+        provisionedAt: new Date(),
+      };
+
+      let row;
+      try {
+        [row] = existing
+          ? await db
+              .update(phoneNumbers)
+              .set({ ...values, status: 'active', releasedAt: null, updatedAt: new Date() })
+              .where(eq(phoneNumbers.id, existing.id))
+              .returning()
+          : await db.insert(phoneNumbers).values(values).returning();
+      } catch (err) {
+        // The money is already spent. Give the number back rather than leave it
+        // on the account with nothing recording it — and if that fails too, put
+        // the sid in the error, because it is the only handle anyone has left.
+        let returned = false;
+        try {
+          await releaseNumberWithProvider(body.provider, providerSid);
+          returned = true;
+        } catch {
+          returned = false;
+        }
+        req.log.error(
+          { err, number: body.number, providerSid, returned },
+          'provisioned number could not be recorded',
+        );
+        throw AppError.internal(
+          `${body.number} was provisioned (${providerSid ?? 'no sid'}) but could not be saved. ` +
+            (returned
+              ? 'It has been released again, so nothing is being billed.'
+              : 'It could NOT be released either — it is still on the provider account and ' +
+                'must be removed by hand.'),
+        );
+      }
 
       return reply.code(201).send({ data: row });
     },
@@ -294,7 +347,16 @@ async function searchAvailableNumbers(opts: {
       capabilities: ['voice', 'sms'],
     }));
   }
-  return [];
+
+  // Was `return []`, which the caller cannot tell from "no numbers match your
+  // area code" — so a search on telnyx looked like a provider with nothing to
+  // sell rather than a provider we never asked. #186 made the purchase branch
+  // refuse for the same reason; this is the step before it and should not be
+  // the one place that still answers with silence.
+  throw AppError.badRequest(
+    `Searching for numbers through ${opts.provider} is not implemented — only twilio is. ` +
+      'The empty result this used to return could not be told apart from no matches.',
+  );
 }
 
 /** Seam so the tests can buy a number without asking Twilio for one. */
