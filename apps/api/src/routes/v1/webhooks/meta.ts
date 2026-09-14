@@ -11,8 +11,10 @@
  * The webhook URL registered in the Meta Developer Console must be:
  *   https://api.yourdomain.com/webhook/meta
  *
- * orgId is now resolved from the Page ID via the meta_page_mappings table.
- * If not found, falls back to META_ORG_ID env var for single-tenant deployments.
+ * orgId is resolved from the Page ID and the channel via the meta_page_mappings
+ * table. A page with no mapping is unknown: nothing is stored and the request is
+ * acknowledged with a warning. There is no META_ORG_ID fallback — that filed a
+ * stranger's conversation under whichever organisation the variable named.
  *
  * Security: Meta signs payloads with SHA-256 HMAC using the App Secret.
  * We verify the X-Hub-Signature-256 header before processing.
@@ -20,7 +22,6 @@
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import crypto from 'crypto';
 import { processInstagramWebhook } from '../../../services/inbox/instagram.js';
 import type { MetaWebhookPayload } from '../../../services/inbox/instagram.js';
 import { processMessengerWebhook } from '../../../services/inbox/messenger.js';
@@ -30,6 +31,7 @@ import { metaPageMappings } from '../../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
 import { env } from '../../../config/env.js';
 import { metaWebhookEnabled } from '../../../lib/webhook-switches.js';
+import { verifyMetaSignature } from '../../../lib/meta-signature.js';
 
 const verifyQuery = z.object({
   'hub.mode': z.string(),
@@ -42,8 +44,7 @@ export default async function metaWebhookRoutes(app: FastifyInstance) {
   const adminAuth = { preHandler: [app.authenticate, app.requireRole('admin', 'owner')] };
 
   // ── Verification handshake (GET) ──────────────────────────────────────────
-  // The two /webhook/meta routes are off by default; verifySignature below
-  // returns true when META_APP_SECRET is unset. Gated here rather than by
+  // The two /webhook/meta routes are off by default. Gated here rather than by
   // skipping the whole route file, because this file also serves the
   // authenticated /api/v1/meta/pages admin surface, which is unaffected.
   app.get('/webhook/meta', async (req, reply) => {
@@ -159,19 +160,39 @@ async function resolveOrgId(
     // ignore
   }
 
-  // Look up in meta_page_mappings
-  if (pageId) {
-    const [mapping] = await db
-      .select({ orgId: metaPageMappings.orgId })
-      .from(metaPageMappings)
-      .where(and(eq(metaPageMappings.pageId, pageId), eq(metaPageMappings.active, true)))
-      .limit(1);
+  // Which channel this is, from the same discriminator handlePayload switches
+  // on. It is half the key: meta_page_mappings is unique on (page_id, channel),
+  // so one page id can legitimately be registered twice — instagram by one
+  // organisation, messenger by another. Matching on the page id alone with
+  // `limit 1` handed a Messenger event to whichever row Postgres returned
+  // first. With the channel in the where clause the unique key is complete and
+  // at most one row can match.
+  const channel =
+    payload.object === 'instagram' ? 'instagram' : payload.object === 'page' ? 'messenger' : null;
 
-    if (mapping) return mapping.orgId;
-  }
+  if (!pageId || !channel) return null;
 
-  // Fallback to env var (single-tenant / dev)
-  return process.env['META_ORG_ID'] ?? null;
+  // eslint-disable-next-line forgemsgOrg/require-org-scope -- resolves the org
+  const [mapping] = await db
+    .select({ orgId: metaPageMappings.orgId })
+    .from(metaPageMappings)
+    .where(
+      and(
+        eq(metaPageMappings.pageId, pageId),
+        eq(metaPageMappings.channel, channel),
+        eq(metaPageMappings.active, true),
+      ),
+    )
+    .limit(1);
+
+  // No mapping, no organisation. There used to be a fallback here —
+  // `process.env['META_ORG_ID'] ?? null`, labelled single-tenant / dev — which
+  // meant a page nobody had registered was not unknown but attributed: a
+  // stranger's Messenger conversation, sender id and text included, stored in
+  // whichever organisation that variable named. The mapping table exists to
+  // replace exactly that; its own schema comment says so. The caller answers
+  // 200 with `warning: 'Page not registered'`, so Meta does not retry forever.
+  return mapping?.orgId ?? null;
 }
 
 async function handlePayload(
@@ -189,17 +210,26 @@ async function handlePayload(
   }
 }
 
-function verifySignature(req: FastifyRequest, signature: string): boolean {
-  const appSecret = process.env['META_APP_SECRET'];
-  if (!appSecret) return true; // Skip verification in dev
-
+/**
+ * Verifies Meta's X-Hub-Signature-256 over the raw request body.
+ *
+ * Exported for its unit test (meta.test.ts) and used nowhere else. Through the
+ * route the unconfigured case is unreachable — metaWebhookEnabled() requires
+ * the secret — so the test has to reach the function directly.
+ */
+export function verifySignature(req: FastifyRequest, signature: string): boolean {
+  // The raw bytes are required, not merely preferred: this route registers with
+  // `config: { rawBody: true }`, so their absence means something is wrong with
+  // the request, not that a re-serialised body should be hashed instead. That is
+  // the one way this stays stricter than lib/meta-signature.ts, which falls back
+  // to JSON.stringify(req.body) for callers with no raw body — hence the
+  // lower-level verifyMetaSignature here rather than verifyMetaRequest.
   const raw = (req as unknown as { rawBody?: Buffer }).rawBody;
   if (!raw) return false;
 
-  const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(raw).digest('hex')}`;
-  try {
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-  } catch {
-    return false;
-  }
+  // The comparison — and, above all, the unconfigured case — is the shared
+  // helper's. This function used to begin `if (!appSecret) return true`, the
+  // shape #180 removed from that helper; a second copy living here meant the
+  // repair had missed the one file that never imported it.
+  return verifyMetaSignature(raw, signature, process.env['META_APP_SECRET']);
 }
