@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { DEFAULT_WAIT, WAIT_UNITS, readWait, waitPatch, type WaitUnit } from '../../wait-config';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -69,7 +70,7 @@ interface AddableNodeType {
 const ADDABLE: AddableNodeType[] = [
   { type: 'send_email', label: 'Send email', defaults: { subject: '' } },
   { type: 'send_sms', label: 'Send SMS', defaults: { message: '' } },
-  { type: 'wait', label: 'Wait', defaults: { duration: 1, unit: 'days' } },
+  { type: 'wait', label: 'Wait', defaults: { ...DEFAULT_WAIT } },
   { type: 'condition', label: 'Condition', defaults: { field: '', op: 'eq', value: '' } },
   { type: 'add_tag', label: 'Add tag', defaults: { tagSlug: '' } },
   { type: 'remove_tag', label: 'Remove tag', defaults: { tagSlug: '' } },
@@ -430,26 +431,35 @@ function NodeConfigEditor({
   }
 
   if (node.type === 'wait') {
-    const dur = (cfg.duration as { days?: number; hours?: number } | undefined) ?? {};
+    // { duration: number, unit } is what the executor times (see wait-config.ts).
+    const wait = readWait(cfg);
+    if (!wait) {
+      return (
+        <p className="text-xs text-secondary-500">
+          Waits until a date from the trigger data — not editable here.
+        </p>
+      );
+    }
     return (
       <div className="flex items-center gap-2 text-sm">
         <input
           type="number"
           min={0}
-          value={dur.days ?? 0}
-          onChange={(e) => onChange({ duration: { ...dur, days: Number(e.target.value) } })}
+          value={wait.duration}
+          onChange={(e) => onChange(waitPatch(Number(e.target.value), wait.unit))}
           className="h-9 w-20 rounded-md border border-secondary-300 px-2 text-sm focus:border-primary-500 focus:outline-none"
         />
-        <span className="text-secondary-600">days</span>
-        <input
-          type="number"
-          min={0}
-          max={23}
-          value={dur.hours ?? 0}
-          onChange={(e) => onChange({ duration: { ...dur, hours: Number(e.target.value) } })}
-          className="h-9 w-20 rounded-md border border-secondary-300 px-2 text-sm focus:border-primary-500 focus:outline-none"
-        />
-        <span className="text-secondary-600">hours</span>
+        <select
+          value={wait.unit}
+          onChange={(e) => onChange(waitPatch(wait.duration, e.target.value as WaitUnit))}
+          className="h-9 rounded-md border border-secondary-300 px-2 text-sm focus:border-primary-500 focus:outline-none"
+        >
+          {WAIT_UNITS.map((u) => (
+            <option key={u} value={u}>
+              {u}
+            </option>
+          ))}
+        </select>
       </div>
     );
   }
