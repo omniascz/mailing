@@ -16,6 +16,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { workflows, type Workflow, type WorkflowNode } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { assertWaitConfigsValid } from '../../lib/workflow-wait-config.js';
 
 export const WORKFLOW_EXPORT_VERSION = '1.0';
 
@@ -79,6 +80,10 @@ export async function exportWorkflow(
 
 export async function importWorkflow(orgId: string, blob: unknown): Promise<Workflow> {
   const parsed = validateBlob(blob);
+  // The same check POST/PUT /api/v1/workflows run (#189): a blob exported
+  // before the wait fix, or written by hand, can carry a wait that fails every
+  // run on that step. Refused before anything is remapped or written.
+  assertWaitConfigsValid(parsed.workflow.nodes);
 
   // Remap all node IDs to fresh UUIDs to avoid collisions
   const idMap = new Map<string, string>();
