@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { buildStarterGraph } from './starter-graph';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -83,19 +84,7 @@ export function NewWorkflowForm() {
       // Gives the user something to inspect/edit instead of an empty
       // canvas. Same shape the gallery templates use so the editor
       // renderer doesn't have to special-case "empty".
-      const nodes = [
-        { id: 't', type: 'trigger', config: { triggerType } },
-        { id: 'w1', type: 'wait', config: { duration: { days: 1, hours: 0 } } },
-        {
-          id: 'e1',
-          type: 'send_email',
-          config: { subject: 'Hello {{contact.first_name|vocative}}' },
-        },
-      ];
-      const edges = [
-        { id: 'e0', source: 't', target: 'w1' },
-        { id: 'e1', source: 'w1', target: 'e1' },
-      ];
+      const { nodes, edges } = buildStarterGraph(triggerType);
 
       const res = await fetch(`${API_BASE}/api/v1/workflows`, {
         method: 'POST',
