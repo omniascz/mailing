@@ -53,6 +53,75 @@ export function readWait(config: Record<string, unknown>): TimedWait | null {
   return { duration, unit };
 }
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** 1530 minutes → "1 day 1 hour 30 minutes". */
+function span(totalMinutes: number): string {
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = Math.round(totalMinutes % 60);
+  const parts = [];
+  if (days) parts.push(plural(days, 'day'));
+  if (hours) parts.push(plural(hours, 'hour'));
+  if (minutes) parts.push(plural(minutes, 'minute'));
+  return parts.join(' ');
+}
+
+/**
+ * How long this wait step waits, in words — read the way executeWait
+ * (apps/api services/workflows/actions.ts:336-374) reads it, in the same order:
+ * an `until` object, then an `until` string, then duration and unit.
+ *
+ * Shapes the executor cannot use say so instead of pretending: the old
+ * `{ duration: { days, hours } }` object, which may sit in the database until
+ * the workflow is saved again, fails every run on this step, and an `until`
+ * object without a date `field` is skipped.
+ */
+export function describeWait(config: Record<string, unknown>): string {
+  const until = config.until;
+
+  if (until && typeof until === 'object') {
+    const u = until as {
+      field?: unknown;
+      offsetDays?: number;
+      offsetHours?: number;
+      offsetMinutes?: number;
+    };
+    if (typeof u.field !== 'string') return 'Skipped — no date field to wait for';
+    const offset =
+      (Number(u.offsetDays) || 0) * 1440 +
+      (Number(u.offsetHours) || 0) * 60 +
+      (Number(u.offsetMinutes) || 0);
+    if (offset === 0) return `At ${u.field}`;
+    return `${span(Math.abs(offset))} ${offset < 0 ? 'before' : 'after'} ${u.field}`;
+  }
+
+  if (typeof until === 'string') {
+    const at = new Date(until);
+    if (Number.isNaN(at.getTime())) return 'Until an invalid date — runs fail on this step';
+    return `Until ${at.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+  }
+
+  const raw = config.duration;
+  if (raw && typeof raw === 'object') {
+    const { days = 0, hours = 0 } = raw as { days?: number; hours?: number };
+    const meant = span((Number(days) || 0) * 1440 + (Number(hours) || 0) * 60) || 'No delay';
+    return `${meant} — old format; runs fail on this step until it is saved again in the editor`;
+  }
+
+  // The executor's defaults: duration 1, unit hours; any other unit counts as days.
+  const duration = raw === undefined ? 1 : Number(raw);
+  if (!Number.isFinite(duration)) return 'Invalid duration — runs fail on this step';
+  const unit =
+    config.unit === undefined
+      ? 'hours'
+      : config.unit === 'minutes' || config.unit === 'hours'
+        ? config.unit
+        : 'days';
+  if (duration === 0) return 'No delay';
+  return plural(duration, unit.slice(0, -1));
+}
+
 /** The config patch the editor merges into a wait node. */
 export function waitPatch(duration: number, unit: WaitUnit): TimedWait {
   const n = Number(duration);

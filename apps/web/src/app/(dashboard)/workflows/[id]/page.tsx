@@ -17,6 +17,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
+import { describeWait } from '../wait-config';
 
 interface NodeStat {
   nodeId: string;
@@ -105,19 +106,9 @@ function describeNode(node: WorkflowNode): { title: string; subtitle?: string } 
         title: 'Send SMS',
         subtitle: String((node.config.body as string)?.slice(0, 80) ?? ''),
       };
-    case 'wait': {
-      const d = node.config.duration as { days?: number; hours?: number } | undefined;
-      const until = node.config.until as { field?: string; offsetHours?: number } | undefined;
-      if (until)
-        return {
-          title: 'Wait',
-          subtitle: `Until ${until.field}${until.offsetHours ? ` ${until.offsetHours}h` : ''}`,
-        };
-      const parts: string[] = [];
-      if (d?.days) parts.push(`${d.days}d`);
-      if (d?.hours) parts.push(`${d.hours}h`);
-      return { title: 'Wait', subtitle: parts.join(' ') || 'immediate' };
-    }
+    case 'wait':
+      // Every shape executeWait reads, and the old { days, hours } object (wait-config.ts).
+      return { title: 'Wait', subtitle: describeWait(node.config ?? {}) };
     case 'condition':
       return { title: 'Condition', subtitle: 'If/else branch' };
     case 'move_to_list':

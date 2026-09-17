@@ -16,6 +16,7 @@ import {
 } from './registry.js';
 import { workflowTriggerTypeEnum, type Workflow } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { assertWaitConfigsValid } from '../../lib/workflow-wait-config.js';
 
 export { listTemplates, findTemplate, WORKFLOW_TEMPLATES };
 export type { WorkflowTemplate, TemplateCategory };
@@ -59,6 +60,11 @@ export async function forkTemplate(
       `Template "${slug}" declares unknown trigger type "${tpl.trigger.type}"`,
     );
   }
+
+  // The same check POST/PUT /api/v1/workflows run (#189). Every shipped
+  // template passes it today (workflow-wait-config.test.ts); this keeps a
+  // template added later from forking into a workflow that fails on its wait.
+  assertWaitConfigsValid(tpl.nodes);
 
   const wf = await createWorkflow({
     orgId,
