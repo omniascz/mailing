@@ -12,6 +12,7 @@
 
 import type { WorkflowNode, WorkflowEdge } from '../../db/schema/workflows.js';
 import { seriesForCategory, withBuiltInEmails } from './email-content.js';
+import { isHiddenWorkflowTemplate } from './hidden-templates.js';
 
 export type TemplateCategory =
   | 'welcome'
@@ -2069,12 +2070,22 @@ export function findTemplate(slug: string): WorkflowTemplate | null {
   return WORKFLOW_TEMPLATES.find((t) => t.slug === slug) ?? null;
 }
 
+/**
+ * The templates we offer: everything except the ones whose email steps are
+ * paired with an email about something else (hidden-templates.ts). The hidden
+ * ones stay in WORKFLOW_TEMPLATES — their tests, and anything that already
+ * references them, go on working.
+ */
+export const PUBLISHED_WORKFLOW_TEMPLATES: WorkflowTemplate[] = WORKFLOW_TEMPLATES.filter(
+  (t) => !isHiddenWorkflowTemplate(t.slug),
+);
+
 export function listTemplates(filter?: {
   category?: TemplateCategory;
   locale?: WorkflowTemplate['locale'];
   recommendedFor?: string;
 }): WorkflowTemplate[] {
-  let list = WORKFLOW_TEMPLATES;
+  let list = PUBLISHED_WORKFLOW_TEMPLATES;
   if (filter?.category) list = list.filter((t) => t.category === filter.category);
   if (filter?.locale) list = list.filter((t) => t.locale === filter.locale);
   if (filter?.recommendedFor)

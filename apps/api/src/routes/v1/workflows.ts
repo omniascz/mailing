@@ -30,7 +30,10 @@ import {
   getWorkflowNodeAnalytics,
 } from '../../services/workflows/index.js';
 import { triggerManual } from '../../services/workflows/triggers.js';
-import { FLOW_TEMPLATES, getFlowTemplate } from '../../services/workflows/flow-templates.js';
+import {
+  PUBLISHED_FLOW_TEMPLATES,
+  getPublishedFlowTemplate,
+} from '../../services/workflows/flow-templates.js';
 import { buildWorkflowMap } from '../../services/workflows/map.js';
 import { materialiseEmailTemplates } from '../../services/workflow-templates/materialise-emails.js';
 
@@ -312,7 +315,7 @@ export default async function workflowRoutes(app: FastifyInstance) {
     { schema: { tags: ['Workflows'], summary: 'List pre-built workflow templates' } },
     async (_req, reply) => {
       return reply.send({
-        data: FLOW_TEMPLATES.map(({ nodes: _nodes, edges: _edges, ...meta }) => meta),
+        data: PUBLISHED_FLOW_TEMPLATES.map(({ nodes: _nodes, edges: _edges, ...meta }) => meta),
       });
     },
   );
@@ -322,7 +325,7 @@ export default async function workflowRoutes(app: FastifyInstance) {
     { schema: { tags: ['Workflows'], summary: 'Get full pre-built workflow template' } },
     async (req, reply) => {
       const { templateId } = req.params as { templateId: string };
-      const template = getFlowTemplate(templateId);
+      const template = getPublishedFlowTemplate(templateId);
       if (!template)
         return reply.status(404).send({ code: 'NOT_FOUND', message: 'Template not found' });
       return reply.send({ data: template });
@@ -334,7 +337,7 @@ export default async function workflowRoutes(app: FastifyInstance) {
     { schema: { tags: ['Workflows'], summary: 'Create a workflow from a pre-built template' } },
     async (req, reply) => {
       const { templateId } = req.params as { templateId: string };
-      const template = getFlowTemplate(templateId);
+      const template = getPublishedFlowTemplate(templateId);
       if (!template)
         return reply.status(404).send({ code: 'NOT_FOUND', message: 'Template not found' });
 

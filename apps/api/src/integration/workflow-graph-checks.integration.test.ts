@@ -273,7 +273,7 @@ describe('what already worked keeps working', () => {
   it('every shipped template forks or is used without being refused', async () => {
     // The check itself sees all 103 shipped graphs (lib/workflow-graph.test.ts).
     // Here: one of each kind through its own route, end to end.
-    for (const slug of ['event-webinar-reminder', 'post-purchase-shipping-update']) {
+    for (const slug of ['abandoned-cart-cs', 'review-request-post-delivery']) {
       const res = await api('POST', `/api/v1/workflow-templates/${slug}/fork`, {
         name: `${TAG} fork ${slug}`,
       });
