@@ -23,6 +23,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { DEFAULT_WAIT, WAIT_UNITS, readWait, waitPatch, type WaitUnit } from '../../wait-config';
+import {
+  deleteNode as deleteNodeInGraph,
+  freshNodeId,
+  insertAfter as insertAfterInGraph,
+  linearize,
+  whyNotDelete,
+  whyNotInsertAfter,
+} from '../../graph-ops';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -63,6 +71,9 @@ interface AddableNodeType {
   defaults: Record<string, unknown>;
 }
 
+// `condition` is NOT here: this list view cannot give a condition's branches
+// their 'true'/'false' edges, and one added without them is a step the run
+// stops at. It comes back with the canvas.
 // Defaults MUST match the executor contract (apps/api services/workflows/actions.ts):
 // wait wants { duration:number, unit }, send_sms wants { message }, condition wants
 // { field, op, value }. Earlier { duration:{days,hours} } / { body } / { rule } shapes
@@ -71,7 +82,6 @@ const ADDABLE: AddableNodeType[] = [
   { type: 'send_email', label: 'Send email', defaults: { subject: '' } },
   { type: 'send_sms', label: 'Send SMS', defaults: { message: '' } },
   { type: 'wait', label: 'Wait', defaults: { ...DEFAULT_WAIT } },
-  { type: 'condition', label: 'Condition', defaults: { field: '', op: 'eq', value: '' } },
   { type: 'add_tag', label: 'Add tag', defaults: { tagSlug: '' } },
   { type: 'remove_tag', label: 'Remove tag', defaults: { tagSlug: '' } },
   { type: 'move_to_list', label: 'Move to list', defaults: { listSlug: '' } },
@@ -122,53 +132,6 @@ const NODE_LABELS: Record<NodeType, string> = {
   send_review_request: 'Request review',
 };
 
-/**
- * Walk the graph from the trigger via outgoing edges. Stops at the first
- * branch (condition with two children) — branches are kept as orphans
- * shown below the main flow so users notice them, but full branch editing
- * waits on the React-Flow canvas. For unbranched workflows (the common
- * case) this gives a clean linear list to edit.
- */
-function linearize(
-  nodes: WorkflowNode[],
-  edges: WorkflowEdge[],
-): {
-  spine: WorkflowNode[];
-  orphans: WorkflowNode[];
-} {
-  const byId = new Map(nodes.map((n) => [n.id, n]));
-  const outgoing = new Map<string, WorkflowEdge[]>();
-  for (const e of edges) {
-    const arr = outgoing.get(e.source) ?? [];
-    arr.push(e);
-    outgoing.set(e.source, arr);
-  }
-  const start = nodes.find((n) => n.type === 'trigger');
-  if (!start) return { spine: nodes, orphans: [] };
-
-  const spine: WorkflowNode[] = [];
-  const seen = new Set<string>();
-  let cur: string | undefined = start.id;
-  while (cur) {
-    if (seen.has(cur)) break;
-    seen.add(cur);
-    const node = byId.get(cur);
-    if (node) spine.push(node);
-    const outs: WorkflowEdge[] = outgoing.get(cur) ?? [];
-    if (outs.length === 1) cur = outs[0]!.target;
-    else cur = undefined; // branch or end
-  }
-  const orphans = nodes.filter((n) => !seen.has(n.id));
-  return { spine, orphans };
-}
-
-function freshEdgeId(): string {
-  return `e-${Math.random().toString(36).slice(2, 10)}`;
-}
-function freshNodeId(): string {
-  return `n-${Math.random().toString(36).slice(2, 10)}`;
-}
-
 interface WorkflowEditorProps {
   workflowId: string;
   initialNodes: WorkflowNode[];
@@ -194,6 +157,8 @@ export function WorkflowEditor({
   const [insertOpenAt, setInsertOpenAt] = useState<number | null>(null);
 
   const { spine, orphans } = useMemo(() => linearize(nodes, edges), [nodes, edges]);
+  const insertReason = (node: WorkflowNode) => whyNotInsertAfter(edges, node.id);
+  const deleteReason = (node: WorkflowNode) => whyNotDelete(node, edges);
   const locked = status !== 'draft';
 
   function updateNodeConfig(nodeId: string, patch: Record<string, unknown>) {
@@ -202,53 +167,26 @@ export function WorkflowEditor({
     );
   }
 
-  /**
-   * Insert a new node between spine[idx-1] and spine[idx]. Idx 0 means
-   * "after the trigger" (or at the start of an empty spine). We assume
-   * the spine is linear — that's enforced by linearize() bailing at
-   * branches, so this stays safe for the no-branch common path.
-   */
+  /** Put a step on the edge leaving `afterNodeId`, keeping that edge's label. */
   function insertAfter(
-    spineIdx: number,
+    afterNodeId: string,
     type: AddableNodeType['type'],
     defaults: Record<string, unknown>,
   ) {
-    const newNode: WorkflowNode = { id: freshNodeId(), type, config: { ...defaults } };
-    const prev = spine[spineIdx];
-    const next = spine[spineIdx + 1];
-
-    setNodes((ns) => [...ns, newNode]);
-
-    if (prev && next) {
-      // Re-route the edge prev → next so it becomes prev → new → next.
-      setEdges((es) => {
-        const without = es.filter((e) => !(e.source === prev.id && e.target === next.id));
-        return [
-          ...without,
-          { id: freshEdgeId(), source: prev.id, target: newNode.id },
-          { id: freshEdgeId(), source: newNode.id, target: next.id },
-        ];
-      });
-    } else if (prev) {
-      // Appending after a tail node.
-      setEdges((es) => [...es, { id: freshEdgeId(), source: prev.id, target: newNode.id }]);
-    }
+    const next = insertAfterInGraph({ nodes, edges }, afterNodeId, {
+      id: freshNodeId(),
+      type,
+      config: { ...defaults },
+    });
+    setNodes(next.nodes);
+    setEdges(next.edges);
     setInsertOpenAt(null);
   }
 
   function deleteNode(nodeId: string) {
-    const incoming = edges.find((e) => e.target === nodeId);
-    const outgoing = edges.find((e) => e.source === nodeId);
-
-    setNodes((ns) => ns.filter((n) => n.id !== nodeId));
-    setEdges((es) => {
-      const filtered = es.filter((e) => e.source !== nodeId && e.target !== nodeId);
-      // If we deleted a middle node, stitch the gap.
-      if (incoming && outgoing) {
-        filtered.push({ id: freshEdgeId(), source: incoming.source, target: outgoing.target });
-      }
-      return filtered;
-    });
+    const next = deleteNodeInGraph({ nodes, edges }, nodeId);
+    setNodes(next.nodes);
+    setEdges(next.edges);
   }
 
   async function save() {
@@ -301,16 +239,18 @@ export function WorkflowEditor({
                 node={node}
                 index={idx}
                 onChange={(patch) => updateNodeConfig(node.id, patch)}
-                onDelete={node.type === 'trigger' ? undefined : () => deleteNode(node.id)}
+                onDelete={deleteReason(node) ? undefined : () => deleteNode(node.id)}
+                deleteReason={deleteReason(node)}
               />
-              {idx < spine.length - 1 || spine.length === 1 ? null : null}
-              {idx < spine.length || spine.length === 1 ? (
+              {insertReason(node) ? (
+                <p className="my-1.5 pl-4 text-xs text-secondary-500">{insertReason(node)}</p>
+              ) : (
                 <InsertSlot
                   open={insertOpenAt === idx}
                   onOpen={() => setInsertOpenAt(insertOpenAt === idx ? null : idx)}
-                  onPick={(t) => insertAfter(idx, t.type, t.defaults)}
+                  onPick={(t) => insertAfter(node.id, t.type, t.defaults)}
                 />
-              ) : null}
+              )}
             </li>
           ))}
         </ol>
@@ -351,11 +291,13 @@ function NodeCard({
   index,
   onChange,
   onDelete,
+  deleteReason,
 }: {
   node: WorkflowNode;
   index: number;
   onChange: (patch: Record<string, unknown>) => void;
   onDelete?: () => void;
+  deleteReason?: string | null;
 }) {
   const Icon = NODE_ICONS[node.type] ?? GitBranch;
 
@@ -378,6 +320,10 @@ function NodeCard({
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
+          ) : deleteReason && node.type !== 'trigger' ? (
+            <span className="text-xs text-secondary-400" title={deleteReason}>
+              can't be removed here
+            </span>
           ) : null}
         </div>
         <div className="mt-2">
