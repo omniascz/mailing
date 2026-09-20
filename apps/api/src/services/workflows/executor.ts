@@ -97,11 +97,35 @@ function resolveNextNode(
 
 // ─── Run a single node ────────────────────────────────────────────────────────
 
+/**
+ * The nodes one synchronous chain has already run.
+ *
+ * A wait ends the chain: the run is parked and picked up later by
+ * resumeWorkflowRun, which starts a fresh one. So a node appearing twice in
+ * the SAME chain means the graph loops with nothing in between — and measured
+ * before this guard, a trigger → a → b → a workflow did not overflow the
+ * stack: it spun in an endless await loop, writing counters and run rows to
+ * Postgres as fast as it could, until the caller was killed 120 seconds later.
+ * The run stayed 'running' forever.
+ *
+ * A loop with a wait in it is a legitimate way to repeat a step, and this does
+ * not touch it.
+ */
 async function executeNode(
   run: WorkflowRun,
   node: WorkflowNode,
   workflow: typeof workflows.$inferSelect,
+  chain: ReadonlySet<string> = new Set(),
 ): Promise<void> {
+  if (chain.has(node.id)) {
+    await failRun(
+      run.id,
+      workflow.id,
+      `Node ${node.id} was reached twice without a wait in between — this workflow loops`,
+    );
+    return;
+  }
+  const ranHere = new Set(chain).add(node.id);
   const ctx: ActionContext = {
     orgId: run.orgId,
     contact: run.contactId ? await loadContact(run.contactId, run.orgId) : null,
@@ -156,7 +180,7 @@ async function executeNode(
       }
       // Execute immediately (synchronous chain)
       const updatedRun: WorkflowRun = { ...run, currentNodeId: node.id };
-      await executeNode(updatedRun, nextNode, workflow);
+      await executeNode(updatedRun, nextNode, workflow, ranHere);
       break;
     }
     case 'branch': {
@@ -180,7 +204,7 @@ async function executeNode(
         return;
       }
       const updatedRun: WorkflowRun = { ...run, currentNodeId: node.id };
-      await executeNode(updatedRun, nextNode, workflow);
+      await executeNode(updatedRun, nextNode, workflow, ranHere);
       break;
     }
     case 'wait': {
