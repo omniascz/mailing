@@ -55,6 +55,13 @@ export const workflowEmailJobSchema = z
     subject: z.string().optional(),
     html: z.string().optional(),
     text: z.string().optional(),
+    /**
+     * The trigger event's data, for the tags a template addresses
+     * ({{order.number}}, {{shipment.tracking_number}}). Optional: jobs enqueued
+     * before this field existed are still valid, and a run with no event data
+     * simply does not carry it.
+     */
+    mergeData: z.record(z.unknown()).optional(),
   })
   .refine((b) => Boolean(b.campaignId || b.templateId || b.html), {
     message: 'campaignId, templateId or html required — the send has no content otherwise',

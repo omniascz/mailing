@@ -154,6 +154,40 @@ export function buildRunMergeData(run: {
   return out;
 }
 
+/**
+ * The trigger event's own data, in the shape the renderer resolves.
+ *
+ * The inline-html path substitutes merge tags here, in the API, with this data
+ * (substituteMergeTags below). The template path does not: it hands blocks to
+ * the batch sender, which builds its merge context from the contact and the
+ * system values alone — so {{order.number}} in a shipped Czech template came
+ * out as its default ("č. —") no matter what the order said. This is what now
+ * travels with the job so both paths resolve the same tags.
+ *
+ * Both shapes go in: the flattened, namespaced keys buildRunMergeData produces
+ * ({{order_amount}}, {{event_title}}) and the raw payload objects the catalogue
+ * addresses by path ({{order.number}}, {{shipment.tracking_number}}). The
+ * renderer resolves either (resolvePath in apps/editor render/merge-tags.ts).
+ *
+ * Capped, because a run's data is whatever the shop posted — an order with a
+ * hundred line items included. Over the cap only the flattened keys travel:
+ * they are bounded and are what the pre-built templates use most.
+ */
+export const RUN_MERGE_DATA_MAX_BYTES = 32_768;
+
+export function buildRunMergeScope(run: {
+  data?: Record<string, unknown> | null;
+}): Record<string, unknown> {
+  const flattened = buildRunMergeData(run);
+  const scope: Record<string, unknown> = { ...(run.data ?? {}), ...flattened };
+  try {
+    if (JSON.stringify(scope).length <= RUN_MERGE_DATA_MAX_BYTES) return scope;
+  } catch {
+    // Circular or unserialisable payload — the flattened keys are scalars.
+  }
+  return flattened;
+}
+
 // ─── Individual action handlers ───────────────────────────────────────────────
 
 /**
@@ -227,6 +261,9 @@ async function executeSendEmail(
     workflowRunId: run.id,
     campaignId: config.campaignId,
     templateId: config.templateId,
+    // Only the template/campaign path needs this: the html below is already
+    // substituted here.
+    ...(config.html ? {} : { mergeData: buildRunMergeScope(run) }),
     subject: config.subject ? substituteMergeTags(config.subject, ctx.contact, extra) : undefined,
     html: config.html
       ? dropUnresolvedLinks(substituteMergeTags(config.html, ctx.contact, extra))
