@@ -14,7 +14,12 @@
 import crypto from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { workflows, type Workflow, type WorkflowNode } from '../../db/schema/index.js';
+import {
+  workflows,
+  type Workflow,
+  type WorkflowNode,
+  type WorkflowEdge,
+} from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { assertWorkflowGraphAccepted } from '../../lib/workflow-graph.js';
 
@@ -34,8 +39,8 @@ export interface WorkflowExportBlob {
     triggerType: string;
     triggerConfig: Record<string, unknown>;
     nodes: WorkflowNode[];
-    /** Additional edges / layout stored alongside nodes. */
-    edges: Record<string, unknown>[];
+    /** The wiring between the nodes: source, target and the branch label. */
+    edges: WorkflowEdge[];
   };
   metadata?: Record<string, unknown>;
 }
@@ -65,7 +70,11 @@ export async function exportWorkflow(
       triggerType: wf.triggerType,
       triggerConfig: wf.triggerConfig,
       nodes: wf.nodes,
-      edges: [],
+      // The blob has always declared an `edges` field and always sent it
+      // empty, so every exported workflow arrived at the other end as a pile
+      // of steps in no order: the import stored the nodes and the run stopped
+      // at the trigger. The edges are what makes it a flow.
+      edges: (wf.edges ?? []) as WorkflowEdge[],
     },
   };
 
@@ -83,7 +92,8 @@ export async function importWorkflow(orgId: string, blob: unknown): Promise<Work
   // The same check every other door runs (lib/workflow-graph.ts). Before the
   // remap: remapNodeRefs calls Object.entries(node.config) and a null config
   // threw there, which reached the caller as a 500.
-  assertWorkflowGraphAccepted(parsed.workflow.nodes);
+  const blobEdges = (parsed.workflow.edges ?? []) as WorkflowEdge[];
+  assertWorkflowGraphAccepted(parsed.workflow.nodes, blobEdges);
 
   // Remap all node IDs to fresh UUIDs to avoid collisions
   const idMap = new Map<string, string>();
@@ -99,6 +109,19 @@ export async function importWorkflow(orgId: string, blob: unknown): Promise<Work
     config: remapNodeRefs(node.config, idMap),
   }));
 
+  // The edges have to follow the nodes through the remap, or they point at ids
+  // that no longer exist in this workflow — which the check above refuses, and
+  // which would fail every run that reached one. Their own ids are regenerated
+  // for the same reason the nodes' are: two imports of one blob must not share
+  // them. The label is what the executor matches a branch on, so it is carried
+  // over untouched.
+  const finalEdges = blobEdges.map((edge) => ({
+    ...edge,
+    id: crypto.randomUUID(),
+    source: idMap.get(edge.source) ?? edge.source,
+    target: idMap.get(edge.target) ?? edge.target,
+  }));
+
   const [created] = await db
     .insert(workflows)
     .values({
@@ -108,6 +131,7 @@ export async function importWorkflow(orgId: string, blob: unknown): Promise<Work
       triggerType: parsed.workflow.triggerType as never,
       triggerConfig: parsed.workflow.triggerConfig,
       nodes: finalNodes,
+      edges: finalEdges,
       status: 'draft',
     })
     .returning();
