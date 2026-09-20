@@ -42,7 +42,7 @@ export interface UpdateWorkflowInput {
 export async function createWorkflow(input: CreateWorkflowInput): Promise<Workflow> {
   // Every caller — the REST route, a template fork, the "use this template"
   // route — arrives here, so the graph is checked once, in front of the insert.
-  assertWorkflowGraphAccepted(input.nodes);
+  assertWorkflowGraphAccepted(input.nodes ?? [], input.edges ?? []);
 
   const [row] = await db
     .insert(workflows)
@@ -100,9 +100,19 @@ export async function updateWorkflow(
   orgId: string,
   input: UpdateWorkflowInput,
 ): Promise<Workflow> {
-  // `undefined` nodes means this update does not touch the graph (a rename, an
-  // activate); anything else replaces it wholesale and is checked first.
-  assertWorkflowGraphAccepted(input.nodes);
+  // A rename or an activate touches neither half and is not checked. An update
+  // that sends one half is checked against the other as it is stored, because
+  // that is the graph the executor will run: new nodes with the old edges can
+  // leave an edge pointing at a node that no longer exists.
+  if (input.nodes !== undefined || input.edges !== undefined) {
+    const [current] = await db
+      .select({ nodes: workflows.nodes, edges: workflows.edges })
+      .from(workflows)
+      .where(and(eq(workflows.id, id), eq(workflows.orgId, orgId), isNull(workflows.deletedAt)))
+      .limit(1);
+    if (!current) throw AppError.notFound('Workflow');
+    assertWorkflowGraphAccepted(input.nodes ?? current.nodes, input.edges ?? current.edges);
+  }
 
   const update: Partial<typeof workflows.$inferInsert> = { updatedAt: new Date() };
   if (input.name !== undefined) update.name = input.name;
