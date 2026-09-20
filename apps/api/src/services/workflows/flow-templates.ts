@@ -13,6 +13,7 @@
 
 import type { WorkflowNode, WorkflowEdge } from '../../db/schema/workflows.js';
 import { DUNNING_TEMPLATE } from './templates/dunning.js';
+import { isHiddenFlowTemplate } from '../workflow-templates/hidden-templates.js';
 import { EMAIL_SERIES_BY_FLOW_ID, withBuiltInEmails } from '../workflow-templates/email-content.js';
 
 export interface FlowTemplate {
@@ -354,6 +355,16 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
   nodes: withBuiltInEmails(t.nodes as never, EMAIL_SERIES_BY_FLOW_ID[t.id] ?? []) as never,
 }));
 
+/** The pre-built flows we offer — see hidden-templates.ts for the rest. */
+export const PUBLISHED_FLOW_TEMPLATES: FlowTemplate[] = FLOW_TEMPLATES.filter(
+  (t) => !isHiddenFlowTemplate(t.id),
+);
+
 export function getFlowTemplate(id: string): FlowTemplate | undefined {
   return FLOW_TEMPLATES.find((t) => t.id === id);
+}
+
+/** The one the listing, detail and "use" routes may hand out. */
+export function getPublishedFlowTemplate(id: string): FlowTemplate | undefined {
+  return isHiddenFlowTemplate(id) ? undefined : getFlowTemplate(id);
 }

@@ -36,6 +36,7 @@ import {
   WORKFLOW_TEMPLATES,
   type WorkflowTemplate,
 } from '../services/workflow-templates/registry.js';
+import { assertWaitConfigsValid } from '../lib/workflow-wait-config.js';
 
 const TAG = `wfimp-${randomUUID().slice(0, 8)}`;
 const BROKEN = { duration: { days: 1, hours: 0 } };
@@ -161,7 +162,10 @@ describe('template fork', () => {
     expect(await rowsNamed(`${TAG} fork ok`)).toHaveLength(1);
   });
 
-  it('templates with until waits still fork', async () => {
+  it('templates with until waits still pass the wait check', () => {
+    // These three are no longer offered in the gallery (their emails did not
+    // match their steps), so they cannot be forked over HTTP any more. What
+    // this case is about is the wait check, so it runs against it directly.
     const withUntil = WORKFLOW_TEMPLATES.filter((t) =>
       t.nodes.some((n) => n.type === 'wait' && (n.config as { until?: unknown }).until),
     );
@@ -169,11 +173,7 @@ describe('template fork', () => {
       ['event-in-person-prep', 'event-webinar-reminder', 'post-purchase-shipping-update'].sort(),
     );
     for (const t of withUntil) {
-      const res = await api('POST', `/api/v1/workflow-templates/${t.slug}/fork`, {
-        name: `${TAG} fork ${t.slug}`,
-      });
-      expect(res.statusCode, `${t.slug}: ${res.body}`).toBe(201);
-      expect(await rowsNamed(`${TAG} fork ${t.slug}`)).toHaveLength(1);
+      expect(() => assertWaitConfigsValid(t.nodes), `${t.slug}`).not.toThrow();
     }
   });
 });

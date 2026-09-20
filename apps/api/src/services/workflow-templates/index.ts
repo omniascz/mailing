@@ -10,6 +10,7 @@ import { createWorkflow } from '../workflows/index.js';
 import {
   findTemplate,
   listTemplates,
+  PUBLISHED_WORKFLOW_TEMPLATES,
   WORKFLOW_TEMPLATES,
   type WorkflowTemplate,
   type TemplateCategory,
@@ -18,7 +19,9 @@ import { workflowTriggerTypeEnum, type Workflow } from '../../db/schema/index.js
 import { AppError } from '../../lib/app-error.js';
 import { materialiseEmailTemplates } from './materialise-emails.js';
 
-export { listTemplates, findTemplate, WORKFLOW_TEMPLATES };
+import { isHiddenWorkflowTemplate } from './hidden-templates.js';
+
+export { listTemplates, findTemplate, WORKFLOW_TEMPLATES, PUBLISHED_WORKFLOW_TEMPLATES };
 export type { WorkflowTemplate, TemplateCategory };
 
 /**
@@ -27,7 +30,7 @@ export type { WorkflowTemplate, TemplateCategory };
  */
 export function listCategories(): Array<{ category: TemplateCategory; count: number }> {
   const counts = new Map<TemplateCategory, number>();
-  for (const t of WORKFLOW_TEMPLATES) {
+  for (const t of PUBLISHED_WORKFLOW_TEMPLATES) {
     counts.set(t.category, (counts.get(t.category) ?? 0) + 1);
   }
   return Array.from(counts.entries()).map(([category, count]) => ({ category, count }));
@@ -45,7 +48,11 @@ export async function forkTemplate(
   override?: { name?: string },
 ): Promise<Workflow> {
   const tpl = findTemplate(slug);
-  if (!tpl) throw AppError.notFound('Template');
+  // A template we do not offer is not forkable by guessing its slug either:
+  // the reason it is hidden is that the emails it would send do not match its
+  // steps, and that is as true here as in the gallery. Workflows forked before
+  // it was hidden are copies of their own and keep working.
+  if (!tpl || isHiddenWorkflowTemplate(slug)) throw AppError.notFound('Template');
 
   // Validate, don't cast. The old `as Workflow['triggerType']` claimed the
   // workflow service would check the enum; it does not, so forking was the one

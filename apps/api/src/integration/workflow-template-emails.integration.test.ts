@@ -128,8 +128,12 @@ afterAll(async () => {
   await app?.close();
 }, 120_000);
 
-/** Three templates whose first step after the trigger is an email. */
-const FORKABLE = ['welcome-3-step-en', 'welcome-3-step-cs', 'post-purchase-thanks-review'];
+/**
+ * Three templates the gallery offers whose first step after the trigger is an
+ * email. The ones this used to fork are no longer offered (#Z61: their emails
+ * did not match their steps), and a fork of those now answers 404.
+ */
+const FORKABLE = ['cz-name-day-greeting', 'winback-60-day', 'reengagement-180-day'];
 
 describe('forking a template brings its emails along', () => {
   it.each(FORKABLE)('%s', async (slug) => {
@@ -184,7 +188,7 @@ describe('forking a template brings its emails along', () => {
       .from(templates)
       .where(eq(templates.orgId, session.orgId));
 
-    const fork = await api('POST', '/api/v1/workflow-templates/welcome-3-step-en/fork', {
+    const fork = await api('POST', '/api/v1/workflow-templates/winback-60-day/fork', {
       name: `${TAG} second`,
     });
     expect(fork.statusCode, fork.body).toBe(201);

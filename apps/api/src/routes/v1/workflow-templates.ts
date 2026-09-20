@@ -15,6 +15,7 @@ import {
   forkTemplate,
   listCategories,
 } from '../../services/workflow-templates/index.js';
+import { isHiddenWorkflowTemplate } from '../../services/workflow-templates/hidden-templates.js';
 
 const categoryEnum = z.enum([
   'welcome',
@@ -73,7 +74,9 @@ export default async function workflowTemplateRoutes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const { slug } = z.object({ slug: z.string().min(1).max(128) }).parse(req.params);
-      const tpl = findTemplate(slug);
+      // A template we do not offer has no detail page either — same reason as
+      // the listing: the emails it would send do not match its steps.
+      const tpl = isHiddenWorkflowTemplate(slug) ? null : findTemplate(slug);
       if (!tpl)
         return reply
           .code(404)
