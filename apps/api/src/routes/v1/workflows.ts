@@ -32,8 +32,6 @@ import {
 import { triggerManual } from '../../services/workflows/triggers.js';
 import { FLOW_TEMPLATES, getFlowTemplate } from '../../services/workflows/flow-templates.js';
 import { buildWorkflowMap } from '../../services/workflows/map.js';
-import { assertNodesOfferable } from '../../lib/unofferable-nodes.js';
-import { assertWaitConfigsValid } from '../../lib/workflow-wait-config.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 const runParam = z.object({ id: z.string().uuid(), runId: z.string().uuid() });
@@ -111,8 +109,6 @@ export default async function workflowRoutes(app: FastifyInstance) {
     { schema: { tags: ['Workflows'], summary: 'Create workflow' } },
     async (req) => {
       const body = createSchema.parse(req.body);
-      assertNodesOfferable(body.nodes);
-      assertWaitConfigsValid(body.nodes);
       const orgId = req.user!.orgId;
       const workflow = await createWorkflow({ ...body, orgId });
       return { data: workflow };
@@ -147,8 +143,6 @@ export default async function workflowRoutes(app: FastifyInstance) {
     async (req) => {
       const { id } = idParam.parse(req.params);
       const body = updateSchema.parse(req.body);
-      assertNodesOfferable(body.nodes);
-      assertWaitConfigsValid(body.nodes);
       const orgId = req.user!.orgId;
       return { data: await updateWorkflow(id, orgId, body) };
     },

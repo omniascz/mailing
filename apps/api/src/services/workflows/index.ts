@@ -12,6 +12,7 @@ import {
   type WorkflowRun,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { assertWorkflowGraphAccepted } from '../../lib/workflow-graph.js';
 import { getNodeBreakdown, type WorkflowNodeBreakdown } from './node-stats.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -39,6 +40,10 @@ export interface UpdateWorkflowInput {
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 export async function createWorkflow(input: CreateWorkflowInput): Promise<Workflow> {
+  // Every caller — the REST route, a template fork, the "use this template"
+  // route — arrives here, so the graph is checked once, in front of the insert.
+  assertWorkflowGraphAccepted(input.nodes);
+
   const [row] = await db
     .insert(workflows)
     .values({
@@ -95,6 +100,10 @@ export async function updateWorkflow(
   orgId: string,
   input: UpdateWorkflowInput,
 ): Promise<Workflow> {
+  // `undefined` nodes means this update does not touch the graph (a rename, an
+  // activate); anything else replaces it wholesale and is checked first.
+  assertWorkflowGraphAccepted(input.nodes);
+
   const update: Partial<typeof workflows.$inferInsert> = { updatedAt: new Date() };
   if (input.name !== undefined) update.name = input.name;
   if (input.description !== undefined) update.description = input.description;

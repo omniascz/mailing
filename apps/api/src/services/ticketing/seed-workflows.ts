@@ -11,6 +11,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { workflows } from '../../db/schema/index.js';
+import { assertWorkflowGraphAccepted } from '../../lib/workflow-graph.js';
 import type { WorkflowNode, WorkflowEdge } from '../../db/schema/workflows.js';
 
 export interface SeedDef {
@@ -187,6 +188,10 @@ export async function seedTicketingWorkflows(orgId: string): Promise<SeedResult>
     }
 
     const { nodes, edges } = buildWorkflowGraph(def);
+    // Built in code, but written straight to the table: the same check the
+    // other doors run, so an edit to SEED_DEFS cannot seed a graph the API
+    // would refuse.
+    assertWorkflowGraphAccepted(nodes);
     await db.insert(workflows).values({
       orgId,
       name: def.name,
