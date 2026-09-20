@@ -191,7 +191,7 @@ export async function seedTicketingWorkflows(orgId: string): Promise<SeedResult>
     // Built in code, but written straight to the table: the same check the
     // other doors run, so an edit to SEED_DEFS cannot seed a graph the API
     // would refuse.
-    assertWorkflowGraphAccepted(nodes);
+    assertWorkflowGraphAccepted(nodes, edges);
     await db.insert(workflows).values({
       orgId,
       name: def.name,

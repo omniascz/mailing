@@ -313,3 +313,101 @@ describe('what already worked keeps working', () => {
     expect(copied, 'the sandbox copied no workflow').toHaveLength(1);
   });
 });
+
+describe('edges', () => {
+  it('refuses an edge to a node that does not exist, then stores the same graph wired up', async () => {
+    // Measured before the check: the graph was stored and a contact reaching
+    // that step failed the run — "Node ghost not found in workflow", with the
+    // run left on the previous node.
+    const refused = await api('POST', '/api/v1/workflows', {
+      name: `${TAG} edge-ghost`,
+      triggerType: 'manual',
+      nodes: [TRIGGER, EMAIL],
+      edges: [{ id: 'e0', source: 't', target: 'ghost' }],
+    });
+    expect(refused.statusCode, refused.body).toBe(400);
+    expect(codeOf(refused)).toBe('INVALID_GRAPH_EDGE');
+    expect(await rowsNamed(`${TAG} edge-ghost`)).toEqual([]);
+
+    const ok = await api('POST', '/api/v1/workflows', {
+      name: `${TAG} edge-ok`,
+      triggerType: 'manual',
+      nodes: [TRIGGER, EMAIL],
+      edges: [{ id: 'e0', source: 't', target: 'e1' }],
+    });
+    expect(ok.statusCode, ok.body).toBe(200);
+    expect(await rowsNamed(`${TAG} edge-ok`)).toHaveLength(1);
+  });
+
+  it('refuses two edges out of one node with the same label, and a self-loop', async () => {
+    const twice = await api('POST', '/api/v1/workflows', {
+      name: `${TAG} edge-dup`,
+      triggerType: 'manual',
+      nodes: [TRIGGER, EMAIL, { id: 'e2', type: 'send_email', config: { subject: 'B' } }],
+      edges: [
+        { id: 'a', source: 't', target: 'e1' },
+        { id: 'b', source: 't', target: 'e2' },
+      ],
+    });
+    expect(twice.statusCode, twice.body).toBe(400);
+    expect(codeOf(twice)).toBe('INVALID_GRAPH_EDGE');
+    expect(await rowsNamed(`${TAG} edge-dup`)).toEqual([]);
+
+    const loop = await api('POST', '/api/v1/workflows', {
+      name: `${TAG} edge-loop`,
+      triggerType: 'manual',
+      nodes: [TRIGGER, EMAIL],
+      edges: [
+        { id: 'a', source: 't', target: 'e1' },
+        { id: 'b', source: 'e1', target: 'e1' },
+      ],
+    });
+    expect(loop.statusCode, loop.body).toBe(400);
+    expect(await rowsNamed(`${TAG} edge-loop`)).toEqual([]);
+
+    // Labelled branches out of one node are the point of labels, and still pass.
+    const branched = await api('POST', '/api/v1/workflows', {
+      name: `${TAG} edge-branch`,
+      triggerType: 'manual',
+      nodes: [
+        TRIGGER,
+        { id: 'c1', type: 'condition', config: { field: 'email', op: 'is_set' } },
+        EMAIL,
+        { id: 'e2', type: 'send_email', config: { subject: 'B' } },
+      ],
+      edges: [
+        { id: 'a', source: 't', target: 'c1' },
+        { id: 'b', source: 'c1', target: 'e1', label: 'true' },
+        { id: 'c', source: 'c1', target: 'e2', label: 'false' },
+      ],
+    });
+    expect(branched.statusCode, branched.body).toBe(200);
+    expect(await rowsNamed(`${TAG} edge-branch`)).toHaveLength(1);
+  });
+
+  it('PUT that replaces only the nodes cannot orphan the stored edges', async () => {
+    const created = await api('POST', '/api/v1/workflows', {
+      name: `${TAG} edge-put`,
+      triggerType: 'manual',
+      nodes: [TRIGGER, EMAIL],
+      edges: [{ id: 'e0', source: 't', target: 'e1' }],
+    });
+    expect(created.statusCode, created.body).toBe(200);
+    const id = (created.json() as { data: { id: string } }).data.id;
+
+    // The stored edge points at e1; these nodes no longer have it.
+    const refused = await api('PUT', `/api/v1/workflows/${id}`, { nodes: [TRIGGER] });
+    expect(refused.statusCode, refused.body).toBe(400);
+    expect(codeOf(refused)).toBe('INVALID_GRAPH_EDGE');
+
+    // Sending both halves together is how the editor saves, and it writes.
+    const both = await api('PUT', `/api/v1/workflows/${id}`, { nodes: [TRIGGER], edges: [] });
+    expect(both.statusCode, both.body).toBe(200);
+    const [row] = await db
+      .select({ nodes: workflows.nodes, edges: workflows.edges })
+      .from(workflows)
+      .where(eq(workflows.id, id));
+    expect((row!.nodes as Array<{ id: string }>).map((n) => n.id)).toEqual(['t']);
+    expect(row!.edges).toEqual([]);
+  });
+});
