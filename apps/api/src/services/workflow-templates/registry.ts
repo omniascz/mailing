@@ -82,6 +82,15 @@ const wait = (id: string, days: number, hours = 0): WorkflowNode =>
 // which is why this helper cannot leave a step without content: a step with
 // only a subject is one the queue contract refuses at send time.
 const email = (id: string, subject: string): WorkflowNode => n(id, 'send_email', { subject });
+/**
+ * An email step that names its email outright, rather than taking whatever the
+ * category series hands it (email-content.ts). Used by the Czech recipes below:
+ * each of their steps has one specific email from the Czech catalogue, and
+ * pairing them by category is exactly the guesswork that made 64 templates
+ * unpublishable.
+ */
+const emailFrom = (id: string, subject: string, builtInTemplateId: string): WorkflowNode =>
+  n(id, 'send_email', { subject, builtInTemplateId });
 // executeSendSms reads config.message (a { body } field never sent).
 const sms = (id: string, body: string): WorkflowNode => n(id, 'send_sms', { message: body });
 
@@ -2050,6 +2059,123 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       email('e1', 'This week in {{org.name}}: top {{digest.count}} articles'),
     ],
     edges: [e('e0', 't', 'e1')],
+  },
+
+  // ─── Czech recipes built on the Czech catalogue ─────────────────────────────
+  // Every step names its email explicitly (emailFrom). Waits follow the house
+  // convention of abandoned-cart-cs: hours for the first touch, days after.
+  {
+    slug: 'post-purchase-cs',
+    name: 'Po nákupu — potvrzení, doprava, recenze',
+    category: 'post_purchase',
+    description:
+      'Od potvrzení objednávky po žádost o recenzi. Čtyři e-maily, které zákazník po nákupu čeká — a které nejvíc zmenšují počet dotazů "kde mám balík".',
+    recommendedFor: ['ecommerce'],
+    locale: 'cs',
+    steps: 4,
+    trigger: { type: 'purchase_event', config: {} },
+    nodes: [
+      n('t', 'trigger', { triggerType: 'purchase_event' }),
+      emailFrom('e1', 'Objednávka přijata', 'cs-order-confirm'),
+      wait('w1', 1),
+      emailFrom('e2', 'Zásilka je na cestě', 'cs-shipping-tracking'),
+      wait('w2', 2),
+      emailFrom('e3', 'Zásilka je doručena', 'cs-delivered'),
+      wait('w3', 7),
+      emailFrom('e4', 'Jak jste spokojeni s nákupem?', 'cs-review-request'),
+    ],
+    edges: [
+      e('e0', 't', 'e1'),
+      e('e1', 'e1', 'w1'),
+      e('e2', 'w1', 'e2'),
+      e('e3', 'e2', 'w2'),
+      e('e4', 'w2', 'e3'),
+      e('e5', 'e3', 'w3'),
+      e('e6', 'w3', 'e4'),
+    ],
+  },
+  {
+    slug: 'payment-pending-cs',
+    name: 'Čeká na platbu převodem',
+    category: 'transactional',
+    description:
+      'Objednávka na bankovní převod, která ještě není zaplacená: platební údaje, QR platba a lhůta, do kdy zboží držíme. Druhá připomínka čeká na e-mail, který katalog zatím nemá.',
+    recommendedFor: ['ecommerce'],
+    locale: 'cs',
+    steps: 1,
+    trigger: { type: 'api_event', config: { eventName: 'payment_pending' } },
+    nodes: [
+      n('t', 'trigger', { triggerType: 'api_event', eventName: 'payment_pending' }),
+      emailFrom('e1', 'Objednávka čeká na zaplacení', 'cs-payment-pending'),
+    ],
+    edges: [e('e0', 't', 'e1')],
+  },
+  {
+    slug: 'back-in-stock-cs',
+    name: 'Zpět skladem — hlídací pes',
+    category: 'browse_abandonment',
+    description:
+      'Zákazník si nechal hlídat vyprodané zboží; jakmile je naskladněné, dostane zprávu s počtem kusů. Druhý dotek by poslal tentýž e-mail znovu, tak tu není.',
+    recommendedFor: ['ecommerce'],
+    locale: 'cs',
+    steps: 1,
+    trigger: { type: 'api_event', config: { eventName: 'back_in_stock' } },
+    nodes: [
+      n('t', 'trigger', { triggerType: 'api_event', eventName: 'back_in_stock' }),
+      emailFrom('e1', 'Zboží je zpátky skladem', 'cs-back-in-stock'),
+    ],
+    edges: [e('e0', 't', 'e1')],
+  },
+  {
+    slug: 'cross-sell-cs',
+    name: 'Doplňky k objednávce',
+    category: 'cross_sell',
+    description:
+      'Týden po nákupu nabídne příslušenství k tomu, co si zákazník koupil. Jeden e-mail, žádné dotírání.',
+    recommendedFor: ['ecommerce'],
+    locale: 'cs',
+    steps: 1,
+    trigger: { type: 'purchase_event', config: {} },
+    nodes: [
+      n('t', 'trigger', { triggerType: 'purchase_event' }),
+      wait('w1', 7),
+      emailFrom('e1', 'K vaší objednávce se hodí ještě tohle', 'cs-crosssell'),
+    ],
+    edges: [e('e0', 't', 'w1'), e('e1', 'w1', 'e1')],
+  },
+  {
+    slug: 'loyalty-points-cs',
+    name: 'Věrnostní body — stav účtu',
+    category: 'vip_loyalty',
+    description:
+      'Po připsání bodů pošle přehled věrnostního účtu: kolik bodů, jaká úroveň a co si za ně zákazník může vzít.',
+    recommendedFor: ['ecommerce'],
+    locale: 'cs',
+    steps: 1,
+    trigger: { type: 'loyalty_points_earned', config: {} },
+    nodes: [
+      n('t', 'trigger', { triggerType: 'loyalty_points_earned' }),
+      emailFrom('e1', 'Máte nové věrnostní body', 'cs-loyalty-points'),
+    ],
+    edges: [e('e0', 't', 'e1')],
+  },
+  {
+    slug: 'pickup-invoice-cs',
+    name: 'Výdejní místo a faktura',
+    category: 'transactional',
+    description:
+      'Zásilka dorazila na výdejní místo: kód k vyzvednutí hned, daňový doklad druhý den. Dvě zprávy, které e-shop musí poslat tak jako tak.',
+    recommendedFor: ['ecommerce'],
+    locale: 'cs',
+    steps: 2,
+    trigger: { type: 'api_event', config: { eventName: 'pickup_ready' } },
+    nodes: [
+      n('t', 'trigger', { triggerType: 'api_event', eventName: 'pickup_ready' }),
+      emailFrom('e1', 'Zásilka čeká na výdejním místě', 'cs-pickup-ready'),
+      wait('w1', 1),
+      emailFrom('e2', 'Faktura k objednávce', 'cs-invoice'),
+    ],
+    edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],
   },
 ];
 

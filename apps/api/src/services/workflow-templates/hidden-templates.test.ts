@@ -80,10 +80,22 @@ describe('what is offered', () => {
     expect(PUBLISHED_FLOW_TEMPLATES.map((t) => t.id)).toContain('abandoned-cart');
   });
 
-  it('Czech is thin, and that is recorded rather than hidden', () => {
-    // Two Czech templates survive: cz-name-day-greeting and abandoned-cart-cs.
-    // Stated here so a later pass that adds Czech emails sees this move.
-    const czech = PUBLISHED_WORKFLOW_TEMPLATES.filter((t) => t.locale === 'cs');
-    expect(czech.map((t) => t.slug).sort()).toEqual(['abandoned-cart-cs', 'cz-name-day-greeting']);
+  it('the Czech gallery is the two originals plus the six built on the Czech catalogue', () => {
+    // #195 left two Czech templates, which was thin for a CZ/SK launch. The six
+    // added since send Czech emails the catalogue already had; the ones still
+    // hidden are waiting on emails nobody has written yet.
+    const czech = PUBLISHED_WORKFLOW_TEMPLATES.filter((t) => t.locale === 'cs').map((t) => t.slug);
+    expect(czech.sort()).toEqual(
+      [
+        'abandoned-cart-cs',
+        'back-in-stock-cs',
+        'cross-sell-cs',
+        'cz-name-day-greeting',
+        'loyalty-points-cs',
+        'payment-pending-cs',
+        'pickup-invoice-cs',
+        'post-purchase-cs',
+      ].sort(),
+    );
   });
 });
