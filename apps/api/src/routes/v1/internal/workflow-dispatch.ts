@@ -120,9 +120,29 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
           .where(and(eq(templates.id, body.templateId), eq(templates.orgId, body.orgId)))
           .limit(1);
         if (!t) return reply.status(404).send({ error: 'template not found' });
-        content = { blocks: t.blocks, globalStyles: t.globalStyles };
         subject = body.subject ?? t.subject ?? '';
         preheader = t.preheader ?? undefined;
+        /**
+         * `subject` and `preheader` go INSIDE the content as well as beside it.
+         *
+         * emailSchema requires a subject (editor schema/blocks.ts), so a body
+         * without one does not parse — and readCampaignContent returning null
+         * is what sent every templated workflow email out as JSON.stringify of
+         * its own blocks (batch-sender renderEmail, path 3). The renderer also
+         * uses the value: it is the document's <title> (render.ts) and the
+         * first line of the plain-text part (plain-text.ts).
+         *
+         * This is the same snapshot the campaign path writes when a campaign
+         * starts from a saved template (routes/v1/templates.ts, "subject and
+         * preheader are inside it as well as on the row"). The dispatch was the
+         * one writer that left them out.
+         */
+        content = {
+          subject,
+          preheader: preheader ?? '',
+          blocks: t.blocks,
+          globalStyles: t.globalStyles,
+        };
         const from = await resolveOrgFrom(body.orgId);
         if (!from)
           return reply.send({ data: { skipped: true, reason: 'no verified sending domain' } });
