@@ -16,6 +16,7 @@ import {
 } from './registry.js';
 import { workflowTriggerTypeEnum, type Workflow } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { materialiseEmailTemplates } from './materialise-emails.js';
 
 export { listTemplates, findTemplate, WORKFLOW_TEMPLATES };
 export type { WorkflowTemplate, TemplateCategory };
@@ -60,13 +61,21 @@ export async function forkTemplate(
     );
   }
 
+  // The emails this template sends become emails this organisation owns, and
+  // each step gets the id of its copy. Before createWorkflow, so a clone that
+  // fails leaves no workflow behind.
+  const { nodes } = await materialiseEmailTemplates(
+    orgId,
+    JSON.parse(JSON.stringify(tpl.nodes)) as typeof tpl.nodes,
+  );
+
   const wf = await createWorkflow({
     orgId,
     name: override?.name ?? tpl.name,
     description: tpl.description,
     triggerType,
     triggerConfig: tpl.trigger.config,
-    nodes: JSON.parse(JSON.stringify(tpl.nodes)),
+    nodes,
     edges: JSON.parse(JSON.stringify(tpl.edges)),
   });
   return wf;

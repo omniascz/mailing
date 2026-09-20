@@ -32,6 +32,7 @@ import {
 import { triggerManual } from '../../services/workflows/triggers.js';
 import { FLOW_TEMPLATES, getFlowTemplate } from '../../services/workflows/flow-templates.js';
 import { buildWorkflowMap } from '../../services/workflows/map.js';
+import { materialiseEmailTemplates } from '../../services/workflow-templates/materialise-emails.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 const runParam = z.object({ id: z.string().uuid(), runId: z.string().uuid() });
@@ -340,12 +341,19 @@ export default async function workflowRoutes(app: FastifyInstance) {
       const body = z.object({ name: z.string().min(1).max(255).optional() }).parse(req.body ?? {});
       const orgId = req.user!.orgId;
 
+      // Same as the gallery fork: the emails the template sends are copied
+      // into this organisation first, and each step gets the id of its copy.
+      const { nodes } = await materialiseEmailTemplates(
+        orgId,
+        JSON.parse(JSON.stringify(template.nodes)) as typeof template.nodes,
+      );
+
       const workflow = await createWorkflow({
         orgId,
         name: body.name ?? template.name,
         description: template.description,
         triggerType: template.triggerType as never,
-        nodes: template.nodes,
+        nodes,
         edges: template.edges,
       });
 
