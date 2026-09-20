@@ -84,6 +84,31 @@ export const dynamicConditionSchema: z.ZodType<DynamicCondition> = z.lazy(() =>
 // Leaf blocks
 // ---------------------------------------------------------------------------
 
+/**
+ * A destination: a real URL, a site-relative path, or a merge tag that becomes
+ * one at send time.
+ *
+ * `z.string().url()` on these fields was a shape test applied to a value that
+ * does not have its final shape yet. The renderer resolves every href through
+ * parseMergeTags at render time (render.ts renderButton/renderImage), and the
+ * emails we ship address the shop's own pages that way —
+ * `{{order.status_url|default:"#"}}`, `{{product_image|default:"https://…"}}`.
+ * Zod rejected the tag, emailSchema did not parse, and the send path fell all
+ * the way through to JSON.stringify: 71 of the 91 built-in emails could not be
+ * rendered by either the workflow path or the campaign path. ProductBlock and
+ * VideoBlock had already run into this and dropped their url validation
+ * outright (see their comments below); this keeps the check for literal values
+ * instead, so a typo in a real URL is still caught.
+ *
+ * A tag is recognised by `{{`, which is what parseMergeTags itself looks for.
+ */
+const MERGE_TAG = /\{\{/;
+const urlOrMergeTag = z
+  .string()
+  .refine((v) => MERGE_TAG.test(v) || v.startsWith('/') || z.string().url().safeParse(v).success, {
+    message: 'Must be a URL, a site-relative path, or a merge tag',
+  });
+
 export const textBlockSchema = z.object({
   ...baseBlockShape,
   type: z.literal('text'),
@@ -99,11 +124,11 @@ export type TextBlock = z.infer<typeof textBlockSchema>;
 export const imageBlockSchema = z.object({
   ...baseBlockShape,
   type: z.literal('image'),
-  src: z.string().url().or(z.string().startsWith('/')),
+  src: urlOrMergeTag,
   alt: z.string().default(''),
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
-  link: z.string().url().optional(),
+  link: urlOrMergeTag.optional(),
   align: z.enum(['left', 'center', 'right']).default('center'),
 });
 export type ImageBlock = z.infer<typeof imageBlockSchema>;
@@ -112,7 +137,7 @@ export const buttonBlockSchema = z.object({
   ...baseBlockShape,
   type: z.literal('button'),
   text: z.string().min(1),
-  url: z.string().url(),
+  url: urlOrMergeTag,
   backgroundColor: z.string().default('#2563eb'),
   textColor: z.string().default('#ffffff'),
   borderRadius: z.string().default('6px'),
