@@ -494,7 +494,7 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'name_day_today', config: {} },
     nodes: [
       n('t', 'trigger', { triggerType: 'name_day_today' }),
-      email('e1', 'Vše nejlepší k svátku, {{contact.first_name|vocative}}!'),
+      email('e1', 'Všechno nejlepší k svátku, {{contact.first_name|vocative|default:"zákazníku"}}'),
     ],
     edges: [e('e0', 't', 'e1')],
   },
@@ -674,11 +674,14 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'cart_abandoned' }),
       wait('w0', 0, 1),
-      email('e1', 'Něco vám zůstalo v košíku'),
+      email('e1', 'Zapomněli jste u nás {{cart.item_count|default:"pár"}} věcí'),
       wait('w1', 1),
-      email('e2', 'Vaše položky čekají'),
+      email(
+        'e2',
+        'Ještě váháte? Doprava nad {{free_shipping_threshold|default:"1 500 Kč"}} zdarma',
+      ),
       wait('w2', 2),
-      email('e3', 'Poslední šance — sleva 10 %'),
+      email('e3', 'Poslední připomínka — a sleva {{cart_discount|default:"5 %"}} na dokončení'),
     ],
     edges: [
       e('e0', 't', 'w0'),
@@ -2076,11 +2079,19 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'purchase_event', config: {} },
     nodes: [
       n('t', 'trigger', { triggerType: 'purchase_event' }),
-      emailFrom('e1', 'Objednávka přijata', 'cs-order-confirm'),
+      emailFrom('e1', 'Objednávka {{order.number|default:"č. —"}} přijata', 'cs-order-confirm'),
       wait('w1', 1),
-      emailFrom('e2', 'Zásilka je na cestě', 'cs-shipping-tracking'),
+      emailFrom(
+        'e2',
+        'Zásilka {{shipment.tracking_number|default:"—"}} je na cestě',
+        'cs-shipping-tracking',
+      ),
       wait('w2', 2),
-      emailFrom('e3', 'Zásilka je doručena', 'cs-delivered'),
+      emailFrom(
+        'e3',
+        'Zásilka {{shipment.tracking_number|default:"—"}} je doručena',
+        'cs-delivered',
+      ),
       wait('w3', 7),
       emailFrom('e4', 'Jak jste spokojeni s nákupem?', 'cs-review-request'),
     ],
@@ -2106,7 +2117,11 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'payment_pending' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'payment_pending' }),
-      emailFrom('e1', 'Objednávka čeká na zaplacení', 'cs-payment-pending'),
+      emailFrom(
+        'e1',
+        'Objednávka {{order.number|default:"—"}} čeká na zaplacení',
+        'cs-payment-pending',
+      ),
     ],
     edges: [e('e0', 't', 'e1')],
   },
@@ -2122,7 +2137,7 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'back_in_stock' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'back_in_stock' }),
-      emailFrom('e1', 'Zboží je zpátky skladem', 'cs-back-in-stock'),
+      emailFrom('e1', '{{product.title|default:"Zboží"}} je zpátky skladem', 'cs-back-in-stock'),
     ],
     edges: [e('e0', 't', 'e1')],
   },
@@ -2139,7 +2154,11 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     nodes: [
       n('t', 'trigger', { triggerType: 'purchase_event' }),
       wait('w1', 7),
-      emailFrom('e1', 'K vaší objednávce se hodí ještě tohle', 'cs-crosssell'),
+      emailFrom(
+        'e1',
+        'K {{order.main_item|default:"vaší objednávce"}} se hodí ještě tohle',
+        'cs-crosssell',
+      ),
     ],
     edges: [e('e0', 't', 'w1'), e('e1', 'w1', 'e1')],
   },
@@ -2155,7 +2174,11 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'loyalty_points_earned', config: {} },
     nodes: [
       n('t', 'trigger', { triggerType: 'loyalty_points_earned' }),
-      emailFrom('e1', 'Máte nové věrnostní body', 'cs-loyalty-points'),
+      emailFrom(
+        'e1',
+        'Máte {{loyalty.points|default:"0"}} bodů — co si za ně vezmete?',
+        'cs-loyalty-points',
+      ),
     ],
     edges: [e('e0', 't', 'e1')],
   },
@@ -2171,9 +2194,17 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'pickup_ready' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'pickup_ready' }),
-      emailFrom('e1', 'Zásilka čeká na výdejním místě', 'cs-pickup-ready'),
+      emailFrom(
+        'e1',
+        'Zásilka čeká na {{pickup.point_name|default:"výdejním místě"}}',
+        'cs-pickup-ready',
+      ),
       wait('w1', 1),
-      emailFrom('e2', 'Faktura k objednávce', 'cs-invoice'),
+      emailFrom(
+        'e2',
+        'Faktura {{invoice.number|default:"—"}} k objednávce {{order.number|default:"—"}}',
+        'cs-invoice',
+      ),
     ],
     edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],
   },
