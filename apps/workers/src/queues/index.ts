@@ -617,6 +617,14 @@ export interface BatchSenderJobData {
    * unsubscribe label today. Absent means English.
    */
   locale?: 'en' | 'cs' | 'sk';
+  /**
+   * Merge data from the workflow run that produced this job — the trigger
+   * event's own fields ({{order.number}}, {{shipment.tracking_number}}).
+   *
+   * Optional, and only triggered sends carry it: a campaign has no run behind
+   * it, and jobs enqueued before this field existed are still in flight.
+   */
+  mergeData?: Record<string, unknown>;
   /** Per-domain tracking defaults — gate open-pixel / link-wrap injection. */
   openTracking?: boolean;
   clickTracking?: boolean;

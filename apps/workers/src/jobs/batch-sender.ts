@@ -32,6 +32,7 @@ import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/share
 // resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
 import { resolveEmailCouponTags } from '@forgemsg/api/services/campaigns/email-coupon-merge';
 import { encodeVerp } from '@forgemsg/shared/sending/verp';
+import { buildMergeContext } from './merge-context.js';
 import {
   connection,
   QUEUE_NAMES,
@@ -514,6 +515,7 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
         pollUrls: buildPollUrls(data.content, data, contact.id, trackingBaseUrl),
       },
       newsletterTierMap.get(contact.id),
+      data.mergeData,
     );
     let subject = parseMergeTags(data.subject, mergeCtx);
 
@@ -823,24 +825,6 @@ function buildPollUrls(
   return out;
 }
 
-function buildMergeContext(
-  contact: ContactRow,
-  systemContext?: MergeTagContext['system'],
-  newsletterTierName?: string | null,
-): MergeTagContext {
-  return {
-    contact: {
-      email: contact.email,
-      firstName: contact.firstName,
-      lastName: contact.lastName,
-      ...contact.customFields,
-      // Newsletter tier — allows DynamicBlock conditions like newsletter_tier_name == "Pro"
-      ...(newsletterTierName ? { newsletter_tier_name: newsletterTierName } : {}),
-    },
-    system: systemContext,
-  };
-}
-
 interface RenderedEmail {
   html: string;
   /** Auto-derived plain-text alternative for multipart/alternative MIME part. */
@@ -874,7 +858,8 @@ interface RenderedEmail {
  *     column accepts anything, so the branch is the floor under a writer we do
  *     not have rather than a path we expect to take.
  */
-function renderEmail(
+/** Exported for the same reason as buildMergeContext. */
+export function renderEmail(
   content: Record<string, unknown>,
   ctx: MergeTagContext,
   preheader?: string,

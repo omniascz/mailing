@@ -158,6 +158,10 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         replyTo,
         priority: PRIORITY.TRIGGERED,
         stream: 'triggered',
+        // What the trigger event carried. The renderer resolves these next to
+        // the contact's own fields; the contact wins a name clash, and system
+        // values (unsubscribe_url, current_year) are resolved before either.
+        mergeData: body.mergeData,
       });
 
       return reply.send({ data: { queued: true } });
