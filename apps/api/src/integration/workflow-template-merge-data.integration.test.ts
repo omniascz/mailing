@@ -60,7 +60,11 @@ import {
 } from '../db/schema/index.js';
 import { workflowNodeStats } from '../db/schema/workflow-node-stats.js';
 import { batchSenderTriggeredQueue } from '../lib/queues.js';
-import { parseMergeTags, type MergeTagContext } from '@forgemsg/editor/render';
+import {
+  renderEmail as renderBlocks,
+  parseMergeTags,
+  type MergeTagContext,
+} from '@forgemsg/editor/render';
 import { readCampaignContent } from '@forgemsg/editor/schema';
 
 type Node = { id: string; type: string; config: Record<string, unknown> };
@@ -448,46 +452,38 @@ describe('what already worked keeps working', () => {
 });
 
 /**
- * The body is a separate, older defect — MEASURED, not assumed.
+ * The body, which this file could not assert over when it was written.
  *
- * batch-sender renderEmail() resolves the job's content through
- * readCampaignContent and renders blocks only when it parses as an EmailSchema.
- * For a templated workflow send it never does, for two reasons:
+ * It used to pin the broken shape down instead: the dispatch built content
+ * without a subject, emailSchema requires one, and 20 of the 29 built-in
+ * emails the published templates use carried a button whose url is a merge
+ * tag that z.string().url() rejected — so readCampaignContent returned null
+ * and the recipient's body was JSON.stringify of the blocks. Both causes are
+ * fixed now, so the case says what it always wanted to say.
  *
- *  1. routes/v1/internal/workflow-dispatch.ts builds `{ blocks, globalStyles }`
- *     and leaves the subject out, while emailSchema requires `subject` (min 1).
- *  2. 20 of the 29 built-in emails the published workflow templates reference —
- *     every Czech one — carry a button whose url is a merge tag
- *     (`{{order.status_url|default:"#"}}`), and the block schema validates urls
- *     with z.string().url(), which rejects it.
- *
- * So renderEmail falls past the blocks path, finds no `html` either, and
- * returns JSON.stringify(content): the recipient's body is the raw block JSON
- * with the tags unsubstituted. Verified by running the worker's own renderEmail
- * over the content the dispatch produces.
- *
- * Neither cause is in this change's scope and neither is made worse by it, so
- * this case pins the shape down instead of pretending to render a body. When
- * the body is fixed, this case fails and says what to assert instead.
+ * The end-to-end proof, through the real batch sender to the MTA queue, lives
+ * in apps/workers .../workflow-template-body.integration.test.ts. This one
+ * stays because it is where the API's half of it is visible.
  */
-describe('the body of a templated send does not render yet (pre-existing)', () => {
-  it('the job content does not parse as an EmailSchema, and says why', async () => {
+describe('the body of a templated send renders as an email', () => {
+  it('the job content parses, and the body carries the order it is about', async () => {
     const { job } = await runWithEvent('post-purchase-cs', {
-      order: { number: 'OBJ-2026-0046' },
+      order: { number: 'OBJ-2026-0046', status_url: 'https://shop.example.cz/o/46' },
     });
 
     const parsed = readCampaignContent(job.content);
     expect(parsed.shape).toBe('blocks');
-    expect(
-      parsed.schema,
-      'the body renders now — remove this case and assert the rendered html instead',
-    ).toBeNull();
-    expect(parsed.error).toContain('subject');
-    expect(parsed.error).toContain('Invalid url');
-    // And this is why the Czech templates cannot be the proof: their steps
-    // carry a fixed subject with no tag in it, so the only variable text they
-    // have is in the body that does not render.
-    expect(job.subject).toBe('Objednávka přijata');
-    expect(renderSubject(job)).toBe('Objednávka přijata');
+    expect(parsed.schema, parsed.error ?? 'the content did not parse').toBeTruthy();
+
+    const html = renderBlocks(parsed.schema!, { context: contextFor(job) }).html;
+    expect(html).toContain('OBJ-2026-0046');
+    expect(html).toContain('https://shop.example.cz/o/46');
+    expect(html, 'a raw tag reached the body').not.toMatch(/\{\{/);
+    expect(html, 'the body is still block JSON').not.toContain('"type":"button"');
+    expect(html.startsWith('<!DOCTYPE html'), 'the body is not an HTML document').toBe(true);
+
+    // The Czech step now names the variable its email names, so the subject
+    // carries the number too.
+    expect(renderSubject(job)).toBe('Objednávka OBJ-2026-0046 přijata');
   });
 });
