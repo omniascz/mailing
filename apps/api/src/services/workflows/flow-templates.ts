@@ -13,6 +13,7 @@
 
 import type { WorkflowNode, WorkflowEdge } from '../../db/schema/workflows.js';
 import { DUNNING_TEMPLATE } from './templates/dunning.js';
+import { EMAIL_SERIES_BY_FLOW_ID, withBuiltInEmails } from '../workflow-templates/email-content.js';
 
 export interface FlowTemplate {
   id: string;
@@ -334,13 +335,24 @@ const RE_ENGAGEMENT: FlowTemplate = {
 
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
+/**
+ * The pre-built flows, with each email step pointing at the email it sends.
+ *
+ * These 14 steps carried `templateId: null`, which the queue contract rejects
+ * outright ("expected string, received null"); withBuiltInEmails drops it and
+ * names a built-in from the catalogue instead (services/workflow-templates
+ * /email-content.ts).
+ */
 export const FLOW_TEMPLATES: FlowTemplate[] = [
   WELCOME_SERIES,
   ABANDONED_CART,
   ONBOARDING_TOUR,
   RE_ENGAGEMENT,
   DUNNING_TEMPLATE,
-];
+].map((t) => ({
+  ...t,
+  nodes: withBuiltInEmails(t.nodes as never, EMAIL_SERIES_BY_FLOW_ID[t.id] ?? []) as never,
+}));
 
 export function getFlowTemplate(id: string): FlowTemplate | undefined {
   return FLOW_TEMPLATES.find((t) => t.id === id);

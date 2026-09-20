@@ -11,6 +11,7 @@
  */
 
 import type { WorkflowNode, WorkflowEdge } from '../../db/schema/workflows.js';
+import { seriesForCategory, withBuiltInEmails } from './email-content.js';
 
 export type TemplateCategory =
   | 'welcome'
@@ -75,12 +76,15 @@ const wait = (id: string, days: number, hours = 0): WorkflowNode =>
   hours === 0
     ? n(id, 'wait', { duration: days, unit: 'days' })
     : n(id, 'wait', { duration: days * 24 + hours, unit: 'hours' });
-const email = (id: string, subject: string, templateRef?: string): WorkflowNode =>
-  n(id, 'send_email', { subject, templateRef });
+// An email step is a subject plus the email it sends. The email comes from
+// the catalogue, chosen per category in email-content.ts and attached below —
+// which is why this helper cannot leave a step without content: a step with
+// only a subject is one the queue contract refuses at send time.
+const email = (id: string, subject: string): WorkflowNode => n(id, 'send_email', { subject });
 // executeSendSms reads config.message (a { body } field never sent).
 const sms = (id: string, body: string): WorkflowNode => n(id, 'send_sms', { message: body });
 
-export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
+const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
   // ─── Welcome series ─────────────────────────────────────────────────────────
   {
     slug: 'welcome-3-step-en',
@@ -2047,6 +2051,19 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     edges: [e('e0', 't', 'e1')],
   },
 ];
+
+/**
+ * Every template, with each email step pointing at the email it sends.
+ *
+ * The pairing lives in email-content.ts and is applied here, once, rather than
+ * repeated at 181 call sites — and applying it to the exported array is what
+ * makes "a step without content" unrepresentable: there is no other way to
+ * reach these templates.
+ */
+export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = RAW_WORKFLOW_TEMPLATES.map((t) => ({
+  ...t,
+  nodes: withBuiltInEmails(t.nodes, seriesForCategory(t.category, t.locale)),
+}));
 
 export function findTemplate(slug: string): WorkflowTemplate | null {
   return WORKFLOW_TEMPLATES.find((t) => t.slug === slug) ?? null;
