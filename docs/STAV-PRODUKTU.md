@@ -14,6 +14,11 @@ integrace zákazníka.
 
 ## 1. Co produkt umí dnes
 
+Bez zapnutí jediné skupiny je registrováno **903 adres a 1127 operací**
+(změřeno dvakrát nezávisle: `buildApp()` + `printRoutes`, jednou s
+`FEATURE_BEYOND_CORE=false`, jednou `=true` → 1245 / 1564, rozdíl 342 / 437).
+To je „jádro" — e-mailová platforma níže.
+
 Vše v této části má obrazovku v administraci nebo veřejné API a doklad, že
 doběhne.
 
@@ -45,19 +50,27 @@ proklikaným během.
 
 ### Co dnes vrací chybu serveru
 
-Měřeno živě proti reálné databázi (`app.inject`, přihlášená relace):
+Seznam vede repozitář sám: `apps/api/src/integration/route-smoke/known-failures.ts`
+(`MAX_KNOWN_5XX = 6`), a route-smoke test shodí build, jakmile některá položka
+začne procházet. Všech šest změřeno živě proti reálné databázi (`app.inject`),
+s přihlášenou relací i bez ní:
 
-- `GET /api/v1/analytics/compare` → **500**; bez `ids` spadne validace dřív než
-  autentizace, takže **500 dostane i nepřihlášený** požadavek.
-- `GET /api/v1/external-feeds` → **500**.
-- `GET /api/v1/integrations/allegro/connect` → **500** („ALLEGRO_CLIENT_ID not
-  configured"); ostatní allegro endpointy odpovídají 200/400.
-- `GET /api/v1/helpdesk/analytics` → **500** (za skupinou `helpdesk`).
-- `GET /api/v1/phone/softphone/ws` — neověřeno; websocketovou routu nelze
-  poctivě změřit HTTP injektáží.
+| Endpoint                               | s relací | bez relace | Co padá                                                                                                                             |
+| -------------------------------------- | -------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/v1/external-feeds`               | 500      | 401        | `syntax error at or near "null"` — `isNull(externalFeeds['deletedAt'])`, sloupec neexistuje (`services/external-feeds/index.ts:38`) |
+| `/api/v1/analytics/cohort`             | 500      | 401        | `rawCohorts.rows is not iterable` — postgres-js vrací pole bez `.rows` (`services/analytics/cohort.ts:60-74`)                       |
+| `/api/v1/helpdesk/analytics`           | 500      | 401        | `helpdeskTickets.as is not a function` (`services/helpdesk/analytics.ts:95,97`); za skupinou `helpdesk-analytics`                   |
+| `/api/v1/analytics/compare`            | 500      | **500**    | chybějící querystring spadne dřív, než se odpoví 401                                                                                |
+| `/api/v1/integrations/allegro/connect` | 500      | 401        | `ALLEGRO_CLIENT_ID not configured` — konfigurace, ne kód (`routes/v1/integrations/allegro.ts:74-76`)                                |
+| `/api/v1/phone/softphone/ws`           | 500      | **500**    | websocketová routa; přes HTTP není socket. Nemá `app.authenticate` v řetězci hooků                                                  |
 
-Dřívější tvrzení, že 500 vrací i `analytics/cohorts`, **už neplatí**: měřeno 200
-a hlídá to `apps/api/src/integration/beyond-core-5xx.integration.test.ts:245`.
+Pět z šesti je v jádru, šestá (analytika helpdesku) za skupinou. Dvě odpovídají
+500 i nepřihlášenému.
+
+Pozor na záměnu: `/api/v1/analytics/**cohorts**` (množné číslo) je jiný
+endpoint, ten byl opraven a měřeno vrací 200
+(`apps/api/src/integration/beyond-core-5xx.integration.test.ts:245`). Rozbitý je
+`/api/v1/analytics/**cohort**`.
 
 ---
 
@@ -72,9 +85,23 @@ a 437 operací** (doloženo zeleným během
 `apps/api/src/integration/beyond-core-groups.integration.test.ts:82,194-195`).
 Výchozí stav je nula zapnutých skupin: `registerBeyondCore` plugin neregistruje,
 dokud skupina není vyjmenovaná v `BEYOND_CORE_GROUPS`
-(`apps/api/src/index.ts:421-424`), a v produkci je `FEATURE_BEYOND_CORE`
-odmítnuto (`packages/shared/src/beyond-core/index.ts:252-259`). Zda je v ostrém
-provozu zapnuto něco: **neověřeno** — hodnota není v repozitáři.
+(`apps/api/src/index.ts:421-424`), v produkci je `FEATURE_BEYOND_CORE` odmítnuto
+(`packages/shared/src/beyond-core/index.ts:252-259`) a `docker-compose.prod.yml`
+předává proměnnou bez defaultu. Zda operátor v ostrém provozu něco zapnul:
+**neověřeno** — hodnota není v repozitáři.
+
+Z té plochy je 186 čtecích adres. Podle řetězce hooků jich **168** vyžaduje
+`app.authenticate` a **18** ne — OAuth callbacky (social, ads, Shopify,
+Shoptet), veřejná nabídka, náhled a veřejný článek blogu, hostovaný dotazník,
+chatový token, `sitemap.xml` a `robots.txt`, Sklik pixel, stránka schůzky a
+veřejné recenze. Část z těch 18 odmítá až v handleru (např.
+`routes/v1/blog.ts:421-426` → 400/401), což řetězec hooků nevidí; přesné
+rozdělení „veřejné záměrně" proti „odmítne později" je **neověřeno**.
+
+Dřívější tvrzení, že z té čtecí plochy „ani jedna nespadne", **neplatí**:
+analytika helpdesku je jednou z těch 186 a vrací 500.
+
+Zapnout jde 75 skupin ze 76 — blokovaná je jediná (`ads-webhook`, část 5).
 
 ### Schopnosti bez cesty od zákazníka
 
@@ -244,6 +271,7 @@ neposílají a žádná publikovaná šablona ji zatím nepoužívá.
   (`apps/api/src/index.ts:652-657`) a na seznamu blokovaných nejsou. Co jim chybí,
   je konfigurace (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`) a Connect
   z části 4 — tedy důvod obchodní, ne technický přepínač.
-- **Analytika helpdesku** — skupinu `helpdesk` lze zapnout, ale
+- **Analytika helpdesku** — skupinu `helpdesk-analytics`
+  (`apps/api/src/index.ts:579`) lze zapnout, ale
   `GET /api/v1/helpdesk/analytics` vrací 500 (měřeno živě). Zapínat ji s touto
   rozbitou obrazovkou nemá smysl.
