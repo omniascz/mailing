@@ -1,150 +1,249 @@
 # Stav produktu
 
-_Měřeno 9. 9. 2026 proti aktuálnímu masteru. Popisuje, co produkt umí dnes — ne co je naplánováno._
+_Měřeno 21. 9. 2026 proti masteru `c0d3bdf`. Popisuje, co produkt umí — ne co je
+naprogramováno. U každého tvrzení je doklad: test, doložený běh, nebo
+soubor:řádek. Kde doklad chybí, je napsáno „neověřeno"._
+
+**Pravidlo, podle kterého je dokument psaný:** funkce „funguje" jen tehdy, když
+existuje cesta, po které ji zákazník spustí, a ta doběhne. Kód bez volajícího
+nefunguje. Funkce za vypnutou skupinou nefunguje, dokud se skupina nezapne.
+Funkce, která čeká na událost, kterou nikdo negeneruje, nefunguje bez vlastní
+integrace zákazníka.
 
 ---
 
-## Co je živé
+## 1. Co produkt umí dnes
 
-Zákazník, který si dnes založí účet, dostane hotovou e-mailovou marketingovou
-platformu. Živá je zhruba **900 endpointů**, které tvoří jádro:
+Vše v této části má obrazovku v administraci nebo veřejné API a doklad, že
+doběhne.
 
-- **E-mail** — kampaně, šablony, vizuální editor, A/B testy, plánované
-  odesílání, transakční pošta. Vlastní odesílací engine s DKIM podpisem,
-  zahříváním IP, správou reputace a zpracováním odhlášení a stížností.
-- **Kontakty** — segmentace, vlastní pole, import, sloučení duplicit, souhlasy
-  podle GDPR účelů, frekvenční stropy, tiché hodiny.
-- **Automatizace** — workflow s vizuálním plátnem, spouštěče podle chování,
-  vícekrokové sekvence.
-- **Další kanály** — SMS přes vlastní SMPP bránu, WhatsApp, Viber. Hlasový
-  robot funguje přes API, ne jako kampaňový kanál.
-- **Analytika** — otevření, prokliky, doručitelnost, výnosy podle kampaně,
-  reporty.
-- **Integrace** — Shoptet, Upgates, FastCentrik, Raynet, Zapier, produktové
-  feedy pro Heureku, Zboží a Google Shopping.
-- **API a SDK** — veřejné REST API, webhooky, JavaScript SDK pro web, Python
-  klient.
+| Co                                                          | Jak to zákazník spustí                               | Doklad                                                                                                                                                                             |
+| ----------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E-mailové kampaně — tvorba, plánování, odeslání             | `/campaigns` v administraci                          | `apps/web/src/app/(dashboard)/campaigns`; běh celé cesty až do MTA fronty: `apps/workers/src/integration/campaign-content-shape.integration.test.ts`                               |
+| Vizuální editor a šablony e-mailů                           | `/templates`, editor bloků                           | `apps/api/src/services/editor/templates` (91 vestavěných), render doložen `apps/editor/src/render` (284 jednotkových testů)                                                        |
+| A/B testy                                                   | `/ab-tests`                                          | `apps/workers/src/integration/ab-two-phase.integration.test.ts`, `ab-always-closes`                                                                                                |
+| Transakční pošta                                            | API `/api/v1/emails`                                 | `apps/api/src/integration/transactional-dkim.integration.test.ts`                                                                                                                  |
+| Vlastní odesílací engine, DKIM, zahřívání IP, reputace      | `/domains`, `/settings`                              | `dkim-rotation`, `dkim-encryption`, `ip-reputation`, `warmup-claim` v `apps/api/src/integration/`                                                                                  |
+| Odhlášení, stížnosti, potlačené adresy                      | `/suppressions`, odkaz v patičce                     | `unsubscribe.integration.test.ts`, `unsubscribe-callers.integration.test.ts`                                                                                                       |
+| Kontakty, segmenty, vlastní pole, import, sloučení duplicit | `/contacts`, `/segments`, `/custom-fields`           | obrazovky v `apps/web/src/app/(dashboard)/`; org-scope doložen `public-write-tenant-scope.integration.test.ts`                                                                     |
+| Souhlasy podle GDPR účelů, frekvenční stropy, tiché hodiny  | `/settings`, `/frequency-rules`, `/quiet-hours`      | `consent-guardrail.integration.test.ts`, `batch-sender-quiet-hours`, `batch-sender-consent`                                                                                        |
+| Workflow automatizace — plátno, větvení, čekání             | `/workflows`                                         | `workflow-graph-checks`, `workflow-editor-branches`, `workflow-cycle-guard`                                                                                                        |
+| Galerie flow šablon: 28 publikovaných, z toho 8 českých     | `/workflows` → fork šablony                          | měřeno během: 93 šablon celkem, 28 publikovaných, 65 skrytých, 8 s `locale=cs`                                                                                                     |
+| E-maily v šablonách flow se renderují                       | součást forku                                        | `apps/workers/src/integration/workflow-template-body.integration.test.ts`; 28 z 29 použitých e-mailů se vyrenderuje, `ecom-002` ne                                                 |
+| SMS — odchozí i příchozí (Twilio, BulkGate)                 | `/campaigns` (typ SMS), API `/api/v1/messaging/send` | `apps/api/src/services/sms/routing.ts:139-146`; příjem včetně STOP/START a dohledání organizace podle čísla: `apps/api/src/routes/v1/sms.ts:209-213`, `services/sms/inbound.ts:47` |
+| Analytika a reporty                                         | `/reports`                                           | obrazovky v `apps/web`; `/api/v1/analytics/cohorts` měřeno živě → 200                                                                                                              |
+| Veřejné REST API, webhooky, SDK (JS, Next, Python)          | API klíč v `/settings`                               | `packages/{sdk,web-sdk,next-sdk,sdk-python}`; `webhook-deliver.integration.test.ts`                                                                                                |
+| Vlastní události z webu nebo e-shopu                        | `POST /api/v1/events`, web SDK                       | `apps/api/src/routes/v1/events.ts:29,67`; `packages/web-sdk/src/*.ts:279`                                                                                                          |
 
-Vše výše je v provozu, chráněné přihlášením a oddělené mezi zákazníky.
+**Pozn. k SMS:** vlastní SMPP brána neexistuje. `apps/sms-gateway/main.go` má sedm
+řádků a jen vypíše hlášku; odesílání jde přes Twilio nebo BulkGate.
 
-**Co v jádru není v pořádku:** pět endpointů dnes vrací chybu serveru místo
-odpovědi — dva analytické reporty (kohorty a srovnání období), externí feedy,
-připojení Allegra a webový soket softphonu. Jsou to okrajové funkce, ale živé,
-a jeden z nich navíc běží bez přihlášení. Je to jediná vada, kterou tento
-dokument v živé ploše zaznamenává.
+**Pozn. k důkazní základně:** prohlížečem je ověřena jen přihlašovací cesta
+(`apps/web/e2e/`, 5 testů: landing, ceník, login, dashboard, obnova hesla).
+Obrazovky výše jsou doložené tím, že existují a volají doložené API — ne
+proklikaným během.
 
----
+### Co dnes vrací chybu serveru
 
-## Co je postavené a čeká na zapnutí
+Měřeno živě proti reálné databázi (`app.inject`, přihlášená relace):
 
-Kromě jádra existuje druhá plocha: **342 dalších adres, 437 operací,
-rozdělených do 76 funkčních skupin.** Nejsou vypnuté omylem — je nad nimi
-přepínač, který dovoluje zapínat je po jedné, a v produkci jich dnes běží
-nula. Nikdo je nikdy neprovozoval.
+- `GET /api/v1/analytics/compare` → **500**; bez `ids` spadne validace dřív než
+  autentizace, takže **500 dostane i nepřihlášený** požadavek.
+- `GET /api/v1/external-feeds` → **500**.
+- `GET /api/v1/integrations/allegro/connect` → **500** („ALLEGRO_CLIENT_ID not
+  configured"); ostatní allegro endpointy odpovídají 200/400.
+- `GET /api/v1/helpdesk/analytics` → **500** (za skupinou `helpdesk`).
+- `GET /api/v1/phone/softphone/ws` — neověřeno; websocketovou routu nelze
+  poctivě změřit HTTP injektáží.
 
-Změřili jsme, co by se stalo, kdyby se zapnuly. Výsledek je lepší, než jsme
-čekali: **ze 186 čtecích adres jich 170 odmítne nepřihlášeného návštěvníka,
-ani jedna nespadne, a zbylých šestnáct je veřejných záměrně** — objednávková
-stránka schůzky, vyplnění dotazníku, žádost o recenzi, veřejná nabídka,
-sledovací pixel. Před rokem byla stejná plocha plná děr; dnes je uzavřená.
-
-Skupiny připravené k zapnutí, seskupené podle toho, co dělají:
-
-**Zákaznická zkušenost** — dotazníky a NPS, recenze (dvě generace),
-věrnostní program s odměnami, pravidly a historií bodů, kupóny, hry o ceny.
-
-**Podpora** — helpdesk s tikety, směrováním, předpřipravenými odpověďmi,
-živým chatem a AI asistentem. Sjednocená schránka pro Instagram a Messenger.
-
-**Obchod** — CRM s firmami, kontakty, obchodními případy, úkoly, poznámkami,
-sekvencemi a reporty. Nabídky, faktury, předplatná, produktový katalog,
-elektronický podpis.
-
-**Marketing** — blog s revizemi a CTA prvky, SEO nástroje (mapa webu, klastry,
-klíčová slova, audit, sledování pozic), správa sociálních sítí, reklamní účty
-a synchronizace publik.
-
-**Data** — zákaznická datová platforma s profily, událostmi, vlastnostmi
-a aktivacemi, propojování identit, pokročilá analytika, doporučovací engine.
-
-**Schůzky a kalendář** — rezervační stránky, synchronizace kalendáře.
-
-Jediná skupina, která by se dnes zapnout **neměla**, je **analytika helpdesku** —
-její přehledový report vrací chybu serveru. A jediná, která je zablokovaná
-schválně, je **příjem reklamních formulářů z Facebooku**: má vlastní přepínač
-a její ověřování podpisu se otevírá, když chybí tajný klíč, takže se smí zapnout
-jen tím druhým přepínačem, ne tímto.
+Dřívější tvrzení, že 500 vrací i `analytics/cohorts`, **už neplatí**: měřeno 200
+a hlídá to `apps/api/src/integration/beyond-core-5xx.integration.test.ts:245`.
 
 ---
 
-## Co je postavené a nemá příjemce
+## 2. Co je postavené, ale nedosažitelné
 
-Zapnout skupinu neznamená, že ji někdo použije. U velké části té plochy platí,
-že **kód funguje, ale nevede k němu cesta** — administrace pro ni nemá
-obrazovku, nebo jí nikdo nedodává data.
+Toto je největší část produktu.
 
-- **CRM, obchodní dokumenty, SEO nástroje, správa sociálních sítí, reklamní
-  publika, věrnostní pravidla, datová platforma** — API je hotové a otestované,
-  ale v administraci pro ně není žádná obrazovka. Zákazník by je mohl používat
-  jen přes API, což u nástroje pro marketéra znamená, že je používat nebude.
-- **Přidělování kupónů po dávkách** — vnitřní endpoint existuje a nikdo ho
-  nevolá. Není naplánovaný, není nikde v kódu zavolán.
-- **Sledování opuštěného prohlížení, rozesílání příspěvků na sítě, upomínky
-  faktur, generování opakovaných plateb, měření pozic ve vyhledávání** — tyhle
-  naopak příjemce mají: volá je plánovač na pozadí. Chybí jim jen obrazovka pro
-  nastavení.
-- **Doporučovací engine** — jeden endpoint bez volajícího z administrace
-  i z SDK.
+### Plocha za přepínači
 
-Rozdíl mezi „čeká na zapnutí" a „nemá příjemce" je praktický: první skupina
-přinese hodnotu ve chvíli, kdy se přepne přepínač; druhá až po tom, co k ní
-někdo postaví obrazovku.
+76 funkčních skupin (`packages/shared/src/beyond-core/index.ts:46`), **342 cest
+a 437 operací** (doloženo zeleným během
+`apps/api/src/integration/beyond-core-groups.integration.test.ts:82,194-195`).
+Výchozí stav je nula zapnutých skupin: `registerBeyondCore` plugin neregistruje,
+dokud skupina není vyjmenovaná v `BEYOND_CORE_GROUPS`
+(`apps/api/src/index.ts:421-424`), a v produkci je `FEATURE_BEYOND_CORE`
+odmítnuto (`packages/shared/src/beyond-core/index.ts:252-259`). Zda je v ostrém
+provozu zapnuto něco: **neověřeno** — hodnota není v repozitáři.
+
+### Schopnosti bez cesty od zákazníka
+
+Měřeno greppem cest `/api/v1/...` v `apps/web/src`, `apps/workers/src`,
+`packages/*` a `scripts/`: ze 76 skupin má volajícího **14**, bez volajícího je
+**62**; po odečtení tří spouštěných zvenčí (`ads-webhook`, `stripe-webhook`,
+`sklik-pixel`) a jedné čistě vnitřní (`internal-coupons`) zbývá **58
+zákaznických schopností, ke kterým nevede žádná cesta**.
+
+Dřívější číslo „36 případů postavené a nedosažitelné" se touto metodou
+nereprodukuje a je příliš nízké.
+
+Bez jediné obrazovky v administraci (0 zásahů na daný prefix v `apps/web/src`):
+
+| Oblast                                                            | Kde je API                                                   |
+| ----------------------------------------------------------------- | ------------------------------------------------------------ |
+| CRM — firmy, pipeline, obchodní případy, úkoly, sekvence, reporty | `apps/api/src/routes/v1/crm/` (11 modulů, 74 endpointů)      |
+| Obchodní dokumenty — nabídky, faktury, předplatná, katalog        | `apps/api/src/routes/v1/commerce/`                           |
+| SEO — audit, klastry, klíčová slova, pozice, mapa webu            | `apps/api/src/routes/v1/seo/`                                |
+| Správa sociálních sítí                                            | `apps/api/src/routes/v1/social/`                             |
+| Reklamní účty a publika                                           | `apps/api/src/routes/v1/ads/`                                |
+| Zákaznická datová platforma (CDP)                                 | `apps/api/src/routes/v1/cdp/`                                |
+| Věrnostní pravidla, odměny, ledger, analytika                     | `apps/api/src/routes/v1/loyalty/earning-rules.ts` a sousední |
+
+Věrnostní program má výjimku: obrazovka `/loyalty` existuje, ale je to read-only
+výpis programů a v prázdném stavu sama říká „Create a program via the API"
+(`apps/web/src/app/(dashboard)/loyalty/page.tsx:20,41-42`).
+
+Jednotlivé endpointy bez volajícího kdekoli v repozitáři:
+
+- **Přidělování kupónů po dávkách** — `POST /api/v1/internal/coupons/allocate-batch`
+  (`apps/api/src/routes/v1/internal/coupons.ts:15`). Jeho vlastní docstring tvrdí,
+  že ho volá batch-sender; ten místo toho importuje funkci přímo
+  (`apps/workers/src/jobs/batch-sender.ts:33,543-545`).
+- **Doporučovací engine** — `POST /api/v1/ai/recommend`
+  (`apps/api/src/routes/v1/ai-recommendations.ts:33`) a
+  `GET /api/v1/products/recommendations`
+  (`apps/api/src/routes/v1/product-recommendations.ts:62`). Ani jeden nemá
+  volajícího v administraci ani v SDK.
+
+### Funkce s plánovačem, ale bez obrazovky pro nastavení
+
+Cron existuje a volá vnitřní routu; nastavit je nejde odnikud:
+
+| Funkce                          | Cron                                               | Rozvrh                                                                |
+| ------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------- |
+| Sledování opuštěného prohlížení | `apps/workers/src/jobs/workflow-scheduler.ts:184`  | `*/15 * * * *`, jen při zapnuté skupině `browse-abandonment` (`:396`) |
+| Rozesílání příspěvků na sítě    | `apps/workers/src/jobs/social-scheduler.ts:28`     | `* * * * *`, skupina `internal-social`                                |
+| Upomínky faktur                 | `apps/workers/src/jobs/invoice-reminder.ts:32`     | `0 8 * * *`, skupina `internal-commerce`                              |
+| Generování opakovaných plateb   | `apps/workers/src/jobs/subscription-billing.ts:58` | `*/5 * * * *`, bez podmínky                                           |
+| Měření pozic ve vyhledávání     | `apps/workers/src/jobs/seo-rank-poll.ts:22`        | `0 6 * * *`, skupina `internal-seo-rank-poll`                         |
+
+### Kanály, které nejsou dokončené
+
+- **WhatsApp** — odchozí funguje (`apps/workers/src/jobs/whatsapp-sender.ts:31-38`,
+  kredenciály jen globální). Příjem ne: routa vrací 404, dokud není zapnutý
+  vlastní přepínač a nastavený app secret
+  (`apps/api/src/routes/v1/whatsapp.ts:280-285`), a i pak přiřazuje zprávy
+  natvrdo do `DEFAULT_ORG_ID` (`:293`, totéž `routes/v1/sms.ts:264`).
+- **Viber** — odchozí jde jen přímým voláním API
+  (`apps/api/src/routes/v1/viber.ts:111`). Příchozí zpráva se zahodí: doslova
+  `void inbound;` (`:203`). Kampaňový kanál to není —
+  `apps/api/src/services/campaigns/channel-dispatch.ts:146-148` pouští jen
+  sms/whatsapp/push.
+- **Hlasový robot** — funguje přes API
+  (`apps/api/src/routes/v1/voice.ts:28-33`), kampaňový kanál to není. Routa
+  navíc nemá `preHandler: [app.authenticate]`, ale čte `req.user!.orgId`
+  (`:30,33`), takže anonymní volání skončí výjimkou místo 401.
+- **Mobilní notifikace** — klíče k Apple a Google jsou jen globální v prostředí
+  (`apps/api/src/services/push/mobile-transport.ts:56-68,161-163`); per-zákazníka
+  je v databázi jen web-push VAPID (`apps/api/src/db/schema/push.ts:19`). Do
+  aplikace zákazníka tedy doručit nelze.
+
+### Další měřené mezery
+
+- **DMARC reporty jen pro jednu organizaci.** Jediná automatická cesta je IMAP
+  poller, který každý report podává pod `DMARC_IMAP_ORG_ID`, a bez něj report
+  zahodí (`apps/workers/src/jobs/dmarc-imap-poll.ts:99-114,122`). Schránka je
+  jedna platformní adresa sdílená všemi zákazníky
+  (`apps/api/src/config/env.ts:681-682`).
+- **E-shopové konektory nemají připojovací obrazovku.** Stránka `/integrations`
+  jen vypíše URL jako text (`apps/web/src/app/(dashboard)/integrations/page.tsx:97-99`)
+  a callback přesměruje na `/settings/integrations/ecommerce/:id`
+  (`apps/api/src/routes/v1/ecommerce-integrations.ts:356`), která v `apps/web`
+  neexistuje.
 
 ---
 
-## Co blokuje spuštění
+## 3. Co potřebuje vlastní integraci zákazníka
 
-**Doména.** Systémová pošta — potvrzení registrace, obnova hesla, ověřovací
-maily — odchází z naší vlastní domény, ale pod identitou zákazníkovy
-organizace. Vyhledávání podpisového klíče je vázané na organizaci, takže pro
-naši doménu klíč nemá odkud vzniknout: tahle pošta **nejde podepsat**. Dokud
-doména nebude vyřešená a zavedená, odcházejí tyto zprávy nepodepsané a
-odesílací engine to hlásí jako úspěch.
+**Co zákazník dostane po napojení e-shopu (Shoptet, Upgates, FastCentrik,
+Shopify):** objednávky. Webhook nebo synchronizace volá `ingestOrder`
+(`apps/api/src/integrations/shoptet/index.ts:89`, `upgates/index.ts:85`,
+`fastcentrik/index.ts:90`), ta spustí `onOrderPlaced`
+(`apps/api/src/services/ecommerce/index.ts:697`), což je spouštěč
+`purchase_event` — tedy **po-nákupní a cross-sell flow běží samy**. Platí ale, že
+skupina `ecommerce` musí být zapnutá (`apps/api/src/index.ts:518`) a připojení se
+dnes dělá mimo administraci.
 
-Na téže doméně visí: nastavení SPF a DMARC, adresa pro zpracování vrácených
-zpráv, odkazy v odhlašovacím centru a odkazy pro sledování prokliků.
+**Co produkt sám generuje:** jmeniny a datová pole (denní cron 06:00 UTC →
+`apps/workers/src/jobs/workflow-scheduler.ts:74`), naskladnění
+(`onBackInStock` → `back_in_stock`, `apps/api/src/services/workflows/triggers.ts:243`),
+přidání štítku, věrnostní body (`services/loyalty/earning-rules.ts:208`).
 
-Vedle toho čeká rozhodnutí o **cenách a limitech plánů** — kód pro vynucování
-kvót existuje ve dvou různých podobách, které by daly různé odpovědi, a než se
-rozhodne, která platí, nedá se ceník uzavřít.
+**Události, které produkt negeneruje** — flow na ně čeká marně, dokud je
+zákazník nezačne posílat na `POST /api/v1/events`:
 
----
+| Událost           | Kdo ji čeká                   | Stav                                                                                                              |
+| ----------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `cart_abandoned`  | `abandoned-cart-cs` (3 kroky) | nikdo ji neposílá; Shoptet téma `cart/abandoned` se zahazuje (`apps/api/src/integrations/shoptet/index.ts:92-94`) |
+| `payment_pending` | `payment-pending-cs`          | nikdo ji neposílá                                                                                                 |
+| `pickup_ready`    | `pickup-invoice-cs`           | nikdo ji neposílá                                                                                                 |
 
-## Co vědomě nestavíme
-
-- **Mobilní SDK.** Serverová strana pro mobilní notifikace je hotová, ale
-  chybí per-zákazníka uložené klíče k Apple a Google — dnes je má systém
-  globální, takže do zákazníkovy aplikace fyzicky nelze doručit. Navíc na
-  českém trhu jde 63 % nákupů z mobilu, ale skoro všechny přes prohlížeč:
-  vlastní aplikaci má jen zlomek e-shopů. Je to samostatný produkt se čtyřmi
-  platformami, ne položka ve frontě.
-- **Zákaznický portál (Customer Hub).** Předpokládá, že koncový zákazník
-  e-shopu se u nás přihlašuje. Nemáme pro něj přihlášení ani identitu a
-  zavedení by znamenalo druhý autentizační systém vedle toho pro marketéry.
-- **Zákaznický AI agent.** Má odpovídat návštěvníkům jménem značky bez dozoru.
-  Nemáme zavedený způsob, jak omezit, co smí říct, a chyba je vidět zákazníkovi
-  značky okamžitě — riziko je nesouměrné s přínosem, dokud nebude helpdesk
-  v ostrém provozu.
-- **Srovnání s konkurencí v oboru (peer benchmarky).** Vyžaduje agregovaná data
-  napříč zákazníky. Máme jednoho zákazníka na každém segmentu, takže by
-  „průměr oboru" byl ve skutečnosti jeden konkrétní e-shop — to je únik dat,
-  ne funkce.
+Z osmi českých šablon tedy **dvě běží po napojení e-shopu samy**
+(post-purchase-cs, cross-sell-cs), **tři jsou vnitřní** (jmeniny, naskladnění,
+věrnostní body) a **tři čekají na vlastní integraci**. Událost
+`checkout_started` produkt generuje, ale jen z Shopify
+(`apps/api/src/routes/v1/ecommerce-integrations.ts:533-535`); české platformy ji
+neposílají a žádná publikovaná šablona ji zatím nepoužívá.
 
 ---
 
-## Shrnutí jednou větou
+## 4. Co blokuje spuštění
 
-Produkt je hotová e-mailová platforma s velkým, uzavřeným a nepoužívaným
-druhým patrem: **74 ze 76 skupin je technicky zapnutelných**, ale u většiny
-z nich by zapnutí samo o sobě nic nezměnilo, protože k nim nevede obrazovka —
-a nezávisle na tom čeká spuštění na doménu.
+- **Doména.** Systémová pošta (potvrzení registrace, obnova hesla, ověřovací
+  maily) odchází z naší domény pod identitou zákazníkovy organizace, ale
+  vyhledání podpisového klíče je org-scoped, takže klíč nemůže nikdy sednout —
+  pošta odchází **nepodepsaná** a engine to hlásí jako úspěch. Doloženo testem
+  `apps/api/src/lib/transactional-dkim.test.ts:164-190`. Na téže doméně visí SPF
+  a DMARC, adresa pro vrácené zprávy, odhlašovací centrum a sledování prokliků.
+- **Stripe Connect u commerce.** Platba za fakturu zákazníka se vytváří na
+  **našem** Stripe účtu: `createInvoicePaymentIntent`
+  (`apps/api/src/services/commerce/payments.ts:101-127`) neposílá `on_behalf_of`,
+  `transfer_data` ani hlavičku `Stripe-Account` — v repozitáři není žádné
+  `acct_` ani onboarding připojeného účtu
+  (`apps/api/src/integration/stripe-customer-tenant.integration.test.ts:22-28`).
+  Dokud Connect nebude, peníze zákazníkových faktur by chodily nám.
+- **Kvóty a ceník ve dvou podobách.** AI kvóta se hlásí jako klouzavých 24 h přes
+  všechny funkce (`apps/api/src/services/billing/plan-enforcement.ts:202-206`),
+  ale vynucuje se per funkce a per kalendářní den UTC
+  (`packages/shared-ai/src/rate-limiter.ts:33-41`) — u free tarifu 5/den hlášených
+  proti ~65/den skutečně povolených. Strop odeslání: `plans.ts:214` odmítá přesně
+  na kvótě, `plan-enforcement.ts:160-168` pouští 20 % přes. Dva katalogy plánů
+  servírují stejný tarif za jinou cenu (`billing/index.ts:13` 149 vs
+  `billing/plans.ts:71-76` 139). Která cena skutečně fakturuje: **neověřeno**
+  (je ve Stripu).
+- **E-shopové konektory bez obrazovky** (viz část 2) — bez nich je většina
+  českých flow šablon nepoužitelná.
+
+---
+
+## 5. Co se nezapíná a proč
+
+- **`ads-webhook` (příjem reklamních formulářů z Facebooku)** — jediná položka
+  na seznamu blokovaných skupin
+  (`packages/shared/src/beyond-core/index.ts:161-170`). V produkci ji nezapne ani
+  jeden ze dvou přepínačů: uvedení v `BEYOND_CORE_GROUPS` shodí boot (`:244-249`)
+  a registrace navíc vyžaduje `ENABLE_META_LEAD_ADS_WEBHOOK` plus app secret
+  (`apps/api/src/index.ts:650`, `lib/webhook-switches.ts:51-60`). Důvod uvedený
+  na seznamu je ale **zastaralý**: tvrdí, že ověření podpisu se otevírá při
+  chybějícím secretu, a to už neplatí (`apps/api/src/lib/meta-signature.ts:32`
+  vrací `unsignedWebhooksAllowed()`, v produkci vždy false).
+- **Commerce jde zapnout.** Dřívější tvrzení, že je nezapnutelné, **neplatí**:
+  všech šest skupin (`commerce-product`, `commerce-quote`, `commerce-invoice`,
+  `stripe-webhook`, `commerce-subscription`, `internal-commerce`) se registruje
+  běžným `registerBeyondCore` bez druhé podmínky
+  (`apps/api/src/index.ts:652-657`) a na seznamu blokovaných nejsou. Co jim chybí,
+  je konfigurace (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`) a Connect
+  z části 4 — tedy důvod obchodní, ne technický přepínač.
+- **Analytika helpdesku** — skupinu `helpdesk` lze zapnout, ale
+  `GET /api/v1/helpdesk/analytics` vrací 500 (měřeno živě). Zapínat ji s touto
+  rozbitou obrazovkou nemá smysl.
