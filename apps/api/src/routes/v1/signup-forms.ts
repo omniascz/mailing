@@ -355,25 +355,21 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  // Public: progressive profiling — return only unfilled fields for a known contact (#205)
-  app.get(
-    '/public/forms/:formId/progressive',
-    {
-      schema: { tags: ['Public Forms'], summary: 'Get progressive fields for a known contact' },
-    },
-    async (req) => {
-      const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
-      const { contactId, orgId, fieldsPerVisit } = z
-        .object({
-          contactId: z.string().uuid(),
-          orgId: z.string().uuid(),
-          fieldsPerVisit: z.coerce.number().int().min(1).max(10).optional(),
-        })
-        .parse(req.query);
-      const { getProgressiveFields } = await import('../../services/signup-forms/progressive.js');
-      return { data: await getProgressiveFields({ formId, contactId, orgId, fieldsPerVisit }) };
-    },
-  );
+  /**
+   * The public progressive route is gone (#205 narrowed).
+   *
+   * GET /public/forms/:formId/progressive took `contactId` and `orgId`
+   * straight from the query with no token of any kind, and answered which of
+   * the form's fields we already hold for that person — measured
+   * {"fields":[…],"total":4,"remaining":2} — with 404 versus 200 as an
+   * existence oracle on top. A contact id is an identifier, not a credential.
+   *
+   * Nothing called it: no page in apps/web, no SDK, no embed script. The
+   * authenticated twin below does the same work scoped by the session's org,
+   * so the capability survives and the unauthenticated way in does not.
+   * Giving it a signed token instead would have been a day of work for a
+   * feature with no caller.
+   */
 
   // Authenticated: progressive profiling for dashboard (uses req.user.orgId)
   app.get(

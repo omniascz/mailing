@@ -94,6 +94,19 @@ describe('the routes that handed out contact data are gone', () => {
     expect(res.body).not.toContain('Nováková');
     expect(res.body).not.toContain('+420777123456');
   });
+
+  it('GET /public/forms/:id/progressive is not a route any more', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/public/forms/${formId}/progressive?contactId=${contactId}&orgId=${session.orgId}`,
+    });
+
+    expect(res.statusCode, res.body).toBe(404);
+    // What it used to answer with: which fields we already hold for that
+    // person, plus 404-versus-200 as an existence oracle.
+    expect(res.body).not.toContain('remaining');
+    expect(res.body).not.toContain('last_name');
+  });
 });
 
 describe('the public form surface a visitor needs still works', () => {
