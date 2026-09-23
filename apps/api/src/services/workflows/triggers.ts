@@ -171,6 +171,33 @@ export async function onTagAdded(orgId: string, contactId: string, tagName: stri
  * the product silently answered no. An abandoned-cart flow would have kept
  * chasing a customer who had already paid.
  */
+/**
+ * Names a shop may send for the same moment.
+ *
+ * The product emits `checkout_started` (onCheckoutStarted, fed by the ecommerce
+ * connectors). Every abandoned-cart recipe we ship now waits for that name —
+ * but a customer's own integration, and our own older documentation, post
+ * `cart_abandoned` to POST /api/v1/events. Both describe the same signal: the
+ * shopper reached the checkout and there is not yet an order. The abandonment
+ * itself is the flow's wait plus `suppressOnEvent`, not a separate event.
+ *
+ * The alias is DIRECTIONAL on purpose. An incoming `cart_abandoned` also starts
+ * a workflow configured for `checkout_started`; the reverse does NOT hold, so a
+ * workflow somebody already configured for `cart_abandoned` keeps firing on
+ * exactly what it fired on before and does not suddenly run on every checkout.
+ * Widening it both ways would change behaviour for flows nobody asked us to
+ * touch.
+ */
+const EVENT_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  checkout_started: ['cart_abandoned'],
+};
+
+/** Does an incoming event name satisfy what a workflow is waiting for? */
+export function matchesEventName(configured: string, incoming: string): boolean {
+  if (configured === incoming) return true;
+  return (EVENT_ALIASES[configured] ?? []).includes(incoming);
+}
+
 export async function onApiEvent(
   orgId: string,
   contactId: string,
@@ -211,7 +238,7 @@ export async function onApiEvent(
   const settled = await Promise.allSettled(
     activeWorkflows.map(async (w) => {
       const config = w.triggerConfig as { eventName?: string };
-      if (!config.eventName || config.eventName === eventName) {
+      if (!config.eventName || matchesEventName(config.eventName, eventName)) {
         return safeStartRun(w.id, orgId, contactId, { triggerEvent: eventName, ...properties });
       }
       return false;
