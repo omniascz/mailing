@@ -21,6 +21,7 @@ import {
   type OutboundCallRequest,
 } from '../../services/voice/call-manager.js';
 import { AppError } from '../../lib/app-error.js';
+import { twilioSignatureRefusal } from '../../lib/twilio-signature.js';
 
 export default async function voiceRoutes(app: FastifyInstance) {
   // ─── Initiate outbound call ──────────────────────────────────────────────
@@ -150,7 +151,30 @@ export default async function voiceRoutes(app: FastifyInstance) {
   app.post(
     '/api/v1/voice/callback',
     { schema: { tags: ['Voice'], summary: 'Twilio webhook callback (status + recording)' } },
-    async (req) => {
+    async (req, reply) => {
+      /**
+       * Who the caller is, before anything is written.
+       *
+       * This route takes BOTH ids from the query string and had no check of any
+       * kind: no session, no signature. Measured against a real database, an
+       * anonymous POST answered 200 and rewrote the call's status, duration,
+       * recording URL and Twilio recording sid — so anyone who learned a pair
+       * of ids could mark a finished call as failed and point its recording at
+       * a file of their own.
+       *
+       * The same check the SMS and WhatsApp callbacks have carried since #184
+       * (lib/twilio-signature.ts). It runs FIRST: the body is not parsed and
+       * completeCall is not reached for a request that cannot be verified. A
+       * missing Auth Token or public base is NOT VERIFIED, not verified —
+       * unsignedWebhooksAllowed() is the only way past it and cannot be reached
+       * in production.
+       */
+      const refusal = twilioSignatureRefusal(req);
+      if (refusal) {
+        req.log.warn({ code: refusal.code }, '[voice] callback refused');
+        return reply.code(401).send({ ...refusal, statusCode: 401 });
+      }
+
       const { call_id, org_id } = z
         .object({
           call_id: z.string().uuid(),

@@ -47,11 +47,14 @@ import { BulkgateSmsAdapter } from '../../channels/sms/bulkgate-adapter.js';
 import { MetaWhatsAppAdapter } from '@forgemsg/shared/whatsapp/meta-adapter';
 import type { InboundMessage } from '@forgemsg/shared';
 import { env } from '../../config/env.js';
-import { createHmac } from 'node:crypto';
-import type { FastifyRequest } from 'fastify';
-import { checkWebhookSignature, timingSafeEqualString } from '../../lib/webhook-signature.js';
+import { twilioSignatureRefusal } from '../../lib/twilio-signature.js';
+/**
+ * Re-exported because sms.test.ts boots THIS module to reach the check: it
+ * resets the module registry per case so config/env.ts re-reads the
+ * environment, and the import path it uses is this file's.
+ */
+export { twilioSignatureRefusal };
 import { verifyMetaRequest } from '../../lib/meta-signature.js';
-import { unsignedWebhooksAllowed } from '../../lib/webhook-switches.js';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { phoneNumbers } from '../../db/schema/phone-numbers.js';
@@ -361,71 +364,4 @@ async function resolveOrgByInboundNumber(toNumber: string): Promise<string | nul
     .where(and(eq(phoneNumbers.number, toNumber), eq(phoneNumbers.status, 'active')))
     .limit(2);
   return matches.length === 1 ? matches[0]!.orgId : null;
-}
-
-/**
- * Twilio's signature, checked the way Twilio documents it.
- *
- * <https://www.twilio.com/docs/usage/security>: take the full URL through the
- * end of the query string; sort the POST parameters alphabetically (Unix-style,
- * case-sensitive); append each name and value to that URL with no delimiters;
- * HMAC-SHA1 the result with the account Auth Token; base64-encode it; compare
- * with the `X-Twilio-Signature` header. Note what is signed: not the body, the
- * URL plus the parameters. A verifier that HMACs the raw body — as
- * services/phone/voip.ts:188 does, uncalled — never matches a real Twilio POST.
- *
- * The URL has to be the one configured in the Twilio console, and this process
- * cannot see it: behind a proxy `req.url` is only the path. API_PUBLIC_URL is
- * the deployment's own statement of its public base, so the URL is rebuilt from
- * it. That makes a wrong API_PUBLIC_URL a reason every genuine callback is
- * refused — which is why the refusal says which of the two causes it was, and
- * why it is logged.
- *
- * A missing Auth Token or a missing public base means NOT VERIFIED, not
- * verified. The only way past that is unsignedWebhooksAllowed(), which cannot
- * be reached in production.
- *
- * Exported for its unit test (sms.test.ts) and called only from this file: the
- * cases where the token or the public base is missing cannot be produced
- * against a running app, because config/env.ts parses once at import.
- */
-export function twilioSignatureRefusal(
-  req: FastifyRequest,
-): { code: string; message: string } | null {
-  const base = (env.API_PUBLIC_URL ?? '').replace(/\/+$/, '');
-  if (!base) {
-    if (unsignedWebhooksAllowed()) return null;
-    return {
-      code: 'WEBHOOK_URL_NOT_CONFIGURED',
-      message:
-        'API_PUBLIC_URL is not set, so the URL Twilio signed cannot be reconstructed and the ' +
-        'request cannot be verified. Set it to the public base of this API — the same origin ' +
-        'as the webhook URL configured in the Twilio console.',
-    };
-  }
-
-  // Twilio posts application/x-www-form-urlencoded; @fastify/formbody parses it
-  // into a flat object of strings, which is exactly the parameter set to sort.
-  const params = (req.body ?? {}) as Record<string, unknown>;
-  const canonical = Object.keys(params)
-    .sort()
-    .reduce((acc, key) => acc + key + String(params[key] ?? ''), `${base}${req.url}`);
-
-  const check = checkWebhookSignature({
-    integration: 'Twilio',
-    secret: env.TWILIO_AUTH_TOKEN,
-    signature: req.headers['x-twilio-signature'] as string | undefined,
-    rawBody: canonical,
-    verify: (signedString, signature, authToken) =>
-      timingSafeEqualString(
-        createHmac('sha1', authToken).update(signedString).digest('base64'),
-        signature,
-      ),
-  });
-
-  if (check.ok) return null;
-  // The escape hatch covers "we have nothing to verify with", not "this did not
-  // verify" — a forged signature is refused in development too.
-  if (check.code === 'WEBHOOK_SECRET_NOT_CONFIGURED' && unsignedWebhooksAllowed()) return null;
-  return { code: check.code, message: check.message };
 }
