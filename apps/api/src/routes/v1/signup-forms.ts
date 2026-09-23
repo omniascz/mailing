@@ -355,25 +355,21 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  // Public: progressive profiling — return only unfilled fields for a known contact (#205)
-  app.get(
-    '/public/forms/:formId/progressive',
-    {
-      schema: { tags: ['Public Forms'], summary: 'Get progressive fields for a known contact' },
-    },
-    async (req) => {
-      const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
-      const { contactId, orgId, fieldsPerVisit } = z
-        .object({
-          contactId: z.string().uuid(),
-          orgId: z.string().uuid(),
-          fieldsPerVisit: z.coerce.number().int().min(1).max(10).optional(),
-        })
-        .parse(req.query);
-      const { getProgressiveFields } = await import('../../services/signup-forms/progressive.js');
-      return { data: await getProgressiveFields({ formId, contactId, orgId, fieldsPerVisit }) };
-    },
-  );
+  /**
+   * The public progressive route is gone (#205 narrowed).
+   *
+   * GET /public/forms/:formId/progressive took `contactId` and `orgId`
+   * straight from the query with no token of any kind, and answered which of
+   * the form's fields we already hold for that person — measured
+   * {"fields":[…],"total":4,"remaining":2} — with 404 versus 200 as an
+   * existence oracle on top. A contact id is an identifier, not a credential.
+   *
+   * Nothing called it: no page in apps/web, no SDK, no embed script. The
+   * authenticated twin below does the same work scoped by the session's org,
+   * so the capability survives and the unauthenticated way in does not.
+   * Giving it a signed token instead would have been a day of work for a
+   * feature with no caller.
+   */
 
   // Authenticated: progressive profiling for dashboard (uses req.user.orgId)
   app.get(
@@ -465,39 +461,20 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  // Public: autofill pre-populated fields for identified visitor (#334)
-  app.get(
-    '/public/forms/:formId/autofill',
-    {
-      schema: {
-        tags: ['Public Forms'],
-        summary: 'Pre-fill form fields for an identified visitor',
-        description:
-          'Provide fmid (tracking cookie) or fmcid (encrypted contact ID in URL) to get safe pre-fill data.',
-      },
-    },
-    async (req, reply) => {
-      const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
-      const { fmid, fmcid, orgId } = z
-        .object({
-          fmid: z.string().max(256).optional(),
-          fmcid: z.string().max(512).optional(),
-          orgId: z.string().uuid(),
-        })
-        .parse(req.query);
-
-      const { resolveContactFromTracking, buildAutofillPayload } =
-        await import('../../services/signup-forms/autofill.js');
-
-      const contactId = await resolveContactFromTracking(fmid, fmcid);
-      if (!contactId) {
-        return reply.send({ data: null });
-      }
-
-      const payload = await buildAutofillPayload(orgId, formId, contactId);
-      return reply.send({ data: payload });
-    },
-  );
+  /**
+   * There is no autofill route here any more (#334 removed).
+   *
+   * GET /public/forms/:formId/autofill answered with a contact's e-mail, first
+   * name, last name and phone number to anyone holding an `fmid` or `fmcid`
+   * from the query string. Nothing in the product ever issued either token —
+   * setTrackingMapping and encryptContactId had no caller anywhere in the
+   * repository — so the feature was a way to read personal data and never a
+   * way to fill a form in. Both tokens were also written verbatim into the
+   * request log, and the fmcid one carried no expiry at all.
+   *
+   * Progressive profiling keeps its AUTHENTICATED route below
+   * (/api/v1/forms/:formId/progressive), which scopes by the session's org.
+   */
 };
 
 export default signupFormRoutes;

@@ -223,8 +223,6 @@ const Env = z
     // Shared secret on the inbound-email webhook. The check used to be
     // `if (secret && …)`, so an unset value skipped authentication entirely.
     INBOUND_EMAIL_SECRET: prodRequired(z.string().min(32), 'dev-inbound-email-secret-change-me-32'),
-    // AES-256-GCM key material for the `fmcid` contact token in form autofill.
-    FORM_AUTOFILL_SECRET: prodRequired(z.string().min(32), 'dev-form-autofill-secret-change-me-32'),
     // HMAC-SHA256 over the preference-centre token (orgId, contactId, exp).
     // A forged one lets anybody edit any contact's GDPR consent.
     PREFERENCE_CENTRE_SECRET: prodRequired(

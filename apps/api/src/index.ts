@@ -326,13 +326,34 @@ import { readReaperConfig, startStuckConnectionReaper } from './db/stuck-connect
 // filter that does not exist. Registration is idempotent.
 registerLocaleFilters();
 
-export async function buildApp() {
+import { requestSerializer } from './lib/log-redaction.js';
+
+export interface BuildAppOptions {
+  /**
+   * Test seam: send the request log to this stream instead of stdout.
+   *
+   * The redaction serializer below can only be proven over what the logger
+   * actually wrote — a test that reads the configuration passes against a
+   * serializer that is never called. pino takes a stream OR a transport, never
+   * both, so passing one also turns pino-pretty off for that instance.
+   */
+  loggerStream?: NodeJS.WritableStream;
+}
+
+export async function buildApp(opts: BuildAppOptions = {}) {
   const app = Fastify({
     logger: {
       level: process.env.LOG_LEVEL || 'info',
-      ...(process.env.NODE_ENV !== 'production' && {
-        transport: { target: 'pino-pretty' },
-      }),
+      serializers: { req: requestSerializer },
+      // Signed tokens travel in URLs — the preference centre, unsubscribe, the
+      // click and open pixels — and the default serializer wrote every one of
+      // them into the log verbatim. lib/log-redaction.ts replaces the value
+      // with a marker and copies every other field Fastify's default produces.
+      ...(opts.loggerStream
+        ? { stream: opts.loggerStream }
+        : process.env.NODE_ENV !== 'production' && {
+            transport: { target: 'pino-pretty' },
+          }),
     },
     genReqId: () => crypto.randomUUID(),
     // Honor X-Forwarded-For / X-Forwarded-Proto from upstream proxies
