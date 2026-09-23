@@ -25,9 +25,26 @@ import { AppError } from '../../lib/app-error.js';
 export default async function voiceRoutes(app: FastifyInstance) {
   // ─── Initiate outbound call ──────────────────────────────────────────────
 
+  /**
+   * The `req.user!` below is what makes this guard load-bearing rather than
+   * decorative. plugins/auth.ts POPULATES `request.user` in an onRequest hook
+   * and never enforces it — enforcement is `app.authenticate`, per route — so
+   * without this preHandler an anonymous POST reached the handler and the
+   * non-null assertion threw: measured 500, not 401.
+   *
+   * It did not place a call. `req.user!.orgId` is the first statement, so it
+   * throws before queueOutboundCall, and the call row is written inside that
+   * function (services/voice/call-manager.ts:245). Measured before this change:
+   * anonymous POST → 500 and `calls` unchanged. The hole was a crash and a
+   * wrong status code on a route that dials phone numbers — not a free call,
+   * and now neither.
+   */
   app.post(
     '/api/v1/voice/calls/initiate',
-    { schema: { tags: ['Voice'], summary: 'Initiate outbound call' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Voice'], summary: 'Initiate outbound call' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { contactId, phone, campaignId, scenarioId, context } = z
