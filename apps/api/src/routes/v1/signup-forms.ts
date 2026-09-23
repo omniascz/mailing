@@ -465,39 +465,20 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  // Public: autofill pre-populated fields for identified visitor (#334)
-  app.get(
-    '/public/forms/:formId/autofill',
-    {
-      schema: {
-        tags: ['Public Forms'],
-        summary: 'Pre-fill form fields for an identified visitor',
-        description:
-          'Provide fmid (tracking cookie) or fmcid (encrypted contact ID in URL) to get safe pre-fill data.',
-      },
-    },
-    async (req, reply) => {
-      const { formId } = z.object({ formId: z.string().uuid() }).parse(req.params);
-      const { fmid, fmcid, orgId } = z
-        .object({
-          fmid: z.string().max(256).optional(),
-          fmcid: z.string().max(512).optional(),
-          orgId: z.string().uuid(),
-        })
-        .parse(req.query);
-
-      const { resolveContactFromTracking, buildAutofillPayload } =
-        await import('../../services/signup-forms/autofill.js');
-
-      const contactId = await resolveContactFromTracking(fmid, fmcid);
-      if (!contactId) {
-        return reply.send({ data: null });
-      }
-
-      const payload = await buildAutofillPayload(orgId, formId, contactId);
-      return reply.send({ data: payload });
-    },
-  );
+  /**
+   * There is no autofill route here any more (#334 removed).
+   *
+   * GET /public/forms/:formId/autofill answered with a contact's e-mail, first
+   * name, last name and phone number to anyone holding an `fmid` or `fmcid`
+   * from the query string. Nothing in the product ever issued either token —
+   * setTrackingMapping and encryptContactId had no caller anywhere in the
+   * repository — so the feature was a way to read personal data and never a
+   * way to fill a form in. Both tokens were also written verbatim into the
+   * request log, and the fmcid one carried no expiry at all.
+   *
+   * Progressive profiling keeps its AUTHENTICATED route below
+   * (/api/v1/forms/:formId/progressive), which scopes by the session's org.
+   */
 };
 
 export default signupFormRoutes;

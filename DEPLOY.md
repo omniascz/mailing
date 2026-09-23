@@ -174,9 +174,9 @@ failure at startup, not a warning — set every one of them before the first
 deploy:
 
 - [ ] `SESSION_SECRET`, `TRACKING_SECRET`, `ASSET_SIGNING_SECRET`,
-      `PREFERENCE_CENTRE_SECRET`, `FORM_AUTOFILL_SECRET` — signing keys for
-      sessions, tracking links, signed asset URLs, the preference centre and
-      form autofill. Generate each separately: `openssl rand -base64 48`
+      `PREFERENCE_CENTRE_SECRET` — signing keys for sessions, tracking links,
+      signed asset URLs and the preference centre. Generate each separately:
+      `openssl rand -base64 48`
 - [ ] `DKIM_MASTER_KEY` — encrypts customers' DKIM private keys at rest.
       Losing it means every sending domain has to be re-keyed
 - [ ] `PLATFORM_DOMAIN` — the bare apex domain, no scheme and no path. Every
