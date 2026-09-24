@@ -1,8 +1,9 @@
 /**
  * Custom event tracking endpoint (task 5.3 — api_event trigger):
  *
- *  POST /api/v1/events   — track a custom event for a contact
- *  GET  /api/v1/events   — list recent events for the org
+ *  POST /api/v1/events            — track a custom event for a contact
+ *  GET  /api/v1/events            — list recent events for the org
+ *  POST /api/v1/checkout-started  — a shop page reports its own basket
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -12,6 +13,7 @@ import { db } from '../../db/client.js';
 import { workflowEvents, contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { onApiEvent } from '../../services/workflows/triggers.js';
+import { recordCheckoutStarted } from '../../services/storefront/checkout-started.js';
 
 export default async function eventRoutes(app: FastifyInstance) {
   /**
@@ -78,6 +80,66 @@ export default async function eventRoutes(app: FastifyInstance) {
     },
   );
 
+  /**
+   * POST /api/v1/checkout-started
+   *
+   * The shop's own page reporting a basket, for platforms that deliver no cart
+   * webhook. Shoptet is the reason it exists: its webhook code list has no cart
+   * event at all, and its abandoned-cart export carries neither a cart id nor a
+   * recovery URL, so neither a webhook nor a poller can do this (probe Z75).
+   * A script in the template can — Shoptet allows HTML codes to be inserted
+   * from the e-shop administration, and the dataLayer exposes the basket.
+   *
+   * Public, because the caller is a page: `authenticatePublic` accepts the
+   * publishable key, and the key carries the one fact this needs, the org.
+   *
+   * The address is the only identifier a page may send. The publishable key is
+   * visible in the page source, so accepting a `contactId` from it would let
+   * anybody enrol strangers by handle — the same rule, and the same wording, as
+   * back-in-stock/subscribe.
+   *
+   * The rate limit is keyed on the key AND the caller's address: with one
+   * publishable key per shop, a single bucket would let one abuser lock out
+   * every genuine shopper.
+   */
+  app.post(
+    '/api/v1/checkout-started',
+    {
+      preHandler: [app.authenticatePublic],
+      config: {
+        rateLimit: {
+          max: 20,
+          timeWindow: '1 hour',
+          keyGenerator: (req: { headers: Record<string, unknown>; ip: string }) =>
+            `checkout-started:${(req.headers['x-api-key'] as string) ?? 'anon'}:${req.ip}`,
+        },
+      },
+      schema: { tags: ['Events'], summary: 'Public: a shop page reports an abandoned basket' },
+    },
+    async (req, reply) => {
+      const body = z
+        .object({
+          email: z.string().email().max(255),
+          contactId: z.string().uuid().optional(),
+          cartId: z.string().min(1).max(191).optional(),
+          amount: z.number().nonnegative().optional(),
+          currency: z.string().length(3).optional(),
+          itemCount: z.number().int().nonnegative().max(1000).optional(),
+          recoveryUrl: z.string().url().max(2048).optional(),
+        })
+        .parse(req.body);
+
+      if (req.user?.isPublicKey && body.contactId) {
+        throw AppError.forbidden('A publishable key must identify the shopper by email');
+      }
+
+      const result = await recordCheckoutStarted(req.user!.orgId, body);
+      // 202 either way, and the body says which. Answering differently for an
+      // address we do not know would turn this into a way to ask whether
+      // somebody shops here.
+      return reply.code(202).send({ data: result });
+    },
+  );
   /**
    * GET /api/v1/events?contact_id=&event_name=&limit=
    * List recent custom events for the org.
