@@ -86,7 +86,7 @@ export default async function voiceRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/voice/calls/:id',
-    { schema: { tags: ['Voice'], summary: 'Get call details' } },
+    { preHandler: [app.authenticate], schema: { tags: ['Voice'], summary: 'Get call details' } },
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
@@ -102,7 +102,10 @@ export default async function voiceRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/voice/calls/contact/:id',
-    { schema: { tags: ['Voice'], summary: 'List calls for contact' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Voice'], summary: 'List calls for contact' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
@@ -119,7 +122,10 @@ export default async function voiceRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/voice/campaigns/:id/calls',
-    { schema: { tags: ['Voice'], summary: 'List calls for campaign' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Voice'], summary: 'List calls for campaign' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
@@ -136,7 +142,10 @@ export default async function voiceRoutes(app: FastifyInstance) {
 
   app.get(
     '/api/v1/voice/campaigns/:id/stats',
-    { schema: { tags: ['Voice'], summary: 'Campaign call statistics' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Voice'], summary: 'Campaign call statistics' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
