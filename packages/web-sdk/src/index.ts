@@ -312,6 +312,52 @@ export const ForgeMsg = {
     });
     return res !== null;
   },
+
+  /**
+   * Report the basket the shopper is looking at.
+   *
+   *   ForgeMsg.checkoutStarted({
+   *     email: 'jana@example.cz',
+   *     amount: 1299,
+   *     currency: 'CZK',
+   *     itemCount: 3,
+   *     recoveryUrl: location.href,
+   *   });
+   *
+   * For shops whose platform delivers no cart webhook — Shoptet has none — the
+   * page is the only thing that knows. `track()` cannot do this: it posts to
+   * /api/v1/events, which takes a contactId, and a page has only an address.
+   *
+   * The e-mail address is required and is the identifier: a publishable key is
+   * visible in the page source, so the API refuses a contactId from one.
+   *
+   * Call it only when there IS an address — on Shoptet that means a logged-in
+   * customer, whose e-mail the dataLayer exposes as `shoptet.customer.email`.
+   * Without one there is nobody to remind, so the call is skipped rather than
+   * sent and refused.
+   *
+   * Calling it on every load of the cart page is fine and expected: the server
+   * enrols one basket per shopper per half hour, because a page cannot be
+   * trusted to remember what it already sent.
+   *
+   * Returns whether the report was accepted — reported rather than swallowed,
+   * for the same reason notifyWhenBackInStock reports its outcome.
+   */
+  async checkoutStarted(cart: {
+    email: string;
+    cartId?: string;
+    amount?: number;
+    currency?: string;
+    itemCount?: number;
+    recoveryUrl?: string;
+  }): Promise<boolean> {
+    if (!cart?.email) return false;
+    const res = await apiFetch('/api/v1/checkout-started', {
+      method: 'POST',
+      body: JSON.stringify(cart),
+    });
+    return res !== null;
+  },
 };
 
 // Browser global for script tag usage
