@@ -40,7 +40,7 @@ a vložte tenhle kód do pole pro **patičku (před `</body>`)**:
       return n + (i.quantity || 1);
     }, 0);
 
-    fetch('https://api.forgemsg.com/api/v1/checkout-started', {
+    fetch('https://API_ADRESA/api/v1/checkout-started', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,7 +57,13 @@ a vložte tenhle kód do pole pro **patičku (před `</body>`)**:
 </script>
 ```
 
-Za `fm_pub_SEM_VLOZTE_SVUJ_KLIC` dosaďte svůj publikovatelný klíč.
+Doplňte dvě věci:
+
+- za `fm_pub_SEM_VLOZTE_SVUJ_KLIC` svůj publikovatelný klíč;
+- místo `API_ADRESA` adresu API vašeho účtu ForgeMsg. Najdete ji ve stejné
+  obrazovce jako klíč (**Nastavení → API klíče**), je uvedená nad seznamem
+  klíčů. Adresu neuhádnete a nesmí se psát „od oka" — požadavek by skončil
+  jinde, než má.
 
 ## Krok 2 — kontrola
 
