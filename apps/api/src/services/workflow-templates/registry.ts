@@ -156,9 +156,16 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     recommendedFor: ['ecommerce'],
     locale: 'en',
     steps: 3,
-    trigger: { type: 'api_event', config: { eventName: 'cart_abandoned' } },
+    trigger: {
+      type: 'api_event',
+      // The product emits `checkout_started` (triggers.ts onCheckoutStarted,
+      // fed by the ecommerce connectors); `cart_abandoned` was emitted by
+      // nobody, so these recipes never fired. The abandonment is the wait
+      // below plus suppressOnEvent, not a separate event.
+      config: { eventName: 'checkout_started', suppressOnEvent: 'order_placed' },
+    },
     nodes: [
-      n('t', 'trigger', { triggerType: 'api_event', eventName: 'cart_abandoned' }),
+      n('t', 'trigger', { triggerType: 'api_event', eventName: 'checkout_started' }),
       wait('w0', 0, 1),
       email('e1', 'You left something behind'),
       wait('w1', 1),
@@ -183,9 +190,16 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     recommendedFor: ['ecommerce'],
     locale: 'en',
     steps: 2,
-    trigger: { type: 'api_event', config: { eventName: 'cart_abandoned' } },
+    trigger: {
+      type: 'api_event',
+      // The product emits `checkout_started` (triggers.ts onCheckoutStarted,
+      // fed by the ecommerce connectors); `cart_abandoned` was emitted by
+      // nobody, so these recipes never fired. The abandonment is the wait
+      // below plus suppressOnEvent, not a separate event.
+      config: { eventName: 'checkout_started', suppressOnEvent: 'order_placed' },
+    },
     nodes: [
-      n('t', 'trigger', { triggerType: 'api_event', eventName: 'cart_abandoned' }),
+      n('t', 'trigger', { triggerType: 'api_event', eventName: 'checkout_started' }),
       wait('w0', 0, 1),
       email('e1', 'You left something in your cart'),
       wait('w1', 1),
@@ -643,9 +657,16 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     recommendedFor: ['ecommerce'],
     locale: 'en',
     steps: 3,
-    trigger: { type: 'api_event', config: { eventName: 'cart_abandoned' } },
+    trigger: {
+      type: 'api_event',
+      // The product emits `checkout_started` (triggers.ts onCheckoutStarted,
+      // fed by the ecommerce connectors); `cart_abandoned` was emitted by
+      // nobody, so these recipes never fired. The abandonment is the wait
+      // below plus suppressOnEvent, not a separate event.
+      config: { eventName: 'checkout_started', suppressOnEvent: 'order_placed' },
+    },
     nodes: [
-      n('t', 'trigger', { triggerType: 'api_event', eventName: 'cart_abandoned' }),
+      n('t', 'trigger', { triggerType: 'api_event', eventName: 'checkout_started' }),
       wait('w0', 0, 1),
       email('e1', 'Forgetting something?'),
       wait('w1', 1),
@@ -670,9 +691,16 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     recommendedFor: ['ecommerce'],
     locale: 'cs',
     steps: 3,
-    trigger: { type: 'api_event', config: { eventName: 'cart_abandoned' } },
+    trigger: {
+      type: 'api_event',
+      // The product emits `checkout_started` (triggers.ts onCheckoutStarted,
+      // fed by the ecommerce connectors); `cart_abandoned` was emitted by
+      // nobody, so these recipes never fired. The abandonment is the wait
+      // below plus suppressOnEvent, not a separate event.
+      config: { eventName: 'checkout_started', suppressOnEvent: 'order_placed' },
+    },
     nodes: [
-      n('t', 'trigger', { triggerType: 'api_event', eventName: 'cart_abandoned' }),
+      n('t', 'trigger', { triggerType: 'api_event', eventName: 'checkout_started' }),
       wait('w0', 0, 1),
       email('e1', 'Zapomněli jste u nás {{cart.item_count|default:"pár"}} věcí'),
       wait('w1', 1),
@@ -700,9 +728,13 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     recommendedFor: ['ecommerce', 'b2b'],
     locale: 'en',
     steps: 2,
-    trigger: { type: 'api_event', config: { eventName: 'cart_abandoned', minValue: 250 } },
+    trigger: {
+      type: 'api_event',
+      // Same rename as the other abandoned-cart recipes above.
+      config: { eventName: 'checkout_started', suppressOnEvent: 'order_placed', minValue: 250 },
+    },
     nodes: [
-      n('t', 'trigger', { triggerType: 'api_event', eventName: 'cart_abandoned' }),
+      n('t', 'trigger', { triggerType: 'api_event', eventName: 'checkout_started' }),
       n('c1', 'condition', { rule: { type: 'cart_value_gte', value: 250 } }),
       wait('w1', 0, 1),
       email('e1', 'Need help finishing your order?'),
