@@ -99,8 +99,7 @@ jobs:
           # skopeo rather than `docker pull && docker tag && docker push`: docker
           # pulls one platform out of a manifest list and pushes a manifest it
           # built itself, so the digest changes and the copy can no longer be
-          # compared with the original. `skopeo copy --all` moves the bytes as
-          # they are, which is what makes the check in the next step meaningful.
+          # compared with the original.
           if ! command -v skopeo >/dev/null 2>&1; then
             sudo apt-get update -qq
             sudo apt-get install -y -qq skopeo
@@ -112,7 +111,12 @@ jobs:
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          skopeo copy --all \
+          # --preserve-digests is not decoration. Measured against a local
+          # registry: plain `copy --all` re-serialises the manifest list, so the
+          # index digest came out as aedbff0c... instead of bd014394... and the
+          # next step rejected it. With the flag the copy is byte-identical and
+          # skopeo fails outright if it ever cannot keep it that way.
+          skopeo copy --all --preserve-digests \
             --dest-creds "${GHCR_USER}:${GHCR_TOKEN}" \
             "docker://${{ steps.what.outputs.src_skopeo }}" \
             "docker://${{ steps.what.outputs.dst }}"
@@ -126,6 +130,7 @@ jobs:
           # compares the copy with the original without trusting either
           # registry's bookkeeping. Equal digests mean equal content, which is a
           # stronger statement than "the S3 probe still passes against it".
+          set -o pipefail
           want="${{ steps.what.outputs.src_digest }}"
           got="sha256:$(skopeo inspect --raw --creds "${GHCR_USER}:${GHCR_TOKEN}" \
             "docker://${{ steps.what.outputs.dst }}" | sha256sum | cut -d' ' -f1)"
