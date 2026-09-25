@@ -58,7 +58,7 @@ export default async function preferenceCenterRoutes(app: FastifyInstance) {
       const id = prefIdentity(token);
       if (id) {
         experiment = await assignVariant(id.orgId, id.contactId);
-        if (experiment) recordImpression(experiment.variantId).catch(() => {});
+        if (experiment) recordImpression(id.orgId, experiment.variantId).catch(() => {});
       }
 
       return reply.send({ data: { ...view, experiment } });
@@ -83,7 +83,8 @@ export default async function preferenceCenterRoutes(app: FastifyInstance) {
       const id = prefIdentity(token);
       if (id) {
         const variant = await assignVariant(id.orgId, id.contactId);
-        if (variant) recordOutcome(variant.variantId, !body.globalUnsubscribe).catch(() => {});
+        if (variant)
+          recordOutcome(variant.variantId, !body.globalUnsubscribe).catch(() => {});
       }
 
       return reply.send({ data: result });
