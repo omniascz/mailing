@@ -229,18 +229,36 @@ jobs:
       # deleted with the runner is the entire price, and it buys a store that
       # needs no change to any test.
       #
-      # Honest limits. This is still MinIO, i.e. still the upstream that moved
-      # three times, and cgr.dev serves only `latest` anonymously: tags/list
-      # answers 401 even with a valid pull token, so nothing here can watch the
-      # tag move or tell how long this digest stays fetchable. Tag AND digest,
-      # so a moved tag cannot silently change what runs; if the digest is
-      # collected this fails at pull time, loudly, the way it just did. The only
-      # source that cannot be taken away is one we own - mirror this digest into
-      # ghcr.io/omniascz and pull from there. That needs a token with
-      # write:packages, which this branch does not have.
+      # So the image is right, but the address was still somebody else's:
+      # cgr.dev serves only `latest` anonymously and answers tags/list with 401
+      # even to a valid pull token, so nothing here could see that image move
+      # either - which is how the last three breakages started. It is now pulled
+      # from a registry we own. `Mirror CI Images` copied that exact digest into
+      # ghcr.io/omniascz/ci-s3 with `crane copy`, which preserves the manifest
+      # bytes, so the digest below is the chainguard digest: identical content,
+      # an address that is ours. Re-mirror by running that workflow, and pin what
+      # it prints here and in docker-compose.yml.
+      #
+      # Tag AND digest: the tag says which release a human is looking at, the
+      # digest is what docker resolves, and a moved tag therefore cannot change
+      # what runs.
       - name: Start MinIO
+        env:
+          # One place to change. The tag is documentation; the digest is the
+          # contract, and it is the same digest the upstream image has.
+          S3_IMAGE: ghcr.io/omniascz/ci-s3:minio-2026-09-25@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
         run: |
-          docker run -d --name ci-minio -p 9000:9000 --user 0:0 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin cgr.dev/chainguard/minio:latest@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1 server /data
+          # An explicit pull, not an implicit one inside `docker run`, for two
+          # reasons. It makes the log say out loud where these bytes came from -
+          # the digest is identical to the upstream image, so a cached copy of
+          # either would satisfy `docker run` and nothing would show which
+          # registry answered. And it separates "the mirror is gone" from "the
+          # store did not start", which used to arrive as a bare exit 125.
+          if ! docker pull "$S3_IMAGE"; then
+            echo "::error::cannot pull $S3_IMAGE. The mirror is missing or no longer readable. Re-run the 'Mirror CI Images' workflow (.github/workflows/mirror-ci-images.yml); if the package was deleted or made private, that run also reports it."
+            exit 1
+          fi
+          docker run -d --name ci-minio -p 9000:9000 --user 0:0 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin "$S3_IMAGE" server /data
           for i in $(seq 1 30); do
             if curl -sf http://127.0.0.1:9000/minio/health/live; then echo "minio up"; exit 0; fi
             sleep 2
