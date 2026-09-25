@@ -63,8 +63,12 @@ const scheduledReportRoutes: FastifyPluginAsync = async (app) => {
       preHandler: [app.authenticate, app.requireRole('admin', 'owner')],
       schema: { tags: ['ScheduledReports'] },
     },
-    async (_req, reply) => {
-      return reply.send({ data: await runDueReports() });
+    async (req, reply) => {
+      // The caller's own org, never every org: this route is reachable by any
+      // admin or owner, and the unscoped version emailed every tenant's due
+      // report to that tenant's recipients and returned the rendered HTML here.
+      // The platform-wide sweep lives behind the internal secret.
+      return reply.send({ data: await runDueReports(req.user!.orgId) });
     },
   );
 };

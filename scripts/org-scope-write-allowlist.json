@@ -4,7 +4,8 @@
     "Every entry needs a reason. status=safe means the id is a credential in",
     "its own right; status=known-open means the sweep is right and the fix is",
     "still owed — those are printed loudly and never quietly pass as correct.",
-    "Keyed by route, not by line: line numbers shift under any edit."
+    "Keyed by route, not by line: line numbers shift under any edit.",
+    "Z84: the customer run-due route is scoped, so it is no longer a finding and its entry would be stale. The internal cron dropped out too, for a duller reason: its write moved into a local helper and this sweep follows one hop from the route, not two. That route is still platform-wide by design; the check simply no longer sees it."
   ],
   "routes": {
     "DELETE /api/v1/2fa": {
@@ -107,10 +108,6 @@
       "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
       "status": "safe"
     },
-    "POST /api/v1/internal/scheduled-reports/run-due": {
-      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
-      "status": "safe"
-    },
     "POST /api/v1/internal/sending/warmup/advance-all": {
       "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
       "status": "safe"
@@ -142,10 +139,6 @@
     "POST /api/v1/public/quotes/:token/sign": {
       "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
       "status": "safe"
-    },
-    "POST /api/v1/scheduled-reports/run-due": {
-      "why": "KNOWN OPEN, not a justification: an org admin can run the due-report sweep for every organization. No caller-supplied id, so nothing here can scope it, but the route should not be customer-facing. Found by this sweep in Z83; fixing it is its own round.",
-      "status": "known-open"
     },
     "POST /api/v1/unsubscribe-experiments/variants/:variantId/impression": {
       "why": "KNOWN OPEN, not a justification: unsubscribe_variants has an org_id and recordImpression writes by variantId alone, so an authenticated org can move another org counters. Found by this sweep in Z83; fixing it is its own round.",

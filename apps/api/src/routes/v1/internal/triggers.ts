@@ -234,8 +234,8 @@ const internalTriggersRoutes: FastifyPluginAsync = async (app) => {
     '/api/v1/internal/scheduled-reports/run-due',
     { schema: { tags: ['Internal'], summary: 'Dispatch due scheduled reports' } },
     async (_req, reply) => {
-      const { runDueReports } = await import('../../../services/scheduled-reports/index.js');
-      const results = await runDueReports();
+      const { runAllDueReports } = await import('../../../services/scheduled-reports/index.js');
+      const results = await runAllDueReports();
       return reply.send({ data: { dispatched: results.length } });
     },
   );
