@@ -7,6 +7,7 @@
  */
 
 import { db } from '../../db/client.js';
+import { AppError } from '../../lib/app-error.js';
 import { processingPurposes, contactGdprConsents } from '../../db/schema/processing-purposes.js';
 import type {
   ProcessingPurpose,
@@ -75,15 +76,31 @@ export interface GrantConsentInput {
 }
 
 export async function grantConsent(input: GrantConsentInput): Promise<ContactGdprConsent> {
-  // Look up retention days to compute expiresAt
+  // Look up retention days to compute expiresAt — within the granting org.
+  //
+  // `purposeId` arrives in the request body of
+  // POST /api/v1/contacts/:contactId/gdpr/consents, so without the orgId this
+  // read reached any tenant's purpose: another org's retention_days decided how
+  // long we keep this person's data, and the consent row written into our org
+  // referenced a purpose our own org cannot see, audit, or explain on a subject
+  // access request. The foreign key only says the purpose exists, not whose it
+  // is, so the row persisted and surfaced in our own consent-state list.
   const [purpose] = await db
     .select({ retentionDays: processingPurposes.retentionDays })
     .from(processingPurposes)
-    .where(eq(processingPurposes.id, input.purposeId));
+    .where(
+      and(eq(processingPurposes.id, input.purposeId), eq(processingPurposes.orgId, input.orgId)),
+    );
+
+  // Refuse rather than default. A purpose that is not ours used to mean "no
+  // expiry", and the consent was recorded anyway with the foreign reference on
+  // it; 404 is the answer the neighbouring purpose routes already give for an
+  // id belonging to another tenant.
+  if (!purpose) throw AppError.notFound('Processing purpose');
 
   const now = new Date();
   let expiresAt: Date | null = null;
-  if (purpose?.retentionDays) {
+  if (purpose.retentionDays) {
     expiresAt = new Date(now.getTime() + purpose.retentionDays * 86_400_000);
   }
 
