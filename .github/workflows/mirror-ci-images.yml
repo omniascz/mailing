@@ -1,0 +1,184 @@
+name: Mirror CI Images
+
+# CI pulls its object store from a registry we own, because every registry we
+# borrowed one from stopped serving it: Docker Hub deleted the `minio/minio`
+# namespace on 2026-09-12, quay.io/minio/minio went private for every tag on
+# 09-24 - taking the digest that was pinned in ci.yml with it - and
+# ghcr.io/minio/minio refuses. Three moves in two weeks. What was withdrawn is
+# the right to pull at all, so pinning harder cannot help; keeping our own copy
+# can.
+#
+# Deliberately NOT a step in ci.yml:
+#   - this has to happen once, and then only when somebody changes the digest on
+#     purpose. A step in ci.yml would re-push on every run of every branch.
+#   - a pull request from a fork gets a read-only token, so a push step would
+#     fail there for reasons that have nothing to do with the change under test.
+#   - above all, if ci.yml could repair the mirror by itself, then a deleted
+#     package would heal silently and nobody would ever learn the mirror had
+#     gone. The failure has to be visible, and it belongs to this workflow.
+#
+# Hence manual dispatch, plus a push trigger scoped to this one file - which is
+# exactly the event "somebody changed what we mirror". Re-running it is safe:
+# copying the same digest twice ends with the same manifest.
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Source image, pinned by digest (registry/name:tag@sha256:...)'
+        required: false
+        default: ''
+      target_tag:
+        description: 'Tag to publish inside ghcr.io/<owner>/ci-s3'
+        required: false
+        default: ''
+  push:
+    paths:
+      - '.github/workflows/mirror-ci-images.yml'
+
+env:
+  REGISTRY: ghcr.io
+  PACKAGE: ci-s3
+  # What a run with no inputs mirrors - the push trigger has none. Keep these in
+  # step with the digest pinned in ci.yml and docker-compose.yml: the digest is
+  # what both of those resolve, so if this drifts, CI keeps using whatever was
+  # mirrored last and this workflow is the only place that would say so.
+  DEFAULT_SOURCE: cgr.dev/chainguard/minio:latest@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
+  DEFAULT_TAG: minio-2026-09-25
+  # crane, pinned by release and verified by checksum, because copying an image
+  # without changing it turned out to be the whole difficulty:
+  #
+  #   docker pull && tag && push  resolves a manifest list to one platform and
+  #                               pushes a manifest docker built itself.
+  #   skopeo copy --all           copies every manifest but re-serialises the
+  #                               index: measured sha256:aedbff0c... against an
+  #                               original of sha256:bd014394....
+  #   skopeo --preserve-digests   byte-identical against a local registry:2, but
+  #                               against GHCR skopeo 1.13.3 (what the runner
+  #                               image ships) refuses: "Manifest list must be
+  #                               converted to type oci.image.index.v1+json to
+  #                               be written to destination, but we cannot
+  #                               modify it". The source already IS an OCI index
+  #                               with two OCI children, so that conversion is a
+  #                               no-op it will not perform.
+  #   crane copy                  moves the manifests as bytes. Digest preserved.
+  CRANE_VERSION: v0.22.1
+  CRANE_SHA256: 0ab7a1d6932a213aed964ce97666c3077fe691c8606413674a8b3e0b9ec4cda0
+
+jobs:
+  mirror:
+    name: Mirror the CI object store into GHCR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Resolve what to copy where
+        id: what
+        env:
+          IN_SOURCE: ${{ github.event.inputs.source }}
+          IN_TAG: ${{ github.event.inputs.target_tag }}
+        run: |
+          src="${IN_SOURCE:-}"
+          [ -n "$src" ] || src="$DEFAULT_SOURCE"
+          tag="${IN_TAG:-}"
+          [ -n "$tag" ] || tag="$DEFAULT_TAG"
+          # A floating source tag would make the mirror unreproducible: the whole
+          # point is that the copy can be compared with the original.
+          case "$src" in
+            *@sha256:*) ;;
+            *) echo "::error::source must be pinned by digest, got '$src'"; exit 1 ;;
+          esac
+          dst="${REGISTRY}/${{ github.repository_owner }}/${PACKAGE}:${tag}"
+          # A reference carrying both a tag and a digest is what docker prefers
+          # and what ci.yml pins, because the tag tells a human which release
+          # this is. crane takes name@digest, so keep both spellings. The tag is
+          # stripped from the last path component only, so a registry with a port
+          # survives.
+          digest="${src##*@}"
+          ref="${src%@*}"
+          case "${ref##*/}" in
+            *:*) repo="${ref%:*}" ;;
+            *) repo="$ref" ;;
+          esac
+          {
+            echo "src=$src"
+            echo "src_copy=${repo}@${digest}"
+            echo "dst=$dst"
+            echo "src_digest=$digest"
+          } >> "$GITHUB_OUTPUT"
+          echo "source:        $src"
+          echo "source (copy): ${repo}@${digest}"
+          echo "target:        $dst"
+
+      - name: Install crane
+        run: |
+          set -euo pipefail
+          cd "$(mktemp -d)"
+          curl -sSfL -o crane.tar.gz \
+            "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz"
+          echo "${CRANE_SHA256}  crane.tar.gz" | sha256sum -c -
+          tar -xzf crane.tar.gz crane
+          sudo install -m 0755 crane /usr/local/bin/crane
+          crane version
+
+      - name: Copy the image, preserving the digest
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          crane auth login "$REGISTRY" -u "$GHCR_USER" -p "$GHCR_TOKEN"
+          crane copy "${{ steps.what.outputs.src_copy }}" "${{ steps.what.outputs.dst }}"
+
+      - name: The mirror must carry the same digest as the original
+        run: |
+          set -euo pipefail
+          # Two answers, because they can disagree: `crane digest` is what the
+          # registry says the manifest hashes to, and sha256 of `crane manifest`
+          # is what the bytes actually hash to. Equal digests mean equal content,
+          # which is a stronger statement than "the S3 probe still passes".
+          want="${{ steps.what.outputs.src_digest }}"
+          said=$(crane digest "${{ steps.what.outputs.dst }}")
+          computed="sha256:$(crane manifest "${{ steps.what.outputs.dst }}" | sha256sum | cut -d' ' -f1)"
+          echo "original:          $want"
+          echo "mirror (registry): $said"
+          echo "mirror (bytes):    $computed"
+          if [ "$want" != "$said" ] || [ "$want" != "$computed" ]; then
+            echo "::error::the mirror does not carry the original digest"
+            exit 1
+          fi
+          echo "the mirror is byte-identical to the original"
+          {
+            echo "### Mirrored"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| source | \`${{ steps.what.outputs.src }}\` |"
+            echo "| mirror | \`${{ steps.what.outputs.dst }}\` |"
+            echo "| digest | \`$want\` |"
+            echo ""
+            echo "Pin this in ci.yml and docker-compose.yml:"
+            echo ""
+            echo '```'
+            echo "${{ steps.what.outputs.dst }}@$want"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Can it be pulled without credentials
+        run: |
+          # `docker compose up` on a laptop pulls this anonymously, so a private
+          # package would work in CI and fail on every dev machine. This step
+          # reports rather than fails: the visibility of a brand new package is
+          # not something a workflow can set.
+          crane auth logout "$REGISTRY" || true
+          rm -f "$HOME/.docker/config.json"
+          if crane digest "${{ steps.what.outputs.dst }}" >/dev/null 2>&1; then
+            echo "anonymous pull: OK - the package is public"
+          else
+            echo "anonymous pull: REFUSED - the package is private."
+            echo "CI can still pull it by logging in with GITHUB_TOKEN, but"
+            echo "docker compose on a laptop cannot. Make it public here:"
+            echo "https://github.com/users/${{ github.repository_owner }}/packages/container/${PACKAGE}/settings"
+            echo "::warning::ghcr.io/${{ github.repository_owner }}/${PACKAGE} is private; dev compose cannot pull it anonymously"
+          fi

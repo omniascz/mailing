@@ -76,15 +76,20 @@ services:
       start_period: 30s
 
   minio:
-    # quay.io/minio/minio went private for every tag on 2026-09-24, after Docker
-    # Hub deleted the namespace on 09-12, so the release this line used to pin
-    # stopped being pullable and `docker compose up` failed here. Chainguard builds the
-    # same server and serves it anonymously; see the candidate measurements in
-    # .github/workflows/ci.yml, which runs this image with the same arguments.
+    # Our own copy of the S3 server, for the reason this line has been edited
+    # twice in a fortnight: Docker Hub deleted `minio/minio` on 2026-09-12 and
+    # quay.io/minio/minio went private for every tag on 09-24, the pinned digest
+    # included, so `docker compose up` simply stopped working here. The image is
+    # MinIO built by Chainguard, copied digest-for-digest into a registry we own
+    # by .github/workflows/mirror-ci-images.yml; the candidate measurements that
+    # chose it are in .github/workflows/ci.yml, which runs the same digest with
+    # the same arguments. The package is public, so this pulls anonymously - no
+    # `docker login ghcr.io` needed on a dev machine.
+    #
     # `user: "0:0"` is required: the entrypoint is /usr/bin/minio as uid 65532,
     # which cannot write the minio_data volume, and `server /data` then dies
     # with "Unable to initialize backend: file access denied".
-    image: cgr.dev/chainguard/minio:latest@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
+    image: ghcr.io/omniascz/ci-s3:minio-2026-09-25@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
     container_name: forgemsg-minio
     user: "0:0"
     ports:
