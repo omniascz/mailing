@@ -19,7 +19,7 @@ name: Mirror CI Images
 #
 # Hence manual dispatch, plus a push trigger scoped to this one file - which is
 # exactly the event "somebody changed what we mirror". Re-running it is safe:
-# copying the same digest twice is a no-op that ends with the same manifest.
+# copying the same digest twice ends with the same manifest.
 
 on:
   workflow_dispatch:
@@ -40,11 +40,30 @@ env:
   REGISTRY: ghcr.io
   PACKAGE: ci-s3
   # What a run with no inputs mirrors - the push trigger has none. Keep these in
-  # step with the digest pinned in ci.yml and docker-compose.yml; the digest is
-  # what both of those resolve, so a mismatch here means CI keeps using whatever
-  # was mirrored last and this workflow is the only place that says so.
+  # step with the digest pinned in ci.yml and docker-compose.yml: the digest is
+  # what both of those resolve, so if this drifts, CI keeps using whatever was
+  # mirrored last and this workflow is the only place that would say so.
   DEFAULT_SOURCE: cgr.dev/chainguard/minio:latest@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
   DEFAULT_TAG: minio-2026-09-25
+  # crane, pinned by release and verified by checksum, because copying an image
+  # without changing it turned out to be the whole difficulty:
+  #
+  #   docker pull && tag && push  resolves a manifest list to one platform and
+  #                               pushes a manifest docker built itself.
+  #   skopeo copy --all           copies every manifest but re-serialises the
+  #                               index: measured sha256:aedbff0c... against an
+  #                               original of sha256:bd014394....
+  #   skopeo --preserve-digests   byte-identical against a local registry:2, but
+  #                               against GHCR skopeo 1.13.3 (what the runner
+  #                               image ships) refuses: "Manifest list must be
+  #                               converted to type oci.image.index.v1+json to
+  #                               be written to destination, but we cannot
+  #                               modify it". The source already IS an OCI index
+  #                               with two OCI children, so that conversion is a
+  #                               no-op it will not perform.
+  #   crane copy                  moves the manifests as bytes. Digest preserved.
+  CRANE_VERSION: v0.22.1
+  CRANE_SHA256: 0ab7a1d6932a213aed964ce97666c3077fe691c8606413674a8b3e0b9ec4cda0
 
 jobs:
   mirror:
@@ -64,20 +83,18 @@ jobs:
           [ -n "$src" ] || src="$DEFAULT_SOURCE"
           tag="${IN_TAG:-}"
           [ -n "$tag" ] || tag="$DEFAULT_TAG"
-          # A floating source tag would make the mirror unreproducible: the
-          # whole point is that the copy can be compared with the original.
+          # A floating source tag would make the mirror unreproducible: the whole
+          # point is that the copy can be compared with the original.
           case "$src" in
             *@sha256:*) ;;
             *) echo "::error::source must be pinned by digest, got '$src'"; exit 1 ;;
           esac
           dst="${REGISTRY}/${{ github.repository_owner }}/${PACKAGE}:${tag}"
-          # skopeo refuses a reference that carries both a tag and a digest
-          # ("Docker references with both a tag and digest are currently not
-          # supported"), while docker accepts exactly that and prefers it. So
-          # keep both spellings: name:tag@digest is what ci.yml pins, because
-          # the tag tells a human what the image is, and name@digest is what
-          # skopeo copies. The tag is stripped only from the last path
-          # component, so a registry with a port survives.
+          # A reference carrying both a tag and a digest is what docker prefers
+          # and what ci.yml pins, because the tag tells a human which release
+          # this is. crane takes name@digest, so keep both spellings. The tag is
+          # stripped from the last path component only, so a registry with a port
+          # survives.
           digest="${src##*@}"
           ref="${src%@*}"
           case "${ref##*/}" in
@@ -86,7 +103,7 @@ jobs:
           esac
           {
             echo "src=$src"
-            echo "src_skopeo=${repo}@${digest}"
+            echo "src_copy=${repo}@${digest}"
             echo "dst=$dst"
             echo "src_digest=$digest"
           } >> "$GITHUB_OUTPUT"
@@ -94,52 +111,44 @@ jobs:
           echo "source (copy): ${repo}@${digest}"
           echo "target:        $dst"
 
-      - name: Ensure skopeo (runner image ships 1.13.3)
+      - name: Install crane
         run: |
-          # skopeo rather than `docker pull && docker tag && docker push`: docker
-          # pulls one platform out of a manifest list and pushes a manifest it
-          # built itself, so the digest changes and the copy can no longer be
-          # compared with the original.
-          if ! command -v skopeo >/dev/null 2>&1; then
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq skopeo
-          fi
-          skopeo --version
+          set -euo pipefail
+          cd "$(mktemp -d)"
+          curl -sSfL -o crane.tar.gz \
+            "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz"
+          echo "${CRANE_SHA256}  crane.tar.gz" | sha256sum -c -
+          tar -xzf crane.tar.gz crane
+          sudo install -m 0755 crane /usr/local/bin/crane
+          crane version
 
       - name: Copy the image, preserving the digest
         env:
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # --preserve-digests is not decoration. Measured against a local
-          # registry: plain `copy --all` re-serialises the manifest list, so the
-          # index digest came out as aedbff0c... instead of bd014394... and the
-          # next step rejected it. With the flag the copy is byte-identical and
-          # skopeo fails outright if it ever cannot keep it that way.
-          skopeo copy --all --preserve-digests \
-            --dest-creds "${GHCR_USER}:${GHCR_TOKEN}" \
-            "docker://${{ steps.what.outputs.src_skopeo }}" \
-            "docker://${{ steps.what.outputs.dst }}"
+          set -euo pipefail
+          crane auth login "$REGISTRY" -u "$GHCR_USER" -p "$GHCR_TOKEN"
+          crane copy "${{ steps.what.outputs.src_copy }}" "${{ steps.what.outputs.dst }}"
 
       - name: The mirror must carry the same digest as the original
-        env:
-          GHCR_USER: ${{ github.actor }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # The digest of a manifest is the sha256 of its raw bytes, so this
-          # compares the copy with the original without trusting either
-          # registry's bookkeeping. Equal digests mean equal content, which is a
-          # stronger statement than "the S3 probe still passes against it".
-          set -o pipefail
+          set -euo pipefail
+          # Two answers, because they can disagree: `crane digest` is what the
+          # registry says the manifest hashes to, and sha256 of `crane manifest`
+          # is what the bytes actually hash to. Equal digests mean equal content,
+          # which is a stronger statement than "the S3 probe still passes".
           want="${{ steps.what.outputs.src_digest }}"
-          got="sha256:$(skopeo inspect --raw --creds "${GHCR_USER}:${GHCR_TOKEN}" \
-            "docker://${{ steps.what.outputs.dst }}" | sha256sum | cut -d' ' -f1)"
-          echo "original: $want"
-          echo "mirror:   $got"
-          if [ "$want" != "$got" ]; then
+          said=$(crane digest "${{ steps.what.outputs.dst }}")
+          computed="sha256:$(crane manifest "${{ steps.what.outputs.dst }}" | sha256sum | cut -d' ' -f1)"
+          echo "original:          $want"
+          echo "mirror (registry): $said"
+          echo "mirror (bytes):    $computed"
+          if [ "$want" != "$said" ] || [ "$want" != "$computed" ]; then
             echo "::error::the mirror does not carry the original digest"
             exit 1
           fi
+          echo "the mirror is byte-identical to the original"
           {
             echo "### Mirrored"
             echo ""
@@ -147,28 +156,29 @@ jobs:
             echo "|---|---|"
             echo "| source | \`${{ steps.what.outputs.src }}\` |"
             echo "| mirror | \`${{ steps.what.outputs.dst }}\` |"
-            echo "| digest | \`$got\` |"
+            echo "| digest | \`$want\` |"
             echo ""
             echo "Pin this in ci.yml and docker-compose.yml:"
             echo ""
-            echo "\`\`\`"
-            echo "${{ steps.what.outputs.dst }}@$got"
-            echo "\`\`\`"
+            echo '```'
+            echo "${{ steps.what.outputs.dst }}@$want"
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Can it be pulled without credentials
         run: |
-          # The dev `docker compose up` pulls this anonymously, so a private
-          # package would work in CI and fail on every laptop. This step does not
-          # fail the run - the visibility of a brand new package is not something
-          # the workflow can set - it reports, so the answer is in the log.
-          if skopeo inspect --no-creds --raw \
-              "docker://${{ steps.what.outputs.dst }}" >/dev/null 2>&1; then
+          # `docker compose up` on a laptop pulls this anonymously, so a private
+          # package would work in CI and fail on every dev machine. This step
+          # reports rather than fails: the visibility of a brand new package is
+          # not something a workflow can set.
+          crane auth logout "$REGISTRY" || true
+          rm -f "$HOME/.docker/config.json"
+          if crane digest "${{ steps.what.outputs.dst }}" >/dev/null 2>&1; then
             echo "anonymous pull: OK - the package is public"
           else
             echo "anonymous pull: REFUSED - the package is private."
-            echo "CI still works (it logs in with GITHUB_TOKEN), but"
-            echo "docker compose on a laptop will not. Flip it at"
+            echo "CI can still pull it by logging in with GITHUB_TOKEN, but"
+            echo "docker compose on a laptop cannot. Make it public here:"
             echo "https://github.com/users/${{ github.repository_owner }}/packages/container/${PACKAGE}/settings"
             echo "::warning::ghcr.io/${{ github.repository_owner }}/${PACKAGE} is private; dev compose cannot pull it anonymously"
           fi
