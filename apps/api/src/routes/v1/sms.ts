@@ -11,7 +11,7 @@
  *
  *   Inbound / two-way (7.4):
  *     GET    /api/v1/sms/inbound
- *     POST   /api/v1/sms/webhooks/bulkgate/dlr      (provider DLR webhook)
+ *     POST   /api/v1/sms/webhooks/bulkgate/dlr/:routeId  (provider DLR webhook)
  *     POST   /api/v1/sms/webhooks/twilio/status     (Twilio status callback)
  *     POST   /api/v1/sms/webhooks/twilio/inbound    (Twilio inbound)
  *     POST   /api/v1/sms/webhooks/whatsapp/status   (Meta WA status webhook)
@@ -42,7 +42,6 @@ import {
   listConsents,
   checkSmsCompliance,
 } from '../../services/sms/compliance.js';
-import { BulkgateSmsAdapter } from '../../channels/sms/bulkgate-adapter.js';
 
 import { MetaWhatsAppAdapter } from '@forgemsg/shared/whatsapp/meta-adapter';
 import type { InboundMessage } from '@forgemsg/shared';
@@ -57,6 +56,8 @@ export { twilioSignatureRefusal };
 import { verifyMetaRequest } from '../../lib/meta-signature.js';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+// Aliased: this file's default export is also called smsRoutes.
+import { smsRoutes as smsRoutesTable } from '../../db/schema/sms.js';
 import { phoneNumbers } from '../../db/schema/phone-numbers.js';
 
 export default async function smsRoutes(app: FastifyInstance) {
@@ -124,36 +125,83 @@ export default async function smsRoutes(app: FastifyInstance) {
   // ── Provider webhooks ─────────────────────────────────────────────────────
   // These endpoints are public (signed by provider, no JWT)
 
-  /** Bulkgate DLR webhook */
-  app.post('/api/v1/sms/webhooks/bulkgate/dlr', async (req, reply) => {
+  // Map a Bulkgate DLR status onto ours. Anything unrecognised is passed
+  // through unchanged rather than guessed at.
+  const BULKGATE_STATUS: Record<string, string> = {
+    delivered: 'delivered',
+    undelivered: 'failed',
+    expired: 'failed',
+    rejected: 'failed',
+  };
+
+  /**
+   * Bulkgate DLR webhook — the connection it belongs to is in the path.
+   *
+   * BulkGate offers nothing to authenticate this call with. Its documentation
+   * for bulk delivery confirmations says only "If you want to receive DLR
+   * entries to your application, just set up url address on BulkGate Portal"
+   * (help.bulkgate.com/docs/en/http-api-bulk-delivery-confirmations-and-incoming-sms.html)
+   * and lists no signature, secret, token or source addresses; the send
+   * endpoint we use, /simple/transactional, has no per-message callback
+   * parameter either, so we cannot put one there. What we CAN do is decide the
+   * URL each customer pastes into their own portal, and that is what the
+   * `:routeId` is: the id of their row in `sms_routes`, the record that holds
+   * their BulkGate credentials.
+   *
+   * That binds the report to one organization. It does not authenticate it —
+   * somebody holding both that uuid and one of the org's BulkGate sms_ids can
+   * still post a status for that org's own message. What it ends is the part
+   * that had nothing to do with the customer: the update used to be keyed by
+   * `sms_id` alone across every tenant, so any stranger's POST, or simply two
+   * BulkGate accounts issuing the same id, rewrote whichever row matched first
+   * — and `updateSmsDeliveryStatus` then fired `sms.delivered` / `sms.failed`
+   * into that org's own webhooks, carrying the recipient's phone number,
+   * contact id and campaign id.
+   */
+  app.post('/api/v1/sms/webhooks/bulkgate/dlr/:routeId', async (req, reply) => {
+    const { routeId } = z.object({ routeId: z.string().uuid() }).parse(req.params);
+
+    const [route] = await db
+      .select({ orgId: smsRoutesTable.orgId, provider: smsRoutesTable.provider })
+      .from(smsRoutesTable)
+      .where(eq(smsRoutesTable.id, routeId))
+      .limit(1);
+
+    // 404 for both "no such route" and "that route is not BulkGate": a DLR
+    // endpoint has no business telling a caller which ids exist.
+    if (!route || route.provider !== 'bulkgate') {
+      return reply.code(404).send({ code: 'NOT_FOUND', message: 'Unknown DLR route' });
+    }
+
     const payload = req.body as Record<string, unknown>;
-
-    // Resolve orgId from DLR data (app_id stored in send log or passed as custom param)
-    // For now accept the DLR and process via adapter's handleInbound
-    const adapter = new BulkgateSmsAdapter({
-      applicationId: '',
-      applicationToken: '',
-    });
-
-    await adapter.handleInbound(payload);
     const smsId = (payload as { sms_id?: string }).sms_id ?? '';
     const status = (payload as { status?: string }).status ?? '';
 
-    // Map Bulkgate DLR status to our status
-    const statusMap: Record<string, string> = {
-      delivered: 'delivered',
-      undelivered: 'failed',
-      expired: 'failed',
-      rejected: 'failed',
-    };
-
     await updateSmsDeliveryStatus(
+      { provider: 'bulkgate', orgId: route.orgId },
       smsId,
-      statusMap[status] ?? status,
+      BULKGATE_STATUS[status] ?? status,
       status === 'delivered' ? new Date() : undefined,
     );
 
     return reply.status(200).send({ ok: true });
+  });
+
+  /**
+   * The address BulkGate portals were configured with before the connection id
+   * was part of it. It is kept so the failure is legible — a 404 from an unknown
+   * path reads as "we broke something", a refusal that names the fix does not —
+   * and it refuses, because a report that cannot say which organization it is
+   * about is exactly the thing that was wrong with it.
+   */
+  app.post('/api/v1/sms/webhooks/bulkgate/dlr', async (_req, reply) => {
+    return reply.code(400).send({
+      code: 'DLR_ROUTE_REQUIRED',
+      message:
+        'This DLR URL is missing its connection id. In the BulkGate portal, set the delivery ' +
+        'report URL to /api/v1/sms/webhooks/bulkgate/dlr/<sms route id>. Without it a report ' +
+        'cannot be attributed to an organization and is not recorded.',
+    });
   });
 
   /** Twilio status callback webhook */
@@ -177,6 +225,10 @@ export default async function smsRoutes(app: FastifyInstance) {
     };
 
     await updateSmsDeliveryStatus(
+      // Verified against TWILIO_AUTH_TOKEN just above, and that is one platform
+      // account: the MessageSid is unique inside an id space only Twilio and we
+      // can write to, so there is no narrower scope to give it.
+      { provider: 'twilio' },
       msgSid,
       statusMap[msgStatus] ?? msgStatus,
       msgStatus === 'delivered' ? new Date() : undefined,
