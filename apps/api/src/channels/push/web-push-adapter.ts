@@ -16,6 +16,7 @@
 
 import {
   BaseChannelAdapter,
+  createTrackingToken,
   type Channel,
   type UnifiedMessage,
   type Recipient,
@@ -207,6 +208,21 @@ export class WebPushAdapter extends BaseChannelAdapter {
       });
     }
 
+    // The log id is minted before the payload, not after, because the payload
+    // has to carry it. It used to be generated below, so the notification went
+    // out knowing its org, contact and campaign but never which send-log row it
+    // was — which meant a service worker had nothing to report a click with, and
+    // POST /api/v1/push/track/click could only ever be driven by a caller that
+    // had obtained a row id some other way.
+    const logId = crypto.randomUUID();
+    const clickToken = createTrackingToken({
+      type: 'pushclick',
+      orgId: message.orgId,
+      messageId: logId,
+      contactId: recipient.contactId,
+      ts: Math.floor(Date.now() / 1000),
+    });
+
     const notificationPayload = JSON.stringify({
       title,
       body,
@@ -219,10 +235,13 @@ export class WebPushAdapter extends BaseChannelAdapter {
         contactId: recipient.contactId,
         orgId: message.orgId,
         campaignId: message.campaignId,
+        // What the service worker posts back to /api/v1/push/track/click. Signed
+        // rather than the bare id: the endpoint takes no session, so the token is
+        // the only thing that can say this click is about this notification.
+        clickToken,
       },
     });
 
-    const logId = crypto.randomUUID();
     await db.insert(pushSendLog).values({
       id: logId,
       orgId: message.orgId,

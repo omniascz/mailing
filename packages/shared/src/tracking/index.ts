@@ -152,13 +152,40 @@ export interface PollVotePayload {
   ts: number;
 }
 
+/**
+ * Push-notification click token. It travels inside the notification's own `data`
+ * object, so a service worker can report a click with no session — the same
+ * position an unsubscribe token occupies inside an email link.
+ *
+ * It names the `push_send_log` row rather than trusting the caller to name it.
+ * The route it feeds took a bare `messageId` out of the request body with no org
+ * filter, which made "this notification was clicked" a claim anybody could make
+ * about anybody's row, from a terminal, as often as they liked — and
+ * `clicked_at` is read by channel scoring and the engagement score, so the
+ * numbers it moves are the customer's.
+ *
+ * No `campaignId`, because a push can be a transactional one-off that has none.
+ * No expiry enforced on `ts` either: a notification can sit unread on a lock
+ * screen for days, and the token permits exactly one thing — marking one row of
+ * one org as clicked — so a stale one is not worth refusing a real click over.
+ */
+export interface PushClickPayload {
+  type: 'pushclick';
+  orgId: string;
+  /** The `push_send_log` row this notification was written as. */
+  messageId: string;
+  contactId?: string;
+  ts: number;
+}
+
 export type TrackingPayload =
   | OpenTrackingPayload
   | ClickTrackingPayload
   | PreferenceCenterPayload
   | UnsubscribePayload
   | ViewInBrowserPayload
-  | PollVotePayload;
+  | PollVotePayload
+  | PushClickPayload;
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
 

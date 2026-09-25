@@ -7,7 +7,7 @@
  *   GET  /api/v1/push/subscriptions          (list subscriptions)
  *   POST /api/v1/push/send                   (send push to a contact)
  *   POST /api/v1/push/send/broadcast         (send to all org subscribers)
- *   POST /api/v1/push/track/click            (record click from SW)
+ *   POST /api/v1/push/track/click            (record click from SW, signed token)
  *   POST /api/v1/push/vapid-keys             (generate + store VAPID pair)
  */
 
@@ -24,6 +24,7 @@ import {
   sendContactMobilePush,
 } from '../../services/push/mobile.js';
 import { AppError } from '../../lib/app-error.js';
+import { verifyTrackingToken } from '@forgemsg/shared';
 
 export default async function pushRoutes(app: FastifyInstance) {
   // ── Native mobile device registry (APNs / FCM) ────────────────────────────
@@ -239,17 +240,66 @@ export default async function pushRoutes(app: FastifyInstance) {
   });
 
   // ── Click tracking (from Service Worker) ─────────────────────────────────
-
+  //
+  // No session, because a service worker has none — but a signed token, for the
+  // same reason the poll and unsubscribe routes carry one: the request asserts
+  // something about a specific row, and without a signature anybody could assert
+  // it about anybody's row. This one took `messageId` straight out of the body
+  // and updated `push_send_log` by id with no org filter, so one curl marked
+  // another tenant's notification as clicked — and `clicked_at` is what channel
+  // scoring (services/channel-scoring/index.ts:381) and the engagement score
+  // (services/engagement-score/index.ts:283) count as push engagement. The
+  // forged number would arrive as somebody else's "push works for this contact".
+  //
+  // The token names the row, so the body no longer does. `messageId` is still
+  // read, but only to be compared: a service worker that sends both must agree
+  // with the signature, and a mismatch is refused rather than resolved in favour
+  // of the unsigned half.
+  //
+  // Worth knowing why no tool caught this: `forgemsgOrg/require-org-scope` never
+  // reported it. Its exemption 1 treats `update(t).where(eq(t.id, x))` as already
+  // as narrow as a query can be — one row, found by its key — which held for all
+  // 603 warnings it was read against, because there the id came from a lookup the
+  // same function had already scoped. Here it came from the body of a request
+  // that carried no session, and a primary key supplied by a stranger narrows
+  // nothing. The audit inherited the blind spot: this route is not in it.
   app.post('/api/v1/push/track/click', async (req, reply) => {
-    const { messageId } = req.body as { messageId?: string; contactId?: string };
+    const { token, messageId } = req.body as {
+      token?: string;
+      messageId?: string;
+      contactId?: string;
+    };
 
-    if (messageId) {
-      await db
-        .update(pushSendLog)
-        .set({ clickedAt: new Date() })
-        .where(eq(pushSendLog.id, messageId));
+    if (!token) {
+      return reply
+        .code(400)
+        .send({ code: 'TOKEN_REQUIRED', message: 'A signed click token is required' });
     }
 
+    const payload = verifyTrackingToken(token);
+    if (!payload || payload.type !== 'pushclick') {
+      return reply
+        .code(400)
+        .send({ code: 'INVALID_TOKEN', message: 'The click token could not be verified' });
+    }
+
+    if (messageId && messageId !== payload.messageId) {
+      return reply
+        .code(400)
+        .send({ code: 'TOKEN_MISMATCH', message: 'The click token names a different message' });
+    }
+
+    // Scoped by the org inside the signature as well as by id: the id alone is
+    // what made this cross-tenant, and a token is only ever minted for the org
+    // that owns the row.
+    await db
+      .update(pushSendLog)
+      .set({ clickedAt: new Date() })
+      .where(and(eq(pushSendLog.id, payload.messageId), eq(pushSendLog.orgId, payload.orgId)));
+
+    // 204 whether or not a row matched. A token this service signed is authentic
+    // even when the row is gone, and answering differently would turn the
+    // endpoint into a way to ask which message ids exist.
     return reply.status(204).send();
   });
 }
