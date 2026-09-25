@@ -71,15 +71,30 @@ jobs:
             *) echo "::error::source must be pinned by digest, got '$src'"; exit 1 ;;
           esac
           dst="${REGISTRY}/${{ github.repository_owner }}/${PACKAGE}:${tag}"
+          # skopeo refuses a reference that carries both a tag and a digest
+          # ("Docker references with both a tag and digest are currently not
+          # supported"), while docker accepts exactly that and prefers it. So
+          # keep both spellings: name:tag@digest is what ci.yml pins, because
+          # the tag tells a human what the image is, and name@digest is what
+          # skopeo copies. The tag is stripped only from the last path
+          # component, so a registry with a port survives.
+          digest="${src##*@}"
+          ref="${src%@*}"
+          case "${ref##*/}" in
+            *:*) repo="${ref%:*}" ;;
+            *) repo="$ref" ;;
+          esac
           {
             echo "src=$src"
+            echo "src_skopeo=${repo}@${digest}"
             echo "dst=$dst"
-            echo "src_digest=${src##*@}"
+            echo "src_digest=$digest"
           } >> "$GITHUB_OUTPUT"
-          echo "source: $src"
-          echo "target: $dst"
+          echo "source:        $src"
+          echo "source (copy): ${repo}@${digest}"
+          echo "target:        $dst"
 
-      - name: Install skopeo
+      - name: Ensure skopeo (runner image ships 1.13.3)
         run: |
           # skopeo rather than `docker pull && docker tag && docker push`: docker
           # pulls one platform out of a manifest list and pushes a manifest it
@@ -99,7 +114,7 @@ jobs:
         run: |
           skopeo copy --all \
             --dest-creds "${GHCR_USER}:${GHCR_TOKEN}" \
-            "docker://${{ steps.what.outputs.src }}" \
+            "docker://${{ steps.what.outputs.src_skopeo }}" \
             "docker://${{ steps.what.outputs.dst }}"
 
       - name: The mirror must carry the same digest as the original
