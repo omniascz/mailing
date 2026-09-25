@@ -1,0 +1,187 @@
+{
+  "_": [
+    "Routes that write by a caller-supplied key and never mention the org.",
+    "Every entry needs a reason. status=safe means the id is a credential in",
+    "its own right; status=known-open means the sweep is right and the fix is",
+    "still owed — those are printed loudly and never quietly pass as correct.",
+    "Keyed by route, not by line: line numbers shift under any edit."
+  ],
+  "routes": {
+    "DELETE /api/v1/2fa": {
+      "why": "two_factor_secrets is keyed by user, not by organization, and the user is the authenticated caller.",
+      "status": "safe"
+    },
+    "GET /api/v1/ads/accounts/callback/:platform": {
+      "why": "The row is deleted by the one-time OAuth state value the callback carries, which is the credential; an org column would add nothing to it.",
+      "status": "safe"
+    },
+    "GET /api/v1/assets/download": {
+      "why": "The download token in the query is the credential; processDownload resolves the delivery from it before writing.",
+      "status": "safe"
+    },
+    "GET /api/v1/email-identities/confirm/:token": {
+      "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
+      "status": "safe"
+    },
+    "GET /api/v1/poll/:token": {
+      "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
+      "status": "safe"
+    },
+    "GET /api/v1/public/quotes/:token": {
+      "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
+      "status": "safe"
+    },
+    "GET /api/v1/social/accounts/callback/:platform": {
+      "why": "The row is deleted by the one-time OAuth state value the callback carries, which is the credential; an org column would add nothing to it.",
+      "status": "safe"
+    },
+    "GET /public/forms/:formId/variant": {
+      "why": "The form or survey id IS the public identifier — it is embedded on the customer site — and the write is that object own counter. Audit category C.",
+      "status": "safe"
+    },
+    "GET /public/forms/:id/view": {
+      "why": "The form or survey id IS the public identifier — it is embedded on the customer site — and the write is that object own counter. Audit category C.",
+      "status": "safe"
+    },
+    "PATCH /api/v1/internal/campaigns/:id/status": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/2fa/confirm": {
+      "why": "two_factor_secrets is keyed by user, not by organization, and the user is the authenticated caller.",
+      "status": "safe"
+    },
+    "POST /api/v1/2fa/enroll": {
+      "why": "two_factor_secrets is keyed by user, not by organization, and the user is the authenticated caller.",
+      "status": "safe"
+    },
+    "POST /api/v1/abuse/spam-traps": {
+      "why": "spam_traps has no org column at all: it is a platform-wide list.",
+      "status": "safe"
+    },
+    "POST /api/v1/auth/reset-password/:token": {
+      "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
+      "status": "safe"
+    },
+    "POST /api/v1/auth/verify-email/:token": {
+      "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
+      "status": "safe"
+    },
+    "POST /api/v1/ecommerce/webhooks/bigcommerce/:connectionId": {
+      "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
+      "status": "safe"
+    },
+    "POST /api/v1/ecommerce/webhooks/generic/:connectionId": {
+      "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
+      "status": "safe"
+    },
+    "POST /api/v1/ecommerce/webhooks/shoptet/:connectionId": {
+      "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
+      "status": "safe"
+    },
+    "POST /api/v1/ecommerce/webhooks/upgates/:connectionId": {
+      "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
+      "status": "safe"
+    },
+    "POST /api/v1/ecommerce/webhooks/woocommerce/:connectionId": {
+      "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/blacklist-check": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/campaigns/:id/ab-winner-dispatched": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/campaigns/:id/dispatch-batches/confirm": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/commerce/invoice-reminders": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/dkim/retire-expired": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/scheduled-reports/run-due": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/sending/warmup/advance-all": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/social/dispatch-due": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/triggers/daily-run": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/webhooks/deliver": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/webhooks/exhausted": {
+      "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/invitations/:token/accept": {
+      "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
+      "status": "safe"
+    },
+    "POST /api/v1/newsletter-tiers/stripe-webhook": {
+      "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
+      "status": "safe"
+    },
+    "POST /api/v1/public/quotes/:token/sign": {
+      "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
+      "status": "safe"
+    },
+    "POST /api/v1/scheduled-reports/run-due": {
+      "why": "KNOWN OPEN, not a justification: an org admin can run the due-report sweep for every organization. No caller-supplied id, so nothing here can scope it, but the route should not be customer-facing. Found by this sweep in Z83; fixing it is its own round.",
+      "status": "known-open"
+    },
+    "POST /api/v1/unsubscribe-experiments/variants/:variantId/impression": {
+      "why": "KNOWN OPEN, not a justification: unsubscribe_variants has an org_id and recordImpression writes by variantId alone, so an authenticated org can move another org counters. Found by this sweep in Z83; fixing it is its own round.",
+      "status": "known-open"
+    },
+    "POST /api/v1/unsubscribe-experiments/variants/:variantId/outcome": {
+      "why": "KNOWN OPEN, not a justification: same write as the impression route above, keyed by variantId with no org. Found by this sweep in Z83.",
+      "status": "known-open"
+    },
+    "POST /api/v1/webhooks/esign/:provider": {
+      "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
+      "status": "safe"
+    },
+    "POST /api/v1/webhooks/stripe": {
+      "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
+      "status": "safe"
+    },
+    "POST /oauth/revoke": {
+      "why": "The row is deleted by the one-time OAuth state value the callback carries, which is the credential; an org column would add nothing to it.",
+      "status": "safe"
+    },
+    "POST /oauth/token": {
+      "why": "The row is deleted by the one-time OAuth state value the callback carries, which is the credential; an org column would add nothing to it.",
+      "status": "safe"
+    },
+    "POST /public/forms/:id/submit": {
+      "why": "The form or survey id IS the public identifier — it is embedded on the customer site — and the write is that object own counter. Audit category C.",
+      "status": "safe"
+    },
+    "POST /public/surveys/:id/submit": {
+      "why": "The form or survey id IS the public identifier — it is embedded on the customer site — and the write is that object own counter. Audit category C.",
+      "status": "safe"
+    },
+    "POST /v/:token/events": {
+      "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
+      "status": "safe"
+    }
+  }
+}
