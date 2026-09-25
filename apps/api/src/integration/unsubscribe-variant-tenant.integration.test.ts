@@ -143,6 +143,64 @@ describe('an impression cannot be recorded on another org’s variant', () => {
   }, 120_000);
 });
 
+describe('an outcome cannot be recorded on another org’s variant', () => {
+  it('leaves org B’s counters exactly as they were, saved and unsubscribed alike', async () => {
+    const before = (await variantRow(variantB))[0];
+    expect(before!.savedCount).toBe(0);
+    expect(before!.unsubCount).toBe(0);
+
+    const saved = await app.inject({
+      method: 'POST',
+      url: `/api/v1/unsubscribe-experiments/variants/${variantB}/outcome`,
+      headers: { authorization: `Bearer ${tokenA}` },
+      payload: { saved: true },
+    });
+    const churned = await app.inject({
+      method: 'POST',
+      url: `/api/v1/unsubscribe-experiments/variants/${variantB}/outcome`,
+      headers: { authorization: `Bearer ${tokenA}` },
+      payload: { saved: false },
+    });
+
+    expect(
+      (await variantRow(variantB))[0],
+      "org A moved org B's outcome counters — saved_count against unsub_count is the whole result " +
+        'of the experiment',
+    ).toEqual(before);
+
+    expect([200, 404]).toContain(saved.statusCode);
+    expect([200, 404]).toContain(churned.statusCode);
+  }, 120_000);
+
+  it('still counts both outcomes on the caller’s own variant', async () => {
+    const start = (await variantRow(variantA))[0]!;
+
+    const saved = await app.inject({
+      method: 'POST',
+      url: `/api/v1/unsubscribe-experiments/variants/${variantA}/outcome`,
+      headers: { authorization: `Bearer ${tokenA}` },
+      payload: { saved: true },
+    });
+    expect(saved.statusCode, saved.body.slice(0, 200)).toBe(200);
+
+    const churned = await app.inject({
+      method: 'POST',
+      url: `/api/v1/unsubscribe-experiments/variants/${variantA}/outcome`,
+      headers: { authorization: `Bearer ${tokenA}` },
+      payload: { saved: false },
+    });
+    expect(churned.statusCode, churned.body.slice(0, 200)).toBe(200);
+
+    const [row] = await variantRow(variantA);
+    expect(row!.savedCount, 'a save on the org’s own variant stopped counting').toBe(
+      start.savedCount + 1,
+    );
+    expect(row!.unsubCount, 'an unsubscribe on the org’s own variant stopped counting').toBe(
+      start.unsubCount + 1,
+    );
+  }, 120_000);
+});
+
 describe('negative control — the public preference centre still works', () => {
   it('serves the unsubscribe page for a signed token and counts its impression', async () => {
     const { createTrackingToken } = await import('@forgemsg/shared');

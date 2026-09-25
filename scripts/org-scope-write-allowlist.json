@@ -5,7 +5,8 @@
     "its own right; status=known-open means the sweep is right and the fix is",
     "still owed — those are printed loudly and never quietly pass as correct.",
     "Keyed by route, not by line: line numbers shift under any edit.",
-    "Z84: the customer run-due route is scoped, so it is no longer a finding and its entry would be stale. The internal cron dropped out too, for a duller reason: its write moved into a local helper and this sweep follows one hop from the route, not two. That route is still platform-wide by design; the check simply no longer sees it."
+    "Z84: the customer run-due route is scoped, so it is no longer a finding and its entry would be stale. The internal cron dropped out too, for a duller reason: its write moved into a local helper and this sweep follows one hop from the route, not two. That route is still platform-wide by design; the check simply no longer sees it.",
+    "Z84: the two unsubscribe-experiment counters are scoped by org now, so neither route is a finding any more and both entries went with them."
   ],
   "routes": {
     "DELETE /api/v1/2fa": {
@@ -139,10 +140,6 @@
     "POST /api/v1/public/quotes/:token/sign": {
       "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
       "status": "safe"
-    },
-    "POST /api/v1/unsubscribe-experiments/variants/:variantId/outcome": {
-      "why": "KNOWN OPEN, not a justification: same write as the impression route above, keyed by variantId with no org. Found by this sweep in Z83.",
-      "status": "known-open"
     },
     "POST /api/v1/webhooks/esign/:provider": {
       "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",

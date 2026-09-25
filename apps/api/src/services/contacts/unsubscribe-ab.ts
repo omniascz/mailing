@@ -102,17 +102,29 @@ export async function recordImpression(orgId: string, variantId: string): Promis
 }
 
 /** Record the final outcome: saved (kept subscribed) or unsubscribed. */
-export async function recordOutcome(variantId: string, saved: boolean): Promise<void> {
+/**
+ * Count how that impression ended, for one organization's variant.
+ *
+ * Same reasoning as recordImpression: the id arrives in the path of a route any
+ * tenant can call, and saved_count against unsub_count is the whole result of
+ * the experiment. A neighbour able to move either number can pick the winner.
+ */
+export async function recordOutcome(
+  orgId: string,
+  variantId: string,
+  saved: boolean,
+): Promise<void> {
+  const mine = and(eq(unsubscribeVariants.id, variantId), eq(unsubscribeVariants.orgId, orgId));
   if (saved) {
     await db
       .update(unsubscribeVariants)
       .set({ savedCount: sql`saved_count + 1` })
-      .where(eq(unsubscribeVariants.id, variantId));
+      .where(mine);
   } else {
     await db
       .update(unsubscribeVariants)
       .set({ unsubCount: sql`unsub_count + 1` })
-      .where(eq(unsubscribeVariants.id, variantId));
+      .where(mine);
   }
 }
 

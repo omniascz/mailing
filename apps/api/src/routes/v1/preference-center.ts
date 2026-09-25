@@ -84,7 +84,7 @@ export default async function preferenceCenterRoutes(app: FastifyInstance) {
       if (id) {
         const variant = await assignVariant(id.orgId, id.contactId);
         if (variant)
-          recordOutcome(variant.variantId, !body.globalUnsubscribe).catch(() => {});
+          recordOutcome(id.orgId, variant.variantId, !body.globalUnsubscribe).catch(() => {});
       }
 
       return reply.send({ data: result });
