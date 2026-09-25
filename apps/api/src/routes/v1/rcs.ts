@@ -77,7 +77,10 @@ const rcsRoutes: FastifyPluginAsync = async (app) => {
           error: z.string().max(2000).optional(),
         })
         .parse(req.body);
-      await updateStatus(id, body.status, { providerId: body.providerId, error: body.error });
+      await updateStatus(req.user!.orgId, id, body.status, {
+        providerId: body.providerId,
+        error: body.error,
+      });
       return reply.code(204).send();
     },
   );
