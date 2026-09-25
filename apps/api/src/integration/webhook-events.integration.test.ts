@@ -216,14 +216,25 @@ describe('webhook events are emitted (authenticated, real DB)', () => {
       };
 
       await mk('SM-itest-delivered');
-      await updateSmsDeliveryStatus('SM-itest-delivered', 'delivered', new Date());
+      await updateSmsDeliveryStatus(
+        { provider: 'twilio' },
+        'SM-itest-delivered',
+        'delivered',
+        new Date(),
+      );
       const ok = data(await waitForEvent('sms.delivered'));
       expect(ok['providerMessageId']).toBe('SM-itest-delivered');
       expect(ok['provider']).toBe('twilio');
       expect(ok['to']).toBe('+420777123456');
 
       await mk('SM-itest-failed');
-      await updateSmsDeliveryStatus('SM-itest-failed', 'failed', undefined, 'Unreachable handset');
+      await updateSmsDeliveryStatus(
+        { provider: 'twilio' },
+        'SM-itest-failed',
+        'failed',
+        undefined,
+        'Unreachable handset',
+      );
       const bad = data(await waitForEvent('sms.failed'));
       expect(bad['providerMessageId']).toBe('SM-itest-failed');
       expect(bad['reason']).toBe('Unreachable handset');
@@ -251,7 +262,7 @@ describe('webhook events are emitted (authenticated, real DB)', () => {
         status: 'queued',
         segments: 1,
       });
-      await updateSmsDeliveryStatus('SM-itest-queued', 'sent');
+      await updateSmsDeliveryStatus({ provider: 'twilio' }, 'SM-itest-queued', 'sent');
       await new Promise((r) => setTimeout(r, 500));
 
       const after = (await deliveries()).filter((r) => r.event.startsWith('sms.')).length;

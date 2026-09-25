@@ -28,10 +28,10 @@ async function processRcsSend(job: Job<RcsSendJob>) {
   const result = await sendRcs(provider, d.phone, d.messageType, d.payload as never);
 
   if (result.status === 'sent') {
-    await updateStatus(d.messageId, 'sent', { providerId: result.providerId });
+    await updateStatus(d.orgId, d.messageId, 'sent', { providerId: result.providerId });
     return { messageId: d.messageId, providerId: result.providerId };
   }
-  await updateStatus(d.messageId, 'failed', { error: result.error });
+  await updateStatus(d.orgId, d.messageId, 'failed', { error: result.error });
   throw new Error(result.error ?? 'RCS send failed');
 }
 

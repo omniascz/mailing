@@ -316,7 +316,30 @@ export async function routedSmsSend(
 
 // ─── Update delivery status from DLR webhook ─────────────────────────────────
 
+/**
+ * Who the delivery report came from, and therefore what it is allowed to touch.
+ *
+ * The two providers are not in the same position, and pretending they were is
+ * what made this cross-tenant:
+ *
+ *   twilio   — the callback is verified against TWILIO_AUTH_TOKEN, one platform
+ *              account for the whole product, so a MessageSid is unique inside
+ *              an id space only we and Twilio can write to. Nothing narrower is
+ *              available and nothing narrower is needed.
+ *   bulkgate — every customer brings their own BulkGate account, and BulkGate
+ *              documents no way to authenticate the callback at all (see the
+ *              route). So an sms_id means nothing on its own: it is unique
+ *              inside somebody's account, not inside ours, and anybody can post
+ *              one. It is only usable together with the org whose connection
+ *              the DLR URL belongs to.
+ *
+ * A discriminated union rather than an optional orgId, so a third provider
+ * cannot be added by forgetting the argument.
+ */
+export type DlrOrigin = { provider: 'twilio' } | { provider: 'bulkgate'; orgId: string };
+
 export async function updateSmsDeliveryStatus(
+  origin: DlrOrigin,
   providerMessageId: string,
   status: string,
   deliveredAt?: Date,
@@ -328,7 +351,16 @@ export async function updateSmsDeliveryStatus(
       status,
       ...(deliveredAt && { deliveredAt }),
     })
-    .where(eq(smsSendLog.providerMessageId, providerMessageId))
+    .where(
+      and(
+        eq(smsSendLog.providerMessageId, providerMessageId),
+        // The provider is part of the key too: two providers' id spaces are
+        // unrelated, so a DLR from one must not be able to name a row sent
+        // through the other.
+        eq(smsSendLog.provider, origin.provider),
+        ...(origin.provider === 'bulkgate' ? [eq(smsSendLog.orgId, origin.orgId)] : []),
+      ),
+    )
     .returning();
 
   // Both provider webhooks (Bulkgate DLR, Twilio status callback) normalise

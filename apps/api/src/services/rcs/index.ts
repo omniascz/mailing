@@ -80,7 +80,23 @@ export async function listForContact(
     .limit(limit);
 }
 
+/**
+ * Write a delivery outcome onto one message of one organization.
+ *
+ * `orgId` comes first and is mandatory because it was missing entirely: the
+ * update was keyed by `messageId` alone, and that id arrives in the path of
+ * `PATCH /api/v1/rcs/messages/:id/status` — a route that authenticates its
+ * caller and then never asks which tenant they are. Any logged-in account could
+ * therefore set the status, the delivery timestamp, the provider id and the
+ * error text on another tenant's message. Both callers already hold the org:
+ * the route has `req.user.orgId`, and the sender worker carries `orgId` in its
+ * job payload.
+ *
+ * The argument order matches helpdesk's updateStatus(orgId, id, status), so two
+ * functions of the same name cannot be confused at a call site.
+ */
 export async function updateStatus(
+  orgId: string,
   messageId: string,
   status: 'sent' | 'delivered' | 'failed',
   meta?: {
@@ -93,7 +109,10 @@ export async function updateStatus(
   if (status === 'delivered') patch.deliveredAt = new Date();
   if (meta?.providerId) patch.providerId = meta.providerId;
   if (meta?.error) patch.error = meta.error;
-  await db.update(rcsMessages).set(patch).where(eq(rcsMessages.id, messageId));
+  await db
+    .update(rcsMessages)
+    .set(patch)
+    .where(and(eq(rcsMessages.id, messageId), eq(rcsMessages.orgId, orgId)));
 }
 
 /** Helper for callers that want to build a carousel inline. */
