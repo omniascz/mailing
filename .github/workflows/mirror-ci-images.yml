@@ -1,0 +1,154 @@
+name: Mirror CI Images
+
+# CI pulls its object store from a registry we own, because every registry we
+# borrowed one from stopped serving it: Docker Hub deleted the `minio/minio`
+# namespace on 2026-09-12, quay.io/minio/minio went private for every tag on
+# 09-24 - taking the digest that was pinned in ci.yml with it - and
+# ghcr.io/minio/minio refuses. Three moves in two weeks. What was withdrawn is
+# the right to pull at all, so pinning harder cannot help; keeping our own copy
+# can.
+#
+# Deliberately NOT a step in ci.yml:
+#   - this has to happen once, and then only when somebody changes the digest on
+#     purpose. A step in ci.yml would re-push on every run of every branch.
+#   - a pull request from a fork gets a read-only token, so a push step would
+#     fail there for reasons that have nothing to do with the change under test.
+#   - above all, if ci.yml could repair the mirror by itself, then a deleted
+#     package would heal silently and nobody would ever learn the mirror had
+#     gone. The failure has to be visible, and it belongs to this workflow.
+#
+# Hence manual dispatch, plus a push trigger scoped to this one file - which is
+# exactly the event "somebody changed what we mirror". Re-running it is safe:
+# copying the same digest twice is a no-op that ends with the same manifest.
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Source image, pinned by digest (registry/name:tag@sha256:...)'
+        required: false
+        default: ''
+      target_tag:
+        description: 'Tag to publish inside ghcr.io/<owner>/ci-s3'
+        required: false
+        default: ''
+  push:
+    paths:
+      - '.github/workflows/mirror-ci-images.yml'
+
+env:
+  REGISTRY: ghcr.io
+  PACKAGE: ci-s3
+  # What a run with no inputs mirrors - the push trigger has none. Keep these in
+  # step with the digest pinned in ci.yml and docker-compose.yml; the digest is
+  # what both of those resolve, so a mismatch here means CI keeps using whatever
+  # was mirrored last and this workflow is the only place that says so.
+  DEFAULT_SOURCE: cgr.dev/chainguard/minio:latest@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
+  DEFAULT_TAG: minio-2026-09-25
+
+jobs:
+  mirror:
+    name: Mirror the CI object store into GHCR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Resolve what to copy where
+        id: what
+        env:
+          IN_SOURCE: ${{ github.event.inputs.source }}
+          IN_TAG: ${{ github.event.inputs.target_tag }}
+        run: |
+          src="${IN_SOURCE:-}"
+          [ -n "$src" ] || src="$DEFAULT_SOURCE"
+          tag="${IN_TAG:-}"
+          [ -n "$tag" ] || tag="$DEFAULT_TAG"
+          # A floating source tag would make the mirror unreproducible: the
+          # whole point is that the copy can be compared with the original.
+          case "$src" in
+            *@sha256:*) ;;
+            *) echo "::error::source must be pinned by digest, got '$src'"; exit 1 ;;
+          esac
+          dst="${REGISTRY}/${{ github.repository_owner }}/${PACKAGE}:${tag}"
+          {
+            echo "src=$src"
+            echo "dst=$dst"
+            echo "src_digest=${src##*@}"
+          } >> "$GITHUB_OUTPUT"
+          echo "source: $src"
+          echo "target: $dst"
+
+      - name: Install skopeo
+        run: |
+          # skopeo rather than `docker pull && docker tag && docker push`: docker
+          # pulls one platform out of a manifest list and pushes a manifest it
+          # built itself, so the digest changes and the copy can no longer be
+          # compared with the original. `skopeo copy --all` moves the bytes as
+          # they are, which is what makes the check in the next step meaningful.
+          if ! command -v skopeo >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq skopeo
+          fi
+          skopeo --version
+
+      - name: Copy the image, preserving the digest
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          skopeo copy --all \
+            --dest-creds "${GHCR_USER}:${GHCR_TOKEN}" \
+            "docker://${{ steps.what.outputs.src }}" \
+            "docker://${{ steps.what.outputs.dst }}"
+
+      - name: The mirror must carry the same digest as the original
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The digest of a manifest is the sha256 of its raw bytes, so this
+          # compares the copy with the original without trusting either
+          # registry's bookkeeping. Equal digests mean equal content, which is a
+          # stronger statement than "the S3 probe still passes against it".
+          want="${{ steps.what.outputs.src_digest }}"
+          got="sha256:$(skopeo inspect --raw --creds "${GHCR_USER}:${GHCR_TOKEN}" \
+            "docker://${{ steps.what.outputs.dst }}" | sha256sum | cut -d' ' -f1)"
+          echo "original: $want"
+          echo "mirror:   $got"
+          if [ "$want" != "$got" ]; then
+            echo "::error::the mirror does not carry the original digest"
+            exit 1
+          fi
+          {
+            echo "### Mirrored"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| source | \`${{ steps.what.outputs.src }}\` |"
+            echo "| mirror | \`${{ steps.what.outputs.dst }}\` |"
+            echo "| digest | \`$got\` |"
+            echo ""
+            echo "Pin this in ci.yml and docker-compose.yml:"
+            echo ""
+            echo "\`\`\`"
+            echo "${{ steps.what.outputs.dst }}@$got"
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Can it be pulled without credentials
+        run: |
+          # The dev `docker compose up` pulls this anonymously, so a private
+          # package would work in CI and fail on every laptop. This step does not
+          # fail the run - the visibility of a brand new package is not something
+          # the workflow can set - it reports, so the answer is in the log.
+          if skopeo inspect --no-creds --raw \
+              "docker://${{ steps.what.outputs.dst }}" >/dev/null 2>&1; then
+            echo "anonymous pull: OK - the package is public"
+          else
+            echo "anonymous pull: REFUSED - the package is private."
+            echo "CI still works (it logs in with GITHUB_TOKEN), but"
+            echo "docker compose on a laptop will not. Flip it at"
+            echo "https://github.com/users/${{ github.repository_owner }}/packages/container/${PACKAGE}/settings"
+            echo "::warning::ghcr.io/${{ github.repository_owner }}/${PACKAGE} is private; dev compose cannot pull it anonymously"
+          fi
