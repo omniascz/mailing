@@ -198,25 +198,49 @@ jobs:
       # mocking the store would leave the one thing that path exists for
       # untested. Bucket and public-read policy are created by the suites.
       #
-      # Docker Hub `minio/minio` is gone. MinIO stopped publishing community
-      # images in October 2025 and the repository was withdrawn, so the pull
-      # fails with "pull access denied … repository does not exist" and the job
-      # dies before db:migrate - every check after it reports skipped, which
-      # reads as a test failure and is not one.
+      # Three registries in two weeks. Docker Hub's `minio/minio` namespace was
+      # deleted on 12 Sep 2026, quay.io/minio/minio went private for every tag
+      # on 24 Sep - including the digest that was pinned right here, which is
+      # the point: the pull died with `docker: unauthorized`, exit 125, before a
+      # single test ran, and every later check then reads as skipped. What broke
+      # was not the tag. It was the right to pull at all, so pinning harder
+      # cannot fix it. ghcr.io/minio/minio refuses too.
       #
-      # Pinned to the last community release on Quay, by tag AND digest: the tag
-      # says which release this is to a human, the digest is what Docker
-      # resolves. No `:latest` - there is no upstream left to track, so a
-      # floating tag could only move to something unrelated or vanish too.
+      # Six candidates were pulled, started, and measured against the ten things
+      # the suites actually ask of the store - CreateBucket, PutBucketPolicy,
+      # Put/Get, NoSuchKey on a missing key, presigned GET and presigned PUT,
+      # anonymous read of a public object, ListObjectsV2, Delete:
+      #   quay.io/minio/aistor/minio pulls, then denies every S3 call with "No
+      #     valid license found, running in offline mode" - 0 of 10.
+      #   adobe/s3mock:3.12.0 does 9, has no bucket policy, and verifies no
+      #     credentials at all - which would let the signing suites pass while
+      #     signing was broken. A store that accepts anything cannot fail.
+      #   chrislusf/seaweedfs:3.80 does 9; PutBucketPolicy is NotImplemented in
+      #     every policy shape, and unconfigured it also checks no credentials.
+      #   dxflrs/garage:v1.0.1 does 7 - no policy, presigned PUT answers 400.
+      #   zenko/cloudserver does all 10 once the policy says Principal "*"
+      #     instead of {"AWS":["*"]}, and it does enforce signatures, but it is
+      #     2.05 GB per job and its last push was 2023-01-10.
+      #   cgr.dev/chainguard/minio does all 10 at 243 MB - with --user 0:0.
       #
-      # cgr.dev/chainguard/minio was the other candidate and was measured and
-      # rejected: it pulls, but its entrypoint is /usr/bin/minio running as uid
-      # 65532, and `server /data` then dies with "Unable to initialize backend:
-      # file access denied". Using it means also granting write access to /data,
-      # which is a change to this step rather than to one string.
+      # Hence --user 0:0, which is the "file access denied" this comment used to
+      # reject the image for: the entrypoint is /usr/bin/minio as uid 65532 and
+      # `server /data` cannot write the volume. Root inside a container that is
+      # deleted with the runner is the entire price, and it buys a store that
+      # needs no change to any test.
+      #
+      # Honest limits. This is still MinIO, i.e. still the upstream that moved
+      # three times, and cgr.dev serves only `latest` anonymously: tags/list
+      # answers 401 even with a valid pull token, so nothing here can watch the
+      # tag move or tell how long this digest stays fetchable. Tag AND digest,
+      # so a moved tag cannot silently change what runs; if the digest is
+      # collected this fails at pull time, loudly, the way it just did. The only
+      # source that cannot be taken away is one we own - mirror this digest into
+      # ghcr.io/omniascz and pull from there. That needs a token with
+      # write:packages, which this branch does not have.
       - name: Start MinIO
         run: |
-          docker run -d --name ci-minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin quay.io/minio/minio:RELEASE.2025-06-13T11-33-47Z@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8 server /data
+          docker run -d --name ci-minio -p 9000:9000 --user 0:0 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin cgr.dev/chainguard/minio:latest@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1 server /data
           for i in $(seq 1 30); do
             if curl -sf http://127.0.0.1:9000/minio/health/live; then echo "minio up"; exit 0; fi
             sleep 2
