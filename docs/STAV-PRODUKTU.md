@@ -287,8 +287,8 @@ na člověku.
 
 ```yaml
 # Routy složené aplikace: buildApp() + printRoutes, bez zapnuté skupiny.
-core_paths: 902
-core_operations: 1126
+core_paths: 903
+core_operations: 1127
 # Rozdíl proti FEATURE_BEYOND_CORE=true, tedy plocha za přepínači.
 beyond_core_paths: 342
 beyond_core_operations: 437
