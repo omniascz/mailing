@@ -47,7 +47,10 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
    */
   app.get(
     '/api/v1/newsletter-referrals/programs',
-    { schema: { tags: ['Newsletter Referrals'], summary: 'List referral programs' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Referrals'], summary: 'List referral programs' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const rows = await db
@@ -69,7 +72,10 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/newsletter-referrals/programs',
-    { schema: { tags: ['Newsletter Referrals'], summary: 'Create referral program' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Referrals'], summary: 'Create referral program' },
+    },
     async (req, reply) => {
       const orgId = req.user!.orgId;
       const body = programCreateSchema.parse(req.body);
@@ -88,7 +94,10 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
    */
   app.put(
     '/api/v1/newsletter-referrals/programs/:id',
-    { schema: { tags: ['Newsletter Referrals'], summary: 'Update referral program' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Referrals'], summary: 'Update referral program' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
@@ -122,7 +131,10 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/newsletter-referrals/assign',
-    { schema: { tags: ['Newsletter Referrals'], summary: 'Assign referral code to contact' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Referrals'], summary: 'Assign referral code to contact' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { contactId, programId } = z
@@ -174,7 +186,10 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
    */
   app.get(
     '/api/v1/newsletter-referrals/stats/:contactId',
-    { schema: { tags: ['Newsletter Referrals'], summary: 'Get referral stats for a contact' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Referrals'], summary: 'Get referral stats for a contact' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);

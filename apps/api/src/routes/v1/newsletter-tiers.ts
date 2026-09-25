@@ -51,7 +51,10 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
    */
   app.get(
     '/api/v1/newsletter-tiers',
-    { schema: { tags: ['Newsletter Tiers'], summary: 'List newsletter tiers' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Tiers'], summary: 'List newsletter tiers' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const rows = await db
@@ -68,7 +71,10 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/newsletter-tiers',
-    { schema: { tags: ['Newsletter Tiers'], summary: 'Create newsletter tier' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Tiers'], summary: 'Create newsletter tier' },
+    },
     async (req, reply) => {
       const orgId = req.user!.orgId;
       const body = tierCreateSchema.parse(req.body);
@@ -87,7 +93,10 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
    */
   app.put(
     '/api/v1/newsletter-tiers/:id',
-    { schema: { tags: ['Newsletter Tiers'], summary: 'Update newsletter tier' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Tiers'], summary: 'Update newsletter tier' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
@@ -116,7 +125,10 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
    */
   app.delete(
     '/api/v1/newsletter-tiers/:id',
-    { schema: { tags: ['Newsletter Tiers'], summary: 'Deactivate newsletter tier' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Tiers'], summary: 'Deactivate newsletter tier' },
+    },
     async (req, reply) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
@@ -135,7 +147,10 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
    */
   app.get(
     '/api/v1/newsletter-tiers/:id/subscribers',
-    { schema: { tags: ['Newsletter Tiers'], summary: 'List subscribers for a tier' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Tiers'], summary: 'List subscribers for a tier' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
@@ -173,7 +188,10 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/newsletter-tiers/subscribe',
-    { schema: { tags: ['Newsletter Tiers'], summary: 'Subscribe contact to a tier' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Tiers'], summary: 'Subscribe contact to a tier' },
+    },
     async (req, reply) => {
       const orgId = req.user!.orgId;
       const body = subscribeSchema.parse(req.body);
@@ -300,7 +318,10 @@ export default async function newsletterTierRoutes(app: FastifyInstance) {
    */
   app.get(
     '/api/v1/newsletter-tiers/check-access',
-    { schema: { tags: ['Newsletter Tiers'], summary: 'Check contact tier access' } },
+    {
+      preHandler: [app.authenticate],
+      schema: { tags: ['Newsletter Tiers'], summary: 'Check contact tier access' },
+    },
     async (req) => {
       const orgId = req.user!.orgId;
       const { contactId, tierId } = z
