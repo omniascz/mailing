@@ -76,8 +76,17 @@ services:
       start_period: 30s
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-06-13T11-33-47Z@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
+    # quay.io/minio/minio went private for every tag on 2026-09-24, after Docker
+    # Hub deleted the namespace on 09-12, so the release this line used to pin
+    # stopped being pullable and `docker compose up` failed here. Chainguard builds the
+    # same server and serves it anonymously; see the candidate measurements in
+    # .github/workflows/ci.yml, which runs this image with the same arguments.
+    # `user: "0:0"` is required: the entrypoint is /usr/bin/minio as uid 65532,
+    # which cannot write the minio_data volume, and `server /data` then dies
+    # with "Unable to initialize backend: file access denied".
+    image: cgr.dev/chainguard/minio:latest@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
     container_name: forgemsg-minio
+    user: "0:0"
     ports:
       - "9000:9000"   # API
       - "9001:9001"   # Console
