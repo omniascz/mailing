@@ -112,7 +112,7 @@ export default async function unsubscribeAbRoutes(app: FastifyInstance) {
   /** POST /api/v1/unsubscribe-experiments/variants/:variantId/impression */
   app.post('/api/v1/unsubscribe-experiments/variants/:variantId/impression', async (req) => {
     const { variantId } = z.object({ variantId: z.string().uuid() }).parse(req.params);
-    await recordImpression(variantId);
+    await recordImpression(req.user!.orgId, variantId);
     return { ok: true };
   });
 
@@ -120,7 +120,7 @@ export default async function unsubscribeAbRoutes(app: FastifyInstance) {
   app.post('/api/v1/unsubscribe-experiments/variants/:variantId/outcome', async (req) => {
     const { variantId } = z.object({ variantId: z.string().uuid() }).parse(req.params);
     const body = z.object({ saved: z.boolean() }).parse(req.body);
-    await recordOutcome(variantId, body.saved);
+    await recordOutcome(req.user!.orgId, variantId, body.saved);
     return { ok: true };
   });
 

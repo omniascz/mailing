@@ -82,25 +82,49 @@ export async function assignVariant(
 }
 
 /** Record that a contact was shown a variant (impression). */
-export async function recordImpression(variantId: string): Promise<void> {
+/**
+ * Count that one organization's variant was shown.
+ *
+ * The orgId is not decoration. `POST
+ * /api/v1/unsubscribe-experiments/variants/:variantId/impression` takes the id
+ * from the path and every authenticated tenant can reach it, so without the org
+ * filter one account could inflate another's experiment counters — and those
+ * counters are what the analysis endpoint reads to declare a winning variant.
+ * Both callers hold the org already: the API route has `req.user.orgId`, and the
+ * public preference centre resolves it from the signed `pref` token before it
+ * ever picks a variant.
+ */
+export async function recordImpression(orgId: string, variantId: string): Promise<void> {
   await db
     .update(unsubscribeVariants)
     .set({ impressions: sql`impressions + 1` })
-    .where(eq(unsubscribeVariants.id, variantId));
+    .where(and(eq(unsubscribeVariants.id, variantId), eq(unsubscribeVariants.orgId, orgId)));
 }
 
 /** Record the final outcome: saved (kept subscribed) or unsubscribed. */
-export async function recordOutcome(variantId: string, saved: boolean): Promise<void> {
+/**
+ * Count how that impression ended, for one organization's variant.
+ *
+ * Same reasoning as recordImpression: the id arrives in the path of a route any
+ * tenant can call, and saved_count against unsub_count is the whole result of
+ * the experiment. A neighbour able to move either number can pick the winner.
+ */
+export async function recordOutcome(
+  orgId: string,
+  variantId: string,
+  saved: boolean,
+): Promise<void> {
+  const mine = and(eq(unsubscribeVariants.id, variantId), eq(unsubscribeVariants.orgId, orgId));
   if (saved) {
     await db
       .update(unsubscribeVariants)
       .set({ savedCount: sql`saved_count + 1` })
-      .where(eq(unsubscribeVariants.id, variantId));
+      .where(mine);
   } else {
     await db
       .update(unsubscribeVariants)
       .set({ unsubCount: sql`unsub_count + 1` })
-      .where(eq(unsubscribeVariants.id, variantId));
+      .where(mine);
   }
 }
 

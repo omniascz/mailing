@@ -127,12 +127,52 @@ function renderCustomReportHtml(name: string, result: ReportResult): string {
   );
 }
 
-/** Cron entrypoint: dispatch every report whose nextRunAt is in the past. */
-export async function runDueReports(now: Date = new Date()): Promise<DispatchResult[]> {
-  const due = await db
-    .select()
-    .from(scheduledReports)
-    .where(and(eq(scheduledReports.enabled, true), lte(scheduledReports.nextRunAt, now)));
+/**
+ * Dispatch the due reports of ONE organization.
+ *
+ * The orgId is load-bearing, and it was missing. `POST
+ * /api/v1/scheduled-reports/run-due` is a CORE route any org's admin or owner
+ * can reach, and it called the unscoped version: one press rendered every
+ * tenant's due report, **emailed it to that tenant's recipients**, advanced
+ * their `next_run_at` so their own scheduled run was skipped — and handed the
+ * rendered HTML of all of them back to the caller in the response body.
+ *
+ * Unlike the RSS case this pattern came from (#167), there is a cron here:
+ * `POST /api/v1/internal/scheduled-reports/run-due`
+ * (routes/v1/internal/triggers.ts:233) runs hourly behind the internal secret
+ * and is the caller that legitimately crosses organizations. It now calls
+ * `runAllDueReports`, and the two audiences are told apart by which function
+ * they can name rather than by an argument somebody might omit.
+ */
+export async function runDueReports(
+  orgId: string,
+  now: Date = new Date(),
+): Promise<DispatchResult[]> {
+  return dispatchDue(
+    and(
+      eq(scheduledReports.orgId, orgId),
+      eq(scheduledReports.enabled, true),
+      lte(scheduledReports.nextRunAt, now),
+    ),
+    now,
+  );
+}
+
+/**
+ * Cron entrypoint: dispatch every due report of every organization.
+ *
+ * Reachable only through the internal endpoint, which sits behind
+ * INTERNAL_API_SECRET. Nothing a customer can call may reach this.
+ */
+export async function runAllDueReports(now: Date = new Date()): Promise<DispatchResult[]> {
+  return dispatchDue(
+    and(eq(scheduledReports.enabled, true), lte(scheduledReports.nextRunAt, now)),
+    now,
+  );
+}
+
+async function dispatchDue(where: ReturnType<typeof and>, now: Date): Promise<DispatchResult[]> {
+  const due = await db.select().from(scheduledReports).where(where);
 
   const results: DispatchResult[] = [];
   for (const report of due) {
