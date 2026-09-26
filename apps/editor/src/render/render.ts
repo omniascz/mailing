@@ -24,6 +24,7 @@ import {
   mustShowOptOut,
   optOutUrl,
   postalAddressLines,
+  senderLinesNotIn,
   unsubscribeLabel,
   type MessageStream,
   type RenderLocale,
@@ -657,8 +658,7 @@ function renderCoupon(block: CouponBlock, ctx: MergeTagContext, links: string[])
 const COMPLIANCE_MARKER = 'data-fm-optout="1"';
 
 /** Sender identity block — the postal address CAN-SPAM and GDPR both want. */
-function postalAddress(ctx: MergeTagContext): string {
-  const lines = postalAddressLines(ctx);
+function postalAddress(ctx: MergeTagContext, lines = postalAddressLines(ctx)): string {
   if (lines.length === 0) return '';
   return `<div style="margin-top:8px;">${lines.map((l) => escapeHtml(l)).join('<br/>')}</div>`;
 }
@@ -701,12 +701,13 @@ function renderFooter(
   marketing: boolean,
   locale: RenderLocale | undefined,
 ): string {
-  const body = escapeHtml(parseMergeTags(block.content, ctx));
+  const text = parseMergeTags(block.content, ctx);
+  const body = escapeHtml(text);
 
-  // CAN-SPAM: always append the sender's physical postal address when the org
-  // has one configured (and the footer body doesn't already contain it).
-  const address = ctx.system?.companyAddress?.trim();
-  const addr = address && !block.content.includes(address) ? postalAddress(ctx) : '';
+  // CAN-SPAM: always append the sender's name and physical postal address when
+  // the org has an address configured — minus whatever the footer text already
+  // says, so a footer that names the shop does not name it twice.
+  const addr = postalAddress(ctx, senderLinesNotIn(ctx, text));
 
   // showUnsubscribe is the template's opinion. It is honoured for
   // transactional mail, where an opt-out does not belong, and overridden for
