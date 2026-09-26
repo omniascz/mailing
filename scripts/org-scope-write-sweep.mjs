@@ -25,9 +25,14 @@
  *
  * One signal, chosen because it is what the three defects had in common and the
  * safe cases do not: a route handler that performs a keyed write — itself, or
- * through a service function one call away — and in which the string `orgId`
- * never appears. A handler that checks ownership mentions the org; a handler
- * that forgot to has nothing to mention.
+ * up to two calls away — and in which the string `orgId` never appears. A
+ * handler that checks ownership mentions the org; a handler that forgot to has
+ * nothing to mention.
+ *
+ * The walk follows calls into imported functions AND into functions declared in
+ * the same file. It used to stop after one hop and to ignore local helpers, and
+ * #212 showed what that costs: splitting a function so that the write moved into
+ * a local helper removed a route from this report without fixing anything.
  *
  * Not a pinned count. A number moves with every refactor and says nothing about
  * which write moved; this prints the route, the file and line, the guard and the
@@ -52,6 +57,9 @@ const ALLOWLIST = path.join(HERE, 'org-scope-write-allowlist.json');
 
 /** Same files the lint rule skips: fixtures there span tenants on purpose. */
 const SKIP = /(\.test\.ts$)|([\\/]integration[\\/])|([\\/]test-support[\\/])/;
+
+/** How many calls from the route handler the walk follows. See the walk below. */
+const MAX_HOPS = 2;
 
 const WRITE_KINDS = new Set(['update', 'delete', 'insert']);
 const CARRIERS = new Set(['where', 'values', 'onConflictDoUpdate', 'set']);
@@ -172,6 +180,57 @@ for (const file of files) {
   }
 }
 
+/**
+ * Every named function in the tree, so the walk can step from one into the next.
+ *
+ * Keyed by file AND name for the same reason the write index is: `send` alone
+ * means a dozen different functions here.
+ */
+const fnNodes = new Map(); // "<file>#<fn>" → {file, sf, node}
+for (const file of files) {
+  const sf = srcOf(file);
+  for (const n of nodesOf(sf)) {
+    let name = null;
+    if (ts.isFunctionDeclaration(n) || ts.isMethodDeclaration(n)) name = n.name?.getText() ?? null;
+    else if (
+      (ts.isArrowFunction(n) || ts.isFunctionExpression(n)) &&
+      n.parent &&
+      ts.isVariableDeclaration(n.parent)
+    )
+      name = n.parent.name.getText();
+    if (!name) continue;
+    const key = `${file}#${name}`;
+    if (!fnNodes.has(key)) fnNodes.set(key, { file, sf, node: n, name });
+  }
+}
+
+/**
+ * The functions a body calls, resolved to index keys.
+ *
+ * Two kinds of edge, and the second one is the point of this whole change:
+ *   - a name this file imported, which is what the walk followed before;
+ *   - a name declared in this same file, which it did not. Splitting
+ *     `runDueReports` into `runAllDueReports` + a local `dispatchDue` helper in
+ *     #212 moved the write one step further from the route and the internal cron
+ *     dropped out of the report without anything being fixed. A local call is an
+ *     edge like any other.
+ *
+ * Only bare identifier calls: `reply.send()` and `adapter.send()` are method
+ * calls on an object, and treating those as edges is how a name-only index once
+ * reported 146 routes instead of 44.
+ */
+function calleesOf(file, sf, root, imports) {
+  const keys = new Set();
+  for (const n of nodesOf(root)) {
+    if (!ts.isCallExpression(n) || !ts.isIdentifier(n.expression)) continue;
+    const name = n.expression.text;
+    const from = imports.get(name);
+    if (from && fnNodes.has(`${from}#${name}`)) keys.add(`${from}#${name}`);
+    else if (fnNodes.has(`${file}#${name}`)) keys.add(`${file}#${name}`);
+  }
+  return [...keys];
+}
+
 /** Resolve a module specifier the way the compiler would, .js → .ts included. */
 function resolveImport(fromFile, spec) {
   if (!spec.startsWith('.')) return null;
@@ -187,8 +246,17 @@ function resolveImport(fromFile, spec) {
   return null;
 }
 
+const importMaps = new Map();
 /** localName → file it was imported from, for static and dynamic imports. */
 function importMap(sf, file) {
+  const cached = importMaps.get(file);
+  if (cached) return cached;
+  const built = buildImportMap(sf, file);
+  importMaps.set(file, built);
+  return built;
+}
+
+function buildImportMap(sf, file) {
   const map = new Map();
   for (const n of nodesOf(sf)) {
     if (ts.isImportDeclaration(n) && ts.isStringLiteral(n.moduleSpecifier)) {
@@ -271,20 +339,35 @@ for (const file of files) {
         writes.push(`${rel(file)}:${w.line} (${w.kind} ${w.table})`);
       }
     }
-    // Writes one call away, through a function this file imported. Only bare
-    // identifier calls: `reply.send()` and `adapter.send()` are not calls to an
-    // imported function, and treating them as such is how a name-only index
-    // reports every route in the repository.
-    for (const inner of nodesOf(handler)) {
-      if (!ts.isCallExpression(inner) || !ts.isIdentifier(inner.expression)) continue;
-      const callee = inner.expression.text;
-      const from = imports.get(callee);
-      if (!from) continue;
-      const hits = serviceWrites.get(`${from}#${callee}`);
-      if (!hits) continue;
-      for (const w of hits) {
-        writes.push(`${w.file}:${w.line} (${w.kind} ${w.table}, via ${callee}())`);
+    // Writes up to MAX_HOPS calls away, breadth-first, carrying the path so a
+    // finding says how the route reaches the write.
+    //
+    // Why two and not more: measured on this repo, a second hop adds twelve
+    // routes to classify and takes the run from ~2s to ~4s, and it is where the
+    // writes that a refactor pushes out of sight actually land. A third adds four
+    // more of the same kinds and nothing new, and beyond that every candidate has
+    // an orgId somewhere along its path — the paths become long service chains
+    // where scoping does happen, so the check stops discriminating and the
+    // allowlist becomes the product instead of the check.
+    const seen = new Set();
+    let frontier = calleesOf(file, sf, handler, imports).map((k) => ({ key: k, via: [] }));
+    for (let hop = 1; hop <= MAX_HOPS && frontier.length > 0; hop++) {
+      const next = [];
+      for (const { key, via } of frontier) {
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const fn = fnNodes.get(key);
+        if (!fn) continue;
+        const path_ = [...via, `${fn.name}()`];
+        for (const w of serviceWrites.get(key) ?? []) {
+          writes.push(`${w.file}:${w.line} (${w.kind} ${w.table}, via ${path_.join(' → ')})`);
+        }
+        if (hop < MAX_HOPS) {
+          const imap = importMap(fn.sf, fn.file);
+          for (const c of calleesOf(fn.file, fn.sf, fn.node, imap)) next.push({ key: c, via: path_ });
+        }
       }
+      frontier = next;
     }
 
     if (writes.length === 0) continue;

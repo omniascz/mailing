@@ -6,7 +6,8 @@
     "still owed — those are printed loudly and never quietly pass as correct.",
     "Keyed by route, not by line: line numbers shift under any edit.",
     "Z84: the customer run-due route is scoped, so it is no longer a finding and its entry would be stale. The internal cron dropped out too, for a duller reason: its write moved into a local helper and this sweep follows one hop from the route, not two. That route is still platform-wide by design; the check simply no longer sees it.",
-    "Z84: the two unsubscribe-experiment counters are scoped by org now, so neither route is a finding any more and both entries went with them."
+    "Z84: the two unsubscribe-experiment counters are scoped by org now, so neither route is a finding any more and both entries went with them.",
+    "Z85 widened the walk from one hop to two and taught it to follow calls into functions declared in the same file, not only imported ones. That added the fourteen entries marked \"Newly visible at two hops\" or reported through a local helper. All fourteen are credentials or org-scoped resolutions one frame down, so all are safe: marking a cron behind the internal secret known-open when its one-hop siblings are safe would make that flag mean nothing."
   ],
   "routes": {
     "DELETE /api/v1/2fa": {
@@ -35,6 +36,10 @@
     },
     "GET /api/v1/social/accounts/callback/:platform": {
       "why": "The row is deleted by the one-time OAuth state value the callback carries, which is the credential; an org column would add nothing to it.",
+      "status": "safe"
+    },
+    "GET /api/v1/sso/oidc/callback": {
+      "why": "The one-time login state is deleted by the state value the provider echoes back, which is the credential; and the users row is matched against the connection's org (userRow.orgId !== orgId is refused) before lastLoginAt is written. Newly visible at two hops.",
       "status": "safe"
     },
     "GET /public/forms/:formId/variant": {
@@ -67,6 +72,10 @@
     },
     "POST /api/v1/auth/verify-email/:token": {
       "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
+      "status": "safe"
+    },
+    "POST /api/v1/billing/webhook": {
+      "why": "Stripe signature verified with a two-sided 300s replay window before anything is written, and the subscription and customer ids are Stripe's own inside our single platform account. Same position as POST /api/v1/webhooks/stripe above. Newly visible at two hops.",
       "status": "safe"
     },
     "POST /api/v1/ecommerce/webhooks/bigcommerce/:connectionId": {
@@ -109,6 +118,30 @@
       "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
       "status": "safe"
     },
+    "POST /api/v1/internal/engagement-score/refresh-all": {
+      "why": "Internal cron behind INTERNAL_API_SECRET (a global onRequest hook on the /api/v1/internal/ prefix). It iterates organizations itself and the per-org function one frame down is what carries the org; the route body has no caller-supplied id to scope by. Newly visible because the walk now follows two hops.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/predictive/refresh-all": {
+      "why": "Internal cron behind INTERNAL_API_SECRET (a global onRequest hook on the /api/v1/internal/ prefix). It iterates organizations itself and the per-org function one frame down is what carries the org; the route body has no caller-supplied id to scope by. Newly visible because the walk now follows two hops.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/rfm/refresh-all": {
+      "why": "Internal cron behind INTERNAL_API_SECRET (a global onRequest hook on the /api/v1/internal/ prefix). It iterates organizations itself and the per-org function one frame down is what carries the org; the route body has no caller-supplied id to scope by. Newly visible because the walk now follows two hops.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/scheduled-reports/run-due": {
+      "why": "The platform-wide report sweep, behind INTERNAL_API_SECRET, and deliberately the one caller that crosses organizations (#212 scoped the customer route and left this one). It is the route whose write #212 pushed into a local helper, which took it out of this report entirely — recovering that is why the walk now follows two hops, and why it is listed here as intent rather than absent.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/segments/refresh-membership": {
+      "why": "Internal cron behind INTERNAL_API_SECRET (a global onRequest hook on the /api/v1/internal/ prefix). It iterates organizations itself and the per-org function one frame down is what carries the org; the route body has no caller-supplied id to scope by. Newly visible because the walk now follows two hops.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/send-optimization/refresh-predictions": {
+      "why": "Internal cron behind INTERNAL_API_SECRET (a global onRequest hook on the /api/v1/internal/ prefix). It iterates organizations itself and the per-org function one frame down is what carries the org; the route body has no caller-supplied id to scope by. Newly visible because the walk now follows two hops.",
+      "status": "safe"
+    },
     "POST /api/v1/internal/sending/warmup/advance-all": {
       "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
       "status": "safe"
@@ -117,8 +150,16 @@
       "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
       "status": "safe"
     },
+    "POST /api/v1/internal/subscriptions/generate-due": {
+      "why": "Internal cron behind INTERNAL_API_SECRET (a global onRequest hook on the /api/v1/internal/ prefix). It iterates organizations itself and the per-org function one frame down is what carries the org; the route body has no caller-supplied id to scope by. Newly visible because the walk now follows two hops.",
+      "status": "safe"
+    },
     "POST /api/v1/internal/triggers/daily-run": {
       "why": "Internal cron endpoint behind INTERNAL_API_SECRET. The body is a platform-wide sweep by design and the caller supplies no id to scope by.",
+      "status": "safe"
+    },
+    "POST /api/v1/internal/warehouse-sync/run-due": {
+      "why": "Internal cron behind INTERNAL_API_SECRET (a global onRequest hook on the /api/v1/internal/ prefix). It iterates organizations itself and the per-org function one frame down is what carries the org; the route body has no caller-supplied id to scope by. Newly visible because the walk now follows two hops.",
       "status": "safe"
     },
     "POST /api/v1/internal/webhooks/deliver": {
@@ -141,8 +182,20 @@
       "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
       "status": "safe"
     },
+    "POST /api/v1/sso/saml/acs": {
+      "why": "The one-time login state is deleted by the state value the provider echoes back, which is the credential; and the users row is matched against the connection's org (userRow.orgId !== orgId is refused) before lastLoginAt is written. Newly visible at two hops.",
+      "status": "safe"
+    },
     "POST /api/v1/webhooks/esign/:provider": {
       "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
+      "status": "safe"
+    },
+    "POST /api/v1/webhooks/instagram": {
+      "why": "The signature is verified against the app secret first, and refused outright when none is configured (#180/#181). The handler then resolves the org from the page/account id and looks the ticket up org-scoped, so the id the update uses came from that scoped lookup. Reported because the orgId lives in the local helper the handler calls, not in the handler.",
+      "status": "safe"
+    },
+    "POST /api/v1/webhooks/messenger": {
+      "why": "The signature is verified against the app secret first, and refused outright when none is configured (#180/#181). The handler then resolves the org from the page/account id and looks the ticket up org-scoped, so the id the update uses came from that scoped lookup. Reported because the orgId lives in the local helper the handler calls, not in the handler.",
       "status": "safe"
     },
     "POST /api/v1/webhooks/stripe": {
@@ -163,6 +216,10 @@
     },
     "POST /public/surveys/:id/submit": {
       "why": "The form or survey id IS the public identifier — it is embedded on the customer site — and the write is that object own counter. Audit category C.",
+      "status": "safe"
+    },
+    "POST /t/chat/:token/message": {
+      "why": "The session token resolves { orgId, ticketId } and the write goes through appendMessage(session.orgId, session.ticketId, …), so the org comes from the token, not from the caller. Reported because the handler itself only passes the token on.",
       "status": "safe"
     },
     "POST /v/:token/events": {
