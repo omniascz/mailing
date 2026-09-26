@@ -37,11 +37,13 @@ jobs:
       - run: pnpm lint
         if: always()
       # A step in this job rather than a job of its own, and per-PR rather than
-      # on a schedule. It parses 1052 files in about two seconds, so a separate
-      # job would spend ten times the check's own cost on checkout, pnpm and
-      # node; and a nightly run would find the defect days later on a branch
-      # nobody is looking at, while this fails the pull request that introduces
-      # it. It needs no database and no build, which is why it fits here with
+      # on a schedule. It parses 1052 files and walks two call hops out of every
+      # route handler, and this step has measured 2s on the runner both before and
+      # after that second hop was added (about 4s on a slower laptop). A separate
+      # job would still spend ten times that on checkout, pnpm and node; and a
+      # nightly run would find the defect days later on a branch nobody is
+      # looking at, while this fails the pull request that introduces it. It
+      # needs no database and no build, which is why it fits here with
       # the other static checks.
       - name: Org-scope write sweep
         if: always()
