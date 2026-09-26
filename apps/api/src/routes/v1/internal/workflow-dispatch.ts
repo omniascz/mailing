@@ -24,7 +24,13 @@
 import type { FastifyInstance } from 'fastify';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
-import { campaigns, templates, sendingDomains, contacts } from '../../../db/schema/index.js';
+import {
+  campaigns,
+  templates,
+  sendingDomains,
+  contacts,
+  organizations,
+} from '../../../db/schema/index.js';
 import {
   batchSenderTriggeredQueue,
   PRIORITY,
@@ -48,6 +54,38 @@ async function resolveOrgFrom(
     .limit(1);
   if (!dom?.domain) return null;
   return { fromName: '', fromEmail: `noreply@${dom.sub ?? dom.domain}` };
+}
+
+/**
+ * Who sent it, for the footer: the same two columns the campaign dispatch reads
+ * (services/campaigns/dispatch.ts). The renderer appends the name and postal
+ * address to the footer, and only when it has an address; a flow that left
+ * them out sent every email with no sender in it.
+ */
+async function resolveOrgFooterIdentity(
+  orgId: string,
+): Promise<{ companyName?: string; companyAddress?: string }> {
+  const [org] = await db
+    .select({ companyName: organizations.companyName, postalAddress: organizations.postalAddress })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1);
+  return {
+    companyName: org?.companyName ?? undefined,
+    companyAddress: org?.postalAddress ?? undefined,
+  };
+}
+
+/**
+ * The language the renderer words its own strings in — the opt-out label.
+ *
+ * It belongs to the message, as on the campaign path: the campaign's column,
+ * or the template row's, which a fork writes from the built-in it cloned
+ * (services/templates/clone-built-in.ts). Anything else is English, which is
+ * also what an absent locale meant before.
+ */
+function renderLocale(value: string | null | undefined): 'en' | 'cs' | 'sk' {
+  return value === 'cs' || value === 'sk' ? value : 'en';
 }
 
 export default async function internalWorkflowDispatchRoutes(app: FastifyInstance) {
@@ -99,6 +137,7 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
       let fromName: string;
       let fromEmail: string;
       let replyTo: string | undefined;
+      let locale: 'en' | 'cs' | 'sk';
 
       if (body.campaignId) {
         const [c] = await db
@@ -113,6 +152,7 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         fromName = c.fromName ?? '';
         fromEmail = c.fromEmail ?? '';
         replyTo = c.replyTo ?? undefined;
+        locale = renderLocale(c.locale);
       } else if (body.templateId) {
         const [t] = await db
           .select()
@@ -122,6 +162,7 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         if (!t) return reply.status(404).send({ error: 'template not found' });
         subject = body.subject ?? t.subject ?? '';
         preheader = t.preheader ?? undefined;
+        locale = renderLocale(t.locale);
         /**
          * `subject` and `preheader` go INSIDE the content as well as beside it.
          *
@@ -164,6 +205,8 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         if (!fromName) fromName = from.fromName;
       }
 
+      const identity = await resolveOrgFooterIdentity(body.orgId);
+
       await batchSenderTriggeredQueue.add('workflow-email', {
         // synthetic campaign id keeps event rows traceable for template sends
         campaignId: body.campaignId ?? body.orgId,
@@ -182,6 +225,9 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         // the contact's own fields; the contact wins a name clash, and system
         // values (unsubscribe_url, current_year) are resolved before either.
         mergeData: body.mergeData,
+        companyName: identity.companyName,
+        companyAddress: identity.companyAddress,
+        locale,
       });
 
       return reply.send({ data: { queued: true } });

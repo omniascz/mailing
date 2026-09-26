@@ -101,7 +101,14 @@ const hero = (id: string, title: string, sub: string, bg = '#1e293b') => ({
   ],
 });
 
-/** Footer block — what the renderer attaches the postal address and opt-out to. */
+/**
+ * Footer block — what the renderer attaches the postal address and opt-out to.
+ *
+ * The shop is named with `{{company_name}}`, a system value read from the
+ * organisation (Settings › Workspace). These footers used `{{company}}`, which
+ * is not one: it resolved from the recipient's own contact fields, so a B2B
+ * contact with a company on file saw their own firm printed as the sender.
+ */
 const paticka = (id: string, content: string) => ({
   id,
   type: 'footer',
@@ -226,7 +233,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
       ),
       paticka(
         'oc12',
-        '{{company|default:"Váš e-shop"}} · Fakturační údaje najdete v přiloženém dokladu.',
+        '{{company_name|default:"Váš e-shop"}} · Fakturační údaje najdete v přiloženém dokladu.',
       ),
     ],
   ),
@@ -251,7 +258,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
       sp('ac8', 16),
       paticka(
         'ac9',
-        '{{company|default:"Váš e-shop"}} · Košík vám držíme 48 hodin od odeslání tohoto e-mailu.',
+        '{{company_name|default:"Váš e-shop"}} · Košík vám držíme 48 hodin od odeslání tohoto e-mailu.',
       ),
     ],
   ),
@@ -290,7 +297,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
       sp('co8', 16),
       paticka(
         'co9',
-        '{{company|default:"Váš e-shop"}} · Na dotazy odpovídáme v pracovní dny do večera.',
+        '{{company_name|default:"Váš e-shop"}} · Na dotazy odpovídáme v pracovní dny do večera.',
       ),
     ],
   ),
@@ -321,7 +328,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
       sp('bs6', 12),
       paticka(
         'bs7',
-        '{{company|default:"Váš e-shop"}} · Hlídání zboží můžete kdykoli zrušit ve svém účtu.',
+        '{{company_name|default:"Váš e-shop"}} · Hlídání zboží můžete kdykoli zrušit ve svém účtu.',
       ),
     ],
   ),
@@ -380,7 +387,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
         'st10',
         '<p style="font-size:13px;color:#6b7280;">Dopravce načte zásilku do systému obvykle do několika hodin. Do té doby může sledování hlásit, že o ní neví.</p>',
       ),
-      paticka('st11', '{{company|default:"Váš e-shop"}}'),
+      paticka('st11', '{{company_name|default:"Váš e-shop"}}'),
     ],
   ),
 
@@ -412,7 +419,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
         'rr7',
         '<p style="font-size:13px;color:#6b7280;">Něco nebylo v pořádku? Odpovězte rovnou na tento e-mail, vyřešíme to bez recenze.</p>',
       ),
-      paticka('rr8', '{{company|default:"Váš e-shop"}}'),
+      paticka('rr8', '{{company_name|default:"Váš e-shop"}}'),
     ],
   ),
 
@@ -447,7 +454,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
       ),
       paticka(
         'lp9',
-        '{{company|default:"Váš e-shop"}} · Věrnostní program můžete kdykoli opustit ve svém účtu.',
+        '{{company_name|default:"Váš e-shop"}} · Věrnostní program můžete kdykoli opustit ve svém účtu.',
       ),
     ],
   ),
@@ -484,7 +491,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
         'bf6',
         '<p style="font-size:13px;color:#6b7280;">Kód lze použít jednou na objednávku a nelze kombinovat s dárkovým poukazem. Zboží odesíláme průběžně, o víkendu se objednávky hromadí — čím dřív objednáte, tím dřív to máte.</p>',
       ),
-      paticka('bf7', '{{company|default:"Váš e-shop"}}'),
+      paticka('bf7', '{{company_name|default:"Váš e-shop"}}'),
     ],
   ),
 
@@ -538,7 +545,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
       sp('wb5', 16),
       paticka(
         'wb6',
-        '{{company|default:"Váš e-shop"}} · Jestli o naše e-maily nestojíte, stačí kliknout níž.',
+        '{{company_name|default:"Váš e-shop"}} · Jestli o naše e-maily nestojíte, stačí kliknout níž.',
       ),
     ],
   ),
@@ -607,7 +614,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
       ),
       paticka(
         'in14',
-        '{{company|default:"Váš e-shop"}} · Tento e-mail je daňový doklad zaslaný elektronicky.',
+        '{{company_name|default:"Váš e-shop"}} · Tento e-mail je daňový doklad zaslaný elektronicky.',
       ),
     ],
   ),
