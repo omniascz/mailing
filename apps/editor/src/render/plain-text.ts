@@ -46,6 +46,7 @@ import {
   mustShowOptOut,
   optOutUrl,
   postalAddressLines,
+  senderLinesNotIn,
   unsubscribeLabel,
   type MessageStream,
   type RenderLocale,
@@ -303,7 +304,7 @@ function renderFooter(
   const body = stripTags(parseMergeTags(block.content, ctx));
   // The postal address rode along on the HTML side only. Same rule here, from
   // the same helper — a text part is a legal copy of the message, not a summary.
-  const lines = [body, ...postalAddressLines(ctx)];
+  const lines = [body, ...senderLinesNotIn(ctx, body)];
   if (mustShowOptOut(marketing, block.showUnsubscribe)) {
     lines.push(`${OPT_OUT_MARK}${unsubscribeLabel(locale)}: ${optOutUrl(ctx)}`);
   }
