@@ -122,6 +122,7 @@ const hero = (id: string, title: string, sub: string, bg = '#1e293b') => ({
   ],
 });
 
+/** Footer block. The shop is `{{company_name}}`, not `{{company}}` — see czech.ts. */
 const paticka = (id: string, content: string) => ({
   id,
   type: 'footer',
@@ -259,7 +260,7 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
       sp('uv1f', 16),
       paticka(
         'uv1g',
-        '{{company|default:"Váš e-shop"}} · Přihlásili jste se {{signup_date|default:"nedávno"}}.',
+        '{{company_name|default:"Váš e-shop"}} · Přihlásili jste se {{signup_date|default:"nedávno"}}.',
       ),
     ],
   ),
@@ -301,7 +302,7 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
       sp('us1f', 12),
       sdilet('us1g', 'Znáte někoho, komu by se to hodilo?'),
       sp('us1h', 16),
-      paticka('us1i', '{{company|default:"Váš e-shop"}} · Druhý díl uvítací série.'),
+      paticka('us1i', '{{company_name|default:"Váš e-shop"}} · Druhý díl uvítací série.'),
     ],
   ),
 
@@ -337,7 +338,10 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
         'kk1e',
         '<p style="font-size:13px;color:#6b7280;">Pokud jste si to rozmysleli, nevadí — tenhle e-mail už od nás k tomuhle košíku nepřijde.</p>',
       ),
-      paticka('kk1f', '{{company|default:"Váš e-shop"}} · Třetí a poslední připomínka košíku.'),
+      paticka(
+        'kk1f',
+        '{{company_name|default:"Váš e-shop"}} · Třetí a poslední připomínka košíku.',
+      ),
     ],
   ),
 
@@ -376,7 +380,7 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
       btn('dr1d', 'Nahlásit problém', '{{support_url|default:"#"}}', '#15803d'),
       paticka(
         'dr1e',
-        '{{company|default:"Váš e-shop"}} · Objednávka {{order.number|default:"—"}}.',
+        '{{company_name|default:"Váš e-shop"}} · Objednávka {{order.number|default:"—"}}.',
       ),
     ],
   ),
@@ -418,7 +422,7 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
       ),
       paticka(
         'vm1d',
-        '{{company|default:"Váš e-shop"}} · Objednávka {{order.number|default:"—"}}.',
+        '{{company_name|default:"Váš e-shop"}} · Objednávka {{order.number|default:"—"}}.',
       ),
     ],
   ),
@@ -462,7 +466,7 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
       ),
       paticka(
         'pl1f',
-        '{{company|default:"Váš e-shop"}} · Objednávka {{order.number|default:"—"}}.',
+        '{{company_name|default:"Váš e-shop"}} · Objednávka {{order.number|default:"—"}}.',
       ),
     ],
   ),
@@ -495,7 +499,7 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
         '#374151',
         'center',
       ),
-      paticka('sv1d', '{{company|default:"Váš e-shop"}} · Přání posíláme jednou za rok.'),
+      paticka('sv1d', '{{company_name|default:"Váš e-shop"}} · Přání posíláme jednou za rok.'),
     ],
   ),
 
@@ -538,7 +542,7 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
       ),
       sdilet('nl1f', 'Přišlo vám to užitečné? Pošlete to dál.'),
       sp('nl1g', 16),
-      paticka('nl1h', '{{company|default:"Váš e-shop"}} · Newsletter, ne nabídka.'),
+      paticka('nl1h', '{{company_name|default:"Váš e-shop"}} · Newsletter, ne nabídka.'),
     ],
   ),
 
@@ -584,7 +588,7 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
       btn('ds1e', 'Zobrazit další doplňky', '{{accessories_url|default:"#"}}'),
       paticka(
         'ds1f',
-        '{{company|default:"Váš e-shop"}} · Podle objednávky {{order.number|default:"—"}}.',
+        '{{company_name|default:"Váš e-shop"}} · Podle objednávky {{order.number|default:"—"}}.',
       ),
     ],
   ),
@@ -624,7 +628,7 @@ export const CZECH_TEMPLATES_2: TemplateMeta[] = [
       btn('op1c', 'Přečíst si celé znění', '{{terms.url|default:"#"}}', '#475569'),
       paticka(
         'op1d',
-        '{{company|default:"Váš e-shop"}} · Tenhle e-mail posíláme, protože nám to ukládá zákon.',
+        '{{company_name|default:"Váš e-shop"}} · Tenhle e-mail posíláme, protože nám to ukládá zákon.',
       ),
     ],
   ),
