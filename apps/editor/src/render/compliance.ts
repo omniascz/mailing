@@ -65,3 +65,24 @@ export function postalAddressLines(ctx: MergeTagContext): string[] {
   const name = ctx.system?.companyName?.trim();
   return name ? [name, address] : [address];
 }
+
+/**
+ * The sender lines a footer block still owes, given the text it already shows.
+ *
+ * A footer that names the shop itself (`{{company_name}} · …`) used to get the
+ * name a second time from the address block right under it. A line the
+ * rendered footer already carries as a whole phrase is left out; anything it
+ * does not carry stays, so the identity the law asks for is never dropped —
+ * only repeated less. Matching is on the rendered text, not the template
+ * source, so a name that arrives through a merge tag counts the same as one
+ * written out. "Obchod" does not stand in for "Obchod s.r.o.", and "Shop" in
+ * "Shopping" is not the name "Shop".
+ */
+export function senderLinesNotIn(ctx: MergeTagContext, renderedFooter: string): string[] {
+  return postalAddressLines(ctx).filter((line) => !containsPhrase(renderedFooter, line));
+}
+
+function containsPhrase(haystack: string, phrase: string): boolean {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'u').test(haystack);
+}

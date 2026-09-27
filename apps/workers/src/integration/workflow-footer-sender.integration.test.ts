@@ -73,7 +73,11 @@ const ALL_STATES: JobType[] = [
 interface MtaJobData {
   toEmail: string;
   htmlBody: string;
+  textBody: string;
 }
+
+/** How many times `needle` occurs in `hay`. */
+const count = (hay: string, needle: string) => hay.split(needle).length - 1;
 
 const batchJob = (data: BatchSenderJobData): Job<BatchSenderJobData> =>
   ({ data, log: async () => {} }) as unknown as Job<BatchSenderJobData>;
@@ -125,7 +129,7 @@ async function sendAndReadFooter(
   orgId: string,
   key: string,
   templateId: string,
-): Promise<{ html: string; footer: string }> {
+): Promise<{ html: string; text: string; footer: string }> {
   const beforeBatch = await idsOn(batchSenderQueues.triggered);
   const res = await fetch(`${API}/api/v1/internal/workflow/send-email`, {
     method: 'POST',
@@ -152,7 +156,7 @@ async function sendAndReadFooter(
   expect(html.startsWith('<!DOCTYPE html'), 'the body is not an HTML document').toBe(true);
   const cell = /<td[^>]*data-fm-optout="1"[^>]*>([\s\S]*?)<\/td>/.exec(html);
   expect(cell, 'the email has no footer cell').toBeTruthy();
-  return { html, footer: cell![1]! };
+  return { html, text: mta[0]!.textBody, footer: cell![1]! };
 }
 
 describe('a workflow email footer names its sender, in its language (real DB + Redis + API)', () => {
@@ -231,5 +235,49 @@ describe('a workflow email footer names its sender, in its language (real DB + R
     expect(footer, 'the recipient’s own firm is printed as the sender').not.toContain(
       RECIPIENT_FIRM,
     );
+  });
+
+  // ─── #Z88: English footers, and the shop named once ─────────────────────────
+  //
+  // The English footers had the same `{{company}}` the Czech ones had before
+  // #214, so they printed the recipient's firm. And once the footer text named
+  // the shop, the address block the renderer appends named it a second time.
+
+  it('onboarding-001: an English footer block names the shop, once — not the recipient', async () => {
+    const { footer } = await sendAndReadFooter(
+      seed.id,
+      'seed',
+      await cloneIntoSeed('onboarding-001'),
+    );
+
+    expect(footer, 'the recipient’s own firm is printed as the sender').not.toContain(
+      RECIPIENT_FIRM,
+    );
+    expect(count(footer, seed.companyName), 'the shop is not named exactly once').toBe(1);
+    expect(footer, 'the postal address is missing').toContain(seed.postalAddress);
+  });
+
+  it('onboard-002: an English text-row footer no longer prints the recipient’s firm', async () => {
+    // This template names the company only in its footer row, so the whole
+    // email is fair to search.
+    const { html } = await sendAndReadFooter(seed.id, 'seed', await cloneIntoSeed('onboard-002'));
+
+    expect(html, 'the recipient’s own firm is printed as the sender').not.toContain(RECIPIENT_FIRM);
+    expect(html, 'the sender is not named').toContain(seed.companyName);
+  });
+
+  it('cs-welcome-1: the shop is named once in the footer, in the HTML and in the text part', async () => {
+    const { footer, text } = await sendAndReadFooter(
+      seed.id,
+      'seed',
+      await cloneIntoSeed('cs-welcome-1'),
+    );
+
+    expect(count(footer, seed.companyName), 'HTML footer names the shop twice').toBe(1);
+    expect(count(text, seed.companyName), 'text part names the shop twice').toBe(1);
+    // Nothing the law asks for went with the duplicate.
+    expect(footer).toContain(seed.postalAddress);
+    expect(text).toContain(seed.postalAddress);
+    expect(footer).toContain('Odhlásit z odběru');
   });
 });

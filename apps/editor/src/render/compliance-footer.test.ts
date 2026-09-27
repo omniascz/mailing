@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderEmail } from './render.js';
+import { renderPlainText } from './plain-text.js';
 import type { EmailSchema } from '../schema/blocks.js';
 
 /**
@@ -181,5 +182,55 @@ describe('the postal address', () => {
     });
     expect(html).toContain('https://t.example/u/abc');
     expect(html).toContain('</html>');
+  });
+});
+
+describe('the sender is named once', () => {
+  // A footer that names the shop itself used to get the name a second time
+  // from the address block right under it. Only a line the rendered footer
+  // already carries is left out; the rest of the identity always stays.
+  const namedFooter = (content: string) => ({ ...footer(true), content });
+  const render = (content: string, context: unknown = SYSTEM) => {
+    const s = schema([text('t1', '<p>x</p>'), namedFooter(content)]);
+    return {
+      html: renderEmail(s, { context: context as never, stream: 'broadcast' }).html,
+      text: renderPlainText(s, { context: context as never, stream: 'broadcast' }),
+    };
+  };
+  const count = (hay: string, needle: string) => hay.split(needle).length - 1;
+
+  it('a footer naming the shop through {{company_name}} does not get it twice', () => {
+    const { html, text } = render('{{company_name}} · Newsletter');
+    expect(count(html, 'Obchod s.r.o.'), 'HTML names the shop twice').toBe(1);
+    expect(count(text, 'Obchod s.r.o.'), 'text part names the shop twice').toBe(1);
+    expect(html, 'the address went with the duplicate').toContain('Nádražní 1, 110 00 Praha');
+    expect(text).toContain('Nádražní 1, 110 00 Praha');
+  });
+
+  it('a footer that does not name the shop still gets the name and the address', () => {
+    const { html, text } = render('Newsletter');
+    expect(html).toContain('Obchod s.r.o.');
+    expect(html).toContain('Nádražní 1, 110 00 Praha');
+    expect(text).toContain('Obchod s.r.o.');
+  });
+
+  it('part of the name is not the name', () => {
+    // "© 2026 Obchod" is not "Obchod s.r.o." — the legal name must still appear.
+    const { html } = render('© 2026 Obchod');
+    expect(html).toContain('Obchod s.r.o.');
+  });
+
+  it('a name inside a longer word is not the name', () => {
+    const ctx = {
+      system: { ...(SYSTEM as { system: object }).system, companyName: 'Shop' },
+    };
+    const { html } = render('Shopping news', ctx);
+    expect(count(html, 'Shop'), 'the legal name "Shop" was dropped').toBe(2);
+  });
+
+  it('an address written into the footer is not repeated, and the name still is added', () => {
+    const { html } = render('Nádražní 1, 110 00 Praha');
+    expect(count(html, 'Nádražní 1, 110 00 Praha')).toBe(1);
+    expect(html).toContain('Obchod s.r.o.');
   });
 });

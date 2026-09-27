@@ -96,7 +96,7 @@ const hero = (title: string, sub: string, bg = '#1e293b') => ({
 });
 const footer = () =>
   txt(
-    '<p style="font-size:12px;color:#9ca3af;text-align:center;">© {{current_year}} {{company|default:"Company"}} · <a href="{{unsubscribe_url}}">Unsubscribe</a> · <a href="{{preference_center_url}}">Preferences</a></p>',
+    '<p style="font-size:12px;color:#9ca3af;text-align:center;">© {{current_year}} {{company_name|default:"Company"}} · <a href="{{unsubscribe_url}}">Unsubscribe</a> · <a href="{{preference_center_url}}">Preferences</a></p>',
     '12px',
     '#9ca3af',
     'center',
@@ -267,7 +267,7 @@ const BATCH2: TemplateMeta[] = [
       sp(),
       div(),
       txt(
-        '<p style="font-size:12px;color:#9ca3af;text-align:center;">© {{current_year}} {{company|default:"Company"}}</p>',
+        '<p style="font-size:12px;color:#9ca3af;text-align:center;">© {{current_year}} {{company_name|default:"Company"}}</p>',
         '12px',
         '#9ca3af',
         'center',
@@ -303,7 +303,7 @@ const BATCH2: TemplateMeta[] = [
       ),
       div(),
       txt(
-        '<p style="font-size:12px;color:#9ca3af;text-align:center;">© {{current_year}} {{company|default:"Company"}}</p>',
+        '<p style="font-size:12px;color:#9ca3af;text-align:center;">© {{current_year}} {{company_name|default:"Company"}}</p>',
         '12px',
         '#9ca3af',
         'center',

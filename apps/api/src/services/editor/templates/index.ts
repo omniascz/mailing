@@ -187,7 +187,7 @@ export const TEMPLATES: TemplateMeta[] = [
         {
           id: 'b7',
           type: 'footer',
-          content: '© {{current_year}} {{company|default:"Company"}}. All rights reserved.',
+          content: '© {{current_year}} {{company_name|default:"Company"}}. All rights reserved.',
           showUnsubscribe: true,
           color: '#94a3b8',
           fontSize: '12px',
@@ -246,7 +246,7 @@ export const TEMPLATES: TemplateMeta[] = [
           id: 'b6',
           type: 'footer',
           content:
-            'You are receiving this because you subscribed to {{company|default:"our"}} digest.',
+            'You are receiving this because you subscribed to {{company_name|default:"our"}} digest.',
           showUnsubscribe: true,
           color: '#9ca3af',
           fontSize: '12px',
@@ -339,7 +339,7 @@ export const TEMPLATES: TemplateMeta[] = [
         {
           id: 'b6',
           type: 'footer',
-          content: '© {{current_year}} {{company|default:"Company"}}',
+          content: '© {{current_year}} {{company_name|default:"Company"}}',
           showUnsubscribe: true,
           color: '#475569',
           fontSize: '12px',
@@ -405,7 +405,7 @@ export const TEMPLATES: TemplateMeta[] = [
         {
           id: 'b6',
           type: 'footer',
-          content: '© {{current_year}} {{company|default:"Company"}}',
+          content: '© {{current_year}} {{company_name|default:"Company"}}',
           showUnsubscribe: true,
           color: '#9ca3af',
           fontSize: '12px',
@@ -477,7 +477,7 @@ export const TEMPLATES: TemplateMeta[] = [
           id: 'b7',
           type: 'footer',
           content:
-            '© {{current_year}} {{company|default:"Company"}} — Questions? Reply to this email.',
+            '© {{current_year}} {{company_name|default:"Company"}} — Questions? Reply to this email.',
           showUnsubscribe: false,
           color: '#9ca3af',
           fontSize: '12px',
@@ -545,7 +545,7 @@ export const TEMPLATES: TemplateMeta[] = [
         {
           id: 'b6',
           type: 'footer',
-          content: '© {{current_year}} {{company|default:"Company"}}',
+          content: '© {{current_year}} {{company_name|default:"Company"}}',
           showUnsubscribe: false,
           color: '#9ca3af',
           fontSize: '12px',
@@ -646,7 +646,7 @@ export const TEMPLATES: TemplateMeta[] = [
         {
           id: 'b6',
           type: 'footer',
-          content: '© {{current_year}} {{company|default:"Company"}}',
+          content: '© {{current_year}} {{company_name|default:"Company"}}',
           showUnsubscribe: true,
           color: '#9ca3af',
           fontSize: '12px',
@@ -817,7 +817,7 @@ export const TEMPLATES: TemplateMeta[] = [
         {
           id: 'b11',
           type: 'footer',
-          content: '© {{current_year}} {{company|default:"Company"}}',
+          content: '© {{current_year}} {{company_name|default:"Company"}}',
           showUnsubscribe: true,
           color: '#9ca3af',
           fontSize: '12px',
@@ -888,7 +888,7 @@ export const TEMPLATES: TemplateMeta[] = [
         {
           id: 'b4',
           type: 'footer',
-          content: '© {{current_year}} {{company|default:"Company"}}',
+          content: '© {{current_year}} {{company_name|default:"Company"}}',
           showUnsubscribe: true,
           color: '#475569',
           fontSize: '12px',
@@ -990,7 +990,7 @@ export const TEMPLATES: TemplateMeta[] = [
         {
           id: 'b7',
           type: 'footer',
-          content: '© {{current_year}} {{company|default:"Company"}}',
+          content: '© {{current_year}} {{company_name|default:"Company"}}',
           showUnsubscribe: true,
           color: '#9ca3af',
           fontSize: '12px',
