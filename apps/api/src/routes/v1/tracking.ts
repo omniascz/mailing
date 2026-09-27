@@ -6,6 +6,14 @@
  * These endpoints are intentionally outside the /api/v1 prefix because they
  * are embedded in sent emails and need stable, short URLs on the tracking domain.
  * Auth is enforced by the HMAC-signed token, not by session cookies.
+ *
+ * There used to be a third, GET /t/click/:linkId, which took the org and the
+ * contact from the query string unsigned, recorded a click for them, ran a
+ * "click action" decoded from the query (tag, field, workflow event) and
+ * redirected to any `dest`. Nothing ever produced such a link — its builder,
+ * services/campaigns/click-actions.ts, never had a caller and did not even put
+ * the ids in the URL — so it was removed with its builder rather than secured
+ * (Z93). Every click goes through the signed /track/c/:token above.
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -255,76 +263,6 @@ export default async function trackingRoutes(app: FastifyInstance) {
       }
 
       return reply.redirect(payload.url, 302);
-    },
-  );
-
-  /**
-   * GET /t/click/:linkId
-   *
-   * Click-action tracking endpoint (#216).
-   * Executes an optional click action (add_tag / update_field / fire_event)
-   * for the identified contact, then 302-redirects to the destination URL.
-   *
-   * Query params:
-   *   action  — base64url-encoded ClickAction JSON
-   *   dest    — destination URL (URL-encoded)
-   *   cid     — contactId (UUID)
-   *   oid     — orgId (UUID)
-   */
-  app.get(
-    '/t/click/:linkId',
-    { schema: { tags: ['Tracking'], summary: 'Click-action redirect (#216)' } },
-    async (req, reply) => {
-      const { linkId } = req.params as { linkId: string };
-      const { action, dest, cid, oid } = req.query as {
-        action?: string;
-        dest?: string;
-        cid?: string;
-        oid?: string;
-      };
-
-      const destination = dest
-        ? decodeURIComponent(dest)
-        : (process.env.APP_URL ?? 'https://example.invalid');
-
-      // Execute click action best-effort (non-blocking on failure)
-      if (action && cid && oid) {
-        try {
-          const { decodeClickAction, executeClickAction } =
-            await import('../../services/campaigns/click-actions.js');
-          const parsed = decodeClickAction(action);
-          if (parsed) {
-            executeClickAction(oid, cid, parsed).catch(() => undefined);
-          }
-        } catch {
-          // non-fatal
-        }
-      }
-
-      // Log click event if we have enough context
-      if (cid && oid) {
-        const ca = parseUserAgent(req.headers['user-agent'] ?? '');
-        await db
-          .insert(emailEvents)
-          .values({
-            orgId: oid,
-            contactId: cid,
-            eventType: 'click',
-            linkUrl: destination.slice(0, 2048),
-            userAgent: (req.headers['user-agent'] ?? '').slice(0, 1024),
-            ipAddress: (
-              (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
-              req.socket.remoteAddress ??
-              ''
-            ).slice(0, 45),
-            deviceType: ca.deviceType,
-            emailClient: ca.emailClient,
-            metadata: { linkId },
-          })
-          .catch(() => undefined);
-      }
-
-      return reply.redirect(destination, 302);
     },
   );
 }
