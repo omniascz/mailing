@@ -550,19 +550,25 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
     ],
   ),
 
-  // 10 — faktura / daňový doklad
+  // 10 — faktura: oznámení, ne doklad
+  //
+  // The invoice itself is the shop's: it issues it, numbers it, and hosts the
+  // PDF. This email only says it exists and links to it. It used to call itself
+  // a tax document, promise the PDF and ISDOC as attachments the workflow path
+  // cannot carry, and fill the supplier with `{{company}}` — the recipient's own
+  // company — next to an IČO and DIČ the product has no source for.
   t(
     'cs-invoice',
-    'Faktura — daňový doklad',
+    'Faktura — oznámení',
     'transactional',
     'invoice',
-    'Daňový doklad s náležitostmi podle českých zvyklostí a variabilním symbolem.',
+    'Oznámení o vystavené faktuře s odkazem na PDF, které vystavil e-shop.',
     'Faktura {{invoice.number|default:"—"}} k objednávce {{order.number|default:"—"}}',
-    'Daňový doklad v příloze, splatnost {{invoice.due_date|default:"—"}}.',
+    'Fakturu si stáhnete v PDF. Splatnost {{invoice.due_date|default:"—"}}.',
     [
       txt(
         'in1',
-        '<h1 style="margin:0;font-size:22px;">Daňový doklad {{invoice.number|default:"—"}}</h1>',
+        '<h1 style="margin:0;font-size:22px;">Faktura {{invoice.number|default:"—"}}</h1>',
         '22px',
         '#111827',
       ),
@@ -571,11 +577,11 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
         'in3',
         '<p>Dobrý den ' +
           OSLOVENI +
-          ',</p><p>posíláme daňový doklad k objednávce {{order.number|default:"—"}}. Najdete ho i v příloze ve formátu PDF a ISDOC.</p>',
+          ',</p><p>k objednávce {{order.number|default:"—"}} jsme vystavili fakturu. Stáhnete si ji tlačítkem níž.</p>',
       ),
       div('in4'),
-      // Supplier and customer side by side, the way a Czech tax document is
-      // read. Stacking them turns the header of an invoice into a list.
+      // Supplier and customer side by side, the way an invoice header is read.
+      // The supplier is the shop as it is set up in Settings › Workspace.
       {
         id: 'in5',
         type: 'columns',
@@ -585,7 +591,7 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
           [
             txt(
               'in5a',
-              '<p><strong>Dodavatel</strong><br>{{company|default:"Váš e-shop"}}<br>IČO: {{company.ico|default:"—"}}<br>DIČ: {{company.dic|default:"—"}}</p>',
+              '<p><strong>Dodavatel</strong><br>{{company_name|default:"Váš e-shop"}}<br>{{company_address|default:""}}</p>',
             ),
           ],
           [
@@ -599,23 +605,20 @@ export const CZECH_TEMPLATES: TemplateMeta[] = [
       div('in7'),
       txt(
         'in8',
-        '<p><strong>Datum vystavení:</strong> {{invoice.issue_date|default:"—"}}<br><strong>Datum zdanitelného plnění:</strong> {{invoice.taxable_date|default:"—"}}<br><strong>Splatnost:</strong> {{invoice.due_date|default:"—"}}<br><strong>Způsob úhrady:</strong> {{invoice.payment_method|default:"—"}}</p>',
+        '<p><strong>Datum vystavení:</strong> {{invoice.issue_date|default:"—"}}<br><strong>Splatnost:</strong> {{invoice.due_date|default:"—"}}<br><strong>Způsob úhrady:</strong> {{invoice.payment_method|default:"—"}}</p>',
       ),
       txt(
         'in9',
-        '<p style="font-size:18px;"><strong>Celkem s DPH: {{invoice.total|default:"—"}}</strong><br><span style="font-size:13px;color:#6b7280;">Základ {{invoice.base|default:"—"}} · DPH {{invoice.vat_rate|default:"21"}} % {{invoice.vat|default:"—"}}</span></p>',
+        '<p style="font-size:18px;"><strong>Celkem k úhradě: {{invoice.total|default:"—"}}</strong></p>',
       ),
       sp('in10', 12),
       btn('in11', 'Stáhnout fakturu (PDF)', '{{invoice.pdf_url|default:"#"}}', '#374151'),
       sp('in12', 16),
       txt(
         'in13',
-        '<p style="font-size:13px;color:#6b7280;">Platbu poznáme podle variabilního symbolu {{invoice.variable_symbol|default:"—"}}. QR kód k platbě je na faktuře.</p>',
+        '<p style="font-size:13px;color:#6b7280;">Platíte-li převodem, uveďte variabilní symbol {{invoice.variable_symbol|default:"—"}}. Kdyby na faktuře něco nesedělo, odpovězte na tento e-mail.</p>',
       ),
-      paticka(
-        'in14',
-        '{{company_name|default:"Váš e-shop"}} · Tento e-mail je daňový doklad zaslaný elektronicky.',
-      ),
+      paticka('in14', '{{company_name|default:"Váš e-shop"}} · Oznámení o vystavené faktuře.'),
     ],
   ),
 ];
