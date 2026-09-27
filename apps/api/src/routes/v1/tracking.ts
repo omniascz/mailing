@@ -10,14 +10,14 @@
 
 import type { FastifyInstance } from 'fastify';
 import { db } from '../../db/client.js';
-import { emailEvents } from '../../db/schema/index.js';
+import { campaigns, emailEvents } from '../../db/schema/index.js';
 import { verifyTrackingToken, isAppleMpp } from '../../services/sending/tracking.js';
 import { scoreAndPersist } from '../../services/deliverability/bot-detection.js';
 import { enrichEventGeo } from '../../services/analytics/geo.js';
 import { parseUserAgent } from '../../lib/user-agent.js';
 import { emitEmailEvent } from '../../services/webhooks/email-events.js';
 import { resolveCampaignCategory } from '../../services/stats/category-isp.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { abVariantForContact } from '../../services/campaigns/variant-attribution.js';
 
 /**
@@ -28,6 +28,32 @@ const TRANSPARENT_GIF = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
   'base64',
 );
+
+/**
+ * The campaign an open or click belongs to — or none.
+ *
+ * The token's campaignId is required and is whatever the batch job carried.
+ * For a flow's templated email that is not a campaign at all: the workflow
+ * dispatch fills it with the org id (BatchSenderJobData.campaignIsPlaceholder).
+ * Written as-is, the email_events foreign key to campaigns refused the row and
+ * the insert's catch swallowed it, so no open or click on a flow email was ever
+ * recorded. Resolved here rather than in the token so the emails already in
+ * inboxes, whose tokens carry the org id, are counted too.
+ *
+ * A lookup that fails keeps the token's value — what this route did before.
+ */
+async function campaignOf(orgId: string, campaignId: string): Promise<string | null> {
+  try {
+    const [row] = await db
+      .select({ id: campaigns.id })
+      .from(campaigns)
+      .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
+      .limit(1);
+    return row?.id ?? null;
+  } catch {
+    return campaignId;
+  }
+}
 
 export default async function trackingRoutes(app: FastifyInstance) {
   /**
@@ -65,6 +91,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
 
       const payload = verifyTrackingToken(token);
       if (payload && payload.type === 'open') {
+        const campaignId = await campaignOf(payload.orgId, payload.campaignId);
         const mpp = isAppleMpp(userAgent);
         const { deviceType, emailClient } = parseUserAgent(userAgent);
 
@@ -72,18 +99,16 @@ export default async function trackingRoutes(app: FastifyInstance) {
           .insert(emailEvents)
           .values({
             orgId: payload.orgId,
-            campaignId: payload.campaignId,
+            campaignId,
             contactId: payload.contactId,
             eventType: 'open',
             // Recovered from the send row — the token cannot carry it.
-            abVariantId: abVariantForContact(payload.campaignId, payload.contactId),
+            abVariantId: campaignId ? abVariantForContact(campaignId, payload.contactId) : null,
             userAgent: userAgent.slice(0, 1024),
             ipAddress: ipAddress?.slice(0, 45) ?? null,
             deviceType,
             emailClient,
-            category: await resolveCampaignCategory(payload.orgId, payload.campaignId).catch(
-              () => null,
-            ),
+            category: await resolveCampaignCategory(payload.orgId, campaignId).catch(() => null),
             metadata: {
               suspectedBot: mpp,
               botReason: mpp ? 'apple_mpp' : null,
@@ -98,14 +123,14 @@ export default async function trackingRoutes(app: FastifyInstance) {
             eventType: 'open',
             userAgent,
             ipAddress,
-            campaignId: payload.campaignId,
+            campaignId,
             contactId: payload.contactId,
             occurredAt: new Date(),
           }).catch(() => {});
           enrichEventGeo(row.id, ipAddress).catch(() => {});
           emitEmailEvent(payload.orgId, 'opened', {
             contactId: payload.contactId,
-            campaignId: payload.campaignId,
+            campaignId,
           });
         }
       }
@@ -145,6 +170,10 @@ export default async function trackingRoutes(app: FastifyInstance) {
       }
 
       const now = new Date();
+      const campaignId = await campaignOf(payload.orgId, payload.campaignId);
+      const sameCampaign = campaignId
+        ? eq(emailEvents.campaignId, campaignId)
+        : isNull(emailEvents.campaignId);
 
       // Fetch recent open (time + IP) for cluster + same-IP detection
       const [recentOpen] = await db
@@ -158,7 +187,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
           and(
             eq(emailEvents.orgId, payload.orgId),
             eq(emailEvents.contactId, payload.contactId ?? ''),
-            eq(emailEvents.campaignId, payload.campaignId ?? ''),
+            sameCampaign,
             eq(emailEvents.eventType, 'open'),
           ),
         )
@@ -172,7 +201,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
           and(
             eq(emailEvents.orgId, payload.orgId),
             eq(emailEvents.contactId, payload.contactId ?? ''),
-            eq(emailEvents.campaignId, payload.campaignId ?? ''),
+            sameCampaign,
             eq(emailEvents.eventType, 'click'),
           ),
         )
@@ -185,18 +214,16 @@ export default async function trackingRoutes(app: FastifyInstance) {
         .insert(emailEvents)
         .values({
           orgId: payload.orgId,
-          campaignId: payload.campaignId,
+          campaignId,
           contactId: payload.contactId,
           eventType: 'click',
-          abVariantId: abVariantForContact(payload.campaignId, payload.contactId),
+          abVariantId: campaignId ? abVariantForContact(campaignId, payload.contactId) : null,
           linkUrl: payload.url.slice(0, 2048),
           userAgent: userAgent.slice(0, 1024),
           ipAddress: ipAddress?.slice(0, 45) ?? null,
           deviceType: click.deviceType,
           emailClient: click.emailClient,
-          category: await resolveCampaignCategory(payload.orgId, payload.campaignId).catch(
-            () => null,
-          ),
+          category: await resolveCampaignCategory(payload.orgId, campaignId).catch(() => null),
           metadata: {},
         })
         .returning({ id: emailEvents.id })
@@ -208,7 +235,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
           eventType: 'click',
           userAgent,
           ipAddress,
-          campaignId: payload.campaignId,
+          campaignId,
           contactId: payload.contactId,
           occurredAt: now,
           openOccurredAt: recentOpen?.createdAt ?? undefined,
@@ -222,7 +249,7 @@ export default async function trackingRoutes(app: FastifyInstance) {
         enrichEventGeo(clickRow.id, ipAddress).catch(() => {});
         emitEmailEvent(payload.orgId, 'clicked', {
           contactId: payload.contactId,
-          campaignId: payload.campaignId,
+          campaignId,
           url: payload.url,
         });
       }
