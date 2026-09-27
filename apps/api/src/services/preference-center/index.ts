@@ -11,7 +11,7 @@
  * `type: 'pref'` discriminator on the JSON payload.
  */
 
-import { and, eq, isNull, isNotNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, isNotNull } from 'drizzle-orm';
 import { verifyTrackingToken, type PreferenceCenterPayload } from '@forgemsg/shared';
 import { db } from '../../db/client.js';
 import { contacts, lists, contactLists, suppressions } from '../../db/schema/index.js';
@@ -149,6 +149,17 @@ export interface UpdateResult {
   listChanges: { listId: string; subscribed: boolean }[];
 }
 
+/** Which of these ids are live lists of this organisation. */
+async function listsOfOrg(orgId: string, ids: string[]): Promise<Set<string>> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Set();
+  const rows = await db
+    .select({ id: lists.id })
+    .from(lists)
+    .where(and(eq(lists.orgId, orgId), inArray(lists.id, unique), isNull(lists.deletedAt)));
+  return new Set(rows.map((r) => r.id));
+}
+
 export async function updatePreferences(token: string, body: UpdateRequest): Promise<UpdateResult> {
   const { orgId, contactId } = resolveToken(token);
 
@@ -185,11 +196,23 @@ export async function updatePreferences(token: string, body: UpdateRequest): Pro
       .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)));
   }
 
-  // 2. Per-list toggles
+  // 2. Per-list toggles — only on this organisation's lists.
+  //
+  // The token proves who the contact is; it says nothing about the list ids
+  // beside it in the body. resubscribeToLists used to insert a membership for
+  // any id it was given, so a token issued by one organisation put its contact
+  // on another's list. Ids that are not a live list of the token's
+  // organisation are dropped here, before either loop sees them.
   const now = new Date();
+  const ownListIds = await listsOfOrg(orgId, [
+    ...(body.unsubscribeFromLists ?? []),
+    ...(body.resubscribeToLists ?? []),
+  ]);
+  const unsubscribeFrom = (body.unsubscribeFromLists ?? []).filter((id) => ownListIds.has(id));
+  const resubscribeTo = (body.resubscribeToLists ?? []).filter((id) => ownListIds.has(id));
 
-  if (body.unsubscribeFromLists?.length) {
-    for (const listId of body.unsubscribeFromLists) {
+  if (unsubscribeFrom.length) {
+    for (const listId of unsubscribeFrom) {
       // Still conditional on unsubscribedAt being null — unsubscribeContact
       // keeps that behaviour and reports whether anything changed, which is
       // what listChanges was already using the RETURNING row for.
@@ -202,8 +225,8 @@ export async function updatePreferences(token: string, body: UpdateRequest): Pro
     }
   }
 
-  if (body.resubscribeToLists?.length) {
-    for (const listId of body.resubscribeToLists) {
+  if (resubscribeTo.length) {
+    for (const listId of resubscribeTo) {
       // Try clear unsubscribed_at on existing row
       const [updated] = await db
         .update(contactLists)

@@ -227,8 +227,8 @@
       "status": "safe"
     },
     "POST /p/center/:token": {
-      "why": "Z90: the signed pref token in the path is the credential and names the contact and org, but the JSON body's resubscribeToLists inserts contact_lists for any list id it is given without checking the list belongs to that org — measured: a token for org A put its contact on org B's list (200, one row). The page's own form only names the contact's lists. The sweep saw this only once the handler stopped mentioning orgId by accident; the fix (scope the list ids by org in updatePreferences) is owed.",
-      "status": "known-open"
+      "why": "The signed pref token in the path is the credential and names the contact and org; updatePreferences scopes every write by that org — list ids in the body that are not live lists of it are dropped before either per-list loop (Z91; until then resubscribeToLists put the contact on any org's list).",
+      "status": "safe"
     }
   }
 }

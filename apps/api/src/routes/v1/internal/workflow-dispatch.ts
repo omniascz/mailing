@@ -210,6 +210,9 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
       await batchSenderTriggeredQueue.add('workflow-email', {
         // synthetic campaign id keeps event rows traceable for template sends
         campaignId: body.campaignId ?? body.orgId,
+        // Says so, so the batch sender does not write the org id into the
+        // unsubscribe token as the email's campaign (BatchSenderJobData).
+        campaignIsPlaceholder: !body.campaignId,
         orgId: body.orgId,
         batchIndex: 0,
         contactIds: [body.contactId],

@@ -482,11 +482,15 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
     const prefCenterUrl = `${trackingBaseUrl}/p/center/${prefToken}`;
     // Signed, stateless one-click unsubscribe token (RFC 8058). Same HMAC
     // scheme as the tracking/pref tokens — no per-recipient Redis write.
+    // The campaign is the unsubscribe's attribution, and the event row it
+    // writes has a foreign key to campaigns. A flow's templated email has no
+    // campaign — its campaignId is a placeholder — so it names none rather than
+    // one that fails that key and turns the confirmation into "invalid link".
     const unsubToken = createTrackingToken({
       type: 'unsub',
       orgId: data.orgId,
       contactId: contact.id,
-      campaignId: data.campaignId,
+      ...(data.campaignIsPlaceholder ? {} : { campaignId: data.campaignId }),
       ts: Math.floor(Date.now() / 1000),
     });
     const unsubscribeUrl = `${trackingBaseUrl}/api/v1/unsubscribe/${unsubToken}`;
