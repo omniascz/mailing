@@ -94,13 +94,26 @@ const hero = (title: string, sub: string, bg = '#1e293b') => ({
     },
   ],
 });
-const footer = () =>
-  txt(
-    '<p style="font-size:12px;color:#9ca3af;text-align:center;">© {{current_year}} {{company_name|default:"Company"}} · <a href="{{unsubscribe_url}}">Unsubscribe</a> · <a href="{{preference_center_url}}">Preferences</a></p>',
-    '12px',
-    '#9ca3af',
-    'center',
-  );
+/**
+ * A footer BLOCK, not a text row that looks like one.
+ *
+ * It used to be a text row carrying its own "Unsubscribe" link. That is not
+ * what the renderer recognises as a footer, so it added its compliance row
+ * underneath as well: two opt-out links, and the shop named in both. As a
+ * footer block the renderer attaches the name, the postal address and one
+ * opt-out link in the email's language, without repeating what the line
+ * already says. The "Preferences" link went with the row: the preference
+ * centre answers with JSON, which is not a page to send a reader to.
+ */
+const footer = () => ({
+  id: `ft${Math.random().toString(36).slice(2, 7)}`,
+  type: 'footer',
+  content: '© {{current_year}} {{company_name|default:"Company"}}',
+  showUnsubscribe: true,
+  textAlign: 'center',
+  fontSize: '12px',
+  color: '#9ca3af',
+});
 
 const BATCH2: TemplateMeta[] = [
   // ── NEWSLETTER ──────────────────────────────────────────────────────────────

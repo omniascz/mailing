@@ -280,4 +280,19 @@ describe('a workflow email footer names its sender, in its language (real DB + R
     expect(text).toContain(seed.postalAddress);
     expect(footer).toContain('Odhlásit z odběru');
   });
+
+  // ─── #Z89: the English footer() row was a second footer ─────────────────────
+  //
+  // 59 English templates end in a text row with its own "Unsubscribe" link.
+  // It is not a footer block, so the renderer added the compliance row as well:
+  // two opt-out links and the shop named in both.
+
+  it('onboard-002: one opt-out link and the shop named once', async () => {
+    const { html } = await sendAndReadFooter(seed.id, 'seed', await cloneIntoSeed('onboard-002'));
+
+    expect(count(html, '>Unsubscribe<'), 'the opt-out link is not there exactly once').toBe(1);
+    expect(count(html, seed.companyName), 'the shop is not named exactly once').toBe(1);
+    expect(html, 'the postal address is missing').toContain(seed.postalAddress);
+    expect(html, 'the recipient’s own firm is printed as the sender').not.toContain(RECIPIENT_FIRM);
+  });
 });
