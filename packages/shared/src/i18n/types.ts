@@ -42,6 +42,12 @@ export interface EmailsBundle {
     unsubscribe_all_cta: string;
     save_cta: string;
     updated_body: string;
+    for_email: string;
+    no_lists: string;
+    globally_unsubscribed_body: string;
+    invalid_title: string;
+    invalid_heading: string;
+    invalid_body: string;
   };
   password_reset: {
     subject: string;

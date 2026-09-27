@@ -225,6 +225,10 @@
     "POST /v/:token/events": {
       "why": "The signed token in the path is the credential and names who it is for; it is verified before the write, so there is no caller-supplied id to scope.",
       "status": "safe"
+    },
+    "POST /p/center/:token": {
+      "why": "Z90: the signed pref token in the path is the credential and names the contact and org, but the JSON body's resubscribeToLists inserts contact_lists for any list id it is given without checking the list belongs to that org — measured: a token for org A put its contact on org B's list (200, one row). The page's own form only names the contact's lists. The sweep saw this only once the handler stopped mentioning orgId by accident; the fix (scope the list ids by org in updatePreferences) is owed.",
+      "status": "known-open"
     }
   }
 }
