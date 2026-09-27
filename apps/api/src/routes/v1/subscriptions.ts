@@ -44,12 +44,12 @@ function prefKey(token: string) {
 
 // ─── HTML helpers ─────────────────────────────────────────────────────────────
 
-function htmlPage(title: string, body: string, locale: SupportedLocale = 'cs') {
+export function htmlPage(title: string, body: string, locale: SupportedLocale = 'cs') {
   return `<!DOCTYPE html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:system-ui,sans-serif;max-width:500px;margin:60px auto;padding:0 20px;color:#1e293b}h1{color:#0f172a}p{color:#475569}.btn{display:inline-block;padding:10px 20px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:6px;margin-top:16px}</style></head><body>${body}</body></html>`;
 }
 
 /** Resolve the page locale: org setting → contact custom_fields.locale → Accept-Language. */
-async function resolvePageLocale(
+export async function resolvePageLocale(
   req: FastifyRequest,
   orgId?: string,
   contactId?: string,

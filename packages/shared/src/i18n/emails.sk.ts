@@ -51,6 +51,14 @@ export const sk: EmailsBundle = {
     unsubscribe_all_cta: 'Odhlásiť sa od všetkých',
     save_cta: 'Uložiť nastavenie',
     updated_body: 'Vaše nastavenie bolo uložené.',
+    for_email: 'Odber pre adresu {{email}}.',
+    no_lists: 'Nie ste prihlásení do žiadneho zoznamu.',
+    globally_unsubscribed_body:
+      'Ste odhlásení zo všetkých správ a nič ďalšie od nás nedostanete. Ak to bol omyl, napíšte odosielateľovi.',
+    invalid_title: 'Neplatný odkaz',
+    invalid_heading: 'Neplatný odkaz',
+    invalid_body:
+      'Tento odkaz na nastavenie odberu je neplatný. Použite odkaz z najnovšieho e-mailu, ktorý ste od nás dostali.',
   },
 
   password_reset: {

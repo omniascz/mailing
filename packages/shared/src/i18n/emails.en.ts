@@ -52,6 +52,14 @@ export const en: EmailsBundle = {
     unsubscribe_all_cta: 'Unsubscribe from all',
     save_cta: 'Save preferences',
     updated_body: 'Your preferences have been saved.',
+    for_email: 'Subscriptions for {{email}}.',
+    no_lists: 'You are not on any list.',
+    globally_unsubscribed_body:
+      'You are unsubscribed from all messages and will receive nothing more from us. If this was a mistake, write to the sender.',
+    invalid_title: 'Invalid link',
+    invalid_heading: 'Invalid link',
+    invalid_body:
+      'This subscription settings link is not valid. Use the link from the most recent email you received from us.',
   },
 
   password_reset: {
