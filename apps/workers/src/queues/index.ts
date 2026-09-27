@@ -549,6 +549,14 @@ export interface CampaignSplitterJobData {
 
 export interface BatchSenderJobData {
   campaignId: string;
+  /**
+   * True when `campaignId` names no campaign: a flow's templated email, for
+   * which the workflow dispatch fills the field with the org id so the rest of
+   * the pipeline has a key to carry. Nothing that is written against the
+   * campaigns table may take it at its word — the unsubscribe token used to,
+   * and the unsubscribe event then failed its foreign key.
+   */
+  campaignIsPlaceholder?: boolean;
   orgId: string;
   batchIndex: number;
   /**
