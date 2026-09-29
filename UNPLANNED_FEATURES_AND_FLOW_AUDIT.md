@@ -121,7 +121,7 @@ Konsolidovaný seznam z roadmapy (Fáze 0–10), `todonow.md` (Opus/Sonnet/Haiku
 ### A.4 Analytics + tracking
 
 - Open pixel tracking (`/track/o/:token`)
-- Click tracking + link wrapping (`/track/c/:token`, `/t/click/:linkId`)
+- Click tracking + link wrapping (`/track/c/:token`)
 - UTM auto-append
 - Event pipeline: Kafka → ClickHouse
 - ClickHouse schema (`email_events`, partition by month, TTL 2 roky)
@@ -667,7 +667,7 @@ For each ze 15 core email flow: stav, missing pieces, doporučení.
 
 **Co máme v plánu/kódu:**
 
-- Tracking endpoints (`/track/o/:token`, `/track/c/:token`, `/t/click/:linkId`)
+- Tracking endpoints (`/track/o/:token`, `/track/c/:token`)
 - Bot detection columns ready v `email_events`
 - Cloudflare Workers proposed pro tracking pixel low-latency
 - Per-link click counts API

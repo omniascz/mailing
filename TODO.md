@@ -471,7 +471,7 @@ Nejsilnější diferenciátor AC je **integrovaný sales CRM** (Pipelines + Sale
 | ✅ #213 | 🛠️ Sonnet | **Nested automations** (spuštění workflow z workflow)                | action `start_workflow` předávající context                                                                         | nový action type v `services/workflows/actions.ts::executeStartWorkflow`             |
 | ✅ #214 | 🛠️ Sonnet | **Automation maps** (graf všech workflow a jejich napojení)          | build graph: který workflow spouští který přes start_workflow / goals                                               | `services/workflows/map.ts`, `routes/v1/workflows.ts::map`                           |
 | ✅ #215 | ⚡ Haiku  | **900+ pre-built recipes**                                           | rozšíření `flow-templates.ts` z ~10 na širší knihovnu (B2B, e-com, SaaS onboarding, re-engagement, sales sequences) | `services/workflows/templates/` (split do kategorií)                                 |
-| ✅ #216 | 🛠️ Sonnet | **Click actions** (add tag / update field po kliknutí na link/image) | render-time: link wrapper s tracking ID → na click resolve action                                                   | rozšíření `apps/editor/src/render/render.ts` + `services/campaigns/click-actions.ts` |
+| ❌ #216 | 🛠️ Sonnet | **Click actions** (add tag / update field po kliknutí na link/image) | render-time: link wrapper s tracking ID → na click resolve action                                                   | nikdy nezapojeno; nepodepsaná `/t/click` i `click-actions.ts` byly odstraněny (#220) |
 
 #### F) Contact data — custom objects a social
 
@@ -1259,7 +1259,7 @@ Při pochybnostech: **start se Sonnetem**, eskaluj na Opus pokud úkol vyžaduje
 | ✅ #478 | 🧠 Opus                                          | D) Voice Agent streaming API                                                        |
 | ✅ #479 | 🛠️ Sonnet                                        | **E) Nested automations + automation maps**                                         |
 | ✅ #480 | ⚡ Haiku (šablony)                               | E) Workflow recipes library (registry-driven, ~88 šablon; volume 900+ neaspirováno) |
-| ✅ #481 | 🛠️ Sonnet                                        | E) Click actions (tag/update on click)                                              |
+| ❌ #481 | 🛠️ Sonnet                                        | E) Click actions (tag/update on click) — nikdy nezapojeno, odstraněno v #220        |
 | ✅ #482 | 🧠 Opus                                          | **F) Custom objects engine**                                                        |
 | ✅ #483 | 🛠️ Sonnet                                        | F) Social enrichment adapter                                                        |
 | ✅ #484 | 🧠 Opus                                          | F) BotSense (bot click detection)                                                   |

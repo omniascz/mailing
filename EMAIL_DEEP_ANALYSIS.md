@@ -195,7 +195,6 @@
 
 - `GET /track/o/:token` (open pixel)
 - `GET /track/c/:token` (click redirect)
-- `GET /t/click/:linkId` (short-link variant)
 
 **Signup forms**: CRUD + `:id/script` (embed JS), public `/public/forms/:id`, `/view`, `/submit`, A/B variants CRUD + `/variant` selector, `/progressive` (progressive profiling)
 
