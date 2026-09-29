@@ -8,6 +8,8 @@ export {
   isCzechPublicHoliday,
   czechPublicHolidayOn,
   holidaysInDays as czechHolidaysInDays,
+  CZECH_OBSERVANCES,
+  observancesInDays as czechObservancesInDays,
   easterSunday,
   toIsoDate,
   type PublicHoliday,

@@ -49,6 +49,22 @@ export const CZECH_FIXED_HOLIDAYS: readonly FixedHoliday[] = [
 ];
 
 /**
+ * Významné dny that are not public holidays, with stable `MM-DD` dates.
+ *
+ * Kept apart from CZECH_FIXED_HOLIDAYS on purpose: a workflow set to fire
+ * before "any public holiday" (no `holidayKeys`) must not start firing on
+ * them. They are reached only by naming their key — `observancesInDays` —
+ * which is how the St Nicholas recipe asks for 5 December.
+ *
+ * Only fixed dates fit here. Den matek (second Sunday of May) is movable by
+ * weekday, which neither this list nor the Easter offsets can express; it is
+ * not in the calendar.
+ */
+export const CZECH_OBSERVANCES: readonly FixedHoliday[] = [
+  { key: '12-05', name: 'Mikuláš', isWorkRest: false },
+];
+
+/**
  * Compute Easter Sunday (Gregorian) for a given year using the Meeus / Jones /
  * Butcher algorithm. Returns `[year, month, day]` (1-indexed month).
  */
@@ -159,4 +175,22 @@ export function holidaysInDays(date: Date, daysAhead: number): PublicHoliday[] {
     ...czechHolidaysForYear(target.getUTCFullYear() + 1),
   ];
   return candidates.filter((h) => h.date === targetIso);
+}
+
+/**
+ * Like `holidaysInDays`, for the významné dny in CZECH_OBSERVANCES: the ones
+ * falling exactly `daysAhead` days after `date`.
+ */
+export function observancesInDays(date: Date, daysAhead: number): PublicHoliday[] {
+  const target = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + daysAhead),
+  );
+  const targetIso = toIsoDate(target);
+  const year = target.getUTCFullYear();
+  return CZECH_OBSERVANCES.map((o) => ({
+    date: `${year}-${o.key}`,
+    key: o.key,
+    name: o.name,
+    isWorkRest: o.isWorkRest,
+  })).filter((o) => o.date === targetIso);
 }

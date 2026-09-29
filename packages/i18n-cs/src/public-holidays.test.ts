@@ -6,6 +6,8 @@ import {
   isCzechPublicHoliday,
   czechPublicHolidayOn,
   holidaysInDays,
+  observancesInDays,
+  CZECH_OBSERVANCES,
   toIsoDate,
 } from './public-holidays.js';
 
@@ -125,5 +127,25 @@ describe('holidaysInDays (workflow trigger)', () => {
 describe('toIsoDate', () => {
   it('formats UTC dates as YYYY-MM-DD', () => {
     expect(toIsoDate(new Date(Date.UTC(2026, 3, 6)))).toBe('2026-04-06');
+  });
+});
+
+describe('observancesInDays (významné dny, not public holidays)', () => {
+  it('finds Mikuláš three days ahead of 2 December', () => {
+    const got = observancesInDays(new Date(Date.UTC(2026, 11, 2)), 3);
+    expect(got.map((o) => [o.date, o.key, o.name, o.isWorkRest])).toEqual([
+      ['2026-12-05', '12-05', 'Mikuláš', false],
+    ]);
+  });
+
+  it('finds nothing on a day that is not one', () => {
+    expect(observancesInDays(new Date(Date.UTC(2026, 11, 2)), 2)).toEqual([]);
+  });
+
+  it('keeps them out of the public holidays, so "any holiday" does not grow', () => {
+    for (const o of CZECH_OBSERVANCES) {
+      expect(CZECH_FIXED_HOLIDAYS.some((h) => h.key === o.key)).toBe(false);
+    }
+    expect(holidaysInDays(new Date(Date.UTC(2026, 11, 2)), 3)).toEqual([]);
   });
 });
