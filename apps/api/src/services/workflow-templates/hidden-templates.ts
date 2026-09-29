@@ -29,9 +29,17 @@
  * missing emails — above all Czech ones: of the templates that survive, two
  * are Czech. Until then, a smaller gallery that keeps its promises beats a
  * large one that does not.
+ *
+ * A second reason, added in Z98: the trigger can never fire. Two templates
+ * offered in the gallery read a date the daily date_field processor does not
+ * have — `last_open_at` and `last_order_at` are not contact custom fields,
+ * and `daysSince` / `daysAfter` are not keys it reads (services/workflows
+ * /triggers.ts: field + offsetDays, matched on custom_fields). Forked, they
+ * would sit active and never send. They come back when the processor can
+ * read those dates.
  */
 
-/** slug → the step that has no matching email. */
+/** slug → the step that has no matching email, or why the trigger never fires. */
 export const HIDDEN_WORKFLOW_TEMPLATES: Record<string, string> = {
   'welcome-3-step-en':
     '"A small thank-you gift" is paired with the Day 7 milestone email, which has no gift.',
@@ -52,6 +60,8 @@ export const HIDDEN_WORKFLOW_TEMPLATES: Record<string, string> = {
     '"Refund confirmed — we\'re sorry it didn\'t work out" is paired with "Your order has shipped".',
   'winback-90-day':
     '"20% off if you come back this week" is paired with a win-back email that names no discount.',
+  'winback-60-day':
+    'The trigger never fires: last_open_at is not a contact custom field and daysSince is not a key the date_field processor reads.',
   'birthday-discount': '"Happy birthday week" is paired with the Valentine\'s Day promo.',
   'birthday-cs':
     '"Narozeninový týden" is paired with the name-day greeting — a different occasion, twice.',
@@ -80,6 +90,8 @@ export const HIDDEN_WORKFLOW_TEMPLATES: Record<string, string> = {
     '"Sorry we missed you — watch the recording" is paired with a webinar invitation.',
   'nps-survey-30-day':
     '"We\'d love to make it right — quick reply?" is paired with the NPS survey again.',
+  'csat-survey-7-day':
+    'The trigger never fires: last_order_at is not a contact custom field and daysAfter is not a key the date_field processor reads.',
   'onboarding-saas-7-day':
     '"Step 1: Invite your team" is paired with the generic welcome email; the steps name features the emails never mention.',
   'onboarding-progressive-profiling':

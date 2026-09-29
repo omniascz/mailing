@@ -34,8 +34,8 @@ doběhne.
 | Kontakty, segmenty, vlastní pole, import, sloučení duplicit | `/contacts`, `/segments`, `/custom-fields`           | obrazovky v `apps/web/src/app/(dashboard)/`; org-scope doložen `public-write-tenant-scope.integration.test.ts`                                                  |
 | Souhlasy podle GDPR účelů, frekvenční stropy, tiché hodiny  | `/settings`, `/frequency-rules`, `/quiet-hours`      | `consent-guardrail.integration.test.ts`, `batch-sender-quiet-hours`, `batch-sender-consent`                                                                     |
 | Workflow automatizace — plátno, větvení, čekání             | `/workflows`                                         | `workflow-graph-checks`, `workflow-editor-branches`, `workflow-cycle-guard`                                                                                     |
-| Galerie flow šablon: 28 publikovaných, z toho 8 českých     | `/workflows` → fork šablony                          | měřeno během: 93 šablon celkem, 28 publikovaných, 65 skrytých, 8 s `locale=cs`                                                                                  |
-| E-maily v šablonách flow se renderují                       | součást forku                                        | `apps/workers/src/integration/workflow-template-body.integration.test.ts`; 28 z 29 použitých e-mailů se vyrenderuje, `ecom-002` ne                              |
+| Galerie flow šablon: 26 publikovaných, z toho 8 českých     | `/workflows` → fork šablony                          | měřeno během: 93 šablon celkem, 26 publikovaných, 67 skrytých, 8 s `locale=cs`                                                                                  |
+| E-maily v šablonách flow se renderují                       | součást forku                                        | `apps/workers/src/integration/workflow-template-body.integration.test.ts`; 26 z 27 použitých e-mailů se vyrenderuje, `ecom-002` ne                              |
 | SMS — odchozí i příchozí (Twilio, BulkGate)                 | `/campaigns` (typ SMS), API `/api/v1/messaging/send` | `apps/api/src/services/sms/routing.ts`; příjem včetně STOP/START a dohledání organizace podle čísla: `apps/api/src/routes/v1/sms.ts`, `services/sms/inbound.ts` |
 | Analytika a reporty                                         | `/reports`                                           | obrazovky v `apps/web`; `/api/v1/analytics/cohorts` měřeno živě → 200                                                                                           |
 | Veřejné REST API, webhooky, SDK (JS, Next, Python)          | API klíč v `/settings`                               | `packages/{sdk,web-sdk,next-sdk,sdk-python}`; `webhook-deliver.integration.test.ts`                                                                             |
@@ -297,9 +297,9 @@ beyond_core_groups: 76
 # apps/api/src/integration/route-smoke/known-failures.ts
 known_5xx_routes: 6
 # apps/api/src/services/workflow-templates/registry.ts
-published_workflow_templates: 28
+published_workflow_templates: 26
 # Vestavěné e-maily, na které publikované šablony odkazují, a kolik z nich
 # projde readCampaignContent jako EmailSchema.
-published_template_emails: 29
-published_template_emails_rendering: 28
+published_template_emails: 27
+published_template_emails_rendering: 26
 ```
