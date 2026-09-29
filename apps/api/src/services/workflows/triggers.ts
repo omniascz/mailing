@@ -31,7 +31,7 @@ import { redis } from '@forgemsg/shared/redis';
 import { startWorkflowRun } from './executor.js';
 import { nameDaysFor as nameDaysCs } from '@forgemsg/i18n-cs/name-days';
 import { nameDaysFor as nameDaysSk } from '@forgemsg/i18n-sk/name-days';
-import { czechHolidaysInDays } from '@forgemsg/i18n-cs';
+import { czechHolidaysInDays, czechObservancesInDays } from '@forgemsg/i18n-cs';
 import { slovakHolidaysInDays } from '@forgemsg/i18n-sk';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -610,7 +610,55 @@ export async function processDailyNameDayTriggers(): Promise<{ triggered: number
  *   holidayKeys?: string[],       // optional whitelist (e.g. ['12-24', 'EASTER+1'])
  *   listId?: string,              // optional contact-list scope
  * }
+ *
+ * Without `holidayKeys` only public holidays count. A key can also name a
+ * Czech významný den that is not a public holiday (CZECH_OBSERVANCES, e.g.
+ * '12-05' for Mikuláš); those are matched only when named.
+ *
+ * The shipped recipes used to write `{ holiday: 'christmas_eve', daysBefore: 7 }`
+ * instead, which this processor never read: no key meant daysAhead 0 and no
+ * filter, so a "Christmas" flow fired on the day of every public holiday. The
+ * recipes now write this shape; workflows forked before that still hold the
+ * old one in their row, so it is translated here (holidayConfig) rather than
+ * migrated. An old name this calendar does not know fires on nothing — firing
+ * on every holiday instead would be the same bug again.
  */
+/** Old recipe names → calendar keys. Anything else maps to no key at all. */
+const LEGACY_HOLIDAY_KEYS: Record<string, string> = {
+  christmas_eve: '12-24',
+  easter_monday: 'EASTER+1',
+  st_nicholas: '12-05',
+};
+
+/**
+ * The trigger config in the one shape the processor acts on.
+ *
+ * `holidayKeys` comes back undefined for "any public holiday", or as a
+ * non-empty list; an old `holiday` name the calendar does not know becomes a
+ * list with nothing the calendar will ever match.
+ */
+export function holidayConfig(raw: unknown): {
+  locale?: 'cs' | 'sk';
+  daysAhead: number;
+  holidayKeys?: string[];
+  listId?: string;
+} {
+  const c = (raw ?? {}) as {
+    locale?: 'cs' | 'sk';
+    daysAhead?: number;
+    holidayKeys?: string[];
+    listId?: string;
+    holiday?: string;
+    daysBefore?: number;
+  };
+  const daysAhead = Math.max(0, Math.floor(Number(c.daysAhead ?? c.daysBefore ?? 0)) || 0);
+  let holidayKeys = c.holidayKeys && c.holidayKeys.length > 0 ? c.holidayKeys : undefined;
+  if (!holidayKeys && typeof c.holiday === 'string') {
+    holidayKeys = [LEGACY_HOLIDAY_KEYS[c.holiday] ?? `unknown:${c.holiday}`];
+  }
+  return { locale: c.locale, daysAhead, holidayKeys, listId: c.listId };
+}
+
 export async function processDailyHolidayTriggers(
   now: Date = new Date(),
 ): Promise<{ triggered: number }> {
@@ -634,23 +682,19 @@ export async function processDailyHolidayTriggers(
   let total = 0;
 
   for (const workflow of activeWorkflows) {
-    const config = (workflow.triggerConfig ?? {}) as {
-      locale?: 'cs' | 'sk';
-      daysAhead?: number;
-      holidayKeys?: string[];
-      listId?: string;
-    };
+    const config = holidayConfig(workflow.triggerConfig);
     const locale = config.locale === 'sk' ? 'sk' : 'cs';
-    const daysAhead = Math.max(0, Math.floor(Number(config.daysAhead ?? 0)));
+    const daysAhead = config.daysAhead;
+    const keys = config.holidayKeys;
 
     const holidays =
       locale === 'sk' ? slovakHolidaysInDays(now, daysAhead) : czechHolidaysInDays(now, daysAhead);
-    if (holidays.length === 0) continue;
+    // Významné dny only when a key names one; "any holiday" stays public holidays.
+    const candidates =
+      keys && locale === 'cs' ? [...holidays, ...czechObservancesInDays(now, daysAhead)] : holidays;
+    if (candidates.length === 0) continue;
 
-    const matching =
-      config.holidayKeys && config.holidayKeys.length > 0
-        ? holidays.filter((h) => config.holidayKeys!.includes(h.key))
-        : holidays;
+    const matching = keys ? candidates.filter((h) => keys.includes(h.key)) : candidates;
     if (matching.length === 0) continue;
 
     const contactRows = config.listId

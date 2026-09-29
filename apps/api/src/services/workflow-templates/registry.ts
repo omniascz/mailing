@@ -520,12 +520,12 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     recommendedFor: ['ecommerce', 'cz-sk'],
     locale: 'cs',
     steps: 1,
-    trigger: { type: 'n_days_before_holiday', config: { holiday: 'easter_monday', daysBefore: 7 } },
+    trigger: { type: 'n_days_before_holiday', config: { daysAhead: 7, holidayKeys: ['EASTER+1'] } },
     nodes: [
       n('t', 'trigger', {
         triggerType: 'n_days_before_holiday',
-        holiday: 'easter_monday',
-        daysBefore: 7,
+        daysAhead: 7,
+        holidayKeys: ['EASTER+1'],
       }),
       email('e1', 'Velikonoční nabídka — slevy do 30 %'),
     ],
@@ -1271,12 +1271,12 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     recommendedFor: ['ecommerce', 'cz-sk'],
     locale: 'cs',
     steps: 1,
-    trigger: { type: 'n_days_before_holiday', config: { holiday: 'christmas_eve', daysBefore: 7 } },
+    trigger: { type: 'n_days_before_holiday', config: { daysAhead: 7, holidayKeys: ['12-24'] } },
     nodes: [
       n('t', 'trigger', {
         triggerType: 'n_days_before_holiday',
-        holiday: 'christmas_eve',
-        daysBefore: 7,
+        daysAhead: 7,
+        holidayKeys: ['12-24'],
       }),
       email('e1', 'Vánoční nabídka — doručíme včas'),
     ],
@@ -1290,12 +1290,12 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     recommendedFor: ['ecommerce', 'cz-sk'],
     locale: 'cs',
     steps: 1,
-    trigger: { type: 'n_days_before_holiday', config: { holiday: 'st_nicholas', daysBefore: 3 } },
+    trigger: { type: 'n_days_before_holiday', config: { daysAhead: 3, holidayKeys: ['12-05'] } },
     nodes: [
       n('t', 'trigger', {
         triggerType: 'n_days_before_holiday',
-        holiday: 'st_nicholas',
-        daysBefore: 3,
+        daysAhead: 3,
+        holidayKeys: ['12-05'],
       }),
       email('e1', 'Mikulášské překvapení čeká'),
     ],
@@ -1309,12 +1309,18 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     recommendedFor: ['ecommerce', 'beauty', 'cz-sk'],
     locale: 'cs',
     steps: 1,
-    trigger: { type: 'n_days_before_holiday', config: { holiday: 'mothers_day', daysBefore: 5 } },
+    // The calendar cannot express "second Sunday in May" (packages/i18n-cs
+    // public-holidays.ts: fixed dates and Easter offsets only), so this key
+    // matches nothing and the flow does not fire. It is also hidden.
+    trigger: {
+      type: 'n_days_before_holiday',
+      config: { daysAhead: 5, holidayKeys: ['MAY-SUN-2'] },
+    },
     nodes: [
       n('t', 'trigger', {
         triggerType: 'n_days_before_holiday',
-        holiday: 'mothers_day',
-        daysBefore: 5,
+        daysAhead: 5,
+        holidayKeys: ['MAY-SUN-2'],
       }),
       email('e1', 'Tip na Den matek — slevy na vybrané dárky'),
     ],
