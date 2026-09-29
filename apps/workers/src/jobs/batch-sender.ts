@@ -495,14 +495,21 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
     });
     const unsubscribeUrl = `${trackingBaseUrl}/api/v1/unsubscribe/${unsubToken}`;
     // Signed view-in-browser token → hosted re-render of this exact email.
-    const viewToken = createTrackingToken({
-      type: 'view',
-      orgId: data.orgId,
-      campaignId: data.campaignId,
-      contactId: contact.id,
-      ts: Math.floor(Date.now() / 1000),
-    });
-    const viewInBrowserUrl = `${trackingBaseUrl}/api/v1/browser/${viewToken}`;
+    //
+    // Only for a real campaign: the page re-renders a campaign's content, and a
+    // flow's templated email has none (its campaignId is a placeholder), so the
+    // link opened "This email is no longer available". Without a URL the
+    // renderer keeps the words of a `{{view_in_browser_url}}` link and drops the
+    // link, and the share block — which shares this URL — renders nothing.
+    const viewInBrowserUrl = data.campaignIsPlaceholder
+      ? undefined
+      : `${trackingBaseUrl}/api/v1/browser/${createTrackingToken({
+          type: 'view',
+          orgId: data.orgId,
+          campaignId: data.campaignId,
+          contactId: contact.id,
+          ts: Math.floor(Date.now() / 1000),
+        })}`;
     const todayIso = new Date().toISOString().slice(0, 10);
     const mergeCtx = buildMergeContext(
       contact,
