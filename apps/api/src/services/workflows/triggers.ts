@@ -474,6 +474,29 @@ export async function onLifecycleStageChanged(
 
 // ─── Trigger: date_field (cron-based) ────────────────────────────────────────
 
+/**
+ * SQL condition on `contacts`: the contact is one the batch sender would still
+ * mail on a non-transactional send — not `status = 'unsubscribed'`, and its
+ * address not on the organisation's suppression list (where bounces and
+ * complaints land). The same two checks batch-sender.ts applies, in the same
+ * lower-cased comparison as /internal/suppressions/check-batch.
+ *
+ * The daily processors used to start a run for everyone whose date or name
+ * matched. For these contacts the run completed and counted in total_runs and
+ * in the email step's `entered`, while the sender dropped the message. It is
+ * deliberately not `status = 'active'` (the holiday processor's filter): the
+ * sender delivers to 'pending', 'non_subscribed' and 'archived' today, and
+ * this is about not counting sends that do not happen, not about changing who
+ * receives one.
+ */
+function sendable() {
+  return sql`status <> 'unsubscribed'
+          AND NOT EXISTS (
+            SELECT 1 FROM suppressions s
+            WHERE s.org_id = contacts.org_id AND s.email = lower(contacts.email)
+          )`;
+}
+
 /** The date_field config in the one shape the processor acts on — or null to skip it. */
 export function dateFieldConfig(raw: unknown): { field: string; offsetDays: number } | null {
   const c = (raw ?? {}) as { field?: unknown; offsetDays?: unknown; daysBefore?: unknown };
@@ -530,6 +553,7 @@ export async function processDailyDateTriggers(): Promise<{ triggered: number }>
         SELECT id FROM contacts
         WHERE org_id = ${workflow.orgId}
           AND deleted_at IS NULL
+          AND ${sendable()}
           AND custom_fields->>${config.field} IS NOT NULL
           AND TO_CHAR(
             (custom_fields->>${config.field})::date
@@ -599,6 +623,7 @@ export async function processDailyNameDayTriggers(): Promise<{ triggered: number
         SELECT id FROM contacts
         WHERE org_id = ${workflow.orgId}
           AND deleted_at IS NULL
+          AND ${sendable()}
           AND first_name IS NOT NULL
           AND lower(unaccent(first_name)) = ANY(${sql.param(normalizedNames)})
       `,
