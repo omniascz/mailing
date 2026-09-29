@@ -132,8 +132,10 @@ afterAll(async () => {
  * Three templates the gallery offers whose first step after the trigger is an
  * email. The ones this used to fork are no longer offered (#Z61: their emails
  * did not match their steps), and a fork of those now answers 404.
+ * winback-60-day was one of the three until Z98 hid it (its date_field trigger
+ * can never fire); churn-prevention-high-risk takes its place.
  */
-const FORKABLE = ['cz-name-day-greeting', 'winback-60-day', 'reengagement-180-day'];
+const FORKABLE = ['cz-name-day-greeting', 'churn-prevention-high-risk', 'reengagement-180-day'];
 
 describe('forking a template brings its emails along', () => {
   it.each(FORKABLE)('%s', async (slug) => {
@@ -188,7 +190,7 @@ describe('forking a template brings its emails along', () => {
       .from(templates)
       .where(eq(templates.orgId, session.orgId));
 
-    const fork = await api('POST', '/api/v1/workflow-templates/winback-60-day/fork', {
+    const fork = await api('POST', '/api/v1/workflow-templates/churn-prevention-high-risk/fork', {
       name: `${TAG} second`,
     });
     expect(fork.statusCode, fork.body).toBe(201);
