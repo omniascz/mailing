@@ -474,11 +474,35 @@ export async function onLifecycleStageChanged(
 
 // ─── Trigger: date_field (cron-based) ────────────────────────────────────────
 
+/** The date_field config in the one shape the processor acts on — or null to skip it. */
+export function dateFieldConfig(raw: unknown): { field: string; offsetDays: number } | null {
+  const c = (raw ?? {}) as { field?: unknown; offsetDays?: unknown; daysBefore?: unknown };
+  if (typeof c.field !== 'string' || !c.field) return null;
+  if (c.offsetDays !== undefined && c.offsetDays !== null) {
+    const n = Number(c.offsetDays);
+    return Number.isInteger(n) ? { field: c.field, offsetDays: n } : null;
+  }
+  if (c.daysBefore !== undefined && c.daysBefore !== null) {
+    const n = Number(c.daysBefore);
+    return Number.isInteger(n) ? { field: c.field, offsetDays: -n } : null;
+  }
+  return { field: c.field, offsetDays: 0 };
+}
+
 /**
  * Run daily to check date-field triggers (birthdays, anniversaries).
- * config: { field: string, offset_days?: number }
- *   field: custom field name (e.g. "birthday")
- *   offset_days: send N days before/after the date (0 = exact match)
+ *
+ * config: { field: string, offsetDays?: number }
+ *   field:      custom field name (e.g. "birthday")
+ *   offsetDays: fire when date + offsetDays is today — so -3 fires three days
+ *               BEFORE the date, 7 fires a week after it. 0 = on the date.
+ *
+ * The shipped recipes wrote `{ field, daysBefore: N }`, which this never read:
+ * with no offset they fired ON the date — the "renews in 30 days" email on the
+ * renewal day. The recipes now write offsetDays; workflows forked earlier hold
+ * the old key in their row, so it is translated (dateFieldConfig) instead of
+ * migrated. An offset that is not a whole number skips the workflow: it used
+ * to go into the SQL as text, where a string rewrote the query.
  */
 export async function processDailyDateTriggers(): Promise<{ triggered: number }> {
   const activeWorkflows = await db
@@ -497,8 +521,8 @@ export async function processDailyDateTriggers(): Promise<{ triggered: number }>
   const mmdd = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   for (const workflow of activeWorkflows) {
-    const config = workflow.triggerConfig as { field?: string; offsetDays?: number };
-    if (!config.field) continue;
+    const config = dateFieldConfig(workflow.triggerConfig);
+    if (!config) continue;
 
     // Find contacts where custom_fields->>field ends with today's MM-DD
     const contactRows = await db.execute(
@@ -509,7 +533,7 @@ export async function processDailyDateTriggers(): Promise<{ triggered: number }>
           AND custom_fields->>${config.field} IS NOT NULL
           AND TO_CHAR(
             (custom_fields->>${config.field})::date
-            + INTERVAL '${sql.raw(String(config.offsetDays ?? 0))} days',
+            + make_interval(days => ${config.offsetDays}::int),
             'MM-DD'
           ) = ${mmdd}
       `,
