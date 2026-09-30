@@ -25,7 +25,7 @@ import {
   throttleRefillMs,
   detectIsp,
 } from '@forgemsg/shared/sending/isp-throttle';
-import { internalHeaders } from '../lib/internal-api.js';
+import { internalHeaders, throwIfPermanentFailure, asFilterError } from '../lib/internal-api.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -211,10 +211,129 @@ async function updateContactStatus(
   }
 }
 
+// ─── Suppression gate ────────────────────────────────────────────────────────
+
+/**
+ * Suppression reasons that stop a transactional message.
+ *
+ * Every reason except `unsubscribe`. An unsubscribe is a refusal of marketing
+ * (services/contacts/unsubscribe.ts writes it for every opt-out), not of the
+ * contract: a person who left the newsletter still gets the receipt, the
+ * password reset, and the confirmation mail when they subscribe again — that
+ * confirmation goes out through this same transactional path, so suppressing
+ * it here would make an unsubscribe impossible to undo. The other reasons say
+ * the address itself must not be mailed (it bounced, complained, was blocked,
+ * does not exist, or the org said so), and those hold for any message.
+ *
+ * Broadcast and triggered mail check every reason.
+ */
+const SUPPRESSES_TRANSACTIONAL = [
+  'hard_bounce',
+  'complaint',
+  'manual',
+  'block',
+  'invalid_email',
+] as const;
+
+/**
+ * Is this recipient suppressed for the job's org, asked at the moment of
+ * sending?
+ *
+ * The one hop every message crosses: campaign and flow mail arrive from
+ * batch-sender, everything else from the API's sendTransactionalEmail, and
+ * both land on these queues. batch-sender also checks, before it renders a
+ * batch; this check is the later one, and it catches what arrived in between —
+ * a hard bounce from earlier in the same campaign, or anything recorded while
+ * this message waited out a throttle or a warmup night. It runs again on every
+ * retry and every deferral for the same reason.
+ *
+ * One call per attempt. BullMQ hands the worker one job at a time, so there is
+ * no batch to fold it into; the same endpoint answers batch-sender's thousand
+ * addresses and this one.
+ *
+ * Fails closed, as batch-sender's filters do: if the API cannot answer, the
+ * job throws and BullMQ retries it rather than sending unchecked.
+ */
+async function isSuppressed(data: MtaSendJobData): Promise<boolean> {
+  const path = '/internal/suppressions/check-batch';
+  let suppressed: unknown;
+  try {
+    const res = await fetch(`${API_URL}/api/v1${path}`, {
+      method: 'POST',
+      headers: internalHeaders(),
+      body: JSON.stringify({
+        orgId: data.orgId,
+        emails: [data.toEmail],
+        ...(data.stream === 'transactional' ? { reasons: SUPPRESSES_TRANSACTIONAL } : {}),
+      }),
+    });
+    throwIfPermanentFailure(res, path, data.orgId);
+    const body = (await res.json()) as { data?: { suppressed?: unknown } };
+    suppressed = body.data?.suppressed;
+  } catch (err) {
+    throw asFilterError(err, path, data.orgId);
+  }
+  // A 2xx without the list is not a "no": it is an answer nobody can read.
+  if (!Array.isArray(suppressed)) {
+    throw asFilterError(new Error('response carried no suppressed list'), path, data.orgId);
+  }
+  const to = data.toEmail.toLowerCase();
+  return suppressed.some((e) => typeof e === 'string' && e.toLowerCase() === to);
+}
+
+/**
+ * Write down a message the gate stopped.
+ *
+ * A `failed` event: never delivered, and nobody on the far side refused it.
+ * Its webhook is `rejected`, the same one /transactional/email emits for a
+ * suppressed address, so a customer sees one event whichever path refused it.
+ *
+ * The log line is not a fallback nicety. The events endpoint refuses a row
+ * whose campaign or contact does not exist, and a transactional job carries
+ * placeholders for both (lib/queues.ts in the API), so for that mail the log
+ * line is the record. A refused write is logged too, rather than lost the way
+ * recordEvent loses it.
+ */
+async function recordSuppressed(data: MtaSendJobData, isp: string): Promise<void> {
+  console.warn(
+    `[mta-sender][suppressed] message=${data.messageId} org=${data.orgId} stream=${data.stream} — recipient is on the suppression list, not sent`,
+  );
+  try {
+    const res = await fetch(`${API_URL}/api/v1/internal/events`, {
+      method: 'POST',
+      headers: internalHeaders(),
+      body: JSON.stringify({
+        type: 'failed',
+        orgId: data.orgId,
+        campaignId: data.campaignId,
+        contactId: data.contactId,
+        messageId: data.messageId,
+        metadata: { reason: 'suppressed', stream: data.stream, isp },
+      }),
+    });
+    if (!res.ok) {
+      console.warn(
+        `[mta-sender][suppressed] message=${data.messageId} event not stored (HTTP ${res.status})`,
+      );
+    }
+  } catch (err) {
+    console.warn(
+      `[mta-sender][suppressed] message=${data.messageId} event not stored: ${(err as Error).message}`,
+    );
+  }
+}
+
 // ─── Job processor ───────────────────────────────────────────────────────────
 
-async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
+export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
   const data = job.data;
+
+  // Before the throttle, so a message that will not be sent does not spend a
+  // token or wait for one.
+  if (await isSuppressed(data)) {
+    await recordSuppressed(data, detectIsp(data.toEmail.split('@')[1] ?? 'other'));
+    return { status: 'suppressed', messageId: data.messageId };
+  }
 
   const recipientDomain = data.toEmail.split('@')[1] ?? 'other';
   // Receiving mailbox provider — denormalised onto each event for ISP stats.
