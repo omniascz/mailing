@@ -72,7 +72,13 @@ beforeAll(async () => {
         });
       }
       res.writeHead(200, { 'content-type': 'application/json' });
-      res.end('{"ok":true}');
+      // mta-sender asks whether the recipient is suppressed before it sends, and
+      // refuses to send on an answer it cannot read. Nobody here is suppressed.
+      res.end(
+        req.url?.startsWith('/api/v1/internal/suppressions/check-batch')
+          ? '{"data":{"suppressed":[]}}'
+          : '{"ok":true}',
+      );
     });
   });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));

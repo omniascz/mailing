@@ -8,7 +8,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
-import { suppressions } from '../../../db/schema/index.js';
+import { suppressions, suppressionReasonEnum } from '../../../db/schema/index.js';
 
 const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
   app.post(
@@ -21,6 +21,12 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
         .object({
           orgId: z.string().uuid(),
           emails: z.array(z.string().email()).max(1000),
+          /**
+           * Only these reasons count. Absent means every reason, which is what
+           * batch-sender asks for; mta-sender narrows it for transactional
+           * mail (SUPPRESSES_TRANSACTIONAL there says why).
+           */
+          reasons: z.array(z.enum(suppressionReasonEnum.enumValues)).min(1).optional(),
         })
         .parse(req.body);
 
@@ -35,7 +41,13 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
       const rows = await db
         .select({ email: suppressions.email })
         .from(suppressions)
-        .where(and(eq(suppressions.orgId, body.orgId), inArray(suppressions.email, lowered)));
+        .where(
+          and(
+            eq(suppressions.orgId, body.orgId),
+            inArray(suppressions.email, lowered),
+            body.reasons ? inArray(suppressions.reason, body.reasons) : undefined,
+          ),
+        );
 
       const suppressed = rows.map((r) => r.email).filter((e): e is string => !!e);
       return reply.send({ data: { suppressed } });
