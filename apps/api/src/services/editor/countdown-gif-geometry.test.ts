@@ -48,7 +48,7 @@
  *     for frame one.
  */
 import { describe, it, expect, beforeAll } from 'vitest';
-import sharp from 'sharp';
+import sharp, { type Metadata } from 'sharp';
 import { generateCountdownGif } from './countdown-gif.js';
 
 /** Frozen so two runs of this file are two attempts at the same picture. */
@@ -93,7 +93,7 @@ function measureInk(data: Buffer, width: number, height: number, channels: numbe
 
 let gif: Buffer;
 let ink: Ink;
-let meta: sharp.Metadata;
+let meta: Metadata;
 
 beforeAll(async () => {
   const realNow = Date.now;

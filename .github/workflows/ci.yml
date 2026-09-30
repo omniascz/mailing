@@ -360,10 +360,21 @@ jobs:
   audit:
     name: Dependency Audit
     runs-on: ubuntu-latest
-    # Non-blocking — surfaces new high+critical CVEs as a warning so we
-    # can patch quickly without blocking unrelated PRs. Promote to a
-    # required check once we've stabilised the baseline.
-    continue-on-error: true
+    # Two thresholds, because one did not work.
+    #
+    # This job used to be `continue-on-error: true` at `--audit-level high`.
+    # It failed on every run from the first one (2026-08-02) and reported
+    # success to CI Pass every time, so a permanently red job nobody read is
+    # where two critical Next.js RCEs sat for three weeks.
+    #
+    # Critical blocks: it is rare, and when it appears it has to stop merges
+    # until it is fixed or explicitly ignored. High reports: new high advisories
+    # land on transitive dependencies independently of any PR, most of them
+    # unreachable, and blocking on them is what made the job red forever.
+    #
+    # The escape hatch for a critical that is proven unreachable is
+    # `pnpm.auditConfig.ignoreGhsas` in the root package.json, with the reason
+    # beside it — a reviewed line in a diff, not a threshold turned down.
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -372,7 +383,18 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm audit --prod --audit-level high
+      - name: Critical advisories (blocking)
+        run: pnpm audit --prod --audit-level critical
+      # Always exits 0. What it finds is an annotation on the run and the PR,
+      # one per advisory, rather than a red job that looks like every other day.
+      - name: High advisories (reported, not blocking)
+        run: |
+          set -uo pipefail
+          pnpm audit --prod --json > audit.json || true
+          jq -r '.advisories // {} | to_entries[] | .value
+                 | select(.severity == "high")
+                 | "::warning title=High advisory: \(.module_name)::\(.github_advisory_id) \(.title) (vulnerable \(.vulnerable_versions), fixed \(.patched_versions))"' audit.json
+          echo "high advisories: $(jq '.metadata.vulnerabilities.high // 0' audit.json)"
 
   build-go:
     name: Build Go Services
@@ -762,6 +784,7 @@ jobs:
         apply-dry-run,
         proto-drift,
         e2e,
+        audit,
       ]
     if: always()
     steps:
@@ -785,8 +808,8 @@ jobs:
       # succeeded. The dump below prints what was actually read, so that is
       # visible rather than assumed.
       #
-      # `audit` and `e2e`: audit is continue-on-error, so it reports success
-      # whatever `pnpm audit` returns and requiring it would assert nothing.
+      # `audit` is required since it stopped being continue-on-error: its
+      # critical step blocks, its high step only reports (see the job).
       # e2e IS required and is in `needs` — it lost its `if:` first, because a
       # label-gated job reports `skipped` and this step treats that as failure.
       - name: Verify every needed job succeeded
