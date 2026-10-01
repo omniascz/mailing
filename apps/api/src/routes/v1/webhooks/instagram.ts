@@ -122,40 +122,46 @@ async function processInstagramEvents(payload: MetaWebhookPayload): Promise<void
         )
         .limit(1);
 
-      let ticketId: string;
-      if (existing) {
-        ticketId = existing.id;
-        // Reopen if closed
-        await db
-          .update(helpdeskTickets)
-          .set({ status: 'open', updatedAt: new Date() })
-          .where(eq(helpdeskTickets.id, ticketId));
-      } else {
-        const [created] = await db
-          .insert(helpdeskTickets)
-          .values({
-            orgId,
-            subject: `Instagram DM from ${igSenderId}`,
-            channel: 'instagram',
-            externalThreadId: igSenderId,
-            externalIdentity: igSenderId,
-            channelMetadata: { page_id: pageId },
-          })
-          .returning({ id: helpdeskTickets.id });
-        ticketId = created!.id;
-      }
+      // One transaction: the ticket and its first message become visible
+      // together. They were two statements, so a ticket could be read — by
+      // the helpdesk, or by anything else watching for it — with no message
+      // in it, and stayed that way for good if the message insert failed.
+      await db.transaction(async (tx) => {
+        let ticketId: string;
+        if (existing) {
+          ticketId = existing.id;
+          // Reopen if closed
+          await tx
+            .update(helpdeskTickets)
+            .set({ status: 'open', updatedAt: new Date() })
+            .where(eq(helpdeskTickets.id, ticketId));
+        } else {
+          const [created] = await tx
+            .insert(helpdeskTickets)
+            .values({
+              orgId,
+              subject: `Instagram DM from ${igSenderId}`,
+              channel: 'instagram',
+              externalThreadId: igSenderId,
+              externalIdentity: igSenderId,
+              channelMetadata: { page_id: pageId },
+            })
+            .returning({ id: helpdeskTickets.id });
+          ticketId = created!.id;
+        }
 
-      // Insert the inbound message (idempotent on mid)
-      await db
-        .insert(ticketMessages)
-        .values({
-          ticketId,
-          sender: igSenderId,
-          direction: 'inbound',
-          externalMessageId: mid ?? null,
-          body: messageText,
-        })
-        .onConflictDoNothing();
+        // Insert the inbound message (idempotent on mid)
+        await tx
+          .insert(ticketMessages)
+          .values({
+            ticketId,
+            sender: igSenderId,
+            direction: 'inbound',
+            externalMessageId: mid ?? null,
+            body: messageText,
+          })
+          .onConflictDoNothing();
+      });
     }
   }
 }
