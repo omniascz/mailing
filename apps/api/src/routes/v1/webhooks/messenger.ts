@@ -121,45 +121,51 @@ async function processMessengerEvents(payload: MetaWebhookPayload): Promise<void
         )
         .limit(1);
 
-      let ticketId: string;
-      if (existing) {
-        ticketId = existing.id;
-        await db
-          .update(helpdeskTickets)
-          .set({ status: 'open', updatedAt: new Date() })
-          .where(eq(helpdeskTickets.id, ticketId));
-      } else {
-        const [created] = await db
-          .insert(helpdeskTickets)
-          .values({
-            orgId,
-            subject: `Messenger from ${psid}`,
-            channel: 'messenger',
-            externalThreadId: psid,
-            externalIdentity: psid,
-            channelMetadata: {
-              page_id: pageId,
-              has_attachments: (messaging.message?.attachments ?? []).length > 0,
-            },
-          })
-          .returning({ id: helpdeskTickets.id });
-        ticketId = created!.id;
-      }
+      // One transaction: the ticket and its first message become visible
+      // together. They were two statements, so a ticket could be read — by
+      // the helpdesk, or by anything else watching for it — with no message
+      // in it, and stayed that way for good if the message insert failed.
+      await db.transaction(async (tx) => {
+        let ticketId: string;
+        if (existing) {
+          ticketId = existing.id;
+          await tx
+            .update(helpdeskTickets)
+            .set({ status: 'open', updatedAt: new Date() })
+            .where(eq(helpdeskTickets.id, ticketId));
+        } else {
+          const [created] = await tx
+            .insert(helpdeskTickets)
+            .values({
+              orgId,
+              subject: `Messenger from ${psid}`,
+              channel: 'messenger',
+              externalThreadId: psid,
+              externalIdentity: psid,
+              channelMetadata: {
+                page_id: pageId,
+                has_attachments: (messaging.message?.attachments ?? []).length > 0,
+              },
+            })
+            .returning({ id: helpdeskTickets.id });
+          ticketId = created!.id;
+        }
 
-      await db
-        .insert(ticketMessages)
-        .values({
-          ticketId,
-          sender: psid,
-          direction: 'inbound',
-          externalMessageId: mid ?? null,
-          body: messageText,
-          attachments: (messaging.message?.attachments ?? []) as Array<{
-            url: string;
-            name: string;
-          }>,
-        })
-        .onConflictDoNothing();
+        await tx
+          .insert(ticketMessages)
+          .values({
+            ticketId,
+            sender: psid,
+            direction: 'inbound',
+            externalMessageId: mid ?? null,
+            body: messageText,
+            attachments: (messaging.message?.attachments ?? []) as Array<{
+              url: string;
+              name: string;
+            }>,
+          })
+          .onConflictDoNothing();
+      });
     }
   }
 }
