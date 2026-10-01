@@ -190,14 +190,6 @@
       "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
       "status": "safe"
     },
-    "POST /api/v1/webhooks/instagram": {
-      "why": "The signature is verified against the app secret first, and refused outright when none is configured (#180/#181). The handler then resolves the org from the page/account id and looks the ticket up org-scoped, so the id the update uses came from that scoped lookup. Reported because the orgId lives in the local helper the handler calls, not in the handler.",
-      "status": "safe"
-    },
-    "POST /api/v1/webhooks/messenger": {
-      "why": "The signature is verified against the app secret first, and refused outright when none is configured (#180/#181). The handler then resolves the org from the page/account id and looks the ticket up org-scoped, so the id the update uses came from that scoped lookup. Reported because the orgId lives in the local helper the handler calls, not in the handler.",
-      "status": "safe"
-    },
     "POST /api/v1/webhooks/stripe": {
       "why": "Provider webhook. The call is bound by the connection id in the path or by the provider signature checked in the handler, not by an org on the row.",
       "status": "safe"
