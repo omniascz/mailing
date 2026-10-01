@@ -9,7 +9,8 @@ import type { FastifyPluginAsync } from 'fastify';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { metaPageMappings } from '../../../db/schema/index.js';
-import { helpdeskTickets, ticketMessages } from '../../../db/schema/helpdesk.js';
+import { ticketMessages } from '../../../db/schema/helpdesk.js';
+import { upsertThreadTicket } from './thread-ticket.js';
 import { verifyMessengerWebhook } from '../../../channels/messenger/adapter.js';
 import { AppError } from '../../../lib/app-error.js';
 import { env } from '../../../config/env.js';
@@ -109,47 +110,24 @@ async function processMessengerEvents(payload: MetaWebhookPayload): Promise<void
       const orgId = await resolveOrgByFacebookPage(pageId);
       if (!orgId) continue;
 
-      const [existing] = await db
-        .select({ id: helpdeskTickets.id })
-        .from(helpdeskTickets)
-        .where(
-          and(
-            eq(helpdeskTickets.orgId, orgId),
-            eq(helpdeskTickets.channel, 'messenger'),
-            eq(helpdeskTickets.externalThreadId, psid),
-          ),
-        )
-        .limit(1);
-
       // One transaction: the ticket and its first message become visible
       // together. They were two statements, so a ticket could be read — by
       // the helpdesk, or by anything else watching for it — with no message
       // in it, and stayed that way for good if the message insert failed.
       await db.transaction(async (tx) => {
-        let ticketId: string;
-        if (existing) {
-          ticketId = existing.id;
-          await tx
-            .update(helpdeskTickets)
-            .set({ status: 'open', updatedAt: new Date() })
-            .where(eq(helpdeskTickets.id, ticketId));
-        } else {
-          const [created] = await tx
-            .insert(helpdeskTickets)
-            .values({
-              orgId,
-              subject: `Messenger from ${psid}`,
-              channel: 'messenger',
-              externalThreadId: psid,
-              externalIdentity: psid,
-              channelMetadata: {
-                page_id: pageId,
-                has_attachments: (messaging.message?.attachments ?? []).length > 0,
-              },
-            })
-            .returning({ id: helpdeskTickets.id });
-          ticketId = created!.id;
-        }
+        // Find or create the conversation's ticket, and reopen it, in one
+        // statement — see upsertThreadTicket.
+        const ticketId = await upsertThreadTicket(tx, {
+          orgId,
+          subject: `Messenger from ${psid}`,
+          channel: 'messenger',
+          externalThreadId: psid,
+          externalIdentity: psid,
+          channelMetadata: {
+            page_id: pageId,
+            has_attachments: (messaging.message?.attachments ?? []).length > 0,
+          },
+        });
 
         await tx
           .insert(ticketMessages)
