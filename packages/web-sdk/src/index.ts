@@ -274,11 +274,17 @@ export const ForgeMsg = {
     if (_config) _config.contactId = contactId;
   },
 
-  /** Manually track a custom event. */
+  /**
+   * Manually track a custom event for the identified contact.
+   *
+   * The body names the event `eventName`, which is what POST /api/v1/events
+   * reads. It used to send `event`: the API answered 400 on every call and
+   * apiFetch swallowed it, so no event from this method ever reached a flow.
+   */
   async track(event: string, properties?: Record<string, unknown>): Promise<void> {
     await apiFetch('/api/v1/events', {
       method: 'POST',
-      body: JSON.stringify({ event, contactId: _config?.contactId, properties }),
+      body: JSON.stringify({ eventName: event, contactId: _config?.contactId, properties }),
     });
   },
 
