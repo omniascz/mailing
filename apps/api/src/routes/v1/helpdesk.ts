@@ -74,6 +74,10 @@ const helpdeskRoutes: FastifyPluginAsync = async (app) => {
           sender: z.enum(['customer', 'agent', 'system']),
           body: z.string().min(1),
           attachments: z.array(z.object({ url: z.string().url(), name: z.string() })).optional(),
+          // 'internal' is an agent note the customer never sees. Omitted, it
+          // follows the sender: customer → inbound, agent → outbound,
+          // system → internal.
+          direction: z.enum(['inbound', 'outbound', 'internal']).optional(),
         })
         .parse(req.body);
       return reply.code(201).send({ data: await appendMessage(req.user!.orgId, id, body) });

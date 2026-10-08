@@ -89,6 +89,21 @@ export async function getTicket(
   return { ticket, messages };
 }
 
+export type MessageDirection = 'inbound' | 'outbound' | 'internal';
+
+/**
+ * Where a message goes when the caller does not say. It used to be the column
+ * default, 'inbound', for every sender — so an agent's reply was stored as a
+ * message from the customer, and a 'system' note as something the live chat
+ * visitor is shown (#231 filters on direction). 'system' is the one sender
+ * this route had for "not for the customer", so it defaults to internal.
+ */
+const DEFAULT_DIRECTION: Record<'customer' | 'agent' | 'system', MessageDirection> = {
+  customer: 'inbound',
+  agent: 'outbound',
+  system: 'internal',
+};
+
 export async function appendMessage(
   orgId: string,
   ticketId: string,
@@ -96,6 +111,7 @@ export async function appendMessage(
     sender: 'customer' | 'agent' | 'system';
     body: string;
     attachments?: Array<{ url: string; name: string }>;
+    direction?: MessageDirection;
   },
 ): Promise<TicketMessage> {
   const [ticket] = await db
@@ -109,6 +125,7 @@ export async function appendMessage(
     .values({
       ticketId,
       sender: input.sender,
+      direction: input.direction ?? DEFAULT_DIRECTION[input.sender],
       body: input.body,
       attachments: input.attachments ?? [],
     })
