@@ -7,11 +7,14 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast';
-import { LIFECYCLE_STAGES, buildContactEditRequests } from './contact-edit-requests';
+import {
+  CONTACT_STATUSES,
+  LIFECYCLE_STAGES,
+  buildContactEditRequests,
+  initialContactForm,
+} from './contact-edit-requests';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-
-const STATUSES = ['active', 'unsubscribed', 'bounced', 'complained', 'pending'] as const;
 
 export interface EditableContact {
   id: string;
@@ -30,28 +33,22 @@ export function EditContactButton({ contact }: { contact: EditableContact }) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [email, setEmail] = useState(contact.email ?? '');
-  const [phone, setPhone] = useState(contact.phone ?? '');
-  const [firstName, setFirstName] = useState(contact.firstName ?? '');
-  const [lastName, setLastName] = useState(contact.lastName ?? '');
-  const [status, setStatus] = useState<(typeof STATUSES)[number]>(
-    (STATUSES as readonly string[]).includes(contact.status)
-      ? (contact.status as (typeof STATUSES)[number])
-      : 'active',
-  );
-  const [stage, setStage] = useState(contact.lifecycleStage ?? '');
+  const initial = initialContactForm(contact);
+  const [email, setEmail] = useState(initial.email);
+  const [phone, setPhone] = useState(initial.phone);
+  const [firstName, setFirstName] = useState(initial.firstName);
+  const [lastName, setLastName] = useState(initial.lastName);
+  const [status, setStatus] = useState(initial.status);
+  const [stage, setStage] = useState(initial.lifecycleStage);
 
   function reset() {
-    setEmail(contact.email ?? '');
-    setPhone(contact.phone ?? '');
-    setFirstName(contact.firstName ?? '');
-    setLastName(contact.lastName ?? '');
-    setStatus(
-      (STATUSES as readonly string[]).includes(contact.status)
-        ? (contact.status as (typeof STATUSES)[number])
-        : 'active',
-    );
-    setStage(contact.lifecycleStage ?? '');
+    const f = initialContactForm(contact);
+    setEmail(f.email);
+    setPhone(f.phone);
+    setFirstName(f.firstName);
+    setLastName(f.lastName);
+    setStatus(f.status);
+    setStage(f.lifecycleStage);
   }
 
   function close() {
@@ -63,7 +60,7 @@ export function EditContactButton({ contact }: { contact: EditableContact }) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const requests = buildContactEditRequests(contact.id, contact.lifecycleStage, {
+      const requests = buildContactEditRequests(contact.id, contact, {
         email,
         phone,
         firstName,
@@ -136,10 +133,10 @@ export function EditContactButton({ contact }: { contact: EditableContact }) {
               <label className="block text-sm font-medium text-secondary-700">Status</label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as (typeof STATUSES)[number])}
+                onChange={(e) => setStatus(e.target.value)}
                 className="h-10 w-full rounded-md border border-secondary-300 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
-                {STATUSES.map((s) => (
+                {CONTACT_STATUSES.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>

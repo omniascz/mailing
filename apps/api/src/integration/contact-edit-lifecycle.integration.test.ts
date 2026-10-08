@@ -40,7 +40,7 @@ interface ApiRequest {
 }
 type Builder = (
   contactId: string,
-  currentStage: string | null,
+  current: { status: string; lifecycleStage: string | null },
   form: {
     email: string;
     phone: string;
@@ -114,7 +114,7 @@ describe('the editor changes the lifecycle stage', () => {
   it('up the pipeline, together with a name change', async () => {
     const c = await newContact('subscriber');
     await save(
-      build(c.id, c.lifecycleStage, {
+      build(c.id, c, {
         email: c.email!,
         phone: '+420777000111',
         firstName: 'Jana',
@@ -138,7 +138,7 @@ describe('the editor changes the lifecycle stage', () => {
   it('back down the pipeline — a person chose it, so it is not refused', async () => {
     const c = await newContact('customer');
     await save(
-      build(c.id, c.lifecycleStage, {
+      build(c.id, c, {
         email: c.email!,
         phone: '',
         firstName: 'Jana',
@@ -153,7 +153,7 @@ describe('the editor changes the lifecycle stage', () => {
 
   it('stage untouched: the other fields still save, and no transition is recorded', async () => {
     const c = await newContact('subscriber');
-    const requests = build(c.id, c.lifecycleStage, {
+    const requests = build(c.id, c, {
       email: c.email!,
       phone: '+420777999888',
       firstName: 'Janička',
