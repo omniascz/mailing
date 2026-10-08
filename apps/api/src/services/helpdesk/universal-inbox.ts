@@ -16,6 +16,9 @@
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
 import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
+
+/** A transaction handle: every query in a routing runs on the one that holds its lock. */
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 import {
   helpdeskTickets,
   ticketMessages,
@@ -123,6 +126,7 @@ function pickPrimaryIdentity(
  * at least an email or phone, create one. Returns null if nothing usable.
  */
 async function resolveContact(
+  q: Tx,
   orgId: string,
   ident: InboundMessage['identity'],
 ): Promise<string | null> {
@@ -130,7 +134,7 @@ async function resolveContact(
   const phone = normPhone(ident.phone);
 
   if (email) {
-    const [existing] = await db
+    const [existing] = await q
       .select({ id: contacts.id })
       .from(contacts)
       .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
@@ -138,7 +142,7 @@ async function resolveContact(
     if (existing) return existing.id;
   }
   if (phone) {
-    const [existing] = await db
+    const [existing] = await q
       .select({ id: contacts.id })
       .from(contacts)
       .where(and(eq(contacts.orgId, orgId), eq(contacts.phone, phone)))
@@ -148,7 +152,7 @@ async function resolveContact(
 
   // Create if we have any identifier — otherwise the ticket is anonymous
   if (email || phone) {
-    const [created] = await db
+    const [created] = await q
       .insert(contacts)
       .values({
         orgId,
@@ -172,11 +176,12 @@ async function resolveContact(
 // ─── Thread routing ──────────────────────────────────────────────────────────
 
 async function findByExternalThread(
+  q: Tx,
   orgId: string,
   channel: InboxChannel,
   threadId: string,
 ): Promise<HelpdeskTicket | null> {
-  const [row] = await db
+  const [row] = await q
     .select()
     .from(helpdeskTickets)
     .where(
@@ -192,12 +197,13 @@ async function findByExternalThread(
 }
 
 async function findOpenByIdentity(
+  q: Tx,
   orgId: string,
   channel: InboxChannel,
   identity: string,
 ): Promise<HelpdeskTicket | null> {
   const since = new Date(Date.now() - REUSE_OPEN_TICKET_WINDOW_MS);
-  const [row] = await db
+  const [row] = await q
     .select()
     .from(helpdeskTickets)
     .where(
@@ -214,9 +220,13 @@ async function findOpenByIdentity(
   return row ?? null;
 }
 
-async function findOpenByContact(orgId: string, contactId: string): Promise<HelpdeskTicket | null> {
+async function findOpenByContact(
+  q: Tx,
+  orgId: string,
+  contactId: string,
+): Promise<HelpdeskTicket | null> {
   const since = new Date(Date.now() - REUSE_OPEN_TICKET_WINDOW_MS);
-  const [row] = await db
+  const [row] = await q
     .select()
     .from(helpdeskTickets)
     .where(
@@ -238,36 +248,66 @@ async function findOpenByContact(orgId: string, contactId: string): Promise<Help
  * Route an inbound message into the universal inbox. Idempotent on
  * externalMessageId: if the same message has been ingested before, the
  * existing ticket/message are returned unchanged.
+ *
+ * One sender at a time. The routing is a sequence of lookups followed by an
+ * insert, and two messages from one sender routed together used to both look,
+ * both find nothing, and both insert. Without a thread id there is no unique
+ * key to stop that, so the sender got two tickets (and a new address two
+ * contacts); with one, the partial unique index on (org_id, channel,
+ * external_thread_id) refused the second insert and the message was not filed.
+ *
+ * A unique index cannot cover the identity path — "one OPEN ticket per sender
+ * updated in the last N days" is not a constraint — so the routing takes a
+ * transaction-scoped advisory lock on the sender first, and does every lookup
+ * and write inside that transaction. The second message waits, then finds the
+ * first one's ticket. The key is the sender's identity, falling back to the
+ * thread id, so a sender's messages with and without a thread id still meet.
+ * A message with neither has nothing to dedupe on and is not serialised.
  */
 export async function routeInbound(msg: InboundMessage): Promise<RouteResult> {
   const identity = pickPrimaryIdentity(msg.channel, msg.identity);
+  const key = identity ?? msg.externalThreadId ?? null;
+  return db.transaction(async (q) => {
+    if (key) {
+      await q.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended(${`inbox:${msg.orgId}:${msg.channel}:${key}`}, 0))`,
+      );
+    }
+    return routeLocked(q, msg, identity);
+  });
+}
 
+async function routeLocked(
+  q: Tx,
+  msg: InboundMessage,
+  identity: string | null,
+): Promise<RouteResult> {
   // Step 1 — thread id match
   let ticket: HelpdeskTicket | null = null;
   let matchReason: RouteResult['matchReason'] = 'new';
   let created = false;
 
   if (msg.externalThreadId) {
-    ticket = await findByExternalThread(msg.orgId, msg.channel, msg.externalThreadId);
+    ticket = await findByExternalThread(q, msg.orgId, msg.channel, msg.externalThreadId);
     if (ticket) matchReason = 'thread';
   }
 
   // Step 2 — open ticket for this identity on this channel
   if (!ticket && identity) {
-    ticket = await findOpenByIdentity(msg.orgId, msg.channel, identity);
+    ticket = await findOpenByIdentity(q, msg.orgId, msg.channel, identity);
     if (ticket) matchReason = 'identity';
   }
 
   // Step 3 — contact resolution, then cross-channel open ticket
-  const contactId = await resolveContact(msg.orgId, msg.identity);
+  const contactId = await resolveContact(q, msg.orgId, msg.identity);
   if (!ticket && contactId) {
-    ticket = await findOpenByContact(msg.orgId, contactId);
+    ticket = await findOpenByContact(q, msg.orgId, contactId);
     if (ticket) matchReason = 'contact';
   }
 
   // Step 4 — create a fresh ticket
   if (!ticket) {
-    const [fresh] = await db
+    const [fresh] = await q
       .insert(helpdeskTickets)
       .values({
         orgId: msg.orgId,
@@ -289,13 +329,13 @@ export async function routeInbound(msg: InboundMessage): Promise<RouteResult> {
       patch.externalThreadId = msg.externalThreadId;
     if (!ticket.externalIdentity && identity) patch.externalIdentity = identity;
     if (!ticket.contactId && contactId) patch.contactId = contactId;
-    await db.update(helpdeskTickets).set(patch).where(eq(helpdeskTickets.id, ticket.id));
+    await q.update(helpdeskTickets).set(patch).where(eq(helpdeskTickets.id, ticket.id));
   }
 
   // Idempotent message insert — if this externalMessageId has already been
   // recorded against this ticket, reuse the existing row instead of duplicating.
   if (msg.externalMessageId) {
-    const [existing] = await db
+    const [existing] = await q
       .select()
       .from(ticketMessages)
       .where(
@@ -310,7 +350,7 @@ export async function routeInbound(msg: InboundMessage): Promise<RouteResult> {
     }
   }
 
-  const [inserted] = await db
+  const [inserted] = await q
     .insert(ticketMessages)
     .values({
       ticketId: ticket.id,
@@ -323,7 +363,7 @@ export async function routeInbound(msg: InboundMessage): Promise<RouteResult> {
     .returning();
   const message: TicketMessage = inserted!;
 
-  await db
+  await q
     .update(helpdeskTickets)
     .set({ updatedAt: new Date(), status: ticket.status === 'closed' ? 'open' : ticket.status })
     .where(eq(helpdeskTickets.id, ticket.id));
