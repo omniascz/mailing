@@ -70,6 +70,13 @@ export const ticketMessages = pgTable(
       .$type<Array<{ url: string; name: string }>>()
       .notNull()
       .default([]),
+    // Per-message facts the row itself cannot carry. Inbound email writes
+    // `fromAddress`, plus `senderNotOnTicket: true` when that address is not
+    // the ticket's contact — a colleague or a Cc'd participant replying.
+    metadata: jsonb('metadata')
+      .$type<{ fromAddress?: string; senderNotOnTicket?: boolean }>()
+      .notNull()
+      .default({}),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

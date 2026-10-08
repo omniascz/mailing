@@ -176,6 +176,13 @@
       "when": 1788817341185,
       "tag": "0024_tan_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791465840298,
+      "tag": "0025_ticket_message_metadata",
+      "breakpoints": true
     }
   ]
 }

@@ -25,6 +25,9 @@ export async function openTicket(
     priority?: 'low' | 'normal' | 'high' | 'urgent';
     body: string;
     tags?: string[];
+    /** Source-channel id of the first message — the email Message-ID, so replies can find it. */
+    externalMessageId?: string;
+    metadata?: TicketMessage['metadata'];
   },
 ): Promise<HelpdeskTicket> {
   const [ticket] = await db
@@ -42,6 +45,8 @@ export async function openTicket(
     ticketId: ticket!.id,
     sender: 'customer',
     body: input.body,
+    externalMessageId: input.externalMessageId ?? null,
+    metadata: input.metadata ?? {},
   });
   return ticket!;
 }
