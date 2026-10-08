@@ -16,7 +16,7 @@
  */
 
 import crypto from 'node:crypto';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, inArray } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { helpdeskTickets, ticketMessages, contacts } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
@@ -25,6 +25,7 @@ import { AppError } from '../../lib/app-error.js';
 
 const SESSION_TTL = 60 * 60 * 24; // 24 h
 const SESSION_PREFIX = 'chat:session:';
+const VISITOR_DIRECTIONS = ['inbound', 'outbound'];
 
 export interface ChatSession {
   sessionToken: string;
@@ -122,7 +123,17 @@ export async function getMessages(
 ): Promise<{ id: string; sender: string; body: string; createdAt: Date }[]> {
   const session = await getChatSession(sessionToken);
 
-  const conditions = [eq(ticketMessages.ticketId, session.ticketId)];
+  // Only rows meant for the visitor. An agent's internal note and an AI draft
+  // are rows of this same ticket with direction 'internal'; everything the
+  // visitor or an agent says TO the visitor is 'inbound' or 'outbound' (an
+  // agent reply through the plain helpdesk route keeps the 'inbound'
+  // default). Listed, not excluded, so a direction added later stays hidden
+  // until someone decides the visitor should see it. Not narrower than this:
+  // polling is the only way an agent's reply reaches the widget.
+  const conditions = [
+    eq(ticketMessages.ticketId, session.ticketId),
+    inArray(ticketMessages.direction, VISITOR_DIRECTIONS),
+  ];
   if (afterTs) {
     const after = new Date(afterTs);
     if (!isNaN(after.getTime())) {
