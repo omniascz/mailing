@@ -40,15 +40,59 @@ export interface ContactEditForm {
   lifecycleStage: string;
 }
 
+/**
+ * Every value of the contact_status enum, so the form can show the status the
+ * contact actually has. It used to list five; for the other two
+ * (non_subscribed, archived) it showed 'active' — and sent it.
+ */
+export const CONTACT_STATUSES = [
+  'active',
+  'unsubscribed',
+  'bounced',
+  'complained',
+  'pending',
+  'non_subscribed',
+  'archived',
+] as const;
+
 export interface ApiRequest {
   method: 'PUT' | 'POST';
   path: string;
   body: Record<string, unknown>;
 }
 
+/** What the contact is now, as loaded into the form. */
+export interface ContactEditCurrent {
+  status: string;
+  lifecycleStage: string | null;
+}
+
+/**
+ * The form's starting values: the contact as it is. The status in particular
+ * is the contact's own — the form used to start at 'active' for any status it
+ * did not list.
+ */
+export function initialContactForm(contact: {
+  email: string | null;
+  phone: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  status: string;
+  lifecycleStage: string | null;
+}): ContactEditForm {
+  return {
+    email: contact.email ?? '',
+    phone: contact.phone ?? '',
+    firstName: contact.firstName ?? '',
+    lastName: contact.lastName ?? '',
+    status: contact.status,
+    lifecycleStage: contact.lifecycleStage ?? '',
+  };
+}
+
 export function buildContactEditRequests(
   contactId: string,
-  currentStage: string | null,
+  current: ContactEditCurrent,
   form: ContactEditForm,
 ): ApiRequest[] {
   const requests: ApiRequest[] = [
@@ -60,12 +104,15 @@ export function buildContactEditRequests(
         phone: form.phone.trim() || undefined,
         firstName: form.firstName.trim() || undefined,
         lastName: form.lastName.trim() || undefined,
-        status: form.status,
+        // Only a status the person changed. Saving a name is not a decision
+        // about consent: this used to send the form's status on every save, so
+        // a non_subscribed contact opened and saved came back 'active' (Z114).
+        ...(form.status !== current.status ? { status: form.status } : {}),
       },
     },
   ];
 
-  if (form.lifecycleStage && form.lifecycleStage !== currentStage) {
+  if (form.lifecycleStage && form.lifecycleStage !== current.lifecycleStage) {
     requests.push({
       method: 'POST',
       path: `/api/v1/contacts/${contactId}/lifecycle`,
