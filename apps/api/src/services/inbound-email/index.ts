@@ -5,17 +5,19 @@
  * `email_reply_received` workflow event.
  */
 
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   inboundEmails,
   contacts,
   suppressions,
   emailEvents,
+  helpdeskTickets,
+  ticketMessages,
   type InboundEmail,
 } from '../../db/schema/index.js';
 import { onApiEvent } from '../workflows/triggers.js';
-import { openTicket, appendMessage } from '../helpdesk/index.js';
+import { openTicket } from '../helpdesk/index.js';
 import {
   classifyBounce,
   isBounceMessage,
@@ -179,12 +181,22 @@ export async function receiveInbound(
       break;
     }
     if (action.type === 'helpdesk') {
+      // A reply goes into the ticket its headers point at — looked up only
+      // among this org's email tickets, because the Message-ID domain is
+      // shared by every org and says nothing about whose message it was.
+      const threadTicketId = await findThreadTicket(orgId, threadReferences(payload));
+      if (threadTicketId) {
+        await appendReplyToTicket(orgId, threadTicketId, payload);
+        continue;
+      }
       const subject = payload.subject?.trim() || '(no subject)';
       const ticket = await openTicket(orgId, {
         subject: action.ticketSubjectPrefix ? `${action.ticketSubjectPrefix} ${subject}` : subject,
         contactId: contact?.id,
         channel: 'email',
         body: payload.textBody || payload.htmlBody || '',
+        externalMessageId: messageIdKey(payload.messageId) ?? undefined,
+        metadata: { fromAddress: fromEmail },
       });
       if (contact) {
         await onApiEvent(orgId, contact.id, 'helpdesk_ticket_opened', {
@@ -221,22 +233,140 @@ export async function receiveInbound(
 }
 
 /**
- * Add a customer reply to an existing ticket — keyed by an
- * `In-Reply-To` header that matches a previously-sent ticket message id.
- * Falls back to receiveInbound() when no matching ticket exists.
+ * A Message-ID as stored in `ticket_messages.external_message_id`: without
+ * the angle brackets, because the engine's MX receiver strips them and a
+ * provider webhook may not. Null when there is none, or when it would not
+ * fit the column — a truncated id would never match anything again.
+ */
+function messageIdKey(raw: string | undefined | null): string | null {
+  const key = (raw ?? '').trim().replace(/^<+/, '').replace(/>+$/, '').trim();
+  return key && key.length <= 253 ? key : null;
+}
+
+function header(payload: InboundPayload, name: string): string | undefined {
+  const want = name.toLowerCase();
+  for (const [k, v] of Object.entries(payload.headers ?? {})) {
+    if (k.toLowerCase() === want) return v;
+  }
+  return undefined;
+}
+
+/**
+ * The ids a reply points at, most specific first: In-Reply-To (the direct
+ * parent), then References newest to oldest. RFC 5322 §3.6.4 builds
+ * References as the parent's References plus the parent's own id, so the
+ * last entry is the parent and the first is the thread root. Walking back
+ * keeps a reply threaded when its parent is a message we never stored.
+ */
+export function threadReferences(payload: InboundPayload): string[] {
+  const raw = [
+    payload.inReplyTo ?? header(payload, 'In-Reply-To'),
+    ...(header(payload, 'References') ?? '').split(/[\s,]+/).reverse(),
+  ];
+  const ids: string[] = [];
+  for (const r of raw) {
+    const key = messageIdKey(r);
+    if (key && !ids.includes(key)) ids.push(key);
+  }
+  // A forged header with thousands of ids should not become a huge IN list.
+  return ids.slice(0, 50);
+}
+
+/**
+ * The email ticket of THIS org that holds one of `ids`, preferring the
+ * earliest id in the list. Another org's ticket is never a candidate: the
+ * query is scoped by the org the inbound route resolved, so a foreign
+ * In-Reply-To simply finds nothing and the caller opens a new ticket.
+ */
+async function findThreadTicket(orgId: string, ids: string[]): Promise<string | null> {
+  if (ids.length === 0) return null;
+  // Agent replies recorded through the inbox route may carry the brackets.
+  const forms = ids.flatMap((id) => [id, `<${id}>`]);
+  const hits = await db
+    .select({ ticketId: ticketMessages.ticketId, ext: ticketMessages.externalMessageId })
+    .from(ticketMessages)
+    .innerJoin(helpdeskTickets, eq(helpdeskTickets.id, ticketMessages.ticketId))
+    .where(
+      and(
+        eq(helpdeskTickets.orgId, orgId),
+        eq(helpdeskTickets.channel, 'email'),
+        inArray(ticketMessages.externalMessageId, forms),
+      ),
+    );
+  for (const id of ids) {
+    const hit = hits.find((h) => messageIdKey(h.ext) === id);
+    if (hit) return hit.ticketId;
+  }
+  return null;
+}
+
+/**
+ * Add an inbound email to the ticket its headers point at.
+ *
+ * Whoever sent it, it goes in: a reply from the customer's other mailbox,
+ * a colleague in Cc, a forward with the thread headers kept. A sender that
+ * is not the ticket's own gets `senderNotOnTicket` so the agent sees it —
+ * marked, not refused. A closed ticket reopens: the customer is talking
+ * again. A redelivered webhook with the same Message-ID adds nothing.
  */
 export async function appendReplyToTicket(
   orgId: string,
   ticketId: string,
   payload: InboundPayload,
 ): Promise<void> {
-  await appendMessage(orgId, ticketId, {
-    sender: 'customer',
-    body: payload.textBody || payload.htmlBody || '',
-    attachments: (payload.attachments ?? [])
-      .filter((a) => a.url)
-      .map((a) => ({ url: a.url!, name: a.filename })),
-  });
+  const fromEmail = normalizeEmail(payload.from);
+  const [ticket] = await db
+    .select({
+      status: helpdeskTickets.status,
+      contactEmail: contacts.email,
+    })
+    .from(helpdeskTickets)
+    .leftJoin(contacts, and(eq(contacts.id, helpdeskTickets.contactId), eq(contacts.orgId, orgId)))
+    .where(and(eq(helpdeskTickets.id, ticketId), eq(helpdeskTickets.orgId, orgId)))
+    .limit(1);
+  if (!ticket) throw AppError.notFound('Ticket');
+
+  // Whose ticket it is: its contact, or — when the first sender was not a
+  // contact — the address that first wrote in.
+  let owner = ticket.contactEmail?.toLowerCase() ?? null;
+  if (!owner) {
+    const [first] = await db
+      .select({ metadata: ticketMessages.metadata })
+      .from(ticketMessages)
+      .where(and(eq(ticketMessages.ticketId, ticketId), eq(ticketMessages.sender, 'customer')))
+      .orderBy(asc(ticketMessages.createdAt))
+      .limit(1);
+    owner = first?.metadata.fromAddress ?? null;
+  }
+
+  const inserted = await db
+    .insert(ticketMessages)
+    .values({
+      ticketId,
+      sender: 'customer',
+      direction: 'inbound',
+      externalMessageId: messageIdKey(payload.messageId),
+      body: payload.textBody || payload.htmlBody || '',
+      attachments: (payload.attachments ?? [])
+        .filter((a) => a.url)
+        .map((a) => ({ url: a.url!, name: a.filename })),
+      metadata:
+        owner === fromEmail
+          ? { fromAddress: fromEmail }
+          : { fromAddress: fromEmail, senderNotOnTicket: true },
+    })
+    .onConflictDoNothing()
+    .returning({ id: ticketMessages.id });
+  if (inserted.length === 0) return;
+
+  await db
+    .update(helpdeskTickets)
+    .set(
+      ticket.status === 'closed'
+        ? { status: 'open', closedAt: null, updatedAt: new Date() }
+        : { updatedAt: new Date() },
+    )
+    .where(and(eq(helpdeskTickets.id, ticketId), eq(helpdeskTickets.orgId, orgId)));
 }
 
 export async function listInbound(
