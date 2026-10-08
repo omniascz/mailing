@@ -51,6 +51,24 @@ export interface InAppMessagePayload {
   autoCloseSeconds?: number;
 }
 
+/**
+ * What a call to the API came to.
+ *
+ * Returned, never thrown: this runs on somebody else's page, and an exception
+ * escaping into the shop's own code — an unhandled rejection from a call the
+ * page did not await — is ours to prevent. A caller that wants to know awaits
+ * the result and reads `ok`; a caller that does not is unaffected.
+ *
+ * `status` is 0 when no HTTP answer arrived (network failure, not initialised).
+ * `error` carries the API's own `{ code, message }` when it sent one.
+ */
+export interface ForgeMsgResult<T = unknown> {
+  ok: boolean;
+  status: number;
+  data?: T;
+  error?: { code: string; message: string };
+}
+
 // ─── Internal state ───────────────────────────────────────────────────────────
 
 let _config: ForgeMsgConfig | null = null;
@@ -81,22 +99,61 @@ function generateId(): string {
 
 // ─── API client ───────────────────────────────────────────────────────────────
 
-async function apiFetch(path: string, opts?: RequestInit): Promise<unknown> {
-  if (!_config) throw new Error('ForgeMsg not initialized');
+/**
+ * Call the API and report the outcome. Never throws — see ForgeMsgResult.
+ *
+ * It used to answer `null` for every non-2xx, so a 400 from a malformed call
+ * looked exactly like a call nobody needed to check: track() sent the wrong
+ * field name for as long as it existed and nothing on either side noticed.
+ */
+async function apiFetch(path: string, opts?: RequestInit): Promise<ForgeMsgResult> {
+  if (!_config) {
+    return {
+      ok: false,
+      status: 0,
+      error: { code: 'NOT_INITIALIZED', message: 'ForgeMsg.init() has not been called' },
+    };
+  }
 
   const base = _config.apiBase ?? 'https://api.example.invalid';
   const key = _config.publicKey ?? _config.apiKey ?? '';
-  const resp = await fetch(`${base}${path}`, {
-    ...opts,
-    headers: {
-      'X-API-Key': key,
-      'Content-Type': 'application/json',
-      ...(opts?.headers ?? {}),
-    },
-  });
+  let resp: Response;
+  try {
+    resp = await fetch(`${base}${path}`, {
+      ...opts,
+      headers: {
+        'X-API-Key': key,
+        'Content-Type': 'application/json',
+        ...(opts?.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      status: 0,
+      error: { code: 'NETWORK_ERROR', message: err instanceof Error ? err.message : String(err) },
+    };
+  }
 
-  if (!resp.ok) return null;
-  return resp.json();
+  let body: unknown;
+  try {
+    body = await resp.json();
+  } catch {
+    body = undefined;
+  }
+
+  if (!resp.ok) {
+    const e = body as { code?: unknown; message?: unknown } | undefined;
+    return {
+      ok: false,
+      status: resp.status,
+      error: {
+        code: typeof e?.code === 'string' ? e.code : `HTTP_${resp.status}`,
+        message: typeof e?.message === 'string' ? e.message : resp.statusText,
+      },
+    };
+  }
+  return { ok: true, status: resp.status, data: body };
 }
 
 async function fetchMessages(): Promise<InAppMessagePayload[]> {
@@ -106,8 +163,8 @@ async function fetchMessages(): Promise<InAppMessagePayload[]> {
   });
   if (_config?.contactId) params.set('contact_id', _config.contactId);
 
-  const data = await apiFetch(`/api/v1/in-app/messages/sdk?${params}`);
-  const result = data as { data?: InAppMessagePayload[] };
+  const res = await apiFetch(`/api/v1/in-app/messages/sdk?${params}`);
+  const result = res.data as { data?: InAppMessagePayload[] } | undefined;
   return result?.data ?? [];
 }
 
@@ -274,11 +331,23 @@ export const ForgeMsg = {
     if (_config) _config.contactId = contactId;
   },
 
-  /** Manually track a custom event. */
-  async track(event: string, properties?: Record<string, unknown>): Promise<void> {
-    await apiFetch('/api/v1/events', {
+  /**
+   * Manually track a custom event for the identified contact.
+   *
+   * The body names the event `eventName`, which is what POST /api/v1/events
+   * reads. It used to send `event`: the API answered 400 on every call and
+   * apiFetch swallowed it, so no event from this method ever reached a flow.
+   *
+   * Resolves to the outcome and never rejects, so a page may call it without
+   * awaiting and nothing escapes into its own code:
+   *
+   *   const res = await ForgeMsg.track('viewed_product', { sku });
+   *   if (!res.ok) console.warn(res.status, res.error?.code, res.error?.message);
+   */
+  async track(event: string, properties?: Record<string, unknown>): Promise<ForgeMsgResult> {
+    return apiFetch('/api/v1/events', {
       method: 'POST',
-      body: JSON.stringify({ event, contactId: _config?.contactId, properties }),
+      body: JSON.stringify({ eventName: event, contactId: _config?.contactId, properties }),
     });
   },
 
@@ -291,17 +360,16 @@ export const ForgeMsg = {
    * publishable key is visible in the page source, so the API refuses a
    * `contactId` from it — see the note on the endpoint.
    *
-   * Returns whether the request was accepted. `apiFetch` answers `null` for
-   * every non-2xx, which is fine for fire-and-forget tracking and NOT fine
-   * here: a form that says "we'll let you know" when the call was rate-limited
-   * or refused is lying to the visitor, so the outcome is reported.
+   * Returns whether the request was accepted: a form that says "we'll let you
+   * know" when the call was rate-limited or refused is lying to the visitor,
+   * so the outcome is reported.
    */
   async notifyWhenBackInStock(sku: string, email: string): Promise<boolean> {
     const res = await apiFetch('/api/v1/back-in-stock/subscribe', {
       method: 'POST',
       body: JSON.stringify({ sku, email }),
     });
-    return res !== null;
+    return res.ok;
   },
 
   /** Ask to be told when a product's price drops below what it is now. */
@@ -310,7 +378,7 @@ export const ForgeMsg = {
       method: 'POST',
       body: JSON.stringify({ sku, email }),
     });
-    return res !== null;
+    return res.ok;
   },
 
   /**
@@ -356,7 +424,7 @@ export const ForgeMsg = {
       method: 'POST',
       body: JSON.stringify(cart),
     });
-    return res !== null;
+    return res.ok;
   },
 };
 

@@ -7,20 +7,11 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast';
+import { LIFECYCLE_STAGES, buildContactEditRequests } from './contact-edit-requests';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 const STATUSES = ['active', 'unsubscribed', 'bounced', 'complained', 'pending'] as const;
-const LIFECYCLE_STAGES = [
-  '',
-  'subscriber',
-  'lead',
-  'mql',
-  'sql',
-  'customer',
-  'evangelist',
-  'other',
-];
 
 export interface EditableContact {
   id: string;
@@ -72,25 +63,27 @@ export function EditContactButton({ contact }: { contact: EditableContact }) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/contacts/${contact.id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim() || undefined,
-          phone: phone.trim() || undefined,
-          firstName: firstName.trim() || undefined,
-          lastName: lastName.trim() || undefined,
-          status,
-          // Empty string means "unset" — the API expects either a real
-          // value or no key at all, so we omit when blank.
-          ...(stage ? { lifecycleStage: stage } : {}),
-        }),
+      const requests = buildContactEditRequests(contact.id, contact.lifecycleStage, {
+        email,
+        phone,
+        firstName,
+        lastName,
+        status,
+        lifecycleStage: stage,
       });
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        toast('error', `Failed (${res.status}) ${text.slice(0, 160)}`);
-        return;
+      // In order: the stage change is only sent once the fields are saved.
+      for (const r of requests) {
+        const res = await fetch(`${API_BASE}${r.path}`, {
+          method: r.method,
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(r.body),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          toast('error', `Failed (${res.status}) ${text.slice(0, 160)}`);
+          return;
+        }
       }
       toast('success', 'Contact updated');
       setOpen(false);
@@ -162,7 +155,7 @@ export function EditContactButton({ contact }: { contact: EditableContact }) {
                 onChange={(e) => setStage(e.target.value)}
                 className="h-10 w-full rounded-md border border-secondary-300 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
-                {LIFECYCLE_STAGES.map((s) => (
+                {['', ...LIFECYCLE_STAGES].map((s) => (
                   <option key={s || 'none'} value={s}>
                     {s || '— none —'}
                   </option>

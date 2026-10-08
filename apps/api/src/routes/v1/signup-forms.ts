@@ -108,7 +108,12 @@ const signupFormRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  const updateSchema = createSchema.partial();
+  // `active` is not a create field — a form starts active — but it is how a
+  // form is paused and resumed. The dashboard's Pause/Resume button sends
+  // `{ active }` here, and updateSignupForm has always accepted it; the
+  // schema stripped it, so the button answered "Form paused" and the form kept
+  // collecting addresses (probe Z112).
+  const updateSchema = createSchema.partial().extend({ active: z.boolean().optional() });
 
   app.put(
     '/api/v1/signup-forms/:id',

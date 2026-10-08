@@ -39,7 +39,7 @@ doběhne.
 | SMS — odchozí i příchozí (Twilio, BulkGate)                 | `/campaigns` (typ SMS), API `/api/v1/messaging/send` | `apps/api/src/services/sms/routing.ts`; příjem včetně STOP/START a dohledání organizace podle čísla: `apps/api/src/routes/v1/sms.ts`, `services/sms/inbound.ts` |
 | Analytika a reporty                                         | `/reports`                                           | obrazovky v `apps/web`; `/api/v1/analytics/cohorts` měřeno živě → 200                                                                                           |
 | Veřejné REST API, webhooky, SDK (JS, Next, Python)          | API klíč v `/settings`                               | `packages/{sdk,web-sdk,next-sdk,sdk-python}`; `webhook-deliver.integration.test.ts`                                                                             |
-| Vlastní události z webu nebo e-shopu                        | `POST /api/v1/events`, web SDK                       | `apps/api/src/routes/v1/events.ts`; `packages/web-sdk/src` (`track`)                                                                                            |
+| Vlastní události z webu nebo e-shopu                        | `POST /api/v1/events`, web SDK                       | `events.ts`; web SDK `track` jen po `identify(contactId)`, backend e-shopu i `contactEmail`; běh: `web-sdk-track`, `web-sdk-errors`, `events-contact-email`     |
 
 **Pozn. k SMS:** vlastní SMPP brána neexistuje. `apps/sms-gateway/main.go` má sedm
 řádků a jen vypíše hlášku; odesílání jde přes Twilio nebo BulkGate.

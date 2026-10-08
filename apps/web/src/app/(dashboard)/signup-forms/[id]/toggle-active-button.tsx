@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pause, Play } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
+import { toggleActiveRequest } from './toggle-active-request';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -16,11 +17,12 @@ export function ToggleActiveButton({ id, active }: { id: string; active: boolean
   async function toggle() {
     setBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/signup-forms/${id}`, {
-        method: 'PUT',
+      const r = toggleActiveRequest(id, active);
+      const res = await fetch(`${API_BASE}${r.path}`, {
+        method: r.method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active: !active }),
+        body: JSON.stringify(r.body),
       });
       if (!res.ok) {
         toast('error', `Failed (${res.status})`);

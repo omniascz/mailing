@@ -8,7 +8,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { workflowEvents, contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -25,7 +25,24 @@ export default async function eventRoutes(app: FastifyInstance) {
    * Ingest-only → authenticatePublic so the browser web-sdk can call it with a
    * public (fm_pub_) key. Still org-scoped and contact-ownership checked below.
    *
-   * Body: { contact_id, event_name, properties? }
+   * Body: { contactId? , contactEmail?, eventName, properties? } — one of
+   * contactId or contactEmail is required.
+   *
+   * contactEmail is for the shop's backend, which knows the customer's address
+   * and not our UUID; the Node and Python SDKs have sent it all along and the
+   * route used to drop it. It is resolved inside the key's org only, compared
+   * lower-cased and trimmed, and never creates a contact: an event about
+   * somebody we do not know is a 404, as an unknown contactId is. Creating one
+   * here would bypass the plan's contact limit and put an address nobody
+   * consented for into whatever flow listens for the event.
+   *
+   * A publishable key may not use it. The key is visible in the page source,
+   * so a 200-or-404 answer to an address would let anybody ask whether that
+   * person is the shop's customer. A page has checkout-started and the
+   * stock-alert forms, which answer the same way for every address.
+   *
+   * When both are sent, contactId decides, as it did before contactEmail was
+   * read at all.
    */
   app.post(
     '/api/v1/events',
@@ -36,29 +53,61 @@ export default async function eventRoutes(app: FastifyInstance) {
     async (req) => {
       const body = z
         .object({
-          contactId: z.string().uuid(),
+          contactId: z.string().uuid().optional(),
+          contactEmail: z.string().trim().email().max(255).optional(),
           eventName: z.string().min(1).max(255),
           properties: z.record(z.unknown()).optional().default({}),
+        })
+        .refine((b) => b.contactId !== undefined || b.contactEmail !== undefined, {
+          path: ['contactId'],
+          message: 'Required: contactId or contactEmail',
         })
         .parse(req.body);
 
       const orgId = req.user!.orgId;
 
-      // Verify contact belongs to org
-      const [contact] = await db
-        .select({ id: contacts.id })
-        .from(contacts)
-        .where(and(eq(contacts.id, body.contactId), eq(contacts.orgId, orgId)))
-        .limit(1);
+      let contactId: string;
+      if (body.contactId !== undefined) {
+        // Verify contact belongs to org
+        const [contact] = await db
+          .select({ id: contacts.id })
+          .from(contacts)
+          .where(and(eq(contacts.id, body.contactId), eq(contacts.orgId, orgId)))
+          .limit(1);
 
-      if (!contact) throw AppError.notFound('Contact');
+        if (!contact) throw AppError.notFound('Contact');
+        contactId = contact.id;
+      } else {
+        if (req.user?.isPublicKey) {
+          throw AppError.forbidden('A publishable key cannot identify a contact by email here');
+        }
+        // contacts has no unique index on (org_id, email), and the contacts
+        // route stores the address as given, so two rows can differ only in
+        // case. The oldest live one is the contact, deterministically.
+        const email = body.contactEmail!.toLowerCase();
+        const [contact] = await db
+          .select({ id: contacts.id })
+          .from(contacts)
+          .where(
+            and(
+              eq(contacts.orgId, orgId),
+              sql`lower(${contacts.email}) = ${email}`,
+              isNull(contacts.deletedAt),
+            ),
+          )
+          .orderBy(asc(contacts.createdAt), asc(contacts.id))
+          .limit(1);
+
+        if (!contact) throw AppError.notFound('Contact');
+        contactId = contact.id;
+      }
 
       // Store event
       const [event] = await db
         .insert(workflowEvents)
         .values({
           orgId,
-          contactId: body.contactId,
+          contactId,
           eventName: body.eventName,
           properties: body.properties,
           processed: false,
@@ -66,7 +115,7 @@ export default async function eventRoutes(app: FastifyInstance) {
         .returning();
 
       // Fire triggers immediately (non-blocking)
-      onApiEvent(orgId, body.contactId, body.eventName, body.properties).catch(() => {});
+      onApiEvent(orgId, contactId, body.eventName, body.properties).catch(() => {});
 
       // Mark as processed (we just fired it synchronously)
       if (event) {
