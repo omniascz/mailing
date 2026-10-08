@@ -19,7 +19,8 @@ import {
 import { anonymizeContact, exportContactData } from '../../services/contacts/gdpr.js';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { contacts as contactsTable } from '../../db/schema/index.js';
+import { contacts as contactsTable, suppressions } from '../../db/schema/index.js';
+import { AppError } from '../../lib/app-error.js';
 import { toCsv } from '../../lib/csv.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
@@ -45,6 +46,64 @@ const contactWriteSchema = z.object({
   source: z.string().max(100).optional(),
   sourceDetails: z.record(z.unknown()).optional(),
 });
+
+/**
+ * May an edit set this contact to `active`?
+ *
+ * `active` is the one status that lets marketing reach somebody, so an edit
+ * moving a contact INTO it from a status that withholds consent is a consent
+ * decision, and an operator's form is not where the recipient gives one. The
+ * dashboard editor used to send `status` on every save and default anything
+ * outside its own list to 'active', so saving a non_subscribed contact's name
+ * opted them into marketing (probe Z114).
+ *
+ *  - non_subscribed, pending — consent was never given. The recipient gives it
+ *    through a signup form or the double opt-in confirmation, never here.
+ *  - unsubscribed, complained — allowed only once the recipient has lifted
+ *    their own suppression through the preference centre (#218's path, which
+ *    deletes the row). While the row is there, flipping the status alone
+ *    produced "active" in the UI and a send path that still refused them.
+ *    The query is the one /internal/suppressions/check-batch runs, so this
+ *    and the send path cannot disagree about what counts as suppressed.
+ *  - archived and bounced are not consent states: archived has its own
+ *    reversal (/unarchive) and stays reachable here; a bounce is a deliverability
+ *    fact whose suppression mta-sender keeps.
+ */
+async function assertActivationHasConsent(orgId: string, id: string): Promise<void> {
+  const [current] = await db
+    .select({ status: contactsTable.status, email: contactsTable.email })
+    .from(contactsTable)
+    .where(
+      and(
+        eq(contactsTable.id, id),
+        eq(contactsTable.orgId, orgId),
+        isNull(contactsTable.deletedAt),
+      ),
+    )
+    .limit(1);
+  if (!current) return; // updateContact answers the 404
+
+  if (current.status === 'non_subscribed' || current.status === 'pending') {
+    throw AppError.conflict(
+      `A ${current.status} contact becomes active only by subscribing themselves — a signup form or the double opt-in confirmation — not by an edit`,
+    );
+  }
+
+  if ((current.status === 'unsubscribed' || current.status === 'complained') && current.email) {
+    const [suppressed] = await db
+      .select({ id: suppressions.id })
+      .from(suppressions)
+      .where(
+        and(eq(suppressions.orgId, orgId), eq(suppressions.email, current.email.toLowerCase())),
+      )
+      .limit(1);
+    if (suppressed) {
+      throw AppError.conflict(
+        `This contact is ${current.status} and still suppressed; they resubscribe through the preference centre, which lifts the suppression — an edit cannot`,
+      );
+    }
+  }
+}
 
 const contactUpdateSchema = contactWriteSchema.extend({
   leadScore: z.string().optional(),
@@ -204,6 +263,10 @@ export default async function contactRoutes(app: FastifyInstance) {
     async (req) => {
       const { id } = idParam.parse(req.params);
       const patch = contactUpdateSchema.parse(req.body);
+
+      if (patch.status === 'active') {
+        await assertActivationHasConsent(req.user!.orgId, id);
+      }
 
       let emailValidationScore: string | undefined;
       let emailValidatedAt: Date | undefined;
