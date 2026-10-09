@@ -86,7 +86,15 @@ export default async function suppressionRoutes(app: FastifyInstance) {
         number
       >;
       for (const row of rows) counts[row.reason as (typeof REASON)[number]] = row.count;
-      const total = Object.values(counts).reduce((a, b) => a + b, 0);
+      // Addresses, not rows: one address can be in several lists at once (one
+      // row per reason), so the sum of the counts would count it twice.
+      const [distinct] = await db
+        .select({
+          n: sql<number>`count(distinct coalesce(${suppressions.email}, ${suppressions.phone}, ${suppressions.id}::text))::int`,
+        })
+        .from(suppressions)
+        .where(eq(suppressions.orgId, req.user!.orgId));
+      const total = distinct?.n ?? 0;
       return { data: { counts, total } };
     },
   );
@@ -106,10 +114,10 @@ export default async function suppressionRoutes(app: FastifyInstance) {
         .returning()
         .catch((err: Error) => {
           if (
-            err.message.includes('suppressions_org_email_idx') ||
+            err.message.includes('suppressions_org_email_reason_idx') ||
             err.message.includes('suppressions_org_phone_idx')
           ) {
-            throw AppError.conflict('Address is already suppressed');
+            throw AppError.conflict('Address is already suppressed for this reason');
           }
           throw err;
         });

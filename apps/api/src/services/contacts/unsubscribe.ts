@@ -132,7 +132,8 @@ async function unsubscribeGlobally(
   // row carried it, nothing did, and a later resubscribe (#235) reopened an
   // address that refuses mail. Deliverability is the one a consent act must
   // never undo; the consent fact is still written below — the 'unsubscribe'
-  // row when the address has no other, the closed lists, and the event.
+  // row (beside any bounce or complaint row: one row per reason), the closed
+  // lists, and the event.
   const keepsDeliverability = contact.status === 'bounced' || contact.status === 'complained';
   const alreadyFlagged = contact.status === 'unsubscribed' || keepsDeliverability;
   let alreadySuppressed = false;

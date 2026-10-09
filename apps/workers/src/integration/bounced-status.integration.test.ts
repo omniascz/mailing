@@ -401,12 +401,12 @@ describe('bounced and complained hold on the send path and through an unsubscrib
 
     expect(afterBounce).toBe('status=bounced suppressions=["hard_bounce"]');
     expect(afterUnsub, 'the unsubscribe erased the bounce').toBe(
-      'status=bounced suppressions=["hard_bounce"]',
+      'status=bounced suppressions=["hard_bounce","unsubscribe"]',
     );
     const reached = await campaignTo(listId, 'hard-after', [subject.email, control.email]);
     expect(reached).toContain(control.email);
     expect(reached, 'the hard-bounced address reached the engine').not.toContain(subject.email);
-    expect(afterResub).toBe('status=bounced suppressions=["hard_bounce"]');
+    expect(afterResub).toBe('status=bounced suppressions=["hard_bounce","unsubscribe"]');
   }, 180_000);
 
   it('a bounced status with no row, then an unsubscribe: the bounce survives, a resubscribe does not reopen it', async () => {
@@ -446,12 +446,12 @@ describe('bounced and complained hold on the send path and through an unsubscrib
 
     expect(fbl, 'the FBL route refused the report').toBe(200);
     expect(afterFbl, 'the complaint was not recorded').toBe(
-      'status=complained suppressions=["unsubscribe"]',
+      'status=complained suppressions=["complaint","unsubscribe"]',
     );
     const reached = await campaignTo(listId, 'fbl-after', [subject.email, control.email]);
     expect(reached).toContain(control.email);
     expect(reached, 'a complainer reached the engine').not.toContain(subject.email);
-    expect(afterResub).toBe('status=complained suppressions=["unsubscribe"]');
+    expect(afterResub).toBe('status=complained suppressions=["complaint","unsubscribe"]');
   }, 180_000);
 
   it('transactional mail is unchanged: a status-only bounce still gets it, a hard_bounce row still stops it', async () => {

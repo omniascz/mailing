@@ -322,9 +322,8 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   // 'bounced' and 'complained' are refused here too. They used to be left to the
   // suppression list, on the assumption that every path setting them writes a
   // row — but POST/PUT /contacts set either status with no row, and those
-  // contacts were mailed. A row cannot always carry the fact either: there is
-  // one per address, so a complaint for an address that already unsubscribed
-  // has no row of its own. The status is the one store that always says it.
+  // contacts were mailed. The status is the store every one of those paths
+  // writes, so it is read here as well as the rows.
   // Transactional mail is unchanged: a status says nothing a row does not, and
   // the row reasons that stop a receipt are mta-sender's call (#225).
   const refusedByStatusSet = new Set<string>();
