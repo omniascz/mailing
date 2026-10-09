@@ -13,7 +13,22 @@ import { emailEvents, campaigns } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
-import { and, eq, gte, lte } from 'drizzle-orm';
+import { and, eq, gte, inArray, lte } from 'drizzle-orm';
+
+/**
+ * Suppression reasons that refuse a transactional message — the list the
+ * mta-sender gate uses for this stream (SUPPRESSES_TRANSACTIONAL in
+ * workers/src/jobs/mta-sender.ts, #225), so this route and /emails decide the
+ * same. transactional-gate.integration.test.ts sends one receipt per reason
+ * through both and fails if they ever disagree.
+ */
+const SUPPRESSES_TRANSACTIONAL = [
+  'hard_bounce',
+  'complaint',
+  'manual',
+  'block',
+  'invalid_email',
+] as const;
 
 const transactionalRoutes: FastifyPluginAsync = async (app) => {
   // ── Send transactional email ──────────────────────────────────────────────
@@ -103,12 +118,26 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       }
 
       // Suppression check → emit a 'rejected' event (SES suppression behaviour)
-      // instead of sending to a bounced/complained/unsubscribed address.
+      // instead of sending to an address that must not be mailed.
+      //
+      // The same reasons the mta-sender gate refuses a transactional message
+      // for (SUPPRESSES_TRANSACTIONAL, workers/src/jobs/mta-sender.ts) — every
+      // reason except 'unsubscribe'. This check predates that gate and refused
+      // on any row, so an unsubscribed customer's receipt was rejected here and
+      // delivered through /emails. A marketing opt-out is not a refusal of the
+      // receipt (#225); a bounce, a complaint, a block, an invalid address or
+      // the org's own entry is.
       const { suppressions } = await import('../../db/schema/index.js');
       const [suppressed] = await db
         .select({ reason: suppressions.reason })
         .from(suppressions)
-        .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, body.to.toLowerCase())))
+        .where(
+          and(
+            eq(suppressions.orgId, orgId),
+            eq(suppressions.email, body.to.toLowerCase()),
+            inArray(suppressions.reason, SUPPRESSES_TRANSACTIONAL),
+          ),
+        )
         .limit(1);
       if (suppressed) {
         const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
