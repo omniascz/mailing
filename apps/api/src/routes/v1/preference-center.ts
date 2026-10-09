@@ -17,11 +17,11 @@
  * Anything else still gets the JSON it always did.
  *
  * The page offers only what this route can actually do and what then holds at
- * send time: leave or rejoin a single list, or leave everything. It does NOT
- * offer to undo a global unsubscribe. `globalResubscribe` below removes the
- * suppression row but leaves contacts.status at 'unsubscribed', and the batch
- * sender refuses on that status — a button for it would promise mail that never
- * comes. The form posts back here as application/x-www-form-urlencoded and is
+ * send time: leave or rejoin a single list, or leave everything. It does not
+ * offer to undo a global unsubscribe; the JSON `globalResubscribe` below does
+ * (services/contacts/resubscribe.ts: the 'unsubscribe' suppression and the
+ * status together), and the page has no button for it yet. The form posts back
+ * here as application/x-www-form-urlencoded and is
  * answered with a redirect to the page, so a reload does not post twice.
  *
  * Unsubscribe A/B testing (#leapfrog): when an active experiment exists, the

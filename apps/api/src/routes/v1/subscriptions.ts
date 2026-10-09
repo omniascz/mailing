@@ -27,6 +27,7 @@ import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 import { t, resolveLocale, verifyTrackingToken, type SupportedLocale } from '@forgemsg/shared';
 import { unsubscribeContact, type UnsubscribeSource } from '../../services/contacts/unsubscribe.js';
+import { resubscribeContact } from '../../services/contacts/resubscribe.js';
 import { env } from '../../config/env.js';
 
 const DOI_TTL = 60 * 60 * 48; // 48 hours
@@ -232,17 +233,39 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         orgId: string;
       };
 
-      // Activate contact
-      await db
-        .update(contacts)
-        .set({ status: 'active', updatedAt: new Date() })
-        .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
+      // Activate the contact — the recipient has just confirmed, from their own
+      // mailbox, that they want this list, so it may lift their own earlier
+      // unsubscribe as well. It used to set 'active' from any status and touch
+      // nothing else: a bounced or complained contact read as active, and a
+      // previously unsubscribed one kept the suppression and the closed list
+      // row, so the person who confirmed never got a campaign.
+      //
+      // Not from bounced or complained: those say the address refuses mail or
+      // its owner reported it, and consent does not change either. Archived is
+      // the org putting a contact aside, and a fresh sign-up brings it back, as
+      // it always has here.
+      const result = await resubscribeContact(orgId, contactId, {
+        from: ['pending', 'non_subscribed', 'unsubscribed', 'archived'],
+      });
 
-      // Add to list (confirmed)
-      await db
-        .insert(contactLists)
-        .values({ contactId, listId, confirmedAt: new Date() })
-        .onConflictDoNothing();
+      // Add to list (confirmed). A list row a global unsubscribe closed is
+      // reopened, but only when the contact can actually be mailed again —
+      // otherwise the row records the sign-up and nothing more.
+      const now = new Date();
+      if (result?.reachable) {
+        await db
+          .insert(contactLists)
+          .values({ contactId, listId, confirmedAt: now })
+          .onConflictDoUpdate({
+            target: [contactLists.contactId, contactLists.listId],
+            set: { confirmedAt: now, unsubscribedAt: null, unsubscribedReason: null },
+          });
+      } else {
+        await db
+          .insert(contactLists)
+          .values({ contactId, listId, confirmedAt: now })
+          .onConflictDoNothing();
+      }
 
       await redis.del(doiKey(token));
 
