@@ -416,4 +416,92 @@ describe('the recipient comes back on their own (real DB + Redis + API, to the e
       expect(after).toBe('status=non_subscribed suppressions=[] list=open');
     }, 120_000);
   });
+
+  describe('double opt-in confirmation', () => {
+    /** The recipient subscribes on a landing page, then clicks the link. */
+    async function confirm(email: string, listId: string): Promise<string> {
+      const sub = await pub('POST', `/api/v1/lists/${listId}/subscribe`, {
+        email,
+        firstName: 'Petra',
+      });
+      const body = (await sub.json()) as { data?: { _devToken?: string } };
+      expect(sub.status, JSON.stringify(body)).toBe(202);
+      expect(body.data?._devToken, 'no DOI token').toBeTruthy();
+      const res = await pub('GET', `/api/v1/confirm/${body.data!._devToken}`);
+      return `subscribe ${sub.status}, confirm ${res.status}`;
+    }
+
+    for (const [status, reason] of [
+      ['bounced', 'hard_bounce'],
+      ['complained', 'complaint'],
+    ] as const) {
+      it(`${status} (${reason}): confirming does not reopen the address, the campaign does not reach them`, async () => {
+        const listId = await newList(`doi-${status}`);
+        const subject = await contactOn(listId, `doi-${status}`, status, reason);
+        const control = await contactOn(listId, `doi-${status}-ctl`, 'active');
+        const before = await state(subject.id, listId);
+        const steps = await confirm(subject.email, listId);
+        const after = await state(subject.id, listId);
+        console.log(`[z115] doi ${status} BEFORE ${before} → ${steps} → AFTER ${after}`);
+
+        const reached = await campaignTo(listId, `doi-${status}`, [subject.email, control.email]);
+        expect(reached, 'the control must reach the engine').toContain(control.email);
+        expect(reached, `a ${reason} address reached the engine`).not.toContain(subject.email);
+        expect(after).toBe(`status=${status} suppressions=["${reason}"] list=open`);
+      }, 120_000);
+    }
+
+    it('a hard-bounced address that also unsubscribed: confirming does not lift the bounce', async () => {
+      const listId = await newList('doi-unsub-bounced');
+      const subject = await contactOn(listId, 'doi-unsub-bounced', 'bounced', 'hard_bounce');
+      const control = await contactOn(listId, 'doi-unsub-bounced-ctl', 'active');
+      await unsubscribeEverything(subject.id);
+      const before = await state(subject.id, listId);
+      const steps = await confirm(subject.email, listId);
+      const after = await state(subject.id, listId);
+      console.log(
+        `[z115] doi unsubscribed+hard_bounce BEFORE ${before} → ${steps} → AFTER ${after}`,
+      );
+
+      expect(before).toBe('status=unsubscribed suppressions=["hard_bounce"] list=closed');
+      const reached = await campaignTo(listId, 'doi-unsub-bounced', [subject.email, control.email]);
+      expect(reached, 'the control must reach the engine').toContain(control.email);
+      expect(reached, 'a hard_bounce address reached the engine').not.toContain(subject.email);
+      expect(after).toBe('status=unsubscribed suppressions=["hard_bounce"] list=closed');
+    }, 120_000);
+
+    it('unsubscribed: confirming a new sign-up brings them back, the campaign reaches them', async () => {
+      const listId = await newList('doi-unsub');
+      const subject = await contactOn(listId, 'doi-unsub', 'active');
+      const control = await contactOn(listId, 'doi-unsub-ctl', 'active');
+      await unsubscribeEverything(subject.id);
+      const before = await state(subject.id, listId);
+      const steps = await confirm(subject.email, listId);
+      const after = await state(subject.id, listId);
+      console.log(`[z115] doi unsubscribed BEFORE ${before} → ${steps} → AFTER ${after}`);
+
+      expect(before).toBe('status=unsubscribed suppressions=["unsubscribe"] list=closed');
+      const reached = await campaignTo(listId, 'doi-unsub', [subject.email, control.email]);
+      expect(reached).toContain(control.email);
+      expect(reached, 'the confirmed recipient did not reach the engine').toContain(subject.email);
+      expect(after).toBe('status=active suppressions=[] list=open');
+    }, 120_000);
+
+    it('a new address: confirming makes it a subscriber, the campaign reaches it', async () => {
+      const listId = await newList('doi-new');
+      const control = await contactOn(listId, 'doi-new-ctl', 'active');
+      const email = addr('doi-new');
+      allAddresses.push(email);
+      const steps = await confirm(email, listId);
+      const [c] = await sql<{ id: string }[]>`
+        SELECT id FROM contacts WHERE org_id = ${seed.id} AND email = ${email}
+      `;
+      const after = await state(c!.id, listId);
+      console.log(`[z115] doi new → ${steps} → AFTER ${after}`);
+      const reached = await campaignTo(listId, 'doi-new', [email, control.email]);
+      expect(reached).toContain(control.email);
+      expect(reached).toContain(email);
+      expect(after).toBe('status=active suppressions=[] list=open');
+    }, 120_000);
+  });
 });
