@@ -17,6 +17,7 @@ import { db } from '../../db/client.js';
 import { contacts, lists, contactLists, suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { unsubscribeContact } from '../contacts/unsubscribe.js';
+import { resubscribeContact } from '../contacts/resubscribe.js';
 
 // ─── View shape returned by GET /p/center/:token ─────────────────────────────
 
@@ -131,8 +132,10 @@ export interface UpdateRequest {
   /** When true, add (or refresh) a row in `suppressions` and clear every
    *  per-list subscription. Equivalent to "Unsubscribe from all". */
   globalUnsubscribe?: boolean;
-  /** When true, remove the global suppression (re-opt-in) — but does NOT
-   *  resubscribe individual lists, those need explicit toggles below. */
+  /** When true, undo the recipient's own global unsubscribe — the
+   *  'unsubscribe' suppression and the status, never a bounce or complaint
+   *  (services/contacts/resubscribe.ts) — but does NOT resubscribe individual
+   *  lists, those need explicit toggles below. */
   globalResubscribe?: boolean;
   /** List IDs to unsubscribe from. Sets contact_lists.unsubscribed_at. */
   unsubscribeFromLists?: string[];
@@ -187,13 +190,16 @@ export async function updatePreferences(token: string, body: UpdateRequest): Pro
     });
   }
 
-  if (body.globalResubscribe && contact.email) {
-    // Hard delete the suppression row so the global gate releases. We
+  if (body.globalResubscribe) {
+    // Undoes the recipient's own global unsubscribe: the 'unsubscribe'
+    // suppression AND the status, which batch-sender refuses on. This used to
+    // delete the suppression row whatever its reason and leave the status — so
+    // the person who came back got nothing, while a hard-bounced or complained
+    // address had its gate lifted. Only an 'unsubscribed' contact is brought
+    // back; one that never subscribed is not subscribed by this. We
     // intentionally do NOT touch per-list unsubscribedAt — the user must
     // re-opt-in to each list explicitly.
-    await db
-      .delete(suppressions)
-      .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)));
+    await resubscribeContact(orgId, contactId, { from: ['unsubscribed'] });
   }
 
   // 2. Per-list toggles — only on this organisation's lists.
