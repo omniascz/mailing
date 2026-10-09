@@ -114,8 +114,13 @@ describe('deferred and failed reach the database as themselves', () => {
   });
 
   it('the auto-pause evaluator counts the bounce and neither of the others', async () => {
-    // 10 sends, 1 real bounce, plus the deferred + failed written above.
+    // 10 messages: 9 delivered (a 'send' and a 'deliver' each, as mta-sender
+    // writes them), the 1 real bounce above, plus the deferred + failed. The
+    // auto-pause divides by delivered + bounced since its denominator stopped
+    // being the billing 'send' rows; health-score below still reads sends, so
+    // a tenth 'send' keeps its 1-in-10 too.
     for (let i = 0; i < 10; i++) await post('send', {});
+    for (let i = 0; i < 9; i++) await post('deliver', {});
 
     const { rate, sampleSize } = await computeRecentRate(orgId, 'bounce');
     expect(sampleSize).toBe(10);

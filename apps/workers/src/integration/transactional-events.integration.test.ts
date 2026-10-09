@@ -240,11 +240,16 @@ describe('transactional events are stored and feed the auto-pause (real DB + Red
   }, 120_000);
 
   it('a transactional hard bounce is stored, and five of them in a hundred sends raise the bounce rule', async () => {
-    // 95 accept-time sends, as /emails writes them for messages that went out.
+    // 95 receipts that went out: the accept-time 'send' /emails writes, and the
+    // 'deliver' mta-sender stores for it. The auto-pause divides by delivered
+    // + bounced (Z121), so the deliveries are the denominator here — sends
+    // alone used to be.
     await sql`
-      INSERT INTO email_events (org_id, event_type, message_id, metadata)
-      SELECT ${pauseOrg}, 'send', '<seed-' || g || '-' || ${tag} || '@forgemsg>', '{"transactional":true}'::jsonb
-      FROM generate_series(1, 95) g
+      INSERT INTO email_events (org_id, event_type, message_id, metadata, stream)
+      SELECT ${pauseOrg}, t.type::email_event_type, '<seed-' || g || '-' || ${tag} || '@forgemsg>',
+             '{"transactional":true}'::jsonb,
+             (CASE WHEN t.type = 'deliver' THEN 'transactional' ELSE 'broadcast' END)::message_stream
+      FROM generate_series(1, 95) g, (VALUES ('send'), ('deliver')) AS t(type)
     `;
     const before = await measured(pauseOrg);
     const results: Record<string, unknown>[] = [];
