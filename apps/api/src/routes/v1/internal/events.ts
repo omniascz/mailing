@@ -20,7 +20,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { db } from '../../../db/client.js';
-import { emailEvents } from '../../../db/schema/index.js';
+import { and, eq } from 'drizzle-orm';
+import { contacts, emailEvents } from '../../../db/schema/index.js';
 import { handleBounce } from '../../../services/campaigns/channel-fallback.js';
 import { abVariantForContact } from '../../../services/campaigns/variant-attribution.js';
 
@@ -31,6 +32,14 @@ const bodySchema = z.object({
   contactId: z.string().uuid(),
   messageId: z.string(),
   metadata: z.record(z.unknown()).optional(),
+  /**
+   * The campaign and contact ids are stand-ins, not rows: sendTransactionalEmail
+   * puts the orgId in campaignId, and a random contactId when its caller named
+   * no contact (lib/queues.ts). Inserted as they are, both hit their foreign
+   * keys and every transactional delivery and bounce was refused — so none was
+   * stored, and the auto-pause below never ran for one.
+   */
+  campaignIsPlaceholder: z.boolean().optional(),
 });
 
 export default async function internalEventsRoutes(app: FastifyInstance) {
@@ -54,14 +63,31 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
 
     // Denormalise the SendGrid-parity stats dimensions onto the event:
     // category from the campaign (cached) and isp from the worker metadata.
+    // A placeholder event is stored with no campaign — every campaign statistic
+    // filters on campaign_id, so none of them can see it — and with the contact
+    // only when the id names a contact of this org. Nothing campaign-derived
+    // (category, A/B variant) applies to it.
+    const placeholder = body.campaignIsPlaceholder === true;
+    let contactId: string | null = body.contactId;
+    if (placeholder) {
+      const [c] = await db
+        .select({ id: contacts.id })
+        .from(contacts)
+        .where(and(eq(contacts.id, body.contactId), eq(contacts.orgId, body.orgId)))
+        .limit(1);
+      contactId = c?.id ?? null;
+    }
+
     const { resolveCampaignCategory } = await import('../../../services/stats/category-isp.js');
-    const category = await resolveCampaignCategory(body.orgId, body.campaignId).catch(() => null);
+    const category = placeholder
+      ? null
+      : await resolveCampaignCategory(body.orgId, body.campaignId).catch(() => null);
     const isp = typeof meta.isp === 'string' ? (meta.isp as string) : null;
 
     await db.insert(emailEvents).values({
       orgId: body.orgId,
-      campaignId: body.campaignId,
-      contactId: body.contactId,
+      campaignId: placeholder ? null : body.campaignId,
+      contactId,
       messageId: body.messageId,
       eventType,
       bounceType,
@@ -71,13 +97,29 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
       // its three bounce branches do not. Fall back to the send row so a bounce
       // is attributable to the variant that caused it — a subject line that
       // trips more spam filters is a legitimate test outcome.
-      abVariantId:
-        (meta.abVariantId as string | undefined) ??
-        abVariantForContact(body.campaignId, body.contactId),
+      abVariantId: placeholder
+        ? null
+        : ((meta.abVariantId as string | undefined) ??
+          abVariantForContact(body.campaignId, body.contactId)),
       category,
       isp,
       metadata: meta,
     });
+
+    // Real-time reputation auto-pause, for every bounce that is stored. It
+    // computes the org's rate over its stored events (auto-pause.ts), so a
+    // transactional bounce counts against the same sends a campaign's does —
+    // mailbox providers do not tell the two apart on our addresses.
+    if (eventType === 'bounce' && (bounceType === 'hard' || bounceType === 'soft')) {
+      const { onBounceComplaintSignal } =
+        await import('../../../services/abuse-detection/auto-pause.js');
+      onBounceComplaintSignal(body.orgId, 'bounce').catch(() => {});
+    }
+
+    // A placeholder event stops here. Its webhooks and the channel fallback
+    // never ran before (the insert failed first), and starting them is a
+    // customer-facing change of its own, not part of storing the event.
+    if (placeholder) return reply.code(201).send({ ok: true });
 
     // Fire the matching webhook (delivered / bounced / sent) — the previously
     // dark email→webhook path.
@@ -106,10 +148,6 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
     // configured fallback send (SMS/WhatsApp/push). Best-effort, non-blocking.
     if (eventType === 'bounce' && (bounceType === 'hard' || bounceType === 'soft')) {
       handleBounce(body.orgId, body.contactId, bounceType).catch(() => {});
-      // Real-time reputation auto-pause (previously route-only, never triggered).
-      const { onBounceComplaintSignal } =
-        await import('../../../services/abuse-detection/auto-pause.js');
-      onBounceComplaintSignal(body.orgId, 'bounce').catch(() => {});
     }
 
     return reply.code(201).send({ ok: true });

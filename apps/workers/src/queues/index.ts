@@ -646,6 +646,12 @@ export interface BatchSenderJobData {
 
 export interface MtaSendJobData {
   campaignId: string;
+  /**
+   * campaignId (and contactId, unless the caller named a contact) are stand-ins
+   * that name no row — set by sendTransactionalEmail (api lib/queues.ts). Jobs
+   * queued before the flag existed are recognised by campaignId === orgId.
+   */
+  campaignIsPlaceholder?: boolean;
   orgId: string;
   contactId: string;
   messageId: string;
