@@ -54,12 +54,19 @@ const internalContactsRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  // Called by mta-sender after hard bounce or complaint to mark contact status
+  /**
+   * Called by mta-sender after a hard bounce or complaint to mark the contact.
+   *
+   * Answers what it did, not just that it ran: `matched` is how many contacts
+   * the request named, `changed` how many of them did not already have the
+   * status. It used to answer `{ ok: true }` whatever the UPDATE touched — so a
+   * job carrying an id no contact has was told the contact was marked.
+   */
   app.patch(
     '/api/v1/internal/contacts/:contactId/status',
     { schema: { tags: ['Internal'] } },
     async (req, reply) => {
-      const { contactId } = req.params as { contactId: string };
+      const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
       const { orgId, status } = z
         .object({
           orgId: z.string().uuid(),
@@ -67,12 +74,20 @@ const internalContactsRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.body);
 
-      await db
-        .update(contacts)
-        .set({ status, updatedAt: new Date() })
+      const matched = await db
+        .select({ id: contacts.id, status: contacts.status })
+        .from(contacts)
         .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
 
-      return reply.send({ data: { ok: true } });
+      const toChange = matched.filter((c) => c.status !== status).map((c) => c.id);
+      if (toChange.length > 0) {
+        await db
+          .update(contacts)
+          .set({ status, updatedAt: new Date() })
+          .where(and(eq(contacts.orgId, orgId), inArray(contacts.id, toChange)));
+      }
+
+      return reply.send({ data: { matched: matched.length, changed: toChange.length } });
     },
   );
 };
