@@ -367,9 +367,10 @@ describe('the recipient comes back on their own (real DB + Redis + API, to the e
     }
 
     it('a hard-bounced address that also unsubscribed: the click does not lift the bounce', async () => {
-      // unsubscribeContact sets the status, and its suppression insert loses to
-      // the bounce row already there — so the status says 'unsubscribed' and
-      // the only row says 'hard_bounce'. Only the reason tells them apart.
+      // The unsubscribe's own row loses to the bounce row already there, so
+      // the only row says 'hard_bounce'. The status stays 'bounced': an
+      // unsubscribe no longer overwrites a deliverability status. It used to
+      // say 'unsubscribed', and only the row's reason told the two apart.
       const listId = await newList('pref-unsub-bounced');
       const subject = await contactOn(listId, 'pref-unsub-bounced', 'bounced', 'hard_bounce');
       const control = await contactOn(listId, 'pref-unsub-bounced-ctl', 'active');
@@ -381,8 +382,29 @@ describe('the recipient comes back on their own (real DB + Redis + API, to the e
         `[z115] pref unsubscribed+hard_bounce BEFORE ${before} → POST /p/center {globalResubscribe} ${code} → AFTER ${after}`,
       );
 
-      expect(before).toBe('status=unsubscribed suppressions=["hard_bounce"] list=closed');
+      expect(before).toBe('status=bounced suppressions=["hard_bounce"] list=closed');
       const reached = await campaignTo(listId, 'pref-unsub-bounced', [
+        subject.email,
+        control.email,
+      ]);
+      expect(reached, 'the control must reach the engine').toContain(control.email);
+      expect(reached, 'a hard_bounce address reached the engine').not.toContain(subject.email);
+      expect(after).toBe('status=bounced suppressions=["hard_bounce"] list=open');
+    }, 120_000);
+
+    it('a row written before unsubscribes kept the bounced status: only the reason holds it', async () => {
+      // 'unsubscribed' over a 'hard_bounce' row is what a global unsubscribe of
+      // a bounced contact used to leave behind, and such rows are still in the
+      // data. The status gate lets 'unsubscribed' through, so the reason is
+      // the only thing standing between this click and a bouncing address.
+      const listId = await newList('pref-legacy-bounced');
+      const subject = await contactOn(listId, 'pref-legacy-bounced', 'unsubscribed', 'hard_bounce');
+      const control = await contactOn(listId, 'pref-legacy-bounced-ctl', 'active');
+      const code = await resubscribe(subject.id, listId);
+      const after = await state(subject.id, listId);
+      console.log(`[z115] pref legacy unsubscribed+hard_bounce → ${code} → AFTER ${after}`);
+
+      const reached = await campaignTo(listId, 'pref-legacy-bounced', [
         subject.email,
         control.email,
       ]);
@@ -481,11 +503,11 @@ describe('the recipient comes back on their own (real DB + Redis + API, to the e
         `[z115] doi unsubscribed+hard_bounce BEFORE ${before} → ${steps} → AFTER ${after}`,
       );
 
-      expect(before).toBe('status=unsubscribed suppressions=["hard_bounce"] list=closed');
+      expect(before).toBe('status=bounced suppressions=["hard_bounce"] list=closed');
       const reached = await campaignTo(listId, 'doi-unsub-bounced', [subject.email, control.email]);
       expect(reached, 'the control must reach the engine').toContain(control.email);
       expect(reached, 'a hard_bounce address reached the engine').not.toContain(subject.email);
-      expect(after).toBe('status=unsubscribed suppressions=["hard_bounce"] list=closed');
+      expect(after).toBe('status=bounced suppressions=["hard_bounce"] list=closed');
     }, 120_000);
 
     it('unsubscribed: confirming a new sign-up brings them back, the campaign reaches them', async () => {

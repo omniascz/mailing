@@ -154,12 +154,18 @@ export async function processFblComplaint(
     .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, email)))
     .limit(1);
 
-  if (!existingSuppression) {
-    // First complaint: update status + add to suppression
+  // The status is set whatever the suppression list holds. It used to be set
+  // only alongside a new row, and there is one row per address — so a
+  // complaint from someone who had already unsubscribed wrote nothing: status
+  // and row both still said 'unsubscribed', and the preference centre's
+  // resubscribe (#235) then reopened a complainer.
+  if (contact.status !== 'complained') {
     await db
       .update(contacts)
       .set({ status: 'complained', updatedAt: new Date() })
       .where(eq(contacts.id, contact.id));
+  }
+  if (!existingSuppression) {
     await addToSuppression(orgId, email, 'complaint');
   }
 

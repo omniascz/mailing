@@ -125,7 +125,16 @@ async function unsubscribeGlobally(
   // flag and the suppression. Both must be true, because the four stores drift
   // and a contact can easily have one without the other — that drift is what
   // this function exists to end.
-  const alreadyFlagged = contact.status === 'unsubscribed';
+  //
+  // A bounced or complained contact keeps its status. contacts.status carries
+  // two facts in one field, consent and deliverability, and overwriting
+  // 'bounced' with 'unsubscribed' threw the second away: where no hard_bounce
+  // row carried it, nothing did, and a later resubscribe (#235) reopened an
+  // address that refuses mail. Deliverability is the one a consent act must
+  // never undo; the consent fact is still written below — the 'unsubscribe'
+  // row when the address has no other, the closed lists, and the event.
+  const keepsDeliverability = contact.status === 'bounced' || contact.status === 'complained';
+  const alreadyFlagged = contact.status === 'unsubscribed' || keepsDeliverability;
   let alreadySuppressed = false;
   if (contact.email) {
     const [row] = await db
