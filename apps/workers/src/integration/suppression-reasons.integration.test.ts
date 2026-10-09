@@ -286,6 +286,8 @@ async function campaignTo(listId: string, label: string, recipients: string[]): 
 }
 
 describe('an address carries every reason it is suppressed for (real DB + Redis + API)', () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
     token = await loginAsSeedUser(API, 'supp');
@@ -305,6 +307,7 @@ describe('an address carries every reason it is suppressed for (real DB + Redis 
       }
       return res;
     });
+    errorSpy = vi.spyOn(console, 'error');
   }, 120_000);
 
   afterAll(async () => {
@@ -381,4 +384,55 @@ describe('an address carries every reason it is suppressed for (real DB + Redis 
     expect(reached).toContain(control.email);
     expect(reached, 'a hard-bounced address reached the engine').not.toContain(subject.email);
   }, 180_000);
+
+  it('a suppression write that fails is reported, not swallowed; one that succeeds is recorded', async () => {
+    // An org that does not exist: the insert fails on the foreign key, which
+    // is a failure no onConflict can absorb.
+    const to = addr('write-fails');
+    allAddresses.push(to);
+    engine.answer.set(to, { code: 550, message: '5.1.1 user unknown' });
+    suppressionWrites.length = 0;
+    errorSpy.mockClear();
+    const data = {
+      messageId: randomUUID(),
+      orgId: randomUUID(),
+      campaignId: randomUUID(),
+      contactId: randomUUID(),
+      fromEmail,
+      fromName: 'Obchod',
+      toEmail: to,
+      subject: 'Faktura',
+      htmlBody: '<p>x</p>',
+      stream: 'transactional',
+    } as unknown as MtaSendJobData;
+    const failed = (await processMtaSend({
+      ...job(data),
+      opts: { attempts: 1 },
+      attemptsMade: 0,
+    } as unknown as Job<MtaSendJobData>)) as Record<string, unknown>;
+    engine.answer.delete(to);
+    const logged = errorSpy.mock.calls.map((c) => String(c[0])).filter((l) => l.includes(to));
+    console.log(
+      `[z117] write fails: result=${JSON.stringify(failed)} internal POST=${JSON.stringify(suppressionWrites)} logged=${JSON.stringify(logged)}`,
+    );
+
+    expect(suppressionWrites, 'mta-sender did not try to write').toHaveLength(1);
+    const code = suppressionWrites[0]!.status;
+    expect(code, 'the write was expected to fail').toBeGreaterThanOrEqual(400);
+    expect(failed.status).toBe('hard_bounce');
+    expect(failed.suppression, 'the job result does not say the write failed').toBe('failed');
+    expect(
+      logged.some((l) => l.includes(`HTTP ${code}`)),
+      'the failure was not logged',
+    ).toBe(true);
+
+    // Must pass: the same bounce for the real org is written and says so.
+    const listId = await newList('write-ok');
+    const ok = await contactOn(listId, 'write-ok');
+    engine.answer.set(ok.email, { code: 550, message: '5.1.1 user unknown' });
+    const sent = await transactional(ok.email);
+    engine.answer.delete(ok.email);
+    expect(sent.mta[0]?.suppression).toBe('written');
+    expect(await reasons(ok.email)).toBe('["hard_bounce"]');
+  }, 120_000);
 });
