@@ -161,20 +161,22 @@ describe('batch-sender skips contacts flagged unsubscribed (real DB + Redis + AP
     await mtaQueues.other.obliterate({ force: true });
   }, 120_000);
 
-  it('a bounced contact behaves exactly as before', async () => {
-    // The filter covers 'unsubscribed' only. Bounces get their suppression from
-    // mta-sender when they happen, so nothing about them changes here — and if
-    // this starts failing, the filter has grown beyond what it was meant to do.
+  it('a bounced contact with no suppression row gets no campaign, and still gets transactional mail', async () => {
+    // This used to assert the opposite — "the filter covers 'unsubscribed'
+    // only", on the assumption that every bounce arrives with a row. POST/PUT
+    // /contacts set the status with none, so the status is now refused too
+    // (bounced-status.integration.test.ts walks that to the engine). A
+    // transactional message is not: the status adds nothing a row does not.
     await mtaQueues.other.obliterate({ force: true });
 
-    const result = (await processBatchSender(
+    const marketing = (await processBatchSender(
       fakeJob({
         campaignId: randomUUID(),
         orgId,
         batchIndex: 0,
-        contactIds: [bouncedId],
+        contactIds: [bouncedId, activeId],
         content: { html: '<p>Hello</p><a href="{{unsubscribe_url}}">Unsubscribe</a>' },
-        subject: 'Bounced unchanged',
+        subject: 'Bounced refused',
         fromName: 'ForgeMsg Test',
         fromEmail: 'test@forgemsg.test',
         priority: 3,
@@ -182,12 +184,33 @@ describe('batch-sender skips contacts flagged unsubscribed (real DB + Redis + AP
       } as BatchSenderJobData),
     )) as { sent: number; skipped: number };
 
-    const jobs = await mtaQueues.other.getJobs(['waiting', 'delayed', 'prioritized', 'active']);
-    const enqueued = jobs.map((j) => (j.data as { contactId: string }).contactId);
+    let jobs = await mtaQueues.other.getJobs(['waiting', 'delayed', 'prioritized', 'active']);
+    let enqueued = jobs.map((j) => (j.data as { contactId: string }).contactId);
+    expect(enqueued).not.toContain(bouncedId);
+    expect(enqueued, 'the active control must be enqueued').toContain(activeId);
+    expect(marketing.sent).toBe(1);
+    expect(marketing.skipped).toBe(1);
+    await mtaQueues.other.obliterate({ force: true });
 
+    const receipt = (await processBatchSender(
+      fakeJob({
+        campaignId: randomUUID(),
+        orgId,
+        batchIndex: 0,
+        contactIds: [bouncedId],
+        content: { html: '<p>Your receipt</p>' },
+        subject: 'Receipt',
+        fromName: 'ForgeMsg Test',
+        fromEmail: 'test@forgemsg.test',
+        priority: 1,
+        stream: 'transactional',
+      } as BatchSenderJobData),
+    )) as { sent: number; skipped: number };
+
+    jobs = await mtaQueues.other.getJobs(['waiting', 'delayed', 'prioritized', 'active']);
+    enqueued = jobs.map((j) => (j.data as { contactId: string }).contactId);
     expect(enqueued).toContain(bouncedId);
-    expect(result.sent).toBe(1);
-    expect(result.skipped).toBe(0);
+    expect(receipt.sent).toBe(1);
 
     await mtaQueues.other.obliterate({ force: true });
   }, 120_000);

@@ -317,13 +317,22 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   // The check belongs here rather than in /internal/contacts/batch because that
   // endpoint serves every stream, and a transactional message rests on contract
   // rather than marketing consent — the same reason the suppression check below
-  // is skipped for it. 'bounced' and 'complained' are deliberately not included:
-  // they get a suppression from mta-sender and fbl-processor at the moment they
-  // happen, and treating them here would change behaviour this is not fixing.
-  const unsubscribedSet = new Set<string>();
+  // is skipped for it.
+  //
+  // 'bounced' and 'complained' are refused here too. They used to be left to the
+  // suppression list, on the assumption that every path setting them writes a
+  // row — but POST/PUT /contacts set either status with no row, and those
+  // contacts were mailed. A row cannot always carry the fact either: there is
+  // one per address, so a complaint for an address that already unsubscribed
+  // has no row of its own. The status is the one store that always says it.
+  // Transactional mail is unchanged: a status says nothing a row does not, and
+  // the row reasons that stop a receipt are mta-sender's call (#225).
+  const refusedByStatusSet = new Set<string>();
   if (stream !== 'transactional') {
     for (const c of contacts) {
-      if (c.status === 'unsubscribed') unsubscribedSet.add(c.id);
+      if (c.status === 'unsubscribed' || c.status === 'bounced' || c.status === 'complained') {
+        refusedByStatusSet.add(c.id);
+      }
     }
   }
 
@@ -433,7 +442,7 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
     //    stream skips suppression; broadcast stream additionally checks
     //    frequency cap + holdout (the pre-fetch already gated these by
     //    stream so the sets are empty for non-applicable streams).
-    if (unsubscribedSet.has(contact.id)) {
+    if (refusedByStatusSet.has(contact.id)) {
       skipped++;
       continue;
     }
