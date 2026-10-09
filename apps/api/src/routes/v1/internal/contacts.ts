@@ -6,7 +6,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { contacts } from '../../../db/schema/index.js';
 
@@ -67,17 +67,42 @@ const internalContactsRoutes: FastifyPluginAsync = async (app) => {
     { schema: { tags: ['Internal'] } },
     async (req, reply) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
-      const { orgId, status } = z
+      const { orgId, status, email } = z
         .object({
           orgId: z.string().uuid(),
           status: z.enum(['bounced', 'complained', 'unsubscribed']),
+          /**
+           * The address the message went to. Used only when the id names no
+           * contact of this org — which is every /emails message: the caller
+           * names no contact, so sendTransactionalEmail puts a random id on
+           * the job (lib/queues.ts). A hard bounce belongs to the address, so
+           * every live contact of the org holding it is marked; contacts has
+           * no unique on email, and leaving a duplicate 'active' would put it
+           * back into the status-based refusals (#234-#236) as mailable.
+           */
+          email: z.string().email().optional(),
         })
         .parse(req.body);
 
-      const matched = await db
+      let by: 'id' | 'email' | null = 'id';
+      let matched = await db
         .select({ id: contacts.id, status: contacts.status })
         .from(contacts)
         .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
+      if (matched.length === 0 && email) {
+        by = 'email';
+        matched = await db
+          .select({ id: contacts.id, status: contacts.status })
+          .from(contacts)
+          .where(
+            and(
+              eq(contacts.orgId, orgId),
+              sql`lower(${contacts.email}) = ${email.toLowerCase()}`,
+              isNull(contacts.deletedAt),
+            ),
+          );
+      }
+      if (matched.length === 0) by = null;
 
       const toChange = matched.filter((c) => c.status !== status).map((c) => c.id);
       if (toChange.length > 0) {
@@ -87,7 +112,7 @@ const internalContactsRoutes: FastifyPluginAsync = async (app) => {
           .where(and(eq(contacts.orgId, orgId), inArray(contacts.id, toChange)));
       }
 
-      return reply.send({ data: { matched: matched.length, changed: toChange.length } });
+      return reply.send({ data: { matched: matched.length, changed: toChange.length, by } });
     },
   );
 };

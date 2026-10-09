@@ -235,21 +235,40 @@ async function addToSuppressionList(
  *
  * It does not throw either: the message has bounced, and a retry would mail
  * the dead address again.
+ *
+ * The address goes along with the id: a transactional job carries a random id
+ * when its caller named no contact (lib/queues.ts), and the route then marks
+ * the contacts holding the address instead. Its answer decides what is
+ * reported — 'written' only when a contact's status actually changed,
+ * 'unchanged' when it already had it, 'no_contact' when the address belongs
+ * to no contact of the org. It used to say 'written' for any 200.
  */
 async function updateContactStatus(
   orgId: string,
   contactId: string,
+  email: string,
   status: 'bounced' | 'complained',
   messageId: string,
-): Promise<'written' | 'failed'> {
+): Promise<'written' | 'unchanged' | 'no_contact' | 'unverified' | 'failed'> {
   let failure: string;
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/contacts/${contactId}/status`, {
       method: 'PATCH',
       headers: internalHeaders(),
-      body: JSON.stringify({ orgId, status }),
+      body: JSON.stringify({ orgId, status, email }),
     });
-    if (res.ok) return 'written';
+    if (res.ok) {
+      const body = (await res.json().catch(() => null)) as {
+        data?: { matched?: unknown; changed?: unknown };
+      } | null;
+      const matched = body?.data?.matched;
+      const changed = body?.data?.changed;
+      // An API older than this answer says only { ok: true }, which proves
+      // nothing about the row.
+      if (typeof matched !== 'number' || typeof changed !== 'number') return 'unverified';
+      if (matched === 0) return 'no_contact';
+      return changed > 0 ? 'written' : 'unchanged';
+    }
     failure = `HTTP ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`;
   } catch (err) {
     failure = (err as Error).message;
@@ -542,7 +561,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
     // Hard bounce — suppress email + mark contact as bounced
     const [suppression, contactStatus] = await Promise.all([
       addToSuppressionList(data.orgId, data.toEmail, 'hard_bounce', data.messageId),
-      updateContactStatus(data.orgId, data.contactId, 'bounced', data.messageId),
+      updateContactStatus(data.orgId, data.contactId, data.toEmail, 'bounced', data.messageId),
     ]);
     await recordEvent({
       type: 'bounce',
