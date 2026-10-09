@@ -224,20 +224,44 @@ async function addToSuppressionList(
   return 'failed';
 }
 
+/**
+ * Mark the contact, and say whether it stuck — the same shape as
+ * addToSuppressionList above, for the same reason.
+ *
+ * This used to catch only a thrown fetch, so a refused PATCH (a 500, a 400)
+ * went unread: the contact kept its old status after a hard bounce, which is
+ * what the UI, the editor's consent check (#234), resubscribeContact (#235)
+ * and batch-sender's status refusal (#236) read, and nobody was told.
+ *
+ * It does not throw either: the message has bounced, and a retry would mail
+ * the dead address again.
+ */
 async function updateContactStatus(
   orgId: string,
   contactId: string,
   status: 'bounced' | 'complained',
-): Promise<void> {
+  messageId: string,
+): Promise<'written' | 'failed'> {
+  let failure: string;
   try {
-    await fetch(`${API_URL}/api/v1/internal/contacts/${contactId}/status`, {
+    const res = await fetch(`${API_URL}/api/v1/internal/contacts/${contactId}/status`, {
       method: 'PATCH',
       headers: internalHeaders(),
       body: JSON.stringify({ orgId, status }),
     });
-  } catch {
-    console.error(`Failed to update contact ${contactId} status to ${status}`);
+    if (res.ok) return 'written';
+    failure = `HTTP ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`;
+  } catch (err) {
+    failure = (err as Error).message;
   }
+  console.error(
+    `[mta-sender][contact-status-write-failed] message=${messageId} org=${orgId} contact=${contactId} status=${status} — ${failure}`,
+  );
+  captureJobException(new Error(`contact status write failed: ${failure}`), {
+    queue: 'mta-sender',
+    orgId,
+  });
+  return 'failed';
 }
 
 // ─── Suppression gate ────────────────────────────────────────────────────────
@@ -516,9 +540,9 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
 
   if (isHardBounce(smtpCode)) {
     // Hard bounce — suppress email + mark contact as bounced
-    const [suppression] = await Promise.all([
+    const [suppression, contactStatus] = await Promise.all([
       addToSuppressionList(data.orgId, data.toEmail, 'hard_bounce', data.messageId),
-      updateContactStatus(data.orgId, data.contactId, 'bounced'),
+      updateContactStatus(data.orgId, data.contactId, 'bounced', data.messageId),
     ]);
     await recordEvent({
       type: 'bounce',
@@ -532,10 +556,17 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
         smtpMessage: result.smtpMessage,
         isp,
         suppression,
+        contactStatus,
         ...ipMeta,
       },
     });
-    return { status: 'hard_bounce', messageId: data.messageId, smtpCode, suppression };
+    return {
+      status: 'hard_bounce',
+      messageId: data.messageId,
+      smtpCode,
+      suppression,
+      contactStatus,
+    };
   }
 
   if (isSoftBounce(smtpCode)) {

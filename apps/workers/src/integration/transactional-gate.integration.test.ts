@@ -263,6 +263,8 @@ async function campaignTo(
 }
 
 describe('the transactional route and the gate agree; a failed status write is reported', () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
     token = await loginAsSeedUser(API, 'txgate');
@@ -270,6 +272,7 @@ describe('the transactional route and the gate agree; a failed status write is r
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
       VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true)
     `;
+    errorSpy = vi.spyOn(console, 'error');
     // Pass-through: records what the internal status PATCH answered.
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const res = await realFetch(input, init);
@@ -348,4 +351,60 @@ describe('the transactional route and the gate agree; a failed status write is r
     expect(reached, 'the control must reach the engine').toContain(control.email);
     expect(reached, 'an unsubscribed address got marketing').not.toContain(subject.email);
   }, 120_000);
+
+  it('a contact status that cannot be written is reported; one that can is set', async () => {
+    // A contact id the PATCH cannot use: Postgres refuses it as a uuid, so the
+    // route fails — the failure no row count can hide.
+    const to = addr('status-fails');
+    allAddresses.push(to);
+    engine.answer.set(to, { code: 550, message: '5.1.1 user unknown' });
+    errorSpy.mockClear();
+    statusWrites.length = 0;
+    const data = {
+      messageId: randomUUID(),
+      orgId: seed.id,
+      campaignId: randomUUID(),
+      contactId: 'not-a-contact-id',
+      fromEmail,
+      fromName: 'Obchod',
+      toEmail: to,
+      subject: 'Faktura',
+      htmlBody: '<p>x</p>',
+      stream: 'transactional',
+    } as unknown as MtaSendJobData;
+    const failed = (await processMtaSend({
+      ...job(data),
+      opts: { attempts: 1 },
+      attemptsMade: 0,
+    } as unknown as Job<MtaSendJobData>)) as Record<string, unknown>;
+    engine.answer.delete(to);
+    const logged = errorSpy.mock.calls
+      .map((c) => String(c[0]))
+      .filter((l) => l.includes('not-a-contact-id'));
+    console.log(
+      `[z118] status write fails: PATCH=${JSON.stringify(statusWrites)} result=${JSON.stringify(failed)} logged=${JSON.stringify(logged)}`,
+    );
+
+    expect(failed.status).toBe('hard_bounce');
+    expect(failed.contactStatus, 'the job result does not say the write failed').toBe('failed');
+    expect(
+      logged.some((l) => /HTTP [45]\d\d/.test(l)),
+      'the failure was not logged',
+    ).toBe(true);
+
+    // Must pass: a real contact hard-bounces in a campaign, and is marked.
+    const listId = await newList('status-ok');
+    const ok = await contactOn(listId, 'status-ok');
+    const control = await contactOn(listId, 'status-ok-ctl');
+    engine.answer.set(ok.email, { code: 550, message: '5.1.1 user unknown' });
+    statusWrites.length = 0;
+    const { mta } = await campaignTo(listId, 'status-ok', [ok.email, control.email]);
+    engine.answer.delete(ok.email);
+    const [row] = await sql<{ status: string }[]>`SELECT status FROM contacts WHERE id = ${ok.id}`;
+    console.log(
+      `[z118] status write ok: PATCH=${JSON.stringify(statusWrites)} result=${JSON.stringify(mta[ok.email])} status=${row!.status}`,
+    );
+    expect(mta[ok.email]?.[0]?.contactStatus).toBe('written');
+    expect(row!.status).toBe('bounced');
+  }, 180_000);
 });
