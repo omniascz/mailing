@@ -123,10 +123,25 @@ async function deliver(to: string): Promise<string[]> {
   return out;
 }
 
+/**
+ * This file's own bucket in the API's 100/min limiter, which keys on
+ * `x-api-key ?? request.ip` (api/plugins/rate-limit.ts). Eleven campaigns and
+ * twenty public calls took 43 of the shared 127.0.0.1 bucket, and in CI the
+ * files after this one got 429 on every call. Same trick as setup/login.ts: an
+ * unknown key is looked up, matches nothing, and the request continues as the
+ * Bearer session (or, on a public route, as nobody) — it picks the counter and
+ * nothing else.
+ */
+const RATE_LIMIT_BUCKET = `integration-resub-${randomUUID()}`;
+
 async function api(method: string, path: string, body?: unknown): Promise<unknown> {
   const res = await fetch(`${API}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      'x-api-key': RATE_LIMIT_BUCKET,
+    },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(20_000),
   });
@@ -140,7 +155,10 @@ async function pub(method: string, path: string, body?: unknown): Promise<Respon
   return fetch(`${API}${path}`, {
     method,
     redirect: 'manual',
-    headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+    headers: {
+      'x-api-key': RATE_LIMIT_BUCKET,
+      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+    },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(20_000),
   });
