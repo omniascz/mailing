@@ -158,6 +158,8 @@ async function patchStatus(contactId: string, body: Record<string, unknown>) {
 }
 
 describe('transactional hard bounces mark the contact; internal writes tell the truth', () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
     token = await loginAsSeedUser(API, 'txstatus');
@@ -181,6 +183,7 @@ describe('transactional hard bounces mark the contact; internal writes tell the 
       }
       return res;
     });
+    errorSpy = vi.spyOn(console, 'error');
   }, 120_000);
 
   afterAll(async () => {
@@ -262,5 +265,118 @@ describe('transactional hard bounces mark the contact; internal writes tell the 
     engine.answer.delete(real.email);
     expect(res.contactStatus).toBe('written');
     expect(await statusOf(real.id)).toBe('bounced');
+  }, 120_000);
+
+  it('an event write that fails is reported; one that succeeds is not', async () => {
+    errorSpy.mockClear();
+    // A campaign id that is not a uuid: /internal/events refuses it in its
+    // schema, a failure that is not about which row it points at.
+    const to = addr('event-fails');
+    allAddresses.push(to);
+    const res = (await processMtaSend({
+      id: `txstatus-${randomUUID()}`,
+      data: {
+        messageId: randomUUID(),
+        orgId: seed.id,
+        campaignId: 'not-a-campaign-id',
+        contactId: randomUUID(),
+        fromEmail,
+        fromName: 'Obchod',
+        toEmail: to,
+        subject: 'Novinky',
+        htmlBody: '<p>x</p>',
+        stream: 'broadcast',
+      },
+      opts: { attempts: 1 },
+      attemptsMade: 0,
+      log: async () => {},
+    } as unknown as Job<MtaSendJobData>)) as Record<string, unknown>;
+    const logged = errorSpy.mock.calls
+      .map((c) => String(c[0]))
+      .filter((l) => l.includes('event-write-failed'));
+    console.log(
+      `[z119] event fails: result=${JSON.stringify(res)} logged=${JSON.stringify(logged)}`,
+    );
+    expect(res.status).toBe('sent');
+    expect(
+      logged.some((l) => /HTTP [45]\d\d/.test(l)),
+      'the event failure was not logged',
+    ).toBe(true);
+    expect(res.events, 'the job result does not say an event was lost').toBe('failed');
+
+    // A receipt through /emails: its placeholder ids are refused on foreign
+    // keys for every event. The job says so, and the log is not flooded — no
+    // per-event error, at most one warning per process.
+    errorSpy.mockClear();
+    const receiptTo = addr('event-receipt');
+    allAddresses.push(receiptTo);
+    writes.length = 0;
+    await api('POST', '/api/v1/emails', {
+      from: fromEmail,
+      to: receiptTo,
+      subject: 'Faktura',
+      html: '<p>x</p>',
+    });
+    const [rc] = await deliver(receiptTo);
+    const rcLogged = errorSpy.mock.calls
+      .map((c) => String(c[0]))
+      .filter((l) => l.includes('event-write-failed'));
+    console.log(
+      `[z119] event receipt: result=${JSON.stringify(rc)} writes=${JSON.stringify(writes)} errors=${rcLogged.length}`,
+    );
+    expect(rc!.status).toBe('sent');
+    expect(rc!.events).toBe('not_stored');
+    expect(rcLogged, 'an expected refusal was logged as an error').toEqual([]);
+
+    // Must pass: a job naming a real campaign and contact — the events are
+    // stored, the job says so, and nothing is logged.
+    errorSpy.mockClear();
+    const known = await contact('event-ok');
+    const [list] = await sql<{ id: string }[]>`
+      INSERT INTO lists (org_id, name) VALUES (${seed.id}, ${`txstatus ${tag}`}) RETURNING id
+    `;
+    const created = (await api('POST', '/api/v1/campaigns', {
+      name: `txstatus ${tag}`,
+      subject: 'Novinky',
+      fromName: 'Obchod',
+      fromEmail,
+      listId: list!.id,
+      content: { html: '<p>x</p><a href="{{unsubscribe_url}}">Odhlásit</a>' },
+    })) as { data: { id: string } };
+    const messageId = randomUUID();
+    const ok = (await processMtaSend({
+      id: `txstatus-${randomUUID()}`,
+      data: {
+        messageId,
+        orgId: seed.id,
+        campaignId: created.data.id,
+        contactId: known.id,
+        fromEmail,
+        fromName: 'Obchod',
+        toEmail: known.email,
+        subject: 'Novinky',
+        htmlBody: '<p>x</p>',
+        stream: 'broadcast',
+      },
+      opts: { attempts: 1 },
+      attemptsMade: 0,
+      log: async () => {},
+    } as unknown as Job<MtaSendJobData>)) as Record<string, unknown>;
+    const stored = await sql<{ event_type: string }[]>`
+      SELECT event_type FROM email_events WHERE message_id = ${messageId} ORDER BY event_type
+    `;
+    const okLogged = errorSpy.mock.calls
+      .map((c) => String(c[0]))
+      .filter((l) => l.includes('event-write-failed'));
+    console.log(
+      `[z119] event ok: result=${JSON.stringify(ok)} stored=${JSON.stringify(stored.map((e) => e.event_type))}`,
+    );
+    await sql`DELETE FROM email_events WHERE campaign_id = ${created.data.id}`;
+    await sql`DELETE FROM campaigns WHERE id = ${created.data.id}`;
+    await sql`DELETE FROM lists WHERE id = ${list!.id}`;
+    expect(ok.status).toBe('sent');
+    expect(ok.events).toBe('written');
+    expect(stored.map((e) => e.event_type).sort()).toEqual(['deliver', 'send']);
+    expect(okLogged).toEqual([]);
   }, 120_000);
 });
