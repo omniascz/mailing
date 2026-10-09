@@ -15,6 +15,7 @@
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/email-events.js';
+import { deliveryDenominators, outcomeRate } from './pure.js';
 
 export type InsightSeverity = 'info' | 'warn' | 'critical';
 
@@ -34,8 +35,8 @@ export interface InsightInput {
 }
 
 interface Totals {
-  send: number;
   deliver: number;
+  failed: number;
   open: number;
   click: number;
   hardBounce: number;
@@ -58,8 +59,8 @@ async function gatherTotals(orgId: string, sinceDays: number): Promise<Totals> {
     .groupBy(emailEvents.eventType, emailEvents.bounceType);
 
   const t: Totals = {
-    send: 0,
     deliver: 0,
+    failed: 0,
     open: 0,
     click: 0,
     hardBounce: 0,
@@ -70,8 +71,8 @@ async function gatherTotals(orgId: string, sinceDays: number): Promise<Totals> {
   for (const r of rows) {
     const n = Number(r.count) || 0;
     switch (r.eventType) {
-      case 'send':
-        t.send += n;
+      case 'failed':
+        t.failed += n;
         break;
       case 'deliver':
         t.deliver += n;
@@ -103,12 +104,20 @@ export async function computeInsights(input: InsightInput): Promise<Insight[]> {
   const ignored = new Set(input.ignoredRules ?? []);
   const out: Insight[] = [];
 
-  const sentOrDelivered = t.deliver || t.send;
-  if (sentOrDelivered === 0) return out;
+  // Outcomes, not the billing 'send' rows (see deliveryDenominators in
+  // pure.ts). Hard bounces used to be divided by deliveries alone, falling back
+  // to 'send' rows: a true 5 % read as 5.26 % and crossed into 'critical', and
+  // a sender whose every message bounced was measured against its bills.
+  const { delivered, attempted, resolved } = deliveryDenominators({
+    delivered: t.deliver,
+    bounces: t.hardBounce + t.softBounce,
+    failed: t.failed,
+  });
+  if (resolved === 0) return out;
 
-  const hardRate = t.hardBounce / sentOrDelivered;
-  const complaintRate = t.complaint / sentOrDelivered;
-  const unsubRate = t.unsubscribe / sentOrDelivered;
+  const hardRate = outcomeRate(t.hardBounce, attempted);
+  const complaintRate = outcomeRate(t.complaint, delivered);
+  const unsubRate = outcomeRate(t.unsubscribe, delivered);
   const openRate = t.deliver > 0 ? t.open / t.deliver : 0;
   const clickRate = t.open > 0 ? t.click / t.open : 0;
 
@@ -121,7 +130,7 @@ export async function computeInsights(input: InsightInput): Promise<Insight[]> {
     title: `Hard bounce rate ${(hardRate * 100).toFixed(2)}% (last ${window}d)`,
     detail:
       'Hard bounces above 2% will hurt your sender reputation and may trigger ISP rate-limiting.',
-    metrics: { hardRate, hardCount: t.hardBounce, sent: sentOrDelivered },
+    metrics: { hardRate, hardCount: t.hardBounce, sent: attempted },
     suggestions: [
       'Enable double opt-in for new signups.',
       'Remove addresses that hard-bounced more than once.',
@@ -133,7 +142,7 @@ export async function computeInsights(input: InsightInput): Promise<Insight[]> {
     severity: complaintRate > 0.005 ? 'critical' : 'warn',
     title: `Complaint rate ${(complaintRate * 100).toFixed(3)}% (last ${window}d)`,
     detail: 'Complaint rate above 0.1% is the threshold Gmail/Yahoo use to throttle senders.',
-    metrics: { complaintRate, complaints: t.complaint, sent: sentOrDelivered },
+    metrics: { complaintRate, complaints: t.complaint, delivered },
     suggestions: [
       'Double-check your unsubscribe link is visible in every template.',
       'Audit recent campaigns — were recipients re-engaged or long-cold?',
@@ -145,7 +154,7 @@ export async function computeInsights(input: InsightInput): Promise<Insight[]> {
     severity: unsubRate > 0.03 ? 'warn' : 'info',
     title: `Unsubscribe rate ${(unsubRate * 100).toFixed(2)}% (last ${window}d)`,
     detail: 'A high unsubscribe rate often correlates with irrelevant content or over-sending.',
-    metrics: { unsubRate, unsubs: t.unsubscribe, sent: sentOrDelivered },
+    metrics: { unsubRate, unsubs: t.unsubscribe, delivered },
     suggestions: [
       'Reduce send frequency to once a week on average.',
       'Segment your list — send the right content to the right people.',

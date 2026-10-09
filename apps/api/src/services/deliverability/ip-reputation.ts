@@ -33,7 +33,7 @@
  *
  * `reputation_score` is `NOT NULL DEFAULT '0'`, so a fresh row already reads as
  * the worst possible score. `computeEmailHealthScore` has the opposite bias: it
- * returns 100 and grade A when `sends === 0`, deliberately, "so empty domains
+ * returns 100 and grade A when no message has an outcome, deliberately, "so empty domains
  * don't show red dashboards before they've sent anything". Either one applied
  * to an address with no history is a confident answer to a question nobody can
  * answer yet — #122's shape.
@@ -55,7 +55,7 @@
 
 import { sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { computeEmailHealthScore } from './pure.js';
+import { computeEmailHealthScore, deliveryDenominators, outcomeRate } from './pure.js';
 import { updateReputation } from '../dedicated-ips/index.js';
 
 /** The window every rate here is measured over. See the note above. */
@@ -64,7 +64,8 @@ export const REPUTATION_WINDOW_DAYS = 30;
 export interface IpReputation {
   ipId: string;
   ipAddress: string;
-  sends: number;
+  /** Messages a receiving server answered from this address — see deliveryDenominators. */
+  attempted: number;
   bounceRatePct: number;
   complaintRatePct: number;
   score: number;
@@ -87,8 +88,8 @@ export interface ReputationSweepSummary {
 interface CountRow extends Record<string, unknown> {
   ip_id: string;
   ip_address: string;
-  sends: number;
   delivered: number;
+  failed: number;
   bounces: number;
   hard_bounces: number;
   complaints: number;
@@ -113,8 +114,8 @@ async function countByIp(): Promise<CountRow[]> {
     SELECT
       d.id   AS ip_id,
       d.ip_address,
-      COUNT(*) FILTER (WHERE e.event_type = 'send')::int      AS sends,
       COUNT(*) FILTER (WHERE e.event_type = 'deliver')::int   AS delivered,
+      COUNT(*) FILTER (WHERE e.event_type = 'failed')::int    AS failed,
       COUNT(*) FILTER (WHERE e.event_type = 'bounce')::int    AS bounces,
       COUNT(*) FILTER (WHERE e.event_type = 'bounce' AND e.bounce_type = 'hard')::int  AS hard_bounces,
       COUNT(*) FILTER (WHERE e.event_type = 'bounce' AND e.bounce_type = 'block')::int AS blocks,
@@ -151,7 +152,13 @@ export async function refreshAllIpReputations(): Promise<ReputationSweepSummary>
   };
 
   for (const r of rows) {
-    if (r.sends === 0) {
+    // Outcomes, not 'send' rows. A 'send' is a billing record: none is written
+    // for a bounced campaign message or for transactional mail (#240), so an
+    // address sending only password resets read as "no history" here at any
+    // bounce rate, and one mixing them divided every bounce by the delivered
+    // campaign mail alone.
+    const { attempted, resolved } = deliveryDenominators(r);
+    if (resolved === 0) {
       // Nothing in the window names this address. Writing anything here would
       // be inventing an answer; leaving reputation_updated_at NULL says so.
       summary.skippedNoHistory++;
@@ -164,12 +171,12 @@ export async function refreshAllIpReputations(): Promise<ReputationSweepSummary>
     // and two formulas answering "how healthy is this sender" would disagree
     // the first time somebody compared a per-IP score with the org score.
     //
-    // Its `sends === 0` branch returns 100/A on purpose, for dashboards. That
+    // Its empty branch returns 100/A on purpose, for dashboards. That
     // branch is unreachable from here: the guard above returns first, so an
     // address with no history is never handed to it.
     const health = computeEmailHealthScore({
-      sends: r.sends,
       delivered: r.delivered,
+      failed: r.failed,
       bounces: r.bounces,
       hardBounces: r.hard_bounces,
       softBounces: Math.max(0, r.bounces - r.hard_bounces - r.blocks),
@@ -183,9 +190,8 @@ export async function refreshAllIpReputations(): Promise<ReputationSweepSummary>
     // Stored as percentages, matching the column comments and what an operator
     // reads on the screen. decimal(5,2) holds 0.00–999.99, so a rate is capped
     // at two decimals — 0.1% complaint arrives as 0.10, not as 0.001.
-    const bounceRatePct = Math.round((r.bounces / r.sends) * 10000) / 100;
-    const complaintDenominator = r.delivered > 0 ? r.delivered : r.sends;
-    const complaintRatePct = Math.round((r.complaints / complaintDenominator) * 10000) / 100;
+    const bounceRatePct = Math.round(outcomeRate(r.bounces, attempted) * 10000) / 100;
+    const complaintRatePct = Math.round(outcomeRate(r.complaints, r.delivered) * 10000) / 100;
 
     await updateReputation(r.ip_id, {
       reputationScore: health.score,
@@ -197,7 +203,7 @@ export async function refreshAllIpReputations(): Promise<ReputationSweepSummary>
     summary.details.push({
       ipId: r.ip_id,
       ipAddress: r.ip_address,
-      sends: r.sends,
+      attempted,
       bounceRatePct,
       complaintRatePct,
       score: health.score,

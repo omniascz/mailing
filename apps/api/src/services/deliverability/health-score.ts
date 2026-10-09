@@ -60,8 +60,8 @@ export async function computeOrgHealth(
   const whereSql = sql`org_id = ${opts.orgId}`;
 
   const result = await db.execute<{
-    sends: number;
     delivered: number;
+    failed: number;
     bounces: number;
     hard_bounces: number;
     soft_bounces: number;
@@ -72,8 +72,9 @@ export async function computeOrgHealth(
     blocks: number;
   }>(sql`
     SELECT
-      COUNT(*) FILTER (WHERE event_type = 'send')::int AS sends,
+      -- Outcomes, not the billing 'send' rows: see deliveryDenominators in pure.ts.
       COUNT(*) FILTER (WHERE event_type = 'deliver')::int AS delivered,
+      COUNT(*) FILTER (WHERE event_type = 'failed')::int AS failed,
       COUNT(*) FILTER (WHERE event_type = 'bounce')::int AS bounces,
       COUNT(*) FILTER (WHERE event_type = 'bounce' AND bounce_type = 'hard')::int AS hard_bounces,
       COUNT(*) FILTER (WHERE event_type = 'bounce' AND bounce_type = 'soft')::int AS soft_bounces,
@@ -90,8 +91,8 @@ export async function computeOrgHealth(
   const row =
     result[0] ??
     ({
-      sends: 0,
       delivered: 0,
+      failed: 0,
       bounces: 0,
       hard_bounces: 0,
       soft_bounces: 0,
@@ -103,8 +104,8 @@ export async function computeOrgHealth(
     } as const);
 
   const score = computeEmailHealthScore({
-    sends: row.sends,
     delivered: row.delivered,
+    failed: row.failed,
     bounces: row.bounces,
     hardBounces: row.hard_bounces,
     softBounces: row.soft_bounces,

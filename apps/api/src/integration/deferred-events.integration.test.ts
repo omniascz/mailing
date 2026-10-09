@@ -117,8 +117,7 @@ describe('deferred and failed reach the database as themselves', () => {
     // 10 messages: 9 delivered (a 'send' and a 'deliver' each, as mta-sender
     // writes them), the 1 real bounce above, plus the deferred + failed. The
     // auto-pause divides by delivered + bounced since its denominator stopped
-    // being the billing 'send' rows; health-score below still reads sends, so
-    // a tenth 'send' keeps its 1-in-10 too.
+    // being the billing 'send' rows, and so does health-score below.
     for (let i = 0; i < 10; i++) await post('send', {});
     for (let i = 0; i < 9; i++) await post('deliver', {});
 
@@ -132,7 +131,7 @@ describe('deferred and failed reach the database as themselves', () => {
   it('health-score counts the bounce and neither of the others', async () => {
     const { computeOrgHealth } = await import('../services/deliverability/health-score.js');
     const health = await computeOrgHealth({ orgId, days: 30 });
-    // bounceRate is bounces/sends: 1 of 10. Counting deferred and failed would
+    // bounceRate is bounces/(delivered + bounced): 1 of 10. Counting deferred and failed would
     // treble it, and 30% is past the point where this stops being a score and
     // starts being a suspension.
     expect(health.components.bounceRate).toBeCloseTo(0.1, 5);

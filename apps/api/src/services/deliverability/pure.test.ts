@@ -99,10 +99,11 @@ describe('classifyGraymail', () => {
 });
 
 describe('computeEmailHealthScore', () => {
+  // 10 000 messages: 9 900 delivered, 50 bounced, 50 lost to transport errors.
   const healthy: EmailHealthMetrics = {
-    sends: 10_000,
     delivered: 9_900,
     bounces: 50,
+    failed: 50,
     hardBounces: 20,
     softBounces: 30,
     complaints: 5,
@@ -126,6 +127,7 @@ describe('computeEmailHealthScore', () => {
     const deliveryDip = computeEmailHealthScore({
       ...healthy,
       delivered: 9_000,
+      failed: 950,
     });
     expect(complaintHeavy.score).toBeLessThan(deliveryDip.score);
     expect(complaintHeavy.issues.some((i) => i.includes('Complaint'))).toBe(true);
@@ -147,9 +149,41 @@ describe('computeEmailHealthScore', () => {
     expect(result.components.complaintRate).toBeCloseTo(5 / 9900, 4);
   });
 
+  it('rates are fractions of delivery outcomes, so a sender with no billing rows is still measured', () => {
+    // 100 password resets, 15 bounced: no 'send' row exists for any of them.
+    const resets = computeEmailHealthScore({
+      delivered: 85,
+      bounces: 15,
+      hardBounces: 15,
+      softBounces: 0,
+      complaints: 0,
+      opens: 0,
+      clicks: 0,
+      unsubscribes: 0,
+    });
+    expect(resets.components.bounceRate).toBe(0.15);
+    expect(resets.components.deliveryRate).toBe(0.85);
+    expect(resets.grade).not.toBe('A');
+  });
+
+  it('a transport failure lowers the delivery rate and is not a bounce', () => {
+    const r = computeEmailHealthScore({
+      delivered: 90,
+      bounces: 0,
+      failed: 10,
+      hardBounces: 0,
+      softBounces: 0,
+      complaints: 0,
+      opens: 30,
+      clicks: 0,
+      unsubscribes: 0,
+    });
+    expect(r.components.deliveryRate).toBe(0.9);
+    expect(r.components.bounceRate).toBe(0);
+  });
+
   it('falls to F for a disastrous sender', () => {
     const disaster = computeEmailHealthScore({
-      sends: 1000,
       delivered: 700,
       bounces: 300,
       hardBounces: 200,
@@ -167,7 +201,6 @@ describe('computeEmailHealthScore', () => {
 
   it('handles zero sends gracefully', () => {
     const empty = computeEmailHealthScore({
-      sends: 0,
       delivered: 0,
       bounces: 0,
       hardBounces: 0,
@@ -184,7 +217,6 @@ describe('computeEmailHealthScore', () => {
 
   it('clamps score to 0..100', () => {
     const result = computeEmailHealthScore({
-      sends: 1000,
       delivered: 0,
       bounces: 1000,
       hardBounces: 1000,
