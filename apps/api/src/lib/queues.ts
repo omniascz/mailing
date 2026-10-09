@@ -384,6 +384,10 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       rawMime: input.rawMime ?? '',
       priority: PRIORITY.TRANSACTIONAL,
       stream: 'transactional',
+      // The campaignId above is the orgId and the contactId may be random:
+      // neither names a row, and mta-sender says so when it records events
+      // (workers MtaSendJobData.campaignIsPlaceholder).
+      campaignIsPlaceholder: true,
       // Spread as a group or not at all. mta-sender keys the whole gRPC dkim
       // message off `data.dkimDomain` being truthy, so an empty-string domain
       // would send the engine a config with no key — which it then skips on the

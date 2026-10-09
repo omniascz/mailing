@@ -304,9 +304,10 @@ describe('transactional hard bounces mark the contact; internal writes tell the 
     ).toBe(true);
     expect(res.events, 'the job result does not say an event was lost').toBe('failed');
 
-    // A receipt through /emails: its placeholder ids are refused on foreign
-    // keys for every event. The job says so, and the log is not flooded — no
-    // per-event error, at most one warning per process.
+    // A receipt through /emails: its delivery is stored with no campaign (its
+    // placeholder ids used to be refused on foreign keys for every event —
+    // transactional-events.integration.test.ts), the job says 'written', and
+    // nothing is logged as a failure.
     errorSpy.mockClear();
     const receiptTo = addr('event-receipt');
     allAddresses.push(receiptTo);
@@ -325,8 +326,13 @@ describe('transactional hard bounces mark the contact; internal writes tell the 
       `[z119] event receipt: result=${JSON.stringify(rc)} writes=${JSON.stringify(writes)} errors=${rcLogged.length}`,
     );
     expect(rc!.status).toBe('sent');
-    expect(rc!.events).toBe('not_stored');
-    expect(rcLogged, 'an expected refusal was logged as an error').toEqual([]);
+    expect(rc!.events).toBe('written');
+    expect(rcLogged).toEqual([]);
+    const [rcStored] = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM email_events
+      WHERE message_id = ${rc!.messageId as string} AND event_type = 'deliver' AND campaign_id IS NULL
+    `;
+    expect(rcStored!.n, 'the receipt delivery was not stored').toBe(1);
 
     // Must pass: a job naming a real campaign and contact — the events are
     // stored, the job says so, and nothing is logged.

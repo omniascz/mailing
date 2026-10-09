@@ -167,13 +167,21 @@ function isFinalAttempt(job: { attemptsMade: number; opts: { attempts?: number }
 /**
  * What happened to one job's event writes, for its result.
  *
- * `synthetic` marks a job whose ids name no rows: sendTransactionalEmail puts
- * the orgId in campaignId and a random contactId when its caller named none
- * (lib/queues.ts). /internal/events refuses every such event on its foreign
- * keys — a known gap, not a fault of this send — so those refusals are counted
- * as `notStored` and logged once per process, not once per event.
+ * `placeholder` marks a transactional job whose ids name no rows:
+ * sendTransactionalEmail puts the orgId in campaignId and a random contactId
+ * when its caller named none (lib/queues.ts). Its events go to /internal/events
+ * flagged as such, and are stored with no campaign. Its 'send' is not recorded
+ * here: the route that accepted the message already wrote one (/emails,
+ * /transactional/email, …), and that row is what billing and the auto-pause
+ * count — a second would double both.
+ *
+ * `synthetic` is the wider shape (campaignId === orgId on any stream): flow
+ * template sends (#218) carry it too, and still have their events refused on
+ * the foreign keys. Those refusals are counted as `notStored` and logged once
+ * per process, not once per event.
  */
 interface EventTrack {
+  placeholder: boolean;
   synthetic: boolean;
   written: number;
   notStored: number;
@@ -181,7 +189,14 @@ interface EventTrack {
 }
 
 function eventTrack(data: MtaSendJobData): EventTrack {
-  return { synthetic: data.campaignId === data.orgId, written: 0, notStored: 0, failed: 0 };
+  const synthetic = data.campaignId === data.orgId;
+  return {
+    placeholder: data.stream === 'transactional' && (data.campaignIsPlaceholder ?? synthetic),
+    synthetic,
+    written: 0,
+    notStored: 0,
+    failed: 0,
+  };
 }
 
 function eventSummary(t: EventTrack): 'written' | 'not_stored' | 'failed' | 'none' {
@@ -215,12 +230,20 @@ async function recordEvent(
     metadata?: Record<string, unknown>;
   },
 ): Promise<void> {
+  if (track.placeholder && event.type === 'send') return;
+  const body = track.placeholder
+    ? {
+        ...event,
+        campaignIsPlaceholder: true,
+        metadata: { ...event.metadata, stream: 'transactional' },
+      }
+    : event;
   let failure: string;
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/events`, {
       method: 'POST',
       headers: internalHeaders(),
-      body: JSON.stringify(event),
+      body: JSON.stringify(body),
     });
     if (res.ok) {
       track.written++;
@@ -232,7 +255,7 @@ async function recordEvent(
       if (!syntheticRefusalLogged) {
         syntheticRefusalLogged = true;
         console.warn(
-          `[mta-sender][event-not-stored] transactional jobs carry placeholder campaign/contact ids, and /internal/events refuses their events on foreign keys — logged once per process (first: message=${event.messageId} type=${event.type})`,
+          `[mta-sender][event-not-stored] jobs with campaignId = orgId outside the transactional stream (flow template sends) have their events refused on foreign keys — logged once per process (first: message=${event.messageId} type=${event.type})`,
         );
       }
       return;
