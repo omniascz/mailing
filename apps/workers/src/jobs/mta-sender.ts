@@ -164,23 +164,91 @@ function isFinalAttempt(job: { attemptsMade: number; opts: { attempts?: number }
 
 // ─── Event recording ─────────────────────────────────────────────────────────
 
-async function recordEvent(event: {
-  type: 'send' | 'deliver' | 'bounce' | 'deferred' | 'failed';
-  orgId: string;
-  campaignId: string;
-  contactId: string;
-  messageId: string;
-  metadata?: Record<string, unknown>;
-}): Promise<void> {
+/**
+ * What happened to one job's event writes, for its result.
+ *
+ * `synthetic` marks a job whose ids name no rows: sendTransactionalEmail puts
+ * the orgId in campaignId and a random contactId when its caller named none
+ * (lib/queues.ts). /internal/events refuses every such event on its foreign
+ * keys — a known gap, not a fault of this send — so those refusals are counted
+ * as `notStored` and logged once per process, not once per event.
+ */
+interface EventTrack {
+  synthetic: boolean;
+  written: number;
+  notStored: number;
+  failed: number;
+}
+
+function eventTrack(data: MtaSendJobData): EventTrack {
+  return { synthetic: data.campaignId === data.orgId, written: 0, notStored: 0, failed: 0 };
+}
+
+function eventSummary(t: EventTrack): 'written' | 'not_stored' | 'failed' | 'none' {
+  if (t.failed > 0) return 'failed';
+  if (t.notStored > 0) return 'not_stored';
+  return t.written > 0 ? 'written' : 'none';
+}
+
+let syntheticRefusalLogged = false;
+
+/**
+ * Record an email event, and say whether it stuck.
+ *
+ * This used to catch only a thrown fetch, under a comment promising the events
+ * were "also logged for later replay" — nothing replays them. fetch resolves
+ * on any HTTP answer, so a refused write went unread and the event was simply
+ * gone: a send, a delivery or a bounce missing from the stats and from
+ * everything that counts bounces. A refusal is now logged with its status and
+ * sent to Sentry, the same pattern as the suppression (#237) and status (#238)
+ * writes, and the job result carries the outcome. It never throws: losing an
+ * event must not fail, and so resend, a message that went out.
+ */
+async function recordEvent(
+  track: EventTrack,
+  event: {
+    type: 'send' | 'deliver' | 'bounce' | 'deferred' | 'failed';
+    orgId: string;
+    campaignId: string;
+    contactId: string;
+    messageId: string;
+    metadata?: Record<string, unknown>;
+  },
+): Promise<void> {
+  let failure: string;
   try {
-    await fetch(`${API_URL}/api/v1/internal/events`, {
+    const res = await fetch(`${API_URL}/api/v1/internal/events`, {
       method: 'POST',
       headers: internalHeaders(),
       body: JSON.stringify(event),
     });
-  } catch {
-    // Non-critical — events are also logged for later replay
+    if (res.ok) {
+      track.written++;
+      return;
+    }
+    const text = await res.text().catch(() => '');
+    if (track.synthetic && res.status === 400 && text.includes('INVALID_REFERENCE')) {
+      track.notStored++;
+      if (!syntheticRefusalLogged) {
+        syntheticRefusalLogged = true;
+        console.warn(
+          `[mta-sender][event-not-stored] transactional jobs carry placeholder campaign/contact ids, and /internal/events refuses their events on foreign keys — logged once per process (first: message=${event.messageId} type=${event.type})`,
+        );
+      }
+      return;
+    }
+    failure = `HTTP ${res.status}: ${text.slice(0, 200)}`;
+  } catch (err) {
+    failure = (err as Error).message;
   }
+  track.failed++;
+  console.error(
+    `[mta-sender][event-write-failed] message=${event.messageId} org=${event.orgId} type=${event.type} — ${failure}`,
+  );
+  captureJobException(new Error(`event write failed: ${failure}`), {
+    queue: 'mta-sender',
+    orgId: event.orgId,
+  });
 }
 
 /**
@@ -235,21 +303,40 @@ async function addToSuppressionList(
  *
  * It does not throw either: the message has bounced, and a retry would mail
  * the dead address again.
+ *
+ * The address goes along with the id: a transactional job carries a random id
+ * when its caller named no contact (lib/queues.ts), and the route then marks
+ * the contacts holding the address instead. Its answer decides what is
+ * reported — 'written' only when a contact's status actually changed,
+ * 'unchanged' when it already had it, 'no_contact' when the address belongs
+ * to no contact of the org. It used to say 'written' for any 200.
  */
 async function updateContactStatus(
   orgId: string,
   contactId: string,
+  email: string,
   status: 'bounced' | 'complained',
   messageId: string,
-): Promise<'written' | 'failed'> {
+): Promise<'written' | 'unchanged' | 'no_contact' | 'unverified' | 'failed'> {
   let failure: string;
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/contacts/${contactId}/status`, {
       method: 'PATCH',
       headers: internalHeaders(),
-      body: JSON.stringify({ orgId, status }),
+      body: JSON.stringify({ orgId, status, email }),
     });
-    if (res.ok) return 'written';
+    if (res.ok) {
+      const body = (await res.json().catch(() => null)) as {
+        data?: { matched?: unknown; changed?: unknown };
+      } | null;
+      const matched = body?.data?.matched;
+      const changed = body?.data?.changed;
+      // An API older than this answer says only { ok: true }, which proves
+      // nothing about the row.
+      if (typeof matched !== 'number' || typeof changed !== 'number') return 'unverified';
+      if (matched === 0) return 'no_contact';
+      return changed > 0 ? 'written' : 'unchanged';
+    }
     failure = `HTTP ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`;
   } catch (err) {
     failure = (err as Error).message;
@@ -380,6 +467,7 @@ async function recordSuppressed(data: MtaSendJobData, isp: string): Promise<void
 
 export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
   const data = job.data;
+  const events = eventTrack(data);
 
   // Before the throttle, so a message that will not be sent does not spend a
   // token or wait for one.
@@ -409,7 +497,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
         () => THROTTLE_MAX_SLEEP_MS,
       );
       const wait = Math.min(Math.max(refill, 1_000), THROTTLE_MAX_SLEEP_MS);
-      await recordEvent({
+      await recordEvent(events, {
         type: 'deferred',
         orgId: data.orgId,
         campaignId: data.campaignId,
@@ -502,7 +590,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
     // 'send' = handed off to MX; 'deliver' = MX returned SMTP 250 (this engine
     // does direct-to-MX, so the 250 IS delivery confirmation). Both are recorded
     // so deliverability/fatigue/attribution analytics that count 'deliver' work.
-    await recordEvent({
+    await recordEvent(events, {
       type: 'send',
       orgId: data.orgId,
       campaignId: data.campaignId,
@@ -510,7 +598,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       messageId: data.messageId,
       metadata: successMeta,
     });
-    await recordEvent({
+    await recordEvent(events, {
       type: 'deliver',
       orgId: data.orgId,
       campaignId: data.campaignId,
@@ -518,7 +606,12 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       messageId: data.messageId,
       metadata: successMeta,
     });
-    return { status: 'sent', messageId: data.messageId, durationMs: result.durationMs };
+    return {
+      status: 'sent',
+      messageId: data.messageId,
+      durationMs: result.durationMs,
+      events: eventSummary(events),
+    };
   }
 
   // Handle failures
@@ -526,7 +619,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
 
   if (isBlockBounce(smtpCode, result.smtpMessage)) {
     // Block — alert but don't suppress (domain issue, not contact issue)
-    await recordEvent({
+    await recordEvent(events, {
       type: 'bounce',
       orgId: data.orgId,
       campaignId: data.campaignId,
@@ -535,16 +628,16 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       metadata: { bounceType: 'block', smtpCode, smtpMessage: result.smtpMessage, isp, ...ipMeta },
     });
     // Don't retry block bounces
-    return { status: 'blocked', messageId: data.messageId, smtpCode };
+    return { status: 'blocked', messageId: data.messageId, smtpCode, events: eventSummary(events) };
   }
 
   if (isHardBounce(smtpCode)) {
     // Hard bounce — suppress email + mark contact as bounced
     const [suppression, contactStatus] = await Promise.all([
       addToSuppressionList(data.orgId, data.toEmail, 'hard_bounce', data.messageId),
-      updateContactStatus(data.orgId, data.contactId, 'bounced', data.messageId),
+      updateContactStatus(data.orgId, data.contactId, data.toEmail, 'bounced', data.messageId),
     ]);
-    await recordEvent({
+    await recordEvent(events, {
       type: 'bounce',
       orgId: data.orgId,
       campaignId: data.campaignId,
@@ -566,6 +659,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       smtpCode,
       suppression,
       contactStatus,
+      events: eventSummary(events),
     };
   }
 
@@ -580,7 +674,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
     // that gets through on attempt four leaves three deferrals and a delivery
     // instead of three bounces and a delivery.
     const final = isFinalAttempt(job);
-    await recordEvent({
+    await recordEvent(events, {
       type: final ? 'bounce' : 'deferred',
       orgId: data.orgId,
       campaignId: data.campaignId,
@@ -612,7 +706,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
     const waits = deferralCount(data, 'warmup_quota');
     if (waits < MAX_WARMUP_DEFERRALS) {
       const until = nextUtcMidnight();
-      await recordEvent({
+      await recordEvent(events, {
         type: 'deferred',
         orgId: data.orgId,
         campaignId: data.campaignId,
@@ -639,7 +733,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
   // This branch used to write nothing whatsoever. Six attempts over 31 minutes
   // ended in a job marked failed and not one row in email_events, so a message
   // lost to the network was indistinguishable from one that never existed.
-  await recordEvent({
+  await recordEvent(events, {
     type: isFinalAttempt(job) ? 'failed' : 'deferred',
     orgId: data.orgId,
     campaignId: data.campaignId,
