@@ -18,7 +18,12 @@ export const suppressions = pgTable(
   },
   (t) => [
     index('suppressions_org_id_idx').on(t.orgId),
-    uniqueIndex('suppressions_org_email_idx').on(t.orgId, t.email),
+    // One row per reason, not per address: an address can be unsubscribed AND
+    // hard-bounced at once, and each consumer reads the reason it cares about
+    // (the #225 gate lets 'unsubscribe' through for transactional mail;
+    // resubscribeContact lifts only that one). (org, email) used to be unique,
+    // so a later reason could not be written next to an earlier one.
+    uniqueIndex('suppressions_org_email_reason_idx').on(t.orgId, t.email, t.reason),
     uniqueIndex('suppressions_org_phone_idx').on(t.orgId, t.phone),
     index('suppressions_email_idx').on(t.email),
   ],

@@ -13,7 +13,7 @@
  * focused on collecting facts.
  */
 
-import { and, count, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, countDistinct, eq, gte, inArray, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   campaigns,
@@ -340,9 +340,10 @@ async function fetchSuppressionOverlap(orgId: string, campaignId: string): Promi
   const emails = rows.map((r) => r.email).filter(Boolean) as string[];
   if (emails.length === 0) return 0;
 
-  // Count how many of those emails appear in the suppression table
+  // Count how many of those emails appear in the suppression table — once
+  // each, as an address can hold a row per reason.
   const [result] = await db
-    .select({ n: count() })
+    .select({ n: countDistinct(suppressions.email) })
     .from(suppressions)
     .where(and(eq(suppressions.orgId, orgId), inArray(suppressions.email, emails)));
 

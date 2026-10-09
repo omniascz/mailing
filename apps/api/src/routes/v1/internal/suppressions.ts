@@ -49,7 +49,8 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
           ),
         );
 
-      const suppressed = rows.map((r) => r.email).filter((e): e is string => !!e);
+      // An address can hold several reasons, one row each; answer it once.
+      const suppressed = [...new Set(rows.map((r) => r.email).filter((e): e is string => !!e))];
       return reply.send({ data: { suppressed } });
     },
   );
@@ -109,8 +110,18 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
         return reply.send({ data: { suppressed: true, created: false } });
       }
 
-      await db.insert(suppressions).values({ orgId: body.orgId, email, reason: body.reason });
-      return reply.send({ data: { suppressed: true, created: true } });
+      // Unique per (org, email, reason), so a hard bounce is written next to an
+      // earlier unsubscribe instead of colliding with it — which used to answer
+      // 409 here, unread by mta-sender, and leave the address with the one
+      // reason the transactional gate lets through. onConflictDoNothing covers
+      // two writers racing on the same reason; `created` comes from what the
+      // insert returned, so a skipped insert is never reported as a write.
+      const inserted = await db
+        .insert(suppressions)
+        .values({ orgId: body.orgId, email, reason: body.reason })
+        .onConflictDoNothing()
+        .returning({ id: suppressions.id });
+      return reply.send({ data: { suppressed: true, created: inserted.length > 0 } });
     },
   );
 };

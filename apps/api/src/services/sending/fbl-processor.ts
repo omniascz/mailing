@@ -165,9 +165,9 @@ export async function processFblComplaint(
       .set({ status: 'complained', updatedAt: new Date() })
       .where(eq(contacts.id, contact.id));
   }
-  if (!existingSuppression) {
-    await addToSuppression(orgId, email, 'complaint');
-  }
+  // Written next to whatever the address already holds — an earlier
+  // unsubscribe used to leave no room for it (one row per address then).
+  await addToSuppression(orgId, email, 'complaint');
 
   // Always increment complaint_count and log the event — even repeat complaints
   // from the same ISP are audit-relevant (signals whether our unsubscribe flow works).
