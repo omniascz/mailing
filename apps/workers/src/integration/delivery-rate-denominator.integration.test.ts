@@ -298,7 +298,7 @@ describe('deliverability rates are one set of messages (real DB + Redis + API)',
     if (orgs.length) {
       await sql`DELETE FROM organizations WHERE id = ANY(${orgs})`;
     }
-    await sql`DELETE FROM dedicated_ips WHERE ip_address IN ${sql([IPS.mixed, IPS.bad, IPS.clean])}`;
+    await sql`DELETE FROM dedicated_ips WHERE ip_address = ANY(${[IPS.mixed, IPS.bad, IPS.clean]})`;
     await sql.end();
   }, 120_000);
 
