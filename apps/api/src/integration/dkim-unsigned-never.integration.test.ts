@@ -24,6 +24,7 @@ vi.mock('../services/domains/dkim.js', async (importOriginal) => {
 });
 
 import { db } from '../db/client.js';
+import { SENDABLE_CONTENT, addRecipient } from './setup/sendable-campaign.js';
 import { organizations, sendingDomains, dkimKeys, campaigns, lists } from '../db/schema/index.js';
 import {
   createInitialKey,
@@ -83,10 +84,11 @@ beforeAll(async () => {
   await verifyAndPromotePending(orgId, row!.id);
   dnsLive = false;
 
-  // assertFromDomainOwned needs the domain verified for this org.
+  // assertFromDomainOwned needs the domain verified for this org, and the
+  // pre-send gate (Z125) needs it authenticated: SPF and DMARC as well.
   await db
     .update(sendingDomains)
-    .set({ isVerified: true, dkimVerified: true })
+    .set({ isVerified: true, dkimVerified: true, spfVerified: true, dmarcVerified: true })
     .where(eq(sendingDomains.id, row!.id));
 }, 60_000);
 
@@ -108,6 +110,8 @@ async function makeCampaign(label: string, status: 'draft' | 'scheduled', schedu
     .values({ orgId, name: `c6-list-${label}-${tag}` })
     .returning({ id: lists.id });
   listIds.push(list!.id);
+  // A non-empty audience, so the campaign is one the gate lets through.
+  await addRecipient(orgId, list!.id);
 
   const [c] = await db
     .insert(campaigns)
@@ -118,7 +122,7 @@ async function makeCampaign(label: string, status: 'draft' | 'scheduled', schedu
       fromName: 'Shop',
       fromEmail: `orders@${domain}`,
       listId: list!.id,
-      content: { blocks: [{ type: 'text', text: 'hi' }] },
+      content: SENDABLE_CONTENT,
       type: 'email',
       status,
       scheduledAt: scheduledAt ?? null,

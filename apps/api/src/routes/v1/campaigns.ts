@@ -67,6 +67,8 @@ import {
 } from '../../services/editor/merge-tag-validation.js';
 
 const idParam = z.object({ id: z.string().uuid() });
+/** The one field the send, schedule and resume routes take: see send-gate.ts. */
+const gateBody = z.object({ acknowledgeDeliverabilityRisk: z.boolean().optional() });
 
 const campaignStatuses = [
   'draft',
@@ -281,10 +283,11 @@ export default async function campaignRoutes(app: FastifyInstance) {
       { schema: { tags: ['Campaigns'], summary: 'Schedule campaign' } },
       async (req) => {
         const { id } = idParam.parse(req.params);
-        const { scheduledAt, timezone } = z
+        const { scheduledAt, timezone, acknowledgeDeliverabilityRisk } = z
           .object({
             scheduledAt: z.string().datetime(),
             timezone: z.string().max(100).optional(),
+            acknowledgeDeliverabilityRisk: z.boolean().optional(),
           })
           .parse(req.body);
 
@@ -293,6 +296,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
           id,
           new Date(scheduledAt),
           timezone,
+          { acknowledgeDeliverabilityRisk, userId: req.user!.userId },
         );
         return { data: campaign };
       },
@@ -392,6 +396,9 @@ export default async function campaignRoutes(app: FastifyInstance) {
       { schema: { tags: ['Campaigns'], summary: 'Send campaign immediately' } },
       async (req) => {
         const { id } = idParam.parse(req.params);
+        // Sending despite a no-go pre-send verdict takes an explicit
+        // acknowledgement; without one the gate answers 422 (send-gate.ts).
+        const { acknowledgeDeliverabilityRisk } = gateBody.parse(req.body ?? {});
         // Plan + suspended check before flipping status. We don't know the
         // exact recipient count yet (splitter resolves audience), so pass
         // adding=1 as a sentinel — checkSendCapacity blocks when monthly
@@ -406,7 +413,11 @@ export default async function campaignRoutes(app: FastifyInstance) {
 
         // Transition → sending + enqueue splitter (A/B, UTM, DKIM forwarded).
         // Same code path the scheduled-campaign cron uses.
-        const campaign = await enqueueCampaignSend(req.user!.orgId, id);
+        const campaign = await enqueueCampaignSend(req.user!.orgId, id, {
+          via: 'send',
+          acknowledgeDeliverabilityRisk,
+          userId: req.user!.userId,
+        });
 
         return { data: campaign };
       },
@@ -435,7 +446,11 @@ export default async function campaignRoutes(app: FastifyInstance) {
       { schema: { tags: ['Campaigns'], summary: 'Resume campaign' } },
       async (req) => {
         const { id } = idParam.parse(req.params);
-        const campaign = await resumeCampaign(req.user!.orgId, id);
+        const { acknowledgeDeliverabilityRisk } = gateBody.parse(req.body ?? {});
+        const campaign = await resumeCampaign(req.user!.orgId, id, {
+          acknowledgeDeliverabilityRisk,
+          userId: req.user!.userId,
+        });
         return { data: campaign };
       },
     );

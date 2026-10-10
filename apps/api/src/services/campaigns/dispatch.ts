@@ -8,9 +8,10 @@
 import { and, eq, lte } from 'drizzle-orm';
 import { emitWebhookEvent } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
+import { AppError } from '../../lib/app-error.js';
 import { campaigns, sendingDomains, organizations } from '../../db/schema/index.js';
 import { campaignSplitterQueue, PRIORITY } from '../../lib/queues.js';
-import { sendCampaign, type CampaignPausedReason } from './index.js';
+import { sendCampaign, unscheduleCampaign, type CampaignPausedReason } from './index.js';
 
 /**
  * Re-exported so this module's existing importers keep working. The resolver
@@ -24,6 +25,7 @@ import { sendCampaign, type CampaignPausedReason } from './index.js';
  * signed with a key a receiver can look up.
  */
 import { resolveDkimForSender } from '../domains/dkim-rotation.js';
+import type { SendGateOptions } from '../pre-send/send-gate.js';
 export { resolveDkimForSender };
 
 /**
@@ -96,7 +98,11 @@ function timewarpForDispatch(campaign: {
   };
 }
 
-export async function enqueueCampaignSend(orgId: string, campaignId: string) {
+export async function enqueueCampaignSend(
+  orgId: string,
+  campaignId: string,
+  gate: SendGateOptions = {},
+) {
   // Sandbox gate: a non-production org cannot fire bulk campaigns (the audience
   // can't be verified per-recipient at dispatch). Mirrors the transactional
   // verified-recipient gate. Checked before any state transition.
@@ -117,7 +123,7 @@ export async function enqueueCampaignSend(orgId: string, campaignId: string) {
     await assertFromDomainOwned(orgId, row.fromEmail);
   }
 
-  const campaign = await sendCampaign(orgId, campaignId);
+  const campaign = await sendCampaign(orgId, campaignId, gate);
 
   // Everything from here to a SUCCESSFUL enqueue runs with the campaign already
   // flipped to 'sending', so anything that throws in between has to put it back.
@@ -282,9 +288,9 @@ export async function setCampaignStatusInternal(
  */
 export async function dispatchScheduledCampaigns(
   now: Date = new Date(),
-): Promise<{ dispatched: number; errors: number; withdrawn: number }> {
+): Promise<{ dispatched: number; errors: number; withdrawn: number; blocked: number }> {
   const due = await db
-    .select({ id: campaigns.id, orgId: campaigns.orgId })
+    .select({ id: campaigns.id, orgId: campaigns.orgId, scheduledAt: campaigns.scheduledAt })
     .from(campaigns)
     .where(and(eq(campaigns.status, 'scheduled'), lte(campaigns.scheduledAt, now)))
     .limit(500);
@@ -292,6 +298,7 @@ export async function dispatchScheduledCampaigns(
   let dispatched = 0;
   let errors = 0;
   let withdrawn = 0;
+  let blocked = 0;
   for (const c of due) {
     try {
       // Read the status again, immediately before sending.
@@ -318,12 +325,29 @@ export async function dispatchScheduledCampaigns(
         continue;
       }
 
-      await enqueueCampaignSend(c.orgId, c.id);
+      // The gate runs here exactly as for an immediate send. The cron has no
+      // caller to acknowledge a no-go, so an acknowledgement given when the
+      // campaign was scheduled — for this very time — carries over.
+      const { scheduleWasAcknowledged } = await import('../pre-send/send-gate.js');
+      const acknowledged = await scheduleWasAcknowledged(c.orgId, c.id, c.scheduledAt);
+      await enqueueCampaignSend(c.orgId, c.id, {
+        via: 'scheduled-dispatch',
+        acknowledgeDeliverabilityRisk: acknowledged,
+      });
       dispatched++;
     } catch (err) {
+      // A no-go the cron cannot override goes back to draft, with the refusal
+      // already in the audit log: left 'scheduled' it would be refused again
+      // every minute and send by itself the moment the numbers moved. As a
+      // draft the owner sees it, and can fix it or send it acknowledged.
+      if (err instanceof AppError && err.code === 'DELIVERABILITY_NO_GO') {
+        await unscheduleCampaign(c.orgId, c.id).catch(() => {});
+        blocked++;
+        continue;
+      }
       errors++;
       console.error(`[dispatch-scheduled] campaign ${c.id} failed:`, err);
     }
   }
-  return { dispatched, errors, withdrawn };
+  return { dispatched, errors, withdrawn, blocked };
 }

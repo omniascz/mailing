@@ -16,6 +16,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { and, eq, inArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { db } from '../db/client.js';
+import { SENDABLE_CONTENT, addRecipient, authenticateSender } from './setup/sendable-campaign.js';
 import { campaigns, campaignDispatchBatches, organizations, lists } from '../db/schema/index.js';
 import { sendCampaign } from '../services/campaigns/index.js';
 import { startDispatch, reportBatchCompletion } from '../services/campaigns/batch-completion.js';
@@ -49,6 +50,10 @@ beforeAll(async () => {
     .values({ orgId, name: `state-model ${randomUUID().slice(0, 8)}` })
     .returning({ id: lists.id });
   listId = list!.id;
+  // A sendable campaign (Z125 pre-send gate): authenticated From domain and a
+  // non-empty audience. See setup/sendable-campaign.ts.
+  await authenticateSender(orgId, 'orders@shop.cz');
+  await addRecipient(orgId, listId);
 });
 
 afterAll(async () => {
@@ -67,7 +72,7 @@ async function draft() {
       fromName: 'Shop',
       fromEmail: 'orders@shop.cz',
       listId,
-      content: { blocks: [{ type: 'text', text: 'hi' }] },
+      content: SENDABLE_CONTENT,
       type: 'email',
       status: 'draft',
     })

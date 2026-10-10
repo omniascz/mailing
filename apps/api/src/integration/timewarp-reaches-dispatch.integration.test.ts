@@ -29,6 +29,7 @@ import { randomUUID } from 'node:crypto';
 import { eq, inArray } from 'drizzle-orm';
 import { createTestApp, login } from './setup/harness.js';
 import { db } from '../db/client.js';
+import { SENDABLE_CONTENT } from './setup/sendable-campaign.js';
 import { campaigns, contacts, lists, contactLists, sendingDomains } from '../db/schema/index.js';
 
 interface Enqueued {
@@ -70,7 +71,9 @@ describe('time-warp reaches the splitter job (real HTTP, real DB)', () => {
         subject: 'Time-warp probe',
         fromName: 'ForgeMsg',
         fromEmail: `probe@${SEND_DOMAIN}`,
-        content: { blocks: [] },
+        // A block schema the renderer recognises, so the campaign carries the
+        // opt-out footer and the pre-send gate (Z125) lets it through.
+        content: SENDABLE_CONTENT,
         listId,
         ...body,
       },

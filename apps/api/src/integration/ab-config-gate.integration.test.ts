@@ -21,6 +21,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { eq, inArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { db } from '../db/client.js';
+import { SENDABLE_CONTENT, addRecipient, authenticateSender } from './setup/sendable-campaign.js';
 import { campaigns, organizations, lists } from '../db/schema/index.js';
 import { sendCampaign, resumeCampaign } from '../services/campaigns/index.js';
 import { setCampaignStatusInternal } from '../services/campaigns/dispatch.js';
@@ -39,7 +40,7 @@ async function makeCampaign(abConfig: Record<string, unknown> | null): Promise<s
       subject: 'A/B gate probe',
       fromName: 'ForgeMsg',
       fromEmail: 'probe@test.local',
-      content: { blocks: [] },
+      content: SENDABLE_CONTENT,
       listId,
       status: 'draft',
       type: 'email',
@@ -71,6 +72,10 @@ beforeAll(async () => {
     .values({ orgId, name: `ab-gate ${randomUUID().slice(0, 8)}` })
     .returning({ id: lists.id });
   listId = list!.id;
+  // A sendable campaign (Z125 pre-send gate): authenticated From domain and a
+  // non-empty audience. See setup/sendable-campaign.ts.
+  await authenticateSender(orgId, 'probe@test.local');
+  await addRecipient(orgId, listId);
 });
 
 afterAll(async () => {

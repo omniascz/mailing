@@ -16,6 +16,7 @@ import { campaigns, templates as campaignTemplates, type Campaign } from '../../
 import { AppError } from '../../lib/app-error.js';
 import { fillMissingAltTexts } from '../editor/ai-alt-text.js';
 import type { UtmSettings } from './utm.js';
+import type { SendGateOptions } from '../pre-send/send-gate.js';
 
 /** Matches an <img …> tag that has no (non-empty) alt attribute. */
 const IMG_WITHOUT_ALT = /<img(?![^>]*\balt\s*=\s*"[^"]+")[^>]*>/i;
@@ -359,6 +360,7 @@ export async function scheduleCampaign(
   campaignId: string,
   scheduledAt: Date,
   timezone?: string,
+  gate: SendGateOptions = {},
 ): Promise<Campaign> {
   const current = await getCampaign(orgId, campaignId);
   validateTransition(current.status as CampaignStatus, 'scheduled');
@@ -369,6 +371,13 @@ export async function scheduleCampaign(
   if (scheduledAt <= new Date()) {
     throw AppError.badRequest('scheduledAt must be in the future');
   }
+
+  // The verdict now, so a no-go is answered at the click rather than found
+  // reverted to draft at send time. An acknowledgement given here is recorded
+  // against this scheduledAt and is what lets the cron send it (send-gate.ts).
+  // The cron evaluates again when the time comes.
+  const { enforceDeliverabilityGate } = await import('../pre-send/send-gate.js');
+  await enforceDeliverabilityGate(orgId, campaignId, { ...gate, via: 'schedule', scheduledAt });
 
   const [row] = await db
     .update(campaigns)
@@ -406,10 +415,20 @@ export async function unscheduleCampaign(orgId: string, campaignId: string): Pro
   return row!;
 }
 
-export async function sendCampaign(orgId: string, campaignId: string): Promise<Campaign> {
+export async function sendCampaign(
+  orgId: string,
+  campaignId: string,
+  gate: SendGateOptions = {},
+): Promise<Campaign> {
   const current = await getCampaign(orgId, campaignId);
   validateTransition(current.status as CampaignStatus, 'queueing');
   validateCampaignReadiness(current);
+
+  // The pre-send verdict, enforced before the flip so a refused campaign stays
+  // exactly where it was (draft or scheduled). Every send reaches the queue
+  // through here — see services/pre-send/send-gate.ts.
+  const { enforceDeliverabilityGate } = await import('../pre-send/send-gate.js');
+  await enforceDeliverabilityGate(orgId, campaignId, gate);
 
   const [row] = await db
     .update(campaigns)
@@ -459,7 +478,11 @@ export async function pauseCampaign(orgId: string, campaignId: string): Promise<
   return row!;
 }
 
-export async function resumeCampaign(orgId: string, campaignId: string): Promise<Campaign> {
+export async function resumeCampaign(
+  orgId: string,
+  campaignId: string,
+  gate: SendGateOptions = {},
+): Promise<Campaign> {
   const current = await getCampaign(orgId, campaignId);
   validateTransition(current.status as CampaignStatus, 'sending');
 
@@ -508,7 +531,7 @@ export async function resumeCampaign(orgId: string, campaignId: string): Promise
     // clears pausedReason — so a second Resume finds NULL and takes the branch
     // below instead of enqueueing twice.
     const { enqueueCampaignSend } = await import('./dispatch.js');
-    return enqueueCampaignSend(orgId, campaignId);
+    return enqueueCampaignSend(orgId, campaignId, { ...gate, via: 'resume' });
   }
 
   const [row] = await db

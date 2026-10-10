@@ -259,13 +259,17 @@ export function classifySubject(input: { subject: string }): CheckResult {
       title: 'Subject line is empty',
     };
   }
+  // A short subject is a warning, not a block: 'Ahoj' or 'Akce' is an ordinary
+  // subject line, and the gate that enforces this verdict has no business
+  // refusing it. The threshold is unchanged; only the severity is.
   if (len < 5) {
     return {
       id: 'subject',
       category: 'content',
-      severity: 'fail',
+      severity: 'warn',
       title: 'Subject line too short',
-      detail: 'A 5+ character subject is required.',
+      detail: 'Subjects under 5 characters say little in the inbox preview.',
+      metrics: { subjectLength: len },
     };
   }
   if (len > 80) {
@@ -381,33 +385,68 @@ export function classifyPlainText(input: { hasPlainText: boolean }): CheckResult
   };
 }
 
-export function classifyBounceRate(input: { recent7dBounceRatePct: number | null }): CheckResult {
-  if (input.recent7dBounceRatePct === null) {
+/**
+ * The sample a rate was computed over, and the minimum it needs before it may
+ * count: the same shape as the auto-pause (#241) — below the minimum the
+ * criterion is reported as information and does not touch the verdict.
+ */
+export interface RateSample {
+  /** Delivery outcomes behind the rate (see deliveryDenominators). */
+  sampleSize: number;
+  minSample: number;
+}
+
+const BOUNCE_FAIL_PCT = 5;
+const BOUNCE_WARN_PCT = 2;
+
+export function classifyBounceRate(
+  input: { recent7dBounceRatePct: number | null } & Partial<RateSample>,
+): CheckResult {
+  const sample: Record<string, number> =
+    input.sampleSize !== undefined && input.minSample !== undefined
+      ? { sampleSize: input.sampleSize, minSample: input.minSample }
+      : {};
+  if (
+    input.recent7dBounceRatePct === null ||
+    (input.sampleSize !== undefined &&
+      input.minSample !== undefined &&
+      input.sampleSize < input.minSample)
+  ) {
+    const thin = input.sampleSize !== undefined && input.sampleSize > 0;
+    // The rate is shown even when it does not count, so the reader sees what
+    // was measured and why it did not decide anything.
+    const measured: Record<string, number> =
+      thin && input.recent7dBounceRatePct !== null
+        ? { bounceRatePct: input.recent7dBounceRatePct }
+        : {};
     return {
       id: 'bounce-rate',
       category: 'reputation',
       severity: 'info',
-      title: 'No recent send history to compare',
+      title: thin
+        ? `Not enough recent history to judge: ${input.sampleSize} of ${input.minSample} messages`
+        : 'No recent send history to compare',
+      ...(input.sampleSize !== undefined ? { metrics: { ...measured, ...sample } } : {}),
     };
   }
   const pct = input.recent7dBounceRatePct;
-  if (pct >= 5) {
+  if (pct >= BOUNCE_FAIL_PCT) {
     return {
       id: 'bounce-rate',
       category: 'reputation',
       severity: 'fail',
       title: `Recent 7-day bounce rate ${pct.toFixed(1)}% — over ISP threshold`,
       detail: 'Sending while bounce rate is above 5% risks suspension. Clean your list first.',
-      metrics: { bounceRatePct: pct },
+      metrics: { bounceRatePct: pct, thresholdPct: BOUNCE_FAIL_PCT, ...sample },
     };
   }
-  if (pct >= 2) {
+  if (pct >= BOUNCE_WARN_PCT) {
     return {
       id: 'bounce-rate',
       category: 'reputation',
       severity: 'warn',
       title: `Recent 7-day bounce rate ${pct.toFixed(1)}%`,
-      metrics: { bounceRatePct: pct },
+      metrics: { bounceRatePct: pct, thresholdPct: BOUNCE_WARN_PCT, ...sample },
     };
   }
   return {
@@ -415,30 +454,57 @@ export function classifyBounceRate(input: { recent7dBounceRatePct: number | null
     category: 'reputation',
     severity: 'pass',
     title: `Recent 7-day bounce rate ${pct.toFixed(1)}%`,
+    ...(input.sampleSize !== undefined ? { metrics: { bounceRatePct: pct, ...sample } } : {}),
   };
 }
+
+const COMPLAINT_FAIL_PCT = 0.3;
+const COMPLAINT_WARN_PCT = 0.1;
 
 export function classifyComplaintRate(input: {
   recent7dComplaintRatePct: number | null;
   /** 24-hour complaint rate, used for Gmail's rolling 24h cap check. Null if < 100 deliveries in window. */
   recent24hComplaintRatePct?: number | null;
+  /** Deliveries behind the 7-day rate; below minSample it does not count. */
+  sample7d?: number;
+  /** Deliveries behind the 24-hour rate; below minSample it does not count. */
+  sample24h?: number;
+  minSample?: number;
 }): CheckResult {
-  const pct7d = input.recent7dComplaintRatePct;
-  const pct24h = input.recent24hComplaintRatePct ?? null;
+  const min = input.minSample;
+  const enough = (n: number | undefined) => n === undefined || min === undefined || n >= min;
+  const pct7d = enough(input.sample7d) ? input.recent7dComplaintRatePct : null;
+  const pct24h = enough(input.sample24h) ? (input.recent24hComplaintRatePct ?? null) : null;
+  const sample: Record<string, number> =
+    min !== undefined
+      ? {
+          ...(input.sample7d !== undefined ? { sample7d: input.sample7d } : {}),
+          ...(input.sample24h !== undefined ? { sample24h: input.sample24h } : {}),
+          minSample: min,
+        }
+      : {};
 
   if (pct7d === null && pct24h === null) {
+    const thin = (input.sample7d ?? 0) > 0;
+    const measured: Record<string, number> =
+      thin && input.recent7dComplaintRatePct !== null
+        ? { complaintRatePct: input.recent7dComplaintRatePct }
+        : {};
     return {
       id: 'complaint-rate',
       category: 'reputation',
       severity: 'info',
-      title: 'No recent send history to compare',
+      title: thin
+        ? `Not enough recent history to judge: ${input.sample7d} of ${min} delivered messages`
+        : 'No recent send history to compare',
+      ...(min !== undefined ? { metrics: { ...measured, ...sample } } : {}),
     };
   }
 
   // Gmail's hard cap is 0.3% on a rolling 24h window. Use the 24h rate when
   // we have sufficient volume (≥ 100 deliveries); fall back to 7d for the check.
   const gmailCheckPct = pct24h ?? pct7d ?? 0;
-  if (gmailCheckPct >= 0.3) {
+  if (gmailCheckPct >= COMPLAINT_FAIL_PCT) {
     return {
       id: 'complaint-rate',
       category: 'reputation',
@@ -446,13 +512,18 @@ export function classifyComplaintRate(input: {
       title: `Complaint rate ${gmailCheckPct.toFixed(2)}% (24h) — above Gmail 0.3% cap`,
       detail:
         'Gmail blocks senders above 0.3% on a rolling 24h basis. Pause sending and audit list quality.',
-      metrics: { complaintRatePct: gmailCheckPct, window: pct24h !== null ? '24h' : '7d' },
+      metrics: {
+        complaintRatePct: gmailCheckPct,
+        window: pct24h !== null ? '24h' : '7d',
+        thresholdPct: COMPLAINT_FAIL_PCT,
+        ...sample,
+      },
     };
   }
 
   // 7-day trend warning at 0.1%
   const trendPct = pct7d ?? 0;
-  if (trendPct >= 0.1) {
+  if (trendPct >= COMPLAINT_WARN_PCT) {
     return {
       id: 'complaint-rate',
       category: 'reputation',
@@ -462,8 +533,13 @@ export function classifyComplaintRate(input: {
         'Approaching Gmail warning threshold. Consider cleaning list or tightening targeting.',
       metrics:
         pct24h !== null
-          ? { complaintRatePct: trendPct, complaintRate24hPct: pct24h }
-          : { complaintRatePct: trendPct },
+          ? {
+              complaintRatePct: trendPct,
+              complaintRate24hPct: pct24h,
+              thresholdPct: COMPLAINT_WARN_PCT,
+              ...sample,
+            }
+          : { complaintRatePct: trendPct, thresholdPct: COMPLAINT_WARN_PCT, ...sample },
     };
   }
 
@@ -472,6 +548,7 @@ export function classifyComplaintRate(input: {
     category: 'reputation',
     severity: 'pass',
     title: `Complaint rate ${trendPct.toFixed(2)}% (7d)${pct24h !== null ? `, ${pct24h.toFixed(2)}% (24h)` : ''}`,
+    ...(min !== undefined ? { metrics: { complaintRatePct: trendPct, ...sample } } : {}),
   };
 }
 
@@ -648,6 +725,8 @@ export function classifyBlacklist(input: {
       severity: 'info',
       title: 'No dedicated IPs configured',
       detail: 'Shared IP pool — blacklist status managed by platform.',
+      // The blacklist's sample is the org's sending IPs; it needs one.
+      metrics: { sampleSize: 0, minSample: 1 },
     };
   }
   if (input.blacklistCount === 0) {
@@ -656,7 +735,7 @@ export function classifyBlacklist(input: {
       category: 'reputation',
       severity: 'pass',
       title: 'No IPs on blacklists',
-      metrics: { checkedIps: input.totalIps },
+      metrics: { checkedIps: input.totalIps, sampleSize: input.totalIps, minSample: 1 },
     };
   }
   const pct = Math.round((input.blacklistCount / input.totalIps) * 100);
@@ -667,6 +746,11 @@ export function classifyBlacklist(input: {
     title: `${input.blacklistCount} of ${input.totalIps} IPs blacklisted`,
     detail: `${pct}% of your sending IPs are on at least one DNSBL. Investigate immediately.`,
     fixHref: '/settings/dedicated-ips',
-    metrics: { blacklisted: input.blacklistCount, total: input.totalIps },
+    metrics: {
+      blacklisted: input.blacklistCount,
+      total: input.totalIps,
+      sampleSize: input.totalIps,
+      minSample: 1,
+    },
   };
 }

@@ -11,11 +11,11 @@
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/index.js';
-import { deliveryDenominators } from '../deliverability/pure.js';
+import { deliveryDenominators, MIN_OUTCOME_SAMPLE } from '../deliverability/pure.js';
 import { evaluateSignal } from './index.js';
 
 /** Minimum messages in the window before a rate is statistically actionable. */
-const MIN_SAMPLE = 100;
+const MIN_SAMPLE = MIN_OUTCOME_SAMPLE;
 /** Rolling window for the rate computation. */
 const WINDOW_HOURS = 24;
 
