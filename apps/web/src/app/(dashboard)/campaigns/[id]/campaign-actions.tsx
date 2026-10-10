@@ -6,6 +6,8 @@ import { Send, Pause, Play, X, RefreshCw, CalendarClock, CalendarX } from 'lucid
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { buildSchedulePayload, toLocalInputValue } from './schedule-payload';
+import { PreSendPanel } from './pre-send-panel';
+import { confirmBody, readFailure, type ApiFailure, type PreSendReport } from './pre-send-report';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -39,21 +41,95 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
   const [pickingDate, setPickingDate] = useState(false);
   const [when, setWhen] = useState('');
 
+  // The pre-send check, opened by Send / Schedule / Try sending again before
+  // anything is sent. `payload` is built once, when the panel opens, so a
+  // schedule confirmed here goes out with exactly the scheduledAt the server
+  // binds the acknowledgement to.
+  const [panel, setPanel] = useState<{
+    intent: 'send' | 'schedule';
+    action: string;
+    path: string;
+    payload?: Record<string, unknown>;
+    scheduledAtLabel?: string;
+  } | null>(null);
+  const [report, setReport] = useState<PreSendReport | null>(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [failure, setFailure] = useState<ApiFailure | null>(null);
+
+  async function post(path: string, body?: unknown) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (res.ok) return null;
+    // Read whole: a refusal names its criteria and their numbers, and a
+    // hundred characters of raw JSON said neither.
+    return readFailure(res.status, await res.text().catch(() => ''));
+  }
+
   async function act(action: string, path: string, body?: unknown) {
     setBusy(action);
     try {
-      const res = await fetch(`${API_BASE}${path}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        toast('error', `${action} failed (${res.status}) ${text.slice(0, 100)}`);
+      const failed = await post(path, body);
+      if (failed) {
+        toast('error', `${action}: ${failed.message}`);
         return;
       }
       toast('success', `${action} succeeded`);
+      startTransition(() => router.refresh());
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function openPanel(next: NonNullable<typeof panel>) {
+    setPanel(next);
+    setReport(null);
+    setLoadError(null);
+    setFailure(null);
+    setAcknowledged(false);
+    setLoadingReport(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/campaigns/${campaign.id}/pre-send-checks`, {
+        credentials: 'include',
+      });
+      const text = await res.text().catch(() => '');
+      if (!res.ok) {
+        setLoadError(readFailure(res.status, text).message);
+        return;
+      }
+      setReport((JSON.parse(text) as { data: PreSendReport }).data);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingReport(false);
+    }
+  }
+
+  function closePanel() {
+    setPanel(null);
+    setReport(null);
+    setFailure(null);
+    setAcknowledged(false);
+  }
+
+  async function confirm() {
+    if (!panel) return;
+    setBusy(panel.action);
+    setFailure(null);
+    try {
+      // The acknowledgement travels only when it was ticked; never as false.
+      const failed = await post(panel.path, confirmBody(panel.payload, acknowledged));
+      if (failed) {
+        setFailure(failed);
+        return;
+      }
+      toast('success', `${panel.action} succeeded`);
+      closePanel();
       startTransition(() => router.refresh());
     } finally {
       setBusy(null);
@@ -79,7 +155,13 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
       toast('error', built.error);
       return;
     }
-    await act('Schedule', `/api/v1/campaigns/${campaign.id}/schedule`, built.payload);
+    await openPanel({
+      intent: 'schedule',
+      action: 'Schedule',
+      path: `/api/v1/campaigns/${campaign.id}/schedule`,
+      payload: built.payload as Record<string, unknown>,
+      scheduledAtLabel: new Date(String(built.payload.scheduledAt)).toLocaleString('cs-CZ'),
+    });
   }
 
   const isBusy = (a: string) => busy === a || pending;
@@ -90,7 +172,13 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
       {status === 'draft' && (
         <Button
           loading={isBusy('Send')}
-          onClick={() => act('Send', `/api/v1/campaigns/${campaign.id}/send`)}
+          onClick={() =>
+            openPanel({
+              intent: 'send',
+              action: 'Send',
+              path: `/api/v1/campaigns/${campaign.id}/send`,
+            })
+          }
         >
           <Send className="h-4 w-4" />
           Send now
@@ -190,7 +278,15 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
       {status === 'paused' && campaign.pausedReason === 'send_failed' && (
         <Button
           loading={isBusy('Try sending again')}
-          onClick={() => act('Try sending again', `/api/v1/campaigns/${campaign.id}/resume`)}
+          // This one really sends (the dispatch rolled back, nothing went out),
+          // so it passes the same check as Send.
+          onClick={() =>
+            openPanel({
+              intent: 'send',
+              action: 'Try sending again',
+              path: `/api/v1/campaigns/${campaign.id}/resume`,
+            })
+          }
         >
           <Send className="h-4 w-4" />
           Try sending again
@@ -220,6 +316,22 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
           <RefreshCw className="h-4 w-4" />
           Resend to non-openers
         </Button>
+      )}
+      {panel && (
+        <PreSendPanel
+          campaignId={campaign.id}
+          intent={panel.intent}
+          scheduledAtLabel={panel.scheduledAtLabel}
+          report={report}
+          loading={loadingReport}
+          loadError={loadError}
+          failure={failure}
+          acknowledged={acknowledged}
+          onAcknowledge={setAcknowledged}
+          onConfirm={confirm}
+          onCancel={closePanel}
+          confirming={busy === panel.action}
+        />
       )}
     </div>
   );
