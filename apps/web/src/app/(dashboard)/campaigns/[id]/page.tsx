@@ -9,6 +9,7 @@ import { CampaignActions } from './campaign-actions';
 import { CloneCampaignButton } from './clone-campaign-button';
 import { PollResultsCard, type PollResult } from './poll-results-card';
 import { AbResultCard, type AbConfigLite, type AbResult } from './ab-result-card';
+import { DeliverabilityRecordCard, latestGateRecord } from './deliverability-record';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -100,9 +101,12 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
   // `isSent`: a draft that carries a poll should show its questions at zero,
   // and an A/B test that has not been decided yet is exactly what an operator
   // is looking at the page to find out.
-  const [polls, abResult] = await Promise.all([
+  const [polls, abResult, gateRecord] = await Promise.all([
     apiFetch<PollResult[]>(`/api/v1/campaigns/${id}/poll-results`, { fallback: [] }),
     apiFetch<AbResult | null>(`/api/v1/campaigns/${id}/ab-result`, { fallback: null }),
+    // Why the pre-send gate last stopped, or let through, this campaign —
+    // including a scheduled send the cron handed back as a draft.
+    latestGateRecord(id),
   ]);
 
   const emptyDevices: DeviceStats = { desktop: 0, mobile: 0, tablet: 0, unknown: 0 };
@@ -167,6 +171,12 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
           <CampaignActions campaign={campaign} />
         </div>
       </header>
+
+      {gateRecord && (
+        <div className="mb-6">
+          <DeliverabilityRecordCard record={gateRecord} />
+        </div>
+      )}
 
       <section className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi label="Sent" value={campaign.totalSent.toLocaleString('cs-CZ')} />
