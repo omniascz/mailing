@@ -72,7 +72,7 @@ jobs:
         # with `CREATE EXTENSION IF NOT EXISTS vector;` and alpine answers
         # `ERROR: extension "vector" is not available` (the control file is not
         # on the image at all, so IF NOT EXISTS does not save it).
-        image: pgvector/pgvector:pg16
+        image: ghcr.io/omniascz/ci-pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
         env:
           POSTGRES_DB: forgemsg_test
           POSTGRES_USER: forgemsg
@@ -85,7 +85,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       redis:
-        image: redis:7-alpine
+        image: ghcr.io/omniascz/ci-redis:7-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
         ports:
           - 6379:6379
         options: >-
@@ -118,7 +118,7 @@ jobs:
     needs: [typecheck]
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: ghcr.io/omniascz/ci-pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
         env:
           POSTGRES_DB: forgemsg_itest
           POSTGRES_USER: forgemsg
@@ -130,7 +130,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       redis:
-        image: redis:7-alpine
+        image: ghcr.io/omniascz/ci-redis:7-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
         ports: ['6379:6379']
         options: >-
           --health-cmd "redis-cli ping"
@@ -290,7 +290,7 @@ jobs:
     # after the code stopped agreeing with it.
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: ghcr.io/omniascz/ci-pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
         env:
           POSTGRES_DB: forgemsg_witest
           POSTGRES_USER: forgemsg
@@ -302,7 +302,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       redis:
-        image: redis:7-alpine
+        image: ghcr.io/omniascz/ci-redis:7-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
         ports: ['6379:6379']
         options: >-
           --health-cmd "redis-cli ping"
@@ -442,7 +442,7 @@ jobs:
     # length — so gating it bought no wall-clock time at all.
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: ghcr.io/omniascz/ci-pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
         env:
           POSTGRES_DB: forgemsg_e2e
           POSTGRES_USER: forgemsg
@@ -454,7 +454,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       redis:
-        image: redis:7-alpine
+        image: ghcr.io/omniascz/ci-redis:7-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
         ports: ['6379:6379']
         options: >-
           --health-cmd "redis-cli ping"
@@ -628,7 +628,7 @@ jobs:
     needs: [typecheck]
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: ghcr.io/omniascz/ci-pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
         env:
           POSTGRES_DB: forgemsg_test
           POSTGRES_USER: forgemsg
