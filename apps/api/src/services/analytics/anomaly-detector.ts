@@ -16,6 +16,7 @@ import { isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { organizations, campaignAlerts } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
+import { deliveryDenominators } from '../deliverability/pure.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ export interface AnomalyCheckResult {
 
 interface OrgMetrics {
   sends: number;
+  delivered: number;
   bounces: number;
   complaints: number;
   opens: number;
@@ -63,6 +65,7 @@ async function getMetricsForWindow(
 
   return {
     sends: get('send'),
+    delivered: get('deliver'),
     bounces: get('bounce'),
     complaints: get('complaint'),
     opens: get('open'),
@@ -113,6 +116,7 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
   const hoursInWindow = 30 * 24;
   const baselinePerHour: OrgMetrics = {
     sends: baseline.sends / hoursInWindow,
+    delivered: baseline.delivered / hoursInWindow,
     bounces: baseline.bounces / hoursInWindow,
     complaints: baseline.complaints / hoursInWindow,
     opens: baseline.opens / hoursInWindow,
@@ -121,19 +125,28 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
 
   const alerts: AnomalyCheckResult['alerts'] = [];
 
+  // Bounce and complaint rates are fractions of delivery outcomes
+  // (deliveryDenominators), not of 'send' rows: mta-sender writes a 'send' row
+  // only for campaign mail it delivered and nothing writes one for a password
+  // reset, so over 'send' an org sending resets was never checked, and an org
+  // mixing both read its bounces against half the messages. Open and
+  // unsubscribe rates keep their 'send' denominator and their own gate.
+  const outcomesNow = deliveryDenominators(current);
+  const outcomesBaseline = deliveryDenominators(baselinePerHour);
+
   // Not enough traffic → skip checks
-  if (current.sends < 10) {
+  if (current.sends < 10 && outcomesNow.attempted < 10) {
     return { orgId, alerts };
   }
 
   // ── Bounce rate ──────────────────────────────────────────────────────────
-  const currentBounceRate = safeRate(current.bounces, current.sends);
-  const baselineBounceRate = safeRate(baselinePerHour.bounces, baselinePerHour.sends);
+  const currentBounceRate = safeRate(current.bounces, outcomesNow.attempted);
+  const baselineBounceRate = safeRate(baselinePerHour.bounces, outcomesBaseline.attempted);
   const bounceThresholdBreached =
     currentBounceRate > 0.05 || // absolute > 5%
     (baselineBounceRate > 0 && currentBounceRate > baselineBounceRate * 2);
 
-  if (bounceThresholdBreached) {
+  if (outcomesNow.attempted >= 10 && bounceThresholdBreached) {
     const severity = currentBounceRate > 0.1 ? 'critical' : 'warning';
     const msg = `Bounce rate spiked to ${(currentBounceRate * 100).toFixed(2)}% (baseline: ${(baselineBounceRate * 100).toFixed(2)}%)`;
     alerts.push({
@@ -143,7 +156,7 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
       details: {
         currentBounceRate,
         baselineBounceRate,
-        currentSends: current.sends,
+        currentAttempted: outcomesNow.attempted,
         currentBounces: current.bounces,
       },
     });
@@ -154,8 +167,8 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
   }
 
   // ── Complaint rate ───────────────────────────────────────────────────────
-  const complaintRate = safeRate(current.complaints, current.sends);
-  if (complaintRate > 0.001) {
+  const complaintRate = safeRate(current.complaints, outcomesNow.delivered);
+  if (outcomesNow.delivered >= 10 && complaintRate > 0.001) {
     const severity = complaintRate > 0.003 ? 'critical' : 'warning';
     const msg = `Complaint rate is ${(complaintRate * 100).toFixed(3)}%, which exceeds the 0.1% threshold`;
     alerts.push({
@@ -165,7 +178,7 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
       details: {
         complaintRate,
         currentComplaints: current.complaints,
-        currentSends: current.sends,
+        currentDelivered: outcomesNow.delivered,
       },
     });
     await createAlert(orgId, 'complaint_rate_spike', severity, msg, { complaintRate });
@@ -174,7 +187,7 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
   // ── Open rate drop ───────────────────────────────────────────────────────
   const currentOpenRate = safeRate(current.opens, current.sends);
   const baselineOpenRate = safeRate(baselinePerHour.opens, baselinePerHour.sends);
-  if (baselineOpenRate > 0 && currentOpenRate < baselineOpenRate * 0.5) {
+  if (current.sends >= 10 && baselineOpenRate > 0 && currentOpenRate < baselineOpenRate * 0.5) {
     const msg = `Open rate dropped to ${(currentOpenRate * 100).toFixed(2)}% (baseline: ${(baselineOpenRate * 100).toFixed(2)}%)`;
     alerts.push({
       type: 'open_rate_drop',
@@ -195,7 +208,7 @@ export async function runAnomalyCheckForOrg(orgId: string): Promise<AnomalyCheck
     currentUnsubRate > 0.02 || // absolute > 2%
     (baselineUnsubRate > 0 && currentUnsubRate > baselineUnsubRate * 3);
 
-  if (unsubThresholdBreached) {
+  if (current.sends >= 10 && unsubThresholdBreached) {
     const msg = `Unsubscribe rate spiked to ${(currentUnsubRate * 100).toFixed(2)}% (baseline: ${(baselineUnsubRate * 100).toFixed(2)}%)`;
     alerts.push({
       type: 'unsub_spike',

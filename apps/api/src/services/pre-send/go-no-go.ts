@@ -54,6 +54,7 @@ import {
   type DeliverabilityGrade,
 } from './go-no-go-pure.js';
 import { checkFrequencyCap } from '../frequency-capping/index.js';
+import { deliveryDenominators } from '../deliverability/pure.js';
 import { listWarmupStatuses } from '../sending/ip-warmup.js';
 
 export interface GoNoGoReport {
@@ -244,31 +245,47 @@ async function fetchRecentRates(orgId: string): Promise<{
   const oneDayAgoSql = sql`${oneDayAgo.toISOString()}::timestamptz`;
 
   // Two windows in one query using conditional counts — cheaper than two passes.
+  //
+  // The rates are fractions of delivery outcomes ('deliver' and 'bounce' rows,
+  // see deliveryDenominators), not of 'send' rows. A 'send' row is a billing
+  // record: mta-sender writes none for a campaign message that bounced, and
+  // nothing writes one for a password reset. Divided by it, one bounce and one
+  // delivery in a campaign read 100 %, and an org sending only resets had no
+  // history at any bounce rate.
   const [row] = (await db
     .select({
-      sends7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'send')::text`,
+      delivered7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'deliver')::text`,
       bounces7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'bounce')::text`,
       complaints7d: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'complaint')::text`,
-      sends24h: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'send' AND ${emailEvents.createdAt} >= ${oneDayAgoSql})::text`,
+      delivered24h: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'deliver' AND ${emailEvents.createdAt} >= ${oneDayAgoSql})::text`,
       complaints24h: sql<string>`count(*) filter (where ${emailEvents.eventType} = 'complaint' AND ${emailEvents.createdAt} >= ${oneDayAgoSql})::text`,
     })
     .from(emailEvents)
     .where(and(eq(emailEvents.orgId, orgId), gte(emailEvents.createdAt, sevenDaysAgo)))) as Array<{
-    sends7d: string;
+    delivered7d: string;
     bounces7d: string;
     complaints7d: string;
-    sends24h: string;
+    delivered24h: string;
     complaints24h: string;
   }>;
 
-  const sends7d = Number(row?.sends7d ?? 0);
-  const sends24h = Number(row?.sends24h ?? 0);
+  const bounces7d = Number(row?.bounces7d ?? 0);
+  const week = deliveryDenominators({
+    delivered: Number(row?.delivered7d ?? 0),
+    bounces: bounces7d,
+  });
+  const delivered24h = deliveryDenominators({
+    delivered: Number(row?.delivered24h ?? 0),
+    bounces: 0,
+  }).delivered;
 
+  // No outcome in the window is no history, reported as null — never a block.
   return {
-    bounceRatePct: sends7d > 0 ? (Number(row?.bounces7d ?? 0) / sends7d) * 100 : null,
-    complaintRatePct: sends7d > 0 ? (Number(row?.complaints7d ?? 0) / sends7d) * 100 : null,
+    bounceRatePct: week.attempted > 0 ? (bounces7d / week.attempted) * 100 : null,
+    complaintRatePct:
+      week.delivered > 0 ? (Number(row?.complaints7d ?? 0) / week.delivered) * 100 : null,
     complaint24hRatePct:
-      sends24h >= 100 ? (Number(row?.complaints24h ?? 0) / sends24h) * 100 : null,
+      delivered24h >= 100 ? (Number(row?.complaints24h ?? 0) / delivered24h) * 100 : null,
   };
 }
 

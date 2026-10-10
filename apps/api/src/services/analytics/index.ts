@@ -11,6 +11,7 @@ import { AppError } from '../../lib/app-error.js';
 import { EMAIL_CLIENT_LABELS } from '../../lib/user-agent.js';
 import { isClickHouseEnabled } from './clickhouse/client.js';
 import { chCampaignEventRows, chOrgDailyRows } from './clickhouse/queries.js';
+import { deliveryDenominators } from '../deliverability/pure.js';
 
 interface CampaignEventRow {
   eventType: string;
@@ -40,10 +41,21 @@ export function computeCampaignStats(rows: CampaignEventRow[]): CampaignStats {
   const safeRate = (num: number, denom: number) =>
     denom > 0 ? Math.round((num / denom) * 10000) / 100 : 0;
 
+  // Delivery, bounce and complaint rates are fractions of delivery outcomes,
+  // not of 'send' rows. A 'send' row is the billing record, and mta-sender
+  // writes one only for a campaign message it delivered: dividing by it made
+  // one bounce and one delivery read as a 100 % bounce rate, and the delivery
+  // rate could never fall below 100 %.
+  const outcomes = deliveryDenominators({
+    delivered,
+    bounces,
+    failed: get('failed')?.total ?? 0,
+  });
+
   return {
     sent,
     delivered,
-    deliveryRate: safeRate(delivered, sent),
+    deliveryRate: safeRate(delivered, outcomes.resolved),
     opens,
     uniqueOpens,
     openRate: safeRate(uniqueOpens, delivered || sent),
@@ -52,13 +64,13 @@ export function computeCampaignStats(rows: CampaignEventRow[]): CampaignStats {
     clickRate: safeRate(uniqueClicks, delivered || sent),
     ctor: safeRate(uniqueClicks, uniqueOpens),
     bounces,
-    bounceRate: safeRate(bounces, sent),
+    bounceRate: safeRate(bounces, outcomes.attempted),
     hardBounces,
     softBounces,
     unsubs,
     unsubRate: safeRate(unsubs, delivered || sent),
     complaints,
-    complaintRate: safeRate(complaints, delivered || sent),
+    complaintRate: safeRate(complaints, outcomes.delivered),
   };
 }
 

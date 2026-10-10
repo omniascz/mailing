@@ -33,6 +33,7 @@ import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 import { planEnum } from '../../db/schema/enums.js';
 import { logAuditEvent } from '../../services/audit-log/index.js';
+import { deliveryDenominators, outcomeRate } from '../../services/deliverability/pure.js';
 
 const PLAN_VALUES = planEnum.enumValues;
 
@@ -136,14 +137,24 @@ export default async function superadminRoutes(app: FastifyInstance) {
           sent30d: sql<number>`(SELECT COUNT(*)::int FROM email_events WHERE org_id = ${id} AND event_type = 'send' AND created_at > NOW() - INTERVAL '30 days')`,
           bounced30d: sql<number>`(SELECT COUNT(*)::int FROM email_events WHERE org_id = ${id} AND event_type = 'bounce' AND created_at > NOW() - INTERVAL '30 days')`,
           complained30d: sql<number>`(SELECT COUNT(*)::int FROM email_events WHERE org_id = ${id} AND event_type = 'complaint' AND created_at > NOW() - INTERVAL '30 days')`,
+          delivered30d: sql<number>`(SELECT COUNT(*)::int FROM email_events WHERE org_id = ${id} AND event_type = 'deliver' AND created_at > NOW() - INTERVAL '30 days')`,
         })
         .from(sql`(SELECT 1) AS dummy`);
 
       // Complaint rate — Postmaster Tools and our own abuse policy care about
       // this. >0.1% is risky territory; >0.3% gets you blacklisted.
+      //
+      // Over delivered mail (deliveryDenominators), not over 'send' rows: a
+      // complaint can only follow a delivery, and a 'send' row is a billing
+      // record that nothing writes for a password reset — an org sending
+      // resets read 0 % here at any complaint count.
       const sent30 = counts?.sent30d ?? 0;
       const complained30 = counts?.complained30d ?? 0;
-      const complaintRate = sent30 > 0 ? complained30 / sent30 : 0;
+      const { delivered: delivered30 } = deliveryDenominators({
+        delivered: counts?.delivered30d ?? 0,
+        bounces: 0,
+      });
+      const complaintRate = outcomeRate(complained30, delivered30);
 
       const [subscription] = await db
         .select()

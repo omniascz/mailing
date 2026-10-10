@@ -75,8 +75,11 @@ describe('getCampaignStats', () => {
   it('calculates open rate correctly', async () => {
     (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValueOnce([{ id: 'camp-1' }]);
     (mockDb.groupBy as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
+      // 1000 messages: 980 delivered, 20 bounced. The fixture used to leave the
+      // 20 with no outcome at all, and 98 % came from dividing by 'send'.
       { eventType: 'send', bounceType: null, total: 1000, uniqueContacts: 1000 },
       { eventType: 'deliver', bounceType: null, total: 980, uniqueContacts: 980 },
+      { eventType: 'bounce', bounceType: 'hard', total: 20, uniqueContacts: 20 },
       { eventType: 'open', bounceType: null, total: 300, uniqueContacts: 245 },
       { eventType: 'click', bounceType: null, total: 80, uniqueContacts: 65 },
     ]);
@@ -111,7 +114,11 @@ describe('getCampaignStats', () => {
   it('separates hard and soft bounces', async () => {
     (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValueOnce([{ id: 'camp-1' }]);
     (mockDb.groupBy as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
+      // 200 messages: 185 delivered, 15 bounced. Without the deliveries the
+      // 7.5 % was 15 bounces over 200 'send' rows; over delivery outcomes it
+      // needs the 185 that were actually delivered.
       { eventType: 'send', bounceType: null, total: 200, uniqueContacts: 200 },
+      { eventType: 'deliver', bounceType: null, total: 185, uniqueContacts: 185 },
       { eventType: 'bounce', bounceType: 'hard', total: 10, uniqueContacts: 10 },
       { eventType: 'bounce', bounceType: 'soft', total: 5, uniqueContacts: 5 },
     ]);
@@ -200,15 +207,18 @@ describe('runAnomalyCheckForOrg', () => {
     const { redis } = await import('@forgemsg/shared/redis');
     (redis.get as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
-    // Last hour: 100 sends, 10 bounces (10% bounce rate > 5% threshold)
+    // Last hour: 100 messages, 90 delivered and 10 bounced (10% > 5% threshold).
+    // The deliveries were missing; over 'send' they were not needed.
     (mockDb.execute as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce([
         { event_type: 'send', cnt: '100' },
+        { event_type: 'deliver', cnt: '90' },
         { event_type: 'bounce', cnt: '10' },
       ])
       // 30-day baseline: normal
       .mockResolvedValueOnce([
         { event_type: 'send', cnt: '50000' },
+        { event_type: 'deliver', cnt: '49500' },
         { event_type: 'bounce', cnt: '500' },
       ]);
 
@@ -225,11 +235,17 @@ describe('runAnomalyCheckForOrg', () => {
     (redis.get as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     (mockDb.execute as ReturnType<typeof vi.fn>)
+      // A complaint follows a delivery, so the 1000 messages have to have been
+      // delivered for 2 complaints to be 0.2 %; the fixture had no deliveries.
       .mockResolvedValueOnce([
         { event_type: 'send', cnt: '1000' },
+        { event_type: 'deliver', cnt: '1000' },
         { event_type: 'complaint', cnt: '2' }, // 0.2% > 0.1%
       ])
-      .mockResolvedValueOnce([{ event_type: 'send', cnt: '30000' }]);
+      .mockResolvedValueOnce([
+        { event_type: 'send', cnt: '30000' },
+        { event_type: 'deliver', cnt: '30000' },
+      ]);
 
     const { runAnomalyCheckForOrg } = await import('./anomaly-detector.js');
     const result = await runAnomalyCheckForOrg('org-1');

@@ -150,7 +150,10 @@ export const getCampaignPerformance = defineTool({
     return [
       `"${campaign.name}" (${campaign.status}${campaign.sentAt ? `, sent ${campaign.sentAt.slice(0, 10)}` : ''})`,
       `  sent        ${sent}`,
-      `  delivered   ${delivered} (${pct(delivered, sent)})`,
+      // The campaign's own delivery rate from the stats route — delivered over
+      // delivery outcomes. delivered / sent was always 100 %: mta-sender writes
+      // the billing 'send' row only for a message it delivered.
+      `  delivered   ${delivered} (${(s.deliveryRate ?? 0).toFixed(1)}%)`,
       `  opens       ${opens} (${pct(opens, delivered)} of delivered)`,
       `  clicks      ${clicks} (${pct(clicks, delivered)} of delivered)`,
       `  bounces     ${s.bounced ?? 0}`,

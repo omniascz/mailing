@@ -46,6 +46,7 @@ import { db } from '../../db/client.js';
 import { templates as savedTemplates } from '../../db/schema/index.js';
 import { env } from '../../config/env.js';
 import { AppError } from '../../lib/app-error.js';
+import { deliveryDenominators } from '../deliverability/pure.js';
 
 /** Groups whose routes are the only things that attribute revenue to a campaign. */
 const REVENUE_GROUPS = ['revenue', 'ecommerce'] as const;
@@ -89,6 +90,7 @@ interface CountRow extends Record<string, unknown> {
   clicks: number;
   unique_clicks: number;
   bounces: number;
+  failed: number;
   complaints: number;
   unsubscribes: number;
 }
@@ -154,6 +156,7 @@ export async function getTemplatePerformance(
       COUNT(e.id) FILTER (WHERE e.event_type = 'click')::int                     AS clicks,
       COUNT(DISTINCT e.contact_id) FILTER (WHERE e.event_type = 'click')::int    AS unique_clicks,
       COUNT(e.id) FILTER (WHERE e.event_type = 'bounce')::int                    AS bounces,
+      COUNT(e.id) FILTER (WHERE e.event_type = 'failed')::int                    AS failed,
       COUNT(e.id) FILTER (WHERE e.event_type = 'complaint')::int                 AS complaints,
       COUNT(e.id) FILTER (WHERE e.event_type = 'unsubscribe')::int               AS unsubscribes
     FROM campaigns c
@@ -173,15 +176,23 @@ export async function getTemplatePerformance(
       clicks: 0,
       unique_clicks: 0,
       bounces: 0,
+      failed: 0,
       complaints: 0,
       unsubscribes: 0,
     } as CountRow);
 
-  // Opens and clicks are rated against what was delivered, bounces and
-  // unsubscribes against what was sent — the conventions the account-wide
-  // stats already use, so a per-template rate is comparable with them rather
-  // than being a second definition of the same word.
+  // Opens, clicks and unsubscribes are rated against what was delivered. The
+  // delivery and bounce rates are fractions of delivery outcomes
+  // (deliveryDenominators) — the definition every deliverability rate shares —
+  // not of 'send' rows: mta-sender writes a 'send' row only for campaign mail it
+  // delivered, so over 'send' the delivery rate could not fall below 100 % and
+  // one bounce beside one delivery read as a 100 % bounce rate.
   const denom = r.delivered > 0 ? r.delivered : 0;
+  const outcomes = deliveryDenominators({
+    delivered: r.delivered,
+    bounces: r.bounces,
+    failed: r.failed,
+  });
 
   return {
     templateId: tpl.id,
@@ -197,10 +208,10 @@ export async function getTemplatePerformance(
     bounces: r.bounces,
     complaints: r.complaints,
     unsubscribes: r.unsubscribes,
-    deliveryRatePct: pct(r.delivered, r.sends),
+    deliveryRatePct: pct(r.delivered, outcomes.resolved),
     openRatePct: pct(r.unique_opens, denom),
     clickRatePct: pct(r.unique_clicks, denom),
-    bounceRatePct: pct(r.bounces, r.sends),
+    bounceRatePct: pct(r.bounces, outcomes.attempted),
     unsubscribeRatePct: pct(r.unsubscribes, denom),
     revenue: revenueAvailability(),
   };

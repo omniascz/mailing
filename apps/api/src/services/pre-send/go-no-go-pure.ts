@@ -420,7 +420,7 @@ export function classifyBounceRate(input: { recent7dBounceRatePct: number | null
 
 export function classifyComplaintRate(input: {
   recent7dComplaintRatePct: number | null;
-  /** 24-hour complaint rate, used for Gmail's rolling 24h cap check. Null if < 100 sends in window. */
+  /** 24-hour complaint rate, used for Gmail's rolling 24h cap check. Null if < 100 deliveries in window. */
   recent24hComplaintRatePct?: number | null;
 }): CheckResult {
   const pct7d = input.recent7dComplaintRatePct;
@@ -436,7 +436,7 @@ export function classifyComplaintRate(input: {
   }
 
   // Gmail's hard cap is 0.3% on a rolling 24h window. Use the 24h rate when
-  // we have sufficient volume (≥ 100 sends); fall back to 7d for the check.
+  // we have sufficient volume (≥ 100 deliveries); fall back to 7d for the check.
   const gmailCheckPct = pct24h ?? pct7d ?? 0;
   if (gmailCheckPct >= 0.3) {
     return {

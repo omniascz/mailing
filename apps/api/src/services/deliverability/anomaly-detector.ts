@@ -20,11 +20,12 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { campaigns, emailEvents } from '../../db/schema/index.js';
 import { reportIncident } from '../status-page/index.js';
+import { deliveryDenominators, outcomeRate } from './pure.js';
 
 export interface AnomalyThresholds {
   bounceRatePct: number;
   complaintRatePct: number;
-  /** Minimum recipients before a percentage is statistically meaningful. */
+  /** Minimum delivery outcomes (delivered + bounced) before a percentage is statistically meaningful. */
   minRecipientsForRatio: number;
   /** Window over which rates are computed (ms). */
   windowMs: number;
@@ -62,7 +63,7 @@ export async function evaluateCampaign(
 
   const [row] = (await db
     .select({
-      sends: sql<string>`COUNT(*) FILTER (WHERE ${emailEvents.eventType} = 'send')::text`,
+      delivered: sql<string>`COUNT(*) FILTER (WHERE ${emailEvents.eventType} = 'deliver')::text`,
       bounces: sql<string>`COUNT(*) FILTER (WHERE ${emailEvents.eventType} = 'bounce')::text`,
       complaints: sql<string>`COUNT(*) FILTER (WHERE ${emailEvents.eventType} = 'complaint')::text`,
     })
@@ -74,18 +75,25 @@ export async function evaluateCampaign(
         sql`${emailEvents.createdAt} >= ${sql.param(cutoff, emailEvents.createdAt)}`,
       ),
     )) as unknown as Array<{
-    sends: string;
+    delivered: string;
     bounces: string;
     complaints: string;
   }>;
 
-  const sends = Number(row?.sends ?? 0);
-  if (sends < thresholds.minRecipientsForRatio) return null;
-
+  // Rates over delivery outcomes, not over 'send' rows. mta-sender writes a
+  // 'send' row only for a campaign message it delivered, so over 'send' a
+  // campaign with 6 bounces in 100 had a sample of 94, was never evaluated,
+  // and its bounces could not pause it however many there were.
   const bounces = Number(row?.bounces ?? 0);
   const complaints = Number(row?.complaints ?? 0);
-  const bounceRatePct = (bounces / sends) * 100;
-  const complaintRatePct = (complaints / sends) * 100;
+  const { delivered, attempted } = deliveryDenominators({
+    delivered: Number(row?.delivered ?? 0),
+    bounces,
+  });
+  if (attempted < thresholds.minRecipientsForRatio) return null;
+
+  const bounceRatePct = outcomeRate(bounces, attempted) * 100;
+  const complaintRatePct = outcomeRate(complaints, delivered) * 100;
 
   if (complaintRatePct >= thresholds.complaintRatePct) {
     return {
@@ -94,7 +102,7 @@ export async function evaluateCampaign(
       reason: 'high_complaint_rate',
       bounceRatePct,
       complaintRatePct,
-      sampleSize: sends,
+      sampleSize: attempted,
     };
   }
   if (bounceRatePct >= thresholds.bounceRatePct) {
@@ -104,7 +112,7 @@ export async function evaluateCampaign(
       reason: 'high_bounce_rate',
       bounceRatePct,
       complaintRatePct,
-      sampleSize: sends,
+      sampleSize: attempted,
     };
   }
   return null;

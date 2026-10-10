@@ -11,6 +11,7 @@
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { emailEvents } from '../../db/schema/index.js';
+import { deliveryDenominators } from '../deliverability/pure.js';
 import { evaluateSignal } from './index.js';
 
 /** Minimum messages in the window before a rate is statistically actionable. */
@@ -39,7 +40,8 @@ const WINDOW_HOURS = 24;
  * untouched: a reset is not billed, and its bounce still counts here.
  *
  * Complaints can only follow delivered mail, so their denominator is
- * 'deliver' alone.
+ * 'deliver' alone. Both denominators come from `deliveryDenominators`, the
+ * one definition every deliverability rate shares.
  */
 export async function computeRecentRate(
   orgId: string,
@@ -55,10 +57,13 @@ export async function computeRecentRate(
     .from(emailEvents)
     .where(and(eq(emailEvents.orgId, orgId), gte(emailEvents.createdAt, since)));
 
-  const delivered = row?.delivered ?? 0;
   const bounced = row?.bounced ?? 0;
+  const { delivered, attempted } = deliveryDenominators({
+    delivered: row?.delivered ?? 0,
+    bounces: bounced,
+  });
   const hits = kind === 'bounce' ? bounced : (row?.complained ?? 0);
-  const sample = kind === 'bounce' ? delivered + bounced : delivered;
+  const sample = kind === 'bounce' ? attempted : delivered;
   const rate = sample > 0 ? (hits / sample) * 100 : 0;
   return { rate: Math.round(rate * 100) / 100, sampleSize: sample };
 }
