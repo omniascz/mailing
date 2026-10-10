@@ -126,7 +126,10 @@ export async function runPreSendChecks(orgId: string, campaignId: string): Promi
 
   // ─── Compliance ──────────────────────────────────────────────────────────
   checks.push(
-    classifyUnsubscribeLink({ hasUnsubscribe: detectUnsubscribe(renderedHtml(campaign)) }),
+    classifyUnsubscribeLink({
+      hasUnsubscribe: detectUnsubscribe(renderedHtml(campaign)),
+      campaignId,
+    }),
   );
   checks.push(
     classifyPreferenceCenter({
@@ -150,6 +153,7 @@ export async function runPreSendChecks(orgId: string, campaignId: string): Promi
   checks.push(
     classifyMergeTags({
       warnings: await validateOrgContent(orgId, [campaign.subject, campaign.preheader, html]),
+      campaignId,
     }),
   );
 

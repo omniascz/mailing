@@ -145,17 +145,28 @@ export function describeMetrics(metrics: Record<string, string | number> | undef
 
 export interface Remedy {
   text: string;
+  /** Only where a page in the app lets the customer make the fix. Never a dead link. */
   href?: string;
   linkLabel?: string;
 }
 
-/** What to do about a blocking criterion, and the page in the app where it is done. */
+/** Where the customer reaches support when the fix is not theirs to make. */
+export const SUPPORT_EMAIL = 'support@mailforge.cz';
+
+/**
+ * What to do about a blocking criterion, and the page in the app where it is
+ * done. A link is given only when that page exists and lets the customer make
+ * the fix; when the fix is not in the customer's hands (the sending IPs are
+ * the platform's), there is no link — the text says what to do and who to ask.
+ */
 export function remedyFor(id: string, campaignId: string): Remedy {
   const edit = `/campaigns/${campaignId}/edit`;
   switch (id) {
     case 'domain-auth':
       return {
-        text: 'Doplňte u odesílací domény záznamy SPF a DKIM v DNS a nechte doménu znovu ověřit.',
+        text:
+          'U svého DNS poskytovatele doplňte záznamy SPF, DKIM a DMARC (hodnoty najdete u domény). ' +
+          'Pak na stránce domény klikněte na „Znovu ověřit DNS“.',
         href: '/domains',
         linkLabel: 'Otevřít domény',
       };
@@ -167,9 +178,9 @@ export function remedyFor(id: string, campaignId: string): Remedy {
       };
     case 'unsubscribe-link':
       return {
-        text: 'Přidejte do obsahu odkaz pro odhlášení ({{unsubscribe_url}}), nebo kampaň postavte z bloků, kam ho doplníme sami.',
+        text: 'Přidejte do HTML obsahu odkaz pro odhlášení ({{unsubscribe_url}}), nebo obsah postavte ve vizuálním editoru, kde ho doplníme sami.',
         href: edit,
-        linkLabel: 'Upravit obsah',
+        linkLabel: 'Upravit kampaň',
       };
     case 'subject':
       return { text: 'Vyplňte předmět kampaně.', href: edit, linkLabel: 'Upravit kampaň' };
@@ -177,27 +188,31 @@ export function remedyFor(id: string, campaignId: string): Remedy {
       return {
         text: 'Upravte texty, na které spamový filtr upozorňuje (viz podrobnosti výše).',
         href: edit,
-        linkLabel: 'Upravit obsah',
+        linkLabel: 'Upravit kampaň',
       };
     case 'bounce-rate':
       return {
-        text: 'Vyčistěte seznam od neplatných adres; nedoručitelné adresy z posledních odeslání najdete v potlačených adresách.',
-        href: '/suppressions',
-        linkLabel: 'Otevřít potlačené adresy',
+        text:
+          'Nedoručitelné adresy už jsou potlačené a znovu se jim neposílá; míra klesne, jak tyto zprávy vypadnou ze 7denního okna. ' +
+          'Mezitím odeberte ze seznamu staré a nepotvrzené adresy.',
+        href: '/lists',
+        linkLabel: 'Otevřít seznamy',
       };
     case 'complaint-rate':
       return {
-        text: 'Posílejte jen kontaktům, které o e-maily stojí, a zkontrolujte, odkud seznam pochází. Přihlášky z posledních dnů najdete u seznamů.',
+        text: 'Posílejte jen kontaktům, které o e-maily stojí: odeberte ze seznamu adresy bez jasného souhlasu.',
         href: '/lists',
         linkLabel: 'Otevřít seznamy',
       };
     case 'ip-warmup':
       return {
-        text: 'Dnešní limit zahřívaných IP adres je vyčerpaný. Naplánujte kampaň na zítřek.',
+        text: 'Dnešní limit zahřívaných IP adres je vyčerpaný. Naplánujte kampaň na zítřek tlačítkem „Schedule for later“.',
       };
     case 'blacklist':
       return {
-        text: 'Všechny vaše odesílací IP adresy jsou na blacklistu. Požádejte provozovatele blacklistu o vyřazení; dokud nejsou venku, zprávy se nedoručí.',
+        text:
+          `Vaše odesílací IP adresy jsou na blacklistu. Vyřazení z něj v aplikaci provést nejde — ` +
+          `napište podpoře na ${SUPPORT_EMAIL}; dokud IP nejsou venku, zprávy se nedoručí.`,
       };
     default:
       return {

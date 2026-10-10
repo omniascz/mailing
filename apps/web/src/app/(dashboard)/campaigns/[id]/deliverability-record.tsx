@@ -8,11 +8,10 @@ import { criterionLabel, describeMetrics } from './pre-send-report';
  * a scheduled campaign back into draft: the cron has no one to answer, so its
  * refusal exists only here.
  *
- * Read through GET /api/v1/audit-logs, which filters by resource and action
- * but not by record id, so each action's latest 200 entries are read and
- * filtered here. A campaign whose last decision is older than the org's 200
- * most recent decisions of that kind shows nothing. The route is for owners
- * and admins; anyone else gets nothing back and sees no card.
+ * Read through GET /api/v1/audit-logs filtered to this campaign
+ * (resourceId), one action at a time, newest first — the server reads this
+ * campaign's rows of the caller's organisation and nothing else. The route is
+ * for owners and admins; anyone else gets nothing back and sees no card.
  */
 
 const ACTIONS = {
@@ -47,7 +46,8 @@ export async function latestGateRecord(campaignId: string): Promise<AuditRow | n
   const lists = await Promise.all(
     (Object.keys(ACTIONS) as Array<keyof typeof ACTIONS>).map((action) =>
       apiFetch<AuditRow[]>(
-        `/api/v1/audit-logs?resource=campaign&action=${encodeURIComponent(action)}&limit=200`,
+        `/api/v1/audit-logs?resource=campaign&resourceId=${encodeURIComponent(campaignId)}` +
+          `&action=${encodeURIComponent(action)}&limit=1`,
         { fallback: [] },
       ),
     ),
