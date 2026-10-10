@@ -112,12 +112,58 @@ export function classifyGraymail(
   };
 }
 
+// ─── Delivery outcomes ──────────────────────────────────────────────────────
+
+/**
+ * The messages a deliverability rate is a fraction of.
+ *
+ * Not the 'send' rows. A 'send' row is a billing record: mta-sender writes one
+ * for campaign mail it delivered and none for a campaign message that bounced,
+ * and none for transactional mail, whose 'send' is written by the route that
+ * bills it — and by only five of the seventeen callers of
+ * sendTransactionalEmail (#240, #241). A bounce or a delivery is written for
+ * every message. Dividing one by the other mixed two sets: an IP or an org
+ * sending only password resets had no denominator at all, and one mixing
+ * campaigns and resets divided every bounce by the delivered campaign mail
+ * alone.
+ *
+ * - `attempted`: what a receiving server answered — accepted or rejected. The
+ *   bounce, hard-bounce and block rates are fractions of it, as the auto-pause's
+ *   is (abuse-detection/auto-pause.ts, #241).
+ * - `resolved`: every message whose fate is known, which adds the transport
+ *   failures nobody answered. The delivery rate is a fraction of it: a message
+ *   lost to DNS was not delivered either.
+ * - `delivered`: complaints, opens, clicks and unsubscribes can only follow a
+ *   delivered message.
+ *
+ * Deferrals are not outcomes and are not counted anywhere here.
+ */
+export interface DeliveryOutcomes {
+  delivered: number;
+  /** Final bounces of every kind: hard, soft and block. */
+  bounces: number;
+  /** Transport failures that ran out of retries ('failed' rows). */
+  failed?: number;
+}
+
+export function deliveryDenominators(o: DeliveryOutcomes): {
+  delivered: number;
+  attempted: number;
+  resolved: number;
+} {
+  const delivered = Math.max(0, o.delivered);
+  const attempted = delivered + Math.max(0, o.bounces);
+  return { delivered, attempted, resolved: attempted + Math.max(0, o.failed ?? 0) };
+}
+
+/** `numerator / denominator`, and 0 over an empty denominator. */
+export function outcomeRate(numerator: number, denominator: number): number {
+  return denominator > 0 ? numerator / denominator : 0;
+}
+
 // ─── Email health score ─────────────────────────────────────────────────────
 
-export interface EmailHealthMetrics {
-  sends: number;
-  delivered: number;
-  bounces: number;
+export interface EmailHealthMetrics extends DeliveryOutcomes {
   hardBounces: number;
   softBounces: number;
   complaints: number;
@@ -149,8 +195,11 @@ export interface EmailHealthScore {
  * Composite email-health score per domain/IP for a given time window.
  * Weights and thresholds follow common ESP guidance:
  *
- *   - Delivery rate (sends → delivered): +25 pts when ≥ 98%
- *   - Bounce rate (bounces / delivered): -20 pts when > 5%
+ * Every rate is a fraction of delivery outcomes (see `deliveryDenominators`),
+ * never of the billing 'send' rows:
+ *
+ *   - Delivery rate (delivered / resolved): +25 pts when ≥ 98%
+ *   - Bounce rate (bounces / attempted): -20 pts when > 5%
  *   - Hard bounce rate: -25 pts when > 2%
  *   - Complaint rate (complaints / delivered): -30 pts when > 0.1%
  *   - Engagement rate ((opens+clicks) / delivered): up to +20 pts at ≥ 30%
@@ -161,22 +210,21 @@ export interface EmailHealthScore {
  * score at 0. The grade mapping mirrors school-grade conventions.
  */
 export function computeEmailHealthScore(metrics: EmailHealthMetrics): EmailHealthScore {
-  const delivered = Math.max(0, metrics.delivered);
-  const sends = Math.max(0, metrics.sends);
-  const safe = (numerator: number, denominator: number) =>
-    denominator === 0 ? 0 : numerator / denominator;
+  const { delivered, attempted, resolved } = deliveryDenominators(metrics);
+  const safe = outcomeRate;
 
-  const deliveryRate = safe(delivered, sends);
-  const bounceRate = safe(metrics.bounces, sends);
-  const hardBounceRate = safe(metrics.hardBounces, sends);
+  const deliveryRate = safe(delivered, resolved);
+  const bounceRate = safe(metrics.bounces, attempted);
+  const hardBounceRate = safe(metrics.hardBounces, attempted);
   const complaintRate = safe(metrics.complaints, delivered);
   const engagementRate = safe(metrics.opens + metrics.clicks, delivered);
   const unsubRate = safe(metrics.unsubscribes, delivered);
-  const blockRate = safe(metrics.blocks ?? 0, sends);
+  const blockRate = safe(metrics.blocks ?? 0, attempted);
 
   // No data — return a neutral-positive score so empty domains don't show
-  // red dashboards before they've sent anything.
-  if (sends === 0) {
+  // red dashboards before they've sent anything. "No data" is no outcome, not
+  // no 'send' row: a reset-only sender has none of those at any bounce rate.
+  if (resolved === 0) {
     return {
       score: 100,
       grade: 'A',
