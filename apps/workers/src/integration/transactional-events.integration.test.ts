@@ -293,7 +293,7 @@ describe('transactional events are stored and feed the auto-pause (real DB + Red
     expect(rows.map((e) => e.event_type).sort()).toEqual(['deliver', 'send']);
   }, 60_000);
 
-  it('a campaign bounce still works, and the campaign stats are what they were', async () => {
+  it('a campaign bounce still works, and the campaign stats rate it over delivery outcomes', async () => {
     const [list] = await sql<{ id: string }[]>`
       INSERT INTO lists (org_id, name) VALUES (${seed.id}, ${`txevents ${tag}`}) RETURNING id
     `;
@@ -356,8 +356,8 @@ describe('transactional events are stored and feed the auto-pause (real DB + Red
     console.log(
       `[z120] campaign stats=${JSON.stringify(pick(stats.data))} rows=${JSON.stringify(rows)}`,
     );
-    // Measured on master before the change (one delivered, one hard bounce —
-    // a hard bounce records no 'send' of its own). The change must not move it.
+    // One delivered, one hard bounce — a hard bounce records no 'send' of its
+    // own, so the rows are what they were before #240.
     expect(Object.fromEntries(rows.map((r) => [r.event_type, r.n]))).toEqual({
       send: 1,
       deliver: 1,
@@ -369,8 +369,12 @@ describe('transactional events are stored and feed the auto-pause (real DB + Red
       bounces: 1,
       hardBounces: 1,
       softBounces: 0,
-      bounceRate: 100,
-      deliveryRate: 100,
+      // Z124: 1 bounce in 2 messages is 50 %, and so is the delivery rate. This
+      // asserted 100 % and 100 % — the value the stats had before #240, which
+      // divided both by the one 'send' row the delivered message has. A
+      // campaign cannot have bounced and delivered everything at once.
+      bounceRate: 50,
+      deliveryRate: 50,
     });
   }, 180_000);
 });

@@ -9,11 +9,19 @@
  *   open_rate           = unique_opens  / delivered
  *   click_rate          = unique_clicks / delivered
  *   click_to_open_rate  = unique_clicks / unique_opens
- *   bounce_rate         = bounces       / sends
+ *   bounce_rate         = bounces       / (delivered + bounces)
  *   unsubscribe_rate    = unsubscribes  / delivered
  *   complaint_rate      = complaints    / delivered
  * A rate with a zero denominator is 0. Rates are fractions (0..1) rounded 4dp.
+ *
+ * The bounce and complaint denominators come from `deliveryDenominators`, the
+ * definition every deliverability rate shares. bounce_rate was bounces / sends,
+ * and a 'send' row is a billing record that mta-sender writes only for campaign
+ * mail it delivered: one bounce and one delivery read 100 %, and the bounces of
+ * password resets, which have no 'send' row, were divided by nothing of theirs.
  */
+
+import { deliveryDenominators } from '../deliverability/pure.js';
 
 export type ReportEventType =
   | 'send'
@@ -178,11 +186,11 @@ function metricValue(t: Tally, metric: ReportMetric): number {
     case 'click_to_open_rate':
       return rate(uniqueClicks, uniqueOpens);
     case 'bounce_rate':
-      return rate(t.bounces, t.sends);
+      return rate(t.bounces, deliveryDenominators(t).attempted);
     case 'unsubscribe_rate':
       return rate(t.unsubscribes, t.delivered);
     case 'complaint_rate':
-      return rate(t.complaints, t.delivered);
+      return rate(t.complaints, deliveryDenominators(t).delivered);
   }
 }
 

@@ -59,7 +59,35 @@ describe('computeReport totals', () => {
     expect(totals.open_rate).toBe(0.5); // 1 unique open / 2 delivered
     expect(totals.click_rate).toBe(0.5); // 1 unique click / 2 delivered
     expect(totals.click_to_open_rate).toBe(1); // 1 unique click / 1 unique open
-    expect(totals.bounce_rate).toBeCloseTo(0.3333, 4); // 1 bounce / 3 sends
+    expect(totals.bounce_rate).toBeCloseTo(0.3333, 4); // 1 bounce / (2 delivered + 1 bounced)
+  });
+
+  it('bounce_rate is bounces over delivery outcomes, not over billed sends', () => {
+    // What mta-sender writes for a campaign of two: the delivered message gets a
+    // 'send' and a 'deliver', the bounced one only its 'bounce'. Over 'send'
+    // this read 1 / 1 = 100 %.
+    const asWritten = [
+      ev('send', '2026-06-01T09:00:00Z', 'c1', 'camp1'),
+      ev('deliver', '2026-06-01T09:00:00Z', 'c1', 'camp1'),
+      ev('bounce', '2026-06-01T09:00:00Z', 'c2', 'camp1'),
+    ];
+    const { totals } = computeReport(asWritten, {
+      metrics: ['bounce_rate', 'complaint_rate'],
+      dimension: 'none',
+    });
+    expect(totals.bounce_rate).toBe(0.5);
+    expect(totals.complaint_rate).toBe(0);
+
+    // A password reset has no 'send' row at all; its bounce still counts.
+    const resets = [
+      ev('deliver', '2026-06-01T09:00:00Z'),
+      ev('deliver', '2026-06-01T09:00:00Z'),
+      ev('deliver', '2026-06-01T09:00:00Z'),
+      ev('bounce', '2026-06-01T09:00:00Z'),
+    ];
+    expect(computeReport(resets, { metrics: ['bounce_rate'], dimension: 'none' }).totals).toEqual({
+      bounce_rate: 0.25,
+    });
   });
 
   it('returns 0 for rates with a zero denominator', () => {
