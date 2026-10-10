@@ -156,6 +156,13 @@ export function deliveryDenominators(o: DeliveryOutcomes): {
   return { delivered, attempted, resolved: attempted + Math.max(0, o.failed ?? 0) };
 }
 
+/**
+ * The fewest delivery outcomes a rate needs before anything acts on it. The
+ * auto-pause (#241) introduced it; the pre-send gate uses the same number so a
+ * rate that cannot pause a sender cannot block a send either.
+ */
+export const MIN_OUTCOME_SAMPLE = 100;
+
 /** `numerator / denominator`, and 0 over an empty denominator. */
 export function outcomeRate(numerator: number, denominator: number): number {
   return denominator > 0 ? numerator / denominator : 0;

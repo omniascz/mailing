@@ -292,8 +292,8 @@ describe('an address carries every reason it is suppressed for (real DB + Redis 
     seed = await readSeedOrg(sql);
     token = await loginAsSeedUser(API, 'supp');
     await sql`
-      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
-      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true)
+      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
+      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)
     `;
     // Pass-through: records what the internal suppression write answered.
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {

@@ -62,6 +62,11 @@ vi.mock('./dispatch.js', () => ({
   enqueueCampaignSend: (...a: unknown[]) => enqueueCampaignSend(...a),
 }));
 
+// The pre-send gate (send-gate.ts) runs inside sendCampaign; it reads email
+// events and audiences this stub database does not have, and it is covered by
+// its own integration suite. Here it lets every send through.
+vi.mock('../pre-send/send-gate.js', () => ({ enforceDeliverabilityGate: vi.fn(async () => ({})) }));
+
 const mod = await import('./index.js');
 
 const ORG = 'org1';
@@ -100,7 +105,7 @@ describe('resumeCampaign — which pause is this', () => {
     await mod.resumeCampaign(ORG, CID);
 
     expect(enqueueCampaignSend).toHaveBeenCalledTimes(1);
-    expect(enqueueCampaignSend).toHaveBeenCalledWith(ORG, CID);
+    expect(enqueueCampaignSend).toHaveBeenCalledWith(ORG, CID, { via: 'resume' });
     // The full send path starts over, and a send now begins in 'queueing':
     // nothing is sent until the splitter has built the batches.
     expect(row.status).toBe('queueing');

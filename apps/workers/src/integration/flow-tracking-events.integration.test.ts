@@ -199,8 +199,8 @@ describe('opens and clicks on a flow email are recorded (real DB + Redis + API)'
     seed = await readSeedOrg(sql);
     token = await loginAsSeedUser(API, 'wftrack');
     await sql`
-      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
-      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true)
+      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
+      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)
     `;
     for (const key of ['campaign', 'flow']) {
       const email = `wftrack-${key}-${tag}@test.local`;

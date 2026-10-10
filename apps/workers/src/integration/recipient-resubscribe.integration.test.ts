@@ -300,8 +300,8 @@ describe('the recipient comes back on their own (real DB + Redis + API, to the e
     seed = await readSeedOrg(sql);
     token = await loginAsSeedUser(API, 'resub');
     await sql`
-      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
-      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true)
+      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
+      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)
     `;
     const [tpl] = await sql<{ id: string }[]>`
       INSERT INTO templates (org_id, name, subject, preheader, blocks, global_styles, locale)

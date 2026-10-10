@@ -167,16 +167,8 @@ export async function resolveNonOpeners(
   return out.map((r) => r.contact_id).filter((id): id is string => !!id);
 }
 
-/**
- * Resolve the audience for a campaign, picking the right strategy based on
- * whether the campaign is a resend (parentCampaignId set) or a normal
- * list+segment send. Called by the internal /audience endpoint that the
- * campaign-splitter worker hits.
- *
- * Returns the contact ID list. Empty array on missing campaign — caller
- * decides whether that's a 404 or just "audience evaluated to nothing".
- */
-export async function resolveAudience(orgId: string, campaignId: string): Promise<string[]> {
+/** The campaign fields both audience readers need, or null for another org's id. */
+async function audienceSource(orgId: string, campaignId: string) {
   const [campaign] = await db
     .select({
       id: campaigns.id,
@@ -187,7 +179,37 @@ export async function resolveAudience(orgId: string, campaignId: string): Promis
     .from(campaigns)
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.orgId, orgId)))
     .limit(1);
+  return campaign ?? null;
+}
 
+/**
+ * Who on a list is in a list+segment audience. One definition for the splitter
+ * (resolveAudience) and the pre-send gate (countAudience), so the gate cannot
+ * count an audience the send would not reach.
+ */
+function listAudienceWhere(orgId: string, listId: string) {
+  return sql`
+    c."org_id" = ${orgId}
+      AND cl."list_id" = ${listId}
+      AND c."deleted_at" IS NULL
+      AND cl."unsubscribed_at" IS NULL
+      -- Exclude marketing-ineligible statuses (archived / non-subscribed);
+      -- bounced/complained/unsubscribed are additionally gated by suppressions.
+      AND c."status" NOT IN ('archived', 'non_subscribed')
+  `;
+}
+
+/**
+ * Resolve the audience for a campaign, picking the right strategy based on
+ * whether the campaign is a resend (parentCampaignId set) or a normal
+ * list+segment send. Called by the internal /audience endpoint that the
+ * campaign-splitter worker hits.
+ *
+ * Returns the contact ID list. Empty array on missing campaign — caller
+ * decides whether that's a 404 or just "audience evaluated to nothing".
+ */
+export async function resolveAudience(orgId: string, campaignId: string): Promise<string[]> {
+  const campaign = await audienceSource(orgId, campaignId);
   if (!campaign) return [];
 
   if (campaign.parentCampaignId) {
@@ -206,19 +228,44 @@ export async function resolveAudience(orgId: string, campaignId: string): Promis
     SELECT cl."contact_id"
     FROM "contact_lists" cl
     JOIN "contacts" c ON c."id" = cl."contact_id"
-    WHERE c."org_id" = ${orgId}
-      AND cl."list_id" = ${campaign.listId}
-      AND c."deleted_at" IS NULL
-      AND cl."unsubscribed_at" IS NULL
-      -- Exclude marketing-ineligible statuses (archived / non-subscribed);
-      -- bounced/complained/unsubscribed are additionally gated by suppressions.
-      AND c."status" NOT IN ('archived', 'non_subscribed')
+    WHERE ${listAudienceWhere(orgId, campaign.listId)}
   `);
 
   type ExecResult = { rows?: Array<{ contact_id: string }> };
   const out =
     (rows as unknown as ExecResult).rows ?? (rows as unknown as Array<{ contact_id: string }>);
   return out.map((r) => r.contact_id);
+}
+
+/**
+ * How many contacts resolveAudience would return, without materialising them:
+ * the pre-send gate's audience size. A count over the same predicate, so it is
+ * the splitter's audience and not a stored estimate (campaigns.
+ * estimated_recipients has no writer and reads 0 for every campaign).
+ */
+export async function countAudience(orgId: string, campaignId: string): Promise<number> {
+  const campaign = await audienceSource(orgId, campaignId);
+  if (!campaign) return 0;
+
+  if (campaign.parentCampaignId) {
+    const cfg = (campaign.autoResendConfig as Record<string, unknown> | null) ?? {};
+    return (
+      await resolveNonOpeners(orgId, campaign.parentCampaignId, {
+        includeBots: cfg.includeBots === true,
+      })
+    ).length;
+  }
+  if (!campaign.listId) return 0;
+
+  const rows = await db.execute<{ n: number }>(sql`
+    SELECT count(*)::int AS n
+    FROM "contact_lists" cl
+    JOIN "contacts" c ON c."id" = cl."contact_id"
+    WHERE ${listAudienceWhere(orgId, campaign.listId)}
+  `);
+  type ExecResult = { rows?: Array<{ n: number }> };
+  const out = (rows as unknown as ExecResult).rows ?? (rows as unknown as Array<{ n: number }>);
+  return Number(out[0]?.n ?? 0);
 }
 
 // Re-export for tests / future endpoints that want explicit access.

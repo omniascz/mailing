@@ -204,8 +204,8 @@ describe('mta-sender refuses suppressed addresses on every path (real DB + Redis
     seed = await readSeedOrg(sql);
     token = await loginAsSeedUser(API, 'mtagate');
     await sql`
-      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
-      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true)
+      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
+      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)
     `;
     const [list] = await sql<{ id: string }[]>`
       INSERT INTO lists (org_id, name) VALUES (${seed.id}, ${`mtagate ${tag}`}) RETURNING id

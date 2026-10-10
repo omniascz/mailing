@@ -154,8 +154,9 @@ describe('classifySubject', () => {
     expect(classifySubject({ subject: '' }).severity).toBe('fail');
     expect(classifySubject({ subject: '   ' }).severity).toBe('fail');
   });
-  it('fails under 5 chars', () => {
-    expect(classifySubject({ subject: 'Hi' }).severity).toBe('fail');
+  it('warns under 5 chars', () => {
+    // Z125: a short subject warns; it no longer blocks (the gate enforces fail).
+    expect(classifySubject({ subject: 'Hi' }).severity).toBe('warn');
   });
   it('warns over 80 chars', () => {
     expect(classifySubject({ subject: 'x'.repeat(120) }).severity).toBe('warn');

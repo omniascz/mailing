@@ -225,13 +225,20 @@ const broadcastsRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
       const body = z
-        .object({ scheduled_at: z.string().datetime().optional() })
+        .object({
+          scheduled_at: z.string().datetime().optional(),
+          acknowledgeDeliverabilityRisk: z.boolean().optional(),
+        })
         .parse(req.body ?? {});
+      const gate = {
+        acknowledgeDeliverabilityRisk: body.acknowledgeDeliverabilityRisk,
+        userId: req.user!.userId,
+      };
 
       if (body.scheduled_at) {
-        await scheduleCampaign(req.user!.orgId, id, new Date(body.scheduled_at));
+        await scheduleCampaign(req.user!.orgId, id, new Date(body.scheduled_at), undefined, gate);
       } else {
-        await sendCampaign(req.user!.orgId, id);
+        await sendCampaign(req.user!.orgId, id, { ...gate, via: 'broadcast' });
       }
       const fresh = await getCampaign(req.user!.orgId, id);
       return reply.send(broadcastShape(fresh));

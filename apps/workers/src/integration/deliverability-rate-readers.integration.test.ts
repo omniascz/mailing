@@ -449,10 +449,17 @@ describe('every bounce, complaint and delivery rate is over delivery outcomes (r
       severity: 'fail',
       metrics: { bounceRatePct: 15 },
     });
-    expect(r.resets!.goNoGo.complaint.severity).toBe('fail'); // 1 / 85 = 1.18 % > 0.3 %
+    // Z125: below the auto-pause's minimum sample (100 outcomes) a rate is
+    // reported and does not count. The rates are the ones measured before;
+    // only the severity of these two thin samples changed.
+    expect(r.resets!.goNoGo.complaint).toMatchObject({
+      severity: 'info', // 1 / 85 = 1.18 %, over 85 deliveries
+      metrics: { sample7d: 85, minSample: 100 },
+    });
+    expect(r.resets!.goNoGo.complaint.metrics?.complaintRatePct).toBeCloseTo(1.1765, 4);
     expect(r.oneOne!.goNoGo.bounce).toMatchObject({
-      severity: 'fail',
-      metrics: { bounceRatePct: 50 },
+      severity: 'info',
+      metrics: { bounceRatePct: 50, sampleSize: 2, minSample: 100 },
     });
     expect(r.mixed!.goNoGo.bounce).toMatchObject({
       severity: 'warn',

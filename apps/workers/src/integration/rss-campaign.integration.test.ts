@@ -197,8 +197,8 @@ describe('RSS campaign end to end (real DB + Redis + API)', () => {
     orgId = org.id;
     postalAddress = org.postalAddress;
     await sql`
-      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
-      VALUES (${orgId}, ${sendingDomain}, 'fm1', true, true)
+      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
+      VALUES (${orgId}, ${sendingDomain}, 'fm1', true, true, true, true)
     `;
 
     const [list] = await sql<{ id: string }[]>`

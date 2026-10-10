@@ -37,7 +37,13 @@ let session: Session;
 
 const TAG = `sch-${randomUUID().slice(0, 8)}`;
 const SEND_DOMAIN = `${TAG}.test`;
-const BODY = { html: '<p>Ahoj</p>', plainText: 'Ahoj' };
+// Raw HTML is sent as written, so it has to carry its own opt-out link; the
+// pre-send gate (Z125) refuses marketing mail without one, as the batch-sender
+// does when it renders it.
+const BODY = {
+  html: '<p>Ahoj</p><p><a href="{{unsubscribe_url}}">Odhlásit</a></p>',
+  plainText: 'Ahoj',
+};
 
 let listId: string;
 const createdCampaigns: string[] = [];

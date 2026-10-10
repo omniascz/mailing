@@ -269,8 +269,8 @@ describe('the transactional route and the gate agree; a failed status write is r
     seed = await readSeedOrg(sql);
     token = await loginAsSeedUser(API, 'txgate');
     await sql`
-      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
-      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true)
+      INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
+      VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)
     `;
     errorSpy = vi.spyOn(console, 'error');
     // Pass-through: records what the internal status PATCH answered.

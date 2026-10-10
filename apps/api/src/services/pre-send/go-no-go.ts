@@ -54,7 +54,10 @@ import {
   type DeliverabilityGrade,
 } from './go-no-go-pure.js';
 import { checkFrequencyCap } from '../frequency-capping/index.js';
-import { deliveryDenominators } from '../deliverability/pure.js';
+import { deliveryDenominators, MIN_OUTCOME_SAMPLE } from '../deliverability/pure.js';
+import { countAudience } from '../campaigns/auto-resend.js';
+import { renderEmail as renderBlocks } from '@forgemsg/editor/render';
+import { readCampaignContent } from '@forgemsg/editor/schema';
 import { listWarmupStatuses } from '../sending/ip-warmup.js';
 
 export interface GoNoGoReport {
@@ -79,7 +82,10 @@ export async function runPreSendChecks(orgId: string, campaignId: string): Promi
   const campaign = await fetchCampaign(orgId, campaignId);
 
   const html = extractHtml(campaign);
-  const recipientCount = campaign.estimatedRecipients ?? 0;
+  // The audience the splitter would resolve, counted now. Not
+  // campaigns.estimated_recipients: nothing writes that column, so it read 0
+  // and 'audience-empty' failed every campaign there is.
+  const recipientCount = await countAudience(orgId, campaignId);
 
   const checks: CheckResult[] = [];
 
@@ -119,7 +125,9 @@ export async function runPreSendChecks(orgId: string, campaignId: string): Promi
   checks.push(classifySubject({ subject: campaign.subject ?? '' }));
 
   // ─── Compliance ──────────────────────────────────────────────────────────
-  checks.push(classifyUnsubscribeLink({ hasUnsubscribe: detectUnsubscribe(html) }));
+  checks.push(
+    classifyUnsubscribeLink({ hasUnsubscribe: detectUnsubscribe(renderedHtml(campaign)) }),
+  );
   checks.push(
     classifyPreferenceCenter({
       hasPreferenceCenterTag: html.includes('{{preference_center_url}}'),
@@ -157,12 +165,23 @@ export async function runPreSendChecks(orgId: string, campaignId: string): Promi
   }
 
   // ─── Reputation ──────────────────────────────────────────────────────────
+  // Each rate carries the sample it was computed over; below the auto-pause's
+  // minimum it is reported and does not count towards the verdict.
   const recent = await fetchRecentRates(orgId);
-  checks.push(classifyBounceRate({ recent7dBounceRatePct: recent.bounceRatePct }));
+  checks.push(
+    classifyBounceRate({
+      recent7dBounceRatePct: recent.bounceRatePct,
+      sampleSize: recent.attempted7d,
+      minSample: MIN_OUTCOME_SAMPLE,
+    }),
+  );
   checks.push(
     classifyComplaintRate({
       recent7dComplaintRatePct: recent.complaintRatePct,
       recent24hComplaintRatePct: recent.complaint24hRatePct,
+      sample7d: recent.delivered7d,
+      sample24h: recent.delivered24h,
+      minSample: MIN_OUTCOME_SAMPLE,
     }),
   );
 
@@ -233,6 +252,10 @@ async function fetchRecentRates(orgId: string): Promise<{
   bounceRatePct: number | null;
   complaintRatePct: number | null;
   complaint24hRatePct: number | null;
+  /** Delivery outcomes (delivered + bounced) in the last 7 days. */
+  attempted7d: number;
+  delivered7d: number;
+  delivered24h: number;
 }> {
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
   const oneDayAgo = new Date(Date.now() - 86_400_000);
@@ -280,12 +303,18 @@ async function fetchRecentRates(orgId: string): Promise<{
   }).delivered;
 
   // No outcome in the window is no history, reported as null — never a block.
+  // A thin window is judged by the classifiers against MIN_OUTCOME_SAMPLE.
   return {
     bounceRatePct: week.attempted > 0 ? (bounces7d / week.attempted) * 100 : null,
     complaintRatePct:
       week.delivered > 0 ? (Number(row?.complaints7d ?? 0) / week.delivered) * 100 : null,
     complaint24hRatePct:
-      delivered24h >= 100 ? (Number(row?.complaints24h ?? 0) / delivered24h) * 100 : null,
+      delivered24h >= MIN_OUTCOME_SAMPLE
+        ? (Number(row?.complaints24h ?? 0) / delivered24h) * 100
+        : null,
+    attempted7d: week.attempted,
+    delivered7d: week.delivered,
+    delivered24h,
   };
 }
 
@@ -307,6 +336,25 @@ function extractHtml(campaign: Campaign): string {
     return JSON.stringify(c);
   }
   return '';
+}
+
+/**
+ * The HTML the opt-out check reads: what the send renders, not what the
+ * campaign stores. Block content goes through the renderer, which attaches the
+ * opt-out footer to every marketing message whether the blocks carry a link or
+ * not (editor compliance-footer); checking the stored blocks reported "no
+ * unsubscribe link" for mail that left with one. Raw HTML is sent as written,
+ * so it is read as written. Content that is neither renders nothing — the
+ * batch-sender refuses it — and reads as empty here.
+ */
+function renderedHtml(campaign: Campaign): string {
+  const parsed = readCampaignContent(campaign.content, campaign.preheader ?? undefined);
+  if (parsed.schema) {
+    // No context: the opt-out renders as the {{unsubscribe_url}} merge tag.
+    return renderBlocks(parsed.schema, { stream: 'broadcast' }).html;
+  }
+  const raw = (campaign.content as { html?: unknown } | null)?.html;
+  return typeof raw === 'string' ? raw : '';
 }
 
 function detectUnsubscribe(html: string): boolean {
