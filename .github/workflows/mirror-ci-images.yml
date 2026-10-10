@@ -8,6 +8,14 @@ name: Mirror CI Images
 # the right to pull at all, so pinning harder cannot help; keeping our own copy
 # can.
 #
+# The same holds, less dramatically, for the service containers. Postgres and
+# Redis came from Docker Hub anonymously, and the anonymous pull limit is
+# counted per runner IP, which GitHub shares between every customer: run
+# 37991907551 died three times on `toomanyrequests: You have reached your
+# unauthenticated pull rate limit` before a single test ran. Logging CI in to
+# Docker Hub would only raise the limit; mirroring removes the registry from
+# the path altogether, so every image CI starts is mirrored here.
+#
 # Deliberately NOT a step in ci.yml:
 #   - this has to happen once, and then only when somebody changes the digest on
 #     purpose. A step in ci.yml would re-push on every run of every branch.
@@ -24,12 +32,18 @@ name: Mirror CI Images
 on:
   workflow_dispatch:
     inputs:
+      package:
+        description: 'Which mirror the source and tag below replace (the other images are re-copied from their defaults)'
+        required: false
+        default: 'ci-s3'
+        type: choice
+        options: [ci-s3, ci-pgvector, ci-redis]
       source:
         description: 'Source image, pinned by digest (registry/name:tag@sha256:...)'
         required: false
         default: ''
       target_tag:
-        description: 'Tag to publish inside ghcr.io/<owner>/ci-s3'
+        description: 'Tag to publish inside ghcr.io/<owner>/<package>'
         required: false
         default: ''
   push:
@@ -38,13 +52,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  PACKAGE: ci-s3
-  # What a run with no inputs mirrors - the push trigger has none. Keep these in
-  # step with the digest pinned in ci.yml and docker-compose.yml: the digest is
-  # what both of those resolve, so if this drifts, CI keeps using whatever was
-  # mirrored last and this workflow is the only place that would say so.
-  DEFAULT_SOURCE: cgr.dev/chainguard/minio:latest@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
-  DEFAULT_TAG: minio-2026-09-25
   # crane, pinned by release and verified by checksum, because copying an image
   # without changing it turned out to be the whole difficulty:
   #
@@ -67,21 +74,59 @@ env:
 
 jobs:
   mirror:
-    name: Mirror the CI object store into GHCR
+    name: Mirror ${{ matrix.package }} into GHCR
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    strategy:
+      # One image failing to copy must not hide whether the others copied.
+      fail-fast: false
+      matrix:
+        # What a run with no inputs mirrors - the push trigger has none. Keep
+        # each source digest in step with what ci.yml pins (and, for ci-s3,
+        # docker-compose.yml): the digest is what they resolve, so if this
+        # drifts, CI keeps using whatever was mirrored last and this workflow
+        # is the only place that would say so.
+        #
+        # The digest is the multi-platform index, not one platform's manifest,
+        # so the copy is the same image a `docker pull` of the tag resolved.
+        include:
+          # Integration (real DB) only: the object store, started as a step.
+          - package: ci-s3
+            source: cgr.dev/chainguard/minio:latest@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
+            tag: minio-2026-09-25
+          # Service container `postgres` in Test, Integration, Workers
+          # Integration, E2E Smoke and Apply migrations (dry run).
+          - package: ci-pgvector
+            source: docker.io/pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+            tag: pg16
+          # Service container `redis` in Test, Integration, Workers
+          # Integration and E2E Smoke.
+          - package: ci-redis
+            source: docker.io/library/redis:7-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+            tag: 7-alpine
     steps:
       - name: Resolve what to copy where
         id: what
         env:
+          IN_PACKAGE: ${{ github.event.inputs.package }}
           IN_SOURCE: ${{ github.event.inputs.source }}
           IN_TAG: ${{ github.event.inputs.target_tag }}
+          PACKAGE: ${{ matrix.package }}
+          DEFAULT_SOURCE: ${{ matrix.source }}
+          DEFAULT_TAG: ${{ matrix.tag }}
         run: |
-          src="${IN_SOURCE:-}"
+          # Inputs override only the mirror they name; with no package input a
+          # dispatch means ci-s3, which is what the inputs meant before there
+          # was more than one image.
+          src=""
+          tag=""
+          if [ "${IN_PACKAGE:-ci-s3}" = "$PACKAGE" ]; then
+            src="${IN_SOURCE:-}"
+            tag="${IN_TAG:-}"
+          fi
           [ -n "$src" ] || src="$DEFAULT_SOURCE"
-          tag="${IN_TAG:-}"
           [ -n "$tag" ] || tag="$DEFAULT_TAG"
           # A floating source tag would make the mirror unreproducible: the whole
           # point is that the copy can be compared with the original.
@@ -167,18 +212,20 @@ jobs:
 
       - name: Can it be pulled without credentials
         run: |
-          # `docker compose up` on a laptop pulls this anonymously, so a private
-          # package would work in CI and fail on every dev machine. This step
-          # reports rather than fails: the visibility of a brand new package is
-          # not something a workflow can set.
+          # ci.yml pulls every one of these anonymously - service containers
+          # and the S3 step alike, with no login anywhere - and so does
+          # `docker compose up` on a laptop. A private package therefore fails
+          # CI as well as every dev machine. This step reports rather than
+          # fails: the visibility of a brand new package is not something a
+          # workflow can set.
           crane auth logout "$REGISTRY" || true
           rm -f "$HOME/.docker/config.json"
           if crane digest "${{ steps.what.outputs.dst }}" >/dev/null 2>&1; then
             echo "anonymous pull: OK - the package is public"
           else
             echo "anonymous pull: REFUSED - the package is private."
-            echo "CI can still pull it by logging in with GITHUB_TOKEN, but"
-            echo "docker compose on a laptop cannot. Make it public here:"
-            echo "https://github.com/users/${{ github.repository_owner }}/packages/container/${PACKAGE}/settings"
-            echo "::warning::ghcr.io/${{ github.repository_owner }}/${PACKAGE} is private; dev compose cannot pull it anonymously"
+            echo "ci.yml pulls it without logging in, so CI cannot use it either,"
+            echo "and neither can docker compose on a laptop. Make it public here:"
+            echo "https://github.com/users/${{ github.repository_owner }}/packages/container/${{ matrix.package }}/settings"
+            echo "::warning::ghcr.io/${{ github.repository_owner }}/${{ matrix.package }} is private; CI service containers and dev compose cannot pull it anonymously"
           fi
