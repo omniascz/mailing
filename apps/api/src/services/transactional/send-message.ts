@@ -18,6 +18,8 @@ import { db } from '../../db/client.js';
 import { emailEvents, suppressions } from '../../db/schema/index.js';
 import { sendTransactionalEmail, type TransactionalAttachment } from '../../lib/queues.js';
 import { checkSendCapacity } from '../billing/plan-enforcement.js';
+import { AppError } from '../../lib/app-error.js';
+import { assertFromDomainOwned, extractFromAddress } from '../sending/from-domain.js';
 
 /**
  * Suppression reasons that refuse a transactional message — the list the
@@ -64,6 +66,18 @@ export type TransactionalOutcome =
   | { status: 'rendering_failed'; message: string };
 
 /**
+ * The configuration set a raw message names. A raw message (SMTP, POST
+ * /transactional/email/raw) has no JSON body to name one in, so it comes in a
+ * header, as SES takes X-SES-CONFIGURATION-SET.
+ */
+export function configurationSetFromHeaders(headers: Record<string, string>): string | undefined {
+  const value = Object.entries(headers).find(
+    ([k]) => k.toLowerCase() === 'x-configuration-set',
+  )?.[1];
+  return value?.trim() || undefined;
+}
+
+/**
  * The suppression row that refuses a transactional message to this address,
  * or null. Asked before anything is queued — by this function, and by the SMTP
  * server at RCPT TO, so a refused recipient is refused before the client sends
@@ -87,10 +101,43 @@ export async function transactionalSuppression(
   return suppressed?.reason ?? null;
 }
 
+/**
+ * The sender must be one the organisation has verified — the same condition the
+ * SMTP relay applied before Z132, assertFromDomainOwned, which is the one
+ * definition of a verified sender (a verified domain, or the verified address
+ * itself). Asked first, before anything is queued, recorded or billed.
+ *
+ * POST /transactional/email did not ask at all: an unverified domain got 202
+ * queued, a send event, a charge and an email.sent webhook (measured in Z131).
+ * Refused here as 422 with a code of its own and the domain named; the shared
+ * assertion keeps its 403 for the other paths that call it.
+ */
+async function assertSenderVerified(orgId: string, from: string): Promise<void> {
+  try {
+    await assertFromDomainOwned(orgId, from);
+  } catch (err) {
+    if (!(err instanceof AppError) || err.code !== 'FROM_NOT_VERIFIED') throw err;
+    const address = extractFromAddress(from) ?? from.trim().toLowerCase();
+    const domain = address.split('@')[1] ?? address;
+    throw new AppError({
+      code: 'SENDER_DOMAIN_NOT_VERIFIED',
+      statusCode: 422,
+      message:
+        `The sender domain ${domain} is not verified for this account, so nothing was sent ` +
+        `or billed. Verify ${domain} (or the address ${address} itself) under Sending Domains, ` +
+        `then send again.`,
+      details: { from: address, domain },
+    });
+  }
+}
+
 export async function sendTransactionalMessage(
   msg: TransactionalMessage,
 ): Promise<TransactionalOutcome> {
   const { orgId, testMode } = msg;
+  // In test mode too: a sandboxed message from someone else's domain is still
+  // a message from someone else's domain.
+  await assertSenderVerified(orgId, msg.from);
   if (!testMode) {
     await checkSendCapacity(orgId, 1);
     const { enforceSendRate } = await import('../sending/send-rate.js');

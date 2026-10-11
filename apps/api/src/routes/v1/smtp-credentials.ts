@@ -18,11 +18,11 @@ import {
   suppressedRecipientReply,
 } from '../../services/smtp/smtp-reply.js';
 import {
+  configurationSetFromHeaders,
   sendTransactionalMessage,
   transactionalSuppression,
 } from '../../services/transactional/send-message.js';
 import { parseRawMime } from '../../services/transactional/mime-parse.js';
-import { assertFromDomainOwned } from '../../services/sending/from-domain.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 
@@ -128,9 +128,8 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
       const recipients = body.rcptTo?.length ? body.rcptTo : [...parsed.to, ...parsed.cc];
       try {
         if (!from) throw AppError.badRequest('No From address in message');
-        // The org may only relay mail from an address it has verified: the Go
-        // server authenticates the org but never checks the From.
-        await assertFromDomainOwned(body.orgId, from);
+        // The From is checked by sendTransactionalMessage, for every recipient
+        // and before anything is written — the same check as HTTP since Z132.
         if (recipients.length === 0) throw AppError.badRequest('No recipients in message');
         if (!parsed.html && !parsed.text)
           throw AppError.badRequest('Message has no text/html body');
@@ -139,11 +138,9 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
         await checkSendCapacity(body.orgId, recipients.length);
 
         // SMTP has no request body to name a configuration set in, so it comes
-        // in a header, as SES takes X-SES-CONFIGURATION-SET. Without it the
-        // set — and the IP pool it picks — could never apply to SMTP mail.
-        const configurationSet = Object.entries(parsed.headers).find(
-          ([k]) => k.toLowerCase() === 'x-configuration-set',
-        )?.[1];
+        // in a header. Without it the set — and the IP pool it picks — could
+        // never apply to SMTP mail.
+        const configurationSet = configurationSetFromHeaders(parsed.headers);
 
         const messages: Array<{ to: string; messageId: string }> = [];
         const rejected: Array<{ to: string; reason: string }> = [];
@@ -159,7 +156,7 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
             html: parsed.html ?? `<pre>${(parsed.text ?? '').replace(/[<>&]/g, '')}</pre>`,
             text: parsed.text ?? undefined,
             headers: parsed.headers,
-            configurationSet: configurationSet?.trim() || undefined,
+            configurationSet,
             metadata: { via: 'smtp', raw: true },
             // Relayed verbatim by the engine; the fields above route and record it.
             rawMime: rawStr,

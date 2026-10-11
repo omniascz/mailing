@@ -266,7 +266,7 @@ describe('DATA: the transactional path', () => {
       headers: { 'X-Configuration-Set': `paused-${tag}` },
     });
     for (const [label, res, text] of [
-      ['unverified From', unverified, /not a verified sender/],
+      ['unverified From', unverified, /sender domain .* is not verified/],
       ['plan used up', plan, /send limit reached/],
       ['sandbox', sandbox, /sandbox mode/],
       ['paused configuration set', paused, /sending is paused/],
