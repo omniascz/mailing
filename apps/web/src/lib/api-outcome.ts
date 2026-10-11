@@ -75,45 +75,45 @@ export function errorStateFor(digest: string | undefined): ErrorState | null {
   const tail = digest.slice(API_ERROR_DIGEST_PREFIX.length);
   if (tail === 'UNREACHABLE') {
     return {
-      title: 'Server je nedostupný',
-      text: 'Nepodařilo se spojit se serverem aplikace. Zkuste to prosím za chvíli znovu.',
+      title: 'Server unreachable',
+      text: 'Could not connect to the application server. Please try again in a moment.',
       retry: true,
     };
   }
   const status = Number(tail);
   if (status === 429) {
     return {
-      title: 'Příliš mnoho požadavků',
-      text: 'Server teď odmítl další požadavky, protože jich přišlo příliš mnoho za krátkou dobu. Počkejte chvíli a zkuste to znovu.',
+      title: 'Too many requests',
+      text: 'The server is refusing further requests because too many arrived in a short time. Wait a moment and try again.',
       retry: true,
     };
   }
   if (status === 401) {
     return {
-      title: 'Přihlášení vypršelo',
-      text: 'Vaše přihlášení už neplatí. Přihlaste se prosím znovu.',
+      title: 'Session expired',
+      text: 'Your sign-in is no longer valid. Please sign in again.',
       retry: false,
       href: '/login',
-      linkLabel: 'Přihlásit se',
+      linkLabel: 'Sign in',
     };
   }
   if (status === 403) {
     return {
-      title: 'Bez oprávnění',
-      text: 'K těmto údajům nemáte oprávnění. Pokud je potřebujete, požádejte správce organizace.',
+      title: 'No permission',
+      text: 'You do not have permission to see this. If you need it, ask an administrator of your organisation.',
       retry: false,
     };
   }
   if (status >= 500) {
     return {
-      title: 'Chyba na serveru',
-      text: `Server při načítání selhal (HTTP ${status}). Zkuste to prosím znovu; pokud to potrvá, napište na support@mailforge.cz.`,
+      title: 'Server error',
+      text: `The server failed while loading (HTTP ${status}). Please try again; if it keeps happening, email support@mailforge.cz.`,
       retry: true,
     };
   }
   return {
-    title: 'Načítání selhalo',
-    text: `Server požadavek odmítl (HTTP ${status}). Zkuste to prosím znovu.`,
+    title: 'Loading failed',
+    text: `The server refused the request (HTTP ${status}). Please try again.`,
     retry: true,
   };
 }

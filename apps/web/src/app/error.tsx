@@ -39,15 +39,15 @@ export default function ErrorBoundary({
           <AlertOctagon className="h-7 w-7" />
         </div>
         <h1 className="text-2xl font-semibold text-secondary-900">
-          {state?.title ?? 'Něco se nepovedlo.'}
+          {state?.title ?? 'Something went wrong.'}
         </h1>
         <p className="mt-2 text-sm text-secondary-600">
           {state?.text ??
-            'Akce selhala kvůli neočekávané chybě. Můžete ji zkusit znovu, nebo se vrátit na hlavní stránku.'}
+            'The action failed because of an unexpected error. You can try again or go back to the home page.'}
         </p>
         {error.digest ? (
           <p className="mt-3 inline-block rounded bg-secondary-100 px-2 py-1 font-mono text-[11px] text-secondary-700">
-            ID chyby: {error.digest}
+            Error ID: {error.digest}
           </p>
         ) : null}
         <div className="mt-6 flex gap-2">
@@ -56,7 +56,7 @@ export default function ErrorBoundary({
             onClick={retry}
             className="inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
-            <RefreshCw className="h-4 w-4" /> Zkusit znovu
+            <RefreshCw className="h-4 w-4" /> Try again
           </button>
           <Link
             href="/"

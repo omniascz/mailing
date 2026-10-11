@@ -58,6 +58,7 @@ import { sendTransactionalEmail } from '../../lib/queues.js';
 import { renderEmail as renderBlocks, renderPlainText } from '@forgemsg/editor/render';
 import { readCampaignContent } from '@forgemsg/editor/schema';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
+import { assertMayOverrideGate } from '../../services/pre-send/override-permission.js';
 import { AppError } from '../../lib/app-error.js';
 import { assertCampaignPurpose } from '../../services/gdpr/campaign-purpose-check.js';
 import { env } from '../../config/env.js';
@@ -181,6 +182,10 @@ export default async function campaignRoutes(app: FastifyInstance) {
    */
   await app.register(async (scope) => {
     scope.addHook('preHandler', app.requireAuth);
+    // Sending, scheduling and resuming put mail in recipients' inboxes: an
+    // editor and up. A viewer only looks (Z129). Overriding the pre-send gate
+    // is narrower still — see assertMayOverrideGate.
+    const mayDispatch = app.requireRole('editor', 'admin', 'owner');
     /**
      * GET /api/v1/campaigns
      * List campaigns for this org. Supports cursor pagination and status filter.
@@ -280,7 +285,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
      */
     scope.post(
       '/api/v1/campaigns/:id/schedule',
-      { schema: { tags: ['Campaigns'], summary: 'Schedule campaign' } },
+      { preHandler: mayDispatch, schema: { tags: ['Campaigns'], summary: 'Schedule campaign' } },
       async (req) => {
         const { id } = idParam.parse(req.params);
         const { scheduledAt, timezone, acknowledgeDeliverabilityRisk } = z
@@ -290,6 +295,7 @@ export default async function campaignRoutes(app: FastifyInstance) {
             acknowledgeDeliverabilityRisk: z.boolean().optional(),
           })
           .parse(req.body);
+        assertMayOverrideGate(req.user, acknowledgeDeliverabilityRisk);
 
         const campaign = await scheduleCampaign(
           req.user!.orgId,
@@ -393,12 +399,16 @@ export default async function campaignRoutes(app: FastifyInstance) {
      */
     scope.post(
       '/api/v1/campaigns/:id/send',
-      { schema: { tags: ['Campaigns'], summary: 'Send campaign immediately' } },
+      {
+        preHandler: mayDispatch,
+        schema: { tags: ['Campaigns'], summary: 'Send campaign immediately' },
+      },
       async (req) => {
         const { id } = idParam.parse(req.params);
         // Sending despite a no-go pre-send verdict takes an explicit
         // acknowledgement; without one the gate answers 422 (send-gate.ts).
         const { acknowledgeDeliverabilityRisk } = gateBody.parse(req.body ?? {});
+        assertMayOverrideGate(req.user, acknowledgeDeliverabilityRisk);
         // Plan + suspended check before flipping status. We don't know the
         // exact recipient count yet (splitter resolves audience), so pass
         // adding=1 as a sentinel — checkSendCapacity blocks when monthly
@@ -443,10 +453,11 @@ export default async function campaignRoutes(app: FastifyInstance) {
      */
     scope.post(
       '/api/v1/campaigns/:id/resume',
-      { schema: { tags: ['Campaigns'], summary: 'Resume campaign' } },
+      { preHandler: mayDispatch, schema: { tags: ['Campaigns'], summary: 'Resume campaign' } },
       async (req) => {
         const { id } = idParam.parse(req.params);
         const { acknowledgeDeliverabilityRisk } = gateBody.parse(req.body ?? {});
+        assertMayOverrideGate(req.user, acknowledgeDeliverabilityRisk);
         const campaign = await resumeCampaign(req.user!.orgId, id, {
           acknowledgeDeliverabilityRisk,
           userId: req.user!.userId,
@@ -477,7 +488,10 @@ export default async function campaignRoutes(app: FastifyInstance) {
      */
     scope.post(
       '/api/v1/campaigns/:id/schedule-resend',
-      { schema: { tags: ['Campaigns'], summary: 'Schedule resend to non-openers' } },
+      {
+        preHandler: mayDispatch,
+        schema: { tags: ['Campaigns'], summary: 'Schedule resend to non-openers' },
+      },
       async (req, reply) => {
         const { id } = idParam.parse(req.params);
         const body = z

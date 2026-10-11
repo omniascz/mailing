@@ -43,34 +43,33 @@ export interface RefusedCriterion {
 export const ACKNOWLEDGE_FIELD = 'acknowledgeDeliverabilityRisk';
 
 const LABELS: Record<string, string> = {
-  'domain-auth': 'Ověření odesílací domény (SPF, DKIM, DMARC)',
-  'audience-empty': 'Příjemci kampaně',
-  'audience-size': 'Velikost publika',
-  'suppression-match': 'Potlačené adresy v publiku',
-  'frequency-cap': 'Limit četnosti zasílání',
-  subject: 'Předmět',
-  'merge-tags': 'Slučovací pole',
-  'unsubscribe-link': 'Odkaz pro odhlášení',
-  'preference-center-tag': 'Odkaz na centrum preferencí',
-  'spam-score': 'Spamové skóre',
-  'plain-text-alt': 'Textová verze e-mailu',
-  'ip-warmup': 'Zahřívání IP adres',
-  'bounce-rate': 'Míra nedoručitelnosti (7 dní)',
-  'complaint-rate': 'Míra stížností na spam',
-  'schedule-time': 'Čas odeslání',
-  blacklist: 'Blacklisty IP adres',
+  'domain-auth': 'Sending domain authentication (SPF, DKIM, DMARC)',
+  'audience-empty': 'Campaign recipients',
+  'audience-size': 'Audience size',
+  'suppression-match': 'Suppressed addresses in the audience',
+  'frequency-cap': 'Frequency cap',
+  subject: 'Subject',
+  'merge-tags': 'Merge tags',
+  'unsubscribe-link': 'Unsubscribe link',
+  'preference-center-tag': 'Preference centre link',
+  'spam-score': 'Spam score',
+  'plain-text-alt': 'Plain-text version',
+  'ip-warmup': 'IP warm-up',
+  'bounce-rate': 'Bounce rate (7 days)',
+  'complaint-rate': 'Spam complaint rate',
+  'schedule-time': 'Send time',
+  blacklist: 'IP blacklists',
 };
 
 export function criterionLabel(id: string): string {
   return LABELS[id] ?? id;
 }
 
-const pct = (v: number) => `${round(v)} %`;
-const round = (v: number) =>
-  Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100).replace('.', ',');
+const pct = (v: number) => `${round(v)}%`;
+const round = (v: number) => (Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100));
 
 /**
- * Every metric the gate reports, in words. Known keys get a Czech label and a
+ * Every metric the gate reports, in words. Known keys get a label and a
  * unit; a key this list does not know is still shown, as `key: value`, so a
  * criterion the server adds later is never silently dropped from the panel.
  */
@@ -93,13 +92,13 @@ export function describeMetrics(metrics: Record<string, string | number> | undef
   const complaint24 = num('complaintRate24hPct');
   const threshold = num('thresholdPct');
   const window = take('window');
-  if (bounce !== undefined) out.push(`Naměřeno: ${pct(bounce)} nedoručitelných zpráv`);
+  if (bounce !== undefined) out.push(`Measured: ${pct(bounce)} of messages bounced`);
   if (complaint !== undefined)
     out.push(
-      `Naměřeno: ${pct(complaint)} stížností${window ? ` (okno ${window === '24h' ? '24 hodin' : '7 dní'})` : ''}`,
+      `Measured: ${pct(complaint)} complaints${window ? ` (${window === '24h' ? '24-hour' : '7-day'} window)` : ''}`,
     );
-  if (complaint24 !== undefined) out.push(`Za posledních 24 hodin: ${pct(complaint24)}`);
-  if (threshold !== undefined) out.push(`Hranice: ${pct(threshold)}`);
+  if (complaint24 !== undefined) out.push(`Last 24 hours: ${pct(complaint24)}`);
+  if (threshold !== undefined) out.push(`Threshold: ${pct(threshold)}`);
 
   const sample = num('sampleSize');
   const sample7d = num('sample7d');
@@ -107,33 +106,35 @@ export function describeMetrics(metrics: Record<string, string | number> | undef
   const minSample = num('minSample');
   if (sample !== undefined)
     out.push(
-      `Vzorek: ${sample}${minSample !== undefined ? ` (minimum ${minSample})` : ''}` +
-        (minSample !== undefined && sample < minSample ? ' — do rozhodnutí se nepočítá' : ''),
+      `Sample: ${sample}${minSample !== undefined ? ` (minimum ${minSample})` : ''}` +
+        (minSample !== undefined && sample < minSample ? ' — not counted towards the verdict' : ''),
     );
   if (sample7d !== undefined)
     out.push(
-      `Vzorek za 7 dní: ${sample7d} doručených${minSample !== undefined ? ` (minimum ${minSample})` : ''}` +
-        (minSample !== undefined && sample7d < minSample ? ' — do rozhodnutí se nepočítá' : ''),
+      `7-day sample: ${sample7d} delivered${minSample !== undefined ? ` (minimum ${minSample})` : ''}` +
+        (minSample !== undefined && sample7d < minSample
+          ? ' — not counted towards the verdict'
+          : ''),
     );
-  if (sample24h !== undefined) out.push(`Vzorek za 24 hodin: ${sample24h} doručených`);
+  if (sample24h !== undefined) out.push(`24-hour sample: ${sample24h} delivered`);
   if (sample === undefined && sample7d === undefined && minSample !== undefined)
-    out.push(`Minimální vzorek: ${minSample}`);
+    out.push(`Minimum sample: ${minSample}`);
 
   const pairs: Array<[string, (v: number | string) => string]> = [
-    ['recipientCount', (v) => `Příjemců: ${v}`],
-    ['suppressedPct', (v) => `Potlačeno: ${pct(Number(v))}`],
-    ['suppressedCount', (v) => `Potlačených adres: ${v}`],
-    ['cappedPct', (v) => `Zastaví limit četnosti: ${pct(Number(v))}`],
-    ['subjectLength', (v) => `Délka předmětu: ${v} znaků`],
-    ['spamScore', (v) => `Skóre: ${v}/10`],
-    ['unknownTags', (v) => `Neznámých polí: ${v}`],
-    ['unknownFilters', (v) => `Neznámých filtrů: ${v}`],
-    ['remainingCapacity', (v) => `Dnes lze odeslat ještě: ${v}`],
-    ['overflow', (v) => `Počká na zítřek: ${v}`],
-    ['blacklisted', (v) => `Na blacklistu: ${v} IP`],
-    ['total', (v) => `IP adres celkem: ${v}`],
-    ['checkedIps', (v) => `Zkontrolovaných IP: ${v}`],
-    ['scheduledHourUtc', (v) => `Hodina odeslání (UTC): ${v}`],
+    ['recipientCount', (v) => `Recipients: ${v}`],
+    ['suppressedPct', (v) => `Suppressed: ${pct(Number(v))}`],
+    ['suppressedCount', (v) => `Suppressed addresses: ${v}`],
+    ['cappedPct', (v) => `Stopped by the frequency cap: ${pct(Number(v))}`],
+    ['subjectLength', (v) => `Subject length: ${v} characters`],
+    ['spamScore', (v) => `Score: ${v}/10`],
+    ['unknownTags', (v) => `Unknown merge tags: ${v}`],
+    ['unknownFilters', (v) => `Unknown filters: ${v}`],
+    ['remainingCapacity', (v) => `Can still be sent today: ${v}`],
+    ['overflow', (v) => `Waits until tomorrow: ${v}`],
+    ['blacklisted', (v) => `Blacklisted IPs: ${v}`],
+    ['total', (v) => `IP addresses in total: ${v}`],
+    ['checkedIps', (v) => `IPs checked: ${v}`],
+    ['scheduledHourUtc', (v) => `Send hour (UTC): ${v}`],
   ];
   for (const [k, fmt] of pairs) {
     const v = take(k);
@@ -165,60 +166,60 @@ export function remedyFor(id: string, campaignId: string): Remedy {
     case 'domain-auth':
       return {
         text:
-          'U svého DNS poskytovatele doplňte záznamy SPF, DKIM a DMARC (hodnoty najdete u domény). ' +
-          'Pak na stránce domény klikněte na „Znovu ověřit DNS“.',
+          'At your DNS provider, add the SPF, DKIM and DMARC records (the values are on the domain page). ' +
+          'Then click “Re-verify DNS” on the domain page.',
         href: '/domains',
-        linkLabel: 'Otevřít domény',
+        linkLabel: 'Open domains',
       };
     case 'audience-empty':
       return {
-        text: 'Vyberte pro kampaň seznam, ve kterém je alespoň jeden aktivní kontakt.',
+        text: 'Choose a list for the campaign that has at least one active contact.',
         href: edit,
-        linkLabel: 'Upravit kampaň',
+        linkLabel: 'Edit campaign',
       };
     case 'unsubscribe-link':
       return {
-        text: 'Přidejte do HTML obsahu odkaz pro odhlášení ({{unsubscribe_url}}), nebo obsah postavte ve vizuálním editoru, kde ho doplníme sami.',
+        text: 'Add an unsubscribe link ({{unsubscribe_url}}) to the HTML content, or build the content in the visual editor, which adds it for you.',
         href: edit,
-        linkLabel: 'Upravit kampaň',
+        linkLabel: 'Edit campaign',
       };
     case 'subject':
-      return { text: 'Vyplňte předmět kampaně.', href: edit, linkLabel: 'Upravit kampaň' };
+      return { text: 'Fill in the campaign subject.', href: edit, linkLabel: 'Edit campaign' };
     case 'spam-score':
       return {
-        text: 'Upravte texty, na které spamový filtr upozorňuje (viz podrobnosti výše).',
+        text: 'Reword what the spam filter flags (see the details above).',
         href: edit,
-        linkLabel: 'Upravit kampaň',
+        linkLabel: 'Edit campaign',
       };
     case 'bounce-rate':
       return {
         text:
-          'Nedoručitelné adresy už jsou potlačené a znovu se jim neposílá; míra klesne, jak tyto zprávy vypadnou ze 7denního okna. ' +
-          'Mezitím odeberte ze seznamu staré a nepotvrzené adresy.',
+          'Bounced addresses are already suppressed and are not sent to again; the rate falls as those messages leave the 7-day window. ' +
+          'In the meantime, remove old and unconfirmed addresses from the list.',
         href: '/lists',
-        linkLabel: 'Otevřít seznamy',
+        linkLabel: 'Open lists',
       };
     case 'complaint-rate':
       return {
-        text: 'Posílejte jen kontaktům, které o e-maily stojí: odeberte ze seznamu adresy bez jasného souhlasu.',
+        text: 'Send only to contacts who want your emails: remove addresses without clear consent from the list.',
         href: '/lists',
-        linkLabel: 'Otevřít seznamy',
+        linkLabel: 'Open lists',
       };
     case 'ip-warmup':
       return {
-        text: 'Dnešní limit zahřívaných IP adres je vyčerpaný. Naplánujte kampaň na zítřek tlačítkem „Schedule for later“.',
+        text: 'Today’s limit for the warming-up IP addresses is used up. Schedule the campaign for tomorrow with “Schedule for later”.',
       };
     case 'blacklist':
       return {
         text:
-          `Vaše odesílací IP adresy jsou na blacklistu. Vyřazení z něj v aplikaci provést nejde — ` +
-          `napište podpoře na ${SUPPORT_EMAIL}; dokud IP nejsou venku, zprávy se nedoručí.`,
+          `Your sending IP addresses are on a blacklist. Delisting cannot be done in the app — ` +
+          `email support at ${SUPPORT_EMAIL}; until the IPs are delisted, messages will not be delivered.`,
       };
     default:
       return {
-        text: 'Opravte kampaň podle podrobností výše.',
+        text: 'Fix the campaign using the details above.',
         href: edit,
-        linkLabel: 'Upravit kampaň',
+        linkLabel: 'Edit campaign',
       };
   }
 }
@@ -240,9 +241,9 @@ export function groupChecks(checks: Check[]): GroupedChecks {
 }
 
 export const VERDICT_TEXT: Record<Verdict, string> = {
-  go: 'Kampaň je připravená k odeslání.',
-  caution: 'Kampaň lze odeslat, ale má varování.',
-  'no-go': 'Kampaň v tomto stavu odeslat nelze.',
+  go: 'The campaign is ready to send.',
+  caution: 'The campaign can be sent, but it has warnings.',
+  'no-go': 'The campaign cannot be sent as it is.',
 };
 
 /**
