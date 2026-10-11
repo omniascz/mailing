@@ -1,4 +1,5 @@
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import { verifiedApiKeyPart } from '../../plugins/rate-limit.js';
 import { z } from 'zod';
 import { AppError } from '../../lib/app-error.js';
 import {
@@ -29,8 +30,7 @@ import {
 const PUBLIC_SUBSCRIBE_LIMIT = {
   max: 10,
   timeWindow: '1 hour',
-  keyGenerator: (req: { headers: Record<string, unknown>; ip: string }) =>
-    `stock-sub:${(req.headers['x-api-key'] as string) ?? 'anon'}:${req.ip}`,
+  keyGenerator: (req: FastifyRequest) => `stock-sub:${verifiedApiKeyPart(req)}:${req.ip}`,
 };
 
 /**

@@ -41,7 +41,7 @@ import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { createTrackingToken } from '@forgemsg/shared';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
@@ -85,14 +85,6 @@ const sql = postgres(process.env.DATABASE_URL!, { max: 2, prepare: false });
  * process CI starts for this suite. A wrong value is a 401 below, not a pass.
  */
 const FBL_SECRET = 'dev-fbl-webhook-secret-change-me-32ch';
-
-/**
- * This file's own bucket in the API's 100/min limiter (`x-api-key ??
- * request.ip`, api/plugins/rate-limit.ts), as in recipient-resubscribe: an
- * unknown key matches nothing and the request continues as the Bearer session,
- * or as nobody on a public route.
- */
-const RATE_LIMIT_BUCKET = `integration-bounced-${randomUUID()}`;
 
 const tag = randomUUID().slice(0, 8);
 const sendingDomain = `bnc-${tag}.test`;
@@ -161,8 +153,7 @@ async function call(
   return fetch(`${API}${path}`, {
     method,
     headers: {
-      'x-api-key': RATE_LIMIT_BUCKET,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? authHeaders(token) : {}),
       ...(body === undefined ? {} : { 'Content-Type': isText ? 'text/plain' : 'application/json' }),
       ...extra,
     },
@@ -337,7 +328,7 @@ async function transactional(to: string): Promise<string> {
 describe('bounced and complained hold on the send path and through an unsubscribe', () => {
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'bnc');
+    token = await seedApiKey(sql, 'bnc');
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
       VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)

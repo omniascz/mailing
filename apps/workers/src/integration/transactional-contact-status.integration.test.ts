@@ -34,7 +34,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import type { Job, JobType } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
 import { mtaQueues, type MtaSendJobData } from '../queues/index.js';
@@ -62,13 +62,6 @@ vi.mock('../lib/mta-grpc-client.js', () => ({
 const API = process.env.API_URL!;
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET!;
 const sql = postgres(process.env.DATABASE_URL!, { max: 2, prepare: false });
-
-/**
- * This file's own bucket in the API's 100/min limiter (`x-api-key ??
- * request.ip`, api/plugins/rate-limit.ts), as in recipient-resubscribe: an
- * unknown key matches nothing and the request continues as the Bearer session.
- */
-const RATE_LIMIT_BUCKET = `integration-txstatus-${randomUUID()}`;
 
 const tag = randomUUID().slice(0, 8);
 const sendingDomain = `txstatus-${tag}.test`;
@@ -104,8 +97,7 @@ async function api(method: string, path: string, body?: unknown): Promise<unknow
     method,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      'x-api-key': RATE_LIMIT_BUCKET,
+      ...authHeaders(token),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(20_000),
@@ -162,7 +154,7 @@ describe('transactional hard bounces mark the contact; internal writes tell the 
 
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'txstatus');
+    token = await seedApiKey(sql, 'txstatus');
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
       VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true)

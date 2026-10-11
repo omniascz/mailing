@@ -28,7 +28,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg } from './setup/seed-org.js';
 // Not via the package export map: apps/api does not export services/rss, and
 // adding an export for a test would be a change to the package's public
@@ -92,7 +92,7 @@ async function api<T>(method: string, path: string, body?: unknown): Promise<T> 
     method,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? authHeaders(token) : {}),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(20_000),
@@ -215,7 +215,7 @@ describe('RSS campaign end to end (real DB + Redis + API)', () => {
 
     // Through setup/login.ts, not the local api() helper: the login route is
     // rate limited per process and this suite is run repeatedly.
-    token = await loginAsSeedUser(API, 'rss');
+    token = await seedApiKey(sql, 'rss');
   }, 120_000);
 
   afterAll(async () => {

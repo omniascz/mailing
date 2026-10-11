@@ -39,7 +39,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
@@ -75,13 +75,6 @@ vi.mock('../lib/mta-grpc-client.js', () => ({
 
 const API = process.env.API_URL!;
 const sql = postgres(process.env.DATABASE_URL!, { max: 2, prepare: false });
-
-/**
- * This file's own bucket in the API's 100/min limiter (`x-api-key ??
- * request.ip`, api/plugins/rate-limit.ts), as in recipient-resubscribe: an
- * unknown key matches nothing and the request continues as the Bearer session.
- */
-const RATE_LIMIT_BUCKET = `integration-txevents-${randomUUID()}`;
 
 const tag = randomUUID().slice(0, 8);
 const sendingDomain = `txevents-${tag}.test`;
@@ -126,8 +119,7 @@ async function api(method: string, path: string, body?: unknown): Promise<unknow
     method,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      'x-api-key': RATE_LIMIT_BUCKET,
+      ...authHeaders(token),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(20_000),
@@ -195,7 +187,7 @@ const settle = (ms: number) => new Promise((r) => setTimeout(r, ms));
 describe('transactional events are stored and feed the auto-pause (real DB + Redis + API)', () => {
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'txevents');
+    token = await seedApiKey(sql, 'txevents');
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
       VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)

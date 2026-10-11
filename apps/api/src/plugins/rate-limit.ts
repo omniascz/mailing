@@ -2,6 +2,63 @@ import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 import rateLimit from '@fastify/rate-limit';
 import { redis } from '@forgemsg/shared/redis';
+import { createHash } from 'node:crypto';
+import type { FastifyRequest } from 'fastify';
+
+const digest = (value: string) => createHash('sha256').update(value).digest('hex').slice(0, 32);
+
+/**
+ * Who a request counts against: its verified caller, or its address.
+ *
+ * The key is derived only from what the auth plugin has already VERIFIED and
+ * put on request.user — never from what the client sent unchecked:
+ *
+ *   - a verified API key   → `apikey:<hash of that key>`, one bucket per key;
+ *   - a verified session   → `session:<hash of its token>`, one bucket per
+ *                            login. Two users always have two buckets, and a
+ *                            page the web app renders on its server for a user
+ *                            carries that user's cookie, so it counts against
+ *                            that user — not against the web server's address,
+ *                            which every user rendered there shares;
+ *   - no verified identity → the IP, and only the IP.
+ *
+ * It used to be `x-api-key header || ip`, unverified: any value in the header,
+ * valid or not, opened a fresh bucket — so a random header lifted every limit,
+ * the 10-per-15-minutes login limit included — while a real signed-in user
+ * rendered by the web server shared one bucket with all the others.
+ *
+ * request.user is set by the auth plugin's onRequest hook. This plugin attaches
+ * its handler to each route (onRoute), and route-level hooks run after the
+ * application-level ones, so by the time the key is computed the identity has
+ * been checked.
+ */
+/**
+ * The verified API key's part of a route's own composite key (key AND address),
+ * or 'anon'. Never the raw header: an unknown value there must not open a
+ * bucket of its own.
+ */
+export function verifiedApiKeyPart(request: FastifyRequest): string {
+  return request.user?.apiKeyMode !== undefined
+    ? digest(String(request.headers['x-api-key'] ?? ''))
+    : 'anon';
+}
+
+export function rateLimitKey(request: FastifyRequest): string {
+  const user = request.user;
+  if (user) {
+    // apiKeyMode is set only on the API-key path of the auth plugin, after
+    // lookupApiKey found an active key for this exact header value.
+    if (user.apiKeyMode !== undefined) {
+      return `apikey:${digest(String(request.headers['x-api-key'] ?? ''))}`;
+    }
+    const header = request.headers.authorization;
+    const token = header?.startsWith('Bearer ')
+      ? header.slice(7)
+      : (request.cookies as Record<string, string> | undefined)?.['fm_session'];
+    if (token) return `session:${digest(token)}`;
+  }
+  return request.ip;
+}
 
 async function rateLimitPlugin(app: FastifyInstance) {
   await app.register(rateLimit, {
@@ -34,10 +91,8 @@ async function rateLimitPlugin(app: FastifyInstance) {
     // unavailable. For a limiter that is the right side to fail on, and it
     // matches how the internal-auth and webhook gates in this codebase behave.
     redis,
-    keyGenerator: (request) => {
-      return (request.headers['x-api-key'] as string) || request.ip;
-    },
-    // Exempt /api/v1/internal/* from the IP-keyed limit. These are the
+    keyGenerator: rateLimitKey,
+    // Exempt /api/v1/internal/* from the limit. These are the
     // service-to-service endpoints (the Go SMTP server's auth + relay calls),
     // already gated by a timing-safe secret in internalAuthPlugin — the IP
     // limit adds no protection there. Worse, every SMTP login arrives from the

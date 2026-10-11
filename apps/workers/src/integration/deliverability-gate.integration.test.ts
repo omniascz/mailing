@@ -39,7 +39,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
@@ -73,8 +73,6 @@ const API = process.env.API_URL!;
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET!;
 const sql = postgres(process.env.DATABASE_URL!, { max: 2, prepare: false });
 
-/** This file's own bucket in the API's limiters. */
-const RATE_LIMIT_BUCKET = `integration-deliverability-gate-${randomUUID()}`;
 const tag = randomUUID().slice(0, 8);
 const ALL: JobType[] = ['waiting', 'prioritized', 'delayed', 'paused', 'active', 'completed'];
 
@@ -112,8 +110,7 @@ async function call(method: string, path: string, bearer: string, body?: unknown
     method,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${bearer}`,
-      'x-api-key': RATE_LIMIT_BUCKET,
+      ...authHeaders(bearer),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(60_000),
@@ -304,7 +301,7 @@ const out: Record<string, unknown> = {};
 describe('the pre-send verdict is enforced at the send (real DB + Redis + API)', () => {
   beforeAll(async () => {
     const seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'deliverability-gate');
+    token = await seedApiKey(sql, 'deliverability-gate');
     const [u] = await sql<{ id: string }[]>`
       SELECT id FROM users WHERE email = 'demo@acme.test' AND org_id = ${seed.id}
     `;

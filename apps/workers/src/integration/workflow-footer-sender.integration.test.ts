@@ -42,7 +42,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { batchSenderQueues, mtaQueues, type BatchSenderJobData } from '../queues/index.js';
@@ -96,7 +96,7 @@ async function addedTo<T>(queue: Queue, before: Set<string>): Promise<T[]> {
 async function cloneIntoSeed(builtInId: string): Promise<string> {
   const res = await fetch(`${API}/api/v1/templates/${builtInId}/use`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ name: `wffoot ${tag} ${builtInId} ${randomUUID().slice(0, 6)}` }),
     signal: AbortSignal.timeout(20_000),
   });
@@ -162,7 +162,7 @@ async function sendAndReadFooter(
 describe('a workflow email footer names its sender, in its language (real DB + Redis + API)', () => {
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'wffoot');
+    token = await seedApiKey(sql, 'wffoot');
     await makeOrgReady(seed.id, 'seed');
 
     // An organisation that never filled in Settings › Workspace. Its own row,

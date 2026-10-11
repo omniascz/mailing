@@ -48,7 +48,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import type { Job } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
 import type { MtaSendJobData } from '../queues/index.js';
@@ -78,9 +78,6 @@ vi.mock('../lib/mta-grpc-client.js', () => ({
 const API = process.env.API_URL!;
 const sql = postgres(process.env.DATABASE_URL!, { max: 2, prepare: false });
 
-/** This file's own bucket in the API's 100/min limiter, as in recipient-resubscribe. */
-const RATE_LIMIT_BUCKET = `integration-delivery-rate-${randomUUID()}`;
-
 const tag = randomUUID().slice(0, 8);
 const fromEmail = `noreply@delivery-rate-${tag}.test`;
 const octet = () => 1 + Math.floor(Math.random() * 250);
@@ -100,8 +97,7 @@ async function api(method: string, path: string, bearer: string, body?: unknown)
     method,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${bearer}`,
-      'x-api-key': RATE_LIMIT_BUCKET,
+      ...authHeaders(bearer),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(120_000),
@@ -253,7 +249,7 @@ async function measure(name: string, ip: string): Promise<Measured> {
 describe('deliverability rates are one set of messages (real DB + Redis + API)', () => {
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'delivery-rate');
+    token = await seedApiKey(sql, 'delivery-rate');
     const [u] = await sql<{ id: string }[]>`
       SELECT id FROM users WHERE email = 'demo@acme.test' AND org_id = ${seed.id}
     `;

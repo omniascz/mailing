@@ -23,7 +23,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg } from './setup/seed-org.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
@@ -56,7 +56,7 @@ async function api<T>(method: string, path: string, body?: unknown): Promise<T> 
     method,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? authHeaders(token) : {}),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(20_000),
@@ -211,7 +211,7 @@ describe('campaign language end to end (real DB + Redis + API)', () => {
 
     // Through setup/login.ts, not the local api() helper: the login route is
     // rate limited per process and this suite is run repeatedly.
-    token = await loginAsSeedUser(API, 'locale');
+    token = await seedApiKey(sql, 'locale');
   }, 120_000);
 
   afterAll(async () => {

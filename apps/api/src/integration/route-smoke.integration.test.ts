@@ -17,7 +17,7 @@
  *   401/403  the guard working. Some routes want a system-admin or a scope this
  *            session does not have.
  *   404      a real id was not available and the handler said so, having run.
- *   429      rate limited. Should not happen — see the remoteAddress note below.
+ *   429      rate limited. Should not happen — see the rate-limit note below.
  *   2xx/3xx  fine.
  *
  * A 5xx is different in kind: the handler was reached and threw. There is no
@@ -25,12 +25,17 @@
  *
  * ─── Why this does not trip the rate limiter ────────────────────────────────
  *
- * The limiter is 100 req/min keyed on `x-api-key ?? request.ip`, hardcoded with
- * no override. A naive sweep gets ~100 answers and several hundred 429s, which
- * is what the original probe hit. Rather than change production config for a
- * test, each request is injected from its own `remoteAddress`, so each lands in
- * its own bucket. Measured: 140 calls from one address give 100×200 + 40×429;
- * 140 from distinct addresses give 140×200.
+ * The limiter is 100 req/min per verified caller (plugins/rate-limit.ts), and
+ * this sweep is one caller: one login, one session, several hundred requests.
+ * So it keeps to the limit. A request answered 429 waits for the window the
+ * answer names (`x-ratelimit-reset`) and is sent again; nothing raises the
+ * limit or lends the sweep another identity.
+ *
+ * It used to spread its requests over made-up source addresses instead. That
+ * worked only because the limiter keyed on an unverified header the test
+ * harness set per address — the bypass that is now closed. A signed-in caller
+ * is counted as itself, whatever address it comes from, so the sweep now takes
+ * as many minutes as it has hundreds of requests.
  */
 import { env } from '../config/env.js';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -82,18 +87,28 @@ let parameterised = 0;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Distinct source address per request — one rate-limit bucket each. */
-let addressCounter = 0;
-function nextAddress(): string {
-  const n = addressCounter++;
-  return `10.${(n >> 16) & 255}.${(n >> 8) & 255}.${(n & 255) + 1}`;
-}
+/** Requests that had to wait for the rate-limit window, for the coverage report. */
+let rateLimitWaits = 0;
 
 /** A route that never answers is as broken as one that 500s. */
+/** One request, waiting out the limiter's window when the answer is 429. */
 async function injectWithTimeout(
   url: string,
   ms = 20_000,
 ): Promise<{ status: number; body: string }> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const r = await injectOnce(url, ms);
+    if (r.status !== 429) return r;
+    rateLimitWaits++;
+    await new Promise((done) => setTimeout(done, (Math.max(r.resetSeconds, 1) + 1) * 1_000));
+  }
+  return injectOnce(url, ms);
+}
+
+async function injectOnce(
+  url: string,
+  ms: number,
+): Promise<{ status: number; body: string; resetSeconds: number }> {
   let timer: NodeJS.Timeout | undefined;
   try {
     return await Promise.race([
@@ -102,15 +117,18 @@ async function injectWithTimeout(
           method: 'GET',
           url,
           headers: { cookie: session.cookie },
-          remoteAddress: nextAddress(),
         })
-        .then((r) => ({ status: r.statusCode, body: r.body.slice(0, 300) })),
+        .then((r) => ({
+          status: r.statusCode,
+          body: r.body.slice(0, 300),
+          resetSeconds: Number(r.headers['x-ratelimit-reset'] ?? r.headers['retry-after'] ?? 60),
+        })),
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms);
       }),
     ]);
   } catch (err) {
-    return { status: 599, body: `[no response] ${(err as Error).message}` };
+    return { status: 599, body: `[no response] ${(err as Error).message}`, resetSeconds: 0 };
   } finally {
     if (timer) clearTimeout(timer);
   }
@@ -211,7 +229,7 @@ beforeAll(async () => {
     }
   };
   await Promise.all(Array.from({ length: 8 }, () => worker()));
-}, 600_000);
+}, 1_500_000);
 
 afterAll(async () => {
   await sql?.end({ timeout: 5 });
@@ -239,7 +257,8 @@ describe('GET route smoke', () => {
         `\n              ${totalGet - parameterised} without a path parameter, ${parameterised} with` +
         `\n              ${totalRequests} requests (${results.filter((r) => r.variant === 'not-found').length} of them a second, not-found pass)` +
         `\n              param slots filled: ${paramStats.realIds} from real rows, ${paramStats.dummies} placeholders` +
-        `\n              status tally: ${ordered.map(([s, n]) => `${s}×${n}`).join('  ')}\n`,
+        `\n              status tally: ${ordered.map(([s, n]) => `${s}×${n}`).join('  ')}` +
+        `\n              waited out the rate-limit window ${rateLimitWaits} time(s)\n`,
     );
     expect(results.length).toBeGreaterThan(0);
   });
