@@ -57,14 +57,18 @@ export function fromAddressDomain(from: string | null | undefined): string | nul
  * from "not verified" from "does not exist", or it becomes an oracle for probing
  * which domains other tenants have registered. Same wording for every failure.
  */
-function refuse(): never {
-  throw new AppError({
+export function fromNotVerifiedError(): AppError {
+  return new AppError({
     code: 'FROM_NOT_VERIFIED',
     statusCode: 403,
     message:
       'This From address is not a verified sender for your account. ' +
       'Verify the domain or email address under Sending Domains before sending from it.',
   });
+}
+
+function refuse(): never {
+  throw fromNotVerifiedError();
 }
 
 /**

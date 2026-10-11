@@ -8,8 +8,9 @@
  */
 
 import { redis } from '@forgemsg/shared/redis';
-import { sendTransactionalEmail } from '../../lib/queues.js';
+import { AppError } from '../../lib/app-error.js';
 import { checkSendCapacity } from '../billing/plan-enforcement.js';
+import { assertSenderVerified, sendTransactionalMessage } from './send-message.js';
 
 export interface BatchRecipient {
   to: string;
@@ -26,9 +27,11 @@ export interface BatchPayload {
   templateId?: string;
   recipients: BatchRecipient[];
   tags?: string[];
+  /** Scheduled with a test key: sandboxed when it fires, as it would have been now. */
+  testMode?: boolean;
 }
 
-export type BatchStatus = 'scheduled' | 'paused' | 'processing' | 'queued' | 'cancelled';
+export type BatchStatus = 'scheduled' | 'paused' | 'processing' | 'queued' | 'cancelled' | 'failed';
 
 export interface BatchRecord {
   batchId: string;
@@ -42,6 +45,8 @@ export interface BatchRecord {
   sendAt?: string;
   /** Retained only while status is scheduled/paused so the cron can send it. */
   payload?: BatchPayload;
+  /** Why a batch that came due could not be sent at all (status 'failed'). */
+  error?: string;
 }
 
 const BATCH_TTL_SECONDS = 604800; // 7 days
@@ -79,19 +84,21 @@ export function dedupeRecipients(recipients: BatchRecipient[]): {
   return { unique, removed: recipients.length - unique.length };
 }
 
-function applyMergeVars(s: string | undefined, vars?: Record<string, string>): string | undefined {
-  if (!s || !vars) return s;
-  let out = s;
-  for (const [k, v] of Object.entries(vars)) {
-    out = out.replace(new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'g'), v);
-  }
-  return out;
-}
-
 /**
- * Run a batch: dedup + enqueue each message. Returns the send tallies. This is
- * the shared core used by both the immediate send path and the scheduled
- * dispatcher.
+ * Run a batch: dedup, then each message down the path POST /transactional/email
+ * takes — verified sender, plan, configuration set, sandbox, suppression,
+ * template, queue, send event, email.sent webhook, metering. Shared by the
+ * immediate route and the scheduled dispatcher, so a scheduled batch goes that
+ * path at the moment it is sent.
+ *
+ * It used to enqueue straight onto the MTA queue: no send event was written, so
+ * batches were never billed (found in Z121), no suppression or sender check ran,
+ * and templateId was ignored. Batches now write a send event per message and
+ * are billed — a deliberate change of behaviour (Z133).
+ *
+ * The per-second send rate is not taken: batch routes do not enforce it at
+ * acceptance (CTO decision, Z133). An unverified sender refuses the whole batch
+ * before anything is written; any other refusal is that message's.
  */
 export async function runTransactionalBatch(
   orgId: string,
@@ -101,33 +108,47 @@ export async function runTransactionalBatch(
   queued: number;
   failed: number;
   deduplicated: number;
-  results: Array<{ to: string; messageId: string; status: string }>;
+  results: Array<{ to: string; messageId: string; status: string; reason?: string }>;
 }> {
   const { unique, removed } = dedupeRecipients(payload.recipients);
-  const results: Array<{ to: string; messageId: string; status: string }> = [];
+  await assertSenderVerified(orgId, payload.from);
+  const testMode = payload.testMode === true;
+  const results: Array<{ to: string; messageId: string; status: string; reason?: string }> = [];
   let queued = 0;
 
-  await Promise.all(
-    unique.map(async (recipient) => {
-      try {
-        const html = applyMergeVars(payload.html, recipient.mergeVars);
-        const text = applyMergeVars(payload.text, recipient.mergeVars);
-        const messageId = await sendTransactionalEmail({
-          from: payload.from,
-          fromName: payload.fromName,
-          to: recipient.to,
-          subject: payload.subject,
-          html: html ?? text ?? '',
-          text,
-          orgId,
-        });
-        results.push({ to: recipient.to, messageId, status: 'queued' });
-        queued++;
-      } catch {
-        results.push({ to: recipient.to, messageId: '', status: 'failed' });
+  for (const recipient of unique) {
+    try {
+      const outcome = await sendTransactionalMessage({
+        orgId,
+        testMode,
+        to: recipient.to,
+        from: payload.from,
+        fromName: payload.fromName,
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
+        templateId: payload.templateId,
+        mergeVars: recipient.mergeVars,
+        tags: payload.tags,
+        metadata: { batch: true, ...recipient.metadata },
+        sendRateTaken: true,
+      });
+      if (outcome.status === 'rejected' || outcome.status === 'rendering_failed') {
+        const reason = outcome.status === 'rejected' ? outcome.reason : outcome.message;
+        results.push({ to: recipient.to, messageId: '', status: outcome.status, reason });
+        continue;
       }
-    }),
-  );
+      results.push({ to: recipient.to, messageId: outcome.messageId, status: 'queued' });
+      queued++;
+    } catch (err) {
+      results.push({
+        to: recipient.to,
+        messageId: '',
+        status: 'failed',
+        reason: (err as Error).message,
+      });
+    }
+  }
 
   return {
     total: unique.length,
@@ -243,6 +264,23 @@ export async function dispatchDueBatches(
     } catch (err) {
       errors++;
       console.error(`[dispatch-batch] batch ${m} failed:`, err);
+      // A refusal that will not change (an unverified sender) would be retried
+      // every minute for ever; it fails the batch instead, with the reason.
+      if (
+        err instanceof AppError &&
+        err.statusCode >= 400 &&
+        err.statusCode < 500 &&
+        err.statusCode !== 429
+      ) {
+        const rec = await getBatch(orgId, batchId).catch(() => null);
+        if (rec) {
+          rec.status = 'failed';
+          rec.error = err.message;
+          delete rec.payload;
+          await saveRecord(rec).catch(() => {});
+        }
+        await redis.zrem(SCHEDULED_ZSET, m).catch(() => {});
+      }
     }
   }
   return { dispatched, errors };

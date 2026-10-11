@@ -31,7 +31,26 @@ import {
   cancelQueuedEmails,
 } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
-import { assertFromDomainOwned } from '../../services/sending/from-domain.js';
+import { AppError } from '../../lib/app-error.js';
+import { fromNotVerifiedError } from '../../services/sending/from-domain.js';
+import { assertSenderVerified } from '../../services/transactional/send-message.js';
+
+/**
+ * The sender check of the shared transactional path (Z133): one definition of
+ * a verified sender for every route. This Resend-compatible route keeps its
+ * own answer, though — 403 FROM_NOT_VERIFIED, as its clients already expect —
+ * so the shared refusal (422 SENDER_DOMAIN_NOT_VERIFIED) is mapped back.
+ */
+async function assertResendSender(orgId: string, from: string): Promise<void> {
+  try {
+    await assertSenderVerified(orgId, from);
+  } catch (err) {
+    if (err instanceof AppError && err.code === 'SENDER_DOMAIN_NOT_VERIFIED') {
+      throw fromNotVerifiedError();
+    }
+    throw err;
+  }
+}
 import { parseScheduledAt } from '../../services/transactional/parse-scheduled-at.js';
 import { fetchRemoteAttachment } from '../../services/sending/fetch-attachment.js';
 
@@ -331,7 +350,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
 
       // The caller may only send from an address its org has verified. Checked
       // even in test mode: a sandbox send with a spoofed From is still a spoof.
-      await assertFromDomainOwned(req.user!.orgId, body.from);
+      await assertResendSender(req.user!.orgId, body.from);
 
       // Enforce plan send-capacity for real (non-sandbox) sends before we
       // record or dispatch anything.
@@ -426,7 +445,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       // Every From must be a verified sender for the org — up-front, so one bad
       // From rejects the whole batch rather than sending the good ones first.
       for (const item of parsed.data) {
-        await assertFromDomainOwned(req.user!.orgId, item.from);
+        await assertResendSender(req.user!.orgId, item.from);
       }
 
       const keyTestMode = req.user?.apiKeyMode === 'test';

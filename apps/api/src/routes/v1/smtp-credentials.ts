@@ -18,8 +18,10 @@ import {
   suppressedRecipientReply,
 } from '../../services/smtp/smtp-reply.js';
 import {
+  assertSenderVerified,
   configurationSetFromHeaders,
   sendTransactionalMessage,
+  takeMessageSendRate,
   transactionalSuppression,
 } from '../../services/transactional/send-message.js';
 import { parseRawMime } from '../../services/transactional/mime-parse.js';
@@ -136,6 +138,13 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
         // The whole message against the plan before the first recipient is
         // queued, so a plan that cannot take all of it refuses all of it.
         await checkSendCapacity(body.orgId, recipients.length);
+        // One unit of the per-second rate for the message, not one per
+        // recipient: accepted whole, or refused whole with 451 before anything
+        // is queued, so a retry cannot duplicate a half-queued message (Z133).
+        // The sender first: a refusal that will not change is answered as
+        // such (550) and does not spend the unit.
+        await assertSenderVerified(body.orgId, from);
+        await takeMessageSendRate(body.orgId, false);
 
         // SMTP has no request body to name a configuration set in, so it comes
         // in a header. Without it the set — and the IP pool it picks — could
@@ -160,6 +169,7 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
             metadata: { via: 'smtp', raw: true },
             // Relayed verbatim by the engine; the fields above route and record it.
             rawMime: rawStr,
+            sendRateTaken: true,
           });
           if (outcome.status === 'rejected') rejected.push({ to, reason: outcome.reason });
           else if (outcome.status !== 'rendering_failed') {

@@ -279,13 +279,24 @@ describe('DATA: the transactional path', () => {
     console.log(`[z131] permanent refusals: ${results.join(' | ')}`);
   });
 
-  it('the send-rate limit stays temporary: 451 4.7.0', async () => {
-    // Two recipients in one second against a limit of one per second.
-    const res = await relay(rateOrg, {
+  it('the send-rate limit counts messages and stays temporary: 451 4.7.0', async () => {
+    // A fresh second, then two messages in it against a limit of one per
+    // second. The first has two recipients and is accepted whole: since Z133
+    // the limit counts messages, not recipients (it used to queue r1, refuse
+    // r2 and answer 451, so the client's retry duplicated r1). The second
+    // message is the one the limit refuses — before anything of it is queued.
+    // The start of a wall-clock second: the window send-rate.ts counts in.
+    await new Promise((r) => setTimeout(r, 1000 - (Date.now() % 1000) + 20));
+    const first = await relay(rateOrg, {
       from: fromOf('rate'),
       to: [`r1-${tag}@example.test`, `r2-${tag}@example.test`],
     });
-    console.log(`[z131] rate limit: ${res.statusCode} ${res.body}`);
+    const res = await relay(rateOrg, { from: fromOf('rate'), to: [`r3-${tag}@example.test`] });
+    console.log(
+      `[z131] rate limit: first=${first.statusCode} second=${res.statusCode} ${res.body}`,
+    );
+    expect(first.statusCode, first.body).toBe(200);
+    expect(first.json().data.messages).toHaveLength(2);
     expect(res.statusCode).toBe(503);
     expect(res.json().smtp).toMatchObject({ code: 451, enhanced: '4.7.0' });
   });

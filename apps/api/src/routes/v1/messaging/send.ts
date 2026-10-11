@@ -7,8 +7,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { db } from '../../../db/client.js';
-import { emailEvents } from '../../../db/schema/index.js';
+import { sendTransactionalMessage } from '../../../services/transactional/send-message.js';
 
 // ── Per-channel payload schemas ───────────────────────────────────────────────
 
@@ -88,49 +87,36 @@ const messagingSendRoutes: FastifyPluginAsync = async (app) => {
               .code(400)
               .send({ code: 'BODY_REQUIRED', message: 'Provide html, text, or templateId' });
           }
-          // Resolve a template if given, else use inline body (was a stub that
-          // logged an event but never dispatched to the MTA).
-          let html = p.html ?? '';
-          let text = p.text ?? '';
-          let subject = p.subject;
-          if (p.templateId) {
-            const { renderStoredTemplate } =
-              await import('../../../services/transactional/render-template.js');
-            const r = await renderStoredTemplate(orgId, p.templateId, p.mergeVars ?? {});
-            html = r.html;
-            text = r.text;
-            if (!subject) subject = r.subject;
-          }
-          const { sendTransactionalEmail } = await import('../../../lib/queues.js');
-          const messageId = await sendTransactionalEmail({
+          // The path POST /transactional/email takes (Z133): verified sender,
+          // plan, send rate, configuration set, sandbox, suppression, template,
+          // queue, send event, email.sent webhook, metering. This route had its
+          // own: an unverified sender domain was queued, recorded, billed and
+          // announced; a suppressed address was queued; a test key sent for real.
+          const outcome = await sendTransactionalMessage({
+            orgId,
+            testMode: req.user?.apiKeyMode === 'test',
             to: p.to,
             from: p.from,
             fromName: p.fromName,
-            subject: subject || '(no subject)',
-            html: html || '<p></p>',
-            text: text || undefined,
-            orgId,
-            scheduleAt: p.scheduleAt ? new Date(p.scheduleAt) : undefined,
+            subject: p.subject,
+            html: p.html,
+            text: p.text,
+            templateId: p.templateId,
+            mergeVars: p.mergeVars,
+            scheduleAt: p.scheduleAt,
+            metadata: { unified: true, ...p.metadata },
+            tags: p.tags,
           });
-          await db.insert(emailEvents).values({
-            orgId,
-            eventType: 'send',
-            messageId,
-            metadata: {
-              to: p.to,
-              transactional: true,
-              unified: true,
-              tags: p.tags ?? [],
-              scheduleAt: p.scheduleAt ?? null,
-              ...p.metadata,
-            },
-          });
-          const { emitEmailEvent } = await import('../../../services/webhooks/email-events.js');
-          emitEmailEvent(orgId, 'sent', { messageId, email: p.to });
-          const { recordUsage } = await import('../../../services/billing/meters.js');
-          recordUsage(orgId, 'email', 1).catch(() => {});
+          if (outcome.status === 'rejected') {
+            return reply
+              .code(202)
+              .send({ data: { channel: 'email', status: 'rejected', reason: outcome.reason } });
+          }
+          if (outcome.status === 'rendering_failed') {
+            return reply.code(400).send({ code: 'RENDERING_FAILED', message: outcome.message });
+          }
           return reply.code(202).send({
-            data: { channel: 'email', messageId, status: p.scheduleAt ? 'scheduled' : 'queued' },
+            data: { channel: 'email', messageId: outcome.messageId, status: outcome.status },
           });
         }
 
