@@ -33,7 +33,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { batchSenderQueues, mtaQueues, type BatchSenderJobData } from '../queues/index.js';
@@ -105,7 +105,7 @@ const visible = (html: string) =>
 async function sendInvoice(): Promise<MtaJobData> {
   const res = await fetch(`${API}/api/v1/templates/cs-invoice/use`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ name: `wfinv ${tag}` }),
     signal: AbortSignal.timeout(20_000),
   });
@@ -160,7 +160,7 @@ describe('cs-invoice announces the shop’s invoice (real DB + Redis + API)', ()
 
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'wfinv');
+    token = await seedApiKey(sql, 'wfinv');
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified)
       VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true)

@@ -14,6 +14,8 @@ import { workflowEvents, contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { onApiEvent } from '../../services/workflows/triggers.js';
 import { recordCheckoutStarted } from '../../services/storefront/checkout-started.js';
+import type { FastifyRequest } from 'fastify';
+import { verifiedApiKeyPart } from '../../plugins/rate-limit.js';
 
 export default async function eventRoutes(app: FastifyInstance) {
   /**
@@ -159,8 +161,8 @@ export default async function eventRoutes(app: FastifyInstance) {
         rateLimit: {
           max: 20,
           timeWindow: '1 hour',
-          keyGenerator: (req: { headers: Record<string, unknown>; ip: string }) =>
-            `checkout-started:${(req.headers['x-api-key'] as string) ?? 'anon'}:${req.ip}`,
+          keyGenerator: (req: FastifyRequest) =>
+            `checkout-started:${verifiedApiKeyPart(req)}:${req.ip}`,
         },
       },
       schema: { tags: ['Events'], summary: 'Public: a shop page reports an abandoned basket' },

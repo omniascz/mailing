@@ -37,7 +37,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
@@ -135,7 +135,7 @@ async function suppress(email: string, reason: string): Promise<void> {
 async function api(method: string, path: string, body?: unknown): Promise<unknown> {
   const res = await fetch(`${API}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(20_000),
   });
@@ -202,7 +202,7 @@ describe('mta-sender refuses suppressed addresses on every path (real DB + Redis
 
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'mtagate');
+    token = await seedApiKey(sql, 'mtagate');
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
       VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)

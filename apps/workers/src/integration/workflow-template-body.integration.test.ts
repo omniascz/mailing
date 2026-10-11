@@ -41,7 +41,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg } from './setup/seed-org.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { batchSenderQueues, mtaQueues, type BatchSenderJobData } from '../queues/index.js';
@@ -80,7 +80,7 @@ async function api<T>(method: string, path: string, body?: unknown): Promise<T> 
     method,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? authHeaders(token) : {}),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(20_000),
@@ -175,7 +175,7 @@ describe('a templated workflow send renders an email (real DB + Redis + API)', (
       RETURNING id
     `;
     contactId = contact!.id;
-    token = await loginAsSeedUser(API, 'wftpl');
+    token = await seedApiKey(sql, 'wftpl');
   }, 120_000);
 
   afterAll(async () => {

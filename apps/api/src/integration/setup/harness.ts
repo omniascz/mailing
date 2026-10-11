@@ -6,7 +6,6 @@
  * stubbed db client: requests land on the same Postgres the migrations and
  * seed ran against.
  */
-import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../index.js';
 
@@ -18,47 +17,22 @@ export const SEED = {
 } as const;
 
 /**
- * Boots the app and gives it a rate-limit identity of its own.
+ * Boots the app.
  *
- * The limiter keys on `x-api-key ?? request.ip`, and every `.inject()` that
- * does not say otherwise arrives from the same address. That was harmless
- * while the counter lived in the process — each test file's app started with
- * an empty bucket. Now the counter is in Redis, deliberately, so the whole
- * suite would share one 100/min budget and the files that make the most calls
- * would answer 429 to each other. Measured on CI before this: eleven cases
- * across workflow-triggers and merge-tag-validation failed on
- * `RATE_LIMIT: Too many requests`, none of them about rate limiting.
+ * It used to add a made-up `x-api-key` header to every injected request, one
+ * per app, because the limiter keyed on whatever that header said — verified or
+ * not — and the header gave each test file a bucket of its own. That is the
+ * bypass the limiter now closes (plugins/rate-limit.ts keys on the verified
+ * caller, and on the address only when there is none), so the header would buy
+ * nothing and would only pretend to.
  *
- * So each app gets a synthetic key, and requests that do not bring their own
- * are attributed to it. This restores per-file isolation for the suite without
- * touching how the limiter behaves in production: it is a header these tests
- * would otherwise not send, applied in the harness, not in the plugin.
- *
- * The key includes the request's own address, and that is not decoration. The
- * first version of this hook used one key per app, which quietly broke
- * route-smoke: that file spreads its several-hundred-request sweep across
- * distinct addresses precisely to stay under the limit, and a single header
- * applied to all of them put the whole sweep back in one bucket. Since the
- * generator prefers `x-api-key` over the IP, overriding it beat a technique
- * that was there for this exact reason. Folding the address in keeps both:
- * different addresses still count separately, same-address requests are
- * isolated per app.
- *
- * Two things it deliberately does NOT do. It does not raise or disable the
- * limit, so a route that rate-limits its caller still rate-limits these tests.
- * And it leaves a key a test sets for itself alone. Files that build the app
- * through buildApp() directly — rate-limit-shared.integration.test.ts, which
- * is about this very counter — do not get it at all.
+ * Isolation comes from identity instead, the way production gets it: a file
+ * that logs in holds its own session, and the session is its bucket; a file
+ * that uses an API key holds its own key. Unauthenticated calls count against
+ * the injected address, as they would against a client's.
  */
 export async function createTestApp(): Promise<FastifyInstance> {
-  const app = await buildApp();
-  const identity = `itest-${randomUUID()}`;
-  app.addHook('onRequest', async (request) => {
-    if (!request.headers['x-api-key']) {
-      request.headers['x-api-key'] = `${identity}:${request.ip}`;
-    }
-  });
-  return app;
+  return buildApp();
 }
 
 export interface Session {

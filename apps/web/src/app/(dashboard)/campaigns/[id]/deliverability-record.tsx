@@ -48,7 +48,9 @@ export async function latestGateRecord(campaignId: string): Promise<AuditRow | n
       apiFetch<AuditRow[]>(
         `/api/v1/audit-logs?resource=campaign&resourceId=${encodeURIComponent(campaignId)}` +
           `&action=${encodeURIComponent(action)}&limit=1`,
-        { fallback: [] },
+        // 403 for an editor or viewer, whom the audit log is not for: no card,
+        // not an error page. Anything else that fails is an error worth seeing.
+        { fallback: [], absentOn: [403, 404] },
       ),
     ),
   );

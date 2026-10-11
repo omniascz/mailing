@@ -35,7 +35,7 @@ import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { createTrackingToken } from '@forgemsg/shared';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
@@ -73,14 +73,6 @@ vi.mock('../lib/mta-grpc-client.js', () => ({
 
 const API = process.env.API_URL!;
 const sql = postgres(process.env.DATABASE_URL!, { max: 2, prepare: false });
-
-/**
- * This file's own bucket in the API's 100/min limiter (`x-api-key ??
- * request.ip`, api/plugins/rate-limit.ts), as in recipient-resubscribe: an
- * unknown key matches nothing and the request continues as the Bearer session,
- * or as nobody on a public route.
- */
-const RATE_LIMIT_BUCKET = `integration-supp-${randomUUID()}`;
 
 const tag = randomUUID().slice(0, 8);
 const sendingDomain = `supp-${tag}.test`;
@@ -135,8 +127,7 @@ async function call(method: string, path: string, body?: unknown): Promise<Respo
   return realFetch(`${API}${path}`, {
     method,
     headers: {
-      'x-api-key': RATE_LIMIT_BUCKET,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? authHeaders(token) : {}),
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -290,7 +281,7 @@ describe('an address carries every reason it is suppressed for (real DB + Redis 
 
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'supp');
+    token = await seedApiKey(sql, 'supp');
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
       VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)

@@ -41,7 +41,7 @@ import type { Job, JobType, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { createTrackingToken } from '@forgemsg/shared';
-import { loginAsSeedUser } from './setup/login.js';
+import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
@@ -123,24 +123,12 @@ async function deliver(to: string): Promise<string[]> {
   return out;
 }
 
-/**
- * This file's own bucket in the API's 100/min limiter, which keys on
- * `x-api-key ?? request.ip` (api/plugins/rate-limit.ts). Eleven campaigns and
- * twenty public calls took 43 of the shared 127.0.0.1 bucket, and in CI the
- * files after this one got 429 on every call. Same trick as setup/login.ts: an
- * unknown key is looked up, matches nothing, and the request continues as the
- * Bearer session (or, on a public route, as nobody) — it picks the counter and
- * nothing else.
- */
-const RATE_LIMIT_BUCKET = `integration-resub-${randomUUID()}`;
-
 async function api(method: string, path: string, body?: unknown): Promise<unknown> {
   const res = await fetch(`${API}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      'x-api-key': RATE_LIMIT_BUCKET,
+      ...authHeaders(token),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(20_000),
@@ -156,7 +144,6 @@ async function pub(method: string, path: string, body?: unknown): Promise<Respon
     method,
     redirect: 'manual',
     headers: {
-      'x-api-key': RATE_LIMIT_BUCKET,
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -298,7 +285,7 @@ async function campaignTo(listId: string, label: string, recipients: string[]): 
 describe('the recipient comes back on their own (real DB + Redis + API, to the engine)', () => {
   beforeAll(async () => {
     seed = await readSeedOrg(sql);
-    token = await loginAsSeedUser(API, 'resub');
+    token = await seedApiKey(sql, 'resub');
     await sql`
       INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
       VALUES (${seed.id}, ${sendingDomain}, 'fm1', true, true, true, true)

@@ -131,31 +131,6 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     }).toPass({ timeout: 15_000 });
   }
 
-  /**
-   * Wait until the API's per-IP budget has room. In this setup the browser and
-   * the web server's own server-side fetches all reach the API from 127.0.0.1,
-   * so they share one 100-per-minute bucket; a page rendered after that is
-   * spent gets 429 for its data and shows "not found". Measured: the counter
-   * stood at 103 after six of these tests, and the seventh page was a 404.
-   * The probe costs one request; the headers say how many are left and when
-   * the window resets.
-   */
-  async function apiBudget(needed = 40) {
-    const deadline = Date.now() + 90_000;
-    while (Date.now() < deadline) {
-      const res = await fetch(`${API}/api/v1/campaigns`);
-      const remaining = Number(res.headers.get('x-ratelimit-remaining') ?? 100);
-      if (remaining >= needed) return;
-      const reset = Number(res.headers.get('x-ratelimit-reset') ?? 5);
-      await new Promise((r) => setTimeout(r, Math.min(Math.max(reset, 1), 61) * 1_000));
-    }
-  }
-
-  test.beforeEach(async () => {
-    test.setTimeout(150_000);
-    await apiBudget();
-  });
-
   /** Every POST the page makes to a campaign action, with its body. */
   function recordPosts(): Array<{ url: string; body: unknown }> {
     const seen: Array<{ url: string; body: unknown }> = [];
@@ -210,9 +185,6 @@ test.describe('pre-send check in the web (real API + gate)', () => {
 
   test.afterAll(async () => {
     if (!sql) return;
-    // Leave the shared budget refilled for the suites that run after this one.
-    test.setTimeout(150_000);
-    await apiBudget(90);
     await context?.close();
     if (campaigns.length) {
       await sql`DELETE FROM audit_logs WHERE resource = 'campaign' AND resource_id = ANY(${campaigns})`;
