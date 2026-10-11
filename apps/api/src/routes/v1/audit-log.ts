@@ -14,6 +14,8 @@ const auditLogRoutes: FastifyPluginAsync = async (app) => {
         .object({
           userId: z.string().uuid().optional(),
           resource: z.string().optional(),
+          /** One record's history, e.g. a campaign's. Within the caller's org only. */
+          resourceId: z.string().max(255).optional(),
           action: z.string().optional(),
           from: z.string().datetime().optional(),
           to: z.string().datetime().optional(),

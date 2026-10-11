@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
 import { QualityCheckButton } from './quality-check-button';
+import { RecheckDnsButton } from './recheck-dns-button';
 import { DeleteDomainButton } from './delete-domain-button';
 import { SendTestButton } from './send-test-button';
 
@@ -85,6 +86,7 @@ export default async function DomainDetailPage({ params }: { params: Promise<{ i
         </div>
         <div className="flex gap-2">
           <SendTestButton domainId={domain.id} />
+          <RecheckDnsButton />
           <QualityCheckButton domainId={domain.id} />
           <DeleteDomainButton id={domain.id} domain={domain.domain} />
         </div>

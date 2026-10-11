@@ -135,7 +135,7 @@ export function classifyDomainAuth(input: {
       title: `Missing ${missing.join(' + ')} on sending domain`,
       detail:
         'Gmail and Yahoo bulk-sender rules reject mail without SPF + DKIM. Authenticate before sending.',
-      fixHref: '/settings/domains',
+      fixHref: '/domains',
     };
   }
   // Only DMARC missing — warn rather than fail; deliverability hit is
@@ -146,7 +146,7 @@ export function classifyDomainAuth(input: {
     severity: 'warn',
     title: 'DMARC record missing',
     detail: "Without DMARC the recipient can't verify alignment. Add a p=none record to start.",
-    fixHref: '/settings/domains',
+    fixHref: '/domains',
   };
 }
 
@@ -165,10 +165,13 @@ export function classifyAudienceSize(input: { recipientCount: number }): CheckRe
       id: 'audience-size',
       category: 'audience',
       severity: 'warn',
-      title: 'Large audience — enable batch delivery',
-      detail: 'For 100K+ sends, batch delivery smooths ISP throughput and protects reputation.',
+      // No fixHref: there is no batch-delivery setting to switch on — every
+      // campaign already goes out in batches of up to 1,000 — so a link would
+      // lead nowhere. The warning stands: a very large send is worth a look.
+      title: 'Large audience — over 100,000 recipients',
+      detail:
+        'Large sends go out in batches automatically. Make sure the whole list has opted in recently.',
       metrics: { recipientCount: input.recipientCount },
-      fixHref: '/campaigns/settings/batch-delivery',
     };
   }
   return {
@@ -211,7 +214,11 @@ export function classifySuppression(input: {
   };
 }
 
-export function classifyUnsubscribeLink(input: { hasUnsubscribe: boolean }): CheckResult {
+export function classifyUnsubscribeLink(input: {
+  hasUnsubscribe: boolean;
+  /** The campaign whose content needs the link: its edit page is where it is added. */
+  campaignId?: string;
+}): CheckResult {
   if (!input.hasUnsubscribe) {
     return {
       id: 'unsubscribe-link',
@@ -219,7 +226,7 @@ export function classifyUnsubscribeLink(input: { hasUnsubscribe: boolean }): Che
       severity: 'fail',
       title: 'Email body has no unsubscribe link',
       detail: 'GDPR + CAN-SPAM + ePrivacy require a working unsubscribe in every marketing email.',
-      fixHref: '/editor/preferences',
+      ...(input.campaignId ? { fixHref: `/campaigns/${input.campaignId}/edit` } : {}),
     };
   }
   return {
@@ -304,6 +311,8 @@ export function classifySubject(input: { subject: string }): CheckResult {
  */
 export function classifyMergeTags(input: {
   warnings: Array<{ kind: string; token: string; suggestion?: string }>;
+  /** The campaign whose content carries the tags: its edit page is where they are fixed. */
+  campaignId?: string;
 }): CheckResult {
   const { warnings } = input;
   if (warnings.length === 0) {
@@ -332,7 +341,7 @@ export function classifyMergeTags(input: {
     severity: 'warn',
     title: `${parts.join(', ')} — vyrenderuje se prázdné`,
     detail: detail.slice(0, 240),
-    fixHref: '/editor',
+    ...(input.campaignId ? { fixHref: `/campaigns/${input.campaignId}/edit` } : {}),
     metrics: { unknownTags: tags.length, unknownFilters: filters.length },
   };
 }
@@ -744,8 +753,9 @@ export function classifyBlacklist(input: {
     category: 'reputation',
     severity: input.blacklistCount === input.totalIps ? 'fail' : 'warn',
     title: `${input.blacklistCount} of ${input.totalIps} IPs blacklisted`,
-    detail: `${pct}% of your sending IPs are on at least one DNSBL. Investigate immediately.`,
-    fixHref: '/settings/dedicated-ips',
+    // No fixHref: delisting is not something the customer can do in the app —
+    // the IPs are the platform's, and support handles the DNSBL request.
+    detail: `${pct}% of your sending IPs are on at least one DNSBL. Contact support (support@mailforge.cz) to have them delisted.`,
     metrics: {
       blacklisted: input.blacklistCount,
       total: input.totalIps,

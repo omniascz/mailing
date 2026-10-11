@@ -115,7 +115,9 @@ describe('what the panel shows', () => {
     expect(html).toContain('Hranice: 5 %');
     expect(html).toContain('Vzorek: 100 (minimum 100)');
     expect(html).toContain('Co s tím: ');
-    expect(html).toContain('href="/suppressions"');
+    // Z127: the lists, where addresses can be removed — not the suppression list, which
+    // already holds the bounced ones and offers nothing that lowers the rate.
+    expect(html).toContain('href="/lists"');
     expect(html).toContain('Rozumím riziku a chci kampaň odeslat i tak.');
     // Grouped: the thin complaint sample is information, the short subject a warning.
     expect(html).toContain('Varování (1)');

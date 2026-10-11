@@ -36,6 +36,7 @@ export async function listAuditLogs(
   opts: {
     userId?: string;
     resource?: string;
+    resourceId?: string;
     action?: string;
     from?: Date;
     to?: Date;
@@ -43,11 +44,14 @@ export async function listAuditLogs(
     cursor?: string;
   },
 ) {
-  const { userId, resource, action, from, to, limit = 50, cursor } = opts;
+  const { userId, resource, resourceId, action, from, to, limit = 50, cursor } = opts;
 
+  // org_id first and always: a resourceId names a record, and the same id in
+  // another organisation's log is not this caller's to read.
   const conditions = [eq(auditLogs.orgId, orgId)];
   if (userId) conditions.push(eq(auditLogs.userId, userId));
   if (resource) conditions.push(eq(auditLogs.resource, resource));
+  if (resourceId) conditions.push(eq(auditLogs.resourceId, resourceId));
   if (action) conditions.push(eq(auditLogs.action, action));
   if (from) conditions.push(gte(auditLogs.createdAt, from));
   if (to) conditions.push(lte(auditLogs.createdAt, to));

@@ -131,6 +131,31 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     }).toPass({ timeout: 15_000 });
   }
 
+  /**
+   * Wait until the API's per-IP budget has room. In this setup the browser and
+   * the web server's own server-side fetches all reach the API from 127.0.0.1,
+   * so they share one 100-per-minute bucket; a page rendered after that is
+   * spent gets 429 for its data and shows "not found". Measured: the counter
+   * stood at 103 after six of these tests, and the seventh page was a 404.
+   * The probe costs one request; the headers say how many are left and when
+   * the window resets.
+   */
+  async function apiBudget(needed = 40) {
+    const deadline = Date.now() + 90_000;
+    while (Date.now() < deadline) {
+      const res = await fetch(`${API}/api/v1/campaigns`);
+      const remaining = Number(res.headers.get('x-ratelimit-remaining') ?? 100);
+      if (remaining >= needed) return;
+      const reset = Number(res.headers.get('x-ratelimit-reset') ?? 5);
+      await new Promise((r) => setTimeout(r, Math.min(Math.max(reset, 1), 61) * 1_000));
+    }
+  }
+
+  test.beforeEach(async () => {
+    test.setTimeout(150_000);
+    await apiBudget();
+  });
+
   /** Every POST the page makes to a campaign action, with its body. */
   function recordPosts(): Array<{ url: string; body: unknown }> {
     const seen: Array<{ url: string; body: unknown }> = [];
@@ -185,12 +210,17 @@ test.describe('pre-send check in the web (real API + gate)', () => {
 
   test.afterAll(async () => {
     if (!sql) return;
+    // Leave the shared budget refilled for the suites that run after this one.
+    test.setTimeout(150_000);
+    await apiBudget(90);
     await context?.close();
     if (campaigns.length) {
       await sql`DELETE FROM audit_logs WHERE resource = 'campaign' AND resource_id = ANY(${campaigns})`;
       await sql`DELETE FROM campaigns WHERE id = ANY(${campaigns})`;
     }
     await sql`DELETE FROM email_events WHERE org_id = ${orgId} AND metadata->>'e2e' = ${tag}`;
+    await sql`DELETE FROM audit_logs WHERE org_id = ${orgId} AND metadata->>'e2e' = ${tag}`;
+    await sql`DELETE FROM users WHERE org_id = ${orgId} AND email = ${`e2e-editor-${tag}@test.local`}`;
     await sql`DELETE FROM contacts WHERE org_id = ${orgId} AND email = ${`e2e-presend-${tag}@test.local`}`;
     await sql`DELETE FROM lists WHERE id = ${listId}`;
     await sql`DELETE FROM sending_domains WHERE org_id = ${orgId} AND domain = ${domain}`;
@@ -258,9 +288,9 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     expect(text).toContain('Míra nedoručitelnosti (7 dní)');
     for (const line of await expectedBounceLines()) expect(text).toContain(line);
     expect(text).toContain('Co s tím:');
-    await expect(blocking.getByRole('link', { name: 'Otevřít potlačené adresy' })).toHaveAttribute(
+    await expect(blocking.getByRole('link', { name: 'Otevřít seznamy' })).toHaveAttribute(
       'href',
-      '/suppressions',
+      '/lists',
     );
 
     // A forced click on the disabled button sends nothing.
@@ -346,5 +376,75 @@ test.describe('pre-send check in the web (real API + gate)', () => {
       via: 'schedule',
       scheduled_at: body.scheduledAt,
     });
+  });
+
+  test('the campaign page finds its gate record among 500 newer ones of the organisation', async () => {
+    await goodHistory();
+    const id = await campaign('busy');
+    // The campaign's own record, an hour old…
+    await sql`
+      INSERT INTO audit_logs (org_id, action, resource, resource_id, metadata, created_at)
+      VALUES (${orgId}, 'campaign.deliverability_blocked', 'campaign', ${id},
+              ${sql.json({ via: 'scheduled-dispatch', verdict: 'no-go', blocking: [], e2e: tag })},
+              now() - interval '1 hour')
+    `;
+    // …and 250 newer ones of each of two actions for other campaigns: the old
+    // card read each action's 200 newest entries of the whole organisation.
+    await sql`
+      INSERT INTO audit_logs (org_id, action, resource, resource_id, metadata)
+      SELECT ${orgId}, a, 'campaign', gen_random_uuid()::text, ${sql.json({ e2e: tag })}
+      FROM unnest(${['campaign.deliverability_blocked', 'campaign.deliverability_override']}::text[]) a,
+           generate_series(1, 250)
+    `;
+    await page.goto(`/campaigns/${id}`);
+    const record = page.getByTestId('deliverability-record');
+    await expect(record).toBeVisible();
+    const text = await record.innerText();
+    console.log(`[z127] busy org card: ${JSON.stringify(text)}`);
+    expect(text).toContain('Odeslání zablokováno');
+    expect(text).toContain('plánovač v naplánovaný čas');
+    expect(text).toContain('vrátila do konceptu');
+  });
+
+  test('an editor — who may send, and is not an owner — gets the panel and can send', async ({
+    browser,
+  }) => {
+    await goodHistory();
+    const email = `e2e-editor-${tag}@test.local`;
+    await sql`
+      INSERT INTO users (org_id, email, name, password_hash, role, email_verified)
+      SELECT ${orgId}, ${email}, 'E2E editor', password_hash, 'editor', true
+      FROM users WHERE email = 'demo@acme.test'
+      ON CONFLICT DO NOTHING
+    `;
+    const id = await campaign('editor');
+    const editorContext = await browser.newContext();
+    const editor = await editorContext.newPage();
+    try {
+      await editor.goto('/login');
+      await editor.getByLabel(/email/i).fill(email);
+      await editor.getByLabel(/password/i).fill('Demo1234!');
+      await editor
+        .getByRole('button', { name: /sign in|login|přihl/i })
+        .first()
+        .click();
+      await expect(editor).toHaveURL(/^https?:\/\/[^/]+\/?$/, { timeout: 15_000 });
+
+      await editor.goto(`/campaigns/${id}`);
+      await expect(async () => {
+        await editor.getByRole('button', { name: 'Send now' }).click();
+        await expect(editor.getByTestId('pre-send-panel')).toBeVisible({ timeout: 1_000 });
+      }).toPass({ timeout: 15_000 });
+      await expect(editor.getByTestId('pre-send-verdict')).toHaveAttribute('data-verdict', 'go');
+      const response = editor.waitForResponse((r) => r.url().endsWith(`/campaigns/${id}/send`));
+      await editor.getByTestId('pre-send-confirm').click();
+      const status = (await response).status();
+      const [row] = await sql<{ status: string }[]>`SELECT status FROM campaigns WHERE id = ${id}`;
+      console.log(`[z127] editor: send=${status} status=${row!.status}`);
+      expect(status).toBe(200);
+      expect(row!.status).toBe('queueing');
+    } finally {
+      await editorContext.close();
+    }
   });
 });
