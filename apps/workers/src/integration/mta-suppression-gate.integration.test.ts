@@ -277,14 +277,25 @@ describe('mta-sender refuses suppressed addresses on every path (real DB + Redis
       expect(cleanResult[0]!.status).toBe('sent');
       expect(sent, 'the suppressed address reached the engine').not.toContain(blocked);
       expect(blockedResult[0]!.status).toBe('suppressed');
-      // Findable: the transactional placeholder ids cannot hold an event row,
-      // so the log line is the record for these three paths.
       expect(
         warn.mock.calls.some((c) =>
           String(c[0]).includes(`[mta-sender][suppressed] message=${blockedResult[0]!.messageId}`),
         ),
         'the block was not logged',
       ).toBe(true);
+      // And stored, where the customer reads the message's other events. This
+      // said the placeholder ids could not hold an event row and the log line
+      // was the record — true only because the worker did not tell the API
+      // they were placeholders, and the write was refused with 400 (Z131).
+      const [failed] = await sql<{ metadata: Record<string, unknown> }[]>`
+        SELECT metadata FROM email_events
+        WHERE message_id = ${blockedResult[0]!.messageId} AND event_type = 'failed'
+      `;
+      expect(failed?.metadata, 'the failed event was not stored').toMatchObject({
+        reason: 'suppressed',
+        stream: 'transactional',
+        to: blocked,
+      });
     });
   }
 

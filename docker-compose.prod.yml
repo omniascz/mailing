@@ -90,6 +90,10 @@ services:
       # picking up a default. Refused at boot if it is on another domain.
       REPORTS_FROM_EMAIL: ${REPORTS_FROM_EMAIL}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET is required}
+      # The same value the engine listens on (engine service below). The API
+      # advertises that one port with new SMTP credentials, and none while it
+      # is unset — the submission server is off until a deployment turns it on.
+      SUBMISSION_LISTEN: ${SUBMISSION_LISTEN:-}
       # Validates X-Inbound-Secret on the inbound-email endpoint; prodRequired in
       # env.ts and matched by the engine's inbound receiver. Same value, same name.
       INBOUND_EMAIL_SECRET: ${INBOUND_EMAIL_SECRET:?INBOUND_EMAIL_SECRET is required}

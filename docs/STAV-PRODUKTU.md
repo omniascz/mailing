@@ -14,7 +14,7 @@ integrace zákazníka.
 
 ## 1. Co produkt umí dnes
 
-Bez zapnutí jediné skupiny je registrováno **902 adres a 1126 operací**
+Bez zapnutí jediné skupiny je registrováno **903 adres a 1127 operací**
 (změřeno dvakrát: `buildApp()` + `printRoutes`, jednou s
 `FEATURE_BEYOND_CORE=false`, jednou `=true` → 1244 / 1563, rozdíl 342 / 437).
 To je „jádro" — e-mailová platforma níže. Tahle čísla hlídá test, viz blok
@@ -287,8 +287,8 @@ na člověku.
 
 ```yaml
 # Routy složené aplikace: buildApp() + printRoutes, bez zapnuté skupiny.
-core_paths: 902
-core_operations: 1126
+core_paths: 903
+core_operations: 1127
 # Rozdíl proti FEATURE_BEYOND_CORE=true, tedy plocha za přepínači.
 beyond_core_paths: 342
 beyond_core_operations: 437

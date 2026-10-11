@@ -12,6 +12,19 @@ import {
   deleteSmtpCredential,
   validateSmtpCredential,
 } from '../../services/smtp/credentials.js';
+import {
+  smtpReplyFor,
+  submissionPorts,
+  suppressedRecipientReply,
+} from '../../services/smtp/smtp-reply.js';
+import {
+  sendTransactionalMessage,
+  transactionalSuppression,
+} from '../../services/transactional/send-message.js';
+import { parseRawMime } from '../../services/transactional/mime-parse.js';
+import { assertFromDomainOwned } from '../../services/sending/from-domain.js';
+import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
+import { AppError } from '../../lib/app-error.js';
 
 const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
   // ── Customer-facing credential management ─────────────────────────────────
@@ -36,12 +49,11 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
         data: {
           ...cred,
           host: process.env.SMTP_SUBMISSION_HOST ?? 'smtp.example.invalid',
-          // 587 (STARTTLS) only. 465 was advertised but the submission server
-          // speaks plaintext-first and has no implicit-TLS listener, so a 465
-          // client (TLS from the first byte) cannot connect — advertising it was
-          // a broken promise. Implicit TLS is a separate, larger change; until
-          // then we only list ports that actually work.
-          ports: [587, 2587],
+          // The port the engine actually opens: it reads SUBMISSION_LISTEN and
+          // listens on that one port, STARTTLS only (no implicit TLS on 465).
+          // This used to say [587, 2587] whatever ran — two ports from one
+          // listener, or two from none. Empty when the server is not enabled.
+          ports: submissionPorts(process.env.SUBMISSION_LISTEN),
           note: 'Save the password now — it cannot be retrieved again.',
         },
       });
@@ -77,6 +89,27 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
     return reply.send({ data: { ok: true, orgId } });
   });
 
+  // RCPT TO: an address this account must not mail is refused here, with a
+  // permanent 550 — before the message is even sent, so it is never queued,
+  // never recorded as sent and never billed, and the client does not retry it.
+  // Same suppression list and reasons as POST /transactional/email.
+  app.post('/api/v1/internal/smtp/rcpt', { schema: { tags: ['Internal'] } }, async (req) => {
+    const body = z
+      .object({ orgId: z.string().uuid(), rcpt: z.string().min(1).max(320) })
+      .parse(req.body);
+    const reason = await transactionalSuppression(body.orgId, body.rcpt);
+    if (!reason) return { data: { accept: true } };
+    const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
+    emitEmailEvent(body.orgId, 'rejected', { email: body.rcpt, reason });
+    return { data: { accept: false, smtp: suppressedRecipientReply(body.rcpt, reason) } };
+  });
+
+  // DATA: the message goes down the same path as POST /transactional/email —
+  // one call of sendTransactionalMessage per recipient. It used to take a path
+  // of its own (sendRawMessage), which skipped the suppression check, the send
+  // rate, the sandbox gate, configuration sets, the IP pool and the `sent`
+  // webhook (Z131). What is SMTP's own stays here: reading the message, the
+  // From check the Go server cannot make, and the reply code.
   app.post(
     '/api/v1/internal/smtp/relay',
     { schema: { tags: ['Internal'] } },
@@ -90,16 +123,58 @@ const smtpCredentialRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.body);
       const rawStr = Buffer.from(body.raw, 'base64').toString('utf8');
-      const { sendRawMessage } = await import('../../services/transactional/raw-send.js');
+      const parsed = parseRawMime(rawStr);
+      const from = body.mailFrom || parsed.from;
+      const recipients = body.rcptTo?.length ? body.rcptTo : [...parsed.to, ...parsed.cc];
       try {
-        const result = await sendRawMessage(body.orgId, rawStr, {
-          envelopeFrom: body.mailFrom,
-          envelopeTo: body.rcptTo,
-          metadata: { via: 'smtp' },
-        });
-        return reply.send({ data: result });
+        if (!from) throw AppError.badRequest('No From address in message');
+        // The org may only relay mail from an address it has verified: the Go
+        // server authenticates the org but never checks the From.
+        await assertFromDomainOwned(body.orgId, from);
+        if (recipients.length === 0) throw AppError.badRequest('No recipients in message');
+        if (!parsed.html && !parsed.text)
+          throw AppError.badRequest('Message has no text/html body');
+        // The whole message against the plan before the first recipient is
+        // queued, so a plan that cannot take all of it refuses all of it.
+        await checkSendCapacity(body.orgId, recipients.length);
+
+        // SMTP has no request body to name a configuration set in, so it comes
+        // in a header, as SES takes X-SES-CONFIGURATION-SET. Without it the
+        // set — and the IP pool it picks — could never apply to SMTP mail.
+        const configurationSet = Object.entries(parsed.headers).find(
+          ([k]) => k.toLowerCase() === 'x-configuration-set',
+        )?.[1];
+
+        const messages: Array<{ to: string; messageId: string }> = [];
+        const rejected: Array<{ to: string; reason: string }> = [];
+        for (const to of recipients) {
+          const outcome = await sendTransactionalMessage({
+            orgId: body.orgId,
+            testMode: false,
+            to,
+            from,
+            fromName: parsed.fromName ?? undefined,
+            replyTo: parsed.replyTo ?? undefined,
+            subject: parsed.subject ?? '(no subject)',
+            html: parsed.html ?? `<pre>${(parsed.text ?? '').replace(/[<>&]/g, '')}</pre>`,
+            text: parsed.text ?? undefined,
+            headers: parsed.headers,
+            configurationSet: configurationSet?.trim() || undefined,
+            metadata: { via: 'smtp', raw: true },
+            // Relayed verbatim by the engine; the fields above route and record it.
+            rawMime: rawStr,
+          });
+          if (outcome.status === 'rejected') rejected.push({ to, reason: outcome.reason });
+          else if (outcome.status !== 'rendering_failed') {
+            messages.push({ to, messageId: outcome.messageId });
+          }
+        }
+        return reply.send({ data: { status: 'queued', messages, rejected } });
       } catch (err) {
-        return reply.status(502).send({ error: (err as Error).message });
+        const smtp = smtpReplyFor(err);
+        if (smtp.code >= 500) return reply.status(422).send({ smtp });
+        req.log.warn({ err }, 'smtp relay: temporary failure');
+        return reply.status(503).send({ smtp });
       }
     },
   );

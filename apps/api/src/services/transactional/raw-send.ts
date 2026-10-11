@@ -1,6 +1,10 @@
 /**
- * Raw-message send — shared by the public /transactional/email/raw route and
- * the SMTP submission relay (both hand us a raw RFC5322 message + an orgId).
+ * Raw-message send for the public POST /transactional/email/raw route.
+ *
+ * The SMTP submission relay used this too until Z131, and now goes through
+ * sendTransactionalMessage (send-message.ts), the path POST /transactional/email
+ * takes. This route still does not: it has no suppression check, send-rate
+ * limit, sandbox gate, configuration set or `sent` webhook of its own.
  */
 
 import { db } from '../../db/client.js';

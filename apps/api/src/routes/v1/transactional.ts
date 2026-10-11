@@ -13,22 +13,8 @@ import { emailEvents, campaigns } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
-import { and, eq, gte, inArray, lte } from 'drizzle-orm';
-
-/**
- * Suppression reasons that refuse a transactional message — the list the
- * mta-sender gate uses for this stream (SUPPRESSES_TRANSACTIONAL in
- * workers/src/jobs/mta-sender.ts, #225), so this route and /emails decide the
- * same. transactional-gate.integration.test.ts sends one receipt per reason
- * through both and fails if they ever disagree.
- */
-const SUPPRESSES_TRANSACTIONAL = [
-  'hard_bounce',
-  'complaint',
-  'manual',
-  'block',
-  'invalid_email',
-] as const;
+import { and, eq, gte, lte } from 'drizzle-orm';
+import { sendTransactionalMessage } from '../../services/transactional/send-message.js';
 
 const transactionalRoutes: FastifyPluginAsync = async (app) => {
   // ── Send transactional email ──────────────────────────────────────────────
@@ -88,168 +74,43 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
 
       const orgId = req.user!.orgId;
       const testMode = req.user?.apiKeyMode === 'test' || body.sandboxMode === true;
-      if (!testMode) {
-        await checkSendCapacity(orgId, 1);
-        const { enforceSendRate } = await import('../../services/sending/send-rate.js');
-        await enforceSendRate(orgId, 1);
-      }
 
-      // Apply the configuration set (throws 403 if the set's sending is paused).
-      const { applyConfigurationSet } = await import('../../services/configuration-sets/index.js');
-      const cfgSet = await applyConfigurationSet(orgId, body.configurationSet);
-      // Resolve the config set's IP pool → sending IP for this send.
-      let sendingIp = '';
-      let sendingIpId: string | null = null;
-      if (cfgSet.ipPoolId) {
-        const { pickIpForSend } = await import('../../services/dedicated-ips/index.js');
-        const ip = await pickIpForSend(orgId, cfgSet.ipPoolId).catch(() => null);
-        sendingIp = ip?.ipAddress ?? '';
-        // Kept so the volume can be attributed after the message is accepted.
-        // The address alone is not enough: recordIpSend is keyed by row id, so
-        // a value that names no registered IP updates nothing rather than
-        // creating a reputation row for whatever string arrived.
-        sendingIpId = ip?.id ?? null;
-      }
-
-      // Sandbox gate: unverified accounts may only send to verified recipients.
-      if (!testMode) {
-        const { assertSandboxSendAllowed } = await import('../../services/identities/index.js');
-        await assertSandboxSendAllowed(orgId, [body.to]);
-      }
-
-      // Suppression check → emit a 'rejected' event (SES suppression behaviour)
-      // instead of sending to an address that must not be mailed.
-      //
-      // The same reasons the mta-sender gate refuses a transactional message
-      // for (SUPPRESSES_TRANSACTIONAL, workers/src/jobs/mta-sender.ts) — every
-      // reason except 'unsubscribe'. This check predates that gate and refused
-      // on any row, so an unsubscribed customer's receipt was rejected here and
-      // delivered through /emails. A marketing opt-out is not a refusal of the
-      // receipt (#225); a bounce, a complaint, a block, an invalid address or
-      // the org's own entry is.
-      const { suppressions } = await import('../../db/schema/index.js');
-      const [suppressed] = await db
-        .select({ reason: suppressions.reason })
-        .from(suppressions)
-        .where(
-          and(
-            eq(suppressions.orgId, orgId),
-            eq(suppressions.email, body.to.toLowerCase()),
-            inArray(suppressions.reason, SUPPRESSES_TRANSACTIONAL),
-          ),
-        )
-        .limit(1);
-      if (suppressed) {
-        const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
-        emitEmailEvent(orgId, 'rejected', { email: body.to, reason: suppressed.reason });
-        return reply
-          .code(202)
-          .send({ data: { status: 'rejected', reason: `suppressed:${suppressed.reason}` } });
-      }
-
-      // Resolve a stored template (SES SendTemplatedEmail) when templateId is
-      // given — subject/html/text come from the rendered template + merge vars.
-      let subject = body.subject ?? '';
-      let html = body.html ?? '';
-      let text = body.text ?? '';
-      if (body.templateId) {
-        const { renderStoredTemplate } =
-          await import('../../services/transactional/render-template.js');
-        try {
-          const rendered = await renderStoredTemplate(orgId, body.templateId, body.mergeVars ?? {});
-          html = rendered.html;
-          text = rendered.text;
-          if (!subject) subject = rendered.subject; // template supplies the subject
-        } catch (err) {
-          // Emit a rendering-failure event (SES RenderingFailure) then surface 400.
-          const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
-          emitEmailEvent(orgId, 'rendering_failed', {
-            email: body.to,
-            templateId: body.templateId,
-            error: (err as Error).message,
-          });
-          return reply
-            .code(400)
-            .send({ code: 'RENDERING_FAILED', message: (err as Error).message });
-        }
-      } else if (body.mergeVars) {
-        // Inline body: simple {{var}} token substitution.
-        for (const [key, val] of Object.entries(body.mergeVars)) {
-          const re = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
-          html = html.replace(re, val);
-          text = text.replace(re, val);
-        }
-      }
-
-      // Enqueue onto MTA-other (transactional priority) and get the canonical
-      // messageId back. The Go engine performs the actual SMTP delivery.
-      const messageId = await sendTransactionalEmail({
+      // The whole path — plan, send rate, configuration set and IP pool,
+      // sandbox, suppression, template, queue, send event, `sent` webhook,
+      // metering — is services/transactional/send-message.ts, shared with the
+      // SMTP submission relay since Z131. This route only answers.
+      const outcome = await sendTransactionalMessage({
+        orgId,
+        testMode,
         to: body.to,
         from: body.from,
         fromName: body.fromName,
         replyTo: body.replyTo,
-        subject: subject || '(no subject)',
-        html: html || '<p></p>',
-        text: text || undefined,
-        orgId,
+        subject: body.subject,
+        html: body.html,
+        text: body.text,
+        templateId: body.templateId,
+        mergeVars: body.mergeVars,
+        headers: body.headers,
+        customArgs: body.customArgs,
+        scheduleAt: body.scheduleAt,
+        metadata: body.metadata,
+        tags: body.tags,
+        configurationSet: body.configurationSet,
         attachments: body.attachments,
-        customHeaders: body.headers,
-        scheduleAt: body.scheduleAt ? new Date(body.scheduleAt) : undefined,
-        sendingIp,
-        tlsPolicy: cfgSet.tlsPolicy,
-        testMode,
       });
 
-      // Charge the IP for this message.
-      //
-      // At acceptance rather than at delivery, matching the two counters this
-      // sits beside: recordFrequencySend in the batch sender is deliberately
-      // taken before the enqueue, and the engine's warmup claim is spent
-      // "whether or not it lands, because what the receiving ISP saw is a
-      // connection from this IP". A rate limiter that under-counts is the
-      // failure that costs reputation; one that over-counts costs a send.
-      //
-      // Best-effort: an accepted message must not be reported as failed
-      // because its bookkeeping did not land.
-      if (sendingIpId) {
-        const { recordIpSend } = await import('../../services/dedicated-ips/index.js');
-        await recordIpSend(sendingIpId, 1).catch(() => {});
+      if (outcome.status === 'rejected') {
+        return reply.code(202).send({ data: { status: 'rejected', reason: outcome.reason } });
       }
-
-      // Log send event for analytics + delivery webhooks.
-      await db.insert(emailEvents).values({
-        orgId,
-        eventType: 'send',
-        messageId,
-        metadata: {
-          to: body.to,
-          transactional: true,
-          tags: body.tags ?? [],
-          scheduleAt: body.scheduleAt ?? null,
-          templateId: body.templateId ?? null,
-          configurationSet: body.configurationSet ?? null,
-          sandbox: testMode,
-          customArgs: body.customArgs ?? {},
-          attachmentCount: body.attachments?.length ?? 0,
-          ...body.metadata,
-        },
-      });
-
-      // Fire the 'sent' webhook for API senders (previously never emitted).
-      const { emitEmailEvent } = await import('../../services/webhooks/email-events.js');
-      emitEmailEvent(orgId, 'sent', { messageId, email: body.to });
-
-      // Per-email usage metering (PAYG) — previously recordUsage was never called.
-      if (!testMode) {
-        const { recordUsage } = await import('../../services/billing/meters.js');
-        recordUsage(orgId, 'email', 1).catch(() => {});
+      if (outcome.status === 'rendering_failed') {
+        return reply.code(400).send({ code: 'RENDERING_FAILED', message: outcome.message });
       }
-
       return reply.code(202).send({
         data: {
-          messageId,
-          status: body.scheduleAt ? 'scheduled' : 'queued',
-          attachments: body.attachments?.length ?? 0,
+          messageId: outcome.messageId,
+          status: outcome.status,
+          attachments: outcome.attachments,
         },
       });
     },
