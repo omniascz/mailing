@@ -274,7 +274,23 @@ func (ss *session) loop() {
 				ss.reply(452, "Too many recipients (max "+itoa(maxRecipients)+")")
 				continue
 			}
-			ss.rcpts = append(ss.rcpts, extractAddr(line[8:]))
+			addr := extractAddr(line[8:])
+			// Ask the API before accepting: an address the account must not
+			// mail is refused now with its permanent code (550), so it is never
+			// queued, never recorded as sent and never billed, and the client
+			// does not retry it. If the API cannot answer, the recipient is
+			// deferred (451) rather than accepted unchecked.
+			verdict, err := ss.srv.checkRecipient(ss.orgID, addr)
+			if err != nil {
+				log.Printf("submission: rcpt check: %v", err)
+				ss.reply(451, "4.3.0 Temporary failure checking the recipient, try again later")
+				continue
+			}
+			if verdict != nil {
+				ss.replySMTP(*verdict)
+				continue
+			}
+			ss.rcpts = append(ss.rcpts, addr)
 			ss.reply(250, "OK")
 		case upper == "DATA":
 			if !ss.authed || ss.from == "" || len(ss.rcpts) == 0 {
@@ -287,9 +303,18 @@ func (ss *session) loop() {
 				ss.reply(552, "message too large or read error")
 				continue
 			}
-			if err := ss.relay(raw); err != nil {
-				log.Printf("submission: relay: %v", err)
-				ss.reply(451, "temporary failure, try again later")
+			if verdict, err := ss.relay(raw); err != nil || verdict != nil {
+				// The API's own answer when it gave one: 550 for a refusal that
+				// will not change (unverified From, plan used up), 451 for one
+				// that may (rate limit, an outage). Only when no answer came
+				// back at all is it a plain 451.
+				if verdict != nil {
+					ss.replySMTP(*verdict)
+				} else {
+					log.Printf("submission: relay: %v", err)
+					ss.reply(451, "4.3.0 Temporary failure, try again later")
+				}
+				ss.from, ss.rcpts = "", nil
 				continue
 			}
 			ss.reply(250, "OK: queued")
@@ -442,7 +467,70 @@ func (s *Server) authenticate(user, pass string) (orgID string, retryable bool, 
 	return out.Data.OrgID, false, nil
 }
 
-func (ss *session) relay(raw []byte) error {
+// smtpReply is the API's verdict, in SMTP terms: code, enhanced status, text.
+type smtpReply struct {
+	Code     int    `json:"code"`
+	Enhanced string `json:"enhanced"`
+	Text     string `json:"text"`
+}
+
+// replySMTP sends the API's verdict, refusing to relay anything that is not a
+// 4xx/5xx reply or that could break the protocol line.
+func (ss *session) replySMTP(r smtpReply) {
+	code := r.Code
+	if code < 400 || code > 599 {
+		code = 451
+	}
+	text := strings.Map(func(c rune) rune {
+		if c < 0x20 || c > 0x7e {
+			return ' '
+		}
+		return c
+	}, strings.TrimSpace(r.Enhanced+" "+r.Text))
+	ss.reply(code, text)
+}
+
+// checkRecipient asks the API whether this account may mail the address.
+// nil verdict and nil error: accept it. A verdict: refuse it with that reply.
+// An error: the API gave no answer (down, timeout, unexpected status).
+func (s *Server) checkRecipient(orgID, rcpt string) (*smtpReply, error) {
+	body, _ := json.Marshal(map[string]string{"orgId": orgID, "rcpt": rcpt})
+	req, err := http.NewRequest("POST", s.cfg.APIURL+"/api/v1/internal/smtp/rcpt", bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Internal-Secret", s.cfg.APISecret)
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		b, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("rcpt endpoint status %d: %s", resp.StatusCode, string(b))
+	}
+	var out struct {
+		Data struct {
+			Accept bool       `json:"accept"`
+			SMTP   *smtpReply `json:"smtp"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, err
+	}
+	if out.Data.Accept {
+		return nil, nil
+	}
+	if out.Data.SMTP == nil {
+		return nil, fmt.Errorf("rcpt endpoint refused without a reply")
+	}
+	return out.Data.SMTP, nil
+}
+
+// relay hands the message to the API. A verdict is the API refusing it, with
+// the reply to give; an error is no usable answer at all.
+func (ss *session) relay(raw []byte) (*smtpReply, error) {
 	payload := map[string]any{
 		"orgId":    ss.orgID,
 		"raw":      base64.StdEncoding.EncodeToString(raw),
@@ -452,21 +540,27 @@ func (ss *session) relay(raw []byte) error {
 	body, _ := json.Marshal(payload)
 	req, err := http.NewRequest("POST", ss.srv.cfg.APIURL+"/api/v1/internal/smtp/relay", bytes.NewReader(body))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	// Always sent — see authenticate(); New() guarantees a non-empty secret.
 	req.Header.Set("X-Internal-Secret", ss.srv.cfg.APISecret)
 	resp, err := ss.srv.client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		b, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("relay status %d: %s", resp.StatusCode, string(b))
+		var out struct {
+			SMTP *smtpReply `json:"smtp"`
+		}
+		if json.Unmarshal(b, &out) == nil && out.SMTP != nil && out.SMTP.Code >= 400 {
+			return out.SMTP, nil
+		}
+		return nil, fmt.Errorf("relay status %d: %s", resp.StatusCode, string(b))
 	}
-	return nil
+	return nil, nil
 }
 
 // readDotData reads until the SMTP dot terminator, undoing dot-stuffing.

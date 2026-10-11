@@ -251,7 +251,7 @@ describe('path 3 — campaign send (at the click, not in the worker)', () => {
   });
 });
 
-describe('path 4 — SMTP relay (/internal/smtp/relay → sendRawMessage)', () => {
+describe('path 4 — SMTP relay (/internal/smtp/relay → sendTransactionalMessage)', () => {
   const relay = (from: string) => {
     const raw = `From: ${from}\r\nTo: victim@example.test\r\nSubject: s\r\n\r\nbody\r\n`;
     return app.inject({
@@ -272,11 +272,14 @@ describe('path 4 — SMTP relay (/internal/smtp/relay → sendRawMessage)', () =
     expect(res.statusCode).toBe(200);
   });
 
-  it('rejects a spoofed From (mapped to 502 by the relay route)', async () => {
+  it('rejects a spoofed From, permanently (550, not the 451 a client retries)', async () => {
     const res = await relay('ceo@paypal.com');
-    // The relay route wraps a send failure as 502 with the message in the body.
-    expect(res.statusCode).toBe(502);
-    expect(res.json().error).toMatch(/not a verified sender/i);
+    // Was 502 here, which the engine answered as 451 "try again later" — so a
+    // mail client retried a From that could never pass. Since Z131 the relay
+    // hands the engine the SMTP reply to give: 550 5.7.1 with the reason.
+    expect(res.statusCode).toBe(422);
+    expect(res.json().smtp).toMatchObject({ code: 550, enhanced: '5.7.1' });
+    expect(res.json().smtp.text).toMatch(/not a verified sender/i);
   });
 });
 

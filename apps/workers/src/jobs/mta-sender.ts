@@ -471,7 +471,13 @@ async function recordSuppressed(data: MtaSendJobData, isp: string): Promise<void
         campaignId: data.campaignId,
         contactId: data.contactId,
         messageId: data.messageId,
-        metadata: { reason: 'suppressed', stream: data.stream, isp },
+        metadata: { reason: 'suppressed', stream: data.stream, isp, to: data.toEmail },
+        // A transactional job carries stand-ins for the campaign and contact
+        // (lib/queues.ts). Said so, the API stores the event without them, as
+        // it does for recordEvent's; unsaid, both hit their foreign keys and
+        // the event was refused with 400 — measured in Z129, the customer
+        // never learned why the message was not sent (Z131).
+        ...(eventTrack(data).placeholder ? { campaignIsPlaceholder: true } : {}),
       }),
     });
     if (!res.ok) {

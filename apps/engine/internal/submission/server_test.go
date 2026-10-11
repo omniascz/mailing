@@ -266,6 +266,11 @@ func TestRCPT_cappedAt100With452(t *testing.T) {
 				fmt.Fprint(w, `{"data":{"orgId":"org-1"}}`)
 				return
 			}
+			if strings.HasSuffix(r.URL.Path, "/rcpt") {
+				w.WriteHeader(200)
+				fmt.Fprint(w, `{"data":{"accept":true}}`)
+				return
+			}
 			atomic.AddInt32(&relayHits, 1)
 			w.WriteHeader(200)
 			fmt.Fprint(w, `{"data":{}}`)
@@ -347,6 +352,134 @@ func drainEHLO(t *testing.T, c *client) {
 		line = strings.TrimRight(line, "\r\n")
 		if len(line) >= 4 && line[3] == ' ' {
 			return
+		}
+	}
+}
+
+// ── Z131: the API decides recipients and refusals, with permanent codes ──────
+
+// verdictAPI answers auth with org-1, refuses one recipient as suppressed, and
+// answers the relay with whatever relayStatus/relayBody say.
+func verdictAPI(relayStatus int, relayBody string, rcptDown bool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/auth"):
+			fmt.Fprint(w, `{"data":{"orgId":"org-1"}}`)
+		case strings.HasSuffix(r.URL.Path, "/rcpt"):
+			if rcptDown {
+				w.WriteHeader(503)
+				return
+			}
+			if strings.Contains(readAll(r), "suppressed@") {
+				fmt.Fprint(w, `{"data":{"accept":false,"smtp":{"code":550,"enhanced":"5.7.1","text":"Recipient <suppressed@x.test> is on this account's suppression list (hard_bounce); not sent, not billed"}}}`)
+				return
+			}
+			fmt.Fprint(w, `{"data":{"accept":true}}`)
+		default:
+			w.WriteHeader(relayStatus)
+			fmt.Fprint(w, relayBody)
+		}
+	}
+}
+
+func readAll(r *http.Request) string {
+	var sb strings.Builder
+	buf := make([]byte, 4096)
+	for {
+		n, err := r.Body.Read(buf)
+		sb.Write(buf[:n])
+		if err != nil {
+			return sb.String()
+		}
+	}
+}
+
+// session that is authenticated and has MAIL FROM done.
+func readySession(t *testing.T, s *Server) *client {
+	t.Helper()
+	c := startSession(s)
+	c.readReply(t)
+	c.send("EHLO probe")
+	drainEHLO(t, c)
+	if code, _ := authClient(t, c, "u", "p"); code != 235 {
+		t.Fatal("auth should succeed")
+	}
+	c.send("MAIL FROM:<a@b.test>")
+	c.readReply(t)
+	return c
+}
+
+func sendData(t *testing.T, c *client) (int, string) {
+	t.Helper()
+	c.send("DATA")
+	if code, _ := c.readReply(t); code != 354 {
+		t.Fatalf("DATA not accepted: %d", code)
+	}
+	c.send("Subject: hi")
+	c.send("")
+	c.send("body")
+	c.send(".")
+	return c.readReply(t)
+}
+
+func TestRCPT_suppressedRecipientRefusedWith550(t *testing.T) {
+	s, done := newTestServer(t, Config{AllowInsecureAuth: insecureCfg}, verdictAPI(200, `{"data":{}}`, false))
+	defer done()
+	c := readySession(t, s)
+	defer c.close()
+	c.send("RCPT TO:<suppressed@x.test>")
+	code, line := c.readReply(t)
+	if code != 550 || !strings.Contains(line, "5.7.1") || !strings.Contains(line, "suppression list") {
+		t.Fatalf("suppressed recipient: want 550 5.7.1 with the reason, got %q", line)
+	}
+	c.send("RCPT TO:<ok@x.test>")
+	if code, line := c.readReply(t); code != 250 {
+		t.Fatalf("ordinary recipient: want 250, got %q", line)
+	}
+}
+
+func TestRCPT_apiDownDefersWith451(t *testing.T) {
+	s, done := newTestServer(t, Config{AllowInsecureAuth: insecureCfg}, verdictAPI(200, `{"data":{}}`, true))
+	defer done()
+	c := readySession(t, s)
+	defer c.close()
+	c.send("RCPT TO:<ok@x.test>")
+	if code, line := c.readReply(t); code != 451 {
+		t.Fatalf("API down at RCPT: want 451, got %q", line)
+	}
+}
+
+func TestDATA_permanentRefusalIs550(t *testing.T) {
+	s, done := newTestServer(t, Config{AllowInsecureAuth: insecureCfg},
+		verdictAPI(422, `{"smtp":{"code":550,"enhanced":"5.7.1","text":"This From address is not a verified sender for your account."}}`, false))
+	defer done()
+	c := readySession(t, s)
+	defer c.close()
+	c.send("RCPT TO:<ok@x.test>")
+	c.readReply(t)
+	code, line := sendData(t, c)
+	if code != 550 || !strings.Contains(line, "not a verified sender") {
+		t.Fatalf("permanent refusal: want 550 with the API's text, got %q", line)
+	}
+}
+
+func TestDATA_temporaryRefusalAndOutageAre451(t *testing.T) {
+	for _, tc := range []struct {
+		status int
+		body   string
+	}{
+		{503, `{"smtp":{"code":451,"enhanced":"4.7.0","text":"Send rate limit exceeded"}}`},
+		{500, `oops`},
+	} {
+		s, done := newTestServer(t, Config{AllowInsecureAuth: insecureCfg}, verdictAPI(tc.status, tc.body, false))
+		c := readySession(t, s)
+		c.send("RCPT TO:<ok@x.test>")
+		c.readReply(t)
+		code, line := sendData(t, c)
+		c.close()
+		done()
+		if code != 451 {
+			t.Fatalf("relay %d %q: want 451, got %q", tc.status, tc.body, line)
 		}
 	}
 }
