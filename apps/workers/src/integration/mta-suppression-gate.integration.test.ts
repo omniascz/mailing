@@ -39,7 +39,7 @@ import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
-import { processMtaSend } from '../jobs/mta-sender.js';
+import { processAtOrgRate } from './setup/process-at-org-rate.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import {
@@ -122,7 +122,7 @@ async function deliver(to: string): Promise<{ status: string; messageId: string 
   const jobs = await mtaJobsFor(to);
   const out: { status: string; messageId: string }[] = [];
   for (const j of jobs) {
-    out.push((await processMtaSend(j)) as { status: string; messageId: string });
+    out.push((await processAtOrgRate(j)) as { status: string; messageId: string });
     await j.remove().catch(() => {});
   }
   return out;

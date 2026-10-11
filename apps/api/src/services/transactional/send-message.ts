@@ -58,27 +58,6 @@ export interface TransactionalMessage {
   attachments?: TransactionalAttachment[];
   /** The message as the client wrote it (SMTP); relayed verbatim by the engine. */
   rawMime?: string;
-  /**
-   * The per-second send rate is not taken here. Two kinds of caller say so:
-   *  - a message with several recipients (raw MIME, SMTP) took its one unit
-   *    up front with takeMessageSendRate — the limit counts accepted messages,
-   *    not recipients, so the message is accepted whole or not at all;
-   *  - the batch routes, which do not enforce the per-second rate at
-   *    acceptance (CTO decision, Z133). Every other step still applies.
-   */
-  sendRateTaken?: boolean;
-}
-
-/**
- * One unit of the per-second send rate for one accepted message, however many
- * recipients it has. Throws 429 (temporary) when the window is full — before
- * anything is queued, so a message can no longer be half-queued by the limit
- * and duplicated when the client retries it.
- */
-export async function takeMessageSendRate(orgId: string, testMode: boolean): Promise<void> {
-  if (testMode) return;
-  const { enforceSendRate } = await import('../sending/send-rate.js');
-  await enforceSendRate(orgId, 1);
 }
 
 export type TransactionalOutcome =
@@ -160,7 +139,15 @@ export async function sendTransactionalMessage(
   // a message from someone else's domain.
   await assertSenderVerified(orgId, msg.from);
   if (!testMode) await checkSendCapacity(orgId, 1);
-  if (!msg.sendRateTaken) await takeMessageSendRate(orgId, testMode);
+  // The per-second send rate is not taken at acceptance any more (Z134): the
+  // MTA worker takes it when the message is sent, and paces rather than
+  // refuses. The rate travels on the job. Same for every caller — single
+  // messages, raw, SMTP, /messaging/send and batches alike.
+  let orgSendRate: number | undefined;
+  if (!testMode) {
+    const { getOrgSendRate } = await import('../sending/send-rate.js');
+    orgSendRate = (await getOrgSendRate(orgId)) || undefined;
+  }
 
   // Apply the configuration set (throws 403 if the set's sending is paused).
   const { applyConfigurationSet } = await import('../configuration-sets/index.js');
@@ -251,6 +238,7 @@ export async function sendTransactionalMessage(
     tlsPolicy: cfgSet.tlsPolicy,
     testMode,
     rawMime: msg.rawMime,
+    orgSendRate,
   });
 
   // Charge the IP for this message.

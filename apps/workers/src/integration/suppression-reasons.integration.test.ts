@@ -38,6 +38,7 @@ import { createTrackingToken } from '@forgemsg/shared';
 import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
+import { processAtOrgRate } from './setup/process-at-org-rate.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import {
@@ -117,7 +118,7 @@ async function deliver(to: string): Promise<Record<string, unknown>[]> {
   ).filter((j) => j?.data?.toEmail === to);
   const out: Record<string, unknown>[] = [];
   for (const j of jobs) {
-    out.push((await processMtaSend(j)) as Record<string, unknown>);
+    out.push((await processAtOrgRate(j)) as Record<string, unknown>);
     await j.remove().catch(() => {});
   }
   return out;

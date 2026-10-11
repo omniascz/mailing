@@ -17,6 +17,7 @@ import { Worker, type Job } from 'bullmq';
 import { captureJobException } from '../lib/telemetry.js';
 import { connection, QUEUE_NAMES, type MtaSendJobData } from '../queues/index.js';
 import { defer, deferralCount, nextUtcMidnight } from '../lib/defer.js';
+import { reserveOrgSendSlot } from '../lib/org-send-rate.js';
 import { streamBackoff } from '../lib/stream-backoff.js';
 import * as mtaClient from '../lib/mta-grpc-client.js';
 import {
@@ -514,8 +515,11 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
   // Adaptive per-ISP throttle gate. When the bucket is exhausted, defer the
   // message by re-enqueuing with a delay (backpressure) instead of blasting
   // past the ISP's limit. Capped so it can't loop forever.
+  // A message that wakes in the send slot it reserved below has already passed
+  // this gate: it is not asked again (Z134), so the two waits never stack.
+  const holdsSlot = typeof data.rateSlotAt === 'number';
   const deferrals = deferralCount(data, 'throttle');
-  if (deferrals < THROTTLE_MAX_DEFERRALS) {
+  if (!holdsSlot && deferrals < THROTTLE_MAX_DEFERRALS) {
     const throttle = await checkThrottle(data.orgId, recipientDomain, sendingIp).catch(() => null);
     if (throttle && !throttle.allowed) {
       // The bucket is a fixed window, so capacity returns when its key expires
@@ -542,6 +546,44 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       });
       await defer(job, token, 'throttle', Date.now() + wait);
     }
+  }
+
+  // The organisation's per-second send rate (Z134), taken here at sending
+  // rather than at acceptance — see lib/org-send-rate.ts. Every message of the
+  // shared transactional path carries its rate (orgSendRate), single messages
+  // and batches alike; campaign, flow and platform mail carry none, as they
+  // never had one.
+  //
+  // How it combines with the ISP throttle above: the ISP gate goes first and
+  // may defer; only a message it lets through reserves a slot here, and the
+  // slot carries the message past both gates when it wakes (holdsSlot). So a
+  // message waits for the ISP at most THROTTLE_MAX_DEFERRALS times and for its
+  // own slot exactly once per attempt; neither wait is ever repeated because of
+  // the other, and the slot's time always comes.
+  if (!holdsSlot && data.orgSendRate && data.orgSendRate > 0) {
+    const now = Date.now();
+    const slot = await reserveOrgSendSlot(data.orgId, data.orgSendRate, now);
+    if (slot > now) {
+      await recordEvent(events, {
+        type: 'deferred',
+        orgId: data.orgId,
+        campaignId: data.campaignId,
+        contactId: data.contactId,
+        messageId: data.messageId,
+        metadata: {
+          reason: 'org_rate',
+          isp,
+          ratePerSecond: data.orgSendRate,
+          waitMs: slot - now,
+          attempt: job.attemptsMade,
+        },
+      });
+      await defer(job, token, 'org_rate', slot, { rateSlotAt: slot });
+    }
+  } else if (holdsSlot) {
+    // The slot is spent by this run. A retry after a failed send reserves a new
+    // one, as a fresh send would.
+    await job.updateData({ ...job.data, rateSlotAt: undefined });
   }
 
   // The address this message actually left from, carried on every event it

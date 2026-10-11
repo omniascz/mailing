@@ -25,7 +25,7 @@
 import type { Job } from 'bullmq';
 import { DelayedError } from 'bullmq';
 
-export type DeferReason = 'retry' | 'throttle' | 'warmup_quota';
+export type DeferReason = 'retry' | 'throttle' | 'warmup_quota' | 'org_rate';
 
 /**
  * How many times this job has been deferred for a given reason.
@@ -40,6 +40,8 @@ export type DeferReason = 'retry' | 'throttle' | 'warmup_quota';
 export interface DeferralCounts {
   throttle?: number;
   warmup_quota?: number;
+  /** Waited for its slot on the organisation's per-second send rate (Z134). */
+  org_rate?: number;
 }
 
 export function deferralCount(
@@ -67,10 +69,12 @@ export async function defer(
   token: string | undefined,
   reason: keyof DeferralCounts,
   untilMs: number,
+  /** Fields to keep on the job across the wait (e.g. the reserved send slot). */
+  patch: Record<string, unknown> = {},
 ): Promise<never> {
   const counts = { ...(job.data.deferrals ?? {}) };
   counts[reason] = (counts[reason] ?? 0) + 1;
-  await job.updateData({ ...job.data, deferrals: counts });
+  await job.updateData({ ...job.data, ...patch, deferrals: counts });
   await job.moveToDelayed(untilMs, token);
   throw new DelayedError();
 }

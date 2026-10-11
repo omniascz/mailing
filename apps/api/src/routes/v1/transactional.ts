@@ -17,7 +17,6 @@ import {
   configurationSetFromHeaders,
   assertSenderVerified,
   sendTransactionalMessage,
-  takeMessageSendRate,
 } from '../../services/transactional/send-message.js';
 import { parseRawMime } from '../../services/transactional/mime-parse.js';
 import { AppError } from '../../lib/app-error.js';
@@ -155,13 +154,10 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       // The whole message against the plan before the first recipient is
       // queued, as sendRawMessage did.
       if (!testMode) await checkSendCapacity(orgId, recipients.length);
-      // The per-second rate counts accepted messages, not recipients: this
-      // message takes one unit, now, or is refused whole (429) before anything
-      // is queued (Z133).
-      // A refusal that will not change comes first, so it is answered as such
-      // and does not spend the unit.
+      // The sender before any recipient, so a refused message is refused
+      // whole. The per-second send rate is not taken at acceptance: the MTA
+      // worker paces the message when it is sent (Z134).
       await assertSenderVerified(orgId, from);
-      await takeMessageSendRate(orgId, testMode);
 
       // One recipient at a time down the path POST /transactional/email takes:
       // verified sender, plan, send rate, configuration set, sandbox,
@@ -186,7 +182,6 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           metadata: { raw: true, ...body.metadata },
           // Relayed verbatim (SendRawEmail); the fields above route and record it.
           rawMime: rawStr,
-          sendRateTaken: true,
         });
         if (outcome.status === 'rejected') rejected.push({ to, reason: outcome.reason });
         else if (outcome.status !== 'rendering_failed') {
@@ -278,8 +273,8 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       // Message by message down the path POST /transactional/email takes
       // (Z133): verified sender, plan, configuration set, sandbox,
       // suppression, template, queue, send event, email.sent webhook,
-      // metering. Batches do not take the per-second send rate at acceptance
-      // (CTO decision, Z133). This route had its own path: no sender check, no
+      // metering; the per-second send rate is taken by the MTA worker when each
+      // message is sent, as for single messages (Z134). This route had its own path: no sender check, no
       // suppression check, no webhook, no metering, and templateId ignored.
       //
       // In order, not in parallel: a refusal of the request itself (an
@@ -309,7 +304,6 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
             testMode,
             ...recipient.metadata,
           },
-          sendRateTaken: true,
         });
         if (outcome.status === 'rejected') {
           results.push({ email: recipient.email, status: 'rejected', reason: outcome.reason });

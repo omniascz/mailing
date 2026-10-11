@@ -685,7 +685,20 @@ export interface MtaSendJobData {
    * do not consume BullMQ attempts (moveToDelayed skips them), so nothing else
    * bounds them — see lib/defer.ts.
    */
-  deferrals?: { throttle?: number; warmup_quota?: number };
+  deferrals?: { throttle?: number; warmup_quota?: number; org_rate?: number };
+  /**
+   * The organisation's per-second send rate (messages/second), set by the API's
+   * shared transactional path (sendTransactionalMessage) and taken here when the
+   * message is sent — see lib/org-send-rate.ts. Absent or 0: no per-second
+   * limit for this message (campaign, flow and platform mail never had one).
+   */
+  orgSendRate?: number;
+  /**
+   * The send slot this message reserved on its organisation's timeline (epoch
+   * ms). Set when it was deferred to that slot, so the run that wakes it sends
+   * without reserving again or re-taking the ISP throttle it already passed.
+   */
+  rateSlotAt?: number;
   /**
    * File attachments (e-ticket PDFs etc.). Content is base64 so the job stays
    * JSON-serialisable through Redis/BullMQ; decoded to a Buffer at send time.

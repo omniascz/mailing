@@ -43,7 +43,7 @@ import postgres from 'postgres';
 import { createTrackingToken } from '@forgemsg/shared';
 import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
-import { processMtaSend } from '../jobs/mta-sender.js';
+import { processAtOrgRate } from './setup/process-at-org-rate.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import {
@@ -131,7 +131,7 @@ async function deliver(to: string): Promise<string[]> {
   for (const j of jobs) {
     const last = { data: j.data, opts: { attempts: 1 }, attemptsMade: 0, log: async () => {} };
     try {
-      const r = (await processMtaSend(last as unknown as Job<MtaSendJobData>)) as {
+      const r = (await processAtOrgRate(last as unknown as Job<MtaSendJobData>)) as {
         status: string;
       };
       out.push(`${j.data.subject} → ${r.status}`);

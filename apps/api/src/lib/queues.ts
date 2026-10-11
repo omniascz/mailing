@@ -218,6 +218,12 @@ export interface TransactionalEmailInput {
    */
   rawMime?: string;
   /**
+   * The organisation's per-second send rate, taken by the MTA worker when the
+   * message is sent (workers lib/org-send-rate.ts). Set by the shared
+   * transactional path only; absent means no per-second limit (Z134).
+   */
+  orgSendRate?: number;
+  /**
    * Stable BullMQ jobId for a *scheduled* send, so it can later be rescheduled
    * (changeDelay) or cancelled (remove). Only applied when scheduleAt is future.
    */
@@ -382,6 +388,7 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       // API schema too is a configuration change, not a send-path one.
       tlsPolicy: input.tlsPolicy ?? '',
       rawMime: input.rawMime ?? '',
+      ...(input.orgSendRate ? { orgSendRate: input.orgSendRate } : {}),
       priority: PRIORITY.TRANSACTIONAL,
       stream: 'transactional',
       // The campaignId above is the orgId and the contactId may be random:
