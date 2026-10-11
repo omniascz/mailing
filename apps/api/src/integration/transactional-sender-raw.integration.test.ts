@@ -30,7 +30,7 @@ import {
   webhookDeliveries,
   webhooks,
 } from '../db/schema/index.js';
-import { redis } from '@forgemsg/shared/redis';
+import { mtaOtherQueue } from '../lib/queues.js';
 
 let app: FastifyInstance;
 const tag = randomUUID().slice(0, 8);
@@ -231,14 +231,19 @@ describe('POST /transactional/email/raw takes the same path', () => {
     const to = `raw-ok-${tag}@example.test`;
     const before = await footprint(org, to);
     const res = await raw(org, fromOf('main'), to);
-    const rateKeys = await redis.keys(`sendrate:${org}:*`);
+    // The send rate travels on the queued job since Z134: the MTA worker takes it
+    // when the message is sent. This asserted the acceptance-time counter
+    // (sendrate:<org>:<second>) that no longer exists.
+    const rated = (await mtaOtherQueue.getJobs(['waiting', 'prioritized', 'delayed'], 0, 5_000))
+      .filter((j) => j?.data?.toEmail === to)
+      .map((j) => j.data.orgSendRate);
     await settle();
     const after = await footprint(org, to);
     console.log(
-      `[z132] raw ordinary: ${res.statusCode} rate keys=${rateKeys.length} ${JSON.stringify(before)} -> ${JSON.stringify(after)}`,
+      `[z132] raw ordinary: ${res.statusCode} orgSendRate=${JSON.stringify(rated)} ${JSON.stringify(before)} -> ${JSON.stringify(after)}`,
     );
     expect(res.statusCode).toBe(202);
-    expect(rateKeys.length).toBeGreaterThan(0);
+    expect(rated).toEqual([1000]);
     expect(after).toEqual({
       sends: before.sends + 1,
       meter: before.meter + 1,

@@ -42,6 +42,7 @@ import postgres from 'postgres';
 import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
+import { processAtOrgRate } from './setup/process-at-org-rate.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import {
@@ -328,7 +329,7 @@ describe('transactional events are stored and feed the auto-pause (real DB + Red
         (await mtaQueues.other.getJobs(ALL_STATES, 0, 5_000)) as Job<MtaSendJobData>[]
       ).filter((j) => j?.data?.toEmail === p.email);
       for (const j of jobs) {
-        await processMtaSend(j);
+        await processAtOrgRate(j);
         await j.remove().catch(() => {});
       }
     }

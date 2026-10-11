@@ -43,7 +43,7 @@ import postgres from 'postgres';
 import { createTrackingToken } from '@forgemsg/shared';
 import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
-import { processMtaSend } from '../jobs/mta-sender.js';
+import { processAtOrgRate } from './setup/process-at-org-rate.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import {
@@ -116,7 +116,7 @@ async function deliver(to: string): Promise<string[]> {
   ).filter((j) => j?.data?.toEmail === to);
   const out: string[] = [];
   for (const j of jobs) {
-    const r = (await processMtaSend(j)) as { status: string };
+    const r = (await processAtOrgRate(j)) as { status: string };
     out.push(`${j.data.subject} → ${r.status}`);
     await j.remove().catch(() => {});
   }

@@ -96,8 +96,8 @@ export function dedupeRecipients(recipients: BatchRecipient[]): {
  * and templateId was ignored. Batches now write a send event per message and
  * are billed — a deliberate change of behaviour (Z133).
  *
- * The per-second send rate is not taken: batch routes do not enforce it at
- * acceptance (CTO decision, Z133). An unverified sender refuses the whole batch
+ * The per-second send rate is paced by the MTA worker when each message is
+ * sent, exactly as for a single message (Z134). An unverified sender refuses the whole batch
  * before anything is written; any other refusal is that message's.
  */
 export async function runTransactionalBatch(
@@ -131,7 +131,6 @@ export async function runTransactionalBatch(
         mergeVars: recipient.mergeVars,
         tags: payload.tags,
         metadata: { batch: true, ...recipient.metadata },
-        sendRateTaken: true,
       });
       if (outcome.status === 'rejected' || outcome.status === 'rendering_failed') {
         const reason = outcome.status === 'rejected' ? outcome.reason : outcome.message;

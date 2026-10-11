@@ -29,7 +29,7 @@ import {
   webhookDeliveries,
   webhooks,
 } from '../db/schema/index.js';
-import { redis } from '@forgemsg/shared/redis';
+import { mtaOtherQueue } from '../lib/queues.js';
 
 let app: FastifyInstance;
 const tag = randomUUID().slice(0, 8);
@@ -203,11 +203,16 @@ describe('DATA: the transactional path', () => {
     const to = `ok-${tag}@example.test`;
     const [m0, d0] = [await meter(org), await sentDeliveries(org)];
     const res = await relay(org, { to: [to] });
-    const rateKeys = await redis.keys(`sendrate:${org}:*`);
+    // The send rate travels on the queued job since Z134: the MTA worker takes it
+    // when the message is sent. This asserted the acceptance-time counter
+    // (sendrate:<org>:<second>) that no longer exists.
+    const rated = (await mtaOtherQueue.getJobs(['waiting', 'prioritized', 'delayed'], 0, 5_000))
+      .filter((j) => j?.data?.toEmail === to)
+      .map((j) => j.data.orgSendRate);
     await settle();
     const events = await sendsTo(org, to);
     console.log(
-      `[z131] relay ordinary: ${res.statusCode} rate keys=${rateKeys.length} send=${JSON.stringify(events[0]?.metadata)}`,
+      `[z131] relay ordinary: ${res.statusCode} orgSendRate=${JSON.stringify(rated)} send=${JSON.stringify(events[0]?.metadata)}`,
     );
     expect(res.statusCode, res.body).toBe(200);
     expect(events).toHaveLength(1);
@@ -221,7 +226,7 @@ describe('DATA: the transactional path', () => {
       via: 'smtp',
       raw: true,
     });
-    expect(rateKeys.length).toBeGreaterThan(0);
+    expect(rated).toEqual([1000]);
     expect(await sentDeliveries(org)).toBe(d0 + 1);
     expect(await meter(org)).toBe(m0 + 1);
   });
@@ -279,26 +284,22 @@ describe('DATA: the transactional path', () => {
     console.log(`[z131] permanent refusals: ${results.join(' | ')}`);
   });
 
-  it('the send-rate limit counts messages and stays temporary: 451 4.7.0', async () => {
-    // A fresh second, then two messages in it against a limit of one per
-    // second. The first has two recipients and is accepted whole: since Z133
-    // the limit counts messages, not recipients (it used to queue r1, refuse
-    // r2 and answer 451, so the client's retry duplicated r1). The second
-    // message is the one the limit refuses — before anything of it is queued.
-    // The start of a wall-clock second: the window send-rate.ts counts in.
+  it('the per-second send rate never refuses at acceptance: two messages in one second, both 250', async () => {
+    // Was 451 4.7.0 for the second message (Z131, Z133): the rate was taken at
+    // acceptance. Since Z134 the MTA worker takes it when the message is sent
+    // and paces the message instead of refusing it, so SMTP never answers 451
+    // for the per-second rate. Both messages carry the org's rate (1/s).
     await new Promise((r) => setTimeout(r, 1000 - (Date.now() % 1000) + 20));
     const first = await relay(rateOrg, {
       from: fromOf('rate'),
       to: [`r1-${tag}@example.test`, `r2-${tag}@example.test`],
     });
     const res = await relay(rateOrg, { from: fromOf('rate'), to: [`r3-${tag}@example.test`] });
-    console.log(
-      `[z131] rate limit: first=${first.statusCode} second=${res.statusCode} ${res.body}`,
-    );
+    console.log(`[z131] rate limit: first=${first.statusCode} second=${res.statusCode}`);
     expect(first.statusCode, first.body).toBe(200);
     expect(first.json().data.messages).toHaveLength(2);
-    expect(res.statusCode).toBe(503);
-    expect(res.json().smtp).toMatchObject({ code: 451, enhanced: '4.7.0' });
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json().data.messages).toHaveLength(1);
   });
 });
 

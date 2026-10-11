@@ -34,6 +34,7 @@ import {
   webhooks,
 } from '../db/schema/index.js';
 import { dispatchDueBatches, getBatch } from '../services/transactional/scheduled-batch.js';
+import { mtaOtherQueue } from '../lib/queues.js';
 
 let app: FastifyInstance;
 const tag = randomUUID().slice(0, 8);
@@ -304,7 +305,7 @@ describe('/emails keeps its answers', () => {
   });
 });
 
-describe('the per-second rate counts messages, not recipients', () => {
+describe('the per-second rate is not taken at acceptance', () => {
   it('/raw: one message to three recipients on a one-per-second plan is queued whole', async () => {
     await nextSecond();
     const tos = [addr('raw-0'), addr('raw-1'), addr('raw-2')];
@@ -324,22 +325,30 @@ describe('the per-second rate counts messages, not recipients', () => {
     });
   });
 
-  it('/raw: a second message in the same second is refused whole (429), nothing queued', async () => {
+  it('/raw: a second message in the same second is accepted too — the rate is taken at sending', async () => {
+    // Z133 refused this second message with 429 at acceptance. Since Z134 the
+    // per-second rate is taken by the MTA worker when the message is sent
+    // (workers lib/org-send-rate.ts), which paces instead of refusing; at
+    // acceptance both messages are queued, each carrying the org's rate.
     await nextSecond();
     const raw = (to: string) =>
       Buffer.from(`From: ${FROM}\r\nTo: ${to}\r\nSubject: s\r\n\r\nbody\r\n`).toString('base64');
     const first = await post('/api/v1/transactional/email/raw', { raw: raw(addr('rate-1')) });
-    await settle(); // the first message's metering lands before the baseline
+    await settle();
     const tos = [addr('rate-2a'), addr('rate-2b')];
     const before = await footprint(tos);
-    const second = await post('/api/v1/transactional/email/raw', {
-      raw: Buffer.from(
-        `From: ${FROM}\r\nTo: ${tos.join(', ')}\r\nSubject: s\r\n\r\nbody\r\n`,
-      ).toString('base64'),
-    });
+    const second = await post('/api/v1/transactional/email/raw', { raw: raw(tos.join(', ')) });
     await settle();
     expect(first.statusCode).toBe(202);
-    expect(second.statusCode).toBe(429);
-    expect(await footprint(tos)).toEqual(before);
+    expect(second.statusCode).toBe(202);
+    expect(await footprint(tos)).toEqual({
+      sends: before.sends + 2,
+      meter: before.meter + 2,
+      sent: before.sent + 2,
+    });
+    const jobs = (
+      await mtaOtherQueue.getJobs(['waiting', 'prioritized', 'delayed'], 0, 5_000)
+    ).filter((j) => tos.includes(j?.data?.toEmail));
+    expect(jobs.map((j) => j.data.orgSendRate)).toEqual([1, 1]);
   });
 });

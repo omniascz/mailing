@@ -43,6 +43,7 @@ import postgres from 'postgres';
 import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processMtaSend } from '../jobs/mta-sender.js';
+import { processAtOrgRate } from './setup/process-at-org-rate.js';
 import { mtaQueues, type MtaSendJobData } from '../queues/index.js';
 
 // Hoisted with the mock: the factory runs while the imports above load.
@@ -283,7 +284,7 @@ describe('the auto-pause rate is one set of messages (real DB + Redis + API)', (
         (await mtaQueues.other.getJobs(ALL_STATES, 0, 5_000)) as Job<MtaSendJobData>[]
       ).filter((j) => j?.data?.toEmail === a);
       for (const j of jobs) {
-        await processMtaSend(j);
+        await processAtOrgRate(j);
         await j.remove().catch(() => {});
       }
     }
