@@ -101,31 +101,31 @@ describe('matcher self-test', () => {
 describe('what the panel shows', () => {
   it('go: the confirm button is live, there is nothing to acknowledge', () => {
     const html = render(GOOD);
-    expect(html).toContain('Kampaň je připravená k odeslání.');
+    expect(html).toContain('The campaign is ready to send.');
     expect(confirmTag(html)).not.toContain('disabled');
     expect(html).not.toContain('pre-send-acknowledge');
   });
 
   it('no-go: disabled until acknowledged, every blocking criterion with its numbers and a remedy', () => {
     const html = render(BAD);
-    expect(html).toContain('Kampaň v tomto stavu odeslat nelze.');
+    expect(html).toContain('The campaign cannot be sent as it is.');
     expect(confirmTag(html)).toContain('disabled');
-    expect(html).toContain('Blokující (1)');
-    expect(html).toContain('Naměřeno: 15 % nedoručitelných zpráv');
-    expect(html).toContain('Hranice: 5 %');
-    expect(html).toContain('Vzorek: 100 (minimum 100)');
-    expect(html).toContain('Co s tím: ');
+    expect(html).toContain('Blocking (1)');
+    expect(html).toContain('Measured: 15% of messages bounced');
+    expect(html).toContain('Threshold: 5%');
+    expect(html).toContain('Sample: 100 (minimum 100)');
+    expect(html).toContain('What to do: ');
     // Z127: the lists, where addresses can be removed — not the suppression list, which
     // already holds the bounced ones and offers nothing that lowers the rate.
     expect(html).toContain('href="/lists"');
-    expect(html).toContain('Rozumím riziku a chci kampaň odeslat i tak.');
+    expect(html).toContain('I understand the risk and want to send the campaign anyway.');
     // Grouped: the thin complaint sample is information, the short subject a warning.
-    expect(html).toContain('Varování (1)');
-    expect(html).toContain('Informativní (1)');
+    expect(html).toContain('Warnings (1)');
+    expect(html).toContain('Info (1)');
     expect(html).toContain(
-      'Vzorek za 7 dní: 85 doručených (minimum 100) — do rozhodnutí se nepočítá',
+      '7-day sample: 85 delivered (minimum 100) — not counted towards the verdict',
     );
-    expect(html).toContain('Délka předmětu: 4 znaků');
+    expect(html).toContain('Subject length: 4 characters');
     // Nothing cut short: the server's own sentence is there in full.
     expect(html).toContain(
       'Sending while bounce rate is above 5% risks suspension. Clean your list first.',
@@ -179,10 +179,10 @@ describe('a refusal from the server is shown whole', () => {
     const failure = readFailure(422, BODY);
     expect(failure.blocking).toHaveLength(1);
     const html = renderToStaticMarkup(<FailureView failure={failure} campaignId="c1" />);
-    expect(html).toContain('Server kampaň odmítl (422)');
-    expect(html).toContain('Míra nedoručitelnosti (7 dní)');
-    expect(html).toContain('Naměřeno: 15 % nedoručitelných zpráv');
-    expect(html).toContain('Vzorek: 100 (minimum 100)');
+    expect(html).toContain('The server refused the campaign (422)');
+    expect(html).toContain('Bounce rate (7 days)');
+    expect(html).toContain('Measured: 15% of messages bounced');
+    expect(html).toContain('Sample: 100 (minimum 100)');
   });
 
   it('any other error keeps its whole message', () => {

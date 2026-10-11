@@ -38,10 +38,10 @@ export function RecheckDnsButton() {
         } catch {
           /* not JSON: show it as it came */
         }
-        toast('error', `Ověření se nepovedlo (${res.status}): ${message}`);
+        toast('error', `Re-verification failed (${res.status}): ${message}`);
         return;
       }
-      toast('success', 'DNS záznamy ověřeny znovu');
+      toast('success', 'DNS records re-verified');
       startTransition(() => router.refresh());
     } finally {
       setBusy(false);
@@ -51,7 +51,7 @@ export function RecheckDnsButton() {
   return (
     <Button variant="outline" loading={busy || pending} onClick={run}>
       <ShieldCheck className="h-4 w-4" />
-      Znovu ověřit DNS
+      Re-verify DNS
     </Button>
   );
 }

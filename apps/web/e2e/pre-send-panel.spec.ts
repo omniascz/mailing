@@ -1,4 +1,11 @@
-import { test, expect, type Page, type BrowserContext, type Request } from '@playwright/test';
+import {
+  test,
+  expect,
+  type Browser,
+  type Page,
+  type BrowserContext,
+  type Request,
+} from '@playwright/test';
 import postgres from 'postgres';
 import { randomUUID } from 'node:crypto';
 
@@ -109,13 +116,11 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     `;
     const attempted = r!.delivered + r!.bounced;
     const pct = (r!.bounced / attempted) * 100;
-    const shown = Number.isInteger(pct)
-      ? String(pct)
-      : String(Math.round(pct * 100) / 100).replace('.', ',');
+    const shown = Number.isInteger(pct) ? String(pct) : String(Math.round(pct * 100) / 100);
     return [
-      `Naměřeno: ${shown} % nedoručitelných zpráv`,
-      'Hranice: 5 %',
-      `Vzorek: ${attempted} (minimum 100)`,
+      `Measured: ${shown}% of messages bounced`,
+      'Threshold: 5%',
+      `Sample: ${attempted} (minimum 100)`,
     ];
   }
 
@@ -209,7 +214,7 @@ test.describe('pre-send check in the web (real API + gate)', () => {
 
     const verdict = page.getByTestId('pre-send-verdict');
     await expect(verdict).toHaveAttribute('data-verdict', 'go');
-    await expect(verdict).toHaveText('Kampaň je připravená k odeslání.');
+    await expect(verdict).toHaveText('The campaign is ready to send.');
     await expect(page.getByTestId('pre-send-acknowledge')).toHaveCount(0);
 
     const response = page.waitForResponse((r) => r.url().endsWith(`/campaigns/${id}/send`));
@@ -239,8 +244,8 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     await expect(failure).toBeVisible();
     const text = await failure.innerText();
     console.log(`[z126] 422 shown: ${JSON.stringify(text)}`);
-    expect(text).toContain('Server kampaň odmítl (422)');
-    expect(text).toContain('Míra nedoručitelnosti (7 dní)');
+    expect(text).toContain('The server refused the campaign (422)');
+    expect(text).toContain('Bounce rate (7 days)');
     for (const line of await expectedBounceLines()) expect(text).toContain(line);
     expect(await status(id)).toBe('draft');
   });
@@ -257,10 +262,10 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     const blocking = page.getByTestId('pre-send-blocking');
     const text = await blocking.innerText();
     console.log(`[z126] no-go blocking: ${JSON.stringify(text)}`);
-    expect(text).toContain('Míra nedoručitelnosti (7 dní)');
+    expect(text).toContain('Bounce rate (7 days)');
     for (const line of await expectedBounceLines()) expect(text).toContain(line);
-    expect(text).toContain('Co s tím:');
-    await expect(blocking.getByRole('link', { name: 'Otevřít seznamy' })).toHaveAttribute(
+    expect(text).toContain('What to do:');
+    await expect(blocking.getByRole('link', { name: 'Open lists' })).toHaveAttribute(
       'href',
       '/lists',
     );
@@ -302,7 +307,7 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     // The detail page shows the gate's last decision.
     await page.reload();
     const record = page.getByTestId('deliverability-record');
-    await expect(record).toContainText('Odesláno přes potvrzení rizika');
+    await expect(record).toContainText('Sent with the risk acknowledged');
     await expect(record).toContainText((await expectedBounceLines())[0]!);
   });
 
@@ -319,7 +324,7 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     await openPanelWith('Schedule', true);
 
     await expect(page.getByTestId('pre-send-verdict')).toHaveAttribute('data-verdict', 'no-go');
-    await expect(page.getByTestId('pre-send-panel')).toContainText('Naplánováno na:');
+    await expect(page.getByTestId('pre-send-panel')).toContainText('Scheduled for:');
     await expect(page.getByTestId('pre-send-confirm')).toBeDisabled();
     expect(posts).toEqual([]);
 
@@ -373,15 +378,13 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     await expect(record).toBeVisible();
     const text = await record.innerText();
     console.log(`[z127] busy org card: ${JSON.stringify(text)}`);
-    expect(text).toContain('Odeslání zablokováno');
-    expect(text).toContain('plánovač v naplánovaný čas');
-    expect(text).toContain('vrátila do konceptu');
+    expect(text).toContain('Sending blocked');
+    expect(text).toContain('the scheduler at the scheduled time');
+    expect(text).toContain('went back to draft');
   });
 
-  test('an editor — who may send, and is not an owner — gets the panel and can send', async ({
-    browser,
-  }) => {
-    await goodHistory();
+  /** A signed-in editor of the test organisation, in a context of their own. */
+  async function asEditor(browser: Browser) {
     const email = `e2e-editor-${tag}@test.local`;
     await sql`
       INSERT INTO users (org_id, email, name, password_hash, role, email_verified)
@@ -389,24 +392,35 @@ test.describe('pre-send check in the web (real API + gate)', () => {
       FROM users WHERE email = 'demo@acme.test'
       ON CONFLICT DO NOTHING
     `;
-    const id = await campaign('editor');
-    const editorContext = await browser.newContext();
-    const editor = await editorContext.newPage();
-    try {
-      await editor.goto('/login');
-      await editor.getByLabel(/email/i).fill(email);
-      await editor.getByLabel(/password/i).fill('Demo1234!');
-      await editor
-        .getByRole('button', { name: /sign in|login|přihl/i })
-        .first()
-        .click();
-      await expect(editor).toHaveURL(/^https?:\/\/[^/]+\/?$/, { timeout: 15_000 });
+    const context = await browser.newContext();
+    const editor = await context.newPage();
+    await editor.goto('/login');
+    await editor.getByLabel(/email/i).fill(email);
+    await editor.getByLabel(/password/i).fill('Demo1234!');
+    await editor
+      .getByRole('button', { name: /sign in|login|přihl/i })
+      .first()
+      .click();
+    await expect(editor).toHaveURL(/^https?:\/\/[^/]+\/?$/, { timeout: 15_000 });
+    return { editor, context };
+  }
 
-      await editor.goto(`/campaigns/${id}`);
-      await expect(async () => {
-        await editor.getByRole('button', { name: 'Send now' }).click();
-        await expect(editor.getByTestId('pre-send-panel')).toBeVisible({ timeout: 1_000 });
-      }).toPass({ timeout: 15_000 });
+  async function openEditorPanel(editor: Page, id: string) {
+    await editor.goto(`/campaigns/${id}`);
+    await expect(async () => {
+      await editor.getByRole('button', { name: 'Send now' }).click();
+      await expect(editor.getByTestId('pre-send-panel')).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
+  }
+
+  test('an editor — who may send, and is not an owner — gets the panel and can send', async ({
+    browser,
+  }) => {
+    await goodHistory();
+    const id = await campaign('editor');
+    const { editor, context } = await asEditor(browser);
+    try {
+      await openEditorPanel(editor, id);
       await expect(editor.getByTestId('pre-send-verdict')).toHaveAttribute('data-verdict', 'go');
       const response = editor.waitForResponse((r) => r.url().endsWith(`/campaigns/${id}/send`));
       await editor.getByTestId('pre-send-confirm').click();
@@ -416,7 +430,40 @@ test.describe('pre-send check in the web (real API + gate)', () => {
       expect(status).toBe(200);
       expect(row!.status).toBe('queueing');
     } finally {
-      await editorContext.close();
+      await context.close();
+    }
+  });
+
+  test('an editor who acknowledges the risk is refused with 403, and the panel says why (Z129)', async ({
+    browser,
+  }) => {
+    await badHistory();
+    const id = await campaign('editor-ack');
+    const { editor, context } = await asEditor(browser);
+    try {
+      await openEditorPanel(editor, id);
+      await expect(editor.getByTestId('pre-send-verdict')).toHaveAttribute('data-verdict', 'no-go');
+      await editor.getByTestId('pre-send-acknowledge').check();
+      const response = editor.waitForResponse((r) => r.url().endsWith(`/campaigns/${id}/send`));
+      await editor.getByTestId('pre-send-confirm').click();
+      const code = (await response).status();
+      const failure = editor.getByTestId('send-failure');
+      await expect(failure).toBeVisible();
+      const text = await failure.innerText();
+      const audit = await sql<{ action: string }[]>`
+        SELECT action FROM audit_logs WHERE resource = 'campaign' AND resource_id = ${id}
+      `;
+      console.log(
+        `[z129] editor+ack: send=${code} status=${await status(id)} audit=${audit.length} panel=${JSON.stringify(text)}`,
+      );
+      expect(code).toBe(403);
+      expect(text).toBe(
+        'The request failed (403, FORBIDDEN): Only an owner or admin can send despite the pre-send check (acknowledgeDeliverabilityRisk: true).',
+      );
+      expect(await status(id)).toBe('draft');
+      expect(audit).toEqual([]);
+    } finally {
+      await context.close();
     }
   });
 });

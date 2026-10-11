@@ -124,6 +124,10 @@ describe('a criterion the customer cannot fix has words, not a link', () => {
     const r = remedyFor('blacklist', 'c1');
     expect(r.href).toBeUndefined();
     expect(r.text).toContain(SUPPORT_EMAIL);
+    expect(r.text).toBe(
+      'Your sending IP addresses are on a blacklist. Delisting cannot be done in the app — ' +
+        'email support at support@mailforge.cz; until the IPs are delisted, messages will not be delivered.',
+    );
     // And the server sends none either.
     const src = readFileSync(PURE, 'utf8');
     const blacklist = src.slice(src.indexOf('export function classifyBlacklist'));
@@ -137,6 +141,8 @@ describe('a criterion the customer cannot fix has words, not a link', () => {
   it('ip-warmup: no link, it says what to do', () => {
     const r = remedyFor('ip-warmup', 'c1');
     expect(r.href).toBeUndefined();
-    expect(r.text).toMatch(/Naplánujte/);
+    expect(r.text).toBe(
+      'Today’s limit for the warming-up IP addresses is used up. Schedule the campaign for tomorrow with “Schedule for later”.',
+    );
   });
 });

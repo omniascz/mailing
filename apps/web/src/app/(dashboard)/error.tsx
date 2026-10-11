@@ -36,10 +36,10 @@ export default function DashboardError({
       <div className="rounded-lg border border-rose-200 bg-rose-50 p-6">
         <div className="mb-3 flex items-center gap-2 text-rose-700">
           <AlertTriangle className="h-5 w-5" />
-          <h2 className="font-semibold">{state?.title ?? 'Načítání selhalo'}</h2>
+          <h2 className="font-semibold">{state?.title ?? 'Loading failed'}</h2>
         </div>
         <p className="text-sm text-rose-900/80">
-          {state?.text ?? (error.message || 'Neznámá chyba při načítání stránky.')}
+          {state?.text ?? (error.message || 'Unknown error while loading the page.')}
         </p>
         {error.digest ? (
           <p className="mt-2 font-mono text-[11px] text-rose-700/70">ID: {error.digest}</p>
@@ -55,14 +55,14 @@ export default function DashboardError({
           ) : null}
           {state?.retry !== false ? (
             <Button onClick={retry} variant="primary" loading={retrying}>
-              <RefreshCw className="h-4 w-4" /> Zkusit znovu
+              <RefreshCw className="h-4 w-4" /> Try again
             </Button>
           ) : null}
           <Link
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 hover:border-secondary-400"
           >
-            Zpět
+            Back
           </Link>
         </div>
       </div>

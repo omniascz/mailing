@@ -75,8 +75,8 @@ test.describe('API errors on server-rendered pages', () => {
         `[z128] 429 page: HTTP ${response?.status()} remaining=${lastRemaining} digest=${await state.getAttribute('data-digest')} text=${JSON.stringify(text)}`,
       );
       expect(await state.getAttribute('data-digest')).toBe('FORGEMSG_API_429');
-      expect(text).toContain('Příliš mnoho požadavků');
-      expect(text).toContain('Zkusit znovu');
+      expect(text).toContain('Too many requests');
+      expect(text).toContain('Try again');
       await expect(page.getByText('Tady to nikam nevede')).toHaveCount(0);
     } finally {
       await context.close();

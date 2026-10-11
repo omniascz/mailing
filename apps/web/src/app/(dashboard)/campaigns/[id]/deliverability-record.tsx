@@ -15,16 +15,16 @@ import { criterionLabel, describeMetrics } from './pre-send-report';
  */
 
 const ACTIONS = {
-  'campaign.deliverability_blocked': 'Odeslání zablokováno',
-  'campaign.deliverability_override': 'Odesláno přes potvrzení rizika',
-  'campaign.deliverability_caution': 'Odesláno s varováním',
+  'campaign.deliverability_blocked': 'Sending blocked',
+  'campaign.deliverability_override': 'Sent with the risk acknowledged',
+  'campaign.deliverability_caution': 'Sent with warnings',
 } as const;
 
 const VIA: Record<string, string> = {
-  send: 'tlačítko Odeslat',
-  schedule: 'naplánování',
-  'scheduled-dispatch': 'plánovač v naplánovaný čas',
-  resume: 'opakované odeslání',
+  send: 'the Send button',
+  schedule: 'scheduling',
+  'scheduled-dispatch': 'the scheduler at the scheduled time',
+  resume: 'resume',
   broadcast: 'API (broadcast)',
 };
 
@@ -67,19 +67,19 @@ export function DeliverabilityRecordCard({ record }: { record: AuditRow }) {
   return (
     <Card data-testid="deliverability-record">
       <CardHeader>
-        <CardTitle>Předodesílací kontrola: {ACTIONS[record.action]}</CardTitle>
+        <CardTitle>Pre-send check: {ACTIONS[record.action]}</CardTitle>
         <CardDescription>
-          {new Date(record.createdAt).toLocaleString('cs-CZ')} · {VIA[m.via ?? ''] ?? m.via}
+          {new Date(record.createdAt).toLocaleString('en-GB')} · {VIA[m.via ?? ''] ?? m.via}
           {m.scheduledAt
-            ? ` · naplánováno na ${new Date(m.scheduledAt).toLocaleString('cs-CZ')}`
+            ? ` · scheduled for ${new Date(m.scheduledAt).toLocaleString('en-GB')}`
             : ''}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {returnedToDraft && (
           <p className="mb-2 text-sm text-secondary-800">
-            V naplánovaný čas kontrola vyšla jako „neodesílat“, proto se kampaň vrátila do konceptu.
-            Opravte níže uvedené, nebo ji odešlete s potvrzením rizika.
+            At the scheduled time the check said “no-go”, so the campaign went back to draft. Fix
+            what is listed below, or send it with the risk acknowledged.
           </p>
         )}
         {listed && listed.length > 0 ? (
@@ -97,7 +97,7 @@ export function DeliverabilityRecordCard({ record }: { record: AuditRow }) {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-secondary-600">Bez dalších podrobností.</p>
+          <p className="text-sm text-secondary-600">No further details.</p>
         )}
       </CardContent>
     </Card>

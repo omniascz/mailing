@@ -25,6 +25,7 @@ import {
   sendCampaign,
   updateCampaign,
 } from '../../../services/campaigns/index.js';
+import { assertMayOverrideGate } from '../../../services/pre-send/override-permission.js';
 
 function broadcastShape(c: Campaign) {
   return {
@@ -110,6 +111,10 @@ const broadcastsRoutes: FastifyPluginAsync = async (app) => {
           message: 'Provide either html or text for the broadcast body',
         });
       }
+
+      // A broadcast created with scheduled_at is scheduled in the same call:
+      // that part is the /schedule decision, editor and up (Z129).
+      if (body.data.scheduled_at) await app.requireRole('editor', 'admin', 'owner')(req);
 
       const replyTo = Array.isArray(body.data.reply_to)
         ? body.data.reply_to[0]
@@ -219,7 +224,8 @@ const broadcastsRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/broadcasts/:id/send',
     {
-      preHandler: [app.authenticate],
+      // The same decision as POST /campaigns/:id/send (Z129).
+      preHandler: [app.authenticate, app.requireRole('editor', 'admin', 'owner')],
       schema: { tags: ['Resend-compatible'], summary: 'Send a broadcast' },
     },
     async (req, reply) => {
@@ -230,6 +236,7 @@ const broadcastsRoutes: FastifyPluginAsync = async (app) => {
           acknowledgeDeliverabilityRisk: z.boolean().optional(),
         })
         .parse(req.body ?? {});
+      assertMayOverrideGate(req.user, body.acknowledgeDeliverabilityRisk);
       const gate = {
         acknowledgeDeliverabilityRisk: body.acknowledgeDeliverabilityRisk,
         userId: req.user!.userId,

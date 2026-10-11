@@ -99,11 +99,13 @@ describe('what apiFetch does with each answer', () => {
 describe('what the error boundary says', () => {
   it('names each kind of failure, and never says "not found"', () => {
     for (const [digest, title] of [
-      ['FORGEMSG_API_429', 'Příliš mnoho požadavků'],
-      ['FORGEMSG_API_500', 'Chyba na serveru'],
-      ['FORGEMSG_API_503', 'Chyba na serveru'],
-      ['FORGEMSG_API_UNREACHABLE', 'Server je nedostupný'],
-      ['FORGEMSG_API_401', 'Přihlášení vypršelo'],
+      ['FORGEMSG_API_429', 'Too many requests'],
+      ['FORGEMSG_API_500', 'Server error'],
+      ['FORGEMSG_API_503', 'Server error'],
+      ['FORGEMSG_API_UNREACHABLE', 'Server unreachable'],
+      ['FORGEMSG_API_401', 'Session expired'],
+      ['FORGEMSG_API_403', 'No permission'],
+      ['FORGEMSG_API_400', 'Loading failed'],
     ] as const) {
       expect(errorStateFor(digest)?.title, digest).toBe(title);
     }
@@ -115,8 +117,25 @@ describe('what the error boundary says', () => {
       digest: 'FORGEMSG_API_429',
     });
     const html = renderToStaticMarkup(<DashboardError error={err} reset={() => {}} />);
-    expect(html).toContain('Příliš mnoho požadavků');
-    expect(html).toContain('Zkusit znovu');
+    expect(html).toContain('Too many requests');
+    expect(html).toContain('Try again');
     expect(html).not.toMatch(/nenašli|404/);
+  });
+
+  it('says it in English, word for word (Z129)', () => {
+    expect(errorStateFor('FORGEMSG_API_429')?.text).toBe(
+      'The server is refusing further requests because too many arrived in a short time. Wait a moment and try again.',
+    );
+    expect(errorStateFor('FORGEMSG_API_UNREACHABLE')?.text).toBe(
+      'Could not connect to the application server. Please try again in a moment.',
+    );
+    expect(errorStateFor('FORGEMSG_API_403')).toMatchObject({
+      title: 'No permission',
+      text: 'You do not have permission to see this. If you need it, ask an administrator of your organisation.',
+      retry: false,
+    });
+    expect(errorStateFor('FORGEMSG_API_502')?.text).toBe(
+      'The server failed while loading (HTTP 502). Please try again; if it keeps happening, email support@mailforge.cz.',
+    );
   });
 });
