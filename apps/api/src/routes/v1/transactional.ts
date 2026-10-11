@@ -11,12 +11,13 @@ import { randomUUID } from 'node:crypto';
 import { db } from '../../db/client.js';
 import { emailEvents, campaigns } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
-import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { and, eq, gte, lte } from 'drizzle-orm';
 import {
   configurationSetFromHeaders,
+  assertSenderVerified,
   sendTransactionalMessage,
+  takeMessageSendRate,
 } from '../../services/transactional/send-message.js';
 import { parseRawMime } from '../../services/transactional/mime-parse.js';
 import { AppError } from '../../lib/app-error.js';
@@ -154,6 +155,13 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       // The whole message against the plan before the first recipient is
       // queued, as sendRawMessage did.
       if (!testMode) await checkSendCapacity(orgId, recipients.length);
+      // The per-second rate counts accepted messages, not recipients: this
+      // message takes one unit, now, or is refused whole (429) before anything
+      // is queued (Z133).
+      // A refusal that will not change comes first, so it is answered as such
+      // and does not spend the unit.
+      await assertSenderVerified(orgId, from);
+      await takeMessageSendRate(orgId, testMode);
 
       // One recipient at a time down the path POST /transactional/email takes:
       // verified sender, plan, send rate, configuration set, sandbox,
@@ -178,6 +186,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
           metadata: { raw: true, ...body.metadata },
           // Relayed verbatim (SendRawEmail); the fields above route and record it.
           rawMime: rawStr,
+          sendRateTaken: true,
         });
         if (outcome.status === 'rejected') rejected.push({ to, reason: outcome.reason });
         else if (outcome.status !== 'rendering_failed') {
@@ -265,65 +274,64 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       const orgId = req.user!.orgId;
       const testMode = req.user?.apiKeyMode === 'test';
       if (!testMode) await checkSendCapacity(orgId, unique.length);
-      const scheduleAt = body.scheduleAt ? new Date(body.scheduleAt) : undefined;
 
-      const results = await Promise.all(
-        unique.map(async (recipient) => {
-          // Per-recipient merge-var substitution.
-          let html = body.html ?? '';
-          let text = body.text ?? '';
-          if (recipient.mergeVars) {
-            for (const [key, val] of Object.entries(recipient.mergeVars)) {
-              const re = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
-              html = html.replace(re, val);
-              text = text.replace(re, val);
-            }
-          }
-
-          const messageId = `<${randomUUID()}@forgemsg>`;
-          await db.insert(emailEvents).values({
-            orgId,
-            eventType: 'send',
-            messageId,
-            metadata: {
-              to: recipient.email,
-              transactional: true,
-              batch: true,
-              mergeVars: recipient.mergeVars ?? {},
-              tags: body.tags ?? [],
-              scheduleAt: body.scheduleAt ?? null,
-              templateId: body.templateId ?? null,
-              testMode,
-              ...recipient.metadata,
-            },
-          });
-
-          // Actually enqueue the send (sandbox no-ops inside).
-          await sendTransactionalEmail({
-            to: recipient.email,
-            from: body.from,
-            fromName: body.fromName,
-            subject: body.subject,
-            html: html || '<p></p>',
-            text: text || undefined,
-            orgId,
-            messageId,
-            scheduleAt,
+      // Message by message down the path POST /transactional/email takes
+      // (Z133): verified sender, plan, configuration set, sandbox,
+      // suppression, template, queue, send event, email.sent webhook,
+      // metering. Batches do not take the per-second send rate at acceptance
+      // (CTO decision, Z133). This route had its own path: no sender check, no
+      // suppression check, no webhook, no metering, and templateId ignored.
+      //
+      // In order, not in parallel: a refusal of the request itself (an
+      // unverified sender) comes from the first message, before anything of
+      // this batch is written.
+      const results: Array<
+        | { email: string; messageId: string; status: string }
+        | { email: string; status: 'rejected' | 'rendering_failed'; reason: string }
+      > = [];
+      for (const recipient of unique) {
+        const outcome = await sendTransactionalMessage({
+          orgId,
+          testMode,
+          to: recipient.email,
+          from: body.from,
+          fromName: body.fromName,
+          subject: body.subject,
+          html: body.html,
+          text: body.text,
+          templateId: body.templateId,
+          mergeVars: recipient.mergeVars,
+          scheduleAt: body.scheduleAt,
+          tags: body.tags,
+          metadata: {
+            batch: true,
+            mergeVars: recipient.mergeVars ?? {},
             testMode,
-          });
-
-          return {
+            ...recipient.metadata,
+          },
+          sendRateTaken: true,
+        });
+        if (outcome.status === 'rejected') {
+          results.push({ email: recipient.email, status: 'rejected', reason: outcome.reason });
+        } else if (outcome.status === 'rendering_failed') {
+          results.push({
             email: recipient.email,
-            messageId,
-            status: testMode ? 'test' : scheduleAt ? 'scheduled' : 'queued',
-          };
-        }),
-      );
+            status: 'rendering_failed',
+            reason: outcome.message,
+          });
+        } else {
+          results.push({
+            email: recipient.email,
+            messageId: outcome.messageId,
+            status: testMode ? 'test' : outcome.status,
+          });
+        }
+      }
 
       return reply.code(202).send({
         data: {
-          queued: results.length,
-          deduplicated: body.recipients.length - results.length,
+          queued: results.filter((r) => 'messageId' in r).length,
+          deduplicated: body.recipients.length - unique.length,
           results,
         },
       });
@@ -415,8 +423,12 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
 
       // ── Scheduled path — persist for the cron, don't send now ──────────────
       const sendAt = body.sendAt ? new Date(body.sendAt) : null;
+      // A test key's batch is sandboxed — now, or when the cron sends it. It
+      // used to be sent for real either way (Z133).
+      const testMode = req.user?.apiKeyMode === 'test';
+      const payload = { ...body, testMode };
       if (sendAt && sendAt.getTime() > Date.now()) {
-        const rec = await scheduleBatch(orgId, batchId, body, sendAt);
+        const rec = await scheduleBatch(orgId, batchId, payload, sendAt);
         return reply.code(202).send({
           data: {
             batchId,
@@ -429,8 +441,8 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
       }
 
       // ── Immediate path ─────────────────────────────────────────────────────
-      await checkSendCapacity(orgId, body.recipients.length);
-      const out = await runTransactionalBatch(orgId, body);
+      if (!testMode) await checkSendCapacity(orgId, body.recipients.length);
+      const out = await runTransactionalBatch(orgId, payload);
 
       await redis.set(
         mkBatchKey(orgId, batchId),

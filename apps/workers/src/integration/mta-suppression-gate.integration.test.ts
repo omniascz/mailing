@@ -145,15 +145,14 @@ async function api(method: string, path: string, body?: unknown): Promise<unknow
   return JSON.parse(text);
 }
 
-/** The three paths that had no suppression check before the MTA. */
+/**
+ * The paths with no suppression check before the MTA. /messaging/send was the
+ * third until Z133, when it moved onto the shared transactional path and its
+ * route check refuses the address first — see its own test below.
+ */
 const SEND: Record<string, (to: string) => Promise<unknown>> = {
   '/emails': (to) =>
     api('POST', '/api/v1/emails', { from: fromEmail, to, subject: 'Faktura', html: '<p>x</p>' }),
-  '/messaging/send': (to) =>
-    api('POST', '/api/v1/messaging/send', {
-      channel: 'email',
-      payload: { to, from: fromEmail, subject: 'Faktura', html: '<p>x</p>' },
-    }),
   '/campaigns/:id/test': (to) => api('POST', `/api/v1/campaigns/${testCampaignId}/test`, { to }),
 };
 
@@ -328,6 +327,30 @@ describe('mta-sender refuses suppressed addresses on every path (real DB + Redis
     };
     await api('POST', '/api/v1/transactional/email', body(clean));
     expect(refused.data.status).toBe('rejected');
+    expect(await mtaJobsFor(blocked)).toHaveLength(0);
+    expect(await mtaJobsFor(clean)).toHaveLength(1);
+
+    sent.length = 0;
+    await deliver(clean);
+    expect(sent).toContain(clean);
+  });
+
+  it('/messaging/send refuses at the route since Z133, as /transactional/email does; a clean address is mailed', async () => {
+    const blocked = addr('bounced-msg');
+    const clean = addr('clean-msg');
+    allAddresses.push(blocked, clean);
+    await suppress(blocked, 'hard_bounce');
+    const body = (to: string) => ({
+      channel: 'email',
+      payload: { to, from: fromEmail, subject: 'Faktura', html: '<p>x</p>' },
+    });
+    const refused = (await api('POST', '/api/v1/messaging/send', body(blocked))) as {
+      data: { status: string; reason: string };
+    };
+    // A fresh per-second window: the route now takes the send rate.
+    await new Promise((r) => setTimeout(r, 1000 - (Date.now() % 1000) + 20));
+    await api('POST', '/api/v1/messaging/send', body(clean));
+    expect(refused.data).toMatchObject({ status: 'rejected', reason: 'suppressed:hard_bounce' });
     expect(await mtaJobsFor(blocked)).toHaveLength(0);
     expect(await mtaJobsFor(clean)).toHaveLength(1);
 
