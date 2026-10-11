@@ -218,7 +218,14 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/newsletter-referrals/convert',
-    { schema: { tags: ['Newsletter Referrals'], summary: 'Record a referral conversion' } },
+    {
+      // Public intake from the customer's website, authenticated like the rest
+      // of it: a publishable (or secret) key of the organisation. It had no
+      // check at all — anyone could add conversions to any organisation's
+      // referral code (Z130).
+      preHandler: [app.authenticatePublic],
+      schema: { tags: ['Newsletter Referrals'], summary: 'Record a referral conversion' },
+    },
     async (req, reply) => {
       const body = z
         .object({
@@ -231,7 +238,13 @@ export default async function newsletterReferralRoutes(app: FastifyInstance) {
       const [referral] = await db
         .select()
         .from(newsletterReferrals)
-        .where(eq(newsletterReferrals.code, body.code))
+        .where(
+          and(
+            eq(newsletterReferrals.code, body.code),
+            // The key's own organisation: another one's code is not found.
+            eq(newsletterReferrals.orgId, req.user!.orgId),
+          ),
+        )
         .limit(1);
 
       if (!referral) throw AppError.notFound('Referral code');

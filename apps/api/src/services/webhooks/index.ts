@@ -24,6 +24,12 @@ import {
   type WebhookEvent,
 } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
+import {
+  effectiveKeyRole,
+  keyRoleFor,
+  memberRoleIn,
+  type ApiKeyRole,
+} from '../auth/api-key-role.js';
 import type { WebhookEventPayloads } from './payloads.js';
 import { safeFetch, BlockedUrlError } from '../../lib/safe-fetch.js';
 import {
@@ -53,6 +59,8 @@ export async function createApiKey(
   /** Public (publishable) key for browser embedding — prefixed `fm_pub_` and
    *  rejected on every secret route (see authenticatePublic). */
   isPublic = false,
+  /** The creator's role; the key acts with it and never more (api-key-role.ts). */
+  role: string = 'viewer',
 ): Promise<{ apiKey: typeof apiKeys.$inferSelect; rawKey: string }> {
   const prefix = isPublic ? 'fm_pub_' : mode === 'test' ? 'fm_test_' : 'fm_live_';
   const raw = `${prefix}${randomBytes(24).toString('hex')}`;
@@ -61,14 +69,30 @@ export async function createApiKey(
 
   const [key] = await db
     .insert(apiKeys)
-    .values({ orgId, userId, name, keyHash, keyPrefix, scopes, expiresAt, mode, isPublic })
+    .values({
+      orgId,
+      userId,
+      name,
+      keyHash,
+      keyPrefix,
+      scopes,
+      expiresAt,
+      mode,
+      isPublic,
+      role: keyRoleFor(role),
+    })
     .returning();
 
   if (!key) throw AppError.internal('Failed to create API key');
   return { apiKey: key, rawKey: raw };
 }
 
-export async function lookupApiKey(rawKey: string): Promise<typeof apiKeys.$inferSelect | null> {
+export type ResolvedApiKey = typeof apiKeys.$inferSelect & {
+  /** The role this request acts with: see services/auth/api-key-role.ts. */
+  effectiveRole: ApiKeyRole;
+};
+
+export async function lookupApiKey(rawKey: string): Promise<ResolvedApiKey | null> {
   const keyHash = hashApiKey(rawKey);
 
   // Redis cache (TTL 60s) to avoid a DB hit on every request
@@ -76,7 +100,10 @@ export async function lookupApiKey(rawKey: string): Promise<typeof apiKeys.$infe
   if (cached === 'null') return null;
   if (cached) {
     try {
-      return JSON.parse(cached);
+      const hit = JSON.parse(cached) as Partial<ResolvedApiKey>;
+      // An entry cached before Z130 has no effectiveRole: resolve it afresh
+      // rather than let it act with a role nobody computed.
+      if (hit.effectiveRole) return hit as ResolvedApiKey;
     } catch {
       // ignore
     }
@@ -93,7 +120,13 @@ export async function lookupApiKey(rawKey: string): Promise<typeof apiKeys.$infe
     return null;
   }
 
-  await redis.setex(`apikey:${keyHash}`, 60, JSON.stringify(key));
+  // Resolved here, cached with the key: a demotion reaches the key within the
+  // cache's 60 seconds.
+  const resolved: ResolvedApiKey = {
+    ...key,
+    effectiveRole: effectiveKeyRole(key.role, await memberRoleIn(key.userId, key.orgId)),
+  };
+  await redis.setex(`apikey:${keyHash}`, 60, JSON.stringify(resolved));
 
   // Update last_used_at async
   db.update(apiKeys)
@@ -101,7 +134,7 @@ export async function lookupApiKey(rawKey: string): Promise<typeof apiKeys.$infe
     .where(eq(apiKeys.id, key.id))
     .catch(() => {});
 
-  return key;
+  return resolved;
 }
 
 export async function listApiKeys(orgId: string) {

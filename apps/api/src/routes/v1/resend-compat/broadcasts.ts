@@ -13,7 +13,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { campaigns, type Campaign } from '../../../db/schema/index.js';
 import {
@@ -138,9 +138,19 @@ const broadcastsRoutes: FastifyPluginAsync = async (app) => {
       });
 
       // If scheduled, also flip status via scheduleCampaign so the worker
-      // picks it up.
+      // picks it up. A refused schedule refuses the whole request: the draft
+      // created a moment ago is removed again, so a 4xx leaves nothing behind.
+      // It used to stay — measured in Z130: 400 "fromName is required", and a
+      // draft in the campaign list nobody asked for.
       if (body.data.scheduled_at) {
-        await scheduleCampaign(req.user!.orgId, broadcast.id, new Date(body.data.scheduled_at));
+        try {
+          await scheduleCampaign(req.user!.orgId, broadcast.id, new Date(body.data.scheduled_at));
+        } catch (err) {
+          await db
+            .delete(campaigns)
+            .where(and(eq(campaigns.id, broadcast.id), eq(campaigns.orgId, req.user!.orgId)));
+          throw err;
+        }
       }
 
       const fresh = await getCampaign(req.user!.orgId, broadcast.id);

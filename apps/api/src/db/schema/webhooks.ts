@@ -190,6 +190,12 @@ export const apiKeys = pgTable(
      *  are rejected on every secret route and accepted only on SDK ingest
      *  endpoints (authenticatePublic). Prefixed `fm_pub_`. */
     isPublic: boolean('is_public').notNull().default(false),
+    /** The role this key acts with: the role of the member who created it at
+     *  that moment, never more (Z130). NULL only on keys from before the column;
+     *  lookupApiKey then falls back to the creator's role, or viewer when the
+     *  creator is gone. The creator's current role still caps it on every
+     *  lookup, so demoting a member demotes their keys. */
+    role: varchar('role', { length: 16 }),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

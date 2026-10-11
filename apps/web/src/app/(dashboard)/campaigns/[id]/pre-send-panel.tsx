@@ -35,6 +35,11 @@ export function PreSendPanel(props: {
   failure?: ApiFailure | null;
   acknowledged: boolean;
   onAcknowledge: (v: boolean) => void;
+  /**
+   * Whether this member may send past a no-go verdict. The API accepts the
+   * acknowledgement from an owner or admin only; anyone else is not offered it.
+   */
+  canOverride?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   confirming: boolean;
@@ -94,7 +99,16 @@ export function PreSendPanel(props: {
             </p>
           )}
 
-          {report.verdict === 'no-go' && (
+          {report.verdict === 'no-go' && props.canOverride === false && (
+            <p
+              data-testid="pre-send-override-not-allowed"
+              className="mt-4 rounded-md border border-secondary-200 bg-secondary-50 p-3 text-secondary-800"
+            >
+              Only an owner or admin can send a campaign the check says “no-go”. Fix what is listed
+              above, or ask an owner or admin to send it.
+            </p>
+          )}
+          {report.verdict === 'no-go' && props.canOverride !== false && (
             <label className="mt-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3">
               <input
                 type="checkbox"

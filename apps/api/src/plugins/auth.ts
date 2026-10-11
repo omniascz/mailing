@@ -72,7 +72,10 @@ async function authPlugin(app: FastifyInstance) {
         request.user = {
           userId: key.userId ?? key.id,
           orgId: key.orgId,
-          role: 'admin' as UserRole,
+          // The creator's role, never more (services/auth/api-key-role.ts).
+          // Every key used to act as admin, which let a viewer mint one and
+          // act as an admin with it (Z130).
+          role: key.effectiveRole as UserRole,
           email: '',
           apiKeyMode: ((key as { mode?: 'live' | 'test' }).mode ?? 'live') as 'live' | 'test',
           apiKeyScopes: (key as { scopes?: string[] }).scopes ?? [],
@@ -120,6 +123,13 @@ async function authPlugin(app: FastifyInstance) {
   app.decorate('requireRole', (...roles: UserRole[]) => {
     return async (request: FastifyRequest) => {
       if (!request.user) throw AppError.unauthorized('Authentication required');
+      // A publishable key is public: it sits in the customer's website source.
+      // It never satisfies a role, whatever role or scopes it carries — a
+      // route behind requireRole alone (no authenticate) was reachable with
+      // one (Z130).
+      if (request.user.isPublicKey) {
+        throw AppError.forbidden('Public API keys cannot access this endpoint');
+      }
       const userRank = ROLE_RANK[request.user.role];
       const requiredRank = Math.min(...roles.map((r) => ROLE_RANK[r]));
       if (userRank < requiredRank) {

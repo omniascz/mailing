@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
 import { getCapabilities } from '@/lib/capabilities.server';
 import { CampaignActions } from './campaign-actions';
+import { sessionRole } from '@/lib/session-role.server';
+import { mayOverrideGate } from '@/lib/session-role';
 import { CloneCampaignButton } from './clone-campaign-button';
 import { PollResultsCard, type PollResult } from './poll-results-card';
 import { AbResultCard, type AbConfigLite, type AbResult } from './ab-result-card';
@@ -87,6 +89,8 @@ export const dynamic = 'force-dynamic';
 export default async function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const campaign = await apiFetch<Campaign | null>(`/api/v1/campaigns/${id}`, { fallback: null });
+  // Owners and admins are offered the no-go override; nobody else (Z130).
+  const canOverride = mayOverrideGate(await sessionRole());
   if (!campaign) notFound();
 
   const delivered = campaign.totalDelivered;
@@ -168,7 +172,7 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
             ) : null}
             <CloneCampaignButton campaign={campaign} />
           </div>
-          <CampaignActions campaign={campaign} />
+          <CampaignActions campaign={campaign} canOverride={canOverride} />
         </div>
       </header>
 

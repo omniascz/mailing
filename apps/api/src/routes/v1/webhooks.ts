@@ -246,7 +246,10 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/api-keys',
     {
-      preHandler: [app.authenticate],
+      // Minting a credential is an admin's decision (Z130). Before, any member
+      // could — and every key acted as admin, so a viewer minted one and sent
+      // a no-go campaign past the gate with it.
+      preHandler: [app.authenticate, app.requireRole('admin', 'owner')],
       schema: {
         tags: ['API Keys'],
         summary: 'Create API key — raw key returned once, store securely',
@@ -265,6 +268,8 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
         body.expiresAt ? new Date(body.expiresAt) : undefined,
         'live',
         body.isPublic ?? false,
+        // The key acts with its creator's role and never more.
+        req.user!.role,
       );
       return reply.status(201).send({ data: result });
     },

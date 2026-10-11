@@ -31,7 +31,14 @@ interface MinimalCampaign {
   pausedReason?: string | null;
 }
 
-export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
+export function CampaignActions({
+  campaign,
+  canOverride = true,
+}: {
+  campaign: MinimalCampaign;
+  /** Whether this member may send past a no-go pre-send verdict (owner, admin). */
+  canOverride?: boolean;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
@@ -328,6 +335,7 @@ export function CampaignActions({ campaign }: { campaign: MinimalCampaign }) {
           failure={failure}
           acknowledged={acknowledged}
           onAcknowledge={setAcknowledged}
+          canOverride={canOverride}
           onConfirm={confirm}
           onCancel={closePanel}
           confirming={busy === panel.action}

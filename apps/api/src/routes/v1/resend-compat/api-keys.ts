@@ -51,7 +51,8 @@ const apiKeysResendRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/api-keys/resend',
     {
-      preHandler: [app.authenticate],
+      // Minting a credential is an admin's decision (Z130), as on POST /api-keys.
+      preHandler: [app.authenticate, app.requireRole('admin', 'owner')],
       schema: { tags: ['Resend-compatible'], summary: 'Create an API key (Resend shape)' },
     },
     async (req, reply) => {
@@ -78,6 +79,8 @@ const apiKeysResendRoutes: FastifyPluginAsync = async (app) => {
         scopes,
         undefined,
         body.data.mode ?? 'live',
+        false,
+        req.user!.role,
       );
       return reply.code(200).send({
         ...apiKeyShape({

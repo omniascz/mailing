@@ -48,6 +48,16 @@ jobs:
       - name: Org-scope write sweep
         if: always()
         run: node scripts/org-scope-write-sweep.mjs
+      # The same kind of check for roles (Z130): state-changing routes a signed-in
+      # caller reaches with no role check. Fails on a new one, and on a baseline
+      # entry the code no longer matches, so the baseline only shrinks on purpose.
+      # Static and fast like the sweep above; its self-test runs first, so a
+      # check gone blind fails here rather than passing quietly.
+      - name: Role-check sweep
+        if: always()
+        run: |
+          node --test scripts/role-check-sweep.test.mjs
+          node scripts/role-check-sweep.mjs
 
   typecheck:
     name: Type Check

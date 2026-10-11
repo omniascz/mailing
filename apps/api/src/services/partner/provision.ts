@@ -98,6 +98,10 @@ export async function provisionPartnerOrg(input: ProvisionInput): Promise<Provis
     ['ticketing:write'],
     undefined,
     'live',
+    false,
+    // Issued by the platform, not by a member: it gets the least role that
+    // writes, and its scope keeps it to ticketing. It used to act as admin.
+    'editor',
   );
 
   return { orgId, created, apiKey: rawKey, seeded };
