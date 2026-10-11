@@ -69,7 +69,7 @@ const GOOD: PreSendReport = {
   checks: [{ id: 'domain-auth', severity: 'pass', title: 'Sending domain fully authenticated' }],
 };
 
-const render = (report: PreSendReport | null, acknowledged = false) =>
+const render = (report: PreSendReport | null, acknowledged = false, canOverride?: boolean) =>
   renderToStaticMarkup(
     <PreSendPanel
       campaignId="c1"
@@ -77,6 +77,7 @@ const render = (report: PreSendReport | null, acknowledged = false) =>
       report={report}
       loading={false}
       acknowledged={acknowledged}
+      canOverride={canOverride}
       onAcknowledge={() => {}}
       onConfirm={() => {}}
       onCancel={() => {}}
@@ -134,6 +135,28 @@ describe('what the panel shows', () => {
 
   it('no-go, acknowledged: the confirm button unlocks', () => {
     expect(confirmTag(render(BAD, true))).not.toContain('disabled');
+  });
+});
+
+describe('who is offered the override (Z130)', () => {
+  it('owner or admin: the acknowledgement checkbox', () => {
+    const html = render(BAD, false, true);
+    expect(html).toContain('data-testid="pre-send-acknowledge"');
+    expect(html).not.toContain('pre-send-override-not-allowed');
+  });
+
+  it('anyone else: no checkbox, the reason instead, and the button stays disabled', () => {
+    const html = render(BAD, false, false);
+    expect(html).not.toContain('pre-send-acknowledge');
+    expect(html).toContain('data-testid="pre-send-override-not-allowed"');
+    expect(html).toContain(
+      'Only an owner or admin can send a campaign the check says “no-go”. Fix what is listed above, or ask an owner or admin to send it.',
+    );
+    expect(confirmTag(html)).toContain('disabled');
+  });
+
+  it('a go verdict is the same for everyone: nothing to override', () => {
+    expect(render(GOOD, false, false)).toEqual(render(GOOD, false, true));
   });
 });
 

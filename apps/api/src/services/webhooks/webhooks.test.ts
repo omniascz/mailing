@@ -271,7 +271,9 @@ describe('lookupApiKey', () => {
 
     const { lookupApiKey } = await import('./index.js');
     const result = await lookupApiKey('fm_live_somevalidkey');
-    expect(result).toEqual(keyRecord);
+    // The row, plus the role the key acts with (Z130). This record names no
+    // creator and carries no role, so it acts as viewer — it used to be admin.
+    expect(result).toEqual({ ...keyRecord, effectiveRole: 'viewer' });
   });
 });
 

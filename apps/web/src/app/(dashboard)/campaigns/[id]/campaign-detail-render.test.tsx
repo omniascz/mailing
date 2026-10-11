@@ -30,6 +30,10 @@ vi.mock('@/lib/capabilities.server', () => ({
   getCapabilities: async () => ({ geoAnalytics: false }),
 }));
 
+// The page reads the member's role from the session cookie (Z130); there is no
+// request scope here, so it is given one.
+vi.mock('@/lib/session-role.server', () => ({ sessionRole: async () => 'owner' }));
+
 vi.mock('./campaign-actions', () => ({ CampaignActions: () => null }));
 vi.mock('./clone-campaign-button', () => ({ CloneCampaignButton: () => null }));
 

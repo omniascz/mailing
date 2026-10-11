@@ -97,6 +97,10 @@ async function makeTenant(label: string): Promise<Tenant> {
     keyHash: createHash('sha256').update(raw).digest('hex'),
     keyPrefix: raw.slice(0, 12),
     scopes: [],
+    // The tenant's own integration key, as an admin of it would mint one. Since
+    // Z130 a key acts with its creator's role, and one naming no creator and no
+    // role acts as viewer — this one used to be admin just by being a key.
+    role: 'admin',
   });
 
   const [c] = await db

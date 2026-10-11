@@ -1,0 +1,96 @@
+{
+  "_": [
+    "Routes that change state with no role check, on purpose. Read by scripts/role-check-sweep.mjs.",
+    "Each entry names one route exactly and says why no role applies. An entry that matches",
+    "nothing any more fails the check: drop it in the same change that removed the route.",
+    "Routes without member authentication are never findings, so they need no entry here:",
+    " - /api/v1/internal/*: behind the internal secret (plugins/internal-auth.ts), called by our",
+    "   own workers and engine, never by a member;",
+    " - incoming webhooks (ESPs, payment, integrations): authenticated by the sender's signature",
+    "   or secret, not by a member session.",
+    "Customer webhook *configuration* (POST /api/v1/webhooks and friends) is a member action and",
+    "is in the baseline, not here."
+  ],
+  "exemptions": [
+    {
+      "route": "POST /api/v1/2fa/enroll",
+      "category": "own account",
+      "why": "Enrols the caller's own second factor. Every member manages their own login, whatever their role."
+    },
+    {
+      "route": "POST /api/v1/2fa/confirm",
+      "category": "own account",
+      "why": "Confirms the caller's own second factor."
+    },
+    {
+      "route": "DELETE /api/v1/2fa",
+      "category": "own account",
+      "why": "Removes the caller's own second factor; keyed by the user, not by the organisation."
+    },
+    {
+      "route": "POST /api/v1/auth/resend-verification",
+      "category": "own account",
+      "why": "Re-sends the caller's own email verification."
+    },
+    {
+      "route": "POST /api/v1/me/orgs/switch",
+      "category": "switch organisation",
+      "why": "Issues a session for another organisation the caller is a member of; the role in it comes from that membership (services/auth/cross-account.ts), not from the current one."
+    },
+    {
+      "route": "POST /api/v1/invitations/:token/accept",
+      "category": "accept invitation",
+      "why": "The invited person accepts their own invitation; the token is the credential, and the role is the one the invitation carries."
+    },
+    {
+      "route": "POST /api/v1/events",
+      "category": "SDK intake",
+      "why": "Event ingest from the customer's website (web-sdk), with a publishable key. A publishable key never satisfies a role, so a role check would shut the website out."
+    },
+    {
+      "route": "POST /api/v1/checkout-started",
+      "category": "SDK intake",
+      "why": "Storefront checkout ingest (publishable key); rate-limited per verified key and address."
+    },
+    {
+      "route": "POST /api/v1/ctas/serve",
+      "category": "SDK intake",
+      "why": "Serves an on-site call to action to a website visitor (publishable key)."
+    },
+    {
+      "route": "POST /api/v1/ctas/:id/click",
+      "category": "SDK intake",
+      "why": "Records a visitor's click on an on-site call to action (publishable key)."
+    },
+    {
+      "route": "POST /api/v1/ctas/:id/dismiss",
+      "category": "SDK intake",
+      "why": "Records a visitor dismissing an on-site call to action (publishable key)."
+    },
+    {
+      "route": "POST /api/v1/push/devices",
+      "category": "SDK intake",
+      "why": "Registers a visitor's browser for web push (publishable key)."
+    },
+    {
+      "route": "DELETE /api/v1/push/devices/:token",
+      "category": "SDK intake",
+      "why": "Unregisters a visitor's browser from web push (publishable key)."
+    },
+    {
+      "route": "POST /api/v1/back-in-stock/subscribe",
+      "category": "SDK intake",
+      "why": "A shopper subscribes to a back-in-stock alert on the customer's store (publishable key)."
+    },
+    {
+      "route": "POST /api/v1/price-drop/subscribe",
+      "category": "SDK intake",
+      "why": "A shopper subscribes to a price-drop alert on the customer's store (publishable key)."
+    },
+    {
+      "route": "POST /api/v1/newsletter-referrals/convert",
+      "category": "SDK intake",
+      "why": "Records a newsletter referral conversion from the customer's website (publishable key, scoped to the key's organisation since Z130; before that it had no authentication at all)."
+    }
+  ]
+}

@@ -434,34 +434,38 @@ test.describe('pre-send check in the web (real API + gate)', () => {
     }
   });
 
-  test('an editor who acknowledges the risk is refused with 403, and the panel says why (Z129)', async ({
+  // Z129 had the editor tick the box and read the API's 403. Since Z130 the web
+  // knows the role (the session cookie) and does not offer the box at all; the
+  // API's 403 for an editor's acknowledgement is covered in api-key-roles and
+  // send-roles integration tests.
+  test('an editor is not offered the override on a no-go campaign; the panel says why (Z130)', async ({
     browser,
   }) => {
     await badHistory();
     const id = await campaign('editor-ack');
+    const posts: string[] = [];
     const { editor, context } = await asEditor(browser);
+    editor.on('request', (r) => {
+      if (r.method() === 'POST' && r.url().endsWith(`/campaigns/${id}/send`)) posts.push(r.url());
+    });
     try {
       await openEditorPanel(editor, id);
       await expect(editor.getByTestId('pre-send-verdict')).toHaveAttribute('data-verdict', 'no-go');
-      await editor.getByTestId('pre-send-acknowledge').check();
-      const response = editor.waitForResponse((r) => r.url().endsWith(`/campaigns/${id}/send`));
-      await editor.getByTestId('pre-send-confirm').click();
-      const code = (await response).status();
-      const failure = editor.getByTestId('send-failure');
-      await expect(failure).toBeVisible();
-      const text = await failure.innerText();
-      const audit = await sql<{ action: string }[]>`
-        SELECT action FROM audit_logs WHERE resource = 'campaign' AND resource_id = ${id}
-      `;
+      const notice = editor.getByTestId('pre-send-override-not-allowed');
+      await expect(notice).toBeVisible();
+      const text = await notice.innerText();
+      const boxes = await editor.getByTestId('pre-send-acknowledge').count();
+      const disabled = await editor.getByTestId('pre-send-confirm').isDisabled();
       console.log(
-        `[z129] editor+ack: send=${code} status=${await status(id)} audit=${audit.length} panel=${JSON.stringify(text)}`,
+        `[z130] editor no-go panel: checkbox=${boxes} confirm disabled=${disabled} notice=${JSON.stringify(text)} posts=${posts.length} status=${await status(id)}`,
       );
-      expect(code).toBe(403);
+      expect(boxes).toBe(0);
+      expect(disabled).toBe(true);
       expect(text).toBe(
-        'The request failed (403, FORBIDDEN): Only an owner or admin can send despite the pre-send check (acknowledgeDeliverabilityRisk: true).',
+        'Only an owner or admin can send a campaign the check says “no-go”. Fix what is listed above, or ask an owner or admin to send it.',
       );
+      expect(posts).toEqual([]);
       expect(await status(id)).toBe('draft');
-      expect(audit).toEqual([]);
     } finally {
       await context.close();
     }
