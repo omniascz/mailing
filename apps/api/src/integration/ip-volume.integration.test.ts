@@ -35,6 +35,7 @@ import {
   warmupIps,
   configurationSets,
   apiKeys,
+  sendingDomains,
 } from '../db/schema/index.js';
 import {
   recordIpSend,
@@ -64,7 +65,15 @@ async function cleanup() {
   await db.delete(configurationSets).where(eq(configurationSets.name, CFG_SET));
   await db.delete(apiKeys).where(eq(apiKeys.name, `ipvol ${SUFFIX}`));
   if (poolId) await db.delete(ipPools).where(eq(ipPools.id, poolId));
+  await db.delete(sendingDomains).where(eq(sendingDomains.domain, senderDomain()));
 }
+
+/**
+ * A sender domain of this file's own, verified. Since Z132 the transactional
+ * route refuses an unverified sender domain (422), as SMTP already did; this
+ * file sent from acme.test, which no organisation has verified.
+ */
+const senderDomain = () => `ipvol-${SUFFIX}.test`;
 
 /** One transactional send through the registered route, as a customer makes it. */
 async function sendOne(to: string) {
@@ -74,7 +83,7 @@ async function sendOne(to: string) {
     headers: { 'x-api-key': apiKey },
     payload: {
       to,
-      from: 'sender@acme.test',
+      from: `sender@${senderDomain()}`,
       subject: 'ip volume itest',
       html: '<p>ip volume itest</p>',
       configurationSet: CFG_SET,
@@ -114,6 +123,15 @@ beforeAll(async () => {
     { ipAddress: IP_ONE, orgId, poolId, status: 'active' },
     { ipAddress: IP_TWO, orgId, poolId, status: 'active' },
   ]);
+
+  await db.insert(sendingDomains).values({
+    orgId,
+    domain: senderDomain(),
+    isVerified: true,
+    dkimVerified: true,
+    spfVerified: true,
+    dmarcVerified: true,
+  });
 
   await db.insert(configurationSets).values({
     orgId,

@@ -14,7 +14,12 @@ import { redis } from '@forgemsg/shared/redis';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { and, eq, gte, lte } from 'drizzle-orm';
-import { sendTransactionalMessage } from '../../services/transactional/send-message.js';
+import {
+  configurationSetFromHeaders,
+  sendTransactionalMessage,
+} from '../../services/transactional/send-message.js';
+import { parseRawMime } from '../../services/transactional/mime-parse.js';
+import { AppError } from '../../lib/app-error.js';
 
 const transactionalRoutes: FastifyPluginAsync = async (app) => {
   // ── Send transactional email ──────────────────────────────────────────────
@@ -138,14 +143,48 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
 
       const rawStr =
         body.encoding === 'base64' ? Buffer.from(body.raw, 'base64').toString('utf8') : body.raw;
-      const { sendRawMessage } = await import('../../services/transactional/raw-send.js');
-      const result = await sendRawMessage(req.user!.orgId, rawStr, {
-        from: body.from,
-        to: body.to,
-        metadata: body.metadata,
-        testMode: req.user?.apiKeyMode === 'test',
-      });
-      return reply.code(202).send({ data: result });
+      const orgId = req.user!.orgId;
+      const testMode = req.user?.apiKeyMode === 'test';
+      const parsed = parseRawMime(rawStr);
+      const from = body.from ?? parsed.from;
+      const recipients = body.to ?? [...parsed.to, ...parsed.cc];
+      if (!from) throw AppError.badRequest('No From address in message');
+      if (recipients.length === 0) throw AppError.badRequest('No recipients in message');
+      if (!parsed.html && !parsed.text) throw AppError.badRequest('Message has no text/html body');
+      // The whole message against the plan before the first recipient is
+      // queued, as sendRawMessage did.
+      if (!testMode) await checkSendCapacity(orgId, recipients.length);
+
+      // One recipient at a time down the path POST /transactional/email takes:
+      // verified sender, plan, send rate, configuration set, sandbox,
+      // suppression, send event, `sent` webhook, metering. This route used its
+      // own (sendRawMessage), which had none of the suppression, rate, sandbox
+      // or webhook steps (Z132).
+      const messages: Array<{ to: string; messageId: string }> = [];
+      const rejected: Array<{ to: string; reason: string }> = [];
+      for (const to of recipients) {
+        const outcome = await sendTransactionalMessage({
+          orgId,
+          testMode,
+          to,
+          from,
+          fromName: parsed.fromName ?? undefined,
+          replyTo: parsed.replyTo ?? undefined,
+          subject: parsed.subject ?? '(no subject)',
+          html: parsed.html ?? `<pre>${(parsed.text ?? '').replace(/[<>&]/g, '')}</pre>`,
+          text: parsed.text ?? undefined,
+          headers: parsed.headers,
+          configurationSet: configurationSetFromHeaders(parsed.headers),
+          metadata: { raw: true, ...body.metadata },
+          // Relayed verbatim (SendRawEmail); the fields above route and record it.
+          rawMime: rawStr,
+        });
+        if (outcome.status === 'rejected') rejected.push({ to, reason: outcome.reason });
+        else if (outcome.status !== 'rendering_failed') {
+          messages.push({ to, messageId: outcome.messageId });
+        }
+      }
+      return reply.code(202).send({ data: { status: 'queued', messages, rejected } });
     },
   );
 

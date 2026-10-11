@@ -279,7 +279,9 @@ describe('path 4 — SMTP relay (/internal/smtp/relay → sendTransactionalMessa
     // hands the engine the SMTP reply to give: 550 5.7.1 with the reason.
     expect(res.statusCode).toBe(422);
     expect(res.json().smtp).toMatchObject({ code: 550, enhanced: '5.7.1' });
-    expect(res.json().smtp.text).toMatch(/not a verified sender/i);
+    // Since Z132 the check is the shared send path's, and its refusal names
+    // the domain; still 550, still permanent.
+    expect(res.json().smtp.text).toMatch(/sender domain paypal\.com is not verified/i);
   });
 });
 
