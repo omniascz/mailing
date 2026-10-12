@@ -7,15 +7,9 @@
  * (refuse to enqueue). Free plan is the only hard-stop tier; paid plans
  * accept overage and bill afterwards via Stripe metered usage.
  */
-import { eq, sql, and, isNull, ne, gte } from 'drizzle-orm';
+import { eq, sql, and, isNull, ne } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  organizations,
-  contacts,
-  emailEvents,
-  aiUsage,
-  billingSubscriptions,
-} from '../../db/schema/index.js';
+import { organizations, contacts, aiUsage, planSendCounters } from '../../db/schema/index.js';
 import { SEND_PLANS, type SendPlanTier } from './plans.js';
 import { CONTACT_PLANS, getAiQuotaPerDay, type ContactPlanTier } from './plans.js';
 import { AppError } from '../../lib/app-error.js';
@@ -66,29 +60,20 @@ export async function getPlanCapacity(orgId: string): Promise<PlanCapacity> {
     );
   const contactCount = contactRow?.n ?? 0;
 
-  // Sends in the current billing period.
-  // Prefer Stripe's actual period start (billing_subscriptions); fall back to
-  // calendar month start when no subscription exists (free plan / pre-Stripe).
-  const [sub] = await db
-    .select({ periodStart: billingSubscriptions.currentPeriodStart })
-    .from(billingSubscriptions)
-    .where(eq(billingSubscriptions.orgId, orgId))
-    .limit(1);
-  const periodStart: Date =
-    sub?.periodStart ?? new Date(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1);
-
+  // Sends in the current billing period, read from the period's counter row
+  // (Z136) rather than counted from email_events, which grew with every send:
+  // 63.9 ms at 500k sends in a month before the index of Z135, 15.0 ms after
+  // it, and still growing. The row's key is plan_period_start(org) — Stripe's
+  // period start from billing_subscriptions, else the calendar month in UTC —
+  // the same function the trigger that fills it uses (migration 0029). No row
+  // means nothing has been sent in the period.
   const [sendRow] = await db
-    .select({ n: sql<number>`COUNT(*)::int` })
-    .from(emailEvents)
+    .select({ n: planSendCounters.sends })
+    .from(planSendCounters)
     .where(
       and(
-        eq(emailEvents.orgId, orgId),
-        eq(emailEvents.eventType, 'send'),
-        // gte(), not a raw sql fragment. A raw fragment bypasses the column's
-        // type mapper, so the driver received a Date it could not encode and
-        // every capacity check threw — which meant POST /api/v1/contacts
-        // answered 500. Same defect as the one fixed in the pre-send panel.
-        gte(emailEvents.createdAt, periodStart),
+        eq(planSendCounters.orgId, orgId),
+        eq(planSendCounters.periodStart, sql`plan_period_start(${orgId}::uuid)`),
       ),
     );
   const sendCount = sendRow?.n ?? 0;

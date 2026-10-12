@@ -116,6 +116,7 @@ export * from './cdp-sources.js';
 export * from './organization-members.js';
 export * from './credit-balances.js';
 export * from './product-meters.js';
+export * from './plan-send-counters.js';
 export * from './seo-clusters.js';
 export * from './social-accounts.js';
 export * from './social-posts.js';

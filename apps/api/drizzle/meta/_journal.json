@@ -204,6 +204,13 @@
       "when": 1791759850121,
       "tag": "0028_email_events_org_type_created",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791824545727,
+      "tag": "0029_plan_send_counters",
+      "breakpoints": true
     }
   ]
 }
