@@ -24,6 +24,7 @@ import { and, eq } from 'drizzle-orm';
 import { contacts, emailEvents } from '../../../db/schema/index.js';
 import { handleBounce } from '../../../services/campaigns/channel-fallback.js';
 import { abVariantForContact } from '../../../services/campaigns/variant-attribution.js';
+import { recipientAddress } from '../../../services/transactional/send-message.js';
 
 const bodySchema = z.object({
   type: z.enum(['send', 'deliver', 'bounce', 'deferred', 'failed']),
@@ -40,6 +41,14 @@ const bodySchema = z.object({
    * stored, and the auto-pause below never ran for one.
    */
   campaignIsPlaceholder: z.boolean().optional(),
+  /**
+   * The address the message went to. A `send` row is one recipient (Z137) and
+   * is unique per (org, message id, recipient), which is what makes a second
+   * post of the same delivery — mta-sender run again on a stalled job — a
+   * no-op. mta-sender sends it; a worker that does not (one deployed before
+   * this field) has the contact's address looked up instead.
+   */
+  recipient: z.string().max(320).optional(),
 });
 
 export default async function internalEventsRoutes(app: FastifyInstance) {
@@ -84,27 +93,51 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
       : await resolveCampaignCategory(body.orgId, body.campaignId).catch(() => null);
     const isp = typeof meta.isp === 'string' ? (meta.isp as string) : null;
 
-    await db.insert(emailEvents).values({
-      orgId: body.orgId,
-      campaignId: placeholder ? null : body.campaignId,
-      contactId,
-      messageId: body.messageId,
-      eventType,
-      bounceType,
-      stream:
-        (meta.stream as 'broadcast' | 'transactional' | 'triggered' | undefined) ?? 'broadcast',
-      // mta-sender puts the variant in the metadata on the success path only;
-      // its three bounce branches do not. Fall back to the send row so a bounce
-      // is attributable to the variant that caused it — a subject line that
-      // trips more spam filters is a legitimate test outcome.
-      abVariantId: placeholder
-        ? null
-        : ((meta.abVariantId as string | undefined) ??
-          abVariantForContact(body.campaignId, body.contactId)),
-      category,
-      isp,
-      metadata: meta,
-    });
+    // The recipient of a `send` row: what the worker said, else the contact's
+    // address. Other event types do not carry one.
+    let recipient: string | null = null;
+    if (eventType === 'send') {
+      if (body.recipient) recipient = recipientAddress(body.recipient);
+      else if (contactId) {
+        const [c] = await db
+          .select({ email: contacts.email })
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.orgId, body.orgId)))
+          .limit(1);
+        recipient = c?.email ? recipientAddress(c.email) : null;
+      }
+    }
+
+    const inserted = await db
+      .insert(emailEvents)
+      .values({
+        orgId: body.orgId,
+        campaignId: placeholder ? null : body.campaignId,
+        contactId,
+        messageId: body.messageId,
+        eventType,
+        bounceType,
+        stream:
+          (meta.stream as 'broadcast' | 'transactional' | 'triggered' | undefined) ?? 'broadcast',
+        // mta-sender puts the variant in the metadata on the success path only;
+        // its three bounce branches do not. Fall back to the send row so a bounce
+        // is attributable to the variant that caused it — a subject line that
+        // trips more spam filters is a legitimate test outcome.
+        abVariantId: placeholder
+          ? null
+          : ((meta.abVariantId as string | undefined) ??
+            abVariantForContact(body.campaignId, body.contactId)),
+        category,
+        isp,
+        recipient,
+        metadata: meta,
+      })
+      // A `send` row this delivery already has: the same job, processed again.
+      // Nothing is stored, counted or announced a second time, and the worker
+      // gets the success it got the first time.
+      .onConflictDoNothing()
+      .returning({ id: emailEvents.id });
+    if (inserted.length === 0) return reply.code(201).send({ ok: true, duplicate: true });
 
     // Real-time reputation auto-pause, for every bounce that is stored. It
     // computes the org's rate over its stored events (auto-pause.ts), so a

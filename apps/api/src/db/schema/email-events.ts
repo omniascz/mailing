@@ -6,6 +6,7 @@ import {
   timestamp,
   jsonb,
   index,
+  uniqueIndex,
   boolean,
   real,
 } from 'drizzle-orm/pg-core';
@@ -70,6 +71,20 @@ export const emailEvents = pgTable(
      *  stats. Populated on the delivery path (send/deliver/bounce). */
     isp: varchar('isp', { length: 32 }),
 
+    /**
+     * The address one `send` row is for (Z137): a `send` row is one recipient,
+     * on every path — the unit the plan limit, the plan send counter and the
+     * invoice all count. Lower-cased bare address. NULL on rows written before
+     * migration 0030 and on event types other than `send`.
+     */
+    recipient: varchar('recipient', { length: 320 }),
+    /**
+     * A sandboxed send (test-mode key, sandboxMode / sandbox_mode): recorded so
+     * the developer can see it, never dispatched, and since Z137 not counted
+     * against the plan and not billed.
+     */
+    sandbox: boolean('sandbox').notNull().default(false),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -87,11 +102,13 @@ export const emailEvents = pgTable(
     // sends in a month, 80 ms and 20,400 buffers per send; with this, 17 ms and
     // 596. The count still grows with volume — see the Z135 report.
     index('email_events_org_type_created_idx').on(t.orgId, t.eventType, t.createdAt),
-    // "Has this message already been counted?" — asked by the plan send
-    // counter's trigger for every `send` row it counts (migration 0029), so a
-    // job that writes the same message twice is one send. Only `send` rows.
-    index('email_events_org_send_message_idx')
-      .on(t.orgId, t.messageId)
+    // One `send` row per message and recipient (Z137). A job that writes the
+    // same delivery twice — mta-sender run again on a stalled job — is refused
+    // here, so no reader of `send` rows can count it twice; writers that can
+    // repeat insert with ON CONFLICT DO NOTHING. Rows with no recipient (written
+    // before migration 0030) are not constrained by it: NULLs are distinct.
+    uniqueIndex('email_events_send_recipient_uq')
+      .on(t.orgId, t.messageId, t.recipient)
       .where(sql`${t.eventType} = 'send'`),
   ],
 );

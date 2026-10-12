@@ -265,7 +265,10 @@ describe('the auto-pause rate is one set of messages (real DB + Redis + API)', (
     expect(o.raised.length, 'a real 10 % campaign bounce rate did not fire').toBeGreaterThan(0);
   }, 120_000);
 
-  it('/emails to+cc+bcc: one billed send, three deliveries; billing counts what it counted', async () => {
+  // Until Z137 this pinned one `send` row for three deliveries: the plan was
+  // checked for three and counted one. The unit is now the recipient on every
+  // path, so three deliveries are three `send` rows and three on the plan.
+  it('/emails to+cc+bcc: three billed sends, three deliveries; billing counts what it delivers', async () => {
     const capacity = async () =>
       ((await api('GET', '/api/v1/billing/capacity')) as { data: Record<string, unknown> }).data;
     const before = await capacity();
@@ -300,8 +303,10 @@ describe('the auto-pause rate is one set of messages (real DB + Redis + API)', (
       `[z121] /emails to+cc+bcc: rows=${JSON.stringify(rows)} billing before=${JSON.stringify(pick(before))} after=${JSON.stringify(pick(after))}`,
     );
     expect(Object.fromEntries(rows.map((r) => [r.event_type, r.n]))).toEqual({
-      send: 1,
+      send: 3,
       deliver: 3,
     });
+    const current = (o: Record<string, unknown>) => (o.sends as { current: number }).current;
+    expect(current(after) - current(before)).toBe(3);
   }, 120_000);
 });

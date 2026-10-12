@@ -5,15 +5,25 @@
  * getProductUsage()  — read usage for a product in a billing period
  * getOrgUsageSummary — all products for an org in a period
  * computePeriodCost  — calculate billable cost at period end
+ *
+ * Email is not metered here (Z137). Its usage is the plan send counter
+ * (plan_send_counters): one unit per non-sandboxed recipient with a `send`
+ * row, kept by a trigger in the transaction that writes the row, on every send
+ * path, keyed by the Stripe period — the number the plan limit is checked
+ * against. The email meter row it replaces was written by one path out of
+ * five, after the fact, with its failures swallowed, keyed by the server's
+ * local calendar month; so the plan and the invoice counted different things.
+ * Reading the counter makes them one number.
  */
 
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, ne, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   productUsageMeters,
   productMeterEvents,
   type MeterProduct,
 } from '../../db/schema/product-meters.js';
+import { planSendCounters } from '../../db/schema/plan-send-counters.js';
 
 // ─── Per-product overage rates (USD per unit) ─────────────────────────────────
 
@@ -38,8 +48,50 @@ export function currentPeriod(date = new Date()): string {
   return `${y}-${m}`;
 }
 
+// ─── Email: the plan send counter ─────────────────────────────────────────────
+
+/**
+ * Email units for a period, from the plan send counter. With no period: the
+ * organisation's current billing period (plan_period_start — the Stripe period,
+ * else the calendar month in UTC), the one the plan limit is checked against.
+ * With a 'YYYY-MM': the billing periods that start in that calendar month
+ * (UTC). For an organisation without a Stripe period that is exactly the month.
+ */
+async function emailUnits(orgId: string, period?: string): Promise<number> {
+  const where = period
+    ? and(
+        eq(planSendCounters.orgId, orgId),
+        sql`${planSendCounters.periodStart} >= (${`${period}-01`}::date AT TIME ZONE 'UTC')`,
+        sql`${planSendCounters.periodStart} < ((${`${period}-01`}::date + interval '1 month') AT TIME ZONE 'UTC')`,
+      )
+    : and(
+        eq(planSendCounters.orgId, orgId),
+        eq(planSendCounters.periodStart, sql`plan_period_start(${orgId}::uuid)`),
+      );
+  const [row] = await db
+    .select({ n: sql<number>`coalesce(sum(${planSendCounters.sends}), 0)::int` })
+    .from(planSendCounters)
+    .where(where);
+  return Number(row?.n ?? 0);
+}
+
+function emailUsage(units: number) {
+  const rate = DEFAULT_OVERAGE_RATES.email ?? 0;
+  return {
+    unitsUsed: units,
+    includedUnits: 0,
+    overageUnits: units,
+    estimatedCostUsd: Number((units * rate).toFixed(4)),
+  };
+}
+
 // ─── Record usage ─────────────────────────────────────────────────────────────
 
+/**
+ * Both writes in one transaction, and a failure is the caller's error: a
+ * billing write that may fail silently is not something to invoice from (Z137).
+ * Not for email — see the header.
+ */
 export async function recordUsage(
   orgId: string,
   product: MeterProduct,
@@ -47,38 +99,37 @@ export async function recordUsage(
   referenceId?: string,
   referenceType?: string,
 ): Promise<void> {
+  if (product === 'email') {
+    throw new Error('Email usage is the plan send counter, written with each send row (Z137)');
+  }
   const period = currentPeriod();
   const rate = DEFAULT_OVERAGE_RATES[product] ?? 0;
 
-  // Atomic upsert on (orgId, product, period)
-  await db
-    .insert(productUsageMeters)
-    .values({
-      orgId,
-      product,
-      period,
-      unitsUsed: units,
-      overageRateUsd: String(rate),
-    })
-    .onConflictDoUpdate({
-      target: [productUsageMeters.orgId, productUsageMeters.product, productUsageMeters.period],
-      set: {
-        unitsUsed: sql`product_usage_meters.units_used + ${units}`,
-        updatedAt: new Date(),
-      },
-    });
-
-  // Append audit event (fire-and-forget)
-  await db
-    .insert(productMeterEvents)
-    .values({
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(productUsageMeters)
+      .values({
+        orgId,
+        product,
+        period,
+        unitsUsed: units,
+        overageRateUsd: String(rate),
+      })
+      .onConflictDoUpdate({
+        target: [productUsageMeters.orgId, productUsageMeters.product, productUsageMeters.period],
+        set: {
+          unitsUsed: sql`product_usage_meters.units_used + ${units}`,
+          updatedAt: new Date(),
+        },
+      });
+    await tx.insert(productMeterEvents).values({
       orgId,
       product,
       units,
       referenceId,
       referenceType,
-    })
-    .catch(() => {});
+    });
+  });
 }
 
 // ─── Read usage ───────────────────────────────────────────────────────────────
@@ -86,13 +137,15 @@ export async function recordUsage(
 export async function getProductUsage(
   orgId: string,
   product: MeterProduct,
-  period = currentPeriod(),
+  periodArg?: string,
 ): Promise<{
   unitsUsed: number;
   includedUnits: number;
   overageUnits: number;
   estimatedCostUsd: number;
 }> {
+  if (product === 'email') return emailUsage(await emailUnits(orgId, periodArg));
+  const period = periodArg ?? currentPeriod();
   const [row] = await db
     .select()
     .from(productUsageMeters)
@@ -120,28 +173,41 @@ export async function getProductUsage(
 
 // ─── Full org summary ─────────────────────────────────────────────────────────
 
-export async function getOrgUsageSummary(orgId: string, period = currentPeriod()) {
+export async function getOrgUsageSummary(orgId: string, periodArg?: string) {
+  const period = periodArg ?? currentPeriod();
   const rows = await db
     .select()
     .from(productUsageMeters)
-    .where(and(eq(productUsageMeters.orgId, orgId), eq(productUsageMeters.period, period)));
+    .where(
+      and(
+        eq(productUsageMeters.orgId, orgId),
+        eq(productUsageMeters.period, period),
+        // Email rows written before Z137 are not read: email is the counter.
+        ne(productUsageMeters.product, 'email'),
+      ),
+    );
 
-  return rows.map((r) => {
-    const overage = Math.max(0, r.unitsUsed - r.includedUnits);
-    const rate = Number(r.overageRateUsd);
-    return {
-      product: r.product,
-      unitsUsed: r.unitsUsed,
-      includedUnits: r.includedUnits,
-      overageUnits: overage,
-      estimatedCostUsd: Number((overage * rate).toFixed(4)),
-    };
-  });
+  const units = await emailUnits(orgId, periodArg);
+  const email = units > 0 ? [{ product: 'email', ...emailUsage(units) }] : [];
+  return [
+    ...email,
+    ...rows.map((r) => {
+      const overage = Math.max(0, r.unitsUsed - r.includedUnits);
+      const rate = Number(r.overageRateUsd);
+      return {
+        product: r.product,
+        unitsUsed: r.unitsUsed,
+        includedUnits: r.includedUnits,
+        overageUnits: overage,
+        estimatedCostUsd: Number((overage * rate).toFixed(4)),
+      };
+    }),
+  ];
 }
 
 // ─── Period cost calculation ──────────────────────────────────────────────────
 
-export async function computePeriodCost(orgId: string, period = currentPeriod()): Promise<number> {
+export async function computePeriodCost(orgId: string, period?: string): Promise<number> {
   const summary = await getOrgUsageSummary(orgId, period);
   return Number(summary.reduce((sum, s) => sum + s.estimatedCostUsd, 0).toFixed(4));
 }

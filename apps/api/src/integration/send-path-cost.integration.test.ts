@@ -101,7 +101,7 @@ beforeAll(async () => {
   // the API key's first lookup before it is cached) is not the steady state.
   expect((await send()).statusCode).toBe(202);
   expect((await send()).statusCode).toBe(202);
-  // ...and their metering, which lands after the reply, out of the way.
+  // ...and their webhooks, which land after the reply, out of the way.
   await new Promise((resolve) => setTimeout(resolve, 500));
 }, 120_000);
 
@@ -122,7 +122,7 @@ describe('one transactional send', () => {
     try {
       const [res, cmds] = await commandsDuring([redis, queue], async () => {
         const r = await send();
-        // Metering and the webhook are fire-and-forget after the reply.
+        // The webhook is fire-and-forget after the reply.
         await new Promise((resolve) => setTimeout(resolve, 300));
         return r;
       });
@@ -152,6 +152,13 @@ describe('one transactional send', () => {
  * The counter is kept by a trigger on the email_events insert (migration
  * 0029), and a trigger's statements are not separate queries from here: that
  * work is inside the `insert into "email_events"` line, not missing.
+ *
+ * 13 → 11 in Z137: the email meter writes after the reply (an upsert into
+ * product_usage_meters and an insert into product_meter_events, both with
+ * their failures swallowed) are gone. Email is invoiced from the counter that
+ * the `send` row's trigger keeps in the same statement (services/billing/
+ * meters.ts), so the billing write is that insert, and its failure is the
+ * request's.
  */
-const EXPECTED_QUERIES = 13;
+const EXPECTED_QUERIES = 11;
 const EXPECTED_REDIS_COMMANDS = 5;

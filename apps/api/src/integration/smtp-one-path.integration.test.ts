@@ -23,13 +23,13 @@ import {
   configurationSets,
   emailEvents,
   organizations,
-  productUsageMeters,
   sendingDomains,
   suppressions,
   webhookDeliveries,
   webhooks,
 } from '../db/schema/index.js';
 import { mtaOtherQueue } from '../lib/queues.js';
+import { getProductUsage } from '../services/billing/meters.js';
 
 let app: FastifyInstance;
 const tag = randomUUID().slice(0, 8);
@@ -115,15 +115,8 @@ const sendsTo = async (orgId: string, to: string) =>
       ),
     );
 
-const meter = async (orgId: string) =>
-  Number(
-    (
-      await db
-        .select({ n: sql<number>`coalesce(sum(${productUsageMeters.unitsUsed}), 0)` })
-        .from(productUsageMeters)
-        .where(and(eq(productUsageMeters.orgId, orgId), eq(productUsageMeters.product, 'email')))
-    )[0]!.n,
-  );
+// The invoice basis for email: the plan send counter since Z137 (meters.ts).
+const meter = async (orgId: string) => (await getProductUsage(orgId, 'email')).unitsUsed;
 
 const sentDeliveries = async (orgId: string) =>
   (

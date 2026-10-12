@@ -128,7 +128,7 @@ afterAll(async () => {
 });
 
 describe('plan send counter', () => {
-  it('counts every send path once per message, and the plan reads it', async () => {
+  it('counts every send path once per recipient, and the plan reads it', async () => {
     expect(await measure()).toEqual({ counter: 0, truth: 0 });
 
     for (let i = 0; i < 3; i++) {
@@ -140,7 +140,7 @@ describe('plan send counter', () => {
       });
       expect(r.statusCode, r.body).toBe(202);
     }
-    // Sandbox: the plan has always counted its `send` row; it still does.
+    // Sandbox: recorded, and since Z137 not counted (it used to be).
     const sandbox = await post('/api/v1/transactional/email', {
       to: rcpt(),
       from: FROM,
@@ -149,7 +149,8 @@ describe('plan send counter', () => {
       sandboxMode: true,
     });
     expect(sandbox.statusCode, sandbox.body).toBe(202);
-    // One message to four recipients is one `send` row, as before.
+    // One message to four recipients: four `send` rows and four units since
+    // Z137 (it used to be one row, checked against the plan as four).
     const resend = await post('/api/v1/emails', {
       from: FROM,
       to: [rcpt(), rcpt()],
@@ -182,41 +183,50 @@ describe('plan send counter', () => {
     await new Promise((r) => setTimeout(r, 2000));
     await dispatchDueBatches();
 
-    // 3 + 1 + 1 + 2 + 2 + 2
-    expect(await measure()).toEqual({ counter: 11, truth: 11 });
-    expect((await getPlanCapacity(org)).sends.current).toBe(11);
+    // 3 + 0 (sandbox) + 4 + 2 + 2 + 2
+    expect(await measure()).toEqual({ counter: 13, truth: 13 });
+    expect((await getPlanCapacity(org)).sends.current).toBe(13);
     expect((await reconcilePlanSendCounters({ orgId: org })).drift).toEqual([]);
   });
 
-  it('counts a message written twice once — posted twice, or twice in one INSERT', async () => {
+  // Until Z137 the counter de-duplicated by message id at count time and the
+  // second row was stored. Now the database refuses the second `send` row for
+  // the same message and recipient, so there is nothing to de-duplicate.
+  it('stores and counts a delivery written twice once — posted twice, or twice in one INSERT', async () => {
     const before = await measure();
     const mid = `<counter-${randomUUID()}@forgemsg>`;
     expect((await internalSend(mid)).statusCode).toBe(201);
     expect((await internalSend(mid)).statusCode).toBe(201);
     const twice = `<counter-${randomUUID()}@forgemsg>`;
     await db.execute(sql`
-      INSERT INTO email_events (org_id, event_type, message_id)
-      VALUES (${org}::uuid, 'send', ${twice}), (${org}::uuid, 'send', ${twice})
+      INSERT INTO email_events (org_id, event_type, message_id, recipient)
+      VALUES (${org}::uuid, 'send', ${twice}, 'a@example.test'), (${org}::uuid, 'send', ${twice}, 'a@example.test')
+      ON CONFLICT DO NOTHING
     `);
+    const rows = (await db.execute(sql`
+      SELECT count(*)::int AS n FROM email_events
+      WHERE org_id = ${org}::uuid AND event_type = 'send' AND message_id IN (${mid}, ${twice})
+    `)) as unknown as Array<{ n: number }>;
+    expect(rows[0]!.n).toBe(2);
     const after = await measure();
     expect(after.counter - before.counter).toBe(2);
     expect(after).toEqual({ counter: after.truth, truth: after.truth });
   });
 
-  it('counts a message written twice concurrently once, and distinct concurrent sends each once', async () => {
+  it('stores and counts a delivery written twice concurrently once, and distinct concurrent sends each once', async () => {
     const before = await measure();
     const mid = `<counter-${randomUUID()}@forgemsg>`;
-    // The first writer holds its transaction open; the second must wait for it
-    // and then see its row, not count past it.
+    // The first writer holds its transaction open; the second waits on the
+    // unique index, then finds the row committed and inserts nothing.
     const first = db.transaction(async (tx) => {
       await tx.execute(
-        sql`INSERT INTO email_events (org_id, event_type, message_id) VALUES (${org}::uuid, 'send', ${mid})`,
+        sql`INSERT INTO email_events (org_id, event_type, message_id, recipient) VALUES (${org}::uuid, 'send', ${mid}, 'b@example.test')`,
       );
       await tx.execute(sql`SELECT pg_sleep(0.4)`);
     });
     await new Promise((r) => setTimeout(r, 100));
     const second = db.execute(
-      sql`INSERT INTO email_events (org_id, event_type, message_id) VALUES (${org}::uuid, 'send', ${mid})`,
+      sql`INSERT INTO email_events (org_id, event_type, message_id, recipient) VALUES (${org}::uuid, 'send', ${mid}, 'b@example.test') ON CONFLICT DO NOTHING`,
     );
     await Promise.all([first, second]);
     await Promise.all(

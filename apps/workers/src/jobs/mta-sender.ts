@@ -228,6 +228,8 @@ async function recordEvent(
     campaignId: string;
     contactId: string;
     messageId: string;
+    /** The address delivered to; on a `send`, part of its unique key (Z137). */
+    recipient?: string;
     metadata?: Record<string, unknown>;
   },
 ): Promise<void> {
@@ -661,12 +663,15 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
     // 'send' = handed off to MX; 'deliver' = MX returned SMTP 250 (this engine
     // does direct-to-MX, so the 250 IS delivery confirmation). Both are recorded
     // so deliverability/fatigue/attribution analytics that count 'deliver' work.
+    // The recipient makes a second run of this job on a delivered message a
+    // no-op: the API keeps one `send` row per message and recipient (Z137).
     await recordEvent(events, {
       type: 'send',
       orgId: data.orgId,
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
+      recipient: data.toEmail,
       metadata: successMeta,
     });
     await recordEvent(events, {

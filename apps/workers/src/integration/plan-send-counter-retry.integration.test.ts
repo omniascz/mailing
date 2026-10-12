@@ -9,10 +9,12 @@
  *    attempt delivers — one `send` row, written by the attempt that delivered;
  *  - reprocessing: a job whose worker died after the engine accepted the
  *    message but before BullMQ recorded the job as done is picked up again as
- *    stalled, and runs the success path a second time with the same messageId —
- *    two `send` rows for one message.
- * Both must leave the counter one higher, equal to the truth (each message
- * once), with the job's real code against the real API and a stub engine.
+ *    stalled, and runs the success path a second time with the same messageId.
+ *    Until Z137 that stored a second `send` row (the counter skipped it, every
+ *    other reader counted it); now the API keeps one `send` row per message
+ *    and recipient, and the second post is a no-op.
+ * Both must leave one `send` row and the counter one higher, equal to the
+ * truth, with the job's real code against the real API and a stub engine.
  *
  * WHAT THIS FILE CANNOT SEE
  * - BullMQ's own stall detection: the second run is the processor called again
@@ -128,13 +130,13 @@ describe('plan send counter under job retries', () => {
     expect(after.counter).toBe(after.truth);
   });
 
-  it('a delivered job processed again is two rows and one send', async () => {
+  it('a delivered job processed again is one row and one send', async () => {
     const before = await measure();
     const data = await message([250]);
     expect(((await run(data, 0)) as { status: string }).status).toBe('sent');
     expect(((await run(data, 0)) as { status: string }).status).toBe('sent');
     const after = await measure();
-    expect(after.rows - before.rows).toBe(2);
+    expect(after.rows - before.rows).toBe(1);
     expect(after.counter - before.counter).toBe(1);
     expect(after.counter).toBe(after.truth);
   });
