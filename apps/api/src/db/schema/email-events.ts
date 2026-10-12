@@ -87,6 +87,12 @@ export const emailEvents = pgTable(
     // sends in a month, 80 ms and 20,400 buffers per send; with this, 17 ms and
     // 596. The count still grows with volume — see the Z135 report.
     index('email_events_org_type_created_idx').on(t.orgId, t.eventType, t.createdAt),
+    // "Has this message already been counted?" — asked by the plan send
+    // counter's trigger for every `send` row it counts (migration 0029), so a
+    // job that writes the same message twice is one send. Only `send` rows.
+    index('email_events_org_send_message_idx')
+      .on(t.orgId, t.messageId)
+      .where(sql`${t.eventType} = 'send'`),
   ],
 );
 

@@ -52,6 +52,7 @@
     "db:studio": "drizzle-kit studio",
     "seed": "tsx scripts/seed.ts",
     "seed:marketing-blog": "tsx scripts/seed-marketing-blog.ts",
+    "reconcile:plan-sends": "tsx scripts/reconcile-plan-send-counters.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {

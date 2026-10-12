@@ -142,6 +142,16 @@ describe('one transactional send', () => {
   });
 });
 
-/** Pinned from the Z135 measurement; see the header for what a change means. */
-const EXPECTED_QUERIES = 14;
+/**
+ * Pinned from the Z135 measurement; see the header for what a change means.
+ *
+ * 14 → 13 in Z136: the plan step read the subscription's period start and then
+ * COUNTed this period's `send` rows in email_events — two queries, the second
+ * growing with every send. It now reads one counter row keyed by
+ * plan_period_start(), which looks the subscription up inside the same query.
+ * The counter is kept by a trigger on the email_events insert (migration
+ * 0029), and a trigger's statements are not separate queries from here: that
+ * work is inside the `insert into "email_events"` line, not missing.
+ */
+const EXPECTED_QUERIES = 13;
 const EXPECTED_REDIS_COMMANDS = 5;
