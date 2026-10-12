@@ -1,0 +1,1 @@
+CREATE INDEX "email_events_org_type_created_idx" ON "email_events" USING btree ("org_id","event_type","created_at");

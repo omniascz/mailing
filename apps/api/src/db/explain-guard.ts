@@ -63,6 +63,20 @@ export function clearExplainViolations(): void {
   violations.length = 0;
 }
 
+type QueryObserver = (query: string) => void;
+const observers = new Set<QueryObserver>();
+
+/**
+ * See every statement the app composes while the guard is installed (tests
+ * only — the guard never runs in production). Returns the unsubscribe. Used to
+ * pin how many queries one request makes (send-path-cost.integration.test.ts),
+ * which a time budget cannot do reliably in CI.
+ */
+export function observeQueries(observer: QueryObserver): () => void {
+  observers.add(observer);
+  return () => observers.delete(observer);
+}
+
 /**
  * Decide whether the guard may run at all.
  *
@@ -139,6 +153,7 @@ export function installExplainGuard(client: Sql): void {
   const rawUnsafe = original as unknown as UnsafeFn;
 
   const wrapped: UnsafeFn = (query, params, options) => {
+    if (typeof query === 'string') for (const o of observers) o(query);
     const pending = rawUnsafe(query, params, options);
 
     if (typeof query !== 'string') return pending;
