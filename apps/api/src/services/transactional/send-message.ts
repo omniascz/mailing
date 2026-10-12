@@ -131,6 +131,15 @@ export async function assertSenderVerified(orgId: string, from: string): Promise
   }
 }
 
+/**
+ * The address a `send` row is keyed by: the bare address, lower-cased, so
+ * "Ann <Ann@X.test>" and "ann@x.test" are one recipient. The unique index on
+ * (org, message id, recipient) for `send` rows (migration 0030) compares this.
+ */
+export function recipientAddress(to: string): string {
+  return extractFromAddress(to) ?? to.trim().toLowerCase();
+}
+
 export async function sendTransactionalMessage(
   msg: TransactionalMessage,
 ): Promise<TransactionalOutcome> {
@@ -257,11 +266,16 @@ export async function sendTransactionalMessage(
     await recordIpSend(sendingIpId, 1).catch(() => {});
   }
 
-  // Log send event for analytics + delivery webhooks.
+  // Log send event for analytics + delivery webhooks. One `send` row is one
+  // recipient — the unit the plan limit, its counter and the invoice count
+  // (Z137); a sandboxed one is recorded and counted by none of them. The plan
+  // send counter is kept by a trigger on this insert (migrations 0029, 0030).
   await db.insert(emailEvents).values({
     orgId,
     eventType: 'send',
     messageId,
+    recipient: recipientAddress(msg.to),
+    sandbox: testMode,
     metadata: {
       to: msg.to,
       transactional: true,
@@ -279,12 +293,6 @@ export async function sendTransactionalMessage(
   // Fire the 'sent' webhook for API senders (previously never emitted).
   const { emitEmailEvent } = await import('../webhooks/email-events.js');
   emitEmailEvent(orgId, 'sent', { messageId, email: msg.to });
-
-  // Per-email usage metering (PAYG) — previously recordUsage was never called.
-  if (!testMode) {
-    const { recordUsage } = await import('../billing/meters.js');
-    recordUsage(orgId, 'email', 1).catch(() => {});
-  }
 
   return {
     status: msg.scheduleAt ? 'scheduled' : 'queued',

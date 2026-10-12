@@ -62,6 +62,7 @@ import { assertMayOverrideGate } from '../../services/pre-send/override-permissi
 import { AppError } from '../../lib/app-error.js';
 import { assertCampaignPurpose } from '../../services/gdpr/campaign-purpose-check.js';
 import { env } from '../../config/env.js';
+import { recipientAddress } from '../../services/transactional/send-message.js';
 import {
   validateOrgContent,
   extractTemplateText,
@@ -557,6 +558,9 @@ export default async function campaignRoutes(app: FastifyInstance) {
           eventType: 'send',
           messageId,
           campaignId: campaign.id,
+          // A test is a real delivery to one address: one recipient on the
+          // plan, its counter and the invoice, like any other send (Z137).
+          recipient: recipientAddress(to),
           metadata: {
             to,
             test: true,

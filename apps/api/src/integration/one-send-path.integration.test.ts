@@ -27,7 +27,6 @@ import {
   apiKeys,
   emailEvents,
   organizations,
-  productUsageMeters,
   sendingDomains,
   suppressions,
   webhookDeliveries,
@@ -35,6 +34,7 @@ import {
 } from '../db/schema/index.js';
 import { dispatchDueBatches, getBatch } from '../services/transactional/scheduled-batch.js';
 import { mtaOtherQueue } from '../lib/queues.js';
+import { getProductUsage } from '../services/billing/meters.js';
 
 let app: FastifyInstance;
 const tag = randomUUID().slice(0, 8);
@@ -62,10 +62,8 @@ async function footprint(tos: string[]) {
         inArray(sql<string>`${emailEvents.metadata}->>'to'`, tos),
       ),
     );
-  const [m] = await db
-    .select({ n: sql<number>`coalesce(sum(${productUsageMeters.unitsUsed}), 0)::int` })
-    .from(productUsageMeters)
-    .where(and(eq(productUsageMeters.orgId, org), eq(productUsageMeters.product, 'email')));
+  // The invoice basis for email: the plan send counter since Z137 (meters.ts).
+  const m = { n: (await getProductUsage(org, 'email')).unitsUsed };
   const [h] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(webhookDeliveries)

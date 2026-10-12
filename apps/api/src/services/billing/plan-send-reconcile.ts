@@ -2,11 +2,15 @@
  * Reconciliation of the plan send counter (Z136): does each organisation's
  * counter row for its current period say what email_events says?
  *
- * The counter (plan_send_counters, filled by the trigger of migration 0029) is
- * what the plan limit is checked against. The truth it must equal is
- * plan_send_truth(org, period start): the messages with a `send` row in the
- * period, each message once. This asks both for every organisation that has a
- * row or a send in its current period, and names each one where they differ.
+ * The counter (plan_send_counters, filled by the trigger of migrations 0029
+ * and 0030) is what the plan limit is checked against and, since Z137, what
+ * email is invoiced from. The truth it must equal is plan_send_truth(org,
+ * period start): the non-sandboxed `send` rows in the period — one row per
+ * recipient, which a unique index keeps from being written twice. (Until Z137
+ * it was each message once, counted at read time; the unit is now the
+ * recipient, the same one the plan and the invoice count.) This asks both for
+ * every organisation that has a row or a send in its current period, and names
+ * each one where they differ.
  *
  * Run on demand, not as a job: `pnpm --filter @forgemsg/api reconcile:plan-sends`
  * (scripts/reconcile-plan-send-counters.ts). The truth is the full count the

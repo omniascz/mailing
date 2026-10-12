@@ -33,7 +33,10 @@ import {
 import { checkSendCapacity } from '../../services/billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 import { fromNotVerifiedError } from '../../services/sending/from-domain.js';
-import { assertSenderVerified } from '../../services/transactional/send-message.js';
+import {
+  assertSenderVerified,
+  recipientAddress,
+} from '../../services/transactional/send-message.js';
 
 /**
  * The sender check of the shared transactional path (Z133): one definition of
@@ -146,6 +149,51 @@ function toArray(v: string | string[] | undefined): string[] {
   return Array.isArray(v) ? v : [v];
 }
 
+/**
+ * Who one Resend-shaped email goes to: to, then cc, then bcc, each address
+ * once (compared as recipientAddress compares them). One delivery and one
+ * `send` row each — the unit the plan limit, its counter and the invoice count
+ * (Z137). An address listed twice used to be mailed twice and checked against
+ * the plan twice while one row was written; it is now one recipient.
+ */
+function emailRecipients(item: {
+  to?: string | string[];
+  cc?: string | string[];
+  bcc?: string | string[];
+}): string[] {
+  const seen = new Set<string>();
+  return [...toArray(item.to), ...toArray(item.cc), ...toArray(item.bcc)].filter((r) => {
+    const key = recipientAddress(r);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
+ * The `send` rows of one email: one per recipient, all with the message id the
+ * caller gets back and the same metadata, in one INSERT (so one created_at,
+ * which is what GET /emails groups them by).
+ */
+async function insertSendRows(
+  orgId: string,
+  messageId: string,
+  recipients: string[],
+  testMode: boolean,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  await db.insert(emailEvents).values(
+    recipients.map((r) => ({
+      orgId,
+      eventType: 'send' as const,
+      messageId,
+      recipient: recipientAddress(r),
+      sandbox: testMode,
+      metadata,
+    })),
+  );
+}
+
 function resendShape(row: {
   messageId: string;
   to: string;
@@ -182,7 +230,7 @@ async function dispatchResendEmail(
   item: z.infer<typeof sendEmailBody>,
   testMode: boolean,
 ): Promise<number> {
-  const recipients = [...toArray(item.to), ...toArray(item.cc), ...toArray(item.bcc)];
+  const recipients = emailRecipients(item);
   if (recipients.length === 0) return 0;
 
   // Resolves both ISO and natural-language ("in 1 hour"); validated at the
@@ -255,9 +303,27 @@ function scheduledEmailJobIdsForRow(row: {
   metadata: unknown;
 }): string[] {
   const m = (row.metadata ?? {}) as { to?: string[]; cc?: string[]; bcc?: string[] };
-  const count = (m.to?.length ?? 0) + (m.cc?.length ?? 0) + (m.bcc?.length ?? 0);
+  const count = emailRecipients(m).length;
   if (!row.messageId || count === 0) return [];
   return scheduledEmailJobIds(stripMessageIdBrackets(row.messageId), count);
+}
+
+/** The same metadata on every `send` row of one email — one per recipient. */
+async function updateSendRowsMetadata(
+  orgId: string,
+  messageId: string,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  await db
+    .update(emailEvents)
+    .set({ metadata })
+    .where(
+      and(
+        eq(emailEvents.orgId, orgId),
+        eq(emailEvents.eventType, 'send'),
+        eq(emailEvents.messageId, messageId),
+      ),
+    );
 }
 
 /**
@@ -354,39 +420,35 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
 
       // Enforce plan send-capacity for real (non-sandbox) sends before we
       // record or dispatch anything.
-      const recipientCount = to.length + toArray(body.cc).length + toArray(body.bcc).length;
-      if (!testMode) await checkSendCapacity(req.user!.orgId, recipientCount);
+      // One unit per recipient, as many as the rows written below.
+      const recipients = emailRecipients(body);
+      if (!testMode) await checkSendCapacity(req.user!.orgId, recipients.length);
 
-      await db.insert(emailEvents).values({
-        orgId: req.user!.orgId,
-        eventType: 'send',
-        messageId,
-        metadata: {
-          to,
-          from: body.from,
-          subject: body.subject,
-          cc: toArray(body.cc),
-          bcc: toArray(body.bcc),
-          replyTo: toArray(body.reply_to),
-          headers: body.headers ?? {},
-          tags: body.tags ?? [],
-          attachments: (body.attachments ?? []).map((a) => ({
-            filename: a.filename ?? null,
-            contentType: a.content_type ?? null,
-            // Remote (path) attachments are sized after fetch; base64 estimated here.
-            sizeBytes: a.content ? Math.ceil((a.content.length * 3) / 4) : null,
-            path: a.path ?? null,
-          })),
-          transactional: true,
-          scheduledAt: body.scheduled_at ?? null,
-          tracking: body.tracking ?? null,
-          ampHtml: ampHtmlPart,
-          ampWarnings,
-          source: 'resend-compatible',
-          // Test-mode events are persisted so the developer can audit what
-          // would have been sent; workers + analytics skip them.
-          testMode,
-        },
+      await insertSendRows(req.user!.orgId, messageId, recipients, testMode, {
+        to,
+        from: body.from,
+        subject: body.subject,
+        cc: toArray(body.cc),
+        bcc: toArray(body.bcc),
+        replyTo: toArray(body.reply_to),
+        headers: body.headers ?? {},
+        tags: body.tags ?? [],
+        attachments: (body.attachments ?? []).map((a) => ({
+          filename: a.filename ?? null,
+          contentType: a.content_type ?? null,
+          // Remote (path) attachments are sized after fetch; base64 estimated here.
+          sizeBytes: a.content ? Math.ceil((a.content.length * 3) / 4) : null,
+          path: a.path ?? null,
+        })),
+        transactional: true,
+        scheduledAt: body.scheduled_at ?? null,
+        tracking: body.tracking ?? null,
+        ampHtml: ampHtmlPart,
+        ampWarnings,
+        source: 'resend-compatible',
+        // Test-mode events are persisted so the developer can audit what
+        // would have been sent; workers + analytics skip them.
+        testMode,
       });
 
       // Actually deliver (sandbox no-ops inside dispatchResendEmail).
@@ -452,7 +514,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
       // Only real (non-sandboxed) recipients count toward plan capacity.
       const totalRecipients = parsed.data.reduce((n, item) => {
         if (keyTestMode || item.sandbox_mode === true) return n;
-        return n + toArray(item.to).length + toArray(item.cc).length + toArray(item.bcc).length;
+        return n + emailRecipients(item).length;
       }, 0);
       if (totalRecipients > 0) await checkSendCapacity(req.user!.orgId, totalRecipients);
 
@@ -463,25 +525,20 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
         const messageId = `<${randomUUID()}@forgemsg>`;
         const to = toArray(item.to);
         const testMode = keyTestMode || item.sandbox_mode === true;
-        await db.insert(emailEvents).values({
-          orgId: req.user!.orgId,
-          eventType: 'send',
-          messageId,
-          metadata: {
-            to,
-            from: item.from,
-            subject: item.subject,
-            cc: toArray(item.cc),
-            bcc: toArray(item.bcc),
-            replyTo: toArray(item.reply_to),
-            tags: item.tags ?? [],
-            batch: true,
-            transactional: true,
-            scheduledAt: item.scheduled_at ?? null,
-            tracking: item.tracking ?? null,
-            source: 'resend-compatible',
-            testMode,
-          },
+        await insertSendRows(req.user!.orgId, messageId, emailRecipients(item), testMode, {
+          to,
+          from: item.from,
+          subject: item.subject,
+          cc: toArray(item.cc),
+          bcc: toArray(item.bcc),
+          replyTo: toArray(item.reply_to),
+          tags: item.tags ?? [],
+          batch: true,
+          transactional: true,
+          scheduledAt: item.scheduled_at ?? null,
+          tracking: item.tracking ?? null,
+          source: 'resend-compatible',
+          testMode,
         });
         // Actually deliver each message (sandbox no-ops inside).
         await dispatchResendEmail(req.user!.orgId, messageId, item, testMode);
@@ -593,11 +650,14 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.query);
 
+      // One entry per email. An email has a `send` row per recipient (Z137),
+      // all written by one INSERT, so they share created_at and message id:
+      // DISTINCT ON those two keeps one of them.
       const rows = await db
-        .select()
+        .selectDistinctOn([emailEvents.createdAt, emailEvents.messageId])
         .from(emailEvents)
         .where(and(eq(emailEvents.orgId, req.user!.orgId), eq(emailEvents.eventType, 'send')))
-        .orderBy(desc(emailEvents.createdAt))
+        .orderBy(desc(emailEvents.createdAt), emailEvents.messageId)
         .limit(q.limit);
 
       return reply.send({
@@ -687,7 +747,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
 
       const meta = (row.metadata ?? {}) as Record<string, unknown>;
       meta.scheduledAt = newSendAt.toISOString();
-      await db.update(emailEvents).set({ metadata: meta }).where(eq(emailEvents.id, row.id));
+      await updateSendRowsMetadata(req.user!.orgId, row.messageId!, meta);
 
       return reply.send({
         object: 'email',
@@ -741,7 +801,7 @@ const emailsRoutes: FastifyPluginAsync = async (app) => {
     const meta = (row.metadata ?? {}) as Record<string, unknown>;
     meta.cancelled = true;
     meta.cancelledAt = new Date().toISOString();
-    await db.update(emailEvents).set({ metadata: meta }).where(eq(emailEvents.id, row.id));
+    await updateSendRowsMetadata(req.user!.orgId, row.messageId!, meta);
 
     return reply.send({ object: 'email', id: stripMessageIdBrackets(row.messageId!) });
   };

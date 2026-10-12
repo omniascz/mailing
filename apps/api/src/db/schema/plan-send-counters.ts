@@ -1,7 +1,8 @@
 /**
- * How many messages an organisation has sent in a billing period — what the
- * plan's monthly send limit is checked against (getPlanCapacity), read in one
- * row instead of counted from email_events on every send (Z136).
+ * How many recipients an organisation has sent to in a billing period — what
+ * the plan's monthly send limit is checked against (getPlanCapacity) and what
+ * email is invoiced from (services/billing/meters.ts, Z137), read in one row
+ * instead of counted from email_events on every send (Z136).
  *
  * Keyed by the organisation and the START of the period, so a new period is a
  * new row that starts from nothing; no job resets anything. The start is the
@@ -9,11 +10,11 @@
  * billing_subscriptions, else the first of the calendar month in UTC.
  *
  * Nothing in the application writes this table. A statement-level trigger on
- * email_events adds the `send` rows each INSERT writes, in that statement — and
- * so in its transaction; the same rows the plan used to count. A message id
- * already counted in the period is not counted again, so a job that runs twice
- * records two rows and one send. The trigger, the functions and the backfill
- * are in migration 0029, which says why each is shaped as it is.
+ * email_events adds the non-sandboxed `send` rows each INSERT writes, in that
+ * statement — and so in its transaction. A `send` row is one recipient, unique
+ * per (org, message id, recipient), so a job that runs twice writes one row and
+ * one send. The trigger, the functions and the backfills are in migrations
+ * 0029 and 0030, which say why each is shaped as it is.
  *
  * Postgres, not Redis: this is what billing and the hard stop are decided on.
  * A Redis key that is evicted or lost with an instance reads as zero, and
