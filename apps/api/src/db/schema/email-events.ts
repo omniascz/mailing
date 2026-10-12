@@ -81,6 +81,12 @@ export const emailEvents = pgTable(
     index('email_events_ab_variant_idx').on(t.campaignId, t.abVariantId),
     index('email_events_org_category_idx').on(t.orgId, t.category),
     index('email_events_org_isp_idx').on(t.orgId, t.isp),
+    // The plan's monthly send count (getPlanCapacity), asked on every
+    // transactional send: org + 'send' + this billing period. With single-column
+    // indexes only, Postgres read the whole org's rows: measured in Z135 at 500k
+    // sends in a month, 80 ms and 20,400 buffers per send; with this, 17 ms and
+    // 596. The count still grows with volume — see the Z135 report.
+    index('email_events_org_type_created_idx').on(t.orgId, t.eventType, t.createdAt),
   ],
 );
 
