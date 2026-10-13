@@ -18,6 +18,7 @@ import { contacts, lists, contactLists, suppressions } from '../../db/schema/ind
 import { AppError } from '../../lib/app-error.js';
 import { unsubscribeContact } from '../contacts/unsubscribe.js';
 import { resubscribeContact } from '../contacts/resubscribe.js';
+import { suppressionEmailIs } from '../suppressions/email.js';
 
 // ─── View shape returned by GET /p/center/:token ─────────────────────────────
 
@@ -100,7 +101,7 @@ export async function getPreferences(token: string): Promise<PreferenceCenterVie
     ? await db
         .select({ reason: suppressions.reason })
         .from(suppressions)
-        .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)))
+        .where(and(eq(suppressions.orgId, orgId), suppressionEmailIs(contact.email)))
     : [];
 
   const listRows = await db
@@ -302,7 +303,7 @@ export async function updatePreferences(
         await db
           .select({ id: suppressions.id })
           .from(suppressions)
-          .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)))
+          .where(and(eq(suppressions.orgId, orgId), suppressionEmailIs(contact.email)))
           .limit(1)
       ).length > 0
     : false;

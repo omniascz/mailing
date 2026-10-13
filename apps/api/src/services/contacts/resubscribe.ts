@@ -35,6 +35,7 @@ import { createHash } from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { consentEvents, contacts, suppressions } from '../../db/schema/index.js';
+import { suppressionEmailIs } from '../suppressions/email.js';
 
 /** How the recipient gave the consent being acted on. Required: no proof, no resubscribe. */
 export interface ConsentProof {
@@ -86,7 +87,7 @@ export async function resubscribeContact(
         .where(
           and(
             eq(suppressions.orgId, orgId),
-            eq(suppressions.email, email),
+            suppressionEmailIs(email),
             eq(suppressions.reason, 'unsubscribe'),
           ),
         )
@@ -118,7 +119,7 @@ export async function resubscribeContact(
       const [still] = await tx
         .select({ id: suppressions.id })
         .from(suppressions)
-        .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, email)))
+        .where(and(eq(suppressions.orgId, orgId), suppressionEmailIs(email)))
         .limit(1);
       if (still) return { status: contact.status, reachable: false };
     }

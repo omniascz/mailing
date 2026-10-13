@@ -32,6 +32,7 @@ import { decodeVerp } from '@forgemsg/shared/sending/verp';
 import { AppError } from '../../lib/app-error.js';
 import { abVariantForContact } from '../campaigns/variant-attribution.js';
 import { recipientAddress } from '../transactional/send-message.js';
+import { suppressionEmail } from '../suppressions/email.js';
 
 export interface InboundPayload {
   from: string;
@@ -243,7 +244,7 @@ export async function receiveInbound(
       if (address && f.outcome.suppress) {
         await db
           .insert(suppressions)
-          .values({ orgId, email: address, reason: f.outcome.suppress })
+          .values({ orgId, email: suppressionEmail(address), reason: f.outcome.suppress })
           .onConflictDoNothing()
           .catch(() => {});
         await db

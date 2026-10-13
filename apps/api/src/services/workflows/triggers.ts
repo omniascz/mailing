@@ -479,7 +479,8 @@ export async function onLifecycleStageChanged(
  * mail on a non-transactional send — not `status = 'unsubscribed'`, and its
  * address not on the organisation's suppression list (where bounces and
  * complaints land). The same two checks batch-sender.ts applies, in the same
- * lower-cased comparison as /internal/suppressions/check-batch.
+ * case-insensitive comparison as /internal/suppressions/check-batch: lower()
+ * on both sides, or a row stored as Jan@X.cz matches nobody (Z144).
  *
  * The daily processors used to start a run for everyone whose date or name
  * matched. For these contacts the run completed and counted in total_runs and
@@ -493,7 +494,7 @@ function sendable() {
   return sql`status <> 'unsubscribed'
           AND NOT EXISTS (
             SELECT 1 FROM suppressions s
-            WHERE s.org_id = contacts.org_id AND s.email = lower(contacts.email)
+            WHERE s.org_id = contacts.org_id AND lower(s.email) = lower(contacts.email)
           )`;
 }
 

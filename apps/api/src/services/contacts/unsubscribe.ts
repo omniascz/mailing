@@ -37,6 +37,7 @@
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contactLists, contacts, emailEvents, suppressions } from '../../db/schema/index.js';
+import { suppressionEmail, suppressionEmailIs } from '../suppressions/email.js';
 
 /** What is being withdrawn. */
 export type UnsubscribeScope =
@@ -144,7 +145,7 @@ async function unsubscribeGlobally(
       .where(
         and(
           eq(suppressions.orgId, orgId),
-          eq(suppressions.email, contact.email.toLowerCase()),
+          suppressionEmailIs(contact.email),
           eq(suppressions.reason, 'unsubscribe'),
         ),
       )
@@ -164,7 +165,7 @@ async function unsubscribeGlobally(
       .insert(suppressions)
       .values({
         orgId,
-        email: contact.email.toLowerCase(),
+        email: suppressionEmail(contact.email),
         reason: 'unsubscribe',
         notes: opts.reason?.slice(0, 1000),
       })

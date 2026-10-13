@@ -20,6 +20,7 @@ import { sendTransactionalEmail, type TransactionalAttachment } from '../../lib/
 import { checkSendCapacity } from '../billing/plan-enforcement.js';
 import { AppError } from '../../lib/app-error.js';
 import { assertFromDomainOwned, extractFromAddress } from '../sending/from-domain.js';
+import { suppressionEmailIs } from '../suppressions/email.js';
 
 /**
  * Suppression reasons that refuse a transactional message — the list the
@@ -93,7 +94,7 @@ export async function transactionalSuppression(
     .where(
       and(
         eq(suppressions.orgId, orgId),
-        eq(suppressions.email, email.toLowerCase()),
+        suppressionEmailIs(email),
         inArray(suppressions.reason, SUPPRESSES_TRANSACTIONAL),
       ),
     )

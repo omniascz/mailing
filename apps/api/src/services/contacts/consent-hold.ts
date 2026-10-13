@@ -19,6 +19,7 @@ import { db } from '../../db/client.js';
 import { suppressions } from '../../db/schema/index.js';
 import type { contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { suppressionEmailIs } from '../suppressions/email.js';
 
 export type ContactStatus = (typeof contacts.$inferSelect)['status'];
 
@@ -61,7 +62,7 @@ export async function heldStatus(
   const rows = await db
     .select({ reason: suppressions.reason })
     .from(suppressions)
-    .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, row.email.toLowerCase())));
+    .where(and(eq(suppressions.orgId, orgId), suppressionEmailIs(row.email)));
   return statusFromSuppressionReasons(rows.map((r) => r.reason));
 }
 

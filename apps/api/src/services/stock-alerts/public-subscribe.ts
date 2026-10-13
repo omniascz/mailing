@@ -46,6 +46,7 @@ import {
   type PriceDropSubscription,
 } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { suppressionEmailIs } from '../suppressions/email.js';
 
 /**
  * Find the person behind an address, or create them.
@@ -114,7 +115,7 @@ async function hasOptedOut(orgId: string, contactId: string, email: string): Pro
   const [supp] = await db
     .select({ id: suppressions.id })
     .from(suppressions)
-    .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, email)))
+    .where(and(eq(suppressions.orgId, orgId), suppressionEmailIs(email)))
     .limit(1);
   return !!supp;
 }
