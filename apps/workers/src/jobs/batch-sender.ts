@@ -324,12 +324,23 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   // row — but POST/PUT /contacts set either status with no row, and those
   // contacts were mailed. The status is the store every one of those paths
   // writes, so it is read here as well as the rows.
+  //
+  // 'pending' is refused as well: the contact signed up and has not confirmed
+  // the double opt-in yet, which is no consent (zákon 480/2004 Sb.). The
+  // audience query left them in, and on master a campaign and a flow e-mail
+  // both reached a contact the moment they filled in a DOI form (Z143,
+  // measured). They get mail once GET /confirm/:token makes them active.
   // Transactional mail is unchanged: a status says nothing a row does not, and
   // the row reasons that stop a receipt are mta-sender's call (#225).
   const refusedByStatusSet = new Set<string>();
   if (stream !== 'transactional') {
     for (const c of contacts) {
-      if (c.status === 'unsubscribed' || c.status === 'bounced' || c.status === 'complained') {
+      if (
+        c.status === 'unsubscribed' ||
+        c.status === 'bounced' ||
+        c.status === 'complained' ||
+        c.status === 'pending'
+      ) {
         refusedByStatusSet.add(c.id);
       }
     }

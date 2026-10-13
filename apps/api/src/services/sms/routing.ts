@@ -17,6 +17,7 @@ import { eq, and, asc, sql } from 'drizzle-orm';
 import { emitWebhookEvent } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { smsRoutes, smsSendLog } from '../../db/schema/sms.js';
+import { contacts } from '../../db/schema/index.js';
 import {
   BulkgateSmsAdapter,
   type BulkgateAdapterConfig,
@@ -233,6 +234,24 @@ export async function routedSmsSend(
   // is exempt from consent + quiet hours. Throws AppError on block.
   // (Previously this lived in a helper that the send path never called.)
   const isMarketing = !!(message.campaignId || message.workflowId);
+  if (message.content.kind === 'sms' && isMarketing && recipient.contactId) {
+    // A contact whose double opt-in is still unconfirmed has given no consent
+    // for marketing on any channel, whatever sms_consents holds for the number
+    // (Z143: on master an SMS campaign went to them). Transactional SMS — no
+    // campaign, no workflow — is not affected.
+    const [contact] = await db
+      .select({ status: contacts.status })
+      .from(contacts)
+      .where(and(eq(contacts.id, recipient.contactId), eq(contacts.orgId, orgId)))
+      .limit(1);
+    if (contact?.status === 'pending') {
+      throw new AppError({
+        code: 'CONSENT_PENDING',
+        statusCode: 403,
+        message: 'Contact has not confirmed the double opt-in; no marketing SMS until they do',
+      });
+    }
+  }
   if (message.content.kind === 'sms' && isMarketing) {
     const compliance = await checkSmsCompliance(orgId, phone, message.content.body, country, {
       requireConsent: true,

@@ -47,7 +47,7 @@ async function segmentPredicate(orgId: string, segmentId: string): Promise<SQL |
 /**
  * Resolve a channel campaign's audience → contact id + phone rows. Applies
  * list membership AND/OR segment conditions, subtracts an exclude segment, and
- * drops marketing-ineligible statuses (archived / non_subscribed). Suppression
+ * drops marketing-ineligible statuses (archived / non_subscribed / pending). Suppression
  * + per-recipient consent are enforced downstream (routedSmsSend compliance).
  */
 export async function resolveChannelAudience(
@@ -57,7 +57,10 @@ export async function resolveChannelAudience(
   const conds: SQL[] = [
     eq(contacts.orgId, orgId),
     isNull(contacts.deletedAt),
-    sql`${contacts.status} NOT IN ('archived', 'non_subscribed')`,
+    // 'pending' = a double opt-in not yet confirmed: no consent. Refused again
+    // at send (routedSmsSend, whatsapp-sender); left out here so the campaign
+    // does not count or enqueue them.
+    sql`${contacts.status} NOT IN ('archived', 'non_subscribed', 'pending')`,
   ];
 
   let hasSource = false;
