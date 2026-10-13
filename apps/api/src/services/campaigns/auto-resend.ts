@@ -193,9 +193,11 @@ function listAudienceWhere(orgId: string, listId: string) {
       AND cl."list_id" = ${listId}
       AND c."deleted_at" IS NULL
       AND cl."unsubscribed_at" IS NULL
-      -- Exclude marketing-ineligible statuses (archived / non-subscribed);
+      -- Exclude marketing-ineligible statuses (archived / non-subscribed /
+      -- pending: a double opt-in not yet confirmed is no consent, and the
+      -- batch sender refuses it too, so the pre-send count is what is sent);
       -- bounced/complained/unsubscribed are additionally gated by suppressions.
-      AND c."status" NOT IN ('archived', 'non_subscribed')
+      AND c."status" NOT IN ('archived', 'non_subscribed', 'pending')
   `;
 }
 
