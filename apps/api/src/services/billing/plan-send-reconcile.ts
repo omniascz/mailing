@@ -90,3 +90,91 @@ export async function reconcilePlanSendCounters(
   }
   return { checked: rows.length, drift };
 }
+
+// ─── Per-message invariants (Z138) ───────────────────────────────────────────
+
+export interface EventInvariantBreach {
+  orgId: string;
+  slug: string;
+  messageId: string;
+  send: number;
+  deliver: number;
+  /** Bounces said in the SMTP session; a DSN bounce (metadata source 'verp') is not one. */
+  bounce: number;
+  failed: number;
+  rule: 'deliver_exceeds_send' | 'outcomes_exceed_send';
+}
+
+/**
+ * Two things that must hold for every message with an event in the
+ * organisation's current billing period, counted over all of its rows:
+ *
+ *  1. deliver ≤ send. Every path writes the `send` row no later than the
+ *     delivery: at acceptance (transactional, /emails, tests), or with it
+ *     (campaign mail, which mta-sender records as `send` only when delivered).
+ *  2. deliver + bounce + failed ≤ greatest(send, 1) — one ending per
+ *     recipient. Two measured cases shape it (Z138 probe), and neither is a
+ *     duplicate:
+ *       - a campaign message that bounced or failed has no `send` row at all
+ *         (send is written on delivery), so it may have one ending against
+ *         zero sends — hence greatest(send, 1);
+ *       - a DSN (inbound, VERP) arrives after the receiving server accepted
+ *         the message, so it follows a `deliver`; those bounces are not
+ *         counted here, the bounce said in the SMTP session is.
+ *     What it does catch: a second ending for one recipient — a delivery or a
+ *     bounce stored twice, or a job run again after a hard bounce, which
+ *     finds the address suppressed and records `failed` beside the bounce.
+ *
+ * A breach is named by organisation and message id.
+ */
+export async function checkEventInvariants(
+  opts: { orgId?: string } = {},
+): Promise<{ messages: number; breaches: EventInvariantBreach[] }> {
+  const orgFilter = opts.orgId ? sql`AND o.id = ${opts.orgId}::uuid` : sql``;
+  const rows = (await db.execute(sql`
+    WITH periods AS (
+      SELECT o.id AS org_id, o.slug, plan_period_start(o.id) AS ps
+      FROM organizations o WHERE true ${orgFilter}
+    ),
+    msgs AS (
+      SELECT DISTINCT e.org_id, e.message_id
+      FROM email_events e JOIN periods p ON p.org_id = e.org_id
+      WHERE e.created_at >= p.ps AND e.message_id IS NOT NULL
+        AND e.event_type IN ('send', 'deliver', 'bounce', 'failed')
+    )
+    SELECT m.org_id, p.slug, m.message_id,
+           count(*) FILTER (WHERE e.event_type = 'send')::int AS send,
+           count(*) FILTER (WHERE e.event_type = 'deliver')::int AS deliver,
+           count(*) FILTER (WHERE e.event_type = 'bounce'
+                             AND coalesce(e.metadata->>'source', '') <> 'verp')::int AS bounce,
+           count(*) FILTER (WHERE e.event_type = 'failed')::int AS failed
+    FROM msgs m
+    JOIN periods p ON p.org_id = m.org_id
+    JOIN email_events e ON e.org_id = m.org_id AND e.message_id = m.message_id
+    WHERE e.event_type IN ('send', 'deliver', 'bounce', 'failed')
+    GROUP BY m.org_id, p.slug, m.message_id
+  `)) as unknown as Array<{
+    org_id: string;
+    slug: string;
+    message_id: string;
+    send: number;
+    deliver: number;
+    bounce: number;
+    failed: number;
+  }>;
+  const breaches: EventInvariantBreach[] = [];
+  for (const r of rows) {
+    const counts = {
+      send: Number(r.send),
+      deliver: Number(r.deliver),
+      bounce: Number(r.bounce),
+      failed: Number(r.failed),
+    };
+    const base = { orgId: r.org_id, slug: r.slug, messageId: r.message_id, ...counts };
+    if (counts.deliver > counts.send) breaches.push({ ...base, rule: 'deliver_exceeds_send' });
+    else if (counts.deliver + counts.bounce + counts.failed > Math.max(counts.send, 1)) {
+      breaches.push({ ...base, rule: 'outcomes_exceed_send' });
+    }
+  }
+  return { messages: rows.length, breaches };
+}

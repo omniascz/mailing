@@ -26,6 +26,7 @@ import {
 import { decodeVerp } from '@forgemsg/shared/sending/verp';
 import { AppError } from '../../lib/app-error.js';
 import { abVariantForContact } from '../campaigns/variant-attribution.js';
+import { recipientAddress } from '../transactional/send-message.js';
 
 export interface InboundPayload {
   from: string;
@@ -114,23 +115,6 @@ export async function receiveInbound(
         .from(emailEvents)
         .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.messageId, verpMsgId)))
         .limit(1);
-      // Record a bounce event against the original message for analytics.
-      await db
-        .insert(emailEvents)
-        .values({
-          orgId,
-          campaignId: ev?.campaignId ?? null,
-          contactId: ev?.contactId ?? null,
-          messageId: verpMsgId,
-          eventType: 'bounce',
-          abVariantId:
-            ev?.campaignId && ev?.contactId
-              ? abVariantForContact(ev.campaignId, ev.contactId)
-              : null,
-          bounceType: cls.type === 'soft' ? 'soft' : cls.type === 'block' ? 'block' : 'hard',
-          metadata: { source: 'verp', reason: cls.reason },
-        })
-        .catch(() => {});
       // If the DSN body didn't yield a recipient, resolve it from the matched
       // contact so suppression still targets the right address.
       if (!failed && ev?.contactId) {
@@ -141,6 +125,29 @@ export async function receiveInbound(
           .limit(1);
         failed = c?.email ?? null;
       }
+      // Record a bounce event against the original message for analytics. One
+      // per message, recipient and bounce type (Z138): a mailbox provider that
+      // sends the same DSN twice — measured: two `bounce` rows — is recorded
+      // once, while a delay notice (soft) followed by the final failure (hard)
+      // stays two rows, because they are two different things said about it.
+      await db
+        .insert(emailEvents)
+        .values({
+          orgId,
+          campaignId: ev?.campaignId ?? null,
+          contactId: ev?.contactId ?? null,
+          messageId: verpMsgId,
+          recipient: failed ? recipientAddress(failed) : null,
+          eventType: 'bounce',
+          abVariantId:
+            ev?.campaignId && ev?.contactId
+              ? abVariantForContact(ev.campaignId, ev.contactId)
+              : null,
+          bounceType: cls.type === 'soft' ? 'soft' : cls.type === 'block' ? 'block' : 'hard',
+          metadata: { source: 'verp', reason: cls.reason },
+        })
+        .onConflictDoNothing()
+        .catch(() => {});
     }
 
     if (failed && (cls.autoSuppress || cls.type === 'hard')) {

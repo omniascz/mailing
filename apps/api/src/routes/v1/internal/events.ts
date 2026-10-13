@@ -42,11 +42,13 @@ const bodySchema = z.object({
    */
   campaignIsPlaceholder: z.boolean().optional(),
   /**
-   * The address the message went to. A `send` row is one recipient (Z137) and
-   * is unique per (org, message id, recipient), which is what makes a second
-   * post of the same delivery — mta-sender run again on a stalled job — a
-   * no-op. mta-sender sends it; a worker that does not (one deployed before
-   * this field) has the contact's address looked up instead.
+   * The address the message went to. `send`, `deliver` and `failed` rows are
+   * unique per (org, message id, recipient), and `bounce` rows per bounce type
+   * as well (Z137, Z138), which is what makes a second post of the same event
+   * — mta-sender run again on a stalled job — a no-op. mta-sender sends it; a
+   * worker that does not (one deployed before this field) has the contact's
+   * address looked up instead. `deferred` is not constrained: a message is
+   * deferred once per attempt.
    */
   recipient: z.string().max(320).optional(),
 });
@@ -93,19 +95,16 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
       : await resolveCampaignCategory(body.orgId, body.campaignId).catch(() => null);
     const isp = typeof meta.isp === 'string' ? (meta.isp as string) : null;
 
-    // The recipient of a `send` row: what the worker said, else the contact's
-    // address. Other event types do not carry one.
+    // The recipient: what the worker said, else the contact's address.
     let recipient: string | null = null;
-    if (eventType === 'send') {
-      if (body.recipient) recipient = recipientAddress(body.recipient);
-      else if (contactId) {
-        const [c] = await db
-          .select({ email: contacts.email })
-          .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.orgId, body.orgId)))
-          .limit(1);
-        recipient = c?.email ? recipientAddress(c.email) : null;
-      }
+    if (body.recipient) recipient = recipientAddress(body.recipient);
+    else if (contactId) {
+      const [c] = await db
+        .select({ email: contacts.email })
+        .from(contacts)
+        .where(and(eq(contacts.id, contactId), eq(contacts.orgId, body.orgId)))
+        .limit(1);
+      recipient = c?.email ? recipientAddress(c.email) : null;
     }
 
     const inserted = await db
@@ -132,9 +131,11 @@ export default async function internalEventsRoutes(app: FastifyInstance) {
         recipient,
         metadata: meta,
       })
-      // A `send` row this delivery already has: the same job, processed again.
-      // Nothing is stored, counted or announced a second time, and the worker
-      // gets the success it got the first time.
+      // A row this delivery already has — `send`, `deliver`, `failed`, or a
+      // bounce of the same type: the same job, processed again. Nothing is
+      // stored, counted or announced a second time (no auto-pause signal, no
+      // webhook, no channel fallback), and the worker gets the success it got
+      // the first time.
       .onConflictDoNothing()
       .returning({ id: emailEvents.id });
     if (inserted.length === 0) return reply.code(201).send({ ok: true, duplicate: true });

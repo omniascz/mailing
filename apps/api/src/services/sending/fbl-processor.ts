@@ -23,6 +23,7 @@ import { contacts, emailEvents, suppressions, organizations } from '../../db/sch
 import { and, eq, sql } from 'drizzle-orm';
 import { redis } from '@forgemsg/shared/redis';
 import { abVariantForContact } from '../campaigns/variant-attribution.js';
+import { recipientAddress } from '../transactional/send-message.js';
 
 // ─── ARF parsing ──────────────────────────────────────────────────────────────
 
@@ -106,7 +107,11 @@ function extractEmail(str: string): string | null {
 
 export interface FblProcessResult {
   email: string | null;
-  action: 'suppressed' | 'already_suppressed' | 'contact_not_found' | 'no_email';
+  /**
+   * `duplicate`: this complaint about this message was already recorded — an
+   * ISP sending the same report again (Z138). Nothing was written or fired.
+   */
+  action: 'suppressed' | 'already_suppressed' | 'contact_not_found' | 'no_email' | 'duplicate';
   complaintCount: number;
   alertFired: boolean;
 }
@@ -169,8 +174,38 @@ export async function processFblComplaint(
   // unsubscribe used to leave no room for it (one row per address then).
   await addToSuppression(orgId, email, 'complaint');
 
-  // Always increment complaint_count and log the event — even repeat complaints
-  // from the same ISP are audit-relevant (signals whether our unsubscribe flow works).
+  // The event first, keyed by the message the complaint is about and the
+  // address that complained: one `complaint` row per message and recipient
+  // (Z138). An ISP that sends the same report again — measured: the same ARF
+  // posted twice wrote two rows, counted two complaints, fired the webhook and
+  // the auto-pause signal twice — is stopped here, before anything is counted.
+  // A complaint about another message is still a new one: repeat complaints
+  // from someone already unsubscribed are what tells whether the unsubscribe
+  // flow works. A report with no Original-Message-ID has nothing to key on and
+  // is recorded every time, as before.
+  const [recorded] = await db
+    .insert(emailEvents)
+    .values({
+      orgId,
+      campaignId: campaignId ?? null,
+      contactId: contact.id,
+      eventType: 'complaint',
+      messageId: report.originalMessageId ? `<${report.originalMessageId}>` : null,
+      recipient: recipientAddress(email),
+      abVariantId: campaignId ? abVariantForContact(campaignId, contact.id) : null,
+      metadata: {
+        feedbackType: report.feedbackType,
+        source: report.source,
+        messageId: report.originalMessageId,
+        alreadySuppressed: Boolean(existingSuppression),
+      },
+    })
+    .onConflictDoNothing()
+    .returning({ id: emailEvents.id });
+  if (!recorded) {
+    return { email, action: 'duplicate', complaintCount: 0, alertFired: false };
+  }
+
   await db
     .update(contacts)
     .set({
@@ -178,20 +213,6 @@ export async function processFblComplaint(
       updatedAt: new Date(),
     })
     .where(eq(contacts.id, contact.id));
-
-  await db.insert(emailEvents).values({
-    orgId,
-    campaignId: campaignId ?? null,
-    contactId: contact.id,
-    eventType: 'complaint',
-    abVariantId: campaignId ? abVariantForContact(campaignId, contact.id) : null,
-    metadata: {
-      feedbackType: report.feedbackType,
-      source: report.source,
-      messageId: report.originalMessageId,
-      alreadySuppressed: Boolean(existingSuppression),
-    },
-  });
 
   // Fire the complaint webhook + trigger real-time reputation auto-pause.
   const { emitEmailEvent } = await import('../webhooks/email-events.js');
