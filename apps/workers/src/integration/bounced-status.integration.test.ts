@@ -29,7 +29,7 @@
  * ─── On silent green ─────────────────────────────────────────────────────────
  *
  * Every campaign also goes to a clean control contact that must reach the
- * engine, and the soft-bounce case — which must keep receiving — comes last.
+ * engine, and the soft-bounce case comes last.
  *
  * WHAT THIS FILE CANNOT SEE
  * - The Go engine and SMTP; inbound DSNs (services/inbound-email), which write
@@ -455,7 +455,12 @@ describe('bounced and complained hold on the send path and through an unsubscrib
     expect(await transactional(statusOnly.email)).toBe('reached');
   }, 120_000);
 
-  it('a soft bounce suppresses nothing: the next campaign reaches the address', async () => {
+  // Until Z139 this pinned "a soft bounce suppresses nothing". The jobs here
+  // run as their LAST attempt, so this 4xx is a definitive failure — every
+  // attempt refused — and since Z139 that suppresses the address (hard_bounce,
+  // contact bounced), as a hard bounce does. A deferral that is followed by a
+  // delivery still suppresses nothing: soft-bounce-suppression.integration.
+  it('a definitive soft bounce suppresses: the next campaign does not reach the address', async () => {
     const listId = await newList('soft');
     const subject = await contactOn(listId, 'soft');
     const control = await contactOn(listId, 'soft-ctl');
@@ -468,10 +473,12 @@ describe('bounced and complained hold on the send path and through an unsubscrib
     `;
     console.log(`[z116] soft: after 452 → ${afterSoft} bounce_type=${ev?.bounce_type}`);
     expect(ev?.bounce_type, 'the 4xx was not recorded as a soft bounce').toBe('soft');
-    expect(afterSoft).toBe('status=active suppressions=[]');
+    expect(afterSoft).toBe('status=bounced suppressions=["hard_bounce"]');
 
     const reached = await campaignTo(listId, 'soft-after', [subject.email, control.email]);
     expect(reached).toContain(control.email);
-    expect(reached, 'a soft bounce stopped the next campaign').toContain(subject.email);
+    expect(reached, 'a definitive soft bounce did not stop the next campaign').not.toContain(
+      subject.email,
+    );
   }, 180_000);
 });

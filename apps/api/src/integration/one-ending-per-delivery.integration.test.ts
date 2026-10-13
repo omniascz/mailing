@@ -15,9 +15,7 @@
  * ─── What is unique now, and what is not ─────────────────────────────────────
  *
  *   deliver, failed, complaint   once per (org, message, recipient)
- *   bounce                       once per (org, message, recipient, type) —
- *                                a delay DSN (soft) then the failure (hard)
- *                                are both kept
+ *   bounce                       once per (org, message, recipient, type)
  *   deferred                     once per attempt — repeats
  *   open, click                  every time — repeat
  *   unsubscribe                  the service writes it only when something
@@ -316,7 +314,9 @@ describe('one ending per delivery', () => {
     expect(await count()).toBe(2);
   });
 
-  it('the same DSN twice is one bounce; a delay notice and then the failure are two', async () => {
+  // Until Z139 the delay notice was stored as a soft bounce, so this pinned
+  // `bounce:soft` + `bounce:hard`. A 4.x.x DSN is a deferral (Z139).
+  it('the same DSN twice is one bounce; a delay notice and then the failure are a deferral and a bounce', async () => {
     const c = await contact();
     const dsn = (m: string, subject: string, status: string, action: string) => ({
       from: 'MAILER-DAEMON@mx.example',
@@ -345,7 +345,7 @@ describe('one ending per delivery', () => {
       org,
       dsn(later, 'Delivery Status Notification (Failure)', '5.1.1', 'failed') as never,
     );
-    expect(await rows(later)).toEqual({ 'bounce:hard': 1, 'bounce:soft': 1, deliver: 1, send: 1 });
+    expect(await rows(later)).toEqual({ 'bounce:hard': 1, deferred: 1, deliver: 1, send: 1 });
   });
 
   it('a second unsubscribe click writes nothing, as before', async () => {

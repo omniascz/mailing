@@ -5,7 +5,10 @@
  *   hard  — permanent failure (5xx, user unknown, domain not found)
  *           → auto-add to suppression list, mark contact as bounced
  *   soft  — transient failure (4xx, mailbox full, greylisted)
- *           → mta-sender throws, BullMQ retries; suppress after 3 soft bounces
+ *           → mta-sender throws, BullMQ retries; each attempt that fails is a
+ *             `deferred`, and only the last one a soft bounce, which suppresses
+ *             the address then (Z139). A DSN with a transient status is a
+ *             deferral too, never a bounce (dsnIsTransient).
  *   block — policy rejection (sender blocked, RBL listing, spam content)
  *           → log + alert, do NOT auto-suppress (domain issue, not contact issue)
  *
@@ -242,12 +245,29 @@ export function classifyBounce(
   };
 }
 
-// ─── Aggregate bounce tracking ────────────────────────────────────────────────
+// ─── DSN status ───────────────────────────────────────────────────────────────
 
 /**
- * Determine whether accumulated soft bounces warrant suppression.
- * Policy: suppress after 3 soft bounces within 30 days.
+ * The class of a DSN's RFC 3464 Status field — 2 (delivered), 4 (transient),
+ * 5 (permanent) — or null when the body has none.
  */
+export function dsnStatusClass(body: string): 2 | 4 | 5 | null {
+  const m = body.match(/^\s*Status:\s*([245])\.\d{1,3}\.\d{1,3}/im);
+  return m ? (Number(m[1]) as 2 | 4 | 5) : null;
+}
+
+/**
+ * Is this DSN a deferral rather than a bounce? A transient status (4.x.x) is
+ * one, whatever words the body carries — a delay notice ("will keep trying")
+ * said nothing permanent about the address (Z139). Without a Status field, the
+ * classification decides: a transient (soft) one is a deferral too.
+ */
+export function dsnIsTransient(body: string, cls: BounceClassification): boolean {
+  const status = dsnStatusClass(body);
+  if (status !== null) return status === 4;
+  return cls.type === 'soft';
+}
+
 /**
  * Heuristic: is this inbound email an async bounce / DSN (delivery status
  * notification) rather than a real reply? Detected by sender (mailer-daemon /
@@ -274,8 +294,4 @@ export function extractFailedRecipient(body: string): string | null {
   if (m && m[1]) return m[1].toLowerCase();
   const m2 = body.match(/failed[^\n]*?<?([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})>?/i);
   return m2 && m2[1] ? m2[1].toLowerCase() : null;
-}
-
-export function shouldSuppressAfterSoftBounces(softBounceCount: number, threshold = 3): boolean {
-  return softBounceCount >= threshold;
 }

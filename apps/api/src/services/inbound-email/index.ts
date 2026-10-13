@@ -20,6 +20,8 @@ import { onApiEvent } from '../workflows/triggers.js';
 import { openTicket } from '../helpdesk/index.js';
 import {
   classifyBounce,
+  dsnIsTransient,
+  dsnStatusClass,
   isBounceMessage,
   extractFailedRecipient,
 } from '../sending/bounce-processor.js';
@@ -97,6 +99,11 @@ export async function receiveInbound(
   if (isBounceMessage(fromEmail, payload.subject ?? undefined)) {
     const body = payload.textBody || payload.htmlBody || '';
     const cls = classifyBounce(body, body);
+    // A delay notice is a deferral, not a bounce (Z139): measured on master, a
+    // 4.4.7 "will keep trying" DSN was stored as a soft bounce — 20 of them on
+    // a campaign of 100 read a 23.33 % bounce rate where the true one was 8 %,
+    // and raised the auto-pause rule. It never suppresses.
+    const transient = dsnIsTransient(body, cls);
 
     // VERP: the DSN's recipient is our per-message return-path. Decode it to the
     // original Message-ID and attribute the bounce to that exact send — this
@@ -125,11 +132,11 @@ export async function receiveInbound(
           .limit(1);
         failed = c?.email ?? null;
       }
-      // Record a bounce event against the original message for analytics. One
-      // per message, recipient and bounce type (Z138): a mailbox provider that
-      // sends the same DSN twice — measured: two `bounce` rows — is recorded
-      // once, while a delay notice (soft) followed by the final failure (hard)
-      // stays two rows, because they are two different things said about it.
+      // Record the event against the original message for analytics: a
+      // `deferred` for a transient status, else a bounce — one per message,
+      // recipient and bounce type (Z138), so a mailbox provider that sends the
+      // same failure DSN twice is recorded once. A delay notice followed by
+      // the final failure is a `deferred` and a bounce.
       await db
         .insert(emailEvents)
         .values({
@@ -138,19 +145,30 @@ export async function receiveInbound(
           contactId: ev?.contactId ?? null,
           messageId: verpMsgId,
           recipient: failed ? recipientAddress(failed) : null,
-          eventType: 'bounce',
+          eventType: transient ? 'deferred' : 'bounce',
           abVariantId:
             ev?.campaignId && ev?.contactId
               ? abVariantForContact(ev.campaignId, ev.contactId)
               : null,
-          bounceType: cls.type === 'soft' ? 'soft' : cls.type === 'block' ? 'block' : 'hard',
-          metadata: { source: 'verp', reason: cls.reason },
+          bounceType: transient
+            ? null
+            : cls.type === 'soft'
+              ? 'soft'
+              : cls.type === 'block'
+                ? 'block'
+                : 'hard',
+          metadata: {
+            source: 'verp',
+            reason: cls.reason,
+            // The DSN's status class (4 = transient; null = no Status field).
+            dsnStatusClass: dsnStatusClass(body),
+          },
         })
         .onConflictDoNothing()
         .catch(() => {});
     }
 
-    if (failed && (cls.autoSuppress || cls.type === 'hard')) {
+    if (failed && !transient && (cls.autoSuppress || cls.type === 'hard')) {
       // Bucket into the correct SendGrid-parity list: invalid_email for
       // nonexistent addresses, hard_bounce for other permanent failures.
       const reason = cls.suppressionReason === 'invalid_email' ? 'invalid_email' : 'hard_bounce';

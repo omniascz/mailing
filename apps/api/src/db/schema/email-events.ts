@@ -122,9 +122,10 @@ export const emailEvents = pgTable(
       // deliver, failed, complaint — through a function, not an enum literal:
       // see migration 0031 ("unsafe use of new value" on a fresh database).
       .where(sql`email_event_happens_once(${t.eventType})`),
-    // A bounce once per type: a delay notice (soft) and then the final failure
-    // (hard) about one delivery are two things the receiving side said, and
-    // both are kept; the same one said twice is not.
+    // A bounce once per type: two different things the receiving side said
+    // about one delivery are both kept; the same one said twice is not. (The
+    // case this was built for in Z138, a delay DSN then the failure DSN, is a
+    // `deferred` and a bounce since Z139 — a delay is not a bounce.)
     uniqueIndex('email_events_bounce_uq')
       .on(t.orgId, t.messageId, t.recipient, t.bounceType)
       .where(sql`${t.eventType} = 'bounce'`),
