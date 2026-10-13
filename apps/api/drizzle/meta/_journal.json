@@ -225,6 +225,13 @@
       "when": 1791872844765,
       "tag": "0031_dedupe_outcome_events",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791895620248,
+      "tag": "0032_one_ending_per_recipient",
+      "breakpoints": true
     }
   ]
 }

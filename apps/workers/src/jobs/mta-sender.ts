@@ -699,7 +699,11 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
   const smtpCode = result.smtpCode;
 
   if (isBlockBounce(smtpCode, result.smtpMessage)) {
-    // Block — alert but don't suppress (domain issue, not contact issue)
+    // A block NEVER suppresses the address — deliberately, do not "fix" it. It
+    // is the receiving side refusing us (our IP, domain or content), not a
+    // fact about the address: suppressing would let one blocked IP at a large
+    // provider wipe every recipient there. Owner decision (Z140); same rule
+    // for a DSN block (classifyBounce in the API).
     await recordEvent(events, {
       type: 'bounce',
       orgId: data.orgId,

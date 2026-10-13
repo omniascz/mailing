@@ -137,15 +137,21 @@ describe('mta-sender processed again writes no ending twice', () => {
     expect(await rows(d.messageId)).toEqual({ 'bounce:block': 1 });
   });
 
-  // Since Z139 the last soft bounce suppresses the address, as a hard bounce
-  // does, so the second run stops at the suppression gate and records that it
-  // did not send (`failed`). The bounce is still stored once. This used to read
-  // `{ 'bounce:soft': 1 }` only because nothing suppressed the address.
+  // Since Z139 the last soft bounce suppresses the address, so the second run
+  // stops at the suppression gate. In #259 this pinned `bounce:soft` plus the
+  // `failed` that gate recorded — a second ending for one message and
+  // recipient. Since Z140 the API keeps one ending, and the `failed` is a no-op.
   it('a soft bounce on the last attempt', async () => {
     const d = await message([450]);
     await run(d, 0, 1);
     await run(d, 0, 1);
-    expect(await rows(d.messageId)).toEqual({ 'bounce:soft': 1, failed: 1 });
+    expect(await rows(d.messageId)).toEqual({ 'bounce:soft': 1 });
+  });
+
+  it('a hard bounce: the second run finds the address suppressed and writes nothing', async () => {
+    const d = await message([550]);
+    expect([await run(d, 0, 3), await run(d, 0, 3)]).toEqual(['hard_bounce', 'suppressed']);
+    expect(await rows(d.messageId)).toEqual({ 'bounce:hard': 1 });
   });
 
   it('a transport failure on the last attempt', async () => {

@@ -121,9 +121,10 @@ export interface EventInvariantBreach {
  *       - a DSN (inbound, VERP) arrives after the receiving server accepted
  *         the message, so it follows a `deliver`; those bounces are not
  *         counted here, the bounce said in the SMTP session is.
- *     What it does catch: a second ending for one recipient — a delivery or a
- *     bounce stored twice, or a job run again after a hard bounce, which
- *     finds the address suppressed and records `failed` beside the bounce.
+ *     What it does catch: a second ending for one recipient. Since Z140 the
+ *     database refuses one for rows with a recipient (email_events_ending_uq),
+ *     so what is left to find is rows without one — written before 0030 — or
+ *     rows put there by hand.
  *
  * A breach is named by organisation and message id.
  */
