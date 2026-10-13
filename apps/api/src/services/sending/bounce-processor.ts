@@ -10,7 +10,8 @@
  *             the address then (Z139). A DSN with a transient status is a
  *             deferral too, never a bounce (dsnIsTransient).
  *   block — policy rejection (sender blocked, RBL listing, spam content)
- *           → log + alert, do NOT auto-suppress (domain issue, not contact issue)
+ *           → log + alert, NEVER suppress: it is our side refused, not the
+ *             address (see the block branch of classifyBounce)
  *
  * Each classification maps to a suppressionReason when auto-suppression occurs.
  *
@@ -179,10 +180,17 @@ export function classifyBounce(
       type: 'block',
       smtpCode: code,
       reason: ndrText,
+      // A BLOCK NEVER SUPPRESSES THE ADDRESS — deliberately, do not "fix" it.
+      // A block is the receiving side refusing US: our IP, our domain, our
+      // content (RBL listing, policy, 5.7.x). It says nothing about the
+      // address. If it suppressed, one blocked IP at a large provider would
+      // wipe every recipient at that provider off the list. Owner decision,
+      // Z140; it held through Z139 and is pinned by dsn-deferral and
+      // soft-bounce-suppression (SMTP 554 and DSN 5.7.1 suppress nothing).
       autoSuppress: false,
       alert: true,
-      // Blocks map to the "blocks" list but are NOT auto-suppressed here
-      // (transient IP/policy issue, not a bad address); callers may record it.
+      // The SendGrid "blocks" bucket this would be filed under if someone
+      // records it by hand — no path in the product writes it automatically.
       suppressionReason: 'block',
     };
   }
@@ -266,6 +274,101 @@ export function dsnIsTransient(body: string, cls: BounceClassification): boolean
   const status = dsnStatusClass(body);
   if (status !== null) return status === 4;
   return cls.type === 'soft';
+}
+
+/** A DSN's RFC 3464 Action field, lower-cased, or null when the body has none. */
+export function dsnAction(
+  body: string,
+): 'failed' | 'delayed' | 'delivered' | 'relayed' | 'expanded' | null {
+  const m = body.match(/^\s*Action:\s*(failed|delayed|delivered|relayed|expanded)\b/im);
+  return m
+    ? (m[1]!.toLowerCase() as 'failed' | 'delayed' | 'delivered' | 'relayed' | 'expanded')
+    : null;
+}
+
+export interface DsnOutcome {
+  /** What the DSN is stored as. */
+  event: 'deferred' | 'bounce';
+  /** The bounce type when `event` is 'bounce'. */
+  bounceType: 'hard' | 'soft' | 'block' | null;
+  /** The suppression list the address goes on, or null: not suppressed. */
+  suppress: 'hard_bounce' | 'invalid_email' | null;
+  /** classifyBounce could not tell what the DSN says (Z140): stored soft, never suppressed. */
+  unclassified: boolean;
+  cls: BounceClassification;
+}
+
+/**
+ * What a DSN means, in the order the decisions were taken (Z140):
+ *
+ *  1. Action first. `failed` is a definitive failure — the remote server gave
+ *     up, even when its status is 4.x.x (4.4.7 "message expired" after days of
+ *     retries); the same moment as mta-sender's last attempt, so a transient
+ *     one is a soft bounce that suppresses (hard_bounce). `delayed`,
+ *     `delivered`, `relayed` and `expanded` are not failures: a deferral, never
+ *     a suppression.
+ *  2. Without an Action, the status: 4.x.x (or a transient classification) is a
+ *     deferral (Z139), anything else a bounce as classified.
+ *  3. A block never suppresses — see classifyBounce: it is our side refused
+ *     (our IP, our content), not the address.
+ *  4. A DSN classifyBounce cannot read is a soft bounce and never suppresses:
+ *     an address is not suppressed on a guess. It is marked `unclassified` so
+ *     how often it happens can be counted and the classification extended from
+ *     the real DSNs (the inbound_emails row keeps the body).
+ */
+export function classifyDsn(body: string): DsnOutcome {
+  const cls = classifyBounce(body, body);
+  const action = dsnAction(body);
+  const status = dsnStatusClass(body);
+  const deferral: DsnOutcome = {
+    event: 'deferred',
+    bounceType: null,
+    suppress: null,
+    unclassified: false,
+    cls,
+  };
+  const asClassified = (definitive: boolean): DsnOutcome => {
+    if (cls.type === 'block') {
+      return { event: 'bounce', bounceType: 'block', suppress: null, unclassified: false, cls };
+    }
+    if (cls.type === 'hard') {
+      return {
+        event: 'bounce',
+        bounceType: 'hard',
+        suppress: cls.suppressionReason === 'invalid_email' ? 'invalid_email' : 'hard_bounce',
+        unclassified: false,
+        cls,
+      };
+    }
+    if (cls.type === 'soft') {
+      return {
+        event: 'bounce',
+        bounceType: 'soft',
+        suppress: definitive ? 'hard_bounce' : null,
+        unclassified: false,
+        cls,
+      };
+    }
+    return { event: 'bounce', bounceType: 'soft', suppress: null, unclassified: true, cls };
+  };
+
+  if (action !== null) {
+    if (action !== 'failed') return deferral;
+    // A transient status on a failed DSN: the retries ran out on the far side.
+    // A block still wins — it never suppresses, whatever the status class.
+    if (status === 4 && cls.type !== 'block') {
+      return {
+        event: 'bounce',
+        bounceType: 'soft',
+        suppress: 'hard_bounce',
+        unclassified: false,
+        cls,
+      };
+    }
+    return asClassified(true);
+  }
+  if (dsnIsTransient(body, cls)) return deferral;
+  return asClassified(false);
 }
 
 /**

@@ -192,3 +192,92 @@ describe('a DSN with a transient status is a deferral', () => {
     expect((await checkEventInvariants({ orgId: org })).breaches).toEqual([]);
   });
 });
+
+/** A DSN with exactly these lines after Final-Recipient. */
+function rawDsn(m: { email: string; messageId: string }, lines: string[], subject: string) {
+  return receiveInbound(org, {
+    from: 'MAILER-DAEMON@mx.example',
+    to: encodeVerp(m.messageId, 'bounce.example.test'),
+    subject,
+    textBody: [`Final-Recipient: rfc822; ${m.email}`, ...lines].join('\n'),
+    headers: {},
+  } as never);
+}
+
+async function contactStatus(email: string): Promise<string> {
+  const [c] = await db
+    .select({ status: contacts.status })
+    .from(contacts)
+    .where(and(eq(contacts.orgId, org), eq(contacts.email, email)));
+  return c!.status;
+}
+
+describe('Action first, then the status (Z140)', () => {
+  it('Action: failed on 4.4.7 is a definitive failure: a soft bounce that suppresses', async () => {
+    const m = await delivered();
+    await rawDsn(
+      m,
+      ['Action: failed', 'Status: 4.4.7', 'Diagnostic-Code: smtp; 421 4.4.7 Message expired'],
+      'Undelivered Mail Returned to Sender',
+    );
+    expect(await rows(m.messageId)).toEqual({ 'bounce:soft': 1, deliver: 1, send: 1 });
+    expect(await suppressedAs(m.email)).toEqual(['hard_bounce']);
+    expect(await contactStatus(m.email)).toBe('bounced');
+  });
+
+  it('Action: delivered with a 4.x.x status is a deferral that suppresses nothing', async () => {
+    const m = await delivered();
+    await rawDsn(
+      m,
+      ['Action: delivered', 'Status: 4.4.7', 'Diagnostic-Code: smtp; 550 5.1.1 quoted'],
+      'Delivery Status Notification',
+    );
+    expect(await rows(m.messageId)).toEqual({ deferred: 1, deliver: 1, send: 1 });
+    expect(await suppressedAs(m.email)).toEqual([]);
+  });
+
+  it('a DSN nothing can classify: a soft bounce, nothing suppressed, and a record that says so', async () => {
+    const m = await delivered();
+    const inbound = await rawDsn(
+      m,
+      ['Your message could not be processed by the remote system.'],
+      'Mail delivery failed',
+    );
+    expect(await rows(m.messageId)).toEqual({ 'bounce:soft': 1, deliver: 1, send: 1 });
+    expect(await suppressedAs(m.email)).toEqual([]);
+    expect(await contactStatus(m.email)).toBe('active');
+    const [row] = await db
+      .select({ metadata: emailEvents.metadata })
+      .from(emailEvents)
+      .where(
+        and(
+          eq(emailEvents.orgId, org),
+          eq(emailEvents.messageId, m.messageId),
+          eq(emailEvents.eventType, 'bounce'),
+        ),
+      );
+    // How often this happens, and the DSN to extend the classification from.
+    expect(row!.metadata).toMatchObject({
+      source: 'verp',
+      classification: 'unknown',
+      inboundEmailId: (inbound as { id: string }).id,
+    });
+  });
+
+  it('a block suppresses nothing, with or without an Action — our side refused, not the address', async () => {
+    for (const lines of [
+      ['Action: failed', 'Status: 5.7.1', 'Diagnostic-Code: smtp; 550 5.7.1 rejected by policy'],
+      ['Status: 5.7.1', 'Diagnostic-Code: smtp; 550 5.7.1 rejected by policy'],
+    ]) {
+      const m = await delivered();
+      await rawDsn(m, lines, 'Undelivered Mail Returned to Sender');
+      expect(await rows(m.messageId)).toEqual({ 'bounce:block': 1, deliver: 1, send: 1 });
+      expect(await suppressedAs(m.email)).toEqual([]);
+      expect(await contactStatus(m.email)).toBe('active');
+    }
+  });
+
+  it('the invariants still hold', async () => {
+    expect((await checkEventInvariants({ orgId: org })).breaches).toEqual([]);
+  });
+});

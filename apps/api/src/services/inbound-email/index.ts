@@ -19,8 +19,8 @@ import {
 import { onApiEvent } from '../workflows/triggers.js';
 import { openTicket } from '../helpdesk/index.js';
 import {
-  classifyBounce,
-  dsnIsTransient,
+  classifyDsn,
+  dsnAction,
   dsnStatusClass,
   isBounceMessage,
   extractFailedRecipient,
@@ -98,12 +98,12 @@ export async function receiveInbound(
   // out-of-band bounces (the engine only sees in-session SMTP rejects).
   if (isBounceMessage(fromEmail, payload.subject ?? undefined)) {
     const body = payload.textBody || payload.htmlBody || '';
-    const cls = classifyBounce(body, body);
-    // A delay notice is a deferral, not a bounce (Z139): measured on master, a
-    // 4.4.7 "will keep trying" DSN was stored as a soft bounce — 20 of them on
-    // a campaign of 100 read a 23.33 % bounce rate where the true one was 8 %,
-    // and raised the auto-pause rule. It never suppresses.
-    const transient = dsnIsTransient(body, cls);
+    // What the DSN means — Action first, then status, then the wording; see
+    // classifyDsn. A delay is a deferral (Z139); `Action: failed` is a
+    // definitive failure even on a 4.x.x status (Z140); a block never
+    // suppresses; a DSN nothing can classify is a soft bounce, never suppressed.
+    const dsn = classifyDsn(body);
+    const cls = dsn.cls;
 
     // VERP: the DSN's recipient is our per-message return-path. Decode it to the
     // original Message-ID and attribute the bounce to that exact send — this
@@ -145,33 +145,40 @@ export async function receiveInbound(
           contactId: ev?.contactId ?? null,
           messageId: verpMsgId,
           recipient: failed ? recipientAddress(failed) : null,
-          eventType: transient ? 'deferred' : 'bounce',
+          eventType: dsn.event,
           abVariantId:
             ev?.campaignId && ev?.contactId
               ? abVariantForContact(ev.campaignId, ev.contactId)
               : null,
-          bounceType: transient
-            ? null
-            : cls.type === 'soft'
-              ? 'soft'
-              : cls.type === 'block'
-                ? 'block'
-                : 'hard',
+          bounceType: dsn.bounceType,
           metadata: {
             source: 'verp',
             reason: cls.reason,
-            // The DSN's status class (4 = transient; null = no Status field).
+            // The DSN's status class (4 = transient; null = no Status field)
+            // and its Action (null = none).
             dsnStatusClass: dsnStatusClass(body),
+            dsnAction: dsnAction(body),
+            // Nothing could classify it: counted by
+            //   metadata->>'classification' = 'unknown'
+            // and the DSN itself is the inbound_emails row named here.
+            ...(dsn.unclassified ? { classification: 'unknown', inboundEmailId: row!.id } : {}),
           },
         })
         .onConflictDoNothing()
         .catch(() => {});
     }
 
-    if (failed && !transient && (cls.autoSuppress || cls.type === 'hard')) {
-      // Bucket into the correct SendGrid-parity list: invalid_email for
-      // nonexistent addresses, hard_bounce for other permanent failures.
-      const reason = cls.suppressionReason === 'invalid_email' ? 'invalid_email' : 'hard_bounce';
+    if (dsn.unclassified) {
+      console.warn(
+        `[inbound][dsn-unclassified] org=${orgId} inbound=${row!.id} message=${verpMsgId ?? '-'} — stored as a soft bounce, nothing suppressed`,
+      );
+    }
+
+    // Suppressed only when classifyDsn says so: a hard bounce (invalid_email or
+    // hard_bounce) or a definitive soft failure (hard_bounce). Never a
+    // deferral, never a block, never an unclassified DSN.
+    if (failed && dsn.suppress) {
+      const reason = dsn.suppress;
       await db
         .insert(suppressions)
         .values({ orgId, email: failed, reason })

@@ -378,7 +378,17 @@ describe('one ending per delivery', () => {
     const twoEndings = mid();
     await event('send', twoEndings, c);
     await event('deliver', twoEndings, c);
-    await event('failed', twoEndings, c, { reason: 'suppressed' });
+    // A second ending through the API is refused since Z140 (the post below is
+    // a no-op), so the breach is made by hand: a row with no recipient, which
+    // no unique index constrains — what a row from before 0030 looks like.
+    expect((await event('failed', twoEndings, c, { reason: 'suppressed' })).json()).toEqual({
+      ok: true,
+      duplicate: true,
+    });
+    await db.execute(sql`
+      INSERT INTO email_events (org_id, campaign_id, contact_id, event_type, message_id)
+      VALUES (${org}::uuid, ${campaignId}::uuid, ${c.id}::uuid, 'failed', ${twoEndings})
+    `);
     const { breaches } = await checkEventInvariants({ orgId: org });
     expect(breaches).toEqual(
       expect.arrayContaining([

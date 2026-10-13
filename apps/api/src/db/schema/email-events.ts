@@ -129,6 +129,19 @@ export const emailEvents = pgTable(
     uniqueIndex('email_events_bounce_uq')
       .on(t.orgId, t.messageId, t.recipient, t.bounceType)
       .where(sql`${t.eventType} = 'bounce'`),
+    // One ending per message and recipient (Z140): a delivery, a bounce said in
+    // the SMTP session, or a failure — whichever came first, and nothing after
+    // it. A job processed again after a hard or definitive soft bounce found
+    // the address suppressed and stored `failed` beside the bounce: a second
+    // ending. A DSN (metadata source 'verp') is not an ending of the attempt —
+    // it is said later, after the receiving server accepted the message — so
+    // a delivery and then a DSN bounce are both kept. The type test goes
+    // through an IMMUTABLE function for the reason given in migration 0031.
+    uniqueIndex('email_events_ending_uq')
+      .on(t.orgId, t.messageId, t.recipient)
+      .where(
+        sql`email_event_is_ending(${t.eventType}) AND coalesce(${t.metadata}->>'source', '') <> 'verp'`,
+      ),
   ],
 );
 

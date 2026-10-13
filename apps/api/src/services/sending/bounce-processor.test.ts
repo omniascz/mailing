@@ -7,6 +7,8 @@ import {
   extractFailedRecipient,
   dsnStatusClass,
   dsnIsTransient,
+  dsnAction,
+  classifyDsn,
 } from './bounce-processor.js';
 
 describe('extractSmtpCode', () => {
@@ -227,6 +229,80 @@ describe('dsnIsTransient', () => {
     expect(dsnIsTransient(soft, classifyBounce(soft, soft))).toBe(true);
     const hard = 'Diagnostic-Code: smtp; 550 5.1.1 user unknown';
     expect(dsnIsTransient(hard, classifyBounce(hard, hard))).toBe(false);
+  });
+});
+
+describe('dsnAction', () => {
+  it('reads the RFC 3464 Action field', () => {
+    expect(dsnAction('Action: failed\nStatus: 4.4.7')).toBe('failed');
+    expect(dsnAction('  action: Delayed')).toBe('delayed');
+    expect(dsnAction('Diagnostic-Code: smtp; 550 the action failed')).toBeNull();
+  });
+});
+
+describe('classifyDsn (Z140)', () => {
+  const dsn = (lines: string[]) => ['Final-Recipient: rfc822; a@b.test', ...lines].join('\n');
+
+  it('Action: failed on 4.4.7 is a definitive soft failure that suppresses (hard_bounce)', () => {
+    const r = classifyDsn(
+      dsn(['Action: failed', 'Status: 4.4.7', 'Diagnostic-Code: smtp; 421 4.4.7 Message expired']),
+    );
+    expect(r).toMatchObject({ event: 'bounce', bounceType: 'soft', suppress: 'hard_bounce' });
+  });
+
+  it('Action: delayed, delivered, relayed are deferrals that suppress nothing', () => {
+    for (const action of ['delayed', 'delivered', 'relayed']) {
+      const r = classifyDsn(
+        dsn([`Action: ${action}`, 'Status: 4.4.7', 'Diagnostic-Code: smtp; 550 5.1.1 quoted']),
+      );
+      expect(r).toMatchObject({ event: 'deferred', bounceType: null, suppress: null });
+    }
+  });
+
+  it('a block never suppresses — SMTP-side policy, with or without Action', () => {
+    for (const lines of [
+      ['Action: failed', 'Status: 5.7.1', 'Diagnostic-Code: smtp; 550 5.7.1 rejected by policy'],
+      ['Status: 5.7.1', 'Diagnostic-Code: smtp; 550 5.7.1 rejected by policy'],
+    ]) {
+      expect(classifyDsn(dsn(lines))).toMatchObject({
+        event: 'bounce',
+        bounceType: 'block',
+        suppress: null,
+      });
+    }
+  });
+
+  it('a hard failure suppresses on the list it belongs to', () => {
+    expect(
+      classifyDsn(
+        dsn(['Action: failed', 'Status: 5.1.1', 'Diagnostic-Code: smtp; 550 5.1.1 user unknown']),
+      ),
+    ).toMatchObject({ event: 'bounce', bounceType: 'hard', suppress: 'invalid_email' });
+    expect(
+      classifyDsn(
+        dsn(['Action: failed', 'Status: 5.2.2', 'Diagnostic-Code: smtp; 552 5.2.2 Mailbox full']),
+      ),
+    ).toMatchObject({ event: 'bounce', bounceType: 'hard', suppress: 'hard_bounce' });
+  });
+
+  it('a DSN nothing can read is a soft bounce, never suppressed, and says so', () => {
+    expect(classifyDsn('Your message could not be processed by the remote system.')).toMatchObject({
+      event: 'bounce',
+      bounceType: 'soft',
+      suppress: null,
+      unclassified: true,
+    });
+    expect(classifyDsn(dsn(['Action: failed', 'something went wrong']))).toMatchObject({
+      bounceType: 'soft',
+      suppress: null,
+      unclassified: true,
+    });
+  });
+
+  it('without an Action, Z139 holds: 4.x.x is a deferral even when it quotes 5.1.1', () => {
+    expect(
+      classifyDsn(dsn(['Status: 4.4.7', 'Diagnostic-Code: smtp; 451 4.4.7 earlier: 550 5.1.1'])),
+    ).toMatchObject({ event: 'deferred', suppress: null });
   });
 });
 
