@@ -20,8 +20,11 @@ import { onApiEvent } from '../workflows/triggers.js';
 import { openTicket } from '../helpdesk/index.js';
 import {
   classifyDsn,
+  classifyDsnRecipient,
   dsnAction,
   dsnStatusClass,
+  parseDeliveryStatus,
+  type DsnOutcome,
   isBounceMessage,
   extractFailedRecipient,
 } from '../sending/bounce-processor.js';
@@ -40,6 +43,11 @@ export interface InboundPayload {
   inReplyTo?: string;
   headers?: Record<string, string>;
   attachments?: Array<{ filename: string; contentType: string; size: number; url?: string }>;
+  /**
+   * The body of the DSN's message/delivery-status part (RFC 3464), when the
+   * message had one: the engine's MX parser passes it since Z141.
+   */
+  deliveryStatus?: string;
 }
 
 /**
@@ -98,97 +106,152 @@ export async function receiveInbound(
   // out-of-band bounces (the engine only sees in-session SMTP rejects).
   if (isBounceMessage(fromEmail, payload.subject ?? undefined)) {
     const body = payload.textBody || payload.htmlBody || '';
-    // What the DSN means — Action first, then status, then the wording; see
-    // classifyDsn. A delay is a deferral (Z139); `Action: failed` is a
-    // definitive failure even on a 4.x.x status (Z140); a block never
-    // suppresses; a DSN nothing can classify is a soft bounce, never suppressed.
-    const dsn = classifyDsn(body);
-    const cls = dsn.cls;
+
+    // What the DSN says, one finding per recipient (Z141). Read from the
+    // message/delivery-status part as RFC 3464 defines it — Final-Recipient,
+    // Action, Status, Diagnostic-Code of each recipient block, a field missing
+    // there taken from the per-message block — and decided by the rules of
+    // Z139/Z140 (classifyDsnRecipient): Action first, then the status; a block
+    // never suppresses; what nothing can classify is a soft bounce, never
+    // suppressed. Only a DSN without that part falls back to reading the body
+    // text, and its record says so (dsnSource 'body-text'): that is a guess.
+    //
+    // It used to be the body text every time. The engine's MX parser dropped
+    // the delivery-status part, so a delay notice quoting an earlier
+    // "550 5.1.1" was a hard bounce that suppressed a deliverable address, and
+    // a DSN for three recipients was one row for none of them (measured).
+    const parsed = payload.deliveryStatus ? parseDeliveryStatus(payload.deliveryStatus) : null;
+    type Finding = {
+      outcome: DsnOutcome;
+      address: string | null;
+      action: string | null;
+      status: string | null;
+      reason: string;
+      dsnSource: 'delivery-status' | 'body-text';
+    };
+    const findings: Finding[] = parsed
+      ? parsed.recipients.map((r) => {
+          const o = classifyDsnRecipient(r, parsed.perMessage);
+          return {
+            outcome: o,
+            address: o.address,
+            action: o.action,
+            status: o.status,
+            reason: o.diagnostic ?? o.status ?? '',
+            dsnSource: 'delivery-status' as const,
+          };
+        })
+      : [
+          ((o: DsnOutcome) => ({
+            outcome: o,
+            address: extractFailedRecipient(body),
+            action: dsnAction(body),
+            status: dsnStatusClass(body)?.toString() ?? null,
+            reason: o.cls.reason,
+            dsnSource: 'body-text' as const,
+          }))(classifyDsn(body)),
+        ];
 
     // VERP: the DSN's recipient is our per-message return-path. Decode it to the
-    // original Message-ID and attribute the bounce to that exact send — this
-    // recovers the recipient/campaign even when the DSN body has no clear
-    // Final-Recipient. Check the To address plus common relay headers.
+    // original Message-ID and attribute each finding to that exact send — this
+    // recovers the recipient/campaign even when a finding names no address.
+    // Check the To address plus common relay headers.
     const hdrs = (payload.headers ?? {}) as Record<string, string>;
     const verpMsgId =
       decodeVerp(payload.to) ??
       decodeVerp(hdrs['Delivered-To'] ?? hdrs['delivered-to']) ??
       decodeVerp(hdrs['X-Original-To'] ?? hdrs['x-original-to']);
+    const [ev] = verpMsgId
+      ? await db
+          .select({ contactId: emailEvents.contactId, campaignId: emailEvents.campaignId })
+          .from(emailEvents)
+          .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.messageId, verpMsgId)))
+          .limit(1)
+      : [];
 
-    let failed = extractFailedRecipient(body);
-    if (verpMsgId) {
-      const [ev] = await db
-        .select({ contactId: emailEvents.contactId, campaignId: emailEvents.campaignId })
-        .from(emailEvents)
-        .where(and(eq(emailEvents.orgId, orgId), eq(emailEvents.messageId, verpMsgId)))
-        .limit(1);
-      // If the DSN body didn't yield a recipient, resolve it from the matched
-      // contact so suppression still targets the right address.
-      if (!failed && ev?.contactId) {
+    for (const f of findings) {
+      // A finding with no address (an X.400 Final-Recipient, or a body with
+      // none) is the matched contact's — but only when it is the only finding:
+      // with several, the contact of the message is not necessarily its.
+      let address = f.address;
+      let contactId: string | null = null;
+      if (address) {
         const [c] = await db
-          .select({ email: contacts.email })
+          .select({ id: contacts.id })
           .from(contacts)
-          .where(and(eq(contacts.orgId, orgId), eq(contacts.id, ev.contactId)))
+          .where(and(eq(contacts.orgId, orgId), eq(contacts.email, address)))
           .limit(1);
-        failed = c?.email ?? null;
+        contactId = c?.id ?? null;
       }
-      // Record the event against the original message for analytics: a
-      // `deferred` for a transient status, else a bounce — one per message,
-      // recipient and bounce type (Z138), so a mailbox provider that sends the
-      // same failure DSN twice is recorded once. A delay notice followed by
-      // the final failure is a `deferred` and a bounce.
-      await db
-        .insert(emailEvents)
-        .values({
-          orgId,
-          campaignId: ev?.campaignId ?? null,
-          contactId: ev?.contactId ?? null,
-          messageId: verpMsgId,
-          recipient: failed ? recipientAddress(failed) : null,
-          eventType: dsn.event,
-          abVariantId:
-            ev?.campaignId && ev?.contactId
-              ? abVariantForContact(ev.campaignId, ev.contactId)
-              : null,
-          bounceType: dsn.bounceType,
-          metadata: {
-            source: 'verp',
-            reason: cls.reason,
-            // The DSN's status class (4 = transient; null = no Status field)
-            // and its Action (null = none).
-            dsnStatusClass: dsnStatusClass(body),
-            dsnAction: dsnAction(body),
-            // Nothing could classify it: counted by
-            //   metadata->>'classification' = 'unknown'
-            // and the DSN itself is the inbound_emails row named here.
-            ...(dsn.unclassified ? { classification: 'unknown', inboundEmailId: row!.id } : {}),
-          },
-        })
-        .onConflictDoNothing()
-        .catch(() => {});
-    }
+      if (findings.length === 1 && ev?.contactId) {
+        if (!address) {
+          const [c] = await db
+            .select({ email: contacts.email })
+            .from(contacts)
+            .where(and(eq(contacts.orgId, orgId), eq(contacts.id, ev.contactId)))
+            .limit(1);
+          address = c?.email ?? null;
+        }
+        contactId ??= ev.contactId;
+      }
 
-    if (dsn.unclassified) {
-      console.warn(
-        `[inbound][dsn-unclassified] org=${orgId} inbound=${row!.id} message=${verpMsgId ?? '-'} — stored as a soft bounce, nothing suppressed`,
-      );
-    }
+      if (verpMsgId) {
+        // One row per recipient: a `deferred`, or a bounce — one per message,
+        // recipient and bounce type (Z138), so a provider that sends the same
+        // failure DSN twice is recorded once.
+        await db
+          .insert(emailEvents)
+          .values({
+            orgId,
+            campaignId: ev?.campaignId ?? null,
+            contactId,
+            messageId: verpMsgId,
+            recipient: address ? recipientAddress(address) : null,
+            eventType: f.outcome.event,
+            abVariantId:
+              ev?.campaignId && contactId ? abVariantForContact(ev.campaignId, contactId) : null,
+            bounceType: f.outcome.bounceType,
+            metadata: {
+              source: 'verp',
+              // Where the decision was read from: the message/delivery-status
+              // part, or — when there was none — the body text (a guess).
+              dsnSource: f.dsnSource,
+              reason: f.reason,
+              dsnAction: f.action,
+              dsnStatus: f.status,
+              // Nothing could classify it: counted by
+              //   metadata->>'classification' = 'unknown'
+              // and the DSN itself is the inbound_emails row named here.
+              ...(f.outcome.unclassified
+                ? { classification: 'unknown', inboundEmailId: row!.id }
+                : {}),
+            },
+          })
+          .onConflictDoNothing()
+          .catch(() => {});
+      }
 
-    // Suppressed only when classifyDsn says so: a hard bounce (invalid_email or
-    // hard_bounce) or a definitive soft failure (hard_bounce). Never a
-    // deferral, never a block, never an unclassified DSN.
-    if (failed && dsn.suppress) {
-      const reason = dsn.suppress;
-      await db
-        .insert(suppressions)
-        .values({ orgId, email: failed, reason })
-        .onConflictDoNothing()
-        .catch(() => {});
-      await db
-        .update(contacts)
-        .set({ status: 'bounced', updatedAt: new Date() })
-        .where(and(eq(contacts.orgId, orgId), eq(contacts.email, failed)))
-        .catch(() => {});
+      if (f.outcome.unclassified) {
+        console.warn(
+          `[inbound][dsn-unclassified] org=${orgId} inbound=${row!.id} message=${verpMsgId ?? '-'} source=${f.dsnSource} — stored as a soft bounce, nothing suppressed`,
+        );
+      }
+
+      // Suppressed only when the decision says so: a hard bounce (invalid_email
+      // or hard_bounce) or a definitive soft failure (hard_bounce). Never a
+      // deferral, never a block, never an unclassified DSN.
+      if (address && f.outcome.suppress) {
+        await db
+          .insert(suppressions)
+          .values({ orgId, email: address, reason: f.outcome.suppress })
+          .onConflictDoNothing()
+          .catch(() => {});
+        await db
+          .update(contacts)
+          .set({ status: 'bounced', updatedAt: new Date() })
+          .where(and(eq(contacts.orgId, orgId), eq(contacts.email, address)))
+          .catch(() => {});
+      }
     }
     await db
       .update(inboundEmails)

@@ -9,7 +9,112 @@ import {
   dsnIsTransient,
   dsnAction,
   classifyDsn,
+  parseDeliveryStatus,
+  classifyDsnRecipient,
+  dsnAddress,
 } from './bounce-processor.js';
+
+describe('parseDeliveryStatus (RFC 3464)', () => {
+  const ds = [
+    'Reporting-MTA: dns; mx.example',
+    'Arrival-Date: Mon, 13 Oct 2026 10:00:00 +0000',
+    '',
+    'Final-Recipient: rfc822; a@example.test',
+    'Action: failed',
+    'Status: 5.1.1',
+    'Diagnostic-Code: smtp; 550 5.1.1 user',
+    '  unknown',
+    '',
+    'Final-Recipient: rfc822; b@example.test',
+    'Action: delayed',
+    'Status: 4.4.7',
+    '',
+  ].join('\r\n');
+
+  it('reads the per-message block and one block per recipient, folded lines joined', () => {
+    const p = parseDeliveryStatus(ds)!;
+    expect(p.perMessage['reporting-mta']).toBe('dns; mx.example');
+    expect(p.recipients).toHaveLength(2);
+    expect(p.recipients[0]!['diagnostic-code']).toBe('smtp; 550 5.1.1 user unknown');
+    expect(p.recipients[1]!.action).toBe('delayed');
+  });
+
+  it('works without the per-message block, and is null without any recipient', () => {
+    expect(
+      parseDeliveryStatus('Final-Recipient: rfc822; a@b.test\nAction: failed')!.recipients,
+    ).toHaveLength(1);
+    expect(parseDeliveryStatus('Reporting-MTA: dns; mx.example\n')).toBeNull();
+    expect(parseDeliveryStatus('')).toBeNull();
+  });
+});
+
+describe('dsnAddress', () => {
+  it('takes rfc822 and utf-8 addresses, nothing else', () => {
+    expect(dsnAddress('rfc822; <A@Example.test>')).toBe('a@example.test');
+    expect(dsnAddress('utf-8; jan@příklad.test')).toBe('jan@příklad.test');
+    expect(dsnAddress('x400; c=CZ;a= ;p=Example;s=Novak')).toBeNull();
+    expect(dsnAddress('garbage')).toBeNull();
+    expect(dsnAddress(undefined)).toBeNull();
+  });
+});
+
+describe('classifyDsnRecipient — the fields decide, not the body (Z141)', () => {
+  const r = (fields: Record<string, string>) => classifyDsnRecipient(fields, {});
+
+  it('delayed 4.4.7 is a deferral, whatever an earlier attempt said', () => {
+    expect(
+      r({
+        'final-recipient': 'rfc822; a@b.test',
+        action: 'delayed',
+        status: '4.4.7',
+        'diagnostic-code': 'smtp; 451 4.4.7 delayed',
+      }),
+    ).toMatchObject({ event: 'deferred', suppress: null, address: 'a@b.test' });
+  });
+
+  it('failed 4.4.7 is a definitive soft failure that suppresses', () => {
+    expect(
+      r({ 'final-recipient': 'rfc822; a@b.test', action: 'failed', status: '4.4.7' }),
+    ).toMatchObject({ event: 'bounce', bounceType: 'soft', suppress: 'hard_bounce' });
+  });
+
+  it('failed 5.1.1 is hard (invalid_email); 5.7.1 with an RBL diagnostic is a block', () => {
+    expect(
+      r({ 'final-recipient': 'rfc822; a@b.test', action: 'failed', status: '5.1.1' }),
+    ).toMatchObject({ bounceType: 'hard', suppress: 'invalid_email' });
+    expect(
+      r({
+        'final-recipient': 'rfc822; a@b.test',
+        action: 'failed',
+        status: '5.7.1',
+        'diagnostic-code': 'smtp; 550 5.7.1 client host blocked using Spamhaus RBL',
+      }),
+    ).toMatchObject({ bounceType: 'block', suppress: null });
+  });
+
+  it('a field missing from the recipient block comes from the per-message block', () => {
+    expect(
+      classifyDsnRecipient(
+        { 'final-recipient': 'rfc822; a@b.test', status: '5.1.1' },
+        { action: 'failed' },
+      ),
+    ).toMatchObject({ action: 'failed', bounceType: 'hard' });
+  });
+
+  it('an X.400 recipient has no address and does not throw', () => {
+    expect(
+      r({ 'final-recipient': 'x400; c=CZ;s=Novak', action: 'failed', status: '5.1.1' }),
+    ).toMatchObject({ address: null, bounceType: 'hard' });
+  });
+
+  it('fields that say nothing classifiable: a soft bounce, unclassified, nothing suppressed', () => {
+    expect(r({ 'final-recipient': 'rfc822; a@b.test', action: 'failed' })).toMatchObject({
+      bounceType: 'soft',
+      suppress: null,
+      unclassified: true,
+    });
+  });
+});
 
 describe('extractSmtpCode', () => {
   it('extracts 3-digit SMTP code', () => {
