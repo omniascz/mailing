@@ -26,6 +26,9 @@ export const suppressions = pgTable(
     uniqueIndex('suppressions_org_email_reason_idx').on(t.orgId, t.email, t.reason),
     uniqueIndex('suppressions_org_phone_idx').on(t.orgId, t.phone),
     index('suppressions_email_idx').on(t.email),
+    // Every lookup that decides a send matches lower(email) on both sides
+    // (services/suppressions/email.ts), which no index above can serve.
+    index('suppressions_org_lower_email_idx').on(t.orgId, sql`lower(${t.email})`),
   ],
 );
 

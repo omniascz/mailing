@@ -9,6 +9,11 @@ import { z } from 'zod';
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { suppressions, suppressionReasonEnum } from '../../../db/schema/index.js';
+import {
+  suppressionEmail,
+  suppressionEmailIn,
+  suppressionEmailIs,
+} from '../../../services/suppressions/email.js';
 
 const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
   app.post(
@@ -34,17 +39,15 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
         return reply.send({ data: { suppressed: [] } });
       }
 
-      // Lower-case match — suppressions are normalised at insert time but
-      // recipients may carry mixed-case addresses from CRM imports.
-      const lowered = body.emails.map((e) => e.toLowerCase());
-
+      // Case-insensitive on both sides. Only the recipient used to be
+      // lower-cased: a row stored as Jan@X.cz matched nobody (Z144).
       const rows = await db
         .select({ email: suppressions.email })
         .from(suppressions)
         .where(
           and(
             eq(suppressions.orgId, body.orgId),
-            inArray(suppressions.email, lowered),
+            suppressionEmailIn(body.emails),
             body.reasons ? inArray(suppressions.reason, body.reasons) : undefined,
           ),
         );
@@ -93,14 +96,14 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.body);
 
-      const email = body.email.toLowerCase();
+      const email = suppressionEmail(body.email);
       const existing = await db
         .select({ id: suppressions.id })
         .from(suppressions)
         .where(
           and(
             eq(suppressions.orgId, body.orgId),
-            eq(suppressions.email, email),
+            suppressionEmailIs(email),
             eq(suppressions.reason, body.reason),
           ),
         )

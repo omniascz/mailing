@@ -4,6 +4,7 @@ import { and, desc, eq, or, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { auditLogs, suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { suppressionEmail, suppressionEmailIs } from '../../services/suppressions/email.js';
 
 const REASON = [
   'hard_bounce',
@@ -113,7 +114,13 @@ export default async function suppressionRoutes(app: FastifyInstance) {
       const body = createSchema.parse(req.body);
       const [row] = await db
         .insert(suppressions)
-        .values({ orgId: req.user!.orgId, ...body })
+        .values({
+          orgId: req.user!.orgId,
+          ...body,
+          // Stored the way every reader looks it up. As typed, Jan@X.cz was a
+          // row that stopped nothing sent to jan@x.cz (Z144).
+          ...(body.email ? { email: suppressionEmail(body.email) } : {}),
+        })
         .returning()
         .catch((err: Error) => {
           if (
@@ -206,7 +213,7 @@ export default async function suppressionRoutes(app: FastifyInstance) {
 
       const conds = [eq(suppressions.orgId, req.user!.orgId)];
       const orConds = [];
-      if (body.email) orConds.push(eq(suppressions.email, body.email.toLowerCase()));
+      if (body.email) orConds.push(suppressionEmailIs(body.email));
       if (body.phone) orConds.push(eq(suppressions.phone, body.phone));
       conds.push(or(...orConds)!);
 
@@ -235,6 +242,11 @@ export async function autoSuppress(
   if (!target.email && !target.phone) return;
   await db
     .insert(suppressions)
-    .values({ orgId, ...target, reason })
+    .values({
+      orgId,
+      ...target,
+      ...(target.email ? { email: suppressionEmail(target.email) } : {}),
+      reason,
+    })
     .onConflictDoNothing();
 }

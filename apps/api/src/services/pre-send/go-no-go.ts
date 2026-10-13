@@ -13,7 +13,7 @@
  * focused on collecting facts.
  */
 
-import { and, countDistinct, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, countDistinct, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   campaigns,
@@ -56,6 +56,7 @@ import {
 import { checkFrequencyCap } from '../frequency-capping/index.js';
 import { deliveryDenominators, MIN_OUTCOME_SAMPLE } from '../deliverability/pure.js';
 import { countAudience } from '../campaigns/auto-resend.js';
+import { suppressionEmailIn } from '../suppressions/email.js';
 import { renderEmail as renderBlocks } from '@forgemsg/editor/render';
 import { readCampaignContent } from '@forgemsg/editor/schema';
 import { listWarmupStatuses } from '../sending/ip-warmup.js';
@@ -103,7 +104,9 @@ export async function runPreSendChecks(orgId: string, campaignId: string): Promi
     if (suppressionOverlap !== null) {
       checks.push(
         classifySuppression({
-          recipientCount,
+          // The audience leaves suppressed addresses out (Z144), so the share
+          // suppression removes is of the audience with them put back.
+          recipientCount: recipientCount + suppressionOverlap,
           suppressedCount: suppressionOverlap,
         }),
       );
@@ -412,9 +415,9 @@ async function fetchSuppressionOverlap(orgId: string, campaignId: string): Promi
   // Count how many of those emails appear in the suppression table — once
   // each, as an address can hold a row per reason.
   const [result] = await db
-    .select({ n: countDistinct(suppressions.email) })
+    .select({ n: countDistinct(sql`lower(${suppressions.email})`) })
     .from(suppressions)
-    .where(and(eq(suppressions.orgId, orgId), inArray(suppressions.email, emails)));
+    .where(and(eq(suppressions.orgId, orgId), suppressionEmailIn(emails)));
 
   return result?.n ?? 0;
 }

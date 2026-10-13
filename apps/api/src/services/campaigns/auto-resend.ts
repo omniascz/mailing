@@ -198,6 +198,14 @@ function listAudienceWhere(orgId: string, listId: string) {
       -- batch sender refuses it too, so the pre-send count is what is sent);
       -- bounced/complained/unsubscribed are additionally gated by suppressions.
       AND c."status" NOT IN ('archived', 'non_subscribed', 'pending')
+      -- A suppressed address, of any reason: batch-sender refuses it for every
+      -- marketing stream, so counting it made the pre-send panel promise a
+      -- send that did not happen (Z144: 2 counted, 1 sent). Case-insensitive,
+      -- as the batch sender's check is.
+      AND NOT EXISTS (
+        SELECT 1 FROM "suppressions" s
+        WHERE s."org_id" = c."org_id" AND lower(s."email") = lower(c."email")
+      )
   `;
 }
 

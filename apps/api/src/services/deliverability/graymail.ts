@@ -10,6 +10,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { tags, contactTags, suppressions } from '../../db/schema/index.js';
 import { classifyGraymail, type GraymailTier } from './pure.js';
+import { suppressionEmail } from '../suppressions/email.js';
 
 export interface GraymailSweepResult {
   orgId: string;
@@ -81,7 +82,7 @@ export async function sweepOrg(orgId: string): Promise<GraymailSweepResult> {
         .insert(suppressions)
         .values({
           orgId,
-          email: r.email,
+          email: suppressionEmail(r.email),
           reason: 'manual' as const,
           notes: `graymail:${decision.tier} — ${decision.reason}`,
         })

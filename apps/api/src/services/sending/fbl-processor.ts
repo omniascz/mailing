@@ -24,6 +24,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { redis } from '@forgemsg/shared/redis';
 import { abVariantForContact } from '../campaigns/variant-attribution.js';
 import { recipientAddress } from '../transactional/send-message.js';
+import { suppressionEmail, suppressionEmailIs } from '../suppressions/email.js';
 
 // ─── ARF parsing ──────────────────────────────────────────────────────────────
 
@@ -156,7 +157,7 @@ export async function processFblComplaint(
   const [existingSuppression] = await db
     .select()
     .from(suppressions)
-    .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, email)))
+    .where(and(eq(suppressions.orgId, orgId), suppressionEmailIs(email)))
     .limit(1);
 
   // The status is set whatever the suppression list holds. It used to be set
@@ -236,7 +237,10 @@ async function addToSuppression(
   email: string,
   reason: 'complaint' | 'hard_bounce',
 ): Promise<void> {
-  await db.insert(suppressions).values({ orgId, email, reason }).onConflictDoNothing();
+  await db
+    .insert(suppressions)
+    .values({ orgId, email: suppressionEmail(email), reason })
+    .onConflictDoNothing();
 }
 
 // ─── Complaint rate alerting ──────────────────────────────────────────────────
