@@ -9,6 +9,7 @@ import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { smsKeywords, contacts, type SmsKeyword } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { CONSENT_WITHHELD, heldStatus } from '../contacts/consent-hold.js';
 
 export type KeywordAction = 'subscribe' | 'unsubscribe' | 'info' | 'reply';
 
@@ -101,7 +102,18 @@ export async function dispatchInboundSms(
         });
       }
     } else if (existing.status !== 'active') {
-      await db.update(contacts).set({ status: 'active' }).where(eq(contacts.id, existing.id));
+      // A keyword texted from this number is consent to SMS, not proof that
+      // the person behind an e-mail address wants marketing again. It used to
+      // write 'active' over unsubscribed and complained, and the next campaign
+      // mailed them (Z142, measured). Those are left as they are; so is an
+      // archive of one of them.
+      const held = await heldStatus(orgId, existing);
+      if (!CONSENT_WITHHELD.includes(held)) {
+        await db
+          .update(contacts)
+          .set({ status: 'active', archivedFrom: null })
+          .where(and(eq(contacts.id, existing.id), eq(contacts.orgId, orgId)));
+      }
     }
   } else if (kw.action === 'unsubscribe') {
     // Matched by phone, so the contact has to be resolved first —

@@ -25,10 +25,32 @@
  *
  * Per-list rows are the caller's business: a global unsubscribe closed them all
  * on purpose, and each path decides which lists the recipient asked back into.
+ *
+ * The consent that lifts the refusal is recorded, in the same transaction, as a
+ * consent_events row: what the recipient did, where, when, from which (hashed)
+ * address and browser. Before Z142 nothing was kept — the suppression row was
+ * the only record of the unsubscribe, and the resubscribe deleted it.
  */
+import { createHash } from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { contacts, suppressions } from '../../db/schema/index.js';
+import { consentEvents, contacts, suppressions } from '../../db/schema/index.js';
+
+/** How the recipient gave the consent being acted on. Required: no proof, no resubscribe. */
+export interface ConsentProof {
+  eventType: 're_consent' | 'double_opt_in';
+  /** 'preference_center', 'double_opt_in', … */
+  source: string;
+  ip?: string | null;
+  userAgent?: string | null;
+  sourceUrl?: string | null;
+  payload?: Record<string, unknown>;
+}
+
+/** The address is kept as a hash, as consent_events.ip_hash is documented. */
+export function hashIp(ip: string | null | undefined): string | null {
+  return ip ? createHash('sha256').update(ip).digest('hex') : null;
+}
 
 type ContactStatus = (typeof contacts.$inferSelect)['status'];
 
@@ -42,7 +64,7 @@ export interface ResubscribeResult {
 export async function resubscribeContact(
   orgId: string,
   contactId: string,
-  opts: { from: readonly ContactStatus[] },
+  opts: { from: readonly ContactStatus[]; proof: ConsentProof },
 ): Promise<ResubscribeResult | null> {
   return db.transaction(async (tx) => {
     const [contact] = await tx
@@ -57,8 +79,9 @@ export async function resubscribeContact(
       return { status: contact.status, reachable: false };
     }
 
+    let lifted = 0;
     if (email) {
-      await tx
+      const removed = await tx
         .delete(suppressions)
         .where(
           and(
@@ -66,7 +89,32 @@ export async function resubscribeContact(
             eq(suppressions.email, email),
             eq(suppressions.reason, 'unsubscribe'),
           ),
-        );
+        )
+        .returning({ id: suppressions.id });
+      lifted = removed.length;
+    }
+    const changesStatus = contact.status !== 'active';
+    if (lifted > 0 || changesStatus) {
+      await tx.insert(consentEvents).values({
+        orgId,
+        contactId,
+        eventType: opts.proof.eventType,
+        legalBasis: 'consent',
+        channel: 'email',
+        purposeCode: 'marketing_email',
+        ipHash: hashIp(opts.proof.ip),
+        userAgent: opts.proof.userAgent?.slice(0, 1000) ?? null,
+        source: opts.proof.source,
+        sourceUrl: opts.proof.sourceUrl ?? null,
+        proofPayload: {
+          ...opts.proof.payload,
+          fromStatus: contact.status,
+          liftedUnsubscribe: lifted > 0,
+        },
+      });
+    }
+
+    if (email) {
       const [still] = await tx
         .select({ id: suppressions.id })
         .from(suppressions)
@@ -75,7 +123,7 @@ export async function resubscribeContact(
       if (still) return { status: contact.status, reachable: false };
     }
 
-    if (contact.status !== 'active') {
+    if (changesStatus) {
       await tx
         .update(contacts)
         .set({ status: 'active', updatedAt: new Date() })

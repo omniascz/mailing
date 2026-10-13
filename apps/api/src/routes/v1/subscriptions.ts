@@ -246,6 +246,13 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       // it always has here.
       const result = await resubscribeContact(orgId, contactId, {
         from: ['pending', 'non_subscribed', 'unsubscribed', 'archived'],
+        proof: {
+          eventType: 'double_opt_in',
+          source: 'double_opt_in',
+          ip: req.ip,
+          userAgent: req.headers['user-agent'] ?? null,
+          payload: { listId },
+        },
       });
 
       // Add to list (confirmed). A list row a global unsubscribe closed is

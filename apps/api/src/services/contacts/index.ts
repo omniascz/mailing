@@ -6,6 +6,7 @@ import { contacts, type Contact } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { parsePhonePrefix } from '../import/phone-prefix.js';
 import type { UnsubscribeSource } from './unsubscribe.js';
+import { assertNotLiftingRefusal, heldStatus } from './consent-hold.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -213,10 +214,22 @@ export async function updateContact(
   // status to 'unsubscribed' on someone already unsubscribed is not an
   // unsubscribe, and must not produce a second event.
   const [before] = await db
-    .select({ status: contacts.status })
+    .select({ status: contacts.status, archivedFrom: contacts.archivedFrom, email: contacts.email })
     .from(contacts)
     .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
     .limit(1);
+
+  // Every single-contact edit comes through here, so this is where an edit is
+  // stopped from lifting a recipient's refusal (./consent-hold.ts). An archive
+  // keeps the status it replaced; any other status leaves the archive and
+  // clears it.
+  const nextStatus = (patch as { status?: Contact['status'] }).status;
+  let archivedFrom: Contact['status'] | null | undefined;
+  if (before && nextStatus !== undefined && nextStatus !== before.status) {
+    assertNotLiftingRefusal(await heldStatus(orgId, before), nextStatus);
+    if (nextStatus === 'archived') archivedFrom = before.status;
+    else if (before.status === 'archived') archivedFrom = null;
+  }
 
   const becomingUnsubscribed =
     (patch as { status?: string }).status === 'unsubscribed' && before?.status !== 'unsubscribed';
@@ -253,7 +266,11 @@ export async function updateContact(
 
   const [row] = await db
     .update(contacts)
-    .set({ ...patch, updatedAt: new Date() } as never)
+    .set({
+      ...patch,
+      ...(archivedFrom !== undefined ? { archivedFrom } : {}),
+      updatedAt: new Date(),
+    } as never)
     .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
     .returning();
   if (!row) throw AppError.notFound('Contact');
@@ -261,6 +278,38 @@ export async function updateContact(
   emitWebhookEvent(orgId, 'contact.updated', {
     ...toContactSummary(row),
     changed: changedFields(patch as Record<string, unknown>),
+  });
+  return row;
+}
+
+/**
+ * Undo an archive: the contact gets back the status the archive replaced, so
+ * an unsubscribed contact comes back unsubscribed. This used to set 'active'
+ * from whatever the status was — archived or not — which turned an
+ * unsubscribed contact into a marketing recipient in one call (Z142, measured).
+ * Written here rather than through updateContact: restoring 'unsubscribed' is
+ * not a new unsubscribe and must not run one.
+ */
+export async function unarchiveContact(orgId: string, id: string) {
+  const [before] = await db
+    .select({ status: contacts.status, archivedFrom: contacts.archivedFrom, email: contacts.email })
+    .from(contacts)
+    .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
+    .limit(1);
+  if (!before) throw AppError.notFound('Contact');
+  if (before.status !== 'archived') {
+    throw AppError.conflict(`Contact is not archived (status ${before.status})`);
+  }
+  const status = await heldStatus(orgId, before);
+  const [row] = await db
+    .update(contacts)
+    .set({ status, archivedFrom: null, updatedAt: new Date() })
+    .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId), eq(contacts.status, 'archived')))
+    .returning();
+  if (!row) throw AppError.conflict('Contact is not archived');
+  emitWebhookEvent(orgId, 'contact.updated', {
+    ...toContactSummary(row),
+    changed: changedFields({ status }),
   });
   return row;
 }

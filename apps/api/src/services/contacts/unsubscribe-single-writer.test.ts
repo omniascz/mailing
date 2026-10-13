@@ -35,7 +35,9 @@ const ALLOWED = new Set([
   join('services', 'contacts', 'unsubscribe.ts'),
   // Diverts the unsubscribe transition and strips status from the patch; every
   // other status it writes (bounced, complained, archived, active) is not an
-  // unsubscribe and is unaffected.
+  // unsubscribe and is unaffected. unarchiveContact, in the same file, writes
+  // back the status an archive replaced, which can be 'unsubscribed': that
+  // restores an unsubscribe the four stores already recorded, it is not one.
   join('services', 'contacts', 'index.ts'),
   // mta-sender's callback after a hard bounce or a complaint. Its schema
   // accepts 'unsubscribed' too, but nothing sends that — see the test below.

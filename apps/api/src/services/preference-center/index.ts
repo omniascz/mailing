@@ -30,6 +30,10 @@ export interface PreferenceCenterView {
    *  the suppressions table). When true, every list opt-in below is
    *  ignored at send time. */
   globallyUnsubscribed: boolean;
+  /** Whether the recipient can undo it here: the only thing suppressing the
+   *  address is their own unsubscribe. A bounce or a complaint is not theirs
+   *  to lift, and the page does not offer it. */
+  canResubscribe: boolean;
   /** Lists the contact is currently on, with their per-list opt-out
    *  state. Only lists whose `deletedAt` IS NULL appear here. */
   lists: Array<{
@@ -81,6 +85,7 @@ export async function getPreferences(token: string): Promise<PreferenceCenterVie
   const [contact] = await db
     .select({
       email: contacts.email,
+      status: contacts.status,
       deletedAt: contacts.deletedAt,
     })
     .from(contacts)
@@ -91,12 +96,11 @@ export async function getPreferences(token: string): Promise<PreferenceCenterVie
     throw AppError.notFound('Contact');
   }
 
-  const globalRow = contact.email
+  const globalRows = contact.email
     ? await db
-        .select({ id: suppressions.id })
+        .select({ reason: suppressions.reason })
         .from(suppressions)
         .where(and(eq(suppressions.orgId, orgId), eq(suppressions.email, contact.email)))
-        .limit(1)
     : [];
 
   const listRows = await db
@@ -115,7 +119,11 @@ export async function getPreferences(token: string): Promise<PreferenceCenterVie
 
   return {
     emailMasked: maskEmail(contact.email),
-    globallyUnsubscribed: globalRow.length > 0,
+    globallyUnsubscribed: globalRows.length > 0,
+    canResubscribe:
+      contact.status === 'unsubscribed' &&
+      globalRows.length > 0 &&
+      globalRows.every((r) => r.reason === 'unsubscribe'),
     lists: listRows.map((r) => ({
       id: r.id,
       name: r.name,
@@ -163,7 +171,19 @@ async function listsOfOrg(orgId: string, ids: string[]): Promise<Set<string>> {
   return new Set(rows.map((r) => r.id));
 }
 
-export async function updatePreferences(token: string, body: UpdateRequest): Promise<UpdateResult> {
+/** Who is acting, for the consent record a resubscribe writes. */
+export interface RequestContext {
+  ip?: string | null;
+  userAgent?: string | null;
+  /** 'page' — the button on the preference page; 'api' — the JSON body. */
+  via: 'page' | 'api';
+}
+
+export async function updatePreferences(
+  token: string,
+  body: UpdateRequest,
+  ctx: RequestContext,
+): Promise<UpdateResult> {
   const { orgId, contactId } = resolveToken(token);
 
   const [contact] = await db
@@ -199,7 +219,16 @@ export async function updatePreferences(token: string, body: UpdateRequest): Pro
     // back; one that never subscribed is not subscribed by this. We
     // intentionally do NOT touch per-list unsubscribedAt — the user must
     // re-opt-in to each list explicitly.
-    await resubscribeContact(orgId, contactId, { from: ['unsubscribed'] });
+    await resubscribeContact(orgId, contactId, {
+      from: ['unsubscribed'],
+      proof: {
+        eventType: 're_consent',
+        source: 'preference_center',
+        ip: ctx.ip,
+        userAgent: ctx.userAgent,
+        payload: { via: ctx.via, lists: body.resubscribeToLists ?? [] },
+      },
+    });
   }
 
   // 2. Per-list toggles — only on this organisation's lists.
