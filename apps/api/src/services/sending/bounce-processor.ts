@@ -317,9 +317,19 @@ export interface DsnOutcome {
  *     the real DSNs (the inbound_emails row keeps the body).
  */
 export function classifyDsn(body: string): DsnOutcome {
-  const cls = classifyBounce(body, body);
-  const action = dsnAction(body);
-  const status = dsnStatusClass(body);
+  return decideDsn(dsnAction(body), dsnStatusClass(body), classifyBounce(body, body));
+}
+
+/**
+ * The decision of classifyDsn, from its three inputs — wherever they were read
+ * from: the fields of a message/delivery-status part (classifyDsnRecipient), or,
+ * when a DSN has none, the body text (classifyDsn — the guess).
+ */
+export function decideDsn(
+  action: ReturnType<typeof dsnAction>,
+  status: 2 | 4 | 5 | null,
+  cls: BounceClassification,
+): DsnOutcome {
   const deferral: DsnOutcome = {
     event: 'deferred',
     bounceType: null,
@@ -367,8 +377,119 @@ export function classifyDsn(body: string): DsnOutcome {
     }
     return asClassified(true);
   }
-  if (dsnIsTransient(body, cls)) return deferral;
+  // No Action: Z139's rule — a transient status (or, with no status, a
+  // transient classification) is a deferral.
+  if (status !== null ? status === 4 : cls.type === 'soft') return deferral;
   return asClassified(false);
+}
+
+// ─── RFC 3464: the message/delivery-status part ───────────────────────────────
+
+/** One block of `Name: value` fields; names lower-cased, folded lines joined. */
+export type DsnFields = Record<string, string>;
+
+export interface DeliveryStatus {
+  /** The per-message fields (Reporting-MTA, Arrival-Date, …). */
+  perMessage: DsnFields;
+  /** One block per recipient (Final-Recipient, Action, Status, Diagnostic-Code, …). */
+  recipients: DsnFields[];
+}
+
+/**
+ * Parse the body of a message/delivery-status part (RFC 3464 §2.1): a block of
+ * per-message fields, then one block per recipient, blocks separated by a blank
+ * line, lines starting with whitespace continuing the field above. Returns null
+ * when there is no recipient block — nothing to classify from.
+ */
+export function parseDeliveryStatus(text: string): DeliveryStatus | null {
+  const blocks: DsnFields[] = [];
+  let current: DsnFields | null = null;
+  let last: string | null = null;
+  for (const line of text.replace(/\r\n?/g, '\n').split('\n')) {
+    if (line.trim() === '') {
+      if (current && Object.keys(current).length > 0) blocks.push(current);
+      current = null;
+      last = null;
+      continue;
+    }
+    if (/^[ \t]/.test(line) && current && last) {
+      current[last] = `${current[last]} ${line.trim()}`;
+      continue;
+    }
+    const colon = line.indexOf(':');
+    if (colon <= 0) continue;
+    current ??= {};
+    last = line.slice(0, colon).trim().toLowerCase();
+    current[last] = line.slice(colon + 1).trim();
+  }
+  if (current && Object.keys(current).length > 0) blocks.push(current);
+  if (blocks.length === 0) return null;
+  // The first block is the per-message one only if it is not itself a
+  // recipient block (some MTAs omit the per-message fields).
+  const isRecipient = (b: DsnFields) => 'final-recipient' in b || 'original-recipient' in b;
+  const [first, ...rest] = blocks;
+  const perMessage = isRecipient(first!) ? {} : first!;
+  const recipients = (isRecipient(first!) ? blocks : rest).filter(isRecipient);
+  return recipients.length > 0 ? { perMessage, recipients } : null;
+}
+
+/**
+ * The address of a recipient field (`<address-type>; <address>`), when its type
+ * is one an email address is written in (rfc822, or utf-8 — RFC 6533). An
+ * X.400 or other address is not one; null.
+ */
+export function dsnAddress(value: string | undefined): string | null {
+  if (!value) return null;
+  const semi = value.indexOf(';');
+  if (semi < 0) return null;
+  const type = value.slice(0, semi).trim().toLowerCase();
+  if (type !== 'rfc822' && type !== 'utf-8') return null;
+  const address = value
+    .slice(semi + 1)
+    .trim()
+    .replace(/^<|>$/g, '')
+    .toLowerCase();
+  return /^[^@\s]+@[^@\s]+$/.test(address) ? address : null;
+}
+
+export interface DsnRecipientOutcome extends DsnOutcome {
+  /** Final-Recipient (or Original-Recipient) as an address; null when it is not one. */
+  address: string | null;
+  action: ReturnType<typeof dsnAction>;
+  status: string | null;
+  diagnostic: string | null;
+}
+
+/**
+ * One recipient of a DSN, decided from its fields alone (Z141): Action, Status
+ * and Diagnostic-Code of its own block, a field missing there taken from the
+ * per-message block. What tells a block from a hard failure is read from the
+ * Status and the Diagnostic-Code, never from the rest of the message — a
+ * human-readable part that quotes an earlier "550 5.1.1", or says "policy",
+ * decides nothing.
+ */
+export function classifyDsnRecipient(
+  recipient: DsnFields,
+  perMessage: DsnFields,
+): DsnRecipientOutcome {
+  const field = (name: string) => recipient[name] ?? perMessage[name];
+  const actionRaw = field('action')?.toLowerCase().split(/\s/)[0];
+  const action =
+    (['failed', 'delayed', 'delivered', 'relayed', 'expanded'] as const).find(
+      (a) => a === actionRaw,
+    ) ?? null;
+  const status = field('status')?.match(/[245]\.\d{1,3}\.\d{1,3}/)?.[0] ?? null;
+  const statusClass = status ? (Number(status[0]) as 2 | 4 | 5) : null;
+  const diagnostic = field('diagnostic-code')?.replace(/^[^;]*;\s*/, '') ?? null;
+  const cls = classifyBounce([status, diagnostic].filter(Boolean).join(' ') || 'unknown');
+  return {
+    ...decideDsn(action, statusClass, cls),
+    address:
+      dsnAddress(recipient['final-recipient']) ?? dsnAddress(recipient['original-recipient']),
+    action,
+    status,
+    diagnostic,
+  };
 }
 
 /**

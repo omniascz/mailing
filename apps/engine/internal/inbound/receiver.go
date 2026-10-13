@@ -57,7 +57,13 @@ type Payload struct {
 	InReplyTo   string            `json:"inReplyTo,omitempty"`
 	Headers     map[string]string `json:"headers,omitempty"`
 	Attachments []Attachment      `json:"attachments,omitempty"`
-	ReceivedAt  time.Time         `json:"receivedAt"`
+	// DeliveryStatus is the body of a message/delivery-status part (RFC 3464;
+	// or message/global-delivery-status, RFC 6533): the per-message and
+	// per-recipient fields of a DSN, as text. It used to be dropped — only
+	// text/plain and text/html were kept — so the API classified bounces from
+	// the human-readable text alone (Z141).
+	DeliveryStatus string    `json:"deliveryStatus,omitempty"`
+	ReceivedAt     time.Time `json:"receivedAt"`
 }
 
 type Receiver struct {
@@ -216,6 +222,12 @@ func walkParts(mr *multipart.Reader, p *Payload) error {
 			}
 			continue
 		}
+		// A delivery-status part is the DSN's data even when the sending MTA
+		// gave it a filename; it must not end up as an attachment.
+		if mediaType == "message/delivery-status" || mediaType == "message/global-delivery-status" {
+			assignBody(p, mediaType, body)
+			continue
+		}
 		filename := part.FileName()
 		if filename != "" {
 			p.Attachments = append(p.Attachments, Attachment{
@@ -232,6 +244,10 @@ func walkParts(mr *multipart.Reader, p *Payload) error {
 
 func assignBody(p *Payload, mediaType string, body []byte) {
 	switch mediaType {
+	case "message/delivery-status", "message/global-delivery-status":
+		if p.DeliveryStatus == "" {
+			p.DeliveryStatus = string(body)
+		}
 	case "text/plain":
 		if p.TextBody == "" {
 			p.TextBody = string(body)

@@ -24,6 +24,11 @@ const inboundPayloadSchema = z.object({
       }),
     )
     .optional(),
+  /**
+   * The DSN's message/delivery-status part (RFC 3464), as text — sent by the
+   * engine's MX receiver since Z141; a provider adapter may send it too.
+   */
+  deliveryStatus: z.string().max(1_000_000).optional(),
 });
 
 /** Payload posted by the Go engine MX receiver — attachments are inline base64. */
