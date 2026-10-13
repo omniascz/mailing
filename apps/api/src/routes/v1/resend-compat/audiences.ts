@@ -279,8 +279,25 @@ const audiencesRoutes: FastifyPluginAsync = async (app) => {
       const patch: Parameters<typeof updateContact>[2] = {};
       if (body.first_name !== undefined) patch.firstName = body.first_name;
       if (body.last_name !== undefined) patch.lastName = body.last_name;
-      if (body.unsubscribed !== undefined) {
-        patch.status = body.unsubscribed ? 'unsubscribed' : 'active';
+      if (body.unsubscribed === true) patch.status = 'unsubscribed';
+      if (body.unsubscribed === false) {
+        // `unsubscribed: false` never restores consent. It used to write
+        // 'active' over unsubscribed, complained and bounced alike, and a
+        // contact created with `unsubscribed: true` (status only, no
+        // suppression row) was mailed by the next campaign (Z142, measured).
+        // On a contact this route already shows as subscribed it changes
+        // nothing; on any other it is refused before anything is written.
+        const current = await getContact(req.user!.orgId, id).catch(() => null);
+        if (!current) return reply.code(404).send(notFound(`Contact ${id} not found`));
+        if (contactShape(current).unsubscribed) {
+          return reply.code(422).send({
+            statusCode: 422,
+            name: 'validation_error',
+            message:
+              'unsubscribed: false cannot resubscribe a contact. Only the recipient opts back in, ' +
+              'through the preference centre or a double opt-in confirmation',
+          });
+        }
       }
       // 'api', same as the native route. `source` records whether the recipient
       // asked to leave or an operator marked them; which SDK the operator used

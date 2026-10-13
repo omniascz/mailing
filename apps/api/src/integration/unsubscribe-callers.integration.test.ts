@@ -215,7 +215,7 @@ describe('preference centre', () => {
     const c = await makeContact({ onLists: [listA, listB] });
     const token = await prefToken(c.id);
 
-    await updatePreferences(token, { globalUnsubscribe: true, reason: 'too many' });
+    await updatePreferences(token, { globalUnsubscribe: true, reason: 'too many' }, { via: 'api' });
 
     expect(await snapshot(c.id, c.email)).toMatchObject({
       status: 'unsubscribed',
@@ -231,7 +231,11 @@ describe('preference centre', () => {
     const c = await makeContact({ onLists: [listA, listB] });
     const token = await prefToken(c.id);
 
-    const result = await updatePreferences(token, { unsubscribeFromLists: [listA] });
+    const result = await updatePreferences(
+      token,
+      { unsubscribeFromLists: [listA] },
+      { via: 'api' },
+    );
     expect(result.listChanges).toContainEqual({ listId: listA, subscribed: false });
 
     expect(await snapshot(c.id, c.email)).toMatchObject({

@@ -302,7 +302,7 @@ describe('the preference-centre link opens a page (real DB + Redis + API)', () =
     expect(json.data.emailMasked).toBe(masked);
   });
 
-  it('"unsubscribe from all" unsubscribes, and the page offers no false way back', async () => {
+  it('"unsubscribe from all" unsubscribes, and the page offers the one real way back', async () => {
     const res = await postForm(prefPath, [['action', 'unsubscribe_all']]);
     expect(res.status).toBe(303);
 
@@ -315,9 +315,16 @@ describe('the preference-centre link opens a page (real DB + Redis + API)', () =
     `;
     expect(sup.length, 'no suppression row').toBe(1);
 
+    // This used to assert no checkbox at all: the page had no way back, because
+    // the resubscribe behind it lifted the row and left the status (d8d1010).
+    // Since #235 it lifts both, and Z142 put the button back — so the page
+    // offers coming back, with the lists unticked, and nothing else: no
+    // per-list save, which would act on lists the global unsubscribe closed.
     const after = await page(res.headers.get('location')!);
     expect(after.body).toContain('Jste odhlášeni ze všech zpráv');
-    expect(after.body, 'the page still offers list toggles').not.toContain('type="checkbox"');
+    expect(after.body).toContain('name="action" value="resubscribe"');
+    expect(after.body, 'a list is ticked for them').not.toContain(' checked');
+    expect(after.body, 'the per-list save is still offered').not.toContain('value="save"');
   });
 
   it('a tampered token gets a readable page and none of the data', async () => {

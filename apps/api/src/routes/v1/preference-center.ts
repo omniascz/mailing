@@ -17,12 +17,16 @@
  * Anything else still gets the JSON it always did.
  *
  * The page offers only what this route can actually do and what then holds at
- * send time: leave or rejoin a single list, or leave everything. It does not
- * offer to undo a global unsubscribe; the JSON `globalResubscribe` below does
- * (services/contacts/resubscribe.ts: the 'unsubscribe' suppression and the
- * status together), and the page has no button for it yet. The form posts back
- * here as application/x-www-form-urlencoded and is
- * answered with a redirect to the page, so a reload does not post twice.
+ * send time: leave or rejoin a single list, leave everything, or — for someone
+ * who left everything — come back. Coming back is the one way an unsubscribed
+ * recipient returns to marketing (services/contacts/resubscribe.ts: the
+ * 'unsubscribe' suppression and the status together, with a consent_events row
+ * as proof). It is offered only when their own unsubscribe is all that
+ * suppresses the address; a bounce or a complaint is not theirs to lift. The
+ * button was hidden in d8d1010 because the resubscribe then lifted the row and
+ * left the status; #235 fixed that, and Z142 put the button back. The form
+ * posts back here as application/x-www-form-urlencoded and is answered with a
+ * redirect to the page, so a reload does not post twice.
  *
  * Unsubscribe A/B testing (#leapfrog): when an active experiment exists, the
  * GET response carries the assigned "save the subscriber" variant (and records
@@ -39,6 +43,7 @@ import {
   getPreferences,
   updatePreferences,
   type PreferenceCenterView,
+  type RequestContext,
   type UpdateRequest,
 } from '../../services/preference-center/index.js';
 import { verifyTrackingToken } from '../../services/sending/tracking.js';
@@ -60,7 +65,7 @@ const updateBody = z.object({
 
 /** What the page's two forms post. `list` repeats once per ticked box. */
 const formBody = z.object({
-  action: z.enum(['save', 'unsubscribe_all']),
+  action: z.enum(['save', 'unsubscribe_all', 'resubscribe']),
   list: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
@@ -107,8 +112,8 @@ async function loadView(
 }
 
 /** Apply an update and record the A/B outcome — the one path both bodies take. */
-async function applyUpdate(token: string, body: UpdateRequest) {
-  const result = await updatePreferences(token, body);
+async function applyUpdate(token: string, body: UpdateRequest, ctx: RequestContext) {
+  const result = await updatePreferences(token, body, ctx);
 
   // Unsubscribe A/B: record the outcome. "Saved" = the recipient did NOT
   // globally unsubscribe (they kept at least their global subscription).
@@ -139,6 +144,22 @@ function renderPage(
 
   if (view.globallyUnsubscribed) {
     parts.push(`<p>${k('globally_unsubscribed_body')}</p>`);
+    if (view.canResubscribe) {
+      // The lists they were on, unticked: coming back reopens only the ones
+      // they tick, as the per-list form does.
+      const boxes = view.lists
+        .map(
+          (l) =>
+            `<label style="display:block;margin:8px 0;"><input type="checkbox" name="list" value="${esc(l.id)}"> ${esc(l.name)}</label>`,
+        )
+        .join('');
+      parts.push(
+        `<form method="post" action="${esc(action)}" style="margin-top:24px;">` +
+          `<p>${k('resubscribe_intro')}</p>${boxes}` +
+          `<input type="hidden" name="action" value="resubscribe">` +
+          `<button type="submit" class="btn" style="border:0;cursor:pointer;">${k('resubscribe_cta')}</button></form>`,
+      );
+    }
     return htmlPage(esc(t('preferences_page.title', locale)), parts.join(''), locale);
   }
 
@@ -238,28 +259,53 @@ export default async function preferenceCenterRoutes(app: FastifyInstance) {
         }
         if (!form.success) return reply.code(303).header('Location', `/p/center/${token}`).send();
 
+        const ctx: RequestContext = {
+          ip: req.ip,
+          userAgent: req.headers['user-agent'] ?? null,
+          via: 'page',
+        };
+        const ticked = new Set(
+          Array.isArray(form.data.list) ? form.data.list : form.data.list ? [form.data.list] : [],
+        );
         if (form.data.action === 'unsubscribe_all') {
-          await applyUpdate(token, { globalUnsubscribe: true });
+          await applyUpdate(token, { globalUnsubscribe: true }, ctx);
+        } else if (form.data.action === 'resubscribe') {
+          // Only from the page that offered it, and only the lists it showed.
+          if (view.canResubscribe) {
+            await applyUpdate(
+              token,
+              {
+                globalResubscribe: true,
+                resubscribeToLists: view.lists.filter((l) => ticked.has(l.id)).map((l) => l.id),
+              },
+              ctx,
+            );
+          }
         } else {
           // The ticked boxes, read against the lists the page showed: only
           // those, so a crafted form cannot name a list this contact is not on.
-          const ticked = new Set(
-            Array.isArray(form.data.list) ? form.data.list : form.data.list ? [form.data.list] : [],
+          await applyUpdate(
+            token,
+            {
+              unsubscribeFromLists: view.lists
+                .filter((l) => l.subscribed && !ticked.has(l.id))
+                .map((l) => l.id),
+              resubscribeToLists: view.lists
+                .filter((l) => !l.subscribed && ticked.has(l.id))
+                .map((l) => l.id),
+            },
+            ctx,
           );
-          await applyUpdate(token, {
-            unsubscribeFromLists: view.lists
-              .filter((l) => l.subscribed && !ticked.has(l.id))
-              .map((l) => l.id),
-            resubscribeToLists: view.lists
-              .filter((l) => !l.subscribed && ticked.has(l.id))
-              .map((l) => l.id),
-          });
         }
         return reply.code(303).header('Location', `/p/center/${token}?saved=1`).send();
       }
 
       const body = updateBody.parse(req.body ?? {});
-      const result = await applyUpdate(token, body);
+      const result = await applyUpdate(token, body, {
+        ip: req.ip,
+        userAgent: req.headers['user-agent'] ?? null,
+        via: 'api',
+      });
       return reply.send({ data: result });
     },
   );

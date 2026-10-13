@@ -30,6 +30,10 @@ export const contacts = pgTable(
 
     // Status
     status: contactStatusEnum('status').notNull().default('active'),
+    // The status an archive replaced, so unarchive puts back what was there —
+    // an unsubscribed contact comes back unsubscribed, not active. NULL on
+    // contacts that are not archived and on those archived before 0033.
+    archivedFrom: contactStatusEnum('archived_from'),
 
     // Manual VIP designation (Mailchimp-style) — segmentable, receiver-invisible.
     isVip: boolean('is_vip').notNull().default(false),

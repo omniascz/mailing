@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, desc, eq, or, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { suppressions } from '../../db/schema/index.js';
+import { auditLogs, suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 
 const REASON = [
@@ -13,6 +13,9 @@ const REASON = [
   'block',
   'invalid_email',
 ] as const;
+
+/** Reasons that record the recipient's own refusal — never deleted by an operator. */
+const RECIPIENT_REFUSALS: readonly string[] = ['unsubscribe', 'complaint'];
 
 const createSchema = z
   .object({
@@ -127,18 +130,61 @@ export default async function suppressionRoutes(app: FastifyInstance) {
 
   /**
    * DELETE /api/v1/suppressions/:id
-   * Remove a suppression (manual re-activation).
+   * Release a deliverability suppression (hard_bounce, invalid_email, block,
+   * manual). Admin or owner only, and every release is written to audit_logs
+   * with who and when.
+   *
+   * An 'unsubscribe' or 'complaint' row is the recipient's own refusal and is
+   * never deleted here: they come back only through the preference centre's
+   * resubscribe or a double opt-in confirmation, which record their consent
+   * (services/contacts/resubscribe.ts). This route used to delete any row for
+   * any role, viewer included, and the next edit to 'active' then mailed an
+   * unsubscribed or complaining address (Z142, measured).
    */
   app.delete(
     '/api/v1/suppressions/:id',
-    { schema: { tags: ['Suppressions'], summary: 'Remove suppression' } },
+    {
+      preHandler: [app.requireRole('admin', 'owner')],
+      schema: { tags: ['Suppressions'], summary: 'Release a deliverability suppression' },
+    },
     async (req, reply) => {
       const { id } = idParam.parse(req.params);
-      const [row] = await db
-        .delete(suppressions)
-        .where(and(eq(suppressions.id, id), eq(suppressions.orgId, req.user!.orgId)))
-        .returning();
-      if (!row) throw AppError.notFound('Suppression');
+      const orgId = req.user!.orgId;
+      await db.transaction(async (tx) => {
+        const [row] = await tx
+          .select()
+          .from(suppressions)
+          .where(and(eq(suppressions.id, id), eq(suppressions.orgId, orgId)))
+          .for('update')
+          .limit(1);
+        if (!row) throw AppError.notFound('Suppression');
+        if (RECIPIENT_REFUSALS.includes(row.reason)) {
+          throw new AppError({
+            code: 'CONSENT_REQUIRED',
+            statusCode: 409,
+            message:
+              `A '${row.reason}' suppression is the recipient's own refusal and cannot be removed. ` +
+              `Only the recipient lifts it — through the preference centre or a double opt-in confirmation`,
+          });
+        }
+        await tx.delete(suppressions).where(eq(suppressions.id, row.id));
+        await tx.insert(auditLogs).values({
+          orgId,
+          userId: req.user!.userId ?? null,
+          action: 'suppression.released',
+          resource: 'suppression',
+          resourceId: row.id,
+          changes: {
+            email: row.email,
+            phone: row.phone,
+            reason: row.reason,
+            suppressedAt: row.createdAt.toISOString(),
+          },
+          metadata: { role: req.user!.role },
+          ipAddress: req.ip ?? null,
+          userAgent: (req.headers['user-agent'] as string | undefined) ?? null,
+        });
+      });
       return reply.code(204).send();
     },
   );

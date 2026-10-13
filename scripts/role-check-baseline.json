@@ -6,7 +6,7 @@
     "Fixing a route means deleting its line in the same change. Intentional",
     "exceptions do not belong here: they are in role-check-exemptions.json."
   ],
-  "count": 511,
+  "count": 510,
   "files": 160,
   "routes": {
     "DELETE /api/v1/ads/accounts/:accountId": "apps/api/src/routes/v1/ads/accounts.ts",
@@ -92,7 +92,6 @@
     "DELETE /api/v1/social/accounts/:accountId": "apps/api/src/routes/v1/social/accounts.ts",
     "DELETE /api/v1/social/monitoring/keywords/:keywordId": "apps/api/src/routes/v1/social/mentions.ts",
     "DELETE /api/v1/social/posts/:postId": "apps/api/src/routes/v1/social/posts.ts",
-    "DELETE /api/v1/suppressions/:id": "apps/api/src/routes/v1/suppressions.ts",
     "DELETE /api/v1/tags/:id": "apps/api/src/routes/v1/tags.ts",
     "DELETE /api/v1/video/:id": "apps/api/src/routes/v1/video.ts",
     "DELETE /api/v1/webhooks/:id": "apps/api/src/routes/v1/webhooks.ts",

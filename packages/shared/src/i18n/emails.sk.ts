@@ -55,6 +55,9 @@ export const sk: EmailsBundle = {
     no_lists: 'Nie ste prihlásení do žiadneho zoznamu.',
     globally_unsubscribed_body:
       'Ste odhlásení zo všetkých správ a nič ďalšie od nás nedostanete. Ak to bol omyl, napíšte odosielateľovi.',
+    resubscribe_intro:
+      'Chcete od nás správy znova dostávať? Označte zoznamy, ku ktorým sa chcete vrátiť.',
+    resubscribe_cta: 'Znova sa prihlásiť',
     invalid_title: 'Neplatný odkaz',
     invalid_heading: 'Neplatný odkaz',
     invalid_body:

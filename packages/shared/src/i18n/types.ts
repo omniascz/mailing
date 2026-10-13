@@ -45,6 +45,8 @@ export interface EmailsBundle {
     for_email: string;
     no_lists: string;
     globally_unsubscribed_body: string;
+    resubscribe_intro: string;
+    resubscribe_cta: string;
     invalid_title: string;
     invalid_heading: string;
     invalid_body: string;

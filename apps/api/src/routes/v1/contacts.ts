@@ -6,6 +6,7 @@ import {
   createContact,
   createContactsBatch,
   updateContact,
+  unarchiveContact,
   deleteContact,
   type ListContactsOpts,
 } from '../../services/contacts/index.js';
@@ -19,7 +20,8 @@ import {
 import { anonymizeContact, exportContactData } from '../../services/contacts/gdpr.js';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { contacts as contactsTable, suppressions } from '../../db/schema/index.js';
+import { contacts as contactsTable } from '../../db/schema/index.js';
+import { heldStatus } from '../../services/contacts/consent-hold.js';
 import { AppError } from '../../lib/app-error.js';
 import { toCsv } from '../../lib/csv.js';
 
@@ -59,19 +61,22 @@ const contactWriteSchema = z.object({
  *
  *  - non_subscribed, pending — consent was never given. The recipient gives it
  *    through a signup form or the double opt-in confirmation, never here.
- *  - unsubscribed, complained — allowed only once the recipient has lifted
- *    their own suppression through the preference centre (#218's path, which
- *    deletes the row). While the row is there, flipping the status alone
- *    produced "active" in the UI and a send path that still refused them.
- *    The query is the one /internal/suppressions/check-batch runs, so this
- *    and the send path cannot disagree about what counts as suppressed.
- *  - archived and bounced are not consent states: archived has its own
- *    reversal (/unarchive) and stays reachable here; a bounce is a deliverability
- *    fact whose suppression mta-sender keeps.
+ *  - unsubscribed, complained — refused by updateContact for every edit, not
+ *    only this route (services/contacts/consent-hold.ts). This route used to
+ *    let them through once no suppression row was left, and DELETE
+ *    /suppressions or a contact created as unsubscribed left none (Z142).
+ *  - bounced is not a consent state; a bounce is a deliverability fact whose
+ *    suppression mta-sender keeps and only an admin releases.
+ *
+ * An archived contact is judged by the status the archive replaced.
  */
 async function assertActivationHasConsent(orgId: string, id: string): Promise<void> {
   const [current] = await db
-    .select({ status: contactsTable.status, email: contactsTable.email })
+    .select({
+      status: contactsTable.status,
+      archivedFrom: contactsTable.archivedFrom,
+      email: contactsTable.email,
+    })
     .from(contactsTable)
     .where(
       and(
@@ -83,25 +88,11 @@ async function assertActivationHasConsent(orgId: string, id: string): Promise<vo
     .limit(1);
   if (!current) return; // updateContact answers the 404
 
-  if (current.status === 'non_subscribed' || current.status === 'pending') {
+  const held = await heldStatus(orgId, current);
+  if (held === 'non_subscribed' || held === 'pending') {
     throw AppError.conflict(
-      `A ${current.status} contact becomes active only by subscribing themselves — a signup form or the double opt-in confirmation — not by an edit`,
+      `A ${held} contact becomes active only by subscribing themselves — a signup form or the double opt-in confirmation — not by an edit`,
     );
-  }
-
-  if ((current.status === 'unsubscribed' || current.status === 'complained') && current.email) {
-    const [suppressed] = await db
-      .select({ id: suppressions.id })
-      .from(suppressions)
-      .where(
-        and(eq(suppressions.orgId, orgId), eq(suppressions.email, current.email.toLowerCase())),
-      )
-      .limit(1);
-    if (suppressed) {
-      throw AppError.conflict(
-        `This contact is ${current.status} and still suppressed; they resubscribe through the preference centre, which lifts the suppression — an edit cannot`,
-      );
-    }
   }
 }
 
@@ -327,14 +318,15 @@ export default async function contactRoutes(app: FastifyInstance) {
 
   /**
    * POST /api/v1/contacts/:id/unarchive
-   * Restore an archived contact back to active.
+   * Restore an archived contact to the status the archive replaced — never
+   * 'active' for one that was unsubscribed. 409 when the contact is not archived.
    */
   app.post(
     '/api/v1/contacts/:id/unarchive',
     { schema: { tags: ['Contacts'], summary: 'Unarchive contact' } },
     async (req) => {
       const { id } = idParam.parse(req.params);
-      const contact = await updateContact(req.user!.orgId, id, { status: 'active' });
+      const contact = await unarchiveContact(req.user!.orgId, id);
       return { data: contact };
     },
   );
