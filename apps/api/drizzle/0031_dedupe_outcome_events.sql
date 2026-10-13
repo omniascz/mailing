@@ -9,9 +9,18 @@
 -- bounce type) twice — a stalled mta-sender job run again. A row with no
 -- contact (a transactional message with no matching contact) cannot be told
 -- from another recipient of the same message, so it is left as it is.
+--
+-- The types are compared as text, never as enum literals: 'failed' was added
+-- to the enum by 0010, and on a fresh database drizzle-kit runs every
+-- migration in one transaction, where Postgres refuses a value added in that
+-- same transaction ("unsafe use of new value" — CI on this PR). An index
+-- predicate must be IMMUTABLE and enum-to-text is only STABLE (a value can be
+-- renamed), so the test is a function declared IMMUTABLE: renaming 'deliver',
+-- 'failed' or 'complaint' would need this index rebuilt, and nothing renames
+-- event types.
 DELETE FROM "email_events" e
 USING "email_events" k
-WHERE e."event_type" IN ('deliver', 'failed', 'complaint', 'bounce')
+WHERE e."event_type"::text IN ('deliver', 'failed', 'complaint', 'bounce')
   AND k."event_type" = e."event_type"
   AND e."org_id" = k."org_id"
   AND e."message_id" = k."message_id"
@@ -19,5 +28,7 @@ WHERE e."event_type" IN ('deliver', 'failed', 'complaint', 'bounce')
   AND e."bounce_type" IS NOT DISTINCT FROM k."bounce_type"
   AND e."recipient" IS NULL AND k."recipient" IS NULL
   AND (k."created_at", k."id") < (e."created_at", e."id");--> statement-breakpoint
-CREATE UNIQUE INDEX "email_events_outcome_uq" ON "email_events" USING btree ("org_id","event_type","message_id","recipient") WHERE "email_events"."event_type" IN ('deliver', 'failed', 'complaint');--> statement-breakpoint
+CREATE OR REPLACE FUNCTION email_event_happens_once(t email_event_type) RETURNS boolean
+LANGUAGE sql IMMUTABLE AS $$ SELECT t::text IN ('deliver', 'failed', 'complaint') $$;--> statement-breakpoint
+CREATE UNIQUE INDEX "email_events_outcome_uq" ON "email_events" USING btree ("org_id","event_type","message_id","recipient") WHERE email_event_happens_once("email_events"."event_type");--> statement-breakpoint
 CREATE UNIQUE INDEX "email_events_bounce_uq" ON "email_events" USING btree ("org_id","message_id","recipient","bounce_type") WHERE "email_events"."event_type" = 'bounce';

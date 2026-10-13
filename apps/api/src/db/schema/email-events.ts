@@ -119,7 +119,9 @@ export const emailEvents = pgTable(
     // `unsubscribe` (a list, then everything, from the same email).
     uniqueIndex('email_events_outcome_uq')
       .on(t.orgId, t.eventType, t.messageId, t.recipient)
-      .where(sql`${t.eventType} IN ('deliver', 'failed', 'complaint')`),
+      // deliver, failed, complaint — through a function, not an enum literal:
+      // see migration 0031 ("unsafe use of new value" on a fresh database).
+      .where(sql`email_event_happens_once(${t.eventType})`),
     // A bounce once per type: a delay notice (soft) and then the final failure
     // (hard) about one delivery are two things the receiving side said, and
     // both are kept; the same one said twice is not.

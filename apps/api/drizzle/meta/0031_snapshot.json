@@ -3425,7 +3425,7 @@
             }
           ],
           "isUnique": true,
-          "where": "\"email_events\".\"event_type\" IN ('deliver', 'failed', 'complaint')",
+          "where": "email_event_happens_once(\"email_events\".\"event_type\")",
           "concurrently": false,
           "method": "btree",
           "with": {}
