@@ -5,7 +5,8 @@ import {
   extractSmtpCode,
   isBounceMessage,
   extractFailedRecipient,
-  shouldSuppressAfterSoftBounces,
+  dsnStatusClass,
+  dsnIsTransient,
 } from './bounce-processor.js';
 
 describe('extractSmtpCode', () => {
@@ -187,20 +188,45 @@ describe('classifyBounce — unknown', () => {
   });
 });
 
-describe('shouldSuppressAfterSoftBounces', () => {
-  it('returns true at the default threshold of 3', () => {
-    expect(shouldSuppressAfterSoftBounces(3)).toBe(true);
-    expect(shouldSuppressAfterSoftBounces(4)).toBe(true);
+// shouldSuppressAfterSoftBounces (suppress after n soft bounces) was deleted in
+// Z139: nothing called it, and the address is now suppressed when a message
+// definitively fails on soft bounces (mta-sender, last attempt), not after a
+// count of them.
+
+describe('dsnStatusClass', () => {
+  it('reads the RFC 3464 Status field', () => {
+    expect(dsnStatusClass('Action: delayed\nStatus: 4.4.7\n')).toBe(4);
+    expect(dsnStatusClass('Action: failed\nStatus: 5.1.1\n')).toBe(5);
+    expect(dsnStatusClass('  status: 2.0.0')).toBe(2);
   });
 
-  it('returns false below threshold', () => {
-    expect(shouldSuppressAfterSoftBounces(2)).toBe(false);
-    expect(shouldSuppressAfterSoftBounces(0)).toBe(false);
+  it('is null without one, and does not read a status out of prose', () => {
+    expect(dsnStatusClass('Diagnostic-Code: smtp; 550 5.1.1 user unknown')).toBeNull();
+  });
+});
+
+describe('dsnIsTransient', () => {
+  const body = (status: string, diag: string) =>
+    `Final-Recipient: rfc822; a@b.test\nStatus: ${status}\nDiagnostic-Code: smtp; ${diag}`;
+
+  it('a 4.x.x status is a deferral whatever the words say', () => {
+    const b = body('4.4.7', '451 4.4.7 delivery delayed — user unknown');
+    expect(dsnIsTransient(b, classifyBounce(b, b))).toBe(true);
   });
 
-  it('respects custom threshold', () => {
-    expect(shouldSuppressAfterSoftBounces(5, 5)).toBe(true);
-    expect(shouldSuppressAfterSoftBounces(4, 5)).toBe(false);
+  it('a 5.x.x status is not, and policy stays block', () => {
+    const hard = body('5.1.1', '550 5.1.1 user unknown');
+    expect(dsnIsTransient(hard, classifyBounce(hard, hard))).toBe(false);
+    const policy = body('5.7.1', '550 5.7.1 rejected by policy');
+    expect(classifyBounce(policy, policy).type).toBe('block');
+    expect(dsnIsTransient(policy, classifyBounce(policy, policy))).toBe(false);
+  });
+
+  it('without a Status field, the classification decides', () => {
+    const soft = 'Diagnostic-Code: smtp; 452 mailbox full, try again later';
+    expect(dsnIsTransient(soft, classifyBounce(soft, soft))).toBe(true);
+    const hard = 'Diagnostic-Code: smtp; 550 5.1.1 user unknown';
+    expect(dsnIsTransient(hard, classifyBounce(hard, hard))).toBe(false);
   });
 });
 

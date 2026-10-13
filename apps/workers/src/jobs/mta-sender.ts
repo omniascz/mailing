@@ -754,7 +754,21 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
     // soft bounce; the ones before it are `deferred`, so a greylisted message
     // that gets through on attempt four leaves three deferrals and a delivery
     // instead of three bounces and a delivery.
+    //
+    // The last one is also where the address is suppressed (Z139): the
+    // receiving server refused this message on every attempt, so it has
+    // definitively failed — the moment a hard bounce suppresses, on the same
+    // list ('hard_bounce', SendGrid's "bounces", where a soft bounce that ran
+    // out of retries ends up too). Not on any deferral before it: a deferral
+    // never suppresses. This replaces shouldSuppressAfterSoftBounces ("suppress
+    // after 3 soft bounces"), which nothing ever called.
     const final = isFinalAttempt(job);
+    const [suppression, contactStatus] = final
+      ? await Promise.all([
+          addToSuppressionList(data.orgId, data.toEmail, 'hard_bounce', data.messageId),
+          updateContactStatus(data.orgId, data.contactId, data.toEmail, 'bounced', data.messageId),
+        ])
+      : [undefined, undefined];
     await recordEvent(events, {
       type: final ? 'bounce' : 'deferred',
       orgId: data.orgId,
@@ -762,7 +776,7 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
       contactId: data.contactId,
       messageId: data.messageId,
       metadata: {
-        ...(final ? { bounceType: 'soft' } : { reason: 'soft_bounce' }),
+        ...(final ? { bounceType: 'soft', suppression, contactStatus } : { reason: 'soft_bounce' }),
         smtpCode,
         smtpMessage: result.smtpMessage,
         attempt: job.attemptsMade,
