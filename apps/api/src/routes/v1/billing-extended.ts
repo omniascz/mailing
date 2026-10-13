@@ -18,11 +18,27 @@ import {
   getProductUsage,
   getOrgUsageSummary,
   computePeriodCost,
-  currentPeriod,
+  currentBillingPeriod,
 } from '../../services/billing/meters.js';
 import type { MeterProduct } from '../../db/schema/product-meters.js';
 import { getConsolidatedReport } from '../../services/billing/subaccounts.js';
 import { METER_PRODUCTS } from '../../db/schema/product-meters.js';
+
+/**
+ * The period an answer is for. Asked for a month: that month (the meters' month,
+ * and for email the billing periods that start in it). Not asked: the current
+ * billing period — `periodStart` its start, `period` the UTC month it starts
+ * in, which is what every product in the answer was read for. It used to say
+ * the server's local month while email was read for the Stripe period (Z138).
+ */
+async function answeredPeriod(
+  orgId: string,
+  period: string | undefined,
+): Promise<{ period: string; periodStart?: string }> {
+  if (period) return { period };
+  const current = await currentBillingPeriod(orgId);
+  return { period: current.month, periodStart: current.start.toISOString() };
+}
 
 const billingExtendedRoutes: FastifyPluginAsync = async (app) => {
   // ── All plans ───────────────────────────────────────────────────────────────
@@ -120,7 +136,11 @@ const billingExtendedRoutes: FastifyPluginAsync = async (app) => {
       const summary = await getOrgUsageSummary(req.user!.orgId, period);
       const totalCost = await computePeriodCost(req.user!.orgId, period);
       return reply.send({
-        data: { period: period ?? currentPeriod(), products: summary, totalCostUsd: totalCost },
+        data: {
+          ...(await answeredPeriod(req.user!.orgId, period)),
+          products: summary,
+          totalCostUsd: totalCost,
+        },
       });
     },
   );
@@ -146,7 +166,9 @@ const billingExtendedRoutes: FastifyPluginAsync = async (app) => {
         .parse(req.query);
 
       const usage = await getProductUsage(req.user!.orgId, product as MeterProduct, period);
-      return reply.send({ data: { product, period: period ?? currentPeriod(), ...usage } });
+      return reply.send({
+        data: { product, ...(await answeredPeriod(req.user!.orgId, period)), ...usage },
+      });
     },
   );
 

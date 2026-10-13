@@ -110,6 +110,22 @@ export const emailEvents = pgTable(
     uniqueIndex('email_events_send_recipient_uq')
       .on(t.orgId, t.messageId, t.recipient)
       .where(sql`${t.eventType} = 'send'`),
+    // The other events that happen once to one delivery (Z138), measured:
+    // `deliver` and `failed` once per attempt that ended, `complaint` once per
+    // message complained about. A job processed again, or an ISP repeating a
+    // feedback report, used to store a second row — and `deliver` is the
+    // denominator of every bounce and delivery rate. Not here, because they
+    // repeat legitimately: `deferred` (once per attempt), `open`, `click`, and
+    // `unsubscribe` (a list, then everything, from the same email).
+    uniqueIndex('email_events_outcome_uq')
+      .on(t.orgId, t.eventType, t.messageId, t.recipient)
+      .where(sql`${t.eventType} IN ('deliver', 'failed', 'complaint')`),
+    // A bounce once per type: a delay notice (soft) and then the final failure
+    // (hard) about one delivery are two things the receiving side said, and
+    // both are kept; the same one said twice is not.
+    uniqueIndex('email_events_bounce_uq')
+      .on(t.orgId, t.messageId, t.recipient, t.bounceType)
+      .where(sql`${t.eventType} = 'bounce'`),
   ],
 );
 

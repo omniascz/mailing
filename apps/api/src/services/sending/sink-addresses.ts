@@ -72,16 +72,22 @@ export async function simulateSink(
     complained: 'complaint',
   } as const;
   for (const kind of sinkEventChain(outcome)) {
-    await db
+    // Keyed like a real delivery's events (Z138): a simulated outcome that is
+    // already recorded for this message is neither stored nor announced again.
+    const stored = await db
       .insert(emailEvents)
       .values({
         orgId,
         messageId,
+        recipient: email.trim().toLowerCase(),
         eventType: EVENT_TYPE[kind],
         ...(kind === 'bounced' ? { bounceType: 'hard' as const } : {}),
         metadata: { simulated: true, sink: email },
       })
-      .catch(() => {});
+      .onConflictDoNothing()
+      .returning({ id: emailEvents.id })
+      .catch(() => [{ id: '' }]);
+    if (stored.length === 0) continue;
     emitEmailEvent(orgId, kind, { messageId, email, simulated: true });
   }
 }

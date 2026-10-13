@@ -42,10 +42,24 @@ const DEFAULT_OVERAGE_RATES: Record<string, number> = {
 
 // ─── Current billing period ───────────────────────────────────────────────────
 
+/** The calendar month of `date` in UTC, 'YYYY-MM' (it used to be server-local). */
 export function currentPeriod(date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  return `${y}-${m}`;
+  return date.toISOString().slice(0, 7);
+}
+
+/**
+ * The organisation's current billing period: its start (plan_period_start —
+ * the Stripe period, else the calendar month in UTC; the period email usage is
+ * read for) and the UTC calendar month it starts in, which is the month the
+ * other products' meters are read for when no period is asked for. One period
+ * per answer, and the answer says which (Z138).
+ */
+export async function currentBillingPeriod(orgId: string): Promise<{ start: Date; month: string }> {
+  const rows = (await db.execute(
+    sql`SELECT plan_period_start(${orgId}::uuid) AS start`,
+  )) as unknown as Array<{ start: Date | string }>;
+  const start = new Date(rows[0]!.start);
+  return { start, month: currentPeriod(start) };
 }
 
 // ─── Email: the plan send counter ─────────────────────────────────────────────
@@ -145,7 +159,7 @@ export async function getProductUsage(
   estimatedCostUsd: number;
 }> {
   if (product === 'email') return emailUsage(await emailUnits(orgId, periodArg));
-  const period = periodArg ?? currentPeriod();
+  const period = periodArg ?? (await currentBillingPeriod(orgId)).month;
   const [row] = await db
     .select()
     .from(productUsageMeters)
@@ -174,7 +188,7 @@ export async function getProductUsage(
 // ─── Full org summary ─────────────────────────────────────────────────────────
 
 export async function getOrgUsageSummary(orgId: string, periodArg?: string) {
-  const period = periodArg ?? currentPeriod();
+  const period = periodArg ?? (await currentBillingPeriod(orgId)).month;
   const rows = await db
     .select()
     .from(productUsageMeters)

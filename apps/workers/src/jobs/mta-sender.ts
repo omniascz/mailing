@@ -184,6 +184,13 @@ function isFinalAttempt(job: { attemptsMade: number; opts: { attempts?: number }
 interface EventTrack {
   placeholder: boolean;
   synthetic: boolean;
+  /**
+   * The address this job delivers to, sent with every event it writes. The
+   * API keeps one row per message and recipient for `send`, `deliver`,
+   * `failed` and (per bounce type) `bounce` (Z137, Z138), so a job processed
+   * again writes nothing twice.
+   */
+  recipient: string;
   written: number;
   notStored: number;
   failed: number;
@@ -194,6 +201,7 @@ function eventTrack(data: MtaSendJobData): EventTrack {
   return {
     placeholder: data.stream === 'transactional' && (data.campaignIsPlaceholder ?? synthetic),
     synthetic,
+    recipient: data.toEmail,
     written: 0,
     notStored: 0,
     failed: 0,
@@ -228,19 +236,18 @@ async function recordEvent(
     campaignId: string;
     contactId: string;
     messageId: string;
-    /** The address delivered to; on a `send`, part of its unique key (Z137). */
-    recipient?: string;
     metadata?: Record<string, unknown>;
   },
 ): Promise<void> {
   if (track.placeholder && event.type === 'send') return;
+  const withRecipient = { ...event, recipient: track.recipient };
   const body = track.placeholder
     ? {
-        ...event,
+        ...withRecipient,
         campaignIsPlaceholder: true,
         metadata: { ...event.metadata, stream: 'transactional' },
       }
-    : event;
+    : withRecipient;
   let failure: string;
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/events`, {
@@ -474,6 +481,7 @@ async function recordSuppressed(data: MtaSendJobData, isp: string): Promise<void
         campaignId: data.campaignId,
         contactId: data.contactId,
         messageId: data.messageId,
+        recipient: data.toEmail,
         metadata: { reason: 'suppressed', stream: data.stream, isp, to: data.toEmail },
         // A transactional job carries stand-ins for the campaign and contact
         // (lib/queues.ts). Said so, the API stores the event without them, as
@@ -663,15 +671,12 @@ export async function processMtaSend(job: Job<MtaSendJobData>, token?: string) {
     // 'send' = handed off to MX; 'deliver' = MX returned SMTP 250 (this engine
     // does direct-to-MX, so the 250 IS delivery confirmation). Both are recorded
     // so deliverability/fatigue/attribution analytics that count 'deliver' work.
-    // The recipient makes a second run of this job on a delivered message a
-    // no-op: the API keeps one `send` row per message and recipient (Z137).
     await recordEvent(events, {
       type: 'send',
       orgId: data.orgId,
       campaignId: data.campaignId,
       contactId: data.contactId,
       messageId: data.messageId,
-      recipient: data.toEmail,
       metadata: successMeta,
     });
     await recordEvent(events, {
