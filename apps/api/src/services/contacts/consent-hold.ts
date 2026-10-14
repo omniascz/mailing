@@ -14,12 +14,12 @@
  * Contacts archived before that column existed have no record; their
  * suppression rows are what is left of the fact.
  */
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { suppressions } from '../../db/schema/index.js';
 import type { contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
-import { suppressionEmailIs } from '../suppressions/email.js';
+import { suppressionBlocks, suppressionEmailIs } from '../suppressions/email.js';
 
 export type ContactStatus = (typeof contacts.$inferSelect)['status'];
 
@@ -82,12 +82,8 @@ export async function heldStatus(
 
 /**
  * Throws when `next` would take a withheld contact out of its refusal, or make
- * a contact who never said yes 'active'.
- *
- * 'bounced' → 'active' is not checked here. Releasing a hard_bounce row
- * (DELETE /suppressions) leaves the contact bounced, and this edit is the only
- * way back for an address whose mailbox works again; whether it should wait
- * for the row to go is the owner's decision (Z147).
+ * a contact who never said yes 'active'. 'bounced' → 'active' has its own
+ * rule, assertBounceReleased below.
  */
 export function assertNotLiftingRefusal(held: ContactStatus, next: ContactStatus): void {
   if (next === 'active' && CONSENT_NOT_GIVEN.includes(held)) {
@@ -108,4 +104,60 @@ export function assertNotLiftingRefusal(held: ContactStatus, next: ContactStatus
       `This contact is ${held}. Only the recipient can opt back in — through the preference ` +
       `centre or a double opt-in confirmation, which record their consent — not an edit`,
   });
+}
+
+/**
+ * Suppression reasons that say the mailbox itself does not take mail. Not
+ * 'block' (the receiving side refusing us, never a fact about the address —
+ * Z140), not complaint/unsubscribe (their own contact status, held above),
+ * not 'manual'.
+ */
+export const BOUNCE_REASONS = ['hard_bounce', 'invalid_email'] as const;
+
+/**
+ * 'bounced' → 'active' waits for the bounce to be released (owner's decision,
+ * 14 Oct 2026). While the address has a hard_bounce or invalid_email row, an
+ * edit is refused; an owner or admin first deletes the row (DELETE
+ * /suppressions/:id, audited), which leaves the contact bounced, and only then
+ * does the edit go through. Before Z149 the edit went through over the row
+ * (measured: 200 for a bounced and an archived-bounced contact alike). A
+ * bounced contact with no such row may still be set active.
+ *
+ * `rows` are the suppression rows of the address the contact will have after
+ * the edit — the one mail would go to.
+ */
+export function assertBounceReleased(
+  held: ContactStatus,
+  next: ContactStatus,
+  rows: readonly { id: string; reason: string }[],
+): void {
+  if (held !== 'bounced' || next !== 'active') return;
+  const row = rows.find((r) => (BOUNCE_REASONS as readonly string[]).includes(r.reason));
+  if (!row) return;
+  throw new AppError({
+    code: 'BOUNCE_ACTIVE',
+    statusCode: 409,
+    message:
+      `This contact's address is suppressed as ${row.reason}. An owner or admin must first ` +
+      `release that suppression (DELETE /api/v1/suppressions/${row.id}); then the contact can be set active`,
+    details: { reason: row.reason, suppressionId: row.id },
+  });
+}
+
+/** The hard_bounce / invalid_email rows of `email` in this org, by address or erasure hash. */
+export async function bounceRows(
+  orgId: string,
+  email: string | null,
+): Promise<{ id: string; reason: string }[]> {
+  if (!email) return [];
+  return db
+    .select({ id: suppressions.id, reason: suppressions.reason })
+    .from(suppressions)
+    .where(
+      and(
+        eq(suppressions.orgId, orgId),
+        suppressionBlocks(email),
+        inArray(suppressions.reason, [...BOUNCE_REASONS]),
+      ),
+    );
 }
