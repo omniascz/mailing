@@ -37,6 +37,13 @@ const isProduction = process.env.NODE_ENV === 'production';
 export const DEV_DKIM_MASTER_KEY =
   '00000000000000000000000000000000000000000000000000000000deadbeef';
 
+/**
+ * The development key for the erasure fingerprint (SUPPRESSION_HASH_KEY).
+ * Exported for the same reason as DEV_DKIM_MASTER_KEY: productionIssues()
+ * compares against this constant, not a copy of it.
+ */
+export const DEV_SUPPRESSION_HASH_KEY = 'dev-only-suppression-hash-key-not-for-production';
+
 /** Domain half of an address, lowercased. Only ever called on `.email()`-validated input. */
 const domainOf = (address: string): string =>
   address.slice(address.lastIndexOf('@') + 1).toLowerCase();
@@ -262,6 +269,25 @@ const Env = z
     DKIM_MASTER_KEY: prodRequired(
       z.string().regex(/^[0-9a-fA-F]{64}$/, 'DKIM_MASTER_KEY must be 64 hex chars (32 bytes)'),
       DEV_DKIM_MASTER_KEY,
+    ),
+    // Key of the fingerprint an erasure keeps in place of the address
+    // (services/suppressions/email.ts, suppressionEmailHash): HMAC-SHA256 of
+    // the address under this key. A plain SHA-256 could be reversed by anyone
+    // holding the database — hash a list of addresses, look for a match. With
+    // the key outside the database, the database alone does not give the
+    // address back (Z150, Michal's decision of 14 October 2026).
+    //
+    // Never change it on a deployment that has erasures. Every fingerprint is
+    // computed with it, so a new key makes every existing erasure row stop
+    // matching — the erased people get mail again — and the addresses needed
+    // to recompute the rows are exactly what the erasure removed. There is no
+    // rotation, by design: losing or replacing the key is losing the erasures.
+    //
+    // prodRequired: production does not start without it, and
+    // productionIssues() refuses the dev default.
+    SUPPRESSION_HASH_KEY: prodRequired(
+      z.string().min(32, 'SUPPRESSION_HASH_KEY must be at least 32 characters'),
+      DEV_SUPPRESSION_HASH_KEY,
     ),
     // Deliberately optional: absent means the partner provisioning endpoint is
     // closed, which is already the correct default. checkPartnerSecret returns
@@ -568,6 +594,17 @@ export function productionIssues(env: Env): string[] {
       'DKIM_MASTER_KEY is still the development default committed to this repository. ' +
         'Every DKIM private key encrypted with it is readable by anyone with a checkout. ' +
         'Generate one with `openssl rand -hex 32`.',
+    );
+  }
+
+  // Same shape as the DKIM key: present, well-formed, and committed here.
+  // Every erasure fingerprint keyed with it is reversible by hashing a list of
+  // addresses with the key from a checkout.
+  if (env.SUPPRESSION_HASH_KEY === DEV_SUPPRESSION_HASH_KEY) {
+    issues.push(
+      'SUPPRESSION_HASH_KEY is still the development default committed to this repository. ' +
+        'An erased address can be found from its fingerprint by anyone with a checkout. ' +
+        'Generate one with `openssl rand -hex 32` before the first erasure; it can never be changed afterwards.',
     );
   }
 

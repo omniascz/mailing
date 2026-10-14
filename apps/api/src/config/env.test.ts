@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { productionIssues, DEV_DKIM_MASTER_KEY } from './env.js';
+import { productionIssues, DEV_DKIM_MASTER_KEY, DEV_SUPPRESSION_HASH_KEY } from './env.js';
 import { DEV_TRACKING_SECRET } from '@forgemsg/shared';
 
 const ORIGINAL_ENV = { ...process.env };
@@ -117,10 +117,31 @@ describe('prodRequired — production must not fall back to a committed default'
     // that sends mail signs it, so a production API without this key can
     // neither store a new DKIM key nor read an existing one.
     DKIM_MASTER_KEY: 'f'.repeat(64),
+    SUPPRESSION_HASH_KEY: 'a-real-suppression-hash-key-at-least-32-chars',
     // prodRequired: the SPF include, Return-Path target and bounce MX printed
     // in a customer's DNS instructions all derive from it.
     PLATFORM_DOMAIN: 'ops.example.com',
   };
+
+  it('a SUPPRESSION_HASH_KEY shorter than 32 characters is refused, in production and in development', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const exit = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((() => undefined) as unknown as typeof process.exit);
+    for (const base of [PROD_BASE, { NODE_ENV: 'development', ...REQUIRED }]) {
+      process.env = { ...base, SUPPRESSION_HASH_KEY: 'k'.repeat(31) };
+      vi.resetModules();
+      await expect(import('./env.js')).rejects.toThrow(/Invalid environment/);
+    }
+    expect(spy.mock.calls.flat().join(' ')).toMatch(
+      /SUPPRESSION_HASH_KEY must be at least 32 characters/,
+    );
+    process.env = { ...PROD_BASE, SUPPRESSION_HASH_KEY: 'k'.repeat(32) };
+    vi.resetModules();
+    expect((await import('./env.js')).env.SUPPRESSION_HASH_KEY).toBe('k'.repeat(32));
+    exit.mockRestore();
+    spy.mockRestore();
+  });
 
   it('production without MINIO_BUCKET is refused, and the message names it', async () => {
     // The dev default is `forgemsg`. A production deployment that never set the
@@ -331,6 +352,14 @@ describe('prodRequired — production must not fall back to a committed default'
       devDefault: DEV_DKIM_MASTER_KEY,
       realValue: 'f'.repeat(64),
     },
+    // The key of the erasure fingerprint (Z150). Without it in production the
+    // API would have nothing to key an erasure with; the dev default would
+    // make every fingerprint reversible from a checkout.
+    {
+      name: 'SUPPRESSION_HASH_KEY',
+      devDefault: DEV_SUPPRESSION_HASH_KEY,
+      realValue: 'a-real-suppression-hash-key-at-least-32-chars',
+    },
   ];
 
   for (const field of CRITICAL) {
@@ -390,6 +419,7 @@ describe('prodRequired — production must not fall back to a committed default'
       'dev-facebook-verify-token-change',
       DEV_TRACKING_SECRET,
       DEV_DKIM_MASTER_KEY,
+      DEV_SUPPRESSION_HASH_KEY,
       // the value it carried before it was brought under prodRequired
       'dev-tracking-secret-changeme',
       // the four system-sender fallbacks, on four domains, two of them ours
@@ -445,12 +475,33 @@ describe('productionIssues — checks carried over from the old lib/env.ts', () 
     expect(productionIssues({ ...VALID, DKIM_MASTER_KEY: 'a1'.repeat(32) })).toEqual([]);
   });
 
+  /**
+   * Same gap as the DKIM key, for the erasure fingerprint (Z150): a present,
+   * well-formed key that is the one committed here keys every erasure with a
+   * value anyone with a checkout can recompute from a list of addresses.
+   */
+  it('refuses to boot production on the committed dev SUPPRESSION_HASH_KEY', () => {
+    expect(productionIssues({ ...VALID, SUPPRESSION_HASH_KEY: DEV_SUPPRESSION_HASH_KEY })).toEqual([
+      expect.stringContaining('SUPPRESSION_HASH_KEY is still the development default'),
+    ]);
+  });
+
+  it('accepts a real SUPPRESSION_HASH_KEY', () => {
+    expect(
+      productionIssues({
+        ...VALID,
+        SUPPRESSION_HASH_KEY: 'a-real-suppression-hash-key-at-least-32-chars',
+      }),
+    ).toEqual([]);
+  });
+
   it('does not fire outside production — dev runs on the default by design', () => {
     expect(
       productionIssues({
         ...VALID,
         NODE_ENV: 'development',
         DKIM_MASTER_KEY: DEV_DKIM_MASTER_KEY,
+        SUPPRESSION_HASH_KEY: DEV_SUPPRESSION_HASH_KEY,
       }),
     ).toEqual([]);
   });
@@ -569,6 +620,7 @@ describe('optional-by-design secrets', () => {
       // here so this case still exercises what it is about — HIPAA_FIELD_KEY
       // being optional — rather than failing on an unrelated missing variable.
       DKIM_MASTER_KEY: 'f'.repeat(64),
+      SUPPRESSION_HASH_KEY: 'a-real-suppression-hash-key-at-least-32-chars',
       API_PUBLIC_URL: 'https://api.example.com',
       APP_URL: 'https://app.example.com',
     };
@@ -621,6 +673,7 @@ describe('optional-by-design secrets', () => {
       FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
       TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
       DKIM_MASTER_KEY: 'f'.repeat(64),
+      SUPPRESSION_HASH_KEY: 'a-real-suppression-hash-key-at-least-32-chars',
       API_PUBLIC_URL: 'https://api.example.com',
       APP_URL: 'https://app.example.com',
     };
@@ -706,6 +759,7 @@ describe('PLATFORM_DOMAIN — required in production, obviously invalid elsewher
       FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'a-real-facebook-verify-tok',
       TRACKING_SECRET: 'a-real-tracking-secret-32-chars-min',
       DKIM_MASTER_KEY: 'f'.repeat(64),
+      SUPPRESSION_HASH_KEY: 'a-real-suppression-hash-key-at-least-32-chars',
       PLATFORM_DOMAIN: 'ops.example.com',
     }) as NodeJS.ProcessEnv;
 

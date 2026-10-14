@@ -15,20 +15,28 @@
  * so a row written before migration 0034 lower-cased the table still matches.
  * The (org_id, lower(email)) index serves these lookups.
  *
- * ─── An erased address (Z145) ───────────────────────────────────────────────
+ * ─── An erased address (Z145, keyed since Z150) ─────────────────────────────
  *
  * Anonymisation (services/contacts/gdpr.ts) cannot keep the address, so its
  * suppression has email NULL and email_hash = suppressionEmailHash(address).
- * That hash used to sit in `notes`, read by nothing that decides a send: the
- * same address created again — POST /contacts, an import, a form — got
- * campaigns, flows and receipts (measured on master by sending). Every send
- * decision now asks suppressionBlocks / suppressionBlocksAny /
- * addressUnsuppressed, which match the address OR its hash. The other readers
- * (consent-hold, unsubscribe, preference centre, …) keep suppressionEmailIs:
- * they look for a row of a given reason, not for whether mail may go.
+ * That fingerprint used to sit in `notes`, read by nothing that decides a
+ * send: the same address created again — POST /contacts, an import, a form —
+ * got campaigns, flows and receipts (measured on master by sending). Every
+ * send decision now asks suppressionBlocks / suppressionBlocksAny /
+ * addressUnsuppressed, which match the address OR its fingerprint. The other
+ * readers (consent-hold, unsubscribe, preference centre, …) keep
+ * suppressionEmailIs: they look for a row of a given reason, not for whether
+ * mail may go.
+ *
+ * The fingerprint is an HMAC under SUPPRESSION_HASH_KEY, a key held in the
+ * environment and never in the database. It was a plain SHA-256 until Z150,
+ * and the SHA-256 of an address can be found by anyone holding the database:
+ * hash a list of addresses and look for a match (measured: sha256sum of the
+ * address equalled email_hash).
  */
-import { createHash } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 import { inArray, or, sql, type SQL } from 'drizzle-orm';
+import { env } from '../../config/env.js';
 import { suppressions } from '../../db/schema/index.js';
 import { normalizeEmail } from '../../lib/email-address.js';
 
@@ -38,17 +46,40 @@ export function suppressionEmail(email: string): string {
 }
 
 /**
- * What an erasure keeps of an address: SHA-256, hex, of suppressionEmail().
- * The same hash anonymizeContact wrote into notes before migration 0035 copied
- * it into email_hash, so rows from before and after match alike.
+ * What an erasure keeps of an address: HMAC-SHA256 of suppressionEmail()
+ * under `key`, hex — 64 characters, the width email_hash always had.
+ * suppressionEmailHash() is this under SUPPRESSION_HASH_KEY; the key is a
+ * parameter only so a test can show that another key gives another
+ * fingerprint.
  */
-export function suppressionEmailHash(email: string): string {
-  return createHash('sha256').update(suppressionEmail(email)).digest('hex');
+export function suppressionEmailHashWith(key: string, email: string): string {
+  return createHmac('sha256', key).update(suppressionEmail(email)).digest('hex');
 }
 
-/** suppressionEmailHash() computed by Postgres, for a query over an address column. */
-function emailHashSql(email: SQL): SQL {
-  return sql`encode(sha256(convert_to(lower(btrim(${email})), 'UTF8')), 'hex')`;
+/**
+ * The fingerprint an erasure writes and every send decision matches:
+ * suppressionEmailHashWith(SUPPRESSION_HASH_KEY, email).
+ *
+ * Rows written before Z150 hold a plain SHA-256 of the address (in email_hash,
+ * and in notes as `gdpr_anonymized:<hex>`). They no longer match anything, so
+ * they no longer block, and nothing looks them up a second way: there were 0
+ * such rows — in the development database, and after every migration on a
+ * clean database plus the seed (Z150, measured) — and there is no production
+ * deployment that could hold one. Turning them into HMACs would need the
+ * addresses the erasure removed.
+ */
+export function suppressionEmailHash(email: string): string {
+  return suppressionEmailHashWith(env.SUPPRESSION_HASH_KEY, email);
+}
+
+/**
+ * suppressionEmailHash() computed by Postgres (pgcrypto's hmac, migration
+ * 0037), for a query over an address column. The key travels as a bind
+ * parameter of the query and nothing else: it is not stored in a table, a
+ * setting or a function body.
+ */
+export function emailHashSql(email: SQL): SQL {
+  return sql`encode(hmac(convert_to(lower(btrim(${email})), 'UTF8'), convert_to(${env.SUPPRESSION_HASH_KEY}, 'UTF8'), 'sha256'), 'hex')`;
 }
 
 /** A row that stops mail to this address: written for it, or left by its erasure. */

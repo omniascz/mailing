@@ -1,0 +1,17 @@
+-- Z150. The erasure fingerprint is an HMAC under a key from the environment,
+-- not a plain SHA-256 of the address (services/suppressions/email.ts). The
+-- audience, go-no-go and daily-trigger queries compute it over contacts.email
+-- in Postgres, which has sha256() but no HMAC without pgcrypto. The key is a
+-- bind parameter of those queries; nothing here, or anywhere in the database,
+-- holds it.
+--
+-- No schema object of the application changes, so drizzle's snapshot does not.
+--
+-- Locks: CREATE EXTENSION only adds catalogue rows (functions, a comment); it
+-- takes no lock on any application table. Measured inside a transaction:
+-- 9.2 ms on a database with 100 000 contacts and 50 000 erasure rows, 3.9 ms
+-- on a seeded one; the only relation locks held were AccessShareLock on
+-- pg_class and RowExclusiveLock on pg_description. pgcrypto is a trusted
+-- extension (PostgreSQL 13+), so a non-superuser owner of the database can
+-- create it.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;

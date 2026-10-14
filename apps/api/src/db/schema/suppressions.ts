@@ -15,10 +15,12 @@ export const suppressions = pgTable(
     reason: suppressionReasonEnum('reason').notNull(),
     notes: varchar('notes', { length: 1000 }),
     /**
-     * SHA-256 (hex) of the address an erasure removed, suppressionEmailHash().
-     * Set on the row anonymizeContact writes in place of `email`, so the
-     * erased person stays suppressed without the list keeping their address.
-     * Every send decision matches it (services/suppressions/email.ts).
+     * Fingerprint of the address an erasure removed, suppressionEmailHash():
+     * HMAC-SHA256 under SUPPRESSION_HASH_KEY, hex (a plain SHA-256 before
+     * Z150). Set on the row anonymizeContact writes in place of `email`, so
+     * the erased person stays suppressed without the list keeping their
+     * address, or a value the database alone can turn back into it. Every
+     * send decision matches it (services/suppressions/email.ts).
      */
     emailHash: text('email_hash'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

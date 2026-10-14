@@ -7,10 +7,14 @@
  *     while keeping the row id so foreign-key references in
  *     email_events / suppressions / segment memberships don't fall over.
  *   - Sets deletedAt and gdprAnonymizedAt timestamps so audit-traceable.
- *   - Adds the original email's SHA-256 to suppressions (email_hash), in
- *     the same transaction as the scrub, so the same address created again
- *     by an import, a form or the API is still never mailed. Only the
- *     person's double opt-in confirmation lifts it.
+ *   - Adds the original email's fingerprint to suppressions (email_hash),
+ *     in the same transaction as the scrub, so the same address created
+ *     again by an import, a form or the API is still never mailed. Only the
+ *     person's double opt-in confirmation lifts it. The fingerprint is an
+ *     HMAC under SUPPRESSION_HASH_KEY (services/suppressions/email.ts), so
+ *     the database alone does not give the address back; until Z150 it was a
+ *     plain SHA-256, which anyone with the database could reverse from a
+ *     list of addresses.
  *   - Anonymises matching email_events rows (clears userAgent + IP)
  *     to avoid retaining behavioral PII tied to the identity.
  *
@@ -89,9 +93,11 @@ async function eraseRelatedRows(orgId: string, contactId: string): Promise<Recor
 }
 
 /**
- * Anonymise a contact in-place. Returns the SHA-256 of the original
- * email so callers can audit which identity was scrubbed without
- * retaining the email itself.
+ * Anonymise a contact in-place. Returns the fingerprint of the original
+ * email (suppressionEmailHash: HMAC under SUPPRESSION_HASH_KEY) so callers
+ * can audit which identity was scrubbed without retaining the email itself.
+ * The same fingerprint goes to suppressions.email_hash, to the row's notes
+ * and to the contact's custom_fields.gdpr_email_hash.
  */
 export async function anonymizeContact(
   orgId: string,
@@ -139,13 +145,15 @@ export async function anonymizeContact(
       })
       .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
 
-    // Permanent suppression by hash. Prevents a re-import, a form or an API
-    // call from mailing the identity again: every send decision matches
-    // email_hash (services/suppressions/email.ts), and only the person's own
-    // double opt-in confirmation lifts it (services/contacts/resubscribe.ts).
-    // The address itself is not kept, so the suppression doesn't double as a
-    // re-identification vector. notes keeps the form rows had before
-    // migration 0035 moved the hash into its own column.
+    // Permanent suppression by fingerprint. Prevents a re-import, a form or
+    // an API call from mailing the identity again: every send decision
+    // matches email_hash (services/suppressions/email.ts), and only the
+    // person's own double opt-in confirmation lifts it (services/contacts/
+    // resubscribe.ts). The address itself is not kept, and the fingerprint is
+    // keyed, so the suppression doesn't double as a re-identification vector
+    // for whoever holds the database. notes keeps the `gdpr_anonymized:<hex>`
+    // form rows had before migration 0035 moved the hash into its own column;
+    // it carries the same keyed fingerprint.
     if (emailHash) {
       await tx.insert(suppressions).values({
         orgId,
