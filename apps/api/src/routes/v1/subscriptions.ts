@@ -23,15 +23,13 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts, lists, contactLists, organizations } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
-import { sendTransactionalEmail } from '../../lib/queues.js';
 import { AppError } from '../../lib/app-error.js';
 import { t, resolveLocale, verifyTrackingToken, type SupportedLocale } from '@forgemsg/shared';
 import { unsubscribeContact, type UnsubscribeSource } from '../../services/contacts/unsubscribe.js';
 import { resubscribeContact } from '../../services/contacts/resubscribe.js';
 import { findOrCreateContact } from '../../services/contacts/by-email.js';
-import { env } from '../../config/env.js';
+import { sendListDoiConfirmation } from '../../services/subscriptions/doi.js';
 
-const DOI_TTL = 60 * 60 * 48; // 48 hours
 const UNSUB_TTL = 60 * 60 * 24 * 7; // 7 days
 
 function doiKey(token: string) {
@@ -141,40 +139,18 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         source: 'double_optin',
       });
 
-      // Generate and store DOI token
-      const token = crypto.randomUUID();
-      await redis.setex(
-        doiKey(token),
-        DOI_TTL,
-        JSON.stringify({ contactId: contact.id, listId, orgId }),
-      );
-
-      // Send confirmation email via the transactional pipeline.
-      const apiPublicUrl =
-        process.env.API_PUBLIC_URL ?? process.env.APP_URL ?? 'http://localhost:3001';
-      const confirmUrl = `${apiPublicUrl}/api/v1/confirm/${token}`;
-      const greeting = body.firstName ? `Hi ${body.firstName},` : 'Hi,';
-
-      try {
-        await sendTransactionalEmail({
-          to: body.email,
-          toName: [body.firstName, body.lastName].filter(Boolean).join(' ') || undefined,
-          from: env.SYSTEM_EMAIL_FROM,
-          fromName: list.name,
-          subject: `Confirm your subscription to ${list.name}`,
-          html: `<!doctype html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:40px auto;padding:24px;color:#1e293b">
-<p style="font-size:16px">${greeting}</p>
-<p style="font-size:16px">You signed up to receive emails from <strong>${list.name}</strong>. Click below to confirm.</p>
-<p style="margin:32px 0"><a href="${confirmUrl}" style="display:inline-block;background:#0ea5e9;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600">Confirm subscription</a></p>
-<p style="font-size:13px;color:#64748b">If you didn't sign up, ignore this — no further messages will arrive. The link expires in 48 hours.</p>
-</body></html>`,
-          text: `${greeting}\n\nYou signed up to receive emails from ${list.name}. Confirm here:\n${confirmUrl}\n\nLink expires in 48 hours.`,
-          orgId,
-          contactId: contact.id,
-        });
-      } catch (err) {
-        app.log.error({ err, event: 'doi_email_enqueue_failed', email: body.email, listId });
-      }
+      // Token + confirmation e-mail. The same function the signup form calls,
+      // and the only one that asks the MTA gate to let a DOI confirmation
+      // through a 'manual' suppression (services/subscriptions/doi.ts).
+      const { token, confirmUrl } = await sendListDoiConfirmation({
+        orgId,
+        contactId: contact.id,
+        listId,
+        email: body.email,
+        listName: list.name,
+        firstName: body.firstName,
+        toName: [body.firstName, body.lastName].filter(Boolean).join(' ') || undefined,
+      });
 
       app.log.info({ event: 'doi_token_generated', token, email: body.email, listId });
 
