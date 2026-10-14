@@ -30,10 +30,11 @@
 import { createHash } from 'node:crypto';
 import { inArray, or, sql, type SQL } from 'drizzle-orm';
 import { suppressions } from '../../db/schema/index.js';
+import { normalizeEmail } from '../../lib/email-address.js';
 
-/** The form an address is stored in on the suppression list. */
+/** The form an address is stored in on the suppression list — the same form contacts.email has. */
 export function suppressionEmail(email: string): string {
-  return email.trim().toLowerCase();
+  return normalizeEmail(email);
 }
 
 /**

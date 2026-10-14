@@ -32,6 +32,7 @@ import {
   getContact,
   updateContact,
 } from '../../../services/contacts/index.js';
+import { contactExists, emailTakenBy } from '../../../services/contacts/by-email.js';
 
 interface ResendErrorBody {
   statusCode: number;
@@ -201,32 +202,19 @@ const audiencesRoutes: FastifyPluginAsync = async (app) => {
       const list = await getList(req.user!.orgId, audienceId).catch(() => null);
       if (!list) return reply.code(404).send(notFound(`Audience ${audienceId} not found`));
 
-      // Find existing contact by (org, email) so we don't dupe.
-      const [existing] = await db
-        .select({ id: contacts.id })
-        .from(contacts)
-        .where(and(eq(contacts.orgId, req.user!.orgId), eq(contacts.email, body.data.email)))
-        .limit(1);
-
-      let contactId: string;
-      if (existing) {
-        contactId = existing.id;
-        // Update name fields if the caller provided them.
-        if (body.data.first_name || body.data.last_name) {
-          await updateContact(req.user!.orgId, contactId, {
-            firstName: body.data.first_name,
-            lastName: body.data.last_name,
-          }).catch(() => null);
-        }
-      } else {
-        const created = await createContact(req.user!.orgId, {
-          email: body.data.email,
-          firstName: body.data.first_name,
-          lastName: body.data.last_name,
-          status: body.data.unsubscribed ? 'unsubscribed' : 'active',
-        });
-        contactId = created.id;
-      }
+      // One address, one contact: an address the org already holds is refused
+      // with the existing contact's id (409 CONTACT_EXISTS) and nothing changes.
+      // This used to look the address up by exact spelling, so the same address
+      // in other capitals became a second, active contact (Z146, measured).
+      const existing = await emailTakenBy(req.user!.orgId, body.data.email);
+      if (existing) throw contactExists(existing);
+      const created = await createContact(req.user!.orgId, {
+        email: body.data.email,
+        firstName: body.data.first_name,
+        lastName: body.data.last_name,
+        status: body.data.unsubscribed ? 'unsubscribed' : 'active',
+      });
+      const contactId = created.id;
 
       await addContactToList(req.user!.orgId, audienceId, contactId).catch(() => null);
 

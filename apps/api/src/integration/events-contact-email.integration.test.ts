@@ -163,7 +163,10 @@ describe('contactEmail as the identifier', () => {
   }, 30_000);
 
   it('the address is compared trimmed and case-insensitively', async () => {
-    const id = await addContact(A.orgId, `Petr.Novak-${TAG}@Example.test`);
+    // Stored the way every writer stores it since 0036 (trimmed, lower case);
+    // the caller's spelling is what varies. A row stored as typed in capitals
+    // is a state migration 0036 normalised away.
+    const id = await addContact(A.orgId, `petr.novak-${TAG}@example.test`);
     const name = `${TAG}-case`;
 
     await A.client.events.track({
@@ -175,26 +178,26 @@ describe('contactEmail as the identifier', () => {
     for (const r of rows) expect(r.contactId).toBe(id);
   }, 30_000);
 
-  it('two rows with one address: the oldest live one, every time', async () => {
-    // contacts has no unique index on (org_id, email); this is a state the
-    // table allows, so the choice must be deterministic and must skip the
-    // soft-deleted.
+  it('a soft-deleted row with the address is skipped, and a second live one is refused', async () => {
+    // The table holds one live contact per address since 0036 (Z146). It used
+    // to allow two, so the route picked the oldest live one; what remains to
+    // pin is that a deleted contact with the same address is never chosen.
     const email = `dup-${TAG}@example.test`;
     await addContact(A.orgId, email, {
       createdAt: new Date('2020-01-01T00:00:00Z'),
       deletedAt: new Date('2021-01-01T00:00:00Z'),
     });
-    const oldest = await addContact(A.orgId, email.toUpperCase(), {
+    const live = await addContact(A.orgId, email, {
       createdAt: new Date('2022-01-01T00:00:00Z'),
     });
-    await addContact(A.orgId, email, { createdAt: new Date('2023-01-01T00:00:00Z') });
+    await expect(addContact(A.orgId, email), 'a second live contact was stored').rejects.toThrow();
 
     for (const n of [1, 2]) {
       const name = `${TAG}-dup-${n}`;
-      await A.client.events.track({ contactEmail: email, eventName: name });
+      await A.client.events.track({ contactEmail: email.toUpperCase(), eventName: name });
       const rows = await eventsNamed(name);
       expect(rows.length).toBeGreaterThan(0);
-      for (const r of rows) expect(r.contactId).toBe(oldest);
+      for (const r of rows) expect(r.contactId).toBe(live);
     }
   }, 30_000);
 

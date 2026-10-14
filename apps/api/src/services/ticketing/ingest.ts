@@ -8,6 +8,7 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
 import { contacts } from '../../db/schema/contacts.js';
 import { revenueEvents } from '../../db/schema/revenue.js';
 import {
@@ -93,14 +94,18 @@ export async function upsertContactByEmail(
   orgId: string,
   c: TicketingContactInput,
 ): Promise<string> {
-  const email = c.email.toLowerCase().trim();
-  const [existing] = await db
-    .select({ id: contacts.id })
-    .from(contacts)
-    .where(and(eq(contacts.orgId, orgId), sql`lower(${contacts.email}) = ${email}`))
-    .limit(1);
+  // One address, one contact (../contacts/by-email.ts): the live contact the
+  // address has keeps its status; its light profile is refreshed as before.
+  const { contact, created } = await findOrCreateContact(orgId, c.email, {
+    phone: c.phone,
+    firstName: c.firstName,
+    lastName: c.lastName,
+    preferredLocale: c.locale,
+    customFields: c.city ? { city: c.city } : undefined,
+    source: 'ticketing',
+  });
 
-  if (existing) {
+  if (!created) {
     await db
       .update(contacts)
       .set({
@@ -116,28 +121,15 @@ export async function upsertContactByEmail(
           : {}),
         updatedAt: new Date(),
       } as never)
-      .where(eq(contacts.id, existing.id));
-    return existing.id;
+      .where(eq(contacts.id, contact.id));
+    return contact.id;
   }
 
-  const [created] = await db
-    .insert(contacts)
-    .values({
-      orgId,
-      email,
-      phone: c.phone,
-      firstName: c.firstName,
-      lastName: c.lastName,
-      preferredLocale: c.locale,
-      customFields: c.city ? { city: c.city } : undefined,
-      source: 'ticketing',
-    })
-    .returning();
   emitWebhookEvent(orgId, 'contact.created', {
-    ...toContactSummary(created!),
+    ...toContactSummary(contact),
     source: 'ticketing',
   });
-  return created!.id;
+  return contact.id;
 }
 
 /** Find-or-create+update an external (ticketed) event by externalId. */

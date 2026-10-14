@@ -8,8 +8,9 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { contactEmailIs } from '../../services/contacts/by-email.js';
 import { workflowEvents, contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { onApiEvent } from '../../services/workflows/triggers.js';
@@ -83,20 +84,13 @@ export default async function eventRoutes(app: FastifyInstance) {
         if (req.user?.isPublicKey) {
           throw AppError.forbidden('A publishable key cannot identify a contact by email here');
         }
-        // contacts has no unique index on (org_id, email), and the contacts
-        // route stores the address as given, so two rows can differ only in
-        // case. The oldest live one is the contact, deterministically.
+        // One live contact per address since 0036; the ordering below only
+        // keeps the answer deterministic if that ever stops being true.
         const email = body.contactEmail!.toLowerCase();
         const [contact] = await db
           .select({ id: contacts.id })
           .from(contacts)
-          .where(
-            and(
-              eq(contacts.orgId, orgId),
-              sql`lower(${contacts.email}) = ${email}`,
-              isNull(contacts.deletedAt),
-            ),
-          )
+          .where(and(eq(contacts.orgId, orgId), contactEmailIs(email)))
           .orderBy(asc(contacts.createdAt), asc(contacts.id))
           .limit(1);
 

@@ -19,6 +19,7 @@
  */
 
 import { db } from '../../db/client.js';
+import { contactEmailIs } from '../contacts/by-email.js';
 import { contacts, emailEvents, suppressions, organizations } from '../../db/schema/index.js';
 import { and, eq, sql } from 'drizzle-orm';
 import { redis } from '@forgemsg/shared/redis';
@@ -144,7 +145,7 @@ export async function processFblComplaint(
   const [contact] = await db
     .select()
     .from(contacts)
-    .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
+    .where(and(eq(contacts.orgId, orgId), contactEmailIs(email)))
     .limit(1);
 
   if (!contact) {

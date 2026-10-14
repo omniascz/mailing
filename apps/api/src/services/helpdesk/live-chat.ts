@@ -18,6 +18,7 @@
 import crypto from 'node:crypto';
 import { and, eq, gt, inArray } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { contactEmailIs } from '../contacts/by-email.js';
 import { helpdeskTickets, ticketMessages, contacts } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
 import { openTicket, appendMessage } from './index.js';
@@ -57,7 +58,7 @@ export async function startChatSession(input: {
     const [c] = await db
       .select({ id: contacts.id })
       .from(contacts)
-      .where(and(eq(contacts.orgId, orgId), eq(contacts.email, input.email)))
+      .where(and(eq(contacts.orgId, orgId), contactEmailIs(input.email)))
       .limit(1);
     contactId = c?.id ?? null;
   }

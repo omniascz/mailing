@@ -12,6 +12,7 @@
 import crypto from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
 import {
   ecommerceConnections,
   ecommerceOrders,
@@ -26,7 +27,7 @@ import {
   type ShoptetCredentials,
   type EcommerceOrderItem,
 } from '../../db/schema/index.js';
-import { contacts, contactEngagement } from '../../db/schema/index.js';
+import { contactEngagement } from '../../db/schema/index.js';
 import { trackPurchase } from '../revenue-attribution/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { sql } from 'drizzle-orm';
@@ -425,48 +426,21 @@ async function findOrCreateBuyer(
   email: string,
   externalOrderId: string,
 ): Promise<string | undefined> {
-  const find = async (tx: typeof db) =>
-    (
-      await tx
-        .select({ id: contacts.id })
-        .from(contacts)
-        .where(and(eq(contacts.orgId, connection.orgId), eq(contacts.email, email)))
-        .limit(1)
-    )[0]?.id;
-
-  const found = await find(db);
-  if (found) return found;
-
-  // `contacts` has no unique index on (org_id, email) — only a plain lookup
-  // index — so `onConflictDoNothing` has nothing to catch on, and two webhooks
-  // for the same new buyer would each insert. Shopify makes that ordinary:
-  // orders/create and orders/updated for one order arrive together and both
-  // land here. An advisory lock keyed on org + address serialises the pair
-  // without a migration on a hot table.
-  return db.transaction(async (tx) => {
-    await tx.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${connection.orgId}:${email}`}, 0))`,
-    );
-    const raced = await find(tx as unknown as typeof db);
-    if (raced) return raced;
-
-    const [created] = await tx
-      .insert(contacts)
-      .values({
-        orgId: connection.orgId,
-        email,
-        status: 'non_subscribed',
-        lifecycleStage: 'customer',
-        source: 'ecommerce_order',
-        sourceDetails: {
-          platform: connection.platform,
-          connectionId: connection.id,
-          externalOrderId,
-        },
-      })
-      .returning({ id: contacts.id });
-    return created?.id;
+  // One address, one contact (../contacts/by-email.ts): the unique index on
+  // (org_id, email) settles two webhooks for the same new buyer — orders/create
+  // and orders/updated arrive together — so the advisory lock that used to do
+  // it is gone. An existing contact is only looked up, never rewritten.
+  const { contact } = await findOrCreateContact(connection.orgId, email, {
+    status: 'non_subscribed',
+    lifecycleStage: 'customer',
+    source: 'ecommerce_order',
+    sourceDetails: {
+      platform: connection.platform,
+      connectionId: connection.id,
+      externalOrderId,
+    },
   });
+  return contact.id;
 }
 
 /** A checkout that was started. Deliberately NOT a NormalizedOrder — see the table. */

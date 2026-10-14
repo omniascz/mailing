@@ -16,6 +16,7 @@
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
 import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
+import { findContactByEmail, findOrCreateContact } from '../contacts/by-email.js';
 
 /** A transaction handle: every query in a routing runs on the one that holds its lock. */
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -134,11 +135,7 @@ async function resolveContact(
   const phone = normPhone(ident.phone);
 
   if (email) {
-    const [existing] = await q
-      .select({ id: contacts.id })
-      .from(contacts)
-      .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
-      .limit(1);
+    const existing = await findContactByEmail(orgId, email, q);
     if (existing) return existing.id;
   }
   if (phone) {
@@ -150,18 +147,22 @@ async function resolveContact(
     if (existing) return existing.id;
   }
 
-  // Create if we have any identifier — otherwise the ticket is anonymous
+  // Create if we have any identifier — otherwise the ticket is anonymous. With
+  // an address, through the one find-or-create (../contacts/by-email.ts), so a
+  // sender racing another write for the same address meets the same contact.
   if (email || phone) {
-    const [created] = await q
-      .insert(contacts)
-      .values({
-        orgId,
-        email: email ?? null,
-        phone: phone ?? null,
-        source: 'inbox',
-      })
-      .returning();
-    if (created) {
+    const { contact: created, created: isNew } = email
+      ? await findOrCreateContact(orgId, email, { phone: phone ?? null, source: 'inbox' }, { q })
+      : {
+          contact: (
+            await q
+              .insert(contacts)
+              .values({ orgId, email: null, phone: phone ?? null, source: 'inbox' })
+              .returning()
+          )[0],
+          created: true,
+        };
+    if (created && isNew) {
       emitWebhookEvent(orgId, 'contact.created', {
         ...toContactSummary(created),
         source: 'inbox',

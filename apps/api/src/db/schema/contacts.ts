@@ -8,6 +8,7 @@ import {
   boolean,
   index,
   integer,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { contactStatusEnum, phoneTypeEnum, phoneStatusEnum, lifecycleStageEnum } from './enums.js';
@@ -88,7 +89,13 @@ export const contacts = pgTable(
   (t) => [
     // Org-scoped lookups
     index('contacts_org_id_idx').on(t.orgId),
-    index('contacts_org_email_idx').on(t.orgId, t.email),
+    // One live contact per address (0036): stored normalised
+    // (lib/email-address.ts), deleted and anonymised contacts left out, so an
+    // erased or deleted address can be created again. Also the lookup index for
+    // services/contacts/by-email.ts, whose queries all carry the predicate.
+    uniqueIndex('contacts_org_email_uq')
+      .on(t.orgId, t.email)
+      .where(sql`deleted_at IS NULL AND email IS NOT NULL`),
     index('contacts_org_phone_idx').on(t.orgId, t.phone),
     index('contacts_org_status_idx').on(t.orgId, t.status),
     index('contacts_org_vip_idx').on(t.orgId, t.isVip),

@@ -14,6 +14,7 @@
 
 import { and, eq, asc, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { normalizedEmailSql } from '../contacts/by-email.js';
 import { contacts } from '../../db/schema/contacts.js';
 import {
   lifecycleRules,
@@ -50,7 +51,7 @@ async function loadFacts(orgId: string, contactId: string): Promise<ContactFacts
   const meetingRows = await db.execute<{ count: string }>(
     sql`SELECT COUNT(*)::text AS count
         FROM bookings b
-        JOIN contacts c ON c.email = b.invitee_email AND c.org_id = b.org_id
+        JOIN contacts c ON c.email = ${normalizedEmailSql(sql`b.invitee_email`)} AND c.org_id = b.org_id
         WHERE b.org_id = ${orgId}::uuid
           AND c.id = ${contactId}::uuid
           AND b.status = 'confirmed'`,

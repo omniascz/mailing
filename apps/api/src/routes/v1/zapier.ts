@@ -11,7 +11,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { createContact } from '../../services/contacts/index.js';
+import { createOrFindContact } from '../../services/contacts/index.js';
 import { listRecentContacts, zapierAddTagByName } from '../../services/integrations/zapier.js';
 
 const zapierRoutes: FastifyPluginAsync = async (app) => {
@@ -55,8 +55,10 @@ const zapierRoutes: FastifyPluginAsync = async (app) => {
           phone: z.string().max(32).optional(),
         })
         .parse(req.body);
-      const contact = await createContact(req.user!.orgId, body, 'zapier');
-      return reply.code(201).send({ data: contact });
+      // An address the org already holds answers with that contact (200), its
+      // status untouched, instead of a second contact beside it.
+      const { contact, created } = await createOrFindContact(req.user!.orgId, body, 'zapier');
+      return reply.code(created ? 201 : 200).send({ data: contact });
     },
   );
 

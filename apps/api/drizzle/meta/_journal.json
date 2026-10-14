@@ -253,6 +253,13 @@
       "when": 1791935483623,
       "tag": "0035_suppression_email_hash",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791943770508,
+      "tag": "0036_contact_email_unique",
+      "breakpoints": true
     }
   ]
 }

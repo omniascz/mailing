@@ -16,14 +16,10 @@
 
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import {
-  migrationJobs,
-  contacts,
-  lists,
-  templates,
-  type MigrationProgress,
-} from '../../db/schema/index.js';
+import { migrationJobs, lists, templates, type MigrationProgress } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { normalizeEmail } from '../../lib/email-address.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
 
 // ─── Mailchimp API client ─────────────────────────────────────────────────────
 
@@ -259,7 +255,7 @@ export async function processMigration(
 
         for (const member of page.members) {
           try {
-            const email = member.email_address.trim().toLowerCase();
+            const email = normalizeEmail(member.email_address);
             const firstName = member.merge_fields['FNAME'] || null;
             const lastName = member.merge_fields['LNAME'] || null;
 
@@ -268,32 +264,17 @@ export async function processMigration(
             // FOREIGN contact id was then written into this org's join tables
             // below - contact_lists has no org_id of its own, so membership is
             // whatever list it points at, and that list belongs to this org.
-            const existing = await db
-              .select({ id: contacts.id })
-              .from(contacts)
-              .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
-              .limit(1);
-
-            let contactId: string;
-
-            if (existing.length > 0 && existing[0]) {
-              contactId = existing[0].id;
-              skipped++;
-            } else {
-              const [c] = await db
-                .insert(contacts)
-                .values({
-                  orgId,
-                  email,
-                  firstName,
-                  lastName,
-                  source: 'mailchimp_migration',
-                })
-                .returning({ id: contacts.id });
-              if (!c) continue;
-              contactId = c.id;
-              imported++;
-            }
+            // One address, one contact (../contacts/by-email.ts): the live
+            // contact the address already has, in any spelling, keeps its
+            // status and is the one put on the list.
+            const { contact, created } = await findOrCreateContact(orgId, email, {
+              firstName,
+              lastName,
+              source: 'mailchimp_migration',
+            });
+            const contactId = contact.id;
+            if (created) imported++;
+            else skipped++;
 
             // Add to list
             if (forgeListId) {

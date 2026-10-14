@@ -18,6 +18,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { and, eq, gte, isNotNull } from 'drizzle-orm';
 import { db } from '../../../../db/client.js';
+import { contactEmailIs } from '../../../contacts/by-email.js';
 import { sitePageViews, trackedSites } from '../../../../db/schema/site-tracking.js';
 import { contacts } from '../../../../db/schema/contacts.js';
 import { AppError } from '../../../../lib/app-error.js';
@@ -143,7 +144,7 @@ export async function recordPixelEvent(
     const [c] = await db
       .select({ id: contacts.id })
       .from(contacts)
-      .where(and(eq(contacts.orgId, site.orgId), eq(contacts.email, event.emailLower)))
+      .where(and(eq(contacts.orgId, site.orgId), contactEmailIs(event.emailLower)))
       .limit(1);
     contactId = c?.id ?? null;
   }

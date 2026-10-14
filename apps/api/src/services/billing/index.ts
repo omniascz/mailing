@@ -1,7 +1,8 @@
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { billingSubscriptions, contacts, organizations } from '../../db/schema/index.js';
+import { billingSubscriptions, organizations } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
 import { onApiEvent } from '../workflows/triggers.js';
 import { verifyStripeSignature } from '../commerce/payments.js';
 
@@ -303,24 +304,13 @@ async function handleCustomerUpsert(obj: Record<string, unknown>) {
   // whether a row exists and writes nothing when one does, so an address
   // another org already held meant the org the event NAMED silently got no
   // contact at all.
-  const [existing] = await db
-    .select({ id: contacts.id })
-    .from(contacts)
-    .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
-    .limit(1);
-
-  if (!existing) {
-    await db
-      .insert(contacts)
-      .values({
-        orgId,
-        email,
-        firstName: firstName || null,
-        lastName,
-        source: 'stripe',
-      } as typeof contacts.$inferInsert)
-      .onConflictDoNothing();
-  }
+  // One address, one contact (../contacts/by-email.ts): an existing contact,
+  // in any spelling, is left exactly as it is.
+  await findOrCreateContact(orgId, email, {
+    firstName: firstName || null,
+    lastName,
+    source: 'stripe',
+  });
 }
 
 async function upsertContactWithPurchase(
@@ -336,26 +326,8 @@ async function upsertContactWithPurchase(
   // pairing one org with another org's contact. The route is public and
   // signature-gated, and a Stripe signature says nothing about which tenant
   // an address belongs to.
-  const [existing] = await db
-    .select({ id: contacts.id })
-    .from(contacts)
-    .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
-    .limit(1);
-
-  let contactId: string;
-  if (existing) {
-    contactId = existing.id;
-  } else {
-    const [created] = await db
-      .insert(contacts)
-      .values({
-        orgId,
-        email,
-        source: 'stripe',
-      } as typeof contacts.$inferInsert)
-      .returning({ id: contacts.id });
-    contactId = created!.id;
-  }
+  const { contact } = await findOrCreateContact(orgId, email, { source: 'stripe' });
+  const contactId = contact.id;
 
   // Fire the stripe_purchase trigger in this process. Same story as the
   // Calendly webhook: this POSTed to /api/v1/internal/workflows/trigger, which

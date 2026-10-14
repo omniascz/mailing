@@ -28,6 +28,7 @@ import { AppError } from '../../lib/app-error.js';
 import { t, resolveLocale, verifyTrackingToken, type SupportedLocale } from '@forgemsg/shared';
 import { unsubscribeContact, type UnsubscribeSource } from '../../services/contacts/unsubscribe.js';
 import { resubscribeContact } from '../../services/contacts/resubscribe.js';
+import { findOrCreateContact } from '../../services/contacts/by-email.js';
 import { env } from '../../config/env.js';
 
 const DOI_TTL = 60 * 60 * 48; // 48 hours
@@ -131,33 +132,14 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
 
       const orgId = list.orgId;
 
-      // Find or create contact (pending)
-      let [contact] = await db
-        .select()
-        .from(contacts)
-        .where(
-          and(
-            eq(contacts.orgId, orgId),
-            eq(contacts.email, body.email.toLowerCase()),
-            isNull(contacts.deletedAt),
-          ),
-        )
-        .limit(1);
-
-      if (!contact) {
-        const [c] = await db
-          .insert(contacts)
-          .values({
-            orgId,
-            email: body.email.toLowerCase(),
-            firstName: body.firstName,
-            lastName: body.lastName,
-            status: 'pending',
-            source: 'double_optin',
-          })
-          .returning();
-        contact = c!;
-      }
+      // Find or create contact (pending). An existing contact keeps its status
+      // (services/contacts/by-email.ts); only the confirmation can change it.
+      const { contact } = await findOrCreateContact(orgId, body.email, {
+        firstName: body.firstName,
+        lastName: body.lastName,
+        status: 'pending',
+        source: 'double_optin',
+      });
 
       // Generate and store DOI token
       const token = crypto.randomUUID();

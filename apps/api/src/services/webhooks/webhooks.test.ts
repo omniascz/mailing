@@ -442,6 +442,9 @@ describe('processFormSubmission', () => {
       .mockResolvedValueOnce([form]) // form lookup
       .mockResolvedValueOnce([]); // existing contact lookup → none
 
+    // The insert names the unique index (ON CONFLICT DO NOTHING) since the
+    // contact is created through findOrCreateContact (Z146).
+    (mockDb.onConflictDoNothing as ReturnType<typeof vi.fn>).mockReturnThis();
     (mockDb.returning as ReturnType<typeof vi.fn>).mockResolvedValueOnce([{ id: 'c-new' }]);
     // update submitCount returns nothing important
     (mockDb.set as ReturnType<typeof vi.fn>).mockReturnThis();

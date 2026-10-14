@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   contacts,
@@ -10,6 +10,8 @@ import {
 import { parseFile } from './parser.js';
 import { validateRow } from './validator.js';
 import type { ContactField } from './column-detect.js';
+import { normalizeEmail } from '../../lib/email-address.js';
+import { LIVE_CONTACT_EMAIL } from '../contacts/by-email.js';
 
 const BATCH_SIZE = 1000;
 const MAX_STORED_ERRORS = 500;
@@ -56,7 +58,6 @@ export async function runImport(opts: RunImportOptions): Promise<void> {
     for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
       const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
       const toInsert: NewContact[] = [];
-      const batchEmails: string[] = [];
 
       for (let i = 0; i < batch.length; i++) {
         const rowNum = batchStart + i + 1; // 1-indexed for humans
@@ -73,7 +74,6 @@ export async function runImport(opts: RunImportOptions): Promise<void> {
         }
 
         const n = result.row;
-        if (n.email) batchEmails.push(n.email);
 
         const contactRow: NewContact = {
           orgId: job.orgId,
@@ -93,27 +93,50 @@ export async function runImport(opts: RunImportOptions): Promise<void> {
         toInsert.push(contactRow);
       }
 
-      // Dedup against existing contacts by (org_id, email).
+      // One address, one contact (services/contacts/by-email.ts). A row whose
+      // address a live contact already has — in any spelling — is skipped, and
+      // so is the second of two rows with the same address in one file; the
+      // insert itself names the unique index, so an address that another
+      // writer creates meanwhile is skipped too instead of failing the batch.
+      // An existing contact's status is never touched.
+      const seen = new Set<string>();
+      const unique = toInsert.filter((c) => {
+        if (!c.email) return true;
+        c.email = normalizeEmail(c.email);
+        if (seen.has(c.email)) return false;
+        seen.add(c.email);
+        return true;
+      });
       const existing =
-        batchEmails.length > 0
+        seen.size > 0
           ? await db
-              .select({ id: contacts.id, email: contacts.email })
+              .select({ email: contacts.email })
               .from(contacts)
-              .where(and(eq(contacts.orgId, job.orgId), inArray(contacts.email, batchEmails)))
+              .where(
+                and(
+                  eq(contacts.orgId, job.orgId),
+                  inArray(contacts.email, [...seen]),
+                  isNull(contacts.deletedAt),
+                ),
+              )
           : [];
-      const existingByEmail = new Map(existing.map((r) => [r.email, r.id]));
-
-      const freshInserts = toInsert.filter((c) => !c.email || !existingByEmail.has(c.email));
-      const overlaps = toInsert.filter((c) => c.email && existingByEmail.has(c.email));
+      const existingEmails = new Set(existing.map((r) => r.email));
+      const freshInserts = unique.filter((c) => !c.email || !existingEmails.has(c.email));
+      const overlaps = toInsert.length - freshInserts.length;
 
       if (freshInserts.length > 0) {
         const insertedRows = await db
           .insert(contacts)
           .values(freshInserts)
+          .onConflictDoNothing({
+            target: [contacts.orgId, contacts.email],
+            where: LIVE_CONTACT_EMAIL,
+          })
           .returning({ id: contacts.id });
         inserted += insertedRows.length;
+        skipped += freshInserts.length - insertedRows.length;
 
-        if (job.defaultListId) {
+        if (job.defaultListId && insertedRows.length > 0) {
           await db
             .insert(contactLists)
             .values(insertedRows.map((r) => ({ contactId: r.id, listId: job.defaultListId! })))
@@ -121,8 +144,8 @@ export async function runImport(opts: RunImportOptions): Promise<void> {
         }
       }
 
-      updated += overlaps.length; // currently we skip updating; counted as "already existed"
-      skipped += overlaps.length;
+      updated += overlaps; // currently we skip updating; counted as "already existed"
+      skipped += overlaps;
 
       processed += batch.length;
 

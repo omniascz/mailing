@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { contactEmailIs } from '../contacts/by-email.js';
 import {
   trackedSites,
   sitePageViews,
@@ -177,13 +178,7 @@ export async function recordRevenueEvent(input: {
     const [c] = await db
       .select({ id: contacts.id })
       .from(contacts)
-      .where(
-        and(
-          eq(contacts.orgId, site.orgId),
-          eq(contacts.email, input.email.toLowerCase()),
-          isNull(contacts.deletedAt),
-        ),
-      )
+      .where(and(eq(contacts.orgId, site.orgId), contactEmailIs(input.email)))
       .limit(1);
     contactId = c?.id ?? null;
   }
@@ -235,13 +230,7 @@ export async function identifyVisitor(input: {
     const [contact] = await db
       .select({ id: contacts.id })
       .from(contacts)
-      .where(
-        and(
-          eq(contacts.orgId, site.orgId),
-          eq(contacts.email, input.email),
-          isNull(contacts.deletedAt),
-        ),
-      )
+      .where(and(eq(contacts.orgId, site.orgId), contactEmailIs(input.email)))
       .limit(1);
     contactId = contact?.id ?? null;
   }

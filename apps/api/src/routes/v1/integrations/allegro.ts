@@ -14,6 +14,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { socialAccounts } from '../../../db/schema/index.js';
 import { AppError } from '../../../lib/app-error.js';
+import { createOrFindContact } from '../../../services/contacts/index.js';
 import { redis } from '@forgemsg/shared/redis';
 
 const ALLEGRO_AUTH_URL = 'https://allegro.pl/auth/oauth/authorize';
@@ -164,22 +165,15 @@ export default async function allegroRoutes(app: FastifyInstance) {
       const email = String((buyer['email'] as string | undefined) ?? '');
       if (!email.includes('@')) continue;
 
-      // Upsert contact
-      const { createContact } = await import('../../../services/contacts/index.js').catch(() => ({
-        createContact: null,
-      }));
-      if (createContact) {
-        await (createContact as (orgId: string, data: Record<string, unknown>) => Promise<unknown>)(
-          orgId,
-          {
-            email,
-            firstName: String((buyer['firstName'] as string | undefined) ?? ''),
-            lastName: String((buyer['lastName'] as string | undefined) ?? ''),
-            source: 'allegro',
-          },
-        ).catch(() => {});
-        synced++;
-      }
+      // Takes the contact the address already has (status untouched) rather
+      // than creating a second one beside it.
+      await createOrFindContact(orgId, {
+        email,
+        firstName: String((buyer['firstName'] as string | undefined) ?? ''),
+        lastName: String((buyer['lastName'] as string | undefined) ?? ''),
+        source: 'allegro',
+      }).catch(() => {});
+      synced++;
     }
 
     return reply.send({ data: { synced, total: forms.length } });

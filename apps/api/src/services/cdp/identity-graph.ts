@@ -23,6 +23,7 @@ import { createHash } from 'node:crypto';
 import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { and, eq, sql, desc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
 import {
   identitySignals,
   identityMerges,
@@ -146,21 +147,36 @@ export async function ingestSignals(input: IngestSignalInput): Promise<Resolutio
     // Create a contact from the strongest PII signal we have
     const emailSignal = normalised.find((s) => s.type === 'email');
     const phoneSignal = normalised.find((s) => s.type === 'phone');
-    const [newContact] = await db
-      .insert(contacts)
-      .values({
-        orgId: input.orgId,
-        email: emailSignal?.value ?? null,
-        phone: phoneSignal?.value ?? null,
-        source: normalised[0]?.source ?? 'identity-graph',
-      })
-      .returning();
-    winnerId = newContact!.id;
-    emitWebhookEvent(input.orgId, 'contact.created', {
-      ...toContactSummary(newContact!),
-      source: 'cdp',
-    });
-    created = true;
+    // No signal knew this person, but the address may still be a contact's:
+    // one address, one contact (../contacts/by-email.ts), and that contact
+    // keeps its status.
+    const resolved = emailSignal
+      ? await findOrCreateContact(input.orgId, emailSignal.value, {
+          phone: phoneSignal?.value ?? null,
+          source: normalised[0]?.source ?? 'identity-graph',
+        })
+      : {
+          contact: (
+            await db
+              .insert(contacts)
+              .values({
+                orgId: input.orgId,
+                email: null,
+                phone: phoneSignal?.value ?? null,
+                source: normalised[0]?.source ?? 'identity-graph',
+              })
+              .returning()
+          )[0]!,
+          created: true,
+        };
+    winnerId = resolved.contact.id;
+    if (resolved.created) {
+      emitWebhookEvent(input.orgId, 'contact.created', {
+        ...toContactSummary(resolved.contact),
+        source: 'cdp',
+      });
+    }
+    created = resolved.created;
   } else if (uniqueCandidates.size === 1) {
     winnerId = Array.from(uniqueCandidates)[0]!;
   } else {

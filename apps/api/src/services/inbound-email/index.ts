@@ -7,6 +7,7 @@
 
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { contactEmailIs } from '../contacts/by-email.js';
 import {
   inboundEmails,
   contacts,
@@ -82,7 +83,7 @@ export async function receiveInbound(
   const [contact] = await db
     .select({ id: contacts.id })
     .from(contacts)
-    .where(and(eq(contacts.orgId, orgId), eq(contacts.email, fromEmail)))
+    .where(and(eq(contacts.orgId, orgId), contactEmailIs(fromEmail)))
     .limit(1);
 
   const [row] = await db
@@ -180,7 +181,7 @@ export async function receiveInbound(
         const [c] = await db
           .select({ id: contacts.id })
           .from(contacts)
-          .where(and(eq(contacts.orgId, orgId), eq(contacts.email, address)))
+          .where(and(eq(contacts.orgId, orgId), contactEmailIs(address)))
           .limit(1);
         contactId = c?.id ?? null;
       }
@@ -250,7 +251,7 @@ export async function receiveInbound(
         await db
           .update(contacts)
           .set({ status: 'bounced', updatedAt: new Date() })
-          .where(and(eq(contacts.orgId, orgId), eq(contacts.email, address)))
+          .where(and(eq(contacts.orgId, orgId), contactEmailIs(address)))
           .catch(() => {});
       }
     }

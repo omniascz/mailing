@@ -11,6 +11,7 @@ import { contacts } from '../../db/schema/contacts.js';
 import { deals } from '../../db/schema/deals.js';
 import { pipelines } from '../../db/schema/pipelines.js';
 import { hubspotConnections, hubspotContactMap, hubspotDealMap } from '../../db/schema/hubspot.js';
+import { findOrCreateContact } from '../../services/contacts/by-email.js';
 import {
   getConnection,
   searchContacts,
@@ -125,14 +126,17 @@ export async function pullContactsFromHubSpot(orgId: string): Promise<{ synced: 
       const email = hsContact.properties.email;
       if (!email) continue;
 
-      const [existing] = await db
-        .select({ id: contacts.id })
-        .from(contacts)
-        .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
-        .limit(1);
-
-      let contactId: string;
-      if (existing) {
+      // One address, one contact (services/contacts/by-email.ts). A contact
+      // the address already has keeps its status; its name and phone are
+      // refreshed from HubSpot as before.
+      const { contact, created } = await findOrCreateContact(orgId, email, {
+        firstName: hsContact.properties.firstname ?? null,
+        lastName: hsContact.properties.lastname ?? null,
+        phone: hsContact.properties.phone ?? null,
+        source: 'hubspot',
+      });
+      const contactId = contact.id;
+      if (!created) {
         await db
           .update(contacts)
           .set({
@@ -141,21 +145,7 @@ export async function pullContactsFromHubSpot(orgId: string): Promise<{ synced: 
             phone: hsContact.properties.phone ?? undefined,
             updatedAt: new Date(),
           })
-          .where(eq(contacts.id, existing.id));
-        contactId = existing.id;
-      } else {
-        const [created] = await db
-          .insert(contacts)
-          .values({
-            orgId,
-            email,
-            firstName: hsContact.properties.firstname ?? null,
-            lastName: hsContact.properties.lastname ?? null,
-            phone: hsContact.properties.phone ?? null,
-            source: 'hubspot',
-          } as typeof contacts.$inferInsert)
-          .returning({ id: contacts.id });
-        contactId = created!.id;
+          .where(eq(contacts.id, contactId));
       }
 
       await db
