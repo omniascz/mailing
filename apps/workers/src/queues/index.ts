@@ -653,13 +653,18 @@ export interface MtaSendJobData {
    */
   campaignIsPlaceholder?: boolean;
   /**
-   * Set only by the API's list double opt-in sender (services/subscriptions/
-   * doi.ts, through sendTransactionalEmail's second argument): the
-   * confirmation the recipient asked for, which a 'manual' suppression does
-   * not stop (mta-sender, isSuppressed). No customer input reaches it — their
-   * headers travel inside customHeaders, never at the top of the job (Z148).
+   * Set only through sendTransactionalEmail's second argument (API
+   * TransactionalPurpose, lib/queues.ts); mta-sender reasonsFor reads it.
+   * - 'doi_confirmation', by the list double opt-in sender (services/
+   *   subscriptions/doi.ts): the confirmation the recipient asked for, which a
+   *   'manual' suppression does not stop (Z148).
+   * - 'workflow_marketing', by the inline-HTML branch of the workflow dispatch
+   *   (routes/v1/internal/workflow-dispatch.ts): a flow's marketing e-mail on
+   *   the transactional stream, stopped by every suppression reason (Z152).
+   * No customer input reaches it — their headers travel inside customHeaders,
+   * never at the top of the job.
    */
-  purpose?: 'doi_confirmation';
+  purpose?: 'doi_confirmation' | 'workflow_marketing';
   orgId: string;
   contactId: string;
   messageId: string;

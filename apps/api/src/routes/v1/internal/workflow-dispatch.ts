@@ -38,6 +38,7 @@ import {
 } from '../../../lib/queues.js';
 import { processWorkflowRuns } from '../../../services/workflows/executor.js';
 import { routedSmsSend } from '../../../services/sms/routing.js';
+import { refusesMarketing } from '@forgemsg/shared';
 // The payload contracts for the 'email' and 'sms' queues. Defined once in
 // lib/queue-contracts.ts so producers can be validated against the same object
 // this handler parses with — see that file's header.
@@ -106,28 +107,57 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
     async (req, reply) => {
       const body = workflowEmailJobSchema.parse(req.body);
 
-      // Inline-content path (seeded / self-contained workflows): send directly via
-      // the transactional pipeline, no campaign/template lookup.
+      // Inline-content path: a flow's send_email with config.html, personal
+      // e-mails, review requests, sales-sequence steps and the seeded ticketing
+      // flows. Sent directly on the transactional stream, no campaign/template
+      // lookup.
+      //
+      // A flow e-mail is marketing — the standing decision is that it stays off
+      // the transactional path because an opt-out must stop it — so this branch
+      // gates it as marketing, twice:
+      // - the contact's status: unsubscribed, bounced, complained or pending gets
+      //   nothing, the same four statuses batch-sender refuses (the shared
+      //   MARKETING_REFUSED_CONTACT_STATUSES). Answered as a skip with 200, so
+      //   the 'email' job completes and is not retried;
+      // - purpose 'workflow_marketing', which makes mta-sender check every
+      //   suppression reason, 'unsubscribe' included, where a transactional
+      //   message is stopped by all but that one.
+      // Before this, the branch read neither: on master 30 of 45 measured sends
+      // reached the engine for people with no consent (Z151), the hole Z143
+      // left out of its scope (MIMO 7). Z152.
+      //
+      // Temporary. The stream is transactional only because moving this mail to
+      // the triggered batch-sender pipeline needs an opt-out link and footer the
+      // inline HTML does not carry (batch-sender refuses raw HTML without
+      // {{unsubscribe_url}}, Z151) — that, and the move, wait on the owner's
+      // decision.
       if (body.html) {
         const [contact] = await db
-          .select({ email: contacts.email })
+          .select({ email: contacts.email, status: contacts.status })
           .from(contacts)
           .where(and(eq(contacts.id, body.contactId), eq(contacts.orgId, body.orgId)))
           .limit(1);
         if (!contact?.email)
           return reply.send({ data: { skipped: true, reason: 'no contact email' } });
+        if (refusesMarketing(contact.status))
+          return reply.send({
+            data: { skipped: true, reason: `contact status ${contact.status}` },
+          });
         const from = await resolveOrgFrom(body.orgId);
         if (!from) return reply.send({ data: { skipped: true, reason: 'no from address' } });
-        const messageId = await sendTransactionalEmail({
-          to: contact.email,
-          from: from.fromEmail,
-          fromName: from.fromName,
-          subject: body.subject ?? '',
-          html: body.html,
-          text: body.text,
-          orgId: body.orgId,
-          contactId: body.contactId,
-        });
+        const messageId = await sendTransactionalEmail(
+          {
+            to: contact.email,
+            from: from.fromEmail,
+            fromName: from.fromName,
+            subject: body.subject ?? '',
+            html: body.html,
+            text: body.text,
+            orgId: body.orgId,
+            contactId: body.contactId,
+          },
+          { purpose: 'workflow_marketing' },
+        );
         return reply.send({ data: { queued: true, messageId } });
       }
 

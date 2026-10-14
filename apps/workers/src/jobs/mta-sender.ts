@@ -423,15 +423,22 @@ const SUPPRESSES_TRANSACTIONAL = [
  *
  * A bounce, a complaint, a block or an invalid address still stop it: the
  * address does not work, or its owner reported us.
+ *
+ * The third purpose, 'workflow_marketing', has no list of its own: it is a
+ * flow's inline-HTML e-mail, marketing on the transactional stream, and every
+ * reason stops it — 'unsubscribe' too, as for broadcast and triggered (Z152;
+ * see the inline branch of the API's workflow-dispatch.ts).
  */
 const SUPPRESSES_DOI_CONFIRMATION = SUPPRESSES_TRANSACTIONAL.filter((r) => r !== 'manual');
 
 /** The reasons that count for this job; undefined means every reason. */
-function reasonsFor(data: MtaSendJobData): readonly string[] | undefined {
+export function reasonsFor(
+  data: Pick<MtaSendJobData, 'stream' | 'purpose'>,
+): readonly string[] | undefined {
   if (data.stream !== 'transactional') return undefined;
-  return data.purpose === 'doi_confirmation'
-    ? SUPPRESSES_DOI_CONFIRMATION
-    : SUPPRESSES_TRANSACTIONAL;
+  if (data.purpose === 'workflow_marketing') return undefined;
+  if (data.purpose === 'doi_confirmation') return SUPPRESSES_DOI_CONFIRMATION;
+  return SUPPRESSES_TRANSACTIONAL;
 }
 
 /**
