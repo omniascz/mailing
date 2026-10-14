@@ -32,6 +32,7 @@ import postgres from 'postgres';
 import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processAtOrgRate } from './setup/process-at-org-rate.js';
+import { suppressionEmailHash } from '../../../api/dist/services/suppressions/email.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import {
@@ -82,8 +83,8 @@ const allAddresses: string[] = [];
 
 const ALL_STATES: JobType[] = ['waiting', 'prioritized', 'delayed', 'paused', 'active'];
 
-const hashOf = (email: string) =>
-  createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
+/** The erasure fingerprint, by the API's own function under the API's key (Z150). */
+const hashOf = suppressionEmailHash;
 const address = (name: string) => {
   const a = `doiman-${name}-${tag}@test.local`;
   allAddresses.push(a);
@@ -325,7 +326,7 @@ describe('the double opt-in confirmation reaches a manual-suppressed address, an
 
   afterAll(async () => {
     for (const a of allAddresses) await deliver(a).catch(() => {});
-    const hashes = allAddresses.map(hashOf);
+    const hashes = allAddresses.map((a) => hashOf(a));
     await sql`DELETE FROM suppressions WHERE org_id = ${seed.id} AND email_hash = ANY(${hashes})`;
     await sql`DELETE FROM suppressions WHERE org_id = ${seed.id} AND lower(email) = ANY(${allAddresses})`;
     if (createdCampaigns.length) {

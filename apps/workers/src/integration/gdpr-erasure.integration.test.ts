@@ -21,8 +21,9 @@
  * and the engine's RCPT check. The gRPC client is the only stub. A clean
  * control and a different person with a similar address on the same list must
  * be mailed every time. A row written before migration 0035 (hash only in
- * notes) is filled by the migration and blocks as well. Neither an owner nor an
- * admin can delete the row, a single-step signup does not lift it, and the
+ * notes) is filled by the migration; since Z150 its plain SHA-256 no longer
+ * matches the keyed fingerprint, so it no longer blocks. Neither an owner nor
+ * an admin can delete the row, a single-step signup does not lift it, and the
  * person's own double opt-in confirmation does, with its consent_events proof.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
@@ -34,6 +35,7 @@ import postgres from 'postgres';
 import { authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
 import { processAtOrgRate } from './setup/process-at-org-rate.js';
+import { suppressionEmailHash } from '../../../api/dist/services/suppressions/email.js';
 import { processBatchSender } from '../jobs/batch-sender.js';
 import { processCampaignSplitter } from '../jobs/campaign-splitter.js';
 import {
@@ -89,8 +91,15 @@ const allAddresses: string[] = [];
 
 const ALL_STATES: JobType[] = ['waiting', 'prioritized', 'delayed', 'paused', 'active'];
 
-/** What an erasure keeps of an address (services/suppressions/email.ts). */
-const hashOf = (email: string) =>
+/**
+ * What an erasure keeps of an address — the API's own function, so the key is
+ * the one the API runs with (SUPPRESSION_HASH_KEY, the same environment). It
+ * was a plain SHA-256 written out here until Z150; the API test
+ * erasure-fingerprint-hmac checks the function itself.
+ */
+const hashOf = suppressionEmailHash;
+/** What anonymizeContact wrote before Z150: the plain SHA-256 of the address. */
+const plainSha256 = (email: string) =>
   createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
 
 const job = <T>(data: T): Job<T> =>
@@ -363,7 +372,10 @@ describe('an erased person stays suppressed until their own double opt-in', () =
 
   afterAll(async () => {
     for (const a of allAddresses) await deliver(a).catch(() => {});
-    const notes = allAddresses.map((a) => `gdpr_anonymized:${hashOf(a)}`);
+    const notes = allAddresses.flatMap((a) => [
+      `gdpr_anonymized:${hashOf(a)}`,
+      `gdpr_anonymized:${plainSha256(a)}`,
+    ]);
     await sql`DELETE FROM suppressions WHERE org_id = ${seed.id} AND notes = ANY(${notes})`;
     await sql`DELETE FROM suppressions WHERE org_id = ${seed.id} AND lower(email) LIKE ${`%-${tag}@test.local`}`;
     if (createdCampaigns.length) {
@@ -424,13 +436,21 @@ describe('an erased person stays suppressed until their own double opt-in', () =
     expect(await smtpAccepts(control)).toBe(true);
   }, 600_000);
 
-  it('a row written before migration 0035 (hash only in notes) is filled by it and blocks', async () => {
+  // Before Z150 this row was filled by 0035 and blocked. It holds what an
+  // erasure wrote then — the plain SHA-256 of the address — and since the
+  // fingerprint is an HMAC under SUPPRESSION_HASH_KEY nothing matches it any
+  // more, and nothing looks it up a second way: Michal's decision of 14
+  // October 2026, with 0 such rows in the development database and none in a
+  // production that does not exist (Z150, measured). What 0035 does to the
+  // row is unchanged and still checked; the send is now expected, and is what
+  // tells a reintroduced second lookup apart.
+  it('a row written before migration 0035 (hash only in notes) is filled by it; its plain SHA-256 no longer blocks', async () => {
     const listId = await newList('legacy');
     const legacy = `erase-legacy-${tag}@test.local`;
     allAddresses.push(legacy);
     await sql`
       INSERT INTO suppressions (org_id, email, reason, notes)
-      VALUES (${seed.id}, NULL, 'manual', ${`gdpr_anonymized:${hashOf(legacy)}`})
+      VALUES (${seed.id}, NULL, 'manual', ${`gdpr_anonymized:${plainSha256(legacy)}`})
     `;
     // The migration as CI applies it, in one transaction.
     const migration = readFileSync(MIGRATION_0035, 'utf8').replaceAll(
@@ -440,17 +460,18 @@ describe('an erased person stays suppressed until their own double opt-in', () =
     await sql.begin((tx) => tx.unsafe(migration));
     const [filled] = await sql<{ email_hash: string | null }[]>`
       SELECT email_hash FROM suppressions
-      WHERE org_id = ${seed.id} AND notes = ${`gdpr_anonymized:${hashOf(legacy)}`}
+      WHERE org_id = ${seed.id} AND notes = ${`gdpr_anonymized:${plainSha256(legacy)}`}
     `;
-    expect(filled!.email_hash).toBe(hashOf(legacy));
+    expect(filled!.email_hash).toBe(plainSha256(legacy));
+    expect(filled!.email_hash).not.toBe(hashOf(legacy));
 
     const legacyId = await createdAgain(legacy);
     const control = `erase-lcontrol-${tag}@test.local`;
     const controlId = await contactRow(control);
     for (const id of [legacyId, controlId]) await onList(listId, id);
     const sent = await campaignTo(listId, [legacy, control]);
-    expect(sent.reached).toEqual([control]);
-    expect(await receipt('/transactional/email', legacy)).toBe(false);
+    expect(sent.reached).toEqual([control, legacy].sort());
+    expect(await receipt('/transactional/email', legacy)).toBe(true);
   }, 600_000);
 
   it('no owner or admin removes the row; a single-step signup does not lift it; the double opt-in does', async () => {

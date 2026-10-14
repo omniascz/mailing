@@ -13,8 +13,9 @@
  *
  * ─── What this file checks ───────────────────────────────────────────────────
  *
- *  - suppressionEmailHash() in JS and the hash Postgres computes for the
- *    audience and trigger queries are the same function of the address.
+ *  - suppressionEmailHash() in JS and emailHashSql(), the hash Postgres
+ *    computes for the audience and trigger queries, are the same function of
+ *    the address (an HMAC under SUPPRESSION_HASH_KEY since Z150).
  *  - A failed suppression insert fails the erasure and leaves the contact as it
  *    was; a successful one writes email_hash and the notes marker.
  *  - date_field and name_day_today start no run for an address created again
@@ -38,7 +39,7 @@ import {
   processDailyNameDayTriggers,
 } from '../services/workflows/triggers.js';
 import { anonymizeContact } from '../services/contacts/gdpr.js';
-import { suppressionEmailHash } from '../services/suppressions/email.js';
+import { emailHashSql, suppressionEmailHash } from '../services/suppressions/email.js';
 import { nameDaysFor } from '@forgemsg/i18n-cs/name-days';
 
 const tag = randomUUID().slice(0, 8);
@@ -125,12 +126,19 @@ describe('an erasure suppresses with the erasure, and the daily triggers honour 
   }, 120_000);
 
   it('the JS hash and the SQL hash of an address agree', async () => {
-    const address = `  Jana.Erased-${tag}@Test.Local `;
-    const [row] = (await db.execute(
-      sql`SELECT encode(sha256(convert_to(lower(btrim(${address})), 'UTF8')), 'hex') AS h`,
-    )) as unknown as Array<{ h: string }>;
-    expect(row!.h).toBe(suppressionEmailHash(address));
-    expect(suppressionEmailHash(address)).toBe(suppressionEmailHash(address.trim().toLowerCase()));
+    // The SQL side is emailHashSql() itself — the expression the audience,
+    // go-no-go and daily-trigger queries use — run by this Postgres. It used to
+    // be a copy of a plain-SHA-256 expression written out here, which checked
+    // the copy rather than the code. Since Z150 both sides are an HMAC under
+    // SUPPRESSION_HASH_KEY (pgcrypto, migration 0037).
+    const lower = `jana.erased-${tag}@test.local`;
+    for (const address of [lower, lower.toUpperCase(), `  Jana.Erased-${tag}@Test.Local `]) {
+      const [row] = (await db.execute(
+        sql`SELECT ${emailHashSql(sql`${address}`)} AS h`,
+      )) as unknown as Array<{ h: string }>;
+      expect(row!.h).toBe(suppressionEmailHash(address));
+      expect(row!.h).toBe(suppressionEmailHash(lower));
+    }
   });
 
   it('a failed suppression insert fails the erasure and leaves the contact as it was', async () => {
