@@ -23,6 +23,8 @@ import {
   type SalesforceConnection,
 } from '../../db/schema/salesforce.js';
 import { contacts, accounts, deals } from '../../db/schema/index.js';
+import { normalizeEmail } from '../../lib/email-address.js';
+import { emailTakenBy, findOrCreateContact } from '../../services/contacts/by-email.js';
 import {
   queryAccounts,
   queryContacts,
@@ -251,12 +253,19 @@ export async function pullContacts(
       const hash = hashRecord(body);
       const localId = await lookupLocalId(conn.orgId, 'contact', c.Id);
       if (localId) {
+        // A changed address is stored normalised, and is left alone when
+        // another live contact already has it (services/contacts/by-email.ts).
+        const email = !c.Email
+          ? null
+          : (await emailTakenBy(conn.orgId, c.Email, localId))
+            ? undefined
+            : normalizeEmail(c.Email);
         await db
           .update(contacts)
           .set({
             firstName: c.FirstName ?? null,
             lastName: c.LastName ?? null,
-            email: c.Email ?? null,
+            email,
             phone: c.Phone ?? null,
             updatedAt: new Date(),
           })
@@ -264,17 +273,30 @@ export async function pullContacts(
         updated++;
         await recordMapping(conn.orgId, 'contact', localId, c.Id, hash);
       } else {
-        const [row] = await db
-          .insert(contacts)
-          .values({
-            orgId: conn.orgId,
-            firstName: c.FirstName,
-            lastName: c.LastName,
-            email: c.Email,
-            phone: c.Phone,
-            source: 'salesforce',
-          })
-          .returning({ id: contacts.id });
+        // One address, one contact: an address a live contact already has is
+        // mapped to that contact, its status untouched.
+        const row = c.Email
+          ? (
+              await findOrCreateContact(conn.orgId, c.Email, {
+                firstName: c.FirstName,
+                lastName: c.LastName,
+                phone: c.Phone,
+                source: 'salesforce',
+              })
+            ).contact
+          : (
+              await db
+                .insert(contacts)
+                .values({
+                  orgId: conn.orgId,
+                  firstName: c.FirstName,
+                  lastName: c.LastName,
+                  email: null,
+                  phone: c.Phone,
+                  source: 'salesforce',
+                })
+                .returning({ id: contacts.id })
+            )[0];
         inserted++;
         if (row) await recordMapping(conn.orgId, 'contact', row.id, c.Id, hash);
       }

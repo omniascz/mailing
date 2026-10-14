@@ -9,6 +9,7 @@
 
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { contactEmailIs } from '../contacts/by-email.js';
 import { bookings } from '../../db/schema/calendar.js';
 import { onApiEvent } from '../workflows/triggers.js';
 import { contacts } from '../../db/schema/contacts.js';
@@ -32,7 +33,7 @@ export async function triggerMeetingEvent(
   const [contact] = await db
     .select({ id: contacts.id })
     .from(contacts)
-    .where(and(eq(contacts.orgId, orgId), eq(contacts.email, booking.inviteeEmail)))
+    .where(and(eq(contacts.orgId, orgId), contactEmailIs(booking.inviteeEmail)))
     .limit(1);
 
   if (!contact) return;

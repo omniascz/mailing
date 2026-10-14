@@ -34,8 +34,9 @@
  * confirmation step remains the honest follow-up.
  */
 
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
 import {
   contacts,
   suppressions,
@@ -56,42 +57,15 @@ import { suppressionEmailIs } from '../suppressions/email.js';
  * specific notification, which is not a marketing opt-in. `resolveAudience`
  * excludes that status in SQL and the contact belongs to no list, so asking to
  * be told about a restock cannot turn into a newsletter.
- *
- * The advisory lock is there for the same reason too: `contacts` has no unique
- * index on (org_id, email), so two submissions arriving together would each
- * insert.
  */
 async function findOrCreateSubscriber(orgId: string, email: string): Promise<string> {
-  const find = async (tx: typeof db) =>
-    (
-      await tx
-        .select({ id: contacts.id })
-        .from(contacts)
-        .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
-        .limit(1)
-    )[0]?.id;
-
-  const found = await find(db);
-  if (found) return found;
-
-  return db.transaction(async (tx) => {
-    await tx.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${orgId}:${email}`}, 0))`,
-    );
-    const raced = await find(tx as unknown as typeof db);
-    if (raced) return raced;
-
-    const [created] = await tx
-      .insert(contacts)
-      .values({
-        orgId,
-        email,
-        status: 'non_subscribed',
-        source: 'stock_alert_form',
-      })
-      .returning({ id: contacts.id });
-    return created!.id;
+  // One address, one contact (../contacts/by-email.ts); the unique index
+  // settles two submissions arriving together.
+  const { contact } = await findOrCreateContact(orgId, email, {
+    status: 'non_subscribed',
+    source: 'stock_alert_form',
   });
+  return contact.id;
 }
 
 /**

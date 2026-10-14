@@ -24,6 +24,8 @@ import {
   type RaynetConnection,
 } from '../../db/schema/raynet.js';
 import { contacts } from '../../db/schema/contacts.js';
+import { normalizeEmail } from '../../lib/email-address.js';
+import { emailTakenBy, findOrCreateContact } from '../../services/contacts/by-email.js';
 import { accounts } from '../../db/schema/accounts.js';
 import { deals } from '../../db/schema/deals.js';
 import { listContacts, listCompanies, listDeals } from './client.js';
@@ -84,10 +86,17 @@ async function upsertContact(conn: RaynetConnection, row: RaynetNormalizedContac
     .limit(1);
 
   if (existing) {
+    // A changed address is stored normalised, and is left alone when another
+    // live contact already has it: one address, one contact
+    // (services/contacts/by-email.ts), and a sync must not fail on it.
+    const email =
+      row.email && !(await emailTakenBy(conn.orgId, row.email, existing.contactId))
+        ? normalizeEmail(row.email)
+        : undefined;
     await db
       .update(contacts)
       .set({
-        email: row.email ?? undefined,
+        email,
         firstName: row.firstName ?? undefined,
         lastName: row.lastName ?? undefined,
         phone: row.phone ?? undefined,
@@ -106,26 +115,29 @@ async function upsertContact(conn: RaynetConnection, row: RaynetNormalizedContac
     return;
   }
 
-  // Create new contact
-  const [inserted] = await db
-    .insert(contacts)
-    .values({
-      orgId: conn.orgId,
-      email: row.email ?? `raynet-${row.externalId}@placeholder.local`,
+  // Create new contact — or map the live contact the address already has,
+  // which keeps its status. Without an address Raynet gets a placeholder.
+  const { contact: inserted } = await findOrCreateContact(
+    conn.orgId,
+    row.email ?? `raynet-${row.externalId}@placeholder.local`,
+    {
       firstName: row.firstName ?? undefined,
       lastName: row.lastName ?? undefined,
       phone: row.phone ?? undefined,
       source: 'raynet_sync',
       status: 'active',
+    },
+  );
+  // Two Raynet records with one address meet in one contact; the first
+  // mapping stays (raynet_contact_map_contact_uq).
+  await db
+    .insert(raynetContactMap)
+    .values({
+      orgId: conn.orgId,
+      contactId: inserted.id,
+      raynetContactId: row.externalId,
     })
-    .onConflictDoNothing()
-    .returning({ id: contacts.id });
-  if (!inserted) return; // email conflict — skip for now
-  await db.insert(raynetContactMap).values({
-    orgId: conn.orgId,
-    contactId: inserted.id,
-    raynetContactId: row.externalId,
-  });
+    .onConflictDoNothing();
 }
 
 async function upsertCompany(conn: RaynetConnection, row: RaynetNormalizedCompany): Promise<void> {

@@ -32,6 +32,8 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { migrationJobs, contacts, lists, type MigrationProgress } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { normalizeEmail } from '../../lib/email-address.js';
+import { LIVE_CONTACT_EMAIL } from '../contacts/by-email.js';
 
 // ─── Ecomail API client ──────────────────────────────────────────────────────
 
@@ -249,7 +251,13 @@ export async function processEcomailMigration(
               .insert(contacts)
               .values(mapped)
               .onConflictDoUpdate({
+                // The partial unique index from 0036 (live contacts only). Until
+                // it existed Postgres refused every one of these inserts — no
+                // index matched the ON CONFLICT target — and the migration
+                // created nobody (Z146, measured). The status of a contact
+                // already there is not in `set`, so it stays as it is.
                 target: [contacts.orgId, contacts.email],
+                targetWhere: LIVE_CONTACT_EMAIL,
                 set: {
                   // Don't clobber custom_fields the user has added since;
                   // only merge in import-attribution keys.
@@ -369,7 +377,7 @@ export function mapSubscriber(sub: EcoSubscriber, orgId: string): MappedContact 
 
   return {
     orgId,
-    email: sub.email.toLowerCase().trim(),
+    email: normalizeEmail(sub.email),
     firstName: sub.name?.trim() || null,
     lastName: sub.surname?.trim() || null,
     phone: sub.phone?.trim() || null,

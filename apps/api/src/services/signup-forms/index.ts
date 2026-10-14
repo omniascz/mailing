@@ -22,6 +22,7 @@ import { AppError } from '../../lib/app-error.js';
 import { isHoneypotTripped, verifyCaptcha } from '../../lib/captcha.js';
 import { validateRequiredFields } from '../forms/conditional-logic.js';
 import { sendListDoiConfirmation } from '../subscriptions/doi.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
@@ -216,16 +217,21 @@ export async function processFormSubmission(
   let contactId: string | null = null;
 
   try {
-    // Upsert contact by email
+    // Upsert contact by email. An existing live contact is the one used — any
+    // spelling, never a deleted one — and keeps its status: a form does not
+    // lift an unsubscribe, a bounce or a pending confirmation. Its name and
+    // phone are refreshed from the form as before.
     if (email) {
-      const existing = await db
-        .select({ id: contacts.id })
-        .from(contacts)
-        .where(and(eq(contacts.orgId, form.orgId), eq(contacts.email, email)))
-        .limit(1);
-
-      if (existing.length > 0) {
-        contactId = existing[0]!.id;
+      const { contact, created } = await findOrCreateContact(form.orgId, email, {
+        firstName: firstName ?? null,
+        lastName: lastName ?? null,
+        phone: phone ?? null,
+        status: doubleOptIn ? 'pending' : 'active',
+        source: 'signup_form',
+        sourceDetails: { formId },
+      });
+      contactId = contact.id;
+      if (!created) {
         await db
           .update(contacts)
           .set({
@@ -236,26 +242,12 @@ export async function processFormSubmission(
           })
           .where(eq(contacts.id, contactId));
       } else {
-        const [newContact] = await db
-          .insert(contacts)
-          .values({
-            orgId: form.orgId,
-            email,
-            firstName: firstName ?? null,
-            lastName: lastName ?? null,
-            phone: phone ?? null,
-            status: doubleOptIn ? 'pending' : 'active',
-            source: 'signup_form',
-            sourceDetails: { formId },
-          })
-          .returning();
-        contactId = newContact!.id;
         // Emitted here, from the row the insert already returned, rather than
         // from a second SELECT — a new contact is the only case where this
         // event is true, and the update branch above emits nothing because
         // contact.updated belongs to the contacts service.
         emitWebhookEvent(form.orgId, 'contact.created', {
-          ...toContactSummary(newContact!),
+          ...toContactSummary(contact),
           source: 'signup_form',
         });
       }

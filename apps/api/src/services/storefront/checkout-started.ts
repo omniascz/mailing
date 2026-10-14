@@ -17,9 +17,10 @@
  * follows).
  */
 
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, eq, gte } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { contacts, workflowEvents } from '../../db/schema/index.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
+import { workflowEvents } from '../../db/schema/index.js';
 import { onCheckoutStarted } from '../workflows/triggers.js';
 
 /**
@@ -67,43 +68,16 @@ export interface CheckoutStartedResult {
  * marketing opt-in. An address we already know is only looked up — reaching a
  * checkout must not rewrite an existing contact's status, which would
  * unsubscribe a subscriber or resurrect somebody who left.
- *
- * The advisory lock is the same guard as findOrCreateBuyer: `contacts` has no
- * unique index on (org_id, email), and two tabs reporting one basket would
- * otherwise each insert.
  */
 async function findOrCreateShopper(orgId: string, email: string): Promise<string | undefined> {
-  const find = async (tx: typeof db) =>
-    (
-      await tx
-        .select({ id: contacts.id })
-        .from(contacts)
-        .where(and(eq(contacts.orgId, orgId), eq(contacts.email, email)))
-        .limit(1)
-    )[0]?.id;
-
-  const found = await find(db);
-  if (found) return found;
-
-  return db.transaction(async (tx) => {
-    await tx.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${orgId}:${email}`}, 0))`,
-    );
-    const raced = await find(tx as unknown as typeof db);
-    if (raced) return raced;
-
-    const [created] = await tx
-      .insert(contacts)
-      .values({
-        orgId,
-        email,
-        status: 'non_subscribed',
-        lifecycleStage: 'lead',
-        source: 'storefront_script',
-      })
-      .returning({ id: contacts.id });
-    return created?.id;
+  // One address, one contact (../contacts/by-email.ts); the unique index
+  // settles two tabs reporting one basket.
+  const { contact } = await findOrCreateContact(orgId, email, {
+    status: 'non_subscribed',
+    lifecycleStage: 'lead',
+    source: 'storefront_script',
   });
+  return contact.id;
 }
 
 /** Has this shopper already reported a basket inside the window? */

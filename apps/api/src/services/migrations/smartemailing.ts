@@ -22,6 +22,8 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { migrationJobs, contacts, lists, type MigrationProgress } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { normalizeEmail } from '../../lib/email-address.js';
+import { LIVE_CONTACT_EMAIL } from '../contacts/by-email.js';
 
 // ─── SmartEmailing API client ────────────────────────────────────────────────
 
@@ -261,7 +263,13 @@ export async function processSmartEmailingMigration(
               .insert(contacts)
               .values(mapped)
               .onConflictDoUpdate({
+                // The partial unique index from 0036 (live contacts only). Until
+                // it existed Postgres refused every one of these inserts — no
+                // index matched the ON CONFLICT target — and the migration
+                // created nobody (Z146, measured). The status of a contact
+                // already there is not in `set`, so it stays as it is.
                 target: [contacts.orgId, contacts.email],
+                targetWhere: LIVE_CONTACT_EMAIL,
                 set: {
                   customFields: sql`coalesce(${contacts.customFields}, '{}'::jsonb) || ${JSON.stringify(mapped.customFields)}::jsonb`,
                   firstName: sql`coalesce(${contacts.firstName}, ${mapped.firstName ?? null})`,
@@ -382,7 +390,7 @@ export function mapSubscriber(row: SeContactListContact, orgId: string): MappedC
 
   return {
     orgId,
-    email: c.emailaddress.toLowerCase().trim(),
+    email: normalizeEmail(c.emailaddress),
     firstName: c.name?.trim() || null,
     lastName: c.surname?.trim() || null,
     phone: c.cellphone?.trim() || null,

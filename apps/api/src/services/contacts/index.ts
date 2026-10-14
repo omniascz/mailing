@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, ilike, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { emitWebhookEvent, toContactSummary, changedFields } from '../webhooks/emit.js';
 import type { ContactSource } from '../webhooks/payloads.js';
 import { db } from '../../db/client.js';
@@ -7,6 +7,13 @@ import { AppError } from '../../lib/app-error.js';
 import { parsePhonePrefix } from '../import/phone-prefix.js';
 import type { UnsubscribeSource } from './unsubscribe.js';
 import { assertNotLiftingRefusal, heldStatus } from './consent-hold.js';
+import { normalizeEmail } from '../../lib/email-address.js';
+import {
+  contactExists,
+  emailTakenBy,
+  findOrCreateContact,
+  isContactEmailConflict,
+} from './by-email.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -168,21 +175,109 @@ export async function createContact(
   input: CreateContactInput,
   source: ContactSource = 'api',
 ) {
-  const [row] = await db
-    .insert(contacts)
-    .values({ orgId, ...enrichPhone(input) })
-    .returning();
+  // One address, one contact (./by-email.ts): an address the org already holds
+  // is refused with the existing contact's id rather than created twice.
+  const email = input.email === undefined ? undefined : normalizeEmail(input.email);
+  if (email) {
+    const existing = await emailTakenBy(orgId, email);
+    if (existing) throw contactExists(existing);
+  }
+  let row: Contact | undefined;
+  try {
+    [row] = await db
+      .insert(contacts)
+      .values({ orgId, ...enrichPhone(input), ...(email === undefined ? {} : { email }) })
+      .returning();
+  } catch (err) {
+    // Lost a race to the same address: the answer is the same 409.
+    if (email && isContactEmailConflict(err)) {
+      const existing = await emailTakenBy(orgId, email);
+      if (existing) throw contactExists(existing);
+    }
+    throw err;
+  }
   emitWebhookEvent(orgId, 'contact.created', { ...toContactSummary(row!), source });
   return row!;
 }
 
+/**
+ * createContact for a path that should take the contact already there
+ * (Zapier, Mall.cz, Allegro): an existing contact is returned with its status
+ * untouched and only its empty name and phone filled.
+ */
+export async function createOrFindContact(
+  orgId: string,
+  input: CreateContactInput & { email: string },
+  source: ContactSource = 'api',
+): Promise<{ contact: Contact; created: boolean }> {
+  try {
+    return { contact: await createContact(orgId, input, source), created: true };
+  } catch (err) {
+    if (!(err instanceof AppError) || err.code !== 'CONTACT_EXISTS') throw err;
+    return findOrCreateContact(
+      orgId,
+      input.email,
+      {},
+      { fill: { firstName: input.firstName, lastName: input.lastName, phone: input.phone } },
+    );
+  }
+}
+
+/**
+ * A batch either creates every contact or none. An address the org already
+ * holds, or one that appears twice in the batch, refuses the whole batch with
+ * the colliding addresses in `details.conflicts`.
+ */
 export async function createContactsBatch(
   orgId: string,
   inputs: CreateContactInput[],
   source: ContactSource = 'api',
 ) {
-  const values = inputs.map((input) => ({ orgId, ...enrichPhone(input) }));
-  const rows = await db.insert(contacts).values(values).returning();
+  const values = inputs.map((input) => ({
+    orgId,
+    ...enrichPhone(input),
+    ...(input.email === undefined ? {} : { email: normalizeEmail(input.email) }),
+  }));
+  const emails = values.flatMap((v) => (v.email ? [v.email] : []));
+  const seen = new Set<string>();
+  const conflicts = new Set<string>();
+  for (const e of emails) {
+    if (seen.has(e)) conflicts.add(e);
+    seen.add(e);
+  }
+  const refuse = (existing: Array<{ id: string; email: string | null }>) =>
+    new AppError({
+      code: 'CONTACT_EXISTS',
+      message: 'Some addresses in this batch already belong to a contact, or appear twice',
+      statusCode: 409,
+      details: {
+        conflicts: [...new Set([...conflicts, ...existing.map((r) => r.email!)])].sort(),
+        existing: existing.map((r) => ({ id: r.id, email: r.email })),
+      },
+    });
+  const taken = async () =>
+    emails.length === 0
+      ? []
+      : db
+          .select({ id: contacts.id, email: contacts.email })
+          .from(contacts)
+          .where(
+            and(
+              eq(contacts.orgId, orgId),
+              inArray(contacts.email, [...seen]),
+              isNull(contacts.deletedAt),
+            ),
+          );
+  const existing = await taken();
+  if (existing.length > 0 || conflicts.size > 0) throw refuse(existing);
+
+  let rows: Contact[];
+  try {
+    rows = await db.insert(contacts).values(values).returning();
+  } catch (err) {
+    if (isContactEmailConflict(err)) throw refuse(await taken());
+    throw err;
+  }
   // Per contact: this is the API batch endpoint, which is bounded by the
   // request body, not the CSV importer that handles hundreds of thousands.
   for (const row of rows) {
@@ -231,6 +326,14 @@ export async function updateContact(
     else if (before.status === 'archived') archivedFrom = null;
   }
 
+  // A changed address is stored normalised, and may not be one another live
+  // contact already has.
+  if (patch.email !== undefined && patch.email !== null) {
+    patch = { ...patch, email: normalizeEmail(patch.email) };
+    const other = await emailTakenBy(orgId, patch.email!, id);
+    if (other) throw contactExists(other);
+  }
+
   const becomingUnsubscribed =
     (patch as { status?: string }).status === 'unsubscribed' && before?.status !== 'unsubscribed';
 
@@ -264,15 +367,24 @@ export async function updateContact(
     patch = rest as UpdateContactInput;
   }
 
-  const [row] = await db
-    .update(contacts)
-    .set({
-      ...patch,
-      ...(archivedFrom !== undefined ? { archivedFrom } : {}),
-      updatedAt: new Date(),
-    } as never)
-    .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
-    .returning();
+  let row: Contact | undefined;
+  try {
+    [row] = await db
+      .update(contacts)
+      .set({
+        ...patch,
+        ...(archivedFrom !== undefined ? { archivedFrom } : {}),
+        updatedAt: new Date(),
+      } as never)
+      .where(and(eq(contacts.id, id), eq(contacts.orgId, orgId), isNull(contacts.deletedAt)))
+      .returning();
+  } catch (err) {
+    if (patch.email && isContactEmailConflict(err)) {
+      const other = await emailTakenBy(orgId, patch.email, id);
+      if (other) throw contactExists(other);
+    }
+    throw err;
+  }
   if (!row) throw AppError.notFound('Contact');
   // After the write, so an event is never emitted for an update that failed.
   emitWebhookEvent(orgId, 'contact.updated', {

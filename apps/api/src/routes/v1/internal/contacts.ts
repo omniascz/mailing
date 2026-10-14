@@ -6,8 +6,9 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
+import { contactEmailIs } from '../../../services/contacts/by-email.js';
 import { contacts } from '../../../db/schema/index.js';
 
 const internalContactsRoutes: FastifyPluginAsync = async (app) => {
@@ -94,13 +95,7 @@ const internalContactsRoutes: FastifyPluginAsync = async (app) => {
         matched = await db
           .select({ id: contacts.id, status: contacts.status })
           .from(contacts)
-          .where(
-            and(
-              eq(contacts.orgId, orgId),
-              sql`lower(${contacts.email}) = ${email.toLowerCase()}`,
-              isNull(contacts.deletedAt),
-            ),
-          );
+          .where(and(eq(contacts.orgId, orgId), contactEmailIs(email)));
       }
       if (matched.length === 0) by = null;
 

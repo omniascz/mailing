@@ -17,7 +17,7 @@ import { AppError } from '../../../lib/app-error.js';
 // Static, so the call below is type-checked. The webhook handler used to reach
 // this through `await import(...).catch(() => ({ createContact: null }))` and a
 // cast, which is what let an orgId out of the request body go unnoticed.
-import { createContact } from '../../../services/contacts/index.js';
+import { createOrFindContact } from '../../../services/contacts/index.js';
 
 const MALL_API_BASE = 'https://app.api.mall.cz';
 
@@ -142,22 +142,16 @@ export default async function mallCzRoutes(app: FastifyInstance) {
       const email = String((customer['email'] as string | undefined) ?? '');
       if (!email.includes('@')) continue;
 
-      const { createContact } = await import('../../../services/contacts/index.js').catch(() => ({
-        createContact: null,
-      }));
-      if (createContact) {
-        await (createContact as (orgId: string, data: Record<string, unknown>) => Promise<unknown>)(
-          orgId,
-          {
-            email,
-            firstName: String((customer['firstName'] as string | undefined) ?? ''),
-            lastName: String((customer['lastName'] as string | undefined) ?? ''),
-            source: 'mallcz',
-            customFields: { mall_customer_id: customer['id'] },
-          },
-        ).catch(() => {});
-        synced++;
-      }
+      // Takes the contact the address already has (status untouched) rather
+      // than creating a second one beside it.
+      await createOrFindContact(orgId, {
+        email,
+        firstName: String((customer['firstName'] as string | undefined) ?? ''),
+        lastName: String((customer['lastName'] as string | undefined) ?? ''),
+        source: 'mallcz',
+        customFields: { mall_customer_id: customer['id'] },
+      }).catch(() => {});
+      synced++;
     }
 
     return reply.send({ data: { synced, total: items.length } });
@@ -228,7 +222,7 @@ export default async function mallCzRoutes(app: FastifyInstance) {
 
       if (email.includes('@') && connection) {
         try {
-          await createContact(orgId, { email, source: 'mallcz' });
+          await createOrFindContact(orgId, { email, source: 'mallcz' });
         } catch (err) {
           // Logged, not swallowed. The endpoint still answers 200 because the
           // sender retries on anything else, but a failure nobody can see is

@@ -9,9 +9,9 @@
 
 import crypto from 'node:crypto';
 import { emitWebhookEvent, toContactSummary } from '../../services/webhooks/emit.js';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { contacts } from '../../db/schema/contacts.js';
+import { findOrCreateContact } from '../../services/contacts/by-email.js';
 import { deals } from '../../db/schema/deals.js';
 import { pipelines } from '../../db/schema/pipelines.js';
 import { calendlyConnections } from '../../db/schema/calendly.js';
@@ -73,29 +73,17 @@ export async function processCalendlyEvent(
     // the RECEIVING org: into a deal row and into onApiEvent, which pairs the
     // two in workflow_events and starts this org's automations on somebody
     // else's contact.
-    const [existing] = await db
-      .select({ id: contacts.id })
-      .from(contacts)
-      .where(and(eq(contacts.orgId, orgId), eq(contacts.email, invitee.email)))
-      .limit(1);
-
-    let contactId: string;
-    if (existing) {
-      contactId = existing.id;
-    } else {
-      const [created] = await db
-        .insert(contacts)
-        .values({
-          orgId,
-          email: invitee.email,
-          firstName: invitee.first_name ?? firstName ?? null,
-          lastName: invitee.last_name ?? lastName,
-          source: 'calendly',
-        } as typeof contacts.$inferInsert)
-        .returning();
-      contactId = created!.id;
+    // One address, one contact (services/contacts/by-email.ts): an existing
+    // contact is used as it is, its status untouched.
+    const { contact, created } = await findOrCreateContact(orgId, invitee.email, {
+      firstName: invitee.first_name ?? firstName ?? null,
+      lastName: invitee.last_name ?? lastName,
+      source: 'calendly',
+    });
+    const contactId = contact.id;
+    if (created) {
       emitWebhookEvent(orgId, 'contact.created', {
-        ...toContactSummary(created!),
+        ...toContactSummary(contact),
         source: 'calendly',
       });
     }

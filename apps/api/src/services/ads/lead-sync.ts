@@ -4,11 +4,12 @@
  * Creates/updates contacts, fires workflow trigger.
  */
 
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
 
 // Workflow trigger helper (same pattern used throughout the codebase)
 async function fireLeadTrigger(
@@ -99,43 +100,34 @@ async function upsertLeadContact(
     source: string;
   },
 ) {
-  const existing = await db
-    .select()
-    .from(contacts)
-    .where(and(eq(contacts.orgId, orgId), eq(contacts.email, data.email)))
-    .then((r) => r[0]);
+  // One address, one contact (../contacts/by-email.ts). A contact the address
+  // already has keeps its status; its name and phone are refreshed as before.
+  const { contact, created } = await findOrCreateContact(orgId, data.email, {
+    firstName: data.firstName,
+    lastName: data.lastName,
+    phone: data.phone,
+    source: data.source,
+    status: 'active',
+  });
 
-  if (existing) {
+  if (!created) {
     const [updated] = await db
       .update(contacts)
       .set({
-        firstName: data.firstName || existing.firstName,
-        lastName: data.lastName || existing.lastName,
-        phone: data.phone || existing.phone,
+        firstName: data.firstName || contact.firstName,
+        lastName: data.lastName || contact.lastName,
+        phone: data.phone || contact.phone,
         updatedAt: new Date(),
       })
-      .where(eq(contacts.id, existing.id))
+      .where(eq(contacts.id, contact.id))
       .returning();
     if (!updated) throw AppError.internal('Failed to update lead contact');
     return updated;
   }
 
-  const [created] = await db
-    .insert(contacts)
-    .values({
-      orgId,
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      source: data.source,
-      status: 'active',
-    })
-    .returning();
-  if (!created) throw AppError.internal('Failed to create lead contact');
   emitWebhookEvent(orgId, 'contact.created', {
-    ...toContactSummary(created),
+    ...toContactSummary(contact),
     source: 'lead_ad',
   });
-  return created;
+  return contact;
 }

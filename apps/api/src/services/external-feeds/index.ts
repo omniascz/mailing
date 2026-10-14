@@ -8,6 +8,7 @@
 
 import { and, eq, isNull, lte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
+import { findOrCreateContact } from '../contacts/by-email.js';
 import {
   externalFeeds,
   contacts as contactsTable,
@@ -205,35 +206,14 @@ export async function pollFeed(feed: ExternalFeed): Promise<FeedPollResult> {
         const email = mapped['email'];
         if (!email) continue;
 
-        // Find or create contact by email (upsert)
-        let contactId: string;
-        const [existing] = await db
-          .select({ id: contactsTable.id })
-          .from(contactsTable)
-          .where(
-            and(
-              eq(contactsTable.orgId, feed.orgId),
-              eq(contactsTable.email, email),
-              isNull(contactsTable.deletedAt),
-            ),
-          )
-          .limit(1);
-
-        if (existing) {
-          contactId = existing.id;
-        } else {
-          const [created] = await db
-            .insert(contactsTable)
-            .values({
-              orgId: feed.orgId,
-              email,
-              firstName: mapped['first_name'],
-              lastName: mapped['last_name'],
-              phone: mapped['phone'],
-            })
-            .returning({ id: contactsTable.id });
-          contactId = created!.id;
-        }
+        // Find or create contact by email (upsert). One address, one contact
+        // (../contacts/by-email.ts): an existing contact keeps its status.
+        const { contact } = await findOrCreateContact(feed.orgId, email, {
+          firstName: mapped['first_name'],
+          lastName: mapped['last_name'],
+          phone: mapped['phone'],
+        });
+        const contactId = contact.id;
 
         if (feed.action === 'upsert_contact') {
           // Update contact fields from mapped data

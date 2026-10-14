@@ -25,6 +25,8 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { migrationJobs, contacts, lists, type MigrationProgress } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { normalizeEmail } from '../../lib/email-address.js';
+import { LIVE_CONTACT_EMAIL } from '../contacts/by-email.js';
 
 // ─── Klaviyo API client ──────────────────────────────────────────────────────
 
@@ -263,7 +265,13 @@ export async function processKlaviyoMigration(
               .insert(contacts)
               .values(mapped)
               .onConflictDoUpdate({
+                // The partial unique index from 0036 (live contacts only). Until
+                // it existed Postgres refused every one of these inserts — no
+                // index matched the ON CONFLICT target — and the migration
+                // created nobody (Z146, measured). The status of a contact
+                // already there is not in `set`, so it stays as it is.
                 target: [contacts.orgId, contacts.email],
+                targetWhere: LIVE_CONTACT_EMAIL,
                 set: {
                   customFields: sql`coalesce(${contacts.customFields}, '{}'::jsonb) || ${JSON.stringify(mapped.customFields)}::jsonb`,
                   firstName: sql`coalesce(${contacts.firstName}, ${mapped.firstName ?? null})`,
@@ -373,7 +381,7 @@ export function mapProfile(profile: KlProfile, orgId: string): MappedContact | n
 
   return {
     orgId,
-    email: a.email.toLowerCase().trim(),
+    email: normalizeEmail(a.email),
     firstName: a.first_name?.trim() || null,
     lastName: a.last_name?.trim() || null,
     phone: a.phone_number?.trim() || null,
