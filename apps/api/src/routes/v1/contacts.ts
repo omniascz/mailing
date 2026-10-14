@@ -21,8 +21,6 @@ import { anonymizeContact, exportContactData } from '../../services/contacts/gdp
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts as contactsTable } from '../../db/schema/index.js';
-import { heldStatus } from '../../services/contacts/consent-hold.js';
-import { AppError } from '../../lib/app-error.js';
 import { toCsv } from '../../lib/csv.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
@@ -48,53 +46,6 @@ const contactWriteSchema = z.object({
   source: z.string().max(100).optional(),
   sourceDetails: z.record(z.unknown()).optional(),
 });
-
-/**
- * May an edit set this contact to `active`?
- *
- * `active` is the one status that lets marketing reach somebody, so an edit
- * moving a contact INTO it from a status that withholds consent is a consent
- * decision, and an operator's form is not where the recipient gives one. The
- * dashboard editor used to send `status` on every save and default anything
- * outside its own list to 'active', so saving a non_subscribed contact's name
- * opted them into marketing (probe Z114).
- *
- *  - non_subscribed, pending — consent was never given. The recipient gives it
- *    through a signup form or the double opt-in confirmation, never here.
- *  - unsubscribed, complained — refused by updateContact for every edit, not
- *    only this route (services/contacts/consent-hold.ts). This route used to
- *    let them through once no suppression row was left, and DELETE
- *    /suppressions or a contact created as unsubscribed left none (Z142).
- *  - bounced is not a consent state; a bounce is a deliverability fact whose
- *    suppression mta-sender keeps and only an admin releases.
- *
- * An archived contact is judged by the status the archive replaced.
- */
-async function assertActivationHasConsent(orgId: string, id: string): Promise<void> {
-  const [current] = await db
-    .select({
-      status: contactsTable.status,
-      archivedFrom: contactsTable.archivedFrom,
-      email: contactsTable.email,
-    })
-    .from(contactsTable)
-    .where(
-      and(
-        eq(contactsTable.id, id),
-        eq(contactsTable.orgId, orgId),
-        isNull(contactsTable.deletedAt),
-      ),
-    )
-    .limit(1);
-  if (!current) return; // updateContact answers the 404
-
-  const held = await heldStatus(orgId, current);
-  if (held === 'non_subscribed' || held === 'pending') {
-    throw AppError.conflict(
-      `A ${held} contact becomes active only by subscribing themselves — a signup form or the double opt-in confirmation — not by an edit`,
-    );
-  }
-}
 
 const contactUpdateSchema = contactWriteSchema.extend({
   leadScore: z.string().optional(),
@@ -254,10 +205,6 @@ export default async function contactRoutes(app: FastifyInstance) {
     async (req) => {
       const { id } = idParam.parse(req.params);
       const patch = contactUpdateSchema.parse(req.body);
-
-      if (patch.status === 'active') {
-        await assertActivationHasConsent(req.user!.orgId, id);
-      }
 
       let emailValidationScore: string | undefined;
       let emailValidatedAt: Date | undefined;

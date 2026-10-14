@@ -42,8 +42,15 @@ describe('assertNotLiftingRefusal', () => {
     expect(allowed.sort()).toEqual(['archived', 'complained', 'unsubscribed']);
   });
 
-  it('a status that withholds nothing is not this guard’s business', () => {
-    for (const held of ['active', 'bounced', 'pending', 'non_subscribed'] as const)
+  it('a contact who never said yes can be moved anywhere but active', () => {
+    for (const held of ['pending', 'non_subscribed'] as const) {
+      const allowed = ALL.filter((next) => !refused(held, next));
+      expect(allowed.sort(), held).toEqual(ALL.filter((s) => s !== 'active').sort());
+    }
+  });
+
+  it('active and bounced are not this guard’s business', () => {
+    for (const held of ['active', 'bounced'] as const)
       for (const next of ALL) expect(refused(held, next), `${held} → ${next}`).toBe(false);
   });
 });

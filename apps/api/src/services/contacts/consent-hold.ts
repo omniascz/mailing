@@ -27,6 +27,20 @@ export type ContactStatus = (typeof contacts.$inferSelect)['status'];
 export const CONSENT_WITHHELD: readonly ContactStatus[] = ['unsubscribed', 'complained'];
 
 /**
+ * Statuses where the recipient has not said yes: a double opt-in nobody
+ * confirmed, or a contact who never subscribed (an order, a stock alert). Only
+ * the recipient's own sign-up makes them 'active' — the signup form, or the
+ * confirmation through ./resubscribe.ts — and those write the contact
+ * themselves, not through an edit. An operator may still move them anywhere
+ * else (unsubscribed, archived, bounced). The dashboard editor once sent
+ * `status` on every save, so saving a non_subscribed contact's name opted them
+ * into marketing (Z114); the PUT route then refused this itself, so no other
+ * caller of updateContact did, and the SMS keyword wrote 'active' over both
+ * (Z147, measured: the next campaign reached them).
+ */
+export const CONSENT_NOT_GIVEN: readonly ContactStatus[] = ['pending', 'non_subscribed'];
+
+/**
  * What an operator may set a withheld contact to: another refusal or an
  * archive, which keeps the refusal in archived_from. ('unsubscribed' on a
  * complained contact runs unsubscribeContact, which keeps 'complained' and the
@@ -66,8 +80,25 @@ export async function heldStatus(
   return statusFromSuppressionReasons(rows.map((r) => r.reason));
 }
 
-/** Throws when `next` would take a withheld contact out of its refusal. */
+/**
+ * Throws when `next` would take a withheld contact out of its refusal, or make
+ * a contact who never said yes 'active'.
+ *
+ * 'bounced' → 'active' is not checked here. Releasing a hard_bounce row
+ * (DELETE /suppressions) leaves the contact bounced, and this edit is the only
+ * way back for an address whose mailbox works again; whether it should wait
+ * for the row to go is the owner's decision (Z147).
+ */
 export function assertNotLiftingRefusal(held: ContactStatus, next: ContactStatus): void {
+  if (next === 'active' && CONSENT_NOT_GIVEN.includes(held)) {
+    throw new AppError({
+      code: 'CONSENT_REQUIRED',
+      statusCode: 409,
+      message:
+        `This contact is ${held}. It becomes active only when the recipient subscribes ` +
+        `themselves — a signup form or the double opt-in confirmation — not by an edit`,
+    });
+  }
   const allowed = ALLOWED_FROM[held];
   if (!allowed || allowed.includes(next)) return;
   throw new AppError({
