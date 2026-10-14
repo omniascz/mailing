@@ -29,6 +29,7 @@ import {
 } from '../../db/schema/index.js';
 import { redis } from '@forgemsg/shared/redis';
 import { startWorkflowRun } from './executor.js';
+import { addressUnsuppressed } from '../suppressions/email.js';
 import { nameDaysFor as nameDaysCs } from '@forgemsg/i18n-cs/name-days';
 import { nameDaysFor as nameDaysSk } from '@forgemsg/i18n-sk/name-days';
 import { czechHolidaysInDays, czechObservancesInDays } from '@forgemsg/i18n-cs';
@@ -480,7 +481,8 @@ export async function onLifecycleStageChanged(
  * address not on the organisation's suppression list (where bounces and
  * complaints land). The same two checks batch-sender.ts applies, in the same
  * case-insensitive comparison as /internal/suppressions/check-batch: lower()
- * on both sides, or a row stored as Jan@X.cz matches nobody (Z144).
+ * on both sides, or a row stored as Jan@X.cz matches nobody (Z144); and by the
+ * hash an erasure leaves in place of the address (Z145), as that check does.
  *
  * The daily processors used to start a run for everyone whose date or name
  * matched. For these contacts the run completed and counted in total_runs and
@@ -492,10 +494,7 @@ export async function onLifecycleStageChanged(
  */
 function sendable() {
   return sql`status <> 'unsubscribed'
-          AND NOT EXISTS (
-            SELECT 1 FROM suppressions s
-            WHERE s.org_id = contacts.org_id AND lower(s.email) = lower(contacts.email)
-          )`;
+          AND ${addressUnsuppressed(sql`contacts.org_id`, sql`contacts.email`)}`;
 }
 
 /** The date_field config in the one shape the processor acts on — or null to skip it. */

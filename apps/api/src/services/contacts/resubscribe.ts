@@ -16,6 +16,12 @@
  *    an old email (or a fresh sign-up) is no evidence that the address now
  *    accepts mail or that the complaint is withdrawn. #225 drew the same line
  *    for transactional mail: only 'unsubscribe' lets it through.
+ *  - And the row an erasure left for this address (email_hash, services/
+ *    contacts/gdpr.ts), but only on a double opt-in confirmation: the person
+ *    asked to be deleted, and the one consent that brings them back is a
+ *    sign-up they confirmed from their own mailbox. A preference-centre
+ *    re-consent does not lift it, and no operator can (DELETE /suppressions
+ *    refuses it). Z145.
  *  - Only from the statuses the caller names. A bounced or complained contact
  *    is never in that list — those are deliverability states, and a consent
  *    act cannot clear them.
@@ -35,7 +41,7 @@ import { createHash } from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { consentEvents, contacts, suppressions } from '../../db/schema/index.js';
-import { suppressionEmailIs } from '../suppressions/email.js';
+import { suppressionEmailHash, suppressionEmailIs } from '../suppressions/email.js';
 
 /** How the recipient gave the consent being acted on. Required: no proof, no resubscribe. */
 export interface ConsentProof {
@@ -94,8 +100,21 @@ export async function resubscribeContact(
         .returning({ id: suppressions.id });
       lifted = removed.length;
     }
+    let liftedErasure = 0;
+    if (email && opts.proof.eventType === 'double_opt_in') {
+      const removed = await tx
+        .delete(suppressions)
+        .where(
+          and(
+            eq(suppressions.orgId, orgId),
+            eq(suppressions.emailHash, suppressionEmailHash(email)),
+          ),
+        )
+        .returning({ id: suppressions.id });
+      liftedErasure = removed.length;
+    }
     const changesStatus = contact.status !== 'active';
-    if (lifted > 0 || changesStatus) {
+    if (lifted > 0 || liftedErasure > 0 || changesStatus) {
       await tx.insert(consentEvents).values({
         orgId,
         contactId,
@@ -111,6 +130,7 @@ export async function resubscribeContact(
           ...opts.proof.payload,
           fromStatus: contact.status,
           liftedUnsubscribe: lifted > 0,
+          liftedErasure: liftedErasure > 0,
         },
       });
     }

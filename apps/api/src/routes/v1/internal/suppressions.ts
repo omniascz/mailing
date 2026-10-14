@@ -10,8 +10,9 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { suppressions, suppressionReasonEnum } from '../../../db/schema/index.js';
 import {
+  blockedAmong,
+  suppressionBlocksAny,
   suppressionEmail,
-  suppressionEmailIn,
   suppressionEmailIs,
 } from '../../../services/suppressions/email.js';
 
@@ -40,20 +41,22 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
       }
 
       // Case-insensitive on both sides. Only the recipient used to be
-      // lower-cased: a row stored as Jan@X.cz matched nobody (Z144).
+      // lower-cased: a row stored as Jan@X.cz matched nobody (Z144). And by
+      // the hash an erasure leaves in place of the address (Z145).
       const rows = await db
-        .select({ email: suppressions.email })
+        .select({ email: suppressions.email, emailHash: suppressions.emailHash })
         .from(suppressions)
         .where(
           and(
             eq(suppressions.orgId, body.orgId),
-            suppressionEmailIn(body.emails),
+            suppressionBlocksAny(body.emails),
             body.reasons ? inArray(suppressions.reason, body.reasons) : undefined,
           ),
         );
 
-      // An address can hold several reasons, one row each; answer it once.
-      const suppressed = [...new Set(rows.map((r) => r.email).filter((e): e is string => !!e))];
+      // The caller's addresses, once each: an erasure row has no address to
+      // answer with, and an address can hold several reasons, one row each.
+      const suppressed = [...new Set(blockedAmong(body.emails, rows))];
       return reply.send({ data: { suppressed } });
     },
   );

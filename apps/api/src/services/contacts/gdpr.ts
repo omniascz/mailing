@@ -7,8 +7,10 @@
  *     while keeping the row id so foreign-key references in
  *     email_events / suppressions / segment memberships don't fall over.
  *   - Sets deletedAt and gdprAnonymizedAt timestamps so audit-traceable.
- *   - Adds the original email's SHA-256 to suppressions so a future
- *     accidental import can't re-add the same identity.
+ *   - Adds the original email's SHA-256 to suppressions (email_hash), in
+ *     the same transaction as the scrub, so the same address created again
+ *     by an import, a form or the API is still never mailed. Only the
+ *     person's double opt-in confirmation lifts it.
  *   - Anonymises matching email_events rows (clears userAgent + IP)
  *     to avoid retaining behavioral PII tied to the identity.
  *
@@ -21,11 +23,11 @@
  * only thing worse than a data-subject complaint.
  */
 
-import crypto from 'node:crypto';
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts, emailEvents, suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { suppressionEmailHash } from '../suppressions/email.js';
 
 export interface GdprAnonymizeResult {
   contactId: string;
@@ -107,30 +109,54 @@ export async function anonymizeContact(
 
   if (!contact) throw AppError.notFound('Contact');
 
-  const originalEmail = (contact.email ?? '').toLowerCase().trim();
-  const emailHash = originalEmail
-    ? crypto.createHash('sha256').update(originalEmail).digest('hex')
-    : '';
+  const emailHash = contact.email?.trim() ? suppressionEmailHash(contact.email) : '';
 
   const now = new Date();
 
-  // Scrub PII fields. We keep the row + foreign-key references intact;
-  // email/phone/names go null; customFields keeps only the anonymise
-  // audit marker so the row's history is reconstructable from logs.
-  await db
-    .update(contacts)
-    .set({
-      email: null,
-      phone: null,
-      firstName: null,
-      lastName: null,
-      customFields: {
-        gdpr_anonymized_at: now.toISOString(),
-        gdpr_email_hash: emailHash,
-      },
-      deletedAt: now,
-    })
-    .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
+  // The scrub and the suppression that keeps the erased person from being
+  // mailed again commit together or not at all. The suppression used to be
+  // inserted last and "best-effort": a failed insert was swallowed and the
+  // anonymisation answered 200 with the person scrubbed and unsuppressed — the
+  // same address created again got every campaign (Z145, measured with a forced
+  // insert failure). Now a failed insert fails the request and leaves the
+  // contact as it was, so the erasure can simply be asked for again.
+  await db.transaction(async (tx) => {
+    // Scrub PII fields. We keep the row + foreign-key references intact;
+    // email/phone/names go null; customFields keeps only the anonymise
+    // audit marker so the row's history is reconstructable from logs.
+    await tx
+      .update(contacts)
+      .set({
+        email: null,
+        phone: null,
+        firstName: null,
+        lastName: null,
+        customFields: {
+          gdpr_anonymized_at: now.toISOString(),
+          gdpr_email_hash: emailHash,
+        },
+        deletedAt: now,
+      })
+      .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)));
+
+    // Permanent suppression by hash. Prevents a re-import, a form or an API
+    // call from mailing the identity again: every send decision matches
+    // email_hash (services/suppressions/email.ts), and only the person's own
+    // double opt-in confirmation lifts it (services/contacts/resubscribe.ts).
+    // The address itself is not kept, so the suppression doesn't double as a
+    // re-identification vector. notes keeps the form rows had before
+    // migration 0035 moved the hash into its own column.
+    if (emailHash) {
+      await tx.insert(suppressions).values({
+        orgId,
+        email: null,
+        phone: null,
+        reason: 'manual',
+        emailHash,
+        notes: `gdpr_anonymized:${emailHash}`,
+      });
+    }
+  });
 
   // Clear behavioral PII from related email_events. We keep aggregate
   // event counts (the row itself stays) but nuke IP + UA so the event
@@ -155,28 +181,6 @@ export async function anonymizeContact(
   // contact's PII (reviews, tickets, notes, deals, SMS logs, consent rows,
   // loyalty, …). Discovered dynamically so coverage tracks the schema.
   const relatedRowsDeleted = await eraseRelatedRows(orgId, contactId);
-
-  // Permanent suppression by hash. Prevents an accidental re-import (e.g.
-  // a customer re-syncing Shopify) from resurrecting the identity. We
-  // store the SHA-256 in the notes field rather than the email field so
-  // the suppression doesn't double as a re-identification vector.
-  if (emailHash) {
-    try {
-      await db
-        .insert(suppressions)
-        .values({
-          orgId,
-          email: null,
-          phone: null,
-          reason: 'manual',
-          notes: `gdpr_anonymized:${emailHash}`,
-        })
-        .onConflictDoNothing();
-    } catch {
-      // Suppression insert is best-effort; the contact is already
-      // anonymised so re-import dedup would catch it via the hash above.
-    }
-  }
 
   return {
     contactId,
