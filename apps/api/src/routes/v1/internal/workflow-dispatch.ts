@@ -22,7 +22,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import {
   campaigns,
@@ -115,10 +115,11 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
       // A flow e-mail is marketing — the standing decision is that it stays off
       // the transactional path because an opt-out must stop it — so this branch
       // gates it as marketing, twice:
-      // - the contact's status: unsubscribed, bounced, complained or pending gets
-      //   nothing, the same four statuses batch-sender refuses (the shared
-      //   MARKETING_REFUSED_CONTACT_STATUSES). Answered as a skip with 200, so
-      //   the 'email' job completes and is not retried;
+      // - the contact's status: unsubscribed, bounced, complained, pending or
+      //   archived gets nothing, the same statuses batch-sender refuses (the
+      //   shared MARKETING_REFUSED_CONTACT_STATUSES; archived since Z153).
+      //   Answered as a skip with 200, so the 'email' job completes and is not
+      //   retried;
       // - purpose 'workflow_marketing', which makes mta-sender check every
       //   suppression reason, 'unsubscribe' included, where a transactional
       //   message is stopped by all but that one.
@@ -131,12 +132,34 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
       // inline HTML does not carry (batch-sender refuses raw HTML without
       // {{unsubscribe_url}}, Z151) — that, and the move, wait on the owner's
       // decision.
+      //
+      // A soft-deleted contact (deleted_at set) gets nothing either: mail to
+      // someone deleted is a send without consent (fixed rule of point 1). The
+      // contact query filtered only by id and org, so it was mailed (Z152 MIMO
+      // 1, measured); the template branch already dropped them, because
+      // /internal/contacts/batch filters deleted_at. The second query runs only
+      // when the first finds no one, so a deleted contact is told apart from
+      // one with no address. Z153.
       if (body.html) {
         const [contact] = await db
           .select({ email: contacts.email, status: contacts.status })
           .from(contacts)
-          .where(and(eq(contacts.id, body.contactId), eq(contacts.orgId, body.orgId)))
+          .where(
+            and(
+              eq(contacts.id, body.contactId),
+              eq(contacts.orgId, body.orgId),
+              isNull(contacts.deletedAt),
+            ),
+          )
           .limit(1);
+        if (!contact) {
+          const [deleted] = await db
+            .select({ id: contacts.id })
+            .from(contacts)
+            .where(and(eq(contacts.id, body.contactId), eq(contacts.orgId, body.orgId)))
+            .limit(1);
+          if (deleted) return reply.send({ data: { skipped: true, reason: 'contact deleted' } });
+        }
         if (!contact?.email)
           return reply.send({ data: { skipped: true, reason: 'no contact email' } });
         if (refusesMarketing(contact.status))

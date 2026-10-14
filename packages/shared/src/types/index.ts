@@ -16,12 +16,31 @@ export interface AppError {
 
 export type UserRole = 'owner' | 'admin' | 'editor' | 'viewer' | 'system_admin';
 
-export type ContactStatus = 'active' | 'unsubscribed' | 'bounced' | 'complained' | 'pending';
+/** Every value of the contact_status enum (apps/api db/schema/enums.ts). */
+export type ContactStatus =
+  | 'active'
+  | 'unsubscribed'
+  | 'bounced'
+  | 'complained'
+  | 'pending'
+  | 'non_subscribed'
+  | 'archived';
 
 /**
  * The contact statuses that get no marketing e-mail, whatever the suppression
- * list says: they opted out, the address bounced, they complained, or they
- * have not confirmed the double opt-in yet (no consent, zákon 480/2004 Sb.).
+ * list says: they opted out, the address bounced, they complained, they have
+ * not confirmed the double opt-in yet (no consent, zákon 480/2004 Sb.), or
+ * they were archived.
+ *
+ * 'archived' is "Removed from marketing" in the enum, and every campaign
+ * audience already leaves it out (listAudienceWhere,
+ * services/campaigns/auto-resend.ts). A flow e-mail still reached it, on the
+ * inline branch of the dispatch and on the template branch alike (measured,
+ * Z152 MIMO 1); listing it here closes both. Z153.
+ *
+ * 'non_subscribed' is deliberately NOT here, although the campaign audience
+ * leaves it out too: whether a flow may mail it waits on the owner's decision
+ * about § 7(3) zákona 480/2004 Sb. Until then it gets what it got.
  *
  * One list for both readers: the workers batch-sender (every broadcast and
  * triggered send) and the API's inline-HTML branch of the workflow dispatch
@@ -33,6 +52,7 @@ export const MARKETING_REFUSED_CONTACT_STATUSES: readonly ContactStatus[] = [
   'bounced',
   'complained',
   'pending',
+  'archived',
 ];
 
 /** Does this contact status refuse marketing e-mail (MARKETING_REFUSED_CONTACT_STATUSES)? */
