@@ -13,7 +13,7 @@
  * Cost tracking: every send is logged in sms_send_log.
  */
 
-import { eq, and, asc, sql } from 'drizzle-orm';
+import { eq, and, asc, isNull, sql } from 'drizzle-orm';
 import { emitWebhookEvent } from '../webhooks/emit.js';
 import { db } from '../../db/client.js';
 import { smsRoutes, smsSendLog } from '../../db/schema/sms.js';
@@ -26,6 +26,7 @@ import { TwilioSmsAdapter, type TwilioConfig } from '../../channels/sms/twilio-a
 import { checkSmsCompliance } from './compliance.js';
 import { resolveCouponMergeTags } from './coupon-merge.js';
 import { AppError } from '../../lib/app-error.js';
+import { refusesMarketing } from '@forgemsg/shared';
 import type { UnifiedMessage, Recipient, DeliveryResult } from '@forgemsg/shared';
 
 // ─── Phone → country code ─────────────────────────────────────────────────────
@@ -229,29 +230,74 @@ export async function routedSmsSend(
     }
   }
 
-  // Compliance gate for MARKETING SMS: consent, TCPA quiet hours (US), and
-  // opt-out text appended. Transactional SMS (OTP/receipts — no campaign/workflow)
-  // is exempt from consent + quiet hours. Throws AppError on block.
-  // (Previously this lived in a helper that the send path never called.)
-  const isMarketing = !!(message.campaignId || message.workflowId);
-  if (message.content.kind === 'sms' && isMarketing && recipient.contactId) {
-    // A contact whose double opt-in is still unconfirmed has given no consent
-    // for marketing on any channel, whatever sms_consents holds for the number
-    // (Z143: on master an SMS campaign went to them). Transactional SMS — no
-    // campaign, no workflow — is not affected.
+  // Contact-state gate for every SMS from a campaign or a flow (Z155).
+  //
+  // Michal, 13. 10.: an unsubscribed, complained or pending contact gets no
+  // marketing on ANY channel, and a flow is marketing. A flow's SMS job carries
+  // workflowRunId and never workflowId (actions.ts: send_sms and the SMS review
+  // request), so on master it went the transactional way and nobody read the
+  // contact's status — pending, unsubscribed and archived contacts all got it
+  // (measured, Z154). There is no exception for a node with priority
+  // 'transactional' (the ticketing day-of SMS with the ticket QR): the
+  // commissioner decided a flow SMS is a flow SMS, and an unsubscribed contact
+  // gets no ticket SMS either.
+  //
+  // A contact who is not found in this org, or is soft-deleted, gets nothing —
+  // the fixed rule of roadmap point 1 for a deleted contact.
+  //
+  // It runs BEFORE checkSmsCompliance: an sms_consents row is about the number,
+  // and consent on the number does not override a contact who unsubscribed.
+  // The statuses are MARKETING_REFUSED_CONTACT_STATUSES in @forgemsg/shared —
+  // the same list the e-mail paths read. Without a contactId (direct API,
+  // OTP, /transactional/sms) nothing changes.
+  const gatesContactState =
+    !!(message.campaignId || message.workflowId || message.workflowRunId) && !!recipient.contactId;
+  if (message.content.kind === 'sms' && gatesContactState) {
     const [contact] = await db
       .select({ status: contacts.status })
       .from(contacts)
-      .where(and(eq(contacts.id, recipient.contactId), eq(contacts.orgId, orgId)))
+      .where(
+        and(
+          eq(contacts.id, recipient.contactId!),
+          eq(contacts.orgId, orgId),
+          isNull(contacts.deletedAt),
+        ),
+      )
       .limit(1);
-    if (contact?.status === 'pending') {
+    if (!contact) {
+      throw new AppError({
+        code: 'CONTACT_UNAVAILABLE',
+        statusCode: 403,
+        message: 'Contact does not exist or was deleted; no campaign or flow SMS',
+      });
+    }
+    // A double opt-in not yet confirmed is no consent (Z143). Its own code, as before.
+    if (contact.status === 'pending') {
       throw new AppError({
         code: 'CONSENT_PENDING',
         statusCode: 403,
         message: 'Contact has not confirmed the double opt-in; no marketing SMS until they do',
       });
     }
+    if (refusesMarketing(contact.status)) {
+      throw new AppError({
+        code: 'MARKETING_REFUSED',
+        statusCode: 403,
+        message: `Contact status is '${contact.status}'; no campaign or flow SMS`,
+      });
+    }
   }
+
+  // Compliance gate for MARKETING SMS: consent on the number, TCPA quiet hours
+  // (US), and opt-out text appended. Transactional SMS (OTP/receipts — no
+  // campaign/workflow) is exempt from consent + quiet hours. Throws AppError on
+  // block. (Previously this lived in a helper that the send path never called.)
+  //
+  // workflowRunId is deliberately NOT here: a flow SMS gets the contact-state
+  // gate above, but whether it needs sms_consents, quiet hours and the opt-out
+  // suffix is the owner's open question (per-channel consent model), so it
+  // behaves exactly as before on those (Z155).
+  const isMarketing = !!(message.campaignId || message.workflowId);
   if (message.content.kind === 'sms' && isMarketing) {
     const compliance = await checkSmsCompliance(orgId, phone, message.content.body, country, {
       requireConsent: true,

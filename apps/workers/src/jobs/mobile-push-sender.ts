@@ -11,6 +11,7 @@
 import { Worker, type Job } from 'bullmq';
 import { connection, QUEUE_NAMES } from '../queues/index.js';
 import { captureJobException } from '../lib/telemetry.js';
+import { marketingSkip } from '../lib/contact-status.js';
 
 export interface MobilePushJobData {
   orgId: string;
@@ -24,6 +25,16 @@ export interface MobilePushJobData {
 async function processMobilePush(job: Job<MobilePushJobData>) {
   const d = job.data;
   if (!d.title && !d.body) return { skipped: 'empty' };
+
+  // Campaign push only, so marketing: a contact who refuses it, is pending, or
+  // is not found / deleted gets none (Michal, 13. 10. — "no channel"; roadmap
+  // point 1 for a deleted contact). Checked before the service touches a
+  // device; an HTTP error throws and BullMQ retries. Z155.
+  const skip = await marketingSkip(d.orgId, d.contactId);
+  if (skip) {
+    job.log(`contact ${d.contactId}: ${skip} — not sent`);
+    return { status: skip };
+  }
 
   const { sendContactMobilePush } = await import('@forgemsg/api/services/push/mobile');
   const summary = await sendContactMobilePush(

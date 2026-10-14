@@ -13,7 +13,8 @@
  *   - push     → 'push-send' (web push) + 'mobile-push-send' (APNs/FCM)
  */
 
-import { and, eq, isNull, sql, type SQL } from 'drizzle-orm';
+import { and, eq, isNull, notInArray, sql, type SQL } from 'drizzle-orm';
+import { MARKETING_REFUSED_CONTACT_STATUSES, type ContactStatus } from '@forgemsg/shared';
 import { db } from '../../db/client.js';
 import { campaigns, contacts, segments, type Campaign } from '../../db/schema/index.js';
 import { buildSegmentWhere } from '../segments/query-builder.js';
@@ -33,6 +34,12 @@ export interface ChannelDispatchResult {
   skipped: number;
 }
 
+/** Statuses a channel campaign never reaches: the shared list + 'non_subscribed'. */
+const CHANNEL_AUDIENCE_EXCLUDED_STATUSES: ContactStatus[] = [
+  ...MARKETING_REFUSED_CONTACT_STATUSES,
+  'non_subscribed',
+];
+
 /** Build the WHERE predicate for a stored segment, or null if missing. */
 async function segmentPredicate(orgId: string, segmentId: string): Promise<SQL | null> {
   const [seg] = await db
@@ -47,8 +54,15 @@ async function segmentPredicate(orgId: string, segmentId: string): Promise<SQL |
 /**
  * Resolve a channel campaign's audience → contact id + phone rows. Applies
  * list membership AND/OR segment conditions, subtracts an exclude segment, and
- * drops marketing-ineligible statuses (archived / non_subscribed / pending). Suppression
- * + per-recipient consent are enforced downstream (routedSmsSend compliance).
+ * drops soft-deleted contacts and every status that gets no marketing:
+ * MARKETING_REFUSED_CONTACT_STATUSES (unsubscribed, bounced, complained,
+ * pending, archived) plus 'non_subscribed'.
+ *
+ * What happens downstream, as it is: an SMS job passes routedSmsSend's
+ * contact-state gate again and then needs an sms_consents row on the number
+ * (checkSmsCompliance); WhatsApp, web push and mobile push workers re-read the
+ * contact's status before the adapter. E-mail suppression rows are NOT applied
+ * to these channels — they are about an address, not a phone or a device.
  */
 export async function resolveChannelAudience(
   orgId: string,
@@ -57,10 +71,15 @@ export async function resolveChannelAudience(
   const conds: SQL[] = [
     eq(contacts.orgId, orgId),
     isNull(contacts.deletedAt),
-    // 'pending' = a double opt-in not yet confirmed: no consent. Refused again
-    // at send (routedSmsSend, whatsapp-sender); left out here so the campaign
-    // does not count or enqueue them.
-    sql`${contacts.status} NOT IN ('archived', 'non_subscribed', 'pending')`,
+    // A contact who refuses marketing gets it on no channel (Michal, 13. 10.).
+    // Before Z155 only archived / non_subscribed / pending were left out, so an
+    // SMS, WhatsApp or push campaign queued unsubscribed, bounced and complained
+    // contacts, and every one but SMS without sms_consents reached the adapter
+    // (measured, Z154). Refused again at send (routedSmsSend and the channel
+    // workers); left out here so the campaign does not count or enqueue them.
+    // 'non_subscribed' is not in the shared list (§ 7(3), Michal) but a channel
+    // campaign has always left it out, so it stays out here.
+    notInArray(contacts.status, CHANNEL_AUDIENCE_EXCLUDED_STATUSES),
   ];
 
   let hasSource = false;

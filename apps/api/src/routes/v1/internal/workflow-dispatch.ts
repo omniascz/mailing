@@ -306,12 +306,19 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
             content: { kind: 'sms', body: body.message },
             ...(body.campaignId ? { campaignId: body.campaignId } : {}),
             ...(body.workflowId ? { workflowId: body.workflowId } : {}),
+            ...(body.workflowRunId ? { workflowRunId: body.workflowRunId } : {}),
           },
           { contactId: body.contactId, phone: body.phone },
         );
         return reply.send({ data: { messageId: result.messageId, status: result.status } });
       } catch (err) {
-        return reply.status(502).send({ error: (err as Error).message });
+        // The code says which gate stopped it (CONTACT_UNAVAILABLE /
+        // CONSENT_PENDING / MARKETING_REFUSED, Z155); the status is unchanged.
+        const code = (err as { code?: unknown }).code;
+        return reply.status(502).send({
+          error: (err as Error).message,
+          ...(typeof code === 'string' ? { code } : {}),
+        });
       }
     },
   );

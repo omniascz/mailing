@@ -10,6 +10,7 @@
 import { Worker, type Job } from 'bullmq';
 import { connection, QUEUE_NAMES } from '../queues/index.js';
 import { captureJobException } from '../lib/telemetry.js';
+import { marketingSkip } from '../lib/contact-status.js';
 
 export interface PushSendJobData {
   orgId: string;
@@ -25,6 +26,17 @@ async function processPushSend(
 ): Promise<{ messageId: string; status: string }> {
   const data = job.data;
   if (!data.title && !data.body) return { messageId: '', status: 'skipped_empty' };
+
+  // Campaign and flow push only, so marketing: a contact who refuses it, is
+  // pending, or is not found / deleted gets none (Michal, 13. 10. — "no
+  // channel"; a flow is marketing; roadmap point 1 for a deleted contact). On
+  // master a flow pushed to a deleted contact (Z154). Checked before the
+  // adapter; an HTTP error throws and BullMQ retries. Z155.
+  const skip = await marketingSkip(data.orgId, data.contactId);
+  if (skip) {
+    job.log(`contact ${data.contactId}: ${skip} — not sent`);
+    return { messageId: '', status: skip };
+  }
 
   const { getPushAdapterForOrg } = await import('@forgemsg/api/services/push/get-adapter');
   const adapter = await getPushAdapterForOrg(data.orgId);
