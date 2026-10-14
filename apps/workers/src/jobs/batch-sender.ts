@@ -27,7 +27,12 @@ import {
 import { readCampaignContent } from '@forgemsg/editor/schema';
 import type { CampaignContentShape } from '@forgemsg/editor/schema';
 import { assertOptOutPresent } from '../lib/optout-guard.js';
-import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/shared';
+import {
+  injectOpenPixel,
+  wrapLinks,
+  createTrackingToken,
+  refusesMarketing,
+} from '@forgemsg/shared';
 // Cross-package import (same pattern as mta-sender → isp-throttle): the coupon
 // resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
 import { resolveEmailCouponTags } from '@forgemsg/api/services/campaigns/email-coupon-merge';
@@ -332,17 +337,13 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   // measured). They get mail once GET /confirm/:token makes them active.
   // Transactional mail is unchanged: a status says nothing a row does not, and
   // the row reasons that stop a receipt are mta-sender's call (#225).
+  //
+  // The four statuses are MARKETING_REFUSED_CONTACT_STATUSES in @forgemsg/shared;
+  // the API's inline-HTML flow branch (workflow-dispatch.ts) reads the same list.
   const refusedByStatusSet = new Set<string>();
   if (stream !== 'transactional') {
     for (const c of contacts) {
-      if (
-        c.status === 'unsubscribed' ||
-        c.status === 'bounced' ||
-        c.status === 'complained' ||
-        c.status === 'pending'
-      ) {
-        refusedByStatusSet.add(c.id);
-      }
+      if (refusesMarketing(c.status)) refusedByStatusSet.add(c.id);
     }
   }
 
