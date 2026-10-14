@@ -13,13 +13,12 @@
  * focused on collecting facts.
  */
 
-import { and, countDistinct, eq, gte, sql } from 'drizzle-orm';
+import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   campaigns,
   sendingDomains,
   emailEvents,
-  suppressions,
   contactLists,
   contacts,
   dedicatedIps,
@@ -56,7 +55,7 @@ import {
 import { checkFrequencyCap } from '../frequency-capping/index.js';
 import { deliveryDenominators, MIN_OUTCOME_SAMPLE } from '../deliverability/pure.js';
 import { countAudience } from '../campaigns/auto-resend.js';
-import { suppressionEmailIn } from '../suppressions/email.js';
+import { addressUnsuppressed } from '../suppressions/email.js';
 import { renderEmail as renderBlocks } from '@forgemsg/editor/render';
 import { readCampaignContent } from '@forgemsg/editor/schema';
 import { listWarmupStatuses } from '../sending/ip-warmup.js';
@@ -399,25 +398,22 @@ async function fetchSuppressionOverlap(orgId: string, campaignId: string): Promi
     .limit(1);
   if (!camp?.listId) return 0;
 
-  // Sample contact emails via junction table
-  const rows = await db
-    .select({ email: contacts.email })
-    .from(contactLists)
-    .innerJoin(contacts, and(eq(contacts.id, contactLists.contactId), eq(contacts.orgId, orgId)))
-    .where(eq(contactLists.listId, camp.listId))
-    .limit(SAMPLE_LIMIT);
-
-  if (rows.length === 0) return 0;
-
-  const emails = rows.map((r) => r.email).filter(Boolean) as string[];
-  if (emails.length === 0) return 0;
-
-  // Count how many of those emails appear in the suppression table — once
-  // each, as an address can hold a row per reason.
-  const [result] = await db
-    .select({ n: countDistinct(sql`lower(${suppressions.email})`) })
-    .from(suppressions)
-    .where(and(eq(suppressions.orgId, orgId), suppressionEmailIn(emails)));
+  // Of a sample of the list's addresses, how many a suppression stops — once
+  // each, as an address can hold a row per reason. Matched in the database
+  // rather than by sending the sample back as parameters: an erasure is
+  // matched by hash as well as by address (Z145), and 50 000 addresses plus
+  // 50 000 hashes would be past Postgres's 65 535 bind parameters.
+  const [result] = (await db.execute(sql`
+    SELECT count(DISTINCT lower(sample.email))::int AS n
+    FROM (
+      SELECT c.org_id, c.email
+      FROM ${contactLists} cl
+      JOIN ${contacts} c ON c.id = cl.contact_id AND c.org_id = ${orgId}
+      WHERE cl.list_id = ${camp.listId}
+      LIMIT ${SAMPLE_LIMIT}
+    ) sample
+    WHERE NOT ${addressUnsuppressed(sql`sample.org_id`, sql`sample.email`)}
+  `)) as unknown as Array<{ n: number }>;
 
   return result?.n ?? 0;
 }

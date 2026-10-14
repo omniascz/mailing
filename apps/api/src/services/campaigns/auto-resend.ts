@@ -28,6 +28,7 @@ import { and, eq, sql, isNotNull } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { campaigns, emailEvents, type Campaign } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { addressUnsuppressed } from '../suppressions/email.js';
 
 export interface ScheduleResendInput {
   /** Hours after parent.sentAt to fire the resend. Min 1, max 168 (7 days). */
@@ -201,11 +202,8 @@ function listAudienceWhere(orgId: string, listId: string) {
       -- A suppressed address, of any reason: batch-sender refuses it for every
       -- marketing stream, so counting it made the pre-send panel promise a
       -- send that did not happen (Z144: 2 counted, 1 sent). Case-insensitive,
-      -- as the batch sender's check is.
-      AND NOT EXISTS (
-        SELECT 1 FROM "suppressions" s
-        WHERE s."org_id" = c."org_id" AND lower(s."email") = lower(c."email")
-      )
+      -- and by an erasure's hash, as the batch sender's check is (Z145).
+      AND ${addressUnsuppressed(sql`c."org_id"`, sql`c."email"`)}
   `;
 }
 

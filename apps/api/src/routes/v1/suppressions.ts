@@ -147,6 +147,11 @@ export default async function suppressionRoutes(app: FastifyInstance) {
    * (services/contacts/resubscribe.ts). This route used to delete any row for
    * any role, viewer included, and the next edit to 'active' then mailed an
    * unsubscribed or complaining address (Z142, measured).
+   *
+   * Nor is the row an erasure leaves (email_hash set, services/contacts/
+   * gdpr.ts): the person was deleted at their request and stays suppressed
+   * until they give consent again, which only their double opt-in confirmation
+   * records. Owner and admin alike; it used to answer 204 to both (Z145).
    */
   app.delete(
     '/api/v1/suppressions/:id',
@@ -165,6 +170,22 @@ export default async function suppressionRoutes(app: FastifyInstance) {
           .for('update')
           .limit(1);
         if (!row) throw AppError.notFound('Suppression');
+        if (row.emailHash) {
+          throw new AppError({
+            code: 'ERASURE_SUPPRESSION',
+            statusCode: 409,
+            message:
+              'This suppression keeps an erased person from being mailed and cannot be removed',
+            details: {
+              reason: 'gdpr_erasure',
+              explanation:
+                'The contact was anonymised at their request (right to erasure). Their address is ' +
+                'kept only as a hash, and mail to it stays stopped until the person confirms a ' +
+                'double opt-in subscription again, which lifts this row and records their consent. ' +
+                'Neither an owner nor an admin can remove it.',
+            },
+          });
+        }
         if (RECIPIENT_REFUSALS.includes(row.reason)) {
           throw new AppError({
             code: 'CONSENT_REQUIRED',

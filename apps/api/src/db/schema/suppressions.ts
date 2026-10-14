@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { suppressionReasonEnum } from './enums.js';
 
@@ -14,6 +14,13 @@ export const suppressions = pgTable(
     phone: varchar('phone', { length: 32 }),
     reason: suppressionReasonEnum('reason').notNull(),
     notes: varchar('notes', { length: 1000 }),
+    /**
+     * SHA-256 (hex) of the address an erasure removed, suppressionEmailHash().
+     * Set on the row anonymizeContact writes in place of `email`, so the
+     * erased person stays suppressed without the list keeping their address.
+     * Every send decision matches it (services/suppressions/email.ts).
+     */
+    emailHash: text('email_hash'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -29,6 +36,7 @@ export const suppressions = pgTable(
     // Every lookup that decides a send matches lower(email) on both sides
     // (services/suppressions/email.ts), which no index above can serve.
     index('suppressions_org_lower_email_idx').on(t.orgId, sql`lower(${t.email})`),
+    index('suppressions_org_email_hash_idx').on(t.orgId, t.emailHash),
   ],
 );
 
