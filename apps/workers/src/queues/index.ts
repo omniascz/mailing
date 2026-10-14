@@ -652,6 +652,14 @@ export interface MtaSendJobData {
    * queued before the flag existed are recognised by campaignId === orgId.
    */
   campaignIsPlaceholder?: boolean;
+  /**
+   * Set only by the API's list double opt-in sender (services/subscriptions/
+   * doi.ts, through sendTransactionalEmail's second argument): the
+   * confirmation the recipient asked for, which a 'manual' suppression does
+   * not stop (mta-sender, isSuppressed). No customer input reaches it — their
+   * headers travel inside customHeaders, never at the top of the job (Z148).
+   */
+  purpose?: 'doi_confirmation';
   orgId: string;
   contactId: string;
   messageId: string;

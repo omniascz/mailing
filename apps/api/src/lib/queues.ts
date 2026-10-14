@@ -230,6 +230,21 @@ export interface TransactionalEmailInput {
   scheduleJobId?: string;
 }
 
+/**
+ * What a system message is for, when that changes which suppressions stop it.
+ *
+ * One value: the confirmation e-mail of a list double opt-in, which the
+ * mta-sender gate lets through a 'manual' suppression — the person asked for it
+ * by submitting the form, and it carries nothing but the link that is their
+ * only way back after an erasure (owner's decision, 14 Oct 2026; Z148).
+ *
+ * Deliberately NOT a field of TransactionalEmailInput. Customer paths build
+ * that object from a request; a field there is one spread away from being
+ * settable by anyone with an API key. This is a separate argument, and the one
+ * caller that passes it is services/subscriptions/doi.ts.
+ */
+export type TransactionalPurpose = 'doi_confirmation';
+
 /** Deterministic jobIds for a scheduled email's per-recipient jobs. */
 export function scheduledEmailJobIds(bareMessageId: string, recipientCount: number): string[] {
   const safe = bareMessageId.replace(/[^A-Za-z0-9_-]/g, '');
@@ -287,7 +302,10 @@ export async function cancelQueuedEmails(jobIds: string[]): Promise<number> {
  * inline (small enough that a real templating system is overkill).
  * For marketing emails go through the campaign-splitter flow instead.
  */
-export async function sendTransactionalEmail(input: TransactionalEmailInput): Promise<string> {
+export async function sendTransactionalEmail(
+  input: TransactionalEmailInput,
+  system?: { purpose: TransactionalPurpose },
+): Promise<string> {
   const messageId = input.messageId ?? `<txn-${randomUUID()}@forgemsg>`;
 
   // Sandbox: `fm_test_` keys record the intent (the caller still writes the
@@ -395,6 +413,8 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput): Pr
       // neither names a row, and mta-sender says so when it records events
       // (workers MtaSendJobData.campaignIsPlaceholder).
       campaignIsPlaceholder: true,
+      // From the second argument only, never from `input` (TransactionalPurpose).
+      ...(system ? { purpose: system.purpose } : {}),
       // Spread as a group or not at all. mta-sender keys the whole gRPC dkim
       // message off `data.dkimDomain` being truthy, so an empty-string domain
       // would send the engine a config with no key — which it then skips on the

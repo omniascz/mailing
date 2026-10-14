@@ -409,6 +409,32 @@ const SUPPRESSES_TRANSACTIONAL = [
 ] as const;
 
 /**
+ * The reasons that stop a list double opt-in confirmation: the transactional
+ * ones without 'manual'.
+ *
+ * 'manual' is what a GDPR erasure leaves (by hash), what an operator adds by
+ * hand (POST /suppressions, and the MCP suppress_contact tool through it) and
+ * what graymail writes. For this one mail it is
+ * not a refusal: the person asked for it by submitting the form, it carries
+ * only the confirmation link, and that link is the only way an erased person
+ * comes back (resubscribe.ts lifts the erasure on the confirmation, and on
+ * nothing else). Nothing else is lifted by sending it — marketing stays
+ * blocked until the link is clicked. Owner's decision, 14 Oct 2026 (Z148).
+ *
+ * A bounce, a complaint, a block or an invalid address still stop it: the
+ * address does not work, or its owner reported us.
+ */
+const SUPPRESSES_DOI_CONFIRMATION = SUPPRESSES_TRANSACTIONAL.filter((r) => r !== 'manual');
+
+/** The reasons that count for this job; undefined means every reason. */
+function reasonsFor(data: MtaSendJobData): readonly string[] | undefined {
+  if (data.stream !== 'transactional') return undefined;
+  return data.purpose === 'doi_confirmation'
+    ? SUPPRESSES_DOI_CONFIRMATION
+    : SUPPRESSES_TRANSACTIONAL;
+}
+
+/**
  * Is this recipient suppressed for the job's org, asked at the moment of
  * sending?
  *
@@ -429,6 +455,7 @@ const SUPPRESSES_TRANSACTIONAL = [
  */
 async function isSuppressed(data: MtaSendJobData): Promise<boolean> {
   const path = '/internal/suppressions/check-batch';
+  const reasons = reasonsFor(data);
   let suppressed: unknown;
   try {
     const res = await fetch(`${API_URL}/api/v1${path}`, {
@@ -437,7 +464,7 @@ async function isSuppressed(data: MtaSendJobData): Promise<boolean> {
       body: JSON.stringify({
         orgId: data.orgId,
         emails: [data.toEmail],
-        ...(data.stream === 'transactional' ? { reasons: SUPPRESSES_TRANSACTIONAL } : {}),
+        ...(reasons ? { reasons } : {}),
       }),
     });
     throwIfPermanentFailure(res, path, data.orgId);

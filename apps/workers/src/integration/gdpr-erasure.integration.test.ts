@@ -47,11 +47,13 @@ import {
 } from '../queues/index.js';
 
 // Hoisted with the mock: the factory runs while the imports above load.
-const engine = vi.hoisted(() => ({ handed: [] as { to: string; subject: string }[] }));
+const engine = vi.hoisted(() => ({
+  handed: [] as { to: string; subject: string; html: string }[],
+}));
 vi.mock('../lib/mta-grpc-client.js', () => ({
   close: () => {},
-  send: async (msg: { toEmail: string; subject: string }) => {
-    engine.handed.push({ to: msg.toEmail, subject: msg.subject });
+  send: async (msg: { toEmail: string; subject: string; htmlBody: string }) => {
+    engine.handed.push({ to: msg.toEmail, subject: msg.subject, html: msg.htmlBody });
     return {
       success: true,
       messageId: 'm',
@@ -487,20 +489,31 @@ describe('an erased person stays suppressed until their own double opt-in', () =
     await onList(formList, await contactRow(control));
     expect((await campaignTo(formList, [address, control])).reached).toEqual([control]);
 
-    // The person's own double opt-in, confirmed from the link.
+    // The person's own double opt-in, confirmed from the link in the e-mail.
+    //
+    // This used to confirm with the `_devToken` the subscribe route returns
+    // outside production, and to drop the e-mail unread. It proved that the
+    // confirmation lifts the erasure — through a door production does not
+    // have: the e-mail itself was stopped at the mta-sender gate ('manual'
+    // stops transactional mail), so no real recipient ever held the link.
+    // Since Z148 the confirmation passes a 'manual' row, and the link is read
+    // from what the engine was handed. Fetched by its path against API_URL:
+    // the host part is API_PUBLIC_URL, which this run does not set.
     const doiList = await newList('doi', 1);
     const sub = await fetch(`${API}/api/v1/lists/${doiList}/subscribe`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: address }),
     });
-    const subBody = (await sub.json()) as { data: { _devToken?: string } };
     expect(sub.status).toBe(202);
-    await deliver(address);
-    expect(subBody.data._devToken, 'the dev token of the confirmation link').toBeTruthy();
-    const confirm = await fetch(`${API}/api/v1/confirm/${subBody.data._devToken}`, {
-      redirect: 'manual',
-    });
+    engine.handed.length = 0;
+    expect(await deliver(address), 'the confirmation was stopped at the gate').toEqual(['sent']);
+    const [mail] = engine.handed.filter(
+      (m) => m.to === address && m.subject.startsWith('Confirm your subscription'),
+    );
+    const link = /href="[^"]*?(\/api\/v1\/confirm\/[0-9a-f-]{36})"/.exec(mail?.html ?? '')?.[1];
+    expect(link, 'no confirmation link in the e-mail').toBeTruthy();
+    const confirm = await fetch(`${API}${link}`, { redirect: 'manual' });
     expect(confirm.status).toBeLessThan(400);
 
     expect(await erasureRows(address), 'the confirmation did not lift the erasure').toEqual([]);
