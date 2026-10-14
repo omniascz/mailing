@@ -338,7 +338,13 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   // Transactional mail is unchanged: a status says nothing a row does not, and
   // the row reasons that stop a receipt are mta-sender's call (#225).
   //
-  // The four statuses are MARKETING_REFUSED_CONTACT_STATUSES in @forgemsg/shared;
+  // 'archived' too ("Removed from marketing"). The campaign audience already
+  // leaves it out, so a broadcast loses no one; a flow e-mail on the template
+  // branch reached it, because this check refused only the four above (Z152
+  // MIMO 1, measured). 'non_subscribed' is not refused here — that waits on
+  // the owner's decision about § 7(3). Z153.
+  //
+  // The statuses are MARKETING_REFUSED_CONTACT_STATUSES in @forgemsg/shared;
   // the API's inline-HTML flow branch (workflow-dispatch.ts) reads the same list.
   const refusedByStatusSet = new Set<string>();
   if (stream !== 'transactional') {
