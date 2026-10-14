@@ -315,7 +315,8 @@ export async function updateContact(
     .limit(1);
 
   // Every single-contact edit comes through here, so this is where an edit is
-  // stopped from lifting a recipient's refusal (./consent-hold.ts). An archive
+  // stopped from lifting a recipient's refusal, or from making a contact who
+  // never said yes (pending, non_subscribed) active (./consent-hold.ts). An archive
   // keeps the status it replaced; any other status leaves the archive and
   // clears it.
   const nextStatus = (patch as { status?: Contact['status'] }).status;
