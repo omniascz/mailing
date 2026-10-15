@@ -26,7 +26,10 @@
 --   (iii) config.builtInTemplateId is that node's e-mail;
 --   (iv)  config.subject is byte for byte the template node's subject;
 --   (v)   config.templateId is a live template of the same organisation named
---         like that built-in e-mail — the copy the fork made or reuses;
+--         like that built-in e-mail and created no later than the flow — the
+--         copy the fork made or reused. (The web editor cannot change
+--         templateId; PUT /workflows can. A swap to another e-mail fails the
+--         name, a swap to a row made after the fork fails the date.);
 --   (vi)  config.priority is not set.
 -- A flow is changed only when every informational node of its template holds
 -- all six: a fork whose subject was edited, whose e-mail was swapped or whose
@@ -73,6 +76,7 @@ matched AS (
         AND t.org_id = w.org_id
         AND t.name = i.email_name
         AND t.deleted_at IS NULL
+        AND t.created_at <= w.created_at
     )
 ),
 whole AS (
