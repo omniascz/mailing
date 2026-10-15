@@ -2,7 +2,7 @@
  * Internal tracking-domain resolution — called by batch-sender once per
  * batch to learn the URL prefix for open-pixel + click-redirect links.
  *
- * Resolution:
+ * Resolution (services/sending/tracking-base-url.ts):
  *  1. Look up the org's verified sending domain (return_path_verified=true).
  *  2. If found AND mailSubdomain is set → return https://{mailSubdomain}.
  *     The customer's DNS CNAME points this subdomain to our tracking
@@ -21,11 +21,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { and, eq } from 'drizzle-orm';
-import { db } from '../../../db/client.js';
-import { sendingDomains } from '../../../db/schema/index.js';
-
-const DEFAULT_TRACKING_BASE_URL = process.env.TRACKING_BASE_URL ?? 'https://track.example.invalid';
+import { resolveTrackingBaseUrl } from '../../../services/sending/tracking-base-url.js';
 
 const internalTrackingDomainRoutes: FastifyPluginAsync = async (app) => {
   app.get(
@@ -40,34 +36,10 @@ const internalTrackingDomainRoutes: FastifyPluginAsync = async (app) => {
         })
         .parse(req.query);
 
-      // Pick the first verified domain with a mailSubdomain. An org can have
-      // multiple sending domains; we currently use the first verified one as
-      // the tracking host. Future Sprint B.6 follow-up could expose
-      // per-campaign domain selection.
-      const [row] = await db
-        .select({
-          mailSubdomain: sendingDomains.mailSubdomain,
-          returnPathVerified: sendingDomains.returnPathVerified,
-        })
-        .from(sendingDomains)
-        .where(and(eq(sendingDomains.orgId, orgId), eq(sendingDomains.returnPathVerified, true)))
-        .limit(1);
-
-      if (row?.mailSubdomain && row.returnPathVerified) {
-        return reply.send({
-          data: {
-            baseUrl: `https://${row.mailSubdomain}`,
-            branded: true,
-          },
-        });
-      }
-
-      return reply.send({
-        data: {
-          baseUrl: DEFAULT_TRACKING_BASE_URL,
-          branded: false,
-        },
-      });
+      // The resolution lives in services/sending/tracking-base-url.ts so the
+      // inline flow e-mail, which builds its unsubscribe URL in the API, uses
+      // the same host as batch-sender does through this route (Z157).
+      return reply.send({ data: await resolveTrackingBaseUrl(orgId) });
     },
   );
 };
