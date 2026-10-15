@@ -62,24 +62,35 @@ export function refusesMarketing(status: string | null | undefined): boolean {
 
 /**
  * The refused statuses a flow's transactional exception lets through: a
- * send_sms or inline send_email node with priority 'transactional', in a flow
- * started by a trigger on the closed list (TRANSACTIONAL_FLOW_TRIGGERS in the
- * API's services/workflows/transactional-exception.ts) — the ticket, the
- * order, the change or cancellation of an event.
+ * send_sms or send_email node (inline HTML or a template) with priority
+ * 'transactional', in a flow started by a trigger on the closed list
+ * (TRANSACTIONAL_FLOW_TRIGGERS in the API's
+ * services/workflows/transactional-exception.ts) — the ticket, the order, the
+ * change or cancellation of an event.
  *
- * Michal, 14. 10. 22:10: such a node reaches an unsubscribed, complained or
- * non_subscribed contact, as transactional mail does. The commissioner's
- * narrowest reading (Z156): ONLY those three. 'non_subscribed' is not listed
- * because nothing refuses it in the first place. Pending (no consent yet),
- * archived and bounced stay refused even with the exception, and so does a
- * deleted or unknown contact.
+ * Michal, 15. 10. 6:10, point 1b ("of course he must get the informational
+ * mail"), which overrides the commissioner's narrower reading of Z156 (only
+ * unsubscribed and complained): such a message reaches a pending, archived,
+ * unsubscribed, complained or non_subscribed contact. 'non_subscribed' is not
+ * listed because nothing refuses it in the first place. What still stops it
+ * is the GDPR fingerprint (an erased person) and a hard bounce / invalid
+ * address (the address does not work) — suppression rows, not statuses. Z158.
  *
- * One list for both readers: the SMS routing gate (routedSmsSend) and the
- * inline-HTML branch of the flow e-mail dispatch.
+ * Three points wait on Michal and stay EXACTLY as before Z158:
+ *  - the 'complaint', 'manual' and 'block' suppression rows still stop the
+ *    exception (mta-sender SUPPRESSES_TRANSACTIONAL);
+ *  - 'bounced' is not lifted, with or without a suppression row;
+ *  - a soft-deleted contact gets nothing.
+ *
+ * One list for every reader: the SMS routing gate (routedSmsSend), the
+ * inline-HTML branch of the flow e-mail dispatch and the template branch
+ * (batch-sender, for a job the dispatch marked flowTransactional).
  */
 export const FLOW_TRANSACTIONAL_LIFTED_STATUSES: readonly ContactStatus[] = [
   'unsubscribed',
   'complained',
+  'pending',
+  'archived',
 ];
 
 /** Does the flow transactional exception lift this status (FLOW_TRANSACTIONAL_LIFTED_STATUSES)? */

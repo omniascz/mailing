@@ -36,4 +36,23 @@ describe('reasonsFor', () => {
     expect(reasonsFor({ stream: 'broadcast' })).toBeUndefined();
     expect(reasonsFor({ stream: 'triggered', purpose: 'doi_confirmation' })).toBeUndefined();
   });
+
+  // Z158: the flow's transactional exception on the template branch travels on
+  // the triggered stream and is stopped by exactly what stops it on the inline
+  // branch (transactional stream, no purpose) — whatever the stream.
+  it('flow_transactional: every reason but unsubscribe, on the triggered stream too', () => {
+    expect(reasonsFor({ stream: 'triggered', purpose: 'flow_transactional' })).toEqual(
+      TRANSACTIONAL,
+    );
+    expect(reasonsFor({ stream: 'transactional', purpose: 'flow_transactional' })).toEqual(
+      reasonsFor({ stream: 'transactional' }),
+    );
+    expect(reasonsFor({ stream: 'broadcast', purpose: 'flow_transactional' })).toEqual(
+      TRANSACTIONAL,
+    );
+  });
+
+  it('triggered without a purpose: still every reason (unchanged)', () => {
+    expect(reasonsFor({ stream: 'triggered' })).toBeUndefined();
+  });
 });

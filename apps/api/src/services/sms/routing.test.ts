@@ -182,13 +182,19 @@ describe('routedSmsSend — workflowRunId gates the contact state, not consent o
 // The flow's transactional exception (Z156; Michal, 14. 10. 22:10). The route
 // sets flowTransactional only after reading the run's flow and node from the
 // database; here it is set directly to test what the gate does with it.
-describe('routedSmsSend — flowTransactional lifts only unsubscribed and complained', () => {
+//
+// Z158 — Michal, 15. 10. 6:10, point 1b, which overrides the narrower reading
+// of Z156: pending and archived are lifted too. These two used to be asserted
+// refused with the exception (archived MARKETING_REFUSED, pending
+// CONSENT_PENDING); that is the change of behaviour, so those assertions moved
+// to the "lets through" case. Bounced and a missing contact stay refused.
+describe('routedSmsSend — flowTransactional lifts pending, archived, unsubscribed and complained', () => {
   const send = (status: string | null, ids: Parameters<typeof msg>[0]) => {
     state.contactRows = status === null ? [] : [{ status }];
     return codeOf(routedSmsSend(ORG, msg(ids), { contactId: CONTACT, phone: '+420777000001' }));
   };
 
-  it.each(['unsubscribed', 'complained'])(
+  it.each(['unsubscribed', 'complained', 'pending', 'archived'])(
     'lets %s through on a flow SMS with the exception, still without the consent check',
     async (status) => {
       expect(await send(status, { workflowRunId: RUN, flowTransactional: true })).toBe(
@@ -198,7 +204,7 @@ describe('routedSmsSend — flowTransactional lifts only unsubscribed and compla
     },
   );
 
-  it.each(['unsubscribed', 'complained'])(
+  it.each(['unsubscribed', 'complained', 'archived'])(
     'refuses %s without the exception, as before',
     async (status) => {
       expect(await send(status, { workflowRunId: RUN })).toBe('MARKETING_REFUSED');
@@ -208,15 +214,17 @@ describe('routedSmsSend — flowTransactional lifts only unsubscribed and compla
     },
   );
 
-  it.each(['archived', 'bounced'])('still refuses %s with the exception', async (status) => {
-    expect(await send(status, { workflowRunId: RUN, flowTransactional: true })).toBe(
-      'MARKETING_REFUSED',
+  it('answers CONSENT_PENDING for a pending contact without the exception, as before', async () => {
+    expect(await send('pending', { workflowRunId: RUN })).toBe('CONSENT_PENDING');
+    expect(await send('pending', { workflowRunId: RUN, flowTransactional: false })).toBe(
+      'CONSENT_PENDING',
     );
   });
 
-  it('still answers CONSENT_PENDING for a pending contact with the exception', async () => {
-    expect(await send('pending', { workflowRunId: RUN, flowTransactional: true })).toBe(
-      'CONSENT_PENDING',
+  // Bounced waits on Michal (Z158): unchanged.
+  it('still refuses bounced with the exception', async () => {
+    expect(await send('bounced', { workflowRunId: RUN, flowTransactional: true })).toBe(
+      'MARKETING_REFUSED',
     );
   });
 
@@ -230,6 +238,12 @@ describe('routedSmsSend — flowTransactional lifts only unsubscribed and compla
     expect(await send('unsubscribed', { campaignId: RUN, flowTransactional: true })).toBe(
       'MARKETING_REFUSED',
     );
+    expect(await send('pending', { campaignId: RUN, flowTransactional: true })).toBe(
+      'CONSENT_PENDING',
+    );
+    expect(
+      await send('pending', { campaignId: RUN, workflowRunId: RUN, flowTransactional: true }),
+    ).toBe('CONSENT_PENDING');
     expect(
       await send('unsubscribed', { campaignId: RUN, workflowRunId: RUN, flowTransactional: true }),
     ).toBe('MARKETING_REFUSED');
@@ -239,10 +253,20 @@ describe('routedSmsSend — flowTransactional lifts only unsubscribed and compla
     expect(await send('unsubscribed', { workflowId: RUN, flowTransactional: true })).toBe(
       'MARKETING_REFUSED',
     );
+    expect(await send('pending', { workflowId: RUN, flowTransactional: true })).toBe(
+      'CONSENT_PENDING',
+    );
   });
 
   it('never runs the consent on the number for an exception SMS (isMarketing unchanged)', async () => {
-    for (const status of ['active', 'non_subscribed', 'unsubscribed', 'complained']) {
+    for (const status of [
+      'active',
+      'non_subscribed',
+      'unsubscribed',
+      'complained',
+      'pending',
+      'archived',
+    ]) {
       await send(status, { workflowRunId: RUN, flowTransactional: true });
     }
     expect(checkSmsCompliance).not.toHaveBeenCalled();

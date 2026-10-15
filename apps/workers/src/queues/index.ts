@@ -633,6 +633,14 @@ export interface BatchSenderJobData {
    * it, and jobs enqueued before this field existed are still in flight.
    */
   mergeData?: Record<string, unknown>;
+  /**
+   * The flow's transactional exception holds for this flow e-mail (Z158). Set
+   * only by the API's workflow dispatch, template branch, after
+   * flowTransactionalException read the run, its flow and the node from the
+   * database. batch-sender reads it on the triggered stream only: the lifted
+   * statuses pass, and only the transactional suppression reasons count.
+   */
+  flowTransactional?: boolean;
   /** Per-domain tracking defaults — gate open-pixel / link-wrap injection. */
   openTracking?: boolean;
   clickTracking?: boolean;
@@ -654,17 +662,22 @@ export interface MtaSendJobData {
   campaignIsPlaceholder?: boolean;
   /**
    * Set only through sendTransactionalEmail's second argument (API
-   * TransactionalPurpose, lib/queues.ts); mta-sender reasonsFor reads it.
+   * TransactionalPurpose, lib/queues.ts), or by batch-sender for
+   * 'flow_transactional'; reasonsFor (lib/suppression-reasons.ts) reads it.
    * - 'doi_confirmation', by the list double opt-in sender (services/
    *   subscriptions/doi.ts): the confirmation the recipient asked for, which a
    *   'manual' suppression does not stop (Z148).
    * - 'workflow_marketing', by the inline-HTML branch of the workflow dispatch
    *   (routes/v1/internal/workflow-dispatch.ts): a flow's marketing e-mail on
    *   the transactional stream, stopped by every suppression reason (Z152).
+   * - 'flow_transactional', by batch-sender for a batch job the workflow
+   *   dispatch marked flowTransactional: a flow's template e-mail under the
+   *   flow's transactional exception, on the triggered stream, stopped only by
+   *   the transactional reasons (Z158).
    * No customer input reaches it — their headers travel inside customHeaders,
    * never at the top of the job.
    */
-  purpose?: 'doi_confirmation' | 'workflow_marketing';
+  purpose?: 'doi_confirmation' | 'workflow_marketing' | 'flow_transactional';
   orgId: string;
   contactId: string;
   messageId: string;

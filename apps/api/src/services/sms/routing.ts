@@ -244,13 +244,16 @@ export async function routedSmsSend(
   // `flowTransactional`, which the workflow dispatch sets only after reading
   // from the database that the run's flow starts on a trigger of the closed
   // list (the order, the ticket, the change or cancellation of an event) and
-  // that the node is a send_sms with priority 'transactional'. It lifts ONLY
-  // unsubscribed and complained (FLOW_TRANSACTIONAL_LIFTED_STATUSES in
-  // @forgemsg/shared; non_subscribed is not refused here anyway) — the
-  // commissioner's narrowest reading. A missing or deleted contact, pending,
-  // archived and bounced are refused exactly as without it. It is read only
-  // with workflowRunId and never with campaignId: a campaign SMS has no
-  // exception.
+  // that the node is a send_sms with priority 'transactional'. It lifts
+  // unsubscribed, complained, pending and archived
+  // (FLOW_TRANSACTIONAL_LIFTED_STATUSES in @forgemsg/shared; non_subscribed is
+  // not refused here anyway) — Michal, 15. 10. 6:10, point 1b, which overrides
+  // the narrower reading of Z156 (Z158). Pending used to be refused as
+  // CONSENT_PENDING before the exception was even looked at; with the
+  // exception it is lifted by the same `lifted` as every other status. A
+  // missing or deleted contact and bounced are refused exactly as without it —
+  // bounced and the deleted contact wait on Michal. It is read only with
+  // workflowRunId and never with campaignId: a campaign SMS has no exception.
   //
   // A contact who is not found in this org, or is soft-deleted, gets nothing —
   // the fixed rule of roadmap point 1 for a deleted contact.
@@ -281,19 +284,19 @@ export async function routedSmsSend(
         message: 'Contact does not exist or was deleted; no campaign or flow SMS',
       });
     }
-    // A double opt-in not yet confirmed is no consent (Z143). Its own code, as before.
-    if (contact.status === 'pending') {
+    const flowTransactional =
+      !!message.flowTransactional && !!message.workflowRunId && !message.campaignId;
+    // A double opt-in not yet confirmed is no consent (Z143). Its own code, as
+    // before — except under the flow's transactional exception, which lifts
+    // pending below like the other statuses (Z158).
+    if (contact.status === 'pending' && !flowTransactional) {
       throw new AppError({
         code: 'CONSENT_PENDING',
         statusCode: 403,
         message: 'Contact has not confirmed the double opt-in; no marketing SMS until they do',
       });
     }
-    const lifted =
-      !!message.flowTransactional &&
-      !!message.workflowRunId &&
-      !message.campaignId &&
-      liftedByFlowTransactional(contact.status);
+    const lifted = flowTransactional && liftedByFlowTransactional(contact.status);
     if (refusesMarketing(contact.status) && !lifted) {
       throw new AppError({
         code: 'MARKETING_REFUSED',

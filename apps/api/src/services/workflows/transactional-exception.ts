@@ -9,13 +9,18 @@
  * event. A 'transactional' node on any other trigger is marketing. The GDPR
  * fingerprint and a hard bounce / invalid address still stop it.
  *
- * The commissioner's narrowest reading, written down 15. 10.:
- *  - the exception lifts ONLY unsubscribed, complained and non_subscribed
- *    (FLOW_TRANSACTIONAL_LIFTED_STATUSES in @forgemsg/shared); pending,
- *    archived, bounced, deleted and unknown contacts get nothing even with it;
- *  - ONLY send_sms and send_email with inline HTML have it. The template
- *    branch of a flow e-mail (batch-sender), WhatsApp, push and review
- *    requests do not;
+ * Michal, 15. 10. 6:10, point 1b — which overrides the commissioner's
+ * narrower reading of Z156 (only unsubscribed and complained, only inline
+ * HTML) — and Z158:
+ *  - the exception lifts pending, archived, unsubscribed, complained and
+ *    non_subscribed (FLOW_TRANSACTIONAL_LIFTED_STATUSES in @forgemsg/shared);
+ *    bounced, deleted and unknown contacts get nothing even with it;
+ *  - send_sms and send_email have it, the e-mail with inline HTML and from a
+ *    template alike (the template branch through batch-sender, Z158).
+ *    WhatsApp, push and review requests do not;
+ *  - three points wait on Michal and stay as they are: the complaint /
+ *    manual / block suppression rows still stop it, bounced is not lifted,
+ *    a soft-deleted contact gets nothing;
  *  - the API decides it from the database — the run, its flow, the flow's
  *    trigger, the node and the node's priority — never from a flag in the job.
  *    The job carries only workflowRunId and nodeId;
@@ -91,8 +96,8 @@ export function isTransactionalFlowTrigger(
  * missing — no nodeId, no run, a run of another org, no such node — is false,
  * i.e. the message is marketing. One query, and none at all without both ids.
  *
- * Whether the e-mail has inline HTML (the template branch has no exception)
- * is the caller's to know; this answers for the node.
+ * It answers for the node, whichever branch the e-mail takes: the inline
+ * branch and, since Z158, the template branch both ask it.
  */
 export async function flowTransactionalException(
   orgId: string,

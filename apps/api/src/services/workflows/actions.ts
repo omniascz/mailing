@@ -241,11 +241,13 @@ async function executeSendEmail(
     html?: string;
     text?: string;
     /**
-     * 'transactional' on an inline-HTML node in a flow started by a trigger of
-     * the closed list (services/workflows/transactional-exception.ts) lets the
-     * e-mail reach an unsubscribed, complained or non_subscribed contact —
-     * Michal, 14. 10. 22:10; Z156. Not read here: the API reads it from the
-     * stored flow, by the nodeId the job carries.
+     * 'transactional' on a node (inline HTML, or a template since Z158) in a
+     * flow started by a trigger of the closed list
+     * (services/workflows/transactional-exception.ts) lets the e-mail reach an
+     * unsubscribed, complained or non_subscribed contact — Michal, 14. 10.
+     * 22:10; Z156 — and a pending or archived one (Michal, 15. 10. 6:10, point
+     * 1b; Z158). Not read here: the API reads it from the stored flow, by the
+     * nodeId the job carries.
      */
     priority?: 'transactional' | 'marketing' | 'promotional';
   };

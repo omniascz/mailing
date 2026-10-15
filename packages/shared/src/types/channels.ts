@@ -134,8 +134,9 @@ export interface UnifiedMessage {
    * decided it from the database — the run's flow starts on a trigger of the
    * closed list and the node that made the job is a send_sms with priority
    * 'transactional' (services/workflows/transactional-exception.ts). Never set
-   * from a job field. routedSmsSend then lets an unsubscribed or complained
-   * contact through its contact-state gate (FLOW_TRANSACTIONAL_LIFTED_STATUSES);
+   * from a job field. routedSmsSend then lets a pending, archived (Z158),
+   * unsubscribed or complained contact through its contact-state gate
+   * (FLOW_TRANSACTIONAL_LIFTED_STATUSES);
    * it is read only together with workflowRunId and never with campaignId.
    */
   flowTransactional?: boolean;
