@@ -14,6 +14,7 @@ import { contactEmailIs } from '../../services/contacts/by-email.js';
 import { workflowEvents, contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { onApiEvent } from '../../services/workflows/triggers.js';
+import { isReservedEventName } from '../../services/workflows/reserved-event-names.js';
 import { recordCheckoutStarted } from '../../services/storefront/checkout-started.js';
 import type { FastifyRequest } from 'fastify';
 import { verifiedApiKeyPart } from '../../plugins/rate-limit.js';
@@ -46,6 +47,11 @@ export default async function eventRoutes(app: FastifyInstance) {
    *
    * When both are sent, contactId decides, as it did before contactEmail was
    * read at all.
+   *
+   * Nor may a publishable key send an event named ticketing.* — 403
+   * EVENT_NAME_RESERVED, nothing stored, nothing started (Michal, 15. 10.
+   * 19:40, point 1c d), Z161). Those names are the ticketing ingest's, and a
+   * flow they start may reach a contact who unsubscribed.
    */
   app.post(
     '/api/v1/events',
@@ -66,6 +72,20 @@ export default async function eventRoutes(app: FastifyInstance) {
           message: 'Required: contactId or contactEmail',
         })
         .parse(req.body);
+
+      // A publishable key may not send ticketing.* (Michal, 15. 10. 19:40,
+      // point 1c d), Z161): the key is in the page source, and those events
+      // start flows with the transactional exception, which reaches contacts
+      // who opted out. Checked before the contact is looked up and before
+      // anything is stored or started, so the answer is the same whether the
+      // contact exists or not. See services/workflows/reserved-event-names.ts.
+      if (req.user?.isPublicKey && isReservedEventName(body.eventName)) {
+        throw new AppError({
+          code: 'EVENT_NAME_RESERVED',
+          message: 'A publishable key cannot send this event',
+          statusCode: 403,
+        });
+      }
 
       const orgId = req.user!.orgId;
 
