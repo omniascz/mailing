@@ -26,6 +26,15 @@ export interface SeedDef {
   subject?: string;
   html?: string;
   message?: string;
+  /**
+   * 'transactional' on the e-mail node: the ticket and the change of an event
+   * the contact bought. Together with a trigger on the closed list
+   * (services/workflows/transactional-exception.ts) it lets the mail reach an
+   * unsubscribed, complained or non_subscribed contact — Michal, 14. 10.
+   * 22:10; Z156. Every other e-mail seed stays marketing. The SMS seed always
+   * had it (buildWorkflowGraph).
+   */
+  priority?: 'transactional';
 }
 
 const wrap = (inner: string) =>
@@ -94,6 +103,7 @@ export const SEED_DEFS: SeedDef[] = [
     key: 'event_changed',
     name: 'Ticketing — Event change notice',
     eventName: 'ticketing.event_changed',
+    priority: 'transactional',
     subject: 'Důležité: změna u vaší akce {{event_title}}',
     html: wrap(
       '<p>Ahoj {{first_name}},</p><p>u akce <strong>{{event_title}}</strong> došlo ke změně (důvod: {{reason}}). Zkontrolujte prosím detaily a potvrďte účast, nebo požádejte o vrácení peněz do {{response_deadline}}.</p>',
@@ -103,6 +113,7 @@ export const SEED_DEFS: SeedDef[] = [
     key: 'day_of_reminder',
     name: 'Ticketing — Day-of reminder',
     eventName: 'ticketing.day_of_reminder',
+    priority: 'transactional',
     subject: 'Vaše akce se blíží 🎭',
     html: wrap(
       '<p>Ahoj {{first_name}},</p><p>nezapomeňte — vaše akce se blíží. Vstupenku a QR kód máte v aplikaci nebo na odkazu níže.</p><p><a href="{{ticket_url}}">Zobrazit vstupenku →</a></p>',
@@ -158,7 +169,13 @@ export function buildWorkflowGraph(def: SeedDef): { nodes: WorkflowNode[]; edges
     nodes.push({
       id: 'send',
       type: 'send_email',
-      config: { subject: def.subject, html: def.html },
+      // Already-seeded flows keep the config they were written with: the seed
+      // skips a flow by name and nothing migrates stored graphs (Z156).
+      config: {
+        subject: def.subject,
+        html: def.html,
+        ...(def.priority ? { priority: def.priority } : {}),
+      },
     });
   }
   edges.push({ id: `e_${prev}_send`, source: prev, target: 'send' });

@@ -15,6 +15,12 @@ interface WorkflowSmsJob {
   orgId: string;
   contactId: string;
   workflowRunId?: string;
+  /**
+   * The flow node that made the job. Forwarded as is (the whole job is the
+   * body); the API reads the run, its flow and this node from the database to
+   * decide the flow's transactional exception (Z156).
+   */
+  nodeId?: string;
   phone: string;
   message: string;
 }

@@ -60,6 +60,33 @@ export function refusesMarketing(status: string | null | undefined): boolean {
   return (MARKETING_REFUSED_CONTACT_STATUSES as readonly string[]).includes(status ?? '');
 }
 
+/**
+ * The refused statuses a flow's transactional exception lets through: a
+ * send_sms or inline send_email node with priority 'transactional', in a flow
+ * started by a trigger on the closed list (TRANSACTIONAL_FLOW_TRIGGERS in the
+ * API's services/workflows/transactional-exception.ts) — the ticket, the
+ * order, the change or cancellation of an event.
+ *
+ * Michal, 14. 10. 22:10: such a node reaches an unsubscribed, complained or
+ * non_subscribed contact, as transactional mail does. The commissioner's
+ * narrowest reading (Z156): ONLY those three. 'non_subscribed' is not listed
+ * because nothing refuses it in the first place. Pending (no consent yet),
+ * archived and bounced stay refused even with the exception, and so does a
+ * deleted or unknown contact.
+ *
+ * One list for both readers: the SMS routing gate (routedSmsSend) and the
+ * inline-HTML branch of the flow e-mail dispatch.
+ */
+export const FLOW_TRANSACTIONAL_LIFTED_STATUSES: readonly ContactStatus[] = [
+  'unsubscribed',
+  'complained',
+];
+
+/** Does the flow transactional exception lift this status (FLOW_TRANSACTIONAL_LIFTED_STATUSES)? */
+export function liftedByFlowTransactional(status: string | null | undefined): boolean {
+  return (FLOW_TRANSACTIONAL_LIFTED_STATUSES as readonly string[]).includes(status ?? '');
+}
+
 export type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
 
 export type PhoneType = 'mobile' | 'landline' | 'voip' | 'unknown';

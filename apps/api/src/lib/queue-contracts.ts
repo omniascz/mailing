@@ -62,6 +62,17 @@ export const workflowEmailJobSchema = z
      * simply does not carry it.
      */
     mergeData: z.record(z.unknown()).optional(),
+    /**
+     * The flow run and the node that made the job (executeSendEmail). Only
+     * identifiers: the inline-HTML branch reads the run, its flow and the node
+     * from the database to decide the flow's transactional exception
+     * (services/workflows/transactional-exception.ts, Z156) — the job carries
+     * no "transactional" flag of its own. workflowRunId was stripped here
+     * before, as it once was for SMS (Z154); personal e-mail and review
+     * requests carry it too, but never nodeId, so they never get the exception.
+     */
+    workflowRunId: z.string().uuid().optional(),
+    nodeId: z.string().optional(),
   })
   .refine((b) => Boolean(b.campaignId || b.templateId || b.html), {
     message: 'campaignId, templateId or html required — the send has no content otherwise',
@@ -85,6 +96,11 @@ export const workflowSmsJobSchema = z.object({
   // flow SMS as transactional and the contact's status was never read (Z154).
   // It gates on contact status only — not sms_consents, not quiet hours (Z155).
   workflowRunId: z.string().uuid().optional(),
+  // The node that made the job (executeSendSms; a review request carries none).
+  // The route reads the run, its flow and this node from the database to
+  // decide the flow's transactional exception (Z156); there is no flag for it
+  // in the job.
+  nodeId: z.string().optional(),
 });
 
 /**

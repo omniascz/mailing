@@ -240,6 +240,14 @@ async function executeSendEmail(
      *  reference a campaign or stored template. Merge tags are substituted. */
     html?: string;
     text?: string;
+    /**
+     * 'transactional' on an inline-HTML node in a flow started by a trigger of
+     * the closed list (services/workflows/transactional-exception.ts) lets the
+     * e-mail reach an unsubscribed, complained or non_subscribed contact —
+     * Michal, 14. 10. 22:10; Z156. Not read here: the API reads it from the
+     * stored flow, by the nodeId the job carries.
+     */
+    priority?: 'transactional' | 'marketing' | 'promotional';
   };
 
   // §9 P1 — send-after-conversion suppression. If the run already hit a
@@ -259,6 +267,10 @@ async function executeSendEmail(
     orgId: ctx.orgId,
     contactId: run.contactId,
     workflowRunId: run.id,
+    // Which node made the job. The API decides the flow's transactional
+    // exception from the run, its flow and this node in the database (Z156);
+    // the job carries no flag for it.
+    nodeId: node.id,
     campaignId: config.campaignId,
     templateId: config.templateId,
     // Only the template/campaign path needs this: the html below is already
@@ -279,6 +291,12 @@ async function executeSendSms(
 ): Promise<ActionResult> {
   const config = node.config as {
     message: string;
+    /**
+     * Read here only by the frequency cap. 'transactional' in a flow started by
+     * a trigger of the closed list also lets the SMS past an unsubscribed or
+     * complained contact — decided by the API from the stored flow, by the
+     * nodeId in the job (Michal, 14. 10. 22:10; Z156).
+     */
     priority?: 'transactional' | 'marketing' | 'promotional';
   };
   if (!config.message) return { type: 'error', message: 'SMS message text is required' };
@@ -321,6 +339,10 @@ async function executeSendSms(
     orgId: ctx.orgId,
     contactId: run.contactId,
     workflowRunId: run.id,
+    // Which node made the job: the API reads this node's priority and the
+    // flow's trigger from the database to decide the transactional exception
+    // (Z156). config.priority itself is not put in the job.
+    nodeId: node.id,
     phone: ctx.contact.phone,
     message,
   });
