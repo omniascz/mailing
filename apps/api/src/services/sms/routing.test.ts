@@ -49,7 +49,11 @@ const ORG = '00000000-0000-4000-8000-000000000001';
 const CONTACT = '00000000-0000-4000-8000-000000000002';
 const RUN = '00000000-0000-4000-8000-000000000003';
 
-function msg(ids: Partial<Pick<UnifiedMessage, 'campaignId' | 'workflowId' | 'workflowRunId'>>) {
+function msg(
+  ids: Partial<
+    Pick<UnifiedMessage, 'campaignId' | 'workflowId' | 'workflowRunId' | 'flowTransactional'>
+  >,
+) {
   return {
     channel: 'sms',
     orgId: ORG,
@@ -171,6 +175,76 @@ describe('routedSmsSend — workflowRunId gates the contact state, not consent o
       await codeOf(routedSmsSend(ORG, msg({}), { contactId: CONTACT, phone: '+420777000001' })),
     ).toBe('BAD_REQUEST');
     expect(state.contactLookups).toBe(0);
+    expect(checkSmsCompliance).not.toHaveBeenCalled();
+  });
+});
+
+// The flow's transactional exception (Z156; Michal, 14. 10. 22:10). The route
+// sets flowTransactional only after reading the run's flow and node from the
+// database; here it is set directly to test what the gate does with it.
+describe('routedSmsSend — flowTransactional lifts only unsubscribed and complained', () => {
+  const send = (status: string | null, ids: Parameters<typeof msg>[0]) => {
+    state.contactRows = status === null ? [] : [{ status }];
+    return codeOf(routedSmsSend(ORG, msg(ids), { contactId: CONTACT, phone: '+420777000001' }));
+  };
+
+  it.each(['unsubscribed', 'complained'])(
+    'lets %s through on a flow SMS with the exception, still without the consent check',
+    async (status) => {
+      expect(await send(status, { workflowRunId: RUN, flowTransactional: true })).toBe(
+        'BAD_REQUEST',
+      );
+      expect(checkSmsCompliance).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['unsubscribed', 'complained'])(
+    'refuses %s without the exception, as before',
+    async (status) => {
+      expect(await send(status, { workflowRunId: RUN })).toBe('MARKETING_REFUSED');
+      expect(await send(status, { workflowRunId: RUN, flowTransactional: false })).toBe(
+        'MARKETING_REFUSED',
+      );
+    },
+  );
+
+  it.each(['archived', 'bounced'])('still refuses %s with the exception', async (status) => {
+    expect(await send(status, { workflowRunId: RUN, flowTransactional: true })).toBe(
+      'MARKETING_REFUSED',
+    );
+  });
+
+  it('still answers CONSENT_PENDING for a pending contact with the exception', async () => {
+    expect(await send('pending', { workflowRunId: RUN, flowTransactional: true })).toBe(
+      'CONSENT_PENDING',
+    );
+  });
+
+  it('still refuses a contact that is not found (missing or deleted) with the exception', async () => {
+    expect(await send(null, { workflowRunId: RUN, flowTransactional: true })).toBe(
+      'CONTACT_UNAVAILABLE',
+    );
+  });
+
+  it('never applies to a campaign SMS, even if the flag is set', async () => {
+    expect(await send('unsubscribed', { campaignId: RUN, flowTransactional: true })).toBe(
+      'MARKETING_REFUSED',
+    );
+    expect(
+      await send('unsubscribed', { campaignId: RUN, workflowRunId: RUN, flowTransactional: true }),
+    ).toBe('MARKETING_REFUSED');
+  });
+
+  it('needs the flow run: the flag alone does not lift anything', async () => {
+    expect(await send('unsubscribed', { workflowId: RUN, flowTransactional: true })).toBe(
+      'MARKETING_REFUSED',
+    );
+  });
+
+  it('never runs the consent on the number for an exception SMS (isMarketing unchanged)', async () => {
+    for (const status of ['active', 'non_subscribed', 'unsubscribed', 'complained']) {
+      await send(status, { workflowRunId: RUN, flowTransactional: true });
+    }
     expect(checkSmsCompliance).not.toHaveBeenCalled();
   });
 });

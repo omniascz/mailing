@@ -26,7 +26,7 @@ import { TwilioSmsAdapter, type TwilioConfig } from '../../channels/sms/twilio-a
 import { checkSmsCompliance } from './compliance.js';
 import { resolveCouponMergeTags } from './coupon-merge.js';
 import { AppError } from '../../lib/app-error.js';
-import { refusesMarketing } from '@forgemsg/shared';
+import { liftedByFlowTransactional, refusesMarketing } from '@forgemsg/shared';
 import type { UnifiedMessage, Recipient, DeliveryResult } from '@forgemsg/shared';
 
 // ─── Phone → country code ─────────────────────────────────────────────────────
@@ -237,10 +237,20 @@ export async function routedSmsSend(
   // workflowRunId and never workflowId (actions.ts: send_sms and the SMS review
   // request), so on master it went the transactional way and nobody read the
   // contact's status — pending, unsubscribed and archived contacts all got it
-  // (measured, Z154). There is no exception for a node with priority
-  // 'transactional' (the ticketing day-of SMS with the ticket QR): the
-  // commissioner decided a flow SMS is a flow SMS, and an unsubscribed contact
-  // gets no ticket SMS either.
+  // (measured, Z154).
+  //
+  // One exception, since Z156 (Michal, 14. 10. 22:10, which overrides the
+  // earlier "a flow SMS is a flow SMS, no ticket SMS for the unsubscribed"):
+  // `flowTransactional`, which the workflow dispatch sets only after reading
+  // from the database that the run's flow starts on a trigger of the closed
+  // list (the order, the ticket, the change or cancellation of an event) and
+  // that the node is a send_sms with priority 'transactional'. It lifts ONLY
+  // unsubscribed and complained (FLOW_TRANSACTIONAL_LIFTED_STATUSES in
+  // @forgemsg/shared; non_subscribed is not refused here anyway) — the
+  // commissioner's narrowest reading. A missing or deleted contact, pending,
+  // archived and bounced are refused exactly as without it. It is read only
+  // with workflowRunId and never with campaignId: a campaign SMS has no
+  // exception.
   //
   // A contact who is not found in this org, or is soft-deleted, gets nothing —
   // the fixed rule of roadmap point 1 for a deleted contact.
@@ -279,7 +289,12 @@ export async function routedSmsSend(
         message: 'Contact has not confirmed the double opt-in; no marketing SMS until they do',
       });
     }
-    if (refusesMarketing(contact.status)) {
+    const lifted =
+      !!message.flowTransactional &&
+      !!message.workflowRunId &&
+      !message.campaignId &&
+      liftedByFlowTransactional(contact.status);
+    if (refusesMarketing(contact.status) && !lifted) {
       throw new AppError({
         code: 'MARKETING_REFUSED',
         statusCode: 403,
@@ -296,7 +311,8 @@ export async function routedSmsSend(
   // workflowRunId is deliberately NOT here: a flow SMS gets the contact-state
   // gate above, but whether it needs sms_consents, quiet hours and the opt-out
   // suffix is the owner's open question (per-channel consent model), so it
-  // behaves exactly as before on those (Z155).
+  // behaves exactly as before on those (Z155). flowTransactional does not
+  // touch this either (Z156): it only widens the contact-state gate.
   const isMarketing = !!(message.campaignId || message.workflowId);
   if (message.content.kind === 'sms' && isMarketing) {
     const compliance = await checkSmsCompliance(orgId, phone, message.content.body, country, {
