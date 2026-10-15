@@ -121,6 +121,14 @@ export interface UnifiedMessage {
   content: MessageContent;
   campaignId?: string;
   workflowId?: string;
+  /**
+   * SMS ze flow — brána stavu kontaktu, ne souhlas na čísle. Set by the
+   * workflow send_sms / review-request SMS jobs (they never carry workflowId).
+   * routedSmsSend refuses a contact who refuses marketing when it is present,
+   * but it does NOT make the send "marketing" for sms_consents, quiet hours
+   * or the opt-out suffix — that stays campaignId/workflowId (Z155).
+   */
+  workflowRunId?: string;
   orgId: string;
   metadata?: Record<string, unknown>;
 }

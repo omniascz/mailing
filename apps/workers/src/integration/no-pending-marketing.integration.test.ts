@@ -412,7 +412,13 @@ async function smsCampaign(listId: string, label: string, phones: Record<string,
   return result;
 }
 
-/** What a flow's send_sms step posts (workflowId marks it marketing). */
+/**
+ * What a flow's send_sms step posts — exactly the job executeSendSms queues
+ * (actions.ts): workflowRunId, no workflowId. This used to post a made-up
+ * workflowId, which no real flow sends, so it walked a path production never
+ * takes and stayed green while a real flow SMS reached a pending contact
+ * (measured, Z154). The contact-state gate keys on workflowRunId (Z155).
+ */
 async function flowSms(contactId: string, phone: string): Promise<string> {
   const r = await fetch(`${API}/api/v1/internal/workflow/send-sms`, {
     method: 'POST',
@@ -420,9 +426,9 @@ async function flowSms(contactId: string, phone: string): Promise<string> {
     body: JSON.stringify({
       orgId: seed.id,
       contactId,
+      workflowRunId: randomUUID(),
       phone,
       message: 'Akce z flow',
-      workflowId: randomUUID(),
     }),
   });
   return `${r.status} ${await r.text()}`;

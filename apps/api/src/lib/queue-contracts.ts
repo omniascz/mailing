@@ -80,6 +80,11 @@ export const workflowSmsJobSchema = z.object({
   // quiet-hours gate) and attributes the delivery to the campaign.
   campaignId: z.string().uuid().optional(),
   workflowId: z.string().uuid().optional(),
+  // Set by a flow's send_sms and its SMS review request (actions.ts), which
+  // never carry workflowId. It used to be stripped here, so the route saw a
+  // flow SMS as transactional and the contact's status was never read (Z154).
+  // It gates on contact status only — not sms_consents, not quiet hours (Z155).
+  workflowRunId: z.string().uuid().optional(),
 });
 
 /**

@@ -9,9 +9,7 @@
 import { Worker, type Job } from 'bullmq';
 import { connection, QUEUE_NAMES } from '../queues/index.js';
 import { captureJobException } from '../lib/telemetry.js';
-import { internalHeaders } from '../lib/internal-api.js';
-
-const API_URL = process.env.API_URL ?? 'http://localhost:3001';
+import { marketingSkip } from '../lib/contact-status.js';
 
 export interface WhatsappSendJobData {
   orgId: string;
@@ -25,34 +23,24 @@ export interface WhatsappSendJobData {
   language?: string;
 }
 
-/**
- * The contact's status, read where batch-sender reads it. Every job on this
- * queue comes from a campaign or a workflow, so every one is marketing.
- */
-async function contactStatus(orgId: string, contactId: string): Promise<string | null> {
-  const res = await fetch(`${API_URL}/api/v1/internal/contacts/batch`, {
-    method: 'POST',
-    headers: internalHeaders(),
-    body: JSON.stringify({ orgId, contactIds: [contactId] }),
-  });
-  // Unknown is not consent: throw, and BullMQ retries rather than sending.
-  if (!res.ok) throw new Error(`/internal/contacts/batch → ${res.status}`);
-  const body = (await res.json()) as { data: { id: string; status: string | null }[] };
-  return body.data.find((c) => c.id === contactId)?.status ?? null;
-}
-
 export async function processWhatsappSend(
   job: Job<WhatsappSendJobData>,
 ): Promise<{ messageId: string; status: string }> {
   const data = job.data;
   if (!data.phone) return { messageId: '', status: 'skipped_no_phone' };
 
-  // A double opt-in not yet confirmed is no consent (Z143). The campaign
-  // audience leaves 'pending' out; a job queued before the contact's status
-  // was read there — or by a workflow — is stopped here, before the adapter.
-  if ((await contactStatus(data.orgId, data.contactId)) === 'pending') {
-    job.log(`contact ${data.contactId} has not confirmed the double opt-in — not sent`);
-    return { messageId: '', status: 'skipped_pending' };
+  // Every job here is a campaign or a flow message, so marketing: a contact who
+  // refuses it gets nothing on this channel either (Michal, 13. 10. — "no
+  // channel"; a flow is marketing). Pending = a double opt-in not yet confirmed
+  // (Z143, own status kept); unsubscribed / bounced / complained / archived =
+  // skipped_refused; not found or deleted = skipped_no_contact (roadmap point
+  // 1). The campaign audience leaves most of them out already; a flow job, or
+  // one queued before the status changed, is stopped here, before the adapter
+  // (Z155). An HTTP error throws and BullMQ retries — nothing is sent.
+  const skip = await marketingSkip(data.orgId, data.contactId);
+  if (skip) {
+    job.log(`contact ${data.contactId}: ${skip} — not sent`);
+    return { messageId: '', status: skip };
   }
 
   const { createWhatsAppAdapter } = await import('@forgemsg/shared/whatsapp/meta-adapter');
