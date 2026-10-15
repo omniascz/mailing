@@ -429,15 +429,34 @@ describe('a flow e-mail with inline HTML reaches only who may get marketing', ()
     });
   });
 
-  it('the control gets the content it was given, unchanged', async () => {
+  it('the control gets the content it was given, unchanged, and then the opt-out footer', async () => {
     const o = await walk('direct', 'active');
-    expect(o.reached).toEqual({
+    expect(o.reached).toMatchObject({
       to: expect.stringMatching(/^ifl-direct-active-/),
       subject: `Z152-direct ${tag}`,
-      html: DIRECT_HTML,
-      text: DIRECT_TEXT,
-      headers: {},
     });
+    // Changed by Z157, not by Z152: Michal (14. 10. 22:10, point 2) decided that
+    // the system appends a footer with the sender and an unsubscribe link to a
+    // marketing inline flow e-mail and sends List-Unsubscribe with it, so
+    // `headers: {}` and the body as given are no longer the right answer. What
+    // this test is for still holds: the job's html and text arrive first and
+    // unchanged; only the footer follows them.
+    const unsub = o.reached!.headers['List-Unsubscribe']!.slice(1, -1);
+    expect(unsub).toMatch(/\/api\/v1\/unsubscribe\/[\w-]+\.[\w-]+$/);
+    expect(o.reached!.headers).toEqual({
+      'List-Unsubscribe': `<${unsub}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    });
+    expect(o.reached!.html.startsWith(DIRECT_HTML)).toBe(true);
+    expect(o.reached!.html.slice(DIRECT_HTML.length)).toBe(
+      '<div data-fm-optout="1" style="padding:16px 24px;font-size:12px;color:#6b7280;text-align:center;">' +
+        `<div style="margin-top:8px;">${seed.companyName}<br/>${seed.postalAddress}</div>` +
+        `<div style="margin-top:8px;"><a href="${unsub}" style="color:#6b7280;text-decoration:underline;">Odhlásit z odběru</a></div>` +
+        '</div>',
+    );
+    expect(o.reached!.text).toBe(
+      `${DIRECT_TEXT}\n\n${seed.companyName}\n${seed.postalAddress}\nOdhlásit z odběru: ${unsub}`,
+    );
   });
 
   it('a refused status is a completed skip that names it', async () => {
