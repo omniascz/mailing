@@ -21,6 +21,13 @@
  * no longer stops it; complaint, hard bounce, invalid, manual and the GDPR
  * fingerprint still do).
  *
+ * Z158 — Michal, 15. 10. 6:10, point 1b, overrides that narrower reading:
+ * pending and archived are lifted too. Two assertions of this file said the
+ * opposite (Day-of SMS: pending CONSENT_PENDING, archived MARKETING_REFUSED;
+ * Day-of reminder: "contact status pending / archived"); they are that change
+ * of behaviour and now expect the message to arrive. Bounced and the deleted
+ * contact are unchanged (they wait on Michal).
+ *
  * ─── What this file walks ────────────────────────────────────────────────────
  *
  * The ticketing flows seeded by the real POST /ticketing/seed-workflows, and
@@ -93,8 +100,16 @@ type State =
   | 'archived'
   | 'bounced'
   | 'deleted';
-const LIFTED: State[] = ['active', 'unsub_row', 'complained', 'non_subscribed'];
-const STILL_REFUSED: State[] = ['pending', 'archived', 'bounced', 'deleted'];
+// pending and archived moved from STILL_REFUSED to LIFTED in Z158 (Michal, 15. 10. 6:10, 1b).
+const LIFTED: State[] = [
+  'active',
+  'unsub_row',
+  'complained',
+  'non_subscribed',
+  'pending',
+  'archived',
+];
+const STILL_REFUSED: State[] = ['bounced', 'deleted'];
 
 let seed: SeedOrg;
 let token: string;
@@ -323,19 +338,17 @@ describe('the transactional exception of a ticketing flow', () => {
     await sql.end();
   }, 300_000);
 
-  it('the seeded Day-of SMS reaches unsubscribed, complained and non_subscribed — not pending, archived, bounced or deleted', async () => {
+  it('the seeded Day-of SMS reaches unsubscribed, complained, non_subscribed, pending and archived — not bounced or deleted', async () => {
     await onlyActive(flows.daySms);
     const got = await walk('ticketing.day_of_sms', 'sms', [...LIFTED, ...STILL_REFUSED]);
     for (const st of LIFTED) expect(got[st]!.job, st).toContain(SMS_REACHED);
-    expect(got.pending!.job).toContain('"code":"CONSENT_PENDING"');
-    expect(got.archived!.job).toContain('"code":"MARKETING_REFUSED"');
     expect(got.bounced!.job).toContain('"code":"MARKETING_REFUSED"');
     // A flow loads no deleted contact, so there is no phone to queue a job for.
     expect(got.deleted!.job).toBe('no job');
     for (const st of STILL_REFUSED) expect(got[st]!.reached, st).toBe(false);
   }, 600_000);
 
-  it('the seeded Day-of reminder e-mail reaches them on the transactional purpose — not pending, archived, bounced or deleted', async () => {
+  it('the seeded Day-of reminder e-mail reaches them on the transactional purpose — not bounced or deleted', async () => {
     await onlyActive(flows.dayMail);
     const got = await walk('ticketing.day_of_reminder', 'email', [...LIFTED, ...STILL_REFUSED]);
     for (const st of LIFTED) {
@@ -343,8 +356,6 @@ describe('the transactional exception of a ticketing flow', () => {
     }
     // The 'unsubscribe' row of unsub_row did not stop it: transactional purpose.
     for (const st of LIFTED) expect(got[st]!.mta, st).toBe('sent/transactional');
-    expect(got.pending!.job).toContain('contact status pending');
-    expect(got.archived!.job).toContain('contact status archived');
     expect(got.bounced!.job).toContain('contact status bounced');
     expect(got.deleted!.job).toContain('contact deleted');
     for (const st of STILL_REFUSED) expect(got[st]!.reached, st).toBe(false);
