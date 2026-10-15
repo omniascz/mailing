@@ -271,18 +271,18 @@ async function orgState() {
   return r!;
 }
 
-async function roleUser(role: string): Promise<{ id: string; email: string }> {
+async function roleUser(role: string, label = role): Promise<{ id: string; email: string }> {
   const [seed] = await db
     .select({ hash: users.passwordHash })
     .from(users)
     .where(eq(users.email, SEED.email));
-  const email = `${TAG}-${role.replace('_', '')}@test.local`;
+  const email = `${TAG}-${label.replace('_', '')}@test.local`;
   const [u] = await db
     .insert(users)
     .values({
       orgId,
       email,
-      name: `${TAG} ${role}`,
+      name: `${TAG} ${label}`,
       passwordHash: seed!.hash,
       role: role as 'viewer',
       emailVerified: true,
@@ -325,7 +325,7 @@ beforeAll(async () => {
   }
 
   // The viewer: a key minted while an admin, then the member made a viewer.
-  const v = await roleUser('admin');
+  const v = await roleUser('admin', 'viewer');
   const asAdmin = await login(app, v.email);
   const minted = await app.inject({
     method: 'POST',
@@ -374,14 +374,14 @@ afterAll(async () => {
     await db.execute(sql`DELETE FROM workflow_runs WHERE contact_id = ${contactId}::uuid`);
     await db.delete(contacts).where(eq(contacts.id, contactId));
   }
+  await db.execute(
+    sql`DELETE FROM audit_logs WHERE org_id = ${orgId}::uuid AND created_at >= ${startedAt.toISOString()}::timestamptz`,
+  );
   if (createdUsers.length) {
     await db.delete(apiKeys).where(inArray(apiKeys.userId, createdUsers));
     await db.delete(users).where(inArray(users.id, createdUsers));
   }
   await db.delete(apiKeys).where(and(eq(apiKeys.orgId, orgId), eq(apiKeys.name, `${TAG} public`)));
-  await db.execute(
-    sql`DELETE FROM audit_logs WHERE org_id = ${orgId}::uuid AND created_at >= ${startedAt.toISOString()}::timestamptz`,
-  );
   const orgAfter = await orgState();
   report.seedOrg = { before: orgBefore, after: orgAfter };
   console.log(`Z164_API_CELLS_JSON ${JSON.stringify(report)}`);
