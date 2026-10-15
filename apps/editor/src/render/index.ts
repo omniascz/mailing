@@ -1,5 +1,10 @@
 export { renderEmail, type RenderOptions, type RenderResult } from './render.js';
 export { renderPlainText, type RenderPlainTextOptions } from './plain-text.js';
+// The opt-out label and the sender lines the compliance footer is made of.
+// Exported so the inline flow e-mail, which the renderer never sees, words its
+// footer from the same place as a campaign's (apps/api
+// services/workflows/inline-optout.ts, Z157).
+export { unsubscribeLabel, postalAddressLines } from './compliance.js';
 export {
   parseMergeTags,
   listMergeTags,

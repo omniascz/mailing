@@ -24,13 +24,7 @@
 import type { FastifyInstance } from 'fastify';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
-import {
-  campaigns,
-  templates,
-  sendingDomains,
-  contacts,
-  organizations,
-} from '../../../db/schema/index.js';
+import { campaigns, templates, sendingDomains, contacts } from '../../../db/schema/index.js';
 import {
   batchSenderTriggeredQueue,
   PRIORITY,
@@ -40,6 +34,11 @@ import { processWorkflowRuns } from '../../../services/workflows/executor.js';
 import { routedSmsSend } from '../../../services/sms/routing.js';
 import { liftedByFlowTransactional, refusesMarketing } from '@forgemsg/shared';
 import { flowTransactionalException } from '../../../services/workflows/transactional-exception.js';
+// The inline e-mail's opt-out and the sender identity of both branches (Z157).
+import {
+  applyInlineOptOut,
+  resolveOrgFooterIdentity,
+} from '../../../services/workflows/inline-optout.js';
 // The payload contracts for the 'email' and 'sms' queues. Defined once in
 // lib/queue-contracts.ts so producers can be validated against the same object
 // this handler parses with — see that file's header.
@@ -56,26 +55,6 @@ async function resolveOrgFrom(
     .limit(1);
   if (!dom?.domain) return null;
   return { fromName: '', fromEmail: `noreply@${dom.sub ?? dom.domain}` };
-}
-
-/**
- * Who sent it, for the footer: the same two columns the campaign dispatch reads
- * (services/campaigns/dispatch.ts). The renderer appends the name and postal
- * address to the footer, and only when it has an address; a flow that left
- * them out sent every email with no sender in it.
- */
-async function resolveOrgFooterIdentity(
-  orgId: string,
-): Promise<{ companyName?: string; companyAddress?: string }> {
-  const [org] = await db
-    .select({ companyName: organizations.companyName, postalAddress: organizations.postalAddress })
-    .from(organizations)
-    .where(eq(organizations.id, orgId))
-    .limit(1);
-  return {
-    companyName: org?.companyName ?? undefined,
-    companyAddress: org?.postalAddress ?? undefined,
-  };
 }
 
 /**
@@ -128,11 +107,11 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
       // reached the engine for people with no consent (Z151), the hole Z143
       // left out of its scope (MIMO 7). Z152.
       //
-      // Temporary. The stream is transactional only because moving this mail to
-      // the triggered batch-sender pipeline needs an opt-out link and footer the
-      // inline HTML does not carry (batch-sender refuses raw HTML without
-      // {{unsubscribe_url}}, Z151) — that, and the move, wait on the owner's
-      // decision.
+      // The opt-out link and the footer are decided and added (Michal, 14. 10.
+      // 22:10, point 2; commissioner's decisions a–h; Z157): applyInlineOptOut
+      // below. The stream stays transactional and the mail is not moved to the
+      // triggered batch-sender pipeline — that move is still not decided, and
+      // nothing here depends on it.
       //
       // A soft-deleted contact (deleted_at set) gets nothing either: mail to
       // someone deleted is a send without consent (fixed rule of point 1). The
@@ -195,16 +174,33 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
           });
         const from = await resolveOrgFrom(body.orgId);
         if (!from) return reply.send({ data: { skipped: true, reason: 'no from address' } });
+        // What § 7(4) of 480/2004 asks of a commercial message, added by the
+        // system (Michal, 14. 10. 22:10, point 2; Z157). Marketing — every
+        // inline mail sent as 'workflow_marketing' (decision a) — gets the
+        // Czech footer with the sender and an unsubscribe link, and
+        // List-Unsubscribe / List-Unsubscribe-Post. The transactional
+        // exception gets neither (decision b), but in every inline mail the
+        // {{unsubscribe}} / {{unsubscribe_url}} tags become the working link
+        // (decision c). Who receives the mail is decided above and is not
+        // changed by this.
+        const optOut = await applyInlineOptOut({
+          orgId: body.orgId,
+          contactId: body.contactId,
+          html: body.html,
+          text: body.text,
+          marketing: !transactional,
+        });
         const messageId = await sendTransactionalEmail(
           {
             to: contact.email,
             from: from.fromEmail,
             fromName: from.fromName,
             subject: body.subject ?? '',
-            html: body.html,
-            text: body.text,
+            html: optOut.html,
+            text: optOut.text,
             orgId: body.orgId,
             contactId: body.contactId,
+            customHeaders: optOut.customHeaders,
           },
           // With the exception: the default transactional purpose (see above).
           transactional ? undefined : { purpose: 'workflow_marketing' },

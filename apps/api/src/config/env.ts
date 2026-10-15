@@ -152,6 +152,15 @@ const Env = z
     API_PUBLIC_URL: z.string().url().optional(),
     APP_URL: z.string().url().optional(),
     TRACKING_BASE_URL: z.string().url().optional(),
+    // Same variable and the same rule as in the workers env schema: offered as
+    // a mailto in List-Unsubscribe only when there is a mailbox behind it. The
+    // API reads it for the inline flow e-mail, whose List-Unsubscribe it builds
+    // itself (services/workflows/inline-optout.ts, Z157); batch-sender reads
+    // the workers copy. Empty string = not set.
+    UNSUBSCRIBE_MAILBOX: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      z.string().email('UNSUBSCRIBE_MAILBOX must be a valid email address').optional(),
+    ),
 
     // ─── Datastores ───────────────────────────────────────────────────────────
     // No defaults. `lib/env.ts` required these outright and ran first, so a boot
