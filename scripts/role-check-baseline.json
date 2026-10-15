@@ -6,8 +6,8 @@
     "Fixing a route means deleting its line in the same change. Intentional",
     "exceptions do not belong here: they are in role-check-exemptions.json."
   ],
-  "count": 510,
-  "files": 160,
+  "count": 502,
+  "files": 159,
   "routes": {
     "DELETE /api/v1/ads/accounts/:accountId": "apps/api/src/routes/v1/ads/accounts.ts",
     "DELETE /api/v1/analytics/saved-queries/:id": "apps/api/src/routes/v1/saved-queries.ts",
@@ -388,7 +388,6 @@
     "POST /api/v1/revenue/track": "apps/api/src/routes/v1/revenue.ts",
     "POST /api/v1/reviews": "apps/api/src/routes/v1/reviews.ts",
     "POST /api/v1/rss-campaigns/preview": "apps/api/src/routes/v1/rss-campaigns.ts",
-    "POST /api/v1/sandboxes": "apps/api/src/routes/v1/sandboxes.ts",
     "POST /api/v1/saved-blocks": "apps/api/src/routes/v1/editor.ts",
     "POST /api/v1/saved-templates": "apps/api/src/routes/v1/templates.ts",
     "POST /api/v1/saved-templates/:id/create-campaign": "apps/api/src/routes/v1/templates.ts",
@@ -432,7 +431,6 @@
     "POST /api/v1/templates/:id/use": "apps/api/src/routes/v1/templates.ts",
     "POST /api/v1/ticketing/events": "apps/api/src/routes/v1/ticketing.ts",
     "POST /api/v1/ticketing/events/batch": "apps/api/src/routes/v1/ticketing.ts",
-    "POST /api/v1/ticketing/seed-workflows": "apps/api/src/routes/v1/ticketing.ts",
     "POST /api/v1/transactional/batch": "apps/api/src/routes/v1/transactional.ts",
     "POST /api/v1/transactional/batch/:batchId/${verb}": "apps/api/src/routes/v1/transactional.ts",
     "POST /api/v1/transactional/email": "apps/api/src/routes/v1/transactional.ts",
@@ -461,13 +459,8 @@
     "POST /api/v1/whatsapp/send/media": "apps/api/src/routes/v1/whatsapp.ts",
     "POST /api/v1/whatsapp/templates": "apps/api/src/routes/v1/whatsapp.ts",
     "POST /api/v1/whatsapp/templates/:id/submit": "apps/api/src/routes/v1/whatsapp.ts",
-    "POST /api/v1/workflow-templates/:slug/fork": "apps/api/src/routes/v1/workflow-templates.ts",
-    "POST /api/v1/workflows": "apps/api/src/routes/v1/workflows.ts",
-    "POST /api/v1/workflows/:id/activate": "apps/api/src/routes/v1/workflows.ts",
     "POST /api/v1/workflows/:id/deactivate": "apps/api/src/routes/v1/workflows.ts",
     "POST /api/v1/workflows/:id/runs/:runId/cancel": "apps/api/src/routes/v1/workflows.ts",
-    "POST /api/v1/workflows/:id/trigger": "apps/api/src/routes/v1/workflows.ts",
-    "POST /api/v1/workflows/templates/:templateId/use": "apps/api/src/routes/v1/workflows.ts",
     "POST /api/v1/zapier/actions/add-tag": "apps/api/src/routes/v1/zapier.ts",
     "POST /api/v1/zapier/actions/create-contact": "apps/api/src/routes/v1/zapier.ts",
     "POST /api/v1/zero-party/forms": "apps/api/src/routes/v1/zero-party-data.ts",
@@ -517,7 +510,6 @@
     "PUT /api/v1/unsubscribe-experiments/:id": "apps/api/src/routes/v1/unsubscribe-ab.ts",
     "PUT /api/v1/webhooks/:id": "apps/api/src/routes/v1/webhooks.ts",
     "PUT /api/v1/whatsapp/templates/:id": "apps/api/src/routes/v1/whatsapp.ts",
-    "PUT /api/v1/workflows/:id": "apps/api/src/routes/v1/workflows.ts",
     "PUT /api/v1/zero-party/forms/:id": "apps/api/src/routes/v1/zero-party-data.ts"
   }
 }

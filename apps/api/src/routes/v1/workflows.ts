@@ -98,6 +98,14 @@ const listQuerySchema = z.object({
 export default async function workflowRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
+  // Creating, changing, activating and starting a flow is sending, so those
+  // routes take requireRole('editor'): editor and up (requireRole takes the
+  // lowest rank listed). Z164, item 9 of point 1 — the standing decision
+  // "owner, admin and editor may send; a viewer may not". Z163 MIMO 1
+  // measured a viewer re-marking a marketing node as transactional through
+  // PUT, and the mail reaching an unsubscribed buyer. Reading, deactivating,
+  // cancelling and deleting are unchanged.
+
   app.get(
     '/api/v1/workflows',
     { schema: { tags: ['Workflows'], summary: 'List workflows' } },
@@ -110,7 +118,10 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/workflows',
-    { schema: { tags: ['Workflows'], summary: 'Create workflow' } },
+    {
+      preHandler: app.requireRole('editor'),
+      schema: { tags: ['Workflows'], summary: 'Create workflow' },
+    },
     async (req) => {
       const body = createSchema.parse(req.body);
       const orgId = req.user!.orgId;
@@ -138,6 +149,7 @@ export default async function workflowRoutes(app: FastifyInstance) {
   app.put(
     '/api/v1/workflows/:id',
     {
+      preHandler: app.requireRole('editor'),
       schema: {
         tags: ['Workflows'],
         summary: 'Update workflow',
@@ -172,6 +184,7 @@ export default async function workflowRoutes(app: FastifyInstance) {
   app.post(
     '/api/v1/workflows/:id/activate',
     {
+      preHandler: app.requireRole('editor'),
       schema: {
         tags: ['Workflows'],
         summary: 'Activate workflow',
@@ -204,6 +217,7 @@ export default async function workflowRoutes(app: FastifyInstance) {
   app.post(
     '/api/v1/workflows/:id/trigger',
     {
+      preHandler: app.requireRole('editor'),
       schema: {
         tags: ['Workflows'],
         summary: 'Manually trigger workflow for a contact',
@@ -334,7 +348,10 @@ export default async function workflowRoutes(app: FastifyInstance) {
 
   app.post(
     '/api/v1/workflows/templates/:templateId/use',
-    { schema: { tags: ['Workflows'], summary: 'Create a workflow from a pre-built template' } },
+    {
+      preHandler: app.requireRole('editor'),
+      schema: { tags: ['Workflows'], summary: 'Create a workflow from a pre-built template' },
+    },
     async (req, reply) => {
       const { templateId } = req.params as { templateId: string };
       const template = getPublishedFlowTemplate(templateId);
