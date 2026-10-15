@@ -45,31 +45,44 @@ import { workflowRuns, workflows } from '../../db/schema/index.js';
  *  - api_event `ticketing.event_changed`: the ticketing app reporting a
  *    change of an event the contact bought. It is also the cancellation: the
  *    ingest has no separate cancel event ('event_changed' is "cancel /
- *    reschedule / venue change" in ingest.ts).
+ *    reschedule / venue change" in ingest.ts);
+ *  - trigger type `purchase_event`, whatever its triggerConfig: every
+ *    e-commerce order webhook (ecommerce/index.ts ingestOrder → onOrderPlaced).
+ *    Michal, 15. 10. 19:40, point 1c a)+b) (Z163): the shop's informational
+ *    e-mails in a flow — the order confirmation, shipped / delivered, the call
+ *    to pay, the pickup code, the invoice — are transactional, and the
+ *    confirmation is transactional for an unpaid order too. That removes the
+ *    reason it was left out (it fires for an order whatever its payment
+ *    status). The trigger alone makes nothing transactional: the node's
+ *    priority decides, so the marketing nodes on purchase_event (a review
+ *    request, cross-sell) stay marketing. Which shipped template nodes carry
+ *    the priority is in workflow-templates/registry.ts; the flows already
+ *    forked from them get it from migration 0038.
  *
  * Deliberately NOT here:
- *  - trigger type 'purchase_event': it is started by every e-commerce
- *    `orders/create` / `orders/updated` webhook (ecommerce/index.ts
- *    ingestOrder → onOrderPlaced), whatever the order's payment status
- *    (Shopify financial_status 'pending', 'refunded', 'voided' all start it),
- *    so it is not "an order was paid";
+ *  - api_event `payment_pending`, `pickup_ready`, `order_shipped`: no code
+ *    emits them, only POST /api/v1/events does, and a publishable key may call
+ *    it. Michal, 15. 10. ~21:30, point 1d: first a 403 for the public key, then
+ *    the list (Z164);
  *  - every other `ticketing.*` event (cart_abandoned, event_attended,
  *    waitlist_freed, lottery_won, subscription_past_due, fill_the_house_offer,
  *    discover_digest, order_refunded): offers, reminders to buy and reviews,
  *    i.e. marketing;
  *  - a flow with no eventName, which starts on every api_event.
  *
- * The names are the trigger's own eventName, matched exactly: the alias table
- * in triggers.ts (checkout_started ← cart_abandoned) touches none of them.
+ * The api_event names are the trigger's own eventName, matched exactly: the
+ * alias table in triggers.ts (checkout_started ← cart_abandoned) touches none
+ * of them.
  */
-export const TRANSACTIONAL_FLOW_TRIGGERS: readonly {
-  triggerType: 'api_event';
-  eventName: string;
-}[] = [
+export const TRANSACTIONAL_FLOW_TRIGGERS: readonly (
+  | { triggerType: 'api_event'; eventName: string }
+  | { triggerType: 'purchase_event' }
+)[] = [
   { triggerType: 'api_event', eventName: 'ticketing.order_paid' },
   { triggerType: 'api_event', eventName: 'ticketing.day_of_reminder' },
   { triggerType: 'api_event', eventName: 'ticketing.day_of_sms' },
   { triggerType: 'api_event', eventName: 'ticketing.event_changed' },
+  { triggerType: 'purchase_event' },
 ];
 
 /** The node types that can carry the exception: the SMS and the e-mail node. */
@@ -81,9 +94,11 @@ export function isTransactionalFlowTrigger(
   triggerConfig: Record<string, unknown> | null | undefined,
 ): boolean {
   const eventName = triggerConfig?.eventName;
-  return TRANSACTIONAL_FLOW_TRIGGERS.some(
-    (t) => t.triggerType === triggerType && t.eventName === eventName,
-  );
+  return TRANSACTIONAL_FLOW_TRIGGERS.some((t) => {
+    if (t.triggerType !== triggerType) return false;
+    // purchase_event is listed whatever its triggerConfig; api_event by its name.
+    return t.triggerType === 'purchase_event' || t.eventName === eventName;
+  });
 }
 
 /**

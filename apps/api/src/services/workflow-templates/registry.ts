@@ -93,6 +93,28 @@ const emailFrom = (id: string, subject: string, builtInTemplateId: string): Work
   n(id, 'send_email', { subject, builtInTemplateId });
 // executeSendSms reads config.message (a { body } field never sent).
 const sms = (id: string, body: string): WorkflowNode => n(id, 'send_sms', { message: body });
+/**
+ * An informational e-mail of an order: it reaches the buyer past an opt-out.
+ *
+ * Michal, 15. 10. 19:40, point 1c a)+b)+c) (Z163): the shop's informational
+ * e-mails in a flow — order confirmation (an unpaid order's too), shipped /
+ * delivered, the call to pay, the pickup code, the invoice — are
+ * transactional. Exactly seven nodes carry it: transactional-order-confirmation
+ * e1, post-purchase-cs e1–e3 (purchase_event), payment-pending-cs e1 and
+ * pickup-invoice-cs e1, e2 (api_event). Only the trigger list decides whether
+ * the priority counts (workflows/transactional-exception.ts): purchase_event is
+ * on it; payment_pending and pickup_ready wait for Z164 (Michal, point 1d: a
+ * 403 for the publishable key first), so there the priority changes nothing
+ * yet (measured in Z163). The marketing nodes on purchase_event (the review
+ * request, cross-sell) do not carry it. The hidden templates do not either:
+ * four of their nodes send an informational subject with a marketing body or
+ * the other way round (Z162), which waits on Michal. Flows already forked from
+ * the seven get it from migration 0038, which keys on the same seven nodes.
+ */
+const transactional = (node: WorkflowNode): WorkflowNode => ({
+  ...node,
+  config: { ...node.config, priority: 'transactional' },
+});
 
 const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
   // ─── Welcome series ─────────────────────────────────────────────────────────
@@ -1379,7 +1401,7 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'purchase_event', config: {} },
     nodes: [
       n('t', 'trigger', { triggerType: 'purchase_event' }),
-      email('e1', 'Order #{{order.id}} — receipt + delivery ETA'),
+      transactional(email('e1', 'Order #{{order.id}} — receipt + delivery ETA')),
     ],
     edges: [e('e0', 't', 'e1')],
   },
@@ -2117,18 +2139,24 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'purchase_event', config: {} },
     nodes: [
       n('t', 'trigger', { triggerType: 'purchase_event' }),
-      emailFrom('e1', 'Objednávka {{order.number|default:"č. —"}} přijata', 'cs-order-confirm'),
+      transactional(
+        emailFrom('e1', 'Objednávka {{order.number|default:"č. —"}} přijata', 'cs-order-confirm'),
+      ),
       wait('w1', 1),
-      emailFrom(
-        'e2',
-        'Zásilka {{shipment.tracking_number|default:"—"}} je na cestě',
-        'cs-shipping-tracking',
+      transactional(
+        emailFrom(
+          'e2',
+          'Zásilka {{shipment.tracking_number|default:"—"}} je na cestě',
+          'cs-shipping-tracking',
+        ),
       ),
       wait('w2', 2),
-      emailFrom(
-        'e3',
-        'Zásilka {{shipment.tracking_number|default:"—"}} je doručena',
-        'cs-delivered',
+      transactional(
+        emailFrom(
+          'e3',
+          'Zásilka {{shipment.tracking_number|default:"—"}} je doručena',
+          'cs-delivered',
+        ),
       ),
       wait('w3', 7),
       emailFrom('e4', 'Jak jste spokojeni s nákupem?', 'cs-review-request'),
@@ -2155,10 +2183,12 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'payment_pending' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'payment_pending' }),
-      emailFrom(
-        'e1',
-        'Objednávka {{order.number|default:"—"}} čeká na zaplacení',
-        'cs-payment-pending',
+      transactional(
+        emailFrom(
+          'e1',
+          'Objednávka {{order.number|default:"—"}} čeká na zaplacení',
+          'cs-payment-pending',
+        ),
       ),
     ],
     edges: [e('e0', 't', 'e1')],
@@ -2232,16 +2262,20 @@ const RAW_WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     trigger: { type: 'api_event', config: { eventName: 'pickup_ready' } },
     nodes: [
       n('t', 'trigger', { triggerType: 'api_event', eventName: 'pickup_ready' }),
-      emailFrom(
-        'e1',
-        'Zásilka čeká na {{pickup.point_name|default:"výdejním místě"}}',
-        'cs-pickup-ready',
+      transactional(
+        emailFrom(
+          'e1',
+          'Zásilka čeká na {{pickup.point_name|default:"výdejním místě"}}',
+          'cs-pickup-ready',
+        ),
       ),
       wait('w1', 1),
-      emailFrom(
-        'e2',
-        'Faktura {{invoice.number|default:"—"}} k objednávce {{order.number|default:"—"}}',
-        'cs-invoice',
+      transactional(
+        emailFrom(
+          'e2',
+          'Faktura {{invoice.number|default:"—"}} k objednávce {{order.number|default:"—"}}',
+          'cs-invoice',
+        ),
       ),
     ],
     edges: [e('e0', 't', 'e1'), e('e1', 'e1', 'w1'), e('e2', 'w1', 'e2')],

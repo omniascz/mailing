@@ -61,6 +61,20 @@ function flow(
   };
 }
 
+/** The list as plain data (an entry may have no eventName: purchase_event). */
+const LIST = TRANSACTIONAL_FLOW_TRIGGERS as readonly { triggerType: string; eventName?: string }[];
+
+/** "api_event:<eventName>", or "purchase_event", which is listed whatever its config. */
+function listed(t: (typeof LIST)[number]): string {
+  if (t.triggerType === 'purchase_event') return t.triggerType;
+  return `${t.triggerType}:${t.eventName}`;
+}
+
+const LISTED_EVENT_NAMES: string[] = [];
+for (const t of LIST) {
+  if (t.triggerType === 'api_event' && t.eventName) LISTED_EVENT_NAMES.push(t.eventName);
+}
+
 beforeEach(() => {
   state.row = null;
   state.queries = 0;
@@ -68,14 +82,14 @@ beforeEach(() => {
 });
 
 describe('the closed list of transactional triggers', () => {
-  it('is exactly the order, the two day-of events and the change of an event', () => {
-    expect(
-      TRANSACTIONAL_FLOW_TRIGGERS.map((t) => `${t.triggerType}:${t.eventName}`).sort(),
-    ).toEqual([
+  // Z163: purchase_event joined the list (Michal, 15. 10. 19:40, point 1c a+b).
+  it('is the order, the two day-of events, the change of an event and purchase_event', () => {
+    expect(LIST.map(listed).sort()).toEqual([
       'api_event:ticketing.day_of_reminder',
       'api_event:ticketing.day_of_sms',
       'api_event:ticketing.event_changed',
       'api_event:ticketing.order_paid',
+      'purchase_event',
     ]);
   });
 
@@ -90,6 +104,10 @@ describe('the closed list of transactional triggers', () => {
     'ticketing.subscription_past_due',
     'order_placed',
     'checkout_started',
+    // Z164 first (Michal, point 1d): a publishable key can still fire them.
+    'payment_pending',
+    'pickup_ready',
+    'order_shipped',
     'ticketing.order_paid ',
     'TICKETING.ORDER_PAID',
   ])('%s is not on it', (eventName) => {
@@ -101,17 +119,25 @@ describe('the closed list of transactional triggers', () => {
     expect(isTransactionalFlowTrigger('api_event', null)).toBe(false);
   });
 
-  it('purchase_event is not on it, nor a listed name under another trigger type', () => {
-    expect(isTransactionalFlowTrigger('purchase_event', {})).toBe(false);
+  // Z163: was "purchase_event is not on it" — Michal, 15. 10. 19:40, point 1c a+b.
+  it('purchase_event is on it whatever its triggerConfig', () => {
+    expect(isTransactionalFlowTrigger('purchase_event', {})).toBe(true);
+    expect(isTransactionalFlowTrigger('purchase_event', null)).toBe(true);
+    expect(isTransactionalFlowTrigger('purchase_event', { categoryTag: 'consumable' })).toBe(true);
     expect(
       isTransactionalFlowTrigger('purchase_event', { eventName: 'ticketing.order_paid' }),
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it('a listed name under another trigger type is not on it', () => {
     expect(isTransactionalFlowTrigger('manual', { eventName: 'ticketing.day_of_sms' })).toBe(false);
+    expect(isTransactionalFlowTrigger('purchase', {})).toBe(false);
+    expect(isTransactionalFlowTrigger('api_event', { eventName: 'purchase_event' })).toBe(false);
   });
 });
 
 describe('flowTransactionalException', () => {
-  it.each(TRANSACTIONAL_FLOW_TRIGGERS.map((t) => t.eventName))(
+  it.each(LISTED_EVENT_NAMES)(
     'holds for a transactional send_sms and send_email node on %s',
     async (eventName) => {
       flow(eventName);
@@ -129,7 +155,24 @@ describe('flowTransactionalException', () => {
     expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(false);
     flow(undefined);
     expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(false);
+    flow('payment_pending', { type: 'send_email', config: { priority: 'transactional' } });
+    expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(false);
+  });
+
+  // Z163: was false — Michal, 15. 10. 19:40, point 1c a+b.
+  it('holds on purchase_event for a transactional node only', async () => {
+    const transactional = { type: 'send_email', config: { priority: 'transactional' } };
+    flow(undefined, transactional, 'purchase_event');
+    expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(true);
     flow(undefined, {}, 'purchase_event');
+    expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(true);
+    flow(undefined, { type: 'send_email', config: { templateId: 't' } }, 'purchase_event');
+    expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(false);
+    flow(
+      undefined,
+      { type: 'send_email', config: { templateId: 't', priority: 'marketing' } },
+      'purchase_event',
+    );
     expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(false);
   });
 
