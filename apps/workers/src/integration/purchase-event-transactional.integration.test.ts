@@ -591,11 +591,7 @@ const byEvent = (eventName: string, properties: Record<string, unknown>) => (p: 
 function normalise(value: unknown, people: Person[]): string {
   let s = JSON.stringify(value, Object.keys(flatKeys(value)).sort(), 1);
   for (const p of people) {
-    s = s
-      .split(p.email)
-      .join('<EMAIL>')
-      .split(encodeURIComponent(p.email))
-      .join('<EMAIL>');
+    s = s.split(p.email).join('<EMAIL>').split(encodeURIComponent(p.email)).join('<EMAIL>');
   }
   return s
     .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<UUID>')
@@ -740,7 +736,11 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
     // in the shape a fork made before it was hidden (registry.ts nodes, the
     // e-mails seriesForCategory('post_purchase', 'en') pairs them with, one
     // organisation copy per e-mail).
-    const hiddenFork = await call('POST', '/api/v1/workflow-templates/post-purchase-shipping-update/fork', {});
+    const hiddenFork = await call(
+      'POST',
+      '/api/v1/workflow-templates/post-purchase-shipping-update/fork',
+      {},
+    );
     report.hiddenForkHttp = hiddenFork.status;
     expect(hiddenFork.status, hiddenFork.text).toBe(404);
     flows.hid = await insertHidden('hid');
@@ -854,7 +854,12 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
       'PPC',
       flows.ppc,
       people,
-      [{ node: 'e1' }, { wait: 'w1', node: 'e2' }, { wait: 'w2', node: 'e3' }, { wait: 'w3', node: 'e4' }],
+      [
+        { node: 'e1' },
+        { wait: 'w1', node: 'e2' },
+        { wait: 'w2', node: 'e3' },
+        { wait: 'w3', node: 'e4' },
+      ],
       byOrder,
     );
     report.PPC = { cells: ppc.cells, advanced: ppc.advanced };
@@ -866,7 +871,8 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
       }
     }
     const e4 = ppc.cells.e4!;
-    for (const st of BOTH) expect(e4[st]!.reached, `e4 ${st}: ${JSON.stringify(e4[st])}`).toBe(true);
+    for (const st of BOTH)
+      expect(e4[st]!.reached, `e4 ${st}: ${JSON.stringify(e4[st])}`).toBe(true);
     for (const st of [...LIFTED, ...NEGATIVE]) {
       expect(e4[st]!.reached, `e4 ${st}: ${JSON.stringify(e4[st])}`).toBe(false);
     }
@@ -1096,16 +1102,22 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
     // The editor's own route for the three edited forks (the web editor can
     // only change a subject; the API takes any config).
     const put = async (wf: Wf, nodes: WfNode[], edges = wf.edges) => {
-      const [now] = await sql<{ nodes: WfNode[] }[]>`SELECT nodes FROM workflows WHERE id = ${wf.id}`;
+      const [now] = await sql<
+        { nodes: WfNode[] }[]
+      >`SELECT nodes FROM workflows WHERE id = ${wf.id}`;
       const r = await call('PUT', `/api/v1/workflows/${wf.id}`, { nodes, edges });
       expect(r.status, r.text).toBe(200);
-      const [after] = await sql<{ nodes: WfNode[] }[]>`SELECT nodes FROM workflows WHERE id = ${wf.id}`;
+      const [after] = await sql<
+        { nodes: WfNode[] }[]
+      >`SELECT nodes FROM workflows WHERE id = ${wf.id}`;
       return { before: now!.nodes, after: after!.nodes };
     };
     const nodesOf = async (id: string) =>
       (await sql<{ nodes: WfNode[] }[]>`SELECT nodes FROM workflows WHERE id = ${id}`)[0]!.nodes;
     const subjectNodes = (await nodesOf(editedSubject.id)).map((n) =>
-      n.id === 'e1' ? { ...n, config: { ...n.config, subject: `${String(n.config.subject)}!` } } : n,
+      n.id === 'e1'
+        ? { ...n, config: { ...n.config, subject: `${String(n.config.subject)}!` } }
+        : n,
     );
     await put(editedSubject, subjectNodes);
     const swapNodes0 = await nodesOf(swappedEmail.id);
@@ -1142,7 +1154,11 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
         WHERE pid = pg_backend_pid() AND locktype IN ('relation', 'transactionid')
         ORDER BY 1, 2
       `;
-      return { count: r.count, ms: Math.round(ms * 10) / 10, locks: locks.map((l) => `${l.rel} ${l.mode}`) };
+      return {
+        count: r.count,
+        ms: Math.round(ms * 10) / 10,
+        locks: locks.map((l) => `${l.rel} ${l.mode}`),
+      };
     });
     const after = await snapshot();
     const again = await sql.begin(async (tx) => (await tx.unsafe(text)).count);
@@ -1203,7 +1219,9 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
     });
     expect(applied.count).toBe(4 + otherChanged.length);
     for (const line of otherChanged) {
-      expect(line.split(' ').slice(1).join(' ')).toMatch(/^(e\d \+config\.priority="transactional" ?)+$/);
+      expect(line.split(' ').slice(1).join(' ')).toMatch(
+        /^(e\d \+config\.priority="transactional" ?)+$/,
+      );
     }
     expect(columnsChanged).toEqual([]);
     expect(again).toBe(0);

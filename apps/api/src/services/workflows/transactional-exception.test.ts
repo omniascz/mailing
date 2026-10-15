@@ -61,15 +61,18 @@ function flow(
   };
 }
 
+/** The list as plain data (an entry may have no eventName: purchase_event). */
+const LIST = TRANSACTIONAL_FLOW_TRIGGERS as readonly { triggerType: string; eventName?: string }[];
+
 /** "api_event:<eventName>", or "purchase_event", which is listed whatever its config. */
-function listed(t: (typeof TRANSACTIONAL_FLOW_TRIGGERS)[number]): string {
+function listed(t: (typeof LIST)[number]): string {
   if (t.triggerType === 'purchase_event') return t.triggerType;
   return `${t.triggerType}:${t.eventName}`;
 }
 
 const LISTED_EVENT_NAMES: string[] = [];
-for (const t of TRANSACTIONAL_FLOW_TRIGGERS) {
-  if (t.triggerType === 'api_event') LISTED_EVENT_NAMES.push(t.eventName);
+for (const t of LIST) {
+  if (t.triggerType === 'api_event' && t.eventName) LISTED_EVENT_NAMES.push(t.eventName);
 }
 
 beforeEach(() => {
@@ -81,7 +84,7 @@ beforeEach(() => {
 describe('the closed list of transactional triggers', () => {
   // Z163: purchase_event joined the list (Michal, 15. 10. 19:40, point 1c a+b).
   it('is the order, the two day-of events, the change of an event and purchase_event', () => {
-    expect(TRANSACTIONAL_FLOW_TRIGGERS.map(listed).sort()).toEqual([
+    expect(LIST.map(listed).sort()).toEqual([
       'api_event:ticketing.day_of_reminder',
       'api_event:ticketing.day_of_sms',
       'api_event:ticketing.event_changed',
