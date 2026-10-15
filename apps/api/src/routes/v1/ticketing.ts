@@ -99,10 +99,21 @@ export default async function ticketingRoutes(app: FastifyInstance) {
     },
   );
 
-  /** Seed ready-to-run ticketing automations into the org (idempotent). */
+  /**
+   * Seed ready-to-run ticketing automations into the org (idempotent).
+   *
+   * It writes flows, so editor and up: Z164, item 9 of point 1 — the standing
+   * decision "owner, admin and editor may send; a viewer may not"; Z163 MIMO 1
+   * (a viewer re-marked marketing as transactional, the mail reached an
+   * unsubscribed buyer). Partner provisioning seeds through the service, not
+   * this route, and is unchanged.
+   */
   app.post(
     '/api/v1/ticketing/seed-workflows',
-    { schema: { tags: ['Ticketing'], summary: 'Seed ticketing automations into the org' } },
+    {
+      preHandler: app.requireRole('editor'),
+      schema: { tags: ['Ticketing'], summary: 'Seed ticketing automations into the org' },
+    },
     async (req, reply) => {
       const result = await seedTicketingWorkflows(req.user!.orgId);
       return reply.send({ data: result });

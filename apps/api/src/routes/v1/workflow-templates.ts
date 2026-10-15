@@ -85,9 +85,14 @@ export default async function workflowTemplateRoutes(app: FastifyInstance) {
     },
   );
 
+  // A fork is a new flow: editor and up, a viewer may not (Z164, item 9 of
+  // point 1 — the standing decision "owner, admin and editor may send; a
+  // viewer may not"; Z163 MIMO 1: a viewer re-marked marketing as
+  // transactional and the mail reached an unsubscribed buyer).
   app.post(
     '/api/v1/workflow-templates/:slug/fork',
     {
+      preHandler: app.requireRole('editor'),
       schema: { tags: ['WorkflowTemplates'], summary: 'Fork a template into a draft workflow' },
     },
     async (req, reply) => {

@@ -19,10 +19,16 @@ import {
 } from '../../services/sandboxes/index.js';
 
 const sandboxRoutes: FastifyPluginAsync = async (app) => {
+  // With seedConfig.copyWorkflows the sandbox is made with a copy of every
+  // flow of the organisation, so creating one takes editor and up — for the
+  // whole route, the role check is a preHandler (Z164, item 9 of point 1: the
+  // standing decision "owner, admin and editor may send; a viewer may not";
+  // Z163 MIMO 1, a viewer re-marked marketing as transactional and the mail
+  // reached an unsubscribed buyer).
   app.post(
     '/api/v1/sandboxes',
     {
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, app.requireRole('editor')],
       schema: { tags: ['Sandboxes'] },
     },
     async (req, reply) => {
