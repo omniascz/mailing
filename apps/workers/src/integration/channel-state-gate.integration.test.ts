@@ -76,7 +76,7 @@ const REFUSED: State[] = ['pending', 'unsub_consent', 'bounced', 'complained', '
 const hits = { wa: [] as string[], fcm: [] as string[], web: [] as string[] };
 const realFetch = globalThis.fetch;
 function stubTransport() {
-  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
     const url =
       typeof input === 'string'
         ? input
@@ -103,7 +103,7 @@ function stubTransport() {
       hits.web.push(url);
       return new Response(null, { status: 201 });
     }
-    return realFetch(input as RequestInfo, init);
+    return realFetch(input, init);
   }) as typeof fetch;
 }
 
