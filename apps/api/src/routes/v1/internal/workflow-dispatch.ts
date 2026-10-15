@@ -127,17 +127,19 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
       // the order, the ticket, the change or cancellation of an event — and the
       // node that made the job is a send_email with priority 'transactional',
       // the API (flowTransactionalException, from the database; the job carries
-      // only workflowRunId and nodeId) lets the mail through to an
-      // unsubscribed, complained or non_subscribed contact
-      // (FLOW_TRANSACTIONAL_LIFTED_STATUSES), and sends it with the default
-      // transactional purpose: an 'unsubscribe' suppression row no longer stops
-      // it, but a complaint, a hard bounce, an invalid address, 'manual', a
-      // block and the GDPR fingerprint still do (mta-sender
-      // SUPPRESSES_TRANSACTIONAL). The commissioner's narrowest reading:
-      // pending, archived, bounced, a deleted and an unknown contact still get
-      // nothing, and only THIS inline branch has the exception — the template
-      // branch below does not. Personal e-mails, review requests and sequence
-      // steps carry no nodeId and so never get it.
+      // only workflowRunId and nodeId) lets the mail through to a pending,
+      // archived, unsubscribed, complained or non_subscribed contact
+      // (FLOW_TRANSACTIONAL_LIFTED_STATUSES; pending and archived since Z158 —
+      // Michal, 15. 10. 6:10, point 1b, which overrides the narrower reading of
+      // Z156), and sends it with the default transactional purpose: an
+      // 'unsubscribe' suppression row no longer stops it, but a complaint, a
+      // hard bounce, an invalid address, 'manual', a block and the GDPR
+      // fingerprint still do (mta-sender SUPPRESSES_TRANSACTIONAL). Bounced, a
+      // deleted and an unknown contact still get nothing. The template branch
+      // below has the same exception since Z158. Three points wait on Michal
+      // and are unchanged: the complaint / manual / block rows, bounced, and
+      // the soft-deleted contact. Personal e-mails, review requests and
+      // sequence steps carry no nodeId and so never get it.
       if (body.html) {
         const [contact] = await db
           .select({ email: contacts.email, status: contacts.status })
@@ -215,6 +217,13 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
       let fromEmail: string;
       let replyTo: string | undefined;
       let locale: 'en' | 'cs' | 'sk';
+      // The flow's transactional exception on the template branch (Z158 —
+      // Michal, 15. 10. 6:10, point 1b: the ticket, the order and the change
+      // of an event reach the recipient whichever kind of node sends them).
+      // Decided by the same flowTransactionalException, from the database,
+      // after the template is loaded; never from the job. A campaign-content
+      // node is not given it.
+      let flowTransactional = false;
 
       if (body.campaignId) {
         const [c] = await db
@@ -266,6 +275,11 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
           return reply.send({ data: { skipped: true, reason: 'no verified sending domain' } });
         fromName = from.fromName;
         fromEmail = from.fromEmail;
+        flowTransactional = await flowTransactionalException(
+          body.orgId,
+          body.workflowRunId,
+          body.nodeId,
+        );
       } else {
         // Unreachable while workflowEmailJobSchema's refine holds (it requires
         // campaignId, templateId or html, and html returned above). Kept so the
@@ -308,6 +322,11 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         companyName: identity.companyName,
         companyAddress: identity.companyAddress,
         locale,
+        // Set only here, only from flowTransactionalException above (Z158).
+        // batch-sender then lets a status of FLOW_TRANSACTIONAL_LIFTED_STATUSES
+        // through and checks only the transactional suppression reasons; the
+        // stream, the render and the footer stay those of the triggered stream.
+        ...(flowTransactional ? { flowTransactional: true } : {}),
       });
 
       return reply.send({ data: { queued: true } });
@@ -325,7 +344,9 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
       // decided here from the database — the run's flow starts on a trigger of
       // the closed list and node `nodeId` is a send_sms with priority
       // 'transactional' — and handed to routedSmsSend, whose contact-state gate
-      // then lets an unsubscribed or complained contact through. Only for a
+      // then lets a pending, archived, unsubscribed or complained contact
+      // through (pending and archived since Z158 — Michal, 15. 10. 6:10,
+      // point 1b; FLOW_TRANSACTIONAL_LIFTED_STATUSES). Only for a
       // flow's own job (workflowRunId), never for a campaign; without nodeId
       // (a review request, an older job) it is false and no query runs.
       const flowTransactional =

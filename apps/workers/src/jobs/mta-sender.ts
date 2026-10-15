@@ -27,6 +27,7 @@ import {
   detectIsp,
 } from '@forgemsg/shared/sending/isp-throttle';
 import { internalHeaders, throwIfPermanentFailure, asFilterError } from '../lib/internal-api.js';
+import { reasonsFor } from '../lib/suppression-reasons.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -386,60 +387,10 @@ async function updateContactStatus(
 
 // ─── Suppression gate ────────────────────────────────────────────────────────
 
-/**
- * Suppression reasons that stop a transactional message.
- *
- * Every reason except `unsubscribe`. An unsubscribe is a refusal of marketing
- * (services/contacts/unsubscribe.ts writes it for every opt-out), not of the
- * contract: a person who left the newsletter still gets the receipt, the
- * password reset, and the confirmation mail when they subscribe again — that
- * confirmation goes out through this same transactional path, so suppressing
- * it here would make an unsubscribe impossible to undo. The other reasons say
- * the address itself must not be mailed (it bounced, complained, was blocked,
- * does not exist, or the org said so), and those hold for any message.
- *
- * Broadcast and triggered mail check every reason.
- */
-const SUPPRESSES_TRANSACTIONAL = [
-  'hard_bounce',
-  'complaint',
-  'manual',
-  'block',
-  'invalid_email',
-] as const;
-
-/**
- * The reasons that stop a list double opt-in confirmation: the transactional
- * ones without 'manual'.
- *
- * 'manual' is what a GDPR erasure leaves (by hash), what an operator adds by
- * hand (POST /suppressions, and the MCP suppress_contact tool through it) and
- * what graymail writes. For this one mail it is
- * not a refusal: the person asked for it by submitting the form, it carries
- * only the confirmation link, and that link is the only way an erased person
- * comes back (resubscribe.ts lifts the erasure on the confirmation, and on
- * nothing else). Nothing else is lifted by sending it — marketing stays
- * blocked until the link is clicked. Owner's decision, 14 Oct 2026 (Z148).
- *
- * A bounce, a complaint, a block or an invalid address still stop it: the
- * address does not work, or its owner reported us.
- *
- * The third purpose, 'workflow_marketing', has no list of its own: it is a
- * flow's inline-HTML e-mail, marketing on the transactional stream, and every
- * reason stops it — 'unsubscribe' too, as for broadcast and triggered (Z152;
- * see the inline branch of the API's workflow-dispatch.ts).
- */
-const SUPPRESSES_DOI_CONFIRMATION = SUPPRESSES_TRANSACTIONAL.filter((r) => r !== 'manual');
-
-/** The reasons that count for this job; undefined means every reason. */
-export function reasonsFor(
-  data: Pick<MtaSendJobData, 'stream' | 'purpose'>,
-): readonly string[] | undefined {
-  if (data.stream !== 'transactional') return undefined;
-  if (data.purpose === 'workflow_marketing') return undefined;
-  if (data.purpose === 'doi_confirmation') return SUPPRESSES_DOI_CONFIRMATION;
-  return SUPPRESSES_TRANSACTIONAL;
-}
+// Which reasons count for a job — SUPPRESSES_TRANSACTIONAL, the DOI list and
+// the purposes — is lib/suppression-reasons.ts, shared with batch-sender
+// (moved there unchanged in Z158, plus 'flow_transactional').
+export { reasonsFor };
 
 /**
  * Is this recipient suppressed for the job's org, asked at the moment of

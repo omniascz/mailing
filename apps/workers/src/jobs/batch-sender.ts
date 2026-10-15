@@ -27,12 +27,8 @@ import {
 import { readCampaignContent } from '@forgemsg/editor/schema';
 import type { CampaignContentShape } from '@forgemsg/editor/schema';
 import { assertOptOutPresent } from '../lib/optout-guard.js';
-import {
-  injectOpenPixel,
-  wrapLinks,
-  createTrackingToken,
-  refusesMarketing,
-} from '@forgemsg/shared';
+import { injectOpenPixel, wrapLinks, createTrackingToken } from '@forgemsg/shared';
+import { reasonsFor, refusedByStatus } from '../lib/suppression-reasons.js';
 // Cross-package import (same pattern as mta-sender → isp-throttle): the coupon
 // resolver assigns a unique per-contact code for {{coupon_code:batchId}} tags.
 import { resolveEmailCouponTags } from '@forgemsg/api/services/campaigns/email-coupon-merge';
@@ -346,17 +342,34 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   //
   // The statuses are MARKETING_REFUSED_CONTACT_STATUSES in @forgemsg/shared;
   // the API's inline-HTML flow branch (workflow-dispatch.ts) reads the same list.
+  //
+  // The flow's transactional exception (Z158 — Michal, 15. 10. 6:10, point
+  // 1b): a flow e-mail from a template that the API's workflow dispatch marked
+  // flowTransactional — from the database, never from anything the job's
+  // producer could choose — is the ticket, the order or the change of an
+  // event. For it, a status of FLOW_TRANSACTIONAL_LIFTED_STATUSES (pending,
+  // archived, unsubscribed, complained) is not refused, and the suppression
+  // rows count only for the transactional reasons, so an 'unsubscribe' row no
+  // longer stops it — the same as the exception on the inline branch, by the
+  // same shared definitions (refusedByStatus, reasonsFor). Bounced, and a
+  // complaint / manual / block row, still stop it: they wait on Michal. Only
+  // on the triggered stream, where the dispatch puts it. Without the flag
+  // nothing here changes.
+  const flowTransactional = data.flowTransactional === true && stream === 'triggered';
   const refusedByStatusSet = new Set<string>();
   if (stream !== 'transactional') {
     for (const c of contacts) {
-      if (refusesMarketing(c.status)) refusedByStatusSet.add(c.id);
+      if (refusedByStatus(c.status, flowTransactional)) refusedByStatusSet.add(c.id);
     }
   }
+  // Carried to every mta job of the batch, so mta-sender's own check at the
+  // moment of sending asks the same reasons as the check here.
+  const purpose = flowTransactional ? ('flow_transactional' as const) : undefined;
 
   const checks: Array<Promise<unknown>> = [];
   if (stream !== 'transactional') {
     checks.push(
-      fetchSuppressedBatch(data.orgId, emails).then((s) =>
+      fetchSuppressedBatch(data.orgId, emails, reasonsFor({ stream, purpose })).then((s) =>
         s.forEach((e) => suppressedSet.add(e.toLowerCase())),
       ),
     );
@@ -687,6 +700,7 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
         priority: data.priority,
         stream,
         abVariantId: data.abVariantId,
+        ...(purpose ? { purpose } : {}),
       },
       opts: delay !== undefined ? { priority: data.priority, delay } : { priority: data.priority },
     });
@@ -1022,14 +1036,22 @@ async function fetchContacts(orgId: string, contactIds: string[]): Promise<Conta
  * currently suppressed for the org. Worker calls this once per batch
  * (≤1000 emails) instead of N individual `/suppressions/check?email=…`
  * calls. Fail-open on API errors so a transient outage doesn't block sends.
+ *
+ * `reasons` narrows the reasons that count, as mta-sender does (reasonsFor);
+ * undefined — every job but the flow's transactional exception — is every
+ * reason, the request exactly as before Z158.
  */
-async function fetchSuppressedBatch(orgId: string, emails: string[]): Promise<string[]> {
+async function fetchSuppressedBatch(
+  orgId: string,
+  emails: string[],
+  reasons: readonly string[] | undefined,
+): Promise<string[]> {
   if (emails.length === 0) return [];
   try {
     const res = await fetch(`${API_URL}/api/v1/internal/suppressions/check-batch`, {
       method: 'POST',
       headers: internalHeaders(),
-      body: JSON.stringify({ orgId, emails }),
+      body: JSON.stringify({ orgId, emails, ...(reasons ? { reasons } : {}) }),
     });
     throwIfPermanentFailure(res, '/internal/suppressions/check-batch', orgId);
     const body = (await res.json()) as { data: { suppressed: string[] } };

@@ -25,7 +25,7 @@ import { suppressionBlocks } from '../suppressions/email.js';
 /**
  * Suppression reasons that refuse a transactional message — the list the
  * mta-sender gate uses for this stream (SUPPRESSES_TRANSACTIONAL in
- * workers/src/jobs/mta-sender.ts, #225), so this route and /emails decide the
+ * workers/src/lib/suppression-reasons.ts, #225), so this route and /emails decide the
  * same. transactional-gate.integration.test.ts sends one receipt per reason
  * through both and fails if they ever disagree.
  */
@@ -187,7 +187,7 @@ export async function sendTransactionalMessage(
   // instead of sending to an address that must not be mailed.
   //
   // The same reasons the mta-sender gate refuses a transactional message
-  // for (SUPPRESSES_TRANSACTIONAL, workers/src/jobs/mta-sender.ts) — every
+  // for (SUPPRESSES_TRANSACTIONAL, workers/src/lib/suppression-reasons.ts) — every
   // reason except 'unsubscribe'. This check predates that gate and refused
   // on any row, so an unsubscribed customer's receipt was rejected here and
   // delivered through /emails. A marketing opt-out is not a refusal of the

@@ -31,7 +31,8 @@ export interface SeedDef {
    * the contact bought. Together with a trigger on the closed list
    * (services/workflows/transactional-exception.ts) it lets the mail reach an
    * unsubscribed, complained or non_subscribed contact — Michal, 14. 10.
-   * 22:10; Z156. Every other e-mail seed stays marketing. The SMS seed always
+   * 22:10; Z156 — and a pending or archived one since Z158 (Michal, 15. 10.
+   * 6:10, point 1b). Every other e-mail seed stays marketing. The SMS seed always
    * had it (buildWorkflowGraph).
    */
   priority?: 'transactional';
