@@ -5,6 +5,7 @@ import { AppError } from '../../lib/app-error.js';
 import {
   subscribeBackInStock,
   subscribePriceDrop,
+  type PublicSubscribeOutcome,
 } from '../../services/stock-alerts/public-subscribe.js';
 import {
   listForContact as listStockForContact,
@@ -61,6 +62,28 @@ function publicSafeBody(req: { user?: { isPublicKey?: boolean } }, body: unknown
   return parsed;
 }
 
+/**
+ * What a subscribe answers: 202 either way, and to a publishable key the same
+ * body either way.
+ *
+ * The body used to carry `subscribed: true | false` (and the row's `id`) to
+ * every caller, so anyone holding the key in page JS could ask about an
+ * address and read whether this shop had it unsubscribed or suppressed — and,
+ * once a pending, bounced or archived contact is refused too (Z172), whether
+ * it had bounced or never confirmed. A publishable-key caller now gets
+ * `{ received: true }` whatever the service decided (Z172). A secret key or a
+ * session is the merchant's own backend, which may know; it keeps
+ * `{ subscribed, id }`. Validation (400), a contactId from a publishable key
+ * (403), an unknown product on price-drop (404) and the rate limit (429)
+ * answer as before.
+ */
+function subscribeAnswer(
+  req: { user?: { isPublicKey?: boolean } },
+  out: PublicSubscribeOutcome,
+): { data: PublicSubscribeOutcome | { received: true } } {
+  return req.user?.isPublicKey ? { data: { received: true } } : { data: out };
+}
+
 const stockRoutes: FastifyPluginAsync = async (app) => {
   // ─── Back-in-stock ────────────────────────────────────────────────────────
   // `authenticatePublic`, which is this repository's answer to "a page needs to
@@ -83,9 +106,7 @@ const stockRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const body = publicSafeBody(req, req.body);
       const out = await subscribeBackInStock(req.user!.orgId, body);
-      // 202 either way. Answering differently for an address that opted out
-      // would turn this into a way to test whether someone is on the list.
-      return reply.code(202).send({ data: out });
+      return reply.code(202).send(subscribeAnswer(req, out));
     },
   );
 
@@ -147,7 +168,8 @@ const stockRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const body = publicSafeBody(req, req.body);
-      return reply.code(202).send({ data: await subscribePriceDrop(req.user!.orgId, body) });
+      const out = await subscribePriceDrop(req.user!.orgId, body);
+      return reply.code(202).send(subscribeAnswer(req, out));
     },
   );
 

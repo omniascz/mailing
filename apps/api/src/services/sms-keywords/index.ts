@@ -90,7 +90,10 @@ export async function dispatchInboundSms(
         .values({
           orgId,
           phone: input.fromPhone,
-          status: 'active',
+          // A keyword is consent to SMS, not to e-mail marketing: 'active'
+          // here meant the contact got campaigns as soon as an e-mail reached
+          // it — a PUT, a merge, an import (Z147 MIMO 5). Z172, položka 5.
+          status: 'non_subscribed',
           source: 'sms_keyword',
         })
         .returning();

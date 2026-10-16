@@ -332,7 +332,8 @@ describe('only the recipient raises a contact to active', () => {
     const created = await sql<{ status: string; email: string | null }[]>`
       SELECT status::text AS status, email FROM contacts WHERE org_id = ${seed.id} AND phone = ${unknown}
     `;
-    expect(created).toEqual([{ status: 'active', email: null }]);
+    // Z172: klíčové slovo je souhlas k SMS, ne k e-mailu (položka 5) — was 'active'.
+    expect(created).toEqual([{ status: 'non_subscribed', email: null }]);
 
     const leaving = await contactRow('stop', 'active');
     const stop = await call('POST', '/api/v1/sms/inbound', {

@@ -178,7 +178,9 @@ describe('a shopper can ask, and the whole chain runs', () => {
 
     const res = await subscribe(t.publicKey, { sku, email });
     expect(res.statusCode, res.body).toBe(202);
-    expect(res.json().data.subscribed).toBe(true);
+    // Z172: odpověď veřejnému volajícímu neprozradí stav adresy — the same
+    // body accepted or refused, no `subscribed`, no `id`.
+    expect(res.json().data).toEqual({ received: true });
 
     // The shopper was not a contact a moment ago — this is usually the first
     // thing the shop ever hears about them.
@@ -341,10 +343,11 @@ describe('what bounds the harm of a public subscribe', () => {
       .returning({ id: contacts.id });
 
     const res = await subscribe(t.publicKey, { sku: `SKU-UN-${tag}`, email });
-    // 202 with subscribed:false — the same status code as a success, because
-    // answering differently would make this a way to test who is on the list.
+    // 202 and the body of a success, because answering differently would make
+    // this a way to test who is on the list. Z172: odpověď veřejnému
+    // volajícímu neprozradí stav adresy (was `subscribed: false`).
     expect(res.statusCode).toBe(202);
-    expect(res.json().data.subscribed).toBe(false);
+    expect(res.json().data).toEqual({ received: true });
     expect((await subsFor(t.orgId)).length, 'somebody who left stays gone').toBe(0);
   }, 60_000);
 
@@ -356,7 +359,9 @@ describe('what bounds the harm of a public subscribe', () => {
 
     const res = await subscribe(t.publicKey, { sku: `SKU-SP-${tag}`, email });
     expect(res.statusCode).toBe(202);
-    expect(res.json().data.subscribed).toBe(false);
+    // Z172: odpověď veřejnému volajícímu neprozradí stav adresy (was
+    // `subscribed: false`).
+    expect(res.json().data).toEqual({ received: true });
     expect((await subsFor(t.orgId)).length).toBe(0);
   }, 60_000);
 
