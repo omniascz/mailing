@@ -151,8 +151,11 @@ const MUST_NOT: State[] = [
 /** Reach the engine under the exception (nothing the exception lifts was broken). */
 const MUST: State[] = ['active', 'complained', 'unsubscribed', 'non_subscribed'];
 const ALL_T2: State[] = [...MUST, 'pending', ...MUST_NOT];
-/** K1 (marketing) reaches only these. */
-const K1_REACHES: State[] = ['active', 'non_subscribed'];
+/**
+ * K1 (marketing) reaches only these. Z166 — Michal, 14. 10. 22:10, point 3: a
+ * flow's marketing node skips non_subscribed; this was ['active', 'non_subscribed'].
+ */
+const K1_REACHES: State[] = ['active'];
 
 const ROW_REASON: Partial<Record<State, string>> = {
   invalid_row: 'invalid_email',
@@ -697,7 +700,7 @@ describe('the template branch exception reaches no one it must not (Z159)', () =
     expect(c.reached, `${st}: ${JSON.stringify(c)}`).toBe(false);
   });
 
-  it('K1 — the same node without the priority reaches only active and non_subscribed', async () => {
+  it('K1 — the same node without the priority reaches only active', async () => {
     await onlyActive(flows.k1);
     k1 = await walk('K1', ALL_T2);
     report.K1 = k1.cells;

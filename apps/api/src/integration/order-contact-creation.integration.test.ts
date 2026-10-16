@@ -14,9 +14,10 @@
  * address but no marketing opt-in, which is precisely what the enum comment
  * says that status means. Two independent things then keep marketing away from
  * it — `resolveAudience` excludes `non_subscribed` in SQL, and the contact
- * belongs to no list — while transactional and behaviour-triggered messages,
- * which rest on contract rather than consent, still work. That is the same
- * posture Klaviyo, Omnisend and Shopify itself take for a guest checkout.
+ * belongs to no list — while transactional messages, which rest on contract
+ * rather than consent, still work. A flow's marketing node skips it like a
+ * campaign does; only a flow's transactional exception reaches it (Michal,
+ * 14. 10. 22:10, point 3; Z166).
  *
  * No GDPR consent record is written. We have none to write: the order payload
  * carries no opt-in we read, and processing purposes are defined per org. A

@@ -184,3 +184,39 @@ describe('batch-sender — the flow transactional exception on the template bran
     expect(suppressionBodies[0]).not.toHaveProperty('reasons');
   });
 });
+
+// Z166 — Michal, 14. 10. 22:10, point 3: a flow's marketing node skips
+// non_subscribed "jako kampaň". The dispatch marks every template-branch job it
+// does not mark flowTransactional with flowMarketing.
+describe('batch-sender — a flow marketing node skips non_subscribed (Z166)', () => {
+  it('flowMarketing on the triggered stream: only active, every reason, no purpose', async () => {
+    await processBatchSender(job({ flowMarketing: true }) as never);
+    expect(reached()).toEqual(['active']);
+    expect(suppressionBodies).toHaveLength(1);
+    expect(suppressionBodies[0]).not.toHaveProperty('reasons');
+    for (const j of enqueued) expect(j.data).not.toHaveProperty('purpose');
+  });
+
+  it('flowMarketing on a broadcast job changes nothing (not by the stream alone either)', async () => {
+    await processBatchSender(job({ flowMarketing: true, stream: 'broadcast' }) as never);
+    expect(reached()).toEqual(['active', 'non_subscribed']);
+  });
+
+  it('flowMarketing: false is the same as no flag', async () => {
+    await processBatchSender(job({ flowMarketing: false }) as never);
+    expect(reached()).toEqual(['active', 'non_subscribed']);
+  });
+
+  it('with flowTransactional the flowMarketing flag is not read', async () => {
+    await processBatchSender(job({ flowTransactional: true, flowMarketing: true }) as never);
+    expect(reached()).toEqual([
+      'active',
+      'archived',
+      'complained',
+      'non_subscribed',
+      'pending',
+      'unsubscribed',
+    ]);
+    for (const j of enqueued) expect(j.data.purpose).toBe('flow_transactional');
+  });
+});

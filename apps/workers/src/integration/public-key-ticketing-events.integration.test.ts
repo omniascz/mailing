@@ -571,7 +571,9 @@ describe('a publishable key and the ticketing flows (Z161)', () => {
       expect(cells[st].runs, st).toEqual({ completed: 1 });
     }
     expect(cells.active.engineVx).toBe(1);
-    expect(cells.non_subscribed.engineVx).toBe(1);
+    // Z166 — Michal, 14. 10. 22:10, point 3: a flow's marketing node skips
+    // non_subscribed. This was 1.
+    expect(cells.non_subscribed.engineVx).toBe(0);
     for (const st of ['unsubscribed', 'pending', 'complained'] as State[]) {
       expect(cells[st].engineVx, `${st}: ${cells[st].emailJobs}`).toBe(0);
     }

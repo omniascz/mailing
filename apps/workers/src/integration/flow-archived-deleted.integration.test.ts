@@ -17,7 +17,9 @@
  * branch, answered as its own skip reason.
  *
  * 'non_subscribed' is NOT refused: that waits on the owner's decision about
- * § 7(3). It is walked here to show it still gets what it got.
+ * § 7(3). It is walked here to show it still gets what it got. Since Z166 a
+ * flow's node skips it (Michal, 14. 10. 22:10, point 3); the direct job and
+ * the sequence step carry no flow run and still reach it.
  *
  * ─── What this file walks ────────────────────────────────────────────────────
  *
@@ -475,8 +477,12 @@ describe('a flow e-mail reaches no archived and no deleted contact', () => {
     'template',
   ];
 
+  // Z166 — Michal, 14. 10. 22:10, point 3: the four flow producers (their job
+  // carries workflowRunId) skip non_subscribed. It was REACHED for all six.
+  const FLOW_PRODUCERS: Producer[] = ['send_email', 'personal', 'review', 'template'];
+
   it.each(PRODUCERS)(
-    '%s: active and non_subscribed reach the engine, archived and deleted do not',
+    '%s: active (and non_subscribed outside a flow) reach the engine, archived and deleted do not',
     async (producer) => {
       const reached: Record<string, boolean> = {};
       for (const state of STATES) {
@@ -486,7 +492,9 @@ describe('a flow e-mail reaches no archived and no deleted contact', () => {
         if (o.run) expect(`${state}: ${o.run.status}`).toBe(`${state}: completed`);
         reached[state] = Boolean(o.reached);
       }
-      expect(reached).toEqual(REACHED);
+      expect(reached).toEqual(
+        FLOW_PRODUCERS.includes(producer) ? { ...REACHED, non_subscribed: false } : REACHED,
+      );
     },
   );
 
