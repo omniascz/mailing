@@ -59,11 +59,19 @@ import { workflowRuns, workflows } from '../../db/schema/index.js';
  *    the priority is in workflow-templates/registry.ts; the flows already
  *    forked from them get it from migration 0038.
  *
+ *  - api_event `payment_pending`, `pickup_ready`, `order_shipped`: the shop's
+ *    own server reporting an order waiting for a bank transfer, a parcel at a
+ *    pickup point, an order shipped (POST /api/v1/events with a secret key;
+ *    no code of ours emits them). Z165, Michal 15. 10. ~21:30, point 1d
+ *    (variant a): only the server sends the three — a publishable key gets
+ *    403 EVENT_NAME_RESERVED (reserved-event-names.ts) — and then they joined
+ *    the list. Matched exactly, as the others: `order_shipped_late` is not
+ *    on it. The template nodes that carry the priority (payment-pending-cs e1,
+ *    pickup-invoice-cs e1, e2) and their forks have had it since Z163
+ *    (registry.ts, migration 0038); the hidden
+ *    transactional-shipping-cascade on order_shipped carries none.
+ *
  * Deliberately NOT here:
- *  - api_event `payment_pending`, `pickup_ready`, `order_shipped`: no code
- *    emits them, only POST /api/v1/events does, and a publishable key may call
- *    it. Michal, 15. 10. ~21:30, point 1d: first a 403 for the public key, then
- *    the list (Z164);
  *  - every other `ticketing.*` event (cart_abandoned, event_attended,
  *    waitlist_freed, lottery_won, subscription_past_due, fill_the_house_offer,
  *    discover_digest, order_refunded): offers, reminders to buy and reviews,
@@ -83,6 +91,9 @@ export const TRANSACTIONAL_FLOW_TRIGGERS: readonly (
   { triggerType: 'api_event', eventName: 'ticketing.day_of_sms' },
   { triggerType: 'api_event', eventName: 'ticketing.event_changed' },
   { triggerType: 'purchase_event' },
+  { triggerType: 'api_event', eventName: 'payment_pending' },
+  { triggerType: 'api_event', eventName: 'pickup_ready' },
+  { triggerType: 'api_event', eventName: 'order_shipped' },
 ];
 
 /** The node types that can carry the exception: the SMS and the e-mail node. */

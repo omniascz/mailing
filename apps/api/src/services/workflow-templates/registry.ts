@@ -103,9 +103,9 @@ const sms = (id: string, body: string): WorkflowNode => n(id, 'send_sms', { mess
  * e1, post-purchase-cs e1–e3 (purchase_event), payment-pending-cs e1 and
  * pickup-invoice-cs e1, e2 (api_event). Only the trigger list decides whether
  * the priority counts (workflows/transactional-exception.ts): purchase_event is
- * on it; payment_pending and pickup_ready wait for Z164 (Michal, point 1d: a
- * 403 for the publishable key first), so there the priority changes nothing
- * yet (measured in Z163). The marketing nodes on purchase_event (the review
+ * on it; payment_pending and pickup_ready are on it since Z165 (Michal, 15. 10.
+ * ~21:30, point 1d, variant a: a 403 for the publishable key first, then the
+ * list; only the server sends the three). The marketing nodes on purchase_event (the review
  * request, cross-sell) do not carry it. The hidden templates do not either:
  * four of their nodes send an informational subject with a marketing body or
  * the other way round (Z162), which waits on Michal. Flows already forked from
