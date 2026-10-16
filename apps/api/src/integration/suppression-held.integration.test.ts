@@ -82,28 +82,42 @@ const rows = async <T>(q: SQL) => (await db.execute(q)) as unknown as T[];
 const address = (label: string) => `${label}-${n++}-${TAG}@${DOMAIN}`;
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 
+/** Windows this file waited out on a 429 — the limit is honoured, not lifted. */
+const rateLimitWaits: { url: string; retryAfterS: number }[] = [];
+
 async function inject(
   method: string,
   url: string,
   headers: Record<string, string>,
   body?: unknown,
 ): Promise<{ status: number; body: string; json: () => Record<string, unknown> }> {
-  const res = await app.inject({
-    method: method as 'POST',
-    url,
-    headers,
-    remoteAddress: IP,
-    ...(body === undefined
-      ? {}
-      : typeof body === 'string'
-        ? { payload: body }
-        : { payload: body as Record<string, unknown> }),
-  });
-  return {
-    status: res.statusCode,
-    body: res.body,
-    json: () => (res.body ? (JSON.parse(res.body) as Record<string, unknown>) : {}),
-  };
+  for (let attempt = 0; ; attempt++) {
+    const res = await app.inject({
+      method: method as 'POST',
+      url,
+      headers,
+      remoteAddress: IP,
+      ...(body === undefined
+        ? {}
+        : typeof body === 'string'
+          ? { payload: body }
+          : { payload: body as Record<string, unknown> }),
+    });
+    if (res.statusCode === 429 && attempt < 3) {
+      const retryAfterS = Number(res.headers['retry-after'] ?? 60);
+      rateLimitWaits.push({
+        url: url.split('?')[0]!.replace(/[0-9a-f-]{36}/g, ':id'),
+        retryAfterS,
+      });
+      await new Promise((r) => setTimeout(r, (retryAfterS + 1) * 1000));
+      continue;
+    }
+    return {
+      status: res.statusCode,
+      body: res.body,
+      json: () => (res.body ? (JSON.parse(res.body) as Record<string, unknown>) : {}),
+    };
+  }
 }
 
 async function asOwner(method: string, url: string, body?: unknown) {
@@ -323,6 +337,7 @@ afterAll(async () => {
   const seedAfter = await seedState();
   report.cells = cells;
   report.leftover = { ...left, doiTokensRemoved: tokensRemoved };
+  report.rateLimitWaits = rateLimitWaits;
   report.seedOrg = { before: seedBefore, after: seedAfter };
   console.log(`Z171_API_CELLS_JSON ${JSON.stringify(report)}`);
   await app?.close();
@@ -351,7 +366,7 @@ describe('A — PUT active over a complaint, unsubscribe or manual row is refuse
         expect(cell.details).toEqual({ reason: row, suppressionId: cell.suppressionId });
         expect(cell.unchanged).toBe(true);
         expect(cell.rowsAfter).toEqual(cell.rowsBefore);
-      }, 30_000);
+      }, 300_000);
     }
   }
 
@@ -378,7 +393,7 @@ describe('A — PUT active over a complaint, unsubscribe or manual row is refuse
     expect(cell.putUnsubscribed).toEqual({ answer: 200, status: 'bounced', rows: ['unsubscribe'] });
     expect([cell.answer, cell.code, cell.after]).toEqual([409, 'SUPPRESSION_HELD', 'bounced']);
     expect(cell.rows).toEqual(['unsubscribe']);
-  }, 30_000);
+  }, 300_000);
 
   it("A the erasure's hash row ('manual', no address) counts: a bounced contact on the address → 409", async () => {
     const email = address('erased');
@@ -402,7 +417,7 @@ describe('A — PUT active over a complaint, unsubscribe or manual row is refuse
       'manual',
       'bounced',
     ]);
-  }, 30_000);
+  }, 300_000);
 
   it('A the PUT changes the address too: the new address with a complaint row → 409, nothing written', async () => {
     const c = await contactIn('bounced');
@@ -423,7 +438,7 @@ describe('A — PUT active over a complaint, unsubscribe or manual row is refuse
     cells['A new address with complaint'] = cell;
     console.log(`[z171] A new address with complaint: ${JSON.stringify(cell)}`);
     expect([cell.answer, cell.code, cell.unchanged]).toEqual([409, 'SUPPRESSION_HELD', true]);
-  }, 30_000);
+  }, 300_000);
 });
 
 describe('A0 — what does not change', () => {
@@ -444,7 +459,7 @@ describe('A0 — what does not change', () => {
           ]);
         }
         expect(cell.rowsAfter).toEqual(cell.rowsBefore);
-      }, 30_000);
+      }, 300_000);
     }
   }
 
@@ -463,7 +478,7 @@ describe('A0 — what does not change', () => {
     console.log(`[z171] A0 hard_bounce + complaint: ${JSON.stringify(cell)}`);
     expect([cell.answer, cell.code, cell.after]).toEqual([409, 'BOUNCE_ACTIVE', 'bounced']);
     expect(cell.details).toEqual({ reason: 'hard_bounce', suppressionId: hb });
-  }, 30_000);
+  }, 300_000);
 
   it('A0 the old address had the complaint row, the PUT moves to a clean one: 200 active', async () => {
     const c = await contactIn('bounced');
@@ -478,7 +493,7 @@ describe('A0 — what does not change', () => {
     cells['A0 old address with complaint'] = cell;
     console.log(`[z171] A0 old address with complaint: ${JSON.stringify(cell)}`);
     expect(cell).toEqual({ answer: 200, status: 'active', movedToNew: true });
-  }, 30_000);
+  }, 300_000);
 
   it('A0 held unsubscribed / complained / pending / non_subscribed → active: 409 CONSENT_REQUIRED', async () => {
     const out: Record<string, unknown> = {};
@@ -499,7 +514,7 @@ describe('A0 — what does not change', () => {
     }
     cells['A0 consent'] = out;
     console.log(`[z171] A0 consent: ${JSON.stringify(out)}`);
-  }, 60_000);
+  }, 300_000);
 
   it('A0 active → active with a complaint row: a no-op status, the name is written', async () => {
     const c = await contactIn('active');
@@ -513,7 +528,7 @@ describe('A0 — what does not change', () => {
     cells['A0 active to active'] = cell;
     console.log(`[z171] A0 active to active: ${JSON.stringify(cell)}`);
     expect(cell).toEqual({ answer: 200, status: 'active', firstName: 'Petra' });
-  }, 30_000);
+  }, 300_000);
 
   it('A0 other targets than active with a complaint row: archived and unsubscribed as on master', async () => {
     const a = await contactIn('bounced');
@@ -548,7 +563,7 @@ describe('A0 — what does not change', () => {
       status: 'bounced',
       rows: ['complaint', 'unsubscribe'],
     });
-  }, 30_000);
+  }, 300_000);
 });
 
 describe('U — unarchive is not an edit (Sonda 1: it writes the status itself)', () => {
@@ -569,7 +584,7 @@ describe('U — unarchive is not an edit (Sonda 1: it writes the status itself)'
     // Recorded, not changed by Z171: unarchive gives back the status the
     // archive replaced, here 'active', over the row (MIMO).
     for (const row of HELD) expect((out[row] as { answer: number }).answer).toBe(200);
-  }, 60_000);
+  }, 300_000);
 });
 
 describe("R — the recipient's own way back is unchanged", () => {
@@ -638,7 +653,7 @@ describe("R — the recipient's own way back is unchanged", () => {
     expect([doi.token, doi.sameContact, doi.status, doi.rows]).toEqual([true, true, 'active', []]);
     expect(erased.before).toEqual(['manual']);
     expect([erased.token, erased.status, erased.rows]).toEqual([true, 'active', []]);
-  }, 60_000);
+  }, 300_000);
 });
 
 describe('S3 — how a bounced contact comes to have a complaint row (recorded)', () => {
@@ -686,7 +701,7 @@ describe('S3 — how a bounced contact comes to have a complaint row (recorded)'
     cells.S3 = out;
     console.log(`[z171] S3: ${JSON.stringify(out)}`);
     expect(Object.keys(out)).toHaveLength(5);
-  }, 60_000);
+  }, 300_000);
 });
 
 /** The pre-send panel's count of a campaign, as the dashboard reads it. */
@@ -746,7 +761,7 @@ describe('P — the count of a list campaign is the audience batch-sender sends 
     console.log(`[z171] P: ${JSON.stringify(cell)}`);
     expect(cell.audienceMembers).toEqual(['active']);
     expect(cell.panel).toBe(1);
-  }, 60_000);
+  }, 300_000);
 
   it('C — updateContact queries, and the plan of the audience count, master shape vs branch shape', async () => {
     const counted = async (start: string, patch: Record<string, unknown>) => {
@@ -823,5 +838,5 @@ describe('P — the count of a list campaign is the audience batch-sender sends 
     cells.C = cell;
     console.log(`[z171] C: ${JSON.stringify(cell)}`);
     expect(countStatement).not.toBeNull();
-  }, 60_000);
+  }, 300_000);
 });

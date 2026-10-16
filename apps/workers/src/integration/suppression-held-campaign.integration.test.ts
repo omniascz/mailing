@@ -574,33 +574,36 @@ describe('a list campaign counts what it sends; PUT active waits on a held row (
     };
 
     // The resend to non-openers: the parent reaches two active contacts, one
-    // is then marked bounced by a PUT (status only, no row), and the resend
-    // (resolveNonOpeners, not changed by Z171) is counted and sent.
+    // is then marked bounced by a PUT (status only, no row), and the resend's
+    // audience (resolveNonOpeners, not changed by Z171) is counted. A resend
+    // has no listId, and the send path refuses that (measured on master and
+    // the branch alike: 400 "listId (audience) is required") — so what is
+    // recorded is the count, the audience the splitter would fetch, and the
+    // answer of the send.
     const rList = await newList('K resend');
     const a = await contactOn(rList, 'k-resend-a');
     const b = await contactOn(rList, 'k-resend-b');
     const parent = await campaignTo(rList, [a.email, b.email]);
     await api('PUT', `/api/v1/contacts/${b.id}`, { status: 'bounced' });
-    const childSubject = `Znovu ${randomUUID().slice(0, 6)}`;
-    let resend: unknown;
-    try {
-      const child = (await api('POST', `/api/v1/campaigns/${parent.campaignId}/schedule-resend`, {
-        delayHours: 1,
-        newSubject: childSubject,
-      })) as { data: { id: string } };
-      const sent = await sendThrough(child.data.id, childSubject, [a.email, b.email]);
-      resend = {
-        parentReached: parent.reached.length,
-        count: sent.count,
-        split: sent.split,
-        reached: sent.reached.map((x) => (x === a.email.toLowerCase() ? 'active' : 'bounced')),
-      };
-    } catch (err) {
-      resend = {
-        parentReached: parent.reached.length,
-        error: (err as Error).message.slice(0, 300),
-      };
-    }
+    const child = (await api('POST', `/api/v1/campaigns/${parent.campaignId}/schedule-resend`, {
+      delayHours: 1,
+      newSubject: `Znovu ${randomUUID().slice(0, 6)}`,
+    })) as { data: { id: string } };
+    const aud = await fetch(
+      `${API}/api/v1/internal/audience?orgId=${org}&campaignId=${child.data.id}`,
+      { headers: INTERNAL },
+    );
+    const audIds =
+      ((await aud.json()) as { data?: { contactIds?: string[] } }).data?.contactIds ?? [];
+    const send = await call('POST', `/api/v1/campaigns/${child.data.id}/send`, owner);
+    const resend = {
+      parentReached: parent.reached.length,
+      count: await preSendCount(child.data.id),
+      audience: audIds
+        .map((id) => (id === a.id ? 'active' : id === b.id ? 'bounced' : 'other'))
+        .sort(),
+      send: { answer: send.status, body: send.text.slice(0, 160) },
+    };
 
     const cell = { emails, flowInline, resend };
     cells.K = cell;
