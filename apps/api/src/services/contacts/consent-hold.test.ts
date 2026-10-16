@@ -7,7 +7,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   assertBounceReleased,
+  assertNoHeldSuppression,
   assertNotLiftingRefusal,
+  HELD_REASONS,
   statusFromSuppressionReasons,
   type ContactStatus,
 } from './consent-hold.js';
@@ -94,6 +96,52 @@ describe('assertBounceReleased', () => {
   it('only a held bounced status is checked — other statuses have their own rules', () => {
     for (const held of ALL.filter((s) => s !== 'bounced'))
       expect(blocked(held, 'active', ['hard_bounce']), held).toBeNull();
+  });
+});
+
+describe('assertNoHeldSuppression (Z171)', () => {
+  const row = (reason: string) => ({ id: `id-${reason}`, reason });
+  const blocked = (stored: ContactStatus, next: ContactStatus, reasons: string[]) => {
+    try {
+      assertNoHeldSuppression(stored, next, reasons.map(row));
+      return null;
+    } catch (err) {
+      return err as { code: string; statusCode: number; message: string; details: unknown };
+    }
+  };
+
+  it('the held reasons are complaint, unsubscribe and manual — not block, not a bounce', () => {
+    expect([...HELD_REASONS].sort()).toEqual(['complaint', 'manual', 'unsubscribe']);
+  });
+
+  it('→ active from any stored status but active waits while such a row stands', () => {
+    for (const stored of ALL.filter((s) => s !== 'active'))
+      for (const reason of HELD_REASONS) {
+        const err = blocked(stored, 'active', ['block', reason]);
+        expect(err, `${stored} + ${reason}`).toMatchObject({
+          code: 'SUPPRESSION_HELD',
+          statusCode: 409,
+          details: { reason, suppressionId: `id-${reason}` },
+        });
+      }
+  });
+
+  it('the message says who brings the contact back', () => {
+    for (const reason of ['complaint', 'unsubscribe'])
+      expect(blocked('bounced', 'active', [reason])!.message).toContain(
+        'preference centre or a double opt-in confirmation',
+      );
+    expect(blocked('bounced', 'active', ['manual'])!.message).toContain(
+      'which an edit does not release',
+    );
+  });
+
+  it('no such row, a stored active status, or another target: not refused', () => {
+    for (const reasons of [[], ['block'], ['hard_bounce'], ['invalid_email']])
+      expect(blocked('bounced', 'active', reasons), reasons.join() || 'no row').toBeNull();
+    expect(blocked('active', 'active', ['complaint'])).toBeNull();
+    for (const next of ALL.filter((s) => s !== 'active'))
+      expect(blocked('bounced', next, ['complaint', 'unsubscribe', 'manual']), next).toBeNull();
   });
 });
 
