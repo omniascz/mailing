@@ -29,7 +29,7 @@
  *   PPC  post-purchase-cs (e1–e3 informational, e4 the review request);
  *   XS   cross-sell-cs (marketing, a 7-day wait first);
  *   PP   payment-pending-cs through POST /api/v1/events with a secret key
- *        (api_event payment_pending — not on the list until Z164);
+ *        (api_event payment_pending — on the list since Z165, Michal point 1d);
  *   TK   a flow of its own on ticketing.order_paid (on the list since Z156);
  *   HID  post-purchase-shipping-update, which is hidden — the fork answers
  *        404, so the flow is written to the table in the shape a fork had.
@@ -916,7 +916,9 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
     }
   }, 600_000);
 
-  it('PP — payment-pending-cs (secret key) reaches active, not unsubscribed', async () => {
+  // Z165: was "reaches active, not unsubscribed" — payment_pending joined the
+  // list (Michal, 15. 10. ~21:30, point 1d, variant a).
+  it('PP — payment-pending-cs (secret key) reaches active and unsubscribed', async () => {
     await onlyActive(flows.pp);
     const people = await Promise.all(
       (['active', 'unsubscribed'] as State[]).map((s) => person(s, 'pepp')),
@@ -925,10 +927,14 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
     const w = await walk('PP', flows.pp, people, [{ node: 'e1' }], fire);
     report.PP = w.cells;
     expect(w.cells.e1!.active!.reached, JSON.stringify(w.cells.e1!.active)).toBe(true);
-    expect(w.cells.e1!.unsubscribed!.reached, JSON.stringify(w.cells.e1!.unsubscribed)).toBe(false);
+    expect(w.cells.e1!.unsubscribed!.reached, JSON.stringify(w.cells.e1!.unsubscribed)).toBe(true);
+    expect(w.cells.e1!.unsubscribed!.mta).toBe('sent/triggered/flow_transactional');
   }, 600_000);
 
-  it('PP — the priority on an api_event node changes nothing that is sent', async () => {
+  // Z165: was "changes nothing that is sent" (all four diffs empty) —
+  // payment_pending joined the list (Michal, 15. 10. ~21:30, point 1d, variant
+  // a), so the priority now makes the e-mail transactional.
+  it('PP — the priority on payment_pending makes the e-mail transactional, the job is the same', async () => {
     // The fork as it is, and the same flow without any priority (as master
     // forks it): one active buyer each, everything the queues and the engine
     // got compared after the per-recipient values are replaced.
@@ -981,7 +987,12 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
       diffs,
     };
     console.log(`[pet] PP priority ${JSON.stringify(report.PPpriority)}`);
-    expect(diffs).toEqual({ job: [], batch: [], mta: [], engine: [] });
+    expect(diffs.job).toEqual([]);
+    expect(marked.cell.batch).toBe('sent=1 skipped=0/ft');
+    expect(marked.cell.mta).toBe('sent/triggered/flow_transactional');
+    expect(plain.cell.batch).toBe('sent=1 skipped=0/-');
+    expect(plain.cell.mta).toBe('sent/triggered/-');
+    expect(plain.cell.reached).toBe(true);
   }, 600_000);
 
   it('HID — the hidden post-purchase-shipping-update fork does not reach unsubscribed', async () => {

@@ -51,7 +51,9 @@ export default async function eventRoutes(app: FastifyInstance) {
    * Nor may a publishable key send an event named ticketing.* — 403
    * EVENT_NAME_RESERVED, nothing stored, nothing started (Michal, 15. 10.
    * 19:40, point 1c d), Z161). Those names are the ticketing ingest's, and a
-   * flow they start may reach a contact who unsubscribed.
+   * flow they start may reach a contact who unsubscribed. Since Z165 the same
+   * holds for payment_pending, pickup_ready and order_shipped (Michal, 15. 10.
+   * ~21:30, point 1d, variant a): only the shop's server sends them.
    */
   app.post(
     '/api/v1/events',
