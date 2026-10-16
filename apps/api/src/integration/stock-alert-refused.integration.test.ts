@@ -51,7 +51,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
-import { sql, type SQL } from 'drizzle-orm';
+import { and, count, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import { redis } from '@forgemsg/shared/redis';
 
 /**
@@ -68,6 +68,7 @@ const { AUTH_TOKEN, PUBLIC_BASE } = vi.hoisted(() => {
 
 import { createTestApp, login, SEED, type Session } from './setup/harness.js';
 import { db } from '../db/client.js';
+import { backInStockSubscriptions, priceDropSubscriptions } from '../db/schema/index.js';
 import { observeQueries } from '../db/explain-guard.js';
 import { ingestProducts } from '../services/product-catalog/feed-ingestion.js';
 
@@ -255,23 +256,17 @@ async function contactsOf(email: string) {
 }
 
 async function subscriptionsOf(kind: 'bis' | 'pd', email: string, contactId?: string | null) {
-  // Two statements rather than a table name in a variable: sql-explain reads
-  // each raw statement as written.
-  const r =
-    kind === 'bis'
-      ? await rows<{ n: number }>(sql`
-          SELECT count(*)::int AS n FROM back_in_stock_subscriptions s
-          WHERE s.org_id = ${org}::uuid
-            AND (s.contact_id IN (SELECT id FROM contacts WHERE org_id = ${org}::uuid AND lower(email) = lower(${email}))
-                 OR s.contact_id = ${contactId ?? null}::uuid)
-        `)
-      : await rows<{ n: number }>(sql`
-          SELECT count(*)::int AS n FROM price_drop_subscriptions s
-          WHERE s.org_id = ${org}::uuid
-            AND (s.contact_id IN (SELECT id FROM contacts WHERE org_id = ${org}::uuid AND lower(email) = lower(${email}))
-                 OR s.contact_id = ${contactId ?? null}::uuid)
-        `);
-  return r[0]!.n;
+  // The contacts of the address now, and the one the cell started with (an
+  // erased contact no longer has the address). The query builder, not raw
+  // sql: sql-explain cannot plan an optional uuid hole.
+  const ids = [...(await contactsOf(email)).map((c) => c.id), ...(contactId ? [contactId] : [])];
+  if (ids.length === 0) return 0;
+  const t = kind === 'bis' ? backInStockSubscriptions : priceDropSubscriptions;
+  const [r] = await db
+    .select({ n: count() })
+    .from(t)
+    .where(and(eq(t.orgId, org), inArray(t.contactId, ids)));
+  return r!.n;
 }
 
 const PATH = {
