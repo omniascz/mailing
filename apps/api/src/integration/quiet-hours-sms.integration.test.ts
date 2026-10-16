@@ -154,7 +154,13 @@ describe('a verification code is never held', () => {
     expect(out.allowed, 'a transactional SMS is not subject to quiet hours').toBe(true);
   }, 60_000);
 
-  it('and the node really enqueues it — not merely "did not park"', async () => {
+  // Z162 MIMO 4 / Z167 (Michal, 14. 10. 22:10, point 4): this flow starts on
+  // 'manual', which is not on the closed list of transactional triggers, so its
+  // 'transactional' node is marketing and waits for the window like one. This
+  // said "really enqueues it": `not.toBe('wait')` and one queued job. A node
+  // with the priority on a trigger of the list still leaves at once — measured
+  // through the real chain in workers flow-sms-compliance (Q).
+  it('and the node off the closed list waits — nothing is queued', async () => {
     // Asserting `!== 'wait'` alone would be worthless here: on the old code a
     // transactional SMS was SKIPPED, and a skip is also not a wait. The
     // difference between "sent" and "silently dropped" is only visible on the
@@ -164,11 +170,10 @@ describe('a verification code is never held', () => {
     await setWindow(windowNow());
 
     const res = await executeAction(smsNode('transactional') as never, runRow, ctx() as never);
-    expect(res.type, 'a code must leave now, not at 9am').not.toBe('wait');
+    expect(res.type, "'transactional' off the closed list is marketing").toBe('wait');
 
     const jobs = await smsQueue.getJobs(['waiting', 'delayed', 'prioritized', 'active']);
-    expect(jobs.length, 'the code must actually be queued').toBe(1);
-    expect((jobs[0]!.data as { contactId: string }).contactId).toBe(contactId);
+    expect(jobs.length, 'parked, not queued').toBe(0);
 
     await smsQueue.obliterate({ force: true });
   }, 60_000);
