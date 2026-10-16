@@ -12,6 +12,12 @@
  * existed only in a test that confirmed with the API's _devToken, which
  * production never returns. The same for a hand-added 'manual' row.
  *
+ * Z170 narrowed this (rozhodnutí Michala 14. 10. (a): výjimka jen pro GDPR
+ * hash): only the erasure row lets the confirmation through; an operator's
+ * 'manual' row by the address stops it (the second test; the rest of this
+ * file is unchanged — apps/workers/src/integration/doi-erasure-only walks the
+ * full matrix).
+ *
  * Owner's decision, 14 Oct 2026: the confirmation may go to a 'manual'
  * address — the recipient asked for it, and it carries only the link. Nothing
  * else changes: marketing waits for the click, and a bounce, a complaint, a
@@ -399,12 +405,14 @@ describe('the double opt-in confirmation reaches a manual-suppressed address, an
     expect(after.count, 'the pre-send count is what is sent').toBe('2');
   }, 600_000);
 
-  it('a hand-added manual row lets the confirmation through on both paths; a hard bounce does not', async () => {
+  it('a hand-added manual row stops the confirmation, an erasure lets it through on the route; a hard bounce does not', async () => {
     const manual = address('manual');
     const res = await call('POST', '/api/v1/suppressions', { email: manual, reason: 'manual' });
     expect(res.status, await res.text()).toBeLessThan(300);
     await submit(await doiForm(await newList('manual-form')), manual);
-    expect((await confirmationsTo(manual)).mails).toHaveLength(1);
+    // Z170: was 1 (Z148). Rozhodnutí Michala 14. 10. (a): výjimka jen pro
+    // GDPR hash — an operator's 'manual' row by the address stops it.
+    expect((await confirmationsTo(manual)).mails).toHaveLength(0);
 
     // POST /lists/:id/subscribe calls the same sender.
     const erased = address('erased-sub');

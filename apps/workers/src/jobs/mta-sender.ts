@@ -27,7 +27,7 @@ import {
   detectIsp,
 } from '@forgemsg/shared/sending/isp-throttle';
 import { internalHeaders, throwIfPermanentFailure, asFilterError } from '../lib/internal-api.js';
-import { reasonsFor } from '../lib/suppression-reasons.js';
+import { exceptErasureFor, reasonsFor } from '../lib/suppression-reasons.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -387,9 +387,10 @@ async function updateContactStatus(
 
 // ─── Suppression gate ────────────────────────────────────────────────────────
 
-// Which reasons count for a job — SUPPRESSES_TRANSACTIONAL, the DOI list and
-// the purposes — is lib/suppression-reasons.ts, shared with batch-sender
-// (moved there unchanged in Z158, plus 'flow_transactional').
+// Which reasons count for a job — SUPPRESSES_TRANSACTIONAL and the purposes —
+// and which job skips the GDPR erasure row (exceptErasureFor: the list DOI
+// confirmation only, Z170) is lib/suppression-reasons.ts, shared with
+// batch-sender (moved there unchanged in Z158, plus 'flow_transactional').
 export { reasonsFor };
 
 /**
@@ -423,6 +424,8 @@ async function isSuppressed(data: MtaSendJobData): Promise<boolean> {
         orgId: data.orgId,
         emails: [data.toEmail],
         ...(reasons ? { reasons } : {}),
+        // The list DOI confirmation only, and only from here (Z170).
+        ...(exceptErasureFor(data) ? { exceptErasure: true } : {}),
       }),
     });
     throwIfPermanentFailure(res, path, data.orgId);

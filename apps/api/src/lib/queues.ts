@@ -234,10 +234,12 @@ export interface TransactionalEmailInput {
  * What a system message is for, when that changes which suppressions stop it.
  *
  * - 'doi_confirmation': the confirmation e-mail of a list double opt-in, which
- *   the mta-sender gate lets through a 'manual' suppression — the person asked
- *   for it by submitting the form, and it carries nothing but the link that is
- *   their only way back after an erasure (owner's decision, 14 Oct 2026; Z148).
- *   Passed only by services/subscriptions/doi.ts.
+ *   the mta-sender gate lets through the row a GDPR erasure leaves (reason
+ *   'manual', no address, only email_hash) — the person asked for it by
+ *   submitting the form, and it carries nothing but the link that is their
+ *   only way back after an erasure (Z148). Every other row stops it, an
+ *   ordinary 'manual' one included: výjimka jen pro výmaz GDPR — Michal
+ *   14. 10., varianta (a) (Z170). Passed only by services/subscriptions/doi.ts.
  * - 'workflow_marketing': a flow's inline-HTML e-mail, which travels on the
  *   transactional stream but is marketing, so the gate checks every
  *   suppression reason for it — 'unsubscribe' included — as it does for
