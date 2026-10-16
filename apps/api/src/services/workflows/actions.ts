@@ -294,10 +294,12 @@ async function executeSendSms(
   const config = node.config as {
     message: string;
     /**
-     * Read here only by the frequency cap. 'transactional' in a flow started by
-     * a trigger of the closed list also lets the SMS past an unsubscribed or
-     * complained contact — decided by the API from the stored flow, by the
-     * nodeId in the job (Michal, 14. 10. 22:10; Z156).
+     * 'transactional' counts only in a flow started by a trigger of the closed
+     * list: there it lets the SMS past an unsubscribed or complained contact —
+     * decided by the API from the stored flow, by the nodeId in the job (Michal,
+     * 14. 10. 22:10; Z156) — and past the org's quiet hours below. On any other
+     * trigger the node is marketing, for the frequency cap too (Michal,
+     * 14. 10. 22:10, point 4; Z167).
      */
     priority?: 'transactional' | 'marketing' | 'promotional';
   };
@@ -311,12 +313,20 @@ async function executeSendSms(
   }
 
   // Cross-channel frequency cap (§9 P1) — skip + log suppression when blocked.
+  // 'transactional' reaches the cap only when the flow's transactional
+  // exception holds for this node — the same flowTransactionalException the API
+  // asks for the job, one query and only for a node that says 'transactional'.
   const { checkFrequencyCap } = await import('../frequency-capping/index.js');
+  let priority = config.priority ?? 'marketing';
+  if (priority === 'transactional') {
+    const { flowTransactionalException } = await import('./transactional-exception.js');
+    if (!(await flowTransactionalException(ctx.orgId, run.id, node.id))) priority = 'marketing';
+  }
   const cap = await checkFrequencyCap({
     orgId: ctx.orgId,
     contactId: run.contactId,
     channel: 'sms',
-    priority: config.priority ?? 'marketing',
+    priority,
   });
   if (!cap.allowed) {
     // Quiet hours are a WAIT, not a skip. `{ type: 'next' }` walks the run past

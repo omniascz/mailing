@@ -4,9 +4,10 @@
  * A flow's SMS job carries workflowRunId and never workflowId. On master that
  * made it transactional: the contact's status was never read, so pending,
  * unsubscribed and archived contacts got flow SMS (measured, Z154).
- * workflowRunId now switches the contact-state gate on — and ONLY that gate:
- * sms_consents, quiet hours and the opt-out suffix stay keyed on
- * campaignId/workflowId, which the owner has not decided for flows.
+ * workflowRunId now switches the contact-state gate on. Since Z167 (Michal,
+ * 14. 10. 22:10, point 4) a flow's marketing SMS — a run, no campaign, no
+ * transactional exception — also gets checkSmsCompliance (sms_consents, quiet
+ * hours, the opt-out suffix) exactly as an SMS campaign does.
  *
  * The database is a stub that answers the contact lookup and returns no SMS
  * route; "No active SMS route" therefore means "past every gate".
@@ -124,7 +125,10 @@ describe('routedSmsSend — workflowRunId gates the contact state, not consent o
     ).toBe('CONTACT_UNAVAILABLE');
   });
 
-  it('lets an active contact through on a flow SMS WITHOUT the consent check or the opt-out suffix', async () => {
+  // Z167 — Michal, 14. 10. 22:10, point 4: a flow's marketing SMS gets the
+  // consent check and the opt-out suffix as an SMS campaign does. This said
+  // "WITHOUT the consent check" and `not.toHaveBeenCalled()` before.
+  it('lets an active contact through on a flow SMS, after the consent check', async () => {
     state.contactRows = [{ status: 'active' }];
     const code = await codeOf(
       routedSmsSend(ORG, msg({ workflowRunId: RUN }), {
@@ -133,7 +137,7 @@ describe('routedSmsSend — workflowRunId gates the contact state, not consent o
       }),
     );
     expect(code).toBe('BAD_REQUEST'); // "No active SMS route" = past every gate
-    expect(checkSmsCompliance).not.toHaveBeenCalled();
+    expect(checkSmsCompliance).toHaveBeenCalledTimes(1);
   });
 
   // Z166 — Michal, 14. 10. 22:10, point 3: a flow's marketing SMS skips
@@ -316,5 +320,57 @@ describe('routedSmsSend — non_subscribed on a flow marketing SMS only', () => 
     expect(await send('pending', { workflowRunId: RUN })).toBe('CONSENT_PENDING');
     for (const status of ['unsubscribed', 'bounced', 'complained', 'archived'])
       expect(await send(status, { workflowRunId: RUN })).toBe('MARKETING_REFUSED');
+  });
+});
+
+// Z167 — Michal, 14. 10. 22:10, point 4: "Marketingová SMS z flow: souhlas na
+// čísle (sms_consents), dovětek STOP a noční klid jako SMS kampaň." The same
+// call with the same parameters as a campaign SMS; the exception never reads it.
+describe("routedSmsSend — a flow's marketing SMS gets the campaign's compliance call", () => {
+  const send = (ids: Parameters<typeof msg>[0], phone = '+420777000001', status = 'active') => {
+    state.contactRows = [{ status }];
+    return codeOf(routedSmsSend(ORG, msg(ids), { contactId: CONTACT, phone }));
+  };
+
+  it('calls checkSmsCompliance with exactly the arguments a campaign SMS gets', async () => {
+    for (const phone of ['+420777000001', '+12125550123']) {
+      vi.mocked(checkSmsCompliance).mockClear();
+      await send({ campaignId: RUN }, phone);
+      await send({ workflowRunId: RUN }, phone);
+      await send({ workflowRunId: RUN, flowTransactional: false }, phone);
+      const [campaign, flow, flowFalse] = vi.mocked(checkSmsCompliance).mock.calls;
+      expect(campaign).toEqual([
+        ORG,
+        phone,
+        'Vstupenka',
+        phone.startsWith('+1') ? 'US' : 'CZ',
+        { requireConsent: true },
+      ]);
+      expect(flow).toEqual(campaign);
+      expect(flowFalse).toEqual(campaign);
+    }
+  });
+
+  it('a block from the compliance check stops a flow SMS with its code', async () => {
+    for (const code of ['SMS_COMPLIANCE_BLOCKED', 'SMS_QUIET_HOURS']) {
+      vi.mocked(checkSmsCompliance).mockRejectedValueOnce(Object.assign(new Error(code), { code }));
+      expect(await send({ workflowRunId: RUN })).toBe(code);
+    }
+  });
+
+  it('the contact-state gate stays first: consent on the number is not even read for a refused contact', async () => {
+    for (const status of ['unsubscribed', 'non_subscribed', 'complained', 'archived', 'bounced'])
+      expect(await send({ workflowRunId: RUN }, '+420777000001', status)).toBe('MARKETING_REFUSED');
+    expect(await send({ workflowRunId: RUN }, '+420777000001', 'pending')).toBe('CONSENT_PENDING');
+    expect(checkSmsCompliance).not.toHaveBeenCalled();
+  });
+
+  it('the transactional exception and an SMS with no campaign, flow or run never read it', async () => {
+    await send({ workflowRunId: RUN, flowTransactional: true });
+    await send({ workflowRunId: RUN, flowTransactional: true }, '+12125550123');
+    state.contactRows = [];
+    await codeOf(routedSmsSend(ORG, msg({}), { phone: '+420777000001' }));
+    await codeOf(routedSmsSend(ORG, msg({}), { phone: '+12125550123' }));
+    expect(checkSmsCompliance).not.toHaveBeenCalled();
   });
 });
