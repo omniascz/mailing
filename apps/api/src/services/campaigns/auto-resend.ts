@@ -25,6 +25,7 @@
  */
 
 import { and, eq, sql, isNotNull } from 'drizzle-orm';
+import { MARKETING_REFUSED_CONTACT_STATUSES, type ContactStatus } from '@forgemsg/shared';
 import { db } from '../../db/client.js';
 import { campaigns, emailEvents, type Campaign } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
@@ -184,21 +185,39 @@ async function audienceSource(orgId: string, campaignId: string) {
 }
 
 /**
+ * The statuses a list campaign's audience leaves out: every status the
+ * batch-sender refuses marketing for, and 'non_subscribed' (no opt-in) — the
+ * same set as the channel audience (channel-dispatch.ts).
+ */
+const LIST_AUDIENCE_EXCLUDED_STATUSES: ContactStatus[] = [
+  ...MARKETING_REFUSED_CONTACT_STATUSES,
+  'non_subscribed',
+];
+
+/**
  * Who on a list is in a list+segment audience. One definition for the splitter
  * (resolveAudience) and the pre-send gate (countAudience), so the gate cannot
  * count an audience the send would not reach.
  */
 function listAudienceWhere(orgId: string, listId: string) {
+  const excluded = sql.join(
+    LIST_AUDIENCE_EXCLUDED_STATUSES.map((s) => sql`${s}`),
+    sql`, `,
+  );
   return sql`
     c."org_id" = ${orgId}
       AND cl."list_id" = ${listId}
       AND c."deleted_at" IS NULL
       AND cl."unsubscribed_at" IS NULL
-      -- Exclude marketing-ineligible statuses (archived / non-subscribed /
-      -- pending: a double opt-in not yet confirmed is no consent, and the
-      -- batch sender refuses it too, so the pre-send count is what is sent);
-      -- bounced/complained/unsubscribed are additionally gated by suppressions.
-      AND c."status" NOT IN ('archived', 'non_subscribed', 'pending')
+      -- A contact is left out by its status AND by its address's suppression
+      -- rows, each on its own. The status: every one batch-sender refuses
+      -- marketing for (unsubscribed, bounced, complained, pending, archived)
+      -- and non_subscribed. Before Z171 only archived / non_subscribed /
+      -- pending were, on the assumption that the other three always have a
+      -- row — they do not (a PUT sets the status alone), so the pre-send count
+      -- and the splitter took them in and batch-sender then refused them
+      -- (Z146: 2 counted, 1 sent).
+      AND c."status" NOT IN (${excluded})
       -- A suppressed address, of any reason: batch-sender refuses it for every
       -- marketing stream, so counting it made the pre-send panel promise a
       -- send that did not happen (Z144: 2 counted, 1 sent). Case-insensitive,
