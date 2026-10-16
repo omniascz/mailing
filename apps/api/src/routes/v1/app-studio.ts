@@ -1,5 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { and, eq } from 'drizzle-orm';
+import { db } from '../../db/client.js';
+import { contacts } from '../../db/schema/index.js';
 import * as svc from '../../services/app-studio/index.js';
 import { onApiEvent } from '../../services/workflows/triggers.js';
 import { AppError } from '../../lib/app-error.js';
@@ -243,6 +246,17 @@ export default async function appStudioRoutes(app: FastifyInstance) {
       const body = z
         .object({ contactId: z.string().uuid(), payload: z.record(z.unknown()).optional() })
         .parse(req.body);
+      // Z169: kontakt cizí org nedal této org souhlas — běh ani zpráva (Z161 MIMO 1).
+      // The app's token says which org this is; the body only names an id. The
+      // same check and the same answer as POST /api/v1/events: 404 `Contact`
+      // for another org's contact and for an id no contact has alike, so the
+      // answer does not tell them apart.
+      const [contact] = await db
+        .select({ id: contacts.id })
+        .from(contacts)
+        .where(and(eq(contacts.id, body.contactId), eq(contacts.orgId, installedApp.orgId)))
+        .limit(1);
+      if (!contact) throw AppError.notFound('Contact');
       await onApiEvent(installedApp.orgId, body.contactId, trigger.eventName, body.payload ?? {});
       return reply.code(202).send({ data: { accepted: true } });
     },
