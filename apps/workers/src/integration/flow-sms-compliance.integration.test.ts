@@ -140,7 +140,17 @@ let startedAt: Date;
 let countersBefore: { period_start: Date; sends: number }[] = [];
 let orgBefore: Record<string, unknown> = {};
 let templatesBefore = new Set<string>();
-let quietBefore: Record<string, unknown>[] = [];
+interface QuietRow {
+  id: string;
+  channel: string;
+  start_hour: number;
+  end_hour: number;
+  timezone: string;
+  enabled: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+let quietBefore: QuietRow[] = [];
 let othersDeactivated: string[] = [];
 let seededHere: string[] = [];
 /** The Day-of SMS's status before this file, when it was not seeded here. */
@@ -549,7 +559,10 @@ describe("a flow's marketing SMS: consent on the number, opt-out suffix and quie
     countersBefore = await sql`
       SELECT period_start, sends FROM plan_send_counters WHERE org_id = ${seed.id}
     `;
-    quietBefore = await sql`SELECT * FROM quiet_hours WHERE org_id = ${seed.id}`;
+    quietBefore = await sql<QuietRow[]>`
+      SELECT id, channel, start_hour, end_hour, timezone, enabled, created_at, updated_at
+      FROM quiet_hours WHERE org_id = ${seed.id}
+    `;
     const tpl = await sql<{ id: string }[]>`SELECT id FROM templates WHERE org_id = ${seed.id}`;
     templatesBefore = new Set(tpl.map((t) => t.id));
     // Anything of the seed org an event or a basket would start besides this
@@ -741,7 +754,13 @@ describe("a flow's marketing SMS: consent on the number, opt-out suffix and quie
   /** quiet_hours of the seed org back to the rows found in beforeAll. */
   async function restoreQuiet() {
     await sql`DELETE FROM quiet_hours WHERE org_id = ${seed.id}`;
-    for (const q of quietBefore) await sql`INSERT INTO quiet_hours ${sql(q)}`;
+    for (const q of quietBefore) {
+      await sql`
+        INSERT INTO quiet_hours (id, org_id, channel, start_hour, end_hour, timezone, enabled, created_at, updated_at)
+        VALUES (${q.id}, ${seed.id}, ${q.channel}, ${q.start_hour}, ${q.end_hour}, ${q.timezone},
+                ${q.enabled}, ${q.created_at}, ${q.updated_at})
+      `;
+    }
   }
 
   // ── F: marketing SMS of a flow ────────────────────────────────────────────
