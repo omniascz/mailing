@@ -205,6 +205,27 @@ export async function onApiEvent(
   eventName: string,
   properties: Record<string, unknown> = {},
 ): Promise<number> {
+  // Z169: kontakt cizí org nedal této org souhlas — běh ani zpráva (Z161 MIMO 1).
+  // The id must be a contact of `orgId`. Nothing downstream checked it: the
+  // workflow_events row and the run were written for whatever id came in, and
+  // nodes that write by id (add_tag, move_to_list) changed another org's
+  // contact, while the send nodes queued jobs for it. Some callers take the id
+  // from a request body or a row a client filled in, so it is checked here, for
+  // every caller. The same filter as POST /api/v1/events (id and org, not
+  // deleted_at). No throw: the callers include crons and webhooks, and an
+  // unknown id is not their failure — it simply starts nothing.
+  const [own] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(and(eq(contacts.id, contactId), eq(contacts.orgId, orgId)))
+    .limit(1);
+  if (!own) {
+    console.warn(
+      `[workflow-triggers] onApiEvent: contact ${contactId} is not a contact of org ${orgId} — nothing started`,
+    );
+    return 0;
+  }
+
   // `processed: true`, and that is load-bearing rather than tidy.
   // `processQueuedWorkflowEvents` sweeps `processed = false` rows every minute
   // and calls THIS function for each one. A row written here as unprocessed

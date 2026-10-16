@@ -530,14 +530,36 @@ describe('workflow triggers', () => {
   });
 
   it('isAlreadyRunning prevents duplicate workflow runs', async () => {
-    // onApiEvent queries DB for active workflows → empty list → no runs started
-    (mockDb.where as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    // Z169: onApiEvent first looks the contact up in the org (select … where …
+    // limit), so that chain finds c-1 here; then it queries DB for active
+    // workflows → empty list → no runs started.
+    (mockDb.where as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce(mockDb)
+      .mockResolvedValueOnce([]);
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValueOnce([{ id: 'c-1' }]);
 
     const { onApiEvent } = await import('./triggers.js');
     // Returns the number of runs it started — no active workflows here, so 0.
     // That count is what lets a one-shot subscription tell "dispatched" from
     // "nobody was listening" before it marks itself spent.
     await expect(onApiEvent('org-1', 'c-1', 'purchase', {})).resolves.toBe(0);
+    // The contact is the org's own, so the event is recorded as before.
+    expect(mockDb.insert).toHaveBeenCalledTimes(1);
+  });
+
+  it('onApiEvent records and starts nothing for an id that is not a contact of the org (Z169)', async () => {
+    // The contact lookup (id AND org) finds no row: another org's contact, or no contact.
+    (mockDb.limit as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const { onApiEvent } = await import('./triggers.js');
+    await expect(onApiEvent('org-1', 'c-other', 'purchase', {})).resolves.toBe(0);
+    // No workflow_events row, and the active-workflow query never ran: one
+    // select (the lookup), no insert.
+    expect(mockDb.insert).not.toHaveBeenCalled();
+    expect(mockDb.select).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 });
 
