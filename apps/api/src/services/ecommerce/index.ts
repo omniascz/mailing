@@ -407,8 +407,10 @@ interface NormalizedOrder {
  * is created `non_subscribed` — "has an address but no marketing opt-in", in
  * the enum's own words — and two independent things then keep marketing away
  * from it: `resolveAudience` excludes that status in SQL, and a contact created
- * here belongs to no list. Transactional and behaviour-triggered messages,
- * which rest on contract, still reach them.
+ * here belongs to no list. Transactional messages, which rest on contract,
+ * still reach them; a flow's marketing node skips them as a campaign does, and
+ * only a flow's transactional exception reaches them (Michal, 14. 10. 22:10,
+ * point 3; Z166).
  *
  * No GDPR consent record is written either. There is none to write: the order
  * payload carries no opt-in that we read, and processing purposes are defined

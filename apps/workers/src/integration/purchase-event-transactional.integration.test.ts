@@ -871,8 +871,10 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
       }
     }
     const e4 = ppc.cells.e4!;
-    for (const st of BOTH)
-      expect(e4[st]!.reached, `e4 ${st}: ${JSON.stringify(e4[st])}`).toBe(true);
+    expect(e4.active!.reached, `e4 active: ${JSON.stringify(e4.active)}`).toBe(true);
+    // Z166 — Michal, 14. 10. 22:10, point 3: the review request is a marketing
+    // node, and a new buyer is non_subscribed. It was asserted reached (BOTH).
+    expect(e4.new_buyer!.reached, `e4 new_buyer: ${JSON.stringify(e4.new_buyer)}`).toBe(false);
     for (const st of [...LIFTED, ...NEGATIVE]) {
       expect(e4[st]!.reached, `e4 ${st}: ${JSON.stringify(e4[st])}`).toBe(false);
     }
@@ -988,6 +990,7 @@ describe('the informational e-mails of an order are transactional (Z163)', () =>
     };
     console.log(`[pet] PP priority ${JSON.stringify(report.PPpriority)}`);
     expect(diffs.job).toEqual([]);
+    expect(diffs.engine).toEqual([]);
     expect(marked.cell.batch).toBe('sent=1 skipped=0/ft');
     expect(marked.cell.mta).toBe('sent/triggered/flow_transactional');
     expect(plain.cell.batch).toBe('sent=1 skipped=0/-');

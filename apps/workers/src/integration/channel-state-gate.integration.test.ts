@@ -348,7 +348,12 @@ describe('SMS from a flow, WhatsApp and push reach no contact who refuses market
     for (const kind of Object.keys(flows)) {
       // The job is exactly what the flow queues — no workflowId was added by hand.
       expect(got[`${kind}/active`]).toContain(SMS_REACHED);
-      expect(got[`${kind}/non_subscribed`]).toContain(SMS_REACHED);
+      // Z166 — Michal, 14. 10. 22:10, point 3: a flow's marketing SMS skips
+      // non_subscribed (all three nodes here are marketing: 'smstx' is not on
+      // the closed list). This was SMS_REACHED.
+      expect(got[`${kind}/non_subscribed`], `${kind}/non_subscribed`).toContain(
+        '"code":"MARKETING_REFUSED"',
+      );
       expect(got[`${kind}/pending`], `${kind}/pending`).toContain('"code":"CONSENT_PENDING"');
       for (const st of ['unsub_consent', 'bounced', 'complained', 'archived'] as State[]) {
         expect(got[`${kind}/${st}`], `${kind}/${st}`).toContain('"code":"MARKETING_REFUSED"');
@@ -402,7 +407,10 @@ describe('SMS from a flow, WhatsApp and push reach no contact who refuses market
     }
     for (const ch of ['wa', 'push']) {
       expect(got[`${ch}/active`]!.reached, `${ch}/active`).toBe(true);
-      expect(got[`${ch}/non_subscribed`]!.reached, `${ch}/non_subscribed`).toBe(true);
+      // Z166 — Michal, 14. 10. 22:10, point 3: a flow's job skips non_subscribed.
+      // This was reached true.
+      expect(got[`${ch}/non_subscribed`]!.reached, `${ch}/non_subscribed`).toBe(false);
+      expect(got[`${ch}/non_subscribed`]!.job, `${ch}/non_subscribed`).toContain('skipped_refused');
       expect(got[`${ch}/pending`]!.job).toContain('skipped_pending');
       for (const st of ['unsub_consent', 'bounced', 'complained', 'archived'] as State[]) {
         expect(got[`${ch}/${st}`]!.reached, `${ch}/${st}`).toBe(false);

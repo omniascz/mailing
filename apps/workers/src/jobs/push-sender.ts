@@ -31,8 +31,9 @@ async function processPushSend(
   // pending, or is not found / deleted gets none (Michal, 13. 10. — "no
   // channel"; a flow is marketing; roadmap point 1 for a deleted contact). On
   // master a flow pushed to a deleted contact (Z154). Checked before the
-  // adapter; an HTTP error throws and BullMQ retries. Z155.
-  const skip = await marketingSkip(data.orgId, data.contactId);
+  // adapter; an HTTP error throws and BullMQ retries. Z155. A flow's job
+  // (workflowRunId) skips non_subscribed as well (Z166).
+  const skip = await marketingSkip(data.orgId, data.contactId, !!data.workflowRunId);
   if (skip) {
     job.log(`contact ${data.contactId}: ${skip} — not sent`);
     return { messageId: '', status: skip };

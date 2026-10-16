@@ -641,6 +641,14 @@ export interface BatchSenderJobData {
    * statuses pass, and only the transactional suppression reasons count.
    */
   flowTransactional?: boolean;
+  /**
+   * This flow e-mail comes from a flow's marketing node (Z166). Set only by the
+   * API's workflow dispatch, template branch, on every job it does not mark
+   * flowTransactional. batch-sender reads it on the triggered stream only:
+   * FLOW_MARKETING_REFUSED_CONTACT_STATUSES is refused, 'non_subscribed'
+   * included (Michal, 14. 10. 22:10, point 3).
+   */
+  flowMarketing?: boolean;
   /** Per-domain tracking defaults — gate open-pixel / link-wrap injection. */
   openTracking?: boolean;
   clickTracking?: boolean;

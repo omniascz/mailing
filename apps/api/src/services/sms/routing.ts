@@ -26,7 +26,11 @@ import { TwilioSmsAdapter, type TwilioConfig } from '../../channels/sms/twilio-a
 import { checkSmsCompliance } from './compliance.js';
 import { resolveCouponMergeTags } from './coupon-merge.js';
 import { AppError } from '../../lib/app-error.js';
-import { liftedByFlowTransactional, refusesMarketing } from '@forgemsg/shared';
+import {
+  liftedByFlowTransactional,
+  refusesFlowMarketing,
+  refusesMarketing,
+} from '@forgemsg/shared';
 import type { UnifiedMessage, Recipient, DeliveryResult } from '@forgemsg/shared';
 
 // ─── Phone → country code ─────────────────────────────────────────────────────
@@ -246,9 +250,10 @@ export async function routedSmsSend(
   // list (the order, the ticket, the change or cancellation of an event) and
   // that the node is a send_sms with priority 'transactional'. It lifts
   // unsubscribed, complained, pending and archived
-  // (FLOW_TRANSACTIONAL_LIFTED_STATUSES in @forgemsg/shared; non_subscribed is
-  // not refused here anyway) — Michal, 15. 10. 6:10, point 1b, which overrides
-  // the narrower reading of Z156 (Z158). Pending used to be refused as
+  // (FLOW_TRANSACTIONAL_LIFTED_STATUSES in @forgemsg/shared; non_subscribed
+  // needs no lifting: only a flow's marketing SMS refuses it, below) — Michal,
+  // 15. 10. 6:10, point 1b, which overrides the narrower reading of Z156
+  // (Z158). Pending used to be refused as
   // CONSENT_PENDING before the exception was even looked at; with the
   // exception it is lifted by the same `lifted` as every other status. A
   // missing or deleted contact and bounced are refused exactly as without it —
@@ -297,7 +302,14 @@ export async function routedSmsSend(
       });
     }
     const lifted = flowTransactional && liftedByFlowTransactional(contact.status);
-    if (refusesMarketing(contact.status) && !lifted) {
+    // A flow's marketing SMS (a run, no campaign, no exception) skips
+    // non_subscribed as well — FLOW_MARKETING_REFUSED_CONTACT_STATUSES (Michal,
+    // 14. 10. 22:10, point 3; Z166). A campaign SMS is unchanged.
+    const flowMarketing = !!message.workflowRunId && !message.campaignId && !flowTransactional;
+    const refused = flowMarketing
+      ? refusesFlowMarketing(contact.status)
+      : refusesMarketing(contact.status) && !lifted;
+    if (refused) {
       throw new AppError({
         code: 'MARKETING_REFUSED',
         statusCode: 403,

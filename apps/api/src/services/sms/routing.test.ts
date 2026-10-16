@@ -136,7 +136,9 @@ describe('routedSmsSend — workflowRunId gates the contact state, not consent o
     expect(checkSmsCompliance).not.toHaveBeenCalled();
   });
 
-  it('non_subscribed passes the gate as before', async () => {
+  // Z166 — Michal, 14. 10. 22:10, point 3: a flow's marketing SMS skips
+  // non_subscribed. This said 'BAD_REQUEST' (past every gate) before.
+  it('non_subscribed is refused on a flow SMS (Z166)', async () => {
     state.contactRows = [{ status: 'non_subscribed' }];
     expect(
       await codeOf(
@@ -145,7 +147,7 @@ describe('routedSmsSend — workflowRunId gates the contact state, not consent o
           phone: '+420777000001',
         }),
       ),
-    ).toBe('BAD_REQUEST');
+    ).toBe('MARKETING_REFUSED');
   });
 
   it('a campaign SMS still gets the consent check after the gate', async () => {
@@ -270,5 +272,49 @@ describe('routedSmsSend — flowTransactional lifts pending, archived, unsubscri
       await send(status, { workflowRunId: RUN, flowTransactional: true });
     }
     expect(checkSmsCompliance).not.toHaveBeenCalled();
+  });
+});
+
+// Z166 — Michal, 14. 10. 22:10, point 3: "non_subscribed: marketingové uzly
+// flow ho vynechají jako kampaň; transakční výjimka z bodu 1 platí." Only a
+// flow's marketing SMS (a run, no campaign, no exception) refuses it.
+describe('routedSmsSend — non_subscribed on a flow marketing SMS only', () => {
+  const send = (status: string, ids: Parameters<typeof msg>[0]) => {
+    state.contactRows = [{ status }];
+    return codeOf(routedSmsSend(ORG, msg(ids), { contactId: CONTACT, phone: '+420777000001' }));
+  };
+
+  it('refuses it on a flow SMS without the exception, before the consent check', async () => {
+    expect(await send('non_subscribed', { workflowRunId: RUN })).toBe('MARKETING_REFUSED');
+    expect(await send('non_subscribed', { workflowRunId: RUN, flowTransactional: false })).toBe(
+      'MARKETING_REFUSED',
+    );
+    expect(checkSmsCompliance).not.toHaveBeenCalled();
+  });
+
+  it('lets it through on a flow SMS under the exception', async () => {
+    expect(await send('non_subscribed', { workflowRunId: RUN, flowTransactional: true })).toBe(
+      'BAD_REQUEST',
+    );
+    expect(checkSmsCompliance).not.toHaveBeenCalled();
+  });
+
+  it('a campaign SMS is unchanged: the gate lets it through to the consent check', async () => {
+    expect(await send('non_subscribed', { campaignId: RUN })).toBe('BAD_REQUEST');
+    expect(await send('non_subscribed', { campaignId: RUN, workflowRunId: RUN })).toBe(
+      'BAD_REQUEST',
+    );
+    expect(checkSmsCompliance).toHaveBeenCalledTimes(2);
+  });
+
+  it('an SMS with a workflowId and no run is unchanged', async () => {
+    expect(await send('non_subscribed', { workflowId: RUN })).toBe('BAD_REQUEST');
+  });
+
+  it('active still passes a flow SMS; the other refused statuses keep their codes', async () => {
+    expect(await send('active', { workflowRunId: RUN })).toBe('BAD_REQUEST');
+    expect(await send('pending', { workflowRunId: RUN })).toBe('CONSENT_PENDING');
+    for (const status of ['unsubscribed', 'bounced', 'complained', 'archived'])
+      expect(await send(status, { workflowRunId: RUN })).toBe('MARKETING_REFUSED');
   });
 });

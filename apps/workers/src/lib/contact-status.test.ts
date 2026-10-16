@@ -53,9 +53,30 @@ describe('marketingSkip', () => {
     expect(await marketingSkip(ORG, ID)).toBe(skip);
   });
 
+  // Z166 — Michal, 14. 10. 22:10, point 3: a flow's job skips non_subscribed.
+  it.each([
+    ['active', null],
+    ['non_subscribed', 'skipped_refused'],
+    ['pending', 'skipped_pending'],
+    ['unsubscribed', 'skipped_refused'],
+    ['bounced', 'skipped_refused'],
+    ['complained', 'skipped_refused'],
+    ['archived', 'skipped_refused'],
+  ])('a flow job: %s → %s', async (status, skip) => {
+    answer(Response.json({ data: [{ id: ID, status }] }));
+    expect(await marketingSkip(ORG, ID, true)).toBe(skip);
+  });
+
+  it('a campaign job (fromFlow false) lets non_subscribed through, as before', async () => {
+    answer(Response.json({ data: [{ id: ID, status: 'non_subscribed' }] }));
+    expect(await marketingSkip(ORG, ID, false)).toBeNull();
+  });
+
   it('not found → skipped_no_contact', async () => {
     answer(Response.json({ data: [] }));
     expect(await marketingSkip(ORG, ID)).toBe('skipped_no_contact');
+    answer(Response.json({ data: [] }));
+    expect(await marketingSkip(ORG, ID, true)).toBe('skipped_no_contact');
   });
 
   it('HTTP error → throws', async () => {

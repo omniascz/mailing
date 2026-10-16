@@ -8,7 +8,11 @@
  * batch-sender must not. Moved here from mta-sender.ts in Z158, which added
  * 'flow_transactional' and refusedByStatus; mta-sender re-exports reasonsFor.
  */
-import { liftedByFlowTransactional, refusesMarketing } from '@forgemsg/shared';
+import {
+  liftedByFlowTransactional,
+  refusesFlowMarketing,
+  refusesMarketing,
+} from '@forgemsg/shared';
 import type { MtaSendJobData } from '../queues/index.js';
 
 /**
@@ -86,10 +90,17 @@ export function reasonsFor(
  * Under the flow's transactional exception the statuses of
  * FLOW_TRANSACTIONAL_LIFTED_STATUSES pass — the same shared test the inline
  * branch and the SMS gate apply (Z158); 'bounced' does not.
+ *
+ * A flow's marketing node (flowMarketing, Z166 — Michal, 14. 10. 22:10, point
+ * 3) refuses FLOW_MARKETING_REFUSED_CONTACT_STATUSES, which adds
+ * 'non_subscribed'. It is never read under the exception.
  */
 export function refusedByStatus(
   status: string | null | undefined,
   flowTransactional: boolean,
+  flowMarketing = false,
 ): boolean {
-  return refusesMarketing(status) && !(flowTransactional && liftedByFlowTransactional(status));
+  if (flowTransactional) return refusesMarketing(status) && !liftedByFlowTransactional(status);
+  if (flowMarketing) return refusesFlowMarketing(status);
+  return refusesMarketing(status);
 }

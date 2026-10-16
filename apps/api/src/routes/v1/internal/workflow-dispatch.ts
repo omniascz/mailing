@@ -32,7 +32,11 @@ import {
 } from '../../../lib/queues.js';
 import { processWorkflowRuns } from '../../../services/workflows/executor.js';
 import { routedSmsSend } from '../../../services/sms/routing.js';
-import { liftedByFlowTransactional, refusesMarketing } from '@forgemsg/shared';
+import {
+  liftedByFlowTransactional,
+  refusesFlowMarketing,
+  refusesMarketing,
+} from '@forgemsg/shared';
 import { flowTransactionalException } from '../../../services/workflows/transactional-exception.js';
 // The inline e-mail's opt-out and the sender identity of both branches (Z157).
 import {
@@ -97,9 +101,13 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
       // gates it as marketing, twice:
       // - the contact's status: unsubscribed, bounced, complained, pending or
       //   archived gets nothing, the same statuses batch-sender refuses (the
-      //   shared MARKETING_REFUSED_CONTACT_STATUSES; archived since Z153).
-      //   Answered as a skip with 200, so the 'email' job completes and is not
-      //   retried;
+      //   shared MARKETING_REFUSED_CONTACT_STATUSES; archived since Z153). A
+      //   flow's node (the job carries the workflowRunId the API's executor
+      //   puts in it — a send_email with html, a personal e-mail, a review
+      //   request) skips non_subscribed too: FLOW_MARKETING_REFUSED_CONTACT_STATUSES
+      //   (Michal, 14. 10. 22:10, point 3; Z166). A sequence step has no run
+      //   and is unchanged. Answered as a skip with 200, so the 'email' job
+      //   completes and is not retried;
       // - purpose 'workflow_marketing', which makes mta-sender check every
       //   suppression reason, 'unsubscribe' included, where a transactional
       //   message is stopped by all but that one.
@@ -167,10 +175,13 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
           body.workflowRunId,
           body.nodeId,
         );
-        if (
-          refusesMarketing(contact.status) &&
-          !(transactional && liftedByFlowTransactional(contact.status))
-        )
+        // refusesFlowMarketing is never read under the exception (Z166).
+        const refused = transactional
+          ? refusesMarketing(contact.status) && !liftedByFlowTransactional(contact.status)
+          : body.workflowRunId
+            ? refusesFlowMarketing(contact.status)
+            : refusesMarketing(contact.status);
+        if (refused)
           return reply.send({
             data: { skipped: true, reason: `contact status ${contact.status}` },
           });
@@ -326,7 +337,10 @@ export default async function internalWorkflowDispatchRoutes(app: FastifyInstanc
         // batch-sender then lets a status of FLOW_TRANSACTIONAL_LIFTED_STATUSES
         // through and checks only the transactional suppression reasons; the
         // stream, the render and the footer stay those of the triggered stream.
-        ...(flowTransactional ? { flowTransactional: true } : {}),
+        // Every other job of this branch is a flow's marketing node, and says so:
+        // batch-sender then refuses FLOW_MARKETING_REFUSED_CONTACT_STATUSES,
+        // non_subscribed included (Michal, 14. 10. 22:10, point 3; Z166).
+        ...(flowTransactional ? { flowTransactional: true } : { flowMarketing: true }),
       });
 
       return reply.send({ data: { queued: true } });

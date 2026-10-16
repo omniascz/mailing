@@ -11,9 +11,10 @@
  * A public endpoint that accepts an arbitrary address is a way to sign someone
  * else up: when the product restocks, that address receives a real message. The
  * `triggered` stream this ends in is filtered for suppressions and for
- * `unsubscribed`, but NOT for a stranger we have never seen — that is exactly
- * how a behaviour-triggered message is supposed to reach a `non_subscribed`
- * contact, and it is the mechanism abandoned checkout relies on.
+ * `unsubscribed`; since Z166 a flow's marketing node also skips a
+ * `non_subscribed` contact, which is what an address first seen here is
+ * (Michal, 14. 10. 22:10, point 3: "marketingové uzly flow ho vynechají jako
+ * kampaň"), so only a flow's transactional exception reaches it.
  *
  * Double opt-in is the correct answer to that and is out of scope here. What
  * bounds the harm without it:
