@@ -288,11 +288,18 @@ const HOOK = 'channelNotInLaunch()';
  * a person outside the organisation (Z168 sonda 1).
  */
 const CHANNEL_ROUTE =
-  /^\/api\/v1\/(sms|whatsapp|push|viber|rcs|telegram|messaging)(\/|$)|\/send(\/|$)|\/reply$|^\/api\/v1\/(voice\/calls\/initiate|phone\/dial)$/;
+  /^\/api\/v1\/(sms|whatsapp|push|viber|rcs|telegram|messaging|transactional)(\/|$)|\/send(\/|$)|\/reply$|^\/api\/v1\/(voice\/calls\/initiate|phone\/dial)$/;
 
 const NOT_A_DIRECT_SEND: Record<string, string> = {
   'POST /api/v1/messaging/send':
     'refuses sms, whatsapp and push in the handler, on the channel alone; email and in_app go on',
+  'POST /api/v1/transactional/email': 'e-mail',
+  'POST /api/v1/transactional/email/raw': 'e-mail',
+  'POST /api/v1/transactional/email/batch': 'e-mail',
+  'POST /api/v1/transactional/batch': 'e-mail recipients only (measured in B)',
+  'POST /api/v1/transactional/batch/:batchId/cancel': 'a scheduled e-mail batch',
+  'POST /api/v1/transactional/batch/:batchId/pause': 'a scheduled e-mail batch',
+  'POST /api/v1/transactional/batch/:batchId/resume': 'a scheduled e-mail batch',
   'POST /api/v1/campaigns/:id/send':
     'a campaign: channel campaigns go through the audience and contact-state gates',
   'POST /api/v1/broadcasts/:id/send': 'Resend-compatible broadcast: an e-mail campaign',
