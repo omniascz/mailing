@@ -337,8 +337,11 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   // 'archived' too ("Removed from marketing"). The campaign audience already
   // leaves it out, so a broadcast loses no one; a flow e-mail on the template
   // branch reached it, because this check refused only the four above (Z152
-  // MIMO 1, measured). 'non_subscribed' is not refused here — that waits on
-  // the owner's decision about § 7(3). Z153.
+  // MIMO 1, measured). Z153. 'non_subscribed' is refused only for a flow's
+  // marketing node — a job the API's workflow dispatch marked flowMarketing,
+  // never by the stream alone, which a campaign's data can name too (Michal,
+  // 14. 10. 22:10, point 3: "marketingové uzly flow ho vynechají jako kampaň";
+  // Z166). A campaign's audience already leaves it out.
   //
   // The statuses are MARKETING_REFUSED_CONTACT_STATUSES in @forgemsg/shared;
   // the API's inline-HTML flow branch (workflow-dispatch.ts) reads the same list.
@@ -356,10 +359,11 @@ export async function processBatchSender(job: Job<BatchSenderJobData>, token?: s
   // on the triggered stream, where the dispatch puts it. Without the flag
   // nothing here changes.
   const flowTransactional = data.flowTransactional === true && stream === 'triggered';
+  const flowMarketing = data.flowMarketing === true && stream === 'triggered' && !flowTransactional;
   const refusedByStatusSet = new Set<string>();
   if (stream !== 'transactional') {
     for (const c of contacts) {
-      if (refusedByStatus(c.status, flowTransactional)) refusedByStatusSet.add(c.id);
+      if (refusedByStatus(c.status, flowTransactional, flowMarketing)) refusedByStatusSet.add(c.id);
     }
   }
   // Carried to every mta job of the batch, so mta-sender's own check at the

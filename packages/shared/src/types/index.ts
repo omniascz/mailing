@@ -38,9 +38,10 @@ export type ContactStatus =
  * inline branch of the dispatch and on the template branch alike (measured,
  * Z152 MIMO 1); listing it here closes both. Z153.
  *
- * 'non_subscribed' is deliberately NOT here, although the campaign audience
- * leaves it out too: whether a flow may mail it waits on the owner's decision
- * about § 7(3) zákona 480/2004 Sb. Until then it gets what it got.
+ * 'non_subscribed' is NOT here, although the campaign audience leaves it out
+ * too: this list is also read by sends that are not a flow's marketing node.
+ * A flow's marketing node refuses it through FLOW_MARKETING_REFUSED_CONTACT_STATUSES
+ * below (Michal, 14. 10. 22:10, point 3; Z166).
  *
  * One list for both readers: the workers batch-sender (every broadcast and
  * triggered send) and the API's inline-HTML branch of the workflow dispatch
@@ -58,6 +59,35 @@ export const MARKETING_REFUSED_CONTACT_STATUSES: readonly ContactStatus[] = [
 /** Does this contact status refuse marketing e-mail (MARKETING_REFUSED_CONTACT_STATUSES)? */
 export function refusesMarketing(status: string | null | undefined): boolean {
   return (MARKETING_REFUSED_CONTACT_STATUSES as readonly string[]).includes(status ?? '');
+}
+
+/**
+ * The contact statuses a flow's MARKETING node reaches no one in: the shared
+ * list above plus 'non_subscribed'.
+ *
+ * Michal, 14. 10. 22:10, point 3: "non_subscribed: marketingové uzly flow ho
+ * vynechají jako kampaň; transakční výjimka z bodu 1 platí." A contact with an
+ * address and no marketing opt-in — a shop's buyer, a shopper the checkout
+ * script reported, an address from a restock or price-drop form — gets no
+ * marketing node of a flow, on any channel, exactly as no campaign reaches it.
+ * Z166.
+ *
+ * Read only for a flow's marketing node: the template branch (batch-sender,
+ * for a job the dispatch marked flowMarketing), the inline-HTML branch of the
+ * workflow dispatch, the SMS routing gate for a flow's SMS and the WhatsApp /
+ * web push workers for a flow's job. Never under the flow's transactional
+ * exception: that node is not a marketing node, and as nothing else refuses
+ * 'non_subscribed', FLOW_TRANSACTIONAL_LIFTED_STATUSES needs no change for it.
+ * Every other send reads MARKETING_REFUSED_CONTACT_STATUSES as before.
+ */
+export const FLOW_MARKETING_REFUSED_CONTACT_STATUSES: readonly ContactStatus[] = [
+  ...MARKETING_REFUSED_CONTACT_STATUSES,
+  'non_subscribed',
+];
+
+/** Does a flow's marketing node refuse this status (FLOW_MARKETING_REFUSED_CONTACT_STATUSES)? */
+export function refusesFlowMarketing(status: string | null | undefined): boolean {
+  return (FLOW_MARKETING_REFUSED_CONTACT_STATUSES as readonly string[]).includes(status ?? '');
 }
 
 /**

@@ -10,7 +10,7 @@
  * marketing: Michal, 13. 10. — a contact who refuses marketing gets it on no
  * channel, and a flow is marketing.
  */
-import { refusesMarketing } from '@forgemsg/shared';
+import { refusesFlowMarketing, refusesMarketing } from '@forgemsg/shared';
 import { internalHeaders } from './internal-api.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
@@ -33,13 +33,20 @@ export type ContactSkip = 'skipped_no_contact' | 'skipped_pending' | 'skipped_re
  * Why a campaign or flow message must not reach this contact, or null when it
  * may. Not found / deleted → skipped_no_contact (the fixed rule of roadmap
  * point 1); pending → skipped_pending (Z143, kept); any other status in
- * MARKETING_REFUSED_CONTACT_STATUSES → skipped_refused. 'non_subscribed' is
- * not in that list and passes, as before (§ 7(3), Michal).
+ * MARKETING_REFUSED_CONTACT_STATUSES → skipped_refused. For a flow's job
+ * (`fromFlow`: the job carries the workflowRunId the API's executor puts in
+ * it, which no campaign job has) 'non_subscribed' is skipped_refused too —
+ * FLOW_MARKETING_REFUSED_CONTACT_STATUSES (Michal, 14. 10. 22:10, point 3;
+ * Z166). A campaign's job is unchanged.
  */
-export async function marketingSkip(orgId: string, contactId: string): Promise<ContactSkip | null> {
+export async function marketingSkip(
+  orgId: string,
+  contactId: string,
+  fromFlow = false,
+): Promise<ContactSkip | null> {
   const status = await contactStatus(orgId, contactId);
   if (status === null) return 'skipped_no_contact';
   if (status === 'pending') return 'skipped_pending';
-  if (refusesMarketing(status)) return 'skipped_refused';
+  if (fromFlow ? refusesFlowMarketing(status) : refusesMarketing(status)) return 'skipped_refused';
   return null;
 }
