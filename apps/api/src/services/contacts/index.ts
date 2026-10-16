@@ -7,9 +7,10 @@ import { AppError } from '../../lib/app-error.js';
 import { parsePhonePrefix } from '../import/phone-prefix.js';
 import type { UnsubscribeSource } from './unsubscribe.js';
 import {
+  activeBlockingRows,
   assertBounceReleased,
+  assertNoHeldSuppression,
   assertNotLiftingRefusal,
-  bounceRows,
   heldStatus,
 } from './consent-hold.js';
 import { normalizeEmail } from '../../lib/email-address.js';
@@ -321,20 +322,24 @@ export async function updateContact(
 
   // Every single-contact edit comes through here, so this is where an edit is
   // stopped from lifting a recipient's refusal, from making a contact who
-  // never said yes (pending, non_subscribed) active, or from making a bounced
-  // contact active while its bounce row stands (./consent-hold.ts) — all
-  // before anything is written. The bounce is checked on the address the
-  // contact will have after this edit, which is where mail would go. An archive
-  // keeps the status it replaced; any other status leaves the archive and
-  // clears it.
+  // never said yes (pending, non_subscribed) active, from making a bounced
+  // contact active while its bounce row stands, or from making any contact
+  // active while a complaint, unsubscribe or manual row stands
+  // (./consent-hold.ts) — all before anything is written. The rows are read
+  // once, on the address the contact will have after this edit, which is
+  // where mail would go; when both row checks apply, BOUNCE_ACTIVE answers. An
+  // archive keeps the status it replaced; any other status leaves the archive
+  // and clears it.
   const nextStatus = (patch as { status?: Contact['status'] }).status;
   let archivedFrom: Contact['status'] | null | undefined;
   if (before && nextStatus !== undefined && nextStatus !== before.status) {
     const held = await heldStatus(orgId, before);
     assertNotLiftingRefusal(held, nextStatus);
-    if (held === 'bounced' && nextStatus === 'active') {
+    if (nextStatus === 'active') {
       const address = patch.email !== undefined ? patch.email : before.email;
-      assertBounceReleased(held, nextStatus, await bounceRows(orgId, address));
+      const rows = await activeBlockingRows(orgId, address);
+      assertBounceReleased(held, nextStatus, rows);
+      assertNoHeldSuppression(before.status, nextStatus, rows);
     }
     if (nextStatus === 'archived') archivedFrom = before.status;
     else if (before.status === 'archived') archivedFrom = null;

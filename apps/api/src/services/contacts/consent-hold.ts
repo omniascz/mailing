@@ -109,8 +109,7 @@ export function assertNotLiftingRefusal(held: ContactStatus, next: ContactStatus
 /**
  * Suppression reasons that say the mailbox itself does not take mail. Not
  * 'block' (the receiving side refusing us, never a fact about the address —
- * Z140), not complaint/unsubscribe (their own contact status, held above),
- * not 'manual'.
+ * Z140), not complaint/unsubscribe/manual (HELD_REASONS below).
  */
 export const BOUNCE_REASONS = ['hard_bounce', 'invalid_email'] as const;
 
@@ -144,8 +143,60 @@ export function assertBounceReleased(
   });
 }
 
-/** The hard_bounce / invalid_email rows of `email` in this org, by address or erasure hash. */
-export async function bounceRows(
+/**
+ * Suppression reasons no edit lifts (Michal, 13 Oct 2026): an unsubscribe and
+ * a complaint are the recipient's own refusal, and only the recipient takes
+ * them back — the preference centre's resubscribe or a double opt-in
+ * confirmation, through ./resubscribe.ts, which write the contact themselves
+ * and not through an edit. A 'manual' row (an operator's block, graymail, a
+ * GDPR erasure's hash) is not released by an edit either. Not 'block': that
+ * is the receiving side refusing us, not a fact about the address (Z140). Not
+ * hard_bounce / invalid_email: those are BOUNCE_REASONS, released by an owner
+ * or admin, and keep their own 409 BOUNCE_ACTIVE.
+ */
+export const HELD_REASONS = ['complaint', 'unsubscribe', 'manual'] as const;
+
+/**
+ * An edit to 'active' from any stored status but 'active' is refused while the
+ * address has a complaint, unsubscribe or manual row (Z171). The status the
+ * contact has in the database is what counts here, not heldStatus: an
+ * archived contact whose archive replaced 'active' is held 'active', and
+ * before Z171 an edit made it active again over the row (measured: 200), as
+ * it did a bounced contact with a complaint row, so the contact read 'active'
+ * while the row went on stopping its mail.
+ *
+ * `rows` are the suppression rows of the address the contact will have after
+ * the edit — the one mail would go to.
+ */
+export function assertNoHeldSuppression(
+  stored: ContactStatus,
+  next: ContactStatus,
+  rows: readonly { id: string; reason: string }[],
+): void {
+  if (next !== 'active' || stored === 'active') return;
+  const row = rows.find((r) => (HELD_REASONS as readonly string[]).includes(r.reason));
+  if (!row) return;
+  const message =
+    row.reason === 'manual'
+      ? `This contact's address is suppressed as manual, which an edit does not release; ` +
+        `the contact cannot be set active while that suppression stands`
+      : `This contact's address is suppressed as ${row.reason}, the recipient's own refusal. ` +
+        `Only the recipient comes back — through the preference centre or a double opt-in ` +
+        `confirmation — not an edit`;
+  throw new AppError({
+    code: 'SUPPRESSION_HELD',
+    statusCode: 409,
+    message,
+    details: { reason: row.reason, suppressionId: row.id },
+  });
+}
+
+/**
+ * The rows of `email` in this org that stop an edit to 'active' — the
+ * BOUNCE_REASONS and the HELD_REASONS — by address or erasure hash, in one
+ * query for both checks.
+ */
+export async function activeBlockingRows(
   orgId: string,
   email: string | null,
 ): Promise<{ id: string; reason: string }[]> {
@@ -157,7 +208,7 @@ export async function bounceRows(
       and(
         eq(suppressions.orgId, orgId),
         suppressionBlocks(email),
-        inArray(suppressions.reason, [...BOUNCE_REASONS]),
+        inArray(suppressions.reason, [...BOUNCE_REASONS, ...HELD_REASONS]),
       ),
     );
 }
