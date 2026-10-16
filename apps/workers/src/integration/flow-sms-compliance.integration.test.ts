@@ -864,7 +864,7 @@ describe("a flow's marketing SMS: consent on the number, opt-out suffix and quie
     expect(outcomeByWho(cells), JSON.stringify(cells)).toEqual(expected);
   }, 600_000);
 
-  it('K POST /messaging/send and POST /transactional/sms — no contact, no consent read (unchanged)', async () => {
+  it('K POST /messaging/send and POST /transactional/sms — refused since Z168, outside the launch perimeter', async () => {
     const list = await people('z167kd', ['cz_consent', 'cz_none', 'cz_revoked', 'us_consent']);
     const out: Record<string, string> = {};
     for (const p of list) {
@@ -877,7 +877,8 @@ describe("a flow's marketing SMS: consent on the number, opt-out suffix and quie
         `messaging ${m.status} ${m.text.includes(SMS_REACHED) ? 'reached' : m.text.slice(0, 120)}` +
         ` | transactional ${t.status} ${t.text.includes(SMS_REACHED) ? 'reached' : t.text.slice(0, 120)}`;
       console.log(`[z167] K direct ${p.key}: ${out[p.key]}`);
-      expect(m.text, p.key).toContain(SMS_REACHED);
+      // Z168: a direct API SMS is off (Michal, 14. 10. 22:10, bod 5).
+      expect(m.text, p.key).toContain('"code":"CHANNEL_NOT_IN_LAUNCH"');
     }
     report['K direct'] = out;
   }, 600_000);

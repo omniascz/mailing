@@ -522,12 +522,13 @@ describe('SMS from a flow, WhatsApp and push reach no contact who refuses market
     }
   }, 600_000);
 
-  it('a transactional SMS to an unsubscribed contact number still goes (unchanged)', async () => {
+  it('a direct transactional SMS to an unsubscribed contact number is refused since Z168', async () => {
     const p = await person('unsub_consent');
     const r = await call('POST', '/api/v1/messaging/send', {
       channel: 'sms',
       payload: { to: p.phone, text: 'Kód 1234' },
     });
-    expect(r.text).toContain(SMS_REACHED);
+    // Z168: a direct API SMS is off (Michal, 14. 10. 22:10, bod 5).
+    expect(r.text).toContain('"code":"CHANNEL_NOT_IN_LAUNCH"');
   });
 });

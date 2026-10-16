@@ -26,6 +26,7 @@ import { db } from '../../db/client.js';
 import { viberTemplates } from '../../db/schema/index.js';
 import { and, eq } from 'drizzle-orm';
 import { createViberAdapter } from '@forgemsg/shared/viber/adapter';
+import { channelNotInLaunch } from '../../lib/launch-perimeter.js';
 
 // ─── Zod schemas ────────────────────────────────────────────────────────────
 
@@ -108,76 +109,84 @@ export default async function viberRoutes(app: FastifyInstance) {
 
   // ── Direct send ────────────────────────────────────────────────────────────
 
-  app.post('/api/v1/viber/send', adminAuth, async (req, reply) => {
-    const body = sendBody.parse(req.body);
+  app.post(
+    '/api/v1/viber/send',
+    {
+      onRequest: [channelNotInLaunch],
+      preHandler: [app.authenticate, app.requireRole('admin', 'owner', 'editor')],
+    },
+    async (req, reply) => {
+      const body = sendBody.parse(req.body);
 
-    // Resolve contact phone
-    const { contacts } = await import('../../db/schema/index.js');
-    const [contact] = await db
-      .select({
-        id: contacts.id,
-        phone: contacts.phone,
-        firstName: contacts.firstName,
-        lastName: contacts.lastName,
-      })
-      .from(contacts)
-      .where(and(eq(contacts.orgId, req.user!.orgId), eq(contacts.id, body.contactId)));
+      // Resolve contact phone
+      const { contacts } = await import('../../db/schema/index.js');
+      const [contact] = await db
+        .select({
+          id: contacts.id,
+          phone: contacts.phone,
+          firstName: contacts.firstName,
+          lastName: contacts.lastName,
+        })
+        .from(contacts)
+        .where(and(eq(contacts.orgId, req.user!.orgId), eq(contacts.id, body.contactId)));
 
-    if (!contact) return reply.code(404).send({ code: 'NOT_FOUND', message: 'Contact not found' });
-    if (!contact.phone) {
-      return reply.code(422).send({ code: 'NO_PHONE', message: 'Contact has no phone number' });
-    }
+      if (!contact)
+        return reply.code(404).send({ code: 'NOT_FOUND', message: 'Contact not found' });
+      if (!contact.phone) {
+        return reply.code(422).send({ code: 'NO_PHONE', message: 'Contact has no phone number' });
+      }
 
-    // Resolve content
-    let messageBody = body.body ?? '';
-    let messageType: 'text' | 'picture' | 'video' | 'file' | 'action' = body.type;
-    let mediaUrl = body.mediaUrl;
-    let actionUrl = body.actionUrl;
-    let actionText = body.actionText;
+      // Resolve content
+      let messageBody = body.body ?? '';
+      let messageType: 'text' | 'picture' | 'video' | 'file' | 'action' = body.type;
+      let mediaUrl = body.mediaUrl;
+      let actionUrl = body.actionUrl;
+      let actionText = body.actionText;
 
-    if (body.templateId) {
-      const [tpl] = await db
-        .select()
-        .from(viberTemplates)
-        .where(
-          and(eq(viberTemplates.orgId, req.user!.orgId), eq(viberTemplates.id, body.templateId)),
-        );
-      if (!tpl) return reply.code(404).send({ code: 'NOT_FOUND', message: 'Template not found' });
-      messageBody = tpl.body;
-      messageType = tpl.type as typeof messageType;
-      mediaUrl = tpl.mediaUrl ?? undefined;
-      actionUrl = tpl.actionUrl ?? undefined;
-      actionText = tpl.actionText ?? undefined;
-    }
+      if (body.templateId) {
+        const [tpl] = await db
+          .select()
+          .from(viberTemplates)
+          .where(
+            and(eq(viberTemplates.orgId, req.user!.orgId), eq(viberTemplates.id, body.templateId)),
+          );
+        if (!tpl) return reply.code(404).send({ code: 'NOT_FOUND', message: 'Template not found' });
+        messageBody = tpl.body;
+        messageType = tpl.type as typeof messageType;
+        mediaUrl = tpl.mediaUrl ?? undefined;
+        actionUrl = tpl.actionUrl ?? undefined;
+        actionText = tpl.actionText ?? undefined;
+      }
 
-    if (!messageBody) {
-      return reply.code(422).send({ code: 'MISSING_BODY', message: 'Message body is required' });
-    }
+      if (!messageBody) {
+        return reply.code(422).send({ code: 'MISSING_BODY', message: 'Message body is required' });
+      }
 
-    const adapter = createViberAdapter();
-    const result = await adapter.send(
-      {
-        channel: 'viber',
-        orgId: req.user!.orgId,
-        content: {
-          kind: 'viber',
-          type: messageType,
-          body: messageBody,
-          mediaUrl,
-          actionUrl,
-          actionText,
+      const adapter = createViberAdapter();
+      const result = await adapter.send(
+        {
+          channel: 'viber',
+          orgId: req.user!.orgId,
+          content: {
+            kind: 'viber',
+            type: messageType,
+            body: messageBody,
+            mediaUrl,
+            actionUrl,
+            actionText,
+          },
         },
-      },
-      {
-        contactId: contact.id,
-        phone: contact.phone,
-        firstName: contact.firstName ?? undefined,
-        lastName: contact.lastName ?? undefined,
-      },
-    );
+        {
+          contactId: contact.id,
+          phone: contact.phone,
+          firstName: contact.firstName ?? undefined,
+          lastName: contact.lastName ?? undefined,
+        },
+      );
 
-    return reply.send({ data: result });
-  });
+      return reply.send({ data: result });
+    },
+  );
 
   // ── Delivery status webhook (unauthenticated — called by provider) ─────────
 
