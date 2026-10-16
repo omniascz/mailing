@@ -673,8 +673,10 @@ export interface MtaSendJobData {
    * TransactionalPurpose, lib/queues.ts), or by batch-sender for
    * 'flow_transactional'; reasonsFor (lib/suppression-reasons.ts) reads it.
    * - 'doi_confirmation', by the list double opt-in sender (services/
-   *   subscriptions/doi.ts): the confirmation the recipient asked for, which a
-   *   'manual' suppression does not stop (Z148).
+   *   subscriptions/doi.ts): the confirmation the recipient asked for, which
+   *   the row a GDPR erasure leaves does not stop — and nothing else it would
+   *   otherwise be stopped by (Z148; narrowed to the erasure row in Z170,
+   *   exceptErasureFor in lib/suppression-reasons.ts).
    * - 'workflow_marketing', by the inline-HTML branch of the workflow dispatch
    *   (routes/v1/internal/workflow-dispatch.ts): a flow's marketing e-mail on
    *   the transactional stream, stopped by every suppression reason (Z152).

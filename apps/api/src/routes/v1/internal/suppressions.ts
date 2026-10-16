@@ -6,7 +6,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, not } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { suppressions, suppressionReasonEnum } from '../../../db/schema/index.js';
 import {
@@ -33,6 +33,16 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
            * mail (SUPPRESSES_TRANSACTIONAL there says why).
            */
           reasons: z.array(z.enum(suppressionReasonEnum.enumValues)).min(1).optional(),
+          /**
+           * Leave out the row a GDPR erasure leaves — reason 'manual', no
+           * address, only email_hash (services/contacts/gdpr.ts). Sent by
+           * mta-sender for a list double opt-in confirmation and by nothing
+           * else (exceptErasureFor in the workers). Výjimka jen pro výmaz
+           * GDPR — Michal 14. 10., varianta (a): an ordinary 'manual' row,
+           * written for the address by an operator or by graymail, still
+           * counts. Absent, every row counts as before.
+           */
+          exceptErasure: z.boolean().optional(),
         })
         .parse(req.body);
 
@@ -51,6 +61,18 @@ const internalSuppressionsRoutes: FastifyPluginAsync = async (app) => {
             eq(suppressions.orgId, body.orgId),
             suppressionBlocksAny(body.emails),
             body.reasons ? inArray(suppressions.reason, body.reasons) : undefined,
+            // In the query, not after it: the erasure row never reaches the
+            // answer. Each part is a plain boolean (IS NULL / IS NOT NULL on
+            // the columns, reason NOT NULL), so the NOT is never NULL.
+            body.exceptErasure
+              ? not(
+                  and(
+                    eq(suppressions.reason, 'manual'),
+                    isNull(suppressions.email),
+                    isNotNull(suppressions.emailHash),
+                  )!,
+                )
+              : undefined,
           ),
         );
 

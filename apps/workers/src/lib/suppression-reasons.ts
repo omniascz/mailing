@@ -1,8 +1,8 @@
 /**
  * Which suppression reasons and which contact statuses stop a message — the
  * one definition both e-mail senders read: mta-sender at the moment of sending
- * (reasonsFor) and batch-sender before it renders a batch (reasonsFor and
- * refusedByStatus).
+ * (reasonsFor, exceptErasureFor) and batch-sender before it renders a batch
+ * (reasonsFor and refusedByStatus).
  *
  * Its own module because mta-sender.ts opens Redis and gRPC on import, and
  * batch-sender must not. Moved here from mta-sender.ts in Z158, which added
@@ -40,30 +40,41 @@ export const SUPPRESSES_TRANSACTIONAL = [
 ] as const;
 
 /**
- * The reasons that stop a list double opt-in confirmation: the transactional
- * ones without 'manual'.
+ * Does this job skip the row a GDPR erasure leaves? Only a list double opt-in
+ * confirmation does: mta-sender then sends `exceptErasure` to check-batch,
+ * which leaves out exactly the erasure row — reason 'manual', no address, the
+ * keyed fingerprint in email_hash (services/contacts/gdpr.ts in the API). Every
+ * reason of SUPPRESSES_TRANSACTIONAL still counts for it, 'manual' included.
  *
- * 'manual' is what a GDPR erasure leaves (by hash), what an operator adds by
- * hand (POST /suppressions, and the MCP suppress_contact tool through it) and
- * what graymail writes. For this one mail it is
- * not a refusal: the person asked for it by submitting the form, it carries
- * only the confirmation link, and that link is the only way an erased person
- * comes back (resubscribe.ts lifts the erasure on the confirmation, and on
- * nothing else). Nothing else is lifted by sending it — marketing stays
- * blocked until the link is clicked. Owner's decision, 14 Oct 2026 (Z148).
+ * Výjimka jen pro výmaz GDPR — Michal 14. 10., varianta (a). Z148 let the
+ * confirmation through every 'manual' row, and 'manual' is also what an
+ * operator adds by hand (POST /suppressions, the MCP suppress_contact tool
+ * through it) and what graymail writes: a confirmation went to an address the
+ * organisation had blocked, and its link lifts none of those rows anyway. The
+ * erased person is the case the exception is for: the person asked for the
+ * mail by submitting the form, it carries only the confirmation link, and that
+ * link is the only way back (resubscribe.ts lifts the erasure on the
+ * confirmation, and on nothing else). An erased address that also has an
+ * ordinary 'manual' row by its address stays stopped.
  *
- * A bounce, a complaint, a block or an invalid address still stop it: the
+ * A bounce, a complaint, a block or an invalid address stop it too: the
  * address does not work, or its owner reported us.
  *
  * The third purpose, 'workflow_marketing', has no list of its own: it is a
  * flow's inline-HTML e-mail, marketing on the transactional stream, and every
  * reason stops it — 'unsubscribe' too, as for broadcast and triggered (Z152;
- * see the inline branch of the API's workflow-dispatch.ts).
+ * see the inline branch of the API's workflow-dispatch.ts). Nothing but the
+ * list confirmation skips the erasure row; batch-sender never asks.
  */
-const SUPPRESSES_DOI_CONFIRMATION = SUPPRESSES_TRANSACTIONAL.filter((r) => r !== 'manual');
+export function exceptErasureFor(data: Pick<MtaSendJobData, 'stream' | 'purpose'>): boolean {
+  return data.stream === 'transactional' && data.purpose === 'doi_confirmation';
+}
 
 /**
- * The reasons that count for this job; undefined means every reason.
+ * The reasons that count for this job; undefined means every reason. A list
+ * double opt-in confirmation counts SUPPRESSES_TRANSACTIONAL, as any
+ * transactional message does; only the erasure row is set aside for it
+ * (exceptErasureFor).
  *
  * 'flow_transactional' is the flow's transactional exception on the template
  * branch (Z158 — Michal, 15. 10. 6:10, point 1b): a triggered e-mail the API's
@@ -79,7 +90,6 @@ export function reasonsFor(
   if (data.purpose === 'flow_transactional') return SUPPRESSES_TRANSACTIONAL;
   if (data.stream !== 'transactional') return undefined;
   if (data.purpose === 'workflow_marketing') return undefined;
-  if (data.purpose === 'doi_confirmation') return SUPPRESSES_DOI_CONFIRMATION;
   return SUPPRESSES_TRANSACTIONAL;
 }
 

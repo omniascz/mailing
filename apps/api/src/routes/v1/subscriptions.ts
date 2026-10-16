@@ -141,7 +141,8 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
 
       // Token + confirmation e-mail. The same function the signup form calls,
       // and the only one that asks the MTA gate to let a DOI confirmation
-      // through a 'manual' suppression (services/subscriptions/doi.ts).
+      // through the row a GDPR erasure leaves; it also holds the limit of
+      // three per address and list in 24 hours (services/subscriptions/doi.ts).
       const { token, confirmUrl } = await sendListDoiConfirmation({
         orgId,
         contactId: contact.id,

@@ -3,13 +3,14 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const { sendTransactionalEmail, setex } = vi.hoisted(() => ({
+const { sendTransactionalEmail, setex, evalScript } = vi.hoisted(() => ({
   sendTransactionalEmail: vi.fn(),
   setex: vi.fn(),
+  evalScript: vi.fn(),
 }));
 
 vi.mock('../../lib/queues.js', () => ({ sendTransactionalEmail }));
-vi.mock('@forgemsg/shared/redis', () => ({ redis: { setex } }));
+vi.mock('@forgemsg/shared/redis', () => ({ redis: { setex, eval: evalScript } }));
 
 import { sendListDoiConfirmation } from './doi.js';
 import { env } from '../../config/env.js';
@@ -37,6 +38,7 @@ describe('list double opt-in confirmation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setex.mockResolvedValue('OK');
+    evalScript.mockResolvedValue(1);
     sendTransactionalEmail.mockResolvedValue('msg-1');
   });
 
@@ -68,8 +70,9 @@ describe('list double opt-in confirmation', () => {
 });
 
 /**
- * The confirmation is the one mail a 'manual' suppression does not stop
- * (mta-sender, isSuppressed; owner's decision 14 Oct 2026, Z148). That is safe
+ * The confirmation is the one mail the row a GDPR erasure leaves does not stop
+ * (mta-sender, isSuppressed; Z148, narrowed to the erasure row in Z170 —
+ * výjimka jen pro výmaz GDPR, Michal 14. 10., varianta (a)). That is safe
  * only while nothing else can ask for it, so these pin who asks: this sender,
  * through sendTransactionalEmail's second argument — never a field of the
  * input object, which customer paths build from a request.
@@ -78,6 +81,7 @@ describe('who may ask for the DOI exception', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setex.mockResolvedValue('OK');
+    evalScript.mockResolvedValue(1);
     sendTransactionalEmail.mockResolvedValue('msg-1');
   });
 
@@ -117,5 +121,72 @@ describe('who may ask for the DOI exception', () => {
       .sort();
     // queues.ts declares the type; doi.ts is the one caller that passes it.
     expect(naming).toEqual(['lib/queues.ts', 'services/subscriptions/doi.ts']);
+  });
+});
+
+/**
+ * At most three confirmations per address and list in 24 hours (Michal 14. 10.;
+ * Z170). The window itself is a Redis script, measured against a real Redis by
+ * apps/api/src/integration/doi-confirmation-limit; this pins what the sender
+ * does with the script's answer.
+ */
+describe('the limit of three per address and list', () => {
+  const opts = {
+    orgId: 'org-1',
+    contactId: 'contact-1',
+    listId: 'list-1',
+    email: 'Subscriber@Example.test',
+    listName: 'Newsletter',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setex.mockResolvedValue('OK');
+    sendTransactionalEmail.mockResolvedValue('msg-1');
+  });
+
+  it('asks the window under the list and the keyed fingerprint, never the address', async () => {
+    evalScript.mockResolvedValue(1);
+    const { suppressionEmailHash } = await import('../suppressions/email.js');
+    await sendListDoiConfirmation(opts);
+    const [, keys, key, now, window, max] = evalScript.mock.calls[0]! as unknown[];
+    expect(keys).toBe(1);
+    expect(key).toBe(`doi:limit:list-1:${suppressionEmailHash('subscriber@example.test')}`);
+    expect(String(key)).not.toContain('ubscriber');
+    expect(typeof now).toBe('number');
+    expect(window).toBe(24 * 60 * 60 * 1000);
+    expect(max).toBe(3);
+  });
+
+  it('under the limit: the token is stored and the mail queued, as before', async () => {
+    evalScript.mockResolvedValue(1);
+    const out = await sendListDoiConfirmation(opts);
+    expect(setex).toHaveBeenCalledTimes(1);
+    expect(setex.mock.calls[0]![0]).toBe(`doi:${out.token}`);
+    expect(sendTransactionalEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it('over the limit: nothing stored, nothing queued, the same answer, a log line without the address', async () => {
+    evalScript.mockResolvedValue(0);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const out = await sendListDoiConfirmation(opts);
+      expect(setex).not.toHaveBeenCalled();
+      expect(sendTransactionalEmail).not.toHaveBeenCalled();
+      expect(out.token).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+      expect(out.confirmUrl.endsWith(`/api/v1/confirm/${out.token}`)).toBe(true);
+      expect(warn.mock.calls.map((c) => String(c[0]))).toEqual([
+        '[doi] doi_rate_limited list=list-1 org=org-1',
+      ]);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('a Redis failure is an error, as the store was: nothing is sent unchecked', async () => {
+    evalScript.mockRejectedValue(new Error('redis down'));
+    await expect(sendListDoiConfirmation(opts)).rejects.toThrow('redis down');
+    expect(setex).not.toHaveBeenCalled();
+    expect(sendTransactionalEmail).not.toHaveBeenCalled();
   });
 });
