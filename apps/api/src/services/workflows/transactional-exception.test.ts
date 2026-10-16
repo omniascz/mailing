@@ -83,8 +83,13 @@ beforeEach(() => {
 
 describe('the closed list of transactional triggers', () => {
   // Z163: purchase_event joined the list (Michal, 15. 10. 19:40, point 1c a+b).
-  it('is the order, the two day-of events, the change of an event and purchase_event', () => {
+  // Z165: payment_pending, pickup_ready, order_shipped joined it (Michal, 15. 10.
+  // ~21:30, point 1d, variant a) — 5 entries → 8.
+  it('is the order, the two day-of events, the change of an event, purchase_event and the three shop events', () => {
     expect(LIST.map(listed).sort()).toEqual([
+      'api_event:order_shipped',
+      'api_event:payment_pending',
+      'api_event:pickup_ready',
       'api_event:ticketing.day_of_reminder',
       'api_event:ticketing.day_of_sms',
       'api_event:ticketing.event_changed',
@@ -104,10 +109,12 @@ describe('the closed list of transactional triggers', () => {
     'ticketing.subscription_past_due',
     'order_placed',
     'checkout_started',
-    // Z164 first (Michal, point 1d): a publishable key can still fire them.
-    'payment_pending',
-    'pickup_ready',
-    'order_shipped',
+    // Z165: payment_pending, pickup_ready, order_shipped left this list (they
+    // are on it now, Michal point 1d); a longer name or another case is not.
+    'order_shipped_late',
+    'payment_pending_reminder',
+    'PAYMENT_PENDING',
+    'Pickup_Ready',
     'ticketing.order_paid ',
     'TICKETING.ORDER_PAID',
   ])('%s is not on it', (eventName) => {
@@ -155,7 +162,8 @@ describe('flowTransactionalException', () => {
     expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(false);
     flow(undefined);
     expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(false);
-    flow('payment_pending', { type: 'send_email', config: { priority: 'transactional' } });
+    // Z165: was payment_pending → false; it is on the list now (Michal point 1d).
+    flow('order_shipped_late', { type: 'send_email', config: { priority: 'transactional' } });
     expect(await flowTransactionalException(ORG, RUN, 'send')).toBe(false);
   });
 
