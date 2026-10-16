@@ -225,13 +225,13 @@ async function call(method: string, path: string, body?: unknown, credential = t
  */
 let pubKey = '';
 let pubUses = 0;
-async function publishable(): Promise<string> {
+let pubLock: Promise<unknown> = Promise.resolve();
+async function nextPublishable(): Promise<string> {
   if (pubKey && pubUses < 8) {
     pubUses++;
     return pubKey;
   }
-  pubKey = `fm_pub_${randomBytes(24).toString('hex')}`;
-  pubUses = 1;
+  const raw = `fm_pub_${randomBytes(24).toString('hex')}`;
   const name = `integration z166-pub-${apiKeyNames.length}-${tag}`;
   const [owner] = await sql<{ id: string }[]>`
     SELECT id FROM users WHERE email = ${SEED_LOGIN.email} LIMIT 1
@@ -239,10 +239,18 @@ async function publishable(): Promise<string> {
   await sql`
     INSERT INTO api_keys (org_id, user_id, name, key_hash, key_prefix, is_public)
     VALUES (${seed.id}, ${owner!.id}, ${name},
-            ${createHash('sha256').update(pubKey).digest('hex')}, ${pubKey.slice(0, 12)}, true)
+            ${createHash('sha256').update(raw).digest('hex')}, ${raw.slice(0, 12)}, true)
   `;
   apiKeyNames.push(name);
+  // Handed out only once its row exists: callers run concurrently.
+  pubKey = raw;
+  pubUses = 1;
   return pubKey;
+}
+function publishable(): Promise<string> {
+  const next = pubLock.then(nextPublishable);
+  pubLock = next.catch(() => {});
+  return next;
 }
 
 interface Person {
