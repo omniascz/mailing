@@ -255,13 +255,22 @@ async function contactsOf(email: string) {
 }
 
 async function subscriptionsOf(kind: 'bis' | 'pd', email: string, contactId?: string | null) {
-  const table = kind === 'bis' ? sql`back_in_stock_subscriptions` : sql`price_drop_subscriptions`;
-  const r = await rows<{ n: number }>(sql`
-    SELECT count(*)::int AS n FROM ${table} s
-    WHERE s.org_id = ${org}::uuid
-      AND (s.contact_id IN (SELECT id FROM contacts WHERE org_id = ${org}::uuid AND lower(email) = lower(${email}))
-           OR s.contact_id = ${contactId ?? null}::uuid)
-  `);
+  // Two statements rather than a table name in a variable: sql-explain reads
+  // each raw statement as written.
+  const r =
+    kind === 'bis'
+      ? await rows<{ n: number }>(sql`
+          SELECT count(*)::int AS n FROM back_in_stock_subscriptions s
+          WHERE s.org_id = ${org}::uuid
+            AND (s.contact_id IN (SELECT id FROM contacts WHERE org_id = ${org}::uuid AND lower(email) = lower(${email}))
+                 OR s.contact_id = ${contactId ?? null}::uuid)
+        `)
+      : await rows<{ n: number }>(sql`
+          SELECT count(*)::int AS n FROM price_drop_subscriptions s
+          WHERE s.org_id = ${org}::uuid
+            AND (s.contact_id IN (SELECT id FROM contacts WHERE org_id = ${org}::uuid AND lower(email) = lower(${email}))
+                 OR s.contact_id = ${contactId ?? null}::uuid)
+        `);
   return r[0]!.n;
 }
 
