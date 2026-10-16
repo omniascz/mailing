@@ -147,4 +147,11 @@ describe("a flow's marketing SMS = an SMS campaign, with the real compliance (Z1
       expect(state.consentLookups).toBe(0);
     },
   );
+
+  it('costs one consent lookup per marketing SMS of a flow, as per campaign SMS', async () => {
+    await cell('K', CZ, true, US_DAY);
+    expect(state.consentLookups).toBe(1);
+    await cell('F', CZ, true, US_DAY);
+    expect(state.consentLookups).toBe(2);
+  });
 });

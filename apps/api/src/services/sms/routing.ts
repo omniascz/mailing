@@ -270,6 +270,10 @@ export async function routedSmsSend(
   // OTP, /transactional/sms) nothing changes.
   const gatesContactState =
     !!(message.campaignId || message.workflowId || message.workflowRunId) && !!recipient.contactId;
+  const flowTransactional =
+    !!message.flowTransactional && !!message.workflowRunId && !message.campaignId;
+  // A flow's marketing SMS: a run, no campaign, no exception.
+  const flowMarketing = !!message.workflowRunId && !message.campaignId && !flowTransactional;
   if (message.content.kind === 'sms' && gatesContactState) {
     const [contact] = await db
       .select({ status: contacts.status })
@@ -289,8 +293,6 @@ export async function routedSmsSend(
         message: 'Contact does not exist or was deleted; no campaign or flow SMS',
       });
     }
-    const flowTransactional =
-      !!message.flowTransactional && !!message.workflowRunId && !message.campaignId;
     // A double opt-in not yet confirmed is no consent (Z143). Its own code, as
     // before — except under the flow's transactional exception, which lifts
     // pending below like the other statuses (Z158).
@@ -305,7 +307,6 @@ export async function routedSmsSend(
     // A flow's marketing SMS (a run, no campaign, no exception) skips
     // non_subscribed as well — FLOW_MARKETING_REFUSED_CONTACT_STATUSES (Michal,
     // 14. 10. 22:10, point 3; Z166). A campaign SMS is unchanged.
-    const flowMarketing = !!message.workflowRunId && !message.campaignId && !flowTransactional;
     const refused = flowMarketing
       ? refusesFlowMarketing(contact.status)
       : refusesMarketing(contact.status) && !lifted;
@@ -323,12 +324,13 @@ export async function routedSmsSend(
   // campaign/workflow) is exempt from consent + quiet hours. Throws AppError on
   // block. (Previously this lived in a helper that the send path never called.)
   //
-  // workflowRunId is deliberately NOT here: a flow SMS gets the contact-state
-  // gate above, but whether it needs sms_consents, quiet hours and the opt-out
-  // suffix is the owner's open question (per-channel consent model), so it
-  // behaves exactly as before on those (Z155). flowTransactional does not
-  // touch this either (Z156): it only widens the contact-state gate.
-  const isMarketing = !!(message.campaignId || message.workflowId);
+  // A flow's marketing SMS gets it too, exactly as an SMS campaign does — the
+  // same call, the same parameters (Michal, 14. 10. 22:10, point 4; Z167). It
+  // runs after the contact-state gate, so consent on the number never lets an
+  // unsubscribed contact through. Under flowTransactional it is never read: a
+  // flow's transactional SMS needs no consent on the number, gets no opt-out
+  // suffix and no quiet hours, as before.
+  const isMarketing = !!(message.campaignId || message.workflowId) || flowMarketing;
   if (message.content.kind === 'sms' && isMarketing) {
     const compliance = await checkSmsCompliance(orgId, phone, message.content.body, country, {
       requireConsent: true,

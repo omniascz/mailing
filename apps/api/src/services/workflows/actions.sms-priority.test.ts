@@ -130,3 +130,14 @@ describe("executeSendSms — 'transactional' passes the quiet hours only under t
     expect(smsAdd).not.toHaveBeenCalled();
   });
 });
+
+describe('executeSendSms — what the exception costs', () => {
+  it("asks flowTransactionalException once, with the run and the node, only for a 'transactional' node", async () => {
+    await send(undefined, true);
+    await send('marketing', true);
+    await send('promotional', true);
+    expect(state.exceptionCalls).toEqual([]);
+    await send('transactional', false);
+    expect(state.exceptionCalls).toEqual([[ORG, RUN, 'sms1']]);
+  });
+});
