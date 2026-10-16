@@ -20,6 +20,7 @@ import {
 } from '../../services/transactional/send-message.js';
 import { parseRawMime } from '../../services/transactional/mime-parse.js';
 import { AppError } from '../../lib/app-error.js';
+import { channelNotInLaunch } from '../../lib/launch-perimeter.js';
 
 const transactionalRoutes: FastifyPluginAsync = async (app) => {
   // ── Send transactional email ──────────────────────────────────────────────
@@ -196,6 +197,7 @@ const transactionalRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/transactional/sms',
     {
+      onRequest: [channelNotInLaunch],
       preHandler: [app.authenticate],
       schema: { tags: ['Transactional'] },
     },

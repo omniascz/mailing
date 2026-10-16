@@ -8,6 +8,10 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { sendTransactionalMessage } from '../../../services/transactional/send-message.js';
+import {
+  MESSAGING_CHANNELS_NOT_IN_LAUNCH,
+  channelNotInLaunchError,
+} from '../../../lib/launch-perimeter.js';
 
 // ── Per-channel payload schemas ───────────────────────────────────────────────
 
@@ -76,6 +80,12 @@ const messagingSendRoutes: FastifyPluginAsync = async (app) => {
       schema: { tags: ['Messaging'] },
     },
     async (req, reply) => {
+      // Refused on the channel alone, before the payload is read or anything is
+      // sent (launch-perimeter.ts). email and in_app go on as before.
+      const channel = (req.body as { channel?: unknown } | null | undefined)?.channel;
+      if (typeof channel === 'string' && MESSAGING_CHANNELS_NOT_IN_LAUNCH.has(channel)) {
+        throw channelNotInLaunchError(channel);
+      }
       const parsed = sendSchema.parse(req.body);
       const orgId = req.user!.orgId;
 

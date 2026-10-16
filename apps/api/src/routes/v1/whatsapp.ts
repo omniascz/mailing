@@ -50,6 +50,7 @@ import { db } from '../../db/client.js';
 import { whatsappConsents, whatsappPhoneNumbers } from '../../db/schema/whatsapp.js';
 import { eq } from 'drizzle-orm';
 import { verifyMetaRequest } from '../../lib/meta-signature.js';
+import { channelNotInLaunch } from '../../lib/launch-perimeter.js';
 import { env } from '../../config/env.js';
 import { whatsappWebhookEnabled } from '../../lib/webhook-switches.js';
 
@@ -138,60 +139,76 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     });
   }
 
-  app.post('/api/v1/whatsapp/send/media', { preHandler: [app.authenticate] }, async (req) => {
-    const { recipient, media, phoneNumberId, accessToken } = req.body as {
-      recipient: { contactId: string; phone: string };
-      media: { type: string; link?: string; id?: string; caption?: string; filename?: string };
-      phoneNumberId: string;
-      accessToken: string;
-    };
+  app.post(
+    '/api/v1/whatsapp/send/media',
+    { onRequest: [channelNotInLaunch], preHandler: [app.authenticate] },
+    async (req) => {
+      const { recipient, media, phoneNumberId, accessToken } = req.body as {
+        recipient: { contactId: string; phone: string };
+        media: { type: string; link?: string; id?: string; caption?: string; filename?: string };
+        phoneNumberId: string;
+        accessToken: string;
+      };
 
-    const sender = getWaSender({ phoneNumberId, accessToken });
-    const result = await sender.sendMedia(
-      recipient,
-      media as Parameters<typeof sender.sendMedia>[1],
-    );
-    return { data: result };
-  });
+      const sender = getWaSender({ phoneNumberId, accessToken });
+      const result = await sender.sendMedia(
+        recipient,
+        media as Parameters<typeof sender.sendMedia>[1],
+      );
+      return { data: result };
+    },
+  );
 
-  app.post('/api/v1/whatsapp/send/button', { preHandler: [app.authenticate] }, async (req) => {
-    const { recipient, message, phoneNumberId, accessToken } = req.body as {
-      recipient: { contactId: string; phone: string };
-      message: Parameters<typeof RichWhatsAppSender.prototype.sendButton>[1];
-      phoneNumberId: string;
-      accessToken: string;
-    };
+  app.post(
+    '/api/v1/whatsapp/send/button',
+    { onRequest: [channelNotInLaunch], preHandler: [app.authenticate] },
+    async (req) => {
+      const { recipient, message, phoneNumberId, accessToken } = req.body as {
+        recipient: { contactId: string; phone: string };
+        message: Parameters<typeof RichWhatsAppSender.prototype.sendButton>[1];
+        phoneNumberId: string;
+        accessToken: string;
+      };
 
-    const sender = getWaSender({ phoneNumberId, accessToken });
-    const result = await sender.sendButton(recipient, message);
-    return { data: result };
-  });
+      const sender = getWaSender({ phoneNumberId, accessToken });
+      const result = await sender.sendButton(recipient, message);
+      return { data: result };
+    },
+  );
 
-  app.post('/api/v1/whatsapp/send/list', { preHandler: [app.authenticate] }, async (req) => {
-    const { recipient, message, phoneNumberId, accessToken } = req.body as {
-      recipient: { contactId: string; phone: string };
-      message: Parameters<typeof RichWhatsAppSender.prototype.sendList>[1];
-      phoneNumberId: string;
-      accessToken: string;
-    };
+  app.post(
+    '/api/v1/whatsapp/send/list',
+    { onRequest: [channelNotInLaunch], preHandler: [app.authenticate] },
+    async (req) => {
+      const { recipient, message, phoneNumberId, accessToken } = req.body as {
+        recipient: { contactId: string; phone: string };
+        message: Parameters<typeof RichWhatsAppSender.prototype.sendList>[1];
+        phoneNumberId: string;
+        accessToken: string;
+      };
 
-    const sender = getWaSender({ phoneNumberId, accessToken });
-    const result = await sender.sendList(recipient, message);
-    return { data: result };
-  });
+      const sender = getWaSender({ phoneNumberId, accessToken });
+      const result = await sender.sendList(recipient, message);
+      return { data: result };
+    },
+  );
 
-  app.post('/api/v1/whatsapp/send/location', { preHandler: [app.authenticate] }, async (req) => {
-    const { recipient, location, phoneNumberId, accessToken } = req.body as {
-      recipient: { contactId: string; phone: string };
-      location: Parameters<typeof RichWhatsAppSender.prototype.sendLocation>[1];
-      phoneNumberId: string;
-      accessToken: string;
-    };
+  app.post(
+    '/api/v1/whatsapp/send/location',
+    { onRequest: [channelNotInLaunch], preHandler: [app.authenticate] },
+    async (req) => {
+      const { recipient, location, phoneNumberId, accessToken } = req.body as {
+        recipient: { contactId: string; phone: string };
+        location: Parameters<typeof RichWhatsAppSender.prototype.sendLocation>[1];
+        phoneNumberId: string;
+        accessToken: string;
+      };
 
-    const sender = getWaSender({ phoneNumberId, accessToken });
-    const result = await sender.sendLocation(recipient, location);
-    return { data: result };
-  });
+      const sender = getWaSender({ phoneNumberId, accessToken });
+      const result = await sender.sendLocation(recipient, location);
+      return { data: result };
+    },
+  );
 
   // ── Compliance (7.9) ──────────────────────────────────────────────────────
 
@@ -393,7 +410,7 @@ export default async function whatsappRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/whatsapp/send/catalog',
-    { preHandler: [app.authenticate] },
+    { onRequest: [channelNotInLaunch], preHandler: [app.authenticate] },
     async (req, reply) => {
       const body = z
         .object({
@@ -526,7 +543,7 @@ export default async function whatsappRoutes(app: FastifyInstance) {
    */
   app.post(
     '/api/v1/whatsapp/flows/:flowId/send',
-    { preHandler: [app.authenticate] },
+    { onRequest: [channelNotInLaunch], preHandler: [app.authenticate] },
     async (req, reply) => {
       const { flowId } = req.params as { flowId: string };
       const body = z

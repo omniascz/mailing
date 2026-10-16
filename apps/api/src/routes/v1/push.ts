@@ -24,6 +24,7 @@ import {
   sendContactMobilePush,
 } from '../../services/push/mobile.js';
 import { AppError } from '../../lib/app-error.js';
+import { channelNotInLaunch } from '../../lib/launch-perimeter.js';
 import { verifyTrackingToken } from '@forgemsg/shared';
 
 export default async function pushRoutes(app: FastifyInstance) {
@@ -64,25 +65,29 @@ export default async function pushRoutes(app: FastifyInstance) {
   });
 
   // Deliver a native mobile push to a contact's registered devices (APNs/FCM).
-  app.post('/api/v1/push/mobile/send', { preHandler: [app.authenticate] }, async (req) => {
-    const { orgId } = req.user as { orgId: string };
-    const body = z
-      .object({
-        contactId: z.string().uuid(),
-        title: z.string().min(1).max(200),
-        body: z.string().min(1).max(500),
-        url: z.string().url().optional(),
-        badge: z.number().int().min(0).optional(),
-      })
-      .parse(req.body);
-    const summary = await sendContactMobilePush(orgId, body.contactId, {
-      title: body.title,
-      body: body.body,
-      url: body.url,
-      badge: body.badge,
-    });
-    return { data: summary };
-  });
+  app.post(
+    '/api/v1/push/mobile/send',
+    { onRequest: [channelNotInLaunch], preHandler: [app.authenticate] },
+    async (req) => {
+      const { orgId } = req.user as { orgId: string };
+      const body = z
+        .object({
+          contactId: z.string().uuid(),
+          title: z.string().min(1).max(200),
+          body: z.string().min(1).max(500),
+          url: z.string().url().optional(),
+          badge: z.number().int().min(0).optional(),
+        })
+        .parse(req.body);
+      const summary = await sendContactMobilePush(orgId, body.contactId, {
+        title: body.title,
+        body: body.body,
+        url: body.url,
+        badge: body.badge,
+      });
+      return { data: summary };
+    },
+  );
 
   // ── VAPID key management ──────────────────────────────────────────────────
 
@@ -212,32 +217,36 @@ export default async function pushRoutes(app: FastifyInstance) {
     });
   }
 
-  app.post('/api/v1/push/send', { preHandler: [app.authenticate] }, async (req) => {
-    const { orgId } = req.user as { orgId: string };
-    const data = sendSchema.parse(req.body);
-    const adapter = await getAdapter(orgId);
+  app.post(
+    '/api/v1/push/send',
+    { onRequest: [channelNotInLaunch], preHandler: [app.authenticate] },
+    async (req) => {
+      const { orgId } = req.user as { orgId: string };
+      const data = sendSchema.parse(req.body);
+      const adapter = await getAdapter(orgId);
 
-    const result = await adapter.send(
-      {
-        channel: 'push',
-        content: {
-          kind: 'push',
-          title: data.title,
-          body: data.body,
-          url: data.url,
-          icon: data.icon,
-          image: data.image,
-          badge: data.badge,
-          actions: data.actions,
+      const result = await adapter.send(
+        {
+          channel: 'push',
+          content: {
+            kind: 'push',
+            title: data.title,
+            body: data.body,
+            url: data.url,
+            icon: data.icon,
+            image: data.image,
+            badge: data.badge,
+            actions: data.actions,
+          },
+          orgId,
+          campaignId: data.campaignId,
         },
-        orgId,
-        campaignId: data.campaignId,
-      },
-      { contactId: data.contactId },
-    );
+        { contactId: data.contactId },
+      );
 
-    return { data: result };
-  });
+      return { data: result };
+    },
+  );
 
   // ── Click tracking (from Service Worker) ─────────────────────────────────
   //

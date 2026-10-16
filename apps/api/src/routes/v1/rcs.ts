@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { queueRcs, listForContact, updateStatus } from '../../services/rcs/index.js';
+import { channelNotInLaunch } from '../../lib/launch-perimeter.js';
 
 const carouselCardSchema = z.object({
   title: z.string().max(200),
@@ -28,6 +29,7 @@ const rcsRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/v1/rcs/messages',
     {
+      onRequest: [channelNotInLaunch],
       preHandler: [app.authenticate, app.requireRole('admin', 'owner', 'editor')],
       schema: { tags: ['RCS'] },
     },
