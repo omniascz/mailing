@@ -66,6 +66,9 @@ vi.mock('./coupon-merge.js', () => ({
   resolveCouponMergeTags: vi.fn(async (body: string) => body),
 }));
 vi.mock('../webhooks/emit.js', () => ({ emitWebhookEvent: vi.fn() }));
+// The erasure's phone fingerprint (Z180) is one more select, which the db
+// mock above would answer with the contact rows; no number here was erased.
+vi.mock('../suppressions/phone.js', () => ({ phoneErased: vi.fn(async () => false) }));
 
 import { routedSmsSend } from './routing.js';
 

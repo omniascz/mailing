@@ -23,6 +23,16 @@ export const suppressions = pgTable(
      * send decision matches it (services/suppressions/email.ts).
      */
     emailHash: text('email_hash'),
+    /**
+     * Fingerprint of the phone number an erasure removed,
+     * suppressionPhoneHash() (services/suppressions/phone.ts): HMAC-SHA256
+     * under the same key, of `phone:` and the normalised number (Z180). Set
+     * only on a row of its own that anonymizeContact writes (email,
+     * email_hash and phone NULL) — never next to email_hash, whose row a
+     * double opt-in confirmation deletes. A campaign's or a flow's marketing
+     * SMS and WhatsApp match it; nothing lifts it.
+     */
+    phoneHash: text('phone_hash'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -39,6 +49,7 @@ export const suppressions = pgTable(
     // (services/suppressions/email.ts), which no index above can serve.
     index('suppressions_org_lower_email_idx').on(t.orgId, sql`lower(${t.email})`),
     index('suppressions_org_email_hash_idx').on(t.orgId, t.emailHash),
+    index('suppressions_org_phone_hash_idx').on(t.orgId, t.phoneHash),
   ],
 );
 

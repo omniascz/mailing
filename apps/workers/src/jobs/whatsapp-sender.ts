@@ -37,8 +37,10 @@ export async function processWhatsappSend(
   // 1). The campaign audience leaves most of them out already; a flow job, or
   // one queued before the status changed, is stopped here, before the adapter
   // (Z155). An HTTP error throws and BullMQ retries — nothing is sent. A flow's
-  // job (workflowRunId) skips non_subscribed as well (Z166).
-  const skip = await marketingSkip(data.orgId, data.contactId, !!data.workflowRunId);
+  // job (workflowRunId) skips non_subscribed as well (Z166). A number a GDPR
+  // erasure left the fingerprint of is skipped_refused, whatever contact holds
+  // it now (Z180); the log line names the contact, never the number.
+  const skip = await marketingSkip(data.orgId, data.contactId, !!data.workflowRunId, data.phone);
   if (skip) {
     job.log(`contact ${data.contactId}: ${skip} — not sent`);
     return { messageId: '', status: skip };

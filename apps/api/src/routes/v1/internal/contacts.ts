@@ -10,6 +10,7 @@ import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../../db/client.js';
 import { contactEmailIs } from '../../../services/contacts/by-email.js';
 import { contacts } from '../../../db/schema/index.js';
+import { phoneErased } from '../../../services/suppressions/phone.js';
 
 const internalContactsRoutes: FastifyPluginAsync = async (app) => {
   app.post(
@@ -22,11 +23,25 @@ const internalContactsRoutes: FastifyPluginAsync = async (app) => {
         .object({
           orgId: z.string().uuid(),
           contactIds: z.array(z.string().uuid()).max(1000),
+          /**
+           * The number a WhatsApp job is about to go to (the workers'
+           * marketingSkip, Z180). When given, the answer carries
+           * `phoneSuppressed`: whether a GDPR erasure in this org left the
+           * number's fingerprint (suppressions.phone_hash). The fingerprint
+           * key lives here only, not in the workers. A caller that sends no
+           * `phone` gets the answer exactly as before.
+           */
+          phone: z.string().optional(),
         })
         .parse(req.body);
 
+      const phoneFlag =
+        body.phone === undefined
+          ? {}
+          : { phoneSuppressed: await phoneErased(body.orgId, body.phone) };
+
       if (body.contactIds.length === 0) {
-        return reply.send({ data: [] });
+        return reply.send({ data: [], ...phoneFlag });
       }
 
       const rows = await db
@@ -51,7 +66,7 @@ const internalContactsRoutes: FastifyPluginAsync = async (app) => {
           ),
         );
 
-      return reply.send({ data: rows });
+      return reply.send({ data: rows, ...phoneFlag });
     },
   );
 

@@ -4,7 +4,12 @@ import { and, desc, eq, or, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { auditLogs, suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
-import { suppressionEmail, suppressionEmailIs } from '../../services/suppressions/email.js';
+import {
+  suppressionEmail,
+  suppressionEmailHash,
+  suppressionEmailIs,
+} from '../../services/suppressions/email.js';
+import { suppressionPhoneHash } from '../../services/suppressions/phone.js';
 
 const REASON = [
   'hard_bounce',
@@ -170,7 +175,9 @@ export default async function suppressionRoutes(app: FastifyInstance) {
           .for('update')
           .limit(1);
         if (!row) throw AppError.notFound('Suppression');
-        if (row.emailHash) {
+        // An erasure's row — the address's fingerprint or, on a row of its
+        // own, the number's (Z180) — is kept from the operator alike.
+        if (row.emailHash || row.phoneHash) {
           throw new AppError({
             code: 'ERASURE_SUPPRESSION',
             statusCode: 409,
@@ -234,8 +241,18 @@ export default async function suppressionRoutes(app: FastifyInstance) {
 
       const conds = [eq(suppressions.orgId, req.user!.orgId)];
       const orConds = [];
-      if (body.email) orConds.push(suppressionEmailIs(body.email));
-      if (body.phone) orConds.push(eq(suppressions.phone, body.phone));
+      // An erased address or number is found by its fingerprint (email_hash,
+      // phone_hash — Z180): before, the check answered `suppressed: false` for
+      // the person the erasure stopped. The answer is an ordinary 'manual'
+      // row's and says nothing of the erasure.
+      if (body.email) {
+        orConds.push(suppressionEmailIs(body.email));
+        orConds.push(eq(suppressions.emailHash, suppressionEmailHash(body.email)));
+      }
+      if (body.phone) {
+        orConds.push(eq(suppressions.phone, body.phone));
+        orConds.push(eq(suppressions.phoneHash, suppressionPhoneHash(body.phone)));
+      }
       conds.push(or(...orConds)!);
 
       const [hit] = await db
