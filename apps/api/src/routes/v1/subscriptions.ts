@@ -4,8 +4,10 @@
  * Double opt-in:
  *   POST /api/v1/lists/:listId/subscribe  → creates or finds a contact,
  *     generates a 48h Redis token, queues a confirmation email (stub).
- *   GET  /api/v1/confirm/:token           → activates contact in the list,
- *     redirects to thank-you page.
+ *   GET  /api/v1/confirm/:token           → a page with a "Confirm" button;
+ *     changes nothing.
+ *   POST /api/v1/confirm/:token           → the button: activates contact in
+ *     the list, redirects to thank-you page.
  *
  * Unsubscribe (RFC 8058 one-click):
  *   POST /api/v1/unsubscribe              → {token} in body, instant opt-out.
@@ -99,6 +101,25 @@ function pageFromKey(
   };
 }
 
+/**
+ * The page a confirmation link opens: one button that posts to `action`. No
+ * script submits it — opening the link must not be the confirmation, because
+ * mail security scanners (Outlook Safe Links, company gateways, prefetch) open
+ * every link in a message before the person does. Needs no cookie or session:
+ * the token in `action` is the credential, as it is in the link.
+ */
+export function confirmButtonPage(action: string, locale: SupportedLocale): string {
+  const title = t('doi_confirm_page.title', locale);
+  const heading = t('doi_confirm_page.heading', locale);
+  const body = t('doi_confirm_page.body', locale);
+  const button = t('doi_confirm_page.button', locale);
+  return htmlPage(
+    title,
+    `<h1>${heading}</h1><p>${body}</p><form method="post" action="${action}"><button type="submit" class="btn" style="border:0;cursor:pointer;font-size:16px">${button}</button></form>`,
+    locale,
+  );
+}
+
 export default async function subscriptionRoutes(app: FastifyInstance) {
   // ── Double opt-in subscribe ───────────────────────────────────────────────
 
@@ -143,7 +164,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       // and the only one that asks the MTA gate to let a DOI confirmation
       // through the row a GDPR erasure leaves; it also holds the limit of
       // three per address and list in 24 hours (services/subscriptions/doi.ts).
-      const { token, confirmUrl } = await sendListDoiConfirmation({
+      await sendListDoiConfirmation({
         orgId,
         contactId: contact.id,
         listId,
@@ -153,27 +174,58 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         toName: [body.firstName, body.lastName].filter(Boolean).join(' ') || undefined,
       });
 
-      app.log.info({ event: 'doi_token_generated', token, email: body.email, listId });
+      // No token and no address: the token confirms the subscription, and a log
+      // line is read by people who are not the subscriber (Z176).
+      app.log.info({ event: 'doi_token_generated', listId });
 
+      // The token used to be in this answer too (`_devToken`, `_confirmUrl`)
+      // outside production. Whoever asked for the sign-up could then confirm
+      // it without the mailbox — the one thing a double opt-in has to prove.
       return reply.code(202).send({
-        data: {
-          message: 'Confirmation email sent. Please check your inbox.',
-          // Dev-only convenience — exposes the token + URL so testers
-          // don't need an inbox to follow the flow.
-          ...(process.env.NODE_ENV !== 'production' && {
-            _devToken: token,
-            _confirmUrl: confirmUrl,
-          }),
-        },
+        data: { message: 'Confirmation email sent. Please check your inbox.' },
       });
     },
   );
 
   /**
    * GET /api/v1/confirm/:token
-   * Confirm DOI — activate contact in the list, redirect to thank-you page.
+   * The link in the confirmation e-mail: a page with a "Confirm" button that
+   * posts to the same address. Reads the token and writes nothing — not the
+   * contact, not the list row, not the token (HEAD, which Fastify answers from
+   * this handler, likewise).
+   *
+   * It used to confirm right here. Mail security scanners (Outlook Safe Links,
+   * company gateways, prefetch) open every link in a message before the person
+   * does, so a subscription was confirmed by a machine — no person had to.
    */
   app.get(
+    '/api/v1/confirm/:token',
+    { schema: { tags: ['Subscriptions'], summary: 'Double opt-in confirmation page' } },
+    async (req, reply) => {
+      const { token } = z.object({ token: z.string().uuid() }).parse(req.params);
+      const raw = await redis.get(doiKey(token));
+
+      if (!raw) {
+        const locale = await resolvePageLocale(req);
+        const page = pageFromKey('doi_expired_page', locale);
+        return reply.code(400).header('Content-Type', 'text/html').send(page.html);
+      }
+
+      const { contactId, orgId } = JSON.parse(raw) as { contactId: string; orgId: string };
+      const locale = await resolvePageLocale(req, orgId, contactId);
+      return reply
+        .header('Content-Type', 'text/html')
+        .send(confirmButtonPage(`/api/v1/confirm/${token}`, locale));
+    },
+  );
+
+  /**
+   * POST /api/v1/confirm/:token
+   * The button on that page: confirm DOI — activate contact in the list,
+   * redirect to thank-you page. Public, no session (the token is the
+   * credential); an empty form body is all it gets.
+   */
+  app.post(
     '/api/v1/confirm/:token',
     { schema: { tags: ['Subscriptions'], summary: 'Confirm double opt-in' } },
     async (req, reply) => {
@@ -238,7 +290,8 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       // Redirect to list's thank-you page or default
       const [list] = await db.select().from(lists).where(eq(lists.id, listId)).limit(1);
       const thankYouUrl = list?.thankYouUrl;
-      if (thankYouUrl) return reply.redirect(thankYouUrl);
+      // 303: the answer to a form post is a GET of the thank-you page.
+      if (thankYouUrl) return reply.redirect(thankYouUrl, 303);
 
       const locale = await resolvePageLocale(req, orgId, contactId);
       const page = pageFromKey('doi_confirmed_page', locale);

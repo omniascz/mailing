@@ -20,6 +20,13 @@ export const cs: EmailsBundle = {
     expires_in: 'Odkaz je platný 48 hodin.',
   },
 
+  doi_confirm_page: {
+    title: 'Potvrzení',
+    heading: 'Potvrďte prosím',
+    body: 'Potvrzení dokončíte stisknutím tlačítka níže.',
+    button: 'Potvrdit',
+  },
+
   doi_confirmed_page: {
     title: 'Registrace potvrzena',
     heading: 'Jste přihlášeni ✓',

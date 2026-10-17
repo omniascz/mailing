@@ -1,9 +1,10 @@
 /**
  * The list double opt-in confirmation — the one sender of it. Generates a DOI
  * token (the `doi:<token>` Redis key + `{contactId,listId,orgId}` payload the
- * `GET /api/v1/confirm/:token` handler consumes) and emails the confirmation
- * link. Used by POST /api/v1/lists/:listId/subscribe and by signup-form submits
- * with `doubleOptIn` enabled.
+ * `POST /api/v1/confirm/:token` handler consumes — the link itself opens a page
+ * with that button) and emails the confirmation link. Used by POST
+ * /api/v1/lists/:listId/subscribe and by signup-form submits with
+ * `doubleOptIn` enabled.
  *
  * Those two used to carry a copy each of the same mail (the route's was inline).
  * They are one function now because this mail is the only one allowed through

@@ -15,6 +15,12 @@ export interface EmailsBundle {
     ignore_if_not_yours: string;
     expires_in: string;
   };
+  doi_confirm_page: {
+    title: string;
+    heading: string;
+    body: string;
+    button: string;
+  };
   doi_confirmed_page: {
     title: string;
     heading: string;
