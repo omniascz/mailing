@@ -467,13 +467,16 @@ afterAll(async () => {
            (SELECT count(*)::int FROM email_events WHERE org_id = ANY(${ids})) AS email_events,
            (SELECT count(*)::int FROM consent_events WHERE org_id = ANY(${ids})) AS consent_events,
            (SELECT count(*)::int FROM campaigns WHERE org_id = ANY(${ids})) AS campaigns,
-           (SELECT count(*)::int FROM lists WHERE org_id = ANY(${ids})) AS lists,
-           (SELECT count(*)::int FROM api_keys WHERE name = ${`integration z177-${tag}`}) AS seed_key
+           (SELECT count(*)::int FROM lists WHERE org_id = ANY(${ids})) AS lists
   `;
+  const [seedKeyLeft] = await sql<{ n: number }[]>`
+    SELECT count(*)::int AS n FROM api_keys WHERE name = ${`integration z177-${tag}`}
+  `;
+  const leftover = { ...left, seed_key: seedKeyLeft!.n };
   const seedAfter = await seedState();
   report.cells = cells;
   report.rateLimitWaits = rateLimitWaits;
-  report.leftover = { ...left, limitKeysRemoved };
+  report.leftover = { ...leftover, limitKeysRemoved };
   report.seedOrg = { before: seedBefore, after: seedAfter };
   const all = JSON.stringify(report);
   const parts = Math.ceil(all.length / 3000);
@@ -482,7 +485,7 @@ afterAll(async () => {
       `Z177_FLOW_CELLS_JSON ${String(i).padStart(4, '0')}/${parts} ${all.slice(i * 3000, (i + 1) * 3000)}`,
     );
   await sql.end();
-  expect(left).toEqual({
+  expect(leftover).toEqual({
     orgs: 0,
     contacts: 0,
     suppressions: 0,
