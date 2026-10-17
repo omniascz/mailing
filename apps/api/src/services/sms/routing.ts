@@ -24,6 +24,7 @@ import {
 } from '../../channels/sms/bulkgate-adapter.js';
 import { TwilioSmsAdapter, type TwilioConfig } from '../../channels/sms/twilio-adapter.js';
 import { checkSmsCompliance } from './compliance.js';
+import { phoneErased } from '../suppressions/phone.js';
 import { resolveCouponMergeTags } from './coupon-merge.js';
 import { AppError } from '../../lib/app-error.js';
 import {
@@ -331,6 +332,18 @@ export async function routedSmsSend(
   // flow's transactional SMS needs no consent on the number, gets no opt-out
   // suffix and no quiet hours, as before.
   const isMarketing = !!(message.campaignId || message.workflowId) || flowMarketing;
+  // A number a GDPR erasure left the fingerprint of (suppressions.phone_hash,
+  // services/suppressions/phone.ts) gets no marketing SMS, whatever contact
+  // holds it now and whatever sms_consents says (Z180). The refusal is the
+  // consent gate's own code and says nothing of an erasure. A transactional SMS
+  // does not ask (Michal's question, 17. 10.).
+  if (message.content.kind === 'sms' && isMarketing && (await phoneErased(orgId, phone))) {
+    throw new AppError({
+      code: 'SMS_COMPLIANCE_BLOCKED',
+      statusCode: 403,
+      message: 'The number is suppressed; no campaign or flow SMS',
+    });
+  }
   if (message.content.kind === 'sms' && isMarketing) {
     const compliance = await checkSmsCompliance(orgId, phone, message.content.body, country, {
       requireConsent: true,

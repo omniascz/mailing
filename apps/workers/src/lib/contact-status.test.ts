@@ -84,3 +84,39 @@ describe('marketingSkip', () => {
     await expect(marketingSkip(ORG, ID)).rejects.toThrow();
   });
 });
+
+// Z180 — the WhatsApp worker passes the job's number; the API answers whether
+// a GDPR erasure left its fingerprint. Without a number the request is as before.
+describe('marketingSkip with the number (Z180)', () => {
+  const PHONE = '+420777000001';
+
+  it('sends the number in the same request and skips an erased one as skipped_refused', async () => {
+    const f = answer(
+      Response.json({ data: [{ id: ID, status: 'active' }], phoneSuppressed: true }),
+    );
+    expect(await marketingSkip(ORG, ID, false, PHONE)).toBe('skipped_refused');
+    const [, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({ orgId: ORG, contactIds: [ID], phone: PHONE });
+    answer(Response.json({ data: [{ id: ID, status: 'active' }], phoneSuppressed: true }));
+    expect(await marketingSkip(ORG, ID, true, PHONE)).toBe('skipped_refused');
+  });
+
+  it('a number with no fingerprint goes as before', async () => {
+    answer(Response.json({ data: [{ id: ID, status: 'active' }], phoneSuppressed: false }));
+    expect(await marketingSkip(ORG, ID, false, PHONE)).toBeNull();
+  });
+
+  it('the contact gates keep their own answers first', async () => {
+    answer(Response.json({ data: [], phoneSuppressed: true }));
+    expect(await marketingSkip(ORG, ID, false, PHONE)).toBe('skipped_no_contact');
+    answer(Response.json({ data: [{ id: ID, status: 'pending' }], phoneSuppressed: true }));
+    expect(await marketingSkip(ORG, ID, false, PHONE)).toBe('skipped_pending');
+  });
+
+  it('without a number the request carries no phone field', async () => {
+    const f = answer(Response.json({ data: [{ id: ID, status: 'active' }] }));
+    expect(await marketingSkip(ORG, ID)).toBeNull();
+    const [, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({ orgId: ORG, contactIds: [ID] });
+  });
+});
