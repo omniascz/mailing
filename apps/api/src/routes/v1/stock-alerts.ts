@@ -18,6 +18,7 @@ import {
   notifyPriceChange,
   unsubscribe as unsubscribePrice,
 } from '../../services/price-drop/index.js';
+import { liveContactsOfOrg } from '../../services/contacts/merge-consent.js';
 
 /**
  * A visitor asking to be told about one product is not an API client working
@@ -118,6 +119,9 @@ const stockRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
+      // A live contact of the org, otherwise 404 Contact (Z183): listForContact
+      // reads by the contact id alone.
+      await liveContactsOfOrg(req.user!.orgId, [contactId]);
       return reply.send({ data: await listStockForContact(contactId) });
     },
   );
@@ -181,6 +185,9 @@ const stockRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
+      // A live contact of the org, otherwise 404 Contact (Z183): listForContact
+      // reads by the contact id alone.
+      await liveContactsOfOrg(req.user!.orgId, [contactId]);
       return reply.send({ data: await listPriceForContact(contactId) });
     },
   );
