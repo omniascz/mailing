@@ -611,8 +611,17 @@ describe("R — the recipient's own way back is unchanged", () => {
 
     const confirm = async (email: string, contactId: string | null) => {
       const s = await inject('POST', `/api/v1/lists/${list.data.id}/subscribe`, {}, { email });
-      const t = (s.json().data as { _devToken?: string } | undefined)?._devToken;
-      const c = t ? await inject('GET', `/api/v1/confirm/${t}`, {}) : null;
+      // The link out of the confirmation e-mail as queued (no worker runs in
+      // this process), and the button its page posts (Z176).
+      const mail = (await mtaOtherQueue.getJobs(ALL, 0, 10_000)).filter(
+        (j) =>
+          j?.data?.toEmail?.toLowerCase() === email.toLowerCase() &&
+          /^Confirm your subscription to /.test(j.data.subject),
+      );
+      const t = /href="[^"]*?(\/api\/v1\/confirm\/[0-9a-f-]{36})"/.exec(
+        String(mail.at(-1)?.data.htmlBody ?? ''),
+      )?.[1];
+      const c = t ? await inject('POST', t, {}) : null;
       const [row] = await db
         .select({ id: contacts.id, status: contacts.status })
         .from(contacts)

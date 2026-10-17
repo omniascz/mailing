@@ -55,12 +55,12 @@ import {
 
 // Hoisted with the mock: the factory runs while the imports above load.
 const engine = vi.hoisted(() => ({
-  handed: [] as { to: string; subject: string }[],
+  handed: [] as { to: string; subject: string; html: string }[],
 }));
 vi.mock('../lib/mta-grpc-client.js', () => ({
   close: () => {},
-  send: async (msg: { toEmail: string; subject: string }) => {
-    engine.handed.push({ to: msg.toEmail, subject: msg.subject });
+  send: async (msg: { toEmail: string; subject: string; htmlBody: string }) => {
+    engine.handed.push({ to: msg.toEmail, subject: msg.subject, html: msg.htmlBody });
     return {
       success: true,
       messageId: 'm',
@@ -141,6 +141,17 @@ async function deliver(to: string): Promise<string[]> {
     await j.remove().catch(() => {});
   }
   return out;
+}
+
+/** The confirmation link in the double opt-in e-mail the engine was last handed for `to`. */
+function confirmPathFor(to: string): string | null {
+  const mail = engine.handed
+    .filter(
+      (m) =>
+        m.to.toLowerCase() === to.toLowerCase() && /^Confirm your subscription to /.test(m.subject),
+    )
+    .at(-1);
+  return /href="[^"]*?(\/api\/v1\/confirm\/[0-9a-f-]{36})"/.exec(mail?.html ?? '')?.[1] ?? null;
 }
 
 async function call(
@@ -489,9 +500,10 @@ describe('a list campaign counts what it sends; PUT active waits on a held row (
 
     const confirm = async (email: string) => {
       const s = await call('POST', `/api/v1/lists/${listId}/subscribe`, null, { email });
-      const t = (JSON.parse(s.text) as { data?: { _devToken?: string } }).data?._devToken;
-      const c = t ? await call('GET', `/api/v1/confirm/${t}`, null) : null;
+      // The link out of the confirmation e-mail, and the button its page posts (Z176).
       await deliver(email);
+      const link = confirmPathFor(email);
+      const c = link ? await call('POST', link, null) : null;
       return { subscribe: s.status, confirm: c?.status ?? null };
     };
     const doi = await contactOn(listId, 'r-doi');

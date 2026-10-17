@@ -534,7 +534,8 @@ describe('an erased person stays suppressed until their own double opt-in', () =
     );
     const link = /href="[^"]*?(\/api\/v1\/confirm\/[0-9a-f-]{36})"/.exec(mail?.html ?? '')?.[1];
     expect(link, 'no confirmation link in the e-mail').toBeTruthy();
-    const confirm = await fetch(`${API}${link}`, { redirect: 'manual' });
+    // The page the link opens posts it back from its button (Z176).
+    const confirm = await fetch(`${API}${link}`, { method: 'POST', redirect: 'manual' });
     expect(confirm.status).toBeLessThan(400);
 
     expect(await erasureRows(address), 'the confirmation did not lift the erasure').toEqual([]);

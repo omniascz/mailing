@@ -65,12 +65,12 @@ import {
 } from '../queues/index.js';
 
 const engine = vi.hoisted(() => ({
-  handed: [] as { to: string; subject: string }[],
+  handed: [] as { to: string; subject: string; html: string }[],
 }));
 vi.mock('../lib/mta-grpc-client.js', () => ({
   close: () => {},
-  send: async (msg: { toEmail: string; subject: string }) => {
-    engine.handed.push({ to: msg.toEmail.toLowerCase(), subject: msg.subject });
+  send: async (msg: { toEmail: string; subject: string; htmlBody: string }) => {
+    engine.handed.push({ to: msg.toEmail.toLowerCase(), subject: msg.subject, html: msg.htmlBody });
     return {
       success: true,
       messageId: 'm',
@@ -167,6 +167,17 @@ async function api(cred: string, method: string, path: string, body?: unknown): 
 }
 
 const short = (r: Res) => `${r.status} ${r.text.replace(/[0-9a-f-]{36}/g, '<uuid>').slice(0, 160)}`;
+
+/** The confirmation link in the double opt-in e-mail the engine was last handed for `to`. */
+function confirmPathFor(to: string): string | null {
+  const mail = engine.handed
+    .filter(
+      (m) =>
+        m.to.toLowerCase() === to.toLowerCase() && /^Confirm your subscription to /.test(m.subject),
+    )
+    .at(-1);
+  return /href="[^"]*?(\/api\/v1\/confirm\/[0-9a-f-]{36})"/.exec(mail?.html ?? '')?.[1] ?? null;
+}
 
 async function makeOrg(): Promise<Org> {
   const domain = `z175-${tag}.test`;
@@ -747,8 +758,10 @@ describe('list_subscribe — the welcome flow on POST /lists/:id/contacts', () =
     {
       const c = people.u!;
       const s = await call('POST', `/api/v1/lists/${L}/subscribe`, null, { email: c.email });
-      const t = (JSON.parse(s.text) as { data?: { _devToken?: string } }).data?._devToken;
-      const conf = t ? await call('GET', `/api/v1/confirm/${t}`, null) : null;
+      // The link out of the confirmation e-mail, and the button its page posts (Z176).
+      await deliverMine();
+      const link = confirmPathFor(c.email);
+      const conf = link ? await call('POST', link, null) : null;
       got.u = {
         ...got.u,
         doi: {

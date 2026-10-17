@@ -521,7 +521,8 @@ describe('a contact who has not confirmed the double opt-in gets no marketing', 
     expect(await transactional(p.email)).toBe('reached');
 
     // The confirmation is the way in, and it leaves its proof.
-    const conf = await call('GET', link!);
+    // The page the link opens posts it back from its button (Z176).
+    const conf = await call('POST', link!);
     expect(conf.status).toBeLessThan(400);
     const [after] = await sql<{ status: string }[]>`SELECT status FROM contacts WHERE id = ${p.id}`;
     expect(after!.status).toBe('active');
