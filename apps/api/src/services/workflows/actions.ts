@@ -9,7 +9,7 @@
  *   remove_from_list, send_webhook, internal_notification
  */
 
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import {
   contacts,
@@ -872,10 +872,18 @@ async function executeRemoveFromList(
   const config = node.config as { listId: string };
   if (!config.listId || !run.contactId) return { type: 'next', nextNodeId: null };
 
+  // A row with unsubscribed_at stays: removal by an operator's flow may not
+  // delete the recipient's refusal of the list (Z174).
   const { contactLists } = await import('../../db/schema/index.js');
   await db
     .delete(contactLists)
-    .where(and(eq(contactLists.contactId, run.contactId), eq(contactLists.listId, config.listId)))
+    .where(
+      and(
+        eq(contactLists.contactId, run.contactId),
+        eq(contactLists.listId, config.listId),
+        isNull(contactLists.unsubscribedAt),
+      ),
+    )
     .catch(() => {});
 
   return { type: 'next', nextNodeId: null };

@@ -12,6 +12,7 @@ import {
   listDuplicates,
   type ResolutionResult,
 } from '../../services/cdp/identity-graph.js';
+import { liveContactsOfOrg } from '../../services/contacts/merge-consent.js';
 
 const SIGNAL_TYPE = z.enum([
   'email',
@@ -108,6 +109,10 @@ const identityGraphRoutes: FastifyPluginAsync = async (app) => {
           reason: z.string().max(255).optional(),
         })
         .parse(req.body);
+      // Both ids live contacts of the caller's organisation before anything is
+      // written, or 404 (Z174): a foreign id used to be recorded in
+      // identity_merges with a 200.
+      await liveContactsOfOrg(req.user!.orgId, [body.winnerContactId, body.loserContactId]);
       const moved = await mergeContacts(
         req.user!.orgId,
         body.winnerContactId,

@@ -6,9 +6,10 @@
  *   • Suggests merges — caller chooses whether to keep.
  */
 
-import { and, eq, isNotNull, lte, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, lte, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { contacts, contactEngagement, emailEvents } from '../../db/schema/index.js';
+import { carryRefusalsToWinner, liveContactsOfOrg } from '../contacts/merge-consent.js';
 
 export interface HygieneReport {
   total: number;
@@ -114,26 +115,53 @@ export async function findDuplicates(orgId: string, limit = 500): Promise<Duplic
   return clusters;
 }
 
-/** Merge duplicates — keep primary, move engagement + events, soft-delete others. */
+/**
+ * Merge duplicates — keep primary, move events, soft-delete others; the
+ * primary takes the duplicates' refusals (../contacts/merge-consent.ts).
+ *
+ * Every id must be a live contact of `orgId`, checked before anything is
+ * written, or 404 (Z174): the events were moved by contact id alone, so a
+ * foreign duplicate's events went to this organisation's contact and a foreign
+ * primary got this organisation's (measured, Z173 O1/O2). One transaction.
+ */
 export async function mergeDuplicates(
   orgId: string,
   primaryId: string,
   duplicateIds: string[],
 ): Promise<{ merged: number }> {
-  let merged = 0;
-  for (const dup of duplicateIds) {
-    if (dup === primaryId) continue;
-    await db.execute(sql`
-      UPDATE email_events SET contact_id = ${primaryId}::uuid
-      WHERE contact_id = ${dup}::uuid
-    `);
-    await db.execute(sql`
-      UPDATE contacts SET deleted_at = now()
-      WHERE id = ${dup}::uuid AND org_id = ${orgId}::uuid
-    `);
-    merged++;
-  }
-  return { merged };
+  const found = await liveContactsOfOrg(orgId, [primaryId, ...duplicateIds]);
+  const dups = duplicateIds.filter((d) => d !== primaryId);
+  if (dups.length === 0) return { merged: 0 };
+  const losers = [...new Set(dups)].map((d) => found.get(d)!);
+  await db.transaction(async (tx) => {
+    await tx
+      .update(emailEvents)
+      .set({ contactId: primaryId })
+      .where(
+        and(
+          eq(emailEvents.orgId, orgId),
+          inArray(
+            emailEvents.contactId,
+            losers.map((l) => l.id),
+          ),
+        ),
+      );
+    // The primary may not keep a permission a duplicate took back (Z174).
+    await carryRefusalsToWinner(tx, orgId, found.get(primaryId)!, losers);
+    await tx
+      .update(contacts)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(contacts.orgId, orgId),
+          inArray(
+            contacts.id,
+            losers.map((l) => l.id),
+          ),
+        ),
+      );
+  });
+  return { merged: dups.length };
 }
 
 void and;

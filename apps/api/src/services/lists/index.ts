@@ -147,6 +147,12 @@ export async function addContactToList(
     .catch(() => {});
 }
 
+/**
+ * Take a contact off a list. A row with unsubscribed_at stays: removal by an
+ * operator may not delete the recipient's refusal of the list (Z174). Deleting
+ * it let the next POST /lists/:id/contacts, the flow's move_to_list or a
+ * signup form put them back with no unsubscribe (measured, Z173 S3 a, b).
+ */
 export async function removeContactFromList(
   orgId: string,
   listId: string,
@@ -155,5 +161,11 @@ export async function removeContactFromList(
   await getList(orgId, listId);
   await db
     .delete(contactLists)
-    .where(and(eq(contactLists.listId, listId), eq(contactLists.contactId, contactId)));
+    .where(
+      and(
+        eq(contactLists.listId, listId),
+        eq(contactLists.contactId, contactId),
+        isNull(contactLists.unsubscribedAt),
+      ),
+    );
 }

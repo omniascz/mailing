@@ -62,6 +62,67 @@ export function refusesMarketing(status: string | null | undefined): boolean {
 }
 
 /**
+ * The consent statuses a merge carries over, strictest first. A merge of two
+ * contacts (POST /identity-graph/merge, the automatic merge of ingestSignals,
+ * POST /duplicates/merge) joins two records of one person, so the winner may
+ * not keep a permission the loser's refusal took back. Before Z174 the winner
+ * kept its own status: an active winner merged with an unsubscribed,
+ * complained or pending loser got the next campaign (measured, Z173).
+ *
+ * 'bounced' is not here: a bounce belongs to the loser's ADDRESS, not to the
+ * person's consent, and carrying it would stop the flow's transactional node
+ * to the winner's working address (Z173, measured 1 → 0). A bounced winner
+ * stays bounced. 'archived' is not a consent status: an archived loser counts
+ * by its archived_from.
+ */
+const MERGE_STATUS_ORDER: readonly ContactStatus[] = [
+  'complained',
+  'unsubscribed',
+  'pending',
+  'non_subscribed',
+  'active',
+];
+
+/** A contact as a merge reads it: its status and what an archive replaced. */
+export interface MergeStatusInput {
+  status: ContactStatus;
+  archivedFrom: ContactStatus | null;
+}
+
+/**
+ * The status the winner of a merge gets: the strictest of the winner's and
+ * the losers' by MERGE_STATUS_ORDER, never a more permissive one than the
+ * winner has (Z174, položka 6).
+ *
+ *  - A loser's 'bounced' is ignored, and so is an archived loser whose
+ *    archived_from is 'bounced' or NULL; any other archived loser counts as
+ *    its archived_from.
+ *  - A 'bounced' winner, or a winner whose status is outside the order, is
+ *    returned unchanged.
+ *  - An archived winner stays archived; its archived_from becomes the
+ *    strictest of its own and the losers'. An archived_from of 'bounced' is
+ *    not changed, and neither is a NULL one: what such an archive replaced is
+ *    read from the suppression rows (consent-hold heldStatus), so a caller
+ *    that wants it merged passes the status read there instead of NULL.
+ */
+export function strictestMergeStatus(
+  winner: MergeStatusInput,
+  losers: readonly MergeStatusInput[],
+): MergeStatusInput {
+  const rank = (s: ContactStatus | null) => (s ? MERGE_STATUS_ORDER.indexOf(s) : -1);
+  const own = winner.status === 'archived' ? winner.archivedFrom : winner.status;
+  if (rank(own) < 0) return winner;
+  let strictest = own as ContactStatus;
+  for (const l of losers) {
+    const s = l.status === 'archived' ? l.archivedFrom : l.status;
+    if (rank(s) >= 0 && rank(s) < rank(strictest)) strictest = s as ContactStatus;
+  }
+  return winner.status === 'archived'
+    ? { status: 'archived', archivedFrom: strictest }
+    : { status: strictest, archivedFrom: winner.archivedFrom };
+}
+
+/**
  * The contact statuses a flow's MARKETING node reaches no one in: the shared
  * list above plus 'non_subscribed'.
  *
