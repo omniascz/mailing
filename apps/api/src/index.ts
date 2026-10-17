@@ -349,6 +349,9 @@ export async function buildApp(opts: BuildAppOptions = {}) {
       // click and open pixels — and the default serializer wrote every one of
       // them into the log verbatim. lib/log-redaction.ts replaces the value
       // with a marker and copies every other field Fastify's default produces.
+      // The shape of a token is not enough to find it — the DOI confirmation
+      // token is a 36-character UUID — so the segment that the matched route's
+      // pattern names `:token` is replaced whatever it looks like (Z181).
       ...(opts.loggerStream
         ? { stream: opts.loggerStream }
         : process.env.NODE_ENV !== 'production' && {
