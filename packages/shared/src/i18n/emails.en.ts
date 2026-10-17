@@ -21,6 +21,13 @@ export const en: EmailsBundle = {
     expires_in: 'The link is valid for 48 hours.',
   },
 
+  doi_confirm_page: {
+    title: 'Confirmation',
+    heading: 'Please confirm',
+    body: 'Press the button below to complete the confirmation.',
+    button: 'Confirm',
+  },
+
   doi_confirmed_page: {
     title: 'Subscription confirmed',
     heading: "You're subscribed ✓",

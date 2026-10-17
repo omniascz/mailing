@@ -32,6 +32,7 @@ import {
   hasActiveConsent,
 } from '../../../services/gdpr/processing-purposes.js';
 import { GDPR_LEGAL_BASES } from '../../../db/schema/index.js';
+import { confirmButtonPage, resolvePageLocale } from '../subscriptions.js';
 
 const idParam = z.object({ id: z.string().uuid() });
 const contactParam = z.object({ contactId: z.string().uuid() });
@@ -240,8 +241,31 @@ export default async function gdprPurposesRoutes(app: FastifyInstance) {
     return reply.send({ data: { ok: true } });
   });
 
-  // Public — confirm DOI via email link click
+  // Public — the link in the e-mail: a page with a "Confirm" button that posts
+  // to the same address. Reads the token, grants nothing (nor does HEAD, which
+  // Fastify answers from this handler). It used to grant the consent here, and
+  // mail security scanners open every link in a message before the person does.
   app.get('/public/gdpr/doi/confirm', async (req, reply) => {
+    const { token, redirect } = req.query as { token?: string; redirect?: string };
+    if (!token) return reply.code(400).send({ code: 'MISSING_TOKEN', message: 'Token required' });
+    const { doiTokenExists } = await import('../../../services/gdpr/per-purpose-doi.js');
+    if (!(await doiTokenExists(token))) {
+      return reply.code(410).send({ code: 'INVALID_TOKEN', message: 'Token expired or invalid' });
+    }
+    const query = new URLSearchParams({ token, ...(redirect ? { redirect } : {}) });
+    const locale = await resolvePageLocale(req);
+    return reply
+      .header('Content-Type', 'text/html')
+      .send(
+        confirmButtonPage(
+          `/public/gdpr/doi/confirm?${query.toString().replace(/&/g, '&amp;')}`,
+          locale,
+        ),
+      );
+  });
+
+  // Public — the button on that page: grant the consent.
+  app.post('/public/gdpr/doi/confirm', async (req, reply) => {
     const { token, redirect } = req.query as { token?: string; redirect?: string };
     if (!token) return reply.code(400).send({ code: 'MISSING_TOKEN', message: 'Token required' });
     const { confirmDoiConsent } = await import('../../../services/gdpr/per-purpose-doi.js');
@@ -250,7 +274,8 @@ export default async function gdprPurposesRoutes(app: FastifyInstance) {
       const redirectUrl =
         redirect ??
         `${process.env['APP_BASE_URL'] ?? ''}/gdpr/confirmed?purpose=${result.purposeSlug}`;
-      return reply.redirect(redirectUrl, 302);
+      // 303: the answer to a form post is a GET of the page it names.
+      return reply.redirect(redirectUrl, 303);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error';
       return reply.code(410).send({ code: 'INVALID_TOKEN', message: msg });

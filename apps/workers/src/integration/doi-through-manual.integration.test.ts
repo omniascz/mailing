@@ -385,8 +385,12 @@ describe('the double opt-in confirmation reaches a manual-suppressed address, an
     const before = await campaignTo(listId, [person, control]);
     expect(before.reached, 'marketing went out before the confirmation').toEqual([control]);
 
-    // The link from the mail — the only place a recipient has it.
-    const confirm = await fetch(`${API}${confirmPath(mails[0]!)}`, { redirect: 'manual' });
+    // The link from the mail — the only place a recipient has it — and the
+    // button on the page it opens, which posts it (Z176).
+    const confirm = await fetch(`${API}${confirmPath(mails[0]!)}`, {
+      method: 'POST',
+      redirect: 'manual',
+    });
     expect(confirm.status).toBeLessThan(400);
 
     expect(await erasureRows(person), 'the confirmation did not lift the erasure').toEqual([]);

@@ -546,7 +546,8 @@ describe('the DOI confirmation passes the erasure row only, three per address an
       .map((m) => m.html);
     const before = await campaignTo(list.id, [person, control]);
     const confirm = mails[0]
-      ? await fetch(`${API}${confirmPath(mails[0])}`, { redirect: 'manual' })
+      ? // The page the link opens posts it back from its button (Z176).
+        await fetch(`${API}${confirmPath(mails[0])}`, { method: 'POST', redirect: 'manual' })
       : null;
     const rowsAfter = await suppressionRows(person);
     const after = await campaignTo(list.id, [person, control]);

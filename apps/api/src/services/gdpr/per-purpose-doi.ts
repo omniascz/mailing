@@ -8,7 +8,9 @@
  * Flow:
  *   1. Contact subscribes → grantConsentPending() stores a pending token in Redis
  *   2. Confirmation email is sent with /gdpr/doi/confirm?token=<t> link
- *   3. Contact clicks → confirmDoiConsent() validates token, inserts granted=true consent
+ *   3. Contact clicks → GET /public/gdpr/doi/confirm is a page with a button
+ *      (doiTokenExists() only reads the token); the button POSTs, and
+ *      confirmDoiConsent() validates token, inserts granted=true consent
  */
 
 import crypto from 'node:crypto';
@@ -111,6 +113,12 @@ export async function initiatePurposeDoi(
   });
 
   return { tokenKey };
+}
+
+/** Whether a per-purpose DOI token is stored. Reads only: opening a link must not consume it. */
+export async function doiTokenExists(token: string): Promise<boolean> {
+  const redis = await getRedis();
+  return (await redis.get(`doi:purpose:${token}`)) !== null;
 }
 
 /**

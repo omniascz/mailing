@@ -109,6 +109,15 @@ async function addedTo<T>(queue: Queue, before: Set<string>): Promise<T[]> {
   return jobs.filter((j) => j && !before.has(String(j.id))).map((j) => j.data as T);
 }
 
+/** The confirmation link in the double opt-in e-mail queued for `to`. */
+async function queuedConfirmPath(to: string): Promise<string | null> {
+  const jobs = (
+    (await mtaQueues.other.getJobs(ALL_STATES, 0, 5_000)) as Job<MtaSendJobData>[]
+  ).filter((j) => j?.data?.toEmail === to && /^Confirm your subscription to /.test(j.data.subject));
+  const html = jobs.at(-1)?.data.htmlBody ?? '';
+  return /href="[^"]*?(\/api\/v1\/confirm\/[0-9a-f-]{36})"/.exec(html)?.[1] ?? null;
+}
+
 /** Run every queued MTA job for `to` through the real processor, then drop it. */
 async function deliver(to: string): Promise<string[]> {
   const jobs = (
@@ -451,10 +460,15 @@ describe('the recipient comes back on their own (real DB + Redis + API, to the e
         email,
         firstName: 'Petra',
       });
-      const body = (await sub.json()) as { data?: { _devToken?: string } };
+      const body = (await sub.json()) as { data?: { message?: string } };
       expect(sub.status, JSON.stringify(body)).toBe(202);
-      expect(body.data?._devToken, 'no DOI token').toBeTruthy();
-      const res = await pub('GET', `/api/v1/confirm/${body.data!._devToken}`);
+      // The link out of the confirmation e-mail as queued for the mta-sender,
+      // not the engine: for a bounced or complained address the gate stops the
+      // e-mail before the engine, and what is pinned here is what the link
+      // does for someone who has it. The page's button posts it (Z176).
+      const link = await queuedConfirmPath(email);
+      expect(link, 'no DOI token').toBeTruthy();
+      const res = await pub('POST', link!);
       return `subscribe ${sub.status}, confirm ${res.status}`;
     }
 

@@ -72,12 +72,12 @@ import {
 } from '../queues/index.js';
 
 const engine = vi.hoisted(() => ({
-  handed: [] as { to: string; subject: string }[],
+  handed: [] as { to: string; subject: string; html: string }[],
 }));
 vi.mock('../lib/mta-grpc-client.js', () => ({
   close: () => {},
-  send: async (msg: { toEmail: string; subject: string }) => {
-    engine.handed.push({ to: msg.toEmail.toLowerCase(), subject: msg.subject });
+  send: async (msg: { toEmail: string; subject: string; htmlBody: string }) => {
+    engine.handed.push({ to: msg.toEmail.toLowerCase(), subject: msg.subject, html: msg.htmlBody });
     return {
       success: true,
       messageId: 'm',
@@ -314,6 +314,17 @@ async function idsOn(queue: Queue): Promise<Set<string>> {
 async function addedTo<T>(queue: Queue, before: Set<string>): Promise<T[]> {
   const jobs = await queue.getJobs(ALL, 0, 10_000);
   return jobs.filter((j) => j && !before.has(String(j.id))).map((j) => j.data as T);
+}
+
+/** The confirmation link in the double opt-in e-mail the engine was last handed for `to`. */
+function confirmPathFor(to: string): string | null {
+  const mail = engine.handed
+    .filter(
+      (m) =>
+        m.to.toLowerCase() === to.toLowerCase() && /^Confirm your subscription to /.test(m.subject),
+    )
+    .at(-1);
+  return /href="[^"]*?(\/api\/v1\/confirm\/[0-9a-f-]{36})"/.exec(mail?.html ?? '')?.[1] ?? null;
 }
 
 /** Every queued MTA job of this file through the real processor; returns "to status/stream/purpose". */
@@ -1046,9 +1057,11 @@ describe('list removal — a row with the recipient’s unsubscribe stays', () =
       const c = await mk('e');
       const d = await del(c.id);
       const s = await call('POST', `/api/v1/lists/${L1}/subscribe`, null, { email: c.email });
-      const t = (JSON.parse(s.text) as { data?: { _devToken?: string } }).data?._devToken;
       const rowAfterSubscribe = await membership(c.id, L1);
-      const conf = t ? await call('GET', `/api/v1/confirm/${t}`, null) : null;
+      // The link out of the confirmation e-mail, and the button its page posts (Z176).
+      await deliverMine();
+      const link = confirmPathFor(c.email ?? '');
+      const conf = link ? await call('POST', link, null) : null;
       out.e = {
         delete: d.status,
         subscribe: s.status,
