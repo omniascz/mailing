@@ -65,6 +65,8 @@ export const sk: EmailsBundle = {
     resubscribe_intro:
       'Chcete od nás správy znova dostávať? Označte zoznamy, ku ktorým sa chcete vrátiť.',
     resubscribe_cta: 'Znova sa prihlásiť',
+    resubscribe_link_expired:
+      'Tento odkaz je príliš starý na to, aby vás znova prihlásil. Na návrat použite odkaz z novšieho e-mailu alebo sa prihláste cez prihlasovací formulár.',
     invalid_title: 'Neplatný odkaz',
     invalid_heading: 'Neplatný odkaz',
     invalid_body:

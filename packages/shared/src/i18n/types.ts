@@ -53,6 +53,7 @@ export interface EmailsBundle {
     globally_unsubscribed_body: string;
     resubscribe_intro: string;
     resubscribe_cta: string;
+    resubscribe_link_expired: string;
     invalid_title: string;
     invalid_heading: string;
     invalid_body: string;
