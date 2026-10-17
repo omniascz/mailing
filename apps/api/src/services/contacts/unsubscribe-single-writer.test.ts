@@ -42,6 +42,12 @@ const ALLOWED = new Set([
   // mta-sender's callback after a hard bounce or a complaint. Its schema
   // accepts 'unsubscribed' too, but nothing sends that — see the test below.
   join('routes', 'v1', 'internal', 'contacts.ts'),
+  // The winner of a merge takes the strictest status of the merged contacts
+  // (Z174), which can be 'unsubscribed': that carries an unsubscribe the
+  // loser's record already holds, it is not a new one. unsubscribeContact
+  // would add a row for the winner's address and close every list; the
+  // commission asked for a direct write (Z174, Zásah 2).
+  join('services', 'contacts', 'merge-consent.ts'),
 ]);
 
 function* walkFiles(dir: string): Generator<string> {

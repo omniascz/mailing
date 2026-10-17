@@ -767,6 +767,10 @@ export async function processDailyHolidayTriggers(
     const matching = keys ? candidates.filter((h) => keys.includes(h.key)) : candidates;
     if (matching.length === 0) continue;
 
+    // A member who unsubscribed from the list (contact_lists.unsubscribed_at)
+    // is left out: an unsubscribe from a list is the recipient's refusal of
+    // that list (Z174, položka 6). Before, the flow started for them and its
+    // marketing e-mail went out (measured, Z173 S3H).
     const contactRows = config.listId
       ? await db.execute(
           sql`
@@ -774,6 +778,7 @@ export async function processDailyHolidayTriggers(
             FROM contact_lists cl
             JOIN contacts c ON c.id = cl.contact_id
             WHERE cl.list_id = ${config.listId}
+              AND cl.unsubscribed_at IS NULL
               AND c.org_id = ${workflow.orgId}
               AND c.deleted_at IS NULL
               AND c.status = 'active'

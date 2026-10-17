@@ -24,6 +24,7 @@ import { emitWebhookEvent, toContactSummary } from '../webhooks/emit.js';
 import { and, eq, sql, desc } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { findOrCreateContact } from '../contacts/by-email.js';
+import { carryRefusalsToWinner } from '../contacts/merge-consent.js';
 import {
   identitySignals,
   identityMerges,
@@ -312,52 +313,61 @@ export async function mergeContacts(
 ): Promise<number> {
   if (winnerContactId === loserContactId) return 0;
 
-  const result = await db
-    .update(identitySignals)
-    .set({ contactId: winnerContactId })
-    .where(and(eq(identitySignals.orgId, orgId), eq(identitySignals.contactId, loserContactId)))
-    .returning({ id: identitySignals.id });
-  const moved = result.length;
+  // One transaction for the whole merge (Z174): when copying the loser's
+  // address onto the winner hits the one-address-one-contact index (the loser
+  // is still live at that point), the answer is the same 409 / failed as
+  // before, but nothing of this merge stays written — before, the loser's
+  // signals had already moved to the winner.
+  return db.transaction(async (tx) => {
+    const result = await tx
+      .update(identitySignals)
+      .set({ contactId: winnerContactId })
+      .where(and(eq(identitySignals.orgId, orgId), eq(identitySignals.contactId, loserContactId)))
+      .returning({ id: identitySignals.id });
+    const moved = result.length;
 
-  // Copy missing PII fields from loser → winner, then soft-delete the loser
-  const [loser] = await db
-    .select()
-    .from(contacts)
-    .where(and(eq(contacts.id, loserContactId), eq(contacts.orgId, orgId)))
-    .limit(1);
-  const [winner] = await db
-    .select()
-    .from(contacts)
-    .where(and(eq(contacts.id, winnerContactId), eq(contacts.orgId, orgId)))
-    .limit(1);
+    // Copy missing PII fields from loser → winner, then soft-delete the loser
+    const [loser] = await tx
+      .select()
+      .from(contacts)
+      .where(and(eq(contacts.id, loserContactId), eq(contacts.orgId, orgId)))
+      .limit(1);
+    const [winner] = await tx
+      .select()
+      .from(contacts)
+      .where(and(eq(contacts.id, winnerContactId), eq(contacts.orgId, orgId)))
+      .limit(1);
 
-  if (loser && winner) {
-    const patch: Record<string, unknown> = {};
-    if (!winner.email && loser.email) patch.email = loser.email;
-    if (!winner.phone && loser.phone) patch.phone = loser.phone;
-    if (!winner.firstName && loser.firstName) patch.firstName = loser.firstName;
-    if (!winner.lastName && loser.lastName) patch.lastName = loser.lastName;
-    if (Object.keys(patch).length > 0) {
-      await db
+    if (loser && winner) {
+      const patch: Record<string, unknown> = {};
+      if (!winner.email && loser.email) patch.email = loser.email;
+      if (!winner.phone && loser.phone) patch.phone = loser.phone;
+      if (!winner.firstName && loser.firstName) patch.firstName = loser.firstName;
+      if (!winner.lastName && loser.lastName) patch.lastName = loser.lastName;
+      if (Object.keys(patch).length > 0) {
+        await tx
+          .update(contacts)
+          .set({ ...patch, updatedAt: new Date() })
+          .where(eq(contacts.id, winnerContactId));
+      }
+      // The winner may not keep a permission the loser took back (Z174).
+      await carryRefusalsToWinner(tx, orgId, winner, [loser]);
+      await tx
         .update(contacts)
-        .set({ ...patch, updatedAt: new Date() })
-        .where(eq(contacts.id, winnerContactId));
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(eq(contacts.id, loserContactId));
     }
-    await db
-      .update(contacts)
-      .set({ deletedAt: new Date(), updatedAt: new Date() })
-      .where(eq(contacts.id, loserContactId));
-  }
 
-  await db.insert(identityMerges).values({
-    orgId,
-    winnerContactId,
-    loserContactId,
-    movedSignals: moved,
-    reason: reason ?? null,
+    await tx.insert(identityMerges).values({
+      orgId,
+      winnerContactId,
+      loserContactId,
+      movedSignals: moved,
+      reason: reason ?? null,
+    });
+
+    return moved;
   });
-
-  return moved;
 }
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
