@@ -21,7 +21,7 @@
  * that the parameter was there, which is what makes a log line still usable for
  * "somebody hit the unsubscribe route without a token" versus "with one".
  *
- * Two rules, both conservative:
+ * Three rules, all conservative:
  *
  *   1. named query parameters — the ones this product actually signs, plus the
  *      generic names an integration might add (`token`, `signature`, `key`).
@@ -30,6 +30,21 @@
  *      are far longer (unsubscribe 218, preference centre 216, open pixel 286,
  *      click 384-456 — the numbers index.ts records for maxParamLength), and a
  *      UUID is 36 with dashes, so ids, slugs and route names survive untouched.
+ *
+ *   3. (Z181) the segment that the matched route's PATTERN names `:token` —
+ *      exactly that name — whatever its length or shape. Rule 2 alone was not
+ *      enough: measured on master 14813b8, the DOI confirmation token is a
+ *      random UUID (36 characters with dashes), and so are the legacy
+ *      unsubscribe and preference tokens; an email-identity, review or video
+ *      token is 32 base64url characters. All of them fall short of 40, and all
+ *      of them were logged in full. The routes of this product that take a
+ *      credential in the path call the parameter `token`, so the name decides,
+ *      not the look — and a new `:token` route is covered the moment it is
+ *      registered, with no list of prefixes to keep up to date. The pattern is
+ *      `request.routeOptions.url`, which Fastify has already filled in when it
+ *      writes "incoming request" (measured for GET, the automatic HEAD, POST,
+ *      and a route under a plugin prefix). A request no route matched has no
+ *      pattern, so it gets rules 1 and 2 and nothing else.
  *
  * What must not change, because things depend on it: the request id (logged
  * outside this serializer), the method, host, remote address and port, the
@@ -60,20 +75,32 @@ const TOKEN_LIKE = /^[A-Za-z0-9_-]{40,}(\.[A-Za-z0-9_-]+)?$/;
 
 export const REDACTED = '[redacted]';
 
+/** The route parameter whose value is a credential, whatever it looks like (rule 3). */
+const TOKEN_PARAM = ':token';
+
 /**
  * Rewrite one URL so it carries no usable token.
  *
+ * `routePattern` is the pattern of the route that matched
+ * (`/api/v1/confirm/:token`), when there is one: the segment it names `:token`
+ * is replaced as well.
+ *
  * Never throws: a malformed URL is logged as-is rather than costing a log line.
  */
-export function redactUrl(url: string): string {
+export function redactUrl(url: string, routePattern?: string): string {
   if (!url) return url;
   const queryAt = url.indexOf('?');
   const path = queryAt === -1 ? url : url.slice(0, queryAt);
   const query = queryAt === -1 ? '' : url.slice(queryAt + 1);
 
+  const patternSegments = routePattern ? routePattern.split('/') : [];
   const safePath = path
     .split('/')
-    .map((segment) => (TOKEN_LIKE.test(segment) ? REDACTED : segment))
+    .map((segment, i) =>
+      (segment && patternSegments[i] === TOKEN_PARAM) || TOKEN_LIKE.test(segment)
+        ? REDACTED
+        : segment,
+    )
     .join('/');
 
   if (!query) return safePath;
@@ -97,13 +124,27 @@ export function redactUrl(url: string): string {
 }
 
 /**
+ * The pattern of the route that matched, or undefined. Fastify's last-resort
+ * 404 path hands the serializer the raw IncomingMessage, which has no
+ * routeOptions, and reading the getter must never cost the log line.
+ */
+function routePatternOf(req: FastifyRequest): string | undefined {
+  try {
+    return req.routeOptions?.url;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * The `req` serializer, field for field what Fastify's default produces —
- * except that `url` has been through redactUrl.
+ * except that `url` has been through redactUrl, with the matched route's
+ * pattern, so a `:token` segment is replaced whatever its shape.
  */
 export function requestSerializer(req: FastifyRequest): Record<string, unknown> {
   return {
     method: req.method,
-    url: redactUrl(req.url),
+    url: redactUrl(req.url, routePatternOf(req)),
     host: req.headers?.host,
     remoteAddress: req.ip,
     remotePort: req.socket?.remotePort,

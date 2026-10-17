@@ -3,6 +3,7 @@ import fp from 'fastify-plugin';
 import { ZodError } from 'zod';
 import { AppError } from '../lib/app-error.js';
 import { captureException } from '../lib/telemetry.js';
+import { redactUrl } from '../lib/log-redaction.js';
 
 /**
  * The fields a postgres-js `PostgresError` actually carries. Measured against
@@ -151,7 +152,9 @@ async function errorHandler(app: FastifyInstance) {
       orgId: request.user?.orgId,
       userId: request.user?.userId,
       requestId: request.id,
-      route: `${request.method} ${request.routeOptions?.url ?? request.url}`,
+      // The pattern when a route matched; otherwise the url, which used to go
+      // out raw with its query string — through the same redaction as the log.
+      route: `${request.method} ${request.routeOptions?.url ?? redactUrl(request.url)}`,
     });
     return reply.status(500).send({
       code: 'INTERNAL_ERROR',
