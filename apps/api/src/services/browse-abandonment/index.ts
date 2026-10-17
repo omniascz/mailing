@@ -24,6 +24,7 @@ import {
   type ProductPageView,
 } from '../../db/schema/index.js';
 import { onApiEvent } from '../workflows/triggers.js';
+import { liveContactsOfOrg } from '../contacts/merge-consent.js';
 
 // ─── Page view tracking ───────────────────────────────────────────────────────
 
@@ -55,6 +56,9 @@ export async function trackPageView(input: TrackPageViewInput): Promise<ProductP
       statusCode: 400,
     });
   }
+  // A contact id must be a live contact of the org, otherwise 404 Contact and
+  // no view recorded (Z182). An anonymous view (visitorToken only) is as it was.
+  if (contactId) await liveContactsOfOrg(orgId, [contactId]);
 
   // Upsert: contact+sku unique, increment view_count + refresh last_viewed_at
   const [row] = await db
@@ -85,13 +89,15 @@ export async function trackPageView(input: TrackPageViewInput): Promise<ProductP
 
 /**
  * When a contact_id becomes known (identity merge), backfill their
- * anonymous page views.
+ * anonymous page views. The contact must be a live contact of `orgId`,
+ * otherwise 404 Contact and no view changes (Z182).
  */
 export async function associateVisitorViews(
   orgId: string,
   visitorToken: string,
   contactId: string,
 ): Promise<number> {
+  await liveContactsOfOrg(orgId, [contactId]);
   const result = await db
     .update(productPageViews)
     .set({ contactId })

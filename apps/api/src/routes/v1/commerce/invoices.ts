@@ -13,6 +13,7 @@ import {
   createInvoicePaymentIntent,
   refundInvoicePayment,
 } from '../../../services/commerce/payments.js';
+import { liveContactsOfOrg } from '../../../services/contacts/merge-consent.js';
 
 const lineItemSchema = z.object({
   productId: z.string().uuid().optional(),
@@ -57,6 +58,10 @@ const commerceInvoiceRoutes: FastifyPluginAsync = async (app) => {
         notes: z.string().optional(),
       })
       .parse(req.body);
+    // The caller's contact id must be a live contact of the org, otherwise 404
+    // Contact and no invoice (Z182). Checked here and not in createInvoice:
+    // its other callers (a quote, a subscription) pass the id of their own row.
+    if (body.contactId) await liveContactsOfOrg(req.user!.orgId, [body.contactId]);
     const { computeLineItem } = await import('../../../services/commerce/products.js');
     const items = body.lineItems.map((i) => computeLineItem(i));
     const data = await createInvoice(req.user!.orgId, {
