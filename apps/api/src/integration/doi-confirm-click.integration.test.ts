@@ -661,8 +661,10 @@ describe('double opt-in — the button confirms, opening the link does not (Z176
     });
     expect(head.status).toBe(200);
     expect(afterHead, 'HEAD granted the consent').toEqual({ consents: [], stored: true });
-    expect(post?.status).toBe(303);
-    expect(post?.location).toBe(`/gdpr/confirmed?purpose=${slug}`);
+    // Without a target from the start the API's own "confirmed" page; it used
+    // to be 303 to APP_BASE_URL/gdpr/confirmed, which nothing serves (Z184).
+    expect(post?.status).toBe(200);
+    expect(post?.location).toBeNull();
     expect(afterPost).toEqual({ consents: ['true/doi_email'], stored: false });
   });
 });
