@@ -51,10 +51,13 @@ const smsKeywordRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  // Simulates an SMS from any `fromPhone`: 'subscribe' makes a contact,
+  // 'unsubscribe' unsubscribes one. Owner, admin, editor — a viewer gets 403,
+  // as on the keywords themselves (Z178).
   app.post(
     '/api/v1/sms/inbound',
     {
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, app.requireRole('admin', 'owner', 'editor')],
       schema: { tags: ['SMS'] },
     },
     async (req, reply) => {
