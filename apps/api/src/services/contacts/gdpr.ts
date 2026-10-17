@@ -15,6 +15,11 @@
  *     the database alone does not give the address back; until Z150 it was a
  *     plain SHA-256, which anyone with the database could reverse from a
  *     list of addresses.
+ *   - And the phone number's fingerprint (phone_hash, services/suppressions/
+ *     phone.ts) on a 'manual' row of its own, so the same number on a contact
+ *     created again gets no marketing SMS or WhatsApp (Z180). Never on the
+ *     address's row: a double opt-in confirmation deletes that row, and the
+ *     number would go with it (Z179, measured). Nothing lifts it.
  *   - Anonymises matching email_events rows (clears userAgent + IP)
  *     to avoid retaining behavioral PII tied to the identity.
  *
@@ -32,6 +37,7 @@ import { db } from '../../db/client.js';
 import { contacts, emailEvents, suppressions } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
 import { suppressionEmailHash } from '../suppressions/email.js';
+import { suppressionPhoneHash } from '../suppressions/phone.js';
 
 export interface GdprAnonymizeResult {
   contactId: string;
@@ -116,6 +122,10 @@ export async function anonymizeContact(
   if (!contact) throw AppError.notFound('Contact');
 
   const emailHash = contact.email?.trim() ? suppressionEmailHash(contact.email) : '';
+  // The number's fingerprint (Z180). Before it the number was deleted with no
+  // trace, so the same number on a contact created again got marketing SMS and
+  // WhatsApp (Z179, measured on master by sending).
+  const phoneHash = contact.phone?.trim() ? suppressionPhoneHash(contact.phone) : '';
 
   const now = new Date();
 
@@ -162,6 +172,26 @@ export async function anonymizeContact(
         reason: 'manual',
         emailHash,
         notes: `gdpr_anonymized:${emailHash}`,
+      });
+    }
+
+    // The number's fingerprint, on a 'manual' row of its own whether or not
+    // the contact had an address (Z180): a campaign's or a flow's marketing SMS
+    // (services/sms/routing.ts) and WhatsApp (the workers' whatsapp-sender) to
+    // that number do not go, and nothing lifts it. Not on the address's row:
+    // the double opt-in confirmation deletes that row by email_hash
+    // (services/contacts/resubscribe.ts), and the number went with it (Z179,
+    // measured 6 → 5 rows, SMS 0 → 1). Each erasure writes its row, as the
+    // address's side does — two erasures of one number give two rows. Neither
+    // the number nor the address is written in clear.
+    if (phoneHash) {
+      await tx.insert(suppressions).values({
+        orgId,
+        email: null,
+        phone: null,
+        reason: 'manual',
+        phoneHash,
+        notes: `gdpr_anonymized_phone:${phoneHash}`,
       });
     }
   });

@@ -42,9 +42,13 @@ vi.mock('./coupon-merge.js', () => ({
   resolveCouponMergeTags: vi.fn(async (body: string) => body),
 }));
 vi.mock('../webhooks/emit.js', () => ({ emitWebhookEvent: vi.fn() }));
+// The erasure's phone fingerprint (Z180) is one more select, which the db
+// mock above would answer with the contact rows; no number here was erased.
+vi.mock('../suppressions/phone.js', () => ({ phoneErased: vi.fn(async () => false) }));
 
 import { routedSmsSend } from './routing.js';
 import { checkSmsCompliance } from './compliance.js';
+import { phoneErased } from '../suppressions/phone.js';
 
 const ORG = '00000000-0000-4000-8000-000000000001';
 const CONTACT = '00000000-0000-4000-8000-000000000002';
@@ -372,5 +376,36 @@ describe("routedSmsSend — a flow's marketing SMS gets the campaign's complianc
     await codeOf(routedSmsSend(ORG, msg({}), { phone: '+420777000001' }));
     await codeOf(routedSmsSend(ORG, msg({}), { phone: '+12125550123' }));
     expect(checkSmsCompliance).not.toHaveBeenCalled();
+  });
+});
+
+// Z180 — a number a GDPR erasure left the fingerprint of gets no campaign or
+// flow SMS, whatever sms_consents says; a transactional SMS does not ask.
+describe('routedSmsSend — the erasure fingerprint of the number (Z180)', () => {
+  const send = (ids: Parameters<typeof msg>[0], phone = '+420777000001') => {
+    state.contactRows = [{ status: 'active' }];
+    return codeOf(routedSmsSend(ORG, msg(ids), { contactId: CONTACT, phone }));
+  };
+
+  it('a campaign or flow marketing SMS to an erased number is refused before the consent check', async () => {
+    vi.mocked(phoneErased).mockClear();
+    for (const ids of [{ campaignId: RUN }, { workflowId: RUN }, { workflowRunId: RUN }]) {
+      vi.mocked(phoneErased).mockResolvedValueOnce(true);
+      expect(await send(ids)).toBe('SMS_COMPLIANCE_BLOCKED');
+    }
+    expect(checkSmsCompliance).not.toHaveBeenCalled();
+    expect(vi.mocked(phoneErased).mock.calls).toEqual([
+      [ORG, '+420777000001'],
+      [ORG, '+420777000001'],
+      [ORG, '+420777000001'],
+    ]);
+  });
+
+  it('a transactional SMS never reads the fingerprint', async () => {
+    vi.mocked(phoneErased).mockClear();
+    await send({ workflowRunId: RUN, flowTransactional: true });
+    state.contactRows = [];
+    await codeOf(routedSmsSend(ORG, msg({}), { phone: '+420777000001' }));
+    expect(phoneErased).not.toHaveBeenCalled();
   });
 });
