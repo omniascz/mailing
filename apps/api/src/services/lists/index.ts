@@ -129,16 +129,23 @@ export async function addContactToList(
   contactId: string,
 ): Promise<void> {
   await getList(orgId, listId);
-  await db
+  const inserted = await db
     .insert(contactLists)
     .values({ contactId, listId, confirmedAt: new Date() })
-    .onConflictDoNothing();
+    .onConflictDoNothing()
+    .returning({ contactId: contactLists.contactId });
 
   // Bump denormalized count (best-effort; the live count is authoritative)
   await db
     .update(lists)
     .set({ contactCount: sql`${lists.contactCount} + 1`, updatedAt: new Date() })
     .where(eq(lists.id, listId));
+
+  // The welcome flow is for a new membership only: an existing row with
+  // unsubscribed_at is the recipient's refusal of the list (Z175, položka 6).
+  // Firing on every call mailed the list's welcome to a member who had left
+  // it, and a second one to a member already on it (measured, Z175 U and A).
+  if (inserted.length === 0) return;
 
   // Fire the `list_subscribe` workflow trigger (fire-and-forget; dynamic import
   // avoids a circular dependency between lists ↔ workflow triggers).
