@@ -602,6 +602,12 @@ afterAll(async () => {
   for (const j of await mtaOtherQueue.getJobs(ALL, 0, 10_000))
     if (j?.data?.toEmail?.toLowerCase().endsWith(`@${DOMAIN}`)) await j.remove().catch(() => {});
   const keys = await perRecipientKeys();
+  // What the AI cells left in the cache, by whose contact, before it is removed.
+  report.perRecipientCacheBeforeCleanup = {
+    total: keys.length,
+    orgBContact: keys.filter((k) => k.includes(`:${contact.b}:`)).length,
+    deletedContact: keys.filter((k) => k.includes(`:${contact.del}:`)).length,
+  };
   if (keys.length) await redis.del(...keys);
   const orgs = [orgA, orgB].filter(Boolean);
   await db.delete(workflowRuns).where(inArray(workflowRuns.contactId, ids));
