@@ -18,6 +18,7 @@ import {
 } from '../../db/schema/subscriptions.js';
 import { AppError } from '../../lib/app-error.js';
 import { createInvoice } from './invoicing.js';
+import { liveContactsOfOrg } from '../contacts/merge-consent.js';
 import type { LineItem } from './products.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -116,6 +117,10 @@ export async function createSubscription(
   input: CreateSubscriptionInput,
 ): Promise<Subscription> {
   if (!input.lineItems?.length) throw AppError.badRequest('lineItems required');
+  // A live contact of the org, otherwise 404 Contact and nothing written
+  // (Z182): the id comes from the caller (POST /commerce/subscriptions, the
+  // only caller).
+  if (input.contactId) await liveContactsOfOrg(orgId, [input.contactId]);
 
   const interval = input.billingInterval ?? 'month';
   const intervalCount = input.billingIntervalCount ?? 1;

@@ -12,6 +12,7 @@ import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { lists, contactLists, type List } from '../../db/schema/lists.js';
 import { AppError } from '../../lib/app-error.js';
+import { liveContactsOfOrg } from '../contacts/merge-consent.js';
 
 export interface CreateListInput {
   name: string;
@@ -122,6 +123,10 @@ export async function deleteList(orgId: string, id: string): Promise<void> {
 /**
  * Add an already-existing contact to a list. Idempotent via PK ON CONFLICT.
  * Doesn't re-trigger DOI — admin adds skip the confirmation flow.
+ *
+ * The contact must be a live contact of `orgId`, otherwise 404 Contact and
+ * nothing is written (Z182). Only the list used to be checked: a contact id of
+ * another organisation went onto org A's list (Z173 MIMO 10).
  */
 export async function addContactToList(
   orgId: string,
@@ -129,6 +134,7 @@ export async function addContactToList(
   contactId: string,
 ): Promise<void> {
   await getList(orgId, listId);
+  await liveContactsOfOrg(orgId, [contactId]);
   const inserted = await db
     .insert(contactLists)
     .values({ contactId, listId, confirmedAt: new Date() })

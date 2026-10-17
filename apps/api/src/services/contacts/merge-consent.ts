@@ -36,7 +36,10 @@ export interface MergedContact {
  * of a merge is written; otherwise 404 NOT_FOUND. Before Z174 a merge with an
  * id of another organisation went through: duplicates moved e-mail events
  * across organisations and identity-graph wrote identity_merges with a
- * foreign id (Z173 O1–O4).
+ * foreign id (Z173 O1–O4). The same check guards every write that takes a
+ * contact id from the caller (Z182: a list membership, an invoice, a
+ * subscription, a product page view): a contact of another organisation, an id
+ * no contact has and a deleted contact all answer the same 404.
  */
 export async function liveContactsOfOrg(
   orgId: string,
