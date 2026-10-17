@@ -26,7 +26,10 @@
  * button was hidden in d8d1010 because the resubscribe then lifted the row and
  * left the status; #235 fixed that, and Z142 put the button back. The form
  * posts back here as application/x-www-form-urlencoded and is answered with a
- * redirect to the page, so a reload does not post twice.
+ * redirect to the page, so a reload does not post twice. Coming back — to
+ * everything or to a list they left — needs a link younger than 30 days
+ * (services/preference-center: prefTokenMayResubscribe); an older one still
+ * shows the page and still unsubscribes, and says why it offers no way back.
  *
  * Unsubscribe A/B testing (#leapfrog): when an active experiment exists, the
  * GET response carries the assigned "save the subscriber" variant (and records
@@ -41,6 +44,7 @@ import { z } from 'zod';
 import { t, type SupportedLocale } from '@forgemsg/shared';
 import {
   getPreferences,
+  loadPreferences,
   updatePreferences,
   type PreferenceCenterView,
   type RequestContext,
@@ -96,10 +100,12 @@ function esc(s: string): string {
 }
 
 /** The view plus the experiment variant, with the impression recorded. */
-async function loadView(
-  token: string,
-): Promise<{ view: PreferenceCenterView; experiment: AssignedVariant | null }> {
-  const view = await getPreferences(token);
+async function loadView(token: string): Promise<{
+  view: PreferenceCenterView;
+  resubscribeExpired: boolean;
+  experiment: AssignedVariant | null;
+}> {
+  const { view, resubscribeExpired } = await loadPreferences(token);
 
   // Unsubscribe A/B: pick the save-the-subscriber variant for this contact.
   let experiment: AssignedVariant | null = null;
@@ -108,7 +114,7 @@ async function loadView(
     experiment = await assignVariant(id.orgId, id.contactId);
     if (experiment) recordImpression(id.orgId, experiment.variantId).catch(() => {});
   }
-  return { view, experiment };
+  return { view, resubscribeExpired, experiment };
 }
 
 /** Apply an update and record the A/B outcome — the one path both bodies take. */
@@ -129,12 +135,17 @@ async function applyUpdate(token: string, body: UpdateRequest, ctx: RequestConte
 function renderPage(
   token: string,
   view: PreferenceCenterView,
+  resubscribeExpired: boolean,
   experiment: AssignedVariant | null,
   locale: SupportedLocale,
   saved: boolean,
 ): string {
   const k = (key: string, values?: Record<string, string>) =>
     esc(t(`preferences_page.${key}`, locale, values));
+  // A link older than the resubscribe window offers no way back — neither the
+  // button nor the boxes of the lists the contact left — and says why
+  // (services/preference-center: PREF_RESUBSCRIBE_MAX_AGE_S).
+  const expiredNote = resubscribeExpired ? `<p>${k('resubscribe_link_expired')}</p>` : '';
   const action = `/p/center/${encodeURIComponent(token)}`;
   const parts: string[] = [
     `<h1>${k('heading')}</h1>`,
@@ -160,16 +171,19 @@ function renderPage(
           `<button type="submit" class="btn" style="border:0;cursor:pointer;">${k('resubscribe_cta')}</button></form>`,
       );
     }
+    parts.push(expiredNote);
     return htmlPage(esc(t('preferences_page.title', locale)), parts.join(''), locale);
   }
 
   if (experiment?.headline) parts.push(`<h2>${esc(experiment.headline)}</h2>`);
   if (experiment?.bodyText) parts.push(`<p>${esc(experiment.bodyText)}</p>`);
 
+  // With an old link only the lists the contact is still on can be ticked (off).
+  const shown = resubscribeExpired ? view.lists.filter((l) => l.subscribed) : view.lists;
   if (view.lists.length === 0) {
     parts.push(`<p>${k('no_lists')}</p>`);
-  } else {
-    const boxes = view.lists
+  } else if (shown.length > 0) {
+    const boxes = shown
       .map(
         (l) =>
           `<label style="display:block;margin:8px 0;"><input type="checkbox" name="list" value="${esc(l.id)}"${l.subscribed ? ' checked' : ''}> ${esc(l.name)}</label>`,
@@ -181,6 +195,7 @@ function renderPage(
         `<button type="submit" class="btn" style="border:0;cursor:pointer;">${k('save_cta')}</button></form>`,
     );
   }
+  parts.push(expiredNote);
 
   parts.push(
     `<form method="post" action="${esc(action)}" style="margin-top:24px;">` +
@@ -230,7 +245,16 @@ export default async function preferenceCenterRoutes(app: FastifyInstance) {
         const saved = (req.query as { saved?: string } | undefined)?.saved === '1';
         return reply
           .header('Content-Type', 'text/html; charset=utf-8')
-          .send(renderPage(token, loaded.view, loaded.experiment, locale, saved));
+          .send(
+            renderPage(
+              token,
+              loaded.view,
+              loaded.resubscribeExpired,
+              loaded.experiment,
+              locale,
+              saved,
+            ),
+          );
       }
 
       const { view, experiment } = await loadView(token);

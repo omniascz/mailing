@@ -65,6 +65,8 @@ export const en: EmailsBundle = {
       'You are unsubscribed from all messages and will receive nothing more from us. If this was a mistake, write to the sender.',
     resubscribe_intro: 'Want our messages again? Tick the lists you want to rejoin.',
     resubscribe_cta: 'Subscribe again',
+    resubscribe_link_expired:
+      'This link is too old to subscribe you again. To come back, use the link in a more recent email or sign up through the signup form.',
     invalid_title: 'Invalid link',
     invalid_heading: 'Invalid link',
     invalid_body:

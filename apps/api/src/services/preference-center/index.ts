@@ -49,9 +49,35 @@ export interface PreferenceCenterView {
 
 // ─── Token decoding ──────────────────────────────────────────────────────────
 
+/**
+ * How long a preference link may bring someone back: 30 days from `ts`, the
+ * moment the link was minted (batch-sender: the send; browser-view: the
+ * e-mail the copy is of).
+ *
+ * The token never expired, so a link out of a year-old e-mail — forwarded,
+ * leaked, sitting in an archive — lifted the recipient's own unsubscribe and
+ * reopened the lists they had left, and the next campaign reached them. A
+ * resubscribe is a consent; a fresh e-mail is the proof the link is still the
+ * recipient's. Leaving is never limited: viewing the page, unsubscribing from
+ * everything or from a list work with a link of any age. Someone who left more
+ * than 30 days ago comes back through a signup form with double opt-in.
+ */
+export const PREF_RESUBSCRIBE_MAX_AGE_S = 30 * 86_400;
+/** Clock skew between the worker that minted the link and this process. */
+const PREF_FUTURE_SKEW_S = 300;
+
+/** Whether this pref link is young enough to raise consent (resubscribe). */
+export function prefTokenMayResubscribe(payload: { ts?: unknown }, now = Date.now()): boolean {
+  const ts = payload.ts;
+  if (typeof ts !== 'number' || !Number.isFinite(ts)) return false;
+  const age = now / 1000 - ts;
+  return age >= -PREF_FUTURE_SKEW_S && age < PREF_RESUBSCRIBE_MAX_AGE_S;
+}
+
 interface ResolvedToken {
   orgId: string;
   contactId: string;
+  mayResubscribe: boolean;
 }
 
 function resolveToken(token: string): ResolvedToken {
@@ -60,7 +86,11 @@ function resolveToken(token: string): ResolvedToken {
     throw AppError.unauthorized('Invalid or expired preference-center token');
   }
   const pref = payload as PreferenceCenterPayload;
-  return { orgId: pref.orgId, contactId: pref.contactId };
+  return {
+    orgId: pref.orgId,
+    contactId: pref.contactId,
+    mayResubscribe: prefTokenMayResubscribe(pref),
+  };
 }
 
 /**
@@ -81,7 +111,18 @@ function maskEmail(email: string | null): string {
 // ─── GET — fetch current preferences ─────────────────────────────────────────
 
 export async function getPreferences(token: string): Promise<PreferenceCenterView> {
-  const { orgId, contactId } = resolveToken(token);
+  return (await loadPreferences(token)).view;
+}
+
+/**
+ * The view, and whether the link is too old for a way back the page would
+ * otherwise offer — the page says so instead of showing the button or the
+ * boxes of the lists the contact left.
+ */
+export async function loadPreferences(
+  token: string,
+): Promise<{ view: PreferenceCenterView; resubscribeExpired: boolean }> {
+  const { orgId, contactId, mayResubscribe } = resolveToken(token);
 
   const [contact] = await db
     .select({
@@ -118,13 +159,15 @@ export async function getPreferences(token: string): Promise<PreferenceCenterVie
     )
     .orderBy(lists.name);
 
-  return {
+  const ownUnsubscribeOnly =
+    contact.status === 'unsubscribed' &&
+    globalRows.length > 0 &&
+    globalRows.every((r) => r.reason === 'unsubscribe');
+  const globallyUnsubscribed = globalRows.length > 0;
+  const view: PreferenceCenterView = {
     emailMasked: maskEmail(contact.email),
-    globallyUnsubscribed: globalRows.length > 0,
-    canResubscribe:
-      contact.status === 'unsubscribed' &&
-      globalRows.length > 0 &&
-      globalRows.every((r) => r.reason === 'unsubscribe'),
+    globallyUnsubscribed,
+    canResubscribe: ownUnsubscribeOnly && mayResubscribe,
     lists: listRows.map((r) => ({
       id: r.id,
       name: r.name,
@@ -133,6 +176,10 @@ export async function getPreferences(token: string): Promise<PreferenceCenterVie
       unsubscribedAt: r.unsubscribedAt ? r.unsubscribedAt.toISOString() : null,
     })),
   };
+  const wouldOffer = globallyUnsubscribed
+    ? ownUnsubscribeOnly
+    : view.lists.some((l) => !l.subscribed);
+  return { view, resubscribeExpired: !mayResubscribe && wouldOffer };
 }
 
 // ─── POST — update preferences ───────────────────────────────────────────────
@@ -148,8 +195,9 @@ export interface UpdateRequest {
   globalResubscribe?: boolean;
   /** List IDs to unsubscribe from. Sets contact_lists.unsubscribed_at. */
   unsubscribeFromLists?: string[];
-  /** List IDs to resubscribe to (clear unsubscribed_at). Re-adds the
-   *  contact_lists row when missing (e.g. previously deleted). */
+  /** List IDs to resubscribe to: clears unsubscribed_at on a list the contact
+   *  left. Never creates a membership — a list they were never on is not a
+   *  way back, and is dropped. */
   resubscribeToLists?: string[];
   /** Free-text reason recorded against the suppression / per-list unsub.
    *  Stored verbatim; surface in support tooling. */
@@ -159,6 +207,9 @@ export interface UpdateRequest {
 export interface UpdateResult {
   globallyUnsubscribed: boolean;
   listChanges: { listId: string; subscribed: boolean }[];
+  /** Present only when a resubscribe in the request was not carried out
+   *  because the link is older than PREF_RESUBSCRIBE_MAX_AGE_S. */
+  resubscribeRefused?: 'link_expired';
 }
 
 /** Which of these ids are live lists of this organisation. */
@@ -185,7 +236,7 @@ export async function updatePreferences(
   body: UpdateRequest,
   ctx: RequestContext,
 ): Promise<UpdateResult> {
-  const { orgId, contactId } = resolveToken(token);
+  const { orgId, contactId, mayResubscribe } = resolveToken(token);
 
   const [contact] = await db
     .select({ email: contacts.email, deletedAt: contacts.deletedAt })
@@ -199,6 +250,9 @@ export async function updatePreferences(
 
   const reason = body.reason?.slice(0, 255) ?? 'preference_center';
   const listChanges: UpdateResult['listChanges'] = [];
+  // An old link still unsubscribes; it raises nothing (PREF_RESUBSCRIBE_MAX_AGE_S).
+  const resubscribeRefused =
+    !mayResubscribe && (!!body.globalResubscribe || (body.resubscribeToLists?.length ?? 0) > 0);
 
   // 1. Global state. This used to write the suppression alone, leaving
   //    contacts.status at 'active' — so the same person read as subscribed in
@@ -211,7 +265,7 @@ export async function updatePreferences(
     });
   }
 
-  if (body.globalResubscribe) {
+  if (body.globalResubscribe && mayResubscribe) {
     // Undoes the recipient's own global unsubscribe: the 'unsubscribe'
     // suppression AND the status, which batch-sender refuses on. This used to
     // delete the suppression row whatever its reason and leave the status — so
@@ -239,13 +293,14 @@ export async function updatePreferences(
   // any id it was given, so a token issued by one organisation put its contact
   // on another's list. Ids that are not a live list of the token's
   // organisation are dropped here, before either loop sees them.
-  const now = new Date();
   const ownListIds = await listsOfOrg(orgId, [
     ...(body.unsubscribeFromLists ?? []),
     ...(body.resubscribeToLists ?? []),
   ]);
   const unsubscribeFrom = (body.unsubscribeFromLists ?? []).filter((id) => ownListIds.has(id));
-  const resubscribeTo = (body.resubscribeToLists ?? []).filter((id) => ownListIds.has(id));
+  const resubscribeTo = mayResubscribe
+    ? (body.resubscribeToLists ?? []).filter((id) => ownListIds.has(id))
+    : [];
 
   if (unsubscribeFrom.length) {
     for (const listId of unsubscribeFrom) {
@@ -263,7 +318,9 @@ export async function updatePreferences(
 
   if (resubscribeTo.length) {
     for (const listId of resubscribeTo) {
-      // Try clear unsubscribed_at on existing row
+      // Only back to a list they left. This used to insert a membership for a
+      // live list the contact had never been on, confirmed now and with no
+      // consent event — a subscription nobody asked for, from a link.
       const [updated] = await db
         .update(contactLists)
         .set({ unsubscribedAt: null, unsubscribedReason: null })
@@ -276,24 +333,7 @@ export async function updatePreferences(
         )
         .returning({ listId: contactLists.listId });
 
-      if (updated) {
-        listChanges.push({ listId: updated.listId, subscribed: true });
-        continue;
-      }
-
-      // No existing membership — create it. Use ON CONFLICT DO NOTHING
-      // so a race or stale state doesn't 500.
-      const [inserted] = await db
-        .insert(contactLists)
-        .values({
-          contactId,
-          listId,
-          addedAt: now,
-          confirmedAt: now,
-        })
-        .onConflictDoNothing()
-        .returning({ listId: contactLists.listId });
-      if (inserted) listChanges.push({ listId: inserted.listId, subscribed: true });
+      if (updated) listChanges.push({ listId: updated.listId, subscribed: true });
     }
   }
 
@@ -311,5 +351,6 @@ export async function updatePreferences(
   return {
     globallyUnsubscribed: globalStillSuppressed,
     listChanges,
+    ...(resubscribeRefused ? { resubscribeRefused: 'link_expired' as const } : {}),
   };
 }

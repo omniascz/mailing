@@ -65,6 +65,8 @@ export const cs: EmailsBundle = {
     resubscribe_intro:
       'Chcete od nás zprávy znovu dostávat? Zaškrtněte seznamy, ke kterým se chcete vrátit.',
     resubscribe_cta: 'Znovu se přihlásit',
+    resubscribe_link_expired:
+      'Tento odkaz je příliš starý na to, aby vás znovu přihlásil. K návratu použijte odkaz z novějšího e-mailu nebo se přihlaste přes přihlašovací formulář.',
     invalid_title: 'Neplatný odkaz',
     invalid_heading: 'Neplatný odkaz',
     invalid_body:

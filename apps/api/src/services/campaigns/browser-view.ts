@@ -27,8 +27,6 @@ import {
 import { readCampaignContent } from '@forgemsg/editor/schema';
 import type { MergeTagContext } from '@forgemsg/editor/render';
 
-const UNSUB_TTL_TS = () => Math.floor(Date.now() / 1000);
-
 export async function renderCampaignForToken(token: string): Promise<string | null> {
   const payload = verifyTrackingToken(token);
   if (!payload || payload.type !== 'view') return null;
@@ -64,14 +62,18 @@ export async function renderCampaignForToken(token: string): Promise<string | nu
     .where(eq(organizations.id, orgId))
     .limit(1);
 
-  // Rebuild the same merge context the send used so the copy matches.
-  const prefToken = createTrackingToken({ type: 'pref', orgId, contactId, ts: UNSUB_TTL_TS() });
+  // Rebuild the same merge context the send used so the copy matches — the
+  // links included: they are as old as the e-mail the copy is of (the view
+  // token's ts), not as old as this request. A pref token minted now let an
+  // old e-mail get round the resubscribe window of the preference centre
+  // (services/preference-center: PREF_RESUBSCRIBE_MAX_AGE_S).
+  const prefToken = createTrackingToken({ type: 'pref', orgId, contactId, ts: payload.ts });
   const unsubToken = createTrackingToken({
     type: 'unsub',
     orgId,
     contactId,
     campaignId,
-    ts: UNSUB_TTL_TS(),
+    ts: payload.ts,
   });
   const ctx: MergeTagContext = {
     contact: contact
