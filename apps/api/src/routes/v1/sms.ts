@@ -351,12 +351,20 @@ export default async function smsRoutes(app: FastifyInstance) {
     consentContext: z.string().optional(),
   });
 
-  app.post('/api/v1/sms/consents', { preHandler: [app.authenticate] }, async (req, reply) => {
-    const { orgId } = req.user as { orgId: string };
-    const data = consentSchema.parse(req.body);
-    const consent = await recordConsent(orgId, data.phone, data);
-    return reply.status(201).send({ data: consent });
-  });
+  // The row checkSmsCompliance reads before a marketing SMS — a flow's (Z167)
+  // or a campaign's. Opening a number to marketing takes owner, admin or
+  // editor; a viewer gets 403 (Z178). Revoking (DELETE below) stays open to
+  // every role: it is the stricter direction.
+  app.post(
+    '/api/v1/sms/consents',
+    { preHandler: [app.authenticate, app.requireRole('admin', 'owner', 'editor')] },
+    async (req, reply) => {
+      const { orgId } = req.user as { orgId: string };
+      const data = consentSchema.parse(req.body);
+      const consent = await recordConsent(orgId, data.phone, data);
+      return reply.status(201).send({ data: consent });
+    },
+  );
 
   app.delete(
     '/api/v1/sms/consents/:phone',

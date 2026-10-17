@@ -6,8 +6,8 @@
     "Fixing a route means deleting its line in the same change. Intentional",
     "exceptions do not belong here: they are in role-check-exemptions.json."
   ],
-  "count": 502,
-  "files": 159,
+  "count": 499,
+  "files": 158,
   "routes": {
     "DELETE /api/v1/ads/accounts/:accountId": "apps/api/src/routes/v1/ads/accounts.ts",
     "DELETE /api/v1/analytics/saved-queries/:id": "apps/api/src/routes/v1/saved-queries.ts",
@@ -417,8 +417,6 @@
     "POST /api/v1/sites": "apps/api/src/routes/v1/site-tracking.ts",
     "POST /api/v1/smart-sending/record": "apps/api/src/routes/v1/smart-sending.ts",
     "POST /api/v1/sms/compliance/check": "apps/api/src/routes/v1/sms.ts",
-    "POST /api/v1/sms/consents": "apps/api/src/routes/v1/sms.ts",
-    "POST /api/v1/sms/inbound": "apps/api/src/routes/v1/sms-keywords.ts",
     "POST /api/v1/sms/routes": "apps/api/src/routes/v1/sms.ts",
     "POST /api/v1/social/analytics/sync": "apps/api/src/routes/v1/social/analytics.ts",
     "POST /api/v1/social/mentions/:mentionId/to-inbox": "apps/api/src/routes/v1/social/mentions.ts",
@@ -448,7 +446,6 @@
     "POST /api/v1/webhooks": "apps/api/src/routes/v1/webhooks.ts",
     "POST /api/v1/webhooks/:id/test": "apps/api/src/routes/v1/webhooks.ts",
     "POST /api/v1/what-if/simulate": "apps/api/src/routes/v1/what-if-simulator.ts",
-    "POST /api/v1/whatsapp/consents": "apps/api/src/routes/v1/whatsapp.ts",
     "POST /api/v1/whatsapp/flows": "apps/api/src/routes/v1/whatsapp.ts",
     "POST /api/v1/whatsapp/flows/:flowId/send": "apps/api/src/routes/v1/whatsapp.ts",
     "POST /api/v1/whatsapp/phone-numbers": "apps/api/src/routes/v1/whatsapp.ts",

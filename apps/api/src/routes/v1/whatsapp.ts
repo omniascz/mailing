@@ -221,21 +221,29 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     return { data: consents };
   });
 
-  app.post('/api/v1/whatsapp/consents', { preHandler: [app.authenticate] }, async (req, reply) => {
-    const { orgId } = req.user as { orgId: string };
-    const { phone, contactId, consentSource, consentContext } = req.body as {
-      phone: string;
-      contactId?: string;
-      consentSource: string;
-      consentContext?: string;
-    };
-    const consent = await recordWaConsent(orgId, phone, {
-      contactId,
-      consentSource,
-      consentContext,
-    });
-    return reply.status(201).send({ data: consent });
-  });
+  // Consent on a number for marketing WhatsApp (the row checkWaCompliance and
+  // channel scoring read) takes owner, admin or editor, as SMS consent does; a
+  // viewer gets 403 (Z178). Revoking (DELETE below) stays open to every role:
+  // it is the stricter direction.
+  app.post(
+    '/api/v1/whatsapp/consents',
+    { preHandler: [app.authenticate, app.requireRole('admin', 'owner', 'editor')] },
+    async (req, reply) => {
+      const { orgId } = req.user as { orgId: string };
+      const { phone, contactId, consentSource, consentContext } = req.body as {
+        phone: string;
+        contactId?: string;
+        consentSource: string;
+        consentContext?: string;
+      };
+      const consent = await recordWaConsent(orgId, phone, {
+        contactId,
+        consentSource,
+        consentContext,
+      });
+      return reply.status(201).send({ data: consent });
+    },
+  );
 
   app.delete(
     '/api/v1/whatsapp/consents/:phone',
