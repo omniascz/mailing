@@ -10,6 +10,7 @@ import { callClaude } from '../../lib/ai-client.js';
 import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 import { buildBrandVoiceContext, getActiveBrandVoice } from './brand-voice.js';
+import { liveContactsOfOrg } from '../contacts/merge-consent.js';
 
 const SYSTEM = `You are an expert email copywriter. Generate a personalized email for this specific recipient.
 Use their profile data to make the email feel 1:1, not mass-broadcast. Reference specific details where available.
@@ -42,6 +43,9 @@ export async function generateForRecipient(
     useBrandVoice?: boolean;
   },
 ): Promise<PerRecipientResult> {
+  // A live contact of the org, otherwise 404 Contact and nothing read — no
+  // cache, no profile, nothing to the AI (Z183): the id comes from the caller.
+  await liveContactsOfOrg(orgId, [contactId]);
   const cacheKey = `per-recipient:${orgId}:${contactId}:${opts.campaignGoal.slice(0, 40)}`;
   const cached = await redis.get(cacheKey);
   if (cached) return JSON.parse(cached) as PerRecipientResult;
@@ -105,6 +109,9 @@ export async function generateBatchPerRecipient(
   contactIds: string[],
   opts: { campaignGoal: string; ctaUrl: string; tone?: string; useBrandVoice?: boolean },
 ): Promise<Record<string, PerRecipientResult>> {
+  // Every id a live contact of the org, otherwise the whole batch is 404
+  // Contact and nothing goes to the AI (Z183) — one query before any of it.
+  await liveContactsOfOrg(orgId, contactIds.slice(0, 50));
   const results: Record<string, PerRecipientResult> = {};
   await Promise.all(
     contactIds.slice(0, 50).map(async (cid) => {

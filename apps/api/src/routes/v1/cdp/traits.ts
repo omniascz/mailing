@@ -15,6 +15,7 @@ import {
   recomputeAllTraits,
   getTraitDefinitions,
 } from '../../../services/cdp/traits.js';
+import { liveContactsOfOrg } from '../../../services/contacts/merge-consent.js';
 
 const traitRoutes: FastifyPluginAsync = async (app) => {
   app.get(
@@ -48,6 +49,11 @@ const traitRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.params);
+      // A live contact of the org, otherwise 404 Contact and nothing written
+      // (Z183): the upsert is ON CONFLICT (contact_id) and would overwrite
+      // another org's row. Here and not in computeTraits: the recompute passes
+      // ids it read from the org's own contacts.
+      await liveContactsOfOrg(req.user!.orgId, [contactId]);
       const values = await computeTraits(req.user!.orgId, contactId);
       return reply.send({ data: values });
     },

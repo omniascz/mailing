@@ -35,6 +35,7 @@ import {
   getPublishedFlowTemplate,
 } from '../../services/workflows/flow-templates.js';
 import { buildWorkflowMap } from '../../services/workflows/map.js';
+import { liveContactsOfOrg } from '../../services/contacts/merge-consent.js';
 import { materialiseEmailTemplates } from '../../services/workflow-templates/materialise-emails.js';
 
 const idParam = z.object({ id: z.string().uuid() });
@@ -228,6 +229,10 @@ export default async function workflowRoutes(app: FastifyInstance) {
       const { id } = idParam.parse(req.params);
       const { contactId } = z.object({ contactId: z.string().uuid() }).parse(req.body);
       const orgId = req.user!.orgId;
+      // A live contact of the org, otherwise 404 Contact and no run (Z183).
+      // Here and not in triggerManual: a signup form passes the contact it
+      // has just made in its own org.
+      await liveContactsOfOrg(orgId, [contactId]);
       const run = await triggerManual(id, orgId, contactId);
       return { data: run };
     },

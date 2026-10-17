@@ -7,6 +7,7 @@ import {
   recordOpen,
   backfillContactTimezones,
 } from '../../services/send-optimization/index.js';
+import { liveContactsOfOrg } from '../../services/contacts/merge-consent.js';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -24,6 +25,10 @@ const sendOptimizationRoutes: FastifyPluginAsync = async (app) => {
           at: z.string().datetime().optional(),
         })
         .parse(req.body);
+      // A live contact of the org, otherwise 404 Contact and nothing written
+      // (Z183): the upsert is ON CONFLICT (contact_id) and would raise another
+      // org's histogram.
+      await liveContactsOfOrg(req.user!.orgId, [body.contactId]);
       await recordOpen(body.contactId, req.user!.orgId, body.at ? new Date(body.at) : undefined);
       return reply.send({ ok: true });
     },

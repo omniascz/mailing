@@ -15,6 +15,7 @@ import {
   completeBuiltinSigning,
   handleESignWebhook,
 } from '../../../services/commerce/e-signature.js';
+import { liveContactsOfOrg } from '../../../services/contacts/merge-consent.js';
 
 const lineItemSchema = z.object({
   productId: z.string().uuid().optional(),
@@ -65,6 +66,9 @@ const commerceQuoteRoutes: FastifyPluginAsync = async (app) => {
         terms: z.string().optional(),
       })
       .parse(req.body);
+    // The caller's contact id must be a live contact of the org, otherwise 404
+    // Contact and no quote (Z183) — the conversion copies it onto an invoice.
+    if (body.contactId) await liveContactsOfOrg(req.user!.orgId, [body.contactId]);
     const { computeLineItem } = await import('../../../services/commerce/products.js');
     const items = body.lineItems.map((i) => computeLineItem(i));
     const data = await createQuote(req.user!.orgId, {
