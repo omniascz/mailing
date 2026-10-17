@@ -49,9 +49,10 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { Queue, type Job, type JobType, type Worker } from 'bullmq';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { createTrackingToken } from '@forgemsg/shared';
+import { redis } from '@forgemsg/shared/redis';
 import { czechHolidaysInDays } from '@forgemsg/i18n-cs';
 import { SEED_LOGIN, authHeaders, seedApiKey } from './setup/login.js';
 import { readSeedOrg, type SeedOrg } from './setup/seed-org.js';
@@ -581,6 +582,20 @@ afterAll(async () => {
     await sql`DELETE FROM organizations WHERE id = ANY(${ids})`;
   }
   if (tplIds.length) await sql`DELETE FROM templates WHERE id = ANY(${tplIds})`;
+  // Rate-limit counters of this file's keys and sessions (api/plugins/rate-limit.ts).
+  let limitKeysRemoved = 0;
+  for (const raw of [seedKey, ...orgs.flatMap((o) => [o.key, o.owner])]) {
+    const d = createHash('sha256').update(raw).digest('hex').slice(0, 32);
+    let cursor = '0';
+    do {
+      const [next, keys] = await redis.scan(cursor, 'MATCH', `*${d}*`, 'COUNT', 1000);
+      cursor = next;
+      for (const key of keys) {
+        await redis.del(key);
+        limitKeysRemoved++;
+      }
+    } while (cursor !== '0');
+  }
   await sql`DELETE FROM api_keys WHERE name = ${`integration z174-${tag}`}`;
   const [left] = await sql<Record<string, number>[]>`
     SELECT (SELECT count(*)::int FROM organizations WHERE id = ANY(${ids})) AS orgs,
@@ -595,7 +610,7 @@ afterAll(async () => {
   const seedAfter = await seedState();
   report.cells = cells;
   report.rateLimitWaits = rateLimitWaits;
-  report.leftover = left;
+  report.leftover = { ...left, limitKeysRemoved };
   report.seedOrg = { before: seedBefore, after: seedAfter };
   const all = JSON.stringify(report);
   const parts = Math.ceil(all.length / 3000);

@@ -350,7 +350,10 @@ beforeAll(async () => {
     { orgId: org },
   );
   expect(r.status, r.body).toBe(200);
-  owner = bearer((JSON.parse(r.body) as { data: { token: string } }).data.token);
+  const ownerToken = (JSON.parse(r.body) as { data: { token: string } }).data.token;
+  owner = bearer(ownerToken);
+  // The session's own rate-limit bucket is removed with the keys' at the end.
+  rawKeys.push(ownerToken);
   await db.execute(sql`
     INSERT INTO sending_domains (org_id, domain, dkim_selector, is_verified, dkim_verified, spf_verified, dmarc_verified)
     VALUES (${org}::uuid, ${DOMAIN}, 'fm1', true, true, true, true)
