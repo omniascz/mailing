@@ -7,10 +7,13 @@
  *
  * Flow:
  *   1. Contact subscribes → grantConsentPending() stores a pending token in Redis
- *   2. Confirmation email is sent with /gdpr/doi/confirm?token=<t> link
+ *   2. Confirmation email is sent with <API_PUBLIC_URL>/public/gdpr/doi/confirm?token=<t>
  *   3. Contact clicks → GET /public/gdpr/doi/confirm is a page with a button
  *      (doiTokenExists() only reads the token); the button POSTs, and
  *      confirmDoiConsent() validates token, inserts granted=true consent
+ *
+ * Where the button leads afterwards is only the redirectUrl the organisation
+ * gave when it started, kept with the token — never anything in the link.
  */
 
 import crypto from 'node:crypto';
@@ -19,6 +22,7 @@ import { processingPurposes, contactGdprConsents, contacts } from '../../db/sche
 import { and, eq } from 'drizzle-orm';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { env } from '../../config/env.js';
+import { AppError } from '../../lib/app-error.js';
 
 const DOI_TOKEN_TTL = 24 * 3600; // 24 hours in seconds
 
@@ -45,6 +49,32 @@ interface DoiPayload {
   contactId: string;
   purposeId: string;
   ipAddress?: string;
+  /** Where the button redirects after the consent: the organisation's, from the start. */
+  redirectUrl?: string;
+}
+
+/**
+ * The redirect target as given at the start: an absolute http: or https: URL,
+ * or an AppError 400 INVALID_REDIRECT_URL. Anything else — javascript:, a
+ * relative or scheme-relative path, ftp: — the button would have sent the
+ * person to, under our domain.
+ */
+export function parseRedirectUrl(value: unknown): string {
+  let url: URL | null = null;
+  try {
+    url = typeof value === 'string' ? new URL(value) : null;
+  } catch {
+    url = null;
+  }
+  if (!url || (url.protocol !== 'http:' && url.protocol !== 'https:')) {
+    throw new AppError({
+      code: 'INVALID_REDIRECT_URL',
+      message: 'redirectUrl must be an absolute http or https URL',
+      statusCode: 400,
+    });
+  }
+  // As the organisation wrote it: the Location the button answers with.
+  return value as string;
 }
 
 /**
@@ -55,8 +85,15 @@ export async function initiatePurposeDoi(
   orgId: string,
   contactId: string,
   purposeSlug: string,
-  options?: { ipAddress?: string; redirectUrl?: string },
+  options?: { ipAddress?: string; redirectUrl?: unknown },
 ): Promise<{ tokenKey: string }> {
+  // Checked before anything is looked up, stored or sent.
+  // Absent (undefined or null) means no target, as before.
+  const redirectUrl =
+    options?.redirectUrl === undefined || options.redirectUrl === null
+      ? undefined
+      : parseRedirectUrl(options.redirectUrl);
+
   // Resolve purpose
   const [purpose] = await db
     .select()
@@ -88,16 +125,19 @@ export async function initiatePurposeDoi(
     contactId,
     purposeId: purpose.id,
     ipAddress: options?.ipAddress,
+    ...(redirectUrl ? { redirectUrl } : {}),
   };
 
   const redis = await getRedis();
   await redis.set(tokenKey, JSON.stringify(payload), DOI_TOKEN_TTL);
 
-  // Build confirmation URL
-  const baseUrl = process.env.APP_BASE_URL ?? 'https://app.example.invalid';
-  const confirmUrl = new URL('/gdpr/doi/confirm', baseUrl);
+  // The page with the button, on the API, from the same base as the list DOI's
+  // link (services/subscriptions/doi.ts). It used to be APP_BASE_URL/gdpr/doi/
+  // confirm, which nothing serves (404), and carried the redirect target in
+  // its query, where anyone could rewrite it.
+  const baseUrl = process.env.API_PUBLIC_URL ?? process.env.APP_URL ?? 'http://localhost:3001';
+  const confirmUrl = new URL('/public/gdpr/doi/confirm', baseUrl);
   confirmUrl.searchParams.set('token', token);
-  if (options?.redirectUrl) confirmUrl.searchParams.set('redirect', options.redirectUrl);
 
   // Send confirmation email
   const firstName = contact.firstName ?? '';
@@ -123,12 +163,12 @@ export async function doiTokenExists(token: string): Promise<boolean> {
 
 /**
  * Confirm DOI consent from clicked email link.
- * Returns the purpose slug so caller can redirect appropriately.
+ * Returns the redirect target stored at the start, if the organisation gave one.
  */
 export async function confirmDoiConsent(
   token: string,
   ipAddress?: string,
-): Promise<{ purposeSlug: string; contactId: string }> {
+): Promise<{ purposeSlug: string; orgId: string; contactId: string; redirectUrl?: string }> {
   const redis = await getRedis();
   const tokenKey = `doi:purpose:${token}`;
   const raw = await redis.get(tokenKey);
@@ -165,7 +205,12 @@ export async function confirmDoiConsent(
   // Consume token (one-time use)
   await redis.del(tokenKey);
 
-  return { purposeSlug: purpose.slug, contactId: payload.contactId };
+  return {
+    purposeSlug: purpose.slug,
+    orgId: payload.orgId,
+    contactId: payload.contactId,
+    ...(payload.redirectUrl ? { redirectUrl: payload.redirectUrl } : {}),
+  };
 }
 
 // ─── Email template ───────────────────────────────────────────────────────────

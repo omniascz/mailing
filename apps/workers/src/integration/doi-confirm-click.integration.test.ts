@@ -831,16 +831,31 @@ describe('double opt-in — the button confirms, opening the link does not (Z176
     const t = /token=([0-9a-f]{64})/.exec(mail.href ?? '')?.[1] ?? '';
     const stored = async () => (await redis.exists(`doi:purpose:${t}`)) === 1;
     const url = `/public/gdpr/doi/confirm?token=${t}`;
-    // The link exactly as the e-mail has it points at APP_BASE_URL/gdpr/doi/confirm,
-    // not at this route; measured here, not changed (Z176 MIMO).
-    const emailLinkPathOnApi = page(await call('GET', `/gdpr/doi/confirm?token=${t}`, null));
+    // The link exactly as the e-mail has it — host, path and query — opened as
+    // is. It pointed at APP_BASE_URL/gdpr/doi/confirm, which nothing serves
+    // (404, Z176 MIMO 1); since Z184 it is this route on the API.
+    // A host that does not resolve is recorded as the error, not thrown.
+    const fromMail = mail.href
+      ? await fetch(mail.href, {
+          redirect: 'manual',
+          headers: { 'User-Agent': PERSON_UA },
+          signal: AbortSignal.timeout(60_000),
+        }).catch((err: unknown) => String(err))
+      : null;
+    const fromMailText = fromMail && typeof fromMail !== 'string' ? await fromMail.text() : '';
+    const emailLink =
+      fromMail && typeof fromMail !== 'string'
+        ? {
+            status: fromMail.status,
+            form: /<form[^>]*method="post"[^>]*>/i.exec(fromMailText)?.[0] ?? null,
+          }
+        : { error: fromMail };
     const get = page(await call('GET', url, null, undefined, { 'User-Agent': SCANNER_UA }));
     const head = page(await call('HEAD', url, null, undefined, { 'User-Agent': SCANNER_UA }));
     const afterOpen = { consents: await consents(), stored: await stored() };
     const afterOpenCampaign = await campaignTo(LP, [pp.email], purpose.data.id);
-    const action = /<form method="post" action="([^"]+)">/.exec(
-      (await call('GET', url, null, undefined, { 'User-Agent': PERSON_UA })).text,
-    )?.[1];
+    // The person presses the button of the page the e-mail's link opened.
+    const action = /<form method="post" action="([^"]+)">/.exec(fromMailText)?.[1];
     const post = action
       ? page(
           await call('POST', action.replace(/&amp;/g, '&'), null, '', { 'User-Agent': PERSON_UA }),
@@ -855,7 +870,7 @@ describe('double opt-in — the button confirms, opening the link does not (Z176
         engine: mail.engine,
         href: mail.href?.replace(/token=[0-9a-f]{64}/, 'token=<token>') ?? null,
       },
-      emailLinkPathOnApi,
+      emailLink,
       get,
       head,
       afterOpen,
@@ -866,6 +881,13 @@ describe('double opt-in — the button confirms, opening the link does not (Z176
     };
     expect(start.status).toBe(200);
     expect(mail.engine).toBe(1);
+    expect(mail.href).toBe(
+      `${process.env.API_PUBLIC_URL ?? process.env.APP_URL ?? 'http://localhost:3001'}/public/gdpr/doi/confirm?token=${t}`,
+    );
+    expect(emailLink).toEqual({
+      status: 200,
+      form: `<form method="post" action="/public/gdpr/doi/confirm?token=${t}">`,
+    });
     expect(get.status).toBe(200);
     expect(get.form).toBe(`<form method="post" action="/public/gdpr/doi/confirm?token=${t}">`);
     expect(head.status).toBe(200);
@@ -876,7 +898,10 @@ describe('double opt-in — the button confirms, opening the link does not (Z176
     expect(afterOpenCampaign.reached, 'a campaign under the purpose followed the scanner').toEqual(
       [],
     );
-    expect(post?.status).toBe(303);
+    // Without a target from the start the API's own "confirmed" page; it used
+    // to be 303 to APP_BASE_URL/gdpr/confirmed, which nothing serves (Z184).
+    expect(post?.status).toBe(200);
+    expect(post?.location).toBeNull();
     expect(afterPost).toEqual({ consents: ['true/doi_email'], stored: false });
     expect(afterPostCampaign.reached).toEqual(['z176-pp']);
   }, 300_000);

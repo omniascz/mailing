@@ -84,7 +84,7 @@ export async function resolvePageLocale(
 }
 
 /** Build an i18n'd page from a section key: returns [title, bodyHTML]. */
-function pageFromKey(
+export function pageFromKey(
   section:
     | 'doi_confirmed_page'
     | 'doi_expired_page'
