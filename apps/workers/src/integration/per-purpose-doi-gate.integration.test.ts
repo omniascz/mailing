@@ -272,6 +272,9 @@ describe('per-purpose DOI start to the engine: roles, live contact, three per 24
     // Everything else of the organisation goes with it (ON DELETE CASCADE).
     await sql`DELETE FROM organizations WHERE id = ${org}`;
     await sql`DELETE FROM api_keys WHERE name = ${`integration z185-${tag}`}`;
+    // A plain variable: a template literal in a hole reads as composed SQL to
+    // the sql-explain check, which cannot then plan the statement.
+    const keyNames = `%z185%${tag}%`;
     const [left] = await sql<Record<string, number>[]>`
       SELECT (SELECT count(*)::int FROM organizations WHERE id = ${org}) AS orgs,
              (SELECT count(*)::int FROM contacts WHERE org_id = ${org}) AS contacts,
@@ -279,7 +282,8 @@ describe('per-purpose DOI start to the engine: roles, live contact, three per 24
              (SELECT count(*)::int FROM email_events WHERE org_id = ${org}) AS email_events,
              (SELECT count(*)::int FROM processing_purposes WHERE org_id = ${org}) AS purposes,
              (SELECT count(*)::int FROM organization_members WHERE org_id = ${org}) AS members,
-             (SELECT count(*)::int FROM api_keys WHERE org_id = ${org} OR name LIKE ${`%z185%${tag}%`}) AS api_keys
+             (SELECT count(*)::int FROM api_keys WHERE org_id = ${org}) AS api_keys,
+             (SELECT count(*)::int FROM api_keys WHERE name LIKE ${keyNames}) AS api_keys_named
     `;
     let doiLeft = 0;
     cursor = '0';
@@ -306,6 +310,7 @@ describe('per-purpose DOI start to the engine: roles, live contact, three per 24
       purposes: 0,
       members: 0,
       api_keys: 0,
+      api_keys_named: 0,
     });
     expect(doiLeft).toBe(0);
     // The seed organisation exactly as this file found it (a snapshot, not zeros).
