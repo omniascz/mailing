@@ -14,7 +14,11 @@ import {
   setContactTopicStatus,
 } from '../../services/topics/index.js';
 import { verifyTrackingToken } from '@forgemsg/shared';
+import { and, eq, isNull } from 'drizzle-orm';
+import { db } from '../../db/client.js';
+import { contacts } from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
+import { prefTokenMayResubscribe } from '../../services/preference-center/index.js';
 
 const topicRoutes: FastifyPluginAsync = async (app) => {
   // ── Authed topic CRUD ─────────────────────────────────────────────────────
@@ -89,21 +93,45 @@ const topicRoutes: FastifyPluginAsync = async (app) => {
   );
 
   // ── Public: view/update topic prefs via preference-center token ────────────
-  function resolvePrefToken(token: string): { orgId: string; contactId: string } {
+  //
+  // The same token as /p/center, under the same rules: joining a topic is a
+  // consent, so only a link younger than 30 days raises it (a forwarded or
+  // leaked year-old e-mail no longer does); leaving works with a link of any
+  // age; a deleted or unknown contact has no preferences to show or change.
+  function resolvePrefToken(token: string): {
+    orgId: string;
+    contactId: string;
+    mayResubscribe: boolean;
+  } {
     const payload = verifyTrackingToken(token) as {
       type?: string;
       orgId?: string;
       contactId?: string;
+      ts?: unknown;
     } | null;
     if (!payload || payload.type !== 'pref' || !payload.orgId || !payload.contactId) {
       throw AppError.unauthorized('Invalid or expired token');
     }
-    return { orgId: payload.orgId, contactId: payload.contactId };
+    return {
+      orgId: payload.orgId,
+      contactId: payload.contactId,
+      mayResubscribe: prefTokenMayResubscribe(payload),
+    };
+  }
+
+  async function requireLiveContact(orgId: string, contactId: string): Promise<void> {
+    const [contact] = await db
+      .select({ id: contacts.id })
+      .from(contacts)
+      .where(and(eq(contacts.orgId, orgId), eq(contacts.id, contactId), isNull(contacts.deletedAt)))
+      .limit(1);
+    if (!contact) throw AppError.notFound('Contact');
   }
 
   app.get('/public/topics/:token', { schema: { tags: ['Topics'] } }, async (req) => {
     const { token } = z.object({ token: z.string().min(10) }).parse(req.params);
     const { orgId, contactId } = resolvePrefToken(token);
+    await requireLiveContact(orgId, contactId);
     return { data: await listContactTopics(orgId, contactId) };
   });
 
@@ -112,7 +140,11 @@ const topicRoutes: FastifyPluginAsync = async (app) => {
     const body = z
       .object({ topicId: z.string().uuid(), status: z.enum(['subscribed', 'unsubscribed']) })
       .parse(req.body);
-    const { orgId, contactId } = resolvePrefToken(token);
+    const { orgId, contactId, mayResubscribe } = resolvePrefToken(token);
+    await requireLiveContact(orgId, contactId);
+    if (body.status === 'subscribed' && !mayResubscribe) {
+      return { data: { ok: false, resubscribeRefused: 'link_expired' as const } };
+    }
     await setContactTopicStatus(orgId, contactId, body.topicId, body.status);
     return { data: { ok: true } };
   });

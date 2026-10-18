@@ -125,13 +125,31 @@ export async function listContactTopics(
   }));
 }
 
-/** Set a contact's explicit status for a topic (upsert). */
+/**
+ * Set a contact's explicit status for a topic (upsert). The topic has to be a
+ * live topic of the organisation: the foreign key alone accepted any topic id
+ * at all — another organisation's, a switched-off one — and the webhook below
+ * carried it into the customer's systems as a preference change.
+ */
 export async function setContactTopicStatus(
   orgId: string,
   contactId: string,
   topicId: string,
   status: SubStatus,
 ): Promise<void> {
+  const [topic] = await db
+    .select({ id: subscriptionTopics.id })
+    .from(subscriptionTopics)
+    .where(
+      and(
+        eq(subscriptionTopics.id, topicId),
+        eq(subscriptionTopics.orgId, orgId),
+        eq(subscriptionTopics.active, true),
+      ),
+    )
+    .limit(1);
+  if (!topic) throw AppError.notFound('Topic');
+
   await db
     .insert(contactTopicSubscriptions)
     .values({ orgId, contactId, topicId, status })
