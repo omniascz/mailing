@@ -15,6 +15,7 @@ import { randomUUID } from 'node:crypto';
 import { createTestApp, login } from './setup/harness.js';
 import { db } from '../db/client.js';
 import {
+  consentEvents,
   contactLists,
   contacts,
   emailEvents,
@@ -64,6 +65,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db.delete(emailEvents).where(eq(emailEvents.orgId, orgId));
+  // The opt_out rows a recipient's own unsubscribe writes since Z186.
+  await db.delete(consentEvents).where(eq(consentEvents.orgId, orgId));
   await db.delete(smsKeywords).where(eq(smsKeywords.orgId, orgId));
   await db.delete(subscriptionTopics).where(eq(subscriptionTopics.orgId, orgId));
   await db.delete(suppressions).where(eq(suppressions.orgId, orgId));

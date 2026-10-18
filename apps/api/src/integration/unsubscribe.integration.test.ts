@@ -19,6 +19,7 @@ import { createTestApp } from './setup/harness.js';
 import { db } from '../db/client.js';
 import {
   campaigns,
+  consentEvents,
   contactLists,
   contacts,
   emailEvents,
@@ -71,6 +72,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db.delete(emailEvents).where(eq(emailEvents.orgId, orgId));
+  // The opt_out rows a recipient's own unsubscribe writes since Z186.
+  await db.delete(consentEvents).where(eq(consentEvents.orgId, orgId));
   await db.delete(campaigns).where(eq(campaigns.orgId, orgId));
   if (madeContacts.length > 0) {
     await db.delete(contactLists).where(inArray(contactLists.contactId, madeContacts));

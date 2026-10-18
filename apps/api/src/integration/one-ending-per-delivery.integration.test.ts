@@ -39,6 +39,7 @@ import {
   apiKeys,
   billingSubscriptions,
   campaigns,
+  consentEvents,
   contacts,
   emailEvents,
   organizations,
@@ -152,6 +153,8 @@ beforeAll(async () => {
 afterAll(async () => {
   if (org) {
     await db.delete(emailEvents).where(eq(emailEvents.orgId, org));
+    // The opt_out row a recipient's own unsubscribe writes since Z186.
+    await db.delete(consentEvents).where(eq(consentEvents.orgId, org));
     await db.delete(organizations).where(eq(organizations.id, org));
   }
   await app?.close();

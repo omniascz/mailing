@@ -313,6 +313,9 @@ describe('an address carries every reason it is suppressed for (real DB + Redis 
     }
     if (contactIds.length) {
       await sql`DELETE FROM email_events WHERE contact_id = ANY(${contactIds})`;
+      // Only the rows Z186 writes: a recipient's opt_out and the re_consent of a
+      // reopened list row (no fromStatus) — nothing this file left before.
+      await sql`DELETE FROM consent_events WHERE contact_id = ANY(${contactIds}) AND (event_type = 'opt_out' OR (event_type = 're_consent' AND proof_payload->>'fromStatus' IS NULL))`;
       await sql`DELETE FROM contact_lists WHERE contact_id = ANY(${contactIds})`;
       await sql`DELETE FROM contacts WHERE id = ANY(${contactIds})`;
     }

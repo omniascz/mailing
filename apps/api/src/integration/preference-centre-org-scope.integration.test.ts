@@ -27,7 +27,7 @@ import { and, eq, inArray, sql as dsql } from 'drizzle-orm';
 import { createTrackingToken } from '@forgemsg/shared';
 import { createTestApp } from './setup/harness.js';
 import { db } from '../db/client.js';
-import { organizations, contacts, lists, contactLists } from '../db/schema/index.js';
+import { organizations, contacts, lists, contactLists, consentEvents } from '../db/schema/index.js';
 
 const tag = randomUUID().slice(0, 8);
 
@@ -104,6 +104,8 @@ describe('POST /p/center/:token stays inside the token’s organisation', () => 
   }, 120_000);
 
   afterAll(async () => {
+    // The opt_out / re_consent rows the preference centre writes since Z186.
+    await db.delete(consentEvents).where(eq(consentEvents.orgId, orgA));
     await db.delete(contactLists).where(eq(contactLists.contactId, contactId));
     await db.delete(contacts).where(eq(contacts.id, contactId));
     await db.delete(lists).where(inArray(lists.id, [ownList, foreignList]));

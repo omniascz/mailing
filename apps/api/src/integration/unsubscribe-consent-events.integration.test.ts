@@ -577,10 +577,11 @@ afterAll(async () => {
   for (const tk of legacyTokens) legacyKeysLeft += await redis.exists(`unsub:${tk}`);
   let limitKeysRemoved = 0;
   const digests = rawKeys.map((k) => createHash('sha256').update(k).digest('hex').slice(0, 32));
-  for (const d of digests) {
+  // The sessions' buckets, and this file's own address's on the public routes.
+  for (const pattern of [...digests.map((d) => `*${d}*`), `*${IP}*`]) {
     let cur = '0';
     do {
-      const [next, keys] = await redis.scan(cur, 'MATCH', `*${d}*`, 'COUNT', 1000);
+      const [next, keys] = await redis.scan(cur, 'MATCH', pattern, 'COUNT', 1000);
       cur = next;
       for (const k of keys) {
         await redis.del(k);
@@ -638,466 +639,514 @@ afterAll(async () => {
   expect(seedAfter, 'the seed organisation changed').toEqual(seedBefore);
 }, 180_000);
 
-describe("a recipient's own unsubscribe and way back are on the consent timeline (Z186)", () => {
-  it('K — the double opt-in: active, one double_opt_in row, the summary reads consent', async () => {
-    const p = await doiPerson('k-doi');
-    const s = await stateOf(p);
-    cells.K_doi = {
-      confirm: p.confirm,
-      status: s.status,
-      lists: s.lists,
-      consent: s.consent.map(shape),
-      summary: s.summary,
-    };
-    expect(s.status).toBe('active');
-    expect(s.lists).toEqual({ D: 'NULL', L2: 'NULL' });
-    expect(s.consent.map((c) => `${c.event_type}/${c.source}`)).toEqual([
-      'double_opt_in/double_opt_in',
-    ]);
-    expect(s.summary).toEqual({ hasActiveConsent: true, email: 'double_opt_in', totalEvents: 1 });
-  });
+// Every contact passes the confirmation route, whose per-address limit this
+// file honours by waiting out its Retry-After (rateLimitWaits) — a wait of up
+// to a minute inside one test, beyond the default 60 s of the suite.
+describe(
+  "a recipient's own unsubscribe and way back are on the consent timeline (Z186)",
+  { timeout: 240_000 },
+  () => {
+    it('K — the double opt-in: active, one double_opt_in row, the summary reads consent', async () => {
+      const p = await doiPerson('k-doi');
+      const s = await stateOf(p);
+      cells.K_doi = {
+        confirm: p.confirm,
+        status: s.status,
+        lists: s.lists,
+        consent: s.consent.map(shape),
+        summary: s.summary,
+      };
+      expect(s.status).toBe('active');
+      expect(s.lists).toEqual({ D: 'NULL', L2: 'NULL' });
+      expect(s.consent.map((c) => `${c.event_type}/${c.source}`)).toEqual([
+        'double_opt_in/double_opt_in',
+      ]);
+      expect(s.summary).toEqual({ hasActiveConsent: true, email: 'double_opt_in', totalEvents: 1 });
+    });
 
-  describe('U — every path a recipient unsubscribes by, twice', () => {
-    const globalPaths: {
-      name: string;
-      source: string;
-      method?: string;
-      campaign?: boolean;
-      token: (p: Person) => Promise<string>;
-      send: (token: string) => Promise<Res>;
-    }[] = [
-      {
-        name: 'U_get_signed',
-        source: 'footer_link',
-        method: 'GET',
-        token: async (p) => unsubToken(p),
-        send: (t) => inject('GET', `/api/v1/unsubscribe/${t}`, AS_BROWSER),
-      },
-      {
-        name: 'U_get_signed_campaign',
-        source: 'footer_link',
-        method: 'GET',
-        campaign: true,
-        token: async (p) => unsubToken(p, true),
-        send: (t) => inject('GET', `/api/v1/unsubscribe/${t}`, AS_BROWSER),
-      },
-      {
-        name: 'U_get_legacy_uuid',
-        source: 'footer_link',
-        method: 'GET',
-        token: legacyToken,
-        send: (t) => inject('GET', `/api/v1/unsubscribe/${t}`, AS_BROWSER),
-      },
-      {
-        name: 'U_head_signed',
-        source: 'footer_link',
-        method: 'HEAD',
-        token: async (p) => unsubToken(p),
-        send: (t) => inject('HEAD', `/api/v1/unsubscribe/${t}`, AS_BROWSER),
-      },
-      {
-        name: 'U_post_one_click_path',
-        source: 'one_click',
-        method: 'POST',
-        campaign: true,
-        token: async (p) => unsubToken(p, true),
-        send: (t) =>
-          inject(
-            'POST',
-            `/api/v1/unsubscribe/${t}`,
-            { ...JSON_UA, 'content-type': 'application/x-www-form-urlencoded' },
-            'List-Unsubscribe=One-Click',
-          ),
-      },
-      {
-        name: 'U_post_one_click_body',
-        source: 'one_click',
-        method: 'POST',
-        token: async (p) => unsubToken(p),
-        send: (t) => inject('POST', '/api/v1/unsubscribe', JSON_UA, { token: t }),
-      },
-      {
-        name: 'U_post_one_click_body_legacy',
-        source: 'one_click',
-        method: 'POST',
-        token: legacyToken,
-        send: (t) => inject('POST', '/api/v1/unsubscribe', JSON_UA, { token: t }),
-      },
-      {
-        name: 'U_centre_page_all',
-        source: 'preference_centre',
-        method: 'POST',
-        token: async (p) => prefToken(p),
-        send: (t) =>
-          inject(
-            'POST',
-            `/p/center/${t}`,
-            FORM,
-            new URLSearchParams([['action', 'unsubscribe_all']]).toString(),
-          ),
-      },
-      {
-        name: 'U_centre_json_global',
-        source: 'preference_centre',
-        method: 'POST',
-        token: async (p) => prefToken(p),
-        send: (t) => inject('POST', `/p/center/${t}`, JSON_UA, { globalUnsubscribe: true }),
-      },
-      {
-        name: 'U_legacy_preferences_all',
-        source: 'preference_centre',
-        method: 'POST',
-        token: legacyToken,
-        send: (t) => inject('POST', `/api/v1/preferences/${t}`, JSON_UA, { unsubscribeAll: true }),
-      },
-    ];
+    describe('U — every path a recipient unsubscribes by, twice', () => {
+      const globalPaths: {
+        name: string;
+        source: string;
+        method?: string;
+        campaign?: boolean;
+        token: (p: Person) => Promise<string>;
+        send: (token: string) => Promise<Res>;
+      }[] = [
+        {
+          name: 'U_get_signed',
+          source: 'footer_link',
+          method: 'GET',
+          token: async (p) => unsubToken(p),
+          send: (t) => inject('GET', `/api/v1/unsubscribe/${t}`, AS_BROWSER),
+        },
+        {
+          name: 'U_get_signed_campaign',
+          source: 'footer_link',
+          method: 'GET',
+          campaign: true,
+          token: async (p) => unsubToken(p, true),
+          send: (t) => inject('GET', `/api/v1/unsubscribe/${t}`, AS_BROWSER),
+        },
+        {
+          name: 'U_get_legacy_uuid',
+          source: 'footer_link',
+          method: 'GET',
+          token: legacyToken,
+          send: (t) => inject('GET', `/api/v1/unsubscribe/${t}`, AS_BROWSER),
+        },
+        {
+          name: 'U_head_signed',
+          source: 'footer_link',
+          method: 'HEAD',
+          token: async (p) => unsubToken(p),
+          send: (t) => inject('HEAD', `/api/v1/unsubscribe/${t}`, AS_BROWSER),
+        },
+        {
+          name: 'U_post_one_click_path',
+          source: 'one_click',
+          method: 'POST',
+          campaign: true,
+          token: async (p) => unsubToken(p, true),
+          send: (t) =>
+            inject(
+              'POST',
+              `/api/v1/unsubscribe/${t}`,
+              { ...JSON_UA, 'content-type': 'application/x-www-form-urlencoded' },
+              'List-Unsubscribe=One-Click',
+            ),
+        },
+        {
+          name: 'U_post_one_click_body',
+          source: 'one_click',
+          method: 'POST',
+          token: async (p) => unsubToken(p),
+          send: (t) => inject('POST', '/api/v1/unsubscribe', JSON_UA, { token: t }),
+        },
+        {
+          name: 'U_post_one_click_body_legacy',
+          source: 'one_click',
+          method: 'POST',
+          token: legacyToken,
+          send: (t) => inject('POST', '/api/v1/unsubscribe', JSON_UA, { token: t }),
+        },
+        {
+          name: 'U_centre_page_all',
+          source: 'preference_centre',
+          method: 'POST',
+          token: async (p) => prefToken(p),
+          send: (t) =>
+            inject(
+              'POST',
+              `/p/center/${t}`,
+              FORM,
+              new URLSearchParams([['action', 'unsubscribe_all']]).toString(),
+            ),
+        },
+        {
+          name: 'U_centre_json_global',
+          source: 'preference_centre',
+          method: 'POST',
+          token: async (p) => prefToken(p),
+          send: (t) => inject('POST', `/p/center/${t}`, JSON_UA, { globalUnsubscribe: true }),
+        },
+        {
+          name: 'U_legacy_preferences_all',
+          source: 'preference_centre',
+          method: 'POST',
+          token: legacyToken,
+          send: (t) =>
+            inject('POST', `/api/v1/preferences/${t}`, JSON_UA, { unsubscribeAll: true }),
+        },
+      ];
 
-    for (const path of globalPaths) {
-      it(`${path.name} — ${path.source}: one opt_out (global), the repeat none`, async () => {
-        const p = await doiPerson(path.name.toLowerCase());
-        const token = await path.token(p);
-        const first = await click(p, token, () => path.send(token));
-        const second = await click(p, token, () => path.send(token));
-        record(path.name, { first, second });
-        // Unchanged by Z186, on master and branch alike.
-        expect(first.delta).toMatchObject(LEFT_ALL);
-        expect(first.delta.newUnsubscribeEvents).toHaveLength(1);
-        expect(second.delta).toMatchObject(LEFT_ALL);
-        // Z186.
-        expectOptOut(first, {
-          source: path.source,
-          scope: 'global',
-          ...(path.campaign ? { campaignId } : {}),
-          ...(path.method ? { method: path.method } : {}),
+      for (const path of globalPaths) {
+        it(`${path.name} — ${path.source}: one opt_out (global), the repeat none`, async () => {
+          const p = await doiPerson(path.name.toLowerCase());
+          const token = await path.token(p);
+          const first = await click(p, token, () => path.send(token));
+          const second = await click(p, token, () => path.send(token));
+          record(path.name, { first, second });
+          // Unchanged by Z186, on master and branch alike.
+          expect(first.delta).toMatchObject(LEFT_ALL);
+          expect(first.delta.newUnsubscribeEvents).toHaveLength(1);
+          expect(second.delta).toMatchObject(LEFT_ALL);
+          // Z186.
+          expectOptOut(first, {
+            source: path.source,
+            scope: 'global',
+            ...(path.campaign ? { campaignId } : {}),
+            ...(path.method ? { method: path.method } : {}),
+          });
+          expectRepeat(second);
+          expect(first.delta.summary).toEqual({
+            hasActiveConsent: false,
+            email: 'opt_out',
+            totalEvents: 2,
+          });
         });
-        expectRepeat(second);
-        expect(first.delta.summary).toEqual({
-          hasActiveConsent: false,
-          email: 'opt_out',
-          totalEvents: 2,
+      }
+
+      const listPaths: {
+        name: string;
+        token: (p: Person) => Promise<string>;
+        send: (token: string) => Promise<Res>;
+      }[] = [
+        {
+          name: 'U_centre_page_list',
+          token: async (p) => prefToken(p),
+          // The "save" form with D's box unticked and L2's ticked.
+          send: (t) =>
+            inject(
+              'POST',
+              `/p/center/${t}`,
+              FORM,
+              new URLSearchParams([
+                ['action', 'save'],
+                ['list', L2],
+              ]).toString(),
+            ),
+        },
+        {
+          name: 'U_centre_json_list',
+          token: async (p) => prefToken(p),
+          send: (t) => inject('POST', `/p/center/${t}`, JSON_UA, { unsubscribeFromLists: [D] }),
+        },
+        {
+          name: 'U_legacy_preferences_list',
+          token: legacyToken,
+          send: (t) =>
+            inject('POST', `/api/v1/preferences/${t}`, JSON_UA, { listIdsToRemove: [D] }),
+        },
+      ];
+
+      for (const path of listPaths) {
+        it(`${path.name} — preference_centre: one opt_out (list D), the repeat none`, async () => {
+          const p = await doiPerson(path.name.toLowerCase());
+          const token = await path.token(p);
+          const first = await click(p, token, () => path.send(token));
+          const second = await click(p, token, () => path.send(token));
+          record(path.name, { first, second });
+          expect(first.delta).toMatchObject(LEFT_D);
+          expect(first.delta.newUnsubscribeEvents).toHaveLength(1);
+          expect(second.delta).toMatchObject(LEFT_D);
+          expectOptOut(first, {
+            source: 'preference_centre',
+            scope: 'list',
+            listId: D,
+            method: 'POST',
+          });
+          expectRepeat(second);
         });
+      }
+
+      it('U_centre_ip_ua — the centre hands unsubscribeContact the IP and User-Agent (email_events)', () => {
+        const ev = (name: string) =>
+          (cells[name] as { first: { newUnsubscribeEvents: ReturnType<typeof eventShape>[] } })
+            .first.newUnsubscribeEvents[0];
+        const got = {
+          page_all: ev('U_centre_page_all'),
+          json_global: ev('U_centre_json_global'),
+          page_list: ev('U_centre_page_list'),
+          json_list: ev('U_centre_json_list'),
+        };
+        cells.U_centre_ip_ua = got;
+        for (const e of Object.values(got))
+          expect({ ip: e?.ip, ua: e?.ua }).toEqual({ ip: IP, ua: PERSON_UA });
       });
-    }
+    });
 
-    const listPaths: {
-      name: string;
-      token: (p: Person) => Promise<string>;
-      send: (token: string) => Promise<Res>;
-    }[] = [
-      {
-        name: 'U_centre_page_list',
-        token: async (p) => prefToken(p),
-        // The "save" form with D's box unticked and L2's ticked.
-        send: (t) =>
+    describe('R — back to a list left, through the preference centre', () => {
+      /** A person who left D by the centre's JSON with a fresh link. */
+      async function leftD(label: string): Promise<Person> {
+        const p = await doiPerson(label);
+        const r = await inject('POST', `/p/center/${prefToken(p)}`, JSON_UA, {
+          unsubscribeFromLists: [D],
+        });
+        expect(r.status).toBe(200);
+        return p;
+      }
+      const reConsent = (c: Click) =>
+        c.delta.newConsent.filter((e) => e.event_type === 're_consent');
+
+      it('R_json — resubscribeToLists [D]: one re_consent, the repeat none', async () => {
+        const p = await leftD('r-json');
+        const token = prefToken(p);
+        const send = () =>
+          inject('POST', `/p/center/${token}`, JSON_UA, { resubscribeToLists: [D] });
+        const first = await click(p, token, send);
+        const second = await click(p, token, send);
+        record('R_json', { first, second });
+        expect(first.delta.lists).toEqual({ D: 'NULL', L2: 'NULL' });
+        expect(second.delta.lists).toEqual({ D: 'NULL', L2: 'NULL' });
+        expect(first.delta.newUnsubscribeEvents).toEqual([]);
+        expect(first.delta.newConsent.map(shape)).toEqual([
+          {
+            event_type: 're_consent',
+            legal_basis: 'consent',
+            channel: 'email',
+            purpose_code: 'marketing_email',
+            consent_version: null,
+            ip_hash: '<sha256(IP)>',
+            user_agent: PERSON_UA,
+            source: 'preference_center',
+            source_url: null,
+            operator_id: null,
+            proof_payload: { listId: D, via: 'api' },
+          },
+        ]);
+        expect(second.delta.newConsent).toEqual([]);
+      });
+
+      it('R_page — the "save" form with D ticked again: one re_consent (via page), the repeat none', async () => {
+        const p = await leftD('r-page');
+        const token = prefToken(p);
+        const send = () =>
           inject(
             'POST',
-            `/p/center/${t}`,
+            `/p/center/${token}`,
             FORM,
             new URLSearchParams([
               ['action', 'save'],
+              ['list', D],
               ['list', L2],
             ]).toString(),
-          ),
-      },
-      {
-        name: 'U_centre_json_list',
-        token: async (p) => prefToken(p),
-        send: (t) => inject('POST', `/p/center/${t}`, JSON_UA, { unsubscribeFromLists: [D] }),
-      },
-      {
-        name: 'U_legacy_preferences_list',
-        token: legacyToken,
-        send: (t) => inject('POST', `/api/v1/preferences/${t}`, JSON_UA, { listIdsToRemove: [D] }),
-      },
-    ];
+          );
+        const first = await click(p, token, send);
+        const second = await click(p, token, send);
+        record('R_page', { first, second });
+        expect(first.delta.lists).toEqual({ D: 'NULL', L2: 'NULL' });
+        expect(
+          first.delta.newConsent.map((c) => ({ type: c.event_type, payload: c.proof_payload })),
+        ).toEqual([{ type: 're_consent', payload: { listId: D, via: 'page' } }]);
+        expect(second.delta.newConsent).toEqual([]);
+      });
 
-    for (const path of listPaths) {
-      it(`${path.name} — preference_centre: one opt_out (list D), the repeat none`, async () => {
-        const p = await doiPerson(path.name.toLowerCase());
-        const token = await path.token(p);
-        const first = await click(p, token, () => path.send(token));
-        const second = await click(p, token, () => path.send(token));
-        record(path.name, { first, second });
-        expect(first.delta).toMatchObject(LEFT_D);
-        expect(first.delta.newUnsubscribeEvents).toHaveLength(1);
-        expect(second.delta).toMatchObject(LEFT_D);
-        expectOptOut(first, {
-          source: 'preference_centre',
-          scope: 'list',
-          listId: D,
-          method: 'POST',
+      it('R_old — a 31-day link: refused, D stays closed, no row', async () => {
+        const p = await leftD('r-old');
+        const token = prefToken(p, 31 * DAY);
+        const send = () =>
+          inject('POST', `/p/center/${token}`, JSON_UA, { resubscribeToLists: [D] });
+        const first = await click(p, token, send);
+        const second = await click(p, token, send);
+        record('R_old', { first, second });
+        expect(first.delta.lists).toEqual({ D: 'SET', L2: 'NULL' });
+        expect(first.delta.newConsent).toEqual([]);
+        expect(second.delta.newConsent).toEqual([]);
+      });
+
+      it('R_never — a list of the organisation the contact was never on: no row, no membership', async () => {
+        const p = await leftD('r-never');
+        const token = prefToken(p);
+        const send = () =>
+          inject('POST', `/p/center/${token}`, JSON_UA, { resubscribeToLists: [M] });
+        const first = await click(p, token, send);
+        const second = await click(p, token, send);
+        record('R_never', { first, second });
+        expect(first.delta.lists).toEqual({ D: 'SET', L2: 'NULL' });
+        expect(first.delta.newConsent).toEqual([]);
+        expect(second.delta.newConsent).toEqual([]);
+      });
+
+      it("R_foreign — another organisation's list: no row, no membership", async () => {
+        const p = await leftD('r-foreign');
+        const token = prefToken(p);
+        const send = () =>
+          inject('POST', `/p/center/${token}`, JSON_UA, { resubscribeToLists: [FOREIGN] });
+        const first = await click(p, token, send);
+        const second = await click(p, token, send);
+        record('R_foreign', { first, second });
+        expect(first.delta.lists).toEqual({ D: 'SET', L2: 'NULL' });
+        expect(first.delta.newConsent).toEqual([]);
+        expect(second.delta.newConsent).toEqual([]);
+      });
+
+      it('R_back_all — the page\'s "subscribe again" with D ticked: the global re_consent as before, and one for D', async () => {
+        const p = await doiPerson('r-back-all');
+        const token = prefToken(p);
+        const unsub = await inject('POST', `/p/center/${token}`, JSON_UA, {
+          globalUnsubscribe: true,
         });
-        expectRepeat(second);
-      });
-    }
-
-    it('U_centre_ip_ua — the centre hands unsubscribeContact the IP and User-Agent (email_events)', () => {
-      const ev = (name: string) =>
-        (cells[name] as { first: { newUnsubscribeEvents: ReturnType<typeof eventShape>[] } }).first
-          .newUnsubscribeEvents[0];
-      const got = {
-        page_all: ev('U_centre_page_all'),
-        json_global: ev('U_centre_json_global'),
-        page_list: ev('U_centre_page_list'),
-        json_list: ev('U_centre_json_list'),
-      };
-      cells.U_centre_ip_ua = got;
-      for (const e of Object.values(got))
-        expect({ ip: e?.ip, ua: e?.ua }).toEqual({ ip: IP, ua: PERSON_UA });
-    });
-  });
-
-  describe('R — back to a list left, through the preference centre', () => {
-    /** A person who left D by the centre's JSON with a fresh link. */
-    async function leftD(label: string): Promise<Person> {
-      const p = await doiPerson(label);
-      const r = await inject('POST', `/p/center/${prefToken(p)}`, JSON_UA, {
-        unsubscribeFromLists: [D],
-      });
-      expect(r.status).toBe(200);
-      return p;
-    }
-    const reConsent = (c: Click) => c.delta.newConsent.filter((e) => e.event_type === 're_consent');
-
-    it('R_json — resubscribeToLists [D]: one re_consent, the repeat none', async () => {
-      const p = await leftD('r-json');
-      const token = prefToken(p);
-      const send = () => inject('POST', `/p/center/${token}`, JSON_UA, { resubscribeToLists: [D] });
-      const first = await click(p, token, send);
-      const second = await click(p, token, send);
-      record('R_json', { first, second });
-      expect(first.delta.lists).toEqual({ D: 'NULL', L2: 'NULL' });
-      expect(second.delta.lists).toEqual({ D: 'NULL', L2: 'NULL' });
-      expect(first.delta.newUnsubscribeEvents).toEqual([]);
-      expect(first.delta.newConsent.map(shape)).toEqual([
-        {
-          event_type: 're_consent',
-          legal_basis: 'consent',
-          channel: 'email',
-          purpose_code: 'marketing_email',
-          consent_version: null,
-          ip_hash: '<sha256(IP)>',
-          user_agent: PERSON_UA,
-          source: 'preference_center',
-          source_url: null,
-          operator_id: null,
-          proof_payload: { listId: D, via: 'api' },
-        },
-      ]);
-      expect(second.delta.newConsent).toEqual([]);
-    });
-
-    it('R_page — the "save" form with D ticked again: one re_consent (via page), the repeat none', async () => {
-      const p = await leftD('r-page');
-      const token = prefToken(p);
-      const send = () =>
-        inject(
-          'POST',
-          `/p/center/${token}`,
-          FORM,
-          new URLSearchParams([
-            ['action', 'save'],
-            ['list', D],
-            ['list', L2],
-          ]).toString(),
+        expect(unsub.status).toBe(200);
+        const send = () =>
+          inject(
+            'POST',
+            `/p/center/${token}`,
+            FORM,
+            new URLSearchParams([
+              ['action', 'resubscribe'],
+              ['list', D],
+            ]).toString(),
+          );
+        const first = await click(p, token, send);
+        const second = await click(p, token, send);
+        record('R_back_all', { first, second });
+        expect(first.delta.status).toBe('active');
+        expect(first.delta.lists).toEqual({ D: 'NULL', L2: 'SET' });
+        // K: the global way back keeps its own row.
+        const global = reConsent(first).filter(
+          (c) => (c.proof_payload ?? {}).liftedUnsubscribe !== undefined,
         );
-      const first = await click(p, token, send);
-      const second = await click(p, token, send);
-      record('R_page', { first, second });
-      expect(first.delta.lists).toEqual({ D: 'NULL', L2: 'NULL' });
-      expect(
-        first.delta.newConsent.map((c) => ({ type: c.event_type, payload: c.proof_payload })),
-      ).toEqual([{ type: 're_consent', payload: { listId: D, via: 'page' } }]);
-      expect(second.delta.newConsent).toEqual([]);
-    });
-
-    it('R_old — a 31-day link: refused, D stays closed, no row', async () => {
-      const p = await leftD('r-old');
-      const token = prefToken(p, 31 * DAY);
-      const send = () => inject('POST', `/p/center/${token}`, JSON_UA, { resubscribeToLists: [D] });
-      const first = await click(p, token, send);
-      const second = await click(p, token, send);
-      record('R_old', { first, second });
-      expect(first.delta.lists).toEqual({ D: 'SET', L2: 'NULL' });
-      expect(first.delta.newConsent).toEqual([]);
-      expect(second.delta.newConsent).toEqual([]);
-    });
-
-    it('R_never — a list of the organisation the contact was never on: no row, no membership', async () => {
-      const p = await leftD('r-never');
-      const token = prefToken(p);
-      const send = () => inject('POST', `/p/center/${token}`, JSON_UA, { resubscribeToLists: [M] });
-      const first = await click(p, token, send);
-      const second = await click(p, token, send);
-      record('R_never', { first, second });
-      expect(first.delta.lists).toEqual({ D: 'SET', L2: 'NULL' });
-      expect(first.delta.newConsent).toEqual([]);
-      expect(second.delta.newConsent).toEqual([]);
-    });
-
-    it("R_foreign — another organisation's list: no row, no membership", async () => {
-      const p = await leftD('r-foreign');
-      const token = prefToken(p);
-      const send = () =>
-        inject('POST', `/p/center/${token}`, JSON_UA, { resubscribeToLists: [FOREIGN] });
-      const first = await click(p, token, send);
-      const second = await click(p, token, send);
-      record('R_foreign', { first, second });
-      expect(first.delta.lists).toEqual({ D: 'SET', L2: 'NULL' });
-      expect(first.delta.newConsent).toEqual([]);
-      expect(second.delta.newConsent).toEqual([]);
-    });
-
-    it('R_back_all — the page\'s "subscribe again" with D ticked: the global re_consent as before, and one for D', async () => {
-      const p = await doiPerson('r-back-all');
-      const token = prefToken(p);
-      const unsub = await inject('POST', `/p/center/${token}`, JSON_UA, {
-        globalUnsubscribe: true,
+        expect(global.map((c) => c.source)).toEqual(['preference_center']);
+        // R: and D's reopened row has its own.
+        expect(
+          reConsent(first)
+            .filter((c) => (c.proof_payload ?? {}).liftedUnsubscribe === undefined)
+            .map((c) => c.proof_payload),
+        ).toEqual([{ listId: D, via: 'page' }]);
+        expect(second.delta.newConsent).toEqual([]);
       });
-      expect(unsub.status).toBe(200);
-      const send = () =>
-        inject(
-          'POST',
-          `/p/center/${token}`,
-          FORM,
-          new URLSearchParams([
-            ['action', 'resubscribe'],
-            ['list', D],
-          ]).toString(),
-        );
-      const first = await click(p, token, send);
-      const second = await click(p, token, send);
-      record('R_back_all', { first, second });
-      expect(first.delta.status).toBe('active');
-      expect(first.delta.lists).toEqual({ D: 'NULL', L2: 'SET' });
-      // K: the global way back keeps its own row.
-      const global = reConsent(first).filter(
-        (c) => (c.proof_payload ?? {}).liftedUnsubscribe !== undefined,
-      );
-      expect(global.map((c) => c.source)).toEqual(['preference_center']);
-      // R: and D's reopened row has its own.
-      expect(
-        reConsent(first)
-          .filter((c) => (c.proof_payload ?? {}).liftedUnsubscribe === undefined)
-          .map((c) => c.proof_payload),
-      ).toEqual([{ listId: D, via: 'page' }]);
-      expect(second.delta.newConsent).toEqual([]);
-    });
-  });
-
-  describe('K — unchanged', () => {
-    it('K_global_resubscribe — globalResubscribe writes its one re_consent, as before', async () => {
-      const p = await doiPerson('k-resub');
-      const token = prefToken(p);
-      const unsub = await inject('POST', `/p/center/${token}`, JSON_UA, {
-        globalUnsubscribe: true,
-      });
-      expect(unsub.status).toBe(200);
-      const send = () => inject('POST', `/p/center/${token}`, JSON_UA, { globalResubscribe: true });
-      const first = await click(p, token, send);
-      const second = await click(p, token, send);
-      record('K_global_resubscribe', { first, second });
-      expect(first.delta.status).toBe('active');
-      expect(first.delta.suppressions).toEqual([]);
-      expect(first.delta.lists).toEqual({ D: 'SET', L2: 'SET' });
-      expect(first.delta.newConsent.map((c) => `${c.event_type}/${c.source}`)).toEqual([
-        're_consent/preference_center',
-      ]);
-      expect(second.delta.newConsent).toEqual([]);
     });
 
-    it('K_admin_put — PUT /contacts/:id status unsubscribed: an email_events row, no consent row', async () => {
-      const p = await doiPerson('k-admin');
-      const send = () =>
-        inject('PUT', `/api/v1/contacts/${p.id}`, owner, { status: 'unsubscribed' });
-      const first = await click(p, '-', send);
-      const second = await click(p, '-', send);
-      record('K_admin_put', { first, second });
-      expect(first.answer.status).toBe(200);
-      expect(first.delta).toMatchObject(LEFT_ALL);
-      expect(first.delta.newUnsubscribeEvents.map((e) => e.metadata?.source)).toEqual(['admin_ui']);
-      expect(first.delta.newConsent).toEqual([]);
-      expect(second.delta.newConsent).toEqual([]);
-    });
-
-    it('K_workflow — the workflow unsubscribe action: an email_events row, no consent row', async () => {
-      const p = await doiPerson('k-flow');
-      const { executeAction } = await import('../services/workflows/actions.js');
-      const node = { id: 'n1', type: 'unsubscribe', config: {} } as unknown as Parameters<
-        typeof executeAction
-      >[0];
-      const run = { id: randomUUID(), orgId: org, contactId: p.id } as unknown as Parameters<
-        typeof executeAction
-      >[1];
-      const ctx = { orgId: org, contact: null } as unknown as Parameters<typeof executeAction>[2];
-      const send = async (): Promise<Res> => {
-        const out = await executeAction(node, run, ctx);
-        return { status: 0, body: JSON.stringify(out), location: null, contentType: null };
-      };
-      const first = await click(p, '-', send);
-      const second = await click(p, '-', send);
-      record('K_workflow', { first, second });
-      expect(first.delta).toMatchObject(LEFT_ALL);
-      expect(first.delta.newUnsubscribeEvents.map((e) => e.metadata?.source)).toEqual(['workflow']);
-      expect(first.delta.newConsent).toEqual([]);
-      expect(second.delta.newConsent).toEqual([]);
-    });
-
-    it('K_topic — leaving a topic (source preference_centre, scope topic): no consent row', async () => {
-      const p = await doiPerson('k-topic');
-      const { unsubscribeContact } = await import('../services/contacts/unsubscribe.js');
-      const send = async (): Promise<Res> => {
-        const out = await unsubscribeContact(org, p.id, {
-          scope: { kind: 'topic', topicId: randomUUID() },
-          source: 'preference_centre',
+    describe('K — unchanged', () => {
+      it('K_global_resubscribe — globalResubscribe writes its one re_consent, as before', async () => {
+        const p = await doiPerson('k-resub');
+        const token = prefToken(p);
+        const unsub = await inject('POST', `/p/center/${token}`, JSON_UA, {
+          globalUnsubscribe: true,
         });
-        return {
-          status: 0,
-          body: JSON.stringify({ changed: out.changed }),
-          location: null,
-          contentType: null,
+        expect(unsub.status).toBe(200);
+        const send = () =>
+          inject('POST', `/p/center/${token}`, JSON_UA, { globalResubscribe: true });
+        const first = await click(p, token, send);
+        const second = await click(p, token, send);
+        record('K_global_resubscribe', { first, second });
+        expect(first.delta.status).toBe('active');
+        expect(first.delta.suppressions).toEqual([]);
+        expect(first.delta.lists).toEqual({ D: 'SET', L2: 'SET' });
+        expect(first.delta.newConsent.map((c) => `${c.event_type}/${c.source}`)).toEqual([
+          're_consent/preference_center',
+        ]);
+        expect(second.delta.newConsent).toEqual([]);
+      });
+
+      it('K_admin_put — PUT /contacts/:id status unsubscribed: an email_events row, no consent row', async () => {
+        const p = await doiPerson('k-admin');
+        const send = () =>
+          inject('PUT', `/api/v1/contacts/${p.id}`, owner, { status: 'unsubscribed' });
+        const first = await click(p, '-', send);
+        const second = await click(p, '-', send);
+        record('K_admin_put', { first, second });
+        expect(first.answer.status).toBe(200);
+        expect(first.delta).toMatchObject(LEFT_ALL);
+        expect(first.delta.newUnsubscribeEvents.map((e) => e.metadata?.source)).toEqual([
+          'admin_ui',
+        ]);
+        expect(first.delta.newConsent).toEqual([]);
+        expect(second.delta.newConsent).toEqual([]);
+      });
+
+      it('K_workflow — the workflow unsubscribe action: an email_events row, no consent row', async () => {
+        const p = await doiPerson('k-flow');
+        const { executeAction } = await import('../services/workflows/actions.js');
+        const node = { id: 'n1', type: 'unsubscribe', config: {} } as unknown as Parameters<
+          typeof executeAction
+        >[0];
+        const run = { id: randomUUID(), orgId: org, contactId: p.id } as unknown as Parameters<
+          typeof executeAction
+        >[1];
+        const ctx = { orgId: org, contact: null } as unknown as Parameters<typeof executeAction>[2];
+        const send = async (): Promise<Res> => {
+          const out = await executeAction(node, run, ctx);
+          return { status: 0, body: JSON.stringify(out), location: null, contentType: null };
         };
-      };
-      const first = await click(p, '-', send);
-      record('K_topic', { first, second: first });
-      expect(first.delta.newConsent).toEqual([]);
-      expect(first.delta.status).toBe('active');
-    });
-  });
+        const first = await click(p, '-', send);
+        const second = await click(p, '-', send);
+        record('K_workflow', { first, second });
+        expect(first.delta).toMatchObject(LEFT_ALL);
+        expect(first.delta.newUnsubscribeEvents.map((e) => e.metadata?.source)).toEqual([
+          'workflow',
+        ]);
+        expect(first.delta.newConsent).toEqual([]);
+        expect(second.delta.newConsent).toEqual([]);
+      });
 
-  it('Q — SQL statements of one unsubscribe (footer link) and one way back (outside transactions)', async () => {
-    const p = await doiPerson('q');
-    const measure = async (send: () => Promise<Res>) => {
-      const statements: string[] = [];
-      const stop = observeQueries((q) => statements.push(q.replace(/\s+/g, ' ').slice(0, 100)));
-      let status = 0;
-      try {
-        status = (await send()).status;
-      } finally {
-        stop();
-      }
-      return { status, sql: statements.length, statements };
-    };
-    const token = unsubToken(p);
-    const unsubscribe = await measure(() =>
-      inject('GET', `/api/v1/unsubscribe/${token}`, AS_BROWSER),
-    );
-    const p2 = await doiPerson('q2');
-    const pref = prefToken(p2);
-    await inject('POST', `/p/center/${pref}`, JSON_UA, { unsubscribeFromLists: [D] });
-    const back = await measure(() =>
-      inject('POST', `/p/center/${pref}`, JSON_UA, { resubscribeToLists: [D] }),
-    );
-    cells.Q = {
-      note: 'observeQueries sees the statements of the db client, not those inside db.transaction',
-      unsubscribe: {
-        status: unsubscribe.status,
-        sql: unsubscribe.sql,
-        statements: unsubscribe.statements,
-      },
-      back: { status: back.status, sql: back.sql, statements: back.statements },
-    };
-    expect(unsubscribe.status).toBe(200);
-    expect(back.status).toBe(200);
-  });
-});
+      it('K_topic — leaving a topic (source preference_centre, scope topic): no consent row', async () => {
+        const p = await doiPerson('k-topic');
+        const { unsubscribeContact } = await import('../services/contacts/unsubscribe.js');
+        const send = async (): Promise<Res> => {
+          const out = await unsubscribeContact(org, p.id, {
+            scope: { kind: 'topic', topicId: randomUUID() },
+            source: 'preference_centre',
+          });
+          return {
+            status: 0,
+            body: JSON.stringify({ changed: out.changed }),
+            location: null,
+            contentType: null,
+          };
+        };
+        const first = await click(p, '-', send);
+        record('K_topic', { first, second: first });
+        expect(first.delta.newConsent).toEqual([]);
+        expect(first.delta.status).toBe('active');
+      });
+
+      it('K_gdpr — the Art. 15 export and the erasure: what they do with the consent rows', async () => {
+        const p = await doiPerson('k-gdpr');
+        const token = unsubToken(p);
+        const unsub = await inject('GET', `/api/v1/unsubscribe/${token}`, AS_BROWSER);
+        const before = await stateOf(p);
+        const exp = await inject('GET', `/api/v1/contacts/${p.id}/export-data`, owner);
+        const expBody = exp.status === 200 ? (JSON.parse(exp.body) as { data?: unknown }) : null;
+        const expData = (expBody?.data ?? expBody ?? {}) as Record<string, unknown>;
+        const erase = await inject('POST', `/api/v1/contacts/${p.id}/anonymize`, owner, {});
+        const erased = (JSON.parse(erase.body) as { data?: { relatedRowsDeleted?: unknown } }).data;
+        const [left] = await rows<{ n: number }>(sql`
+          SELECT count(*)::int AS n FROM consent_events
+          WHERE org_id = ${org}::uuid AND contact_id = ${p.id}::uuid
+        `);
+        cells.K_gdpr = {
+          unsubscribe: unsub.status,
+          consentBefore: before.consent.map((c) => c.event_type),
+          export: {
+            status: exp.status,
+            keys: Object.keys(expData).sort(),
+            mentionsConsent: exp.body.includes('consent'),
+          },
+          erase: { status: erase.status, relatedRowsDeleted: erased?.relatedRowsDeleted ?? null },
+          consentRowsAfter: left!.n,
+        };
+        expect(unsub.status).toBe(200);
+        expect(erase.status).toBe(200);
+        expect(left!.n, 'the erasure kept consent rows of the contact').toBe(0);
+      });
+    });
+
+    it('Q — SQL statements of one unsubscribe (footer link) and one way back (outside transactions)', async () => {
+      const p = await doiPerson('q');
+      const measure = async (send: () => Promise<Res>) => {
+        const statements: string[] = [];
+        const stop = observeQueries((q) => statements.push(q.replace(/\s+/g, ' ').slice(0, 100)));
+        let status = 0;
+        try {
+          status = (await send()).status;
+        } finally {
+          stop();
+        }
+        return { status, sql: statements.length, statements };
+      };
+      const token = unsubToken(p);
+      const unsubscribe = await measure(() =>
+        inject('GET', `/api/v1/unsubscribe/${token}`, AS_BROWSER),
+      );
+      const p2 = await doiPerson('q2');
+      const pref = prefToken(p2);
+      await inject('POST', `/p/center/${pref}`, JSON_UA, { unsubscribeFromLists: [D] });
+      const back = await measure(() =>
+        inject('POST', `/p/center/${pref}`, JSON_UA, { resubscribeToLists: [D] }),
+      );
+      cells.Q = {
+        note: 'observeQueries sees the statements of the db client, not those inside db.transaction',
+        unsubscribe: {
+          status: unsubscribe.status,
+          sql: unsubscribe.sql,
+          statements: unsubscribe.statements,
+        },
+        back: { status: back.status, sql: back.sql, statements: back.statements },
+      };
+      expect(unsubscribe.status).toBe(200);
+      expect(back.status).toBe(200);
+    });
+  },
+);
