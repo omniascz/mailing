@@ -36,6 +36,7 @@ import {
 import { resubscribeContact } from '../../services/contacts/resubscribe.js';
 import { findOrCreateContact } from '../../services/contacts/by-email.js';
 import { sendListDoiConfirmation } from '../../services/subscriptions/doi.js';
+import { maskEmail } from '../../services/preference-center/index.js';
 
 const UNSUB_TTL = 60 * 60 * 24 * 7; // 7 days
 
@@ -391,6 +392,8 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
   /**
    * GET /api/v1/preferences/:token
    * Return list memberships so the contact can manage their subscriptions.
+   * The address is masked as on /p/center: the token travels in an e-mail
+   * that can be forwarded, and the full address is not the forwardee's.
    */
   app.get(
     '/api/v1/preferences/:token',
@@ -418,7 +421,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
 
       return {
         data: {
-          email: contact.email,
+          emailMasked: maskEmail(contact.email),
           status: contact.status,
           memberships: memberships.map((m) => ({
             listId: m.list.id,

@@ -104,7 +104,7 @@ function resolveToken(token: string): ResolvedToken {
  * or screenshotted without leaking the full address. Keeps the first letter
  * + last letter of the local part + full domain ("p***r@example.cz").
  */
-function maskEmail(email: string | null): string {
+export function maskEmail(email: string | null): string {
   if (!email) return '';
   const at = email.lastIndexOf('@');
   if (at < 1) return email;
