@@ -700,7 +700,9 @@ describe('double opt-in — the button confirms, opening the link does not (Z176
     expect(s.mail.engine).toBe(1);
     expect(before).toEqual({
       status: 'unsubscribed',
-      consent: [],
+      // The preference-centre unsubscribe is on the consent timeline (Z186);
+      // the request carried no User-Agent, so fetch's own.
+      consent: ['opt_out/preference_centre/ip:true/ua:node'],
       row: 'confirmed:true unsub:true',
       token: true,
       suppressions: ['unsubscribe'],
