@@ -27,7 +27,12 @@ import { contacts, lists, contactLists, organizations } from '../../db/schema/in
 import { redis } from '@forgemsg/shared/redis';
 import { AppError } from '../../lib/app-error.js';
 import { t, resolveLocale, verifyTrackingToken, type SupportedLocale } from '@forgemsg/shared';
-import { unsubscribeContact, type UnsubscribeSource } from '../../services/contacts/unsubscribe.js';
+import {
+  unsubscribeContact,
+  unsubscribeHttpMethod,
+  type UnsubscribeHttpMethod,
+  type UnsubscribeSource,
+} from '../../services/contacts/unsubscribe.js';
 import { resubscribeContact } from '../../services/contacts/resubscribe.js';
 import { findOrCreateContact } from '../../services/contacts/by-email.js';
 import { sendListDoiConfirmation } from '../../services/subscriptions/doi.js';
@@ -317,6 +322,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         source: 'one_click',
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
+        httpMethod: unsubscribeHttpMethod(req.method),
       });
       return reply.code(204).send();
     },
@@ -344,6 +350,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
           source: 'one_click',
           ipAddress: req.ip,
           userAgent: req.headers['user-agent'],
+          httpMethod: unsubscribeHttpMethod(req.method),
         });
       } catch {
         // Swallow — never 4xx a provider one-click POST.
@@ -366,6 +373,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
           source: 'footer_link',
           ipAddress: req.ip,
           userAgent: req.headers['user-agent'],
+          httpMethod: unsubscribeHttpMethod(req.method),
         });
         const locale = await resolvePageLocale(req, orgId, contactId);
         const page = pageFromKey('unsubscribe_page', locale);
@@ -449,6 +457,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
           reason: body.reason,
           ipAddress: req.ip,
           userAgent: req.headers['user-agent'],
+          httpMethod: unsubscribeHttpMethod(req.method),
         });
       } else if (body.listIdsToRemove?.length) {
         for (const listId of body.listIdsToRemove) {
@@ -462,6 +471,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
             reason: body.reason,
             ipAddress: req.ip,
             userAgent: req.headers['user-agent'],
+            httpMethod: unsubscribeHttpMethod(req.method),
           });
         }
       }
@@ -525,7 +535,12 @@ async function resolveUnsubToken(token: string): Promise<{ contactId: string; or
  */
 async function processUnsubscribe(
   token: string,
-  ctx: { source: UnsubscribeSource; ipAddress?: string; userAgent?: string },
+  ctx: {
+    source: UnsubscribeSource;
+    ipAddress?: string;
+    userAgent?: string;
+    httpMethod?: UnsubscribeHttpMethod;
+  },
 ): Promise<{ contactId: string; orgId: string }> {
   const decoded = await decodeUnsubToken(token);
   if (!decoded) throw AppError.badRequest('Invalid or expired unsubscribe token');
@@ -538,6 +553,7 @@ async function processUnsubscribe(
     campaignId: decoded.campaignId,
     ipAddress: ctx.ipAddress,
     userAgent: ctx.userAgent,
+    httpMethod: ctx.httpMethod,
   });
 
   // The webhook keeps firing on every call, unlike the event. A provider

@@ -380,12 +380,15 @@ afterAll(async () => {
   expect(seedAfter, 'the seed organisation changed').toEqual(seedBefore);
 }, 120_000);
 
-/** Where a contact who left everything stands — the state every refusal must keep. */
+/**
+ * Where a contact who left everything stands — the state every refusal must keep.
+ * The unsubscribe itself is on the consent timeline since Z186.
+ */
 const LEFT_ALL: State = {
   status: 'unsubscribed',
   suppressions: ['unsubscribe'],
   lists: { L: 'unsubscribed_at SET confirmed', L2: 'unsubscribed_at SET confirmed' },
-  consent: [],
+  consent: ['opt_out/preference_centre'],
 };
 
 describe('the preference-centre link brings a person back only while it is young (Z177)', () => {
@@ -453,7 +456,8 @@ describe('the preference-centre link brings a person back only while it is young
       status: 'active',
       suppressions: [],
       lists: { L: 'unsubscribed_at SET confirmed', L2: 'unsubscribed_at NULL confirmed' },
-      consent: [],
+      // Leaving L with a fresh link (Z186); the old link's "save" adds nothing.
+      consent: ['opt_out/preference_centre'],
     });
   });
 
@@ -477,7 +481,8 @@ describe('the preference-centre link brings a person back only while it is young
       status: 'active',
       suppressions: [],
       lists: { L: 'unsubscribed_at SET confirmed', L2: 'unsubscribed_at NULL confirmed' },
-      consent: [],
+      // Leaving L with a fresh link (Z186); the old link's way back adds nothing.
+      consent: ['opt_out/preference_centre'],
     };
     expect(before).toEqual(leftL);
     expect(back).toEqual({
@@ -496,6 +501,8 @@ describe('the preference-centre link brings a person back only while it is young
     expect(afterMixed).toEqual({
       ...leftL,
       lists: { L: 'unsubscribed_at SET confirmed', L2: 'unsubscribed_at SET confirmed' },
+      // Z186: the unsubscribe from L2 the old link still carries out is on the timeline too.
+      consent: ['opt_out/preference_centre', 'opt_out/preference_centre'],
     });
   });
 
@@ -685,7 +692,12 @@ describe('the preference-centre link brings a person back only while it is young
         status: 'active',
         suppressions: [],
         lists: { L: 'unsubscribed_at NULL confirmed', L2: 'unsubscribed_at SET confirmed' },
-        consent: ['re_consent/preference_center'],
+        // Z186: the unsubscribe, the global way back, and the way back to L.
+        consent: [
+          'opt_out/preference_centre',
+          're_consent/preference_center',
+          're_consent/preference_center',
+        ],
       });
     }
   });
