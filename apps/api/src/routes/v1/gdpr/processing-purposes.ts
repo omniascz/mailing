@@ -229,19 +229,27 @@ export default async function gdprPurposesRoutes(app: FastifyInstance) {
 
   // ── Per-purpose double opt-in (#647) ──────────────────────────────────────
 
-  // Initiate DOI for a purpose (authenticated — called from automation action)
-  app.post('/api/v1/contacts/:contactId/gdpr/doi/:purposeSlug', auth, async (req, reply) => {
-    const { contactId, purposeSlug } = req.params as { contactId: string; purposeSlug: string };
-    // redirectUrl: an absolute http(s) URL, or 400 INVALID_REDIRECT_URL before
-    // a token or an e-mail exists; it is kept with the token, not put in the link.
-    const body = (req.body ?? {}) as { redirectUrl?: unknown };
-    const { initiatePurposeDoi } = await import('../../../services/gdpr/per-purpose-doi.js');
-    await initiatePurposeDoi(req.user!.orgId, contactId, purposeSlug, {
-      ipAddress: req.ip,
-      redirectUrl: body.redirectUrl,
-    });
-    return reply.send({ data: { ok: true } });
-  });
+  // Initiate DOI for a purpose (authenticated — called from automation action).
+  // It sends an e-mail in the organisation's name: owner, admin and editor
+  // only, as the purposes' own writes above. A viewer could, and a deleted
+  // contact got the mail (Z185).
+  app.post(
+    '/api/v1/contacts/:contactId/gdpr/doi/:purposeSlug',
+    { preHandler: [app.authenticate, app.requireRole('admin', 'owner', 'editor')] },
+    async (req, reply) => {
+      const { contactId, purposeSlug } = req.params as { contactId: string; purposeSlug: string };
+      // redirectUrl: an absolute http(s) URL, or 400 INVALID_REDIRECT_URL before
+      // a token or an e-mail exists; it is kept with the token, not put in the link.
+      const body = (req.body ?? {}) as { redirectUrl?: unknown };
+      const { initiatePurposeDoi } = await import('../../../services/gdpr/per-purpose-doi.js');
+      // Over the limit (3 per address and purpose in 24 h) it answers the same.
+      await initiatePurposeDoi(req.user!.orgId, contactId, purposeSlug, {
+        ipAddress: req.ip,
+        redirectUrl: body.redirectUrl,
+      });
+      return reply.send({ data: { ok: true } });
+    },
+  );
 
   // Public — the link in the e-mail: a page with a "Confirm" button that posts
   // to the same address. Reads the token, grants nothing (nor does HEAD, which

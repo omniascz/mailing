@@ -308,7 +308,8 @@ afterAll(async () => {
         if (listIds.some((id) => key.startsWith(`doi:limit:${id}:`))) await redis.del(key);
         continue;
       }
-      if (key.startsWith('doi:purpose:')) continue;
+      // doi:limit-purpose: is a sorted set (Z185): GET would answer WRONGTYPE.
+      if (key.startsWith('doi:purpose:') || key.startsWith('doi:limit-purpose:')) continue;
       const raw = await redis.get(key);
       if (raw?.includes(org)) {
         await redis.del(key);

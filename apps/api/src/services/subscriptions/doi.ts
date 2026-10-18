@@ -51,6 +51,36 @@ export function doiLimitKey(listId: string, email: string): string {
   return `doi:limit:${listId}:${suppressionEmailHash(email.toLowerCase())}`;
 }
 
+/**
+ * The same limit for a per-purpose GDPR confirmation (services/gdpr/
+ * per-purpose-doi.ts): the purpose and the erasure fingerprint of the address.
+ * Never under `doi:purpose:` — that is where the tokens are, and the page of
+ * the link would take a limit key for one.
+ */
+export function purposeDoiLimitKey(purposeId: string, email: string): string {
+  return `doi:limit-purpose:${purposeId}:${suppressionEmailHash(email.toLowerCase())}`;
+}
+
+/**
+ * Whether one more confirmation may go under `key` (LIMIT_SCRIPT): true, and
+ * this one is counted; false when DOI_LIMIT have gone in the last 24 hours,
+ * and nothing is counted. `id` tells this confirmation apart from one queued
+ * in the same millisecond. A Redis failure throws: nothing is sent unchecked.
+ */
+export async function withinDoiLimit(key: string, id: string): Promise<boolean> {
+  const now = Date.now();
+  const allowed = await redis.eval(
+    LIMIT_SCRIPT,
+    1,
+    key,
+    now,
+    DOI_LIMIT_WINDOW_MS,
+    DOI_LIMIT,
+    `${now}:${id}`,
+  );
+  return Number(allowed) === 1;
+}
+
 export async function sendListDoiConfirmation(opts: {
   orgId: string;
   contactId: string;
@@ -69,17 +99,7 @@ export async function sendListDoiConfirmation(opts: {
   // asked. Every queued confirmation counts, also one the MTA gate then stops;
   // an attempt over the limit counts for nothing. A Redis failure throws, as
   // the setex below did before: nothing is sent unchecked.
-  const now = Date.now();
-  const allowed = await redis.eval(
-    LIMIT_SCRIPT,
-    1,
-    doiLimitKey(opts.listId, opts.email),
-    now,
-    DOI_LIMIT_WINDOW_MS,
-    DOI_LIMIT,
-    `${now}:${token}`,
-  );
-  if (Number(allowed) !== 1) {
+  if (!(await withinDoiLimit(doiLimitKey(opts.listId, opts.email), token))) {
     // Both callers answer exactly as for a sent confirmation, and the token
     // has the same shape but is stored nowhere: the answer must not tell
     // anyone what has been sent to this address. The log names no address.

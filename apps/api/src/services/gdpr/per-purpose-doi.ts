@@ -19,10 +19,11 @@
 import crypto from 'node:crypto';
 import { db } from '../../db/client.js';
 import { processingPurposes, contactGdprConsents, contacts } from '../../db/schema/index.js';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { sendTransactionalEmail } from '../../lib/queues.js';
 import { env } from '../../config/env.js';
 import { AppError } from '../../lib/app-error.js';
+import { purposeDoiLimitKey, withinDoiLimit } from '../subscriptions/doi.js';
 
 const DOI_TOKEN_TTL = 24 * 3600; // 24 hours in seconds
 
@@ -108,18 +109,30 @@ export async function initiatePurposeDoi(
     });
   }
 
-  // Resolve contact email
+  // A live contact of this organisation with an address. Another org's id, an
+  // unknown one, a deleted contact and one erased (no address left) answer the
+  // same 404: a deleted contact used to get the e-mail, an erased one a 500.
   const [contact] = await db
     .select({ email: contacts.email, firstName: contacts.firstName })
     .from(contacts)
-    .where(and(eq(contacts.orgId, orgId), eq(contacts.id, contactId)))
+    .where(and(eq(contacts.orgId, orgId), eq(contacts.id, contactId), isNull(contacts.deletedAt)))
     .limit(1);
 
-  if (!contact?.email) throw Object.assign(new Error('Contact has no email'), { statusCode: 422 });
+  if (!contact?.email) throw AppError.notFound('Contact');
 
   // Generate and store token
   const token = crypto.randomBytes(32).toString('hex');
   const tokenKey = `doi:purpose:${token}`;
+
+  // At most three confirmations per address and purpose in any 24 hours — the
+  // list DOI's limit (Michal 14. 10.), here per purpose. Over it the start
+  // answers as for a sent one, and no token is stored and no e-mail queued.
+  // The log names no address. A Redis failure throws.
+  if (!(await withinDoiLimit(purposeDoiLimitKey(purpose.id, contact.email), token))) {
+    console.warn(`[doi] purpose_doi_rate_limited purpose=${purpose.id} org=${orgId}`);
+    return { tokenKey };
+  }
+
   const payload: DoiPayload = {
     orgId,
     contactId,
