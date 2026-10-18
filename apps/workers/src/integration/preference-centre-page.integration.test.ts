@@ -239,6 +239,9 @@ describe('the preference-centre link opens a page (real DB + Redis + API)', () =
     if (emails.length)
       await sql`DELETE FROM suppressions WHERE org_id = ${seed.id} AND email = ANY(${emails})`;
     if (ids.length) {
+      // Only the rows Z186 writes: a recipient's opt_out and the re_consent of a
+      // reopened list row (no fromStatus) — nothing this file left before.
+      await sql`DELETE FROM consent_events WHERE contact_id = ANY(${ids}) AND (event_type = 'opt_out' OR (event_type = 're_consent' AND proof_payload->>'fromStatus' IS NULL))`;
       await sql`DELETE FROM contact_lists WHERE contact_id = ANY(${ids})`;
       await sql`DELETE FROM contacts WHERE id = ANY(${ids})`;
     }

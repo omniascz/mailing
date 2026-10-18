@@ -36,8 +36,15 @@
  */
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/client.js';
-import { contactLists, contacts, emailEvents, suppressions } from '../../db/schema/index.js';
+import {
+  consentEvents,
+  contactLists,
+  contacts,
+  emailEvents,
+  suppressions,
+} from '../../db/schema/index.js';
 import { suppressionEmail, suppressionEmailIs } from '../suppressions/email.js';
+import { hashIp } from './resubscribe.js';
 
 /** What is being withdrawn. */
 export type UnsubscribeScope =
@@ -61,6 +68,25 @@ export type UnsubscribeSource =
   | 'admin_ui'
   | 'internal';
 
+/**
+ * The sources where the recipient withdrew consent themselves, from a link we
+ * sent them. Only these leave an `opt_out` on the consent timeline: an admin,
+ * an import or a flow marking someone unsubscribed is not the person's own act
+ * and is not recorded as one there.
+ */
+const RECIPIENT_SOURCES: ReadonlySet<UnsubscribeSource> = new Set([
+  'footer_link',
+  'one_click',
+  'preference_centre',
+]);
+
+/** The HTTP method of the request that carried the unsubscribe. */
+export type UnsubscribeHttpMethod = 'GET' | 'HEAD' | 'POST';
+
+export function unsubscribeHttpMethod(method: string): UnsubscribeHttpMethod | undefined {
+  return method === 'GET' || method === 'HEAD' || method === 'POST' ? method : undefined;
+}
+
 export interface UnsubscribeOptions {
   scope: UnsubscribeScope;
   source: UnsubscribeSource;
@@ -71,6 +97,8 @@ export interface UnsubscribeOptions {
   messageId?: string;
   ipAddress?: string;
   userAgent?: string;
+  /** Recorded on the consent row; left out of it when the caller has none. */
+  httpMethod?: UnsubscribeHttpMethod;
 }
 
 export interface UnsubscribeResult {
@@ -109,7 +137,7 @@ export async function unsubscribeContact(
     case 'global':
       return unsubscribeGlobally(orgId, contact, opts);
     case 'list':
-      return unsubscribeFromList(orgId, contact.id, opts.scope.listId, opts);
+      return unsubscribeFromList(orgId, contact, opts.scope.listId, opts);
     case 'topic':
       return unsubscribeFromTopic(orgId, contact.id, opts.scope.topicId, opts);
   }
@@ -188,15 +216,17 @@ async function unsubscribeGlobally(
     scope: 'global',
     listsClosed: closed.length,
   });
+  await recordOptOut(orgId, contact, opts, { scope: 'global' }, eventId);
   return { changed: true, eventId, wasLastList: closed.length === 1 };
 }
 
 async function unsubscribeFromList(
   orgId: string,
-  contactId: string,
+  contact: { id: string; status: string | null },
   listId: string,
   opts: UnsubscribeOptions,
 ): Promise<UnsubscribeResult> {
+  const contactId = contact.id;
   const now = new Date();
 
   // Conditional on unsubscribed_at being null, so a repeat is a no-op that
@@ -228,6 +258,7 @@ async function unsubscribeFromList(
     listId,
     wasLastList,
   });
+  await recordOptOut(orgId, contact, opts, { scope: 'list', listId }, eventId);
   return { changed: true, eventId, wasLastList };
 }
 
@@ -275,4 +306,43 @@ async function recordEvent(
     })
     .returning({ id: emailEvents.id });
   return row?.id;
+}
+
+/**
+ * Write the consent_events row of a recipient's own unsubscribe — the
+ * withdrawal on the timeline that proves the consent (GDPR Art. 7(3)). Without
+ * it the timeline of someone who confirmed a double opt-in and later left
+ * through the footer link ended on the consent, and the summary still read
+ * them as consenting.
+ *
+ * Only after a change (a repeat click is not a second withdrawal) and only for
+ * RECIPIENT_SOURCES; a topic is not the marketing_email purpose.
+ */
+async function recordOptOut(
+  orgId: string,
+  contact: { id: string; status: string | null },
+  opts: UnsubscribeOptions,
+  scope: { scope: 'global' } | { scope: 'list'; listId: string },
+  emailEventId: string | undefined,
+): Promise<void> {
+  if (!RECIPIENT_SOURCES.has(opts.source)) return;
+  await db.insert(consentEvents).values({
+    orgId,
+    contactId: contact.id,
+    eventType: 'opt_out',
+    legalBasis: 'consent',
+    channel: 'email',
+    purposeCode: 'marketing_email',
+    ipHash: hashIp(opts.ipAddress),
+    userAgent: opts.userAgent?.slice(0, 1000) ?? null,
+    source: opts.source,
+    proofPayload: {
+      ...scope,
+      ...(opts.campaignId ? { campaignId: opts.campaignId } : {}),
+      ...(opts.messageId ? { messageId: opts.messageId } : {}),
+      emailEventId,
+      fromStatus: contact.status,
+      ...(opts.httpMethod ? { method: opts.httpMethod } : {}),
+    },
+  });
 }

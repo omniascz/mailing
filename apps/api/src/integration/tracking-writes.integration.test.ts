@@ -18,7 +18,13 @@ import { randomUUID } from 'node:crypto';
 import { injectOpenPixel, wrapLinks } from '@forgemsg/shared';
 import { createTestApp } from './setup/harness.js';
 import { db } from '../db/client.js';
-import { campaigns, contacts, emailEvents, organizations } from '../db/schema/index.js';
+import {
+  campaigns,
+  consentEvents,
+  contacts,
+  emailEvents,
+  organizations,
+} from '../db/schema/index.js';
 
 let app: FastifyInstance;
 let orgId: string;
@@ -60,6 +66,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db.delete(emailEvents).where(eq(emailEvents.campaignId, campaignId));
+  // The opt_out row a recipient's own unsubscribe writes since Z186.
+  await db.delete(consentEvents).where(eq(consentEvents.orgId, orgId));
   await db.delete(campaigns).where(eq(campaigns.id, campaignId));
   await db.delete(contacts).where(eq(contacts.id, contactId));
   await db.delete(organizations).where(eq(organizations.id, orgId));

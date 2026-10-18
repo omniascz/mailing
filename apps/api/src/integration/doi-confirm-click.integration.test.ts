@@ -521,7 +521,9 @@ describe('double opt-in — the button confirms, opening the link does not (Z176
     expect(unsub.status).toBe(200);
     expect(before).toEqual({
       status: 'unsubscribed',
-      consent: [],
+      // The preference-centre unsubscribe is on the consent timeline (Z186);
+      // the request carried no User-Agent, so inject's own.
+      consent: ['opt_out/preference_centre/ip:true/ua:lightMyRequest'],
       row: 'confirmed:true unsub:true',
       token: true,
       suppressions: ['unsubscribe'],

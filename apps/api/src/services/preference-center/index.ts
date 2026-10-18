@@ -14,10 +14,16 @@
 import { and, eq, inArray, isNull, isNotNull } from 'drizzle-orm';
 import { verifyTrackingToken, type PreferenceCenterPayload } from '@forgemsg/shared';
 import { db } from '../../db/client.js';
-import { contacts, lists, contactLists, suppressions } from '../../db/schema/index.js';
+import {
+  consentEvents,
+  contacts,
+  lists,
+  contactLists,
+  suppressions,
+} from '../../db/schema/index.js';
 import { AppError } from '../../lib/app-error.js';
-import { unsubscribeContact } from '../contacts/unsubscribe.js';
-import { resubscribeContact } from '../contacts/resubscribe.js';
+import { unsubscribeContact, type UnsubscribeHttpMethod } from '../contacts/unsubscribe.js';
+import { hashIp, resubscribeContact } from '../contacts/resubscribe.js';
 import { suppressionEmailIs } from '../suppressions/email.js';
 
 // ─── View shape returned by GET /p/center/:token ─────────────────────────────
@@ -223,12 +229,14 @@ async function listsOfOrg(orgId: string, ids: string[]): Promise<Set<string>> {
   return new Set(rows.map((r) => r.id));
 }
 
-/** Who is acting, for the consent record a resubscribe writes. */
+/** Who is acting, for the consent records an unsubscribe or a resubscribe writes. */
 export interface RequestContext {
   ip?: string | null;
   userAgent?: string | null;
   /** 'page' — the button on the preference page; 'api' — the JSON body. */
   via: 'page' | 'api';
+  /** The request's method, for the opt_out record; absent, it is not written. */
+  method?: UnsubscribeHttpMethod;
 }
 
 export async function updatePreferences(
@@ -262,6 +270,9 @@ export async function updatePreferences(
       scope: { kind: 'global' },
       source: 'preference_centre',
       reason,
+      ipAddress: ctx.ip ?? undefined,
+      userAgent: ctx.userAgent ?? undefined,
+      httpMethod: ctx.method,
     });
   }
 
@@ -311,6 +322,9 @@ export async function updatePreferences(
         scope: { kind: 'list', listId },
         source: 'preference_centre',
         reason,
+        ipAddress: ctx.ip ?? undefined,
+        userAgent: ctx.userAgent ?? undefined,
+        httpMethod: ctx.method,
       });
       if (result.changed) listChanges.push({ listId, subscribed: false });
     }
@@ -321,17 +335,38 @@ export async function updatePreferences(
       // Only back to a list they left. This used to insert a membership for a
       // live list the contact had never been on, confirmed now and with no
       // consent event — a subscription nobody asked for, from a link.
-      const [updated] = await db
-        .update(contactLists)
-        .set({ unsubscribedAt: null, unsubscribedReason: null })
-        .where(
-          and(
-            eq(contactLists.contactId, contactId),
-            eq(contactLists.listId, listId),
-            isNotNull(contactLists.unsubscribedAt),
-          ),
-        )
-        .returning({ listId: contactLists.listId });
+      //
+      // The way back is a consent, and is recorded as one with the row it
+      // reopened: same transaction, so there is never a reopened list without
+      // its re_consent, nor a re_consent for a list that stayed closed.
+      const updated = await db.transaction(async (tx) => {
+        const [row] = await tx
+          .update(contactLists)
+          .set({ unsubscribedAt: null, unsubscribedReason: null })
+          .where(
+            and(
+              eq(contactLists.contactId, contactId),
+              eq(contactLists.listId, listId),
+              isNotNull(contactLists.unsubscribedAt),
+            ),
+          )
+          .returning({ listId: contactLists.listId });
+        if (row) {
+          await tx.insert(consentEvents).values({
+            orgId,
+            contactId,
+            eventType: 're_consent',
+            legalBasis: 'consent',
+            channel: 'email',
+            purposeCode: 'marketing_email',
+            ipHash: hashIp(ctx.ip),
+            userAgent: ctx.userAgent?.slice(0, 1000) ?? null,
+            source: 'preference_center',
+            proofPayload: { listId: row.listId, via: ctx.via },
+          });
+        }
+        return row;
+      });
 
       if (updated) listChanges.push({ listId: updated.listId, subscribed: true });
     }

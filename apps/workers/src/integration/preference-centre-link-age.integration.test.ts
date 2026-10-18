@@ -720,23 +720,28 @@ describe('the preference-centre link brings a person back only while it is young
       expect(JSON.stringify(out[k]), k).not.toContain('"status":4');
   }, 600_000);
 
+  // The unsubscribe, and the way back to L, are on the consent timeline since Z186.
   const leftAll = {
     status: 'unsubscribed',
     suppressions: ['unsubscribe'],
     lists: { L: 'unsubscribed_at SET' },
-    consent: [],
+    consent: ['opt_out/preference_centre'],
   };
   const leftL = {
     status: 'active',
     suppressions: [],
     lists: { L: 'unsubscribed_at SET' },
-    consent: [],
+    consent: ['opt_out/preference_centre'],
   };
   const back = {
     status: 'active',
     suppressions: [],
     lists: { L: 'unsubscribed_at NULL' },
-    consent: ['re_consent/preference_center'],
+    consent: [
+      'opt_out/preference_centre',
+      're_consent/preference_center',
+      're_consent/preference_center',
+    ],
   };
   const cell = (k: string) => acts[k] as Record<string, unknown>;
 
@@ -812,7 +817,8 @@ describe('the preference-centre link brings a person back only while it is young
         answer: { status: 200, data: { listChanges: [{ listId: lists.L, subscribed: false }] } },
         after: leftL,
       },
-      fromCopy: { copy: 200, answer: 200, after: leftAll },
+      // The copy's footer link (Z186: the source on the timeline is the link's).
+      fromCopy: { copy: 200, answer: 200, after: { ...leftAll, consent: ['opt_out/footer_link'] } },
     });
   });
 

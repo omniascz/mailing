@@ -57,6 +57,7 @@ import {
   recordOutcome,
   type AssignedVariant,
 } from '../../services/contacts/unsubscribe-ab.js';
+import { unsubscribeHttpMethod } from '../../services/contacts/unsubscribe.js';
 import { htmlPage, resolvePageLocale } from './subscriptions.js';
 
 const updateBody = z.object({
@@ -287,6 +288,7 @@ export default async function preferenceCenterRoutes(app: FastifyInstance) {
           ip: req.ip,
           userAgent: req.headers['user-agent'] ?? null,
           via: 'page',
+          method: unsubscribeHttpMethod(req.method),
         };
         const ticked = new Set(
           Array.isArray(form.data.list) ? form.data.list : form.data.list ? [form.data.list] : [],
@@ -329,6 +331,7 @@ export default async function preferenceCenterRoutes(app: FastifyInstance) {
         ip: req.ip,
         userAgent: req.headers['user-agent'] ?? null,
         via: 'api',
+        method: unsubscribeHttpMethod(req.method),
       });
       return reply.send({ data: result });
     },

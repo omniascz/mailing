@@ -611,7 +611,7 @@ describe('an unsubscribed or complaining address comes back only by its own cons
     expect(await campaignTo(listId, 'pref-back', [c.email, control.email])).toContain(c.email);
 
     // Master: nothing recorded — the deleted row was the only trace of the unsubscribe.
-    const proof = await sql<
+    const timeline = await sql<
       {
         event_type: string;
         source: string;
@@ -624,6 +624,16 @@ describe('an unsubscribed or complaining address comes back only by its own cons
       SELECT event_type, source, ip_hash, user_agent, occurred_at, proof_payload
       FROM consent_events WHERE org_id = ${seed.id} AND contact_id = ${c.id}
     `;
+    // Since Z186 the unsubscribe (opt_out) and the way back to the ticked list
+    // (re_consent {listId, via}) are on the timeline beside the global way back.
+    expect(timeline.map((e) => e.event_type).sort()).toEqual([
+      'opt_out',
+      're_consent',
+      're_consent',
+    ]);
+    const proof = timeline.filter(
+      (e) => e.event_type === 're_consent' && 'liftedUnsubscribe' in e.proof_payload,
+    );
     expect(proof).toHaveLength(1);
     expect(proof[0]).toMatchObject({
       event_type: 're_consent',
