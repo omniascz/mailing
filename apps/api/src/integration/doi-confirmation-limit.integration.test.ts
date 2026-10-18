@@ -193,7 +193,13 @@ async function tokens(email: string, listId: string): Promise<number> {
   ).map((r) => r.id);
   let n = 0;
   for (const key of await scanKeys('doi:*')) {
-    if (key.startsWith('doi:limit:') || key.startsWith('doi:purpose:')) continue;
+    // doi:limit-purpose: is a sorted set (Z185): GET would answer WRONGTYPE.
+    if (
+      key.startsWith('doi:limit:') ||
+      key.startsWith('doi:purpose:') ||
+      key.startsWith('doi:limit-purpose:')
+    )
+      continue;
     const raw = await redis.get(key);
     if (!raw) continue;
     try {
@@ -274,7 +280,13 @@ afterAll(async () => {
       await redis.del(key);
       continue;
     }
-    if (key.startsWith('doi:limit:') || key.startsWith('doi:purpose:')) continue;
+    // doi:limit-purpose: is a sorted set (Z185): GET would answer WRONGTYPE.
+    if (
+      key.startsWith('doi:limit:') ||
+      key.startsWith('doi:purpose:') ||
+      key.startsWith('doi:limit-purpose:')
+    )
+      continue;
     const raw = await redis.get(key);
     if (raw?.includes(org)) {
       await redis.del(key);

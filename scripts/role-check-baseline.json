@@ -6,7 +6,7 @@
     "Fixing a route means deleting its line in the same change. Intentional",
     "exceptions do not belong here: they are in role-check-exemptions.json."
   ],
-  "count": 499,
+  "count": 498,
   "files": 158,
   "routes": {
     "DELETE /api/v1/ads/accounts/:accountId": "apps/api/src/routes/v1/ads/accounts.ts",
@@ -233,7 +233,6 @@
     "POST /api/v1/contacts/:contactId/best-send-time/compute": "apps/api/src/routes/v1/per-contact-sto.ts",
     "POST /api/v1/contacts/:contactId/emails": "apps/api/src/routes/v1/contact-emails.ts",
     "POST /api/v1/contacts/:contactId/emails/:emailId/verify": "apps/api/src/routes/v1/contact-emails.ts",
-    "POST /api/v1/contacts/:contactId/gdpr/doi/:purposeSlug": "apps/api/src/routes/v1/gdpr/processing-purposes.ts",
     "POST /api/v1/contacts/:contactId/gdpr/preference-centre-token": "apps/api/src/routes/v1/gdpr/processing-purposes.ts",
     "POST /api/v1/contacts/:id/archive": "apps/api/src/routes/v1/contacts.ts",
     "POST /api/v1/contacts/:id/infer-gender": "apps/api/src/routes/v1/gender.ts",

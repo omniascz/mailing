@@ -436,7 +436,8 @@ describe('the DOI confirmation passes the erasure row only, three per address an
           await redis.del(key);
           continue;
         }
-        if (key.startsWith('doi:limit:')) continue;
+        // doi:limit-purpose: is a sorted set (Z185): GET would answer WRONGTYPE.
+        if (key.startsWith('doi:limit:') || key.startsWith('doi:limit-purpose:')) continue;
         const raw = await redis.get(key);
         if (raw?.includes(org)) await redis.del(key);
       }
